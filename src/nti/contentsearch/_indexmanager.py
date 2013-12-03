@@ -30,18 +30,34 @@ from . import search_query
 from . import search_results
 from . import interfaces as search_interfaces
 
-def uim_search(username, query, indexmanager=None):
-	indexmanager = 	component.getUtility(search_interfaces.IIndexManager) \
-					if indexmanager is None else indexmanager
-	uim = indexmanager._get_user_index_manager(username)
+def get_entity(entity):
+	result = Entity.get_entity(str(entity)) \
+			 if not nti_interfaces.IEntity.providedBy(entity) else entity
+	return result
+
+def entity_exists(entity):
+	result = get_entity(entity)
+	return result is not None
+
+def uim_search(user, query, indexmanager=None):
+	indexmanager = \
+		component.getUtility(search_interfaces.IIndexManager) \
+		if indexmanager is None else indexmanager
+	uim = indexmanager._get_user_index_manager(user)
 	result = uim.search(query=query) if uim is not None else None
 	return result
 
-def entity_ugd_search(username, query, trax=True):
+def entity_data_search(user, query, trax=True):
 	transactionRunner = \
-		component.getUtility(nti_interfaces.IDataserverTransactionRunner) if trax else None
-	func = functools.partial(uim_search, username=username, query=query)
+		component.getUtility(nti_interfaces.IDataserverTransactionRunner) \
+		if trax else None
+	func = functools.partial(uim_search, user=user, query=query)
 	result = transactionRunner(func) if trax else func()
+	return result
+
+def create_content_searcher(*args, **kwargs):
+	factory = component.getUtility(search_interfaces.IContentSearcherFactory)
+	result = factory(*args, **kwargs)
 	return result
 
 @interface.implementer(search_interfaces.IIndexManager)
@@ -58,11 +74,9 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
-	def __init__(self, bookidx_manager_factory, useridx_manager_adapter,
-				 parallel_search=True):
+	def __init__(self, useridx_manager_adapter, parallel_search=True):
 		self.books = CaseInsensitiveDict()
 		self.parallel_search = parallel_search
-		self.bookidx_manager_factory = bookidx_manager_factory
 		self.useridx_manager_adapter = useridx_manager_adapter
 
 	def __str__(self):
@@ -71,26 +85,16 @@ class IndexManager(object):
 	__repr__ = __str__
 
 	@classmethod
-	def get_entity(cls, username):
-		result = Entity.get_entity(username)
-		return result
-
-	@classmethod
-	def users_exists(cls, username):
-		result = cls.get_entity(username)
-		return result is not None
-
-	@classmethod
 	def get_dfls(cls, username, sort=False):
-		user = cls.get_entity(username)
+		user = get_entity(username)
 		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
 		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
 		return result
 
 	@classmethod
 	def get_user_dymamic_memberships(cls, username, sort=False):
-		user = cls.get_entity(username)
-		everyone = cls.get_entity('Everyone')
+		user = get_entity(username)
+		everyone = get_entity('Everyone')
 		result = getattr(user, 'dynamic_memberships', ())
 		result = [x for x in result if x != everyone and x is not None]
 		return result
@@ -134,7 +138,7 @@ class IndexManager(object):
 		result = False
 		indexid = indexname if not ntiid else ntiid
 		if indexid not in self.books:
-			bmi = self.bookidx_manager_factory(indexname=indexname, ntiid=ntiid, **kwargs)
+			bmi = create_content_searcher(indexname=indexname, ntiid=ntiid, **kwargs)
 			if bmi is not None:
 				result = True
 				self.books[indexid] = bmi
@@ -178,7 +182,7 @@ class IndexManager(object):
 
 	def _get_user_index_manager(self, target, create=True):
 		if isinstance(target, six.string_types):
-			target = self.get_entity(target)
+			target = get_entity(target)
 		result = self.useridx_manager_adapter(target, None) if target and create else None
 		return result
 
@@ -200,7 +204,7 @@ class IndexManager(object):
 		results = search_results.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
-			procs = [gevent.spawn(entity_ugd_search, username, query) for username in entities]
+			procs = [gevent.spawn(entity_data_search, username, query) for username in entities]
 			gevent.joinall(procs)
 			for proc in procs:
 				rest = proc.value

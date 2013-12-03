@@ -104,6 +104,20 @@ class IWhooshContentSearcher(IContentSearcher):
 		close all indices
 		"""
 
+class IContentSearcherFactory(interface.Interface):
+
+	def __call__(*args, **kwargs):
+		"""
+		return an instance of a IContentSearcher
+		"""
+
+class IWhooshContentSearcherFactory(IContentSearcherFactory):
+
+	def __call__(indexname, ntiid=None, **kwargs):
+		"""
+		return an instance of a IWhooshContentSearcher
+		"""
+
 class IEntityIndexManager(ISearcher):
 
 	username = nti_schema.ValidTextLine(title="entity name", required=True)
@@ -147,6 +161,13 @@ class IEntityIndexManager(ISearcher):
 		unindex the object with the specified id
 		"""
 
+class IEntityIndexManagerFactory(interface.Interface):
+
+	def __call__(user):
+		"""
+		return an instance of a IEntityIndexManager for the specified user
+		"""
+		
 # index events
 
 class IIndexEvent(component.interfaces.IObjectEvent):
