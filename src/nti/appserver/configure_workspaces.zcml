@@ -28,8 +28,6 @@
 			 for="nti.dataserver.interfaces.IFriendsListContainer"
 			 provides=".interfaces.IContainerCollection" />
 
-	<adapter factory=".workspaces.LibraryWorkspace" />
-	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces.WorkspaceExternalizer" />
 	<adapter factory=".workspaces.UserService"
 			 provides='.interfaces.IUserService'/>
@@ -41,8 +39,6 @@
 	<subscriber factory=".workspaces._user_workspace"
 				provides=".interfaces.IWorkspace" />
 	<subscriber factory=".workspaces._global_workspace"
-				provides=".interfaces.IWorkspace" />
-	<subscriber factory=".workspaces._library_workspace"
 				provides=".interfaces.IWorkspace" />
 
 	<adapter factory=".workspaces.ServiceExternalizer" />
@@ -58,9 +54,6 @@
 			 name="summary"/>
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer"
 			 name="detail"/>
-	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
-			 name="detail" />
-	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.CollectionContentTypeAware" />
 

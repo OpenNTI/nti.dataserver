@@ -356,8 +356,6 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 			<topic label="C1" href="faa-index.html"/>
 			</toc>""")
 		self.library = DynamicLibrary( self.temp_dir )
-		self.library_workspace = component.getAdapter( self.library, app_interfaces.IWorkspace )
-		self.library_collection = self.library_workspace.collections[0]
 
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
@@ -372,6 +370,10 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 		component.provideUtility( self.policy )
 		self.acl_policy = pyramid_authorization.ACLAuthorizationPolicy()
 		component.provideUtility( self.acl_policy )
+
+		self.library_workspace = component.getMultiAdapter( (self.library, self.request), app_interfaces.IWorkspace )
+		self.library_collection = self.library_workspace.collections[0]
+
 
 	def tearDown(self):
 		shutil.rmtree( self.temp_dir )

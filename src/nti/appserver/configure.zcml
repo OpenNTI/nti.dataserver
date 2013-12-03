@@ -73,7 +73,6 @@
 	<adapter factory=".pyramid_renderers._LongerCachedUGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._UserActivityViewCacheController" />
 	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
-	<adapter factory=".pyramid_renderers._ContentPackageLibraryCacheController" />
 	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
 	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
 	<adapter factory=".pyramid_renderers._TranscriptCacheController" />
@@ -122,7 +121,7 @@
 
 	<subscriber factory=".rating_views.RatingLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
-				
+
 	<!-- Other decorators -->
 	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

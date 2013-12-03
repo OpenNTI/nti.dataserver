@@ -226,14 +226,6 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( link_rels, does_not( has_item( 'account.preflight.create' ) ) )
 
 	@WithSharedApplicationMockDS
-	def test_library_main(self):
-		with mock_dataserver.mock_db_trans( self.ds ):
-			self._create_user()
-		testapp = TestApp( self.app )
-		res = testapp.get( '/dataserver2/users/sjohnson@nextthought.com/Library/Main', extra_environ=self._make_extra_environ() )
-		assert_that( res.cache_control, has_property( 'max_age', 120 ) )
-
-	@WithSharedApplicationMockDS
 	def test_resolve_root_ntiid(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()

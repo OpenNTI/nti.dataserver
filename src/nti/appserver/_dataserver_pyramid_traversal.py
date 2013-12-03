@@ -326,7 +326,7 @@ def _CommunityBoardResource( context, request ):
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class UserTraversable(_PseudoTraversableMixin):
 
-	_pseudo_classes_ = { 'Library': lib_interfaces.IContentPackageLibrary,
+	_pseudo_classes_ = {
 						 'Pages': _PagesResource,
 						 PersonalBlog.__default_name__: _BlogResource }
 	_pseudo_classes_.update( _PseudoTraversableMixin._pseudo_classes_ )
