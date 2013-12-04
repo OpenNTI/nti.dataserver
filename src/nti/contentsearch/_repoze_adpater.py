@@ -112,7 +112,6 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 
 		return results
 
-	@metricmethod
 	def search(self, query, *args, **kwargs):
 		qo = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
@@ -201,9 +200,3 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return result
 
 _RepozeEntityIndexManagerFactory = an_factory(_RepozeEntityIndexManager)
-
-@interface.implementer(search_interfaces.IEntityIndexManagerFactory)
-class _DefaultEntityIndexManagerFactory(object):
-
-	def __call__(self, user):
-		return search_interfaces.IRepozeEntityIndexManager(user, None)

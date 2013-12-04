@@ -117,11 +117,9 @@ class IWhooshContentSearcherFactory(IContentSearcherFactory):
 		return an instance of a IWhooshContentSearcher
 		"""
 
-class IEntityIndexManager(ISearcher):
-
-	username = nti_schema.ValidTextLine(title="entity name", required=True)
-
-	def index_content(data, type_name=None):
+class IEntityIndexController(ISearcher):
+	
+	def index_content(data):
 		"""
 		index the specified content
 
@@ -130,7 +128,7 @@ class IEntityIndexManager(ISearcher):
 		:return whether the data as indexed successfully
 		"""
 
-	def update_content(data, type_name=None):
+	def update_content(data):
 		"""
 		update the specified content index
 
@@ -139,7 +137,7 @@ class IEntityIndexManager(ISearcher):
 		:return whether the data as reindexed successfully
 		"""
 
-	def delete_content(data, type_name=None):
+	def delete_content(data):
 		"""
 		delete from the index the specified content
 
@@ -148,31 +146,18 @@ class IEntityIndexManager(ISearcher):
 		:return whether the data as deleted from the index successfully
 		"""
 
-	def remove_index(type_name):
-		"""
-		remove the specified index
-
-		:param type_name: index type
-		"""
-
 	def unindex(oid):
 		"""
 		unindex the object with the specified id
 		"""
 
-class IEntityIndexManagerFactory(interface.Interface):
+class IEntityIndexManager(IEntityIndexController):
 
-	def __call__(user):
-		"""
-		return an instance of a IEntityIndexManager for the specified user
-		"""
+	username = nti_schema.ValidTextLine(title="entity name", required=True)
 
 # entity adapters
 
 class IRepozeEntityIndexManager(IEntityIndexManager):
-	pass
-
-class IWhooshEntityIndexManager(IEntityIndexManager):
 	pass
 
 # index manager

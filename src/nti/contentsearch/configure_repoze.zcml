@@ -19,9 +19,11 @@
 	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IRepozeEntityIndexManager" />
-
-	<utility factory="._repoze_adpater._DefaultEntityIndexManagerFactory" />
-
+	
+	<adapter factory="._repoze_controller._RepozeEntityIndexController"
+			 for="nti.dataserver.interfaces.IEntity"
+			 provides=".interfaces.IEntityIndexController" />
+			 
 	<!-- Search query -->
 
 	<utility factory="._repoze_query._DefaultSearchQueryValiator"  />

@@ -19,16 +19,16 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import make_ntiid
 
-from .. import interfaces as search_interfaces
-from ..constants import (tags_)
-from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-						  NTIID, PHRASE_SEARCH, ID, FIELD)
+from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.constants import (tags_)
+from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
+						 				NTIID, PHRASE_SEARCH, ID, FIELD)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
-from . import zanpakuto_commands
+from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests import zanpakuto_commands
 
 from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 
@@ -362,3 +362,4 @@ class TestAppRepozeUserAdapter(SharedApplicationTestBase):
 
 			hits = rim.search('yachiru'.upper())
 			assert_that(hits, has_length(1))
+
