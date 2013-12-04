@@ -8,7 +8,6 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import schema
-from zope import component
 from zope import interface
 from zope.deprecation import deprecated
 from zope.mimetype import interfaces as zmime_interfaces
@@ -167,42 +166,6 @@ class IEntityIndexManagerFactory(interface.Interface):
 		"""
 		return an instance of a IEntityIndexManager for the specified user
 		"""
-		
-# index events
-
-class IIndexEvent(component.interfaces.IObjectEvent):
-	data = schema.Object(nti_interfaces.IModeledContent, title="The indexed object")
-	user = schema.Object(nti_interfaces.IEntity, title="The entity that indexed the object")
-
-class IObjectIndexed(IIndexEvent):
-	pass
-
-class IObjectReIndexed(IIndexEvent):
-	pass
-
-class IObjectUnIndexed(IIndexEvent):
-	pass
-
-class IndexEvent(component.interfaces.ObjectEvent):
-	def __init__(self, data, user):
-		super(IndexEvent, self).__init__(data)
-		self.user = user
-
-	@property
-	def data(self):
-		return self.object
-
-@interface.implementer(IObjectIndexed)
-class ObjectIndexedEvent(IndexEvent):
-	pass
-
-@interface.implementer(IObjectReIndexed)
-class ObjectReIndexedEvent(IndexEvent):
-	pass
-
-@interface.implementer(IObjectUnIndexed)
-class ObjectUnIndexedEvent(IndexEvent):
-	pass
 
 # entity adapters
 

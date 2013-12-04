@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Search constants.
 
@@ -6,6 +7,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from nti.externalization import interfaces as ext_interfaces
 
@@ -108,6 +111,7 @@ last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 
 text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_, redactionExplanation_)
 
+book_prefix = ''
 vtrans_prefix = 'vtrans_'
 nticard_prefix = 'nticard_'
 nti_mimetype_prefix = MIME_BASE + '.'
