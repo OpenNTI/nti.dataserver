@@ -104,6 +104,24 @@ def annotation_alias(annotation_name, annotation_property=None, default=None, de
 					 doc=doc )
 
 from zope.cachedescriptors.property import CachedProperty as _CachedProperty
+from zope.cachedescriptors.property import Lazy as _Lazy
+from functools import update_wrapper
+
+class Lazy(_Lazy):
+	"""
+	Just like :class:`zope.cachedescriptors.property.Lazy`, except
+	properly preserves documentation and other attributes.
+	"""
+
+	pass
+
+# Actually, we do this by default, but encourage
+# the proper importing
+_Lazy_init__ = _Lazy.__init__
+def _patch_Lazy_init(self,func,**kwargs):
+	_Lazy_init__(self,func,**kwargs)
+	update_wrapper(self,func)
+_Lazy.__init__ = _patch_Lazy_init
 
 def CachedProperty(*args):
 	"""
@@ -133,6 +151,13 @@ def CachedProperty(*args):
 	return factory
 
 	return arg1
+
+# Like the above, preserve docs
+_CachedProperty_init__ = _CachedProperty.__init__
+def _patch_CachedProperty_init(self,func,*names):
+	_CachedProperty_init__(self, func, *names)
+	update_wrapper(self,func)
+_CachedProperty.__init__ = _patch_CachedProperty_init
 
 class LazyOnClass(object):
 	"""
