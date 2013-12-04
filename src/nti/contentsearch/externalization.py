@@ -14,112 +14,16 @@ from zope import interface
 
 from z3c.batching.batch import Batch
 
-from pyramid.threadlocal import get_current_request
-
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
-from nti.dataserver.links import Link
-
 from . import search_hits
-from . import _search_highlights
 from . import interfaces as search_interfaces
 
-from .constants import (tags_, content_, title_, replacementContent_,
-					    redactionExplanation_)
-from .constants import (LAST_MODIFIED, SNIPPET, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 	SUGGESTIONS, FRAGMENTS, PHRASE_SEARCH, TOTAL_FRAGMENTS, FIELD,
-					 	TYPE_COUNT, HIT_META_DATA)
-
-# highlight decorators
-
-def _word_fragments_highlight(query=None, text=None):
-	query = search_interfaces.ISearchQuery(query, None)
-	if query and text:
-		result = _search_highlights.word_fragments_highlight(query, text, query.language)
-	else:
-		result = _search_highlights.HighlightInfo()
-	return result
-
-# search hits
-
-@component.adapter(search_interfaces.ISearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _SearchHitHighlightDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		query = original.query
-		text = external.get(SNIPPET, None)
-		hi = self.hilight_text(query, text)
-		self.set_snippet(hi, external)
-
-	def hilight_text(self, query, text):
-		hi = _word_fragments_highlight(query, text)
-		return hi
-
-	def set_snippet(self, hi, external):
-		external[SNIPPET] = hi.snippet
-		if hi.fragments:
-			external[FRAGMENTS] = toExternalObject(hi.fragments)
-			external[TOTAL_FRAGMENTS] = hi.total_fragments
-
-class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
-
-	def decorate_on_source_fields(self, hit, external, sources):
-		query = hit.query
-		content_hi = None
-		for field, text in sources:
-			hi = _word_fragments_highlight(query, text)
-			content_hi = hi if not content_hi else content_hi
-			if hi.match_count > 0:
-				self.set_snippet(hi, external)
-				external[FIELD] = field
-				return
-
-		if content_hi:
-			external[FIELD] = field
-			self.set_snippet(content_hi, external)
-
-@component.adapter(search_interfaces.INoteSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _NoteSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-
-	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
-		self.decorate_on_source_fields(hit, external, t_sources)
-
-@component.adapter(search_interfaces.IRedactionSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-
-	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET, None)),
-					(replacementContent_, hit.get_replacement_content()),
-					(redactionExplanation_, hit.get_redaction_explanation()))
-		self.decorate_on_source_fields(hit, external, t_sources)
-
-@component.adapter(search_interfaces.IPostSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-
-	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET, None)),
-					(title_, hit.get_title()),
-					(tags_, hit.get_tags()))
-		self.decorate_on_source_fields(hit, external, t_sources)
-
-@component.adapter(search_interfaces.IWhooshNTICardSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _NTICardSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
-
-	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
-		self.decorate_on_source_fields(hit, external, t_sources)
+from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
+					 	SUGGESTIONS, PHRASE_SEARCH, TYPE_COUNT, HIT_META_DATA)
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
@@ -266,30 +170,6 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestR
 		result = _SearchResultsExternalizer.toExternalObject(self)
 		result[SUGGESTIONS] = self.suggestions
 		return result
-
-@component.adapter(search_interfaces.ISearchResults)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-class _SearchResultsLinkDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		query = original.query
-		if query.is_batching:
-			request = get_current_request()
-			if request is None: return
-
-			# Insert links to the next and previous batch
-			result_list = Batch(original.hits, query.batchStart, query.batchSize)
-			next_batch, prev_batch = result_list.next, result_list.previous
-			for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-				if batch is not None and batch != result_list:
-					batch_params = request.params.copy()
-					batch_params['batchStart'] = batch.start
-					link_next_href = request.current_route_path(_query=sorted(batch_params.items()))
-					link_next = Link(link_next_href, rel=rel)
-					external.setdefault('Links', []).append(link_next)
-
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):

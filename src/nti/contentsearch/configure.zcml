@@ -54,47 +54,50 @@
 			 for=".interfaces.IWhooshNTICardContent"
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
-	<adapter factory="._search_external._SearchHitExternalizer" />
+	<adapter factory=".externalization._SearchHitExternalizer" />
+	<adapter factory=".externalization._SearchResultsExternalizer" />
+	<adapter factory=".externalization._SuggestResultsExternalizer" />
+	<adapter factory=".externalization._IndexHitMetaDataExternalizer" />
+	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />
+	
+	<adapter factory=".externalization._IndexHitInternalObjectIO" for=".interfaces.IIndexHit" />
+	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.ISearchQuery" />
+	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshBookContent" />
+	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshNTICardContent" />
+	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshVideoTranscriptContent" />
+			
+	<!-- Decorators -->
+		
+	<subscriber factory=".decorators._SearchHitHighlightDecorator"
+				for=".interfaces.ISearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+	<subscriber factory=".decorators._PostSearchHitHighlightDecorator"
+				for=".interfaces.IPostSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._NoteSearchHitHighlightDecorator"
+				for=".interfaces.INoteSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
+	<subscriber factory=".decorators._RedactionSearchHitHighlightDecorator"
+				for=".interfaces.IRedactionSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._NTICardSearchHitHighlightDecorator"
+				for=".interfaces.IWhooshNTICardSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
+	<subscriber factory=".decorators._SearchResultsLinkDecorator"
+				for=".interfaces.ISearchResults"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+	
+	<!-- Search hit comparators -->
+	
 	<utility factory=".search_hits._TypeSearchHitComparator" name="type" />
 	<utility factory=".search_hits._ScoreSearchHitComparator" name="score" />
 	<utility factory=".search_hits._RelevanceSearchHitComparator" name="relevance" />
 	<utility factory=".search_hits._LastModifiedSearchHitComparator" name="last_modified" />
-
-	<adapter factory="._search_external._SearchResultsExternalizer" />
-	<adapter factory="._search_external._SuggestResultsExternalizer" />
-	<adapter factory="._search_external._IndexHitMetaDataExternalizer" />
-	<adapter factory="._search_external._SuggestAndSearchResultsExternalizer" />
-
-	<adapter factory="._search_external._IndexHitInternalObjectIO" for=".interfaces.IIndexHit" />
-	<adapter factory="._search_external._SearchInternalObjectIO" for=".interfaces.ISearchQuery" />
-	<adapter factory="._search_external._SearchInternalObjectIO" for=".interfaces.IWhooshBookContent" />
-	<adapter factory="._search_external._SearchInternalObjectIO" for=".interfaces.IWhooshNTICardContent" />
-	<adapter factory="._search_external._SearchInternalObjectIO" for=".interfaces.IWhooshVideoTranscriptContent" />
-				
-	<subscriber factory="._search_external._SearchHitHighlightDecorator"
-				for=".interfaces.ISearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory="._search_external._PostSearchHitHighlightDecorator"
-				for=".interfaces.IPostSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory="._search_external._NoteSearchHitHighlightDecorator"
-				for=".interfaces.INoteSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
-	<subscriber factory="._search_external._RedactionSearchHitHighlightDecorator"
-				for=".interfaces.IRedactionSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
-	<subscriber factory="._search_external._NTICardSearchHitHighlightDecorator"
-				for=".interfaces.IWhooshNTICardSearchHit"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
-	<subscriber factory="._search_external._SearchResultsLinkDecorator"
-				for=".interfaces.ISearchResults"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 	
 	<!-- Content Resolvers -->
 
@@ -171,9 +174,11 @@
 	<include file="configure_whoosh.zcml" />
 
 	<!-- Mime factories -->
+	
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 	<ext:registerMimeFactories module=".search_query" />
 	<ext:registerMimeFactories module=".content_types" />
 	<ext:registerMimeFactories module=".search_results" />
+	
 </configure>
