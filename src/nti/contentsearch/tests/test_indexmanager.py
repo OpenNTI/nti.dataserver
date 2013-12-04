@@ -80,7 +80,6 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
-		assert_that(self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir), is_(True))
 		assert_that(self.im.add_book(indexname='unknown', ntiid='unknown', indexdir='/tmp'), is_(False))
 
 	@WithMockDSTrans

@@ -15,14 +15,11 @@ import functools
 
 from zope import component
 from zope import interface
-from zope.event import notify
 
 from perfmetrics import metric
 
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from . import indexagent
 from . import search_query
@@ -77,19 +74,14 @@ class IndexManager(object):
 		return cls.indexmanager
 
 	def __init__(self, parallel_search=True):
-		self.books = CaseInsensitiveDict()
 		self.parallel_search = parallel_search
-
-	def __str__(self):
-		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
-
-	__repr__ = __str__
 
 	@classmethod
 	def get_dfls(cls, username, sort=False):
 		user = get_entity(username)
 		fls = getattr(user, 'getFriendsLists', lambda s: ())(user)
-		result = [x for x in fls if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x)]
+		condition = nti_interfaces.IDynamicSharingTargetFriendsList.providedBy
+		result = [x for x in fls if condition(x)]
 		return result
 
 	@classmethod
@@ -103,7 +95,7 @@ class IndexManager(object):
 	@classmethod
 	def get_search_memberships(cls, username):
 		result = cls.get_user_dymamic_memberships(username) + cls.get_dfls(username)
-		result = {e.username.lower():e for e in result}  # make sure there is no duplicate
+		result = {e.username.lower():e for e in result}  #  no duplicates
 		result = sorted(result.values(), key=lambda e: e.username.lower())
 		return result
 
@@ -119,9 +111,9 @@ class IndexManager(object):
 	@metric
 	def suggest_and_search(self, query):
 		query = search_query.QueryObject.create(query)
-		cnt_results = self.content_suggest_and_search(query=query)
-		ugd_results = self.user_data_suggest_and_search(query=query)
-		results = search_results.merge_suggest_and_search_results(cnt_results, ugd_results)
+		cnt_data = self.content_suggest_and_search(query=query)
+		ugd_data = self.user_data_suggest_and_search(query=query)
+		results = search_results.merge_suggest_and_search_results(cnt_data, ugd_data)
 		return results
 
 	@metric
@@ -135,50 +127,58 @@ class IndexManager(object):
 	def get_book_index_manager(self, indexid):
 		return self.books.get(indexid, None) if indexid is not None else None
 
-	def add_book(self, indexname, ntiid=None, *args, **kwargs):
-		result = False
-		indexid = indexname if not ntiid else ntiid
-		if indexid not in self.books:
-			bmi = create_content_searcher(indexname=indexname, ntiid=ntiid, **kwargs)
-			if bmi is not None:
+	def register_content(self, ntiid=None, *args, **kwargs):
+		if not ntiid:
+			return False
+		ntiid = ntiid.lower()
+		result = component.queryUtility(search_interfaces.IContentSearcher,
+									 	name=ntiid) is not None
+		if not result:
+			searcher = create_content_searcher(ntiid=ntiid, *args, **kwargs)
+			if searcher is not None:
+				component.provideUtility(searcher, search_interfaces.IContentSearcher,
+									 	 name=ntiid)
 				result = True
-				self.books[indexid] = bmi
-				logger.info("Book index '%s,%r' has been added to index manager" % (indexname, ntiid))
+				logger.info("Content '%s' has been added to index manager", ntiid)
 			else:
-				logger.warn("Could not add book index '%s,%r,%r' to index manager" % (indexname, ntiid, kwargs))
+				logger.error("Content '%s' could not be added to index manager", ntiid)
 		return result
 
-	def _query_books(self, query):
-		return  (query.indexid,) if query.indexid else ()
+	add_book = register_content
+
+	def get_content_searcher(self, query):
+		name = query.indexid.lower() if query.indexid else u''
+		searcher = component.queryUtility(search_interfaces.IContentSearcher, name=name)
+		return searcher
 
 	def content_search(self, query):
 		query = search_query.QueryObject.create(query)
 		results = search_results.empty_search_results(query)
-		books = self._query_books(query)
-		for book in books:
-			bm = self.get_book_index_manager(book)
-			r = bm.search(query) if bm is not None else None
-			results = search_results.merge_search_results(r, results) if r is not None else results
+		searcher = self.get_content_searcher(query)
+		if searcher is not None:
+			r = searcher.search(query)
+			results = search_results.merge_search_results(r, results) \
+					  if r is not None else results
 		return results
 
 	def content_suggest_and_search(self, query):
 		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_and_search_results(query)
-		books = self._query_books(query)
-		for book in books:
-			bm = self.get_book_index_manager(book)
-			r = bm.suggest_and_search(query) if bm is not None else None
-			results = search_results.merge_suggest_and_search_results(r, results) if r is not None else results
+		searcher = self.get_content_searcher(query)
+		if searcher is not None:
+			r = searcher.suggest_and_search(query)
+			results = search_results.merge_suggest_and_search_results(r, results) \
+					  if r is not None else results
 		return results
 
 	def content_suggest(self, query, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
 		results = search_results.empty_suggest_results(query)
-		books = self._query_books(query)
-		for book in books:
-			bm = self.get_book_index_manager(book)
-			r = bm.suggest(query) if bm is not None else None
-			results = search_results.merge_suggest_results(r, results) if r is not None else results
+		searcher = self.get_content_searcher(query)
+		if searcher is not None:
+			r = searcher.suggest(query)
+			results = search_results.merge_suggest_results(r, results) \
+					  if r is not None else results
 		return results
 
 	@classmethod
@@ -199,7 +199,8 @@ class IndexManager(object):
 		results = search_results.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
-			procs = [gevent.spawn(entity_data_search, username, query) for username in entities]
+			procs = [gevent.spawn(entity_data_search, username, query)
+					 for username in entities]
 			gevent.joinall(procs)
 			for proc in procs:
 				rest = proc.value
@@ -227,25 +228,21 @@ class IndexManager(object):
 		return results
 
 	def index_user_content(self, target, data, type_name=None):
-		um = None
-		if data is not None:
-			um = get_user_index_manager(target)
-		if um is not None and data is not None and um.index_content(data, type_name=type_name):
-			notify(search_interfaces.ObjectIndexedEvent(data, target))
+		um = get_user_index_manager(target)
+		if data is not None and um is not None:
+			um.index_content(data, type_name=type_name)
 
 	def update_user_content(self, target, data, type_name=None):
-		um = None
-		if data is not None:
+		um = get_user_index_manager(target)
+		if data is not None and um is not None:
+			um.update_content(data, type_name=type_name)
 			um = get_user_index_manager(target)
-		if um is not None and data is not None and um.update_content(data, type_name=type_name):
-			notify(search_interfaces.ObjectReIndexedEvent(data, target))
 
 	def delete_user_content(self, target, data, type_name=None):
-		um = None
-		if data is not None:
+		um = get_user_index_manager(target)
+		if data is not None and um is not None:
+			um.delete_content(data, type_name=type_name)
 			um = get_user_index_manager(target)
-		if um is not None and data is not None and um.delete_content(data, type_name=type_name):
-			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
 	def unindex(self, target, uid):
 		um = get_user_index_manager(target)

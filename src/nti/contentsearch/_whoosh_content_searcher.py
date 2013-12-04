@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
-Whoosh based book index manager
+Whoosh based content searcher
 
 $Id$
 """
@@ -25,11 +26,10 @@ from whoosh import index
 
 from . import constants
 from . import search_results
-from .search_query import QueryObject
 from . import _whoosh_index as whoosh_index
+from . import _whoosh_query as whoosh_query
 from . import interfaces as search_interfaces
-from ._whoosh_indexstorage import DirectoryStorage
-from ._whoosh_query import CosineScorerModel as CSM
+from . import _whoosh_indexstorage as index_storage
 
 class _BoundingProxy(ProxyBase):
 
@@ -54,6 +54,8 @@ class _BoundingProxy(ProxyBase):
 
 class _Searchable(object):
 
+	CSM = whoosh_query.CosineScorerModel
+
 	def __init__(self, searchable, indexname, index, classname):
 		self.index = index
 		self.indexname = indexname
@@ -68,20 +70,20 @@ class _Searchable(object):
 
 	@metric
 	def search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		with _BoundingProxy(self.index.searcher(weighting=CSM)) as s:
+		query = search_interfaces.ISearchQuery(query)
+		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.search(s, query)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		with _BoundingProxy(self.index.searcher(weighting=CSM)) as s:
+		query = search_interfaces.ISearchQuery(query)
+		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.suggest_and_search(s, query)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
-		with _BoundingProxy(self.index.searcher(weighting=CSM)) as s:
+		query = search_interfaces.ISearchQuery(query)
+		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.suggest(s, query)
 		return results
 
@@ -93,7 +95,7 @@ class WhooshContentSearcher(object):
 
 	idx_factories = \
 	(
-		('', whoosh_index.Book, constants.content_),
+		(constants.book_prefix, whoosh_index.Book, constants.content_),
 		(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
 		(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
 	)
@@ -135,7 +137,7 @@ class WhooshContentSearcher(object):
 
 	@metric
 	def search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+		query = search_interfaces.ISearchQuery(query)
 		results = search_results.empty_search_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
@@ -144,7 +146,7 @@ class WhooshContentSearcher(object):
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+		query = search_interfaces.ISearchQuery(query)
 		results = search_results.empty_suggest_and_search_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
@@ -153,7 +155,7 @@ class WhooshContentSearcher(object):
 		return results
 
 	def suggest(self, query, *args, **kwargs):
-		query = QueryObject.create(query, **kwargs)
+		query = search_interfaces.ISearchQuery(query)
 		results = search_results.empty_suggest_results(query)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
@@ -168,9 +170,9 @@ class WhooshContentSearcher(object):
 @interface.implementer(search_interfaces.IWhooshContentSearcherFactory)
 class _ContentSearcherFactory(object):
 
-	def __call__(self, indexname, ntiid=None, indexdir=None):
-		if indexdir and os.path.exists(indexdir):
-			storage = DirectoryStorage(indexdir)
+	def __call__(self, indexname=None, ntiid=None, indexdir=None):
+		if indexname and indexdir and os.path.exists(indexdir):
+			storage = index_storage.DirectoryStorage(indexdir)
 			searcher = WhooshContentSearcher(indexname, storage, ntiid)
 			return searcher if len(searcher) > 0 else None
 		return None
