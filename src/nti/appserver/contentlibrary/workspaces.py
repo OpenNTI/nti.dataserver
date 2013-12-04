@@ -98,7 +98,7 @@ def _library_workspace( user_service ):
 									  app_interfaces.IWorkspace,
 									  name='Library' )
 	if ws:
-		ws.__parent__ = user_service
+		ws.__parent__ = user
 		return ws
 
 
