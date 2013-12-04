@@ -326,9 +326,15 @@ class Variant(FieldValidationMixin,schema.Field):
 
 	fields = ()
 
-	def __init__( self, fields, **kwargs ):
+	def __init__( self, fields, variant_raise_when_schema_provided=False, **kwargs ):
 		"""
 		:param fields: A list or tuple of field instances.
+		:keyword variant_raise_when_schema_provided: If ``True``, then
+			if a value is provided to ``validate`` that implements
+			the schema of a particular field, and that field raised
+			a validation error, that error will be propagated instead
+			of the error raised by the last field, and no additional fields
+			will be asked to do validation.
 
 		"""
 		if not fields or not all( (sch_interfaces.IField.providedBy( x ) for x in fields ) ):
@@ -340,6 +346,7 @@ class Variant(FieldValidationMixin,schema.Field):
 		for f in self.fields:
 			f.__parent__ = self
 
+		self._raise_when_provided = variant_raise_when_schema_provided
 		super(Variant,self).__init__( **kwargs )
 
 	def __get_name( self ):
@@ -376,7 +383,8 @@ class Variant(FieldValidationMixin,schema.Field):
 				# one of them accepted, yay!
 				return
 			except sch_interfaces.ValidationError as e:
-				pass
+				if self._raise_when_provided and hasattr(field, 'schema') and field.schema.providedBy(value):
+					raise
 		# We get here only by all of them throwing an exception.
 		# we re-raise the last thing thrown
 		self._reraise_validation_error( e, value )
