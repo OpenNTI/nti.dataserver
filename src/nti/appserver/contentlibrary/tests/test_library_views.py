@@ -40,6 +40,7 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import greater_than
 from nose.tools import assert_raises
@@ -279,13 +280,20 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 from nti.app.testing.application_webtest import SharedApplicationTestBase
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-
+from urllib import quote
 class TestApplication(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_library_main(self):
 		href = '/dataserver2/users/sjohnson@nextthought.com/Library/Main'
+
+		service_res = self.testapp.get( '/dataserver2')
+		library_ws, = [x for x in service_res.json_body['Items'] if x['Title'] == 'Library']
+		assert_that( library_ws, has_entry( 'Items', has_length(1)))
+		main_col = library_ws['Items'][0]
+		assert_that( main_col, has_entry( 'href', quote(href) ))
+
 		res = self.testapp.get( href )
-		assert_that( res.cache_control, has_property( 'max_age', 120 ) )
+		assert_that( res.cache_control, has_property( 'max_age', 60 ) )
 		assert_that( res.json_body, has_entries( 'href', href,
 												 'titles', is_(list)))

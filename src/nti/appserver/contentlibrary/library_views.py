@@ -520,7 +520,7 @@ from nti.appserver.pyramid_renderers import AbstractReliableLastModifiedCacheCon
 @component.adapter(lib_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheController):
 
-	max_age = 120
+	max_age = 60
 
 	@property
 	def _context_specific(self):
