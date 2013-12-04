@@ -24,29 +24,29 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from ..search_query import QueryObject
-from .. import interfaces as search_interfaces
-from .._whoosh_schemas import create_book_schema
-from .._whoosh_indexstorage import create_directory_index
-from ..indexmanager import create_index_manager_with_repoze
-from .._whoosh_content_searcher import WhooshContentSearcher
+from nti.contentsearch.search_query import QueryObject
+from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch._whoosh_schemas import create_book_schema
+from nti.contentsearch._whoosh_indexstorage import create_directory_index
+from nti.contentsearch.indexmanager import create_index_manager_with_repoze
+from nti.contentsearch._whoosh_content_searcher import WhooshContentSearcher
 
-from ..constants import (ITEMS, HIT_COUNT)
+from nti.contentsearch.constants import (ITEMS, HIT_COUNT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import phrases
-from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from nti.contentsearch.tests import phrases
+from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import ConfiguringTestBase
 
 from hamcrest import (is_, assert_that, has_length, has_entry)
 
-class _BaseIndexManagerTest(ConfiguringTestBase):
+class TestIndexManager(ConfiguringTestBase):
 
 	@classmethod
 	def setUpClass(cls):
-		super(_BaseIndexManagerTest, cls).setUpClass()
+		super(TestIndexManager, cls).setUpClass()
 		cls.now = time.time()
 		cls._add_book_data()
 
@@ -72,8 +72,13 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 	def tearDownClass(cls):
 		cls.bim.close()
 		shutil.rmtree(cls.book_idx_dir, True)
-		super(_BaseIndexManagerTest, cls).tearDownClass()
+		super(TestIndexManager, cls).tearDownClass()
 
+	def create_index_mananger(self):
+		result = create_index_manager_with_repoze(parallel_search=False)
+		component.provideUtility(result, search_interfaces.IIndexManager)
+		return result
+	
 	def wait_delay(self):
 		pass
 
@@ -317,10 +322,3 @@ class _BaseIndexManagerTest(ConfiguringTestBase):
 		q = QueryObject(term='tensho', username=aizen.username)
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
-
-class TestIndexManagerWithRepoze(_BaseIndexManagerTest):
-
-	def create_index_mananger(self):
-		result = create_index_manager_with_repoze(parallel_search=False)
-		component.provideUtility(result, search_interfaces.IIndexManager)
-		return result
