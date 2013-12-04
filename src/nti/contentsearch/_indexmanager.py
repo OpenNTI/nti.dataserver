@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
 import gevent
 import functools
 
@@ -39,11 +38,14 @@ def entity_exists(entity):
 	result = get_entity(entity)
 	return result is not None
 
-def uim_search(user, query, indexmanager=None):
-	indexmanager = \
-		component.getUtility(search_interfaces.IIndexManager) \
-		if indexmanager is None else indexmanager
-	uim = indexmanager._get_user_index_manager(user)
+def get_user_index_manager(user, create=True):
+	factory = component.getUtility(search_interfaces.IEntityIndexManagerFactory)
+	user = get_entity(user)
+	result = factory(user) if user and create else None
+	return result
+
+def uim_search(user, query):
+	uim = get_user_index_manager(user)
 	result = uim.search(query=query) if uim is not None else None
 	return result
 
@@ -74,10 +76,9 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
-	def __init__(self, useridx_manager_adapter, parallel_search=True):
+	def __init__(self, parallel_search=True):
 		self.books = CaseInsensitiveDict()
 		self.parallel_search = parallel_search
-		self.useridx_manager_adapter = useridx_manager_adapter
 
 	def __str__(self):
 		return 'IndexManager(books=%s, %s)' % (len(self.books), self.useridx_manager_adapter)
@@ -180,12 +181,6 @@ class IndexManager(object):
 			results = search_results.merge_suggest_results(r, results) if r is not None else results
 		return results
 
-	def _get_user_index_manager(self, target, create=True):
-		if isinstance(target, six.string_types):
-			target = get_entity(target)
-		result = self.useridx_manager_adapter(target, None) if target and create else None
-		return result
-
 	@classmethod
 	def _get_search_entities(cls, username):
 		result = [username] + cls.get_search_memberships(username)
@@ -194,7 +189,7 @@ class IndexManager(object):
 	def _get_search_uims(self, username):
 		result = []
 		for name in self._get_search_entities(username):
-			uim = self._get_user_index_manager(name)
+			uim = get_user_index_manager(name)
 			if uim is not None:
 				result.append(uim)
 		return result
@@ -211,7 +206,7 @@ class IndexManager(object):
 				results = search_results.merge_search_results (results, rest)
 		else:
 			for name in entities:
-				rest = uim_search(name, query, self)
+				rest = uim_search(name, query)
 				results = search_results.merge_search_results (results, rest)
 		return results
 
@@ -234,26 +229,26 @@ class IndexManager(object):
 	def index_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
-			um = self._get_user_index_manager(target)
+			um = get_user_index_manager(target)
 		if um is not None and data is not None and um.index_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectIndexedEvent(data, target))
 
 	def update_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
-			um = self._get_user_index_manager(target)
+			um = get_user_index_manager(target)
 		if um is not None and data is not None and um.update_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectReIndexedEvent(data, target))
 
 	def delete_user_content(self, target, data, type_name=None):
 		um = None
 		if data is not None:
-			um = self._get_user_index_manager(target)
+			um = get_user_index_manager(target)
 		if um is not None and data is not None and um.delete_content(data, type_name=type_name):
 			notify(search_interfaces.ObjectUnIndexedEvent(data, target))
 
 	def unindex(self, target, uid):
-		um = self._get_user_index_manager(target)
+		um = get_user_index_manager(target)
 		if um is not None:
 			return um.unindex(uid)
 		return False

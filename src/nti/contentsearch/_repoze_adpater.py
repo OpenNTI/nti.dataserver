@@ -201,3 +201,9 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return result
 
 _RepozeEntityIndexManagerFactory = an_factory(_RepozeEntityIndexManager)
+
+@interface.implementer(search_interfaces.IEntityIndexManagerFactory)
+class _DefaultEntityIndexManagerFactory(object):
+
+	def __call__(self, user):
+		return search_interfaces.IRepozeEntityIndexManager(user, None)
