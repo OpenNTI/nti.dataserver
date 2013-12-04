@@ -30,13 +30,13 @@ from nti.contentlibrary.boto_s3 import key_last_modified
 
 from nti.utils import make_cache_dir
 
-def _add_book( indexmanager, indexname, indexdir, ntiid ):
+def _add_book(indexmanager, indexname, indexdir, ntiid):
 	try:
 		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		if indexmanager.add_book( indexname=indexname, indexdir=indexdir, ntiid=ntiid ):
-			logger.debug( 'Added index %s at %s to %s', indexname, indexdir, indexmanager )
+		if indexmanager.add_book(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
+			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
 		else:
-			logger.warn( 'Failed to add index %s at %s to %s', indexname, indexdir, indexmanager )
+			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
 	except ImportError: # pragma: no cover
 		# Adding a book on disk loads the Whoosh indexes, which
 		# are implemented as pickles. Incompatible version changes
