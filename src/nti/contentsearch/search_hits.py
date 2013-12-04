@@ -34,12 +34,19 @@ from . import interfaces as search_interfaces
 
 from .constants import (title_)
 from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE,
-						SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE, VIDEO_ID,
-						BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT, NTI_CARD, TITLE, HREF,
-						VIDEO_TRANSCRIPT_MIME_TYPE, START_MILLISECS, END_MILLISECS,
-						NTI_CARD_MIME_TYPE, TARGET_NTIID)
+						SNIPPET, HIT, ID, CONTENT, SCORE, OID, POST, MIME_TYPE,
+						VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT,
+						NTI_CARD, TITLE, HREF, VIDEO_TRANSCRIPT_MIME_TYPE,
+						START_MILLISECS, END_MILLISECS, NTI_CARD_MIME_TYPE,
+						TARGET_NTIID)
 
-def get_hit_id(obj):
+def get_search_hit(obj, score=1.0, query=None):
+	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
+	hit.score = score
+	hit.query = query
+	return hit
+
+def _get_hit_id(obj):
 	if nti_interfaces.IModeledContent.providedBy(obj):
 		result = unicode(discriminators.get_uid(obj))
 	elif isinstance(obj, collections.Mapping):
@@ -87,7 +94,7 @@ class _SearchHit(_BaseSearchHit):
 	adapter_interface = search_interfaces.IUserContentResolver
 
 	def __init__(self, original, score=1.0):
-		super(_SearchHit, self).__init__(original, get_hit_id(original), score)
+		super(_SearchHit, self).__init__(original, _get_hit_id(original), score)
 
 	def set_hit_info(self, original, score):
 		super(_SearchHit, self).set_hit_info(original, score)
@@ -103,7 +110,8 @@ class _SearchHit(_BaseSearchHit):
 	def get_snippet(cls, adpated):
 		text = cls.get_field(adpated, 'get_content') or u''
 		text = component.getAdapter(text,
-									frg_interfaces.IPlainTextContentFragment, name='text')
+									frg_interfaces.IPlainTextContentFragment,
+									name='text')
 		return text
 
 	@classmethod
@@ -252,12 +260,6 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 	def get_oid(cls, hit):
 		return unicode(hit.ntiid)
 
-def get_search_hit(obj, score=1.0, query=None):
-	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
-	hit.score = score
-	hit.query = query
-	return hit
-
 # define search hit comparators
 
 class _CallableComparator(object):
@@ -341,7 +343,7 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 		return result
 
 @repoze.lru.lru_cache(300)
-def path_intersection(x, y):
+def _path_intersection(x, y):
 	result = []
 	_limit = min(len(x), len(y))
 	for i in xrange(0, _limit):
@@ -360,7 +362,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		if not reference or not p:
 			return 0
 
-		ip = path_intersection(reference, p)
+		ip = _path_intersection(reference, p)
 		if len(ip) == 0:
 			result = 0  # no path intersection
 		elif len(ip) == len(reference):

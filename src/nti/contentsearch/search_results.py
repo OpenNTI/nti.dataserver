@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import six
 import numbers
 import collections
@@ -319,7 +321,8 @@ def empty_search_results(query):
 	return result
 
 def empty_suggest_and_search_results(query):
-	result = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(query)
+	result = component.getUtility(
+						search_interfaces.ISuggestAndSearchResultsCreator)(query)
 	return result
 
 def empty_suggest_results(query):

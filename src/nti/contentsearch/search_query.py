@@ -4,8 +4,10 @@ Search query implementation.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
@@ -19,7 +21,7 @@ from zope import interface
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
 
-from .constants import descending_
+from . import constants
 from . import interfaces as search_interfaces
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')
@@ -114,16 +116,21 @@ class QueryObject(object, UserDict.DictMixin):
 
 	__external_can_create__ = True
 	__external_class_name__ = 'SearchQuery'
+
 	__metaclass__ = _MetaQueryObject
 
 	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 'batchSize', 'batchStart')
-	__str_properties__ 	 = ('term', 'indexid', 'username', 'location', 'sortOn', 'sortOrder', 'language')
+	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 
+							'batchSize', 'batchStart')
+	__str_properties__ 	 = ('term', 'indexid', 'username', 'location', 'sortOn', 
+							'sortOrder', 'language')
 	__set_properties__	 = ('searchOn',)
-	__properties__ 		 = __set_properties__ + __str_properties__ + __int_properties__ + __float_properties__
+	__properties__ 		 = __set_properties__ + __str_properties__ + __int_properties__ + \
+						   __float_properties__
 
-	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999, 'sortOrder':descending_ ,
-							'limit': sys.maxint, 'language':'en'}
+	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999,
+							'sortOrder':constants.descending_ , 'limit': sys.maxint,
+							'language':'en'}
 
 	def __init__(self, *args, **kwargs):
 		self._data = {}
@@ -165,7 +172,7 @@ class QueryObject(object, UserDict.DictMixin):
 
 	@property
 	def is_descending_sort_order(self):
-		return self.sortOrder == descending_
+		return self.sortOrder == constants.descending_
 
 	@property
 	def is_batching(self):
@@ -173,8 +180,8 @@ class QueryObject(object, UserDict.DictMixin):
 
 	def toExternalObject(self):
 		result = LocatedExternalDict()
-		result[ext_interfaces.StandardExternalFields.MIMETYPE] = self.mimeType
-		result[ext_interfaces.StandardExternalFields.CLASS] = self.__external_class_name__
+		result[constants.MIME_TYPE] = self.mimeType
+		result[constants.CLASS] = self.__external_class_name__
 		items = result['Items'] = {}
 		metadata = result['Metadata'] = {}
 		for name, value in self._data.items():
