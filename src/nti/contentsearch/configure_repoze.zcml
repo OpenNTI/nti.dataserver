@@ -15,9 +15,12 @@
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
 
 	<!-- Entity adapters -->
+	
 	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
 			 for="nti.dataserver.interfaces.IEntity"
 			 provides=".interfaces.IRepozeEntityIndexManager" />
+
+	<utility factory="._repoze_adpater._DefaultEntityIndexManagerFactory" />
 
 	<!-- Search query -->
 

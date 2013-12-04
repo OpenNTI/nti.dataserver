@@ -7,21 +7,21 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	
-	<include file="configure_whoosh_content.zcml" />
+	<utility factory="._whoosh_content_searcher._ContentSearcherFactory" />
 	
-	<configure zcml:condition="have devmode">
-		<utility factory="._whoosh_query._DefaultNoteWhooshQueryParser" name="note" />
-		<utility factory="._whoosh_query._DefaultPostWhooshQueryParser" name="post" />
-		<utility factory="._whoosh_query._DefaultHighlightWhooshQueryParser" name="highlight" />
-		<utility factory="._whoosh_query._DefaultRedactionWhooshQueryParser" name="redaction" />
-		<utility factory="._whoosh_query._DefaultMessageinfoWhooshQueryParser" name="messageinfo" />
-		
-		<utility factory="._whoosh_indexstorage._create_default_whoosh_storage"
-				 provides=".interfaces.IWhooshIndexStorage" />
+	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" />
+	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" name="en" />
 	
-		<adapter factory="._whoosh_adapter._WhooshEntityIndexManagerFactory"
-				 for="nti.dataserver.interfaces.IEntity"
-				 provides=".interfaces.IWhooshEntityIndexManager" />
-	</configure>
+	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
+	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
+	
+	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" />
+	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
+	
+	<utility factory="._whoosh_query._DefaultWhooshQueryParser" />
+	
+	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
+	<utility factory="._whoosh_query._DefaultNTICardWhooshQueryParser" name="nticard" />
+	<utility factory="._whoosh_query._DefaultVideoTranscriptWhooshQueryParser" name="videotranscript" />
 	
 </configure>

@@ -1,36 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than
 
 import uuid
 import random
 import shutil
 import tempfile
 
-from zope import component
-
 from whoosh import fields
 from whoosh import query
 from whoosh.compat import text_type
 
-from nti.dataserver import interfaces as nti_interfaces
-
-from ..interfaces import IWhooshIndexStorage
 from .._whoosh_indexstorage import DirectoryStorage
-from .._whoosh_indexstorage import UserDirectoryStorage
-from .._whoosh_indexstorage import UserRedisIndexStorage
-
-from nti.dataserver.tests import mock_redis
 
 from . import domain
 from . import ConfiguringTestBase
 
-sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True), content=fields.TEXT(stored=True))
+sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True),
+							  content=fields.TEXT(stored=True))
 
 class _IndexStorageTest(object):
 
@@ -73,7 +69,7 @@ class _IndexStorageTest(object):
 
 			q = query.Every()
 			results = s.search(q, limit=None)
-			self.assertEqual(cnt, len(results))
+			assert_that(results, has_length(cnt))
 
 	def test_open_index(self):
 		self._add_2_index("sample2")
@@ -88,7 +84,7 @@ class _IndexStorageTest(object):
 		with index.searcher() as s:
 			q = query.Term("content", random.choice(domain))
 			results = s.search(q, limit=None)
-			self.assertTrue(len(results) > 0)
+			assert_that(results, has_length(greater_than(0)))
 
 	def test_delete_index(self):
 		index, ids = self._add_2_index("sample5", 50)
@@ -99,11 +95,7 @@ class _IndexStorageTest(object):
 		with index.searcher() as s:
 			q = query.Term("id", unicode(ids[0]))
 			results = s.search(q, limit=None)
-			self.assertTrue(len(results) == 0)
-
-	def test_component(self):
-		storage = component.getUtility(IWhooshIndexStorage)
-		self.assertTrue(storage != None)
+			assert_that(results, has_length(0))
 
 class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 
@@ -112,38 +104,3 @@ class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
 		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
 		cls.idx_storage = DirectoryStorage(cls.indexdir)
 		super(TestDirectoryStorage, cls).setUpClass()
-
-class TestUserNameDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
-
-	@classmethod
-	def setUpClass(cls):
-		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
-		cls.idx_storage = UserDirectoryStorage(cls.indexdir)
-		super(TestUserNameDirectoryStorage, cls).setUpClass()
-
-	def _create_index(self, indexname):
-		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema, username='user@nti.com')
-
-	def test_open_index(self):
-		self._add_2_index("sample2")
-		self.idx_storage.open_index(indexname="sample2", username='user@nti.com')
-
-class TestUserRedisIndexStorage(ConfiguringTestBase, _IndexStorageTest):
-
-	@classmethod
-	def setUpClass(cls):
-		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
-		cls.idx_storage = UserRedisIndexStorage()
-		super(TestUserRedisIndexStorage, cls).setUpClass()
-
-	def setUp(self):
-		super(TestUserRedisIndexStorage, self).setUp()
-		self.redis = mock_redis.InMemoryMockRedis()
-		component.provideUtility(self.redis, provides=nti_interfaces.IRedisClient)
-
-	def _create_index(self, indexname):
-		return self.storage.get_or_create_index(indexname=indexname, schema=sample_schema, username='user@nti.com')
-
-	def test_open_index(self):
-		self._add_2_index("sample2")
-		self.idx_storage.open_index(indexname="sample2", username='user@nti.com')

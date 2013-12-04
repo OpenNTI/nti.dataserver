@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import os
 import time
 import uuid
 import shutil
@@ -30,7 +29,6 @@ from .. import interfaces as search_interfaces
 from .._whoosh_schemas import create_book_schema
 from .._whoosh_indexstorage import create_directory_index
 from ..indexmanager import create_index_manager_with_repoze
-from ..indexmanager import create_index_manager_with_whoosh
 from .._whoosh_content_searcher import WhooshContentSearcher
 
 from ..constants import (ITEMS, HIT_COUNT)
@@ -325,25 +323,5 @@ class TestIndexManagerWithRepoze(_BaseIndexManagerTest):
 
 	def create_index_mananger(self):
 		result = create_index_manager_with_repoze(parallel_search=False)
-		component.provideUtility(result, search_interfaces.IIndexManager)
-		return result
-
-class TestIndexManagerWithWhoosh(_BaseIndexManagerTest):
-
-	@classmethod
-	def setUpClass(cls):
-		cls.whoosh_dir = tempfile.mkdtemp(dir="/tmp")
-		os.environ['DATASERVER_DIR'] = cls.whoosh_dir
-		# Yes, this is backwards, but order matters: the factory won't install
-		# the storage if DATASERVER_DIR is not set (which is weird)
-		super(TestIndexManagerWithWhoosh, cls).setUpClass()
-
-	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.whoosh_dir, True)
-		super(TestIndexManagerWithWhoosh, cls).tearDownClass()
-
-	def create_index_mananger(self):
-		result = create_index_manager_with_whoosh(indexdir=self.whoosh_dir, use_md5=False, parallel_search=False)
 		component.provideUtility(result, search_interfaces.IIndexManager)
 		return result
