@@ -55,6 +55,8 @@ from zope.schema import TextLine
 TextLine = TextLine
 from zope.schema import Timedelta
 Timedelta = Timedelta
+from zope.schema import Choice
+Choice = Choice
 
 try:
 	from Acquisition.interfaces import IAcquirer
@@ -496,6 +498,7 @@ class ValidText(FieldValidationMixin,schema.Text):
 
 	def set( self, context, value ):
 		_do_set( self, context, value, ValidText, BeforeTextAssignedEvent )
+
 
 class ValidTextLine(FieldValidationMixin,schema.TextLine):
 	"""
