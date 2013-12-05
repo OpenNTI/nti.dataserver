@@ -118,6 +118,7 @@ nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
 post_ = u'post'
+book_ = u'book'
 canvas_ = u'canvas'
 nticard_ = u'nticard'
 highlight_ = u'highlight'

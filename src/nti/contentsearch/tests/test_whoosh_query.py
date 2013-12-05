@@ -4,8 +4,11 @@
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import close_to
+from hamcrest import assert_that
 
 from whoosh import fields
 from whoosh.filedb.filestore import RamStorage
@@ -16,16 +19,14 @@ from nti.dataserver.contenttypes import Note
 from nti.ntiids.ntiids import make_ntiid
 
 from .. import interfaces as search_interfaces
-from .._whoosh_query import create_query_parser
-from .._whoosh_query import CosineScorerModel as CSM
+from ..whoosh_query import create_query_parser
+from ..whoosh_query import CosineScorerModel as CSM
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, close_to)
 
 class TestWhooshQuery(ConfiguringTestBase):
 

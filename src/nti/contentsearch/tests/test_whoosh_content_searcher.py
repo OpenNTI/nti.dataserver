@@ -7,6 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import contains_inanyorder
+
 import time
 import shutil
 import tempfile
@@ -17,21 +25,19 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.externalization.externalization import toExternalObject
 
 from .. import constants
-from .._whoosh_schemas import create_book_schema
-from .._whoosh_schemas import create_nti_card_schema
-from .._whoosh_schemas import videotimestamp_to_datetime
+from ..common import videotimestamp_to_datetime
+from ..whoosh_schemas import create_book_schema
+from ..whoosh_schemas import create_nti_card_schema
 from .._whoosh_indexstorage import create_directory_index
-from .._whoosh_schemas import create_video_transcript_schema
+from ..whoosh_schemas import create_video_transcript_schema
 from .._whoosh_content_searcher import WhooshContentSearcher
 
-from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET, NTIID,
-						 SUGGESTIONS, SCORE, START_MILLISECS, END_MILLISECS, VIDEO_ID, TITLE,
-						 HREF, TARGET_NTIID)
+from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
+						 NTIID, SUGGESTIONS, SCORE, START_MILLISECS, END_MILLISECS,
+						 VIDEO_ID, TITLE, HREF, TARGET_NTIID)
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, has_key, has_entry, has_length, is_not, is_, contains_inanyorder)
 
 class TestWhooshContentSearcher(ConfiguringTestBase):
 
@@ -161,7 +167,9 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 
 		items = hits[ITEMS]
 		item = items[0]
-		assert_that(item, has_entry(SNIPPET, 'Multiplication and subtraction of fire and ice, show your might'))
+		assert_that(item,
+			has_entry(SNIPPET,
+					 'Multiplication and subtraction of fire and ice, show your might'))
 
 	def test_search_start(self):
 		hits = toExternalObject(self.bim.search("ra*"))

@@ -12,16 +12,18 @@ logger = __import__('logging').getLogger(__name__)
 from nti.contentprocessing import rank_words
 
 from . import common
+from . import constants
 from . import search_query
+from . import whoosh_query
 from . import content_types
 from . import search_results
-from ._whoosh_query import parse_query
-from . import _whoosh_schemas as wschs
+from . import whoosh_schemas as schemas
+
+from nti.utils.property import Lazy
 
 from .constants import (content_, ntiid_, last_modified_, videoId_, creator_,
 						containerId_, title_, end_timestamp_, start_timestamp_,
 					 	href_, target_ntiid_)
-
 
 # alias BWC
 
@@ -31,7 +33,14 @@ empty_suggest_and_search_results = search_results.empty_suggest_and_search_resul
 class _SearchableContent(object):
 
 	_schema = None
+
+	prefix = u''
+	type = None
 	default_word_max_dist = 15
+
+	def __init__(self, schema=None):
+		if schema is not None:
+			self._schema = schema
 
 	@property
 	def schema(self):
@@ -39,7 +48,7 @@ class _SearchableContent(object):
 
 	def _parse_query(self, query, **kwargs):
 		qo = search_query.QueryObject.create(query, **kwargs)
-		parsed_query = parse_query(qo, self.schema, self.__class__.__name__.lower())
+		parsed_query = whoosh_query.parse_query(qo, self.schema)
 		return qo, parsed_query
 
 	def search(self, searcher, query, *args, **kwargs):
@@ -104,9 +113,12 @@ class _SearchableContent(object):
 
 class Book(_SearchableContent):
 
-	def __init__(self, schema=None):
-		schema = schema or wschs.create_book_schema()
-		self._schema = schema
+	type = constants.book_
+	prefix = constants.book_prefix
+
+	@Lazy
+	def schema(self):
+		return self._schema or schemas.create_book_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
@@ -129,9 +141,12 @@ class Book(_SearchableContent):
 
 class VideoTranscript(_SearchableContent):
 
-	def __init__(self, schema=None):
-		schema = schema or wschs.create_video_transcript_schema()
-		self._schema = schema
+	type = constants.videotranscript_
+	prefix = constants.vtrans_prefix
+
+	@Lazy
+	def schema(self):
+		return self._schema or schemas.create_video_transcript_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
@@ -153,9 +168,12 @@ class VideoTranscript(_SearchableContent):
 
 class NTICard(_SearchableContent):
 
-	def __init__(self, schema=None):
-		schema = schema or wschs.create_nti_card_schema()
-		self._schema = schema
+	type = constants.nticard_
+	prefix = constants.nticard_prefix
+
+	@Lazy
+	def schema(self):
+		return self._schema or schemas.create_nti_card_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		result = []
