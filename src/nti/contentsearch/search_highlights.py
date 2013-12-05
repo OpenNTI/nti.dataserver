@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 import re
 from heapq import nlargest
 
-from zope import schema
 from zope import component
 from zope import interface
 
@@ -21,15 +20,22 @@ import repoze.lru
 from whoosh import analysis
 from whoosh import highlight
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.datastructures import LocatedExternalDict
-
-from nti.utils import schema as nti_schema
 
 from nti.contentprocessing import split_content
 from nti.contentprocessing import interfaces as cp_interfaces
 
 from . import interfaces as search_interfaces
+
+@interface.implementer(search_interfaces.IWhooshAnalyzer)
+def _create_default_analyzer(lang='en'):
+	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
+	expression = component.getUtility(cp_interfaces.IWordTokenizerExpression, name=lang)
+	stoplist = sw_util.stopwords() if sw_util else ()
+	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False),
+				 analysis.LowercaseFilter(),
+				 analysis.StopFilter(stoplist=stoplist) ]
+	return analysis.CompositeAnalyzer(*analyzers)
 
 class HighlightInfo(object):
 
@@ -55,16 +61,6 @@ class HighlightInfo(object):
 	def search_fragments(self):
 		return self.fragments
 
-@interface.implementer(search_interfaces.IWhooshAnalyzer)
-def _create_default_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
-	expression = component.getUtility(cp_interfaces.IWordTokenizerExpression, name=lang)
-	stoplist = sw_util.stopwords() if sw_util else ()
-	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False),
-				 analysis.LowercaseFilter(),
-				 analysis.StopFilter(stoplist=stoplist) ]
-	return analysis.CompositeAnalyzer(*analyzers)
-
 def _get_query_terms(query, lang='en'):
 	result = split_content(query.term.lower(), lang)
 	return result
@@ -87,8 +83,10 @@ class _Range(object):
 		self.start = start
 
 	def __str__(self):
-		return "{0}.{1}({2},{3},'{4}')".format(self.__class__.__module__, self.__class__.__name__,
-											   self.start, self.end, self.text.encode('unicode_escape') if self.text else '')
+		return "{0}.{1}({2},{3},'{4}')".format(
+							self.__class__.__module__, self.__class__.__name__,
+							self.start, self.end,
+							self.text.encode('unicode_escape') if self.text else '')
 
 	__repr__ = __str__
 
@@ -103,11 +101,7 @@ class _Range(object):
 	def __hash__(self):
 		return hash((self.start, self.end))
 
-class ISearchFragment(ext_interfaces.IExternalObject):
-	text = nti_schema.ValidTextLine(title="fragment text", required=True)
-	matches = schema.Iterable("Iterable with pair tuples where a match occurs", required=True)
-
-@interface.implementer(ISearchFragment)
+@interface.implementer(search_interfaces.ISearchFragment)
 class _SearchFragment(object):
 
 	__slots__ = ('text', 'matches')
@@ -148,7 +142,8 @@ class _SearchFragment(object):
 		return result
 
 	@classmethod
-	def _match_terms(cls, fragment, termset, check_start_word, check_end_word, punkt_pattern):
+	def _match_terms(cls, fragment, termset, check_start_word,
+					 check_end_word, punkt_pattern):
 		matches = []
 		for term in termset:
 			idx = 0
@@ -156,8 +151,10 @@ class _SearchFragment(object):
 			idx = fragment.find(term, idx)
 			while idx >= 0:
 				endidx = idx + _len
-				if  (not check_start_word or _is_word_start(idx, fragment, punkt_pattern)) and \
-					(not check_end_word or _is_word_end(endidx, fragment, punkt_pattern)):
+				if  (not check_start_word or
+						 _is_word_start(idx, fragment, punkt_pattern)) and \
+					(not check_end_word or
+						 _is_word_end(endidx, fragment, punkt_pattern)):
 					mrange = _Range(idx, endidx, term)
 					matches.append(mrange)
 				idx = fragment.find(term, endidx)
@@ -192,14 +189,16 @@ class _SearchFragment(object):
 	@classmethod
 	def create_from_terms(cls, text, termset, check_word, punkt_pattern):
 		fragment = text
-		matches = cls._match_terms(fragment.lower(), termset, check_word, check_word, punkt_pattern)
+		matches = cls._match_terms(fragment.lower(), termset, check_word, check_word,
+								   punkt_pattern)
 		matches = sorted(matches, key=lambda ra: ra.start)
 		result = _SearchFragment()
 		result.text = fragment
 		result.matches = matches if matches else ()
 		return result
 
-def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments, punkt_expression):
+def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments,
+								  punkt_expression):
 	snippets = []
 	fragments = []
 	_len = len(termset)
@@ -268,7 +267,8 @@ def _context_fragments(sf, termset, query, maxchars, surround, punkt_pattern):
 		# keep track of # chars
 		count += len(s)
 		# create fragment
-		sf = _SearchFragment.create_from_terms(s, termset, query.is_phrase_search, punkt_pattern)
+		sf = _SearchFragment.create_from_terms(s, termset, query.is_phrase_search,
+											   punkt_pattern)
 		fragments.append(sf)
 		if count > maxchars:
 			break
@@ -309,9 +309,11 @@ def _create_fragmenter(maxchars=300, surround=50):
 	result = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
 	return result
 
-def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, order=highlight.FIRST, lang='en'):
+def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
+							 order=highlight.FIRST, lang='en'):
 
-	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus, name=lang)
+	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus,
+										 name=lang)
 
 	# get query terms
 	text = unicode(text)
@@ -319,7 +321,6 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, orde
 	termset = _get_query_terms(query)
 
 	# prepare fragmenter
-	# TODO: could we have a context scorer?
 	scorer = highlight.BasicFragmentScorer()
 	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
 	formatter = _null_formatter  #  highlight.UppercaseFormatter()
@@ -346,8 +347,11 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, orde
 			search_fragments.append(sf)
 		snippet = formatter(text, fragments)
 	else:
-		sf = _SearchFragment.create_from_terms(text, termset, query.is_phrase_search, punkt_pattern)
-		frags, snippet = _context_fragments(sf, termset, query, maxchars=maxchars, surround=surround, punkt_pattern=punkt_pattern)
+		sf = _SearchFragment.create_from_terms(text, termset,
+											   query.is_phrase_search, punkt_pattern)
+
+		frags, snippet = _context_fragments(sf, termset, query, maxchars=maxchars,
+											surround=surround, punkt_pattern=punkt_pattern)
 		if len(frags) == 1 and not frags[0].matches:
 			sf = _no_hit_match(sf, maxchars, copy_tokens)
 			snippet = sf.text
@@ -359,8 +363,10 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5, orde
 			total_fragments = len(frags)
 
 	if query.is_phrase_search:
-		punkt_exp = component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus, name=lang)
-		snippet, search_fragments = _prune_phrase_terms_fragments(termset, snippet, search_fragments, punkt_exp)
+		punkt_exp = component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus,
+										 name=lang)
+		snippet, search_fragments = \
+			_prune_phrase_terms_fragments(termset, snippet, search_fragments, punkt_exp)
 
 	result = HighlightInfo(snippet, search_fragments, total_fragments)
 	return result

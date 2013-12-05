@@ -23,16 +23,6 @@ from . import search_query
 from . import search_results
 from . import interfaces as search_interfaces
 
-def get_entity(entity):
-	result = Entity.get_entity(str(entity)) \
-			 if not nti_interfaces.IEntity.providedBy(entity) else entity
-	return result
-
-def create_content_searcher(*args, **kwargs):
-	factory = component.getUtility(search_interfaces.IContentSearcherFactory)
-	result = factory(*args, **kwargs)
-	return result
-
 @interface.implementer(search_interfaces.IIndexManager)
 class IndexManager(object):
 
@@ -49,6 +39,18 @@ class IndexManager(object):
 
 	def __init__(self, parallel_search=True):
 		self.parallel_search = parallel_search
+
+	@classmethod
+	def get_entity(cls, entity):
+		result = Entity.get_entity(str(entity)) \
+				 if not nti_interfaces.IEntity.providedBy(entity) else entity
+		return result
+
+	@classmethod
+	def create_content_searcher(cls, *args, **kwargs):
+		factory = component.getUtility(search_interfaces.IContentSearcherFactory)
+		result = factory(*args, **kwargs)
+		return result
 
 	@metric
 	def search(self, query):
@@ -85,7 +87,7 @@ class IndexManager(object):
 		result = component.queryUtility(search_interfaces.IContentSearcher,
 									 	name=ntiid) is not None
 		if not result:
-			searcher = create_content_searcher(ntiid=ntiid, *args, **kwargs)
+			searcher = self.create_content_searcher(ntiid=ntiid, *args, **kwargs)
 			if searcher is not None:
 				component.provideUtility(searcher, search_interfaces.IContentSearcher,
 									 	 name=ntiid)
@@ -134,7 +136,7 @@ class IndexManager(object):
 
 	def user_data_search(self, query, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
-		entity = get_entity(query.username)
+		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
 		results = controller.search(query) if controller is not None \
 				  else search_results.empty_search_results(query)
@@ -142,7 +144,7 @@ class IndexManager(object):
 
 	def user_data_suggest_and_search(self, query, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
-		entity = get_entity(query.username)
+		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
 		results = controller.suggest_and_search(query) if controller is not None \
 				  else search_results.empty_suggest_and_search_results(query)
@@ -150,7 +152,7 @@ class IndexManager(object):
 
 	def user_data_suggest(self, query, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
-		entity = get_entity(query.username)
+		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
 		results = controller.suggest(query) if controller is not None \
 				  else search_results.empty_suggest_results(query)
@@ -158,24 +160,24 @@ class IndexManager(object):
 
 	def index_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
-			target = get_entity(target)
+			target = self.get_entity(target)
 			controller = search_interfaces.IEntityIndexController(target)
 			controller.index_content(data)
 
 	def update_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
-			target = get_entity(target)
+			target = self.get_entity(target)
 			controller = search_interfaces.IEntityIndexController(target)
 			controller.update_content(data)
 
 	def delete_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
-			target = get_entity(target)
+			target = self.get_entity(target)
 			controller = search_interfaces.IEntityIndexController(target)
 			controller.delete_content(data)
 
 	def unindex(self, target, uid):
-		target = get_entity(target)
+		target = self.get_entity(target)
 		controller = search_interfaces.IEntityIndexController(target)
 		return controller.unindex(uid)
 

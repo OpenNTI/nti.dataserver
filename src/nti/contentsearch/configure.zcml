@@ -155,7 +155,7 @@
 			 
 	<!-- Search highlights -->
 
-	<utility factory="._search_highlights._create_default_analyzer" name="en" />
+	<utility factory=".search_highlights._create_default_analyzer" name="en" />
 
 	<!-- Search results -->
 

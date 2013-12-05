@@ -15,6 +15,8 @@ from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization import interfaces as ext_interfaces
+
 from . import constants
 
 from nti.utils import schema as nti_schema
@@ -490,7 +492,10 @@ class _ContentMixinResolver(IContentResolver,
 class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
 	pass
 
-class IThreadableContentResolver(IUserContentResolver, ITagsResolver, IKeywordsResolver, IShareableContentResolver):
+class IThreadableContentResolver(IUserContentResolver,
+								 ITagsResolver,
+								 IKeywordsResolver,
+								 IShareableContentResolver):
 
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
@@ -603,11 +608,13 @@ class IBaseHit(interface.Interface):
 
 class IIndexHit(IBaseHit):
 	"""represent a search hit stored in a ISearchResults"""
-	ref = nti_schema.Variant((nti_schema.Object(nti_interfaces.IModeledContent, description="A :class:`.IModeledContent`"),
-							  nti_schema.Object(IWhooshContent, description="A :class:`.IWhooshContent`"),
-							  nti_schema.ValidTextLine(title='Object int id as string'),
-							  nti_schema.Number(title="Object int id")),
-							 title="The hit object")
+	ref = nti_schema.Variant(
+				(nti_schema.Object(nti_interfaces.IModeledContent,
+								   description="A :class:`.IModeledContent`"),
+				 nti_schema.Object(IWhooshContent, description="A :class:`.IWhooshContent`"),
+				 nti_schema.ValidTextLine(title='Object int id as string'),
+				 nti_schema.Number(title="Object int id")),
+				title="The hit object")
 
 class ISearchHit(IBaseHit, IMapping):
 	"""represent an externalized search hit"""
@@ -641,17 +648,22 @@ class IWhooshNTICardSearchHit(ISearchHit):
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):
-		"""Compare arguments for for order. a or b can beither a IndexHit or ISearchHit"""
+		"""
+		Compare arguments for for order. a or b can beither a IndexHit or ISearchHit
+		"""
 
 class IIndexHitMetaData(interface.Interface):
 	"""Class to track index hit meta data"""
 
-	last_modified = nti_schema.Number(title="Greatest last modified time", required=True, readonly=True)
+	last_modified = nti_schema.Number(title="Greatest last modified time",
+									  required=True, readonly=True)
 	type_count = schema.Dict(title="Index hit type count", required=True, readonly=True)
 	total_hit_count = schema.Int(title='Total hit count', required=True, readonly=True)
 
 	def track(ihit):
-		"""track any metadata from the specified index hit"""
+		"""
+		track any metadata from the specified index hit
+		"""
 
 	def __iadd__(other):
 		pass
@@ -710,6 +722,11 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 		"""return a new instance of a ISuggestAndSearchResults"""
 
 # highlights
+
+class ISearchFragment(ext_interfaces.IExternalObject):
+	text = nti_schema.ValidTextLine(title="fragment text", required=True)
+	matches = schema.Iterable("Iterable with pair tuples where a match occurs",
+							  required=True)
 
 class IWhooshAnalyzer(interface.Interface):
 	pass
