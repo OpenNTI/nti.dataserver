@@ -50,6 +50,10 @@ class IndexHit(zcontained.Contained):
 	def query(self):
 		return None if self.__parent__ is None else self.__parent__.query
 
+	def __repr__(self):
+		return '%s(%s,%s)' % (self.__class__.__name__, self.ref, self.score)
+	__str__ = __repr__
+
 	def __eq__(self, other):
 		try:
 			return self is other or (self.ref == other.ref and self.score == other.score)
