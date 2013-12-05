@@ -25,7 +25,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from .._whoosh_index import Book
+from ..whoosh_index import Book
 
 from ..constants import (HIT_COUNT, QUERY, ITEMS)
 

@@ -7,6 +7,12 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
+from hamcrest import is_
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import time
 import uuid
 import shutil
@@ -26,7 +32,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch._whoosh_schemas import create_book_schema
+from nti.contentsearch.whoosh_schemas import create_book_schema
 from nti.contentsearch._whoosh_indexstorage import create_directory_index
 from nti.contentsearch.indexmanager import create_index_manager_with_repoze
 from nti.contentsearch._whoosh_content_searcher import WhooshContentSearcher
@@ -39,8 +45,6 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentsearch.tests import phrases
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import ConfiguringTestBase
-
-from hamcrest import (is_, assert_that, has_length, has_entry)
 
 class TestIndexManager(ConfiguringTestBase):
 

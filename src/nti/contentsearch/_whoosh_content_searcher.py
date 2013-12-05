@@ -25,9 +25,9 @@ from perfmetrics import metric
 from whoosh import index
 
 from . import constants
+from . import whoosh_query
+from . import whoosh_index
 from . import search_results
-from . import _whoosh_index as whoosh_index
-from . import _whoosh_query as whoosh_query
 from . import interfaces as search_interfaces
 from . import _whoosh_indexstorage as index_storage
 

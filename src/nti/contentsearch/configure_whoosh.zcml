@@ -9,19 +9,15 @@
 	
 	<utility factory="._whoosh_content_searcher._ContentSearcherFactory" />
 	
-	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" />
-	<utility factory="._whoosh_schemas._DefaultBookSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" />
+	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" name="en" />
 	
-	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
-	<utility factory="._whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
+	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
 	
-	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" />
-	<utility factory="._whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" />
+	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
 	
-	<utility factory="._whoosh_query._DefaultWhooshQueryParser" />
-	
-	<utility factory="._whoosh_query._DefaultBookWhooshQueryParser" name="book" />
-	<utility factory="._whoosh_query._DefaultNTICardWhooshQueryParser" name="nticard" />
-	<utility factory="._whoosh_query._DefaultVideoTranscriptWhooshQueryParser" name="videotranscript" />
+	<utility factory=".whoosh_query._DefaultWhooshQueryParser" />
 	
 </configure>

@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import component
 from zope import interface
 
@@ -18,9 +20,8 @@ from nti.contentprocessing import default_ngram_minsize
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import default_word_tokenizer_pattern
 
+from . import common
 from . import interfaces as search_interfaces
-
-from .common import videotimestamp_to_datetime
 
 # content analyzer
 
@@ -86,13 +87,14 @@ class _DefaultBookSchemaCreator(object):
 		return schema
 
 def create_book_schema(name='en'):
-	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator, name=name) or _DefaultBookSchemaCreator()
+	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator,
+									 name=name) or _DefaultBookSchemaCreator()
 	return to_call.create()
 
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
 	def _parse_datestring(self, qstring):
-		result = videotimestamp_to_datetime(qstring)
+		result = common.videotimestamp_to_datetime(qstring)
 		return result
 
 	def __setstate__(self, d):
