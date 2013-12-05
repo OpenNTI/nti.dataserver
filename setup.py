@@ -307,7 +307,7 @@ setup(
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
 		'sympy >= 0.7.3',
-		'stripe >= 1.9.8',  # stripe payments
+		'stripe',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
