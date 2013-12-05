@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -9,20 +9,22 @@ logger = __import__('logging').getLogger(__name__)
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import os
 import shutil
 import tempfile
 
-from whoosh.query import (Or, Term)
+from whoosh.query import Or
+from whoosh.query import Term
 
 from ...RenderedBook import _EclipseTOCMiniDomTopic
-from .._whoosh_book_indexer import _BookFileWhooshIndexer
-from .._whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
+from ..whoosh_book_indexer import _BookFileWhooshIndexer
+from ..whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
 from ...utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
 from . import ConfiguringTestBase
-
-from hamcrest import assert_that, has_length
 
 class TestWhooshBookIndexer(ConfiguringTestBase):
 
@@ -40,7 +42,8 @@ class TestWhooshBookIndexer(ConfiguringTestBase):
 
 	def _test_book_indexer(self, clazz, bio_expected, homeo_expected):
 		indexname = 'biology'
-		path = os.path.join(os.path.dirname(__file__), '../../tests/intro-biology-rendered-book')
+		path = os.path.join(os.path.dirname(__file__),
+							'../../tests/intro-biology-rendered-book')
 
 		document = EmptyMockDocument()
 		document.userdata['jobname'] = indexname

@@ -4,8 +4,10 @@ TermExtract key word extractor.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
@@ -20,7 +22,8 @@ class _DefaultKeyWordFilter(object):
 		self.single_strength_min_occur = single_strength_min_occur
 
 	def __call__(self, word, occur, strength):
-		result = (strength == 1 and occur >= self.single_strength_min_occur) or (strength <= self.max_limit_strength)
+		result = (strength == 1 and occur >= self.single_strength_min_occur) or \
+				 (strength <= self.max_limit_strength)
 		result = result and len(word) > 1
 		return result
 

@@ -4,8 +4,10 @@ Whoosh NTI card indexer.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import time
 from datetime import datetime
@@ -18,16 +20,17 @@ from nti.contentprocessing import get_content_translation_table
 from nti.contentsearch import nticard_prefix
 from nti.contentsearch import interfaces as search_interfaces
 
-from . import _node_utils as node_utils
-from . import _content_utils as content_utils
+from . import node_utils
+from . import content_utils
 from . import interfaces as cridxr_interfaces
-from ._common_indexer import _BasicWhooshIndexer
+from . import whoosh_common_indexer as common_indexer
 
 @interface.implementer(cridxr_interfaces.IWhooshNTICardIndexer)
-class _WhooshNTICardIndexer(_BasicWhooshIndexer):
+class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
-		creator = component.getUtility(search_interfaces.IWhooshNTICardSchemaCreator, name=name)
+		creator = component.getUtility(search_interfaces.IWhooshNTICardSchemaCreator,
+									   name=name)
 		return creator.create()
 
 	def _get_attribute(self, node, attr):
@@ -45,7 +48,8 @@ class _WhooshNTICardIndexer(_BasicWhooshIndexer):
 			result['ntiid'] = self._get_attribute(node, 'data-ntiid')
 			result['creator'] = self._get_attribute(node, 'data-creator')
 			for obj in node.iterchildren():
-				if obj.tag == 'span' and node_utils.get_attribute(obj, 'class') == 'description':
+				if 	obj.tag == 'span' and \
+					node_utils.get_attribute(obj, 'class') == 'description':
 					content = node_utils.get_node_content(obj)
 				elif obj.tag == 'param':
 					name = node_utils.get_attribute(obj, 'name')

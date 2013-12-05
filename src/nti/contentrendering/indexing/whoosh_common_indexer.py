@@ -4,7 +4,7 @@ Basic whoosh indexer.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,7 +15,7 @@ from collections import namedtuple
 
 from whoosh import index
 
-_WhooshIndexSpec = namedtuple('_WhooshIndexSpec', ['book', 'indexname', 'indexdir'])
+WhooshIndexSpec = namedtuple('WhooshIndexSpec', ['book', 'indexname', 'indexdir'])
 
 class _BasicWhooshIndexer(object):
 
@@ -73,7 +73,7 @@ class _BasicWhooshIndexer(object):
 		indexname = self.get_index_name(book, indexname)
 		indexdir = self.get_index_dir(book, indexdir)
 		self.remove_index_files(indexdir, indexname)
-		idxspec = _WhooshIndexSpec(book, indexname, indexdir)
+		idxspec = WhooshIndexSpec(book, indexname, indexdir)
 
 		logger.info('Indexing %s' % indexname)
 

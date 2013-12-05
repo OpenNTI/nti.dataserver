@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -9,18 +9,20 @@ logger = __import__('logging').getLogger(__name__)
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import os
 import shutil
 import tempfile
 
-from whoosh.query import (Term)
+from whoosh.query import Term
 
 from ...RenderedBook import _EclipseTOCMiniDomTopic
-from .._whoosh_video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
+from ..whoosh_video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
 
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, has_length, is_)
 
 class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 
@@ -56,7 +58,8 @@ class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
 
 	def test_index_prmia(self):
 		indexname = 'prmiavt'
-		path = os.path.join(os.path.dirname(__file__), 'framework_for_diagnosing_systemic_risk.html')
+		path = os.path.join(os.path.dirname(__file__),
+							'framework_for_diagnosing_systemic_risk.html')
 		idx, count = self._index_file(path, indexname, 'videoindexer')
 		try:
 			assert_that(count, is_(78))

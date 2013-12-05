@@ -4,7 +4,7 @@ Whoosh book indexers.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,11 +27,11 @@ from nti.contentrendering import ConcurrentExecutor
 
 from nti.contentsearch import interfaces as search_interfaces
 
-from . import _node_utils as node_utils
-from . import _termextract as termextract
-from . import _content_utils as content_utils
+from . import node_utils
+from . import termextract
+from . import content_utils
 from . import interfaces as cridxr_interfaces
-from ._common_indexer import _BasicWhooshIndexer
+from . import whoosh_common_indexer as common_indexer
 
 # global helper functions
 
@@ -49,7 +49,8 @@ def _get_last_modified(node):
 
 class _DataNode(object):
 
-	__slots__ = ('title', 'ntiid', 'location', 'related', 'last_modified', 'content', 'keywords')
+	__slots__ = ('title', 'ntiid', 'location', 'related', 'last_modified', 'content',
+				 'keywords')
 
 	def __init__(self, node):
 		self.location = node.location
@@ -68,10 +69,11 @@ class _DataNode(object):
 # Base whoosh indexer
 
 @interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
-class _WhooshBookIndexer(_BasicWhooshIndexer):
+class _WhooshBookIndexer(common_indexer._BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
-		creator = component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)
+		creator = \
+			component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)
 		return creator.create()
 
 	def add_document(self, writer, docid, ntiid, title, content,
@@ -173,7 +175,8 @@ def _process_datanode(node, language='en'):
 
 		table = get_content_translation_table(language)
 		raw_content = _get_page_content(raw_content)
-		tokenized_words = content_utils.sanitize_content(raw_content, table=table, tokens=True)
+		tokenized_words = content_utils.sanitize_content(raw_content, table=table,
+														 tokens=True)
 		if tokenized_words:
 			node.content = ' '.join(tokenized_words)
 			node.keywords = termextract.extract_key_words(tokenized_words)
