@@ -361,13 +361,15 @@ class Variant(FieldValidationMixin,schema.Field):
 
 	def getDoc( self ):
 		doc = super(Variant,self).getDoc()
-		doc += '\nValue is one of:'
+		doc += '\n\nValue is one of:'
 		for field in self.fields:
 			fielddoc = field.getDoc()
 			if not fielddoc:
 				fielddoc = getattr( type(field), '__doc__', '' )
 			if fielddoc:
 				doc += '\n\n\t' + fielddoc
+		# Definition lists must end with a blank line
+		doc += '\n'
 		return doc
 
 	def bind( self, obj ):
@@ -600,6 +602,7 @@ class _ValueTypeAddingDocMixin(object):
 			value_type = getattr( self, 'value_type', None )
 			if value_type is not None:
 				doc += '\nThe value type is documented as:\n\t' + value_type.getDoc()
+				doc += '\n'
 			_type = getattr( self, 'accept_types', getattr( self, '_type', None) )
 			def _class_dir( t ):
 				mod = t.__module__ + '.' if t.__module__ and t.__module__ != '__builtin__' else ''
