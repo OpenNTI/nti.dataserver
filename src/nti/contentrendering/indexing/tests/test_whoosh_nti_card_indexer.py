@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_length
+from hamcrest import assert_that
 
 import os
 import shutil
@@ -16,11 +21,9 @@ import tempfile
 from whoosh.query import (Term)
 
 from ...RenderedBook import _EclipseTOCMiniDomTopic
-from .._whoosh_nti_card_indexer import _DefaultWhooshNTICardIndexer
+from ..whoosh_nti_card_indexer import _DefaultWhooshNTICardIndexer
 
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, has_length, is_, is_not)
 
 class TestNTICardIndexer(ConfiguringTestBase):
 

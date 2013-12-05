@@ -4,7 +4,7 @@ Whoosh video transcript indexer.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,12 +25,12 @@ from nti.contentsearch import vtrans_prefix
 from nti.contentsearch import videotimestamp_to_datetime
 from nti.contentsearch import interfaces as search_interfaces
 
-from . import _node_utils as node_utils
-from . import _termextract as termextract
-from . import _content_utils as content_utils
+from . import node_utils
+from . import termextract
+from . import content_utils
 from . import interfaces as cridxr_interfaces
-from ._common_indexer import _BasicWhooshIndexer
 from ..media import interfaces as media_interfaces
+from . import whoosh_common_indexer as common_indexer
 
 _video_types = (u'application/vnd.nextthought.ntivideo')
 
@@ -69,7 +69,8 @@ class _Video(object):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.ntiid == other.ntiid and self.path == self.path)
+			return self is other or (self.ntiid == other.ntiid
+									 and self.path == self.path)
 		except AttributeError:
 			return NotImplemented
 
@@ -80,7 +81,8 @@ class _Video(object):
 		return xhash
 
 def _parse_video_source(video):
-	parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name=video.parser)
+	parser = component.getUtility(media_interfaces.IVideoTranscriptParser,
+								  name=video.parser)
 	with open(video.path, "r") as source:
 		transcript = parser.parse(source)
 	return video, transcript
@@ -106,10 +108,12 @@ def _parse_and_prepare(video):
 	return result
 
 @interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
-class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
+class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
-		creator = component.getUtility(search_interfaces.IWhooshVideoTranscriptSchemaCreator, name=name)
+		creator = \
+			component.getUtility(search_interfaces.IWhooshVideoTranscriptSchemaCreator,
+								 name=name)
 		return creator.create()
 
 	@classmethod
@@ -130,7 +134,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 		result = {}
 		for topic_ntiid, topic_el in topic_map.items():
 			for obj in topic_el.getElementsByTagName('object'):
-				if obj.getAttribute('mimeType') != u'application/vnd.nextthought.ntivideo':
+				mimeType = obj.getAttribute('mimeType')
+				if mimeType != u'application/vnd.nextthought.ntivideo':
 					continue
 				ntiid = obj.getAttribute('ntiid')
 				if ntiid and topic_ntiid:
@@ -218,7 +223,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 					   params.get('data-lang', params.get('lang')) or 'en'
 
 			for vrdsrc in video_sources:
-				bases = {video_ntiid, vrdsrc.get('subtitle', None), params.get('subtitle')}
+				bases = {video_ntiid, vrdsrc.get('subtitle', None),
+						 params.get('subtitle')}
 				if vrdsrc.get('service', vrdsrc.get('type', u'')).lower() == 'youtube':
 					bases.add(vrdsrc.get('source'))
 				bases.discard(None)
@@ -226,7 +232,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 				vid_tupl = self._find_video_transcript(content_path, bases, parser_names)
 				if vid_tupl:
 					parser_name, video_path = vid_tupl
-					result = (_Video(parser_name, video_ntiid, video_path, title, language),)
+					result = (_Video(parser_name, video_ntiid, video_path,
+									title, language),)
 					break
 		else:
 			result = []
@@ -241,7 +248,9 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 		return result
 
-	def index_transcript_entry(self, writer, containerId, video_id, title, entry, language=u'en'):
+	def index_transcript_entry(self, writer, containerId, video_id, title,
+							   entry, language=u'en'):
+
 		if not getattr(entry, 'processed', False):
 			_prepare_entry(entry, language)
 
@@ -250,6 +259,8 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 
 		try:
 			last_modified = datetime.fromtimestamp(time.time())
+			end_ts = entry.end_timestamp
+			start_ts = entry.start_timestamp
 			writer.add_document(containerId=containerId,
 								videoId=video_id,
 								language=language,
@@ -258,15 +269,16 @@ class _WhooshVideoTranscriptIndexer(_BasicWhooshIndexer):
 								quick=entry.content,
 								keywords=entry.keywords,
 								last_modified=last_modified,
-								end_timestamp=videotimestamp_to_datetime(entry.end_timestamp),
-								start_timestamp=videotimestamp_to_datetime(entry.start_timestamp))
+								end_timestamp=videotimestamp_to_datetime(end_ts),
+								start_timestamp=videotimestamp_to_datetime(start_ts))
 			return True
 		except Exception:
 			writer.cancel()
 			raise
 
 	def get_index_name(self, book, indexname=None):
-		indexname = super(_WhooshVideoTranscriptIndexer, self).get_index_name(book, indexname)
+		indexname = \
+			super(_WhooshVideoTranscriptIndexer, self).get_index_name(book, indexname)
 		indexname = vtrans_prefix + indexname
 		return indexname
 
