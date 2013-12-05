@@ -22,7 +22,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.dataserver.links import Link
 
-from . import _search_highlights
+from . import search_highlights
 from . import interfaces as search_interfaces
 
 from .constants import (tags_, content_, title_, replacementContent_,
@@ -33,9 +33,10 @@ from .constants import (SNIPPET, FRAGMENTS, TOTAL_FRAGMENTS, FIELD)
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)
 	if query and text:
-		result = _search_highlights.word_fragments_highlight(query, text, query.language)
+		result = search_highlights.word_fragments_highlight(query, text,
+															lang=query.language)
 	else:
-		result = _search_highlights.HighlightInfo()
+		result = search_highlights.HighlightInfo()
 	return result
 
 @component.adapter(search_interfaces.ISearchHit)
@@ -132,6 +133,7 @@ class _SearchResultsLinkDecorator(object):
 			if batch is not None and batch != result_list:
 				batch_params = request.params.copy()
 				batch_params['batchStart'] = batch.start
-				link_next_href = request.current_route_path(_query=sorted(batch_params.items()))
+				_query = sorted(batch_params.items())
+				link_next_href = request.current_route_path(_query=_query)
 				link_next = Link(link_next_href, rel=rel)
 				external.setdefault('Links', []).append(link_next)

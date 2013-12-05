@@ -164,7 +164,8 @@ class _SuggestResultsExternalizer(_BaseSearchResultsExternalizer):
 		return result
 
 @component.adapter(search_interfaces.ISuggestAndSearchResults)
-class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer, _SuggestResultsExternalizer):
+class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer,
+										   _SuggestResultsExternalizer):
 
 	def toExternalObject(self):
 		result = _SearchResultsExternalizer.toExternalObject(self)
@@ -176,8 +177,10 @@ class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
-		return (search_interfaces.IWhooshBookContent, search_interfaces.IWhooshVideoTranscriptContent,
-				search_interfaces.IWhooshNTICardContent, search_interfaces.ISearchQuery)
+		return (search_interfaces.IWhooshBookContent,
+				search_interfaces.IWhooshVideoTranscriptContent,
+				search_interfaces.IWhooshNTICardContent,
+				search_interfaces.ISearchQuery)
 
 	@classmethod
 	def _ap_enumerate_module_names(cls):

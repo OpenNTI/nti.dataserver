@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from ..content_utils import get_content
 
-from .._search_highlights import word_fragments_highlight
+from ..search_highlights import word_fragments_highlight
 
 from . import ConfiguringTestBase, zanpakuto_commands
 
