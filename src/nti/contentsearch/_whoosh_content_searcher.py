@@ -28,8 +28,8 @@ from . import constants
 from . import whoosh_query
 from . import whoosh_index
 from . import search_results
+from . import whoosh_storage
 from . import interfaces as search_interfaces
-from . import _whoosh_indexstorage as index_storage
 
 class _BoundingProxy(ProxyBase):
 
@@ -172,7 +172,7 @@ class _ContentSearcherFactory(object):
 
 	def __call__(self, indexname=None, ntiid=None, indexdir=None):
 		if indexname and indexdir and os.path.exists(indexdir):
-			storage = index_storage.DirectoryStorage(indexdir)
+			storage = whoosh_storage.DirectoryStorage(indexdir)
 			searcher = WhooshContentSearcher(indexname, storage, ntiid)
 			return searcher if len(searcher) > 0 else None
 		return None
