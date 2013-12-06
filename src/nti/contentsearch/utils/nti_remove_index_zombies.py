@@ -18,8 +18,8 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver import interfaces as nti_interfaces
 
 import nti.contentsearch
-from . import find_user_dfls
-from ._repoze_utils import get_catalog_and_docids
+from nti.contentsearch.utils import find_user_dfls
+from nti.contentsearch.utils._repoze_utils import get_catalog_and_docids
 
 def _get_object(uid):
 	_ds_intid = component.getUtility( zope.intid.IIntIds )
@@ -38,6 +38,7 @@ def unindex_zombies(entity, verbose=False):
 	return counter
 			
 def remove_zombies(usernames, verbose=False):
+
 	if not usernames:
 		dataserver = component.getUtility( nti_interfaces.IDataserver)
 		_users = nti_interfaces.IShardLayout( dataserver ).users_folder
