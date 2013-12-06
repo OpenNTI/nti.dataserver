@@ -47,7 +47,7 @@ def entity_data_search(user, query, trax=True):
 @interface.implementer(search_interfaces.IEntityIndexController)
 class _RepozeEntityIndexController(object):
 
-	def __init__(self, entity, parallel_search=True):
+	def __init__(self, entity, parallel_search=False):
 		self.entity = entity
 		self.parallel_search = parallel_search
 

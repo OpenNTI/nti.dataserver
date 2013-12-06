@@ -28,7 +28,7 @@ from .. import constants
 from ..common import videotimestamp_to_datetime
 from ..whoosh_schemas import create_book_schema
 from ..whoosh_schemas import create_nti_card_schema
-from .._whoosh_indexstorage import create_directory_index
+from ..whoosh_storage import create_directory_index
 from ..whoosh_schemas import create_video_transcript_schema
 from .._whoosh_content_searcher import WhooshContentSearcher
 

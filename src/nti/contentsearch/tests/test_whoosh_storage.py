@@ -20,7 +20,7 @@ from whoosh import fields
 from whoosh import query
 from whoosh.compat import text_type
 
-from .._whoosh_indexstorage import DirectoryStorage
+from ..whoosh_storage import DirectoryStorage
 
 from . import domain
 from . import ConfiguringTestBase
