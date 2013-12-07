@@ -90,26 +90,27 @@ class _Searchable(object):
 	def close(self):
 		self.index.close()
 
+_INDEX_FACTORIES = \
+(
+	(constants.book_prefix, whoosh_index.Book, constants.content_),
+	(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
+	(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
+)
+
 @interface.implementer(search_interfaces.IWhooshContentSearcher)
 class WhooshContentSearcher(object):
-
-	idx_factories = \
-	(
-		(constants.book_prefix, whoosh_index.Book, constants.content_),
-		(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
-		(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
-	)
 
 	def __init__(self, baseindexname, storage, ntiid=None):
 		self._searchables = {}
 		self.storage = storage
 		self.ntiid = ntiid if ntiid else baseindexname
-		for prefix, factory, classsname in self.idx_factories:
+		for prefix, factory, classsname in _INDEX_FACTORIES:
 			indexname = prefix + baseindexname
-			if storage.index_exists(indexname):
-				index = storage.get_index(indexname)
-				self._searchables[indexname] = \
-						 _Searchable(factory(), indexname, index, classsname)
+			if not storage.index_exists(indexname):
+				continue
+			index = storage.get_index(indexname)
+			self._searchables[indexname] = \
+						_Searchable(factory(), indexname, index, classsname)
 
 	@property
 	def indices(self):
