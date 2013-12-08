@@ -40,6 +40,10 @@ import os
 import transaction
 import gevent
 
+from zope import interface
+from zope import component
+from zope.component.hooks import setSite, getSite, setHooks, clearSite
+
 import pyramid_zodbconn
 from pyramid_zodbconn import get_connection
 
@@ -48,7 +52,7 @@ from pyramid.security import authenticated_userid
 from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
-from zope.component.hooks import setSite, getSite, setHooks, clearSite
+from pyramid.httpexceptions import HTTPBadRequest
 
 def _get_possible_site_names(request):
 	"""
@@ -163,7 +167,7 @@ class site_tween(object):
 		self._debug_site( site )
 		self._add_properties_to_request( request )
 
-		site = get_site_for_request( request, site )
+		site = _get_site_for_request( request, site )
 
 		setSite( site )
 		__traceback_info__ = self.handler
@@ -222,13 +226,40 @@ class site_tween(object):
 			except AssertionError:
 				logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
 
+from .interfaces import IMissingSitePolicy
 from nti.dataserver.site import get_site_for_site_names
-def get_site_for_request( request, site=None ):
+def _get_site_for_request( request, parent_site ):
 	"""
-	Public for testing purposes only.
+	In the context of a request, looks up the named site for the request.
+
+	If this is not found, uses a registered utility object to decide
+	whether to continue with the default site or require a properly
+	configured site by forcing an error.
+
 	"""
-	site_names = getattr( request, 'possible_site_names', None ) or _get_possible_site_names( request )
-	return get_site_for_site_names( site_names, site=site )
+	site_names = request.possible_site_names
+	found_site = get_site_for_site_names( site_names, site=parent_site )
+	if found_site is parent_site:
+		# This design adds overhead when a site is not
+		# found. This should be uncommon during production,
+		# although common at development time.
+		found_site = component.getGlobalSiteManager().getUtility(IMissingSitePolicy)( request, parent_site )
+		# We could reduce the overhead a bit by looking up
+		# the utility in the tween factory. The next step would be
+		# to abstract  this entire function to be part of the policy
+		# (which of course is looked up at factory time). But
+		# the ZCA may not have been configured at the time the factory
+		# is invoked so we'd have to be careful.
+	return found_site
+
+
+def _DevmodeMissingSitePolicy(request, parent_site):
+	return parent_site
+interface.directlyProvides(_DevmodeMissingSitePolicy,IMissingSitePolicy)
+
+def _ProductionMissingSitePolicy(request, parent_site):
+	raise HTTPBadRequest("Invalid site")
+interface.directlyProvides(_ProductionMissingSitePolicy,IMissingSitePolicy)
 
 def site_tween_factory(handler, registry):
 	"""
