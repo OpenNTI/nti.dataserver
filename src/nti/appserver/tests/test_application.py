@@ -89,6 +89,19 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
 from nti.app.testing.site import trivial_transaction_in_root_site as _trivial_db_transaction_cm
 
+class TestApplicationNonDevmode(SharedApplicationTestBase):
+	APP_IN_DEVMODE = False
+	features = tuple( set(SharedApplicationTestBase.features) - {'devmode'})
+
+	@WithSharedApplicationMockDS(users=False,testapp=True)
+	def test_non_configured_site_raises_error_in_production(self):
+		res = self.testapp.get('/foo/bar',
+							   extra_environ={b'HTTP_ORIGIN': b'http://foo.bar.com'},
+							   status=400)
+		assert_that( res.text, contains_string('Invalid site') )
+
+
+
 class TestApplication(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)

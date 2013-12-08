@@ -16,7 +16,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import re
 import urllib
 import datetime
 import nameparser
@@ -46,7 +45,6 @@ from nti.contentfragments import censor
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
-from nti.dataserver.users import user_profile
 from nti.dataserver import shards as nti_shards
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
@@ -57,8 +55,6 @@ from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils.schema import InvalidValue
 from nti.utils.schema import find_most_derived_interface
-
-from . import sites
 
 import zope.deferredimport
 zope.deferredimport.initialize()

@@ -1,0 +1,12 @@
+<!-- -*- mode: nxml -*- -->
+<configure
+	xmlns="http://namespaces.zope.org/zope"
+	xmlns:zcml="http://namespaces.zope.org/zcml">
+	<include package="zope.component" />
+
+	<utility component=".zope_site_tween._DevmodeMissingSitePolicy"
+			 zcml:condition="have devmode" />
+	<utility component=".zope_site_tween._ProductionMissingSitePolicy"
+			 zcml:condition="not-have devmode" />
+
+</configure>
