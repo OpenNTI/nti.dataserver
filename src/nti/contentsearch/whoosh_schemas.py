@@ -25,20 +25,21 @@ from . import interfaces as search_interfaces
 
 # content analyzer
 
-def _ngram_minmax(lang='en'):
+def _ngram_min_max(lang='en'):
 	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
 
-def create_ngram_field(lang='en'):
-	minsize, maxsize = _ngram_minmax()
+def create_ngram_field(lang='en', at='start'):
+	minsize, maxsize = _ngram_min_max()
 	expression = \
 		component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or \
 		default_word_tokenizer_pattern
 	tokenizer = analysis.RegexTokenizer(expression=expression)
-	return fields.NGRAMWORDS(minsize=minsize, maxsize=maxsize, stored=False,
-							 tokenizer=tokenizer, at='start')
+	analyzer = analysis.NgramWordAnalyzer(minsize=minsize, maxsize=maxsize,
+										  tokenizer=tokenizer, at=at)
+	return fields.TEXT(analyzer=analyzer, phrase=False)
 
 def create_content_analyzer(lang='en'):
 	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
