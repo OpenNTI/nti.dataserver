@@ -89,7 +89,9 @@ TESTS_REQUIRE = [
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 	# 'z3c.coverage >= 2.0.0', # For HTML coverage reports that are prettier than plain 'coverage' TODO: Do we need this?
 	'zope.testing >= 4.1.2',
-	'nti.nose_traceback_info'
+	'nti.nose_traceback_info',
+	'nti.testing',
+	'nti.app.testing',
 ]
 
 setup(
@@ -130,9 +132,8 @@ setup(
 	install_requires=[
 		'nti.plasTeX',
 		'nti.geventwebsocket',
-		'nti.testing',
 		# NOTE: These are temporary!
-		'nti.app.testing',
+
 		'nti.app.sites.mathcounts',
 		'nti.app.sites.alpha',
 		'nti.app.sites.demo',
