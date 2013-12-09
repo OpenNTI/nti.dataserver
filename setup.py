@@ -306,7 +306,7 @@ setup(
 		'setuptools',
 		'simplejson >= 3.3.1',
 		'six >= 1.4.1',
-		'sympy >= 0.7.3',
+		'sympy',
 		'stripe',  # stripe payments
 		# 'slimit',
 		'supervisor >= 3.0',
@@ -472,7 +472,7 @@ setup(
 			# locally (you may need to use a different version of node)
 			# Managing translations
 			'Babel >= 1.3',
-			'lingua >= 1.5',
+			'lingua',
 			]
 	},
 	dependency_links=[
@@ -480,8 +480,7 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
-		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev',
-		'https://pypi.python.org/packages/source/s/sympy/sympy-0.7.3-py2.7.tar.gz#egg=sympy-0.7.3',
+		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev'
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
