@@ -22,6 +22,11 @@ from nti.ntiids import ntiids
 
 from . import content_utils
 
+def get_user(user):
+	user = 	User.get_user(str(user)) \
+			if not nti_interfaces.IUser.providedBy(user) else user
+	return user
+
 def get_descendants(unit):
 	yield unit
 	last = unit
@@ -44,11 +49,12 @@ def add_users_content_roles(user, items, library=None, registry=component):
 	:param user: The user object
 	:param items: List of ntiids
 	"""
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = get_user(user)
 	if not user or not items:
 		return 0
 
-	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
+								 nauth.CONTENT_ROLE_PREFIX)
 
 	roles_to_add = set()
 	current_roles = {x.id:x for x in member.groups}
@@ -75,11 +81,12 @@ def remove_users_content_roles(user, items, library=None, registry=component):
 	:param user: The user object
 	:param items: List of ntiids
 	"""
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = get_user(user)
 	if not user or not items:
 		return 0
 
-	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
+								 nauth.CONTENT_ROLE_PREFIX)
 	if not member.hasGroups():
 		return 0
 
@@ -108,8 +115,9 @@ def get_users_content_roles(user, registry=component):
 
 	:param user: The user object
 	"""
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
+	user = get_user(user)
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
+								 nauth.CONTENT_ROLE_PREFIX)
 
 	result = []
 	for x in member.groups or ():
@@ -120,9 +128,13 @@ def get_users_content_roles(user, registry=component):
 	return result
 
 def get_user_accessible_content(user, library=None, registry=component):
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
-	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember, nauth.CONTENT_ROLE_PREFIX)
-	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	user = get_user(user)
+
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
+								 nauth.CONTENT_ROLE_PREFIX)
+
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) \
+			  if library is None else library
 
 	packages = {}
 	for package in (library.contentPackages if library is not None else ()):
@@ -135,6 +147,7 @@ def get_user_accessible_content(user, library=None, registry=component):
 	for x in member.groups or ():
 		ntiid = packages.get(x.id, None)
 		if ntiid:
-			ntiid = content_utils.get_collection_root_ntiid(ntiid, library=library, registry=registry)
+			ntiid = content_utils.get_collection_root_ntiid(ntiid, library=library,
+															registry=registry)
 			result.add(ntiid)
 	return result

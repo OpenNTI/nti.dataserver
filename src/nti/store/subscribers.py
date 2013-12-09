@@ -155,7 +155,8 @@ def _purchase_attempt_synced(event):
 	purchase.updateLastMod()
 	logger.info('%r has been synched' % purchase)
 
-@component.adapter(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitationAcceptedEvent)
+@component.adapter(store_interfaces.IStorePurchaseInvitation,
+				   invite_interfaces.IInvitationAcceptedEvent)
 def _purchase_invitation_accepted(invitation, event):
 	if 	store_interfaces.IStorePurchaseInvitation.providedBy(invitation) and \
 		store_interfaces.IInvitationPurchaseAttempt.providedBy(invitation.purchase):
