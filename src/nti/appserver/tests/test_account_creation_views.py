@@ -188,7 +188,7 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 
 
 class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
-	# The tests that depend on not having devmode installed (stricter defailt validation) should be here
+	# The tests that depend on not having devmode installed (stricter default validation) should be here
 	# Since they run so much slower due to the mimetype registration
 	features = ()
 
@@ -552,6 +552,14 @@ class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 	features = ()
 	APP_IN_DEVMODE = False
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestApplicationCreateUserNonDevmode,cls).setUpClass()
+		# Allow requests from unconfigured domains
+		# XXX HACK
+		from nti.appserver.tweens.zope_site_tween import _DevmodeMissingSitePolicy
+		component.getGlobalSiteManager().registerUtility(_DevmodeMissingSitePolicy)
 
 	@WithSharedApplicationMockDS
 	def test_create_user( self ):
