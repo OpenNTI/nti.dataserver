@@ -4,7 +4,7 @@ Content processing module
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import re
@@ -20,13 +20,20 @@ default_ngram_minsize = 2
 default_ngram_maxsize = 20  # average word size in English in 5.10
 default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
 
-default_punk_char_expression = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|+|\-|<|>|=|_|\~|\\|/|\|]'
-default_punk_char_expression_plus = r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|+|\-|<|>|=|_|\~|\\|/|\||\s]'
+default_punk_char_expression =\
+	r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|+|\-|<|>|=|_|\~|\\|/|\|]'
 
-default_word_tokenizer_pattern = re.compile(default_word_tokenizer_expression, re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
+default_punk_char_expression_plus =\
+	r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|+|\-|<|>|=|_|\~|\\|/|\||\s]'
 
-default_punk_char_pattern = re.compile(default_punk_char_expression, re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
-default_punk_char_pattern_plus = re.compile(default_punk_char_expression_plus, re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
+default_word_tokenizer_pattern = re.compile(default_word_tokenizer_expression, 
+											re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
+
+default_punk_char_pattern = re.compile(default_punk_char_expression,
+									   re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
+
+default_punk_char_pattern_plus = re.compile(default_punk_char_expression_plus, 
+											re.I | re.MULTILINE | re.DOTALL | re.UNICODE)
 
 space_pattern = re.compile('\s+', re.UNICODE)
 
@@ -43,8 +50,8 @@ non_alpha_pattern = _makenon_alpha_re()
 del _makenon_alpha_re
 
 # export common functions
-from ._content_utils import normalize
-from ._content_utils import rank_words
-from ._ngrams_utils import compute_ngrams
-from ._content_utils import split_content
-from ._content_utils import get_content_translation_table
+from .content_utils import normalize
+from .content_utils import rank_words
+from .content_utils import split_content
+from .ngrams_utils import compute_ngrams
+from .content_utils import get_content_translation_table

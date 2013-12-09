@@ -4,7 +4,7 @@ NGRAM processing utilities
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import repoze.lru
@@ -15,7 +15,7 @@ from zope import interface
 from . import default_ngram_minsize
 from . import default_ngram_maxsize
 from . import interfaces as cp_interfaces
-from ._content_utils import split_content
+from .content_utils import split_content
 
 @repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):

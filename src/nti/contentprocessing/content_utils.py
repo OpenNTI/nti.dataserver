@@ -4,7 +4,7 @@ Content processing utilities
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import re
@@ -17,7 +17,10 @@ from pkg_resources import resource_filename
 from zope import component
 from zope import interface
 
-from whoosh.support import levenshtein
+try:
+	from zopyx.txng3.ext.levenshtein import ratio as relative
+except ImportError:
+	from whoosh.support.levenshtein import relative
 
 from nltk.tokenize import RegexpTokenizer
 
@@ -103,7 +106,9 @@ class _ContentTokenizer(object):
 
 	@classmethod
 	def to_plain_text(cls, content):
-		text = component.getAdapter(content, frg_interfaces.IPlainTextContentFragment, name='text')
+		text = \
+			component.getAdapter(content, 
+								 frg_interfaces.IPlainTextContentFragment, name='text')
 		return text
 
 @interface.implementer(cp_interfaces.IWordSimilarity)
@@ -120,7 +125,7 @@ class _DefaultWordSimilarity(object):
 class _LevenshteinWordSimilarity(_DefaultWordSimilarity):
 
 	def compute(self, a, b):
-		result = levenshtein.relative(a, b)
+		result = relative(a, b)
 		return result
 
 def rank_words(word, terms, reverse=True):
