@@ -7,35 +7,35 @@ OpenGraph metadata or Twitter card metadata.
 
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-from zope import component
+import os
+import six
+import rdflib
+import shutil
+import string
+import pyquery
+import requests
+import tempfile
+import urlparse
+import PyPDF2 as pyPdf
 
-from zope.mimetype import interfaces as mime_interfaces
+from zope import component
+from zope import interface
+
 from zope.location import interfaces as loc_interfaces
-from . import interfaces
+from zope.mimetype import interfaces as mime_interfaces
 
 from zope.cachedescriptors.property import Lazy
 from nti.utils.property import alias
 
-import os
-import PyPDF2 as pyPdf
-import pyquery
-import rdflib
-import requests
-import shutil
-import six
-import string
-import tempfile
-import urlparse
-
 from nti.utils.schema import createDirectFieldProperties
 from nti.utils.schema import PermissiveSchemaConfigured
+
+from . import interfaces
 
 @interface.implementer(interfaces.IImageMetadata, loc_interfaces.IContained)
 class ImageMetadata(PermissiveSchemaConfigured):
@@ -123,7 +123,8 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 	result = None
 
 	if mime_type:
-		processor = component.queryUtility( interfaces.IContentMetadataExtractor, name=mime_type )
+		processor = component.queryUtility(interfaces.IContentMetadataExtractor,
+										   name=mime_type )
 	if processor:
 		args = args_factory()
 		result = processor.extract_metadata( args )
@@ -140,7 +141,8 @@ def _get_metadata_from_mime_type( location, mime_type, args_factory ):
 def _get_metadata_from_url( urlscheme, location ):
 	# TODO: Need to redirect here based on url scheme
 
-	schemehandler = component.queryUtility( interfaces.IContentMetadataURLHandler, name=urlscheme )
+	schemehandler = component.queryUtility(interfaces.IContentMetadataURLHandler,
+										   name=urlscheme)
 	if schemehandler is not None:
 		return schemehandler( location )
 
@@ -154,7 +156,9 @@ def _http_scheme_handler( location ):
 	# Get the content type, splitting off encoding, etc
 	mime_type = response.headers.get('content-type').split( ';', 1 )[0]
 
-	result, args = _get_metadata_from_mime_type( location, mime_type, lambda: _request_args( location, response ) )
+	result, args = \
+		 _get_metadata_from_mime_type( 
+					location, mime_type, lambda: _request_args( location, response ) )
 
 	if result is not None:
 		result.sourcePath = args.download_path
@@ -221,15 +225,23 @@ class _HTMLExtractor(object):
 		# the wrong data or content type. Thus,
 		# we do not provide the location argument,
 		# and we do force the media type.
-		graph.parse( data=args.text, format='rdfa', publicID=args.__name__, media_type='text/html' )
+		graph.parse(data=args.text, format='rdfa',
+					publicID=args.__name__, media_type='text/html')
 
-		nss = (rdflib.Namespace('http://ogp.me/ns#'), rdflib.Namespace('http://opengraphprotocol.org/schema/'))
-		for ns_name, attr_name in (('title', 'title'), ('url', 'href'), ('image', 'image'), ('description', 'description')):
+		nss = (rdflib.Namespace('http://ogp.me/ns#'), 
+			   rdflib.Namespace('http://opengraphprotocol.org/schema/'))
+		
+		pairs = (('title', 'title'), ('url', 'href'), ('image', 'image'), 
+				 ('description', 'description'))
+		
+		for ns_name, attr_name in pairs:
 			# Don't overwrite
 			if getattr( result, attr_name, None ):
 				continue
 
-			triples = graph.triples_choices( (None, [getattr(x, ns_name) for x in nss], None) )
+			triples = \
+				graph.triples_choices((None, [getattr(x, ns_name) for x in nss], None))
+				
 			for _, _, val in triples:
 				if ns_name == 'image':
 					if not result.images:
@@ -249,7 +261,9 @@ class _HTMLExtractor(object):
 
 		if len(result.images) == 1:
 			for k in 'height', 'width':
-				triples = graph.triples_choices( (None, [getattr(x, 'image:' + k) for x in nss], None ) )
+				triples = \
+					graph.triples_choices(
+							(None, [getattr(x, 'image:' + k) for x in nss], None ) )
 				for _, _, val in triples:
 					setattr( result.images[0], k, int(val.toPython()) )
 		return result

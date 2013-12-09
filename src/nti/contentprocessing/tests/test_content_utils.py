@@ -1,23 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+
 from zope import component
 
-from .._content_utils import rank_words
-from .._content_utils import get_content
-from .._content_utils import split_content
-from .. import interfaces as cp_interfaces
-from .._content_utils import get_content_translation_table
+from nti.contentprocessing.content_utils import rank_words
+from nti.contentprocessing.content_utils import get_content
+from nti.contentprocessing.content_utils import split_content
+from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing.content_utils import get_content_translation_table
 
-from  . import ConfiguringTestBase
-
-from hamcrest import (assert_that, is_, has_length)
+from nti.contentprocessing.tests import ConfiguringTestBase
 
 class TestContentUtils(ConfiguringTestBase):
 
@@ -52,7 +54,7 @@ class TestContentUtils(ConfiguringTestBase):
 		terms = sorted(self.sample_words)
 		word = 'stranger'
 		w = rank_words(word, terms)
-		assert_that(w, is_(['charlie', 'bravo', 'alfa', 'delta', 'echo']))
+		assert_that(w, is_([u'bravo', u'delta', u'charlie', u'alfa', u'echo']))
 
 	def test_content_translation_table(self):
 		table = get_content_translation_table()
