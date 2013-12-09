@@ -17,7 +17,8 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as store_interfaces
 
-@interface.implementer(store_interfaces.IContentBundle, an_interfaces.IAttributeAnnotatable)
+@interface.implementer(store_interfaces.IContentBundle,
+					   an_interfaces.IAttributeAnnotatable)
 class ContentBundle(SchemaConfigured):
 
 	# create all interface fields

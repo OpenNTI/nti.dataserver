@@ -13,15 +13,15 @@
 			 for="nti.dataserver.interfaces.IUser"
 			 provides=".interfaces.IPurchaseHistory" />
 
-	<subscriber handler="._subscribers._purchase_attempt_started" />
-	<subscriber handler="._subscribers._purchase_attempt_successful" />
-	<subscriber handler="._subscribers._purchase_attempt_failed" />
-	<subscriber handler="._subscribers._purchase_attempt_refunded" />
-	<subscriber handler="._subscribers._purchase_attempt_synced" />
-	<subscriber handler="._subscribers._purchase_attempt_disputed" />
-	<subscriber handler="._subscribers._purchase_invitation_accepted" />
-	<subscriber handler="._subscribers._enrollment_attempt_successful" />
-	<subscriber handler="._subscribers._unenrollment_attempt_successful" />
+	<subscriber handler=".subscribers._purchase_attempt_started" />
+	<subscriber handler=".subscribers._purchase_attempt_successful" />
+	<subscriber handler=".subscribers._purchase_attempt_failed" />
+	<subscriber handler=".subscribers._purchase_attempt_refunded" />
+	<subscriber handler=".subscribers._purchase_attempt_synced" />
+	<subscriber handler=".subscribers._purchase_attempt_disputed" />
+	<subscriber handler=".subscribers._purchase_invitation_accepted" />
+	<subscriber handler=".subscribers._enrollment_attempt_successful" />
+	<subscriber handler=".subscribers._unenrollment_attempt_successful" />
 
 	<adapter factory=".externalization.PriceableExternal" />
 	<adapter factory=".externalization.PricedItemExternal" />

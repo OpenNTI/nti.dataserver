@@ -41,9 +41,10 @@ class Course(purchasable.Purchasable):
 		except AttributeError:
 			return NotImplemented
 
-def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(), fee=None, title=None,
-				  license_=None, author=None, description=None, icon=None, thumbnail=None, discountable=False,
-				  bulk_purchase=False, communities=(), featured=False, preview=False, department=None,
+def create_course(ntiid, name=None, provider=None, amount=None, currency=None, items=(),
+				  fee=None, title=None, license_=None, author=None, description=None,
+				  icon=None, thumbnail=None, discountable=False, bulk_purchase=False,
+				  communities=(), featured=False, preview=False, department=None,
 				  signature=None, startdate=None):
 
 	if amount and not provider:

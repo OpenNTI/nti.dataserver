@@ -147,7 +147,8 @@ def get_available_items(user, registry=component):
 
 	# get purchase history
 	purchased = set()
-	user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+	user = User.get_user(str(user))\
+		   if not nti_interfaces.IUser.providedBy(user) else user
 	history = store_interfaces.IPurchaseHistory(user)
 	for p in history:
 		if p.has_succeeded() or p.is_pending():
