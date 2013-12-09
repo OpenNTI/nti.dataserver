@@ -45,11 +45,14 @@ from nti.mimetype import mimetype
 def get_remote_user(request=None, dataserver=None):
 	"""
 	Returns the user object corresponding to the authenticated user of the
-	request, or None.
+	request, or None (if there is no request or no dataserver or no such user)
 	"""
 	request = request or get_current_request()
-	dataserver = dataserver or component.getUtility( IDataserver )
-	result = users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver) if request else None
+	dataserver = dataserver or component.queryUtility( IDataserver )
+
+	result = None
+	if request is not None and dataserver is not None:
+		result = users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver)
 	return result
 
 class AbstractView(object):
