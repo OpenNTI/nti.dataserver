@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 import zope.intid
 
 from zope import component
-from zope.annotation import interfaces as an_interfaces
 
 from zc import intid as zc_intid
 
@@ -22,12 +21,6 @@ from .. import utils
 from .. import discriminators
 from .. import interfaces as search_interfaces
 from ..utils._repoze_utils import remove_entity_indices
-
-def remove_user_index_data(user):
-	annotations = an_interfaces.IAnnotations(user, {})
-	name = "nti.contentsearch._repoze_adpater._RepozeEntityIndexManager"
-	if name in annotations:
-		del annotations[name]
 
 def reindex_ugd(user, users_get, ds_intid):
 	username = user.username
