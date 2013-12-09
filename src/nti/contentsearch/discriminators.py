@@ -108,7 +108,7 @@ def get_acl(obj, default=None):
 	sharedWith = get_sharedWith(obj)
 	if sharedWith:
 		result.extend(sharedWith)
-	return tuple(set(result)) if result else None
+	return tuple(set(result)) if result else default
 
 def get_references(obj, default=None):
 	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
