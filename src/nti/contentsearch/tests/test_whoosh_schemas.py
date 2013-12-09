@@ -61,3 +61,7 @@ class TestWhooshSchemas(ConfiguringTestBase):
 			q = qp.parse(unicode("you hav"))
 			results = s.search(q, limit=None)
 			assert_that(results, has_length(1))
+
+			q = qp.parse(unicode("man cas"))
+			results = s.search(q, limit=None)
+			assert_that(results, has_length(1))
