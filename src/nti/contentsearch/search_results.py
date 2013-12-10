@@ -37,7 +37,6 @@ class IndexHit(zcontained.Contained):
 	def __init__(self, obj=None, score=None):
 		self.ref = obj
 		self.score = score
-		self.__parent__ = None
 	
 	@property
 	def obj(self):
