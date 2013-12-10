@@ -132,6 +132,7 @@ setup(
 	install_requires=[
 		'nti.plasTeX',
 		'nti.geventwebsocket',
+		'pywikipedia',
 		# NOTE: These are temporary!
 
 		'nti.app.sites.mathcounts',
