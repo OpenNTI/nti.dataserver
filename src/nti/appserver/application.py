@@ -599,8 +599,9 @@ def createApplication( http_port,
 	# Note: It's not clear how much benefit, if any, ropez.who.plugins.openid would bring
 	# us. I don't know if I want 401s to automatically result in redirections to HTML pages.
 	# OTOH, it would fit in with the existing place that we 'autocreate' users
-	from pyramid.session import UnencryptedCookieSessionFactoryConfig
-	my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
+	from pyramid.session import SignedCookieSessionFactory
+	my_session_factory = SignedCookieSessionFactory('ntidataservercookiesecretpass',
+													httponly=True)
 	pyramid_config.set_session_factory( my_session_factory )
 
 	auth_policy, forbidden_view, user_token_creator = pyramid_auth.create_authentication_policy(
