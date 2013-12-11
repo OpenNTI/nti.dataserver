@@ -897,3 +897,6 @@ def ProcessOptions( options, document ):
 	document.context.newcounter( 'relatedwork' )
 	document.context.newcounter( 'relatedworkref', initial=-1 )
 	document.context.newcounter( 'ntidiscussion' )
+
+from plasTeX.interfaces import IOptionAwarePythonPackage
+interface.moduleProvides(IOptionAwarePythonPackage)

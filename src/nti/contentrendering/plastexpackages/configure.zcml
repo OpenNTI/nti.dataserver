@@ -4,6 +4,12 @@
 	<include package="zope.component" />
 	<include package="nti.mimetype" />
 
+	<utility component=".nticourse"
+            name="nticourse" />
+   <utility component=".ntilatexmacros"
+            name="ntilatexmacros" />
+
+
 	<adapter factory=".extractors._CourseExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"
 			 provides="nti.contentrendering.interfaces.ICourseExtractor" />

@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -12,11 +11,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import codecs
 import collections
 import simplejson as json  # Needed for sort_keys, ensure_ascii
-
-from xml.dom.minidom import Document as XMLDocument
 
 from zope import component
 from zope import interface
@@ -27,9 +23,6 @@ from plasTeX.Base.LaTeX import Document as LaTexDocument
 from plasTeX.Renderers import render_children
 
 from nti.contentrendering import interfaces as crd_interfaces
-
-from nti.externalization import internalization
-from nti.externalization.externalization import toExternalObject
 
 @interface.implementer(crd_interfaces.ICourseExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
@@ -43,16 +36,14 @@ class _CourseExtractor(object):
 		courseinfo = book.document.getElementsByTagName('courseinfo')
 		dom = book.toc.dom
 		if course_els:
-			dom.childNodes[0].appendChild(dom.createTextNode(u'	'))
-			dom.childNodes[0].appendChild(self._process_course(course_els[0], courseinfo))
-			dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
+			dom.childNodes[0].appendChild(self._process_course(dom, course_els[0], courseinfo))
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
 			dom.childNodes[0].setAttribute('isCourse', 'false')
 		book.toc.save()
 
-	def _process_course(self, doc_el, courseinfo):
-		toc_el = XMLDocument().createElement('course')
+	def _process_course(self, dom, doc_el, courseinfo):
+		toc_el = dom.createElement('course')
 		toc_el.setAttribute('label', ''.join(render_children( doc_el.renderer, doc_el.title)))
 		toc_el.setAttribute('courseName', ''.join(render_children( doc_el.renderer, doc_el.number)))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
@@ -65,31 +56,25 @@ class _CourseExtractor(object):
 		units = doc_el.getElementsByTagName('courseunit')
 
 		# SAJ: All courses should now have a course_info.json file, so always add this node
-		toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
-		info = XMLDocument().createElement('info')
+		info = dom.createElement('info')
 		info.setAttribute('src', u'course_info.json')
 		toc_el.appendChild(info)
 		for unit in units:
-			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
-			toc_el.appendChild(self._process_unit(unit))
-		for node in self._process_communities(doc_el):
-			toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			toc_el.appendChild(self._process_unit(dom, unit))
+		for node in self._process_communities(dom, doc_el):
 			toc_el.appendChild(node)
-		toc_el.appendChild(XMLDocument().createTextNode(u'\n	'))
 		return toc_el
 
-	def _process_unit(self, doc_el):
-		toc_el = XMLDocument().createElement('unit')
+	def _process_unit(self, dom, doc_el):
+		toc_el = dom.createElement('unit')
 		toc_el.setAttribute('label', unicode(doc_el.title))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
 		lessons = doc_el.getElementsByTagName('courselessonref')
 		for lesson in lessons:
-			toc_el.appendChild(XMLDocument().createTextNode(u'\n			'))
-			toc_el.appendChild(self._process_lesson(lesson))
-		toc_el.appendChild(XMLDocument().createTextNode(u'\n		'))
+			toc_el.appendChild(self._process_lesson(dom, lesson))
 		return toc_el
 
-	def _process_lesson(self, doc_el):
+	def _process_lesson(self, dom, doc_el):
 		# SAJ: Lets find our parent course node
 		course = doc_el.parentNode
 		while (course.tagName != 'course'):
@@ -101,40 +86,36 @@ class _CourseExtractor(object):
 		for date in doc_el.date:
 			dates.append(tz_utc.normalize(tz.localize(date).astimezone(tz_utc)).isoformat())
 
-		toc_el = XMLDocument().createElement('lesson')
+		toc_el = dom.createElement('lesson')
 		toc_el.setAttribute('date', ','.join(dates))
 		toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid)
 		return toc_el
 
-	def _process_communities(self, doc_el):
+	def _process_communities(self, dom, doc_el):
 		communities = doc_el.getElementsByTagName('coursecommunity')
 		com_els = []
 		public = []
 		restricted = []
 		for community in communities:
-			entry_el = XMLDocument().createElement('entry')
-			entry_el.appendChild(XMLDocument().createTextNode(community.attributes['ntiid']))
+			entry_el = dom.createElement('entry')
+			entry_el.appendChild(dom.createTextNode(community.attributes['ntiid']))
 			if community.scope == 'restricted':
 				restricted.append(entry_el)
 			else:
 				public.append(entry_el)
 
 		if public:
-			scope_el = XMLDocument().createElement('scope')
+			scope_el = dom.createElement('scope')
 			scope_el.setAttribute('type', u'public')
 			for entry in public:
-				scope_el.appendChild(XMLDocument().createTextNode(u'\n			'))
 				scope_el.appendChild(entry)
-			scope_el.appendChild(XMLDocument().createTextNode(u'\n		'))
 			com_els.append(scope_el)
 
 		if restricted:
-			scope_el = XMLDocument().createElement('scope')
+			scope_el = dom.createElement('scope')
 			scope_el.setAttribute('type', u'restricted')
 			for entry in restricted:
-				scope_el.appendChild(XMLDocument().createTextNode(u'\n			'))
 				scope_el.appendChild(entry)
-			scope_el.appendChild(XMLDocument().createTextNode(u'\n		'))
 			com_els.append(scope_el)
 
 		return com_els
@@ -153,6 +134,8 @@ class _RelatedWorkExtractor(object):
 		if lesson_els or related_els:
 			outpath = os.path.expanduser(book.contentLocation)
 			# add name space
+			# FIXME: This is not the right way to do that. It should be
+			# managed automatically?
 			dom.childNodes[0].setAttribute('xmlns:content', "http://www.nextthought.com/toc")
 			# cache topics
 			topic_map = self._get_topic_map(dom)
@@ -273,11 +256,10 @@ class _RelatedWorkExtractor(object):
 		for d, node in content_items:
 			if node is None:
 				continue
-			el = dom.createElement('content:related')
+			el = dom.createElementNS("http://www.nextthought.com/toc", 'content:related')
 			for name, value in d.items():
 				el.setAttribute(unicode(name), unicode(value))
 			node.appendChild(el)
-			node.appendChild(dom.createTextNode(u'\n'))
 
 			items[d['ntiid']] = d
 			container = node.getAttribute('ntiid') or doc_ntiid
@@ -347,7 +329,6 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('icon', icon)
 					if lesson_el:
 						lesson_el.appendChild(toc_el)
-						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 				for discussionref_el in discussionref_els:
 					lesson_el = topic_map.get(el.ntiid)
@@ -368,7 +349,6 @@ class _DiscussionExtractor(object):
 					toc_el.setAttribute('icon', icon)
 					if lesson_el:
 						lesson_el.appendChild(toc_el)
-						lesson_el.appendChild(dom.createTextNode(u'\n'))
 
 @interface.implementer(crd_interfaces.INTIVideoExtractor)
 @component.adapter(crd_interfaces.IRenderedBook)
@@ -573,7 +553,6 @@ class _NTIVideoExtractor(object):
 		toc_el.setAttribute('type', 'application/vnd.nextthought.videoindex')
 
 		dom.childNodes[0].appendChild(toc_el)
-		dom.childNodes[0].appendChild(dom.createTextNode(u'\n'))
 
 
 	def _process_lessons(self, dom, els, topic_map):
@@ -605,4 +584,3 @@ class _NTIVideoExtractor(object):
 					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
 					if lesson_el is not None:
 						lesson_el.appendChild(toc_el)
-						lesson_el.appendChild(dom.createTextNode(u'\n'))
