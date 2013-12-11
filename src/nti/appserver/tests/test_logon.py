@@ -311,8 +311,8 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		fail = openid_login( None, get_current_request() )
 		assert_that( fail, is_( hexc.HTTPUnauthorized ) )
 
-		from pyramid.session import UnencryptedCookieSessionFactoryConfig
-		my_session_factory = UnencryptedCookieSessionFactoryConfig('ntidataservercookiesecretpass')
+		from pyramid.session import SignedCookieSessionFactory
+		my_session_factory = SignedCookieSessionFactory('ntidataservercookiesecretpass', httponly=True)
 		self.config.set_session_factory( my_session_factory )
 		self.config.add_route( name=ROUTE_OPENID_RESPONSE, pattern='/dataserver2/' + ROUTE_OPENID_RESPONSE )
 
