@@ -32,19 +32,18 @@ class IndexHit(zcontained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
 	__external_can_create__ = True
 
-	__slots__ = ('ref', 'score', '__parent__', '__name__')
-
 	def __init__(self, obj=None, score=None):
+		super(IndexHit,self).__init__()
 		self.ref = obj
 		self.score = score
-	
+
 	@property
 	def obj(self):
 		result = self.ref
 		if isinstance(self.ref, (numbers.Integral, six.string_types)):
 			result = discriminators.get_object(int(self.ref))
 		return result
-			
+
 	@property
 	def query(self):
 		return None if self.__parent__ is None else self.__parent__.query
@@ -131,6 +130,7 @@ class _BaseSearchResults(zcontained.Contained):
 	sorted = False
 
 	def __init__(self, query):
+		super(_BaseSearchResults,self).__init__()
 		assert search_interfaces.ISearchQuery.providedBy(query)
 		self._query = query
 
