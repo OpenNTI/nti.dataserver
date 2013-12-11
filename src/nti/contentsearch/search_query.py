@@ -159,6 +159,10 @@ class QueryObject(object, UserDict.DictMixin):
 	# -- search --
 
 	@property
+	def content_id(self):
+		return getattr(self, 'indexid', None)
+
+	@property
 	def is_empty(self):
 		return not self.term
 

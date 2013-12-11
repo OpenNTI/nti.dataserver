@@ -291,16 +291,19 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 @interface.implementer(search_interfaces.ISearchResultsCreator)
 class _SearchResultCreator(object):
+
 	def __call__(self, query):
 		return _SearchResults(query)
 
 @interface.implementer(search_interfaces.ISuggestResultsCreator)
 class _SuggestResultsCreator(object):
+
 	def __call__(self, query):
 		return _SuggestResults(query)
 
 @interface.implementer(search_interfaces.ISuggestAndSearchResultsCreator)
 class _SuggestAndSearchResultsCreator(object):
+
 	def __call__(self, query):
 		return _SuggestAndSearchResults(query)
 

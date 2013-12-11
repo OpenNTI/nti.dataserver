@@ -148,4 +148,5 @@ def create_queryobject(username, params, matchdict, registry=component):
 def get_queryobject(request):
 	username = request.matchdict.get('user', None)
 	username = username or request.authenticated_userid
-	return create_queryobject(username, request.params, request.matchdict, request.registry)
+	return create_queryobject(username, request.params, request.matchdict,
+							  request.registry)

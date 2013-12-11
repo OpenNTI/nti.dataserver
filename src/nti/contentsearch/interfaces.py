@@ -38,7 +38,7 @@ SEARCH_TYPES_VOCABULARY = \
 
 class ISearchQuery(interface.Interface):
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
-	username = nti_schema.ValidTextLine(title="User doing the search", required=True)
+	username = nti_schema.ValidTextLine(title="User doing the search", required=False)
 	language = nti_schema.ValidTextLine(title="Query search term language", required=False, default='en')
 
 	limit = schema.Int(title="search results limit", required=False)
@@ -48,8 +48,8 @@ class ISearchQuery(interface.Interface):
 	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
 	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)
 
-	batchSize = schema.Int(title="page size", required=False)
-	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False)
+	batchSize = schema.Int(title="page size", required=False, min=1)
+	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False, min=0)
 
 	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
 	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
