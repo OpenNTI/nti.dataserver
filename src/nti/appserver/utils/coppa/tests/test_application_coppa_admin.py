@@ -35,13 +35,25 @@ from nti.testing.matchers import validly_provides as verifiably_provides
 
 class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
+	IF_ROOT = None
+	IF_WOUT_AGREEMENT = None
+	IF_WITH_AGREEMENT = None
+
+	@classmethod
+	def setUpClass(cls):
+		super(TestApplicationCoppaAdmin,cls).setUpClass()
+		from nti.app.sites.mathcounts.policy import MathcountsSitePolicyEventListener
+		cls.IF_ROOT = MathcountsSitePolicyEventListener.IF_ROOT
+		cls.IF_WOUT_AGREEMENT = MathcountsSitePolicyEventListener.IF_WOUT_AGREEMENT
+		cls.IF_WITH_AGREEMENT = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT
+
 	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):
 		"Basic tests of the coppa admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )
-			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
+			interface.alsoProvides( coppa_user, self.IF_WOUT_AGREEMENT )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
 
 		testapp = TestApp( self.app )
@@ -108,7 +120,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
-			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithAgreement ) )
+			assert_that( user, verifiably_provides( self.IF_WITH_AGREEMENT ) )
 			assert_that( user, verifiably_provides( user_interfaces.IRequireProfileUpdate ) )
 
 			assert_that( user_interfaces.IFriendlyNamed( user ), has_property( 'realname', 'Jason' ) )
@@ -117,7 +129,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
 			assert_that( upgrade_event, has_property( 'user', user ) )
-			assert_that( upgrade_event, has_property( 'upgraded_interface', site_policies.IMathcountsCoppaUserWithAgreement ) )
+			assert_that( upgrade_event, has_property( 'upgraded_interface', self.IF_WITH_AGREEMENT ) )
 
 		# We generated just the ack email
 		mailer = component.getUtility( ITestMailDelivery )
@@ -158,7 +170,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 	def test_post_contact_email_addr_sends_email(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = self._create_user( username='ossmkitty' )
-			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
+			interface.alsoProvides( coppa_user, self.IF_WOUT_AGREEMENT )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
 
 		testapp = TestApp( self.app )
@@ -178,7 +190,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
-			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
+			assert_that( user, verifiably_provides( self.IF_WOUT_AGREEMENT ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
 
 		# reset
@@ -209,7 +221,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = users.User.get_user( 'ossmkitty' )
-			assert_that( user, verifiably_provides( site_policies.IMathcountsCoppaUserWithoutAgreement ) )
+			assert_that( user, verifiably_provides( self.IF_WOUT_AGREEMENT ) )
 			assert_that( user_interfaces.IUserProfile( user ), has_property( 'contact_email', none() ) )
 
 	@WithSharedApplicationMockDS
@@ -217,7 +229,7 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )
-			interface.alsoProvides( coppa_user, site_policies.IMathcountsCoppaUserWithoutAgreement )
+			interface.alsoProvides( coppa_user, self.IF_WOUT_AGREEMENT )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
 
 		testapp = TestApp( self.app )

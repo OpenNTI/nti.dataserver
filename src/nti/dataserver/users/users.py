@@ -41,6 +41,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids import ntiids
 
@@ -276,7 +277,7 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 		"""
 		super(Device,self).__init__()
 		if isinstance(deviceId,collections.Mapping):
-			deviceId = deviceId[datastructures.StandardExternalFields.ID]
+			deviceId = deviceId[StandardExternalFields.ID]
 		# device id arrives in hex encoding
 		self.deviceId = deviceId.decode( 'hex' )
 
