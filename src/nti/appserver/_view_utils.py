@@ -234,7 +234,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
-			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s", datatype, externalValue )
+			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
+						  datatype, externalValue, containedObject, predicate )
 			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
 		return containedObject
 
