@@ -13,13 +13,14 @@ from hamcrest.library import has_property
 from hamcrest import greater_than_or_equal_to
 from hamcrest import less_than
 from hamcrest import is_not
-from hamcrest import contains, contains_inanyorder
+from hamcrest import contains
 from hamcrest import has_value
 from hamcrest import same_instance
 does_not = is_not
 from nose.tools import assert_raises
 from nti.testing.time import time_monotonically_increases
 from nti.testing.matchers import is_empty
+import unittest
 
 from nti.appserver.application import createApplication, _configure_async_changes
 from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
@@ -35,8 +36,6 @@ from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase
 import webob.datetime_utils
 import datetime
 import time
-import functools
-import os
 import os.path
 
 import urllib
@@ -1150,6 +1149,7 @@ class TestApplicationSearch(SharedApplicationTestBase):
 				# Nor one that doesn't exist
 				testapp.get( path, extra_environ=self._make_extra_environ(user='user_dne@biz'), status=401)
 
+	@unittest.skip("Carlos is change the implementation and _get_user_index_manager is gone")
 	@WithSharedApplicationMockDS
 	def test_ugd_search_no_data_returns_empty(self):
 		"Any search term against a user whose index DNE returns empty results"
@@ -1169,6 +1169,7 @@ class TestApplicationSearch(SharedApplicationTestBase):
 			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
+	@unittest.skip("Carlos is change the implementation and _get_user_index_manager is gone")
 	@WithSharedApplicationMockDS
 	def test_ugd_search_other_user(self):
 		"Security prevents searching other user's data"
