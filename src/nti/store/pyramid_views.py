@@ -27,8 +27,6 @@ from zope.event import notify
 from zope import lifecycleevent
 from zope.annotation import IAnnotations
 
-from pyramid.security import authenticated_userid
-
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -64,20 +62,14 @@ class _PurchaseAttemptView(object):
 
 class GetPendingPurchasesView(_PurchaseAttemptView):
 
-	def __init__(self, request):
-		self.request = request
-
 	def __call__(self):
 		request = self.request
-		username = authenticated_userid(request)
+		username = request.authenticated_userid
 		purchases = purchase_history.get_pending_purchases(username)
 		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
 		return result
 
 class GetPurchaseHistoryView(_PurchaseAttemptView):
-
-	def __init__(self, request):
-		self.request = request
 
 	def _convert(self, t):
 		result = t
@@ -89,7 +81,7 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 
 	def __call__(self):
 		request = self.request
-		username = authenticated_userid(request)
+		username = request.authenticated_userid
 		purchasable_id = request.params.get('purchasableID', None)
 		if not purchasable_id:
 			start_time = self._convert(request.params.get('startTime', None))
@@ -120,7 +112,7 @@ class GetPurchaseAttemptView(object):
 
 	def __call__(self):
 		request = self.request
-		username = authenticated_userid(request)
+		username = request.authenticated_userid
 		purchase_id = request.params.get('purchaseID')
 		if not purchase_id:
 			raise_field_error(request, "purchaseID", "Failed to provide a purchase attempt ID")
@@ -192,7 +184,7 @@ class RedeemPurchaseCodeView(_PostView):
 		if purchasable_id not in purchase.Items:
 			raise_field_error(request, "invitation_code", _("The invitation code is not for this purchasable"))
 
-		username = authenticated_userid(request)
+		username = request.authenticated_userid
 		try:
 			invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
 			invite.accept(username)
@@ -232,10 +224,10 @@ class PricePurchasableView(_PostView):
 		return result
 
 class EnrollCourseView(_PostView):
-				
+
 	def enroll(self, values=None):
 		values = values or self.readInput()
-		username = authenticated_userid(self.request)
+		username = self.request.authenticated_userid
 		course_id = values.get('courseID', u'')
 		description = values.get('description', u'')
 		try:
@@ -253,7 +245,7 @@ class UnenrollCourseView(_PostView):
 
 	def unenroll(self, values=None):
 		values = values or self.readInput()
-		username = authenticated_userid(self.request)
+		username = self.request.authenticated_userid
 		course_id = values.get('courseID', u'')
 		try:
 			enrollment.unenroll_course(username, course_id, self.request)
@@ -310,7 +302,7 @@ class DeletePurchaseAttemptView(_BasePostPurchaseAttemptView):
 class DeletePurchaseHistoryView(_PostView):
 
 	def __call__(self):
-		username = authenticated_userid(self.request)
+		username = self.request.authenticated_userid
 		user = users.User.get_user(username)
 		su = store_interfaces.IPurchaseHistory(user)
 
@@ -327,7 +319,7 @@ class PermissionPurchasableView(_PostView):
 
 	def __call__(self):
 		values = self.readInput()
-		username = values.get('username', authenticated_userid(self.request))
+		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
@@ -350,7 +342,7 @@ class GetContentRolesView(object):
 
 	def __call__(self):
 		request = self.request
-		username = request.params.get('username') or  authenticated_userid(request)
+		username = request.params.get('username') or  request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')

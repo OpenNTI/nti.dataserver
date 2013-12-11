@@ -18,7 +18,6 @@ from zope import interface
 from zope.deprecation import deprecate
 
 import pyramid.interfaces
-import pyramid.security as sec
 from pyramid.view import view_config
 import pyramid.httpexceptions as hexc
 
@@ -120,7 +119,7 @@ def _create_new_session(request):
 	Creates a session for the authenticated user of the request.
 	"""
 
-	username = sec.authenticated_userid( request )
+	username = request.authenticated_userid
 	if not username:
 		logger.debug( "Unauthenticated session request" )
 		raise hexc.HTTPUnauthorized()
@@ -225,7 +224,7 @@ def _connect_view( request ):
 	# So this is a hamfisted way of achieving that policy.
 	# NOTE: It seems that the 'flashsocket' transport does not actually set
 	# up authentication
-	if not sec.authenticated_userid( request ):
+	if not request.authenticated_userid:
 		if transport == 'flashsocket':
 			logger.warn( "Allowing unauthenticated flashsocket use from %s", request )
 		else:

@@ -16,7 +16,6 @@ from zope import interface
 from zope import component
 from zope.container.interfaces import ILocation
 
-from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
 from nti.dataserver.links import Link
@@ -136,7 +135,7 @@ class PurchasableDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		request = get_current_request()
-		username = authenticated_userid(request) if request else None
+		username = request.authenticated_userid if request else None
 		if username:
 			self.add_activation(username, original, external)
 			self.set_links(request, username, original, external)

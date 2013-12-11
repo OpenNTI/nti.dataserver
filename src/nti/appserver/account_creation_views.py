@@ -28,7 +28,6 @@ import zope.schema.interfaces
 
 import z3c.password.interfaces
 
-from pyramid import security as sec
 from pyramid.view import view_config
 
 import nti.appserver.httpexceptions as hexc
@@ -231,7 +230,7 @@ def account_create_view(request):
 
 	"""
 
-	if sec.authenticated_userid( request ):
+	if request.authenticated_userid:
 		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
 
 	# TODO: We are hardcoding the factory. Should we do that?
@@ -283,7 +282,7 @@ def account_preflight_view(request):
 
 	"""
 
-	if sec.authenticated_userid( request ):
+	if request.authenticated_userid:
 		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
 
 	externalValue = obj_io.read_body_as_external_object(request)

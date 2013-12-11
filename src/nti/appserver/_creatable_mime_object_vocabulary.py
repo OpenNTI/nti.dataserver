@@ -15,7 +15,6 @@ from zope import interface
 from zope.schema import interfaces as sch_interfaces
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
 
-from pyramid import security as psec
 from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 
@@ -96,7 +95,7 @@ def _user_sensitive_factory_finder(ext_object):
 	request = get_current_request()
 	if request:
 		try:
-			auth_user_name = psec.authenticated_userid( request )
+			auth_user_name = request.authenticated_userid
 		except AssertionError:
 			# Some test cases call us with bad header values, causing
 			# repoze.who.api.request_classifier and paste.httpheaders to incorrectly

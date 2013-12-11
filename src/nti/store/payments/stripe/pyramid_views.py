@@ -15,7 +15,6 @@ import transaction
 from zope import component
 
 from pyramid import httpexceptions as hexc
-from pyramid.security import authenticated_userid
 
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -177,7 +176,7 @@ class StripePaymentView(_PostStripeView):
 	def __call__(self):
 		request = self.request
 
-		username = authenticated_userid(request)
+		username = request.authenticated_userid
 		purchase_attempt, token, stripe_key, expected_amount = self.readInput(username)
 
 		# check for any pending purchase for the items being bought

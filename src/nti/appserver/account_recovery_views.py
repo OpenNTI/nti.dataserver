@@ -34,9 +34,7 @@ from nti.appserver._util import raise_json_error
 from nti.appserver._email_utils import queue_simple_html_text_email
 from nti.appserver import _external_object_io as obj_io
 
-
 from pyramid.view import view_config
-from pyramid import security as sec
 
 import nti.appserver.httpexceptions as hexc
 
@@ -63,7 +61,7 @@ REL_FORGOT_PASSCODE = "logon.forgot.passcode"
 REL_RESET_PASSCODE  = 'logon.reset.passcode'
 
 def _preflight_email_based_request(request):
-	if sec.authenticated_userid( request ):
+	if request.authenticated_userid:
 		raise hexc.HTTPForbidden( "Cannot look for forgotten accounts while logged on." )
 
 	email_assoc_with_account = request.params.get( 'email' )
@@ -269,7 +267,7 @@ def reset_passcode_view(request):
 	Note that this does not log the user in; they must use their new password to do that.
 
 	"""
-	if sec.authenticated_userid( request ):
+	if request.authenticated_userid:
 		raise hexc.HTTPForbidden( "Cannot look for forgotten accounts while logged on." )
 
 	username = request.params.get( 'username' )

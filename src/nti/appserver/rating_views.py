@@ -17,7 +17,6 @@ from zope import component
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
-from pyramid.security import authenticated_userid
 
 from nti.appserver import _util
 
@@ -55,7 +54,7 @@ def _RateView(request):
 	except ValueError:
 		raise hexc.HTTPUnprocessableEntity(detail='invaing rating')
 
-	ranking.rate_object(request.context, authenticated_userid(request), rating)
+	ranking.rate_object(request.context, request.authenticated_userid, rating)
 	return _util.uncached_in_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
@@ -65,5 +64,5 @@ def _RateView(request):
 			  request_method='DELETE',
 			  name='unrate')
 def _RemoveRatingView(request):
-	ranking.unrate_object(request.context, authenticated_userid(request))
+	ranking.unrate_object(request.context, request.authenticated_userid)
 	return _util.uncached_in_response(request.context)

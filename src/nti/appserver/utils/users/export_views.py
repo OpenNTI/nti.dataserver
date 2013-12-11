@@ -19,7 +19,6 @@ from collections import defaultdict
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
-from pyramid.security import authenticated_userid
 
 import ZODB
 import zope.intid
@@ -102,7 +101,7 @@ def user_info_extract(request):
 	return response
 
 # user_opt_in_email_communication
-			
+
 def _parse_time(t):
 	try:
 		return datetime.fromtimestamp(t).isoformat() if t else u''
@@ -129,7 +128,7 @@ def _get_opt_in_comm(coppaOnly=False):
 	for user in users:
 		if coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user):
 			continue
-		
+
 		iid = _ds_intid.queryId(user, None)
 		if iid is not None:
 			email = _get_field_info(iid, ent_catalog, 'email')
@@ -166,7 +165,7 @@ def _get_profile_info(coppaOnly=False):
 	for user in _users.values():
 		if not nti_interfaces.IUser.providedBy(user) or (coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user)):
 			continue
-		
+
 		profile = user_interfaces.IUserProfile(user)
 		email = getattr(profile, 'email', None)
 		contact_email =  getattr(profile, 'contact_email', None)
@@ -183,7 +182,7 @@ def user_profile_info(request):
 	def _generator():
 		for obj in _get_profile_info(coppaOnly):
 			yield obj
-			
+
 	response = request.response
 	response.content_type = b'text/csv; charset=UTF-8'
 	response.content_disposition = b'attachment; filename="profile.csv"'
@@ -259,7 +258,7 @@ def _get_user_objects(user, mime_types=(), broken=False):
 			 permission=nauth.ACT_MODERATE)
 def user_export_objects(request):
 	values = request.params
-	username = values.get('username', authenticated_userid(request))
+	username = values.get('username') or request.authenticated_userid
 	user = users.Entity.get_entity(username)
 	if not user:
 		raise hexc.HTTPNotFound(detail='User %s not found' % username)
@@ -309,10 +308,10 @@ def object_resolver(request):
 			 request_method='POST',
 			 permission=nauth.ACT_MODERATE)
 class DeleteObjectObjects(_JsonBodyView):
-	
+
 	def __call__(self):
 		values = self.readInput()
-		username = values.get('username', authenticated_userid(self.request))
+		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
@@ -338,8 +337,8 @@ class DeleteObjectObjects(_JsonBodyView):
 					obj = user.getContainedObject(containerId, objId)
 					if obj is not None and user.deleteContainedObject(containerId, objId):
 						counter_map[mime_type] = counter_map[mime_type] + 1
-						
-		
+
+
 		if broken_objects:
 			for container in list(user.containers.values()):
 				for _, obj in list(container.items()):

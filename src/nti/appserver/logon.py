@@ -139,7 +139,7 @@ def _authenticated_user( request ):
 	reference a user that no longer or doesn't exist; this can happen during
 	testing when mixing site names up.)
 	"""
-	remote_user_name = sec.authenticated_userid( request )
+	remote_user_name = request.authenticated_userid
 	if remote_user_name:
 		remote_user = users.User.get_user( remote_user_name )
 		return remote_user
@@ -237,7 +237,7 @@ def _forgetting( request, redirect_param_name, no_param_class, redirect_value=No
 		# TODO: Sending multiple warnings
 		response.headers[b'Warning'] = error.encode('utf-8')
 
-	logger.debug( "Forgetting user %s with %s (%s)", sec.authenticated_userid(request), response, response.headers )
+	logger.debug( "Forgetting user %s with %s (%s)", request.authenticated_userid, response, response.headers )
 	return response
 
 @view_config(route_name=REL_LOGIN_LOGOUT, request_method='GET')
@@ -590,7 +590,7 @@ def _create_success_response( request, userid=None, success=None ):
 
 	request.response = response # Make it the same to avoid confusing things that only get the request, e.g., event listeners
 
-	userid = userid or sec.authenticated_userid( request )
+	userid = userid or request.authenticated_userid
 
 	logon_userid_with_request( userid, request, response )
 

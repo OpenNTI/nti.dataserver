@@ -16,7 +16,6 @@ from zope import interface
 from zope.location import locate
 
 from pyramid import httpexceptions as hexc
-from pyramid.security import authenticated_userid
 
 from . import common
 from . import constants
@@ -148,5 +147,5 @@ def create_queryobject(username, params, matchdict, registry=component):
 
 def get_queryobject(request):
 	username = request.matchdict.get('user', None)
-	username = username or authenticated_userid(request)
+	username = username or request.authenticated_userid
 	return create_queryobject(username, request.params, request.matchdict, request.registry)

@@ -23,7 +23,6 @@ from zope.intid.interfaces import IIntIds
 from z3c.batching.batch import Batch
 
 from pyramid.view import view_config
-from pyramid import security as psec
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 
@@ -258,7 +257,7 @@ def _ifollowandme_predicate_factory( request ):
 	return _ifollow_predicate_factory( request, True )
 
 def _favorite_predicate_factory( request ):
-	auth_userid = psec.authenticated_userid( request )
+	auth_userid = request.authenticated_userid
 	return functools.partial( liking.favorites_object, username=auth_userid, safe=True )
 
 def _bookmark_predicate_factory( request ):
@@ -1232,7 +1231,7 @@ def replies_view(request):
 	"""
 
 	# First collect the objects
-	the_user = users.User.get_user( psec.authenticated_userid( request ) )
+	the_user = users.User.get_user( request.authenticated_userid )
 	root_note = request.context
 
 	result_iface = IUGDExternalCollection

@@ -15,7 +15,7 @@ import collections
 import simplejson as json
 
 from pyramid.threadlocal import get_current_request
-from pyramid.security import authenticated_userid, remember
+from pyramid.security import remember
 
 from zope import interface
 from zope.event import notify
@@ -74,7 +74,7 @@ class AbstractTwoStateViewLinkDecorator(object):
 			the generated link.
 		"""
 		request = get_current_request()
-		current_username = authenticated_userid( request ) if request else None
+		current_username = request.authenticated_userid if request else None
 		if not current_username:
 			return
 

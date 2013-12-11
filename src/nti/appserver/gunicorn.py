@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 import os
 
-from pyramid.security import unauthenticated_userid
 from pyramid.threadlocal import get_current_request
 
 import gunicorn
@@ -334,7 +333,7 @@ class _ServerFactory(object):
 					pass
 				cache = False
 				try:
-					uid = unauthenticated_userid( prequest )
+					uid = prequest.unauthenticated_userid
 					cache = True
 				except (LookupError,AttributeError): # pragma: no cover
 					# In some cases, pyramid tries to turn this into an authenticated
