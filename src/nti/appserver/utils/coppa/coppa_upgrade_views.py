@@ -110,6 +110,10 @@ class RollbackCoppaUsers(_JsonBodyView):
 			dataserver = component.getUtility( nti_interfaces.IDataserver)
 			usernames = nti_interfaces.IShardLayout(dataserver).users_folder.keys()
 
+		policy, _ = site_policies.find_site_policy(self.request)
+		if policy is None or not hasattr(policy, 'IF_ROOT'):
+			return "No policy found"
+
 		items = []
 		for username in usernames:
 			user = users.User.get_user(username)
@@ -126,14 +130,14 @@ class RollbackCoppaUsers(_JsonBodyView):
 				if testmode:
 					continue
 
-				is_mc_user = sp_interfaces.IMathcountsUser.providedBy(user)
+				is_mc_user = policy.IF_ROOT.providedBy(user)
 
 				# reset interfaces
 
 				if is_mc_user:
-					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreement)
-					interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
-					interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
+					interface.noLongerProvides(user, policy.IF_WITH_AGREEMENT)
+					interface.noLongerProvides(user, policy.IF_WITH_AGREEMENT_UPGRADED)
+					interface.alsoProvides(user, policy.IF_WOUT_AGREEMENT)
 				else:
 					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreement)
 					interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
@@ -267,14 +271,18 @@ def upgrade_coppa_user_view(request):
 	if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
 		raise hexc.HTTPUnprocessableEntity(detail='User is not a coppa user')
 
+	policy, _ = site_policies.find_site_policy(request)
+	if policy is None or not hasattr(policy, 'IF_ROOT'):
+		return "No policy found"
+
 	if iface is IOver13Schema:
-		if sp_interfaces.IMathcountsUser.providedBy(user):
+		if policy.IF_ROOT.providedBy(user):
 			# let's make sure we remove this interface if it's there
 			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
 				interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 
-			interface.noLongerProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
-			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithAgreementUpgraded)
+			interface.noLongerProvides(user, policy.IF_WOUT_AGREEMENT)
+			interface.alsoProvides(user, policy.IF_WITH_AGREEMENT_UPGRADED)
 		else:
 			interface.noLongerProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithAgreementUpgraded)
@@ -286,8 +294,8 @@ def upgrade_coppa_user_view(request):
 		setattr(profile, 'opt_in_email_communication', is_true(externalValue.get('opt_in_email_communication')))
 	else:
 		contact_email = externalValue.get('contact_email')
-		if sp_interfaces.IMathcountsUser.providedBy(user):
-			interface.alsoProvides(user, sp_interfaces.IMathcountsCoppaUserWithoutAgreement)
+		if policy.IF_ROOT.providedBy(user):
+			interface.alsoProvides(user, policy.IF_WOUT_AGREEMENT)
 		else:
 			interface.alsoProvides(user, nti_interfaces.ICoppaUserWithoutAgreement)
 		profile = user_interfaces.IUserProfile(user)
