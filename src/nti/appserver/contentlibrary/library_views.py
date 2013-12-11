@@ -23,7 +23,6 @@ from zope.annotation.factory import factory as an_factory
 from zope.traversing import interfaces as trv_interfaces
 
 from pyramid import traversal
-from pyramid import security as sec
 from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 from pyramid.view import view_config, view_defaults
@@ -93,7 +92,7 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	# Traverse down to the pages collection and use it to create the info.
 	# This way we get the correct link structure
 
-	remote_user = users.User.get_user(sec.authenticated_userid(request),
+	remote_user = users.User.get_user(request.authenticated_userid,
 									  dataserver=request.registry.getUtility(nti_interfaces.IDataserver))
 	if not remote_user:
 		raise hexc.HTTPForbidden()
@@ -236,8 +235,9 @@ class _ContentUnitPreferencesDecorator(object):
 			return
 
 		request = get_current_request()
-		if not request: return
-		remote_user = users.User.get_user( sec.authenticated_userid( request ),
+		if not request:
+			return
+		remote_user = users.User.get_user( request.authenticated_userid,
 										   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
 		if not remote_user:
 			return
@@ -310,7 +310,7 @@ class _ContentUnitFieldsTraversable(object):
 	def traverse( self, name, remaining_path ):
 		if name == 'sharingPreference':
 			request = self.request or get_current_request()
-			remote_user = users.User.get_user( sec.authenticated_userid( request ),
+			remote_user = users.User.get_user( request.authenticated_userid,
 											   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
 			# Preferences for the root are actually stored
 			# on the unnamed node

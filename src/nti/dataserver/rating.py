@@ -17,7 +17,6 @@ from zope import interface
 from zope.event import notify
 from zope.annotation import interfaces as an_interfaces
 
-from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
 from persistent.interfaces import IPersistent
@@ -38,7 +37,7 @@ RATING_CAT_NAME = u'rating'
 
 class IObjectUnratedEvent(cr_interfaces.IObjectRatedEvent):
 	pass
-	
+
 @interface.implementer(IObjectUnratedEvent)
 class ObjectUnratedEvent(ObjectRatedEvent):
 	pass
@@ -173,7 +172,7 @@ class RatingDecorator(object):
 
 	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
-		username = authenticated_userid(request) if request else None
+		username = request.authenticated_userid if request else None
 		if username:
 			rating = rates_object(context, username)
 			if rating is not None:

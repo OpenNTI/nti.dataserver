@@ -15,8 +15,6 @@ from zope import component
 
 from pyramid.view import view_config
 
-from pyramid.security import authenticated_userid
-
 from nti.appserver import _util
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -49,7 +47,7 @@ def _LikeView(request):
 	Registered as a named view, so invoked via the @@like syntax.
 
 	"""
-	liking.like_object( request.context, authenticated_userid( request ) )
+	liking.like_object( request.context, request.authenticated_userid )
 	return _util.uncached_in_response( request.context )
 
 
@@ -67,7 +65,7 @@ def _UnlikeView(request):
 	Registered as a named view, so invoked via the @@unlike syntax.
 
 	"""
-	liking.unlike_object( request.context, authenticated_userid( request ) )
+	liking.unlike_object( request.context, request.authenticated_userid )
 	return _util.uncached_in_response( request.context )
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
@@ -95,7 +93,7 @@ def _FavoriteView(request):
 	Registered as a named view, so invoked via the @@favorite syntax.
 
 	"""
-	liking.favorite_object( request.context, authenticated_userid( request ) )
+	liking.favorite_object( request.context, request.authenticated_userid )
 	return _util.uncached_in_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
@@ -112,5 +110,5 @@ def _UnfavoriteView(request):
 	Registered as a named view, so invoked via the @@unlike syntax.
 
 	"""
-	liking.unfavorite_object( request.context, authenticated_userid( request ) )
+	liking.unfavorite_object( request.context, request.authenticated_userid )
 	return _util.uncached_in_response( request.context )

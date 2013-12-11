@@ -20,7 +20,6 @@ from zc import intid as zc_intid
 from pyramid.request import Request
 from pyramid.view import view_config
 import pyramid.httpexceptions  as hexc
-from pyramid.security import authenticated_userid
 
 from nti.appserver import _util
 from nti.appserver import interfaces as app_interfaces
@@ -63,7 +62,7 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 
 def _do_flag(f, request):
 	try:
-		f( request.context, authenticated_userid( request ) )
+		f( request.context, request.authenticated_userid )
 		return _util.uncached_in_response( request.context )
 	except KeyError: # pragma: no cover
 		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
@@ -153,7 +152,7 @@ def moderation_admin_post( request ):
 
 	if 'subFormTable.buttons.unflag' in request.POST:
 		for item in the_table.selectedItems:
-			flagging.unflag_object( item, authenticated_userid( request ) )
+			flagging.unflag_object( item, request.authenticated_userid )
 	elif 'subFormTable.buttons.delete' in request.POST:
 		# TODO: We should probably do something in this object's place,
 		# notify the user they have been moderated. As it is, the object
@@ -167,7 +166,7 @@ def moderation_admin_post( request ):
 		# Also if we do this, do we want to remove its 'public' visibility? Or for the sake of
 		# threads do we need to leave it?
 		for item in the_table.selectedItems:
-			flagging.unflag_object( item, authenticated_userid( request ) )
+			flagging.unflag_object( item, request.authenticated_userid )
 			interface.alsoProvides( item, IModeratorDealtWithFlag) # TODO: Apply the IDeletedObjectPlaceholder ?
 
 			# TODO: This is not very generic due to the way that

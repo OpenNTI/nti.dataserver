@@ -24,7 +24,6 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 from zope.schema import interfaces as sch_interfaces
 
-from pyramid import security as sec
 from pyramid.threadlocal import get_current_request
 from pyramid import traversal
 import webob.datetime_utils
@@ -52,7 +51,7 @@ def get_remote_user(request=None, dataserver=None):
 
 	result = None
 	if request is not None and dataserver is not None:
-		result = users.User.get_user(sec.authenticated_userid(request), dataserver=dataserver)
+		result = users.User.get_user(request.authenticated_userid, dataserver=dataserver)
 	return result
 
 class AbstractView(object):

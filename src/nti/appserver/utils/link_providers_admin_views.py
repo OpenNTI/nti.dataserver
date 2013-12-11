@@ -15,8 +15,6 @@ from pyramid import httpexceptions as hexc
 
 from zope.annotation import IAnnotations
 
-from pyramid.security import authenticated_userid
-
 from nti.appserver import logon
 from nti.appserver.utils import _JsonBodyView
 from nti.appserver.link_providers import link_provider
@@ -44,7 +42,7 @@ class _ResetGenerationLink(_JsonBodyView):
 
 	def __call__(self):
 		values = self.readInput()
-		username = values.get('username', authenticated_userid(self.request))
+		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')

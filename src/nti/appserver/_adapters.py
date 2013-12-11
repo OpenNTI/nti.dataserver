@@ -184,7 +184,6 @@ class _DFLUserLikeDecorator(object):
 
 
 import nameparser
-from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 from zope.i18n.interfaces import IUserPreferredLanguages
 
@@ -205,7 +204,8 @@ class _UserRealnameStripper(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject( self, original, external ):
-		if original.username == psec.authenticated_userid( get_current_request() ):
+		request = get_current_request()
+		if request and original.username == request.authenticated_userid:
 			return
 		for k in _REALNAME_FIELDS:
 			if k in external:
@@ -479,7 +479,7 @@ class _AuthenticatedUserLinkAdder(object):
 		if not request:
 			return
 
-		userid = psec.authenticated_userid( request )
+		userid = request.authenticated_userid
 		if not userid or original.username != userid:
 			return
 

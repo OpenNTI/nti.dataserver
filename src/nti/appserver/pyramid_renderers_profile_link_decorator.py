@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from pyramid.security import authenticated_userid
 from pyramid.threadlocal import get_current_request
 
 from nti.externalization import interfaces as ext_interfaces
@@ -40,7 +39,7 @@ class ProfileLinkDecorator(object):
 	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
 		the_links = mapping.setdefault(LINKS, [])
-		if request is not None and context.username == authenticated_userid(request):
+		if request is not None and context.username == request.authenticated_userid:
 			# You get your own profile schema
 			link = Link(context,
 					 	rel=REL_ACCOUNT_PROFILE_SCHEMA,

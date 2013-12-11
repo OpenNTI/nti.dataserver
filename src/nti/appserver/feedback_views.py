@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 import textwrap
 
 from pyramid.view import view_config
-from pyramid import security as psec
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
@@ -96,7 +95,7 @@ def send_feedback_view( request ):
 
 	return _format_email( request,
 						  'body',
-						  psec.authenticated_userid(request),
+						  request.authenticated_userid,
 						  'Feedback',
 						  'Feedback From %s on %s',
 						  'feedback@nextthought.com' )
@@ -115,7 +114,7 @@ def send_crash_report_view( request ):
 	email. To help prevent abuse, ``message`` is capped in size.
 	"""
 	# Not actually enforcing any of that now.
-	userid = psec.authenticated_userid(request) or psec.unauthenticated_userid(request) or "unknown"
+	userid = request.authenticated_userid or request.unauthenticated_userid or "unknown"
 	return _format_email( request,
 						  'message',
 						  userid,

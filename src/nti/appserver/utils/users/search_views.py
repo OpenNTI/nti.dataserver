@@ -18,7 +18,6 @@ from zope.proxy import ProxyBase
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
-from pyramid.security import authenticated_userid
 
 import ZODB
 
@@ -111,7 +110,7 @@ def _do_content_reindex(entity, predicate, processSharingTargets=True):
 def reindex_content(request):
 	values = simplejson.loads(unicode(request.body, request.charset)) if request.body else {}
 	values = CaseInsensitiveDict(**values)
-	username = values.get('username', authenticated_userid(request))
+	username = values.get('username') or request.authenticated_userid
 	entity = users.Entity.get_entity(username)
 	if entity is None or not nti_interfaces.IEntity.providedBy(entity):
 		raise hexc.HTTPNotFound(detail='Entity not found')

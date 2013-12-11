@@ -17,17 +17,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import pkg_resources
 import dolmen.builtins
-from cStringIO import StringIO
-
-try:
-	from gevent.lock import RLock
-except ImportError:
-	from threading import RLock
-
-import PyPDF2 as pyPdf
-from PyPDF2 import generic as pdf_generic
 
 from zope import component
 from zope import interface
@@ -57,7 +47,6 @@ from . import site_policies
 def dispatch_content_created_to_user_policies( content, event ):
 	component.handle( content, content.creator, event )
 
-from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 from nti.dataserver import users
 from nti.dataserver.users import user_profile
@@ -71,7 +60,7 @@ def dispatch_content_edited_to_user_policies( content, event ):
 	# there may be an authentication policy installed, which can lead to repoze.who
 	# throwing errors. In some places in chat we install our own authentication policy,
 	# but not everywhere. See the following stack trace.
-	editor = users.User.get_user( psec.authenticated_userid( request ) )
+	editor = users.User.get_user( request.authenticated_userid )
 	component.handle( content, editor, event )
 
 # Traceback (most recent call last):
@@ -305,109 +294,3 @@ class ContactEmailRecovery(object):
 
 	contact_email_recovery_hash = annotation_alias(CONTACT_EMAIL_RECOVERY_ANNOTATION, 'context')
 	consent_email_last_sent = annotation_alias(CONSENT_EMAIL_LAST_SENT_ANNOTATION, 'context')
-
-
-# Reading the pristine PDF is fairly time consuming; fortunately, it
-# returns a dict we can clone
-_cached_pages = {} # filename => {page, contents, lock}
-import zope.testing.cleanup
-zope.testing.cleanup.addCleanUp( _cached_pages.clear )
-
-def _alter_pdf( pdf_filename, username, child_firstname, parent_email ):
-	"""
-	Given a stream to our COPPA pdf, manipulate the fields to include the given data,
-	and return a new read stream.
-
-	This process is intimately tied to the structure of the PDF. If the PDF changes, then this
-	process will have to be (slightly) recalculated. Thus this method is littered with assertions.
-
-	This process depends on using standard PDF fonts, or having the
-	entire font embedded, otherwise characters not contained in the
-	PDF will fail to render (will render as square boxes). Our starter
-	PDF includes all the ASCII characters, except the lowercase 'j',
-	which causes text strings to break up. It has also been run
-	through Acrobat Pro to be sure that the fields we want to replace
-	are in Helvetica (Bold), and that this font (a standard font) is
-	not subsetted, so that we can render 'j'. Acrobat Pro is also used to add the
-	clickable link, which doesn't make it through printing from Word.
-
-	The best way to get the document out of Word is to Print, use the
-	PDF option of the Print dialog and 'Save as Adobe PDF', and
-	'Smallest File Size' which puts it right into Acrobat. This is the
-	only way to achieve the ~40K file size (otherwise you get 800K).
-	When using the PDF Optimizer, image optimizations should be
-	unchecked; having it checked seems to embed 300K of Color Space
-	data. Also, the best results seem to come from simply unembedding all the
-	fonts and setting compatibility to PDF 1.3.
-	"""
-
-	# NOTE: With the upgrade from pyPDF to pyPDF2, much of the constraints
-	# here need to be revisited. It is much more capable...
-
-	# The locations in the Contents array at which various things are
-	# found
-	IX_UNAME = 382
-	# In this version, the first name, because it has the lowercase 'j',
-	# spans several operations. The strategy is to put our simple text into
-	# the first section, and then whitespace over the remaining letters
-	# We need to use the same number of characters for following lines
-	# to be aligned correctly
-	IX_FNAME = 401
-	IX_FNAME_END = 407
-	IX_EMAIL = 424
-
-	pdf_page, page_content, lock = _cached_pages.get( pdf_filename, (None, None, None) )
-	if pdf_page is None:
-		pdf_stream = pkg_resources.resource_stream( 'nti.appserver.templates',
-													pdf_filename )
-		pdf_reader = pyPdf.PdfFileReader( pdf_stream )
-		assert pdf_reader.numPages == 1
-
-		pdf_page = pdf_reader.getPage( 0 )
-		lock = RLock()
-
-		# Get the content (we have to decode it, if we ask the page to decode it, it
-		# doesn't hold the reference)
-		page_content = pyPdf.pdf.ContentStream( pdf_page['/Contents'].getObject(), pdf_page.pdf )
-		# And store the content back in the page, under the NamedObject key
-		# (which happens to be equal to the string, but IS NOT a string)
-		page_key = None
-		for key in pdf_page.keys():
-			if key == '/Contents':
-				page_key = key
-				break
-		assert page_key is not None
-		pdf_page[page_key] = page_content
-
-		# make sure we have the correct page
-		assert page_content.operations[IX_EMAIL][1] == 'TJ' # TJ being the 'text with placement' operator
-		assert page_content.operations[IX_UNAME][1] == 'TJ'
-		assert page_content.operations[IX_FNAME][1] == 'TJ'
-
-		_cached_pages[pdf_filename] = pdf_page, page_content, lock
-
-	def _pdf_clean( text ):
-		# Many punctuation characters are handled specially and overlap
-		# each other. They don't work in the Tj operator.
-		# We can get pretty close with some padding
-		#return text.replace( '-', '-  ' ).replace( '_', '_  ' ).replace( 'j', 'j ' )
-		# With this version of the template, this seems to not be needed
-		return text
-
-
-	writer = pyPdf.PdfFileWriter()
-	stream = StringIO()
-	with lock:
-		page_content.operations[IX_EMAIL] = ([pdf_generic.TextStringObject(_pdf_clean(parent_email))], 'Tj')  # Tj being the simple text operator
-		page_content.operations[IX_UNAME] = ([pdf_generic.TextStringObject(_pdf_clean(username))], 'Tj')
-		page_content.operations[IX_FNAME] = ([pdf_generic.TextStringObject(child_firstname)], 'Tj')
-
-		for i in range(IX_FNAME+1,IX_FNAME_END):
-			page_content.operations[i] = ([pdf_generic.TextStringObject('')], 'Tj')
-		extra_text = 'klmnopqrstuvwxyz1234567890'
-		page_content.operations[IX_FNAME_END+1] = ([pdf_generic.TextStringObject(' ' * len(extra_text))], 'Tj')
-		writer.addPage( pdf_page )
-		writer.write( stream )
-
-	stream.seek( 0 )
-	return stream

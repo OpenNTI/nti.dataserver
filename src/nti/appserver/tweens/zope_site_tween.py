@@ -47,8 +47,6 @@ from zope.component.hooks import setSite, getSite, setHooks, clearSite
 import pyramid_zodbconn
 from pyramid_zodbconn import get_connection
 
-from pyramid.security import authenticated_userid
-
 from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
@@ -208,7 +206,7 @@ class site_tween(object):
 		# and instead require our own .tweens.transaction_tween
 		# Now (and only now, that the site is setup since that's when we can access the DB
 		# and get the user) record info in the transaction
-		uid = authenticated_userid( request )
+		uid = request.authenticated_userid
 		if uid:
 			transaction.get().setUser( uid )
 

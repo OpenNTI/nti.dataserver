@@ -52,8 +52,6 @@ class _Participation(object):
 		self.interaction = None
 		self.principal = principal
 
-from pyramid.security import authenticated_userid
-
 class _interaction_tween(object):
 
 	__slots__ = ('handler',)
@@ -62,7 +60,7 @@ class _interaction_tween(object):
 		self.handler = handler
 
 	def __call__( self, request ):
-		uid = authenticated_userid( request )
+		uid = request.authenticated_userid
 		if uid:
 			dataserver = component.getUtility( IDataserver )
 			# We must have a user at this point...
