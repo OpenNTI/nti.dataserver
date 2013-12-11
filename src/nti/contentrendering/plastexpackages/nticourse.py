@@ -59,7 +59,7 @@ class course(Environment, plastexids.NTIIDMixin):
             else:
                 logger.warn('No valid timezone specified')
                 self.tz = timezone( DEFAULT_TZ )
-            
+
             __traceback_info__ = options, self.attributes
 
         return tok
@@ -80,7 +80,7 @@ class course(Environment, plastexids.NTIIDMixin):
 
     class coursecommunity(Command):
         args = '[ options:dict ] ntiid:str'
-        
+
         def digest(self, tokens):
             tok = super(course.coursecommunity,self).digest(tokens)
 
@@ -89,7 +89,7 @@ class course(Environment, plastexids.NTIIDMixin):
                 self.scope = options['scope']
             else:
                 self.scope = u'public'
-            
+
             __traceback_info__ = options, self.attributes
 
             return tok
@@ -132,7 +132,7 @@ class courselessonname(Command):
 
 class courselessonref(Crossref.ref):
     args = 'label:idref date:str'
-    
+
     def invoke( self, tex ):
         res = super(courselessonref, self).invoke( tex )
         dates = self.attributes['date'].split(',')
@@ -168,3 +168,7 @@ def ProcessOptions( options, document ):
     document.context.newcounter('courseinfo')
     document.context.newcounter('courselesson')
     document.context.newcounter('courseunit')
+
+from plasTeX.interfaces import IOptionAwarePythonPackage
+from zope import interface
+interface.moduleProvides(IOptionAwarePythonPackage)

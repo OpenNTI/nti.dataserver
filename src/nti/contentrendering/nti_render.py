@@ -241,7 +241,7 @@ def main():
 	write_dc_metadata(document, jobname)
 
 	elapsed = time.time() - start_t
-	logger.info("Rendering took %s(s)" % elapsed)
+	logger.info("Rendering took %s(s)", elapsed)
 
 from nti.utils import setupChameleonCache
 
@@ -256,7 +256,7 @@ def postRender(document, contentLocation='.', jobname='prealgebra', context=None
 	logger.info('Creating rendered book')
 	book = RenderedBook(document, contentLocation)
 	elapsed = time.time() - start_t
-	logger.info("Rendered book created in %s(s)" % elapsed)
+	logger.info("Rendered book created in %s(s)", elapsed)
 
 	# This step adds NTIIDs to the TOC in addition to modifying
 	# on-disk content.
@@ -294,10 +294,10 @@ def postRender(document, contentLocation='.', jobname='prealgebra', context=None
 		start_t = time.time()
 		logger.info("Indexing content in-process.")
 		for name, impl in component.getUtilitiesFor(interfaces.IRenderedBookIndexer):
-			logger.info("Indexing %s content" % name)
+			logger.info("Indexing %s content", name)
 			impl.transform(book, jobname)
 		elapsed = time.time() - start_t
-		logger.info("Content indexing took %s(s)" % elapsed)
+		logger.info("Content indexing took %s(s)", elapsed)
 
 	# TODO: Aren't the things in the archive mirror file the same things
 	# we want to list in the manifest? If so, we should be able to combine
