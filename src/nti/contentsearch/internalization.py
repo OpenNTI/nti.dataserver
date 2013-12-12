@@ -27,11 +27,13 @@ class _QueryObjectUpdater(object):
 	def __init__(self, obj):
 		self.obj = obj
 
-	def updateFromExternalObject(self, externalObject, *args, **kwargs ):
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		for name in ('IsEmtpty', 'IsBatching', 'IsPrefixSearch', 'IsPhraseSearch',
 					'IsDescendingSortOrder'):
-			if name in externalObject:
-				del externalObject[name]
+			if name in parsed:
+				del parsed[name]
 
-		result = InterfaceObjectIO(self.obj, search_interfaces.ISearchQuery).updateFromExternalObject(externalObject)
+		result = InterfaceObjectIO(
+					self.obj,
+					search_interfaces.ISearchQuery).updateFromExternalObject(parsed)
 		return result

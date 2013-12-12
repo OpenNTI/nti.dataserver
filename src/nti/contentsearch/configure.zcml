@@ -22,9 +22,19 @@
 	<include package="nti.externalization" />
 	
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ISearchQuery"
-		modules=".search_query" />
+		root_interfaces=".interfaces.ISearchQuery
+						 .interfaces.IBookContent
+						 .interfaces.INTICardContent
+						 .interfaces.IVideoTranscriptContent"
+		modules=".search_query .content_types" />
 		
+	<adapter factory=".externalization._IndexHitInternalObjectIO" 
+			 for=".interfaces.IIndexHit" />
+		
+	<adapter factory=".search_hits._SearchHit"
+			 for="*"
+			 provides=".interfaces.ISearchHit" />
+			 
 	<adapter factory=".search_hits._SearchHit"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
@@ -66,11 +76,6 @@
 	<adapter factory=".externalization._SuggestResultsExternalizer" />
 	<adapter factory=".externalization._IndexHitMetaDataExternalizer" />
 	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />
-	
-	<adapter factory=".externalization._IndexHitInternalObjectIO" for=".interfaces.IIndexHit" />
-	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshBookContent" />
-	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshNTICardContent" />
-	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshVideoTranscriptContent" />
 			
 	<!-- Decorators -->
 		
@@ -187,7 +192,6 @@
 
 	<!-- Mime factories -->
 	
-	<ext:registerMimeFactories module=".content_types" />
 	<ext:registerMimeFactories module=".search_results" />
 	
 </configure>

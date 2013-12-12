@@ -173,21 +173,6 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer,
 		return result
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
-class _SearchInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
-
-	@classmethod
-	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
-		return (search_interfaces.IWhooshBookContent,
-				search_interfaces.IWhooshVideoTranscriptContent,
-				search_interfaces.IWhooshNTICardContent)
-
-	@classmethod
-	def _ap_enumerate_module_names(cls):
-		return ('content_types',)
-
-_SearchInternalObjectIO.__class_init__()
-
-@interface.implementer(ext_interfaces.IInternalObjectIO)
 class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	
 	_excluded_out_ivars_ = {'query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
