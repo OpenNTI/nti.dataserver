@@ -175,8 +175,8 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer,
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 	
-	_excluded_out_ivars_ = {'query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
-	_excluded_in_ivars_ = {'query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
+	_excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
+	_excluded_in_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):

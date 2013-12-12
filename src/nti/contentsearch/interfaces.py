@@ -16,8 +16,6 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization import interfaces as ext_interfaces
-
 from . import constants
 
 from nti.utils import schema as nti_schema
@@ -623,13 +621,17 @@ class IRepozeSearchQueryValidator(ISearchQueryValidator):
 # search results
 
 class IBaseHit(interface.Interface):
-	"""represent a base search hit"""
-	query = schema.Object(ISearchQuery, title="Search query", required=False)
-	score = nti_schema.Number(title="hit relevance score", required=True)
+	"""
+	represent a base search hit
+	"""
+	Query = schema.Object(ISearchQuery, title="Search query", required=False)
+	Score = nti_schema.Number(title="hit relevance score", required=True, default=1.0, min=0.0)
 
 class IIndexHit(IBaseHit):
-	"""represent a search hit stored in a ISearchResults"""
-	ref = nti_schema.Variant(
+	"""
+	represent a search hit stored in a ISearchResults
+	"""
+	Ref = nti_schema.Variant(
 				(nti_schema.Object(nti_interfaces.IModeledContent,
 								   description="A :class:`.IModeledContent`"),
 				 nti_schema.Object(IWhooshContent, description="A :class:`.IWhooshContent`"),
@@ -638,9 +640,13 @@ class IIndexHit(IBaseHit):
 				title="The hit object")
 
 class ISearchHit(IBaseHit, IMapping):
-	"""represent an externalized search hit"""
-	oid = interface.Attribute("hit unique id")
-	last_modified = interface.Attribute("last modified date for this hit")
+	"""
+	represent an externalized search hit
+	"""
+	OID = nti_schema.ValidTextLine(title="hit unique id", required=True, readonly=True)
+	Snippet = nti_schema.ValidTextLine(title="text found", required=True, default=u'')
+	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
+	lastModified = nti_schema.Int(title="last modified date for this hit", default=0, required=True)
 
 class INoteSearchHit(ISearchHit):
 	pass

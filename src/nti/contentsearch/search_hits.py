@@ -27,6 +27,8 @@ from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
+from nti.utils.property import alias
+
 from . import common
 from . import content_utils
 from . import discriminators
@@ -58,8 +60,10 @@ def _get_hit_id(obj):
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(dict):
 
+	oid = alias('OID')
+
 	def __init__(self, original, oid=None, score=1.0):
-		self.oid = oid
+		self.OID = oid
 		self._query = None
 		self.set_hit_info(original, score)
 
@@ -83,14 +87,16 @@ class _BaseSearchHit(dict):
 	def set_score(self, score=1.0):
 		self[SCORE] = score or 1.0
 
-	score = property(get_score, set_score)
+	Score = score = property(get_score, set_score)
 
 	@property
-	def last_modified(self):
+	def lastModified(self):
 		return self.get(LAST_MODIFIED, 0)
+	last_modified = lastModified
 
 class _SearchHit(_BaseSearchHit):
 
+	__external_class_name__ = 'Hit'
 	adapter_interface = search_interfaces.IUserContentResolver
 
 	def __init__(self, original, score=1.0):

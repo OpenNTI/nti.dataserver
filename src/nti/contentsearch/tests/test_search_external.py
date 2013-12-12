@@ -163,8 +163,8 @@ class TestSearchExternal(ConfiguringTestBase):
 		eo = toExternalObject(hit)
 		assert_that(eo, has_entry(u'Class', u'IndexHit'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
-		assert_that(eo, has_entry(u'ref', 1L))
-		assert_that(eo, has_entry(u'score', 1.0))
+		assert_that(eo, has_entry(u'Ref', 1L))
+		assert_that(eo, has_entry(u'Score', 1.0))
 		# internalize
 		factory = find_factory_for(eo)
 		new_index = factory()
@@ -178,8 +178,8 @@ class TestSearchExternal(ConfiguringTestBase):
 		eo = toExternalObject(hit)
 		assert_that(eo, has_entry(u'Class', u'IndexHit'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.indexhit'))
-		assert_that(eo, has_entry(u'ref', has_entry('body', is_([u'rubby haddock']))))
-		assert_that(eo, has_entry(u'score', 0.5))
+		assert_that(eo, has_entry(u'Ref', has_entry('body', is_([u'rubby haddock']))))
+		assert_that(eo, has_entry(u'Score', 0.5))
 		# internalize
 		factory = find_factory_for(eo)
 		new_index = factory()

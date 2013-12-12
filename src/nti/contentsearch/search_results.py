@@ -21,6 +21,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
+from nti.utils.property import alias
 
 from . import common
 from . import discriminators
@@ -29,39 +30,43 @@ from . import interfaces as search_interfaces
 @interface.implementer(search_interfaces.IIndexHit)
 class IndexHit(zcontained.Contained):
 
-	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
 	__external_can_create__ = True
+	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
+
+	ref = alias('Ref')
+	score = alias('Score')
 
 	def __init__(self, obj=None, score=None):
 		super(IndexHit,self).__init__()
-		self.ref = obj
-		self.score = score
+		self.Ref = obj
+		self.Score = score
 
 	@property
 	def obj(self):
-		result = self.ref
-		if isinstance(self.ref, (numbers.Integral, six.string_types)):
+		result = self.Ref
+		if isinstance(self.Ref, (numbers.Integral, six.string_types)):
 			result = discriminators.get_object(int(self.ref))
 		return result
 
 	@property
-	def query(self):
+	def Query(self):
 		return None if self.__parent__ is None else self.__parent__.query
+	query = Query
 
 	def __repr__(self):
-		return '%s(%s,%s)' % (self.__class__.__name__, self.ref, self.score)
+		return '%s(%s,%s)' % (self.__class__.__name__, self.Ref, self.score)
 	__str__ = __repr__
 
 	def __eq__(self, other):
 		try:
-			return self is other or (self.ref == other.ref and self.score == other.score)
+			return self is other or (self.Ref == other.Ref and self.Score == other.Score)
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
 		xhash = 47
-		xhash ^= hash(self.ref)
-		xhash ^= hash(self.score)
+		xhash ^= hash(self.Ref)
+		xhash ^= hash(self.Score)
 		return xhash
 
 @interface.implementer(search_interfaces.IIndexHitMetaData)
