@@ -751,6 +751,7 @@ class ISearchFragment(ext_interfaces.IExternalObject):
 										   min_length=2,
 										   max_length=2),
 					title="Iterable with pair tuples where a match occurs",
+					min_length=0,
 					required=True)
 
 class IWhooshAnalyzer(interface.Interface):
