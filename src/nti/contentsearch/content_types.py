@@ -11,48 +11,33 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.dataserver import mimetype
+
+from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as search_interfaces
 
-class _MetaSearchWhooshContent(type):
-
-	def __new__(cls, name, bases, dct):
-		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
-		t.parameters = dict()
-		setattr(t, '__external_can_create__', True)
-		setattr(t, '__external_class_name__', name[1:])
-		return t
-
 @interface.implementer(search_interfaces.IWhooshBookContent)
 class BookContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
-	@property
-	def intid(self):
-		return self.docnum
-
-	@property
-	def containerId(self):
-		return self.ntiid
+	intid = alias('docnum')
+	containerId = ContainerId = alias('ntiid')
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
 class VideoTranscriptContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
-	@property
-	def ntiid(self):
-		return self.videoId
+	containerId = ContainerId = alias('videoId')
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class NTICardContent(SchemaConfigured):
-	__metaclass__ = _MetaSearchWhooshContent
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
 	
-	@property
-	def content(self):
-		return self.description
+	content = alias('description')
+
