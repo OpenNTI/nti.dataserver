@@ -40,7 +40,7 @@ from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE
 						VIDEO_ID, BOOK_CONTENT_MIME_TYPE, VIDEO_TRANSCRIPT,
 						NTI_CARD, TITLE, HREF, VIDEO_TRANSCRIPT_MIME_TYPE,
 						START_MILLISECS, END_MILLISECS, NTI_CARD_MIME_TYPE,
-						TARGET_NTIID)
+						TARGET_NTIID, TARGET_MIME_TYPE)
 
 def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj)
@@ -57,6 +57,16 @@ def _get_hit_id(obj):
 		result = None
 	return result or unicode(uuid.uuid4())
 
+class _MetaSearchHit(type):
+
+	def __new__(cls, name, bases, dct):
+		t = type.__new__(cls, name, bases, dct)
+		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
+		t.parameters = dict()
+		setattr(t, '__external_can_create__', True)
+		setattr(t, '__external_class_name__', 'Hit')
+		return t
+
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(dict):
 
@@ -72,6 +82,7 @@ class _BaseSearchHit(dict):
 		self[SCORE] = score
 		self[TYPE] = original.__class__.__name__
 		self[MIME_TYPE] = nti_mimetype_from_object(original, False) or u''
+		self[TARGET_MIME_TYPE] = self[MIME_TYPE]
 
 	def get_query(self):
 		return self._query
@@ -96,7 +107,7 @@ class _BaseSearchHit(dict):
 
 class _SearchHit(_BaseSearchHit):
 
-	__external_class_name__ = 'Hit'
+	__metaclass__ = _MetaSearchHit
 	adapter_interface = search_interfaces.IUserContentResolver
 
 	def __init__(self, original, score=1.0):

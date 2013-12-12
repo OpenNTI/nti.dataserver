@@ -4,8 +4,10 @@ Search common functions.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
@@ -26,10 +28,12 @@ from nti.externalization import interfaces as ext_intefaces
 
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE, VIDEO_TRANSCRIPT_MIME_TYPE,
-						NTI_CARD_MIME_TYPE)
-from .constants import (content_, post_, note_, highlight_, redaction_, indexable_types_order, indexable_type_names,
-						transcript_, messageinfo_, nti_mimetype_prefix, videotranscript_, nticard_)
+from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE,
+						VIDEO_TRANSCRIPT_MIME_TYPE, NTI_CARD_MIME_TYPE)
+
+from .constants import (content_, post_, note_, highlight_, redaction_,
+						indexable_types_order, indexable_type_names, transcript_,
+						messageinfo_, nti_mimetype_prefix, videotranscript_, nticard_)
 
 # Make sure we keep this order, especially since we need to test first for INote before IHighlight
 interface_to_indexable_types = (
