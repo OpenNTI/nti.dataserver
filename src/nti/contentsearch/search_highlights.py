@@ -75,18 +75,16 @@ def _is_word_end(idx, text, punkt_pattern):
 
 class _Range(object):
 
-	__slots__ = ('start', 'end', 'text')
+	__slots__ = ('start', 'end')
 
-	def __init__(self, start, end, text):
+	def __init__(self, start, end):
 		self.end = end
-		self.text = text
 		self.start = start
 
 	def __str__(self):
-		return "{0}.{1}({2},{3},'{4}')".format(
+		return "{0}.{1}({2},{3})".format(
 							self.__class__.__module__, self.__class__.__name__,
-							self.start, self.end,
-							self.text.encode('unicode_escape') if self.text else '')
+							self.start, self.end)
 
 	__repr__ = __str__
 
@@ -155,7 +153,7 @@ class _SearchFragment(object):
 						 _is_word_start(idx, fragment, punkt_pattern)) and \
 					(not check_end_word or
 						 _is_word_end(endidx, fragment, punkt_pattern)):
-					mrange = _Range(idx, endidx, term)
+					mrange = _Range(idx, endidx)
 					matches.append(mrange)
 				idx = fragment.find(term, endidx)
 		matches = cls._clean_ranges(matches)
@@ -172,7 +170,7 @@ class _SearchFragment(object):
 				termset.remove(txt)
 			idx = t.startchar - offset
 			endidx = t.endchar - offset
-			mrange = _Range(idx, endidx, txt)
+			mrange = _Range(idx, endidx)
 			matches.append(mrange)
 
 		fragment = wf.text[wf.startchar:wf.endchar]
@@ -223,7 +221,7 @@ def _prune_phrase_terms_fragments(termset, original_snippet, original_fragments,
 
 		matched = re.search(pattern, sf.text)
 		if matched:
-			sf.matches = [_Range(matched.start(), matched.end(), None)]
+			sf.matches = [_Range(matched.start(), matched.end())]
 			fragments.append(sf)
 			snippets.append(sf.text)
 

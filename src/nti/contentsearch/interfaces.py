@@ -746,8 +746,12 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 
 class ISearchFragment(ext_interfaces.IExternalObject):
 	text = nti_schema.ValidTextLine(title="fragment text", required=True)
-	matches = schema.Iterable("Iterable with pair tuples where a match occurs",
-							  required=True)
+	matches = nti_schema.ListOrTuple(
+					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
+										   min_length=2,
+										   max_length=2),
+					title="Iterable with pair tuples where a match occurs",
+					required=True)
 
 class IWhooshAnalyzer(interface.Interface):
 	pass
