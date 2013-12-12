@@ -95,15 +95,15 @@ class TestIndexManager(ConfiguringTestBase):
 		self.im = self.create_index_mananger()
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
-		q = QueryObject(indexid='bleach', query='omega')
+		q = QueryObject(indexid='bleach', term='omega')
 		hits = self.im.content_search(query=q)
 		assert_that(hits, has_length(1))
 
-		q = QueryObject(indexid='bleach', query='wen')
+		q = QueryObject(indexid='bleach', term='wen')
 		hits = self.im.content_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
 
-		q = QueryObject(indexid='bleach', query='extre')
+		q = QueryObject(indexid='bleach', term='extre')
 		hits = self.im.content_suggest(query=q)
 		assert_that(hits, has_length(1))
 
@@ -190,11 +190,11 @@ class TestIndexManager(ConfiguringTestBase):
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 
-		q = QueryObject(term='not_to_be_found', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='not_to_be_found', username=usr.username, searchOn=('note',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
 
-		q = QueryObject(term='rage', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='rage', username=usr.username, searchOn=('note',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(1))
 
@@ -203,7 +203,7 @@ class TestIndexManager(ConfiguringTestBase):
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 
-		q = QueryObject(term='flow', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='flow', username=usr.username, searchOn=('note',))
 		hits = self.im.user_data_suggest(q)
 		assert_that(hits, has_length(1))
 
@@ -212,7 +212,7 @@ class TestIndexManager(ConfiguringTestBase):
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 
-		q = QueryObject(term='creat', username=usr.username, searchon=('Notes',))
+		q = QueryObject(term='creat', username=usr.username, searchOn=('note',))
 		hits = self.im.user_data_suggest_and_search(query=q)
 		assert_that(hits, has_length(1))
 
@@ -224,13 +224,13 @@ class TestIndexManager(ConfiguringTestBase):
 		note = notes[0]
 		note.body = [u'Shoot To Death']
 		self.im.update_user_content(user, data=note)
-		q = QueryObject(term='death', username=user.username, searchon=('Notes',))
+		q = QueryObject(term='death', username=user.username, searchOn=('note',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(2))
 
 		note = notes[1]
 		self.im.delete_user_content(user, data=note)
-		q = QueryObject(term='deviate', username=user.username, searchon=('Notes',))
+		q = QueryObject(term='deviate', username=user.username, searchOn=('note',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
 

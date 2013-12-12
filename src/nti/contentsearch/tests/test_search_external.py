@@ -140,22 +140,21 @@ class TestSearchExternal(ConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_search_query(self):
-		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',), type='shikai')
+		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',))
 		# externalize
 		eo = toExternalObject(qo)
 		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
 		assert_that(eo, has_entry(u'MimeType', u'application/vnd.nextthought.search.query'))
-		assert_that(eo, has_entry(u'Items', has_entry(u'sortOn', u'relevance')))
-		assert_that(eo, has_entry(u'Items', has_entry(u'term', u'sode no shirayuki')))
-		assert_that(eo, has_entry(u'Items', has_entry(u'searchOn', is_([u'note']))))
-		assert_that(eo, has_entry(u'Metadata', has_entry(u'type', 'shikai')))
+		assert_that(eo, has_entry(u'sortOn', u'relevance'))
+		assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
+		assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
 		# internalize
 		factory = find_factory_for(eo)
 		new_query = factory()
 		update_from_external_object(new_query, eo)
 		assert_that(new_query, has_property('term', 'sode no shirayuki'))
 		assert_that(new_query, has_property('sortOn', 'relevance'))
-		assert_that(new_query, has_property('searchOn', is_(('note',))))
+		assert_that(new_query, has_property('searchOn', is_(['note'])))
 
 	@WithMockDSTrans
 	def test_index_hit(self):

@@ -7,11 +7,12 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+import sys
+
 from zope import schema
 from zope import interface
-from zope.deprecation import deprecated
+from zope.interface.common.mapping import IMapping
 from zope.mimetype import interfaces as zmime_interfaces
-from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -21,39 +22,59 @@ from . import constants
 
 from nti.utils import schema as nti_schema
 
-deprecated('IRepozeDataStore', 'Use lastest index implementation')
-class IRepozeDataStore(IFullMapping):
-
-	def has_user(username):
-		"""
-		return if the store has catalogs for the specified user
-
-		:param user: username
-		"""
-
 # search query
 
 SEARCH_TYPES_VOCABULARY = \
-	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in constants.indexable_type_names])
+	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) \
+										for _x in constants.indexable_type_names + (constants.invalid_type_,)])
 
 class ISearchQuery(interface.Interface):
+
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
 	username = nti_schema.ValidTextLine(title="User doing the search", required=False)
-	language = nti_schema.ValidTextLine(title="Query search term language", required=False, default='en')
+	language = nti_schema.ValidTextLine(title="Query search term language", required=False,
+										default='en')
 
-	limit = schema.Int(title="search results limit", required=False)
+	limit = schema.Int(title="search results limit", required=False, default=sys.maxint)
+
 	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
-	searchOn = schema.Set(value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY), title="Content types to search on", required=False)
+
+	searchOn = nti_schema.ListOrTuple(value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY),
+						  			  title="Content types to search on", required=False)
+
 	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
-	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked", required=False)
-	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order", default='descending', required=False)
 
-	batchSize = schema.Int(title="page size", required=False, min=1)
-	batchStart = schema.Int(title="The index of the first object to return, starting with zero", required=False, min=0)
+	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked",
+										required=False)
+	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order",
+										 default='descending', required=False)
 
-	is_prefix_search = schema.Bool(title="Returns true if the search is for prefix search", required=True, readonly=True)
-	is_phrase_search = schema.Bool(title="Returns true if the search is for phrase search", required=True, readonly=True)
-	is_descending_sort_order = schema.Bool(title="Returns true if the sortOrder is descending", required=True, default=True, readonly=True)
+	surround = schema.Int(title="Hightlight surround chars", required=False, default=20, min=1)
+	maxchars = schema.Int(title="Hightlight max chars", required=False, default=300, min=1)
+
+	prefix = schema.Int(title="Suggestion prefix", required=False, min=1)
+	threshold = nti_schema.Number(title="Suggestion threshold", required=False, default=0.4999, min=0.0)
+	maxdist = schema.Int(title="Maximun edit distance from the given word to look at", required=False, default=15, min=2)
+
+	batchSize = schema.Int(title="page size", required=False)
+	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
+						    required=False, min=0)
+
+	IsEmtpty = schema.Bool(title="Returns true if this is an empty search",
+						   required=True, readonly=True)
+
+	IsBatching = schema.Bool(title="Returns true if this is a batch search",
+							 required=True, readonly=True)
+
+	IsPrefixSearch = schema.Bool(title="Returns true if the search is for prefix search",
+								 required=True, readonly=True)
+
+	IsPhraseSearch = schema.Bool(title="Returns true if the search is for phrase search",
+								 required=True, readonly=True)
+
+	IsDescendingSortOrder = schema.Bool(title="Returns true if the sortOrder is descending",
+								 		required=True, readonly=True)
+
 
 class ISearchQueryValidator(interface.Interface):
 

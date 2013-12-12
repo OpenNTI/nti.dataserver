@@ -24,7 +24,7 @@ class TestPyramidViews(ConfiguringTestBase):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'menos', 'ntiid':ntiid}
 		params = {'accept':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
-				  'batchSize':'10', 'batchStart':'0'}
+				  'batchSize':10, 'batchStart':0}
 
 		qo = create_queryobject('harribel@bleach.com', params, matchdict)
 		assert_that(search_interfaces.ISearchQuery.providedBy(qo), is_(True))
@@ -37,14 +37,14 @@ class TestPyramidViews(ConfiguringTestBase):
 
 		params = {'accept':'application/vnd.nextthought.foo'}
 		qo = create_queryobject('harribel@bleach.com', params, matchdict)
-		assert_that(qo.searchOn, is_((invalid_type_,)))
+		assert_that(qo.searchOn, is_([invalid_type_]))
 
 	def test_create_query_object_exclude(self):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
 		params = {'exclude':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
-				  'batchSize':'100', 'batchStart':'3'}
+				  'batchSize':100, 'batchStart':3}
 
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
 		assert_that(search_interfaces.ISearchQuery.providedBy(qo), is_(True))
@@ -64,7 +64,7 @@ class TestPyramidViews(ConfiguringTestBase):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
-		params = {'batchSize':'-100', 'batchStart':'3'}
+		params = {'batchSize':-100, 'batchStart':3}
 
 		try:
 			create_queryobject('ulquiorra@bleach.com', params, matchdict)
@@ -72,14 +72,14 @@ class TestPyramidViews(ConfiguringTestBase):
 		except:
 			pass
 
-		params = {'batchSize':'100', 'batchStart':'-3'}
+		params = {'batchSize':100, 'batchStart':-3}
 		try:
 			create_queryobject('ulquiorra@bleach.com', params, matchdict)
 			self.fail()
 		except:
 			pass
 
-		params = {'batchSize':'xx', 'batchStart':'-3'}
+		params = {'batchSize':'xx', 'batchStart':-3}
 		try:
 			create_queryobject('ulquiorra@bleach.com', params, matchdict)
 			self.fail()
@@ -95,7 +95,7 @@ class TestPyramidViews(ConfiguringTestBase):
 				  			'application/vnd.nextthought.forums.personalblogcomment,application/vnd.nextthought.messageinfo',
 				  'sortOn': 'relevance',
 				  'sortOrder' : 'descending',
-				  'batchSize':'78', 'batchStart':'5'}
+				  'batchSize':78, 'batchStart':5}
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
 		assert_that(qo.username, is_('ulquiorra@bleach.com'))
 		assert_that(qo.term, is_('arrancar'))
