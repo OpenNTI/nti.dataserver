@@ -35,7 +35,7 @@ VIDEO_ID		 = u'VideoID'
 NTI_CARD		 = u'NTICard'
 FRAGMENTS		 = u'Fragments'
 DESCRIPTION		 = u'Description'
-TARGET_NTIID	 = u'Target NTIID'
+TARGET_NTIID	 = u'TargetNTIID'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
 VIDEO_TRANSCRIPT = u'VideoTranscript'
@@ -47,12 +47,13 @@ TARGET_OID		 = u'TargetOID'
 TYPE_COUNT		 = u'Type Count'
 MESSAGE_INFO	 = u'MessageInfo'
 SUGGESTIONS		 = u'Suggestions'
+HIT_META_DATA	 = u'HitMetaData'
 END_MILLISECS	 = u'EndMilliSecs'
 PHRASE_SEARCH 	 = u'PhraseSearch'
 COLLECTION_ID	 = u'CollectionId'
-HIT_META_DATA	 = u'Hit MetaData'
 START_MILLISECS	 = u'StartMilliSecs'
 TOTAL_HIT_COUNT	 = u'Total Hit Count'
+TARGET_MIME_TYPE = u'Target' + ext_interfaces.StandardExternalFields.MIMETYPE
 CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
@@ -109,11 +110,12 @@ last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						LAST_MODIFIED,
 						last_modified_)
 
-text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_, redactionExplanation_)
+text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_,
+			   redactionExplanation_)
 
-book_prefix = ''
-vtrans_prefix = 'vtrans_'
-nticard_prefix = 'nticard_'
+book_prefix = u''
+vtrans_prefix = u'vtrans_'
+nticard_prefix = u'nticard_'
 nti_mimetype_prefix = MIME_BASE + '.'
 
 note_ = u'note'
