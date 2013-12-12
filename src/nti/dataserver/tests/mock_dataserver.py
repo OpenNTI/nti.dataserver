@@ -54,9 +54,6 @@ class ChangePassingMockDataserver(Dataserver ):
 	def _setup_chat( self, *args ):
 		pass
 
-	def _setup_apns( self, *args ):
-		pass
-
 	def _setup_redis( self, *args ):
 		client = mock_redis.InMemoryMockRedis()
 		component.provideUtility( client )

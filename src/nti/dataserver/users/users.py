@@ -30,6 +30,8 @@ from zope.location import interfaces as loc_interfaces
 
 from z3c.password import interfaces as pwd_interfaces
 
+from nti.apns import interfaces as apns_interfaces
+
 from nti.dataserver import dicts
 from nti.dataserver import sharing
 from nti.dataserver import mimetype
@@ -852,8 +854,10 @@ class User(Principal):
 		Distribute the incoming change to any connected devices/sessions.
 		This is an extension point for layers.
 		"""
-		#TODO: Move this out to a listener somewhere
-		apnsCon = _get_shared_dataserver().apns
+		# TODO: Move this out to a listener somewhere
+		apnsCon = component.queryUtility(apns_interfaces.INotificationService)
+		# NOTE: At this time, no such component is actually
+		# being registered.
 		if not apnsCon:
 			if self.devices:
 				logger.warn( "No APNS connection, not broadcasting change" )

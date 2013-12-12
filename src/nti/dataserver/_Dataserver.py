@@ -32,8 +32,6 @@ from zc import intid as zc_intid
 
 from persistent import Persistent
 
-from nti.apns.connection import APNS
-
 from nti.chatserver.chatserver import Chatserver
 
 from nti.dataserver import sessions
@@ -76,7 +74,7 @@ class MinimalDataserver(object):
 
 	db = None
 
-	def __init__(self, parentDir=None, apnsCertFile=None ):
+	def __init__(self, parentDir=None):
 		"""
 		"""
 		if parentDir is None and 'DATASERVER_DIR' in os.environ:
@@ -311,11 +309,9 @@ class Dataserver(MinimalDataserver):
 
 	chatserver = None
 	session_manager = None
-	_apns = None
 
-
-	def __init__(self, parentDir=None, apnsCertFile=None  ):
-		super(Dataserver, self).__init__(parentDir, apnsCertFile=apnsCertFile )
+	def __init__(self, parentDir=None ):
+		super(Dataserver, self).__init__(parentDir)
 		self.changeListeners = []
 
 		with self.db.transaction() as conn:
@@ -326,8 +322,6 @@ class Dataserver(MinimalDataserver):
 			# is ported over
 			if not root.has_key( 'nti.dataserver' ):
 				raise Exception( "Creating DS against uninitialized DB. Test code?", str(root) )
-
-		self._apnsCertFile = apnsCertFile
 
 		self.__setup_volatile()
 
@@ -344,8 +338,6 @@ class Dataserver(MinimalDataserver):
 
 		room_name = 'meeting_rooms'
 		self.chatserver = self._setup_chat( room_name )
-
-		self._apns = self
 
 		# Currently a no-op as we do this all in-process at the moment
 		_, other_closeables = self._setup_change_distribution()
@@ -370,33 +362,9 @@ class Dataserver(MinimalDataserver):
 							 meeting_storage=meeting_storage.CreatorBasedAnnotationMeetingStorage(),
 							 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( ) )
 
-
-	def _setup_apns( self, apnsCertFile ):
-		# Here we used to be using an inproc ZMQ socket to listen
-		# for device feedback events. Now we are using zope.event to
-		# distribute these. In the future, if we need to
-		# push APNS connections off to a background process, we can either
-		# include that code in the APNS server, or we can start proxying
-		# event objects around.
-
-		return APNS( certFile=apnsCertFile )
-
 	def get_sessions(self):
 		return self.session_manager
 	sessions = property( get_sessions )
-
-
-	@property
-	def apns(self):
-		if self._apns is self:
-			try:
-				self._apns = self._setup_apns( self._apnsCertFile )
-				self.other_closeables.append( self._apns )
-			except Exception:
-				# Probably a certificate problem
-				logger.warn( "Failed to create APNS connection. Notifications not available" )
-				self._apns = None
-		return self._apns
 
 	def add_change_listener( self, listener ):
 		""" Adds a listener (a callable object) for changes."""
