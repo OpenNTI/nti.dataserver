@@ -41,7 +41,7 @@ from .constants import (NTIID, CREATOR, LAST_MODIFIED, CONTAINER_ID, CLASS, TYPE
 						TARGET_NTIID)
 
 def get_search_hit(obj, score=1.0, query=None):
-	hit = search_interfaces.ISearchHit(obj, None) or _SearchHit(obj)
+	hit = search_interfaces.ISearchHit(obj)
 	hit.score = score
 	hit.query = query
 	return hit
@@ -266,7 +266,6 @@ class _CallableComparator(object):
 
 	def __call__(self, a, b):
 		return self.compare(a, b)
-
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _ScoreSearchHitComparator(_CallableComparator):
