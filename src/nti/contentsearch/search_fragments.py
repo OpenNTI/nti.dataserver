@@ -36,10 +36,10 @@ def is_range_subsumed(refidx, v, ranges):
 				return True
 	return False
 
-def clean_ranges(cls, matches):
+def clean_ranges(matches):
 	result = []
 	for idx, r in enumerate(matches):
-		if not cls._isRange_subsumed(idx, r, matches):
+		if not is_range_subsumed(idx, r, matches):
 			result.append(r)
 	return result
 
@@ -61,11 +61,11 @@ def match_terms(fragment, termset, check_start_word, check_end_word, punkt_patte
 	matches = clean_ranges(matches)
 	return matches
 
-def create_from_whoosh_fragment(whoosh_frag, termset, punkt_pattern):
+def create_from_whoosh_fragment(whoosh_fragment, termset, punkt_pattern):
 	matches = []
 	termset = set(termset)
-	offset = whoosh_frag.startchar
-	for t in whoosh_frag.matches:
+	offset = whoosh_fragment.startchar
+	for t in whoosh_fragment.matches:
 		txt = t.text.lower()
 		if txt in termset:
 			termset.remove(txt)
@@ -74,7 +74,7 @@ def create_from_whoosh_fragment(whoosh_frag, termset, punkt_pattern):
 		mrange = Range(idx, endidx)
 		matches.append(mrange)
 
-	fragment = whoosh_frag.text[whoosh_frag.startchar:whoosh_frag.endchar]
+	fragment = whoosh_fragment.text[whoosh_fragment.startchar:whoosh_fragment.endchar]
 	if termset:
 		m = match_terms(fragment.lower(), termset, True, False, punkt_pattern)
 		matches.extend(m)

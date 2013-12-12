@@ -25,8 +25,9 @@
 		root_interfaces=".interfaces.ISearchQuery
 						 .interfaces.IBookContent
 						 .interfaces.INTICardContent
+						 .interfaces.ISearchFragment
 						 .interfaces.IVideoTranscriptContent"
-		modules=".search_query .content_types" />
+		modules=".search_query .content_types .search_fragments" />
 		
 	<adapter factory=".externalization._IndexHitInternalObjectIO" 
 			 for=".interfaces.IIndexHit" />
@@ -172,7 +173,7 @@
 			 
 	<!-- Search highlights -->
 
-	<utility factory=".search_highlights._create_default_analyzer" name="en" />
+	<utility factory=".search_highlights.create_default_analyzer" name="en" />
 
 	<!-- Search results -->
 
