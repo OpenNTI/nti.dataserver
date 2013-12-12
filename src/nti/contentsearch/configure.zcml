@@ -17,7 +17,14 @@
 	<utility factory=".content_utils._DefaultStopWords" />
 
 	<!-- Externalization -->
-
+	
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+	
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.ISearchQuery"
+		modules=".search_query" />
+		
 	<adapter factory=".search_hits._SearchHit"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
@@ -61,7 +68,6 @@
 	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />
 	
 	<adapter factory=".externalization._IndexHitInternalObjectIO" for=".interfaces.IIndexHit" />
-	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.ISearchQuery" />
 	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshBookContent" />
 	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshNTICardContent" />
 	<adapter factory=".externalization._SearchInternalObjectIO" for=".interfaces.IWhooshVideoTranscriptContent" />
@@ -92,6 +98,12 @@
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 	
+	<!-- Internalization -->
+			
+	<adapter factory=".internalization._QueryObjectUpdater"
+			 for=".interfaces.ISearchQuery"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			 
 	<!-- Search hit comparators -->
 	
 	<utility factory=".search_hits._TypeSearchHitComparator" name="type" />
@@ -175,9 +187,6 @@
 
 	<!-- Mime factories -->
 	
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
-	<ext:registerMimeFactories module=".search_query" />
 	<ext:registerMimeFactories module=".content_types" />
 	<ext:registerMimeFactories module=".search_results" />
 	

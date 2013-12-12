@@ -58,7 +58,7 @@ class _SearchableContent(object):
 
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
 		qo = search_query.QueryObject.create(query, **kwargs)
-		if ' ' in qo.term or qo.is_prefix_search or qo.is_phrase_search:
+		if ' ' in qo.term or qo.IsPrefixSearch or qo.IsPhraseSearch:
 			results = empty_suggest_and_search_results(qo)
 			results += self.search(searcher, qo)
 		else:

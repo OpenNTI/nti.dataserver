@@ -11,15 +11,12 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
-import sys
-import UserDict
-import collections
 
 from zope import component
 from zope import interface
 
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.datastructures import LocatedExternalDict
+from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
 from . import constants
 from . import interfaces as search_interfaces
@@ -40,171 +37,60 @@ def _default_query_adapter(query, *args, **kwargs):
 		query = QueryObject.create(query, *args, **kwargs)
 	return query
 
-def _getter(name, default=None):
-	def function(self):
-		return self._data.get(name, default)
-	return function
-
-def _setter_str(name, default=u''):
-	def function(self, val):
-		val = val or default
-		val = unicode(val) if isinstance(val, six.string_types) else repr(val)
-		self._data[name] = val
-	return function
-
-def _setter_int(name, _abs=True):
-	def function(self, val):
-		if val is not None:
-			val = abs(int(val)) if _abs else int(val)
-		self._data[name] = val
-	return function
-
-def _setter_float(name, _abs=True):
-	def function(self, val):
-		if val is not None:
-			val = abs(float(val)) if _abs else float(val)
-		self._data[name] = val
-	return function
-
-def _setter_tuple(name, unique=True):
-	def function(self, val):
-		if val is not None:
-			if isinstance(val, (list, tuple)) and len(val) == 1:
-				val = val[0]
-			if isinstance(val, six.string_types):
-				val = val.split(',')
-			if not isinstance(val, collections.Iterable):
-				val = list(val)
-			val = tuple(set(val)) if unique else tuple(val)
-		self._data[name] = val
-	return function
-
-class _MetaQueryObject(type):
-
-	def __new__(cls, name, bases, dct):
-		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.query'
-		t.parameters = dict()
-
-		# string properties
-		for name in t.__str_properties__:
-			df = t.__defaults__.get(name, None)
-			setattr(t, name, property(_getter(name, df), _setter_str(name)))
-		setattr(t, 'query', property(_getter('term'), _setter_str('term')))
-
-		# int properties
-		for name in t.__int_properties__:
-			df = t.__defaults__.get(name, None)
-			setattr(t, name, property(_getter(name, df), _setter_int(name)))
-
-		# float properties
-		for name in t.__float_properties__:
-			df = t.__defaults__.get(name, None)
-			setattr(t, name, property(_getter(name, df), _setter_float(name)))
-
-		# set properties
-		for name in t.__set_properties__:
-			df = t.__defaults__.get(name, None)
-			setattr(t, name, property(_getter(name, df), _setter_tuple(name)))
-
-		return t
-
-_empty_subqueries = {}
-
-@interface.implementer(search_interfaces.ISearchQuery, ext_interfaces.IExternalObject)
-class QueryObject(object, UserDict.DictMixin):
+@interface.implementer(search_interfaces.ISearchQuery)
+class QueryObject(SchemaConfigured):
 
 	__external_can_create__ = True
 	__external_class_name__ = 'SearchQuery'
 
-	__metaclass__ = _MetaQueryObject
+	mime_type = mimeType = 'application/vnd.nextthought.search.query'
 
-	__float_properties__ = ('threshold',)
-	__int_properties__ 	 = ('limit', 'maxdist', 'prefix', 'surround', 'maxchars', 
-							'batchSize', 'batchStart')
-	__str_properties__ 	 = ('term', 'indexid', 'username', 'location', 'sortOn', 
-							'sortOrder', 'language')
-	__set_properties__	 = ('searchOn',)
-	__properties__ 		 = __set_properties__ + __str_properties__ + __int_properties__ + \
-						   __float_properties__
-
-	__defaults__ 		 = {'surround': 20, 'maxchars' : 300, 'threshold' : 0.4999,
-							'sortOrder':constants.descending_ , 'limit': sys.maxint,
-							'language':'en'}
-
-	def __init__(self, *args, **kwargs):
-		self._data = {}
-		for k, v in kwargs.items():
-			if k and v is not None:
-				self.__setitem__(k, v)
-
-	def keys(self):
-		return self._data.keys()
+	createDirectFieldProperties(search_interfaces.ISearchQuery)
 
 	def __str__(self):
 		return self.term
 
 	def __repr__(self):
-		return 'QueryObject(%r)' % self._data
+		return 'QueryObject(%r)' % self.term
 
 	def __getitem__(self, key):
-		return self._data[key]
+		return getattr(self, key)
 
 	def __setitem__(self, key, val):
-		if hasattr(self, key):
-			setattr(self, key, val)
-		else:
-			self._data[key] = unicode(val) if isinstance(val, six.string_types) else val
+		setattr(self, key, val)
 
-	# -- search --
+	@property
+	def query(self):
+		return self.term
 
 	@property
 	def content_id(self):
-		return getattr(self, 'indexid', None)
+		return self.indexid
 
 	@property
-	def is_empty(self):
+	def IsEmtpty(self):
 		return not self.term
+	is_empty = IsEmtpty
 
 	@property
-	def is_phrase_search(self):
+	def IsPhraseSearch(self):
 		return is_phrase_search(self.term)
+	is_phrase_search = IsPhraseSearch
 
 	@property
-	def is_prefix_search(self):
+	def IsPrefixSearch(self):
 		return is_prefix_search(self.term)
-
+	is_prefix_search = IsPrefixSearch
+	
 	@property
-	def is_descending_sort_order(self):
+	def IsDescendingSortOrder(self):
 		return self.sortOrder == constants.descending_
+	is_descending_sort_order = IsDescendingSortOrder
 
 	@property
-	def is_batching(self):
+	def IsBatching(self):
 		return self.batchStart is not None and self.batchSize
-
-	def toExternalObject(self):
-		result = LocatedExternalDict()
-		result[constants.MIME_TYPE] = self.mimeType
-		result[constants.CLASS] = self.__external_class_name__
-		items = result['Items'] = {}
-		metadata = result['Metadata'] = {}
-		for name, value in self._data.items():
-			if name in self.__properties__:
-				if name in self.__set_properties__:
-					value = list(value) if value else []
-				items[name] = value
-			else:
-				metadata[name] = value
-		return result
-
-	def updateFromExternalObject(self, externalObject, *args, **kwargs):
-		props = externalObject.get('Items', {})
-		for k, v in props.items():
-			setattr(self, k, v)
-		meta = externalObject.get('Metadata', {})
-		for k, v in meta.items():
-			self[k] = v
-		return self
+	is_batching = IsBatching
 
 	# ---------------
 
@@ -216,7 +102,7 @@ class QueryObject(object, UserDict.DictMixin):
 			if isinstance(query, QueryObject):
 				if kwargs:
 					queryobject = QueryObject()
-					queryobject._data.update(query._data)
+					queryobject.__dict__.update(query.__dict__)
 				else:
 					queryobject = query
 
