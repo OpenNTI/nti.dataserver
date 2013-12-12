@@ -744,7 +744,7 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 
 # highlights
 
-class ISearchFragment(ext_interfaces.IExternalObject):
+class ISearchFragment(interface.Interface):
 	text = nti_schema.ValidTextLine(title="fragment text", required=True)
 	matches = nti_schema.ListOrTuple(
 					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
