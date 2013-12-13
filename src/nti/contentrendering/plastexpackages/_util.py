@@ -28,6 +28,9 @@ def _asm_local_textcontent(self):
 			output.append(unicode(item))
 		elif getattr(item, 'unicode', None) is not None:
 			output.append(item.unicode)
+	# We are doing an interface conversion here, because
+	# getting the unicode may be unescaping and we need to escap
+	# again (?)
 	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
 
 def _asm_rendered_textcontent(self, ignorable_renderables=()):
@@ -39,13 +42,17 @@ def _asm_rendered_textcontent(self, ignorable_renderables=()):
 		of classes. If a given child node is an instance of a
 		class in the tuple, it will be ignored and not rendered.
 	"""
-	childNodes = []
-	for item in self.childNodes:
-		if isinstance(item, ignorable_renderables):
-			continue
-		childNodes.append( item )
 
-	output = render_children( self.renderer, childNodes )
+	if not ignorable_renderables:
+		selected_children = self.childNodes
+	else:
+		selected_children = (node for node in self.childNodes if not isinstance(node, ignorable_renderables))
+
+	output = render_children( self.renderer, selected_children )
+
+	# Now return an actual HTML content fragment. Note that this
+	# has been rendered so there's no need to do the interface
+	# conversion
 	return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 class LocalContentMixin(object):
@@ -60,10 +67,17 @@ class LocalContentMixin(object):
 	tuple of classes of potential child elements that are not included
 	in the rendered content.
 
-	Mixin order matters, this needs to be first.
+	Mixin order matters, this needs to be first; if you override
+	``_after_render`` you must be sure to call this implementation of it.
 	"""
 
 	_asm_ignorable_renderables = ()
+
+	#: Starts out as the non-rendered latex source fragment
+	#: of the children of this node, ignoring things defined in
+	#: _asm_ignorable_renderables; after this object
+	#: has been rendered, replaced with their HTML content.
 	_asm_local_content = readproperty(_asm_local_textcontent)
+
 	def _after_render( self, rendered ):
 		self._asm_local_content = _asm_rendered_textcontent( self, self._asm_ignorable_renderables )
