@@ -55,23 +55,23 @@ def get_mimetype(obj, default=None):
 	return result or default
 
 def get_containerId(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.IContainerIDResolver)
-	result = adapted.get_containerId() if adapted else None
+	adapted = search_interfaces.IContainerIDResolver(obj, None)
+	result = adapted.containerId if adapted else None
 	return result or default
 
 def get_ntiid(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.INTIIDResolver)
-	result = adapted.get_ntiid() if adapted else None
+	adapted = search_interfaces.INTIIDResolver(obj, None)
+	result = adapted.ntiid if adapted else None
 	return result or default
 
 def get_creator(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.ICreatorResolver)
-	result = adapted.get_creator() if adapted else None
+	adapted = search_interfaces.ICreatorResolver(obj, None)
+	result = adapted.creator if adapted else None
 	return result or default
 
 def get_title(obj, default=None, language='en'):
-	adapted = component.queryAdapter(obj, search_interfaces.ITitleResolver)
-	result = get_content(adapted.get_title(), language) if adapted else None
+	adapted = search_interfaces.ITitleResolver(obj, None)
+	result = get_content(adapted.title, language) if adapted else None
 	return result.lower() if result else default
 
 def get_title_and_ngrams(obj, default=None, language='en'):
@@ -81,23 +81,23 @@ def get_title_and_ngrams(obj, default=None, language='en'):
 	return result.lower() if result else default
 
 def get_last_modified(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.ILastModifiedResolver)
-	result = adapted.get_last_modified() if adapted else None
+	adapted = search_interfaces.ILastModifiedResolver(obj, None)
+	result = adapted.lastModified if adapted else None
 	return result if result else default
 
 def get_tags(obj, default=()):
-	adapted = component.queryAdapter(obj, search_interfaces.ITagsResolver)
-	result = adapted.get_tags() if adapted else None
+	adapted = search_interfaces.ITagsResolver(obj, None)
+	result = adapted.tags if adapted else None
 	return result or default
 
 def get_keywords(obj, default=()):
-	adapted = component.queryAdapter(obj, search_interfaces.IKeywordsResolver)
-	result = adapted.get_keywords() if adapted else None
+	adapted = search_interfaces.IKeywordsResolver(obj, None)
+	result = adapted.keywords if adapted else None
 	return result or default
 
 def get_sharedWith(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.IShareableContentResolver)
-	result = adapted.get_sharedWith() if adapted else None
+	adapted = search_interfaces.IShareableContentResolver(obj, None)
+	result = adapted.sharedWith if adapted else None
 	return result or default
 
 def get_acl(obj, default=None):
@@ -111,29 +111,29 @@ def get_acl(obj, default=None):
 	return tuple(set(result)) if result else default
 
 def get_references(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.INoteContentResolver)
-	result = adapted.get_references() if adapted else None
+	adapted = search_interfaces.INoteContentResolver(obj, None)
+	result = adapted.references if adapted else None
 	return result or default
 
 def get_channel(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	result = adapted.get_channel() if adapted else None
+	adapted = search_interfaces.IMessageInfoContentResolver(obj, None)
+	result = adapted.channel if adapted else None
 	return result or default
 
 def get_recipients(obj, default=None):
-	adapted = component.queryAdapter(obj, search_interfaces.IMessageInfoContentResolver)
-	result = adapted.get_recipients() if adapted else None
+	adapted = search_interfaces.IMessageInfoContentResolver(obj, None)
+	result = adapted.recipients if adapted else None
 	return result or default
 
 def get_replacement_content(obj, default=None, language='en'):
-	adapted = component.queryAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_replacement_content(), language) if adapted else None
+	adapted = search_interfaces.IRedactionContentResolver(obj, None)
+	result = get_content(adapted.replacementContent, language) if adapted else None
 	return result.lower() if result else default
 get_replacementContent = get_replacement_content
 
 def get_redaction_explanation(obj, default=None, language='en'):
-	adapted = component.queryAdapter(obj, search_interfaces.IRedactionContentResolver)
-	result = get_content(adapted.get_redaction_explanation(), language) if adapted else None
+	adapted = search_interfaces.IRedactionContentResolver(obj, None)
+	result = get_content(adapted.redactionExplanation, language) if adapted else None
 	return result.lower() if result else default
 get_redactionExplanation = get_redaction_explanation
 
@@ -157,8 +157,8 @@ get_post_title = get_title
 get_post_title_and_ngrams = get_title_and_ngrams
 
 def get_object_content(obj, default=None, language='en'):
-	adapted = component.getAdapter(obj, search_interfaces.IContentResolver)
-	result = get_content(adapted.get_content(), language)
+	adapted = search_interfaces.IContentResolver(obj, None)
+	result = get_content(adapted.content, language)
 	return result.lower() if result else default
 
 def get_object_ngrams(obj, default=None, language='en'):
