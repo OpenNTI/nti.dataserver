@@ -47,7 +47,9 @@ from . import httpexceptions as hexc
 def file_view(request):
 	"""
 	A view that simply returns the data of the file without setting any
-	``Content-Disposition`` headers to attempt to force a download.
+	``Content-Disposition`` headers to attempt to force a download (and
+	typically a display inline).
+
 	Some ACL in the parent hierarchy must make this readable.
 	"""
 	# Best we can do is try to get good cache headers. Check this before
