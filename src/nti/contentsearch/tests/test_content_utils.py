@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import close_to
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import os
 import json
-
-from zope import component
 
 from nti.chatserver.messageinfo import MessageInfo
 
@@ -27,13 +31,15 @@ from nti.externalization.internalization import update_from_external_object
 from nti.ntiids.ntiids import make_ntiid
 
 from ..interfaces import IContentResolver
+from ..interfaces import INoteContentResolver
+from ..interfaces import IHighlightContentResolver
+from ..interfaces import IRedactionContentResolver
+from ..interfaces import IMessageInfoContentResolver
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, is_, is_not, close_to, has_length)
 
 class TestContentUtils(ConfiguringTestBase):
 
@@ -71,16 +77,16 @@ class TestContentUtils(ConfiguringTestBase):
 		note = self._create_note('nothing can be explained', usr.username, containerId)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject(note)
-		adapted = component.getAdapter(note, IContentResolver)
-		assert_that(adapted.get_content(), is_('nothing can be explained'))
-		assert_that(adapted.get_references(), has_length(0))
-		assert_that(adapted.get_ntiid(), is_not(None))
-		assert_that(adapted.get_creator(), is_('nt@nti.com'))
-		assert_that(adapted.get_containerId(), is_(containerId))
-		assert_that(adapted.get_keywords(), is_([]))
-		assert_that(adapted.get_tags(), is_(['ichigo']))
-		assert_that(adapted.get_sharedWith(), has_length(0))
-		assert_that(adapted.get_last_modified(), is_not(None))
+		adapted = INoteContentResolver(note)
+		assert_that(adapted.content, is_('nothing can be explained'))
+		assert_that(adapted.references, has_length(0))
+		assert_that(adapted.ntiid, is_not(None))
+		assert_that(adapted.creator, is_('nt@nti.com'))
+		assert_that(adapted.containerId, is_(containerId))
+		assert_that(adapted.keywords, is_([]))
+		assert_that(adapted.tags, is_(['ichigo']))
+		assert_that(adapted.sharedWith, has_length(0))
+		assert_that(adapted.lastModified, is_not(None))
 
 	@WithMockDSTrans
 	def test_note_adapter_canvas(self):
@@ -93,8 +99,8 @@ class TestContentUtils(ConfiguringTestBase):
 		note = self._create_note('New Age', usr.username, containerId, canvas=c)
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject(note)
-		adapted = component.getAdapter(note, IContentResolver)
-		assert_that(adapted.get_content(), is_('New Age Mike Wyzgowski'))
+		adapted = IContentResolver(note)
+		assert_that(adapted.content, is_('New Age Mike Wyzgowski'))
 
 	@WithMockDSTrans
 	def test_redaction_adpater(self):
@@ -103,22 +109,23 @@ class TestContentUtils(ConfiguringTestBase):
 		user = self._create_user(username=username)
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		update_from_external_object(redaction, {'replacementContent': u'my redaction',
-												'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
+		update_from_external_object(redaction,
+					{'replacementContent': u'my redaction',
+					 'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
 		redaction.creator = username
 		redaction.containerId = containerId
 		redaction = user.addContainedObject(redaction)
-		adapted = component.getAdapter(redaction, IContentResolver)
-		assert_that(adapted.get_content(), is_('Fear'))
-		assert_that(adapted.get_replacement_content(), is_('my redaction'))
-		assert_that(adapted.get_redaction_explanation(), is_('Have overcome it everytime I have been on the verge of death'))
-		assert_that(adapted.get_references(), has_length(0))
-		assert_that(adapted.get_ntiid(), is_not(None))
-		assert_that(adapted.get_creator(), is_('kuchiki@bleach.com'))
-		assert_that(adapted.get_containerId(), is_(containerId))
-		assert_that(adapted.get_keywords(), has_length(0))
-		assert_that(adapted.get_sharedWith(), has_length(0))
-		assert_that(adapted.get_last_modified(), is_not(None))
+		adapted = IRedactionContentResolver(redaction)
+		assert_that(adapted.content, is_('Fear'))
+		assert_that(adapted.replacementContent, is_('my redaction'))
+		assert_that(adapted.redactionExplanation, is_('Have overcome it everytime I have been on the verge of death'))
+		assert_that(adapted.references, has_length(0))
+		assert_that(adapted.ntiid, is_not(None))
+		assert_that(adapted.creator, is_('kuchiki@bleach.com'))
+		assert_that(adapted.containerId, is_(containerId))
+		assert_that(adapted.keywords, has_length(0))
+		assert_that(adapted.sharedWith, has_length(0))
+		assert_that(adapted.lastModified, is_not(None))
 
 	@WithMockDSTrans
 	def test_highlight_adpater(self):
@@ -130,15 +137,15 @@ class TestContentUtils(ConfiguringTestBase):
 		highlight.creator = username
 		highlight.containerId = containerId
 		highlight = user.addContainedObject(highlight)
-		adapted = component.getAdapter(highlight, IContentResolver)
-		assert_that(adapted.get_content(), is_('Kon saw it! The Secret of a Beautiful Office Lady'))
-		assert_that(adapted.get_references(), is_(()))
-		assert_that(adapted.get_ntiid(), is_not(None))
-		assert_that(adapted.get_creator(), is_('urahara@bleach.com'))
-		assert_that(adapted.get_containerId(), is_(containerId))
-		assert_that(adapted.get_keywords(), has_length(0))
-		assert_that(adapted.get_sharedWith(), has_length(0))
-		assert_that(adapted.get_last_modified(), is_not(None))
+		adapted = IHighlightContentResolver(highlight)
+		assert_that(adapted.content, is_('Kon saw it! The Secret of a Beautiful Office Lady'))
+		assert_that(adapted.references, is_(()))
+		assert_that(adapted.ntiid, is_not(None))
+		assert_that(adapted.creator, is_('urahara@bleach.com'))
+		assert_that(adapted.containerId, is_(containerId))
+		assert_that(adapted.keywords, has_length(0))
+		assert_that(adapted.sharedWith, has_length(0))
+		assert_that(adapted.lastModified, is_not(None))
 
 	@WithMockDSTrans
 	def test_messageinfo_adapter_canvas(self):
@@ -148,16 +155,16 @@ class TestContentUtils(ConfiguringTestBase):
 		c.append(ct)
 		mi = MessageInfo()
 		mi.Body = [u'Beginning of Despair, the Unreachable Blade', c]
-		adapted = component.getAdapter(mi, IContentResolver)
-		assert_that(adapted.get_content(), is_('Beginning of Despair, the Unreachable Blade Ichigo VS Ulquiorra'))
+		adapted = IMessageInfoContentResolver(mi)
+		assert_that(adapted.content, is_('Beginning of Despair, the Unreachable Blade Ichigo VS Ulquiorra'))
 
 	def test_dict_adpater(self):
-		adapted = component.getAdapter(self.note, IContentResolver)
-		assert_that(adapted.get_content(), is_('Eddard Stark Lord of Winterfell'))
-		assert_that(adapted.get_references(), has_length(0))
-		assert_that(adapted.get_creator(), is_('carlos.sanchez@nextthought.com'))
-		assert_that(adapted.get_keywords(), has_length(0))
-		assert_that(adapted.get_sharedWith(), has_length(0))
-		assert_that(adapted.get_last_modified(), is_(close_to(1334000544.120, 0.05)))
-		assert_that(adapted.get_containerId(), is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
-		assert_that(adapted.get_ntiid(), is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
+		adapted = IContentResolver(self.note)
+		assert_that(adapted.content, is_('Eddard Stark Lord of Winterfell'))
+		assert_that(adapted.references, has_length(0))
+		assert_that(adapted.creator, is_('carlos.sanchez@nextthought.com'))
+		assert_that(adapted.keywords, has_length(0))
+		assert_that(adapted.sharedWith, has_length(0))
+		assert_that(adapted.lastModified, is_(close_to(1334000544.120, 0.05)))
+		assert_that(adapted.containerId, is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
+		assert_that(adapted.ntiid, is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
