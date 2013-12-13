@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
 
 import os
 
-from plasTeX.Renderers import Renderable as BaseRenderable
+from plasTeX.Renderers import RenderableMixin as BaseRenderableMixin
 from plasTeX.Renderers import Renderer as BaseRenderer
 from plasTeX.Renderers import mixin, unmix, renderable_as_unicode
 from plasTeX.DOM import Node
@@ -43,7 +43,7 @@ def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 	# super
 
 	bases = list( factory.__mro__ )
-	bases.insert( bases.index( BaseRenderer ), _ResourceRenderer )
+	bases.insert( bases.index( BaseRenderer ), _ResourceRendererMixin )
 
 
 	# We also override the template registration method to capture templates
@@ -61,15 +61,15 @@ def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 		return result
 	# Likewise for a few other methods that we actually do want to override
 	factory_dict = { 'setTemplate': _setTemplate,
-					 'doJavaHelpFiles': _ResourceRenderer.doJavaHelpFiles,
-					 'doCHMFiles': _ResourceRenderer.doCHMFiles }
+					 'doJavaHelpFiles': _ResourceRendererMixin.doJavaHelpFiles,
+					 'doCHMFiles': _ResourceRendererMixin.doCHMFiles }
 
 
 	factory = type( str('_%sResourceRenderer' % baserenderername), tuple(bases), factory_dict )
 
 	renderer = factory()
 	renderer._XXX_ECLIPSE_DISABLED = False # Re-enable since we have the right template.
-	renderer.renderableClass = Renderable
+	renderer.renderableClass = RenderableMixin
 	renderer.resourcedb = resourcedb
 	if not unmix:
 		renderer.unmix_after_render = unmix
@@ -87,12 +87,12 @@ class _EnabledMockImager(object):
 
 	enabled = True
 
-class _ResourceRenderer(object):
+class _ResourceRendererMixin(object):
 
 	unmix_after_render = True
 
 	def __init__( self, *args, **kwargs ):
-		super(_ResourceRenderer,self).__init__( *args, **kwargs )
+		super(_ResourceRendererMixin,self).__init__( *args, **kwargs )
 		self.template_names_by_type = {}
 
 	def render(self, document, postProcess=None):
@@ -117,7 +117,7 @@ class _ResourceRenderer(object):
 
 		# Mix in required methods and members
 		document.renderer = self
-		# FIXME: this is not thread safe
+		# FIXME: this is not thread safe; see comments in the superclass
 		mixin(Node, self.renderableClass)
 		try:
 			# Create a filename generator
@@ -163,7 +163,7 @@ class _ResourceRenderer(object):
 	def doCHMFiles( self, *args, **kwargs ):
 		return
 
-class Renderable(BaseRenderable):
+class RenderableMixin(BaseRenderableMixin):
 
 	def __unicode__( self ):
 		"""
@@ -176,7 +176,7 @@ class Renderable(BaseRenderable):
 			return cached_value[1]
 
 		self._before_render()
-		__traceback_info__ = self, type(self)
+		__traceback_info__ = self, self.__class__, type(self)
 		result = renderable_as_unicode( self )
 		after_result = self._after_render( result )
 		if after_result is not None:
@@ -235,7 +235,7 @@ class Renderable(BaseRenderable):
 			elif unit_name in 'pc':
 				dimension = Dimension( float(dimen) / 12 )
 			else:
-				logger.warning('Unknown unit: %s' % unit_name)
+				logger.warning('Unknown unit: %s', unit_name)
 			return dimension
 
 		# SAJ: For now assuming that the PNG converter creates assets with scales 1, 2, and 4.
@@ -298,7 +298,9 @@ class Renderable(BaseRenderable):
 		# supported is when the requested size is the same size or larger than the largest asset.
 		if current_size == 'oversize':
 			logger.warning( 'Using oversized resource for: %s \nactual size: (%s, %s) \nrequested size: (%s, %s)',
-							self.source, assets['1'].width, assets['1'].height, (self.style['width'] if 'width' in self.style else None), (self.style['height'] if 'height' in self.style else None) )
+							self.source, assets['1'].width, assets['1'].height,
+							(self.style['width'] if 'width' in self.style else None),
+							(self.style['height'] if 'height' in self.style else None) )
 			img.resizeable = False
 		elif current_size == 'actual':
 			img.resizeable = False
@@ -364,7 +366,7 @@ class Renderable(BaseRenderable):
 		# If a plain string is returned, we have no idea what
 		# the encoding is, but we'll make a guess.
 		if type(val) is not unicode: # pragma: no cover
-			logger.warning('The renderer for %s returned a non-unicode string.	 Using the default input encoding.', type(child).__name__)
+			logger.warning('The renderer for %s returned a non-unicode string.	 Using the default input encoding.', type(val).__name__)
 			val = unicode(val, self.config['files']['input-encoding'])
 
 		return val
