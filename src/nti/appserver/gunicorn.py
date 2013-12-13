@@ -39,6 +39,60 @@ try:
 except AttributeError:
 	raise ImportError("Gunicorn too old")
 
+if gunicorn.version_info != (18,0):
+	raise ImportError("Unknown gunicorn version")
+# Gunicorn 18.0 and below have a bug formatting times:
+# (see https://github.com/benoitc/gunicorn/issues/621)
+# which causes our logging to be VERY misleading
+# a fix is committed that we replicate below,
+# so when the version changes, review
+# this patch
+
+from gunicorn import glogging
+def _glogging_atoms(self, resp, req, environ, request_time):
+	""" Gets atoms for log formating.
+	"""
+	status = resp.status.split(None, 1)[0]
+	atoms = {
+		'h': environ.get('REMOTE_ADDR', '-'),
+		'l': '-',
+		'u': '-',  # would be cool to get username from basic auth header
+		't': self.now(),
+		'r': "%s %s %s" % (environ['REQUEST_METHOD'],
+						   environ['RAW_URI'], environ["SERVER_PROTOCOL"]),
+		's': status,
+		'b': resp.response_length and str(resp.response_length) or '-',
+		'f': environ.get('HTTP_REFERER', '-'),
+		'a': environ.get('HTTP_USER_AGENT', '-'),
+		'T': request_time.seconds,
+		'D': request_time.microseconds,
+		'p': "<%s>" % os.getpid()
+	}
+
+	# add request headers
+	if hasattr(req, 'headers'):
+		req_headers = req.headers
+	else:
+		req_headers = req
+
+	atoms.update(dict([("{%s}i" % k.lower(), v) for k, v in req_headers]))
+
+	# add response headers
+	atoms.update(dict([("{%s}o" % k.lower(), v) for k, v in resp.headers]))
+
+	return atoms
+
+def SafeAtoms__init__(self, atoms):
+	dict.__init__(self)
+	for key, value in atoms.items():
+		if isinstance(value, basestring):
+			self[key] = value.replace(b'"', b'\\"')
+		else:
+			self[key] = value
+
+glogging.Logger.atoms = _glogging_atoms
+glogging.SafeAtoms.__init__ = SafeAtoms__init__
+
 import gevent
 import gevent.socket
 
@@ -252,9 +306,12 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# and tries to interpolate the settings for the log file.
 		# For now, we just add on the time in seconds and  microseconds with %(T)s.%(D)s. Other options include
 		# using a different key with a fake % char, like ^,
-		# (Note: microseconds and seconds are not /total/, they are each fractions.)
+		# (Note: microseconds and seconds are not /total/, they are each fractions;
+		# they come from a `datetime.timedelta` object, which guarantees that the microsecond
+		# value is between 0 and one whole second; we need to properly set formatting
+		# field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
-		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(T)s.%(D)ss" )
+		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(T)s.%(D)06ds" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
