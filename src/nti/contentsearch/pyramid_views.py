@@ -93,13 +93,14 @@ def clean_search_query(query, language='en'):
 
 #### from IPython.core.debugger import Tracer; Tracer()() #####
 
+accepted_keys = {'ntiid', 'accept', 'exclude'}
 indexable_type_names = frozenset(constants.indexable_type_names)
 
 def create_queryobject(username, params, matchdict, registry=component):
 	# parse params:
 	args = dict(params)
 	for name in list(args.keys()):
-		if name not in search_interfaces.ISearchQuery:
+		if name not in search_interfaces.ISearchQuery and name not in accepted_keys:
 			del args[name]
 	
 	term = matchdict.get('term', u'')
