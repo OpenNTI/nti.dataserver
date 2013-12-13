@@ -451,42 +451,66 @@ class IWhooshQueryParser(ISearchQueryParser):
 
 class IContentResolver(interface.Interface):
 
+	content = nti_schema.ValidTextLine(title="content to index", default=None)
+
 	def get_content():
 		"""return the text content to index"""
 
 class INTIIDResolver(interface.Interface):
+
+	ntiid = nti_schema.ValidTextLine(title="NTIID identifier", default=None)
 
 	def get_ntiid():
 		"""return the NTI identifier"""
 
 class IContainerIDResolver(interface.Interface):
 
+	containerId = nti_schema.ValidTextLine(title="container identifier", default=None)
+
 	def get_containerId():
 		"""return the container identifier"""
 
 class ILastModifiedResolver(interface.Interface):
+
+	lastModified = nti_schema.Float(title="last modified date", default=0.0)
 
 	def get_last_modified():
 		"""return the last modified date"""
 
 class ICreatorResolver(interface.Interface):
 
+	creator = nti_schema.ValidTextLine(title="creator user", default=None)
+
 	def get_creator():
 		"""return the creator"""
 
 class ITitleResolver(interface.Interface):
+
+	title = nti_schema.ValidTextLine(title="object title", default=None)
+
 	def get_title():
 		"""return the post/forum title"""
 
 class ITagsResolver(interface.Interface):
+	
+	tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="tag"), title='tags',
+								  default=())
+	
 	def get_tags():
 		"""return the tags"""
 
 class IKeywordsResolver(interface.Interface):
+
+	keywords = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="keyword"),
+									  title='keywords', default=())
+
 	def get_keywords():
 		"""return the key words"""
 
 class IShareableContentResolver(interface.Interface):
+
+	sharedWith = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
+									  	title='sharedWith', default=())
 
 	def get_sharedWith():
 		"""
@@ -516,6 +540,8 @@ class IThreadableContentResolver(IUserContentResolver,
 								 IKeywordsResolver,
 								 IShareableContentResolver):
 
+	inReplyTo = nti_schema.ValidTextLine(title="inReplyTo ntiid", default=None)
+
 	def get_inReplyTo():
 		"""return the inReplyTo nttid"""
 
@@ -523,6 +549,12 @@ class IHighlightContentResolver(IThreadableContentResolver):
 	pass
 
 class IRedactionContentResolver(IHighlightContentResolver):
+
+	replacementContent = nti_schema.ValidTextLine(title="replacement content",
+												  default=None)
+
+	redactionExplanation = nti_schema.ValidTextLine(title="replacement explanation",
+													default=None)
 
 	def get_replacement_content():
 		"""return the replacement content"""
@@ -536,6 +568,13 @@ class INoteContentResolver(IHighlightContentResolver, ITitleResolver):
 		"""return the nttids of the objects its refers"""
 
 class IMessageInfoContentResolver(IThreadableContentResolver):
+
+	id = nti_schema.ValidTextLine(title="message id", default=None)
+
+	channel = nti_schema.ValidTextLine(title="message channel", default=None)
+
+	recipients = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
+									  	title='message recipients', default=())
 
 	def get_id():
 		"""return the message id"""
@@ -551,6 +590,8 @@ class IBlogContentResolver(_ContentMixinResolver,
 						  	IShareableContentResolver,
 						  	ITitleResolver,
 						  	ITagsResolver):
+
+	id = nti_schema.ValidTextLine(title="post id", default=None)
 
 	def get_id():
 		"""return the post id"""
@@ -568,6 +609,8 @@ class IVideoTranscriptContentResolver(_ContentMixinResolver):
 	pass
 
 class INTICardContentResolver(_ContentMixinResolver, ICreatorResolver):
+
+	title = nti_schema.ValidTextLine(title="card title", default=None)
 
 	def get_title():
 		"""return the card title"""
