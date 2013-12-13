@@ -64,7 +64,7 @@ class _MetaSearchHit(type):
 		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
 		t.parameters = dict()
 		setattr(t, '__external_can_create__', True)
-		setattr(t, '__external_class_name__', 'Hit')
+		setattr(t, '__external_class_name__', HIT)
 		return t
 
 @interface.implementer(search_interfaces.ISearchHit)
