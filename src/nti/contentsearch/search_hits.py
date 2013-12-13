@@ -70,6 +70,8 @@ class _MetaSearchHit(type):
 @interface.implementer(search_interfaces.ISearchHit)
 class _BaseSearchHit(dict):
 
+	__metaclass__ = _MetaSearchHit
+
 	oid = alias('OID')
 
 	def __init__(self, original, oid=None, score=1.0):
@@ -80,9 +82,9 @@ class _BaseSearchHit(dict):
 	def set_hit_info(self, original, score):
 		self[CLASS] = HIT
 		self[SCORE] = score
+		self[MIME_TYPE] = self.mimeType
 		self[TYPE] = original.__class__.__name__
-		self[MIME_TYPE] = nti_mimetype_from_object(original, False) or u''
-		self[TARGET_MIME_TYPE] = self[MIME_TYPE]
+		self[TARGET_MIME_TYPE] = nti_mimetype_from_object(original, False) or u''
 
 	def get_query(self):
 		return self._query
@@ -107,7 +109,6 @@ class _BaseSearchHit(dict):
 
 class _SearchHit(_BaseSearchHit):
 
-	__metaclass__ = _MetaSearchHit
 	adapter_interface = search_interfaces.IUserContentResolver
 
 	def __init__(self, original, score=1.0):
@@ -219,7 +220,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 		self[CONTAINER_ID] = hit.ntiid
 		self[title_.capitalize()] = hit.title
 		self[LAST_MODIFIED] = hit.last_modified
-		self[MIME_TYPE] = BOOK_CONTENT_MIME_TYPE
+		self[TARGET_MIME_TYPE] = BOOK_CONTENT_MIME_TYPE
 
 	@classmethod
 	def get_oid(cls, hit):
@@ -243,7 +244,7 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 		self[LAST_MODIFIED] = hit.last_modified
 		self[END_MILLISECS] = hit.end_millisecs
 		self[START_MILLISECS] = hit.start_millisecs
-		self[MIME_TYPE] = VIDEO_TRANSCRIPT_MIME_TYPE
+		self[TARGET_MIME_TYPE] = VIDEO_TRANSCRIPT_MIME_TYPE
 
 	@classmethod
 	def get_oid(cls, hit):
@@ -265,10 +266,10 @@ class _WhooshNTICardSearchHit(_BaseSearchHit):
 		self[TITLE] = hit.title
 		self.title = hit.title
 		self[SNIPPET] = hit.content
-		self[MIME_TYPE] = NTI_CARD_MIME_TYPE
 		self[CONTAINER_ID] = hit.containerId
 		self[TARGET_NTIID] = hit.target_ntiid
 		self[LAST_MODIFIED] = hit.last_modified
+		self[TARGET_MIME_TYPE] = NTI_CARD_MIME_TYPE
 
 	def get_title(self):
 		return self.title or u''
