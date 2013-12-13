@@ -98,7 +98,10 @@ indexable_type_names = frozenset(constants.indexable_type_names)
 def create_queryobject(username, params, matchdict, registry=component):
 	# parse params:
 	args = dict(params)
-
+	for name in list(args.keys()):
+		if name not in search_interfaces.ISearchQuery:
+			del args[name]
+	
 	term = matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
 	args['term'] = term
