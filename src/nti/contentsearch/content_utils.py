@@ -38,22 +38,25 @@ from . import common
 from . import interfaces as search_interfaces
 
 from .constants import (CLASS, BODY, ID, NTIID, CREATOR, CONTAINER_ID, AUTO_TAGS)
-from .constants import (text_, body_, selectedText_, replacementContent_, redactionExplanation_,
-					 	keywords_, tag_fields, last_modified_fields, sharedWith_,
-					 	highlight_, note_, post_, tags_, messageinfo_, redaction_, canvas_,
-					 	canvastextshape_, references_, title_, inReplyTo_, recipients_, channel_,
+from .constants import (text_, body_, selectedText_, replacementContent_,
+						redactionExplanation_, keywords_, tag_fields,
+						last_modified_fields, sharedWith_, highlight_, note_, post_,
+						tags_, messageinfo_, redaction_, canvas_, canvastextshape_,
+						references_, title_, inReplyTo_, recipients_, channel_,
 					 	flattenedSharingTargetNames_)
 
 def get_ntiid_path(ntiid, library=None, registry=component):
 	result = ()
-	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) \
+			  if library is None else library
 	if library and ntiid:
 		paths = library.pathToNTIID(ntiid)
 		result = tuple([p.ntiid for p in paths]) if paths else ()
 	return result
 
 def get_collection_root(ntiid, library=None, registry=component):
-	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary)  \
+			  if library is None else library
 	paths = library.pathToNTIID(ntiid) if library else None
 	return paths[0] if paths else None
 
@@ -110,16 +113,19 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 	def get_ntiid(self):
 		result = to_external_ntiid_oid(self.obj)
 		return result
+	ntiid = property(get_ntiid)
 
 	def get_creator(self):
 		result = self.obj.creator
 		if nti_interfaces.IEntity.providedBy(result):
 			result = unicode(result.username)
 		return unicode(result) if result else None
+	creator = property(get_creator)
 
 	def get_containerId(self):
 		result = self.obj.containerId
 		return unicode(result) if result else None
+	containerId = property(get_containerId)
 
 	def get_sharedWith(self):
 		data = ()
@@ -127,16 +133,19 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 			data = self.obj.flattenedSharingTargetNames
 		result = _process_words(data)
 		return result
+	sharedWith = property(get_sharedWith)
 
 	def get_flattenedSharingTargets(self):
 		if nti_interfaces.IReadableShared.providedBy(self.obj):
 			return self.obj.flattenedSharingTargets
 		return ()
+	flattenedSharingTargets = property(get_flattenedSharingTargets)
 
 	def get_last_modified(self):
 		result = self.obj.lastModified
 		result = float(result) if result is not None else None
 		return result
+	lastModified = property(get_last_modified)
 
 class _ThreadableContentResolver(_AbstractIndexDataResolver):
 
@@ -146,11 +155,13 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 			data = getattr(self.obj, name, ())
 			result.update(_process_words(data))
 		return list(result) if result else []
+	tags = property(get_tags)
 
 	def get_keywords(self):
 		result = getattr(self.obj, keywords_, None)
 		result = set(_process_words(result)) if result else None
 		return list(result) if result else []
+	keywords = property(get_keywords)
 
 	def get_references(self):
 		result = set()
@@ -161,10 +172,12 @@ class _ThreadableContentResolver(_AbstractIndexDataResolver):
 				ntiid = adapted.get_ntiid()
 				if ntiid: result.add(unicode(ntiid))
 		return list(result) if result else ()
+	references = property(get_references)
 
 	def get_inReplyTo(self):
 		result = getattr(self.obj, inReplyTo_, None)
 		return unicode(result) if result else None
+	inReplyTo = property(get_inReplyTo)
 
 @component.adapter(nti_interfaces.IHighlight)
 @interface.implementer(search_interfaces.IHighlightContentResolver)
@@ -173,6 +186,7 @@ class _HighLightContentResolver(_ThreadableContentResolver):
 	def get_content(self):
 		result = self.obj.selectedText
 		return result
+	content = property(get_content)
 
 @component.adapter(nti_interfaces.IRedaction)
 @interface.implementer(search_interfaces.IRedactionContentResolver)
@@ -181,15 +195,18 @@ class _RedactionContentResolver(_HighLightContentResolver):
 	def get_content(self):
 		result = self.obj.selectedText
 		return result
+	content = property(get_content)
 
 	def get_replacement_content(self):
 		result = self.obj.replacementContent
 		result = None if result and result.lower() == redaction_ else result
 		return result
+	replacementContent = property(get_replacement_content)
 
 	def get_redaction_explanation(self):
 		result = self.obj.redactionExplanation
 		return result if result else None
+	redactionExplanation = property(get_redaction_explanation)
 
 class _PartsContentResolver(object):
 
@@ -209,9 +226,11 @@ class _NoteContentResolver(_ThreadableContentResolver, _PartsContentResolver):
 
 	def get_title(self):
 		return self.obj.title
+	title = property(get_title)
 
 	def get_content(self):
 		return self._resolve(self.obj.body)
+	content = property(get_content)
 
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoContentResolver)
@@ -219,53 +238,64 @@ class _MessageInfoContentResolver(_ThreadableContentResolver, _PartsContentResol
 
 	def get_content(self):
 		return self._resolve(self.obj.Body)
+	content = property(get_content)
 
 	def get_id(self):
 		result = self.obj.ID
 		return unicode(result) if result else None
+	ID = id = property(get_id)
 
 	def get_channel(self):
 		result = self.obj.channel
 		return unicode(result) if result else None
+	channel = property(get_channel)
 
 	def get_recipients(self):
 		data = getattr(self.obj, recipients_, None)
 		return _process_words(data)
+	recipients = property(get_recipients)
 
 @component.adapter(Canvas)
 class _CanvasShapeContentResolver(_BasicContentResolver, _PartsContentResolver):
 
 	def get_content(self):
 		return self._resolve(self.obj.shapeList)
+	content = property(get_content)
 
 @component.adapter(CanvasTextShape)
 class _CanvasTextShapeContentResolver(_BasicContentResolver):
 
 	def get_content(self):
 		return self.obj.text
+	content = property(get_content)
 
 class _BlogContentResolverMixin(_AbstractIndexDataResolver, _PartsContentResolver):
 
 	def get_title(self):
 		return self.obj.title
+	title = property(get_title)
 
 	def get_content(self):
 		result = self._resolve(self.obj.body)
 		return result
+	content = property(get_content)
 
 	def get_tags(self):
 		result = self.obj.tags
 		result = _process_words(set(result)) if result else ()
 		return result
+	tags = property(get_tags)
 
 	def get_id(self):
 		result = None
 		obj = self.obj
 		if forum_interfaces.IHeadlinePost.providedBy(obj):
 			obj = getattr(self.obj, '__parent__', None)
-		if forum_interfaces.ITopic.providedBy(obj) or forum_interfaces.IPost.providedBy(obj):
+		if 	forum_interfaces.ITopic.providedBy(obj) or \
+			forum_interfaces.IPost.providedBy(obj):
 			result = getattr(obj, 'id', None)
 		return result or u''
+	ID = id = property(get_id)
 
 @component.adapter(forum_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostContentResolver)
@@ -300,9 +330,6 @@ class _DictContentResolver(object):
 		return default
 
 	# content resolver
-
-	def get_content(self):
-		return self.get_multipart_content(self.obj)
 
 	def get_multipart_content(self, source):
 		if isinstance(source, six.string_types):
@@ -342,39 +369,51 @@ class _DictContentResolver(object):
 		result = unicode(result) if result else u''
 		return result
 
+	def get_content(self):
+		return self.get_multipart_content(self.obj)
+	content = property(get_content)
+
 	# user content resolver
 
 	def get_title(self):
 		result = self.obj.get(title_, ())
 		return unicode(result) if result else None
+	title = property(get_title)
 
 	def get_ntiid(self):
 		result = self.obj.get(NTIID)
 		return unicode(result) if result else None
+	ntiid = property(get_ntiid)
 
 	def get_creator(self):
 		result = self.obj.get(CREATOR)
 		return unicode(result) if result else None
+	creator = property(get_creator)
 
 	def get_containerId(self):
 		result = self.obj.get(CONTAINER_ID)
 		return unicode(result) if result else None
+	containerId = property(get_containerId)
 
 	def get_keywords(self):
 		result = self.obj.get(keywords_)
 		result = set(_process_words(result)) if result else None
-		return list(result) if result else []
+		return list(result) if result else ()
+	keywords = property(get_keywords)
 
 	def get_tags(self):
 		result = self.obj.get(tags_, self.obj.get(AUTO_TAGS, ()))
 		return _process_words(result)
+	tags = property(get_tags)
 
 	def get_sharedWith(self):
 		data = self.obj.get(sharedWith_, self.obj.get(flattenedSharingTargetNames_, ()))
 		return _process_words(data)
+	sharedWith = property(get_sharedWith)
 
 	def get_last_modified(self):
 		return self._get_attr(last_modified_fields)
+	lastModified = property(get_last_modified)
 
 	# treadable content resolver
 
@@ -385,34 +424,41 @@ class _DictContentResolver(object):
 		for s in common.to_list(objects) or ():
 			result.add(unicode(s))
 		return list(result) if result else ()
+	references = property(get_references)
 
 	def get_inReplyTo(self):
 		result = self.obj.get(inReplyTo_, u'')
 		return result if result else None
+	inReplyTo = property(get_inReplyTo)
 
 	# redaction content resolver
 
 	def get_replacement_content(self):
 		result = self.obj.get(replacementContent_, None)
 		return result if result else None
+	replacementContent = property(get_replacement_content)
 
 	def get_redaction_explanation(self):
 		result = self.obj.get(redactionExplanation_, None)
 		return result if result else None
+	redactionExplanation = property(get_redaction_explanation)
 
 	# messageinfo content resolver
 
 	def get_id(self):
 		result = self.obj.get(ID, None)
 		return unicode(result) if result else None
+	ID = id = property(get_id)
 
 	def get_channel(self):
 		result = self.obj.get(channel_, None)
 		return unicode(result) if result else None
+	channel = property(get_channel)
 
 	def get_recipients(self):
 		data = self.obj.get(recipients_, ())
 		return _process_words(data)
+	recipients = property(get_recipients)
 
 @component.adapter(search_interfaces.IBookContent)
 @interface.implementer(search_interfaces.IBookContentResolver)
@@ -420,13 +466,16 @@ class _BookContentResolver(_BasicContentResolver):
 
 	def get_content(self):
 		return self.obj.content
+	content = property(get_content)
 
 	def get_ntiid(self):
 		return self.obj.ntiid
 	get_containerId = get_ntiid
+	ntiid = containerId = property(get_ntiid)
 
 	def get_last_modified(self):
 		return self.obj.last_modified
+	lastModified = property(get_last_modified)
 
 @component.adapter(search_interfaces.IVideoTranscriptContent)
 @interface.implementer(search_interfaces.IVideoTranscriptContentResolver)
@@ -434,15 +483,19 @@ class _VideoTranscriptContentResolver(_BasicContentResolver):
 
 	def get_content(self):
 		return self.obj.content
+	content = property(get_content)
 
 	def get_containerId(self):
 		return self.obj.containerId
+	containerId = property(get_containerId)
 
 	def get_ntiid(self):
 		return self.obj.videoId or self.get_containerId()
+	videoId = ntiid = property(get_ntiid)
 
 	def get_last_modified(self):
 		return self.obj.last_modified
+	lastModified = property(get_last_modified)
 
 @component.adapter(search_interfaces.INTICardContent)
 @interface.implementer(search_interfaces.INTICardContentResolver)
@@ -451,27 +504,35 @@ class _NTICardContentResolver(_BasicContentResolver):
 	def get_content(self):
 		return self.obj.content
 	get_description = get_content
+	content = property(get_content)
 
 	def get_containerId(self):
 		return self.obj.containerId
+	containerId = property(get_containerId)
 
 	def get_title(self):
 		return self.obj.title
+	title = property(get_title)
 
 	def get_href(self):
 		return self.obj.href
+	href = property(get_href)
 
 	def get_target_ntiid(self):
 		return self.obj.target_ntiid
+	target_ntiid = property(get_target_ntiid)
 
 	def get_ntiid(self):
 		return self.obj.ntiid
+	ntiid = property(get_ntiid)
 
 	def get_creator(self):
 		return self.obj.creator
+	creator = property(get_creator)
 
 	def get_last_modified(self):
 		return self.obj.last_modified
+	lastModified = property(get_last_modified)
 
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
