@@ -23,8 +23,9 @@ from nti.utils import schema as nti_schema
 # search query
 
 SEARCH_TYPES_VOCABULARY = \
-	schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) \
-										for _x in constants.indexable_type_names + (constants.invalid_type_,)])
+	schema.vocabulary.SimpleVocabulary(
+				[schema.vocabulary.SimpleTerm(_x) \
+				for _x in constants.indexable_type_names + (constants.invalid_type_,)])
 
 class ISearchQuery(interface.Interface):
 
@@ -37,8 +38,9 @@ class ISearchQuery(interface.Interface):
 
 	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
 
-	searchOn = nti_schema.ListOrTuple(value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY),
-						  			  title="Content types to search on", required=False)
+	searchOn = nti_schema.ListOrTuple(
+						value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY),
+						title="Content types to search on", required=False)
 
 	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
 
@@ -47,12 +49,17 @@ class ISearchQuery(interface.Interface):
 	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order",
 										 default='descending', required=False)
 
-	surround = schema.Int(title="Hightlight surround chars", required=False, default=20, min=1)
-	maxchars = schema.Int(title="Hightlight max chars", required=False, default=300, min=1)
+	surround = schema.Int(title="Hightlight surround chars", required=False,
+						  default=20, min=1)
+
+	maxchars = schema.Int(title="Hightlight max chars", required=False,
+						  default=300, min=1)
 
 	prefix = schema.Int(title="Suggestion prefix", required=False, min=1)
-	threshold = nti_schema.Number(title="Suggestion threshold", required=False, default=0.4999, min=0.0)
-	maxdist = schema.Int(title="Maximun edit distance from the given word to look at", required=False, default=15, min=2)
+	threshold = nti_schema.Number(title="Suggestion threshold", required=False,
+								  default=0.4999, min=0.0)
+	maxdist = schema.Int(title="Maximun edit distance from the given word to look at",
+						 required=False, default=15, min=2)
 
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
@@ -453,78 +460,41 @@ class IContentResolver(interface.Interface):
 
 	content = nti_schema.ValidTextLine(title="content to index", default=None)
 
-	def get_content():
-		"""return the text content to index"""
-
 class INTIIDResolver(interface.Interface):
 
 	ntiid = nti_schema.ValidTextLine(title="NTIID identifier", default=None)
-
-	def get_ntiid():
-		"""return the NTI identifier"""
 
 class IContainerIDResolver(interface.Interface):
 
 	containerId = nti_schema.ValidTextLine(title="container identifier", default=None)
 
-	def get_containerId():
-		"""return the container identifier"""
-
 class ILastModifiedResolver(interface.Interface):
 
 	lastModified = nti_schema.Float(title="last modified date", default=0.0)
-
-	def get_last_modified():
-		"""return the last modified date"""
 
 class ICreatorResolver(interface.Interface):
 
 	creator = nti_schema.ValidTextLine(title="creator user", default=None)
 
-	def get_creator():
-		"""return the creator"""
-
 class ITitleResolver(interface.Interface):
 
 	title = nti_schema.ValidTextLine(title="object title", default=None)
 
-	def get_title():
-		"""return the post/forum title"""
-
 class ITagsResolver(interface.Interface):
-	
+
 	tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="tag"), title='tags',
 								  default=())
-	
-	def get_tags():
-		"""return the tags"""
 
 class IKeywordsResolver(interface.Interface):
 
 	keywords = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="keyword"),
 									  title='keywords', default=())
 
-	def get_keywords():
-		"""return the key words"""
-
 class IShareableContentResolver(interface.Interface):
 
 	sharedWith = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
 									  	title='sharedWith', default=())
 
-	def get_sharedWith():
-		"""
-		Deprecated.
-		Returns the usernames of entities this object is shared with.
-		Note this is not fully reliable as the entity names may not
-		be globally unique.
-		"""
-
-	def get_flattenedSharingTargets():
-		"""
-		Returns the same thing as :class:`.IReadableShared`'s ``flattenedSharingTargets``
-		attribute.
-		"""
 
 class _ContentMixinResolver(IContentResolver,
 							INTIIDResolver,
@@ -542,9 +512,6 @@ class IThreadableContentResolver(IUserContentResolver,
 
 	inReplyTo = nti_schema.ValidTextLine(title="inReplyTo ntiid", default=None)
 
-	def get_inReplyTo():
-		"""return the inReplyTo nttid"""
-
 class IHighlightContentResolver(IThreadableContentResolver):
 	pass
 
@@ -556,16 +523,10 @@ class IRedactionContentResolver(IHighlightContentResolver):
 	redactionExplanation = nti_schema.ValidTextLine(title="replacement explanation",
 													default=None)
 
-	def get_replacement_content():
-		"""return the replacement content"""
-
-	def get_redaction_explanation():
-		"""return the redaction explanation content"""
-
 class INoteContentResolver(IHighlightContentResolver, ITitleResolver):
 
-	def get_references():
-		"""return the nttids of the objects its refers"""
+	references = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="ntiid"),
+									  	title='nttids references', default=())
 
 class IMessageInfoContentResolver(IThreadableContentResolver):
 
@@ -576,15 +537,6 @@ class IMessageInfoContentResolver(IThreadableContentResolver):
 	recipients = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
 									  	title='message recipients', default=())
 
-	def get_id():
-		"""return the message id"""
-
-	def get_channel():
-		"""return the message channel"""
-
-	def get_recipients():
-		"""return the message recipients"""
-
 class IBlogContentResolver(_ContentMixinResolver,
 							ICreatorResolver,
 						  	IShareableContentResolver,
@@ -592,9 +544,6 @@ class IBlogContentResolver(_ContentMixinResolver,
 						  	ITagsResolver):
 
 	id = nti_schema.ValidTextLine(title="post id", default=None)
-
-	def get_id():
-		"""return the post id"""
 
 class IPostContentResolver(IBlogContentResolver):
 	pass
@@ -611,9 +560,6 @@ class IVideoTranscriptContentResolver(_ContentMixinResolver):
 class INTICardContentResolver(_ContentMixinResolver, ICreatorResolver):
 
 	title = nti_schema.ValidTextLine(title="card title", default=None)
-
-	def get_title():
-		"""return the card title"""
 
 class IModeledContentResolver(IPostContentResolver,
 							  IMessageInfoContentResolver,
@@ -794,7 +740,9 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 # highlights
 
 class ISearchFragment(interface.Interface):
+
 	text = nti_schema.ValidTextLine(title="fragment text", required=True)
+
 	matches = nti_schema.ListOrTuple(
 					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
 										   min_length=2,
