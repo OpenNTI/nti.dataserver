@@ -11,7 +11,8 @@ import sys
 
 from zope import schema
 from zope import interface
-from zope.interface.common.mapping import IMapping
+from zope.deprecation import deprecated
+from zope.interface.common.mapping import IMapping, IFullMapping
 from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
@@ -19,6 +20,19 @@ from nti.dataserver import interfaces as nti_interfaces
 from . import constants
 
 from nti.utils import schema as nti_schema
+
+deprecated('IRepozeDataStore', 'Use lastest index implementation')
+class IRepozeDataStore(IFullMapping):
+	"""
+	This interface is implemented by persistent objects in databases
+	in the wild (notably, these objects were registered as persistent utilities,
+	so the persistent registry has a handle to this class).  Therefore, it MUST remain
+	here as an interface (or we have to clean out the databases); otherwise add errors result such as this one::
+
+	  zope.interface-4.0.5-py2.7-macosx-10.9-x86_64.egg/zope/interface/adapter.py", line 493, in add_extendor
+         for i in provided.__iro__:
+      AttributeError: type object 'IRepozeDataStore' has no attribute '__iro__'
+	"""
 
 # search query
 
@@ -146,7 +160,7 @@ class IWhooshContentSearcherFactory(IContentSearcherFactory):
 		"""
 
 class IEntityIndexController(ISearcher):
-	
+
 	def index_content(data):
 		"""
 		index the specified content
