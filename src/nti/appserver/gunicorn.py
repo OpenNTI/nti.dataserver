@@ -166,6 +166,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 
 		cfg = self.server.worker.cfg
 		cfg_x_forwarded_for_header = cfg.x_forwarded_for_header
+
 		for header in self.headers.headers:
 			# If we're not careful to split with a byte string here, we can
 			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
@@ -180,13 +181,16 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			# In gunicorn .18, the x-forwarded-for value is parsed incorrectly.
 			# It takes only the last value instead of the first value,
 			# which means that if we're behind multiple proxies we get
-			# the wrong ip.
+			# the wrong ip...a second issue is that if there are two headers (something legal)
+			# only the value of the last one is used (even though the environ is correctly
+			# update to have only one concatenated header)
 			# I haven't submitted an issue/pull request because the implementation
 			# is changing in .19 (https://github.com/benoitc/gunicorn/pull/633)
 			# It looks like one way around this would be with the PROXY protocol
 			# (see the proxy_protocol configuration) that haproxy and stunnel support.
 			# The logic to accept and parse these values is somewhat complex, so rather
-			# than duplicate it, we reverse the value :)
+			# than duplicate it, we reverse the value, which works for the simple
+			# one-header case.
 			if cfg_x_forwarded_for_header and k == cfg_x_forwarded_for_header:
 				if b',' in v:
 					parts = v.split(b',')
