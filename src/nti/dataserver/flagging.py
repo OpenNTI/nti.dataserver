@@ -95,7 +95,13 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 			return False
 
 	def unflag(self, context):
-		if sets.discard_p(self.flagged, self._intids.queryId(context)):
+		iid = self._intids.queryId(context)
+		if iid is None: # pragma: no cover
+			# We've seen this during moderation; how did that happen?
+			logger.warn( "Context %s has no intid, cannot be un/flagged", context )
+			return
+
+		if sets.discard_p(self.flagged, iid):
 			notify(nti_interfaces.ObjectUnflaggedEvent(context))
 
 	def iterflagged(self):
