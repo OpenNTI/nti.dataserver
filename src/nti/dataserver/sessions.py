@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-Session distribution and management. 
+Session distribution and management.
 
 $Id$
 """
@@ -9,6 +9,8 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger( __name__ )
+
+import os
 
 import time
 import zlib
@@ -35,7 +37,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import SiteNotInstalledError
 
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import DevmodeNonExternalizableObjectReplacer 
+from nti.externalization.externalization import DevmodeNonExternalizableObjectReplacer
 
 from nti.socketio.interfaces import ISocketIOSocket
 from nti.socketio.interfaces import ISocketSession
@@ -134,6 +136,11 @@ class SessionService(object):
 		return gevent.spawn( read_incoming )
 
 	def _spawn_session_watchdog( self ):
+		# A monotonic series, unlikely to wrap when we spawned
+		my_sleep_adjustment = os.getpid() % 20
+		if os.getpid() % 2: # if even, go low
+			my_sleep_adjustment = -my_sleep_adjustment
+		tx_runner = component.getUtility( nti_interfaces.IDataserverTransactionRunner )
 		def watchdog_sessions():
 			while True:
 				# Some transports make it very hard to detect
@@ -141,8 +148,12 @@ class SessionService(object):
 				# We watch for it to die (since we created it) and cleanup
 				# after it...this is a compromise between always
 				# knowing it has died and doing the best we can across the cluster
-				gevent.sleep( 60 )	# Time? We can detect a dead session no faster than we decide it's dead,
-									# which is SESSION_HEARTBEAT_TIMEOUT
+				gevent.sleep( 60 + my_sleep_adjustment )
+				# Time? We can detect a dead session no faster than we decide it's dead,
+				# which is SESSION_HEARTBEAT_TIMEOUT. We adjust it so that all
+				# workers on a machine (which were forked almost simultaneously) don't
+				# all go through it at the same instant.
+
 				watching_sessions = list(self._watching_sessions)
 
 				# TODO: With the heartbeats in redis, we can check for valid sessions there.
@@ -155,7 +166,7 @@ class SessionService(object):
 					# although there is a higher risk of conflict
 					def _get_sessions():
 						return {sid: self.get_session(sid) for sid in watching_sessions}
-					sessions = component.getUtility( nti_interfaces.IDataserverTransactionRunner )( _get_sessions, retries=5, sleep=0.1 )
+					sessions = tx_runner( _get_sessions, retries=5, sleep=0.1 )
 				except transaction.interfaces.TransientError:
 					# Try again later
 					logger.debug( "Trying session poll later", exc_info=True )
