@@ -6,7 +6,9 @@ from __future__ import print_function, absolute_import, unicode_literals
 
 from hamcrest import assert_that, has_length, is_, same_instance, is_not
 from hamcrest import contains
-from nti.dataserver.tests import has_attr, provides
+from hamcrest import equal_to
+from hamcrest import has_property as has_attr
+from nti.testing.matchers import provides
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
@@ -24,6 +26,10 @@ import nti.dataserver.interfaces as nti_interfaces
 setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
 tearDownModule = nti.testing.base.module_teardown
 
+def test_everyone_equal_string():
+	iprin = nti_interfaces.IPrincipal('system.Everyone')
+	assert_that( iprin, is_(equal_to('system.Everyone')))
+
 def test_user_adapts_to_group_member(  ):
 	u = users.User( 'sjohnson@nextthought.com', 't' )
 	pgm = nti_interfaces.IGroupMember( u )
@@ -34,8 +40,8 @@ def test_user_adapts_to_group_member(  ):
 	assert_that( pgm, verifiably_provides( nti_interfaces.IGroupAwarePrincipal ) )
 
 	# Internally, this is implemented with annotations
-	assert_that( u, has_attr( '__annotations__' ) )
-	assert_that( u.__annotations__, has_length( 1 ) )
+	assert_that( u, has_attr( '__annotations__',
+							  has_length( 1 ) ) )
 
 	# And we're using the same objects so it works
 	mutable = nti_interfaces.IMutableGroupMember( u )
@@ -48,8 +54,8 @@ def test_user_adapts_to_group_member(  ):
 	assert_that( rgm, verifiably_provides( nti_interfaces.IGroupMember ) )
 	assert_that( list(rgm.groups), is_([]) )
 
-	assert_that( u, has_attr( '__annotations__' ) )
-	assert_that( u.__annotations__, has_length( 2 ) )
+	assert_that( u, has_attr( '__annotations__',
+							  has_length( 2 ) ) )
 
 
 def test_string_adapts_to_principal(  ):
