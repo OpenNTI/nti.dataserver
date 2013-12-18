@@ -252,6 +252,21 @@ class _EveryoneGroup(_StringGroup):
 		super(_EveryoneGroup,self).__init__( string )
 		self.title = self.description
 
+	def __eq__(self,other):
+		"""
+		We also allow ourself to be equal to the string version
+		of our id. This is because of the unauthenticated case:
+		in that case, our code that adds this object to
+		the list of principal identities is never called,
+		leaving ACLs that are defined with this IPrincipal
+		to fail.
+		"""
+		result = _StringGroup.__eq__(self,other)
+		if result is NotImplemented and isinstance(other,basestring):
+			result = self.id == other
+		return result
+
+
 _EveryoneGroup.description = _EveryoneGroup.__doc__
 
 class _AuthenticatedGroup(_EveryoneGroup):

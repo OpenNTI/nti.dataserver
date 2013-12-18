@@ -538,7 +538,7 @@ class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 										'realname': 'Jason Madden',
 										'email': 'foo@bar.com'	} )
 
-		path = b'/dataserver2/users/@@account.create'
+		path = b'/dataserver2/account.create'
 
 		res = app.post( path, data )
 
@@ -586,7 +586,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
 										'password': 'password' } )
 
-		path = b'/dataserver2/users/@@account.create'
+		path = b'/dataserver2/account.create'
 
 		_ = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
@@ -602,7 +602,7 @@ class TestApplicationPreflightUser(SharedApplicationTestBase):
 					 'password': 'pass123word',
 					 'email': 'foo@bar.com'	}
 
-		path = b'/dataserver2/users/@@account.preflight.create'
+		path = b'/dataserver2/account.preflight.create'
 
 		for data in (data_with_username_only, data_full):
 			data = to_json_representation( data )

@@ -42,6 +42,7 @@ openid.oidutil.log = logging.getLogger('openid').info
 from zope import interface
 from zope import component
 from zope import lifecycleevent
+from zope.traversing import api as ztraversing
 from zope.event import notify
 from zope.i18n import translate
 
@@ -175,15 +176,6 @@ def _links_for_unauthenticated_users( request ):
 	remote_user = _authenticated_user( request )
 	if not remote_user:
 
-		create_account = request.route_path( 'objects.generic.traversal', traverse=('users') )
-
-		create = Link( create_account, rel=REL_CREATE_ACCOUNT,
-					   target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
-					   elements=('@@' + REL_CREATE_ACCOUNT,))
-		preflight = Link( create_account, rel=REL_PREFLIGHT_CREATE_ACCOUNT,
-						  target_mime_type=mimetype.nti_mimetype_from_object( users.User ),
-						  elements=('@@' + REL_PREFLIGHT_CREATE_ACCOUNT,))
-
 		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
 								rel=REL_FORGOT_USERNAME )
 		forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
@@ -191,7 +183,21 @@ def _links_for_unauthenticated_users( request ):
 		reset_passcode = Link( request.route_path( REL_RESET_PASSCODE ),
 							   rel=REL_RESET_PASSCODE )
 
-		links = [create, preflight, forgot_username, forgot_passcode, reset_passcode]
+		links = [forgot_username, forgot_passcode, reset_passcode]
+
+		# These may be security controlled
+		root = component.getUtility(nti_interfaces.IDataserver).root_folder
+		for rel in REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT:
+			route = request.route_path( 'objects.generic.traversal', traverse=(rel,))
+			resource = ztraversing.traverse( root, route, request=request )
+			try:
+				yes = has_permission(nauth.ACT_CREATE, resource, request)
+			except ValueError: # Test cases that don't have a complete policy setup
+				yes = False
+
+			if yes:
+				links.append( Link( route, rel=rel, target_mime_type=mimetype.nti_mimetype_from_object( users.User ) ) )
+
 
 		for provider in component.subscribers( (remote_user,request), app_interfaces.IUnauthenticatedUserLinkProvider ):
 			links.extend( provider.get_links() )
