@@ -17,6 +17,7 @@ from zope.traversing import interfaces as trv_interfaces
 
 import pyramid.traversal
 import pyramid.interfaces
+from pyramid.threadlocal import get_current_request
 import pyramid.security as sec
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
@@ -226,9 +227,9 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 	# TODO: The implied resources could (should) actually be persistent. That way
 	# they fit nicely and automatically in the resource tree.
 
-	def __init__( self, context, request ):
+	def __init__( self, context, request=None ):
 		self.context = context
-		self.request = request
+		self.request = request or get_current_request()
 
 	allowed_keys = ('users',)
 

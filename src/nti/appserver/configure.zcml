@@ -53,8 +53,13 @@
 	<!-- __________________ -->
 
 	<!-- Resource traversal -->
+	<!-- with and without request -->
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
-			 provides="zope.traversing.interfaces.ITraversable" />
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"/>
+	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 for="nti.dataserver.interfaces.IDataserverFolder"/>
 
 	<adapter factory="._dataserver_pyramid_traversal.UserTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
@@ -234,6 +239,17 @@
 			 for="nti.dataserver.interfaces.ISimpleEnclosureContainer pyramid.interfaces.IRequest"
 			 factory="._dataserver_pyramid_traversal.EnclosureTraversable"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+	<!-- Account creation endpoints. -->
+	<adapter name="account.create"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+			 factory=".account_creation_views.AccountCreatePathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+	<adapter name="account.preflight.create"
+			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
+			 factory=".account_creation_views.AccountCreatePreflightPathAdapter"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
 
 	<!-- Events -->
 	<!-- Stream events -->

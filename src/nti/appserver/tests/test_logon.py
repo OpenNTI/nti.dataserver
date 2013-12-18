@@ -196,10 +196,15 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
 		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
 
+		self.config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
+							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
+
+
 		# Provide a library
 		library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
 		component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
 
+	@WithMockDSTrans
 	def test_unathenticated_ping(self):
 		"An unauthenticated ping returns one link, to the handshake."
 
@@ -207,27 +212,34 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result, has_property( 'links', has_length( 6 ) ) )
 		__traceback_info__ = result.links
 		assert_that( result.links[-2].target, ends_with( '/dataserver2/handshake' ) )
-		assert_that( result.links[0].target, ends_with( '/dataserver2/users' ) )
-		assert_that( result.links[0].elements, is_( ('@@account.create',) ) )
+		assert_that( result.links[0].target, ends_with( '/dataserver2/account.create') )
 		assert_that( result.links[0].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
 		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
 
 
 	@WithMockDSTrans
-	def _test_authenticated_ping(self):
+	def test_authenticated_ping(self):
 		"An authenticated ping returns two links, to the handshake and the root"
 
+		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
-		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
+			def effective_principals(self, request):
+				return [user]
+
+
 		get_current_request().registry.registerUtility( Policy() )
+		from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
+		get_current_request().registry.registerUtility( ACLAuthorizationPolicy() )
+
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
+		__traceback_info__ = result.links
 		len_links = len(result.links)
-		assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
-		assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
+		#assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
+		#assert_that( result.links[1].target, ends_with( '/dataserver2' ) )
 
 		# We can increase that by adding links
 		user_link_provider.add_link( user, 'force-edit-profile' )
@@ -235,7 +247,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result, has_property( 'links', has_length( len_links + 1 ) ) )
 		external = to_external_object( result )
 		assert_that( external, has_entry( 'Links', has_length( len_links + 1 ) ) )
-		assert_that( external['Links'][3], has_entry( 'href', '/dataserver2/users/jason.madden%40nextthought.com/@@force-edit-profile' ) )
+		assert_that( external['Links'], has_item( has_entry( 'rel', 'force-edit-profile' ) ) )
 
 		# and we can decrease again
 		user_link_provider.delete_link( user, 'force-edit-profile' )
@@ -251,18 +263,22 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
+			def effective_principals(self, request):
+				return [self.authenticated_userid(request)]
 
 		component.provideUtility( Policy() )
+		from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
+		component.provideUtility( ACLAuthorizationPolicy() )
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[5].target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( result.links[5].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[5].target, contains_string( 'oidcsum=1290829754' ) )
+		assert_that( result.links[3].target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( result.links[3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[3].target, contains_string( 'oidcsum=1290829754' ) )
 
-		assert_that( result.links[2].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
 		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
