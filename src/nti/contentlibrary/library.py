@@ -250,6 +250,15 @@ class AbstractCachedNotifyingStaticLibrary(AbstractCachedStaticLibrary):
 
 		return result
 
+	def __delattr__(self, name):
+		if name == 'contentPackages' and 'contentPackages' in self.__dict__:
+			# When we are uncached to force re-enumeration,
+			# we need to send the corresponding object removed events
+			# so that people that care can clean up
+			for title in self.contentPackages:
+				lifecycleevent.removed(title)
+		super(AbstractCachedNotifyingStaticLibrary,self).__delattr__(name)
+
 def pathToPropertyValue( unit, prop, value ):
 	"""
 	A convenience function for returning, in order from the root down,
