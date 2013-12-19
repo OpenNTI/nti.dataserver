@@ -420,42 +420,7 @@ class LibraryTraversable(object):
 		except KeyError:
 			raise loc_interfaces.LocationError( key )
 
-
-
-from zope.traversing.namespace import adapter
-
-class adapter_request(adapter):
-	"""
-	Implementation of the adapter namespace that attempts to pass the
-	request along when getting an adapter.
-	"""
-
-	def __init__( self, context, request=None ):
-		super(adapter_request,self).__init__( context, request )
-		self.request = request
-
-	def traverse( self, name, ignored ):
-		result = None
-		if self.request is not None:
-			result = component.queryMultiAdapter(
-							(self.context, self.request),
-							trv_interfaces.IPathAdapter,
-							name )
-
-
-		if result is None:
-			# Look for the single-adapter. Or raise location error
-			result = super(adapter_request,self).traverse( name, ignored )
-
-		# Some sanity checks on the returned object
-		__traceback_info__ = result, self.context, result.__parent__, result.__name__
-		assert nti_interfaces.IZContained.providedBy( result )
-		assert result.__parent__ is not None
-		if result.__name__ is None:
-			result.__name__ = name
-		assert result.__name__ == name
-
-		return result
+from nti.dataserver.traversal import adapter_request # BWC export
 
 class _resource_adapter_request(adapter_request):
 	"""
@@ -465,6 +430,8 @@ class _resource_adapter_request(adapter_request):
 
 	def __init__( self, context, request=None ):
 		super(_resource_adapter_request,self).__init__( context.resource, request=request )
+
+
 
 ## Attachments/Enclosures
 

@@ -129,3 +129,93 @@ def find_interface(resource, interface, strict=True):
 	for item in lineage:
 		if interface.providedBy( item ):
 			return item
+
+
+from zope.traversing.namespace import adapter
+from zope.traversing.interfaces import IPathAdapter
+
+class adapter_request(adapter):
+	"""
+	Implementation of the adapter namespace that attempts to pass the
+	request along when getting an adapter.
+	"""
+
+	def __init__( self, context, request=None ):
+		super(adapter_request,self).__init__( context, request )
+		self.request = request
+
+	def traverse( self, name, ignored ):
+		result = None
+		if self.request is not None:
+			result = component.queryMultiAdapter(
+							(self.context, self.request),
+							IPathAdapter,
+							name )
+
+
+		if result is None:
+			# Look for the single-adapter. Or raise location error
+			result = super(adapter_request,self).traverse( name, ignored )
+
+		# Some sanity checks on the returned object
+		__traceback_info__ = result, self.context, result.__parent__, result.__name__
+		assert nti_interfaces.IZContained.providedBy( result )
+		assert result.__parent__ is not None
+		if result.__name__ is None:
+			result.__name__ = name
+		assert result.__name__ == name
+
+		return result
+
+from zope.traversing.interfaces import ITraversable
+from zope.traversing.adapters import DefaultTraversable
+from zope.container.traversal import ContainerTraversable
+from zope import interface
+
+@interface.implementer(ITraversable)
+class ContainerAdapterTraversable(ContainerTraversable):
+	"""
+	A :class:`ITraversable` implementation for containers that also
+	automatically looks for named path adapters *if* the container
+	has no matching key.
+
+	You may subclass this traversable or register it in ZCML
+	directly. It is usable both with and without a request.
+	"""
+
+	def __init__( self, context, request=None ):
+		super(ContainerAdapterTraversable,self).__init__(context)
+		self.context = context
+		self.request = request
+
+	def traverse( self, key, remaining_path ):
+		try:
+			return super(ContainerAdapterTraversable,self).traverse(key, remaining_path)
+		except KeyError:
+			# Is there a named path adapter?
+			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
+
+
+@interface.implementer(ITraversable)
+class DefaultAdapterTraversable(DefaultTraversable):
+	"""
+	A :class:`ITraversable` implementation for ordinary objects that also
+	automatically looks for named path adapters *if* the traversal
+	found no matching path.
+
+	You may subclass this traversable or register it in ZCML
+	directly. It is usable both with and without a request.
+
+	"""
+
+	def __init__( self, context, request=None ):
+		super(DefaultAdapterTraversable,self).__init__(context)
+		self.context = context
+		self.request = request
+
+	def traverse( self, key, remaining_path ):
+		try:
+			return super(DefaultAdapterTraversable,self).traverse(key, remaining_path)
+		except KeyError:
+			# Is there a named path adapter?
+			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
