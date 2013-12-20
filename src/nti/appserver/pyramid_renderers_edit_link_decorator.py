@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 """
 A decorator for the 'edit' link
+
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
-from ZODB import loglevels
 
 from zope import interface
 
@@ -20,7 +21,7 @@ from nti.appserver.pyramid_authorization import is_writable
 
 from zope.location.interfaces import ILocation
 
-from nti.dataserver.interfaces import ICreated, ILink, IShouldHaveTraversablePath
+from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
 from nti.dataserver.links import Link
 from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
@@ -28,79 +29,109 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.singleton import SingletonDecorator
 
 
-ILink_providedBy = ILink.providedBy
-ICreated_providedBy = ICreated.providedBy
-
 LINKS = StandardExternalFields.LINKS
+IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class EditLinkDecorator(object):
 	"""
-	Adds the ``edit`` link relationship to persistent objects (because we have to be able
-	to generate a URL and we need the OID) that are writable by the current user.
+	Adds the ``edit`` link relationship to objects that are persistent
+	(because we have to be able to generate a URL and we need the OID)
+	or guaranteed to have a traversable path, and which are writable
+	by the current user.
 
-	Also, since this is the most convenient place, decorates objects with a top-level
-	'href' link. This may or may not always be correct and performant. Be careful
-	what you register this for.
+	Subclasses may override :meth:`_has_permission` if this definition
+	needs changed.
+
+	Also, since this is the most convenient place, decorates objects
+	with a top-level ``href`` link. This may or may not always be
+	correct and performant. Be careful what you register this for.
 	"""
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
-		if not getattr( context, '_p_jar', None ):
-			return
-		# preflight, make sure there is no edit link already
-		# is_writable is relatively expensive
-		for l in mapping.get(LINKS,()):
-			try:
-				if l.rel == 'edit':
-					return
-			except AttributeError:
-				pass
-
-		if is_writable(context, skip_cache=True):
-			# TODO: This is weird, assuming knowledge about the URL structure here
-			# Should probably use request ILocationInfo to traverse back up to the ISite
-			__traceback_info__ = context, mapping
-			try:
-				# Some objects are not in the traversal tree. Specifically,
-				# chatserver.IMeeting (which is IModeledContent and IPersistent)
-				# Our options are to either catch that here, or introduce an
-				# opt-in interface that everything that wants 'edit' implements
-				nearest_site = find_nearest_site( context )
-			except TypeError:
-				nearest_site = None
-
-			if nearest_site is None:
-				logger.debug( "Not providing edit links for %s, could not find site", getattr(context, '__class__', type(context)) )
-				return
-
-			mapping.setdefault( LINKS, [] )
-			link = Link( to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context,
+	def _make_link_to_context(self, context):
+		if IShouldHaveTraversablePath_providedBy(context):
+			link = Link(context,
+						rel='edit')
+			link.__parent__ = context.__parent__
+			link.__name__ = context.__name__
+		else:
+			link = Link( to_external_ntiid_oid( context ),
 						 rel='edit' )
 			link.__parent__ = context
+			# XXX: Is this necessary anymore?
 			link.__name__ = ''
 			interface.alsoProvides( link, ILocation )
-			try:
-				link.creator = context.creator
-				interface.alsoProvides( link, ICreated )
-			except AttributeError:
-				pass
-			#if ICreated_providedBy( context ):
 
-			mapping[LINKS].append( link )
+		try:
+			# XXX: Why are we doing this?
+			link.creator = context.creator
+			interface.alsoProvides( link, ICreated )
+		except AttributeError:
+			pass
+		return link
 
+	def _preflight_context(self, context):
+		""" We must either have a persistent object, or one with a traversable path """
+		return getattr( context, '_p_jar', None ) or IShouldHaveTraversablePath_providedBy(context)
+
+	def _has_permission(self, context):
+		return is_writable(context, skip_cache=True) # XXX Why skipping cache?
+
+	def decorateExternalMapping( self, context, mapping ):
+		if not self._preflight_context(context):
+			return
+
+		# make sure there is no edit link already
+		# permission check is relatively expensive
+		links = mapping.setdefault( LINKS, [] )
+		needs_edit = True
+		for l in links:
+			if getattr(l, 'rel', None) == 'edit':
+				needs_edit = False
+				break
+
+		needs_edit = needs_edit and self._has_permission(context)
+		needs_href = 'href' not in mapping
+
+		if not (needs_edit or needs_href):
+			return
+
+		# TODO: This is weird, assuming knowledge about the URL structure here
+		# Should probably use request ILocationInfo to traverse back up to the ISite
+		__traceback_info__ = context, mapping
+		try:
+			# Some objects are not in the traversal tree. Specifically,
+			# chatserver.IMeeting (which is IModeledContent and IPersistent)
+			# Our options are to either catch that here, or introduce an
+			# opt-in interface that everything that wants 'edit' implements
+			nearest_site = find_nearest_site( context )
+		except TypeError:
+			nearest_site = None
+
+		if nearest_site is None:
+			logger.debug( "Not providing edit/href links for %s, could not find site",
+						  getattr(context, '__class__', type(context)) )
+			return
+
+
+		edit_link = self._make_link_to_context(context)
+
+		if needs_edit:
+			links.append( edit_link )
+		if needs_href or needs_edit:
 			# For cases that we can, make edit and the toplevel href be the same.
 			# this improves caching
-			mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
+			mapping['href'] = render_link( edit_link, nearest_site=nearest_site )['href']
 
-		elif 'href' not in mapping:
+			# We used to catch this when rendering a link:
+			#except (KeyError,ValueError,AssertionError,TypeError):
+			#	logger.log( loglevels.TRACE, "Failed to get href link for %s", context, exc_info=True )
+			# But that could still fail later when the edit link is rendered?
+			# So why catch here? Does rendering the edit link also catch?
+
 			# NOTE: This may be a minor perf degredaion? Think through the implications of this
 			# FIXME: temporary place to ensure that everything is always given
 			# a unique, top-level 'href'. The one-and-only client is currently depending upon this.
 			# FIXME: Note duplication of IShouldHaveTraversablePath checks; cf pyramid_renderers
-			try:
-				link = Link(to_external_ntiid_oid( context ) if not IShouldHaveTraversablePath.providedBy( context ) else context)
-				mapping['href'] = render_link( link )['href']
-			except (KeyError,ValueError,AssertionError,TypeError):
-				logger.log( loglevels.TRACE, "Failed to get href link for %s", context, exc_info=True )
