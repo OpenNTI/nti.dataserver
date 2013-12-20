@@ -50,8 +50,12 @@ class EditLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
+	#: Subclasses can set this to false to force the use of
+	#: object identifies
+	allow_traversable_paths = True
+
 	def _make_link_to_context(self, context):
-		if IShouldHaveTraversablePath_providedBy(context):
+		if self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context):
 			link = Link(context,
 						rel='edit')
 			link.__parent__ = context.__parent__
@@ -74,7 +78,7 @@ class EditLinkDecorator(object):
 
 	def _preflight_context(self, context):
 		""" We must either have a persistent object, or one with a traversable path """
-		return getattr( context, '_p_jar', None ) or IShouldHaveTraversablePath_providedBy(context)
+		return getattr( context, '_p_jar', None ) or (self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
 		return is_writable(context, skip_cache=True) # XXX Why skipping cache?
@@ -135,3 +139,10 @@ class EditLinkDecorator(object):
 			# FIXME: temporary place to ensure that everything is always given
 			# a unique, top-level 'href'. The one-and-only client is currently depending upon this.
 			# FIXME: Note duplication of IShouldHaveTraversablePath checks; cf pyramid_renderers
+
+class OIDEditLinkDecorator(EditLinkDecorator):
+	"""
+	A decorator for persistent objects.
+	"""
+
+	allow_traversable_paths = False
