@@ -199,6 +199,15 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		except AttributeError:
 			pass
 
+	def __changed(self, inst):
+		# sometimes instances are not actually persistent,
+		# don't give them a _p_changed
+		try:
+			if not inst._p_changed:
+				inst._p_changed = True
+		except AttributeError:
+			pass
+
 	def __get__( self, inst, klass ):
 		if inst is None:
 			return klass
@@ -218,7 +227,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 				return # not in dict, but they gave us the default value, so ignore it
 			val = self.factory( value )
 			inst.__dict__[self.__name__] = val
-			inst._p_changed = True
+			self.__changed(inst)
 			if getattr(inst, '_p_jar', None) is not None:
 				inst._p_jar.add( val )
 		else:
@@ -228,4 +237,4 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		self.__activate( inst )
 		if self.__name__ in inst.__dict__:
 			del inst.__dict__[self.__name__]
-			inst._p_changed = True
+			self.__changed(inst)

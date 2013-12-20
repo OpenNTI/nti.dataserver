@@ -369,12 +369,13 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 		validate_named_field_value( ext_self, self._iface, k, value )()
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(InterfaceObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
+		result = super(InterfaceObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )
 		# If we make it this far, then validate the object.
 		# TODO: Should probably just make sure that there are no /new/ validation errors added
 		# Best we can do right now is skip this step if asked
 		if self.validate_after_update:
 			self._validate_after_update(self._iface, self._ext_self)
+		return result
 
 	def _validate_after_update( self, iface, ext_self ):
 		errors = schema.getValidationErrors( iface, ext_self )
