@@ -370,7 +370,7 @@ setup(
 		'zope.copy >= 4.0.2',
 		'zope.copypastemove[zcml] >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dep
 		'zope.datetime >= 4.0.0',
-		'zope.deprecation >= 4.0.2',
+		'zope.deprecation',
 		'zope.deferredimport >= 4.0.0',	 # useful with zope.deprecation. Req'd by contentratings
 		'zope.dottedname >= 4.0.1',
 		'zope.dublincore >= 4.0.0',
