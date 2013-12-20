@@ -18,6 +18,8 @@ from pyramid.threadlocal import get_current_request
 from pyramid.traversal import lineage as _pyramid_lineage
 
 from nti.dataserver.authorization_acl import ACL
+from nti.dataserver.authorization_acl import acl_from_aces
+from nti.dataserver.authorization_acl import ace_denying_all
 from nti.dataserver.authorization import ACT_UPDATE, ACT_READ, ACT_CREATE
 from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
@@ -85,6 +87,8 @@ def _clear_caches():
 import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _clear_caches )
 
+from ZODB.POSException import POSKeyError
+
 def _lineage_that_ensures_acls(obj):
 	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
 	for location in _pyramid_lineage(obj):
@@ -115,6 +119,27 @@ def _lineage_that_ensures_acls(obj):
 			else:
 				# Yes we can. So do so
 				yield ACLProxy( location, acl )
+		except POSKeyError: # pragma: no cover
+			# Yikes
+			logger.warn('Cannot access ACL due to broken reference: %s', type(obj), exc_info=True)
+			# It's highly likely we won't be able to get __parent__ either.
+			# Check that...
+			try:
+				getattr( location, '__parent__')
+			except (POSKeyError,AttributeError):
+				break
+
+			# Ok, we can still get __parent__, but some sub-object in our __acl__
+			# raised. Now, it could be that our __acl__ was trying to
+			# deny specific rights that we would otherwise inherit
+			# from our parents...we can't know. We also can't know if we're
+			# actually being traversed to find acls, or just to find parents...
+			# for security, we return an object that denies all permissions
+			fake = _Fake()
+			fake.__acl__ = acl_from_aces( ace_denying_all() )
+			fake.__parent__ = location.__parent__
+			yield fake
+
 
 def can_create(obj, request=None, skip_cache=False):
 	"""
