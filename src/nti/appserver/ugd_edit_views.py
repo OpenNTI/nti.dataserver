@@ -17,7 +17,7 @@ from zope import component
 from zope import lifecycleevent
 from zope.container.interfaces import InvalidContainerType
 
-from pyramid import traversal
+import time
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -137,25 +137,21 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		theObject = getattr( context, 'resource', context ) # TODO: b/w/c that can vanish. just context.
 		self._check_object_exists( theObject )
 
-		user = theObject.creator
-
-		self._check_object_exists( theObject )
-
 		# Now that we know we've got an object, see if they sent
 		# preconditions
 		self._check_object_unmodified_since( theObject )
 
-		objectId = theObject.id
-		if self._do_delete_object( theObject )  is None: # Should fire lifecycleevent.removed
+		if self._do_delete_object( theObject ) is None: # Should fire lifecycleevent.removed
 			raise hexc.HTTPNotFound()
 
-		lastModified = theObject.creator.lastModified
-
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
-		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'", user, objectId, getattr(theObject,'__class__', type(theObject)).__name__, theObject.containerId)
+		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'",
+					getattr(theObject, 'creator', None),
+					getattr(theObject, 'id', None), getattr(theObject,'__class__', type(theObject)).__name__,
+					getattr(theObject, 'containerId', getattr(theObject, '__parent__', None) ) )
 
 		result = hexc.HTTPNoContent()
-		result.last_modified = lastModified
+		result.last_modified = time.time()
 		return result
 
 	def _do_delete_object( self, theObject ):
