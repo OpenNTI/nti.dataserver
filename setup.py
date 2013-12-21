@@ -333,6 +333,7 @@ setup(
 		'z3c.pt >= 3.0.0a1',  # Better ZPT support than plastex, add-in to Chameleon
 		'z3c.ptcompat >= 2.0.0a1',	# Make zope.pagetemplate also use the Chameleon-based ZPT
 		'z3c.rml',
+		'z3c.schema',
 		'z3c.table >= 2.0.0a1',	 # Flexible table rendering
 		'zc.blist >= 1.0b2',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.dict >= 1.3b1',	 # BTree based dicts that are subclassable
@@ -480,6 +481,7 @@ setup(
 	dependency_links=[
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
+		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev'

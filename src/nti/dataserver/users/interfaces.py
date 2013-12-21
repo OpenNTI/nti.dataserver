@@ -26,7 +26,7 @@ from zope import interface
 from zope import component
 from zope.i18n import translate
 from zope.interface import Interface
-from zope.interface.common.mapping import IMapping
+from z3c.schema.email import isValidMailAddress
 
 import zope.component.interfaces
 
@@ -127,25 +127,6 @@ class InsecurePasswordIsForbidden(pwd_interfaces.InvalidPassword):
 			self.value = value
 
 
-# Email validation functions. With the exception of _load_valid_domain_list and its use,
-# these are based on some Zope/Plone code
-
-# RFC 2822 local-part: dot-atom or quoted-string
-# characters allowed in atom: A-Za-z0-9!#$%&'*+-/=?^_`{|}~
-# RFC 2821 domain: max 255 characters
-_LOCAL_RE = re.compile(r'([A-Za-z0-9!#$%&\'*+\-/=?^_`{|}~]+'
-                     r'(\.[A-Za-z0-9!#$%&\'*+\-/=?^_`{|}~]+)*|'
-                     r'"[^(\|")]*")@[^@]{3,255}$')
-
-# RFC 2821 local-part: max 64 characters
-# RFC 2821 domain: sequence of dot-separated labels
-# characters allowed in label: A-Za-z0-9-, first is a letter
-# Even though the RFC does not allow it all-numeric labels do exist
-_DOMAIN_RE = re.compile(r'[^@]{1,64}@[A-Za-z0-9][A-Za-z0-9-]*'
-                                r'(\.[A-Za-z0-9][A-Za-z0-9-]*)+$')
-
-EMAIL_RE = re.compile(r"^(\w&.%#$&'\*+-/=?^_`{}|~]+!)*[\w&.%#$&'\*+-/=?^_`{}|~]+@(([0-9a-z]([0-9a-z-]*[0-9a-z])?\.)+[a-z]{2,6}|([0-9]{1,3}\.){3}[0-9]{1,3})$", re.IGNORECASE)
-
 def _load_resource(n, f):
 	stream = pkg_resources.resource_stream( n, f )
 	reader = codecs.getreader('utf-8')(stream)
@@ -173,9 +154,7 @@ def _checkEmailAddress(address):
 
 	This should catch most invalid but no valid addresses.
 	"""
-	if not _LOCAL_RE.match(address):
-		raise EmailAddressInvalid(address)
-	if not _DOMAIN_RE.match(address):
+	if not isValidMailAddress(address):
 		raise EmailAddressInvalid(address)
 
 	cctlds = component.getUtility(locale_interfaces.ICcTLDInformation)
@@ -186,9 +165,6 @@ def _checkEmailAddress(address):
 
 def _isValidEmail(email):
 	""" checks for valid email """
-	if EMAIL_RE.search(email) == None:
-		raise EmailAddressInvalid(email)
-
 	_checkEmailAddress(email)
 	return True
 
