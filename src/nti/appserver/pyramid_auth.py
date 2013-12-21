@@ -38,6 +38,7 @@ from nti.dataserver import authorization as nti_authorization
 from . import httpexceptions as hexc
 from .pyramid_renderers import default_vary_on
 from .interfaces import IUserViewTokenCreator
+from .interfaces import ILogonWhitelist
 
 def _decode_username_request( request ):
 	"""
@@ -95,6 +96,13 @@ class _NTIUsers(object):
 		user_password = user.password
 		return user_password.checkPassword( password ) if user_password else False
 
+	@classmethod
+	def user_can_login(cls, username):
+		if cls.user_exists(username):
+			whitelist = component.getUtility(ILogonWhitelist)
+			return username in whitelist
+
+
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
 		if not self.user_exists( username ): # pragma: no cover
@@ -130,7 +138,7 @@ class _NTIUsersAuthenticatorPlugin(object):
 
 	def authenticate( self, environ, identity ):
 		try:
-			if _NTIUsers.user_has_password( identity['login'], identity['password'] ):
+			if _NTIUsers.user_can_login(identity['login']) and _NTIUsers.user_has_password( identity['login'], identity['password'] ):
 				return identity['login']
 		except KeyError: # pragma: no cover
 			return None
@@ -368,7 +376,7 @@ def _create_who_apifactory( secure_cookies=True,
 								   # this can raise an exception, but the only place that matters, logging,
 								   # already deals with it (gunicorn.py). Because it's an exception,
 								   # it prevents any of the caching from kicking in
-								   userid_checker=User.get_user)
+								   userid_checker=_NTIUsers.user_can_login)
 
 	# Create a last-resort identifier and authenticator that
 	# can be used only for certain views, here, our
