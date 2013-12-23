@@ -18,6 +18,7 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import has_length
 
 from nti.testing import base
@@ -26,6 +27,22 @@ from nti.testing import matchers
 
 
 course_string = r"""
+%Course lessons defined
+
+\courselesson{Title 1}{l1} % AKA chapter
+\courselessonsection{Section Title 1} % a section
+\section{This is ignored}
+
+\courselesson{Title 2}{l2} % another chapter
+\section{This is ignored}
+\courselessonsection{Section Title 2} % section
+\subsection{This Subsection is also ignored}
+\courselessonsubsection{SubSection Title 2}
+
+% A lesson not included in a unit
+\courselesson{Title 3}{l3}
+
+
 \begin{course}{Law And Justice}{Number}
 %Define the Course Discussion Board
 \coursecommunity{CLC3403.ou.nextthought.com}
@@ -33,9 +50,16 @@ course_string = r"""
 \courseboard{tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Board:GeneralCommunity-DiscussionBoard}
 \courseannouncementboard{tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Forum:GeneralCommunity-In_Class_Announcements tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Forum:GeneralCommunity-Open_Announcements}
 
-%Course Units defined
+%Course units defined
+
+\begin{courseunit}{Unit}
+\courselessonref{l1} % no date
+\courselessonref{l2}{08/19/2013,08/21/2013} % with date
+\end{courseunit}
 
 \end{course}
+
+
 """
 
 works_string = r"""
@@ -44,7 +68,6 @@ Aristotle was a Greek philosopher and polymath, a student of Plato and teacher o
 \end{relatedwork}
 """
 
-from xml.dom.minidom import parseString
 from nti.contentrendering.tests import RenderContext
 from nti.contentrendering.tests import simpleLatexDocumentText
 
@@ -63,7 +86,7 @@ tearDownModule = nti.testing.base.module_teardown
 
 
 def test_course_and_related_extractor_works():
-	"Does very little verification. Mostly makes sure we don't crash"
+	#Does very little verification. Mostly makes sure we don't crash
 
 	class Book(object):
 		document = None
@@ -89,6 +112,39 @@ def test_course_and_related_extractor_works():
 		ext = _RelatedWorkExtractor()
 		ext.transform(book)
 
+		__traceback_info__ = book.toc.dom.toprettyxml()
+
 		assert_that( book.toc.dom.getElementsByTagName('course'), has_length(1) )
 		assert_that( book.toc.dom.documentElement.attributes, has_entry('isCourse', 'true'))
 		assert_that( book.toc.dom.getElementsByTagNameNS("http://www.nextthought.com/toc", 'related'), has_length(1) )
+
+		course = book.toc.dom.getElementsByTagName('course')[0]
+		assert_that( course.getElementsByTagName('unit'), has_length(1) )
+		unit = course.getElementsByTagName('unit')[0]
+		assert_that( unit.attributes, has_entry( 'levelnum', '0'))
+
+		assert_that( unit.getElementsByTagName('lesson'), has_length(5) )
+		assert_that( unit.childNodes, has_length(2) )
+
+		lesson = unit.childNodes[1]
+		assert_that( dict(lesson.attributes.items()),
+					 has_entries( 'levelnum', '1',
+								  'date', "2013-08-19T05:00:00+00:00,2013-08-22T04:59:59.999999+00:00",
+								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.l2"))
+
+
+		sub_lessons = lesson.childNodes
+		assert_that( sub_lessons, has_length(1))
+
+		sub_lesson = sub_lessons[0]
+		assert_that( dict(sub_lesson.attributes.items()),
+					 has_entries( 'levelnum', '2',
+								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.section_title_2"))
+
+		sub_sub_lessons = sub_lesson.childNodes
+		assert_that( sub_sub_lessons, has_length(1))
+
+		sub_sub_lesson = sub_sub_lessons[0]
+		assert_that( dict(sub_sub_lesson.attributes.items()),
+					 has_entries( 'levelnum', '3',
+								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.subsection_title_2"))

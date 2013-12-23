@@ -69,26 +69,43 @@ class _CourseExtractor(object):
 		toc_el = dom.createElement('unit')
 		toc_el.setAttribute('label', unicode(doc_el.title))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
-		lessons = doc_el.getElementsByTagName('courselessonref')
-		for lesson in lessons:
-			toc_el.appendChild(self._process_lesson(dom, lesson))
+		toc_el.setAttribute('levelnum', '0')
+
+		lesson_refs = doc_el.getElementsByTagName('courselessonref')
+		course_node = doc_el
+		while course_node.tagName != 'course':
+			course_node = course_node.parentNode
+
+		for lesson_ref in lesson_refs:
+			lesson_ref_dates = lesson_ref.date
+			lesson = lesson_ref.idref['label']
+
+			toc_el.appendChild(self._process_lesson(dom, course_node, lesson, lesson_ref_dates, level=1))
 		return toc_el
 
-	def _process_lesson(self, dom, doc_el):
-		# SAJ: Lets find our parent course node
-		course = doc_el.parentNode
-		while (course.tagName != 'course'):
-			course = course.parentNode
+	def _process_lesson(self, dom, course_node, lesson_node, lesson_dates=None, level=1):
+		date_strings = None
+		if lesson_dates:
+			date_strings = []
+			# SAJ: Add the course's timezone and translate to UTC
+			tz = course_node.tz
+			# TODO: These might be relative to the parent (e.g., +1 week)
 
-		# SAJ: Add the course's timezone and translate to UTC
-		tz = course.tz
-		dates = []
-		for date in doc_el.date:
-			dates.append(tz_utc.normalize(tz.localize(date).astimezone(tz_utc)).isoformat())
+			for date in lesson_dates:
+				date_strings.append(tz_utc.normalize(tz.localize(date).astimezone(tz_utc)).isoformat())
 
 		toc_el = dom.createElement('lesson')
-		toc_el.setAttribute('date', ','.join(dates))
-		toc_el.setAttribute('topic-ntiid', doc_el.idref['label'].ntiid)
+		if date_strings:
+			toc_el.setAttribute('date', ','.join(date_strings))
+		toc_el.setAttribute('topic-ntiid', lesson_node.ntiid)
+		toc_el.setAttribute( 'levelnum', str(level))
+
+		for sub_lesson in lesson_node.subsections:
+			if not sub_lesson.tagName.startswith('course'):
+				continue
+			child = self._process_lesson( dom, course_node, sub_lesson, level=level+1)
+			toc_el.appendChild( child )
+
 		return toc_el
 
 	def _process_communities(self, dom, doc_el):
