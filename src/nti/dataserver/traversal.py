@@ -168,12 +168,14 @@ class adapter_request(adapter):
 		return result
 
 from zope.traversing.interfaces import ITraversable
-from zope.traversing.adapters import DefaultTraversable
-from zope.container.traversal import ContainerTraversable
+from zope.traversing.adapters import DefaultTraversable as _DefaultTraversable
+from zope.container.traversal import ContainerTraversable as _ContainerTraversable
 from zope import interface
 
+from nti.utils.property import alias
+
 @interface.implementer(ITraversable)
-class ContainerAdapterTraversable(ContainerTraversable):
+class ContainerAdapterTraversable(_ContainerTraversable):
 	"""
 	A :class:`ITraversable` implementation for containers that also
 	automatically looks for named path adapters *if* the container
@@ -182,6 +184,8 @@ class ContainerAdapterTraversable(ContainerTraversable):
 	You may subclass this traversable or register it in ZCML
 	directly. It is usable both with and without a request.
 	"""
+
+	context = alias('_container')
 
 	def __init__( self, context, request=None ):
 		super(ContainerAdapterTraversable,self).__init__(context)
@@ -197,7 +201,7 @@ class ContainerAdapterTraversable(ContainerTraversable):
 
 
 @interface.implementer(ITraversable)
-class DefaultAdapterTraversable(DefaultTraversable):
+class DefaultAdapterTraversable(_DefaultTraversable):
 	"""
 	A :class:`ITraversable` implementation for ordinary objects that also
 	automatically looks for named path adapters *if* the traversal
