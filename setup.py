@@ -243,7 +243,7 @@ setup(
 		# Note that the 1.0 series is a much improved parser over 0.95;
 		# this may result in some differences. (0.99 is actually newer
 		# than 1.0b3)
-		'html5lib == 0.99',
+		'html5lib == 0.999',
 		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
