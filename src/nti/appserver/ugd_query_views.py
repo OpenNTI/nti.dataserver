@@ -20,8 +20,6 @@ from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
 
-from z3c.batching.batch import Batch
-
 from pyramid.view import view_config
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
@@ -40,7 +38,6 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import liking
-from nti.dataserver.links import Link
 from nti.dataserver.users import entity
 from nti.dataserver import authorization as nauth
 from nti.dataserver.sharing import SharingContextCache
@@ -471,27 +468,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 				entities.append( ent )
 		return entities
 
-	def _get_batch_size_start( self ):
-		"""
-		Return a two-tuple, (batch_size, batch_start). If the values are
-		invalid, raises an HTTP exception. If either is missing, returns
-		the defaults for both.
-		"""
-
-		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
-		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
-		if batch_size is not None and batch_start is not None:
-			try:
-				batch_size = int(batch_size)
-				batch_start = int(batch_start)
-			except ValueError:
-				raise hexc.HTTPBadRequest()
-			if batch_size <= 0 or batch_start < 0:
-				raise hexc.HTTPBadRequest()
-
-			return batch_size, batch_start
-
-		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
 	@classmethod
 	def do_getObjects( cls, owner, containerId, remote_user,
@@ -861,45 +837,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 				# So return an empty page.
 				batch_start = len(result_list)
 
-		if batch_size is not None and batch_start is not None:
-			# Ok, reify up to batch_size + batch_start + 2 items from merged
-			result_list = []
-			count = 0
-			for _, x in merged:
-				result_list.append( x )
-				count += 1
-				if count > number_items_needed:
-					break
-
-			if batch_start >= len(result_list):
-				# Batch raises IndexError
-				result_list = []
-			else:
-				result_list = Batch( result_list, batch_start, batch_size )
-				# Insert links to the next and previous batch
-				# NOTE: If our batch_start is not a multiple of the batch_size,
-				# we may not get a previous (if there are fewer than batch_size previous elements?)
-				# Also in that case, our next may be set up to reach the end of the data, overlapping this
-				# one if need be.
-				next_batch, prev_batch = result_list.next, result_list.previous
-				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-					if batch is not None and batch != result_list:
-						batch_params = self.request.params.copy()
-						# Pop some things that don't work
-						batch_params.pop( 'batchAround', '' )
-						# TODO: batchBefore
-						batch_params['batchStart'] = batch.start
-						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
-						link_next = Link( link_next_href, rel=rel )
-						result.setdefault( 'Links', [] ).append( link_next )
-
-			result['Items'] = result_list
-		else:
-			# Not batching.
-			result_list = [x[1] for x in merged]
-			result['Items'] = result_list
-
-
+		self._batch_tuple_iterable(result, merged, number_items_needed, batch_size, batch_start)
 		return result
 
 	def _update_last_modified_after_sort(self, objects, result ):

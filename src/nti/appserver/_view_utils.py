@@ -40,6 +40,9 @@ from nti.externalization.interfaces import StandardInternalFields, StandardExter
 from nti.externalization.externalization import to_standard_external_last_modified_time
 from nti.mimetype import mimetype
 
+from z3c.batching.batch import Batch
+from nti.dataserver.links import Link
+
 
 def get_remote_user(request=None, dataserver=None):
 	"""
@@ -61,6 +64,75 @@ class AbstractView(object):
 	def __init__(self, request):
 		self.request = request
 		self.dataserver = component.getUtility(IDataserver)
+
+	# Batching
+	# XXX: This doesn't exactly belong here
+	#
+	_DEFAULT_BATCH_SIZE = None
+	_DEFAULT_BATCH_START = None
+
+	def _get_batch_size_start( self ):
+		"""
+		Return a two-tuple, (batch_size, batch_start). If the values are
+		invalid, raises an HTTP exception. If either is missing, returns
+		the defaults for both.
+		"""
+
+		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
+		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
+		if batch_size is not None and batch_start is not None:
+			try:
+				batch_size = int(batch_size)
+				batch_start = int(batch_start)
+			except ValueError:
+				raise hexc.HTTPBadRequest()
+			if batch_size <= 0 or batch_start < 0:
+				raise hexc.HTTPBadRequest()
+
+			return batch_size, batch_start
+
+		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
+
+
+	def _batch_tuple_iterable(self, result, tuples, number_items_needed, batch_size=None, batch_start=None):
+		if batch_size is not None and batch_start is not None:
+			# Ok, reify up to batch_size + batch_start + 2 items from merged
+			result_list = []
+			count = 0
+			for _, x in tuples:
+				result_list.append( x )
+				count += 1
+				if count > number_items_needed:
+					break
+
+			if batch_start >= len(result_list):
+				# Batch raises IndexError
+				result_list = []
+			else:
+				result_list = Batch( result_list, batch_start, batch_size )
+				# Insert links to the next and previous batch
+				# NOTE: If our batch_start is not a multiple of the batch_size,
+				# we may not get a previous (if there are fewer than batch_size previous elements?)
+				# Also in that case, our next may be set up to reach the end of the data, overlapping this
+				# one if need be.
+				next_batch, prev_batch = result_list.next, result_list.previous
+				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
+					if batch is not None and batch != result_list:
+						batch_params = self.request.params.copy()
+						# Pop some things that don't work
+						batch_params.pop( 'batchAround', '' )
+						# TODO: batchBefore
+						batch_params['batchStart'] = batch.start
+						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+						link_next = Link( link_next_href, rel=rel )
+						result.setdefault( 'Links', [] ).append( link_next )
+
+			result['Items'] = result_list
+		else:
+			# Not batching.
+			result_list = [x[1] for x in tuples]
+			result['Items'] = result_list
+
 
 class AbstractAuthenticatedView(AbstractView):
 	"""
