@@ -31,7 +31,7 @@ class _ContentPackageLibraryExternal(object):
 	def toExternalObject( self ):
 		return {
 				 'title': "Library",
-				 'titles' : [toExternalObject(x) for x in self.library.titles] }
+				 'titles' : [toExternalObject(x) for x in self.library.contentPackages] }
 
 def _path_maybe_quote(path):
 	if ' ' in path:
