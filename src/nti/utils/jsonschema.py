@@ -11,10 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-TAG_HIDDEN_IN_UI   = "nti.dataserver.users.field_hidden_in_ui" # Don't display this by default in the UI
-TAG_UI_TYPE        = 'nti.dataserver.users.field_type' # Qualifying details about how the field should be treated, such as data source
-TAG_REQUIRED_IN_UI = 'nti.dataserver.users.field_required' # Overrides the value from the field itself
-TAG_READONLY_IN_UI = 'nti.dataserver.users.field_readonly' # Overrides the value from the field itself, if true
+TAG_HIDDEN_IN_UI   = "nti.dataserver.users.field_hidden_in_ui" #: Don't display this by default in the UI
+TAG_UI_TYPE        = 'nti.dataserver.users.field_type' #: Qualifying details about how the field should be treated, such as data source
+TAG_REQUIRED_IN_UI = 'nti.dataserver.users.field_required' #: Overrides the value from the field itself
+TAG_READONLY_IN_UI = 'nti.dataserver.users.field_readonly' #: Overrides the value from the field itself, if true
+
+# Known types
+UI_TYPE_EMAIL = 'nti.dataserver.users.interfaces.EmailAddress'
+UI_TYPE_HASHED_EMAIL = UI_TYPE_EMAIL + ":Hashed" # So that a begins-with test will match either, making validation easier
+#: Something that can be set once, typically during account creation
+UI_TYPE_ONE_TIME_CHOICE = 'nti.dataserver.users.interfaces.OneTimeChoice'
+
 
 from zope import interface
 from zope.schema import interfaces as sch_interfaces

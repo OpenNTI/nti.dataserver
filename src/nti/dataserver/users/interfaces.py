@@ -28,7 +28,7 @@ from zope.i18n import translate
 from zope.interface import Interface
 from z3c.schema.email import isValidMailAddress
 
-import zope.component.interfaces
+import zope.interface.interfaces
 
 from z3c.password import interfaces as pwd_interfaces
 from plone.i18n.locales import interfaces as locale_interfaces
@@ -193,7 +193,7 @@ def checkRealname(value):
 
 	return True
 
-class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
+class IWillUpdateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` with
 	an entity that is in the process of being created by the factories. At this
@@ -210,14 +210,14 @@ class IWillUpdateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 _marker = object()
 
 @interface.implementer(IWillUpdateNewEntityEvent)
-class WillUpdateNewEntityEvent(zope.component.interfaces.ObjectEvent):
+class WillUpdateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
 
 	def __init__(self, obj, ext_value=_marker, meta_data=_marker):
 		super(WillUpdateNewEntityEvent, self).__init__(obj)
 		self.ext_value = ext_value if ext_value is not _marker else {}
 		self.meta_data = meta_data if ext_value is not _marker else {}
 
-class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
+class IWillCreateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
 	"""
 	Fired before an
 	:class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` and
@@ -234,7 +234,7 @@ class IWillCreateNewEntityEvent(zope.component.interfaces.IObjectEvent):
 
 
 @interface.implementer(IWillCreateNewEntityEvent)
-class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
+class WillCreateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
 
 	def __init__(self, obj, ext_value=None, preflight_only=False, meta_data=None):
 		super(WillCreateNewEntityEvent, self).__init__(obj)
@@ -242,14 +242,14 @@ class WillCreateNewEntityEvent(zope.component.interfaces.ObjectEvent):
 		self.meta_data = meta_data
 		self.preflight_only = preflight_only
 
-class IWillDeleteEntityEvent(zope.component.interfaces.IObjectEvent):
+class IWillDeleteEntityEvent(zope.interface.interfaces.IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectRemovedEvent` with
 	an entity that is in the process of being deleted by the factories.
 	"""
 
 @interface.implementer(IWillUpdateNewEntityEvent)
-class WillDeleteEntityEvent(zope.component.interfaces.ObjectEvent):
+class WillDeleteEntityEvent(zope.interface.interfaces.ObjectEvent):
 
 	def __init__( self, obj):
 		super(WillDeleteEntityEvent,self).__init__( obj )
@@ -345,8 +345,7 @@ class IUserProfile(IFriendlyNamed, IAvatarURL):
 	Base class that user profiles should extend.
 	"""
 
-UI_TYPE_EMAIL = 'nti.dataserver.users.interfaces.EmailAddress'
-UI_TYPE_HASHED_EMAIL = UI_TYPE_EMAIL + ":Hashed" # So that a begins-with test will match either, making validation easier
+from nti.utils.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
 
 class IRestrictedUserProfile(IUserProfile):
 	"""
