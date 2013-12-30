@@ -408,6 +408,8 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 		# clear caches
 		import nti.contentlibrary.contentunit
 		nti.contentlibrary.contentunit._clear_caches()
+		self.library_collection._library._v_contentPackages = None
+
 		self.beginRequest()
 
 		external = to_external_object( self.library_collection )
