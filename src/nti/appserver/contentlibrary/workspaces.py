@@ -15,7 +15,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-from zope.location import Location
 from zope.container.interfaces import IContained
 
 from nti.appserver import interfaces as app_interfaces
@@ -48,16 +47,20 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		ProxyBase.__init__(self, base)
 		self.library = base
 		self.request = request
+		self._v_contentPackages = None
 
 	@property
-	def titles(self):
-		def test( content_package ):
-			if is_readable( content_package, self.request ):
-				return True
-			# Nope. What about a top-level child?
-			return any( (is_readable(child, self.request) for child in content_package.children) )
+	def contentPackages(self):
+		if self._v_contentPackages is None:
+			def test( content_package ):
+				if is_readable( content_package, self.request ):
+					return True
+				# Nope. What about a top-level child?
+				return any( (is_readable(child, self.request) for child in content_package.children) )
 
-		return list(filter(test, self.library.titles))
+			self._v_contentPackages = list(filter(test, self.library.contentPackages))
+
+		return self._v_contentPackages
 
 
 @interface.implementer(content_interfaces.IContentPackageLibrary)
@@ -154,6 +157,8 @@ class LibraryCollection(object):
 		# Cannot add to library
 		return ()
 
+from nti.externalization.interfaces import LocatedExternalDict
+
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(app_interfaces.ILibraryCollection)
 class LibraryCollectionDetailExternalizer(object):
@@ -164,13 +169,16 @@ class LibraryCollectionDetailExternalizer(object):
 	# TODO: This doesn't do a good job of externalizing it,
 	# though. We're skipping all the actual Collection parts
 
+	__slots__ = ('_collection',)
+
 	def __init__(self, collection ):
 		self._collection = collection
 
 	def toExternalObject(self):
-		# TODO: Standardize the way ACLs are applied during external writing
-		# This is weird and bad: we're overwriting what Library itself does
 		library = self._collection.library
-		return {
-				 'title': "Library",
-				 'titles' : [to_external_object(x) for x in library.titles] }
+		result = LocatedExternalDict( {
+			'title': "Library",
+			'titles' : [to_external_object(x) for x in library.contentPackages] } )
+		result.__name__ = self._collection.__name__
+		result.__parent__ = self._collection.__parent__
+		return result

@@ -60,8 +60,6 @@ class AbstractLibrary(object):
 
 		return titles
 
-	titles = contentPackages # b/c
-
 	@property
 	def lastModified(self):
 		"""
@@ -81,7 +79,7 @@ class AbstractLibrary(object):
 		if isinstance(key,numbers.Integral):
 			return self.contentPackages[key]
 
-		for title in self.titles:
+		for title in self.contentPackages:
 			if key in (title.title, title.ntiid):
 				return title
 		raise KeyError( key )
@@ -105,7 +103,7 @@ class AbstractLibrary(object):
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""
-		for title in self.titles:
+		for title in self.contentPackages:
 			result = pathToPropertyValue( title, 'ntiid', ntiid )
 			if result:
 				return result
