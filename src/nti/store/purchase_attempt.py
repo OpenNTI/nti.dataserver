@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import BTrees
 import functools
-from datetime import datetime
 
 from zope import interface
 from zope.container import contained as zcontained
@@ -24,6 +23,7 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import make_repr
 
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -70,9 +70,9 @@ class PurchaseAttempt(ModDateTrackingObject,
 	def __str__(self):
 		return "%s,%s" % (self.Items, self.State)
 
-	def __repr__(self):
-		d = datetime.fromtimestamp(self.StartTime)
-		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.Items, self.State, self.Processor, d)
+
+	__repr__ = make_repr()
+
 
 	def __eq__(self, other):
 		try:
