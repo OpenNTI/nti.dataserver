@@ -82,10 +82,9 @@ class _BaseSearchHit(dict):
 	def set_hit_info(self, original, score):
 		self[CLASS] = HIT
 		self[SCORE] = score
-		# self[MIME_TYPE] = self.mimeType
+		self[MIME_TYPE] = self.mimeType
 		self[TYPE] = original.__class__.__name__
 		self[TARGET_MIME_TYPE] = nti_mimetype_from_object(original, False) or u''
-		self[MIME_TYPE] = self[TARGET_MIME_TYPE]
 
 	def get_query(self):
 		return self._query
