@@ -80,9 +80,24 @@ class _PurchaseIndex(Persistent):
 
 	def get_history_by_item(self, purchasable_id):
 		item_set = self.item_index.get(purchasable_id)
-		for iid in item_set or ():
-			p = component.getUtility(zope.intid.IIntIds).queryObject(iid)
+		iids = component.getUtility(zope.intid.IIntIds) if item_set is not None else ()
+		if item_set is None:
+			item_set = ()
+
+		for iid in item_set:
+			p = iids.queryObject(iid)
 			if store_interfaces.IPurchaseAttempt.providedBy(p):
+				# NOTE: There seem to be some attempts that are inconsistent;
+				# they exist in the backward index so that queryObject works,
+				# but they do not actually have an intid that matches
+				# (_ds_intid). This means that removal cannot work for
+				# those cases that allow removal (courses). We think (hope) this is a
+				# rare problem, so we pretend it doesn't exist, only logging loudly.
+				# This could also be a corruption in our internal indexes.
+				if iids.queryId(p) != iid:
+					logger.warn("Found inconsistent purchase attempt for purchasable %s, ignoring: %r", purchasable_id, p)
+					continue
+
 				yield p
 
 	def get_history_by_time(self, start_time=None, end_time=None):
