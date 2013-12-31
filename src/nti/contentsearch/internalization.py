@@ -27,9 +27,16 @@ class _QueryObjectUpdater(object):
 	def __init__(self, obj):
 		self.obj = obj
 
+	@classmethod
+	def readonly(cls):
+		result = []
+		for name in search_interfaces.ISearchQuery.names():
+			if search_interfaces.ISearchQuery[name].readonly:
+				result.append(name)
+		return result
+
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		for name in ('IsEmtpty', 'IsBatching', 'IsPrefixSearch', 'IsPhraseSearch',
-					'IsDescendingSortOrder'):
+		for name in self.readonly():
 			if name in parsed:
 				del parsed[name]
 
