@@ -68,9 +68,9 @@ class QueryObject(SchemaConfigured):
 		return self.indexid
 
 	@property
-	def IsEmtpty(self):
+	def IsEmpty(self):
 		return not self.term
-	is_empty = IsEmtpty
+	is_empty = IsEmpty
 
 	@property
 	def IsPhraseSearch(self):
