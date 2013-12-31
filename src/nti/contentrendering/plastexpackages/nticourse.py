@@ -159,19 +159,80 @@ class coursepart(part):
 	counter = 'course' + part.counter
 
 class courselesson(chapter):
-	args = '* [ toc ] title label:id'
+	args = '* [ toc ] title label:id' # TODO: Move towards dates at this level
 	blockType = True
 	counter = 'courselesson'
 	forcePars = False
 
+import isodate
+
+def _parse_date_at_invoke(self):
+	# FIXME: We want these to be relative, not absolute, so they
+	# can be made absolute based on when the course begins.
+	# How to represent that? Probably need some schema transformation
+	# step in nti.externalization? Or some auixilliary data fields?
+	options = self.attributes.get('options') or ()
+	def _parse(key):
+		if key in options:
+			val = options[key]
+			if 'T' not in val:
+				# If they give no timestamp, make it midnight
+				val += 'T00:00'
+			return isodate.parse_datetime(val)
+
+	not_before = _parse('not_before_date')
+	not_after = _parse('not_after_date')
+
+	if not_before is not None and not_after is not None:
+		# Both are required.
+		# TODO: Check sequence.
+		return not_before, not_after
+	# For compatibility with \courselessonref, we also accept just the ending
+	# date.
+	if not_after is not None:
+		return (not_after,)
+	return ()
+
+def _make_invoke(cls):
+	def invoke(self, tex):
+		res = super(cls, self).invoke(tex)
+		self.date = _parse_date_at_invoke(self)
+		return res
+	return invoke
+
 class courselessonsection(section):
+	"""
+	Example::
+
+		\courselessonsection{Title}{not_after_date=2014-01-13}
+
+	"""
 	counter = 'course' + section.counter
+	args = '* [ toc ] title {options:dict:str}'
 
 class courselessonsubsection(subsection):
+	"""
+	Example::
+
+		\courselessonsubsection{Title}{not_after_date=2014-01-13}
+
+	"""
+
 	counter = 'course' + subsection.counter
+	args = '* [ toc ] title {options:dict:str}'
 
 class courselessonsubsubsection(subsubsection):
+	"""
+	Example::
+
+		\courselessonsubsubsection{Title}{not_after_date=2014-01-13}
+
+	"""
 	counter = 'course' + subsubsection.counter
+	args = '* [ toc ] title {options:dict:str}'
+
+for _c in courselessonsection, courselessonsubsection, courselessonsubsubsection:
+	_c.invoke = _make_invoke(_c)
 
 class courseinfoname(Command):
 	pass
