@@ -79,7 +79,7 @@ class ISearchQuery(interface.Interface):
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
 						    required=False, min=0)
 
-	IsEmtpty = schema.Bool(title="Returns true if this is an empty search",
+	IsEmpty = schema.Bool(title="Returns true if this is an empty search",
 						   required=True, readonly=True)
 
 	IsBatching = schema.Bool(title="Returns true if this is a batch search",
