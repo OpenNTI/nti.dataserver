@@ -35,9 +35,9 @@ course_string = r"""
 
 \courselesson{Title 2}{l2} % another chapter
 \section{This is ignored}
-\courselessonsection{Section Title 2} % section
+\courselessonsection{Section Title 2}{not_before_date=2013-12-31,not_after_date=2014-01-02} % section
 \subsection{This Subsection is also ignored}
-\courselessonsubsection{SubSection Title 2}
+\courselessonsubsection{SubSection Title 2}{not_after_date=2014-01-03}
 
 % A lesson not included in a unit
 \courselesson{Title 3}{l3}
@@ -139,6 +139,7 @@ def test_course_and_related_extractor_works():
 		sub_lesson = sub_lessons[0]
 		assert_that( dict(sub_lesson.attributes.items()),
 					 has_entries( 'levelnum', '2',
+								  'date', "2013-12-31T06:00:00+00:00,2014-01-02T06:00:00+00:00",
 								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.section_title_2"))
 
 		sub_sub_lessons = sub_lesson.childNodes
@@ -147,4 +148,5 @@ def test_course_and_related_extractor_works():
 		sub_sub_lesson = sub_sub_lessons[0]
 		assert_that( dict(sub_sub_lesson.attributes.items()),
 					 has_entries( 'levelnum', '3',
+								  'date', "2014-01-03T06:00:00+00:00",
 								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.subsection_title_2"))

@@ -103,7 +103,8 @@ class _CourseExtractor(object):
 		for sub_lesson in lesson_node.subsections:
 			if not sub_lesson.tagName.startswith('course'):
 				continue
-			child = self._process_lesson( dom, course_node, sub_lesson, level=level+1)
+			dates = getattr(sub_lesson, 'date', None)
+			child = self._process_lesson( dom, course_node, sub_lesson, dates, level=level+1)
 			toc_el.appendChild( child )
 
 		return toc_el
