@@ -234,6 +234,11 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 
 			if 'creator' in options:
 				self.creator = options['creator']
+
+			self.visibility = u'everyone'
+			if 'visibility' in options.keys():
+				self.visibility = options['visibility']
+
 		return res
 
 	@readproperty
@@ -260,7 +265,18 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 class ntivideoref(Base.Crossref.ref):
-	pass
+	args = '[options:dict] label:idref'
+
+	def digest(self, tokens):
+		tok = super(ntivideoref, self).digest(tokens)
+
+		options = self.attributes.get( 'options', {} ) or {}
+		self.visibility = u''
+		if 'visibility' in options.keys():
+			self.visibility = options['visibility']
+
+		return tok
+
 
 class ntilocalvideoname(Command):
 		unicode = ''
