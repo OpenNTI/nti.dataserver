@@ -39,19 +39,7 @@ from nti.utils import dataurl
 from . import interfaces as app_interfaces
 from . import httpexceptions as hexc
 
-@view_config( route_name='objects.generic.traversal',
-			  context=zope.file.interfaces.IFile,
-			  permission=nauth.ACT_READ, # anyone logged in...
-			  request_method='GET',
-			  name="view")
-def file_view(request):
-	"""
-	A view that simply returns the data of the file without setting any
-	``Content-Disposition`` headers to attempt to force a download (and
-	typically a display inline).
-
-	Some ACL in the parent hierarchy must make this readable.
-	"""
+def _do_view( request, view ):
 	# Best we can do is try to get good cache headers. Check this before
 	# opening a blob; if etags match it raises NotModified
 	app_interfaces.IPreRenderResponseCacheController(request.context)(request.context, {'request': request} )
@@ -61,7 +49,7 @@ def file_view(request):
 	# local file. It (the app_iter) is thus transaction and site
 	# independent making it safe to pass up through any tweens that do
 	# transaction and site management
-	view = download.Display( request.context, IBrowserRequest(request) )
+	view = view( request.context, IBrowserRequest(request) )
 	try:
 		app_iter = view()
 	except POSKeyError:
@@ -79,11 +67,49 @@ def file_view(request):
 	# and zope.mimetype provides an adapter from that to IContentInfo, which Display
 	# uses to set the mimetype
 
-	# Our one use-case for this currently (whiteboard images) could benefit significantly
+	# Our most common use-case for this currently (whiteboard images) could benefit significantly
 	# from something like putting the blobs up in S3/cloudfront and serving from there,
 	# or at least not serving from the dataserver directly.
 
 	return request.response
+
+
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.file.interfaces.IFile,
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  name="view")
+def file_view(request):
+	"""
+	A view that simply returns the data of the file without setting any
+	``Content-Disposition`` headers to attempt to force a download (and
+	typically a display inline).
+
+	Some ACL in the parent hierarchy must make this readable.
+	"""
+
+	return _do_view(request, download.Display)
+
+
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.file.interfaces.IFile,
+			  permission=nauth.ACT_READ,
+			  request_method='GET')
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.file.interfaces.IFile,
+			  permission=nauth.ACT_READ,
+			  request_method='GET',
+			  name="download")
+def file_download_view(request):
+	"""
+	A view that returns the data of the file for download by setting a
+	``Content-Disposition`` headers to attempt to force a download.
+	This is the default view for a file, and also a named view.
+
+	Some ACL in the parent hierarchy must make this readable.
+	"""
+
+	return _do_view(request, download.Download)
 
 @view_config( route_name='objects.generic.traversal',
 			  context=IFileResource,
