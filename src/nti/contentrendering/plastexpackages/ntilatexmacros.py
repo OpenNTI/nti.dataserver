@@ -275,6 +275,11 @@ class ntivideoref(Base.Crossref.ref):
 		if 'visibility' in options.keys():
 			self.visibility = options['visibility']
 
+		self.to_render = False
+		if 'to_render' in options.keys():
+			if options['to_render'] in [ u'true', u'True' ]:
+				self.to_render = True
+
 		return tok
 
 

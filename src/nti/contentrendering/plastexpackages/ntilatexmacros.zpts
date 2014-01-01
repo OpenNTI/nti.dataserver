@@ -15,7 +15,7 @@ name: ntiincludevideo
 <div class="externalvideo" tal:attributes="id self/id"><iframe width="640" height="360" tal:attributes="src self/attributes/video_url" frameborder="0" allowfullscreen="true" ></iframe></div>
 
 name: ntivideoref
-<object class="ntivideo"
+<object class="ntivideo" tal:condition="self/to_render"
 	tal:attributes="type self/idref/label/mimeType; itemprop self/idref/label/itemprop; data-ntiid self/idref/label/ntiid">
   <param name="title" tal:condition="self/idref/label/title" tal:attributes="value self/idref/label/title">
   <param name="subtitle" tal:condition="self/idref/label/subtitle" tal:attributes="value self/idref/label/subtitle">
