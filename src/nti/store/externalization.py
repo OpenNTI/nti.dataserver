@@ -131,6 +131,14 @@ class PurchasableDecorator(object):
 
 	def add_activation(self, username, original, external):
 		activated = purchase_history.is_item_activated(username, original.NTIID)
+		# XXX: FIXME: Hack for some borked objects, hopefully only in alpha database
+		# See purchase_history for more details
+		if activated and store_interfaces.ICourse.providedBy(original):
+			# We can easily get out of sync here if the purchase object
+			# itself has been removed/lost. This will result in logging a
+			# warning if so.
+			from . import enrollment
+			activated = enrollment.is_enrolled( username, original.NTIID )
 		external['Activated'] = activated
 
 	def decorateExternalObject(self, original, external):
