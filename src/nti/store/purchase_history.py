@@ -75,8 +75,9 @@ class _PurchaseIndex(Persistent):
 		return False
 
 	def has_history_by_item(self, purchasable_id):
-		item_set = self.item_index.get(purchasable_id) or ()
-		return len(item_set) > 0
+		# Actually load the history to perform consistency checks
+		items = list(self.get_history_by_item(purchasable_id))
+		return len(items) > 0
 
 	def get_history_by_item(self, purchasable_id):
 		item_set = self.item_index.get(purchasable_id)
