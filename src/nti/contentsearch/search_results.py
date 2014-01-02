@@ -75,50 +75,46 @@ class IndexHitMetaData(object):
 	unspecified_container = u'+++unspecified_container+++'
 
 	def __init__(self):
-		self._last_modified = 0
-		self._type_count = collections.defaultdict(int)
-		self._container_count = collections.defaultdict(int)
+		self.lastModified = 0
+		self.type_count = collections.defaultdict(int)
+		self.container_count = collections.defaultdict(int)
 
 	@property
 	def last_modified(self):
-		return self._last_modified
-
-	@property
-	def type_count(self):
-		return self._type_count
+		return self.lastModified
 
 	@property
 	def total_hit_count(self):
-		return sum(self._type_count.values())
+		return sum(self.type_count.values())
 
 	def track(self, ihit):
 		selected = ihit.obj
 
 		# container count
 		rsr = search_interfaces.IContainerIDResolver(selected, None)
-		containerId = rsr.get_containerId() if rsr else self.unspecified_container
-		self._container_count[containerId] = self._container_count[containerId] + 1
+		containerId = rsr.containerId if rsr else self.unspecified_container
+		self.container_count[containerId] = self.container_count[containerId] + 1
 
 		# last modified
 		rsr = search_interfaces.ILastModifiedResolver(selected, None)
-		last_modified = rsr.get_last_modified() if rsr else 0
-		self._last_modified = max(self._last_modified, last_modified or 0)
+		lastModified = rsr.lastModified if rsr else 0
+		self.lastModified = max(self.lastModified, lastModified or 0)
 
 		# type count
 		type_name = common.get_type_name(selected)
-		self._type_count[type_name] = self._type_count[type_name] + 1
+		self.type_count[type_name] = self.type_count[type_name] + 1
 
 	def __iadd__(self, other):
 		# container count
-		for k, v in other._container_count.items():
-			self._container_count[k] = self._container_count[k] + v
+		for k, v in other.container_count.items():
+			self.container_count[k] = self.container_count[k] + v
 
 		# last modified
-		self._last_modified = max(self._last_modified, other._last_modified)
+		self.lastModified = max(self.lastModified, other.lastModified)
 
 		# container count
-		for k, v in other._type_count.items():
-			self._type_count[k] = self._type_count[k] + v
+		for k, v in other.type_count.items():
+			self.type_count[k] = self.type_count[k] + v
 
 		return self
 
