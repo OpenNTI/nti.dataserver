@@ -10,65 +10,22 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
+import time
 
 from zope import component
 from zope import interface
+from zope.event import notify
 from zope.location import locate
 
 from pyramid import httpexceptions as hexc
+
+from nti.dataserver.users import Entity
 
 from . import common
 from . import constants
 from . import search_query
 from . import content_utils
 from . import interfaces as search_interfaces
-
-class BaseView(object):
-
-	name = None
-
-	def __init__(self, request):
-		self.request = request
-
-	@property
-	def query(self):
-		return get_queryobject(self.request)
-
-	@property
-	def indexmanager(self):
-		return self.request.registry.getUtility(search_interfaces.IIndexManager)
-
-	def _locate(self, obj, parent):
-		# TODO: (Instead of modification info, we should be using etags here, anyway).
-		locate(obj, parent, self.name)
-		# TODO: Make cachable?
-		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
-		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
-		return obj
-
-class SearchView(BaseView):
-
-	name = 'Search'
-
-	def __call__(self):
-		query = self.query
-		result = self.indexmanager.search(query=query)
-		result = self._locate(result, self.request.root)
-		return result
-
-Search = SearchView
-
-class UserDataSearchView(BaseView):
-
-	name = 'UserSearch'
-
-	def __call__(self):
-		query = self.query
-		result = self.indexmanager.search(query=query)
-		result = self._locate(result, self.request.root)
-		return result
-
-UserSearch = UserDataSearchView
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
@@ -154,3 +111,49 @@ def get_queryobject(request):
 	username = username or request.authenticated_userid
 	return create_queryobject(username, request.params, request.matchdict,
 							  request.registry)
+
+class BaseView(object):
+
+	name = None
+
+	def __init__(self, request):
+		self.request = request
+
+	@property
+	def query(self):
+		return get_queryobject(self.request)
+
+	@property
+	def indexmanager(self):
+		return self.request.registry.getUtility(search_interfaces.IIndexManager)
+
+	def _locate(self, obj, parent):
+		# TODO: (Instead of modification info, we should be using etags here, anyway).
+		locate(obj, parent, self.name)
+		# TODO: Make cachable?
+		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
+		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
+		return obj
+
+	def search(self, query):
+		now = time.time()
+		result = self.indexmanager.search(query=query)
+		metadata = result.metadata
+		elapsed = time.time() - now
+		entity = Entity.get_entity(query.username)
+		notify(search_interfaces.SearchCompletedEvent(entity, query, metadata, elapsed))
+		return result
+
+	def __call__(self):
+		query = self.query
+		result = self.search(query=query)
+		result = self._locate(result, self.request.root)
+		return result
+
+class SearchView(BaseView):
+	name = 'Search'
+Search = SearchView  # BWC
+
+class UserDataSearchView(BaseView):
+	name = 'UserSearch'
+UserSearch = UserDataSearchView  # BWC

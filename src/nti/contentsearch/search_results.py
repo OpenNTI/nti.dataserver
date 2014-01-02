@@ -173,14 +173,13 @@ class _SearchResults(_BaseSearchResults):
 		self._hits = []
 		self._ihitmeta = IndexHitMetaData()
 
-	def get_hits(self):
+	@property
+	def hits(self):
 		return self._hits
 
-	def get_hit_meta_data(self):
+	@property
+	def metadata(self):
 		return self._ihitmeta
-
-	hits = property(get_hits)
-	hit_meta_data = property(get_hit_meta_data)
 
 	def _add(self, item):
 		ihit = None
