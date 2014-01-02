@@ -460,7 +460,7 @@ setup(
 			'sphinx',	# Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
-			'virtualenv >= 1.10.1',
+			'virtualenv',
 			'virtualenvwrapper >= 4.1.1',
 			'zc.buildout >= 2.2.1',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
