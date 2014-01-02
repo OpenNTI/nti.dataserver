@@ -247,7 +247,7 @@ setup(
 		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
-		'lxml >= 3.2.4', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
 		'nameparser >= 0.2.8', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
@@ -291,7 +291,7 @@ setup(
 		# RDF and embedded RDFa parsing.
 		'rdflib >= 4.0.1',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
-		'redis >= 2.8.0',
+		'redis',
 		# There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog >= 0.8.2',
 		'repoze.lru >= 0.6',  # LRU caching. Dep of Pyramid
