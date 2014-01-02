@@ -140,7 +140,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		result[HIT_COUNT] = len(items)
 		result[LAST_MODIFIED] = last_modified
-		result[HIT_META_DATA] = toExternalObject(self.results.get_hit_meta_data())
+		result[HIT_META_DATA] = toExternalObject(self.results.metadata)
 
 		# set for IUGDExternalCollection
 		result.lastModified = last_modified

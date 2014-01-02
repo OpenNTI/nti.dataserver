@@ -10,10 +10,11 @@ __docformat__ = "restructuredtext en"
 import sys
 
 from zope import schema
+from zope import component
 from zope import interface
 from zope.deprecation import deprecated
-from zope.interface.common.mapping import IMapping, IFullMapping
 from zope.mimetype import interfaces as zmime_interfaces
+from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -709,6 +710,8 @@ class ISearchResults(IBaseSearchResults):
 				required=True,
 				readonly=True)
 
+	metadata = schema.Object(IIndexHitMetaData, title="Search hit metadata", required=False)
+
 	def add(hit_or_hits):
 		"""add a search hit(s) to this result"""
 
@@ -767,3 +770,24 @@ class ISearchFragment(interface.Interface):
 
 class IWhooshAnalyzer(interface.Interface):
 	pass
+
+# index events
+
+class ISearchCompletedEvent(interface.Interface):
+	user = schema.Object(nti_interfaces.IEntity, title="The search entity")
+	query = schema.Object(ISearchQuery, title="The search query")
+	metadata = schema.Object(IIndexHitMetaData, title="The result meta-data")
+	elpased = schema.Float(title="The search elapsed time")
+
+@interface.implementer(ISearchCompletedEvent)
+class SearchCompletedEvent(component.interfaces.ObjectEvent):
+
+	def __init__(self, user, query, metadata, elapsed=0):
+		super(SearchCompletedEvent, self).__init__(user)
+		self.query = query
+		self.elapsed = elapsed
+		self.metadata = metadata
+
+	@property
+	def user(self):
+		return self.object
