@@ -136,12 +136,12 @@
 
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.interfaces.IModeledContent" />
+				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />
 
 	<!-- Decorating the user -->
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.interfaces.IUser" />
+				for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".pyramid_renderers_profile_link_decorator.ProfileLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />

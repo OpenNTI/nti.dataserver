@@ -101,19 +101,23 @@
 	-->
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry" />
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
+					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic" />
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityForum" />
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityForum
+					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard" />
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard
+					 pyramid.interfaces.IRequest" />
 
 	<!--
 		 For caching purposes, we can treat topics like modeled content; they have
