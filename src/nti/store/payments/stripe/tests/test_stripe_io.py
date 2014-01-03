@@ -7,6 +7,12 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than_or_equal_to
+
 import time
 import uuid
 import stripe
@@ -14,8 +20,6 @@ import unittest
 from datetime import date
 
 from .. import stripe_io
-
-from hamcrest import (assert_that, is_, is_not, has_length, greater_than_or_equal_to)
 			
 @unittest.SkipTest
 class TestStripeIO(unittest.TestCase):
@@ -59,7 +63,7 @@ class TestStripeIO(unittest.TestCase):
 									cvc="542",
 									address="3001 Oak Tree #D16",
 									city="Norman",
-									zip = "73072",
+									zip="XYZ72",
 									state="OK",
 									country="USA")
 		assert_that(t, is_not(None))
