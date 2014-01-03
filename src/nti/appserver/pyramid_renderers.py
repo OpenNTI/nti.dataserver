@@ -110,7 +110,8 @@ def render_externalizable(data, system):
 							 # LookupError is usually a programming problem.
 							 # AssertionError is one or both
 							 catch_components=(AttributeError,LookupError,AssertionError),
-							 catch_component_action=component.queryUtility(ICatchComponentAction,default=catch_replace_action))
+							 catch_component_action=component.queryUtility(ICatchComponentAction,default=catch_replace_action),
+							 request=request)
 	# There's some possibility that externalizing an object alters its
 	# modification date (usually decorators do this), so check it after externalizing
 	lastMod = getattr( data, 'lastModified', 0 )
@@ -615,3 +616,51 @@ class REST(object):
 		IResponseCacheController( data, default_cache_controller )( data, system )
 
 		return body
+
+from abc import ABCMeta
+from abc import abstractmethod
+from nti.utils.property import alias
+
+class AbstractRequestAwareDecorator(object):
+	"""
+	A base class providing support for decorators that
+	are request-aware. Subclasses can be registered
+	as either :class:`.IExternalMappingDecorator` objects
+	or :class:`.IExternalObjectDecorator` objects and this
+	class will unify the interface.
+	"""
+
+	__metaclass__ = ABCMeta
+
+	def __init__(self, context, request):
+		self.request = request
+
+	def _predicate(self, context, result):
+		"You may implement this method to check a precondition, return False if no decoration."
+		return True
+
+	def decorateExternalMapping( self, context, result ):
+		if self._predicate(context, result):
+			self._do_decorate_external(context, result)
+
+	decorateExternalObject = alias('decorateExternalMapping')
+
+	@abstractmethod
+	def _do_decorate_external(self, context, result):
+		"Implement this to do your actual decoration"
+		raise NotImplementedError()
+
+
+from nti.utils.property import Lazy
+
+class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
+	"""
+	A base class that ensures authenticated requests.
+	"""
+
+	def _predicate(self, context, result):
+		return bool(self.request.authenticated_userid)
+
+	@Lazy
+	def remoteUser(self):
+		return get_remote_user(self.request)

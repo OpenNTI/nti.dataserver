@@ -26,14 +26,14 @@ from nti.dataserver.links import Link
 from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.singleton import SingletonDecorator
 
+from .pyramid_renderers import AbstractRequestAwareDecorator
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class EditLinkDecorator(object):
+class EditLinkDecorator(AbstractRequestAwareDecorator):
 	"""
 	Adds the ``edit`` link relationship to objects that are persistent
 	(because we have to be able to generate a URL and we need the OID)
@@ -47,8 +47,6 @@ class EditLinkDecorator(object):
 	with a top-level ``href`` link. This may or may not always be
 	correct and performant. Be careful what you register this for.
 	"""
-
-	__metaclass__ = SingletonDecorator
 
 	#: Subclasses can set this to false to force the use of
 	#: object identifies
@@ -81,12 +79,12 @@ class EditLinkDecorator(object):
 		return getattr( context, '_p_jar', None ) or (self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		return is_writable(context, skip_cache=True) # XXX Why skipping cache?
+		return is_writable(context, request=self.request, skip_cache=True) # XXX Why skipping cache?
 
-	def decorateExternalMapping( self, context, mapping ):
-		if not self._preflight_context(context):
-			return
+	def _predicate(self, context, result):
+		return self._preflight_context(context)
 
+	def _do_decorate_external( self, context, mapping ):
 		# make sure there is no edit link already
 		# permission check is relatively expensive
 		links = mapping.setdefault( LINKS, [] )

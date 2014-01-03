@@ -90,7 +90,8 @@ MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,co
 class _ExternalizationState(object):
 	__slots__ = ( 'coerceNone', 'name', 'registry', 'catch_components', 'catch_component_action',
 				  'default_non_externalizable_replacer',
-				  'ext_obj_cache')
+				  'ext_obj_cache',
+				  'request')
 
 	def __init__( self, **kwargs ):
 		self.ext_obj_cache = dict()
@@ -128,7 +129,7 @@ def _to_external_object_state(obj, state, top_level=False):
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
 		elif isinstance(obj, MAPPING_TYPES ):
-			result = to_standard_external_dictionary( obj, name=state.name, registry=state.registry )
+			result = to_standard_external_dictionary( obj, name=state.name, registry=state.registry, request=state.request )
 			if obj.__class__ is dict:
 				result.pop( 'Class', None )
 			# Note that we recurse on the original items, not the things newly
@@ -152,6 +153,13 @@ def _to_external_object_state(obj, state, top_level=False):
 
 		for decorator in state.registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
 			decorator.decorateExternalObject( orig_obj, result )
+
+		# Request specific decorating, if given, is more specific than plain object
+		# decorating, so it gets to go last.
+		if state.request is not None and state.request is not _NotGiven:
+			for decorator in state.registry.subscribers( (orig_obj, state.request), IExternalObjectDecorator):
+				decorator.decorateExternalObject( orig_obj, result )
+
 		return result
 	except state.catch_components as t:
 		if top_level:
@@ -167,7 +175,8 @@ def _to_external_object_state(obj, state, top_level=False):
 
 def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 					  catch_components=(), catch_component_action=None,
-					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer):
+					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer,
+					  request=_NotGiven):
 	""" Translates the object into a form suitable for
 	external distribution, through some data formatting process. See :const:`SEQUENCE_TYPES`
 	and :const:`MAPPING_TYPES` for details on what we can handle by default.
@@ -187,6 +196,10 @@ def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 	:param callable default_non_externalizable_replacer: If we are asked to externalize an object
 		and cannot, and there is no :class:`~nti.externalization.interfaces.INonExternalizableReplacer` registered for it,
 		then call this object and use the results.
+	:param request: If given, the request that the object is being externalized on behalf
+		of. If given, then the object decorators will also look for subscribers
+		to the object plus the request (like traversal adapters); this is a good way to
+		separate out request or user specific code.
 
 	"""
 
@@ -220,7 +233,7 @@ def stripNoneFromExternal( obj ):
 	elif isinstance( obj, collections.Mapping ):
 		obj = {k:stripNoneFromExternal(v)
 			   for k,v in obj.iteritems()
-			   if (v is not None and k is not None)}
+			   if v is not None and k is not None}
 	return obj
 
 def stripSyntheticKeysFromExternalDictionary( external ):
@@ -298,7 +311,7 @@ def _choose_field(result, self, ext_name, converter=lambda x: x, fields=(), sup_
 		try:
 			value = getattr(self, x, None)
 		except ZODB.POSException.POSKeyError:
-			logger.exception("Could not get attribute %s for object %s" % (x, self))
+			logger.exception("Could not get attribute %s for object %s", x, self)
 			continue
 		if value is not None:
 			result[ext_name] = converter(value)
@@ -311,7 +324,7 @@ def _choose_field(result, self, ext_name, converter=lambda x: x, fields=(), sup_
 		try:
 			value = getattr(self, x, None)
 		except ZODB.POSException.POSKeyError:
-			logger.exception("Could not get attribute %s for object %s" % (x, self))
+			logger.exception("Could not get attribute %s for object %s", x, self)
 			continue
 		if value is not None:
 			value = sup_converter( value )
@@ -357,7 +370,9 @@ def to_standard_external_created_time( context, default=None, _write_into=None )
 	return holder.get( StandardExternalFields.CREATED_TIME, default )
 
 
-def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven, registry=component, decorate=True):
+def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven,
+									 registry=component, decorate=True,
+									 request=_NotGiven):
 	"""
 	Returns a dictionary representing the standard externalization of
 	the object. This impl takes care of the standard attributes
@@ -432,13 +447,22 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven, regis
 
 
 	if decorate:
-		decorate_external_mapping( self, result, registry=registry )
+		decorate_external_mapping( self, result, registry=registry, request=request )
 
 	return result
 
-def decorate_external_mapping( self, result, registry=component ):
+from pyramid.threadlocal import get_current_request # XXX Layer violation
+
+def decorate_external_mapping( self, result, registry=component, request=_NotGiven ):
 	for decorator in registry.subscribers( (self,), IExternalMappingDecorator ):
 		decorator.decorateExternalMapping( self, result )
+
+	if request is _NotGiven:
+		request = get_current_request()
+
+	if request is not None:
+		for decorator in registry.subscribers( (self, request), IExternalMappingDecorator ):
+			decorator.decorateExternalMapping( self, result )
 
 toExternalDictionary = to_standard_external_dictionary
 deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )

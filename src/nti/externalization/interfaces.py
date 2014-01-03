@@ -98,16 +98,22 @@ class INonExternalizableReplacement(interface.Interface):
 
 class IExternalObjectDecorator(interface.Interface):
 	"""
-	Used as a subscription adapter to provide additional information
-	to the externalization of an object after it has been externalized
-	by the primary implementation of :class:`~nti.externalization.interfaces.IInternalObjectExternalizer`. Allows for a separation
-	of concerns. These are called in no specific order, and so must
-	operate by mutating the external object.
+	Used as a subscription adapter (of the object or the object and
+	request) to provide additional information to the externalization
+	of an object after it has been externalized by the primary
+	implementation of
+	:class:`~nti.externalization.interfaces.IInternalObjectExternalizer`.
+	Allows for a separation of concerns. These are called in no
+	specific order, and so must operate by mutating the external
+	object.
+
+	These are called *after* :class:`.IExternalMappingDecorator`.
 	"""
 
 	def decorateExternalObject( origial, external ):
 		"""
-		Decorate the externalized object (which is probably a mapping).
+		Decorate the externalized object (which is probably a mapping,
+		though this is not guaranteed).
 
 		:param original: The object that is being externalized.
 			Passed to facilitate using non-classes as decorators.
@@ -119,13 +125,16 @@ class IExternalObjectDecorator(interface.Interface):
 
 class IExternalMappingDecorator(interface.Interface):
 	"""
-	Used as a subscription adapter to provide additional information
-	to the externalization of an object after it has been externalized
-	by the primary implementation of
+	Used as a subscription adapter (of the object or the object and
+	request) to provide additional information to the externalization
+	of an object after it has been externalized by the primary
+	implementation of
 	:class:`~nti.externalization.interfaces.IInternalObjectExternalizer`.
 	Allows for a separation of concerns. These are called in no
 	specific order, and so must operate by mutating the external
 	object.
+
+	These are called *before* :class:`.IExternalObjectDecorator`.
 	"""
 
 	def decorateExternalMapping( original, external ):
@@ -133,8 +142,8 @@ class IExternalMappingDecorator(interface.Interface):
 		Decorate the externalized object mapping.
 
 		:param original: The object that is being externalized. Passed
-			to facilitate using non-classes as decorators. :param
-			external: The externalization of that object, an
+			to facilitate using non-classes as decorators.
+		:param external: The externalization of that object, an
 			:class:`~nti.externalization.interfaces.ILocatedExternalMapping`,
 			produced by an implementation of
 			:class:`~nti.externalization.interfaces.IInternalObjectExternalizer` or default rules.
