@@ -289,7 +289,7 @@ setup(
 		'pystatsd >= 0.1.10',
 		'pytz',
 		# RDF and embedded RDFa parsing.
-		'rdflib >= 4.0.1',
+		'rdflib',
 		# Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'redis',
 		# There is a nice complete mock for it at fakeredis, installed for tests
