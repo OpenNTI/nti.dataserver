@@ -96,7 +96,6 @@ glogging.SafeAtoms.__init__ = SafeAtoms__init__
 import gevent
 import gevent.socket
 
-from .application_server import FlashPolicyServer
 from .application_server import WebSocketServer
 
 from paste.deploy import loadwsgi
@@ -351,10 +350,6 @@ class _ServerFactory(object):
 	what's necessary to finish initializing it for running (such as
 	messing with socket blocking and adjusting handler classes).
 	Serves as the 'server_class' value.
-
-	Also takes care of creating the flash policy server on its port instead
-	of the application.
-
 	"""
 
 	def __init__( self, worker ):
@@ -362,10 +357,6 @@ class _ServerFactory(object):
 
 
 	def __call__( self,  listen_on_socket, application=None, spawn=None, log=None, handler_class=None):
-		if listen_on_socket.cfg_addr[1] == self.worker.cfg.flash_policy_server_port: # Is this the flash port?
-			logger.info( "Created FlashPolicyServer on %s", listen_on_socket )
-			return FlashPolicyServer( listen_on_socket )
-
 		app_server = WebSocketServer(
 				listen_on_socket,
 				application,
@@ -552,7 +543,6 @@ class _PasterServerApplication(PasterServerApplication):
 				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
 				self.cfg.set( 'pidfile',  pidfile )
 		assert len( self.cfg.bind ) == 1
-		self._setup_flash_port( self.cfg, gcfg )
 
 	def reload(self):
 		# In super, reload calls load_config, which is only
@@ -577,26 +567,6 @@ class _PasterServerApplication(PasterServerApplication):
 		from zope.testing import cleanup
 		cleanup.cleanUp()
 		return
-
-	@classmethod # for testing
-	def _setup_flash_port( cls, cfg, global_conf ):
-		# Setup the flash port, if configured.
-		# An empty or missing value means to use the default port.
-		# A positive integer means to use that port. A negative
-		# integer disables the port.
-		# We bind this in the standard fashion so that it survives properly across
-		# fork/exec. It also simplifies things.
-		cfg.flash_policy_server_port = FlashPolicyServer.NONPRIV_POLICY_PORT
-		if global_conf and 'flash_policy_server_port' in global_conf and global_conf['flash_policy_server_port']:
-			port = int(global_conf['flash_policy_server_port'])
-			if port > 0:
-				cfg.flash_policy_server_port = port
-			else:
-				cfg.flash_policy_server_port = None
-
-		if cfg.flash_policy_server_port:
-			cfg.set( 'bind', cfg.bind + [':' + str(cfg.flash_policy_server_port)] )
-
 
 	def load(self):
 		if self.app is None:

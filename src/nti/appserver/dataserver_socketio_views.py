@@ -132,7 +132,7 @@ def _create_new_session(request):
 	logger.debug( "Created new session %s with site policies %s", session, session.originating_site_names )
 	return session
 
-KNOWN_TRANSPORTS = {'websocket':1, 'flashsocket':2, 'xhr-polling':3, 'jsonp-polling':4}
+KNOWN_TRANSPORTS = {'websocket':1, 'xhr-polling':3, 'jsonp-polling':4}
 
 @view_config(route_name=RT_HANDSHAKE) # POST or GET
 def _handshake_view( request ):
@@ -143,7 +143,6 @@ def _handshake_view( request ):
 	"""
 	session = _create_new_session(request)
 
-	# data = "%s:15:10:jsonp-polling,htmlfile" % (session.session_id,)
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type,...
 	handler_types = [x[0] for x in component.getAdapters( (request,), nti.socketio.interfaces.ISocketIOTransport)]
 	handler_types = sorted(handler_types, key=lambda x: KNOWN_TRANSPORTS.get(x, -1))
@@ -207,7 +206,7 @@ def _connect_view( request ):
 
 	environ = request.environ
 	transport = request.matchdict.get( 'transport' )
-	ws_transports = ('websocket','flashsocket')
+	ws_transports = ('websocket',)
 	session_id = request.matchdict.get( 'session_id' )
 
 	# All our errors need to come back as 404 (not 403) otherwise the browser
@@ -222,13 +221,8 @@ def _connect_view( request ):
 
 	# Users must be authenticated. All users are allowed to make connections
 	# So this is a hamfisted way of achieving that policy.
-	# NOTE: It seems that the 'flashsocket' transport does not actually set
-	# up authentication
 	if not request.authenticated_userid:
-		if transport == 'flashsocket':
-			logger.warn( "Allowing unauthenticated flashsocket use from %s", request )
-		else:
-			raise hexc.HTTPUnauthorized()
+		raise hexc.HTTPUnauthorized()
 
 
 	# Make the session object available for WSGI apps

@@ -34,7 +34,6 @@ from nose.tools import assert_raises
 
 from nti.appserver import gunicorn
 from nti.appserver.gunicorn import _PasterServerApplication
-from nti.appserver.gunicorn import FlashPolicyServer
 
 
 import fudge
@@ -44,7 +43,6 @@ class MockConfig(object):
 	debug = False
 	umask = 0
 	worker_connections = 1
-	flash_policy_server_port = 1
 	settings = None
 	access_log_format = ''
 	workers = 2
@@ -81,28 +79,6 @@ class MockSocket(object):
 	cfg_addr = ('',8081)
 
 from gunicorn import config as gconfig
-
-def test_create_flash_socket():
-	cfg = MockConfig()
-	cfg.bind = ['bind']
-	# No value
-	_PasterServerApplication._setup_flash_port( cfg, {} )
-	assert_that( cfg, has_property( 'flash_policy_server_port', FlashPolicyServer.NONPRIV_POLICY_PORT ) )
-	assert_that( cfg.bind, is_( ['bind', ':' + str(FlashPolicyServer.NONPRIV_POLICY_PORT ) ] ) )
-
-	cfg = MockConfig()
-	cfg.bind = ['bind']
-	# Negative value
-	_PasterServerApplication._setup_flash_port( cfg, {'flash_policy_server_port': '-1'} )
-	assert_that( cfg, has_property( 'flash_policy_server_port', none() ) )
-	assert_that( cfg.bind, is_( ['bind'] ) )
-
-	cfg = MockConfig()
-	cfg.bind = ['bind']
-	# Specified value
-	_PasterServerApplication._setup_flash_port( cfg, {'flash_policy_server_port': '100'} )
-	assert_that( cfg, has_property( 'flash_policy_server_port', 100 ) )
-	assert_that( cfg.bind, is_( ['bind', ':100' ] ) )
 
 
 class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
@@ -187,7 +163,6 @@ class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
 		global_conf['http_port'] = '1'
 
 		cfg = gconfig.Config()
-		_PasterServerApplication._setup_flash_port( cfg, global_conf )
 
 		# Default worker_connections config
 		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
