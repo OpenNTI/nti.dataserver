@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Stripe io interface.
 
@@ -6,6 +7,8 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import sys
@@ -29,14 +32,17 @@ class StripeIO(object):
 
 	@classmethod
 	def create_stripe_customer(cls, email, description=None, coupon=None, api_key=None):
-		customer = cls._do_stripe_operation(stripe.Customer.create, api_key=api_key, email=email,
-											coupon=coupon, description=description)
+		customer = cls._do_stripe_operation(stripe.Customer.create, api_key=api_key,
+											email=email, coupon=coupon,
+											description=description)
 		return customer
 
 	@classmethod
 	def get_stripe_customer(cls, customer_id, api_key=None):
 		try:
-			customer = cls._do_stripe_operation(stripe.Customer.retrieve, customer_id, api_key)
+			customer = cls._do_stripe_operation(stripe.Customer.retrieve,
+												customer_id,
+												api_key)
 			return customer
 		except stripe.InvalidRequestError:
 			return None
@@ -50,29 +56,36 @@ class StripeIO(object):
 		return False
 
 	@classmethod
-	def update_stripe_customer(cls, customer, email=_marker, description=_marker, coupon=_marker, api_key=None):
-		customer = cls.get_stripe_customer(customer, api_key) if isinstance(customer, six.string_types) else customer
+	def update_stripe_customer(cls, customer, email=_marker, description=_marker,
+							   coupon=_marker, api_key=None):
+		customer = cls.get_stripe_customer(customer, api_key) \
+				   if isinstance(customer, six.string_types) else customer
 		if customer:
-			customer.email = email if email is not _marker else customer.email
-			customer.coupon = coupon if coupon is not _marker else customer.coupon
-			customer.description = description if description is not _marker else customer.description
+			if email is not _marker:
+				customer.email = email
+			if coupon is not _marker:
+				customer.coupon = coupon
+			if description is not _marker:
+				customer.description = description
 			cls._do_stripe_operation(customer.save)
 			return True
 		return False
 
 	@classmethod
-	def create_token(cls, customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
+	def create_token(cls, customer_id=None, number=None, exp_month=None, exp_year=None,
+					 cvc=None, api_key=None, **kwargs):
 		if not customer_id:
 			cvc = str(cvc) if cvc else None
-			cc = {	'number': number, 'exp_month':exp_month,
-					'exp_year': exp_year, 'cvc': cvc,
-					'address_line1': kwargs.get('address_line1', None) or kwargs.get('address', None),
-					'address_line2': kwargs.get('address_line2', None) or kwargs.get('address2', None),
-					'address_city': kwargs.get('address_city', None) or kwargs.get('city', None),
-					'address_state': kwargs.get('address_state', None) or kwargs.get('state', None),
-					'address_zip': kwargs.get('address_zip', None) or kwargs.get('zip', None),
-					'address_country': kwargs.get('address_country', 'None') or kwargs.get('country', None)
-				}
+			cc = {
+				'number': number, 'exp_month':exp_month,
+				'exp_year': exp_year, 'cvc': cvc,
+				'address_line1': kwargs.get('address_line1', kwargs.get('address')),
+				'address_line2': kwargs.get('address_line2', kwargs.get('address2')),
+				'address_city': kwargs.get('address_city', kwargs.get('city')),
+				'address_state': kwargs.get('address_state', kwargs.get('state')),
+				'address_zip': kwargs.get('address_zip', kwargs.get('zip')),
+				'address_country': kwargs.get('address_country', kwargs.get('country'))
+			}
 			data = {'card':cc}
 		else:
 			data = {'customer': customer_id}
@@ -84,14 +97,15 @@ class StripeIO(object):
 	@classmethod
 	def get_stripe_token(cls, token, api_key=None):
 		try:
-			token = cls._do_stripe_operation(stripe.Token.retrieve, token, api_key=api_key)
+			token = cls._do_stripe_operation(stripe.Token.retrieve,
+											 token, api_key=api_key)
 			return token
 		except stripe.InvalidRequestError:
 			return None
 	get_token = get_stripe_token
 
-	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None, description=None,
-							 application_fee=None, api_key=None):
+	def create_stripe_charge(self, amount, currency='USD', customer_id=None, card=None,
+							 description=None, application_fee=None, api_key=None):
 		assert customer_id or card
 		data = {'amount':amount, 'currency':currency, 'description':description}
 		if card:
@@ -108,25 +122,29 @@ class StripeIO(object):
 	@classmethod
 	def get_stripe_charge(cls, charge_id, api_key=None):
 		try:
-			charge = cls._do_stripe_operation(stripe.Charge.retrieve, charge_id, api_key=api_key)
+			charge = cls._do_stripe_operation(stripe.Charge.retrieve, charge_id,
+											  api_key=api_key)
 			return charge
 		except stripe.InvalidRequestError:
 			return None
 	get_charge = get_stripe_charge
 
 	def _get_stripe_charges(self, count=10, offset=0, customer=None, api_key=None):
-		charges = self._do_stripe_operation(stripe.Charge.all, count=count, offset=offset,
-											customer=customer, api_key=api_key)
+		charges = self._do_stripe_operation(stripe.Charge.all, count=count,
+										    offset=offset, customer=customer,
+										    api_key=api_key)
 		return charges
 
-	def get_stripe_charges(self, customer=None, start_time=None, end_time=None, count=50, api_key=None):
+	def get_stripe_charges(self, customer=None, start_time=None, end_time=None,
+						   count=50, api_key=None):
 		offset = 0
 		start_time = int(start_time) if start_time else 0
 		end_time = int(end_time) if end_time else sys.maxint
 
 		_loop = True
 		while _loop:
-			charges = self._get_stripe_charges(count=count, offset=offset, customer=customer, api_key=api_key)
+			charges = self._get_stripe_charges(count=count, offset=offset,
+											   customer=customer, api_key=api_key)
 			if not charges.data:
 				_loop = False
 			else:
@@ -146,7 +164,8 @@ class StripeIO(object):
 	@classmethod
 	def get_stripe_coupon(cls, coupon_code, api_key=None):
 		try:
-			coupon = cls._do_stripe_operation(stripe.Coupon.retrieve, coupon_code, api_key=api_key)
+			coupon = cls._do_stripe_operation(stripe.Coupon.retrieve,
+											  coupon_code, api_key=api_key)
 			return coupon
 		except stripe.InvalidRequestError:
 			return None
