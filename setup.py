@@ -133,20 +133,6 @@ setup(
 		'nti.plasTeX',
 		'nti.geventwebsocket',
 		'pywikipedia',
-		# NOTE: These are temporary!
-
-		'nti.app.sites.mathcounts',
-		'nti.app.sites.alpha',
-		'nti.app.sites.demo',
-		'nti.app.sites.litworld',
-		'nti.app.sites.prmia',
-		'nti.app.sites.law',
-		'nti.app.sites.rwanda',
-		'nti.app.sites.columbia',
-		'nti.wsgi.cors',
-		'nti.openmath',
-		'nti.assessment',
-
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
