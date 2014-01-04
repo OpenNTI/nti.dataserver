@@ -190,9 +190,10 @@ class UGDPutView(AbstractAuthenticatedView,
 		creator = theObject.creator
 		# This is required; only register this view for objects that have it.
 		# This class is NOT meant to be a fully generic PUT view by itself.
-		# (TODO: Our registrations in application.py are wrong, make them
+		# (TODO: Our registrations in application.py are wrong (zope's IContained), make them
 		# more specific. Also, we could check and refuse to execute if there is a
-		# subpath, view names, or query params, that was unconsumed)
+		# subpath, view names, or query params, that was unconsumed.
+		# Now experementing with using dataserver's IModeledContent which is actually correct)
 		containerId = theObject.containerId
 
 		externalValue = self.readInput()
