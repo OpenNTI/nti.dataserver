@@ -318,13 +318,21 @@ def _modifying_ugd_views(pyramid_config):
 							renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							permission=nauth.ACT_READ, request_method='GET')
 
+	# XXX: FIXME: This is wrong. These next two used to use:
+	#	context='zope.container.interfaces.IContained',
+	# But that's far too general, and as stock views they definitely
+	# didn't work on plain implementations of that interface. In the best case
+	# they blew up, in the worst case they silently did nothing.
+	# So we're trying to be more specificy
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
-							renderer='rest', context='zope.container.interfaces.IContained',
+							renderer='rest',
+							context='nti.dataserver.interfaces.IModeledContent',
 							permission=nauth.ACT_DELETE, request_method='DELETE')
 
-	# XXX: FIXM: This is wrong. This really shouldn't be IContained, that's far too general.
+
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
-							renderer='rest', context='zope.container.interfaces.IContained',
+							renderer='rest',
+							context='nti.dataserver.interfaces.IModeledContent',
 							permission=nauth.ACT_UPDATE, request_method='PUT')
 
 	# And the user itself can be put to
