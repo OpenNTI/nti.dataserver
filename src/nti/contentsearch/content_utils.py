@@ -147,21 +147,26 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return result
 	lastModified = property(get_last_modified)
 
-class _ThreadableContentResolver(_AbstractIndexDataResolver):
+class _DefaultTagKeywordResolver(object):
+
+	def __init__(self, obj):
+		self.obj = obj
 
 	def get_tags(self):
 		result = set()
 		for name in tag_fields:
 			data = getattr(self.obj, name, ())
 			result.update(_process_words(data))
-		return list(result) if result else []
+		return list(result) if result else ()
 	tags = property(get_tags)
 
 	def get_keywords(self):
 		result = getattr(self.obj, keywords_, None)
 		result = set(_process_words(result)) if result else None
-		return list(result) if result else []
+		return list(result) if result else ()
 	keywords = property(get_keywords)
+
+class _ThreadableContentResolver(_AbstractIndexDataResolver, _DefaultTagKeywordResolver):
 
 	def get_references(self):
 		result = set()
@@ -312,10 +317,10 @@ class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
 
 @component.adapter(IDict)
 @interface.implementer(search_interfaces.IHighlightContentResolver,
-						search_interfaces.INoteContentResolver,
-						search_interfaces.IRedactionContentResolver,
-						search_interfaces.IMessageInfoContentResolver,
-						search_interfaces.IPostContentResolver)
+					   search_interfaces.INoteContentResolver,
+					   search_interfaces.IRedactionContentResolver,
+					   search_interfaces.IMessageInfoContentResolver,
+					   search_interfaces.IPostContentResolver)
 class _DictContentResolver(object):
 
 	__slots__ = ('obj',)

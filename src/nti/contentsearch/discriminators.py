@@ -86,14 +86,16 @@ def get_last_modified(obj, default=None):
 	return result if result else default
 
 def get_tags(obj, default=()):
-	adapted = search_interfaces.ITagsResolver(obj, None)
-	result = adapted.tags if adapted else None
-	return result or default
+	result = set()
+	for resolver in component.subscribers((obj,), search_interfaces.ITagsResolver):
+		result.update(resolver.tags or ())
+	return list(result) if result else default
 
 def get_keywords(obj, default=()):
-	adapted = search_interfaces.IKeywordsResolver(obj, None)
-	result = adapted.keywords if adapted else None
-	return result or default
+	result = set()
+	for resolver in component.subscribers((obj,), search_interfaces.IKeywordsResolver):
+		result.update(resolver.keywords or ())
+	return list(result) if result else default
 
 def get_sharedWith(obj, default=None):
 	adapted = search_interfaces.IShareableContentResolver(obj, None)
