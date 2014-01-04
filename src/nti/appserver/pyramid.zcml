@@ -88,14 +88,4 @@
 	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 
-	<configure zcml:condition="not-have in-buildout">
-		<include package="nti.app.client_preferences"
-				 file="pyramid.zcml"
-				 zcml:condition="installed nti.app.client_preferences" />
-		<configure zcml:condition="installed nti.app.products.ou">
-			<include package="nti.app.products.ou" file="pyramid.zcml" />
-		</configure>
-
-	</configure>
-
 </configure>
