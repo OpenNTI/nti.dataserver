@@ -188,15 +188,17 @@ class UGDPutView(AbstractAuthenticatedView,
 		# 	raise hexc.HTTPForbidden()
 
 		creator = theObject.creator
-		containerId = theObject.containerId
-		objId = theObject.id
+		containerId = getattr(theObject, 'containerId', None)
 
-		externalValue = self.readInput( )
+		externalValue = self.readInput()
+		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified
 
-		self.updateContentObject( theObject, externalValue ) # Should fire lifecycleevent.modified
-
-		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
-		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator, theObject.id, getattr(theObject,'__class__',type(theObject)).__name__, containerId)
+		# TS thinks this log message should be info not debug.  It exists to provide
+		# statistics not to debug.
+		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator,
+					theObject.id,
+					getattr(theObject, '__class__', type(theObject)).__name__,
+					containerId)
 
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by
