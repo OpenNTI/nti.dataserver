@@ -758,7 +758,7 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 
 class ISearchFragment(interface.Interface):
 
-	text = nti_schema.ValidTextLine(title="fragment text", required=True)
+	text = schema.Text(title="fragment text", required=True, default=u'')
 
 	matches = nti_schema.ListOrTuple(
 					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
