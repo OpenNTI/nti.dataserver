@@ -83,7 +83,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.ntiid, is_not(None))
 		assert_that(adapted.creator, is_('nt@nti.com'))
 		assert_that(adapted.containerId, is_(containerId))
-		assert_that(adapted.keywords, is_([]))
+		assert_that(adapted.keywords, is_(()))
 		assert_that(adapted.tags, is_(['ichigo']))
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))

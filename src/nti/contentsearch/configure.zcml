@@ -119,13 +119,17 @@
 	
 	<!-- Content Resolvers -->
 
+	<subscriber factory=".content_utils._DefaultTagKeywordResolver"
+				for="*"
+				provides=".interfaces.ITagsResolver"/>
+	
+	<subscriber factory=".content_utils._DefaultTagKeywordResolver"
+				for="*"
+				provides=".interfaces.IKeywordsResolver"/>
+	
 	<adapter factory=".content_utils._StringContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="basestring" />
-
-	<adapter factory=".content_utils._DictContentResolver"
-			 provides=".interfaces.IModeledContentResolver"
-			 for="dict" />
 
 	<adapter factory=".content_utils._HighLightContentResolver"
 			 provides=".interfaces.IHighlightContentResolver"
@@ -171,6 +175,18 @@
 			 provides=".interfaces.IBookContentResolver"
 			 for=".interfaces.IBookContent" />
 			 
+	<adapter factory=".content_utils._DictContentResolver"
+			 provides=".interfaces.IModeledContentResolver"
+			 for="dict" />
+		
+	<subscriber factory=".content_utils._DictContentResolver"
+				for="dict"
+				provides=".interfaces.ITagsResolver"/>
+	
+	<subscriber factory=".content_utils._DictContentResolver"
+				for="dict"
+				provides=".interfaces.IKeywordsResolver"/>
+			 	 
 	<!-- Search highlights -->
 
 	<utility factory=".search_highlights.create_default_analyzer" name="en" />
