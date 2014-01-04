@@ -188,7 +188,12 @@ class UGDPutView(AbstractAuthenticatedView,
 		# 	raise hexc.HTTPForbidden()
 
 		creator = theObject.creator
-		containerId = getattr(theObject, 'containerId', None)
+		# This is required; only register this view for objects that have it.
+		# This class is NOT meant to be a fully generic PUT view by itself.
+		# (TODO: Our registrations in application.py are wrong, make them
+		# more specific. Also, we could check and refuse to execute if there is a
+		# subpath, view names, or query params, that was unconsumed)
+		containerId = theObject.containerId
 
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified

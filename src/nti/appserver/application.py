@@ -322,6 +322,7 @@ def _modifying_ugd_views(pyramid_config):
 							renderer='rest', context='zope.container.interfaces.IContained',
 							permission=nauth.ACT_DELETE, request_method='DELETE')
 
+	# XXX: FIXM: This is wrong. This really shouldn't be IContained, that's far too general.
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
 							renderer='rest', context='zope.container.interfaces.IContained',
 							permission=nauth.ACT_UPDATE, request_method='PUT')
