@@ -95,7 +95,7 @@ class TrivialMatchScanner(BasicScanner):
 	def do_scan(self, content_fragment, yielded):
 		for x in self.prohibited_values:
 			idx = content_fragment.find(x, 0)
-			while (idx != -1):
+			while idx != -1:
 				match_range = (idx, idx + len(x))
 				if self.test_range(match_range, yielded):
 					yield match_range
@@ -127,7 +127,7 @@ class WordMatchScanner(BasicScanner):
 		ranges = []
 		for x in word_list:
 			idx = content_fragment.find(x, 0)
-			while (idx != -1):
+			while idx != -1:
 				endidx = idx + len(x)
 				match_range = (idx, endidx)
 				if self._test_start(idx, content_fragment) and self._test_end(endidx, content_fragment):
@@ -135,7 +135,8 @@ class WordMatchScanner(BasicScanner):
 				idx = content_fragment.find(x, endidx)
 		return ranges
 
-	def do_scan(self, content_fragment, white_words_ranges=[]):
+	def do_scan(self, content_fragment, white_words_ranges=None):
+		white_words_ranges = list() if white_words_ranges is None else white_words_ranges
 		ranges = self._find_ranges(self.white_words, content_fragment)
 		white_words_ranges.extend(ranges)
 
@@ -151,7 +152,8 @@ class PipeLineMatchScanner(BasicScanner):
 	def __init__(self, scanners=()):
 		self.scanners = tuple(scanners)
 
-	def do_scan(self, content_fragment, ranges=[]):
+	def do_scan(self, content_fragment, ranges=None):
+		ranges = list() if ranges is None else ranges
 		content_fragment = content_fragment.lower()
 		for s in self.scanners:
 			matched_ranges = s.do_scan(content_fragment, ranges)
@@ -239,7 +241,7 @@ def censor_before_text_assigned(fragment, target, event):
 
 	if interfaces.ICensoredUnicodeContentFragment.providedBy(fragment):
 		# Nothing to do, already censored
-		return
+		return None, None
 
 	# Does somebody want to censor assigning values of fragments' type to objects of
 	# target's type to the field named event.name?
