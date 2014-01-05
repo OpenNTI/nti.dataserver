@@ -110,7 +110,7 @@ class IndexManager(object):
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			r = searcher.search(query)
-			results = search_results.merge_search_results(r, results) \
+			results = search_results.merge_search_results(results, r) \
 					  if r is not None else results
 		return results
 
@@ -120,7 +120,7 @@ class IndexManager(object):
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			r = searcher.suggest_and_search(query)
-			results = search_results.merge_suggest_and_search_results(r, results) \
+			results = search_results.merge_suggest_and_search_results(results, r) \
 					  if r is not None else results
 		return results
 
@@ -130,7 +130,7 @@ class IndexManager(object):
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			r = searcher.suggest(query)
-			results = search_results.merge_suggest_results(r, results) \
+			results = search_results.merge_suggest_results(results, r) \
 					  if r is not None else results
 		return results
 
