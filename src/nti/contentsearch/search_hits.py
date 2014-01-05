@@ -248,8 +248,8 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 
 	@classmethod
 	def get_oid(cls, hit):
-		tpl = (hit.containerId, u'-', hit.videoId)
-		return unicode(''.join(tpl))
+		result = (str(hit.docnum), u'-', hit.videoId)
+		return unicode(''.join(result))
 
 @component.adapter(search_interfaces.IWhooshNTICardContent)
 @interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
