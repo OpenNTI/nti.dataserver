@@ -46,6 +46,15 @@ class IntIds(_ZCIntIds):
 	# alternatively, they define __slots__ and forbid new attributes
 
 	def queryId(self, ob, default=None):
+		"""
+		NOTE: if you pass a broken object (in the ZODB sense),
+		this will hide that fact. We have to activate it,
+		but if it is broken, we will not be able to. However,
+		we catch KeyError, which is a superclass of the POSKeyError
+		that gets thrown, so you cannot distinguish it at this point.
+
+		We do not change this for backwards compatibility.
+		"""
 		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
 	def register(self, ob):
