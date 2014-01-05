@@ -265,7 +265,7 @@ setup(
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
-		'pyramid_zodbconn >= 0.4',
+		'pyramid_zodbconn',
 		'pyramid-openid >= 0.3.4',
 		# 'psycopg2 >= 2.5.1',	# PostGreSQL
 		# Monitoring stats and instrumenting code
