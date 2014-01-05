@@ -98,7 +98,7 @@ class _PurchaseIndex(Persistent):
 				if iids.queryId(p) != iid:
 					p._p_activate()
 					logger.warn("Found inconsistent purchase attempt for purchasable %s, ignoring: %r (%s %s)",
-								purchasable_id, p, getattr(p, '__class__', None), type(p)))
+								purchasable_id, p, getattr(p, '__class__', None), type(p))
 					continue
 
 				yield p
