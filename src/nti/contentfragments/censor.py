@@ -19,6 +19,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
+import array
 from pkg_resources import resource_filename
 
 import html5lib
@@ -30,6 +31,8 @@ from zope import component
 from zope.event import notify
 
 from . import interfaces
+
+from nti.utils.property import Lazy
 
 def punkt_re_char(lang='en'):
 	# TODO: remove circular dependency, content processing uses content fragments
@@ -49,18 +52,26 @@ def _get_censored_fragment(org_fragment, new_fragment, factory=interfaces.Censor
 class SimpleReplacementCensoredContentStrategy(object):
 
 	def __init__(self, replacement_char='*'):
-		self.replacement_char = replacement_char
-		assert len(self.replacement_char) == 1
+		assert len(replacement_char) == 1
+		self._replacement_array = array.array(b'u', replacement_char)
 
 	def censor_ranges(self, content_fragment, censored_ranges):
 		# Since we will be replacing each range with its equal length
 		# of content and not shortening, then sorting the ranges doesn't matter
-		buf = list(content_fragment)
+		content_fragment = content_fragment.decode('utf-8') if isinstance(content_fragment, bytes) else content_fragment
+		buf = array.array(b'u', content_fragment)
 
 		for start, end in censored_ranges:
-			buf[start:end] = self.replacement_char * (end - start)
+			buf[start:end] = self._replacement_array * (end - start)
 
 		new_fragment = ''.join(buf)
+		# XXX Temporary diagnostic content
+		if 'crap' in new_fragment.split():
+			# This word should never be here, it's always censored,
+			# but sometimes it is here
+			logger.warn('Found censored word in fragment %r -> %r',
+						content_fragment, new_fragment)
+
 		return _get_censored_fragment(content_fragment, new_fragment)
 
 class BasicScanner(object):
@@ -76,7 +87,7 @@ class BasicScanner(object):
 		return True
 
 	def do_scan(self, fragment, ranges):
-		pass
+		raise NotImplementedError()
 
 	def scan(self, content_fragment):
 		yielded = []  # A simple, inefficient way of making sure we don't send overlapping ranges
@@ -93,27 +104,26 @@ class TrivialMatchScanner(BasicScanner):
 		self.prohibited_values = [x.lower() for x in prohibited_values if x]
 
 	def do_scan(self, content_fragment, yielded):
-		for x in self.prohibited_values:
-			idx = content_fragment.find(x, 0)
+		for the_word in self.prohibited_values:
+			# Find all occurrences of each prohibited word,
+			# one at a time
+			idx = content_fragment.find(the_word, 0)
 			while idx != -1:
-				match_range = (idx, idx + len(x))
+				match_range = (idx, idx + len(the_word))
 				if self.test_range(match_range, yielded):
 					yield match_range
-				idx = content_fragment.find(x, idx + len(x))
+				idx = content_fragment.find(the_word, match_range[1])
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 class WordMatchScanner(BasicScanner):
 
 	def __init__(self, white_words=(), prohibited_words=()):
-		self._v_char_tester = None
 		self.white_words = tuple([word.lower() for word in white_words])
 		self.prohibited_words = tuple([word.lower() for word in prohibited_words])
 
-	@property
+	@Lazy
 	def char_tester(self):
-		if self._v_char_tester is None:
-			self._v_char_tester = re.compile(punkt_re_char())
-		return self._v_char_tester
+		return re.compile(punkt_re_char())
 
 	def _test_start(self, idx, content_fragment):
 		result = idx == 0 or self.char_tester.match(content_fragment[idx - 1])
@@ -124,26 +134,25 @@ class WordMatchScanner(BasicScanner):
 		return result
 
 	def _find_ranges(self, word_list, content_fragment):
-		ranges = []
-		for x in word_list:
-			idx = content_fragment.find(x, 0)
+		for the_word in word_list: # Find all occurrences of each word one by one
+			idx = content_fragment.find(the_word, 0)
 			while idx != -1:
-				endidx = idx + len(x)
+				endidx = idx + len(the_word)
 				match_range = (idx, endidx)
 				if self._test_start(idx, content_fragment) and self._test_end(endidx, content_fragment):
-					ranges.append(match_range)
-				idx = content_fragment.find(x, endidx)
-		return ranges
+					yield match_range
+				idx = content_fragment.find(the_word, endidx)
 
-	def do_scan(self, content_fragment, white_words_ranges=None):
-		white_words_ranges = list() if white_words_ranges is None else white_words_ranges
+	def do_scan(self, content_fragment, yielded):
+		# Here, 'yielded' is the ranges we examine and either guarantee
+		# they are good, or guarantee they are bad
 		ranges = self._find_ranges(self.white_words, content_fragment)
-		white_words_ranges.extend(ranges)
+		yielded.extend(ranges)
 
 		# yield/return any prohibited_words
 		ranges = self._find_ranges(self.prohibited_words, content_fragment)
 		for match_range in ranges:
-			if self.test_range(match_range, white_words_ranges):
+			if self.test_range(match_range, yielded):
 				yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
@@ -152,14 +161,13 @@ class PipeLineMatchScanner(BasicScanner):
 	def __init__(self, scanners=()):
 		self.scanners = tuple(scanners)
 
-	def do_scan(self, content_fragment, ranges=None):
-		ranges = list() if ranges is None else ranges
+	def do_scan(self, content_fragment, yielded):
 		content_fragment = content_fragment.lower()
 		for s in self.scanners:
-			matched_ranges = s.do_scan(content_fragment, ranges)
+			matched_ranges = s.do_scan(content_fragment, yielded)
 			for match_range in matched_ranges:
-				ranges.append(match_range)
-				yield match_range
+				if self.test_range( match_range, yielded ):
+					yield match_range
 
 @interface.implementer(interfaces.ICensoredContentScanner)
 def _word_profanity_scanner():
