@@ -60,11 +60,19 @@ class _CensorTestMixin(object):
 	def _setup_library( cls, *args, **kwargs ):
 		return FileLibrary(os.path.join(os.path.dirname(__file__), '../../tests/ExLibrary'))
 
-	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None ):
+	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None,
+							  bad_val=bad_val, censored_val=censored_val,
+							  bad_word=bad_word, censored_word=censored_word,
+							  create_user=True):
+
 		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
-			for iface in extra_ifaces:
-				interface.alsoProvides( user, iface )
+			if create_user:
+				user = self._create_user()
+				for iface in extra_ifaces:
+					interface.alsoProvides( user, iface )
+			else:
+				from nti.dataserver.users import User
+				user = User.get_user(self.extra_environ_default_user)
 
 			n = contenttypes.Note()
 			n.applicableRange = contentrange.ContentRangeDescription()
@@ -113,6 +121,23 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
 								   environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'})
+		# Single word body
+		data = {'body': ['crap'],
+				'title': 'crap',
+				'tags': ['crap'],
+				'ContainerId': "tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1",
+				'MimeType': "application/vnd.nextthought.note"}
+		extra_environ = self._make_extra_environ()
+		extra_environ.update({b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'})
+		testapp = TestApp(self.app)
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, extra_environ=extra_environ )
+
+		assert_that( res.json_body,
+					 has_entries( 'body', only_contains( '****' ),
+								  'title', '****',
+								  'tags', only_contains( '****' )) )
+
+
 
 	@WithSharedApplicationMockDS
 	def test_create_chat_object_events_copy_owner_from_session(self):

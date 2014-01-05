@@ -65,13 +65,6 @@ class SimpleReplacementCensoredContentStrategy(object):
 			buf[start:end] = self._replacement_array * (end - start)
 
 		new_fragment = buf.tounicode()
-		# XXX Temporary diagnostic content
-		if 'crap' in new_fragment.split():
-			# This word should never be here, it's always censored,
-			# but sometimes it is here
-			logger.warn('Found censored word in fragment %r -> %r',
-						content_fragment, new_fragment)
-
 		return _get_censored_fragment(content_fragment, new_fragment)
 
 class BasicScanner(object):
