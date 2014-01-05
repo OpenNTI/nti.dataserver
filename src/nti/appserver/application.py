@@ -430,6 +430,10 @@ def createApplication( http_port,
 	__traceback_info__ = settings
 
 	setHooks() # required for z3c.baseregistry
+
+	# Let everything know about the settings
+	component.getGlobalSiteManager().registerUtility(settings, app_interfaces.IApplicationSettings)
+
 	xml_conf_machine = _create_xml_conf_machine( settings )
 	if 'pre_site_zcml' in settings:
 		# One before we load the main config so it has a chance to exclude files
