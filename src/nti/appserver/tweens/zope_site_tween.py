@@ -37,6 +37,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import platform
 import transaction
 import gevent
 
@@ -178,6 +179,7 @@ class site_tween(object):
 
 	def _add_properties_to_request(self, request):
 		request.environ['nti.pid'] = os.getpid() # helpful in debug tracebacks
+		request.environ['nti.node'] = platform.node()
 		request.environ['nti.early_request_teardown'] = _early_request_teardown
 		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
 		request.environ['nti.gevent_spawn'] = _gevent_spawn
