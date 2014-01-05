@@ -80,13 +80,11 @@ class _PurchaseIndex(Persistent):
 		return len(items) > 0
 
 	def get_history_by_item(self, purchasable_id):
-		item_set = self.item_index.get(purchasable_id)
-		iids = component.getUtility(zope.intid.IIntIds) if item_set is not None else ()
-		if item_set is None:
-			item_set = ()
+		zope_iids = component.getUtility(zope.intid.IIntIds)
+		item_set = self.item_index.get(purchasable_id) or ()
 
-		for iid in item_set:
-			p = iids.queryObject(iid)
+		for uid in item_set:
+			p = zope_iids.queryObject(uid)
 			if store_interfaces.IPurchaseAttempt.providedBy(p):
 				# NOTE: There seem to be some attempts that are inconsistent;
 				# they exist in the backward index so that queryObject works,
@@ -95,13 +93,16 @@ class _PurchaseIndex(Persistent):
 				# those cases that allow removal (courses). We think (hope) this is a
 				# rare problem, so we pretend it doesn't exist, only logging loudly.
 				# This could also be a corruption in our internal indexes.
-				if iids.queryId(p) != iid:
+				queried = zope_iids.queryId(p)
+				if queried != uid:
 					try:
 						p._p_activate()
 					except KeyError: # It looks like queryId can hide the POSKeyError by generally catching KeyError
 						logger.exception("Broken object %r", p)
-					logger.warn("Found inconsistent purchase attempt for purchasable %s, ignoring: %r (%s %s)",
-								purchasable_id, p, getattr(p, '__class__', None), type(p))
+					logger.warn("Found inconsistent purchase attempt for " +
+								"purchasable %s, ignoring: %r (%s %s). ids (%s, %s)",
+								purchasable_id, p, getattr(p, '__class__', None),
+								type(p), queried, uid)
 					continue
 
 				yield p
