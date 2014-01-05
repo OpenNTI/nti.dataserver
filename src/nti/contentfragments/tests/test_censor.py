@@ -34,6 +34,10 @@ def test_defaults():
 	assert_that(strat.censor_ranges(bad_val, scanner.scan(bad_val)),
 				is_('This is ******* stupid, you ************ *******'))
 
+	# One word. We seem to have some variation
+	assert_that( strat.censor_ranges('crap', scanner.scan('crap')),
+				 is_('****'))
+
 def test_mike_words():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
 	strat = component.getUtility(frag_interfaces.ICensoredContentStrategy)
