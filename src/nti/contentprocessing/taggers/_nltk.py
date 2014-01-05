@@ -4,7 +4,7 @@ NLTK based POS taggers
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -35,7 +35,7 @@ def nltk_tagged_corpora():
 			if isinstance(v, (LazyCorpusLoader, CorpusReader)) and \
 			  hasattr(v,"tagged_sents") and hasattr(v,"tagged_words"):
 				result[k] = v
-				interface.alsoProvides( v, tagger_interfaces.ITaggedCorpus )
+				interface.alsoProvides(v, tagger_interfaces.ITaggedCorpus)
 	except Exception:
 		logger.error("Error importing nltk corpora")
 	return result
