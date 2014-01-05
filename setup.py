@@ -293,7 +293,7 @@ setup(
 		'setproctitle >= 1.1.8',  # used by gunicorn
 		'setuptools',
 		'simplejson >= 3.3.1',
-		'six >= 1.4.1',
+		'six',
 		'sympy',
 		'stripe',  # stripe payments
 		# 'slimit',
@@ -329,7 +329,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
-		'zodburi >= 2.0b1',	 # used by pyramid_zodbconn
+		'zodburi',	 # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
