@@ -64,7 +64,7 @@ class SimpleReplacementCensoredContentStrategy(object):
 		for start, end in censored_ranges:
 			buf[start:end] = self._replacement_array * (end - start)
 
-		new_fragment = ''.join(buf)
+		new_fragment = buf.tounicode()
 		# XXX Temporary diagnostic content
 		if 'crap' in new_fragment.split():
 			# This word should never be here, it's always censored,
