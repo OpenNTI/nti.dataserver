@@ -663,3 +663,8 @@ class IUserActivityProvider(interface.Interface):
 	"""
 	# TODO: This will move like the above. There may be a better
 	# interface from zope.contentprovider or something to use
+
+class IApplicationSettings(mapping.IFullMapping):
+	"""
+	The application settings dictionary.
+	"""
