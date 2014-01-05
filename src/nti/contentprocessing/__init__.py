@@ -7,6 +7,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import re
 import sys
 import unicodedata
@@ -20,7 +22,7 @@ default_ngram_minsize = 2
 default_ngram_maxsize = 20  # average word size in English in 5.10
 default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
 
-default_punk_char_expression =\
+default_punk_char_expression = \
 	r'[\?|!|(|)|"|\'|`|{|}|\[|\]|:|;|,|\.|\^|%|&|#|\*|@|$|&|+|\-|<|>|=|_|\~|\\|/|\|]'
 
 default_punk_char_expression_plus =\

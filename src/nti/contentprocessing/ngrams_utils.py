@@ -7,15 +7,17 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import repoze.lru
 
 from zope import component
 from zope import interface
 
+from . import content_utils
 from . import default_ngram_minsize
 from . import default_ngram_maxsize
 from . import interfaces as cp_interfaces
-from .content_utils import split_content
 
 @repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
@@ -29,7 +31,7 @@ def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
-	tokens = split_content(text)
+	tokens = content_utils.split_content(text)
 	result = set() if unique else []
 	for text in tokens:
 		ngrams = _ngram_cache(text, minsize, maxsize, unique, lower)
