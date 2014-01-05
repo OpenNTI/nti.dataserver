@@ -918,9 +918,13 @@ class _RecursiveUGDView(_UGDView):
 			readable = True
 			current = obj.object
 			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
-				readable = is_readable(current, skip_cache=True)
-				current = getattr(current, '__parent__', None)
+				readable = is_readable(current)
 				if not readable:
+					return False
+				try:
+					current = getattr(current, '__parent__', None) # Avoid asking unless we need it
+				except KeyError: # broken object
+					logger.exception("Broken object, stopping ACL traversal %r", current)
 					return False
 		return True
 

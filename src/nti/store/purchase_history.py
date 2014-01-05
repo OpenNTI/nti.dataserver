@@ -96,7 +96,9 @@ class _PurchaseIndex(Persistent):
 				# rare problem, so we pretend it doesn't exist, only logging loudly.
 				# This could also be a corruption in our internal indexes.
 				if iids.queryId(p) != iid:
-					logger.warn("Found inconsistent purchase attempt for purchasable %s, ignoring: %r", purchasable_id, p)
+					p._p_activate()
+					logger.warn("Found inconsistent purchase attempt for purchasable %s, ignoring: %r (%s %s)",
+								purchasable_id, p, getattr(p, '__class__', None), type(p)))
 					continue
 
 				yield p
