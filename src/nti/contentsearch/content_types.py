@@ -32,8 +32,6 @@ class VideoTranscriptContent(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
-	containerId = ContainerId = alias('videoId')  # FIXME: this should not be
-
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class NTICardContent(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
