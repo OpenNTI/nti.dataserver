@@ -52,6 +52,7 @@ def ConcurrentExecutor(max_workers=None):
 
 	return _Executor(max_workers=max_workers)
 
+import pickle
 class _nothrow(object):
 	"""
 	For submission to executors, a callable that doesn't throw (and avoids hangs.)
@@ -69,4 +70,13 @@ class _nothrow(object):
 			from zope.exceptions import print_exception
 			import sys
 			print_exception( *sys.exc_info() )
-			return e # TODO: These may not be serializable?
+			# We'd like to return something useful, but
+			# the exception itself may not be serializable
+			# (and usually isn't if it has arguments and is an
+			# Exception subclass---see the Python bug about this)
+			try:
+				pickle.loads(pickle.dumps(e))
+			except Exception:
+				return Exception(str(e))
+			else:
+				return e

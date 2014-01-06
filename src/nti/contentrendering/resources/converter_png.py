@@ -168,6 +168,7 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 		with ProcessPoolExecutor() as executor:
 			for the_tuple in executor.map( _size, self.images.keys(), pngs ):
 				__traceback_info__ = self.command, the_tuple
+
 				img = self.images[the_tuple[0]]
 				img._cropped = True
 				#img.width = math.ceil( float(the_tuple[1]) / 1.3 )
