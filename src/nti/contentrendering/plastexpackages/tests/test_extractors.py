@@ -29,7 +29,7 @@ from nti.testing import matchers
 course_string = r"""
 %Course lessons defined
 
-\courselesson{Title 1}{l1} % AKA chapter
+\courselesson{Title 1}{l1}{is_outline_stub_only=true} % AKA chapter
 \courselessonsection{Section Title 1} % a section
 \section{This is ignored}
 
@@ -37,7 +37,7 @@ course_string = r"""
 \section{This is ignored}
 \courselessonsection{Section Title 2}{not_before_date=2013-12-31,not_after_date=2014-01-02} % section
 \subsection{This Subsection is also ignored}
-\courselessonsubsection{SubSection Title 2}{not_after_date=2014-01-03}
+\courselessonsubsection{SubSection Title 2}{is_outline_stub_only=true,not_after_date=2014-01-03}
 
 % A lesson not included in a unit
 \courselesson{Title 3}{l3}
@@ -53,7 +53,7 @@ course_string = r"""
 %Course units defined
 
 \begin{courseunit}{Unit}
-\courselessonref{l1} % no date
+\courselessonref{l1} % no date, but stub
 \courselessonref{l2}{08/19/2013,08/21/2013} % with date
 \end{courseunit}
 
@@ -126,11 +126,15 @@ def test_course_and_related_extractor_works():
 		assert_that( unit.getElementsByTagName('lesson'), has_length(5) )
 		assert_that( unit.childNodes, has_length(2) )
 
+		assert_that( dict(unit.childNodes[0].attributes.items()),
+					 has_entry('isOutlineStubOnly', 'true') )
+
 		lesson = unit.childNodes[1]
 		assert_that( dict(lesson.attributes.items()),
 					 has_entries( 'levelnum', '1',
 								  'date', "2013-08-19T05:00:00+00:00,2013-08-22T04:59:59.999999+00:00",
-								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.l2"))
+								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.l2",
+								  'isOutlineStubOnly', 'false'))
 
 
 		sub_lessons = lesson.childNodes
@@ -149,4 +153,5 @@ def test_course_and_related_extractor_works():
 		assert_that( dict(sub_sub_lesson.attributes.items()),
 					 has_entries( 'levelnum', '3',
 								  'date', "2014-01-03T06:00:00+00:00",
-								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.subsection_title_2"))
+								  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.subsection_title_2",
+								  'isOutlineStubOnly', 'true'))

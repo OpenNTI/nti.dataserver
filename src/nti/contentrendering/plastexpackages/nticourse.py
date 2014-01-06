@@ -159,10 +159,12 @@ class coursepart(part):
 	counter = 'course' + part.counter
 
 class courselesson(chapter):
-	args = '* [ toc ] title label:id' # TODO: Move towards dates at this level
+	args = '* [ toc ] title label:id {options:dict:str}' # TODO: Move towards dates at this level
 	blockType = True
 	counter = 'courselesson'
 	forcePars = False
+
+	is_outline_stub_only = False
 
 import isodate
 
@@ -191,12 +193,20 @@ def _parse_date_at_invoke(self):
 	# date.
 	if not_after is not None:
 		return (not_after,)
+
 	return ()
+
+def _parse_isoutline_at_invoke(self):
+	options = self.attributes.get('options') or ()
+	if 'is_outline_stub_only' in options:
+		return options['is_outline_stub_only'] == 'true'
+	return False
 
 def _make_invoke(cls):
 	def invoke(self, tex):
 		res = super(cls, self).invoke(tex)
 		self.date = _parse_date_at_invoke(self)
+		self.is_outline_stub_only = _parse_isoutline_at_invoke(self)
 		return res
 	return invoke
 
@@ -210,6 +220,8 @@ class courselessonsection(section):
 	counter = 'course' + section.counter
 	args = '* [ toc ] title {options:dict:str}'
 
+	is_outline_stub_only = False
+
 class courselessonsubsection(subsection):
 	"""
 	Example::
@@ -221,6 +233,8 @@ class courselessonsubsection(subsection):
 	counter = 'course' + subsection.counter
 	args = '* [ toc ] title {options:dict:str}'
 
+	is_outline_stub_only = False
+
 class courselessonsubsubsection(subsubsection):
 	"""
 	Example::
@@ -231,7 +245,9 @@ class courselessonsubsubsection(subsubsection):
 	counter = 'course' + subsubsection.counter
 	args = '* [ toc ] title {options:dict:str}'
 
-for _c in courselessonsection, courselessonsubsection, courselessonsubsubsection:
+	is_outline_stub_only = False
+
+for _c in courselesson, courselessonsection, courselessonsubsection, courselessonsubsubsection:
 	_c.invoke = _make_invoke(_c)
 
 class courseinfoname(Command):
