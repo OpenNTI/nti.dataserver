@@ -61,6 +61,7 @@ class _CourseExtractor(object):
 		toc_el.appendChild(info)
 		for unit in units:
 			toc_el.appendChild(self._process_unit(dom, unit))
+
 		for node in self._process_communities(dom, doc_el):
 			toc_el.appendChild(node)
 		return toc_el
@@ -99,6 +100,7 @@ class _CourseExtractor(object):
 			toc_el.setAttribute('date', ','.join(date_strings))
 		toc_el.setAttribute('topic-ntiid', lesson_node.ntiid)
 		toc_el.setAttribute( 'levelnum', str(level))
+		toc_el.setAttribute( 'isOutlineStubOnly', str(lesson_node.is_outline_stub_only).lower())
 
 		for sub_lesson in lesson_node.subsections:
 			if not sub_lesson.tagName.startswith('course'):
