@@ -56,6 +56,12 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 			interface.alsoProvides( coppa_user, self.IF_WOUT_AGREEMENT )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
 
+			# And a whole bunch of others for batching/paging reasons
+			for i in range(300):
+				u = self._create_user( username='TESTUSER' + str(i) )
+				interface.alsoProvides( u, self.IF_WOUT_AGREEMENT )
+				user_interfaces.IFriendlyNamed( u ).realname = u'TESTUSER' + str(i)
+
 		testapp = TestApp( self.app )
 		kittyapp = TestApp( self.app, extra_environ=self._make_extra_environ('ossmkitty') )
 
@@ -72,13 +78,19 @@ class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 		assert_that( res.body, does_not( contains_string( 'ossmkitty' ) ) )
 		assert_that( res.body, does_not( contains_string( 'Jason' ) ) )
 
-		# Ok, now for real
+		# Ok, now for real.
+		# We include some table batching/searching params to make sure that it works
+		# even then. These are case-insensitive
+		path = path + '?usersearch=OSSM'
+
 		res = testapp.get( path , extra_environ=environ )
 		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'text/html' ) )
 		assert_that( res.body, contains_string( 'ossmkitty' ) )
 		assert_that( res.body, contains_string( 'Jason' ) )
+
+		assert_that( res.body, does_not( contains_string('TESTUSER') ))
 
 		# OK, now let's approve it, then we should be back to an empty page.
 

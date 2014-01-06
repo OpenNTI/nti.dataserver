@@ -37,6 +37,7 @@ _USER_FILTER_PARAM = 'usersearch'
 
 def _coppa_table_and_site( request, force_table=False ):
 	content = ()
+	iface = None
 	site_policy, _pol_name = site_policies.find_site_policy( request )
 	if site_policy and getattr(site_policy, 'IF_WOUT_AGREEMENT', None):
 		iface = site_policy.IF_WOUT_AGREEMENT
@@ -45,18 +46,26 @@ def _coppa_table_and_site( request, force_table=False ):
 		dataserver = request.registry.getUtility( nti_interfaces.IDataserver )
 		users_folder = nti_interfaces.IShardLayout( dataserver ).users_folder
 
-		content = [x for x in users_folder.values() if iface.providedBy( x )]
-
 		# Poor mans user search. We match on the username, which is the most
 		# common use case here
 		if _USER_FILTER_PARAM in request.params:
 			usersearch = request.params[_USER_FILTER_PARAM]
-			content = [x for x in content if usersearch in x.username]
+			usersearch = usersearch.lower()
+			values = (users_folder[x] for x in users_folder.keys() if usersearch in x)
+		else:
+			values = users_folder.values()
+
+		content = [x for x in values if iface.providedBy( x )]
+
 	else:
 		logger.warn( "No site policy (%s/%s) or policy (%s) does not specify users to find",
 					 site_policy, _pol_name, site_policy )
 
 	if site_policy or force_table:
+		logger.debug("Found %d users for site policy %s that are %s",
+					 len(content), _pol_name, iface)
+		# NOTE: We could implement an IValues adapter to be able
+		# to be lazy about the content sequence yet still batch/page/etc
 		the_table = CoppaAdminTable( content,
 									 IBrowserRequest( request ) )
 		the_table.__parent__ = request.context
@@ -133,6 +142,7 @@ class RealnameColumn(_table_utils.AdaptingGetAttrColumn):
 	header = _('Name')
 	attrName = 'realname'
 	adapt_to = user_interfaces.IFriendlyNamed
+	weight = 3
 
 class ContactEmailColumn(column.Column):
 	"""
