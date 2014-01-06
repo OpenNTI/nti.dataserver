@@ -196,11 +196,6 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	# sadly we need to retokenize to find term matches
 	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
 	tokens = analyzer(text, chars=True, mode="query", removestops=False)
-	if len(text) > maxchars:
-		copy_tokens = [t.copy() for t in tokens]
-		tokens = copy_tokens
-	else:
-		copy_tokens = ()
 
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
@@ -209,7 +204,6 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 							top_fragments(whoosh_fragments, scorer, top, order)
 
 	if whoosh_fragments:
-		del copy_tokens
 		fragments = []
 		for f in whoosh_fragments:
 			sf = search_fragments.create_from_whoosh_fragment(f, termset, punkt_pattern)
@@ -224,12 +218,15 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 											   punkt_pattern=punkt_pattern)
 
 		if len(frags) == 1 and not frags[0].matches:
-			sf = _no_hit_match(sf, maxchars, copy_tokens)
+			# At this point we could not find a match then,
+			# it's easier to tokenize again rather than to copy the tokens.
+			# Rememer The analyzer returns an generator
+			tokens = analyzer(text, chars=True, mode="query", removestops=False)
+			sf = _no_hit_match(sf, maxchars, tokens)
 			snippet = sf.text
 			total_fragments = 1
 			fragments = [sf]
 		else:
-			del copy_tokens
 			fragments = frags
 			total_fragments = len(frags)
 
