@@ -91,7 +91,18 @@ class QueryObject(SchemaConfigured):
 	def IsBatching(self):
 		return self.batchStart is not None and self.batchSize
 	is_batching = IsBatching
+	
+	def __eq__(self, other):
+		try:
+			return self is other or (self.term.lower() == other.term.lower())
+		except AttributeError:
+			return NotImplemented
 
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.term.lower())
+		return xhash
+	
 	# ---------------
 
 	@classmethod
