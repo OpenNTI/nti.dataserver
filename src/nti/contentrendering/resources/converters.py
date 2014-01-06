@@ -18,9 +18,10 @@ try:
 except ImportError:
 	from StringIO import StringIO
 
-import codecs
 import shutil
 import tempfile
+
+import six
 
 from zope import interface
 
@@ -316,8 +317,10 @@ class AbstractDocumentCompilerDriver(object):
 
 		source_bytes = self.source_bytes()
 		__traceback_info__ = tempdir, filename, source_bytes
+		assert isinstance(source_bytes, bytes) # already encoded
 
-		with codecs.open( filename, 'w', self._encoding ) as out:
+
+		with open( filename, 'wb' ) as out:
 			out.write(source_bytes)
 
 		try:
@@ -343,12 +346,29 @@ class AbstractDocumentCompilerDriver(object):
 	def source_bytes(self):
 		# May not be an StringIO object anymore
 		try:
-			return self.source().getvalue()
+			result = self.source().getvalue()
 		except AttributeError:
-			return self.source()
+			result = self.source()
+
+		assert isinstance(result, bytes)
+		return result
 
 	def write(self, data):
+		"Given a text or bytes object, record its bytes, encoding with this object's encoding"
 		if data:
+			# In py2, pure python StringIO objects support arbitrary
+			# mixing of unicode and bytes objects, automatically *decoding*
+			# the bytes portions to unicode and returning a unicode object
+			# when 'getvalue' is called.
+			# However, cStringIO objects are actually strict about
+			# requiring every input being bytes, immediately *encoding*
+			# any unicode objects to bytes using the default encoding.
+			# This can easily produce UnicodeEncodeErrors.
+			# Therefore, we pre-emptively encode ourself to work the same
+			# no matter what
+			if isinstance(data, six.text_type):
+				data = data.encode(self._encoding)
+
 			self._writer.write(data)
 
 class AbstractOneOutputDocumentCompilerDriver(AbstractDocumentCompilerDriver):

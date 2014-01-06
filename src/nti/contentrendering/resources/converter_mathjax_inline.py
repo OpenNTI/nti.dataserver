@@ -100,7 +100,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		htmlOutFile = os.path.join(tempdir, self.htmlfile)
 		__traceback_info__ = tempdir, htmlOutFile, htmlSource
 
-		with codecs.open(htmlOutFile, 'w', self._encoding) as f:
+		with open(htmlOutFile, 'wb') as f:
 			f.write(htmlSource)
 
 		copied_configs = []
