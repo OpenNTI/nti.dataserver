@@ -224,7 +224,7 @@ setup(
 		'gevent >= 1.0',
 		'greenlet >= 0.4.1',
 		'gunicorn >= 18.0',
-		'hiredis >= 0.1.1',	 # Redis C parser
+		'hiredis',	 # Redis C parser
 		# HTML5 parsing library
 		# Note that the 1.0 series is a much improved parser over 0.95;
 		# this may result in some differences. (0.99 is actually newer
@@ -292,7 +292,7 @@ setup(
 		'requests',
 		'setproctitle >= 1.1.8',  # used by gunicorn
 		'setuptools',
-		'simplejson >= 3.3.1',
+		'simplejson',
 		'six',
 		'sympy',
 		'stripe',  # stripe payments
@@ -394,7 +394,7 @@ setup(
 		'zope.proxy >= 4.1.3',	# 4.1.x support py3k, uses newer APIs. Not binary compat with older extensions, must rebuild. (In partic, req zope.security >= 3.9)
 		'zope.server >= 3.9.0',	 # DO NOT USED. Included as transitive for latest.
 		'zope.sequencesort >= 4.0.1',  # advanced locale aware sorting
-		'zope.schema >= 4.3.2',
+		'zope.schema',
 		'zope.security[zcml,untrustedpython] >= 4.0.0',	 # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy >= 4.0.0a1',
 		'zope.session >= 4.0.0a2',	# 4.0.0a2 is out, should be fine
