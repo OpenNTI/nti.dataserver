@@ -1118,7 +1118,7 @@ REL_REPLIES = 'replies'
 from .pyramid_renderers import _md5_etag
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.INote)
+@component.adapter(nti_interfaces.IThreadable)
 class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	"""
 	Decorates the external object based on the presence of things that
@@ -1158,7 +1158,7 @@ from nti.dataserver.datastructures import LastModifiedCopyingUserList
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
-			  context=nti_interfaces.INote,
+			  context=nti_interfaces.IThreadable,
 			  permission=nauth.ACT_READ,
 			  request_method='GET',
 			  name=REL_REPLIES)

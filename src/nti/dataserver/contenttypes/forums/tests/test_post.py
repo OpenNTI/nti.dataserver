@@ -186,7 +186,9 @@ def test_comment_externalizes():
 								  'Class', 'PersonalBlogComment',
 								  'MimeType', 'application/vnd.nextthought.forums.personalblogcomment',
 								  'body', none(),
-								  'sharedWith', is_empty() ),
+								  'sharedWith', is_empty(),
+								  'references', [],
+								  'inReplyTo', None),
 					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
 	ext_post = to_external_object( post )

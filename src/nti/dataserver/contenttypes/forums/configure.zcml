@@ -56,7 +56,7 @@
 	<ext:registerAutoPackageIO
 		modules=".board .forum .post .topic .ace"
 		root_interfaces=".interfaces.IBoard .interfaces.IForum .interfaces.ITopic .interfaces.IPost .interfaces.IForumACE"
-		iobase="nti.dataserver.contenttypes.base.UserContentRootInternalObjectIOMixin"
+		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO"
 		/>
 
 	<!-- ACLs -->
