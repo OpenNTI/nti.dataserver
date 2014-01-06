@@ -4,6 +4,10 @@
 Utilities for working with :mod:`z3c.table`. Contains some column support
 classes.
 
+.. note:: It is critical for the columns you use in a table to have distinct
+	`weight` values; if they don't, their order might vary across machines as ties
+	are broken based on the arbitrary iteration order of dicts-of-dicts.
+	Alternately, you can override `orderColumns` in your table subclass.
 
 $Id$
 """
@@ -287,6 +291,7 @@ class UsernameColumn(column.GetAttrColumn):
 	"""
 	header = 'Username'
 	attrName = 'username'
+	weight = 2
 
 class AdaptingGetAttrColumn(column.GetAttrColumn):
 	"""
