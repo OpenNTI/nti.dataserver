@@ -777,6 +777,7 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		self.require_link_href_with_rel( comment_res.json_body, 'flag' )
 		self.require_link_href_with_rel( comment_res.json_body, 'favorite' )
 		self.require_link_href_with_rel( comment_res.json_body, 'like' )
+		replies_link = self.require_link_href_with_rel( comment_res.json_body, 'replies' )
 
 		# This affected the count and contents as well
 		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
@@ -787,6 +788,29 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		# And the contents link
 		new_content_href = self.require_link_href_with_rel( self.testapp.get( topic_url ).json_body, 'contents' )
 		assert_that( new_content_href, is_not( content_href ) )
+
+		# The non-creator can also reply to that one
+		reply_data = self._create_comment_data_for_POST()
+		reply_data['inReplyTo'] = comment_res.json_body['NTIID']
+		reply_data['references'] = [comment_res.json_body['NTIID']]
+		reply_res = testapp2.post_json( topic_url, reply_data, status=201 )
+		assert_that( reply_res.json_body, has_entry( 'inReplyTo', comment_res.json_body['NTIID']) )
+
+		new_comment_res = testapp2.get(comment_res.json_body['href'])
+		assert_that( new_comment_res.json_body, has_entry('ReferencedByCount', 1) )
+
+		reply_content_href = self.require_link_href_with_rel( self.testapp.get( topic_url ).json_body, 'contents' )
+		assert_that( reply_content_href, is_not( new_content_href ) )
+
+		# We can fetch the contents to get just the TopLevel objects
+		content_res = self.testapp.get( reply_content_href, params={'filter': 'TopLevel'} )
+		assert_that( content_res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( content_res.json_body['Items'][0], has_entry('OID', comment_res.json_body['OID']) )
+
+		# We can fetch the replies directly too
+		replies_res = self.testapp.get( replies_link )
+		assert_that( replies_res.json_body, has_entry( 'Items', has_length(1)))
+		assert_that( replies_res.json_body['Items'][0], has_entry('OID', reply_res.json_body['OID']) )
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

@@ -197,10 +197,11 @@ class ThreadableExternalizableMixin(object):
 
 	def toExternalObject(self,mergeFrom=None):
 		extDict = super(ThreadableExternalizableMixin,self).toExternalObject(mergeFrom=mergeFrom)
-		assert isinstance( extDict, collections.Mapping )
-		context = self._ext_replacement()
-		extDict['inReplyTo'] = self._ext_ref( context.inReplyTo, context._inReplyTo )
-		extDict['references'] = [ self._ext_ref( ref(), ref ) for ref in context._references ]
+		if self._ext_can_write_threads():
+			assert isinstance( extDict, collections.Mapping )
+			context = self._ext_replacement()
+			extDict['inReplyTo'] = self._ext_ref( context.inReplyTo, context._inReplyTo )
+			extDict['references'] = [ self._ext_ref( ref(), ref ) for ref in context._references ]
 		return extDict
 
 	def _ext_ref( self, obj, ref ):
@@ -247,3 +248,10 @@ class ThreadableExternalizableMixin(object):
 		"""
 		mod_time = getattr( self._ext_replacement(), '_p_mtime', None )
 		return not mod_time
+
+	def _ext_can_write_threads(self):
+		"""
+		Called to determine if we should even write the threadable
+		properties to the dictionary. Sometimes subclasses may not want to.
+		"""
+		return True

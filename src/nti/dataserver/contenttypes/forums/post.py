@@ -23,6 +23,7 @@ from nti.dataserver import sharing
 from nti.utils.schema import AdaptingFieldProperty
 
 from ..note import BodyFieldProperty
+from ..threadable import ThreadableMixin
 
 from ._compat import Implicit
 from . import _containerIds_from_parent
@@ -61,6 +62,10 @@ class HeadlinePost(Post):
 class GeneralPost(Post):
 	pass
 
+@interface.implementer(for_interfaces.ICommentPost)
+class CommentPost(Post, ThreadableMixin):
+	pass
+
 # These last are never permissioned separately, only
 # inherited. The inheritance is expressed through the ACLs, but
 # in is convenient for the actual values to be accessible down here too.
@@ -74,7 +79,8 @@ class GeneralHeadlinePost(GeneralPost,HeadlinePost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
 @interface.implementer(for_interfaces.IGeneralForumComment)
-class GeneralForumComment(GeneralPost):
+class GeneralForumComment(GeneralPost,
+						  CommentPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
 @interface.implementer(for_interfaces.ICommunityHeadlinePost)
@@ -86,7 +92,7 @@ class PersonalBlogEntryPost(HeadlinePost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
 @interface.implementer(for_interfaces.IPersonalBlogComment)
-class PersonalBlogComment(Post):
+class PersonalBlogComment(CommentPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
 #	@CachedProperty
@@ -95,4 +101,3 @@ class PersonalBlogComment(Post):
 #								  provider=self._creator_username,
 #								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
 #								  specific=ntiids.escape_provider(self.username.lower()))
-

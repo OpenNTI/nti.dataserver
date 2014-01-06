@@ -96,6 +96,11 @@ class IPost(IContained, IAcquirer,
 
 	body = nti_interfaces.CompoundModeledContentBody()
 
+class ICommentPost(IPost,
+				   nti_interfaces.IThreadable):
+	"""
+	Comments within (under) the headline post of a topic.
+	"""
 
 class ITopic(IContentContainer,
 			 IContained,
@@ -205,7 +210,8 @@ class IPersonalBlogEntryPost(IHeadlinePost):
 	__parent__.required = False
 
 
-class IPersonalBlogComment(IPost, nti_interfaces.IShouldHaveTraversablePath):
+class IPersonalBlogComment(ICommentPost,
+						   nti_interfaces.IShouldHaveTraversablePath):
 	containers(b'.IPersonalBlogEntry') # Adds __parent__ as required
 	__parent__.required = False
 
@@ -315,7 +321,7 @@ class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 class IGeneralTopic(ITopic):
 	containers(IGeneralForum)
 	__parent__.required = False
-	contains(b".IGeneralPost")
+	contains(b".IGeneralPost") # XXX Shouldn't this be IGeneralForumComment?
 
 class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
 							nti_interfaces.ICreated,
@@ -338,7 +344,9 @@ class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
 	headline = Object(ICommunityHeadlinePost, title="The main, first post of this topic.")
 
 
-class IGeneralForumComment(IGeneralPost, nti_interfaces.IShouldHaveTraversablePath):
+class IGeneralForumComment(IGeneralPost,
+						   ICommentPost,
+						   nti_interfaces.IShouldHaveTraversablePath):
 	"""Secondary comments in a general topic."""
 	containers(IGeneralTopic)
 	__parent__.required = False
