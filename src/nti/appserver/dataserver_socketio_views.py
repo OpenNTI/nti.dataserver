@@ -132,7 +132,9 @@ def _create_new_session(request):
 	logger.debug( "Created new session %s with site policies %s", session, session.originating_site_names )
 	return session
 
-KNOWN_TRANSPORTS = {'websocket':1, 'xhr-polling':3, 'jsonp-polling':4}
+POSSIBLE_TRANSPORTS = {'websocket', 'flashsocket', 'xhr-polling', 'jsonp-polling', 'htmlfile'}
+SUPPORTED_TRANSPORTS = {'websocket': 1,
+						'xhr-polling': 2}
 
 @view_config(route_name=RT_HANDSHAKE) # POST or GET
 def _handshake_view( request ):
@@ -144,8 +146,10 @@ def _handshake_view( request ):
 	session = _create_new_session(request)
 
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type,...
-	handler_types = [x[0] for x in component.getAdapters( (request,), nti.socketio.interfaces.ISocketIOTransport)]
-	handler_types = sorted(handler_types, key=lambda x: KNOWN_TRANSPORTS.get(x, -1))
+	handler_types = [x[0] for x in component.getAdapters( (request,),
+														  nti.socketio.interfaces.ISocketIOTransport)
+					 if x[0] in SUPPORTED_TRANSPORTS]
+	handler_types = sorted(handler_types, key=lambda x: SUPPORTED_TRANSPORTS.get(x, -1))
 	data = "%s:15:10:%s" % (session.session_id, ",".join(handler_types))
 	data = data.encode( 'ascii' )
 	# NOTE: We are not handling JSONP here. It should not be a registered transport
