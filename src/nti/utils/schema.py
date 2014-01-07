@@ -57,6 +57,10 @@ from zope.schema import Timedelta
 Timedelta = Timedelta
 from zope.schema import Choice
 Choice = Choice
+from zope.schema import Tuple
+Tuple = Tuple
+from zope.schema import FrozenSet
+FrozenSet = FrozenSet
 
 try:
 	from Acquisition.interfaces import IAcquirer

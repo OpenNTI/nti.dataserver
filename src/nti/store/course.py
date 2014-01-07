@@ -26,13 +26,14 @@ from . import purchasable
 from .utils import to_frozenset
 from . import interfaces as store_interfaces
 
+from nti.externalization.externalization import make_repr
+
 @interface.implementer(store_interfaces.ICourse)
 class Course(purchasable.Purchasable):
 	createDirectFieldProperties(store_interfaces.ICourse)
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.Description, self.NTIID)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -45,7 +46,7 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 				  fee=None, title=None, license_=None, author=None, description=None,
 				  icon=None, thumbnail=None, discountable=False, bulk_purchase=False,
 				  communities=(), featured=False, preview=False, department=None,
-				  signature=None, startdate=None):
+				  signature=None, startdate=None, **kwargs):
 
 	if amount and not provider:
 		raise AssertionError("Must specfify a provider")
@@ -68,7 +69,7 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 					Preview=preview, Fee=fee, License=license_, Discountable=discountable,
 					BulkPurchase=bulk_purchase, Icon=icon, Thumbnail=thumbnail,
 					Communities=communities, Featured=featured, Department=department,
-					Signature=signature, StartDate=startdate)
+					Signature=signature, StartDate=startdate, **kwargs)
 
 	return result
 
