@@ -19,6 +19,7 @@ from zope import interface
 from zope import lifecycleevent
 from zope.location import locate
 from zope.annotation import factory as an_factory
+from zope.location.interfaces import ISublocations
 from zope.container import contained as zcontained
 
 from persistent import Persistent
@@ -141,7 +142,7 @@ class _PurchaseIndex(Persistent):
 		BTrees.check.check(self.time_index)
 
 @component.adapter(nti_interfaces.IUser)
-@interface.implementer(store_interfaces.IPurchaseHistory)
+@interface.implementer(store_interfaces.IPurchaseHistory, ISublocations)
 class PurchaseHistory(zcontained.Contained, Persistent):
 
 	family = BTrees.family64
@@ -229,6 +230,13 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def __len__(self):
 		return len(self._index)
+
+	def sublocations(self):
+		zope_iids = component.getUtility(zope.intid.IIntIds)
+		for iid in self._index.purchases:
+			purchase = zope_iids.queryObject(iid)
+			if getattr(purchase, '__parent__',None) is self:
+				yield purchase
 
 	def _v_check(self):
 		import BTrees.check
