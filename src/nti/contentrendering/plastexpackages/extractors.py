@@ -149,9 +149,9 @@ class _RelatedWorkExtractor(object):
 
 	def transform( self, book ):
 		dom = book.toc.dom
-		lesson_els = book.document.getElementsByTagName( 'courselesson' )
+		reference_els = book.document.getElementsByTagName( 'relatedworkref' )
 		related_els = book.document.getElementsByTagName( 'relatedwork' )
-		if lesson_els or related_els:
+		if reference_els or related_els:
 			outpath = os.path.expanduser(book.contentLocation)
 			# add name space
 			# FIXME: This is not the right way to do that. It should be
@@ -160,7 +160,7 @@ class _RelatedWorkExtractor(object):
 			# cache topics
 			topic_map = self._get_topic_map(dom)
 			# get content data
-			content = self._process_lessons(dom, lesson_els, topic_map)
+			content = self._process_references(dom, reference_els, topic_map)
 			content.extend(self._process_related(dom, related_els))
 			# save dom and files
 			self._save_related_content(outpath, dom, content)
@@ -174,57 +174,63 @@ class _RelatedWorkExtractor(object):
 				result[ntiid] = topic_el
 		return result
 
-	def _process_lessons(self, dom, els, topic_map):
+	def _process_references(self, dom, els, topic_map):
 		result = []
 		for el in els:
-			ref_els = el.getElementsByTagName('relatedworkref')
-			if ref_els:
-				lesson_el = topic_map.get(el.ntiid)
+			if el.parentNode:
+				# Discover the nearest topic in the toc that is a 'course' node
+				parent_el = el.parentNode
+				lesson_el = None
+				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					lesson_el = topic_map.get(parent_el.ntiid)
+				while lesson_el is None and parent_el.parentNode is not None:
+					parent_el = parent_el.parentNode
+					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+						lesson_el = topic_map.get(parent_el.ntiid)
 
-				for ref_el in ref_els:
-					if ref_el.relatedwork.iconResource is not None:
-						icon = ref_el.relatedwork.iconResource.image.url
-					elif ref_el.relatedwork.icon is not None:
-						icon = ref_el.relatedwork.icon
+					if el.relatedwork.iconResource is not None:
+						icon = el.relatedwork.iconResource.image.url
+					elif el.relatedwork.icon is not None:
+						icon = el.relatedwork.icon
 					else:
 						icon = ''
 
-					if ref_el.description == '':
-						ref_el.description = ref_el.relatedwork.description
+					if el.description == '':
+						el.description = el.relatedwork.description
 
-					visibility = (ref_el.visibility or ref_el.relatedwork.visibility)
+					visibility = (el.visibility or el.relatedwork.visibility)
 
-					uri = ref_el.uri
-
-					if uri == '':
-						ref_el.uri = ref_el.relatedwork.uri
-						ref_el.gen_target_ntiid()
-						uri = ref_el.uri
+					uri = el.uri
 
 					if uri == '':
-						logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (ref_el.ntiid, ref_el.relatedwork.ntiid))
+						el.uri = el.relatedwork.uri
+						el.gen_target_ntiid()
+						uri = el.uri
 
-					if uri != '' and ref_el.target_ntiid is None:
-						ref_el.gen_target_ntiid()
+					if uri == '':
+						logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
 
-					if ref_el.relatedwork.targetMimeType is None:
-						ref_el.relatedwork.gen_target_ntiid()
+					if uri != '' and el.target_ntiid is None:
+						el.gen_target_ntiid()
 
-					title = unicode(''.join(render_children( ref_el.relatedwork.renderer, ref_el.relatedwork.title )))
-					creator = unicode(''.join(render_children( ref_el.relatedwork.renderer, ref_el.relatedwork.creator )))
-					description = unicode(ref_el.description)
+					if el.relatedwork.targetMimeType is None:
+						el.relatedwork.gen_target_ntiid()
+
+					title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
+					creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
+					description = unicode(el.description)
 
 					content = {
 						'label': title,
 						'creator': creator,
 						'href': uri,
-						'type': ref_el.relatedwork.targetMimeType,
+						'type': el.relatedwork.targetMimeType,
 						'icon': icon,
 						'desc': description,
-						'section': ref_el.category,
+						'section': el.category,
 						'visibility': visibility,
-						'target-ntiid': ref_el.target_ntiid,
-						'ntiid': ref_el.ntiid
+						'target-ntiid': el.target_ntiid,
+						'ntiid': el.ntiid
 					}
 					if lesson_el:
 						result.append((content, lesson_el))
@@ -331,7 +337,15 @@ class _DiscussionExtractor(object):
 			discussionref_els = el.getElementsByTagName('ntidiscussionref')
 			if discussion_els or discussionref_els:
 				for discussion_el in discussion_els:
-					lesson_el = topic_map.get(el.ntiid)
+					# Discover the nearest topic in the toc that is a 'course' node
+					parent_el = discussion_el.parentNode
+					lesson_el = None
+					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+						lesson_el = topic_map.get(parent_el.ntiid)
+					while lesson_el is None and parent_el.parentNode is not None:
+						parent_el = parent_el.parentNode
+						if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+							lesson_el = topic_map.get(parent_el.ntiid)
 
 					if discussion_el.iconResource is not None:
 						icon = discussion_el.iconResource.image.url
@@ -351,7 +365,15 @@ class _DiscussionExtractor(object):
 						lesson_el.appendChild(toc_el)
 
 				for discussionref_el in discussionref_els:
-					lesson_el = topic_map.get(el.ntiid)
+					# Discover the nearest topic in the toc that is a 'course' node
+					parent_el = discussionref_el.parentNode
+					lesson_el = None
+					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+						lesson_el = topic_map.get(parent_el.ntiid)
+					while lesson_el is None and parent_el.parentNode is not None:
+						parent_el = parent_el.parentNode
+						if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+							lesson_el = topic_map.get(parent_el.ntiid)
 
 					if discussionref_el.idref['label'].iconResource is not None:
 						icon = discussionref_el.idref['label'].iconResource.image.url
@@ -378,13 +400,13 @@ class _NTIVideoExtractor(object):
 		pass
 
 	def transform(self, book):
-		lesson_els = book.document.getElementsByTagName('courselesson')
+		reference_els = book.document.getElementsByTagName('ntivideoref')
 		video_els = book.document.getElementsByTagName('ntivideo')
 		outpath = os.path.expanduser(book.contentLocation)
 		dom = book.toc.dom
-		if lesson_els or video_els:
+		if reference_els or video_els:
 			topic_map = self._get_topic_map(dom)
-			self._process_lessons(dom, lesson_els, topic_map)
+			self._process_references(dom, reference_els, topic_map)
 			self._process_videos(dom, video_els, outpath, topic_map)
 			book.toc.save()
 
@@ -575,35 +597,34 @@ class _NTIVideoExtractor(object):
 		dom.childNodes[0].appendChild(toc_el)
 
 
-	def _process_lessons(self, dom, els, topic_map):
+	def _process_references(self, dom, els, topic_map):
 		for el in els:
-			video_els = el.getElementsByTagName('ntivideoref')
-			if video_els:
+			if el.parentNode:
+				# Discover the nearest topic in the toc that is a 'course' node
+				parent_el = el.parentNode
 				lesson_el = None
+				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					lesson_el = topic_map.get(parent_el.ntiid)
+				while lesson_el is None and parent_el.parentNode is not None:
+					parent_el = parent_el.parentNode
+					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+						lesson_el = topic_map.get(parent_el.ntiid)
 
-				# Determine which topic represents the lesson
-				lesson_el = topic_map.get(el.ntiid)
+				poster = ''
+				source_els = el.idref['label'].getElementsByTagName('ntivideosource')
+				if source_els:
+					poster = source_els[0].poster
 
-				for video_el in video_els:
+				visibility = (el.visibility or el.idref['label'].visibility)
 
-					# Determine which topic represents the lesson
-					lesson_el = topic_map.get(el.ntiid)
-
-					poster = ''
-					source_els = video_el.idref['label'].getElementsByTagName('ntivideosource')
-					if source_els:
-						poster = source_els[0].poster
-
-					visibility = (video_el.visibility or video_el.idref['label'].visibility)
-
-					toc_el = dom.createElement('object')
-					if hasattr(video_el.idref['label'].title, 'textContent'):
-						toc_el.setAttribute('label', video_el.idref['label'].title.textContent)
-					else:
-						toc_el.setAttribute('label', video_el.idref['label'].title)
-					toc_el.setAttribute('poster', poster)
-					toc_el.setAttribute('ntiid', video_el.idref['label'].ntiid)
-					toc_el.setAttribute('mimeType', video_el.idref['label'].mimeType)
-					toc_el.setAttribute('visibility', visibility)
-					if lesson_el is not None:
-						lesson_el.appendChild(toc_el)
+				toc_el = dom.createElement('object')
+				if hasattr(el.idref['label'].title, 'textContent'):
+					el.setAttribute('label', el.idref['label'].title.textContent)
+				else:
+					toc_el.setAttribute('label', el.idref['label'].title)
+				toc_el.setAttribute('poster', poster)
+				toc_el.setAttribute('ntiid', el.idref['label'].ntiid)
+				toc_el.setAttribute('mimeType', el.idref['label'].mimeType)
+				toc_el.setAttribute('visibility', visibility)
+				if lesson_el is not None:
+					lesson_el.appendChild(toc_el)
