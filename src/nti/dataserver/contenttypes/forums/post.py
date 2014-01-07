@@ -49,7 +49,17 @@ class Post(
 	id, containerId = _containerIds_from_parent()
 
 	def __eq__( self, other ):
-		return other == (self.id, self.__parent__, self.title, self.body, self.creator)
+		try:
+			return other == (self.id, self.__parent__, self.title, self.body, self.creator)
+		except AttributeError: # pragma: no cover
+			# XXX: FIXME: This shouldn't be possible. And yet:
+			#  Module nti.appserver.pyramid_authorization:105 in _lineage_that_ensures_acls
+			#  >>  acl = cache.get( location )
+			#  Module nti.dataserver.contenttypes.forums.post:52 in __eq__
+			#  >>  return other == (self.id, self.__parent__, self.title, self.body, self.creator)
+			#  AttributeError: 'CommunityHeadlinePost' object has no attribute 'creator'
+			logger.exception("Unexpected attribute error comparing a post")
+			return NotImplemented
 
 	def __hash__( self ):
 		return hash( (self.id, self.containerId, self.title, tuple(self.body or ()), self.creator) )
