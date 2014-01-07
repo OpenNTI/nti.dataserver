@@ -17,6 +17,8 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as store_interfaces
 
+from nti.externalization.externalization import make_repr
+
 @interface.implementer(store_interfaces.IContentBundle,
 					   an_interfaces.IAttributeAnnotatable)
 class ContentBundle(SchemaConfigured):
@@ -27,6 +29,10 @@ class ContentBundle(SchemaConfigured):
 	# Override Description to adapt to a content fragment
 	Description = AdaptingFieldProperty(store_interfaces.IContentBundle['Description'])
 
+	def __reduce__(self):
+		# Not persistent!
+		raise TypeError()
+
 	@property
 	def id(self):
 		return self.NTIID
@@ -34,8 +40,7 @@ class ContentBundle(SchemaConfigured):
 	def __str__(self):
 		return self.NTIID
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__, self.NTIID, self.Items)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -48,5 +53,3 @@ class ContentBundle(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.NTIID)
 		return xhash
-
-

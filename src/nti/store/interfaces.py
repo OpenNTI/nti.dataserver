@@ -8,7 +8,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import schema
 from zope import interface
 from zope.interface.common import sequence
 from zope.location.interfaces import IContained
@@ -18,7 +17,8 @@ from dolmen.builtins import IIterable
 
 from nti.contentfragments.schema import HTMLContentFragment
 
-from nti.utils import schema as nti_schema
+from nti.utils import schema
+from zope.schema import vocabulary
 
 # : A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary
 # : will be available as a registered vocabulary under this name
@@ -37,10 +37,10 @@ PA_STATE_RESERVED = u'Reserved'
 
 PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
 			 PA_STATE_REFUNDED, PA_STATE_SUCCESS, PA_STATE_CANCELED, PA_STATE_RESERVED)
-PA_STATE_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PA_STATES])
+PA_STATE_VOCABULARY = vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PA_STATES])
 
 PAYMENT_PROCESSORS = ('stripe',)
-PAYMENT_PROCESSORS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
+PAYMENT_PROCESSORS_VOCABULARY = vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
 class IPurchasableStore(interface.Interface):
 
@@ -65,38 +65,47 @@ class IPurchasableStore(interface.Interface):
 		"""
 
 class IContentBundle(interface.Interface):
-	NTIID = nti_schema.ValidTextLine(title='Content bundle NTTID', required=True)
-	Title = nti_schema.ValidTextLine(title='Content bundle title', required=False)
-	Author = nti_schema.ValidTextLine(title='Content bundle author', required=False)
+	NTIID = schema.ValidTextLine(title='Content bundle NTTID', required=True)
+	Title = schema.ValidTextLine(title='Content bundle title', required=False)
+	Author = schema.ValidTextLine(title='Content bundle author', required=False)
 	Description = HTMLContentFragment(title='Content bundle description', required=False, default='')
-	Items = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The item identifier'), title="Bundle items")
+	Items = schema.FrozenSet(value_type=schema.ValidTextLine(title='The item identifier'), title="Bundle items")
 
 class IPurchasable(IContentBundle):
 	Amount = schema.Float(title="Cost amount", required=True, min=0.0)
-	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
+	Currency = schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	Discountable = schema.Bool(title="Discountable flag", required=True, default=False)
 	BulkPurchase = schema.Bool(title="Bulk purchase flag", required=True, default=False)
 	Fee = schema.Float(title="Percentage fee", required=False, min=0.0)
-	Icon = nti_schema.ValidTextLine(title='Icon URL', required=False)
-	Thumbnail = nti_schema.ValidTextLine(title='Thumbnail URL', required=False)
-	Provider = nti_schema.ValidTextLine(title='Purchasable item provider', required=True)
-	License = nti_schema.ValidTextLine(title='Purchasable license', required=False)
+	Icon = schema.ValidTextLine(title='Icon URL', required=False)
+	Thumbnail = schema.ValidTextLine(title='Thumbnail URL', required=False)
+	Provider = schema.ValidTextLine(title='Purchasable item provider', required=True)
+	License = schema.ValidTextLine(title='Purchasable license', required=False)
 
 class ICourse(IPurchasable):
-	Name = nti_schema.ValidTextLine(title='Course Name', required=False)
+	Name = schema.ValidTextLine(title='Course Name', required=False)
 	Featured = schema.Bool(title='Featured flag', required=False, default=False)
 	Preview = schema.Bool(title='Course preview flag', required=False)
-	StartDate = nti_schema.ValidTextLine(title="Course start date", required=False)
-	Department = nti_schema.ValidTextLine(title='Course Department', required=False)
-	Signature = nti_schema.ValidText(title='Course/Professor Signature', required=False)
-	Communities = schema.FrozenSet(value_type=nti_schema.ValidTextLine(title='The community identifier'), title="Communities")
+	StartDate = schema.ValidTextLine(title="Course start date", required=False)
+	Department = schema.ValidTextLine(title='Course Department', required=False)
+	Signature = schema.ValidText(title='Course/Professor Signature', required=False)
+	Communities = schema.FrozenSet(value_type=schema.ValidTextLine(title='The community identifier'), title="Communities")
 	# overrides
 	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
-	Currency = nti_schema.ValidTextLine(title='Currency amount', required=False)
-	Provider = nti_schema.ValidTextLine(title='Course provider', required=False)
+	Currency = schema.ValidTextLine(title='Currency amount', required=False)
+	Provider = schema.ValidTextLine(title='Course provider', required=False)
+
+	# Temporary BWC to match CourseCatalogEntry
+	Duration = schema.Timedelta(title="The length of the course",
+								description="Currently optional, may be None",
+								required=False)
+	EndDate = schema.Date( title="The date on which the course ends",
+						   description="Currently optional; a missing value means the course has no defined end date.",
+						   required=False)
+
 
 class IPriceable(interface.Interface):
-	NTIID = nti_schema.ValidTextLine(title='Purchasable item NTTID', required=True)
+	NTIID = schema.ValidTextLine(title='Purchasable item NTTID', required=True)
 	Quantity = schema.Int(title="Quantity", required=False, default=1, min=0)
 
 	def copy():
@@ -116,34 +125,34 @@ class IPricedItem(IPriceable):
 	PurchaseFee = schema.Float(title="Fee Amount", required=False)
 	PurchasePrice = schema.Float(title="Cost amount", required=True)
 	NonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
-	Currency = nti_schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
+	Currency = schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
 class IPricingResults(interface.Interface):
 	Items = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
-	Currency = nti_schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
+	Currency = schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
 class IUserAddress(interface.Interface):
-	Street = nti_schema.ValidText(title='Street address', required=False)
-	City = nti_schema.ValidTextLine(title='The city name', required=False)
-	State = nti_schema.ValidTextLine(title='The state', required=False)
-	Zip = nti_schema.ValidTextLine(title='The zip code', required=False, default=u'')
-	Country = nti_schema.ValidTextLine(title='The country', required=False, default='USA')
+	Street = schema.ValidText(title='Street address', required=False)
+	City = schema.ValidTextLine(title='The city name', required=False)
+	State = schema.ValidTextLine(title='The state', required=False)
+	Zip = schema.ValidTextLine(title='The zip code', required=False, default=u'')
+	Country = schema.ValidTextLine(title='The country', required=False, default='USA')
 
 class IPaymentCharge(interface.Interface):
 	Amount = schema.Float(title="Change amount", required=True)
 	Created = schema.Float(title="Created timestamp", required=True)
-	Currency = nti_schema.ValidTextLine(title='Currency amount', required=True, default='USD')
+	Currency = schema.ValidTextLine(title='Currency amount', required=True, default='USD')
 	CardLast4 = schema.Int(title='CreditCard last 4 digists', required=False)
-	Name = nti_schema.ValidTextLine(title='The customer/charge name', required=False)
+	Name = schema.ValidTextLine(title='The customer/charge name', required=False)
 	Address = schema.Object(IUserAddress, title='User address', required=False)
 
 class IPurchaseError(interface.Interface):
-	Type = nti_schema.ValidTextLine(title='Error type', required=True)
-	Code = nti_schema.ValidTextLine(title='Error code', required=False)
-	Message = nti_schema.ValidText(title='Error message', required=True)
+	Type = schema.ValidTextLine(title='Error type', required=True)
+	Code = schema.ValidTextLine(title='Error code', required=False)
+	Message = schema.ValidText(title='Error message', required=True)
 
 class INTIStoreException(interface.Interface):
 	""" marker interface for store exceptions """
@@ -162,7 +171,7 @@ class IPurchasablePricer(interface.Interface):
 
 class IPaymentProcessor(interface.Interface):
 
-	name = nti_schema.ValidTextLine(title='Processor name', required=True)
+	name = schema.ValidTextLine(title='Processor name', required=True)
 
 	def validate_coupon(coupon):
 		"""
@@ -198,10 +207,10 @@ class IPurchaseAttempt(IContained):
 	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
 
 	Order = schema.Object(IPurchaseOrder, title="Purchase order", required=True)
-	Description = nti_schema.ValidTextLine(title='A purchase description', required=False)
+	Description = schema.ValidTextLine(title='A purchase description', required=False)
 
-	StartTime = nti_schema.Number(title='Start time', required=True)
-	EndTime = nti_schema.Number(title='Completion time', required=False)
+	StartTime = schema.Number(title='Start time', required=True)
+	EndTime = schema.Number(title='Completion time', required=False)
 
 	Pricing = schema.Object(IPricingResults, title='Pricing results', required=False)
 	Error = schema.Object(IPurchaseError, title='Error object', required=False)
@@ -264,11 +273,11 @@ class IEnrollmentAttempt(IPurchaseAttempt):
 	pass
 
 class IRedeemedPurchaseAttempt(IPurchaseAttempt):
-	RedemptionTime = nti_schema.Number(title='Redemption time', required=True)
-	RedemptionCode = nti_schema.ValidTextLine(title='Redemption Code', required=True)
+	RedemptionTime = schema.Number(title='Redemption time', required=True)
+	RedemptionCode = schema.ValidTextLine(title='Redemption Code', required=True)
 
 class IEnrollmentPurchaseAttempt(IPurchaseAttempt):
-	Processor = nti_schema.ValidTextLine(title='Enrollment institution', required=False)
+	Processor = schema.ValidTextLine(title='Enrollment institution', required=False)
 
 class IPurchaseAttemptEvent(IObjectEvent):
 	object = schema.Object(IPurchaseAttempt, title="The purchase")
