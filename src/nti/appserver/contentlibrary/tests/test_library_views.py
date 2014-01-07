@@ -294,6 +294,6 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( main_col, has_entry( 'href', quote(href) ))
 
 		res = self.testapp.get( href )
-		assert_that( res.cache_control, has_property( 'max_age', 30 ) )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		assert_that( res.json_body, has_entries( 'href', href,
 												 'titles', is_([])))
