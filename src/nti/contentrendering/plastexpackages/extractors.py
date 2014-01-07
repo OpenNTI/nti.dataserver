@@ -619,7 +619,7 @@ class _NTIVideoExtractor(object):
 
 				toc_el = dom.createElement('object')
 				if hasattr(el.idref['label'].title, 'textContent'):
-					el.setAttribute('label', el.idref['label'].title.textContent)
+					toc_el.setAttribute('label', el.idref['label'].title.textContent)
 				else:
 					toc_el.setAttribute('label', el.idref['label'].title)
 				toc_el.setAttribute('poster', poster)
