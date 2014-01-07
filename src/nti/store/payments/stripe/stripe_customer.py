@@ -4,8 +4,10 @@ Stripe customer utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope.event import notify
 
@@ -16,11 +18,12 @@ from nti.dataserver.users import interfaces as user_interfaces
 from . import stripe_io
 from . import interfaces as stripe_interfaces
 
-class _StripeCustomer(stripe_io.StripeIO):
+class StripeCustomer(stripe_io.StripeIO):
 
 	@classmethod
 	def _get_user(cls, user):
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		user = 	User.get_user(str(user)) \
+			 	if not nti_interfaces.IUser.providedBy(user) else user
 		return user
 
 	@classmethod
@@ -31,7 +34,8 @@ class _StripeCustomer(stripe_io.StripeIO):
 		email = getattr(profile, 'email', None)
 		description = getattr(profile, 'description', None)
 
-		customer = cls.create_stripe_customer(email=email, description=description, coupon=coupon, api_key=api_key)
+		customer = cls.create_stripe_customer(email=email, description=description,
+											  coupon=coupon, api_key=api_key)
 		notify(stripe_interfaces.StripeCustomerCreated(user, customer.id))
 
 		return customer
@@ -42,7 +46,8 @@ class _StripeCustomer(stripe_io.StripeIO):
 		user = cls._get_user(user)
 		adapted = stripe_interfaces.IStripeCustomer(user)
 		if adapted.customer_id:
-			result = cls.delete_stripe_customer(customer_id=adapted.customer_id, api_key=api_key)
+			result = cls.delete_stripe_customer(customer_id=adapted.customer_id,
+												api_key=api_key)
 			notify(stripe_interfaces.StripeCustomerDeleted(user, adapted.customer_id))
 		return result
 
@@ -73,7 +78,10 @@ class _StripeCustomer(stripe_io.StripeIO):
 		else:
 			result = adapted.customer_id
 			# get or create the customer so it can be updated later
-			customer = cls.get_stripe_customer(result, api_key=api_key) or cls.create_customer(user, api_key=api_key)
+			customer = 	cls.get_stripe_customer(result, api_key=api_key) or \
+						cls.create_customer(user, api_key=api_key)
 			# reset the id in case the customer was recreated
 			result = adapted.customer_id = customer.id
 		return result
+
+_StripeCustomer = StripeCustomer  # BWC

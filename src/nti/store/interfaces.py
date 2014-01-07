@@ -35,12 +35,15 @@ PA_STATE_REFUNDED = u'Refunded'
 PA_STATE_CANCELED = u'Canceled'
 PA_STATE_RESERVED = u'Reserved'
 
-PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING, PA_STATE_STARTED, PA_STATE_DISPUTED,
-			 PA_STATE_REFUNDED, PA_STATE_SUCCESS, PA_STATE_CANCELED, PA_STATE_RESERVED)
-PA_STATE_VOCABULARY = vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PA_STATES])
+PA_STATES = (PA_STATE_UNKNOWN, PA_STATE_FAILED, PA_STATE_FAILURE, PA_STATE_PENDING,
+			 PA_STATE_STARTED, PA_STATE_DISPUTED, PA_STATE_REFUNDED, PA_STATE_SUCCESS,
+			 PA_STATE_CANCELED, PA_STATE_RESERVED)
+PA_STATE_VOCABULARY = \
+	vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PA_STATES])
 
 PAYMENT_PROCESSORS = ('stripe',)
-PAYMENT_PROCESSORS_VOCABULARY = vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
+PAYMENT_PROCESSORS_VOCABULARY = \
+	vocabulary.SimpleVocabulary([vocabulary.SimpleTerm(_x) for _x in PAYMENT_PROCESSORS])
 
 class IPurchasableStore(interface.Interface):
 
@@ -69,7 +72,8 @@ class IContentBundle(interface.Interface):
 	Title = schema.ValidTextLine(title='Content bundle title', required=False)
 	Author = schema.ValidTextLine(title='Content bundle author', required=False)
 	Description = HTMLContentFragment(title='Content bundle description', required=False, default='')
-	Items = schema.FrozenSet(value_type=schema.ValidTextLine(title='The item identifier'), title="Bundle items")
+	Items = schema.FrozenSet(value_type=schema.ValidTextLine(title='The item identifier'),
+							 title="Bundle items")
 
 class IPurchasable(IContentBundle):
 	Amount = schema.Float(title="Cost amount", required=True, min=0.0)
@@ -89,7 +93,8 @@ class ICourse(IPurchasable):
 	StartDate = schema.ValidTextLine(title="Course start date", required=False)
 	Department = schema.ValidTextLine(title='Course Department', required=False)
 	Signature = schema.ValidText(title='Course/Professor Signature', required=False)
-	Communities = schema.FrozenSet(value_type=schema.ValidTextLine(title='The community identifier'), title="Communities")
+	Communities = schema.FrozenSet(value_type=schema.ValidTextLine(title='The community identifier'),
+								   title="Communities")
 	# overrides
 	Amount = schema.Float(title="Cost amount", required=False, min=0.0)
 	Currency = schema.ValidTextLine(title='Currency amount', required=False)
@@ -115,8 +120,10 @@ class IPurchaseItem(IPriceable):
 	"""marker interface for a purchase order item"""
 
 class IPurchaseOrder(sequence.IMinimalSequence):
-	Items = schema.Tuple(value_type=schema.Object(IPriceable), title='The items', required=True, min_length=1)
-	Quantity = schema.Int(title='Purchase bulk quantity (overwrites-item quantity)', required=False)
+	Items = schema.Tuple(value_type=schema.Object(IPriceable), title='The items',
+						 required=True, min_length=1)
+	Quantity = schema.Int(title='Purchase bulk quantity (overwrites-item quantity)',
+						  required=False)
 
 	def copy():
 		"""makes a new copy of this purchase order"""
@@ -128,7 +135,8 @@ class IPricedItem(IPriceable):
 	Currency = schema.ValidTextLine(title='Currency ISO code', required=True, default='USD')
 
 class IPricingResults(interface.Interface):
-	Items = schema.List(value_type=schema.Object(IPricedItem), title='The priced items', required=True, min_length=0)
+	Items = schema.List(value_type=schema.Object(IPricedItem), title='The priced items',
+						required=True, min_length=0)
 	TotalPurchaseFee = schema.Float(title="Fee Amount", required=False)
 	TotalPurchasePrice = schema.Float(title="Cost amount", required=True)
 	TotalNonDiscountedPrice = schema.Float(title="Non discounted price", required=False)
@@ -192,6 +200,15 @@ class IPaymentProcessor(interface.Interface):
 		:expected_amount: expected amount
 		"""
 
+	def refund_purchase(purchase_id):
+		"""
+		Refund a purchase attempt
+
+		:purchase_id purchase identifier
+		:username User making the purchase
+		:expected_amount: expected amount
+		"""
+		
 	def sync_purchase(purchase_id, username):
 		"""
 		Synchronized the purchase data with the payment processor info
@@ -202,9 +219,11 @@ class IPaymentProcessor(interface.Interface):
 
 class IPurchaseAttempt(IContained):
 
-	Processor = schema.Choice(vocabulary=PAYMENT_PROCESSORS_VOCABULARY, title='purchase processor', required=True)
+	Processor = schema.Choice(vocabulary=PAYMENT_PROCESSORS_VOCABULARY,
+							  title='purchase processor', required=True)
 
-	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state', required=True)
+	State = schema.Choice(vocabulary=PA_STATE_VOCABULARY, title='Purchase state',
+						  required=True)
 
 	Order = schema.Object(IPurchaseOrder, title="Purchase order", required=True)
 	Description = schema.ValidTextLine(title='A purchase description', required=False)
@@ -214,7 +233,8 @@ class IPurchaseAttempt(IContained):
 
 	Pricing = schema.Object(IPricingResults, title='Pricing results', required=False)
 	Error = schema.Object(IPurchaseError, title='Error object', required=False)
-	Synced = schema.Bool(title='if the item has been synchronized with the processors data', required=True, default=False)
+	Synced = schema.Bool(title='if the item has been synchronized with the processors data',
+						 required=True, default=False)
 
 	def has_completed():
 		"""

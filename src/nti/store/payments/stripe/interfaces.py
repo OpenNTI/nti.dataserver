@@ -4,7 +4,7 @@ Stripe Payment interfaces
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -106,11 +106,13 @@ class IStripePurchaseAttempt(interface.Interface):
 
 class IStripeCustomer(interface.Interface):
 	CustomerID = nti_schema.ValidTextLine(title='customer id')
-	Charges = schema.Set(value_type=nti_schema.ValidTextLine(title='the charge id'), title='customer stripe charges')
+	Charges = schema.Set(value_type=nti_schema.ValidTextLine(title='the charge id'),
+						 title='customer stripe charges')
 
 class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 
-	def create_token(customer_id=None, number=None, exp_month=None, exp_year=None, cvc=None, api_key=None, **kwargs):
+	def create_token(customer_id=None, number=None, exp_month=None, exp_year=None,
+					 cvc=None, api_key=None, **kwargs):
 		"""
 		Create a stripe token
 		
