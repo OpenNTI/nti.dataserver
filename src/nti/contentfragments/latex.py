@@ -83,6 +83,8 @@ _escapes = [(u'$', u'\\$'),
 			(u'\u201c', u'``'),
 			(u'\u201d', u"''"),
 			(u'\u2022', u'*'),
+			# JAM: Why is this commented out? It has been since the
+			# first revision of this file, but it seems valid
 			# (u'\u2026', u'$\\ldots$'),
 			(u'\u20ac', u'\\euro '),
 			(u'\u2192', u'$\\rightarrow$'),
