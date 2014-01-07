@@ -4,9 +4,10 @@ Stripe utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
@@ -14,8 +15,9 @@ import simplejson as json
 
 from nti.store import payment_charge
 from nti.store import NTIStoreException
-from . import interfaces as stripe_interfaces
 from nti.store import interfaces as store_interfaces
+
+from . import interfaces as stripe_interfaces
 
 def makenone(s, default=None):
 	if isinstance(s, six.string_types):
@@ -74,15 +76,17 @@ def create_payment_charge(charge):
 	last4, name = get_card_info(charge)
 	address = create_user_address(charge)
 	created = float(charge.created or time.time())
-	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency, Created=created,
-										  CardLast4=last4, Address=address, Name=name)
+	result = payment_charge.PaymentCharge(Amount=amount, Currency=currency,
+										  Created=created, CardLast4=last4,
+										  Address=address, Name=name)
 	return result
 
 def adapt_to_error(e):
 	"""
 	adapts an exception to a IStripePurchaseError
 	"""
-	result = store_interfaces.IPurchaseError(e, None) or stripe_interfaces.IStripePurchaseError(e, None)
+	result = store_interfaces.IPurchaseError(e, None) or \
+			 stripe_interfaces.IStripePurchaseError(e, None)
 	if result is None and isinstance(e, Exception):
 		result = store_interfaces.IPurchaseError(NTIStoreException(e.args), None)
 	return result
