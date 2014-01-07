@@ -113,7 +113,8 @@ class PurchaseAttempt(ModDateTrackingObject,
 		return self.State == store_interfaces.PA_STATE_UNKNOWN
 
 	def is_pending(self):
-		return self.State in (store_interfaces.PA_STATE_STARTED, store_interfaces.PA_STATE_PENDING)
+		return self.State in (store_interfaces.PA_STATE_STARTED,
+							  store_interfaces.PA_STATE_PENDING)
 
 	def is_refunded(self):
 		return self.State == store_interfaces.PA_STATE_REFUNDED
@@ -191,7 +192,8 @@ def get_providers(purchase):
 def get_currencies(purchase):
 	return purchase_order.get_currencies(purchase.Order)
 
-def create_purchase_attempt(order, processor, state=None, description=None, start_time=None):
+def create_purchase_attempt(order, processor, state=None, description=None,
+							start_time=None):
 	state = state or store_interfaces.PA_STATE_UNKNOWN
 	start_time = start_time if start_time else time.time()
 	cls = PurchaseAttempt if not order.Quantity else InvitationPurchaseAttempt
@@ -209,9 +211,11 @@ def create_redeemed_purchase_attempt(purchase, redemption_code, redemption_time=
 	purchase_order.replace_quantity(new_order, 1)
 
 	result = RedeemedPurchaseAttempt(
-				Order=new_order, Processor=purchase.Processor, Description=purchase.Description,
-				State=purchase.State, StartTime=purchase.StartTime, EndTime=purchase.EndTime,
-				Error=purchase.Error, Synced=purchase.Synced, RedemptionTime=float(redemption_time),
+				Order=new_order, Processor=purchase.Processor,
+				Description=purchase.Description, State=purchase.State,
+				StartTime=purchase.StartTime, EndTime=purchase.EndTime,
+				Error=purchase.Error, Synced=purchase.Synced,
+				RedemptionTime=float(redemption_time),
 				RedemptionCode=unicode(redemption_code))
 	return result
 
