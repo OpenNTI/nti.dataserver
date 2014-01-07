@@ -520,7 +520,17 @@ from nti.appserver.pyramid_renderers import AbstractReliableLastModifiedCacheCon
 @component.adapter(lib_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheController):
 
-	max_age = 30
+	# Before the advent of purchasables, there was no way the user
+	# could modify his own library. Going through the purchase process
+	# took a long time, so we had a 30 to 60 second max_age. Then
+	# courses came along, and it was possible to enroll in a bunch of
+	# them, one after the other, very quickly, and that max_age caused
+	# the UI to not be able to see the new entries. This is unlikely
+	# if you expect the user to actually consider what he's enrolling
+	# in, but possible. And when it does happen, it's very confusing
+	# to the end user and gives a very flaky impression.
+	# So currently it is 0 for that use case.
+	max_age = 0
 
 	@property
 	def _context_specific(self):
