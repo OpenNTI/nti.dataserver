@@ -647,9 +647,12 @@ class ISearchHit(IBaseHit, IMapping):
 	"""
 	represent an externalized search hit
 	"""
-	OID = nti_schema.ValidTextLine(title="hit unique id", required=True, readonly=True)
+	Query = nti_schema.Object(ISearchQuery, required=True, readonly=True)
+	NTIID = nti_schema.ValidTextLine(title="hit object ntiid", required=False, readonly=True)
+	OID = nti_schema.ValidTextLine(title="hit unique id", required=False, readonly=True)
 	Snippet = nti_schema.ValidTextLine(title="text found", required=True, default=u'')
 	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
+	Score = nti_schema.Float(title="Score for this hit", default=1.0, required=True)
 	lastModified = nti_schema.Int(title="last modified date for this hit", default=0, required=True)
 
 class INoteSearchHit(ISearchHit):

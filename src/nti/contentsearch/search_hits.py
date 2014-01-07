@@ -92,7 +92,7 @@ class _BaseSearchHit(dict):
 	def set_query(self, query):
 		self._query = search_interfaces.ISearchQuery(query, None)
 
-	query = property(get_query, set_query)
+	Query = query = property(get_query, set_query)
 
 	def get_score(self):
 		return self.get(SCORE, 1.0)
@@ -101,6 +101,14 @@ class _BaseSearchHit(dict):
 		self[SCORE] = score or 1.0
 
 	Score = score = property(get_score, set_score)
+
+	@property
+	def Type(self):
+		return self.get(TYPE)
+
+	@property
+	def NTIID(self):
+		return self.get(NTIID)
 
 	@property
 	def lastModified(self):
@@ -290,8 +298,12 @@ class _ScoreSearchHitComparator(_CallableComparator):
 
 	@classmethod
 	def get_score(cls, item):
-		result = item.score if search_interfaces.IBaseHit.providedBy(item) else 1.0
-		return result
+		result = None
+		if search_interfaces.IBaseHit.providedBy(item):
+			result = item.score
+		elif search_interfaces.ISearchHit.providedBy(item):
+			result = item.Score
+		return result or 1.0
 
 	@classmethod
 	def compare_score(cls, a, b):
@@ -303,7 +315,7 @@ class _ScoreSearchHitComparator(_CallableComparator):
 	@classmethod
 	def get_type_name(cls, item):
 		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.get(CLASS, u'')
+			result = item.Type
 		elif search_interfaces.IBaseHit.providedBy(item):
 			result = common.get_type_name(item.obj)
 		else:
@@ -321,9 +333,9 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	def get_lm(cls, item):
 		if search_interfaces.IIndexHit.providedBy(item):
 			adapted = search_interfaces.ILastModifiedResolver(item.obj, None)
-			result = adapted.get_last_modified() if adapted is not None else 0
+			result = adapted.lastModified if adapted is not None else 0
 		elif search_interfaces.ISearchHit.providedBy(item):
-			result = item.get(LAST_MODIFIED, 0)
+			result = item.lastModified
 		else:
 			result = 0
 		return result
@@ -401,6 +413,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 			result = content_utils.get_ntiid_path(item)
 		elif search_interfaces.IBaseHit.providedBy(item):
 			result = content_utils.get_ntiid_path(item.query.location)
+		elif search_interfaces.ISearchHit.providedBy(item):
+			result = content_utils.get_ntiid_path(item.Query.location)
 		else:
 			result = ()
 		return result
@@ -408,7 +422,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_containerId(cls, item):
 		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.get(NTIID, None)
+			result = item.NTIID
 		elif search_interfaces.IIndexHit.providedBy(item):
 			adapted = search_interfaces.IContainerIDResolver(item.obj, None)
 			result = adapted.get_containerId() if adapted else None
