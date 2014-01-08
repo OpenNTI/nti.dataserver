@@ -252,7 +252,6 @@
 			 factory=".account_creation_views.AccountCreatePreflightPathAdapter"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
 
-
 	<!-- Events -->
 	<!-- Stream events -->
 	<subscriber handler="._stream_event_listeners.user_change_broadcaster" />
