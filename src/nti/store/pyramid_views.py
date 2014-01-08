@@ -358,4 +358,5 @@ class GetContentRolesView(object):
 StripePaymentView = pyramid_payment.StripePaymentView
 CreateStripeTokenView = pyramid_payment.CreateStripeTokenView
 GetStripeConnectKeyView = pyramid_payment.GetStripeConnectKeyView
+StripeRefundPaymentView = pyramid_payment.StripeRefundPaymentView
 PricePurchasableWithStripeCouponView = pyramid_payment.PricePurchasableWithStripeCouponView

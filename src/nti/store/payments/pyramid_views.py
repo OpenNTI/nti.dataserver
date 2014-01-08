@@ -14,4 +14,5 @@ from .stripe import pyramid_views as stripe_pyramid
 StripePaymentView = stripe_pyramid.StripePaymentView
 CreateStripeTokenView = stripe_pyramid.CreateStripeTokenView
 GetStripeConnectKeyView = stripe_pyramid.GetStripeConnectKeyView
+StripeRefundPaymentView = stripe_pyramid.StripeRefundPaymentView
 PricePurchasableWithStripeCouponView = stripe_pyramid.PricePurchasableWithStripeCouponView
