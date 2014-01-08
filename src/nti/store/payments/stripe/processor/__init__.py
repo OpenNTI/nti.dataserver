@@ -11,5 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 from .sync import SyncProcessor
 from .event import EventProcessor
 from .coupon import CouponProcessor
+from .refund import RefundProcessor
 from .pricing import PricingProcessor
 from .purchase import PurchaseProcessor
