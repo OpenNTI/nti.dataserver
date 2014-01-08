@@ -26,22 +26,22 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 
 TEST_WITH_STRIPE = True
 
-def _create_user(username='nt@nti.com', password='temp001', **kwargs):
+def create_user(username='nt@nti.com', password='temp001', **kwargs):
     ds = mock_dataserver.current_mock_ds
     ext_value = {'external_value':kwargs}
     usr = User.create_user(ds, username=username, password=password, **ext_value)
     return usr
 
-def _create_random_user():
+def create_random_user():
     code = str(uuid.uuid4()).split('-')[0]
     username = u'u' + code
     email = username + '@nextthought.com'
     desc = 'test user ' + code
-    user = _create_user(username=username, email=email, description=desc)
+    user = create_user(username=username, email=email, description=desc)
     return user
 
-def _create_purchase_attempt(item, processor, quantity=None, description=None,
-                             coupon=None):
+def create_purchase_attempt(item, processor, quantity=None, description=None,
+                            coupon=None):
     pi = stripe_purchase.create_stripe_purchase_item(item, 1)
     po = stripe_purchase.create_stripe_purchase_order(pi, quantity=quantity,
                                                       coupon=coupon)
@@ -49,10 +49,10 @@ def _create_purchase_attempt(item, processor, quantity=None, description=None,
                                                   description=description)
     return pa
 
-def _create_and_register_purchase_attempt(username, item, quantity=None, processor=None,
-                                          coupon=None, description="my charge"):
-    pa = _create_purchase_attempt(item, quantity=quantity, processor=processor,
-                                  coupon=coupon, description=description)
+def create_and_register_purchase_attempt(username, item, quantity=None, processor=None,
+                                         coupon=None, description="my charge"):
+    pa = create_purchase_attempt(item, quantity=quantity, processor=processor,
+                                 coupon=coupon, description=description)
     purchase_id = purchase_history.register_purchase_attempt(pa, username)
     return purchase_id
 
@@ -64,16 +64,16 @@ def create_purchase(self, item=None, amount=100, coupon=None, manager=None,
 
     with mock_dataserver.mock_db_trans(ds):
         if username is None:
-            user = _create_random_user()
+            user = create_random_user()
         else:
-            user = _create_user(username=username, email=username)
+            user = create_user(username=username, email=username)
         username = user.username
 
     with mock_dataserver.mock_db_trans(ds):
-        purchase_id = _create_and_register_purchase_attempt(username, item=item,
-                                                            processor=manager.name,
-                                                            coupon=coupon,
-                                                            quantity=quantity)
+        purchase_id = create_and_register_purchase_attempt(username, item=item,
+                                                           processor=manager.name,
+                                                           coupon=coupon,
+                                                           quantity=quantity)
         assert_that(purchase_id, is_not(none()))
 
 
