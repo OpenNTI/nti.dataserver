@@ -66,7 +66,8 @@ class GetPendingPurchasesView(_PurchaseAttemptView):
 		request = self.request
 		username = request.authenticated_userid
 		purchases = purchase_history.get_pending_purchases(username)
-		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
+		result = LocatedExternalDict({'Items': purchases,
+									  'Last Modified':self._last_modified(purchases)})
 		return result
 
 class GetPurchaseHistoryView(_PurchaseAttemptView):
@@ -86,10 +87,13 @@ class GetPurchaseHistoryView(_PurchaseAttemptView):
 		if not purchasable_id:
 			start_time = self._convert(request.params.get('startTime', None))
 			end_time = self._convert(request.params.get('endTime', None))
-			purchases = purchase_history.get_purchase_history(username, start_time, end_time)
+			purchases = purchase_history.get_purchase_history(username,
+															  start_time, end_time)
 		else:
-			purchases = purchase_history.get_purchase_history_by_item(username, purchasable_id)
-		result = LocatedExternalDict({'Items': purchases, 'Last Modified':self._last_modified(purchases)})
+			purchases = purchase_history.get_purchase_history_by_item(username,
+																	  purchasable_id)
+		result = LocatedExternalDict({'Items': purchases,
+									  'Last Modified':self._last_modified(purchases)})
 		return result
 
 def _sync_purchase(purchase):
@@ -97,7 +101,8 @@ def _sync_purchase(purchase):
 	username = purchase.creator.username
 
 	def sync_purchase():
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=purchase.Processor)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=purchase.Processor)
 		manager.sync_purchase(purchase_id=purchase_id, username=username)
 
 	def process_sync():
@@ -115,7 +120,8 @@ class GetPurchaseAttemptView(object):
 		username = request.authenticated_userid
 		purchase_id = request.params.get('purchaseID')
 		if not purchase_id:
-			raise_field_error(request, "purchaseID", "Failed to provide a purchase attempt ID")
+			raise_field_error(request, "purchaseID",
+							  "Failed to provide a purchase attempt ID")
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
@@ -125,7 +131,8 @@ class GetPurchaseAttemptView(object):
 			if time.time() - start_time >= 90 and not purchase.is_synced():
 				_sync_purchase(purchase)
 
-		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+		result = LocatedExternalDict({'Items':[purchase],
+									  'Last Modified':purchase.lastModified})
 		return result
 
 class GetPurchasablesView(object):
@@ -145,7 +152,8 @@ class GetCoursesView(object):
 
 	def __call__(self):
 		purchasables = purchasable.get_all_purchasables()
-		courses = list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
+		courses = \
+			list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
 		result = LocatedExternalDict({'Items': courses, 'Last Modified':0})
 		return result
 
@@ -158,7 +166,8 @@ class _PostView(object):
 
 	def readInput(self):
 		request = self.request
-		values = simplejson.loads(unicode(request.body, request.charset)) if request.body else {}
+		values = simplejson.loads(unicode(request.body, request.charset)) \
+				 if request.body else {}
 		return CaseInsensitiveDict(**values)
 
 class RedeemPurchaseCodeView(_PostView):
@@ -168,11 +177,13 @@ class RedeemPurchaseCodeView(_PostView):
 		values = self.readInput()
 		purchasable_id = values.get('purchasableID')
 		if not purchasable_id:
-			raise_field_error(request, "purchasableID", _("Failed to provide a purchasable ID"))
+			raise_field_error(request, "purchasableID",
+							  _("Failed to provide a purchasable ID"))
 
 		invitation_code = values.get('invitationCode', values.get('invitation_code'))
 		if not invitation_code:
-			raise_field_error(request, "invitation_code", _("Failed to provide a invitation code"))
+			raise_field_error(request, "invitation_code",
+							  _("Failed to provide a invitation code"))
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
@@ -182,16 +193,20 @@ class RedeemPurchaseCodeView(_PostView):
 			raise hexc.HTTPUnprocessableEntity(detail='Not redeemable purchase')
 
 		if purchasable_id not in purchase.Items:
-			raise_field_error(request, "invitation_code", _("The invitation code is not for this purchasable"))
+			raise_field_error(request, "invitation_code",
+							  _("The invitation code is not for this purchasable"))
 
 		username = request.authenticated_userid
 		try:
-			invite = invitations.create_store_purchase_invitation(purchase, invitation_code)
+			invite = \
+				invitations.create_store_purchase_invitation(purchase, invitation_code)
 			invite.accept(username)
 		except invitations.InvitationAlreadyAccepted:
-			raise_field_error(request, "invitation_code", _("The invitation code has already been accepted"))
+			raise_field_error(request, "invitation_code",
+							  _("The invitation code has already been accepted"))
 		except invitations.InvitationCapacityExceeded:
-			raise_field_error(request, "invitation_code", _("There are no remaining invitations for this code"))
+			raise_field_error(request, "invitation_code",
+							  _("There are no remaining invitations for this code"))
 
 		return hexc.HTTPNoContent()
 
@@ -233,7 +248,7 @@ class EnrollCourseView(_PostView):
 		try:
 			enrollment.enroll_course(username, course_id, description, self.request)
 		except enrollment.CourseNotFoundException:
-			raise_field_error(self.request, 'courseID', 'course not found')
+			raise_field_error(self.request, 'courseID', _('course not found'))
 
 		return hexc.HTTPNoContent()
 
@@ -251,12 +266,12 @@ class UnenrollCourseView(_PostView):
 			enrollment.unenroll_course(username, course_id, self.request)
 		except enrollment.CourseNotFoundException:
 			logger.error("Course %s not found" % course_id)
-			raise_field_error(self.request, 'courseID', 'course not found')
+			raise_field_error(self.request, 'courseID', _('course not found'))
 		except enrollment.UserNotEnrolledException:
 			logger.error("User %s not enrolled in %s" % (username, course_id))
-			raise_field_error(self.request, 'username', 'User not enrolled')
+			raise_field_error(self.request, 'username', _('User not enrolled'))
 		except enrollment.InvalidEnrollmentAttemptException:
-			raise_field_error(self.request, 'courseID', 'Invalid enrollment attempt')
+			raise_field_error(self.request, 'courseID', _('Invalid enrollment attempt'))
 
 		return hexc.HTTPNoContent()
 
@@ -272,7 +287,8 @@ class _BasePostPurchaseAttemptView(_PostView):
 		values = self.readInput()
 		purchase_id = values.get('purchaseID')
 		if not purchase_id:
-			raise_field_error(self.request, "purchaseID", _("Must specify a valid purchase attempt id"))
+			raise_field_error(self.request, "purchaseID",
+							  _("Must specify a valid purchase attempt id"))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id)
 		if not purchase:
@@ -285,10 +301,12 @@ class RefundPurchaseAttemptView(_BasePostPurchaseAttemptView):
 	def __call__(self):
 		purchase = super(RefundPurchaseAttemptView, self).__call__()
 		if not purchase.has_succeeded():
-			raise_field_error(self.request, "purchaseID", _("Must specify a successfully completed purchase attempt"))
+			raise_field_error(self.request, "purchaseID",
+							  _("Must specify a successful purchase attempt"))
 
 		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
-		result = LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+		result = LocatedExternalDict({'Items':[purchase],
+									  'Last Modified':purchase.lastModified})
 		return result
 
 class DeletePurchaseAttemptView(_BasePostPurchaseAttemptView):
@@ -309,7 +327,8 @@ class DeletePurchaseHistoryView(_PostView):
 		for p in su.values():
 			lifecycleevent.removed(p)
 
-		IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
+		annotations = IAnnotations(user)
+		annotations.pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
 
 		logger.info("Purchase history has been removed")
 
