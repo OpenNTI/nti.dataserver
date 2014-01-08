@@ -97,6 +97,8 @@ def create_purchase(self, item=None, amount=100, coupon=None, manager=None,
 
 class TestBaseProcessorMixin(object):
 
+    book_id = 'xyz-book'
+
     @classmethod
     def setUpClass(cls):
         super(TestBaseProcessorMixin, cls).setUpClass()

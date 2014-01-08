@@ -43,8 +43,6 @@ from . import create_and_register_purchase_attempt
 
 class TestPurchaseProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
 
-	book_id = 'xyz-book'
-
 	def setUp(self):
 		super(TestPurchaseProcessor, self).setUp()
 		self.manager = PurchaseProcessor()
