@@ -95,11 +95,12 @@ class RefundProcessor(BaseProcessor):
 				notify(stripe_interfaces.RegisterStripeCharge(purchase, charge.id))
 			
 		if charge:
+			cents_amount = int(amount * 100.0) if amount is not None else None
 			def do_refund():
 				logger.debug('Refunding %s...', trx_id)
 				local_purchase = zope_iids.queryObject(uid)
 				if not charge.refunded:
-					charge.refund(amount=amount,
+					charge.refund(amount=cents_amount,
 								  refund_application_fee=refund_application_fee)
 				else:
 					logger.warn('Stripe charge already refunded')
