@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -10,4 +10,5 @@ __docformat__ = "restructuredtext en"
 from nti.store.tests import ConfiguringTestBase as StoreConfiguringTestBase
 
 class ConfiguringTestBase(StoreConfiguringTestBase):
-    set_up_packages = StoreConfiguringTestBase.set_up_packages + (('purchasables.zcml', 'nti.store.payments.stripe.tests'),)
+    set_up_packages = StoreConfiguringTestBase.set_up_packages + \
+                      (('purchasables.zcml', 'nti.store.payments.stripe.tests'),)
