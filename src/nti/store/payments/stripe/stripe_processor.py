@@ -15,9 +15,11 @@ from zope import interface
 from . import interfaces as stripe_interfaces
 
 from .processor import SyncProcessor
+from .processor import RefundProcessor
 from .processor import EventProcessor
 from .processor import PurchaseProcessor
 
 @interface.implementer(stripe_interfaces.IStripePaymentProcessor)
-class StripePaymentProcessor(PurchaseProcessor, SyncProcessor, EventProcessor):
+class StripePaymentProcessor(PurchaseProcessor, SyncProcessor, EventProcessor,
+							 RefundProcessor):
 	pass
