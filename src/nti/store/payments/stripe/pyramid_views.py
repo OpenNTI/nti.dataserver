@@ -232,7 +232,7 @@ class StripeRefundPaymentView(_PostStripeView):
 
 	def readInput(self):
 		values = super(StripeRefundPaymentView, self).readInput()
-		trax_id = values.get('TransactionID')
+		trax_id = values.get('TransactionID', values.get('transaction_id', None))
 		if not trax_id:
 			raise_field_error(self.request, 'TransactionID',
 							  "No transaction id specified")
