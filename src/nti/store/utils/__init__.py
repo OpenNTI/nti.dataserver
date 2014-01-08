@@ -60,6 +60,29 @@ def is_valid_pve_int(value):
 	except (TypeError, ValueError):
 		return False
 
+true_values = ('1', 'y', 'yes', 't', 'true')
+false_values = ('0', 'n', 'no', 'f', 'false')
+
+def is_valid_boolean(value):
+	if isinstance(value, bool):
+		return True
+	elif isinstance(value, six.string_types):
+		v = value.lower()
+		return v in true_values or v in false_values
+	else:
+		return False
+
+def to_boolean(value):
+	if isinstance(value, bool):
+		return value
+	v = value.lower()
+	if v in true_values:
+		return True
+	elif v in false_values:
+		return False
+	else:
+		return None
+
 # meta classes
 
 class MetaStoreObject(type):

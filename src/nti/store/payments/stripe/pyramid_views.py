@@ -4,7 +4,7 @@ Stripe payment pyramid views.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -12,19 +12,24 @@ logger = __import__('logging').getLogger(__name__)
 import simplejson
 import transaction
 
+import zope.intid
 from zope import component
 
 from pyramid import httpexceptions as hexc
 
+from nti.externalization import integer_strings
 from nti.externalization.datastructures import LocatedExternalDict
 
-from nti.store import InvalidPurchasable
-from nti.store import NTIStoreException
-from nti.store import interfaces as store_interfaces
-from nti.store import purchasable as source
+from nti.store.utils import to_boolean
 from nti.store import purchase_history
-from nti.store.payments import is_valid_amount, is_valid_pve_int
+from nti.store import NTIStoreException
+from nti.store import InvalidPurchasable
+from nti.store import purchasable as source
+from nti.store.utils import is_valid_amount
+from nti.store.utils import is_valid_pve_int
+from nti.store.utils import is_valid_boolean
 from nti.store.utils import raise_field_error
+from nti.store import interfaces as store_interfaces
 
 from nti.utils.maps import CaseInsensitiveDict
 
@@ -65,7 +70,8 @@ class CreateStripeTokenView(_PostStripeView):
 		values = self.readInput()
 		__traceback_info__ = values, self.request.params
 		stripe_key = self.get_stripe_connect_key(values)
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
 
 		params = {'api_key':stripe_key.PrivateKey}
 
@@ -102,8 +108,11 @@ class CreateStripeTokenView(_PostStripeView):
 class PricePurchasableWithStripeCouponView(_PostStripeView):
 
 	def price(self, purchasable_id, quantity=None, coupon=None):
-		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")
-		priceable = stripe_purchase.create_stripe_priceable(ntiid=purchasable_id, quantity=quantity, coupon=coupon)
+		pricer = component.getUtility(store_interfaces.IPurchasablePricer,
+									  name=self.processor)
+		priceable = stripe_purchase.create_stripe_priceable(ntiid=purchasable_id,
+															quantity=quantity,
+															coupon=coupon)
 		result = pricer.price(priceable)
 		return result
 
@@ -136,7 +145,8 @@ class StripePaymentView(_PostStripeView):
 		values = super(StripePaymentView, self).readInput()
 		purchasable_id = values.get('purchasableID')
 		if not purchasable_id:
-			raise_field_error(self.request, 'purchasableID', "No item to purchase specified")
+			raise_field_error(self.request, 'purchasableID',
+							  "No item to purchase specified")
 
 		stripe_key = None
 		purchasable = source.get_purchasable(purchasable_id)
@@ -144,9 +154,11 @@ class StripePaymentView(_PostStripeView):
 			raise_field_error(self.request, 'purchasableID', "Invalid purchasable item")
 		else:
 			provider = purchasable.Provider
-			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
+			stripe_key = \
+				component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
 			if not stripe_key:
-				raise_field_error(self.request, 'purchasableID', "Invalid purchasable provider")
+				raise_field_error(self.request, 'purchasableID',
+								  "Invalid purchasable provider")
 
 		token = values.get('token', None)
 		if not token:
@@ -168,7 +180,8 @@ class StripePaymentView(_PostStripeView):
 		description = description or "%s's payment for '%r'" % (username, purchasable_id)
 
 		item = stripe_purchase.create_stripe_purchase_item(purchasable_id)
-		po = stripe_purchase.create_stripe_purchase_order(item, quantity=quantity, coupon=coupon)
+		po = stripe_purchase.create_stripe_purchase_order(item, quantity=quantity,
+														  coupon=coupon)
 
 		pa = purchase_history.create_purchase_attempt(po, processor=self.processor)
 		return pa, token, stripe_key, expected_amount
@@ -180,29 +193,82 @@ class StripePaymentView(_PostStripeView):
 		purchase_attempt, token, stripe_key, expected_amount = self.readInput(username)
 
 		# check for any pending purchase for the items being bought
-		purchase = purchase_history.get_pending_purchase_for(username, purchase_attempt.Items)
+		purchase = purchase_history.get_pending_purchase_for(username,
+															 purchase_attempt.Items)
 		if purchase is not None:
-			logger.warn("There is already a pending purchase for item(s) %s", list(purchase_attempt.Items))
-			return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+			logger.warn("There is already a pending purchase for item(s) %s",
+						list(purchase_attempt.Items))
+			return LocatedExternalDict({'Items':[purchase],
+										'Last Modified':purchase.lastModified})
 
 		# register purchase
-		purchase_id = purchase_history.register_purchase_attempt(purchase_attempt, username)
+		purchase_id = \
+			purchase_history.register_purchase_attempt(purchase_attempt, username)
 		logger.info("Purchase attempt (%s) created", purchase_id)
 
 		# after commit
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s", purchase_id)
 			try:
-				manager.process_purchase(purchase_id=purchase_id, username=username, token=token,
-										 expected_amount=expected_amount, api_key=stripe_key.PrivateKey,
+				manager.process_purchase(purchase_id=purchase_id, username=username,
+										 token=token, expected_amount=expected_amount,
+										 api_key=stripe_key.PrivateKey,
 										 request=request)
 			except NTIStoreException:
 				# TODO: How should this actually be handled?
 				logger.exception("Failed to process purchase %s", purchase_id)
 
-		transaction.get().addAfterCommitHook(lambda success: success and request.nti_gevent_spawn(process_purchase))
+		transaction.get().addAfterCommitHook(
+							lambda s: s and request.nti_gevent_spawn(process_purchase))
 
 		# return
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
-		return LocatedExternalDict({'Items':[purchase], 'Last Modified':purchase.lastModified})
+		return LocatedExternalDict({'Items':[purchase],
+									'Last Modified':purchase.lastModified})
+
+class StripeRefundPaymentView(_PostStripeView):
+
+	def readInput(self):
+		values = super(StripeRefundPaymentView, self).readInput()
+		trax_id = values.get('TransactionID')
+		if not trax_id:
+			raise_field_error(self.request, 'TransactionID',
+							  "No transaction id specified")
+
+		amount = values.get('amount', None)
+		if amount is not None and not is_valid_amount(amount):
+			raise_field_error(self.request, 'amount', "Invalid amount")
+		amount = float(amount) if amount is not None else None
+
+		refund_application_fee = values.get('RefundApplicationFee',
+								 values.get('refund_application_fee', None))
+
+		if refund_application_fee is not None:
+			if not is_valid_boolean(refund_application_fee):
+				raise_field_error(self.request, 'refund_application_fee',
+								  "Invalid refund application fee")
+			refund_application_fee = to_boolean(refund_application_fee)
+
+	def __call__(self):
+		request = self.request
+
+		trx_id, amount, refund_application_fee = self.readInput()
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
+		
+		try:
+			manager.refund_purchase(trx_id, amount=amount,
+									refund_application_fee=refund_application_fee,
+									request=request)
+		except NTIStoreException, e:
+			logger.exception("Error while refunding transaction")
+			raise_field_error(self.request, e, str(e))
+
+		# return
+		uid = integer_strings.from_external_string(trx_id)
+		zope_iids = component.getUtility(zope.intid.IIntIds)
+		purchase = zope_iids.queryObject(uid)
+		return LocatedExternalDict({'Items':[purchase],
+									'Last Modified':purchase.lastModified})
