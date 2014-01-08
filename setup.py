@@ -222,7 +222,7 @@ setup(
 		'feedgenerator >= 1.7',
 		'futures >= 2.1.5',
 		'gevent >= 1.0',
-		'greenlet >= 0.4.1',
+		'greenlet',
 		'gunicorn >= 18.0',
 		'hiredis',	 # Redis C parser
 		# HTML5 parsing library
