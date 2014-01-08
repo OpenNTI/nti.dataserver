@@ -230,6 +230,7 @@ class DenyAccountCreatePathAdapter(AccountCreatePathAdapter):
 
 @view_config(route_name='objects.generic.traversal',
 			 context=AccountCreatePathAdapter,
+			 permission=nauth.ACT_CREATE,
 			 request_method='POST',
 			 renderer='rest')
 def account_create_view(request):
@@ -310,6 +311,7 @@ class DenyAccountCreatePreflightPathAdapter(AccountCreatePreflightPathAdapter):
 
 @view_config(route_name='objects.generic.traversal',
 			 context=AccountCreatePreflightPathAdapter,
+			 permission=nauth.ACT_CREATE,
 			 request_method='POST',
 			 renderer='rest')
 def account_preflight_view(request):
