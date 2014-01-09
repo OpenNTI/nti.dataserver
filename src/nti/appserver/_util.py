@@ -108,6 +108,8 @@ class AbstractTwoStateViewLinkDecorator(object):
 		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
 		_links.append( link )
 
+		return link
+
 @interface.implementer(app_interfaces.IUncacheableInResponse)
 class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 	"""
