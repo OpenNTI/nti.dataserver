@@ -443,6 +443,9 @@ class _NTIVideoExtractor(object):
 		entry['description'] = video.description
 		entry['closedCaptions'] = video.closed_caption
 
+		if hasattr(video, 'slidedeck'):
+			entry['slidedeck'] = video.slidedeck
+
 		for source in video.getElementsByTagName('ntivideosource'):
 			val = {'source':[], 'type':[]}
 
