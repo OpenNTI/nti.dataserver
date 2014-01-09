@@ -30,6 +30,7 @@ name: ntislidevideo
   <param name="title" tal:attributes="value self/title"/>
   <param name="creator" tal:attributes="value self/creator | nothing"/>
   <param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/ntiid | string:default"/>
+  <param name="video-ntiid" tal:attributes="value self/video_ntiid"/>
   <img tal:attributes="src self/thumbnail"/>
   <div class="hidden" style="display:none" tal:content="self/media_sources"></div>
   <span class="description" tal:content="self/description" tal:condition="self/description">
