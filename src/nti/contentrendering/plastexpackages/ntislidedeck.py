@@ -135,11 +135,11 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTISlideVideo'
 
-	creator = 'Unknown'
+	_creator = ''
 	type = 'local'
-	title = 'No Title'
+	_title = ''
 	show_video = False
-	thumbnail = None
+	_thumbnail = None
 
 	mimeType = 'application/vnd.nextthought.ntislidevideo'
 	itemprop = 'presentation-card'
@@ -158,15 +158,15 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 
 			video_els = self.getElementsByTagName( 'ntivideo' )
 			if video_els:
-				self.title = video_els[0].title
-				self.creator = video_els[0].creator
+				self._title = video_els[0].title
+				self._creator = video_els[0].creator
 				video_els[0].itemprop = 'presentation-none'
 
 			video_els = self.getElementsByTagName( 'ntiincludevideo' )
 			if video_els:
 				multimedia = ntivideo()
-				multimedia.title = self.title
-				multimedia.creator = self.creator
+				multimedia.title = self._title
+				multimedia.creator = self._creator
 				multimedia.itemprop = 'presentation-none'
 				
 				multimedia_source = ntivideo.ntivideosource()
@@ -183,7 +183,7 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 			video_source_els = self.getElementsByTagName( 'ntivideosource' )
 			for video_source_el in video_source_els:
 				if video_source_el.thumbnail is not None:
-					self.thumbnail = video_source_el.thumbnail
+					self._thumbnail = video_source_el.thumbnail
 
 		return res
 
@@ -193,6 +193,67 @@ class ntislidevideo(LocalContentMixin, Float, plastexids.NTIIDMixin):
 		if(els):
 			return els[0].description
 		return cfg_interfaces.IPlainTextContentFragment( cfg_interfaces.ILatexContentFragment( '' ) )
+
+	@readproperty
+	def title(self):
+		title = 'No Title'
+		video_els = self.getElementsByTagName( 'ntivideo' )
+		videoref_els = self.getElementsByTagName( 'ntivideoref' )
+		if self._title:
+			title = self._title
+		elif video_els:
+			title = video_els[0].title
+		elif videoref_els:
+			title = videoref_els[0].idref['label'].title
+		return title
+
+	@readproperty
+	def creator(self):
+		creator = 'Unknown'
+		video_els = self.getElementsByTagName( 'ntivideo' )
+		videoref_els = self.getElementsByTagName( 'ntivideoref' )
+		if self._creator:
+			creator = self._creator
+		elif video_els:
+			creator = video_els[0].creator
+		elif videoref_els:
+			creator = videoref_els[0].idref['label'].creator
+		return creator
+
+	@readproperty
+	def video_ntiid(self):
+		video_ntiid = None
+		video_els = self.getElementsByTagName( 'ntivideo' )
+		videoref_els = self.getElementsByTagName( 'ntivideoref' )
+		if video_els:
+			video_ntiid = video_els[0].ntiid
+			if not hasattr(video_els[0], 'slidedeck'):
+				video_els[0].slidedeck = self.slidedeck.idref['label'].ntiid
+		elif videoref_els:
+			video_ntiid = videoref_els[0].idref['label'].ntiid
+			if not hasattr(videoref_els[0].idref['label'], 'slidedeck'):
+				videoref_els[0].idref['label'].slidedeck = self.slidedeck.idref['label'].ntiid
+		return video_ntiid
+
+	@readproperty
+	def thumbnail(self):
+		thumbnail = None
+		video_els = self.getElementsByTagName( 'ntivideo' )
+		videoref_els = self.getElementsByTagName( 'ntivideoref' )
+		if self._thumbnail:
+			thumbnail = self._thumbnail
+		elif video_els:
+			video_source_els = video_els[0].getElementsByTagName( 'ntivideosource' )
+			for video_source_el in video_source_els:
+				if video_source_el.thumbnail is not None:
+					thumbnail = video_source_el.thumbnail
+		elif videoref_els:
+			video_source_els = videoref_els[0].idref['label'].getElementsByTagName( 'ntivideosource' )
+			for video_source_el in video_source_els:
+				if video_source_el.thumbnail is not None:
+					thumbnail = video_source_el.thumbnail
+		return thumbnail
+
 
 	@readproperty
 	def media_sources(self):
