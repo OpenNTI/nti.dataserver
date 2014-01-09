@@ -511,6 +511,11 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		res = testapp.delete( edit_url )
 		assert_that( res.status_int, is_( 204 ) )
 
+		testapp.get( edit_url, status=404 )
+		res = self.testapp.get(entry_contents_url)
+		__traceback_info__ = res.json_body
+		self.require_link_href_with_rel(res.json_body['Items'][0], 'replies')
+
 		# When it is replaced with placeholders
 		res = testapp.get( entry_url )
 		assert_that( res.json_body, has_entry( 'PostCount', 1 ) )

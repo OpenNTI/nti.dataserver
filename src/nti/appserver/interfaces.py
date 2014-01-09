@@ -29,6 +29,12 @@ from nti.utils.schema import IndexedIterable as TypedIterable
 
 IContactEmailRecovery = IContactEmailRecovery  # BBB
 
+class IAllowInDeletedPlaceholderLink(interface.Interface):
+	"""
+	Marker interface for a link that should still be returned
+	for deleted objects.
+	"""
+
 class IUserRootResource(ILocation):
 	"""
 	Marker interface for the node in a resource

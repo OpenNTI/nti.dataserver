@@ -521,7 +521,18 @@ class _DeletedObjectPlaceholderDecorator(object):
 			external['tags'] = ()
 
 		if StandardExternalFields.LINKS in external:
-			external[StandardExternalFields.LINKS] = [] # because other things may try to append still
+			# These may or may not be rendered at this point
+			links = []
+			for l in external[StandardExternalFields.LINKS]:
+				try:
+					rel = l['rel']
+				except KeyError:
+					rel = l.rel
+				if rel in ('replies',):
+					# We want to allow access to non-deleted children
+					# XXX FIXME This should probably be a per-interface whitelist?
+					links.append(l)
+			external[StandardExternalFields.LINKS] = links
 
 		# Note that we are still externalizing with the original class and mimetype values;
 		# to do otherwise would almost certainly break client assumptions about the type of data the APIs return.
