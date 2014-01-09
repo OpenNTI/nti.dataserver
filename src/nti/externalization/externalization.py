@@ -218,6 +218,10 @@ def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 	_manager.push( {'name': name} )
 	state.name = name
 
+	if request is _NotGiven:
+		request = get_current_request()
+	state.request = request
+
 	try:
 		return _to_external_object_state( obj, state, True )
 	finally:
