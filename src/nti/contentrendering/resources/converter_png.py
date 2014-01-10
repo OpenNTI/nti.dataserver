@@ -41,8 +41,19 @@ def _size(key, png):
 	# identify, from ImageMagick, is much easier to work with than pdfinfo --box
 	command = ['identify', '-format', '%w %h', png]
 	output = subprocess.check_output( command )
-	width_in_pt, height_in_pt = output.split()
-	return (key, width_in_pt, height_in_pt)
+	output_parts = output.split()
+	if len(output_parts) == 2:
+		# Exactly what we expected, yay
+		width_in_pt, height_in_pt = output_parts
+		return (key, width_in_pt, height_in_pt)
+	elif len(output_parts) >= 3:
+		# Hmm, probably an animated gif?
+		# We get WIDTH x...x HEIGHT
+		# with an intervening value for each frame
+		logger.debug("Animated gif at %s %s?", key, png)
+		return (key, output_parts[0], output_parts[-1])
+	else:
+		raise ValueError("Unsupported identify output %s" % output_parts)
 
 def _scale(input, output, scale, defaultScale):
 	"""Scales the input file to the desired size and then sanitizes the result with pngcrush."""
@@ -239,8 +250,8 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 				return img
 
 		# If anything fails, just let the imager handle it...
-		except Exception, msg:
-			logger.warning('%s in image "%s".	 Reverting to LaTeX to generate the image.' % (msg, name))
+		except Exception as e:
+			logger.warning('%s in image "%s". Reverting to LaTeX to generate the image.', e, name, exc_info=True)
 		return self.newImage(node.source)
 
 def _invert(ifile, ofile):
