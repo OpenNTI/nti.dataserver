@@ -75,6 +75,7 @@ class TestResourceDB(ConfiguringTestBase):
 		rdb = ResourceDB( self.ctx.dom )
 		assert_that( rdb.getResource( '$x^2$', ('mathjax_inline',)), is_( none() ) )
 
+
 	def test_filter_source( self ):
 		string_1 = '\\includegraphics[width=6px]{my/image/file}'
 		string_2 = '\\ntiincludeannotationgraphics[width=6px]{my/image/file}'
@@ -144,3 +145,24 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		assert_that( resource_svg, is_( not_none() ) )
 		# assert_that( open( os.path.join( os.path.dirname(__file__), 'tabular_hlines.svg' ), 'rb' ).read(),
 		# 			 is_( open( resource_svg, 'rb' ).read() ) )
+
+class TestResourceDBAnimatedGIF(ConfiguringTestBase):
+
+	def setUp( self ):
+		super(TestResourceDBAnimatedGIF,self).setUp()
+		self.ctx = RenderContext( simpleLatexDocumentText( preludes=(br'\usepackage{graphicx}',),
+														   bodies=([br'\includegraphics[width=208pt,keepaspectratio=true]{h0EAC0F25.gif}']) ),
+								  files=(os.path.join(os.path.dirname(__file__), 'h0EAC0F25.gif'),))
+		self.ctx.__enter__()
+
+	def tearDown( self ):
+		self.ctx.__exit__( None, None, None )
+		super(TestResourceDBAnimatedGIF,self).tearDown()
+
+	def test_system_generate(self):
+		# This runs a full test and actually invokes renderers.
+		rdb = ResourceDB( self.ctx.dom )
+		rdb.generateResourceSets()
+
+		assert_that(rdb.getResource(br'\includegraphics[width=208pt,keepaspectratio=true]{h0EAC0F25.gif}', ('png', 'orig', 1)),
+					is_( not_none() ))
