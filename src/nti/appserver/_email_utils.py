@@ -243,6 +243,11 @@ def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=N
 	if not fromaddr:
 		fromaddr = getattr( pyramidmailer, 'default_sender', None )
 
+	# NOTE: Amazon SES now supports labels for sending emails, making
+	# it possible to do 'VERP' (https://en.wikipedia.org/wiki/Variable_envelope_return_path),
+	# meaning we can directly identify the account we sent to (or even type of email) in case of a bounce
+	# This requires using 'labels' and modifying the sending address: foo+label@domain.com
+
 	if toaddrs is None:
 		toaddrs = pyramid_mail_message.send_to # required
 
