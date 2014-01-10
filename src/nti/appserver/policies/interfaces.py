@@ -15,6 +15,9 @@ class ISitePolicyUserEventListener(interface.Interface):
 	they should apply to.
 	"""
 
+	DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
+											   'Optional site-specific email sender')
+
 	def map_validation_exception(incoming_data, exception):
 		"""
 		Gives a site policy a chance to change an exception being returned

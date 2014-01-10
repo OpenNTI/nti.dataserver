@@ -420,6 +420,11 @@ class AbstractSitePolicyEventListener(object):
 	Basics of a site policy.
 	"""
 
+	#: An email address used to send emails to users
+	#: such as account creation, both on behalf of this
+	#: object as well as from other places. Optional.
+	DEFAULT_EMAIL_SENDER = None
+
 	#: The asset spec for a template having both text and
 	#: HTML versions. If the asset spec is a bare name
 	#: like "foobar", it is assumed to be located in the

@@ -530,7 +530,10 @@ from nti.dataserver.tests import mock_dataserver
 class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
-	def test_create_user( self ):
+	def test_create_user( self):
+		self._do_test_create_user()
+
+	def _do_test_create_user( self, extra_environ=None ):
 		app = TestApp( self.app )
 
 		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
@@ -540,7 +543,7 @@ class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 
 		path = b'/dataserver2/account.create'
 
-		res = app.post( path, data )
+		res = app.post( path, data, extra_environ=extra_environ )
 
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
@@ -566,7 +569,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-
+		return mailer
 
 class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
@@ -575,6 +578,31 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 		super(TestApplicationCreateUser,self).test_create_user()
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
+
+
+	@WithSharedApplicationMockDS
+	def test_create_user_email_site_policy(self):
+		from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
+		from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+		from zope import interface
+		policy = GenericSitePolicyEventListener()
+		policy.DEFAULT_EMAIL_SENDER = 'test@nextthought.com'
+
+		from z3c.baseregistry.baseregistry import BaseComponents
+		from nti.appserver.policies.sites import BASEADULT
+		site = BaseComponents(BASEADULT, name='sitepolicyemailtest.nextthought.com', bases=(BASEADULT,))
+		component.provideUtility(site, interface.interfaces.IComponents, name='sitepolicyemailtest.nextthought.com')
+
+		site.registerUtility(policy)
+
+		extra_environ = {b'HTTP_ORIGIN': b'http://sitepolicyemailtest.nextthought.com'}
+
+		super(TestApplicationCreateUser,self)._do_test_create_user(extra_environ=extra_environ)
+
+		mailer = component.getUtility( ITestMailDelivery )
+		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
+		assert_that( mailer.queue, has_item( has_entry('From', policy.DEFAULT_EMAIL_SENDER ) ) )
+
 
 
 	@WithSharedApplicationMockDS
