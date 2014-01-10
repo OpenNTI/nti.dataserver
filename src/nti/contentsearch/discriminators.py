@@ -110,7 +110,8 @@ def get_acl(obj, default=None):
 	sharedWith = get_sharedWith(obj)
 	if sharedWith:
 		result.extend(sharedWith)
-	return tuple(set(result)) if result else default
+	result = {x.lower() for x in result}
+	return list(result) if result else default
 
 def get_references(obj, default=None):
 	adapted = search_interfaces.INoteContentResolver(obj, None)
