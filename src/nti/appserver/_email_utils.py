@@ -218,6 +218,8 @@ def send_pyramid_mailer_mail( message ):
 	send_mail( pyramid_mail_message=message )
 	return message
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=None ):
 	"""
 	Sends a message transactionally. The first three arguments are exactly the
@@ -231,7 +233,15 @@ def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=N
 	pyramidmailer = component.queryUtility( IMailer )
 
 	if fromaddr is None:
-		fromaddr = getattr( pyramid_mail_message, 'sender', None ) or getattr( pyramidmailer, 'default_sender', None )
+		fromaddr = getattr( pyramid_mail_message, 'sender', None )
+	if not fromaddr:
+		# Can we get a site policy for the current site?
+		# It would be the unnamed IComponents
+		policy = component.queryUtility(ISitePolicyUserEventListener)
+		if policy:
+			fromaddr = getattr(policy, 'DEFAULT_EMAIL_SENDER', None)
+	if not fromaddr:
+		fromaddr = getattr( pyramidmailer, 'default_sender', None )
 
 	if toaddrs is None:
 		toaddrs = pyramid_mail_message.send_to # required
