@@ -487,6 +487,10 @@ class ILastModifiedResolver(interface.Interface):
 
 	lastModified = nti_schema.Float(title="last modified date", default=0.0)
 
+class ICreatedTimeResolver(interface.Interface):
+
+	createdTime = nti_schema.Float(title="created date", default=0.0)
+
 class ICreatorResolver(interface.Interface):
 
 	creator = nti_schema.ValidTextLine(title="creator user", default=None)
@@ -514,7 +518,8 @@ class IShareableContentResolver(interface.Interface):
 class _ContentMixinResolver(IContentResolver,
 							INTIIDResolver,
 							IContainerIDResolver,
-							ILastModifiedResolver):
+							ILastModifiedResolver,
+							ICreatedTimeResolver):
 	pass
 
 class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
