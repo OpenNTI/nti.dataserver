@@ -462,6 +462,7 @@ class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealna
 		super(_NoOpUserSearchPolicyAndRealnameStripper,self).decorateExternalObject( original, external )
 
 from nti.externalization.interfaces import StandardExternalFields
+from .link_providers import provide_links
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)
@@ -484,10 +485,7 @@ class _AuthenticatedUserLinkAdder(object):
 			return
 
 		links = list( external.get( StandardExternalFields.LINKS, () ) )
-		reg = component.getSiteManager() # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
-
-		for provider in reg.subscribers( (original,request), app_interfaces.IAuthenticatedUserLinkProvider ):
-			links.extend( provider.get_links() )
+		links.extend( provide_links( original, request ) )
 
 		external[StandardExternalFields.LINKS] = links
 

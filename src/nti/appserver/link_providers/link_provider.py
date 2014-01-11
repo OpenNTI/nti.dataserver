@@ -40,6 +40,7 @@ def _make_link( user, link_rel, field=None, view_named=None, mime_type=None ):
 				 elements=elements,
 				 target_mime_type=mime_type)
 	link_belongs_to_user( link, user )
+
 	return link
 
 make_link = _make_link
@@ -72,7 +73,9 @@ class LinkProvider(object):
 		return (link,)
 
 	def _make_link_with_rel( self, rel ):
-		return _make_link( self.user, rel, self.field, self.view_named, self.mime_type )
+		link = _make_link( self.user, rel, self.field, self.view_named, self.mime_type )
+		link._v_provided_by = self
+		return link
 
 	def __repr__( self ):
 		return "<%s %s %s>" % (self.__class__.__name__, self.__name__, self.url)

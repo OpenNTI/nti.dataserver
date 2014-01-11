@@ -11,20 +11,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
-
 from nti.dataserver.interfaces import IUser
-from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
 from pyramid.view import view_config
 
 from nti.dataserver import authorization as nauth
 from nti.appserver import httpexceptions as hexc
 from .link_provider import VIEW_NAME_NAMED_LINKS
+from . import unique_link_providers
 
 def _find_link_providers( user, request, link_name ):
 	providers = []
-	for provider in component.subscribers( (user, request), IAuthenticatedUserLinkProvider ):
+	for provider in unique_link_providers( user, request ):
 		if getattr( provider, '__name__', '' ) == link_name:
 			providers.append( provider )
 		elif any( (x for x in provider.get_links() if x.rel == link_name) ):
