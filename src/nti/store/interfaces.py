@@ -104,9 +104,9 @@ class ICourse(IPurchasable):
 	Duration = schema.Timedelta(title="The length of the course",
 								description="Currently optional, may be None",
 								required=False)
-	EndDate = schema.Date( title="The date on which the course ends",
-						   description="Currently optional; a missing value means the course has no defined end date.",
-						   required=False)
+	EndDate = schema.Datetime( title="The date on which the course ends",
+							   description="Currently optional; a missing value means the course has no defined end date.",
+							   required=False)
 
 
 class IPriceable(interface.Interface):
@@ -208,7 +208,7 @@ class IPaymentProcessor(interface.Interface):
 		:username User making the purchase
 		:expected_amount: expected amount
 		"""
-		
+
 	def sync_purchase(purchase_id, username):
 		"""
 		Synchronized the purchase data with the payment processor info
