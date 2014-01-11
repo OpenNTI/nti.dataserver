@@ -85,6 +85,11 @@ def get_last_modified(obj, default=None):
 	result = adapted.lastModified if adapted else None
 	return result if result else default
 
+def get_created_time(obj, default=None):
+	adapted = search_interfaces.ICreatedTimeResolver(obj, None)
+	result = adapted.createdTime if adapted else None
+	return result if result else default
+
 def get_tags(obj, default=()):
 	result = set()
 	for resolver in component.subscribers((obj,), search_interfaces.ITagsResolver):

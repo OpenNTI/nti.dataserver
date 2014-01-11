@@ -87,6 +87,8 @@ references_		 = u'references'
 inReplyTo_		 = u'inReplyTo'
 recipients_		 = u'recipients'
 sharedWith_		 = u'sharedWith'
+createdTime_	 = unicode(ext_interfaces.StandardInternalFields.CREATED_TIME)
+lastModified_	 = unicode(ext_interfaces.StandardInternalFields.LAST_MODIFIED)
 selectedText_	 = u'selectedText'
 target_ntiid_ 	 = u'target_ntiid'
 containerId_	 = unicode(ext_interfaces.StandardInternalFields.CONTAINER_ID)
@@ -109,6 +111,9 @@ last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 						ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
 						LAST_MODIFIED,
 						last_modified_)
+
+created_time_fields = (ext_interfaces.StandardInternalFields.CREATED_TIME,
+					   ext_interfaces.StandardExternalFields.CREATED_TIME)
 
 text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_,
 			   redactionExplanation_)

@@ -43,7 +43,8 @@ from .constants import (text_, body_, selectedText_, replacementContent_,
 						last_modified_fields, sharedWith_, highlight_, note_, post_,
 						tags_, messageinfo_, redaction_, canvas_, canvastextshape_,
 						references_, title_, inReplyTo_, recipients_, channel_,
-					 	flattenedSharingTargetNames_)
+					 	flattenedSharingTargetNames_, createdTime_, lastModified_,
+					 	created_time_fields)
 
 def get_ntiid_path(ntiid, library=None, registry=component):
 	result = ()
@@ -141,11 +142,18 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 		return ()
 	flattenedSharingTargets = property(get_flattenedSharingTargets)
 
-	def get_last_modified(self):
-		result = self.obj.lastModified
+	def _get_date(self, name):
+		result = getattr(self.obj, name, None)
 		result = float(result) if result is not None else None
 		return result
+
+	def get_last_modified(self):
+		return self._get_date(lastModified_)
 	lastModified = property(get_last_modified)
+
+	@property
+	def createdTime(self):
+		return self._get_date(createdTime_)
 
 class _DefaultTagKeywordResolver(object):
 
@@ -420,6 +428,10 @@ class _DictContentResolver(object):
 		return self._get_attr(last_modified_fields)
 	lastModified = property(get_last_modified)
 
+	def get_created_time(self):
+		return self._get_attr(created_time_fields)
+	createdTime = property(get_created_time)
+
 	# treadable content resolver
 
 	def get_references(self):
@@ -480,7 +492,7 @@ class _BookContentResolver(_BasicContentResolver):
 
 	def get_last_modified(self):
 		return self.obj.last_modified
-	lastModified = property(get_last_modified)
+	createdTime = lastModified = property(get_last_modified)
 
 @component.adapter(search_interfaces.IVideoTranscriptContent)
 @interface.implementer(search_interfaces.IVideoTranscriptContentResolver)
@@ -500,7 +512,7 @@ class _VideoTranscriptContentResolver(_BasicContentResolver):
 
 	def get_last_modified(self):
 		return self.obj.last_modified
-	lastModified = property(get_last_modified)
+	createdTime = lastModified = property(get_last_modified)
 
 @component.adapter(search_interfaces.INTICardContent)
 @interface.implementer(search_interfaces.INTICardContentResolver)
@@ -537,7 +549,7 @@ class _NTICardContentResolver(_BasicContentResolver):
 
 	def get_last_modified(self):
 		return self.obj.last_modified
-	lastModified = property(get_last_modified)
+	createdTime = lastModified = property(get_last_modified)
 
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
