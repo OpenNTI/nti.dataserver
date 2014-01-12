@@ -78,3 +78,32 @@ class TestApplicationDFLViews(SharedApplicationTestBase):
 			assert_that( list(dfl), is_( [other_user] ) )
 
 			assert_that( member_user.entities_followed, does_not( contains( fl1 ) ) )
+
+	@WithSharedApplicationMockDS
+	def test_locked_dfl(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			owner = self._create_user()
+			owner_username = owner.username
+			member_user = self._create_user('member@foo')
+			other_user = self._create_user('otheruser@foo')
+
+			fl1 = users.DynamicFriendsList(username='Friends')
+			fl1.creator = owner  # Creator must be set
+			owner.addContainedObject(fl1)
+			fl1.addFriend(member_user)
+			fl1.addFriend(other_user)
+			fl1.Locked = True
+
+			dfl_ntiid = fl1.NTIID
+
+		testapp = TestApp(self.app)
+
+		# The member is the only one that has the link
+		path = '/dataserver2/Objects/' + dfl_ntiid
+		path = str(path)
+		path = urllib.quote(path)
+
+		res = testapp.get(path, extra_environ=self._make_extra_environ(owner_username))
+		if 'Links' in res.json_body:
+			assert_that(res.json_body, has_entry('Links',
+												 does_not(has_item(has_entries('rel', 'edit')))))

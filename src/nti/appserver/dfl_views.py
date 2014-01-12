@@ -16,13 +16,17 @@ from zope import component
 from pyramid.view import view_config
 
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.singleton import SingletonDecorator
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver._util import AbstractTwoStateViewLinkDecorator
+
+LINKS = ext_interfaces.StandardExternalFields.LINKS
 
 #: The link relationship type describing the current user's
 #: membership in something like a :class:`nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`.
@@ -68,3 +72,21 @@ class DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 		result = user is not None and user in context and not context.Locked
 		return result
 
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class DFLEditLinkRemoverDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, context, external):
+		if context.Locked:
+			edit_idx = -1
+			links = external.get(LINKS, ())
+			for idx, link in enumerate(links):
+				if link.get('rel') == 'edit':
+					edit_idx = idx
+					break
+			if edit_idx != -1:
+				links.pop(edit_idx)
+			if not links and LINKS in external:
+				del external[LINKS]
