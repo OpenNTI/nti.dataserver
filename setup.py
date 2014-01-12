@@ -446,7 +446,7 @@ setup(
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',
 			'virtualenv',
-			'virtualenvwrapper >= 4.1.1',
+			'virtualenvwrapper',
 			'zc.buildout >= 2.2.1',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
 			#'zodbbrowser >= 0.11.0', leads to version conflicts due to its old deps
