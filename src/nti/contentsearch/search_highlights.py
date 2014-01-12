@@ -71,6 +71,8 @@ class HighlightInfo(object):
 	def search_fragments(self):
 		return self.fragments
 
+empty_hi_marker = HighlightInfo()
+
 def prune_phrase_terms_fragments(termset, original_snippet, original_fragments,
 								 punkt_expression):
 	snippets = []
