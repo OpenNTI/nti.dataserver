@@ -46,34 +46,3 @@ def sanitize_content(text, table=None, tokens=False):
 	tokenized_words = split_content(text)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
 	return result
-
-def parse_last_modified(t):
-	"""
-	parsed to a float value a rendered based last modified date
-	"""
-	original = t
-	result = time.time()
-	try:
-		__traceback__info = original
-		if t:
-			ms = ".0"
-			idx = t.rfind(".")
-			if idx != -1:
-				ms = t[idx:]
-				t = t[0:idx]
-
-			# check if there are +00:00 attached
-			idx = ms.find('+')
-			if idx != -1:
-				ms = ms[:idx]
-
-			try:
-				t = time.strptime(t, "%Y-%m-%d %H:%M:%S")
-				t = long(time.mktime(t))
-			except ValueError:
-				t = float(t)
-			result = str(t) + ms
-	except:
-		logger.error("could not parse date %s", original)
-		result = time.time()
-	return float(result)

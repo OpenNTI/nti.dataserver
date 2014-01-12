@@ -20,7 +20,7 @@ import plasTeX
 from plasTeX.TeX import TeX
 from plasTeX.Logging import getLogger
 
-import pytz
+import isodate
 
 log = getLogger(__name__)
 logger = log
@@ -169,7 +169,7 @@ def main():
 	components = interfaces.JobComponents(jobname)
 
 	document.userdata['working-dir'] = os.getcwd()
-	document.userdata['generated_time'] = str(datetime.datetime.utcnow().replace(tzinfo=pytz.UTC))
+	document.userdata['generated_time'] = isodate.datetime_isoformat(datetime.datetime.utcnow())
 	document.userdata['transform_process'] = True
 
 	document.userdata['extra_scripts'] = document.config['NTI']['extra-scripts'].split()
