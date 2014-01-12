@@ -36,7 +36,7 @@ def _word_fragments_highlight(query=None, text=None):
 		result = search_highlights.word_fragments_highlight(query, text,
 															lang=query.language)
 	else:
-		result = search_highlights.HighlightInfo()
+		result = search_highlights.empty_hi_marker
 	return result
 
 @component.adapter(search_interfaces.ISearchHit)
