@@ -215,7 +215,6 @@ setup(
 		# pulls in dm.reuse
 		'dm.zope.schema >= 2.0.1',
 		'dolmen.builtins >= 0.3.1',	 # interfaces for common python types
-		'elasticsearch',
 		'filechunkio >= 1.5',  # Req'd for multi-put in boto == 2.5.2
 		# A very simple (one module, no deps) RSS and Atom feed generator.
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
