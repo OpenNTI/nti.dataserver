@@ -134,6 +134,10 @@
 	<subscriber factory=".ugd_query_views.RepliesLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<subscriber factory=".dfl_views.DFLEditLinkRemoverDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />
