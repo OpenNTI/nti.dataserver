@@ -30,13 +30,15 @@ null_formatter = highlight.NullFormatter()
 
 @interface.implementer(search_interfaces.IWhooshAnalyzer)
 def create_default_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
 	expression = component.getUtility(cp_interfaces.IWordTokenizerExpression, name=lang)
-	stoplist = sw_util.stopwords() if sw_util else ()
 	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False),
-				 analysis.LowercaseFilter(),
-				 analysis.StopFilter(stoplist=stoplist) ]
+				 analysis.LowercaseFilter() ]
 	return analysis.CompositeAnalyzer(*analyzers)
+
+def retokenize(text, lang='en'):
+	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
+	tokens = analyzer(text, chars=True, mode="query", removestops=False)
+	return tokens
 
 @repoze.lru.lru_cache(5)
 def create_fragmenter(maxchars=300, surround=50):
@@ -196,8 +198,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	fragmenter = create_fragmenter(maxchars, surround)
 
 	# sadly we need to retokenize to find term matches
-	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
-	tokens = analyzer(text, chars=True, mode="query", removestops=False)
+	tokens = retokenize(text, lang)
 
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
@@ -223,7 +224,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 			# At this point we could not find a match then,
 			# it's easier to tokenize again rather than to copy the tokens.
 			# Rememer The analyzer returns an generator
-			tokens = analyzer(text, chars=True, mode="query", removestops=False)
+			tokens = retokenize(text, lang)
 			sf = _no_hit_match(sf, maxchars, tokens)
 			snippet = sf.text
 			total_fragments = 1
