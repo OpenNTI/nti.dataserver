@@ -51,8 +51,10 @@ def parse_last_modified(t):
 	"""
 	parsed to a float value a rendered based last modified date
 	"""
+	original = t
 	result = time.time()
 	try:
+		__traceback__info = original
 		if t:
 			ms = ".0"
 			idx = t.rfind(".")
@@ -60,9 +62,18 @@ def parse_last_modified(t):
 				ms = t[idx:]
 				t = t[0:idx]
 
-			t = time.strptime(t, "%Y-%m-%d %H:%M:%S")
-			t = long(time.mktime(t))
+			# check if there are +00:00 attached
+			idx = ms.find('+')
+			if idx != -1:
+				ms = ms[:idx]
+
+			try:
+				t = time.strptime(t, "%Y-%m-%d %H:%M:%S")
+				t = long(time.mktime(t))
+			except ValueError:
+				t = float(t)
 			result = str(t) + ms
 	except:
-		pass
+		logger.error("could not parse date %s", original)
+		result = time.time()
 	return float(result)
