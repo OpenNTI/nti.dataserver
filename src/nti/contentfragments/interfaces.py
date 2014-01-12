@@ -89,7 +89,7 @@ class UnicodeContentFragment(unicode):
 			raise AttributeError(name, type(self))
 		if name == b'__class__':
 			return type(self)
-		return super(UnicodeContentFragment,self).__getattribute__(name)
+		return unicode.__getattribute__(self, name)
 
 	def __setstate__(self, state):
 		# If we had any state saved due to bad pickles in the past
@@ -105,7 +105,14 @@ class UnicodeContentFragment(unicode):
 
 	def __getstate__(self):
 		# Support just the ZCA attributes
-		state = super(UnicodeContentFragment,self).__getattribute__(b'__dict__')
+		try:
+			state = unicode.__getattribute__(self, b'__dict__')
+		except AttributeError:
+			# Hmm, really is a slot
+			try:
+				state = {'__provides__': self.__provides__}
+			except AttributeError:
+				state = None
 		if state:
 			state = {k: v for k, v in state.items() if k in type(self).__slots__}
 			return state

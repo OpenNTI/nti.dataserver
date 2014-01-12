@@ -12,6 +12,7 @@ from nose.tools import assert_raises
 import cPickle as pickle
 
 from nti.contentfragments.interfaces import SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment
+from nti.contentfragments.interfaces import UnicodeContentFragment
 
 def test_html_math(  ):
 
@@ -56,20 +57,43 @@ class ITest(interface.Interface):
 
 def test_cannot_set_attributes_but_can_provide_interfaces_across_pickles():
 
-	for t in SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment:
+	all_ucf_subclasses = set()
+	def r(t):
+		if t in all_ucf_subclasses:
+			return
+		all_ucf_subclasses.add(t)
+		for x in t.__subclasses__():
+			r(x)
+	r(UnicodeContentFragment)
+	# Plus some fixed one just 'cause
+	all_ucf_subclasses.update( (SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment, UnicodeContentFragment) )
+	print(all_ucf_subclasses)
+	for t in all_ucf_subclasses:
 		s1 = t( 'safe' )
 
 		with assert_raises(AttributeError):
 			s1.__parent__ = 'foo'
 
 		# If we do sneak one into the dictionary, it doesn't survive pickling
-		s1dict = unicode.__getattribute__( s1, '__dict__' )
-		s1dict['__parent__'] = 'foo'
+		try:
+			s1dict = unicode.__getattribute__( s1, '__dict__' )
+			s1dict['__parent__'] = 'foo'
+		except AttributeError:
+			if t is not UnicodeContentFragment:
+				# The root really doesn't allow this,
+				# but for some reason of inheritance the
+				# subclasses do?
+				raise
 
 		copy = pickle.loads( pickle.dumps( s1 ) )
 
 		assert_that( copy, is_( s1 ) )
-		copy_dict = unicode.__getattribute__( copy, '__dict__' )
+		try:
+			copy_dict = unicode.__getattribute__( copy, '__dict__' )
+		except AttributeError:
+			if t is not UnicodeContentFragment:
+				raise
+			copy_dict = {}
 		assert_that( copy_dict, is_( {} ) )
 
 		# But if they provided extra interfaces, this does persist
