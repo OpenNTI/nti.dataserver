@@ -345,6 +345,11 @@ class sidebar(Environment):
 	args = 'title'
 	blockType = True
 
+# The following are LaTeX 2e escape commands
+
+class backslash(Base.Command):
+	unicode = u'\u005C'
+
 # The following 'text' symbols are 'Predefined' LaTeX 2e commands
 
 class textcopyright(Base.Command):
