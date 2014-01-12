@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import re
-import time
+import isodate
 import codecs
 from datetime import datetime
 
@@ -36,15 +36,21 @@ from . import whoosh_common_indexer as common_indexer
 # global helper functions
 
 def _get_last_modified(node):
-	last_modified = time.time()
+	last_modified = None
 	for n in node.dom(b'meta'):
 		if node_utils.get_attribute(n, 'http-equiv') == "last-modified":
-			value = node_utils.get_attribute(n, 'content')
-			last_modified = content_utils.parse_last_modified(value)
+			last_modified = node_utils.get_attribute(n, 'content')
 			break
 
-	last_modified = last_modified or time.time()
-	last_modified = datetime.fromtimestamp(float(last_modified))
+	if last_modified is not None:
+		__traceback_info__ = last_modified
+		try:
+			last_modified = isodate.parse_datetime(last_modified)
+		except ValueError:
+			# Hmm...re-indexing old content?
+			last_modified = None
+
+	last_modified = last_modified or datetime.utcnow()
 	return last_modified
 
 class _DataNode(object):
