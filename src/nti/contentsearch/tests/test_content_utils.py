@@ -30,6 +30,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import make_ntiid
 
+from ..interfaces import ITypeResolver
 from ..interfaces import IContentResolver
 from ..interfaces import INoteContentResolver
 from ..interfaces import IHighlightContentResolver
@@ -87,7 +88,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.tags, is_(['ichigo']))
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))
-		assert_that(adapted.type, is_('note'))
+		assert_that(ITypeResolver(note).type, is_('note'))
 
 	@WithMockDSTrans
 	def test_note_adapter_canvas(self):
