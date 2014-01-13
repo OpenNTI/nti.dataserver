@@ -32,11 +32,11 @@
 	<adapter factory=".externalization._IndexHitInternalObjectIO" 
 			 for=".interfaces.IIndexHit" />
 		
-	<adapter factory=".search_hits._SearchHit"
+	<adapter factory=".search_hits.SearchHit"
 			 for="*"
 			 provides=".interfaces.ISearchHit" />
 			 
-	<adapter factory=".search_hits._SearchHit"
+	<adapter factory=".search_hits.SearchHit"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
 

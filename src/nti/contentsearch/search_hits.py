@@ -68,7 +68,7 @@ class _MetaSearchHit(type):
 		return t
 
 @interface.implementer(search_interfaces.ISearchHit)
-class _BaseSearchHit(dict):
+class BaseSearchHit(dict):
 
 	__metaclass__ = _MetaSearchHit
 
@@ -115,7 +115,13 @@ class _BaseSearchHit(dict):
 		return self.get(LAST_MODIFIED, 0)
 	last_modified = lastModified
 
-class _SearchHit(_BaseSearchHit):
+_BaseSearchHit = BaseSearchHit  # BWC
+
+def get_value(obj, name, default=u''):
+	result = getattr(obj, name, None)
+	return result if result else default
+
+class SearchHit(BaseSearchHit):
 
 	adapter_interface = search_interfaces.IUserContentResolver
 
@@ -126,33 +132,30 @@ class _SearchHit(_BaseSearchHit):
 		super(_SearchHit, self).set_hit_info(original, score)
 		adapted = component.queryAdapter(original, self.adapter_interface)
 		self[SNIPPET] = self.get_snippet(adapted)
-		self[NTIID] = self.get_field(adapted, 'get_ntiid')
-		self[CREATOR] = self.get_field(adapted, 'get_creator')
-		self[CONTAINER_ID] = self.get_field(adapted, 'get_containerId')
-		self[LAST_MODIFIED] = self.get_field(adapted, 'get_last_modified', 0)
+		self[NTIID] = get_value(adapted, 'ntiid')
+		self[CREATOR] = get_value(adapted, 'creator')
+		self[CONTAINER_ID] = get_value(adapted, 'containerId')
+		self[LAST_MODIFIED] = get_value(adapted, 'lastModified', 0)
 		return adapted
 
 	@classmethod
-	def get_snippet(cls, adpated):
-		text = cls.get_field(adpated, 'get_content') or u''
+	def get_snippet(cls, adapted):
+		text = get_value(adapted, 'content')
 		text = component.getAdapter(text,
 									frg_interfaces.IPlainTextContentFragment,
 									name='text')
 		return text
 
-	@classmethod
-	def get_field(cls, adapted, mnane, default=u''):
-		m = getattr(adapted, mnane, None)
-		return m() if m is not None else default
+_SearchHit = SearchHit  # BWC
 
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(search_interfaces.INoteSearchHit)
-class _NoteSearchHit(_SearchHit):
+class _NoteSearchHit(SearchHit):
 	adapter_interface = search_interfaces.INoteContentResolver
 
 	def set_hit_info(self, original, score):
 		adapted = super(_NoteSearchHit, self).set_hit_info(original, score)
-		self.title = self.get_field(adapted, "get_title")
+		self.title = get_value(adapted, 'title')
 		return adapted
 
 	def get_title(self):
@@ -160,54 +163,54 @@ class _NoteSearchHit(_SearchHit):
 
 @component.adapter(nti_interfaces.IHighlight)
 @interface.implementer(search_interfaces.IHighlightSearchHit)
-class _HighlightSearchHit(_SearchHit):
+class _HighlightSearchHit(SearchHit):
 	adapter_interface = search_interfaces.IHighlightContentResolver
 
 @component.adapter(nti_interfaces.IRedaction)
 @interface.implementer(search_interfaces.IRedactionSearchHit)
-class _RedactionSearchHit(_SearchHit):
+class _RedactionSearchHit(SearchHit):
 
 	adapter_interface = search_interfaces.IRedactionContentResolver
 
 	def set_hit_info(self, original, score):
 		adapted = super(_RedactionSearchHit, self).set_hit_info(original, score)
-		self.replacement_content = self.get_field(adapted, "get_replacement_content")
-		self.redaction_explanation = self.get_field(adapted, "get_redaction_explanation")
+		self.replacement_content = get_value(adapted, "replacementContent")
+		self.redaction_explanation = get_value(adapted, "redactionExplanation")
 		return adapted
 
 	def get_replacement_content(self):
-		return self.replacement_content or u''
+		return self.replacement_content
 
 	def get_redaction_explanation(self):
-		return self.redaction_explanation or u''
+		return self.redaction_explanation
 
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoSearchHit)
-class _MessageInfoSearchHit(_SearchHit):
+class _MessageInfoSearchHit(SearchHit):
 
 	adapter_interface = search_interfaces.IMessageInfoContentResolver
 
 	def set_hit_info(self, original, score):
 		adapted = super(_MessageInfoSearchHit, self).set_hit_info(original, score)
-		self[ID] = self.get_field(adapted, "get_id")
+		self[ID] = get_value(adapted, "id")
 		return adapted
 
 @component.adapter(for_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostSearchHit)
-class _PostSearchHit(_SearchHit):
+class _PostSearchHit(SearchHit):
 
 	adapter_interface = search_interfaces.IPostContentResolver
 
 	def set_hit_info(self, original, score):
 		adapted = super(_PostSearchHit, self).set_hit_info(original, score)
 		self[TYPE] = POST
-		self[ID] = self.get_field(adapted, "get_id")
-		self.tags = self.get_field(adapted, "get_tags")
-		self.title = self.get_field(adapted, "get_title")
+		self[ID] = get_value(adapted, "id")
+		self.title = get_value(adapted, "title")
+		self.tags = get_value(adapted, "tags" , ())
 		return adapted
 
 	def get_title(self):
-		return self.title or u''
+		return self.title
 
 	def get_tags(self):
 		t = self.tags or ()
@@ -215,7 +218,7 @@ class _PostSearchHit(_SearchHit):
 
 @component.adapter(search_interfaces.IWhooshBookContent)
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
-class _WhooshBookSearchHit(_BaseSearchHit):
+class _WhooshBookSearchHit(BaseSearchHit):
 
 	def __init__(self, hit):
 		super(_WhooshBookSearchHit, self).__init__(hit, self.get_oid(hit))
@@ -236,7 +239,7 @@ class _WhooshBookSearchHit(_BaseSearchHit):
 
 @component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
-class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
+class _WhooshVideoTranscriptSearchHit(BaseSearchHit):
 
 	def __init__(self, hit):
 		super(_WhooshVideoTranscriptSearchHit, self).__init__(hit, self.get_oid(hit))
@@ -261,7 +264,7 @@ class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 
 @component.adapter(search_interfaces.IWhooshNTICardContent)
 @interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
-class _WhooshNTICardSearchHit(_BaseSearchHit):
+class _WhooshNTICardSearchHit(BaseSearchHit):
 
 	def __init__(self, hit):
 		super(_WhooshNTICardSearchHit, self).__init__(hit, self.get_oid(hit))
