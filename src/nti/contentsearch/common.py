@@ -26,21 +26,31 @@ from .constants import (CLASS, MIME_TYPE)
 
 from .constants import (transcript_, messageinfo_, nti_mimetype_prefix,)
 
-def get_type_mappers(sort=False):
-	result = []
-	for _, m in component.getUtilitiesFor(search_interfaces.ISearchTypeMetaData):
-		result.append(m)
-	if sort:
-		result = sorted(result, key=lambda m: m.Order)
-	return result
+_mappers = None
+def get_type_mappers():
+	global _mappers
+	if not _mappers:
+		result = []
+		for _, m in component.getUtilitiesFor(search_interfaces.ISearchTypeMetaData):
+			result.append(m)
+		_mappers = sorted(result, key=lambda m: m.Order)
+	return _mappers
 
+_indexable_types_names = None
 def get_indexable_types():
-	result = {m.Name for m in get_type_mappers()}
-	return result
+	global _indexable_types_names
+	if not _indexable_types_names:
+		result = {m.Name for m in get_type_mappers()}
+		_indexable_types_names = frozenset(result)
+	return _indexable_types_names
 
+_ugd_indexable_types = None
 def get_ugd_indexable_types():
-	result = {m.Name for m in get_type_mappers() if m.IsUGD}
-	return result
+	global _ugd_indexable_types
+	if not _ugd_indexable_types:
+		result = {m.Name for m in get_type_mappers() if m.IsUGD}
+		_ugd_indexable_types = frozenset(result)
+	return _ugd_indexable_types
 
 def epoch_time(dt):
 	if dt:
@@ -94,7 +104,7 @@ def normalize_type_name(x):
 
 def get_type_name(obj):
 
-	for m in get_type_mappers(True):
+	for m in get_type_mappers():
 		if m.Interface.providedBy(obj):
 			return m.Name
 
