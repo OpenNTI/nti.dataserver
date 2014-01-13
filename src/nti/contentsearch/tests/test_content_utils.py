@@ -30,6 +30,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids.ntiids import make_ntiid
 
+from ..interfaces import IACLResolver
 from ..interfaces import ITypeResolver
 from ..interfaces import IContentResolver
 from ..interfaces import INoteContentResolver
@@ -89,6 +90,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))
 		assert_that(ITypeResolver(note).type, is_('note'))
+		assert_that(IACLResolver(note).acl, is_([usr.username]))
 
 	@WithMockDSTrans
 	def test_note_adapter_canvas(self):
