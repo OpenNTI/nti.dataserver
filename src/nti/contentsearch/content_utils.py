@@ -227,17 +227,20 @@ class _RedactionContentResolver(_HighLightContentResolver):
 		return result if result else None
 	redactionExplanation = property(get_redaction_explanation)
 
+def resolve_content_parts(data):
+	result = []
+	items = common.to_list(data)
+	for item in items or ():
+		adapted = search_interfaces.IContentResolver(item, None)
+		if adapted:
+			result.append(adapted.content)
+	result = u' '.join([x for x in result if x is not None])
+	return result
+
 class _PartsContentResolver(object):
 
 	def _resolve(self, data):
-		result = []
-		items = common.to_list(data)
-		for item in items or ():
-			adapted = search_interfaces.IContentResolver(item, None)
-			if adapted:
-				result.append(adapted.get_content())
-		result = u' '.join([x for x in result if x is not None])
-		return result
+		return resolve_content_parts(data)
 
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(search_interfaces.INoteContentResolver)
