@@ -74,13 +74,13 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return catalog
 
 	def _valid_type(self, type_name, catnames):
-		return type_name in catnames and type_name in constants.ugd_indexable_type_names
+		return type_name in catnames and type_name in common.get_ugd_indexable_types()
 
 	def _adapt_search_on_types(self, searchOn=()):
 		cns = self.get_catalog_names()
 		result = [common.normalize_type_name(x) \
 				  for x in searchOn if self._valid_type(x, cns)] if searchOn else cns
-		result = common.sort_search_types(result)
+		result = common.sort_search_types(result) if result else ()
 		return result
 
 	@metricmethod

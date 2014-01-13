@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -14,8 +17,6 @@ from ..pyramid_views import create_queryobject
 from .. import interfaces as search_interfaces
 
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, is_)
 
 class TestPyramidViews(ConfiguringTestBase):
 
@@ -54,7 +55,7 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.batchSize, is_(100))
 		assert_that(qo.batchStart, is_(3))
 		assert_that(sorted(qo.searchOn), is_(sorted((u'content', u'highlight', u'messageinfo', u'nticard',
-													 u'redaction', u'videotranscript'))))
+													 u'redaction', u'transcript', u'videotranscript'))))
 
 		params = {'exclude':'*/*'}
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)

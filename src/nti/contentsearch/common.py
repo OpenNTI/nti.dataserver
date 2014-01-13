@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Search common functions.
@@ -19,34 +20,27 @@ from datetime import datetime
 
 from zope import component
 
-from nti.chatserver import interfaces as chat_interfaces
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
-
-from nti.externalization import interfaces as ext_intefaces
-
 from . import interfaces as search_interfaces
 
-from .constants import (CLASS, MIME_TYPE, BOOK_CONTENT_MIME_TYPE, POST_MIME_TYPE,
-						VIDEO_TRANSCRIPT_MIME_TYPE, NTI_CARD_MIME_TYPE)
+from .constants import (CLASS, MIME_TYPE)
 
-from .constants import (content_, post_, note_, highlight_, redaction_,
-						indexable_types_order, indexable_type_names, transcript_,
-						messageinfo_, nti_mimetype_prefix, videotranscript_, nticard_)
+from .constants import (transcript_, messageinfo_, nti_mimetype_prefix,)
 
-# Make sure we keep this order, especially since we need to test first for INote before IHighlight
-interface_to_indexable_types = (
-	(search_interfaces.IBookContent, content_),
-	(search_interfaces.IVideoTranscriptContent, videotranscript_),
-	(search_interfaces.INTICardContent, nticard_),
-	(nti_interfaces.INote, note_),
-	(nti_interfaces.IHighlight, highlight_),
-	(nti_interfaces.IRedaction, redaction_),
-	(chat_interfaces.IMessageInfo, messageinfo_),
-	(forum_interfaces.IPost, post_))
+def get_type_mappers(sort=False):
+	result = []
+	for _, m in component.getUtilitiesFor(search_interfaces.ISearchTypeMetaData):
+		result.append(m)
+	if sort:
+		result = sorted(result, key=lambda m: m.Order)
+	return result
 
-mime_type_map = None
+def get_indexable_types():
+	result = {m.Name for m in get_type_mappers()}
+	return result
+
+def get_ugd_indexable_types():
+	result = {m.Name for m in get_type_mappers() if m.IsUGD}
+	return result
 
 def epoch_time(dt):
 	if dt:
@@ -100,9 +94,9 @@ def normalize_type_name(x):
 
 def get_type_name(obj):
 
-	for iface, name in interface_to_indexable_types:
-		if iface.providedBy(obj):
-			return name
+	for m in get_type_mappers(True):
+		if m.Interface.providedBy(obj):
+			return m.Name
 
 	# legacy and test purpose
 	if not isinstance(obj, dict):
@@ -119,44 +113,25 @@ def get_type_name(obj):
 
 def get_mimetype_from_type(name):
 	name = name.lower() if name else u''
-	mmap = get_mime_type_map()
-	for k, v in mmap.items():
-		if v == name:
-			return k
+	for m in get_type_mappers():
+		if m.Name == name:
+			return m.MimeType
 	return None
 
 def get_type_from_mimetype(mt):
 	mt = mt.lower() if mt else u''
-	mmap = get_mime_type_map()
-	result = mmap.get(mt, None)
-	if result is None and mt.startswith(nti_mimetype_prefix):
-		result = mt[len(nti_mimetype_prefix):]
-		if result == transcript_:
-			result = messageinfo_
-	result = result if result in indexable_type_names else None
-	return normalize_type_name(result) if result else None
+	for m in get_type_mappers():
+		if m.MimeType == mt:
+			if m.Name == transcript_:  # transcript and messageinfo are the same
+				return messageinfo_
+			return m.Name
+	return None
 
 def get_mime_type_map():
-	global mime_type_map
-	if not mime_type_map:
-		mime_type_map = {}
-		utils = component.getUtilitiesFor(ext_intefaces.IMimeObjectFactory)
-		for mime_type, utility in utils:
-			ifaces = utility.getInterfaces()
-			for iface in ifaces:
-				for indexable, type_name in interface_to_indexable_types:
-					if iface.extends(indexable, strict=False):
-						mime_type_map[mime_type] = type_name
-						break
-				if mime_type in mime_type_map:
-					break
-		if mime_type_map:
-			mime_type_map[POST_MIME_TYPE] = post_
-			mime_type_map[NTI_CARD_MIME_TYPE] = nticard_
-			mime_type_map[BOOK_CONTENT_MIME_TYPE] = content_
-			mime_type_map[VIDEO_TRANSCRIPT_MIME_TYPE] = videotranscript_
-
-	return mime_type_map
+	result = {}
+	for m in get_type_mappers():
+		result[m.MimeType] = m.Name
+	return result
 
 def is_all_query(query):
 	mo = re.search('([\?\*])', query)
@@ -174,9 +149,10 @@ def to_list(data):
 	return data
 
 def get_sort_order(type_name):
-	return indexable_types_order.get(type_name, 0)
+	m = component.queryUtility(search_interfaces.ISearchTypeMetaData, name=type_name)
+	return m.Order if m is not None else 0
 
-def sort_search_types(type_names=indexable_type_names):
+def sort_search_types(type_names=()):
 	type_names = to_list(type_names)
-	result = sorted(type_names, key=lambda x: indexable_types_order.get(x, 0))
+	result = sorted(type_names, key=lambda x: get_sort_order(x))
 	return result

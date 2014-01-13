@@ -187,6 +187,23 @@
 				for="dict"
 				provides=".interfaces.IKeywordsResolver"/>
 			 	 
+	<!-- Type metadata -->
+
+	<utility factory=".search_metadata._note_metadata" name="note" />
+	<utility factory=".search_metadata._post_metadata" name="post" />
+	<utility factory=".search_metadata._book_metadata" name="content" />
+	<utility factory=".search_metadata._nticard_metadata" name="nticard" />
+	<utility factory=".search_metadata._highlight_metadata" name="highlight" />
+	<utility factory=".search_metadata._redaction_metadata" name="redaction" />
+	<utility factory=".search_metadata._transcript_metadata" name="transcript" />
+	<utility factory=".search_metadata._messageinfo_metadata" name="messageinfo" />
+	<utility factory=".search_metadata._videotranscript_metadata" name="videotranscript" />
+	
+	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
+	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
+	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
+	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
+		
 	<!-- Search highlights -->
 
 	<utility factory=".search_highlights.create_default_analyzer" name="en" />
