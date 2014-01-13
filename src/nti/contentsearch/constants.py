@@ -143,9 +143,5 @@ NTI_CARD_MIME_TYPE = u'application/vnd.nextthought.nticard'
 BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
 VIDEO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.videotranscript'
 
-ugd_indexable_type_names = (note_, post_, highlight_, redaction_, messageinfo_)
-indexable_type_names = (content_, videotranscript_, nticard_) + ugd_indexable_type_names
-indexable_types_order = dict({ p:x for x, p in enumerate(indexable_type_names) })
-
 ascending_ = u'ascending'
 descending_ = u'descending'

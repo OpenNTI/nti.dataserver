@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Search interfaces.
@@ -18,8 +19,6 @@ from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import constants
-
 from nti.utils import schema as nti_schema
 
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
@@ -37,11 +36,6 @@ class IRepozeDataStore(IFullMapping):
 
 # search query
 
-SEARCH_TYPES_VOCABULARY = \
-	schema.vocabulary.SimpleVocabulary(
-				[schema.vocabulary.SimpleTerm(_x) \
-				for _x in constants.indexable_type_names + (constants.invalid_type_,)])
-
 class ISearchQuery(interface.Interface):
 
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
@@ -53,9 +47,8 @@ class ISearchQuery(interface.Interface):
 
 	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
 
-	searchOn = nti_schema.ListOrTuple(
-						value_type=schema.Choice(vocabulary=SEARCH_TYPES_VOCABULARY),
-						title="Content types to search on", required=False)
+	searchOn = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Content types to search on"),
+									  required=False)
 
 	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
 
@@ -470,6 +463,13 @@ class IWhooshQueryParser(ISearchQueryParser):
 		pass
 
 # user generated content resolvers
+
+class ISearchTypeMetaData(interface.Interface):
+	Name = nti_schema.ValidTextLine(title="Search type name", readonly=True)
+	MimeType = nti_schema.ValidTextLine(title="Search object mimeType", readonly=True)
+	IsUGD = nti_schema.Bool(title="Is user generated data", default=True, readonly=True)
+	Order = nti_schema.Int(title="Search order", default=99, readonly=True, required=False)
+	Interface = nti_schema.Object(interface.Interface, title="Object Interface", readonly=True)
 
 class ITypeResolver(interface.Interface):
 

@@ -51,9 +51,11 @@ def clean_search_query(query, language='en'):
 #### from IPython.core.debugger import Tracer; Tracer()() #####
 
 accepted_keys = {'ntiid', 'accept', 'exclude'}
-indexable_type_names = frozenset(constants.indexable_type_names)
 
 def create_queryobject(username, params, matchdict, registry=component):
+
+	indexable_type_names = common.get_indexable_types()
+
 	# parse params:
 	args = dict(params)
 	for name in list(args.keys()):
