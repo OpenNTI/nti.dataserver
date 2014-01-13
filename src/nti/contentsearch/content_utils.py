@@ -103,7 +103,8 @@ def _process_words(words):
 			words = ()
 	return words or ()
 
-@interface.implementer(search_interfaces.IContentResolver)
+@interface.implementer(search_interfaces.IContentResolver,
+					   search_interfaces.ITypeResolver)
 class _BasicContentResolver(object):
 
 	def __init__(self, obj):
@@ -111,6 +112,10 @@ class _BasicContentResolver(object):
 
 class _AbstractIndexDataResolver(_BasicContentResolver):
 
+	@property
+	def type(self):
+		return common.get_type_name(self.obj)
+	
 	def get_ntiid(self):
 		result = to_external_ntiid_oid(self.obj)
 		return result
@@ -381,6 +386,10 @@ class _DictContentResolver(object):
 
 		result = unicode(result) if result else u''
 		return result
+
+	@property
+	def type(self):
+		return common.get_type_name(self.obj)
 
 	def get_content(self):
 		return self.get_multipart_content(self.obj)

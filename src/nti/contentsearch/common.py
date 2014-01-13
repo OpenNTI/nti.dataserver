@@ -100,9 +100,9 @@ def normalize_type_name(x):
 
 def get_type_name(obj):
 
-	for iface, type_ in interface_to_indexable_types:
+	for iface, name in interface_to_indexable_types:
 		if iface.providedBy(obj):
-			return type_
+			return name
 
 	# legacy and test purpose
 	if not isinstance(obj, dict):

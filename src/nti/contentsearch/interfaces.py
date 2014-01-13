@@ -471,6 +471,10 @@ class IWhooshQueryParser(ISearchQueryParser):
 
 # user generated content resolvers
 
+class ITypeResolver(interface.Interface):
+
+	type = nti_schema.ValidTextLine(title="content type", default=None)
+
 class IContentResolver(interface.Interface):
 
 	content = nti_schema.ValidTextLine(title="content to index", default=None)
