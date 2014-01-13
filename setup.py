@@ -403,7 +403,7 @@ setup(
 		# STX is a plain text markup in which document structure is signalled primarily by identation.
 		# Pulled in by ...?
 		'zope.structuredtext >= 4.0.0',
-		'zope.tal >= 4.0.0a1',
+		'zope.tal',
 		'zope.tales >= 4.0.2',
 		'zope.traversing >= 4.0.0a3',
 		# Plug to make zope.schema's vocabulary registry ZCA
