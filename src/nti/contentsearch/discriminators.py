@@ -16,7 +16,6 @@ from nti.contentprocessing import compute_ngrams
 
 from nti.externalization import oids
 
-from . import common
 from . import content_utils
 from . import interfaces as search_interfaces
 
@@ -47,7 +46,8 @@ def query_object(uid, default=None, intids=None):
 	return result
 
 def get_type(obj, default=None):
-	result = common.get_type_name(obj)
+	adapted = search_interfaces.ITypeResolver(obj, None)
+	result = adapted.type if adapted else None
 	return result or default
 
 def get_mimetype(obj, default=None):
