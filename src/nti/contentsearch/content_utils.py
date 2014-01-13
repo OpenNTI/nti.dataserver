@@ -45,7 +45,7 @@ from .constants import (text_, body_, selectedText_, replacementContent_,
 						tags_, messageinfo_, redaction_, canvas_, canvastextshape_,
 						references_, title_, inReplyTo_, recipients_, channel_,
 					 	flattenedSharingTargetNames_, createdTime_, lastModified_,
-					 	created_time_fields)
+					 	created_time_fields, content_, videotranscript_, nticard_)
 
 def get_ntiid_path(ntiid, library=None, registry=component):
 	result = ()
@@ -491,6 +491,10 @@ class _DictContentResolver(object):
 @interface.implementer(search_interfaces.IBookContentResolver)
 class _BookContentResolver(_BasicContentResolver):
 
+	@property
+	def type(self):
+		return content_
+
 	def get_content(self):
 		return self.obj.content
 	content = property(get_content)
@@ -507,6 +511,10 @@ class _BookContentResolver(_BasicContentResolver):
 @component.adapter(search_interfaces.IVideoTranscriptContent)
 @interface.implementer(search_interfaces.IVideoTranscriptContentResolver)
 class _VideoTranscriptContentResolver(_BasicContentResolver):
+
+	@property
+	def type(self):
+		return videotranscript_
 
 	def get_content(self):
 		return self.obj.content
@@ -527,6 +535,10 @@ class _VideoTranscriptContentResolver(_BasicContentResolver):
 @component.adapter(search_interfaces.INTICardContent)
 @interface.implementer(search_interfaces.INTICardContentResolver)
 class _NTICardContentResolver(_BasicContentResolver):
+
+	@property
+	def type(self):
+		return nticard_
 
 	def get_content(self):
 		return self.obj.content

@@ -519,7 +519,8 @@ class IShareableContentResolver(interface.Interface):
 									  	title='sharedWith', default=())
 
 
-class _ContentMixinResolver(IContentResolver,
+class _ContentMixinResolver(ITypeResolver,
+							IContentResolver,
 							INTIIDResolver,
 							IContainerIDResolver,
 							ILastModifiedResolver,

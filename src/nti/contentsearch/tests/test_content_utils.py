@@ -87,6 +87,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.tags, is_(['ichigo']))
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))
+		assert_that(adapted.type, is_('note'))
 
 	@WithMockDSTrans
 	def test_note_adapter_canvas(self):
@@ -126,6 +127,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.keywords, has_length(0))
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))
+		assert_that(adapted.type, is_('redaction'))
 
 	@WithMockDSTrans
 	def test_highlight_adpater(self):
@@ -146,6 +148,7 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.keywords, has_length(0))
 		assert_that(adapted.sharedWith, has_length(0))
 		assert_that(adapted.lastModified, is_not(None))
+		assert_that(adapted.type, is_('highlight'))
 
 	@WithMockDSTrans
 	def test_messageinfo_adapter_canvas(self):
@@ -157,9 +160,11 @@ class TestContentUtils(ConfiguringTestBase):
 		mi.Body = [u'Beginning of Despair, the Unreachable Blade', c]
 		adapted = IMessageInfoContentResolver(mi)
 		assert_that(adapted.content, is_('Beginning of Despair, the Unreachable Blade Ichigo VS Ulquiorra'))
+		assert_that(adapted.type, is_('messageinfo'))
 
 	def test_dict_adpater(self):
 		adapted = IContentResolver(self.note)
+		assert_that(adapted.type, is_('note'))
 		assert_that(adapted.content, is_('Eddard Stark Lord of Winterfell'))
 		assert_that(adapted.references, has_length(0))
 		assert_that(adapted.creator, is_('carlos.sanchez@nextthought.com'))
