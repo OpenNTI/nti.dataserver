@@ -471,6 +471,11 @@ class ISearchTypeMetaData(interface.Interface):
 	Order = nti_schema.Int(title="Search order", default=99, readonly=True, required=False)
 	Interface = nti_schema.Object(interface.Interface, title="Object Interface", readonly=True)
 
+class IACLResolver(interface.Interface):
+
+	acl = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="entity username"),
+								 title='username', default=())
+
 class ITypeResolver(interface.Interface):
 
 	type = nti_schema.ValidTextLine(title="content type", default=None)

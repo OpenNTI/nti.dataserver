@@ -109,15 +109,9 @@ def get_sharedWith(obj, default=None):
 	return result or default
 
 def get_acl(obj, default=None):
-	result = []
-	creator = get_creator(obj)
-	if creator:
-		result.append(creator)
-	sharedWith = get_sharedWith(obj)
-	if sharedWith:
-		result.extend(sharedWith)
-	result = {x.lower() for x in result}
-	return list(result) if result else default
+	adapted = search_interfaces.IACLResolver(obj, None)
+	result = adapted.acl if adapted else None
+	return result or default
 
 def get_references(obj, default=None):
 	adapted = search_interfaces.INoteContentResolver(obj, None)

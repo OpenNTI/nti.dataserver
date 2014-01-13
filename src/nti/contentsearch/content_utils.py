@@ -576,6 +576,22 @@ class _NTICardContentResolver(_BasicContentResolver):
 		return self.obj.last_modified
 	createdTime = lastModified = property(get_last_modified)
 
+@interface.implementer(search_interfaces.IACLResolver)
+class _ACLResolver(_BasicContentResolver):
+
+	@property
+	def acl(self):
+		result = set()
+		obj = self.obj
+		resolver = search_interfaces.ICreatorResolver(obj, None)
+		if resolver is not None:
+			result.add(resolver.creator.lower())
+		resolver = search_interfaces.IShareableContentResolver(obj, None)
+		if resolver is not None:
+			result.update([x.lower() for x in resolver.sharedWith])
+		return list(result) if result else None
+
+
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
 
