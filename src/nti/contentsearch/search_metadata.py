@@ -39,76 +39,93 @@ class SearchTypeMetaData(SchemaConfigured):
 	def Type(self):
 		return self.Name
 
+	def __str__(self):
+		return "%s(%r,%r)" % (self.__class__.__name__, self.Name, self.MimeType)
+	__repr__ = __str__
+
+	def __eq__(self, other):
+		try:
+			return self is other or (self.Name == other.Name
+									 and self.MimeType == other.MimeType)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.Name)
+		xhash ^= hash(self.MimeType)
+		return xhash
+
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _note_metadata():
 	return SearchTypeMetaData(Name=note_, MimeType=(MIME_BASE + "." + note_),
-							 IsUGD=True, Order=5, Interface=nti_interfaces.INote)
+							  IsUGD=True, Order=5, Interface=nti_interfaces.INote)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _highlight_metadata():
 	return SearchTypeMetaData(Name=highlight_, MimeType=(MIME_BASE + "." + highlight_),
-							 IsUGD=True, Order=6, Interface=nti_interfaces.IHighlight)
+							  IsUGD=True, Order=6, Interface=nti_interfaces.IHighlight)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _redaction_metadata():
 	return SearchTypeMetaData(Name=redaction_, MimeType=(MIME_BASE + "." + redaction_),
-							 IsUGD=True, Order=7, Interface=nti_interfaces.IRedaction)
+							  IsUGD=True, Order=7, Interface=nti_interfaces.IRedaction)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _transcript_metadata():
 	return SearchTypeMetaData(Name=transcript_, MimeType=(MIME_BASE + "." + transcript_),
-							 IsUGD=True, Order=8, Interface=nti_interfaces.ITranscript)
+							  IsUGD=True, Order=8, Interface=nti_interfaces.ITranscript)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _messageinfo_metadata():
 	return SearchTypeMetaData(Name=messageinfo_, MimeType=(MIME_BASE + "." + messageinfo_),
-							 IsUGD=True, Order=8, Interface=chat_interfaces.IMessageInfo)
+							  IsUGD=True, Order=8, Interface=chat_interfaces.IMessageInfo)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _post_metadata():
 	return SearchTypeMetaData(Name=post_, MimeType=POST_MIME_TYPE,
-							 IsUGD=True, Order=9, Interface=forum_interfaces.IPost)
+							  IsUGD=True, Order=9, Interface=forum_interfaces.IPost)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _legacypost_metadata():
 	return SearchTypeMetaData(Name=post_, MimeType=(MIME_BASE + "." + post_),
-							 IsUGD=True, Order=9,
-							 Interface=forum_interfaces.IPost)
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.IPost)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _personalblogcomment_metadata():
 	return SearchTypeMetaData(Name=post_,
-							 MimeType=(MIME_BASE + ".forums.personalblogcomment"),
-							 IsUGD=True, Order=9,
-							 Interface=forum_interfaces.IPersonalBlogComment)
+							  MimeType=(MIME_BASE + ".forums.personalblogcomment"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.IPersonalBlogComment)
 	
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _personalblogentrypost_metadata():
 	return SearchTypeMetaData(Name=post_,
-							 MimeType=(MIME_BASE + ".forums.personalblogentrypost"),
-							 IsUGD=True, Order=9,
-							 Interface=forum_interfaces.IPersonalBlogEntryPost)
+							  MimeType=(MIME_BASE + ".forums.personalblogentrypost"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.IPersonalBlogEntryPost)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _nticard_metadata():
 	return SearchTypeMetaData(Name=nticard_, MimeType=NTI_CARD_MIME_TYPE,
-							 IsUGD=False, Order=3,
-							 Interface=search_interfaces.INTICardContent)
+							  IsUGD=False, Order=3,
+							  Interface=search_interfaces.INTICardContent)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _book_metadata():
 	return SearchTypeMetaData(Name=content_, MimeType=BOOK_CONTENT_MIME_TYPE,
-							 IsUGD=False, Order=1,
-							 Interface=search_interfaces.IBookContent)
+							  IsUGD=False, Order=1,
+							  Interface=search_interfaces.IBookContent)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _legacycontent_metadata():
 	return SearchTypeMetaData(Name=content_, MimeType=(MIME_BASE + "." + content_),
-							 IsUGD=False, Order=1,
-							 Interface=search_interfaces.IBookContent)
+							  IsUGD=False, Order=1,
+							  Interface=search_interfaces.IBookContent)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _videotranscript_metadata():
 	return SearchTypeMetaData(Name=videotranscript_, MimeType=VIDEO_TRANSCRIPT_MIME_TYPE,
-							 IsUGD=False, Order=2,
-							 Interface=search_interfaces.IVideoTranscriptContent)
+							  IsUGD=False, Order=2,
+							  Interface=search_interfaces.IVideoTranscriptContent)
