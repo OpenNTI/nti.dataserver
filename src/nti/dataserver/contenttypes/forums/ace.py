@@ -5,7 +5,7 @@ Relating to ACE implementations for objects defined in this package.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,8 +24,7 @@ from . import interfaces as frm_interfaces
 					   nti_interfacess.IACE,
 					   zmime_interfaces.IContentTypeAware)
 class ForumACE(SchemaConfigured):
-	mime_type = u'application/vnd.nextthought.forums.ace'
-
+	mimeType = mime_type = u'application/vnd.nextthought.forums.ace'
 	createDirectFieldProperties(frm_interfaces.IForumACE)
 
 	def __iter__(self):
@@ -34,8 +33,8 @@ class ForumACE(SchemaConfigured):
 				yield (self.Action, entity, perm)
 
 	def __str__(self):
-		return "%s(%s,%s,%s)" % (self.__class__, self.Action, self.Permissions, self.Entities)
-
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.Action,
+								 self.Permissions, self.Entities)
 	__repr__ = __str__
 
 	def __eq__(self, other):
