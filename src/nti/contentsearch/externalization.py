@@ -52,7 +52,7 @@ class _IndexHitMetaDataExternalizer(object):
 		result = LocatedExternalDict()
 		result[LAST_MODIFIED] = self.data.last_modified
 		result[TOTAL_HIT_COUNT] = self.data.total_hit_count
-		result[TYPE_COUNT] = {k.capitalize():v for k, v in self.data.type_count.items()}
+		result[TYPE_COUNT] = {k:v for k, v in self.data.type_count.items()}
 		return result
 
 # search results
@@ -99,7 +99,8 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		if self.is_batching:
 			if self.batchStart < len(self.results):
-				return Batch(self.results.hits, start=self.batchStart, size=self.batchSize)
+				return Batch(self.results.hits, start=self.batchStart,
+							 size=self.batchSize)
 			else:
 				return ()
 		else:
