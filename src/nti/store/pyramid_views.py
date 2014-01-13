@@ -135,26 +135,38 @@ class GetPurchaseAttemptView(object):
 									  'Last Modified':purchase.lastModified})
 		return result
 
+from pyramid.authorization import ACLAuthorizationPolicy
+from nti.dataserver.authorization import ACT_READ
+
 class GetPurchasablesView(object):
 
 	def __init__(self, request):
 		self.request = request
 
 	def __call__(self):
-		purchasables = purchasable.get_all_purchasables()
+		purchasables = list(purchasable.get_all_purchasables())
+		for p in list(purchasables):
+			if hasattr(p, 'HACK_make_acl'):
+				acl = p.HACK_make_acl()
+				class Dummy(object):
+					__acl__ = None
+				dummy = Dummy()
+				dummy.__acl__ = acl
+				policy = ACLAuthorizationPolicy()
+				if not policy.permits(dummy, self.request.effective_principals, ACT_READ):
+					logger.debug('Removing purch %s', p)
+					purchasables.remove(p)
+
 		result = LocatedExternalDict({'Items': purchasables, 'Last Modified':0})
 		return result
 
-class GetCoursesView(object):
-
-	def __init__(self, request):
-		self.request = request
+class GetCoursesView(GetPurchasablesView):
 
 	def __call__(self):
-		purchasables = purchasable.get_all_purchasables()
-		courses = \
-			list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
-		result = LocatedExternalDict({'Items': courses, 'Last Modified':0})
+		result = super(GetPurchasablesView,self).__call__()
+		purchasables = result['Items']
+		courses = list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
+		result['Items'] = courses
 		return result
 
 # post - views
