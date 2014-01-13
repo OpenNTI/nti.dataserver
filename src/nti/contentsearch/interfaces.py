@@ -524,15 +524,16 @@ class IShareableContentResolver(interface.Interface):
 									  	title='sharedWith', default=())
 
 
-class _ContentMixinResolver(ITypeResolver,
-							IContentResolver,
-							INTIIDResolver,
-							IContainerIDResolver,
-							ILastModifiedResolver,
-							ICreatedTimeResolver):
+class ContentMixinResolver(ITypeResolver,
+						   IContentResolver,
+						   INTIIDResolver,
+						   IContainerIDResolver,
+						   ILastModifiedResolver,
+						   ICreatedTimeResolver):
 	pass
+_ContentMixinResolver = ContentMixinResolver  # BWC
 
-class IUserContentResolver(_ContentMixinResolver, ICreatorResolver):
+class IUserContentResolver(ContentMixinResolver, ICreatorResolver):
 	pass
 
 class IThreadableContentResolver(IUserContentResolver,
