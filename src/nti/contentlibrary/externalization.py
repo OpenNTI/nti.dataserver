@@ -97,7 +97,8 @@ class _ContentPackageExternal(object):
 		result['root'] = root_url
 		result['title'] = self.package.title # Matches result['DCTitle']
 
-		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href if self.package.index else None
+		index_dc = '?dc=' + str(self.package.index_last_modified ) if self.package.index_last_modified else ''
+		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href + index_dc if self.package.index else None
 		result['index_jsonp'] = interfaces.IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
 
 
