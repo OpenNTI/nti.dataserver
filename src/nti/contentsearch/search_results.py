@@ -23,7 +23,6 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.utils.sort import isorted
 from nti.utils.property import alias
 
-from . import common
 from . import discriminators
 from . import interfaces as search_interfaces
 
@@ -91,17 +90,18 @@ class IndexHitMetaData(object):
 		selected = ihit.obj
 
 		# container count
-		rsr = search_interfaces.IContainerIDResolver(selected, None)
-		containerId = rsr.containerId if rsr else self.unspecified_container
+		resolver = search_interfaces.IContainerIDResolver(selected, None)
+		containerId = resolver.containerId if resolver else self.unspecified_container
 		self.container_count[containerId] = self.container_count[containerId] + 1
 
 		# last modified
-		rsr = search_interfaces.ILastModifiedResolver(selected, None)
-		lastModified = rsr.lastModified if rsr else 0
+		resolver = search_interfaces.ILastModifiedResolver(selected, None)
+		lastModified = resolver.lastModified if resolver else 0
 		self.lastModified = max(self.lastModified, lastModified or 0)
 
 		# type count
-		type_name = common.get_type_name(selected)
+		resolver = search_interfaces.ITypeResolver(selected, None)
+		type_name = resolver.type if resolver else 0
 		self.type_count[type_name] = self.type_count[type_name] + 1
 
 	def __iadd__(self, other):
