@@ -328,6 +328,8 @@ def _string_role_factory( name ):
 		return result
 	return _StringRole(name)
 
+from nti.utils.property import alias
+
 @interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(nti_interfaces.IUser)
 class _UserPrincipal(_AbstractPrincipal):
@@ -337,12 +339,12 @@ class _UserPrincipal(_AbstractPrincipal):
 
 	def __init__( self, user ):
 		self.context = user
+		self.id = user.username
 
-	@property
-	def id(self):
-		return self.context.username
-	title = id
-	description = id
+	username = alias('id')
+	title = alias('id')
+	description = alias('id')
+
 
 @interface.implementer(nti_interfaces.IGroupAwarePrincipal)
 @component.adapter(nti_interfaces.IUser)
