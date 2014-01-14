@@ -188,7 +188,6 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( )
 
 		extDict['lastLoginTime'] = self.entity.lastLoginTime
-		extDict['NotificationCount'] = self.entity.notificationCount.value
 		if self.public_summary_profile_fields:
 			prof = interfaces.IUserProfile( self.entity )
 			for f in self.public_summary_profile_fields:
@@ -239,6 +238,8 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 			return result
 
+		extDict['NotificationCount'] = self.entity.notificationCount.value
+
 		prof = interfaces.IRestrictedUserProfile( self.entity )
 		extDict['email'] = prof.email
 		extDict['birthdate'] = prof.birthdate.isoformat() if prof.birthdate is not None else None
@@ -286,7 +287,20 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 		return _links
 
-_UserExternalObject = _UserPersonalSummaryExternalObject
+# By default, when externalizing we send the minimum public data.
+# A few places exist, such as the resolve user api, that can
+# get the 'complete' data by asking for the registered 'personal'
+# externalizer
+from pyramid.threadlocal import get_current_request
+@interface.implementer( IExternalObject )
+@component.adapter( nti_interfaces.IUser )
+def _UserExternalObject(user):
+	# XXX This doesn't exactly belong at this layer. Come up with
+	# a better way to do this switching.
+	req = get_current_request()
+	if req is None or req.authenticated_userid is None or req.authenticated_userid != user.username:
+		return component.getAdapter(user,IExternalObject,name='summary')
+	return component.getAdapter(user,IExternalObject,name='personal-summary')
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
@@ -297,4 +311,4 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 			extDict[k] = None
 		return extDict
 
-_CoppaUserExternalObject = _CoppaUserPersonalSummaryExternalObject
+_CoppaUserExternalObject = _CoppaUserSummaryExternalObject

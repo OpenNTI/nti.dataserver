@@ -542,7 +542,6 @@ class _PasterServerApplication(PasterServerApplication):
 			if ds_dir:
 				pidfile = os.path.join( ds_dir, 'var', 'gunicorn.pid' )
 				self.cfg.set( 'pidfile',  pidfile )
-		assert len( self.cfg.bind ) == 1
 
 	def reload(self):
 		# In super, reload calls load_config, which is only

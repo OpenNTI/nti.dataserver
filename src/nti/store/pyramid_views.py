@@ -163,7 +163,7 @@ class GetPurchasablesView(object):
 class GetCoursesView(GetPurchasablesView):
 
 	def __call__(self):
-		result = super(GetPurchasablesView,self).__call__()
+		result = super(GetCoursesView,self).__call__()
 		purchasables = result['Items']
 		courses = list(itertools.ifilter(store_interfaces.ICourse.providedBy, purchasables))
 		result['Items'] = courses
