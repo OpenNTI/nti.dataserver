@@ -39,19 +39,20 @@ def is_enrolled(user, course_id):
 	enrollment = get_enrollment(user, course_id)
 	return enrollment is not None
 
-def enroll_course(user, course_id, description=None, request=None, registry=component):
-	if course.get_course(course_id, registry) is None:
-		raise CourseNotFoundException()
-
+def do_enrollment(user, course_id, description=None, request=None, registry=component):
 	item = purchase_order.create_purchase_item(course_id, 1)
 	order = purchase_order.create_purchase_order(item, quantity=1)
 	purchase = purchase_attempt.create_enrollment_attempt(order, description=description)
-
 	if not is_enrolled(user, course_id):
 		purchase_history.register_purchase_attempt(purchase, user)
 		notify(store_interfaces.EnrollmentAttemptSuccessful(purchase, request))
 		return True
 	return False
+
+def enroll_course(user, course_id, description=None, request=None, registry=component):
+	if course.get_course(course_id, registry) is None:
+		raise CourseNotFoundException()
+	return do_enrollment(user, course_id, description, request, registry)
 
 def unenroll_course(user, course_id, request=None, registry=component):
 	if course.get_course(course_id, registry) is None:
