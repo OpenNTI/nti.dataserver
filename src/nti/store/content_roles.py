@@ -39,28 +39,29 @@ def get_descendants(unit):
 			return
 
 def check_item_in_library(item, library=None, registry=component):
-	item = 	content_utils.get_collection_root_ntiid(item, library=library, registry=registry) \
-			if item and ntiids.is_valid_ntiid_string(item) else None
-	return item
+	result = None
+	if item and ntiids.is_valid_ntiid_string(item):
+		result = content_utils.get_collection_root_ntiid(item, library=library,
+														 registry=registry)
+	return result
 
-def add_content_roles(user, roles_to_add, registry=component):
-	if isinstance(roles_to_add, six.string_types):
-		roles_to_add = roles_to_add.split()
+def get_role_for_item(item):
+	provider = ntiids.get_provider(item).lower()
+	specific = ntiids.get_specific(item).lower()
+	role = nauth.role_for_providers_content(provider, specific)
+	return role
 
-	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
-								 nauth.CONTENT_ROLE_PREFIX)
-
-	current_roles = {x.id:x for x in member.groups}
-	all_roles = set(list(current_roles.values()) + list(roles_to_add))
-	member.setGroups(list(all_roles))
-
-def add_users_content_roles(user, items, library=None, registry=component):
+def add_users_content_roles(user, items, library=None, verify=True, registry=component):
 	"""
 	Add the content roles to the given user
 
 	:param user: The user object
 	:param items: List of ntiids
 	"""
+
+	if isinstance(items, six.string_types):
+		items = set(items.split())
+
 	user = get_user(user)
 	if not user or not items:
 		return 0
@@ -72,13 +73,11 @@ def add_users_content_roles(user, items, library=None, registry=component):
 	current_roles = {x.id:x for x in member.groups}
 
 	for item in items:
-		item = check_item_in_library(item, library, registry)
+		item = check_item_in_library(item, library, registry) if verify else item
 		if item is None:
 			continue
 
-		provider = ntiids.get_provider(item).lower()
-		specific = ntiids.get_specific(item).lower()
-		role = nauth.role_for_providers_content(provider, specific)
+		role = get_role_for_item(item)
 		if role.id not in current_roles:
 			logger.info("Role %s added to %s", role.id, user)
 			roles_to_add.add(role)
