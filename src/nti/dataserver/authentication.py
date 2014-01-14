@@ -32,6 +32,15 @@ def _user_factory( username ):
 	from nti.dataserver.users import User
 	return User.get_user( username )
 
+# We will cache effective principals on the current request
+# XXX TODO: This isn't very clean and is a poor
+# separation of concerns
+from pyramid.threadlocal import get_current_request
+
+class _FakeRequest(object):
+	# A dictionary
+	_v_nti_ds_authentication_eff_prin_cache = ()
+
 def effective_principals( username,
 						  registry=component,
 						  authenticated=True,
@@ -57,6 +66,13 @@ def effective_principals( username,
 	user = username if hasattr(username,'username') else user_factory( username )
 	username = user.username if hasattr(user, 'username') else username # canonicalize
 
+	request = get_current_request()
+	if not request:
+		request = _FakeRequest()
+	key = (username, authenticated)
+	if key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ()):
+		return request._v_nti_ds_authentication_eff_prin_cache[key]
+
 	result = set()
 	# Query all the available groups for this user,
 	# primary groups (unnamed adapter) and other groups (named adapters)
@@ -79,6 +95,11 @@ def effective_principals( username,
 		domain = username.split( '@', 1 )[-1]
 		result.add( domain )
 		result.add( nti_interfaces.IPrincipal( domain ) )
+
+	if not getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ()):
+		request._v_nti_ds_authentication_eff_prin_cache = dict()
+	request._v_nti_ds_authentication_eff_prin_cache[key] = result
+
 	return result
 
 @interface.implementer(nti_interfaces.IAuthenticationPolicy)
