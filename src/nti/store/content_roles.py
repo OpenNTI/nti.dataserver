@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 from zope import component
 
 from nti.contentlibrary import interfaces as lib_interfaces
@@ -41,6 +42,17 @@ def check_item_in_library(item, library=None, registry=component):
 	item = 	content_utils.get_collection_root_ntiid(item, library=library, registry=registry) \
 			if item and ntiids.is_valid_ntiid_string(item) else None
 	return item
+
+def add_content_roles(user, roles_to_add, registry=component):
+	if isinstance(roles_to_add, six.string_types):
+		roles_to_add = roles_to_add.split()
+
+	member = registry.getAdapter(user, nti_interfaces.IMutableGroupMember,
+								 nauth.CONTENT_ROLE_PREFIX)
+
+	current_roles = {x.id:x for x in member.groups}
+	all_roles = set(list(current_roles.values()) + list(roles_to_add))
+	member.setGroups(list(all_roles))
 
 def add_users_content_roles(user, items, library=None, registry=component):
 	"""
