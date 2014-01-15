@@ -131,6 +131,14 @@ class _PhonyRequest(object):
 	def get_input_headers(self):
 		raise Exception("Not implemented for phony request")
 
+from gunicorn.http import Request
+class _NonParsingRequest(Request):
+	def parse(self, unreader):
+		pass
+
+	@classmethod
+	def unread(cls, buf):
+		pass
 
 class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandler):
 	"""
@@ -146,6 +154,15 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 	# getting the X-FORWARDED-PROTOCOL, etc, correct, it's important to do that.
 	# Our worker uses a custom server, and we depend on that to be able to pass the right
 	# information to gunicorn.http.wsgi.create
+
+	__request = None
+
+	def read_request(self, requestline):
+		self.__request = _NonParsingRequest(self.server.worker.cfg, _NonParsingRequest)
+		if self.__request.proxy_protocol(requestline):
+			self.requestline = self.read_requestline()
+		return super(_PyWSGIWebSocketHandler,self).read_request(self.requestline)
+
 
 	def get_environ(self):
 		# Start with what gevent creates
@@ -199,7 +216,7 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
 		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
 		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.socket.getsockname(), cfg)
-
+		gunicorn_env.update( gunicorn.http.wsgi.proxy_environ(self.__request) )
 		environ.update( gunicorn_env )
 
 
@@ -342,7 +359,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# (But at least as of 0.17.2 they are now reported? Check this.)
 		if _call_super: # pragma: no cover
 			super(GeventApplicationWorker,self).init_process()
-
 
 class _ServerFactory(object):
 	"""
