@@ -22,9 +22,13 @@ __docformat__ = "restructuredtext en"
 from nti.monkey import relstorage_umysqldb_patch_on_import
 from nti.monkey import relstorage_timestamp_repr_patch_on_import
 from nti.monkey import relstorage_zlibstorage_patch_on_import
+from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
+
 relstorage_umysqldb_patch_on_import.patch()
 relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
+relstorage_explicitly_close_memcache_patch_on_import.patch()
+
 
 # NOTE: Not importing patch_all, don't want gevent
 

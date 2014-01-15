@@ -178,6 +178,9 @@ def _patch():
 	relstorage_timestamp_repr_patch_on_import.patch()
 	from . import relstorage_zlibstorage_patch_on_import
 	relstorage_zlibstorage_patch_on_import.patch()
+	from . import relstorage_explicitly_close_memcache_patch_on_import
+	relstorage_explicitly_close_memcache_patch_on_import.patch()
+
 _patch()
 
 def patch():

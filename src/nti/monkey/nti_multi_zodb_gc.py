@@ -37,10 +37,12 @@ __docformat__ = "restructuredtext en"
 from nti.monkey import relstorage_timestamp_repr_patch_on_import
 from nti.monkey import relstorage_zlibstorage_patch_on_import
 from nti.monkey import relstorage_external_gc_patch_on_import
+from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
 
 relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
 relstorage_external_gc_patch_on_import.patch()
+relstorage_explicitly_close_memcache_patch_on_import.patch()
 
 # zc.zodbdgc 0.6.1 has an issue dealing with new refs
 # that are empty. This copy of its function
