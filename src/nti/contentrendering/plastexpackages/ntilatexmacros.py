@@ -810,6 +810,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 
 	#: From IEmbeddedContainer
 	mimeType = "application/vnd.nextthought.relatedworkref"
+	targetMimeType = None
 	target_ntiid = None
 
 	def digest(self, tokens):
@@ -849,6 +850,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		uri = self.uri
 		if is_valid_ntiid_string( uri ):
 			self.target_ntiid = uri
+			self.targetMimeType = 'application/vnd.nextthought.content'
 		else:
 			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
 			from hashlib import md5
@@ -857,6 +859,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 			self.target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
 											specific=md5(uri).hexdigest() )
+			self.targetMimeType = 'application/vnd.nextthought.externallink'
 
 ###############################################################################
 # The following block of commands concern representing forum discussions.
