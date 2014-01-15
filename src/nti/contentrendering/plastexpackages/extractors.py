@@ -213,8 +213,11 @@ class _RelatedWorkExtractor(object):
 					if uri != '' and el.target_ntiid is None:
 						el.gen_target_ntiid()
 
-					if el.relatedwork.targetMimeType is None:
+					targetMimeType = el.targetMimeType
+
+					if targetMimeType is None:
 						el.relatedwork.gen_target_ntiid()
+						targetMimeType = el.relatedwork.targetMimeType
 
 					title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
 					creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
@@ -224,7 +227,7 @@ class _RelatedWorkExtractor(object):
 						'label': title,
 						'creator': creator,
 						'href': uri,
-						'type': el.relatedwork.targetMimeType,
+						'type': targetMimeType,
 						'icon': icon,
 						'desc': description,
 						'section': el.category,
