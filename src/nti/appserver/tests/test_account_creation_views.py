@@ -597,7 +597,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		extra_environ = {b'HTTP_ORIGIN': b'http://sitepolicyemailtest.nextthought.com'}
 
-		super(TestApplicationCreateUser,self)._do_test_create_user(extra_environ=extra_environ)
+		res = super(TestApplicationCreateUser,self)._do_test_create_user(extra_environ=extra_environ)
+		assert_that( res.json_body, has_entry('email', 'foo@bar.com'))
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )

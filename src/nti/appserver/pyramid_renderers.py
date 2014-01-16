@@ -99,11 +99,16 @@ def find_content_type( request, data=None ):
 
 @metric
 def render_externalizable(data, system):
+	"""
+	.. note:: As an ad-hoc protocol, if the request object has an attribute
+		`_v_nti_render_externalizable_name`, then that will be the name we pass
+		to :func:`toExternalObject`. Otherwise, we will use the default name.
+	"""
 	request = system['request']
 	response = request.response
 	__traceback_info__ = data, request, response, system
 
-	body = toExternalObject( data, name='',
+	body = toExternalObject( data, name=getattr(request, '_v_nti_render_externalizable_name', ''),
 							 # Catch *nested* errors during externalization. We got this far,
 							 # at least send back some data for the main object. The exception will be logged.
 							 # AttributeError is usually a migration problem,
