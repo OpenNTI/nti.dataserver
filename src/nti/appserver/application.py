@@ -574,18 +574,24 @@ def createApplication( http_port,
 		# also set the default
 		import perfmetrics
 		perfmetrics.set_statsd_client( pyramid_config.registry.settings['statsd_uri'] )
-	# First, ensure that each request is wrapped in default global transaction
-	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory', under=pyramid.tweens.EXCVIEW )
 
-	# Arrange for a db connection to be opened with each request
-	# if pyramid_zodbconn.get_connection() is called (until called, this does nothing)
-	# TODO: We can probably replace this with something simpler, or else
-	# better integrate this
-	pyramid_config.include( 'pyramid_zodbconn' )
-	_configure_pyramid_zodbconn( DatabaseOpenedWithRoot( server.db ), pyramid_config.registry )
+	# First, connect to the database. We used to use pyramid_zodbconn,
+	# which is not a tween just a set of request hooks (because the
+	# pyramid command line doesn't run tweens). But we don't use that
+	# command line, and i'm worried about the complexities of its
+	# callback-based-closure. I prefer the simplicity of a try/finally block
+	pyramid_config.add_tween('nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory',
+							 under=pyramid.tweens.EXCVIEW )
+
+	# Then, ensure that each request is wrapped in default global transaction
+	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory',
+							  under='nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory' )
+
+	_configure_zodb_tween( DatabaseOpenedWithRoot( server.db ), pyramid_config.registry )
 
 	# Add a tween that ensures we are within a SiteManager.
-	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory', under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
+	pyramid_config.add_tween( 'nti.appserver.tweens.zope_site_tween.site_tween_factory',
+							  under='nti.appserver.tweens.transaction_tween.transaction_tween_factory' )
 
 	# And a tween that handles Zope security integration
 	pyramid_config.add_tween( 'nti.appserver.tweens.zope_security_interaction_tween.security_interaction_tween_factory',
@@ -703,7 +709,7 @@ def _configure_async_changes( ds, indexmanager=None ):
 	logger.info( 'Finished adding listeners' )
 
 @component.adapter(IDatabaseOpenedWithRoot)
-def _configure_pyramid_zodbconn( database_event, registry=None ):
+def _configure_zodb_tween( database_event, registry=None ):
 	# Notice that we're using the db from the DS directly, not requiring construction
 	# of a new DB based on a URI; that is a second option if we don't want the
 	# DS object 'owning' the DB. Also listens for database opened events; assumes
@@ -716,9 +722,9 @@ def _configure_pyramid_zodbconn( database_event, registry=None ):
 	if registry is None:
 		# event
 		registry = component.getGlobalSiteManager()
+	registry.nti_zodb_root_db = database_event.database
 
-	registry.zodb_database = database_event.database # 0.2
-	registry._zodb_databases = { '': database_event.database } # 0.3, 0.4
+_configure_pyramid_zodbconn = _configure_zodb_tween # bwc
 
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days
