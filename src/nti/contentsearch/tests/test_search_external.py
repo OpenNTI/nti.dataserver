@@ -73,7 +73,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		md = eo[HIT_META_DATA]
 		assert_that(md, has_key(TYPE_COUNT))
 		tc = md[TYPE_COUNT]
-		assert_that(tc, has_entry('Note', len(notes)))
+		assert_that(tc, has_entry('note', len(notes)))
 
 	@WithMockDSTrans
 	def test_externalize_suggest_results(self):
