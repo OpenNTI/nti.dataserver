@@ -280,6 +280,10 @@ def account_create_view(request):
 	notify( app_interfaces.UserCreatedWithRequestEvent( new_user, request ) )
 	logon_user_with_request( new_user, request, request.response )
 
+	# Ensure the user is rendered his full profile;
+	# the ordinary detection of user == authenticated_user won't work
+	# because according to the request he's not really authenticated
+	request._v_nti_render_externalizable_name = 'personal-summary'
 	return new_user
 
 class AccountCreatePreflightPathAdapter(Contained):
