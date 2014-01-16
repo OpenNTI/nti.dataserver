@@ -67,8 +67,10 @@ def test_cannot_set_attributes_but_can_provide_interfaces_across_pickles():
 	r(UnicodeContentFragment)
 	# Plus some fixed one just 'cause
 	all_ucf_subclasses.update( (SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment, UnicodeContentFragment) )
-	print(all_ucf_subclasses)
 	for t in all_ucf_subclasses:
+		if t.__module__ != 'nti.contentfragments.interfaces':
+			continue
+
 		s1 = t( 'safe' )
 
 		with assert_raises(AttributeError):

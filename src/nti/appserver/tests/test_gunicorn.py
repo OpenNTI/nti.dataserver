@@ -40,6 +40,10 @@ import fudge
 class MockConfig(object):
 	is_ssl = False # added 0.17.1
 	max_requests = None
+	limit_request_line = 1024
+	limit_request_fields = 1024
+	limit_request_field_size = 1024
+	proxy_protocol = True
 	debug = False
 	umask = 0
 	worker_connections = 1

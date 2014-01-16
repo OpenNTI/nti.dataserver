@@ -159,8 +159,10 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 
 	def read_request(self, requestline):
 		self.__request = _NonParsingRequest(self.server.worker.cfg, _NonParsingRequest)
+		self.requestline = requestline
 		if self.__request.proxy_protocol(requestline):
 			self.requestline = self.read_requestline()
+
 		return super(_PyWSGIWebSocketHandler,self).read_request(self.requestline)
 
 
