@@ -8,7 +8,9 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import greater_than_or_equal_to
 
 from nti.ntiids.ntiids import make_ntiid
 
@@ -105,4 +107,4 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.batchStart, is_(5))
 		assert_that(qo.sortOn, 'relevance')
 		assert_that(qo.sortOrder, 'descending')
-		assert_that(sorted(qo.searchOn), is_(sorted((u'content', u'note', u'post', u'messageinfo', u'highlight'))))
+		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(5)))
