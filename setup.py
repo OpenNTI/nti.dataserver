@@ -264,7 +264,6 @@ setup(
 		'pyramid_mailer >= 0.13',  # Which uses repoze.sendmail
 		'pyramid_who >= 0.3',
 		'pyramid_zcml >= 1.0.0',
-		'pyramid_zodbconn',
 		'pyramid-openid >= 0.3.4',
 		# 'psycopg2 >= 2.5.1',	# PostGreSQL
 		# Monitoring stats and instrumenting code
@@ -328,7 +327,6 @@ setup(
 		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
-		'zodburi',	 # used by pyramid_zodbconn
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',

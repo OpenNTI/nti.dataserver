@@ -45,9 +45,6 @@ from zope import interface
 from zope import component
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
 
-import pyramid_zodbconn
-from pyramid_zodbconn import get_connection
-
 from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
 
@@ -98,14 +95,9 @@ def _early_request_teardown(request):
 
 	transaction.commit()
 	request.environ['nti.early_teardown_happened'] = True
-	get_connection(request).close()
+	request.nti_zodb_root_connection.close()
+	del request.nti_zodb_root_connection # signal we already closed
 	setSite( None )
-	# Remove the close action that pyramid_zodbconn wants to do.
-	# The connection might have been reused by then.
-	for callback in request.finished_callbacks:
-		if getattr( callback, '__module__', None ) == pyramid_zodbconn.__name__:
-			request.finished_callbacks.remove( callback )
-			break
 
 def _gevent_spawn(run, *args, **kwargs):
 	"""
@@ -160,9 +152,8 @@ class site_tween(object):
 		self.handler = handler
 
 	def __call__( self, request ):
-		conn = get_connection( request )
 		#conn.sync() # syncing the conn aborts the transaction.
-		site = conn.root()['nti.dataserver']
+		site = request.nti_zodb_root_connection.root()['nti.dataserver']
 		self._debug_site( site )
 		self._add_properties_to_request( request )
 
