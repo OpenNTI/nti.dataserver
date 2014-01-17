@@ -334,7 +334,6 @@ class _RunJobInSite(TransactionLoop):
 		self.site_names = kwargs.pop( 'site_names' )
 		self.job_name = kwargs.pop( 'job_name' )
 		super(_RunJobInSite,self).__init__( *args, **kwargs )
-		self.conn = None
 
 	def describe_transaction( self, *args, **kwargs ):
 		if self.job_name:
@@ -348,8 +347,8 @@ class _RunJobInSite(TransactionLoop):
 			note = func.__name__
 		return note
 
-	def run_handler( self, *args, **kwargs ):
-		with _site_cm(self.conn, self.site_names):
+	def run_handler( self, conn,  *args, **kwargs ):
+		with _site_cm(conn, self.site_names):
 			result = self.handler( *args, **kwargs )
 
 			# Commit the transaction while the site is still current
@@ -364,8 +363,10 @@ class _RunJobInSite(TransactionLoop):
 
 	def __call__( self, *args, **kwargs ):
 		with _connection_cm() as conn:
-			self.conn = conn
-			return super(_RunJobInSite,self).__call__( *args, **kwargs )
+			# Notice we don't keep conn as an ivar anywhere, to avoid
+			# any chance of circular references. These need to be sure to be
+			# reclaimed
+			return super(_RunJobInSite,self).__call__( conn, *args, **kwargs )
 
 _marker = object()
 
