@@ -187,9 +187,10 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	logger.info( "Monkey patching most libraries for gevent" )
 
 	import threading
-	# For some reason, monkey patching the threading library
-	# in 1.0 misses RLock. This is critical because ZODB.DB uses
-	# an RLock...if it doesn't get patched, we can leak connections
+	# Gevent patches the primitives that make up threading.RLock,
+	# but leaves RLock in place. This is nice if it has already
+	# been imported. However, it is cleaner to replace it if it hasn't
+	# been. So we do that.
 	import gevent.lock
 	assert threading.RLock is not gevent.lock.RLock # in case internals change
 	gevent.monkey.saved['threading']['RLock'] = threading.RLock
