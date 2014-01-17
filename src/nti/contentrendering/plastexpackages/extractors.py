@@ -188,55 +188,55 @@ class _RelatedWorkExtractor(object):
 					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
-					if el.relatedwork.iconResource is not None:
-						icon = el.relatedwork.iconResource.image.url
-					elif el.relatedwork.icon is not None:
-						icon = el.relatedwork.icon
-					else:
-						icon = ''
+				if el.relatedwork.iconResource is not None:
+					icon = el.relatedwork.iconResource.image.url
+				elif el.relatedwork.icon is not None:
+					icon = el.relatedwork.icon
+				else:
+					icon = ''
 
-					if el.description == '':
-						el.description = el.relatedwork.description
+				if el.description == '':
+					el.description = el.relatedwork.description
 
-					visibility = (el.visibility or el.relatedwork.visibility)
+				visibility = (el.visibility or el.relatedwork.visibility)
 
+				uri = el.uri
+
+				if uri == '':
+					el.uri = el.relatedwork.uri
+					el.gen_target_ntiid()
 					uri = el.uri
 
-					if uri == '':
-						el.uri = el.relatedwork.uri
-						el.gen_target_ntiid()
-						uri = el.uri
+				if uri == '':
+					logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
 
-					if uri == '':
-						logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
+				if uri != '' and el.target_ntiid is None:
+					el.gen_target_ntiid()
 
-					if uri != '' and el.target_ntiid is None:
-						el.gen_target_ntiid()
+				targetMimeType = el.targetMimeType
 
-					targetMimeType = el.targetMimeType
+				if targetMimeType is None:
+					el.relatedwork.gen_target_ntiid()
+					targetMimeType = el.relatedwork.targetMimeType
 
-					if targetMimeType is None:
-						el.relatedwork.gen_target_ntiid()
-						targetMimeType = el.relatedwork.targetMimeType
+				title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
+				creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
+				description = unicode(el.description)
 
-					title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
-					creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
-					description = unicode(el.description)
-
-					content = {
-						'label': title,
-						'creator': creator,
-						'href': uri,
-						'type': targetMimeType,
-						'icon': icon,
-						'desc': description,
-						'section': el.category,
-						'visibility': visibility,
-						'target-ntiid': el.target_ntiid,
-						'ntiid': el.ntiid
-					}
-					if lesson_el:
-						result.append((content, lesson_el))
+				content = {
+					'label': title,
+					'creator': creator,
+					'href': uri,
+					'type': targetMimeType,
+					'icon': icon,
+					'desc': description,
+					'section': el.category,
+					'visibility': visibility,
+					'target-ntiid': el.target_ntiid,
+					'ntiid': el.ntiid
+				}
+				if lesson_el:
+					result.append((content, lesson_el))
 		return result
 
 	def _process_related(self, dom, els):
