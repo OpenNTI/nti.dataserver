@@ -20,11 +20,6 @@ After this tween runs, the request has been modified in the following ways.
   iterable of the virtual site names to consider. This is also in the
   WSGI environment as ``nti.possible_site_names``. (See :func:`_get_possible_site_names`)
 
-* It has a method called ``early_request_teardown`` for cleaning up
-  resources if the request handler won't actually be returning. This is
-  also in the WSGI environment as ``nti.early_request_teardown`` as a function
-  of the request. (See :func:`_early_request_teardown`.)
-
 * It has a method called ``nti_gevent_spawn`` for replacing :func:`gevent.spawn`
   while maintaining the current request.
 
@@ -85,19 +80,6 @@ def _get_possible_site_names(request):
 			result.remove( blacklisted )
 
 	return result
-
-def _early_request_teardown(request):
-	"""
-	Clean up all the things set up by our new request handler and the
-	tweens. Call this function if the request thread will not be returning,
-	but these resources should be cleaned up.
-	"""
-
-	transaction.commit()
-	request.environ['nti.early_teardown_happened'] = True
-	request.nti_zodb_root_connection.close()
-	del request.nti_zodb_root_connection # signal we already closed
-	setSite( None )
 
 def _gevent_spawn(run, *args, **kwargs):
 	"""
@@ -171,12 +153,10 @@ class site_tween(object):
 	def _add_properties_to_request(self, request):
 		request.environ['nti.pid'] = os.getpid() # helpful in debug tracebacks
 		request.environ['nti.node'] = platform.node()
-		request.environ['nti.early_request_teardown'] = _early_request_teardown
 		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
 		request.environ['nti.gevent_spawn'] = _gevent_spawn
 		# The "proper" way to add properties is with request.set_property, but
 		# this is easier and faster.
-		request.early_request_teardown = _early_request_teardown
 		request.possible_site_names = request.environ['nti.possible_site_names']
 		request.nti_settings = request.registry.settings # shortcut
 		request.nti_gevent_spawn = _gevent_spawn

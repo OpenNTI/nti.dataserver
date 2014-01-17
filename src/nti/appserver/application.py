@@ -575,13 +575,19 @@ def createApplication( http_port,
 		import perfmetrics
 		perfmetrics.set_statsd_client( pyramid_config.registry.settings['statsd_uri'] )
 
-	# First, connect to the database. We used to use pyramid_zodbconn,
+	# First, before any "application" processing, hook in a place to run
+	# greenlets with nothing below it on the stack
+	pyramid_config.add_tween('nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory',
+							 under=pyramid.tweens.EXCVIEW )
+
+
+	# Next, connect to the database. We used to use pyramid_zodbconn,
 	# which is not a tween just a set of request hooks (because the
 	# pyramid command line doesn't run tweens). But we don't use that
 	# command line, and i'm worried about the complexities of its
 	# callback-based-closure. I prefer the simplicity of a try/finally block
 	pyramid_config.add_tween('nti.appserver.tweens.zodb_connection_tween.zodb_connection_tween_factory',
-							 under=pyramid.tweens.EXCVIEW )
+							 under='nti.appserver.tweens.greenlet_runner_tween.greenlet_runner_tween_factory')
 
 	# Then, ensure that each request is wrapped in default global transaction
 	pyramid_config.add_tween( 'nti.appserver.tweens.transaction_tween.transaction_tween_factory',
