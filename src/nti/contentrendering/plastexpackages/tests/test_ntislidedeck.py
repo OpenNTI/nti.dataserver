@@ -109,7 +109,7 @@ Test Presentation.
 	assert_that( elem, has_property( 'thumbnail' ) )
 
 	# Check that the attributes have the expected values
-	assert_that( elem.title, equal_to( 'No Title' ) )
+	assert_that( elem.title, equal_to( '' ) )
 	assert_that( elem.creator, equal_to( 'Unknown' ) )
 	assert_that( elem.thumbnail, equal_to( old_video.attributes['thumbnail'] ) )
 	assert_that( new_video.itemprop, equal_to( 'presentation-none' ) )
