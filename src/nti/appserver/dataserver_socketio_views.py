@@ -205,6 +205,8 @@ def _get_session(session_id):
 		raise hexc.HTTPNotFound("Session has no owner %s" % session_id )
 	return session
 
+from .tweens.greenlet_runner_tween import HTTPOkGreenletsToRun
+
 @view_config(route_name=RT_CONNECT) # Any request method
 def _connect_view( request ):
 
@@ -249,37 +251,31 @@ def _connect_view( request ):
 	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
 		return jobs_or_response
 
+
 	# If we have connection jobs (websockets)
 	# we need to stay in this call stack so that the
 	# socket is held open for reading by the server
 	# and that the events continue to fire for it
 	# (Other things might be in that state too)
 	# We have to close the connection and commit the transaction
-	# if we do expect to stick around a long time
+	# if we do expect to stick around a long time.
+	# We do this by cooperating with the greenlet_runner_tween
+	# and letting the stack unwind as normal.
+	greenlets_to_run = HTTPOkGreenletsToRun()
+	greenlets_to_run.greenlets = jobs_or_response
+	greenlets_to_run.response = request.response
+
+	transaction.get().addAfterCommitHook(_kill_transport_jobs_on_failed_commit,
+										 args=(transport, jobs_or_response))
+
 	# TODO: If this process raises and we wind up hitting the retry logic,
-	# how does this react?
-	if 'wsgi.websocket' in environ:
-		# See application.py
-		try:
-			environ['nti.early_request_teardown'](request)
-		except Exception: # Most commonly a ConflictError or commit
-			# Gotta kill the jobs
-			exc_info = sys.exc_info()
-			logger.exception( "Failed to teardown request; aborting" )
-			try:
-				transaction.doom() # No use trying again
-			except ValueError:
-				# If the exception was raised while we were actually
-				# committing the transaction, then we won't be able to doom it,
-				# it's too late.
-				pass
-			transport.kill()
-			for job in jobs_or_response:
-				job.kill()
-			# Re-raise the original, not the ValueError that probably fired
-			raise exc_info[0], None, exc_info[2]
+	# how does this react? Badly probably
+	return greenlets_to_run
 
-
-	if jobs_or_response:
-		gevent.joinall(jobs_or_response)
-	return request.response
+def _kill_transport_jobs_on_failed_commit(success, transport, jobs):
+	# Not a closure to be sure what we capture
+	if not success:
+		logger.debug("Killing transport and jobs on commit failure")
+		transport.kill()
+		for job in jobs:
+			job.kill()
