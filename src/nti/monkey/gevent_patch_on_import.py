@@ -120,6 +120,12 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zop
 		if gevent.local.local not in obj.__bases__:
 			raise TypeError( "%s not monkey patched. Bad import order" % name )
 
+	# Now the rlock patch for ZODB
+	dottedname.resolve('ZODB.DB')
+	db = sys.modules['ZODB.DB'] # ZODB.DB shadows the module
+	if db.threading.RLock is not gevent.lock.RLock:
+		raise TypeError("ZODB.DB/threading.RLock not monkey patched")
+
 
 if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
 
@@ -180,8 +186,16 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	logger = __import__('logging').getLogger(__name__) # Only import this after the patch, it allocates locks
 	logger.info( "Monkey patching most libraries for gevent" )
 
-	import gevent.local
 	import threading
+	# For some reason, monkey patching the threading library
+	# in 1.0 misses RLock. This is critical because ZODB.DB uses
+	# an RLock...if it doesn't get patched, we can leak connections
+	import gevent.lock
+	assert threading.RLock is not gevent.lock.RLock # in case internals change
+	gevent.monkey.saved['threading']['RLock'] = threading.RLock
+	threading.RLock = gevent.lock.RLock
+
+	import gevent.local
 	_threading_local = __import__('_threading_local') # TODO: Why is this imported now?
 
 	# And now the things to patch ProcessPoolExecutor as described
