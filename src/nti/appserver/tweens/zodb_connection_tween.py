@@ -23,7 +23,6 @@ logger = __import__('logging').getLogger(__name__)
 from cStringIO import StringIO
 import os
 from pprint import pprint
-import gc
 
 class zodb_connection_tween(object):
 	"""
@@ -77,18 +76,12 @@ class zodb_connection_tween(object):
 		for name, db in db.databases.items():
 			infos[name] = sorted(db.connectionDebugInfo(), key=lambda x: x['info'])
 			infos[name + ' LEN'] = len(infos[name])
+			infos[name + ' AVA'] = len(db.pool.available)
 			if len(infos[name]) > db.pool.size:
 				need_gc.append((name, db, len(infos[name])))
 		pprint(infos, stream)
 		logger.debug("Connection details in pid %s:\n%s", pid, stream.getvalue())
 		if need_gc:
-			logger.warn("Too many open connections; reducing size and GCing")
-			gc.collect()
-			sizes = []
-			for name, db, old_size in need_gc:
-				db.pool.reduce_size()
-				new_size = len(db.connectionDebugInfo())
-				sizes.append((name, old_size, new_size))
-			logger.warn("Database, old size, new size: %s", sizes)
+			logger.warn("Too many connection objects in pid %s: %s", pid, need_gc)
 
 zodb_connection_tween_factory = zodb_connection_tween
