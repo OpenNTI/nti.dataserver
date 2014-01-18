@@ -23,6 +23,7 @@ logger = __import__('logging').getLogger(__name__)
 from cStringIO import StringIO
 import os
 from pprint import pprint
+import gc
 
 class zodb_connection_tween(object):
 	"""
@@ -74,14 +75,39 @@ class zodb_connection_tween(object):
 		infos = {}
 		need_gc = []
 		for name, db in db.databases.items():
-			infos[name] = sorted(db.connectionDebugInfo(), key=lambda x: x['info'])
-			infos[name + ' LEN'] = len(infos[name])
-			infos[name + ' AVA'] = len(db.pool.available)
-			if len(infos[name]) > db.pool.size:
-				need_gc.append((name, db, len(infos[name])))
+			db._a()
+			try:
+				infos[name] = sorted(db.connectionDebugInfo(), key=lambda x: x['info'])
+				infos[name + ' LEN'] = len(infos[name])
+				infos[name + ' AVA'] = len(db.pool.available)
+				if len(infos[name]) > db.pool.size:
+					need_gc.append((name, db, len(infos[name])))
+			finally:
+				db._r()
 		pprint(infos, stream)
 		logger.debug("Connection details in pid %s:\n%s", pid, stream.getvalue())
 		if need_gc:
 			logger.warn("Too many connection objects in pid %s: %s", pid, need_gc)
+			def _print_refs(c):
+				if c in c.db().pool.available:
+					return
+				stream = StringIO()
+				objs = gc.get_referrers(c)
+				by_type = {}
+				for o in objs:
+					if getattr(o, '_p_jar', None) is c:
+						# Filter out things that are directly tied to it
+						continue
+					by_type[type(o)] = by_type.get(type(o), 0) + 1
+
+				pprint(by_type, stream)
+				logger.warn("Referrers to %s:\n%s", c, stream.getvalue())
+
+			for name, db, _ in need_gc:
+				db._a()
+				try:
+					db.pool.map(_print_refs)
+				finally:
+					db._r()
 
 zodb_connection_tween_factory = zodb_connection_tween
