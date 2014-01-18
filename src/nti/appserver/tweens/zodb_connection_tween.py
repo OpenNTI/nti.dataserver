@@ -34,7 +34,8 @@ class zodb_connection_tween(object):
 
 	"""
 
-	DEBUG_COUNT = 100
+	DEBUG_COUNT = 1000
+	DEBUG_OFF = True
 
 	def __init__(self, handler, registry):
 		self.handler = handler
@@ -63,6 +64,9 @@ class zodb_connection_tween(object):
 		conn = request.nti_zodb_root_connection
 		for c in conn.connections.values():
 			c.setDebugInfo(request.path_url)
+		if self.DEBUG_OFF:
+			return
+
 		self._count += 1
 		if self._count < self.DEBUG_COUNT:
 			return
