@@ -66,6 +66,7 @@ def _connection_cm():
 
 	ds = component.getUtility( interfaces.IDataserver )
 	conn = ds.db.open()
+	conn.setDebugInfo("_connection_cm")
 	try:
 		yield conn
 	finally:
@@ -349,6 +350,7 @@ class _RunJobInSite(TransactionLoop):
 
 	def run_handler( self, conn,  *args, **kwargs ):
 		with _site_cm(conn, self.site_names):
+			conn.setDebugInfo(self.site_names)
 			result = self.handler( *args, **kwargs )
 
 			# Commit the transaction while the site is still current
@@ -363,6 +365,7 @@ class _RunJobInSite(TransactionLoop):
 
 	def __call__( self, *args, **kwargs ):
 		with _connection_cm() as conn:
+			conn.setDebugInfo(self.describe_transaction(*args, **kwargs))
 			# Notice we don't keep conn as an ivar anywhere, to avoid
 			# any chance of circular references. These need to be sure to be
 			# reclaimed
