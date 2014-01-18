@@ -94,14 +94,20 @@ class zodb_connection_tween(object):
 				stream = StringIO()
 				objs = gc.get_referrers(c)
 				by_type = {}
+				details = []
 				for o in objs:
 					if getattr(o, '_p_jar', None) is c:
 						# Filter out things that are directly tied to it
 						continue
 					by_type[type(o)] = by_type.get(type(o), 0) + 1
-
+					if type(o) is list:
+						details.append(o)
 				pprint(by_type, stream)
 				logger.warn("Referrers to %s:\n%s", c, stream.getvalue())
+				if details:
+					stream = StringIO()
+					pprint(details, stream)
+					logger.warn("Details for %s:\n%s", c, stream.getvalue())
 
 			for name, db, _ in need_gc:
 				db._a()
