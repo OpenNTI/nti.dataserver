@@ -35,6 +35,7 @@ class zodb_connection_tween(object):
 		self.handler = handler
 
 	def __call__(self, request):
+		#logger.debug("Connection details %s", '\n'.join([str(x) for x in request.registry.nti_zodb_root_db.connectionDebugInfo()]))
 		# The value of nti_zodb_root_db may change at runtime,
 		# so we don't cache it (only during tests)
 		request.nti_zodb_root_connection = request.registry.nti_zodb_root_db.open()
