@@ -60,7 +60,8 @@ class zodb_connection_tween(object):
 
 	def _debug_connection(self, request):
 		conn = request.nti_zodb_root_connection
-		conn.setDebugInfo(request.application_url)
+		for c in conn.connections.values():
+			c.setDebugInfo(request.path_url)
 		self._count += 1
 		if self._count < self.DEBUG_COUNT:
 			return
