@@ -73,7 +73,8 @@ class zodb_connection_tween(object):
 		stream = StringIO()
 		infos = {}
 		for name, db in db.databases.items():
-			infos[name] = db.connectionDebugInfo()
+			infos[name] = sorted(db.connectionDebugInfo(), key=lambda x: x['info'])
+			infos[name + ' LEN'] = len(infos[name])
 		pprint(infos, stream)
 		logger.debug("Connection details in pid %s:\n%s", pid, stream.getvalue())
 
