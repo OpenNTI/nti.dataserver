@@ -102,7 +102,11 @@ class zodb_connection_tween(object):
 					by_type[type(o)] = by_type.get(type(o), 0) + 1
 					if type(o) is list:
 						details.append(o)
-						details.append( {type(x) for x in gc.get_referrers(o)} )
+						oo = gc.get_referrers(o)
+						details.append( {type(x) for x in oo} )
+						for x in oo:
+							if isinstance(x, dict):
+								details.append(x.keys())
 				pprint(by_type, stream)
 				logger.warn("Referrers to %s:\n%s", c, stream.getvalue())
 				if details:
