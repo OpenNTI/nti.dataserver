@@ -35,7 +35,7 @@ class zodb_connection_tween(object):
 	"""
 
 	DEBUG_COUNT = 100
-	DEBUG_OFF = False
+	DEBUG_OFF = True
 
 	def __init__(self, handler, registry):
 		self.handler = handler
