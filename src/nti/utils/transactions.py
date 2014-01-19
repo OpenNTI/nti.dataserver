@@ -259,6 +259,12 @@ def _timing( operation, name):
 	done = time.time()
 	return done - now
 
+class _GONE(object):
+	def __str__(self):
+		return "<_GONE: This object is gone>"
+	__repr__ = __str__
+_GONE = _GONE()
+
 class TransactionLoop(object):
 	"""
 	Similar to the transaction attempts mechanism, but less error prone and with added logging and
@@ -316,6 +322,26 @@ class TransactionLoop(object):
 	def run_handler( self, *args, **kwargs ):
 		return self.handler( *args, **kwargs )
 
+	def __free(self, tx):
+		"""
+		After we are done with a transaction, clean it of
+		anything joined to it (resources and synchronizers).
+
+		Committing or aborting the transaction causes the
+		transaction object to call `free` on the transaction
+		manager, thus breaking that reference cycle. But
+		the transaction still keeps a reference to all of its
+		resources, synchronizers and even the manager.
+
+		This could lead to reference cycles and prevent proper
+		garbage collection, so we manually clean out the transaction
+		object and dispose of these references. After this method runs,
+		the transaction object is useless.
+		"""
+		for k in list(tx.__dict__):
+			tx.__dict__[k] = _GONE
+
+
 	def __call__( self, *args, **kwargs ):
 		# NOTE: We don't handle repoze.tm being in the pipeline
 
@@ -351,24 +377,26 @@ class TransactionLoop(object):
 
 				# note: commit our tx variable, NOT what is current; if they aren't the same, this raises ValueError
 				_do_commit( tx, note, self.long_commit_duration )
-
+				self.__free(tx); del tx
 				return result
 			except self.AbortException as e:
 				duration = _timing( transaction.abort, 'transaction.abort' )  # note: NOT our tx variable, whatever is current
+				self.__free(tx); del tx
 				logger.debug( "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception:
-				exc_info = sys.exc_info()
-				try:
-					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
-					retryable = transaction.manager._retryable(*exc_info[:-1])
-					if number <= 0 or not retryable:
-						raise
-					if self.sleep:
-						_sleep( self.sleep )
-					logger.log( TRACE, "Retrying transaction on exception %d", number, exc_info=True )
-				finally:
-					del exc_info # avoid leak
+				_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
+				self.__free(tx); del tx
+
+				if number <= 0:
+					raise
+
+				retryable = transaction.manager._retryable( *sys.exc_info()[:-1] )
+				if not retryable:
+					raise
+				if self.sleep:
+					_sleep( self.sleep )
+				#logger.log( TRACE, "Retrying transaction on exception %d", number, exc_info=True )
 			except SystemExit:
 				t, v, tb = sys.exc_info()
 				# If we are exiting, or otherwise probably going to exit, do try
@@ -382,3 +410,9 @@ class TransactionLoop(object):
 					print_exception( *sys.exc_info() )
 
 				raise t, v, tb
+
+# By default, it wants to create a different logger
+# for each and every thread or greenlet. We go through
+# lots of greenlets, so that's lots of loggers
+import transaction._transaction
+transaction._transaction._LOGGER = __import__('logging').getLogger('txn.GLOBAL')

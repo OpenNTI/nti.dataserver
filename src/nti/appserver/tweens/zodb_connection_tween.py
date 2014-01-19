@@ -34,8 +34,8 @@ class zodb_connection_tween(object):
 
 	"""
 
-	DEBUG_COUNT = 1000
-	DEBUG_OFF = True
+	DEBUG_COUNT = 100
+	DEBUG_OFF = False
 
 	def __init__(self, handler, registry):
 		self.handler = handler
@@ -104,10 +104,10 @@ class zodb_connection_tween(object):
 						# Filter out things that are directly tied to it
 						continue
 					by_type[type(o)] = by_type.get(type(o), 0) + 1
-					if type(o) is list:
+					if type(o) is list and o is not objs and o is not details:
 						details.append(o)
 						oo = gc.get_referrers(o)
-						details.append( {type(x) for x in oo} )
+						details.append( {type(x) for x in oo if x is not objs and x is not details} )
 						for x in oo:
 							if isinstance(x, dict):
 								details.append(x.keys())
