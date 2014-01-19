@@ -124,4 +124,4 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 								  {'file': 'thing.js', 'line': 82 })
 
 		assert_that( decodestring(msg.as_string()),
-					 contains_string( '    REMOTE_USER_DATA                    \'sjohnson@nextthought.com\'' ) )
+					 contains_string('REMOTE_USER_DATA                   \'sjohnson@nextthought.com\'') )
