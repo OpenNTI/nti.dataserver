@@ -189,10 +189,32 @@ class MinimalDataserver(object):
 			# TODO: Mock this in tests
 			cache = memcache.Client(cache_servers.split())
 
-		interface.alsoProvides( cache, interfaces.IMemcacheClient )
 		import pickle
 		cache.pickleProtocol = pickle.HIGHEST_PROTOCOL
-		component.getGlobalSiteManager().registerUtility( cache, interfaces.IMemcacheClient )
+
+		import threading
+		# The underlying memcache object is not necessarily greenlet/thread safe
+		# (it wants to be greenlet local, but that doesn't work well with long-lived
+		# greenlets; see the monkey patch.) So we write an implementation that is
+		# TODO: How much of a penalty do we take for this? We probably want a real
+		# visible, manageable pool.
+		@interface.implementer(interfaces.IMemcacheClient)
+		class _Client(object):
+			def __init__(self, cache):
+				self.cache = cache
+				self.lock = threading.Lock()
+
+			def get(self, *args, **kwargs):
+				with self.lock:
+					return self.cache.get(*args,**kwargs)
+			def set(self, *args, **kwargs):
+				with self.lock:
+					return self.cache.set(*args,**kwargs)
+			def delete(self, *args, **kwargs):
+				with self.lock:
+					return self.cache.delete(*args,**kwargs)
+
+		component.getGlobalSiteManager().registerUtility( _Client(cache), interfaces.IMemcacheClient )
 		# There is no need to explicitly close this UDP-based service. (?)
 		# It is also not necessary to re-open it on a fork.
 		return cache
