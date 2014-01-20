@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Monkey-patch for ZLibStorage and RelStorage to work correctly together.
+Monkey-patch for ZLibStorage and RelStorage to work correctly
+together.
+
+This does two things. First, it makes sure that `new_instance`
+maintains the correct wrapper.
+
+Second, it makes RelStorage call super when 'registerDB' is done. This
+is needed to get conflict resolution to work correctly; without
+this call, the ConflictResolution class doesn't know to uncompress the
+pickled data.
 
 $Id$
 """
@@ -44,6 +53,32 @@ def _patch_zlibstorage_for_IMVCCStorage():
 		ZlibStorage.new_instance = new_instance
 
 _patch_zlibstorage_for_IMVCCStorage()
+del _patch_zlibstorage_for_IMVCCStorage
+
+def _patch_relstorage_registerDB():
+	from relstorage.storage import RelStorage
+
+	def registerDB(self, db):
+		# We know the current implementation is a no-op,
+		# so we simply replace it. This needs to be checked
+		# when the version changes.
+		try:
+			super(RelStorage,self).registerDB(db)
+			raise TypeError("Internals changed, check patch")
+		except AttributeError:
+			# We expect the MRO to be
+			# [<class 'relstorage.storage.RelStorage'>,
+			#  <class ZODB.UndoLogCompatible.UndoLogCompatible>,
+			#  <class 'ZODB.ConflictResolution.ConflictResolvingStorage'>,
+			#  <type 'object'>]
+			# So when ConflictResolvingStorage calls super(), it raises
+			# this attribute error
+			pass
+
+	RelStorage.registerDB = registerDB
+
+_patch_relstorage_registerDB()
+del _patch_relstorage_registerDB
 
 def patch():
 	pass
