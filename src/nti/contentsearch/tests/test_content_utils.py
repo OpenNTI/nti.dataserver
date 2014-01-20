@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import close_to
+from hamcrest import equal_to
 from hamcrest import has_length
 from hamcrest import assert_that
 
@@ -37,6 +38,8 @@ from ..interfaces import INoteContentResolver
 from ..interfaces import IHighlightContentResolver
 from ..interfaces import IRedactionContentResolver
 from ..interfaces import IMessageInfoContentResolver
+
+from .. import discriminators
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -176,3 +179,15 @@ class TestContentUtils(ConfiguringTestBase):
 		assert_that(adapted.lastModified, is_(close_to(1334000544.120, 0.05)))
 		assert_that(adapted.containerId, is_('tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(adapted.ntiid, is_('tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0932:5573657273'))
+
+	@WithMockDSTrans
+	def test_canvas_adapter(self):
+		marker = object()
+		c = Canvas()
+		ct = CanvasTextShape()
+		ct.text = u'Ichigo'
+		c.append(ct)
+		adapted = IContentResolver(c)
+		assert_that(adapted.content, is_('Ichigo'))
+		kws = discriminators.get_keywords(c, marker)
+		assert_that(kws, equal_to(marker))
