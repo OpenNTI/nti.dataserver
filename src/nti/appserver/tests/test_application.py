@@ -1010,11 +1010,12 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'href', urllib.quote( path ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
-	def _edit_user_ext_field( self, field, data ):
-		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user()
-			username = user.username
-			user_ext_id = to_external_ntiid_oid( user )
+	def _edit_user_ext_field( self, field, data, username=None, user_ext_id=None ):
+		if username is None:
+			with mock_dataserver.mock_db_trans( self.ds ):
+				user = self._create_user()
+				username = user.username
+				user_ext_id = to_external_ntiid_oid( user )
 
 		testapp = TestApp( self.app )
 
@@ -1032,6 +1033,7 @@ class TestApplication(SharedApplicationTestBase):
 				assert_that( res.status_int, is_( 200 ) )
 
 				with mock_dataserver.mock_db_trans( self.ds ):
+					user = users.User.get_user(username)
 					# For the case where we change the password, we have to
 					# recreate the user for the next loop iteration to work
 					user.password = 'temp001'
@@ -1055,13 +1057,28 @@ class TestApplication(SharedApplicationTestBase):
 		"We can POST to a specific sub-URL to change the avatarURL"
 
 		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
-		res = self._edit_user_ext_field( 'avatarURL', data )
-		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
 
 		testapp = TestApp( self.app )
+		# First, we can get the old one at a well-known location for the user
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			username = user.username
+			user_ext_id = to_external_ntiid_oid( user )
+
+		res = testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
+						  status=302)
+		assert_that( res.location, is_('http://www.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon') )
+
+		res = self._edit_user_ext_field( 'avatarURL', data, username, user_ext_id )
+		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
+
 
 		res = testapp.get( res.json_body['avatarURL'], extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'image/gif' ) )
+		# And this one is also directly available at this location
+		res = testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
+						  status=302)
+		assert_that( res.location, starts_with( 'http://localhost/dataserver2/' ) )
 
 	@WithSharedApplicationMockDS
 	def test_put_data_to_user( self ):
