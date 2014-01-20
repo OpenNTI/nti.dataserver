@@ -72,6 +72,7 @@
 
 	<pyramid:scan package=".link_providers.views" />
 	<pyramid:scan package=".bulk_email_views" />
+	<pyramid:scan package=".user_views" />
 
 	<include package=".forums" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
