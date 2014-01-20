@@ -104,13 +104,13 @@ def _process_words(words):
 			words = ()
 	return words or ()
 
-@interface.implementer(search_interfaces.IContentResolver,
-					   search_interfaces.ITypeResolver)
+@interface.implementer(search_interfaces.IContentResolver)
 class _BasicContentResolver(object):
 
 	def __init__(self, obj):
 		self.obj = obj
 
+@interface.implementer(search_interfaces.ITypeResolver)
 class _AbstractIndexDataResolver(_BasicContentResolver):
 
 	@property
