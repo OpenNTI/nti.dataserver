@@ -51,7 +51,7 @@ def _coppa_table_and_site( request, force_table=False ):
 		if _USER_FILTER_PARAM in request.params:
 			usersearch = request.params[_USER_FILTER_PARAM]
 			usersearch = usersearch.lower()
-			values = (users_folder[x] for x in users_folder.keys() if usersearch in x)
+			values = (users_folder[x] for x in users_folder.keys() if usersearch in x.lower())
 		else:
 			values = users_folder.values()
 
