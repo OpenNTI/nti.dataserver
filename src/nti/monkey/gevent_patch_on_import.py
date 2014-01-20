@@ -97,6 +97,36 @@ def _patch_logging():
 
 	logging.LogRecord = _LogRecord
 
+def _patch_memcache():
+	"""
+	The pure-python memcache client wants to make *everything*
+	in its __dict__ greenlet local, including all sockets.
+
+	While generally that might be an acceptable solution, it fails
+	when there are many long-lived greenlets that might use the
+	object. We have that situation with our websocket connections.
+
+	Our primary use of memcache is through ZODB/RelStorage, where it
+	maintains a one-to-one mapping between connections and memcache
+	Client objects. ZODB/RelStorage connections are single
+	thread/greenlet objects, so having the sockets be greenlet local
+	is no benefit. In fact, it is a net loss, leading to far too many
+	extent sockets.
+
+	Therefore, we go to some pains here to make the memcache implementation
+	NOT greenlet local.
+	"""
+	# We cannot change the base after the fact because of the use of __new__,
+	# so we must carefully manage the order of imports.
+	import threading
+	local = threading.local
+	try:
+		threading.local = object
+		import memcache
+		assert memcache.local is object
+		assert memcache.Client.__bases__ == (object,)
+	finally:
+		threading.local = local
 
 def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zope.component.hooks.siteinfo', 'pyramid.threadlocal.ThreadLocalManager', 'pyramid.threadlocal.manager')):
 	# depending on the order of imports, we may need to patch
@@ -210,6 +240,8 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	check_threadlocal_status()
 
 	_patch_logging()
+
+	_patch_memcache()
 
 	if TRACE_GREENLETS:
 		import greenlet
