@@ -47,7 +47,6 @@ def query_object(uid, default=None, intids=None):
 
 def get_type(obj, default=None):
 	adapted = search_interfaces.ITypeResolver(obj, None)
-	print(adapted, getattr(adapted, 'type', None))
 	result = adapted.type if adapted else None
 	return result or default
 
