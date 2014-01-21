@@ -17,7 +17,7 @@ from zc import intid as zc_intid
 from ZODB.POSException import POSKeyError
 from zope.component.hooks import site, setHooks
 
-from ..common import post_
+from ..constants import post_
 from .. import discriminators
 from ..utils import find_all_posts
 from .. import interfaces as search_interfaces
