@@ -18,7 +18,7 @@ import math
 
 from . import converters
 
-def _do_convert(  page ):
+def _do_convert(page):
 	"""
 	Convert a page of a PDF into SVG using ``pdf2svg`` (which must be
 	accessible on the system PATH).
@@ -47,9 +47,11 @@ def _do_convert(  page ):
 
 	# Get the width and height from the media box since we're not cropping it
 	# in Python code
-	width_in_pt, height_in_pt = subprocess.Popen( "pdfinfo -box -f %d images.pdf | grep MediaBox | awk '{print $4,$5}'" % (page), shell=True, stdout=subprocess.PIPE).communicate()[0].split()
+	command = "pdfinfo -box -f %d images.pdf | grep MediaBox | awk '{print $4,$5}'" % (page)
+	result = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
+	__traceback_info__ = command, result
+	width_in_pt, height_in_pt = result[0].split()
 	return (filename, width_in_pt, height_in_pt)
-
 
 class PDF2SVG(plasTeX.Imagers.VectorImager):
 	"""
@@ -79,7 +81,7 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 
 		filenames = []
 		with ProcessPoolExecutor( max_workers=16 ) as executor:
-			for the_tuple in zip(executor.map( _do_convert, xrange( 1, maxpages + 1 ) ),self.images.values()):
+			for the_tuple in zip(executor.map(_do_convert, xrange(1, maxpages + 1)), self.images.values()):
 				filenames.append( the_tuple[0][0] )
 
 				the_tuple[1].width = math.ceil( float(the_tuple[0][1]) ) * 1.3
