@@ -42,6 +42,7 @@ def _size(key, png):
 	# ImageMagick @6.8.8-0 does not like the two format params separated
 	command = ['identify', '-format', '"%w %h"', png]
 	output = subprocess.check_output( command )
+	output = output.replace('"', '').replace("'", '')
 	output_parts = output.split()
 	if len(output_parts) == 2:
 		# Exactly what we expected, yay
