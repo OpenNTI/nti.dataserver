@@ -77,7 +77,10 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 
 		#Find out how many pages to expect
 		# TODO: Use of shell is deprecated.
-		maxpages = int(subprocess.Popen( "pdfinfo images.pdf | grep Pages | awk '{print $2}'", shell=True, stdout=subprocess.PIPE).communicate()[0])
+		cmd = "pdfinfo images.pdf | grep Pages | awk '{print $2}'"
+		result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+		logger.debug("pdf info max pages output %s", result)
+		maxpages = int(result[0])
 
 		filenames = []
 		with ProcessPoolExecutor( max_workers=16 ) as executor:
