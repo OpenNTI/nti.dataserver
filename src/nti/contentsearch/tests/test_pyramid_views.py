@@ -56,8 +56,7 @@ class TestPyramidViews(ConfiguringTestBase):
 		assert_that(qo.location, is_(ntiid))
 		assert_that(qo.batchSize, is_(100))
 		assert_that(qo.batchStart, is_(3))
-		assert_that(sorted(qo.searchOn), is_(sorted((u'content', u'highlight', u'messageinfo', u'nticard',
-													 u'redaction', u'transcript', u'videotranscript'))))
+		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(7)))
 
 		params = {'exclude':'*/*'}
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
