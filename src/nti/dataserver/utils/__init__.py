@@ -16,7 +16,7 @@ from zope.configuration import xmlconfig, config
 
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver._Dataserver import Dataserver
+from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
 
 def _configure(self=None, set_up_packages=(), features=(), context=None):
 
@@ -49,7 +49,8 @@ class _DataserverCreationFailed(Exception): pass
 
 def run_with_dataserver( environment_dir=None, function=None,
 						 as_main=True, verbose=False,
-						 config_features=(), xmlconfig_packages=() ):
+						 config_features=(), xmlconfig_packages=(),
+						 minimal_ds=False):
 	"""
 	Execute the `function` in the (already running) dataserver
 	environment configured at `environment_dir`.
@@ -91,7 +92,7 @@ def run_with_dataserver( environment_dir=None, function=None,
 	@functools.wraps(function) # yes, two layers, but we do wrap `function`
 	def run_user_fun_transaction_wrapper():
 		try:
-			ds = Dataserver( environment_dir )
+			ds = Dataserver(environment_dir) if not minimal_ds else MinimalDataserver(environment_dir)
 		except Exception:
 			# Reraise something we can deal with (in collusion with run), but with the original traceback.
 			# This traceback should be safe.
