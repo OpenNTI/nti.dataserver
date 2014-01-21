@@ -72,6 +72,7 @@ class WeakRef(object):
 			return self._v_entity_cache if self._v_entity_cache else None
 
 		try:
+			__traceback_info__ = self.username, self._entity_id
 			result = component.getUtility( zc_intid.IIntIds ).getObject( self._entity_id )
 		except KeyError:
 			result = None
