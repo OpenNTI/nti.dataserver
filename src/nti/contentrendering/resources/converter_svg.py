@@ -3,20 +3,21 @@
 """
 A resource converter to create SVG.
 
-
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import plasTeX.Imagers
-from nti.contentrendering import ConcurrentExecutor as ProcessPoolExecutor
-import subprocess
 import math
+import subprocess
+
+import plasTeX.Imagers
 
 from . import converters
+from .. import ConcurrentExecutor as ProcessPoolExecutor
 
 def _do_convert(page):
 	"""
@@ -47,9 +48,9 @@ def _do_convert(page):
 
 	# Get the width and height from the media box since we're not cropping it
 	# in Python code
-	command = "pdfinfo -box -f %d images.pdf | grep MediaBox | awk '{print $4,$5}'" % (page)
-	result = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).communicate()
-	__traceback_info__ = command, result
+	cmd = "pdfinfo -box -f %d images.pdf | grep MediaBox | awk '{print $4,$5}'" % (page)
+	result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
+	__traceback_info__ = cmd, result
 	width_in_pt, height_in_pt = result[0].split()
 	return (filename, width_in_pt, height_in_pt)
 
@@ -66,16 +67,17 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 
 	def executeConverter(self, output):
 		open('images.pdf', 'w').write(output.read())
-		#Crop all the pages of the PDF to the exact size
-		#os.system( "pdfcrop --hires --margin 0 images.pdf images.pdf" )
+		# Crop all the pages of the PDF to the exact size
+		# os.system( "pdfcrop --hires --margin 0 images.pdf images.pdf" )
 		with open('/dev/null', 'w') as dev_null:
-			subprocess.check_call( ('pdfcrop', '--hires', '--margin', '0', 'images.pdf', 'images.pdf' ),
-								   stdout=dev_null, stderr=dev_null )
+			subprocess.check_call(
+					 ('pdfcrop', '--hires', '--margin', '0', 'images.pdf', 'images.pdf'),
+					  stdout=dev_null, stderr=dev_null)
 		# We must mark these as cropped
 		for img in self.images.values():
 			img._cropped = True
 
-		#Find out how many pages to expect
+		# Find out how many pages to expect
 		# TODO: Use of shell is deprecated.
 		cmd = "pdfinfo images.pdf | grep Pages | awk '{print $2}'"
 		result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
@@ -83,8 +85,9 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 		maxpages = int(result[0])
 
 		filenames = []
-		with ProcessPoolExecutor( max_workers=16 ) as executor:
-			for the_tuple in zip(executor.map(_do_convert, xrange(1, maxpages + 1)), self.images.values()):
+		with ProcessPoolExecutor(max_workers=16) as executor:
+			_images = self.images.values()
+			for the_tuple in zip(executor.map(_do_convert, xrange(1, maxpages + 1)), _images):
 				filenames.append( the_tuple[0][0] )
 
 				the_tuple[1].width = math.ceil( float(the_tuple[0][1]) ) * 1.3
@@ -100,5 +103,6 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 Imager = PDF2SVG # An alias for use as a plastex imager module
 
 class PDF2SVGBatchConverter(converters.ImagerContentUnitRepresentationBatchConverter):
+
 	def __init__(self, document):
 		super(PDF2SVGBatchConverter, self).__init__(document, PDF2SVG)
