@@ -185,6 +185,9 @@ class AbstractNTIIDSafeNameChooser(object):
 
 from zope.container.constraints import checkObject
 class _CheckObjectOnSetMixin(object):
+	"""
+	Works only with the standard BTree container.
+	"""
 	def _setitemf( self, key, value ):
 		checkObject( self, key, value )
 		super(_CheckObjectOnSetMixin,self)._setitemf( key, value )
