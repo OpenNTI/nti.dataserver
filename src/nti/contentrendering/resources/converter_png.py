@@ -39,7 +39,8 @@ import plasTeX.Imagers.gspdfpng
 
 def _size(key, png):
 	# identify, from ImageMagick, is much easier to work with than pdfinfo --box
-	command = ['identify', '-format', '%w %h', png]
+	# ImageMagick @6.8.8-0 does not like the two format params separated
+	command = ['identify', '-format', '"%w %h"', png]
 	output = subprocess.check_output( command )
 	output_parts = output.split()
 	if len(output_parts) == 2:
@@ -370,7 +371,7 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 		return image
 
 	def __newNameFromOrig(self, name, size, inverted):
-		dir, base = os.path.split(name)
+		_, base = os.path.split(name)
 		fname, ext = os.path.splitext(base)
 
 		newName = '%s_%dx' % (fname, size)
