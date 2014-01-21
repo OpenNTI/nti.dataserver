@@ -126,9 +126,32 @@ class MinimalDataserver(object):
 		# We notify both in that same order (sometimes action is taken on IDatabaseOpened
 		# which impacts how zope.generations does its work on OpenedWithRoot)
 
+		def _make_class_factory(db):
+			"""Support objects defining their own replacement object.
+			This is useful for classes that used to be persistent but aren't anymore."""
+			orig_class_factory = db.classFactory
+			def nti_classFactory(connection, modulename, globalname):
+				result = orig_class_factory(connection, modulename, globalname)
+				replace = getattr(result, '_v_nti_pseudo_broken_replacement_name', None)
+				if replace is not None:
+					result = orig_class_factory(connection, modulename, replace)
+				return result
+			return nti_classFactory
+
 		# TODO: Should we be the ones doing this?
 
-		notify( DatabaseOpened( self.db ) )
+		for db in self.db.databases.values():
+			notify( DatabaseOpened( db ) )
+			# This will allow zope.app.broken to set up a nice class factory.
+			# We need to rewrap that class factory to respect our pseudo-broken
+			# support
+			db.classFactory = _make_class_factory(db)
+			# Unfortunately, if a Connection was already opened, it
+			# caches the class factory...and we would open a connection
+			# to evolve the database. So we must go through and also
+			# set those to the right value
+			db.pool.map(lambda conn: setattr(conn._reader, '_factory', db.classFactory))
+
 		notify( DatabaseOpenedWithRoot( self.db ) )
 
 
