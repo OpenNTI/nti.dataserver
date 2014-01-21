@@ -196,11 +196,11 @@ def _parse_date_at_invoke(self):
 
 	return ()
 
+from paste.deploy.converters import asbool
+
 def _parse_isoutline_at_invoke(self):
-	options = self.attributes.get('options') or ()
-	if 'is_outline_stub_only' in options:
-		return options['is_outline_stub_only'] == 'true'
-	return False
+	options = self.attributes.get('options') or {}
+	return asbool(options.get('is_outline_stub_only'))
 
 def _make_invoke(cls):
 	def invoke(self, tex):
