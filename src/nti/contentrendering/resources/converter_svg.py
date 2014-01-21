@@ -81,17 +81,17 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 		# TODO: Use of shell is deprecated.
 		cmd = "pdfinfo images.pdf | grep Pages | awk '{print $2}'"
 		result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
-		logger.debug("pdf info max pages output %s", result)
-		maxpages = int(result[0])
+		logger.info("pdf info max pages output %s", result)
+		maxpages = int(result[0].strip())
 
 		filenames = []
 		with ProcessPoolExecutor(max_workers=16) as executor:
 			_images = self.images.values()
 			for the_tuple in zip(executor.map(_do_convert, xrange(1, maxpages + 1)), _images):
-				filenames.append( the_tuple[0][0] )
+				filenames.append(the_tuple[0][0])
 
-				the_tuple[1].width = math.ceil( float(the_tuple[0][1]) ) * 1.3
-				the_tuple[1].height = math.ceil( float(the_tuple[0][2]) ) * 1.3
+				the_tuple[1].width = math.ceil(float(the_tuple[0][1])) * 1.3
+				the_tuple[1].height = math.ceil(float(the_tuple[0][2])) * 1.3
 				# FIXME: The depth (height above baseline) is not correct
 				the_tuple[1].depth = -3
 
