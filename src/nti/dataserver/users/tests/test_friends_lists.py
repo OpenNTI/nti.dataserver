@@ -406,3 +406,27 @@ def test_replace_dfl_sharing_with_a_member():
 
 		scnt = sjohnson.getSharedContainer(  u'c1' )
 		assert_that(note, is_in(scnt))
+
+@WithMockDSTrans
+def test_remove_friends():
+	owner = users.User.create_user(username='owner@bar')
+	fl1 = users.DynamicFriendsList(username='Friends')
+	fl1.creator = owner 
+	owner.addContainedObject( fl1 )
+
+	collected = []
+	for x in range(100):
+		user = users.User.create_user(username='%sfoo@bar' % x)
+		fl1.addFriend( user )
+		collected.append(user)
+		
+	
+	result = fl1.removeFriends(*collected[50:])
+	assert_that(result, is_(50))
+	assert_that(fl1, has_length(50))
+
+	for user in collected[50:]:
+		assert_that(user, does_not(is_in(fl1)))
+
+	for user in collected[0:50]:
+		assert_that(user, is_in(fl1))
