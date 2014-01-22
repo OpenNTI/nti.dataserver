@@ -14,6 +14,8 @@
 
 	<!-- Events -->
 	<subscriber handler=".users.user_devicefeedback" />
+	<subscriber handler=".users._add_member_to_community" />
+	<subscriber handler=".users._remove_member_from_community" />
 
 
 	<!-- Externalization -->

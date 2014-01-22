@@ -175,6 +175,11 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
 	Principal.password_manager_name = 'Plain Text'
 
+from nti.utils.property import Lazy
+from nti.dataserver.sharing import _remove_entity_from_named_lazy_set_of_wrefs
+from nti.dataserver.sharing import _set_of_usernames_from_named_lazy_set_of_wrefs
+from nti.dataserver.sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
+
 @interface.implementer(nti_interfaces.ICommunity,
 					   loc_interfaces.ISublocations)
 class Community(sharing.DynamicSharingTargetMixin,Entity):
@@ -194,7 +199,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 	NTIID = cachedIn('_v_ntiid')(named_entity_ntiid)
 
 	# We override these methods for space efficiency.
-	# TODO: Should we track membership here? If so, membership
+	# TODO: If we're tracking membership, should membership
 	# would be a prereq for accepting shared data. Also,
 	# Everyone would need these methods to return True
 	def accept_shared_data_from( self, source ):
@@ -221,6 +226,39 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 			if getattr( val, '__parent__', None ) is self:
 				yield val
 
+	@Lazy
+	def _members(self):
+		"""
+		We track weak references to our members to be able
+		to answer __contains__ quickly.
+		"""
+		return self._lazy_create_ootreeset_for_wref()
+
+	def _note_member(self, entity):
+		self._members.add(nti_interfaces.IWeakRef(entity))
+
+	def _del_member(self, entity):
+		_remove_entity_from_named_lazy_set_of_wrefs(self, '_members', entity)
+
+	def __contains__(self, other):
+		return nti_interfaces.IWeakRef(other, None) in self._members
+
+	def iter_members(self):
+		return _iterable_of_entities_from_named_lazy_set_of_wrefs(self, '_members')
+
+	def iter_member_usernames(self):
+		return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_members')
+
+@component.adapter(nti_interfaces.IUser,nti_interfaces.IStartDynamicMembershipEvent)
+def _add_member_to_community(entity, event):
+	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
+		event.target._note_member(entity)
+
+@component.adapter(nti_interfaces.IUser,nti_interfaces.IStopDynamicMembershipEvent)
+def _remove_member_from_community(entity, event):
+	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
+		event.target._del_member(entity)
+
 @interface.implementer(nti_interfaces.IEntityContainer)
 @component.adapter(nti_interfaces.ICommunity)
 class CommunityEntityContainer(object):
@@ -230,7 +268,9 @@ class CommunityEntityContainer(object):
 
 	def __contains__( self, entity ):
 		try:
-			return self.context in entity.dynamic_memberships
+			#return self.context in entity.dynamic_memberships
+			#return entity.is_dynamic_member_of(self.context)
+			return entity in self.context
 		except AttributeError:
 			return False
 

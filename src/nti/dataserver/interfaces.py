@@ -565,7 +565,17 @@ class IDynamicSharingTarget(IEntity):
 	"""
 
 class ICommunity(IDynamicSharingTarget):
-	pass
+
+	def iter_members():
+		"""
+		Return an iterable of the entity objects that are a member
+		of this community.
+		"""
+
+	def iter_member_usernames():
+		"""
+		Return an iterable of the usernames of members of this community.
+		"""
 
 
 class IUnscopedGlobalCommunity(ICommunity):
