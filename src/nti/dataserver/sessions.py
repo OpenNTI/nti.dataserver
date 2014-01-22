@@ -31,7 +31,7 @@ from zope import component
 from zope.event import notify
 from zope.cachedescriptors.property import Lazy
 
-from ZODB import loglevels
+from ZODB.loglevels import TRACE
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import SiteNotInstalledError
@@ -177,7 +177,7 @@ class SessionService(object):
 
 				for sid, sess in sessions.items():
 					if sess is None:
-						logger.debug( "Session %s died", sid )
+						logger.log( TRACE, "Session %s died", sid )
 						self._watching_sessions.discard( sid )
 		return gevent.spawn( watchdog_sessions )
 
@@ -385,7 +385,7 @@ class SessionService(object):
 			all_sessions = self.get_sessions_by_owner( username )
 
 		if not all_sessions: # pragma: no cover
-			logger.log( loglevels.TRACE, "No sessions for %s to send event %s to", username, name )
+			logger.log( TRACE, "No sessions for %s to send event %s to", username, name )
 			return
 
 		# When sending an event to a user, we need to write the object
@@ -410,7 +410,7 @@ class SessionService(object):
 					  for arg in args]
 
 		for s in all_sessions:
-			logger.log( loglevels.TRACE, "Dispatching %s to %s", name, s )
+			logger.log( TRACE, "Dispatching %s to %s", name, s )
 			ISocketIOSocket(s).send_event( name, *args )
 
 	### Low-level messaging routines (that can probably be refactored/extracted for clarity)

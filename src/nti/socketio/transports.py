@@ -31,7 +31,7 @@ except ImportError:
 import time
 import socket
 import geventwebsocket.exceptions
-from ZODB import loglevels
+from ZODB.loglevels import TRACE
 import pyramid.interfaces
 from nti.socketio import interfaces
 import nti.dataserver.interfaces as nti_interfaces
@@ -49,7 +49,7 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 
 	for pkt in pkts:
 		if pkt.msg_type == 0:
-			logger.debug( "Killing session %s on receipt of death packet %s from remote client", session, pkt )
+			logger.log( TRACE, "Killing session %s on receipt of death packet %s from remote client", session, pkt )
 			session.kill()
 		elif pkt.msg_type == 1:
 			sock.send_connect( pkt['data'] )
@@ -60,7 +60,7 @@ def _decode_packet_to_session( session, sock, data, doom_transaction=True ):
 			session.queue_message_from_client( pkt )
 
 def _safe_kill_session( session, reason='' ):
-	logger.debug( "Killing session %s %s", session, reason )
+	logger.log( TRACE, "Killing session %s %s", session, reason )
 	try:
 		session.kill()
 	except AttributeError:
@@ -149,7 +149,7 @@ class XHRPollingTransport(BaseTransport):
 		if result is None:
 			# Must have pulled a None out of the queue. Which means our
 			# session is dead. How to deal with this?
-			logger.debug( "Polling got terminal None message. Need to disconnect." )
+			logger.log( TRACE, "Polling got terminal None message. Need to disconnect." )
 			result = session.socket.protocol.make_noop()
 
 		response = self.request.response
@@ -341,7 +341,7 @@ class WebsocketTransport(BaseTransport):
 					logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
 								 len(self.message), self.message[0:50] )
 				except socket.error as e:
-					logger.debug( "Stopping sending messages to '%s' on %s", self.session_id, e )
+					logger.log( TRACE, "Stopping sending messages to '%s' on %s", self.session_id, e )
 					# The session will be killed of its own accord soon enough.
 					break
 
@@ -473,21 +473,7 @@ class WebsocketTransport(BaseTransport):
 		heartbeat = self.WebSocketGreenlet.spawn( ping )
 
 		to_cleanup = [gr1, gr2, heartbeat]
-		def cleanup(dead_greenlet):
-			logger.log( loglevels.TRACE, "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
-			if session_service.get_proxy_session( session_id ) is session_proxy:
-				logger.log( loglevels.TRACE, "Removing websocket session proxy for %s", session_id )
-				session_service.set_proxy_session( session_id, None )
-
-			try:
-				to_cleanup.remove( dead_greenlet )
-			except ValueError: pass # hmm?
-			# When one dies, they all die
-			for greenlet in to_cleanup:
-				if not greenlet.ready():
-					logger.log( loglevels.TRACE, "Asking %s to quit on death of %s", greenlet, dead_greenlet )
-					greenlet.ws_ask_to_quit()
-
+		cleanup = self._make_cleanup(to_cleanup, session_id, session_proxy)
 		for link in to_cleanup:
 			link.link( cleanup )
 
@@ -496,6 +482,25 @@ class WebsocketTransport(BaseTransport):
 		session.incr_hits()
 
 		return [gr1, gr2, heartbeat]
+
+	def _make_cleanup(self, to_cleanup, session_id, session_proxy ):
+		def cleanup(dead_greenlet):
+			logger.log( TRACE, "Performing cleanup on death of %s/%s", dead_greenlet, session_id )
+			session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
+			if session_service.get_proxy_session( session_id ) is session_proxy:
+				logger.log( TRACE, "Removing websocket session proxy for %s", session_id )
+				session_service.set_proxy_session( session_id, None )
+
+			try:
+				to_cleanup.remove( dead_greenlet )
+			except ValueError: pass # hmm?
+			# When one dies, they all die
+			for greenlet in to_cleanup:
+				if not greenlet.ready():
+					logger.log( TRACE, "Asking %s to quit on death of %s", greenlet, dead_greenlet )
+					greenlet.ws_ask_to_quit()
+
+		return cleanup
 
 	def kill( self ):
 		try:
