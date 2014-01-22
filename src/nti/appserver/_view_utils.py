@@ -235,9 +235,19 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		try:
 			return self._do_call()
 		except sch_interfaces.ValidationError as e:
+			transaction.doom()
 			obj_io.handle_validation_error( self.request, e )
 		except interface.Invalid as e:
+			transaction.doom()
 			obj_io.handle_possible_validation_error( self.request, e )
+		except (TypeError,LookupError): # pragma: no cover
+			# These are borderline server/client errors. They could
+			# be either, depending on details...often they're a failed
+			# interface adaptation, but that could be because of bad input
+			transaction.doom()
+			logger.warn("Failed to accept input. Client or server problem?", exc_info=True)
+			raise hexc.HTTPUnprocessableEntity()
+
 
 	def readInput(self, value=None):
 		"""
