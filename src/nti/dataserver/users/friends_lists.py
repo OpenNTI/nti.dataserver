@@ -155,12 +155,16 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			jar.readCurrent(self._friends_wref_set)
 
 		mod_friends = list(self)
+		count = len(mod_friends)
 		for friend in friends:
 			if friend in self:
 				mod_friends.remove(friend)
-		result = self._update_friends_from_external(mod_friends)
-		self.updateLastMod()
-		return result
+
+		if count != len(mod_friends):
+			result = self._update_friends_from_external(mod_friends)
+			self.updateLastMod()
+			return result
+		return 0
 
 	@property
 	def _creator_username(self):
