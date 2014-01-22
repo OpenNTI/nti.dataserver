@@ -645,7 +645,7 @@ class IBaseHit(interface.Interface):
 	represent a base search hit
 	"""
 	Query = schema.Object(ISearchQuery, title="Search query", required=False)
-	Score = nti_schema.Number(title="hit relevance score", required=True, default=1.0, min=0.0)
+	Score = nti_schema.Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
 class IIndexHit(IBaseHit):
 	"""
@@ -663,37 +663,43 @@ class ISearchHit(IBaseHit, IMapping):
 	"""
 	represent an externalized search hit
 	"""
-	Query = nti_schema.Object(ISearchQuery, required=True, readonly=True)
-	NTIID = nti_schema.ValidTextLine(title="hit object ntiid", required=False, readonly=True)
-	OID = nti_schema.ValidTextLine(title="hit unique id", required=False, readonly=True)
-	Snippet = nti_schema.ValidTextLine(title="text found", required=True, default=u'')
+	OID = nti_schema.ValidTextLine(title="hit unique id", required=False)
+	NTIID = nti_schema.ValidTextLine(title="hit object ntiid", required=False)
+	Snippet = nti_schema.ValidTextLine(title="text found", required=False, default=u'')
 	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
-	Score = nti_schema.Float(title="Score for this hit", default=1.0, required=True)
-	lastModified = nti_schema.Int(title="last modified date for this hit", default=0, required=True)
+	Creator = nti_schema.ValidTextLine(title="Search hit target creator", required=False)
+	ContainerId = nti_schema.ValidTextLine(title="Search hit container id", required=False)
+	LastModified = nti_schema.Float(title="last modified date for this hit", default=0, required=False)
+	TargetMimeType = nti_schema.ValidTextLine(title="Search hit target mimetype", required=True)
 
 class INoteSearchHit(ISearchHit):
-	pass
+	Title = nti_schema.ValidTextLine(title="Note title", required=False)
 
 class IHighlightSearchHit(ISearchHit):
 	pass
 
 class IRedactionSearchHit(ISearchHit):
-	pass
+	RedactionExplanation = nti_schema.ValidTextLine(title="Redaction Explanation", required=False)
+	ReplacementContent = nti_schema.ValidTextLine(title="Redaction replacement content", required=False)
 
 class IMessageInfoSearchHit(ISearchHit):
 	pass
 
 class IPostSearchHit(ISearchHit):
-	pass
+	Title = nti_schema.ValidTextLine(title="Post title", required=False)
+	Tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Post tags"), required=False)
 
 class IWhooshBookSearchHit(ISearchHit):
-	pass
+	Title = nti_schema.ValidTextLine(title="Book title", required=False)
 
 class IWhooshVideoTranscriptSearchHit(ISearchHit):
-	pass
+	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
+	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=True)
+	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=True)
 
 class IWhooshNTICardSearchHit(ISearchHit):
-	pass
+	Href = nti_schema.ValidTextLine(title="Card HREF", required=True)
+	TargetNTIID = nti_schema.ValidTextLine(title="Card target NTIID", required=True)
 
 class ISearchHitComparator(interface.Interface):
 

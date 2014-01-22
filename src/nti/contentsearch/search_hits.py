@@ -61,8 +61,9 @@ class _MetaSearchHit(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
 		t.parameters = dict()
+		t.mimeType = 'application/vnd.nextthought.search.%s' % name[1:].lower()
+		t.mime_type = t.mimeType
 		setattr(t, '__external_can_create__', True)
 		setattr(t, '__external_class_name__', HIT)
 		return t
@@ -153,6 +154,8 @@ _SearchHit = SearchHit  # BWC
 class _NoteSearchHit(SearchHit):
 	adapter_interface = search_interfaces.INoteContentResolver
 
+	Title = alias('title')
+
 	def set_hit_info(self, original, score):
 		adapted = super(_NoteSearchHit, self).set_hit_info(original, score)
 		self.title = get_value(adapted, 'title')
@@ -172,6 +175,9 @@ class _RedactionSearchHit(SearchHit):
 
 	adapter_interface = search_interfaces.IRedactionContentResolver
 
+	RedactionExplanation = alias('replacementContent')
+	ReplacementContent = alias('redactionExplanation')
+
 	def set_hit_info(self, original, score):
 		adapted = super(_RedactionSearchHit, self).set_hit_info(original, score)
 		self.replacement_content = get_value(adapted, "replacementContent")
@@ -187,19 +193,17 @@ class _RedactionSearchHit(SearchHit):
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoSearchHit)
 class _MessageInfoSearchHit(SearchHit):
-
 	adapter_interface = search_interfaces.IMessageInfoContentResolver
 
-	def set_hit_info(self, original, score):
-		adapted = super(_MessageInfoSearchHit, self).set_hit_info(original, score)
-		self[ID] = get_value(adapted, "id")
-		return adapted
 
 @component.adapter(for_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostSearchHit)
 class _PostSearchHit(SearchHit):
 
 	adapter_interface = search_interfaces.IPostContentResolver
+
+	Tags = alias('tags')
+	Title = alias('title')
 
 	def set_hit_info(self, original, score):
 		adapted = super(_PostSearchHit, self).set_hit_info(original, score)
@@ -265,6 +269,9 @@ class _WhooshVideoTranscriptSearchHit(BaseSearchHit):
 @component.adapter(search_interfaces.IWhooshNTICardContent)
 @interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
 class _WhooshNTICardSearchHit(BaseSearchHit):
+
+	OID = alias('NTIID')
+	Title = alias('title')
 
 	def __init__(self, hit):
 		super(_WhooshNTICardSearchHit, self).__init__(hit, self.get_oid(hit))
