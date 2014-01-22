@@ -270,7 +270,6 @@ class _WhooshVideoTranscriptSearchHit(BaseSearchHit):
 @interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
 class _WhooshNTICardSearchHit(BaseSearchHit):
 
-	OID = alias('NTIID')
 	Title = alias('title')
 
 	def __init__(self, hit):
