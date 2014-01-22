@@ -87,7 +87,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 	def __contains__( self, entity ):
 		# We can very efficiently check the containment
 		# of the entity using the sorted set/wref
-		return nti_interfaces.IWeakRef(entity, None) in self._friends_wref_set
+		try:
+			return nti_interfaces.IWeakRef(entity, None) in self._friends_wref_set
+		except TypeError:
+			return False # "Object has default comparison"
 
 	def addFriend( self, friend ):
 		"""
