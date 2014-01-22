@@ -223,7 +223,7 @@ def _do_commit( tx, description, long_commit_duration ):
 	exc_info = sys.exc_info()
 	try:
 		duration = _timing( tx.commit, 'transaction.commit' )
-		logger.debug( "Committed transaction for %s in %ss", description, duration )
+		logger.log( TRACE, "Committed transaction for %s in %ss", description, duration )
 		if duration > long_commit_duration: # pragma: no cover
 			# We held (or attempted to hold) locks for a really, really, long time. Why?
 			logger.warn( "Slow running commit for %s in %ss", description, duration )
@@ -386,7 +386,7 @@ class TransactionLoop(object):
 			except self.AbortException as e:
 				duration = _timing( transaction.abort, 'transaction.abort' )  # note: NOT our tx variable, whatever is current
 				self.__free(tx); del tx
-				logger.debug( "Aborted %s transaction for %s in %ss", e.reason, note, duration )
+				logger.log( TRACE, "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception:
 				_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
