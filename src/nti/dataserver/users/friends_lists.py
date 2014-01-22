@@ -143,6 +143,25 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			self.updateLastMod()
 			return up_count
 
+	def removeFriends(self, *friends):
+		"""
+		Remove the `friends` from this object.
+
+		:param friends: Entities contained by this object.
+		"""
+		jar = self._p_jar
+		if jar and self._friends_wref_set._p_jar:
+			self._friends_wref_set._p_activate()
+			jar.readCurrent(self._friends_wref_set)
+
+		mod_friends = list(self)
+		for friend in friends:
+			if friend in self:
+				mod_friends.remove(friend)
+		result = self._update_friends_from_external(mod_friends)
+		self.updateLastMod()
+		return result
+
 	@property
 	def _creator_username(self):
 		return self.creator.username if self.creator else 'Unknown' # for purposes of caching NTIID
