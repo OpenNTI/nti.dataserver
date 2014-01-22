@@ -669,7 +669,7 @@ class ISearchHit(IBaseHit, IMapping):
 	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
 	Creator = nti_schema.ValidTextLine(title="Search hit target creator", required=False)
 	ContainerId = nti_schema.ValidTextLine(title="Search hit container id", required=False)
-	LastModified = nti_schema.Float(title="last modified date for this hit", default=0, required=False)
+	LastModified = nti_schema.Number(title="last modified date for this hit", default=0, required=False)
 	TargetMimeType = nti_schema.ValidTextLine(title="Search hit target mimetype", required=True)
 
 class INoteSearchHit(ISearchHit):
