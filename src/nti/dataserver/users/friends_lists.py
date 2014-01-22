@@ -85,9 +85,9 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 				yield ent
 
 	def __contains__( self, entity ):
-		for x in self: # use the generator
-			if entity == x:
-				return True
+		# We can very efficiently check the containment
+		# of the entity using the sorted set/wref
+		return nti_interfaces.IWeakRef(entity, None) in self._friends_wref_set
 
 	def addFriend( self, friend ):
 		"""
@@ -290,10 +290,10 @@ class _FriendsListEntityIterable(object):
 		self.context = context
 
 	def __iter__(self):
-		return (x for x in self.context)
+		return self.context #(x for x in self.context)
 
 	def __contains__(self, other):
-		return other in iter(self)
+		return other in self.context
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
@@ -413,6 +413,9 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 		result = set( super(_DynamicFriendsListEntityIterable,self).__iter__() )
 		result.add( self.context.creator )
 		return iter(result)
+
+	def __contains__(self, other):
+		return super(_DynamicFriendsListEntityIterable,self).__contains__(other) or other == self.context.creator
 
 
 from nti.dataserver import datastructures

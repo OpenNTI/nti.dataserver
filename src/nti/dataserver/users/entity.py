@@ -39,14 +39,12 @@ from nti.dataserver.users import interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
+from nti.utils.property import CachedProperty
+
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
 		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
-
-
-@lru_cache(10000)
-def _lower(s): return s.lower() if s else s
 
 
 @functools.total_ordering
@@ -319,17 +317,21 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 
 	### Comparisons and Hashing ###
 
+	@CachedProperty
+	def _lower_username(self):
+		return self.username.lower() if self.username else None
+
 	def __eq__(self, other):
 		try:
-			return other is self or _lower(self.username) == _lower(other.username)
+			return other is self or self._lower_username == other._lower_username
 		except AttributeError:
 			return NotImplemented
 
 	def __lt__(self, other):
 		try:
-			return _lower(self.username) < _lower(other.username)
+			return self._lower_username < other._lower_username
 		except AttributeError:
 			return NotImplemented
 
 	def __hash__(self):
-		return _lower(self.username).__hash__()
+		return self._lower_username.__hash__()
