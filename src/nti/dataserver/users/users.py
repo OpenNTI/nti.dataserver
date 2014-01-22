@@ -236,9 +236,11 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 
 	def _note_member(self, entity):
 		self._members.add(nti_interfaces.IWeakRef(entity))
+		self.updateLastMod()
 
 	def _del_member(self, entity):
 		_remove_entity_from_named_lazy_set_of_wrefs(self, '_members', entity)
+		self.updateLastMod()
 
 	def __contains__(self, other):
 		return nti_interfaces.IWeakRef(other, None) in self._members
