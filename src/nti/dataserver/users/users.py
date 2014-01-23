@@ -243,7 +243,10 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 		self.updateLastMod()
 
 	def __contains__(self, other):
-		return nti_interfaces.IWeakRef(other, None) in self._members
+		try:
+			return nti_interfaces.IWeakRef(other, None) in self._members
+		except TypeError:
+			return False # "Object has default comparison""
 
 	def iter_members(self):
 		return _iterable_of_entities_from_named_lazy_set_of_wrefs(self, '_members')
