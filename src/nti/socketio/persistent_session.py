@@ -38,6 +38,8 @@ class AbstractSession(PersistentPropertyHolder):
 	decide how to process those locally or remotely.
 	"""
 
+	heartbeat_is_transactional = True
+
 	connection_confirmed = False
 	_broadcast_connect = False
 

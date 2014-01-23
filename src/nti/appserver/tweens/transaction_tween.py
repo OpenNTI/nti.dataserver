@@ -38,12 +38,16 @@ def _commit_veto(request, response):
 
 	* The response status code starts with ``4`` or ``5``.
 
+	# The request environment has a true value for `nti.commit_veto`
+
 	Otherwise the transaction will be allowed to commit.
 	"""
 	xtm = response.headers.get('x-tm')
 	if xtm is not None: # pragma: no cover
 		return xtm != 'commit'
-	return response.status.startswith(('4', '5'))
+	if response.status.startswith(('4', '5')):
+		return True
+	return request.environ.get('nti.commit_veto')
 
 def _is_side_effect_free( request ):
 	"""

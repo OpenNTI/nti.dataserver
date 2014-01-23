@@ -187,6 +187,8 @@ class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
 	implementations should probably be :class:`an_interfaces.IAttributeAnnotatable`
 	"""
 
+	heartbeat_is_transactional = schema.Bool("Do you have to commit the transaction to update the heartbeat/disconnect time?")
+
 	connected = schema.Bool(title='Is the session known to be connected to a client?')
 	owner = schema.TextLine(title='The name of the user that owns this session.')
 	socket = schema.Object(
