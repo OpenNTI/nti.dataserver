@@ -15,16 +15,11 @@ import transaction
 
 from zope import component
 from zope import interface
-from zope.deprecation import deprecate
 
 import pyramid.interfaces
 from pyramid.view import view_config
 import pyramid.httpexceptions as hexc
 
-try:
-	import gevent
-except ImportError:
-	gevent = None
 from geventwebsocket import interfaces as ws_interfaces
 
 from nti.appserver.policies import site_policies
