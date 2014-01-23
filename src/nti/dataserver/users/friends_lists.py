@@ -125,33 +125,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 
 		return result
 
-	def removeFriend( self, friend ):
-		"""
-		Remove the `friend` from this object.
-
-		:param friend: An entity contained by this object.
-		"""
-		# implemented with _update_friends_from_external so as to let subclasses fire the correct
-		# events
-		if friend in self:
-			jar = self._p_jar
-			if jar and self._friends_wref_set._p_jar:
-				self._friends_wref_set._p_activate()
-				jar.readCurrent( self._friends_wref_set )
-
-			friends = list(self)
-			friends.remove( friend )
-			up_count = self._update_friends_from_external( friends )
-			assert up_count == 1
-			self.updateLastMod()
-			return up_count
-
-	def removeFriends(self, *friends):
-		"""
-		Remove the `friends` from this object.
-
-		:param friends: Entities contained by this object.
-		"""
+	def _do_remove_friends(self, *friends):
 		jar = self._p_jar
 		if jar and self._friends_wref_set._p_jar:
 			self._friends_wref_set._p_activate()
@@ -168,6 +142,28 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			self.updateLastMod()
 			return result
 		return 0
+	
+	def removeFriend( self, friend ):
+		"""
+		Remove the `friend` from this object.
+
+		:param friend: An entity contained by this object.
+		"""
+		# implemented with _update_friends_from_external so as to let subclasses fire the correct
+		# events
+		if friend in self:
+			up_count = self._do_remove_friends(friend)
+			assert up_count == 1
+			return up_count
+
+	def removeFriends(self, *friends):
+		"""
+		Remove the `friends` from this object.
+
+		:param friends: Entities contained by this object.
+		"""
+		up_count = self._do_remove_friends(*friends)
+		return up_count
 
 	@property
 	def _creator_username(self):
