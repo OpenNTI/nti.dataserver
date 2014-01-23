@@ -71,8 +71,7 @@ def decode_packet_to_session( session, sock, data, doom_transaction=True ):
 
 	for pkt in pkts:
 		if pkt.msg_type == 0:
-			logger.log( TRACE, "Killing session %s on receipt of death packet %s from remote client", session, pkt )
-			session.kill()
+			safe_kill_session( session, "on receipt of death packet %s from remote client" % pkt )
 		elif pkt.msg_type == 1:
 			sock.send_connect( pkt['data'] )
 		elif pkt.msg_type == 2: # heartbeat

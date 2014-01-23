@@ -6,8 +6,8 @@ from hamcrest import (assert_that, is_, has_length, only_contains, has_property,
 import gevent
 import transaction
 
-from gevent.queue import Queue
-from Queue import Empty
+from .._base import Queue
+from .._base import Empty
 import nti.socketio.protocol
 protocol = nti.socketio.protocol
 import nti.socketio.transports as transports
@@ -155,6 +155,7 @@ class TestWebSocket(ConfiguringTestBase):
 		assert_that( reader, has_property( 'run_loop', False ) )
 
 class MockSession(object):
+	heartbeat_is_transactional = False
 	socket = None
 	session_confirmed = None
 	heartbeats = None
@@ -241,7 +242,7 @@ class TestXHRTransport(ConfiguringTestBase):
 	def test_connect_fresh(self):
 		self.request.body = b"1::"
 		self.transport.connect( self.session, 'POST' )
-
+		self.transport.proxy_timeout = 0.1
 		assert_that( self.session, has_property( 'connection_confirmed', True ) )
 
 		# Now that it's confirmed, we'll go into a get
@@ -259,4 +260,11 @@ class TestXHRTransport(ConfiguringTestBase):
 		self.transport.proxy_timeout = 0.01
 
 		rsp = self.transport.connect( self.session, 'GET' )
-		assert_that( rsp.body, is_( b'8::' ) )
+		# The greenlet to run came back
+		assert_that( rsp, is_( list ))
+		for i in rsp:
+			i.join()
+		# The response is all set up with the noop, and the
+		# abort tm command
+		assert_that( self.request.response.body, is_( b'8::' ) )
+		assert_that( self.request.environ, has_entry( 'nti.commit_veto', 'abort'))

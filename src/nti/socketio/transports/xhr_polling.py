@@ -23,6 +23,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from ._base import BaseTransport
 from ._base import SessionEventProxy
 from ._base import Empty
+from ._base import Greenlet
 from ._base import decode_packet_to_session
 
 
@@ -47,7 +48,10 @@ def _using_session_proxy( service, sid  ):
 @interface.implementer( interfaces.ISocketIOTransport )
 class XHRPollingTransport(BaseTransport):
 
-	proxy_timeout = 5.0
+	#: How long we'll wait for a message to come in.
+	#: It looks like the socket.io.js client by default
+	#: only wants to wait for 10s.
+	proxy_timeout = 9.0
 
 	def __init__(self, request):
 		super(XHRPollingTransport, self).__init__(request)
@@ -57,59 +61,75 @@ class XHRPollingTransport(BaseTransport):
 		rsp.content_type = b'text/plain'
 		return rsp
 
+	def _make_poll_job(self, session_service, session):
+		session_id = session.session_id
+		def poll():
+			try:
+				with _using_session_proxy( session_service, session_id ) as session_proxy:
+					session_proxy.get_client_msg( timeout=self.proxy_timeout )
+				# Note that if we get a message via broadcast,
+				# our cached session is going to be behind, so it's
+				# pointless to try to read from it again. Unfortunately,
+				# to avoid duplicate messages, we cannot just send
+				# this one to the client (since its still in the session).
+				# The simplest thing to do is to immediately return
+				# and let the next poll pick up the message. Thus, the return
+				# value is ignored and we simply wait
+			except Empty:
+				pass
+
+		return Greenlet.spawn(poll)
+
 	def get(self, session):
+		# Although our persistent_session object implements this in the
+		# database, the one we actually expect to use uses redis.
+		# Our logic below to switch to a greenlet doesn't handle this, so check for it
+		assert not session.heartbeat_is_transactional, "Unsupported session type"
+
 		session.clear_disconnect_timeout()
 		session_service = component.getUtility( nti_interfaces.IDataserver ).session_manager
 		result = None
-		try:
-			# A dead session will feed us a queue with a None object
-			messages = session.get_messages_to_client()
-			if messages is not None:
-				messages = list(messages)
-			if not messages:
-				with _using_session_proxy( session_service, session.session_id ) as session_proxy:
-					# Nothing to read right now.
-					# The client expects us to block, though, for some time
-					# We use our session proxy to both wait
-					# and notify us immediately if a new message comes in
-					session_proxy.get_client_msg( timeout=self.proxy_timeout )
-					# Note that if we get a message via broadcast,
-					# our cached session is going to be behind, so it's
-					# pointless to try to read from it again. Unfortunately,
-					# to avoid duplicate messages, we cannot just send
-					# this one to the client (since its still in the session).
-					# The simplest thing to do is to immediately return
-					# and let the next poll pick up the message. Thus, the return
-					# value is ignored and we simply wait
-					# TODO: It may be possible to back out of the transaction
-					# and retry.
 
-			if not messages:
-				raise Empty()
+		# A dead session will feed us a queue with a None object
+		messages = session.get_messages_to_client()
+		if messages is not None:
+			messages = list(messages) # Often generators
+		if messages:
 			# If we feed encode_multi None or an empty queue, it raises
 			# ValueError.
 			# If however, we feed it len() == 1 and that 1 is None,
 			# it quietly returns None to us
 			result = session.socket.protocol.encode_multi( messages )
-		except (Empty,IndexError):
-			result = session.socket.protocol.make_noop()
+			if result is None:
+				# Our session is dead, yay!
+				# How to deal with this?
+				logger.log( TRACE, "Polling got terminal None message. Need to disconnect." )
+				result = session.socket.protocol.make_noop()
+			response = self.request.response
+			response.body = result
+			return response
 
-		__traceback_info__ = session, messages, result
-		if result is None:
-			# Must have pulled a None out of the queue. Which means our
-			# session is dead. How to deal with this?
-			logger.log( TRACE, "Polling got terminal None message. Need to disconnect." )
-			result = session.socket.protocol.make_noop()
-
-		response = self.request.response
-		response.body = result
-		return response
+		# Nothing to read right now.
+		# The client expects us to block, though, for some time
+		# We use our session proxy to both wait
+		# and notify us immediately if a new message comes in.
+		# In order to avoid blocking while our DB transaction is open,
+		# we instead return a greenlet.
+		self.request.response.body = session.socket.protocol.make_noop()
+		self.request.environ[str('nti.commit_veto')] = str('abort')
+		jobs = [self._make_poll_job(session_service, session)]
+		return jobs
 
 	def _request_body(self):
 		return self.request.body
 
 
 	def post(self, session, response_message=None):
+		# The websocket transport has an optimization to detect
+		# heartbeats and only do them when necessary to keep the session
+		# alive, avoiding a database transaction. In practice,
+		# though, the polling client does not post heartbeats, so the
+		# optimization doesn't apply to us here. Instead, we do so on GET.
 		decode_packet_to_session( session, session.socket, self._request_body() )
 		# The client will expect to re-confirm the session
 		# by sending a blank post when it gets an error.
