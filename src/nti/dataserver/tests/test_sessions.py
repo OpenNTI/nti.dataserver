@@ -146,14 +146,21 @@ class TestSessionService(mock_dataserver.SharedConfiguringTestBase):
 		session = self.session_service.create_session( watch_session=False )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
 		# connect it
+		session.connection_confirmed = True # Needed to get the event
 		session.incr_hits()
 		assert_that( session, has_property( 'connected', True ) )
+		# This should have a stat now
+		assert_that( self.redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
+					 is_( [(session.owner, 1)]) )
 		# kill it
 		session.kill()
 		assert_that( session, has_property( 'connected', False ) )
 
 		# No longer able to get
 		assert_that( self.session_service.get_session( session.session_id ), is_( none() ) )
+		# And the stat is 0
+		assert_that( self.redis.zrange(sessions._session_active_keys, 0, -1, withscores=True),
+					 is_( [(session.owner, 0)]) )
 
 	@WithMockDSTrans
 	def test_get_by_owner(self):
