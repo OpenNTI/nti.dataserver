@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import random
+import functools
 
 from zope import component
 from zope import interface
@@ -83,7 +84,11 @@ class _AbstractEntitySummaryExternalObject(object):
 		extDict['CreatedTime'] = getattr( entity, 'createdTime', 42 ) # for migration
 		extDict.__parent__ = entity.__parent__
 		extDict.__name__ = entity.__name__
-		extDict.__acl__ = auth.ACL( entity )
+		# we'd like to make the ACL available. Pyramid
+		# supports either a callable or the flattened list;
+		# defer it until/if we need it by using a callable because
+		# computing it can be expensive if the cache is cold.
+		extDict.__acl__ = functools.partial( auth.ACL, entity )
 		return extDict
 
 	def toExternalObject( self ):

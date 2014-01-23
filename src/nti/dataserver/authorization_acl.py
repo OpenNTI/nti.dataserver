@@ -285,6 +285,7 @@ def is_writable( context, username, **kwargs ):
 	return has_permission( authorization.ACT_UPDATE, context, username, **kwargs )
 
 from ZODB.POSException import POSKeyError
+import functools
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(object)
@@ -293,7 +294,13 @@ class ACLDecorator(object):
 
 	def decorateExternalMapping( self, orig, result ):
 		try:
-			result.__acl__ = ACL( orig )
+			if hasattr(orig, '__acl__') and result.__acl__ is not None:
+				return
+			# we'd like to make the ACL available. Pyramid
+			# supports either a callable or the flattened list;
+			# defer it until/if we need it by using a callable because
+			# computing it can be expensive if the cache is cold.
+			result.__acl__ = functools.partial( ACL, orig )
 		except POSKeyError:
 			logger.warn( "Failed to get ACL on POSKeyError" )
 			result.__acl__ = ()
