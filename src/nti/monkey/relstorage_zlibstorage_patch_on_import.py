@@ -10,7 +10,7 @@ maintains the correct wrapper.
 Second, it makes RelStorage call super when 'registerDB' is done. This
 is needed to get conflict resolution to work correctly; without
 this call, the ConflictResolution class doesn't know to uncompress the
-pickled data.
+pickled data. This same modification has to be carried through to `new_instance`.
 
 $Id$
 """
@@ -76,6 +76,19 @@ def _patch_relstorage_registerDB():
 			pass
 
 	RelStorage.registerDB = registerDB
+
+	# Arguably it's a bug that RelStorage doesn't do
+	# either of these things itself; this one could be argued
+	# that ConflictResolvingStorage needs to implement this method
+	# and RelStorage call super
+	orig_new_instance = RelStorage.new_instance
+	def new_instance(self):
+		new_instance = orig_new_instance(self)
+		new_instance._crs_transform_record_data = self._crs_transform_record_data
+		new_instance._crs_untransform_record_data = self._crs_untransform_record_data
+		return new_instance
+	RelStorage.new_instance = new_instance
+
 
 _patch_relstorage_registerDB()
 del _patch_relstorage_registerDB
