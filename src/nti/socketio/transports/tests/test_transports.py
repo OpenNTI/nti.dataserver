@@ -6,7 +6,6 @@ from hamcrest import (assert_that, is_, has_length, only_contains, has_property,
 import gevent
 import transaction
 
-from nti.socketio import transports as socketio_server
 from gevent.queue import Queue
 from Queue import Empty
 import nti.socketio.protocol
@@ -18,6 +17,10 @@ from nti.dataserver.tests import mock_dataserver
 
 #from pyramid.testing import DummyRequest
 from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
+
+from ..websocket import _WebsocketSessionEventProxy
+from ..websocket import _WebSocketSender
+from ..websocket import _WebSocketReader
 
 class WebSocket(object):
 	server = None
@@ -68,7 +71,7 @@ class TestWebSocket(ConfiguringTestBase):
 	#	handler.handling_session_cm.premature_exit_but_its_okay = lambda: 1
 
 
-		transport = socketio_server.WebsocketTransport(handler)
+		transport = transports.WebsocketTransport(handler)
 		transport.handler = handler
 
 		sess = Mock()
@@ -96,8 +99,8 @@ class TestWebSocket(ConfiguringTestBase):
 		class Service(object):
 			def get_session( self, sid ): return None
 
-		proxy = socketio_server._WebsocketSessionEventProxy()
-		sender = socketio_server.WebsocketTransport.WebSocketSender( 1, proxy, Service(), (), None )
+		proxy = _WebsocketSessionEventProxy()
+		sender = _WebSocketSender( 1, proxy, Service(), (), None )
 
 		# Kill the session on a None-message
 		assert_that( sender._do_send(), is_( False ) )
@@ -128,7 +131,7 @@ class TestWebSocket(ConfiguringTestBase):
 			def receive(self):
 				return self.pkts.pop()
 
-		proxy = socketio_server._WebsocketSessionEventProxy()
+		proxy = _WebsocketSessionEventProxy()
 		socket = WebSocket()
 		socket.pkts.append( None )
 		socket.pkts.append( b'0::' )
@@ -136,7 +139,7 @@ class TestWebSocket(ConfiguringTestBase):
 		service = Service()
 		service.session = session
 
-		reader = socketio_server.WebsocketTransport.WebSocketReader( 1, proxy, service, (), socket )
+		reader = _WebSocketReader( 1, proxy, service, (), socket )
 
 
 		reader._run()
