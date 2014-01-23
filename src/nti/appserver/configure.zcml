@@ -137,13 +137,13 @@
 	<subscriber factory=".dfl_views.DFLEditLinkRemoverDecorator"
 				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
 	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IModeledContent pyramid.interfaces.IRequest" />
 
 	<!-- Decorating the user -->
-	<subscriber factory=".pyramid_renderers_edit_link_decorator.EditLinkDecorator"
+	<subscriber factory=".pyramid_renderers_edit_link_decorator.UserEditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest" />
 
@@ -153,8 +153,10 @@
 	<subscriber factory="._adapters._AuthenticatedUserLinkAdder"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<!-- This one is really slow in big databases. -->
 	<subscriber factory=".usersearch_views._SharedDynamicMembershipProviderDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				zcml:condition='have shared-dynamic-memberships-external' />
 
 	<adapter factory="._adapters.EnclosureExternalObject" />
 	<adapter factory="._adapters.BrokenExternalObject" />

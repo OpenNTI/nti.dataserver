@@ -27,13 +27,13 @@ from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
 from nti.externalization.oids import to_external_ntiid_oid
 
-from .pyramid_renderers import AbstractRequestAwareDecorator
+from .pyramid_renderers import AbstractAuthenticatedRequestAwareDecorator
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class EditLinkDecorator(AbstractRequestAwareDecorator):
+class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	Adds the ``edit`` link relationship to objects that are persistent
 	(because we have to be able to generate a URL and we need the OID)
@@ -79,10 +79,14 @@ class EditLinkDecorator(AbstractRequestAwareDecorator):
 		return getattr( context, '_p_jar', None ) or (self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		return is_writable(context, request=self.request, skip_cache=True) # XXX Why skipping cache?
+		try:
+			return is_writable(context, request=self.request)
+		except TypeError: # "unhashable type"
+			return is_writable(context, request=self.request, skip_cache=True)
 
 	def _predicate(self, context, result):
-		return self._preflight_context(context)
+		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
+				and self._preflight_context(context))
 
 	def _do_decorate_external( self, context, mapping ):
 		# make sure there is no edit link already
@@ -144,3 +148,18 @@ class OIDEditLinkDecorator(EditLinkDecorator):
 	"""
 
 	allow_traversable_paths = False
+
+class UserEditLinkDecorator(EditLinkDecorator):
+	"""
+	A custom decorator for users.
+
+	The general ACL for users is expensive to compute,
+	if the database cache is cold. Through our special knowledge
+	of the ACL for a user, we can skip that and only return
+	the link to the user himself.
+
+	See all :class:`nti.dataserver.authorization_acl._UserACLProvider`
+	"""
+
+	def _has_permission(self, context):
+		return self.remoteUser == context
