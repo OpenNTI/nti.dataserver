@@ -41,6 +41,8 @@ from nti.externalization.externalization import DevmodeNonExternalizableObjectRe
 
 from nti.socketio.interfaces import ISocketIOSocket
 from nti.socketio.interfaces import ISocketSession
+from nti.socketio.interfaces import ISocketSessionConnectedEvent
+from nti.socketio.interfaces import ISocketSessionDisconnectedEvent
 from nti.socketio.interfaces import SocketSessionDisconnectedEvent
 from nti.socketio.persistent_session import AbstractSession as Session
 
@@ -561,3 +563,20 @@ def _send_notification(user_notification_event):
 				raise
 			except Exception: # pragma: no cover
 				logger.exception("Failed to send %s to %s", user_notification_event, target)
+
+
+# We maintain some extra stats in redis about who has how many active sessions
+# Note that this is non-transactional; that may be an issue in case of many conflicts?
+# Have to try and see
+_session_active_keys = 'sessions/active_sessions_set'
+@component.adapter( ISocketSession, ISocketSessionConnectedEvent )
+def _increment_count_for_new_socket(session, event):
+	redis = component.getUtility( nti_interfaces.IRedisClient )
+	redis.zincrby(_session_active_keys, session.owner, 1)
+
+
+@component.adapter( ISocketSession, ISocketSessionDisconnectedEvent )
+def _decrement_count_for_dead_socket(session, event):
+	redis = component.getUtility( nti_interfaces.IRedisClient )
+	if redis.zscore(_session_active_keys, session.owner):
+		redis.zincrby(_session_active_keys, session.owner, -1)
