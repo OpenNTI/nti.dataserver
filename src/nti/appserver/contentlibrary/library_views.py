@@ -112,7 +112,7 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 		# This is probably not huge, because right now they both change at the
 		# same time due to the rendering process. But we can expect that to
 		# decouple
-		# NOTE: The preferences decorator may change this
+		# NOTE: The preferences decorator may change this, but only to be newer
 		info.lastModified = last_modified
 	return info
 
@@ -406,12 +406,14 @@ class _LibraryTOCRedirectClassView(object):
 		self.request = request
 
 	def _lastModified(self, request):
+		# This should be the time of the .html file
 		lastModified = request.context.lastModified
-		if lastModified <= 0:
-			# Hmm, ok, can we find one higher up?
-			root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
-			if root_package:
-				lastModified = root_package.lastModified
+		# But the ToC is important too, so we take the newest
+		# of all these that we can find
+		root_package = traversal.find_interface( request.context, lib_interfaces.IContentPackage )
+		lastModified = max( lastModified,
+							getattr(root_package, 'lastModified', 0),
+							getattr(root_package, 'index_last_modified', 0))
 		return lastModified
 
 	link_mt = nti_mimetype_with_class( 'link' )
