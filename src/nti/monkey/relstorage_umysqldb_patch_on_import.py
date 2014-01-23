@@ -33,6 +33,24 @@ def _patch():
 	from pymysql.err import InternalError
 	class Connection(umysqldb.connections.Connection):
 
+		def __debug_lock(self, sql, ex=False):
+			if not 'GET_LOCK' in sql:
+				return
+
+			logger = __import__('logging').getLogger(__name__)
+
+			try:
+				result = self._result
+				if result is None:
+					logger.warn("No result from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+					return
+				if not result.affected_rows:
+					logger.warn("Zero rowcount from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+				if not result.rows:
+					logger.warn("Empty rows from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+			except Exception:
+				logger.exception("Failed to debug lock problem")
+
 		def query( self, sql, args=() ):
 			__traceback_info__ = args
 			if isinstance( args, dict ):
@@ -44,8 +62,9 @@ def _patch():
 				args = ()
 			try:
 				super(Connection,self).query( sql, args=args )
+				self.__debug_lock(sql)
 			except InternalError as e:
-
+				self.__debug_lock(sql, True)
 				if e.args == (0, 'Socket receive buffer full'):
 					# This is very similar to https://github.com/esnme/ultramysql/issues/16
 					# (although that issue is claimed to be fixed).
@@ -72,6 +91,9 @@ def _patch():
 						# error with 2.61 of umysql; it's not clear why that is, but
 						# something seems to be holding on to the errno
 
+				raise
+			except Exception:
+				self.__debug_lock(sql, True)
 				raise
 
 
