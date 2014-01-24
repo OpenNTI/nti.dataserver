@@ -738,8 +738,8 @@ class IBaseSearchResults(interface.Interface):
 class ISearchResults(IBaseSearchResults):
 
 	hits = nti_schema.IndexedIterable(
-				value_type=schema.Object(IIndexHit, title="index hit"),
-				title="IIndexHit objects",
+				value_type=nti_schema.Object(IBaseHit, description="A :class:`.IBaseHit`"),
+				title="index hit objects",
 				required=True,
 				readonly=True)
 
