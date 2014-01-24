@@ -72,6 +72,7 @@ class IndexHit(zcontained.Contained):
 class IndexHitMetaData(object):
 
 	unspecified_container = u'+++unspecified_container+++'
+	mime_type = mimeType = nti_mimetype_with_class('IndexHitMetaData')
 
 	def __init__(self):
 		self.lastModified = 0
@@ -81,10 +82,20 @@ class IndexHitMetaData(object):
 	@property
 	def last_modified(self):
 		return self.lastModified
+	LastModified = last_modified
 
 	@property
 	def total_hit_count(self):
 		return sum(self.type_count.values())
+	TotalHitCount = total_hit_count
+
+	@property
+	def TypeCount(self):
+		return dict(self.type_count)
+
+	@property
+	def ContainerCount(self):
+		return dict(self.container_count)
 
 	def track(self, ihit):
 		selected = ihit.obj

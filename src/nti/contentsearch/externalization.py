@@ -16,14 +16,15 @@ from z3c.batching.batch import Batch
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
 from . import search_hits
 from . import interfaces as search_interfaces
 
-from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS, TOTAL_HIT_COUNT,
-					 	SUGGESTIONS, PHRASE_SEARCH, TYPE_COUNT, HIT_META_DATA)
+from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS,
+					 	SUGGESTIONS, PHRASE_SEARCH, HIT_META_DATA)
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(search_interfaces.ISearchHit)
@@ -39,21 +40,10 @@ class _SearchHitExternalizer(object):
 
 # search metadata
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(search_interfaces.IIndexHitMetaData)
-class _IndexHitMetaDataExternalizer(object):
-
-	__slots__ = ('data',)
-
-	def __init__(self, data):
-		self.data = data
-
-	def toExternalObject(self):
-		result = LocatedExternalDict()
-		result[LAST_MODIFIED] = self.data.last_modified
-		result[TOTAL_HIT_COUNT] = self.data.total_hit_count
-		result[TYPE_COUNT] = {k:v for k, v in self.data.type_count.items()}
-		return result
+class _IndexHitMetaDataExternal(InterfaceObjectIO):
+	_ext_iface_upper_bound = search_interfaces.IIndexHitMetaData
 
 # search results
 
