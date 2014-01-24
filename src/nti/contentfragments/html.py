@@ -128,7 +128,7 @@ class _SanitizerFilter(sanitizer.Filter):
 						   'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr',
 						   'i', 'img',
 						   'p', 'pre',
-						   'small', 'span', 'strong',
+						   'small', 'span', 'strong', 'sub', 'sup',
 						   'tt',
 						   'u']
 	allowed_elements = acceptable_elements + ['html', 'head', 'body']
