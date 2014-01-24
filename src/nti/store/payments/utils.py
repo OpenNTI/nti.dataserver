@@ -4,17 +4,19 @@ Payment utilities
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import re
+import numbers
 
 from zope import schema
 from z3c.schema.payments import ISO7812CreditCard
 from z3c.schema.payments import isValidCreditCard
 from z3c.schema.payments import NotValidISO7812CreditCard
 _cc = ISO7812CreditCard()
-import numbers
 
 def is_valid_creditcard_number(s):
 	"""
