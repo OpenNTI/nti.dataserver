@@ -10,10 +10,10 @@
 
 	<include package="." file="stripe_objects.zcml" />
 	
-	<subscriber handler="._subscribers.stripe_customer_created" />
-	<subscriber handler="._subscribers.stripe_customer_deleted" />
-	<subscriber handler="._subscribers.register_stripe_token" />
-	<subscriber handler="._subscribers.register_stripe_charge" />
+	<subscriber handler=".subscribers.stripe_customer_created" />
+	<subscriber handler=".subscribers.stripe_customer_deleted" />
+	<subscriber handler=".subscribers.register_stripe_token" />
+	<subscriber handler=".subscribers.register_stripe_charge" />
 
 	<adapter factory=".stripe_adapters._StripeCustomerFactory"
 			 for="nti.dataserver.interfaces.IUser"
