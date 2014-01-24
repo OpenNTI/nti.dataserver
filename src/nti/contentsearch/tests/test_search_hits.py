@@ -7,6 +7,11 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_entry
+from hamcrest import assert_that
+
 import os
 import json
 import time
@@ -28,20 +33,15 @@ from ..search_hits import _NoteSearchHit
 from ..search_hits import get_search_hit
 from ..search_hits import _HighlightSearchHit
 from ..search_hits import _RedactionSearchHit
-from .. import interfaces as search_interfaces
 from ..search_hits import _WhooshBookSearchHit
 from ..search_hits import _MessageInfoSearchHit
-from ..search_hits import _RelevanceSearchHitComparator as RSHC
 
-from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET, ITEMS)
+from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import zanpakuto_commands
 from . import ConfiguringTestBase
-
-from hamcrest import (assert_that, is_, is_not, has_entry, has_length)
 
 class TestSearchHits(ConfiguringTestBase):
 
@@ -184,57 +184,3 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, containerId))
 		assert_that(d, has_entry(NTIID, containerId))
 		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
-
-	def test_relevance_path_score(self):
-		path = ref = ('a', 'b', 'c', 'd')
-		assert_that(RSHC.score_path(ref, path), is_(10000))
-		path = ref + ('e',)
-		assert_that(RSHC.score_path(ref, path), is_(9000))
-		path = ('a', 'b', 'c')
-		assert_that(RSHC.score_path(ref, path), is_(60))
-		path = ('a', 'b')
-		assert_that(RSHC.score_path(ref, path), is_(40))
-		path = ('a',)
-		assert_that(RSHC.score_path(ref, path), is_(20))
-		path = ('a', 'b', 'c', 'x')
-		assert_that(RSHC.score_path(ref, path), is_(59))
-		path = ('a', 'b', 'c', 'x', 'y')
-		assert_that(RSHC.score_path(ref, path), is_(58))
-		path = ('a', 'b', 'x', 'y')
-		assert_that(RSHC.score_path(ref, path), is_(38))
-		path = ('a', 'x', 'y', 'z')
-		assert_that(RSHC.score_path(ref, path), is_(17))
-		path = ('x', 'y', 'z')
-		assert_that(RSHC.score_path(ref, path), is_(0))
-		assert_that(RSHC.score_path(ref, ()), is_(0))
-
-	@WithMockDSTrans
-	def test_search_hit_relevance(self):
-		usr = self._create_user()
-		rim = search_interfaces.IRepozeEntityIndexManager(usr)
-		for x in zanpakuto_commands:
-			for n in xrange(2):
-				if  n == 0:
-					ugd = Note()
-					ugd.body = [unicode(x)]
-				else:
-					ugd = Highlight()
-					ugd.selectedText = unicode(x)
-				ugd.creator = usr.username
-				ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % n)
-				mock_dataserver.current_transaction.add(ugd)
-				ugd = usr.addContainedObject(ugd)
-				rim.index_content(ugd)
-
-		query = search_interfaces.ISearchQuery("all")
-		query.location = make_ntiid(nttype='bleach', specific='manga')
-		query.sortOn = 'relevance'
-		hits = rim.search(query)
-		assert_that(hits, has_length(6))
-		hits = toExternalObject(hits)
-		items = hits[ITEMS]
-		for n, hit in enumerate(items):
-			if n <= 2:
-				assert_that(hit[TYPE], is_('Note'))
-			else:
-				assert_that(hit[TYPE], is_('Highlight'))

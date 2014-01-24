@@ -112,10 +112,10 @@
 			 
 	<!-- Search hit comparators -->
 	
-	<utility factory=".search_hits._TypeSearchHitComparator" name="type" />
-	<utility factory=".search_hits._ScoreSearchHitComparator" name="score" />
-	<utility factory=".search_hits._RelevanceSearchHitComparator" name="relevance" />
-	<utility factory=".search_hits._LastModifiedSearchHitComparator" name="last_modified" />
+	<utility factory=".search_comparators._TypeSearchHitComparator" name="type" />
+	<utility factory=".search_comparators._ScoreSearchHitComparator" name="score" />
+	<utility factory=".search_comparators._RelevanceSearchHitComparator" name="relevance" />
+	<utility factory=".search_comparators._LastModifiedSearchHitComparator" name="last_modified" />
 	
 	<!-- Content Resolvers -->
 
