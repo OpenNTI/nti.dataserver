@@ -1,11 +1,14 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Defines stripe payment object.
 
 $Id: purchasable.py 18394 2013-04-18 19:27:11Z carlos.sanchez $
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
@@ -27,7 +30,8 @@ class StripePriceable(priceable.Priceable):
 
 	def __eq__(self, other):
 		try:
-			return super(StripePriceable, self).__eq__(other) and self.Coupon == other.Coupon
+			return 	super(StripePriceable, self).__eq__(other) and \
+					self.Coupon == other.Coupon
 		except AttributeError:
 			return NotImplemented
 
@@ -58,7 +62,8 @@ class StripePricedItem(pricing.PricedItem):
 
 	def __eq__(self, other):
 		try:
-			return super(StripePricedItem, self).__eq__(other) and self.Coupon == other.Coupon
+			return 	super(StripePricedItem, self).__eq__(other) and \
+					self.Coupon == other.Coupon
 		except AttributeError:
 			return NotImplemented
 
@@ -91,7 +96,8 @@ class StripePurchaseOrder(purchase_order.PurchaseOrder):
 
 	def __eq__(self, other):
 		try:
-			return super(StripePurchaseOrder, self).__eq__(other) and self.Coupon == other.Coupon
+			return 	super(StripePurchaseOrder, self).__eq__(other) and \
+					self.Coupon == other.Coupon
 		except AttributeError:
 			return NotImplemented
 

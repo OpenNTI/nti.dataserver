@@ -34,11 +34,11 @@
 	<adapter factory=".externalization.StripePurchaseErrorExternal" />
 	<adapter factory=".externalization.StripePricedItemExternal" />
 	
-	<subscriber factory=".externalization.PurchasableDecorator"
+	<subscriber factory=".decorators.PurchasableDecorator"
 				for="...interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 		
-	<subscriber factory=".externalization.StripePricedItemDecorator"
+	<subscriber factory=".decorators.StripePricedItemDecorator"
 				for=".interfaces.IStripePricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 				

@@ -1,11 +1,14 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Stripe utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 
@@ -24,7 +27,8 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 	processor = "stripe"
 
 	def get_coupon(self, coupon=None, api_key=None):
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
 		if coupon is not None and api_key:
 			# stripe defines an 80 sec timeout for http requests
 			# at this moment we are to wait for coupon validation
@@ -41,8 +45,10 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 		priced = StripePricedPurchasable.copy(priced)
 		coupon = getattr(priceable, 'Coupon', None)
 
-		manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
-		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, priced.Provider)
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
+		stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey,
+										    priced.Provider)
 
 		purchase_price = priced.PurchasePrice
 
@@ -66,7 +72,8 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 			result.Items.append(priced)
 			result.TotalPurchaseFee += priced.PurchaseFee
 			result.TotalPurchasePrice += priced.PurchasePrice
-			result.TotalNonDiscountedPrice += priced.NonDiscountedPrice or priced.PurchasePrice
+			result.TotalNonDiscountedPrice += \
+						priced.NonDiscountedPrice or priced.PurchasePrice
 
 		if len(currencies) != 1:
 			raise PricingException("Multi-Currency pricing is not supported")
@@ -79,9 +86,12 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 				raise PricingException("Multi-Provider coupon purchase is not supported")
 
 			provider = providers.pop()
-			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey, provider)
-			coupon = self.get_coupon(coupon, stripe_key.PrivateKey) if stripe_key else None
-			manager = component.getUtility(store_interfaces.IPaymentProcessor, name=self.processor)
+			stripe_key = component.queryUtility(stripe_interfaces.IStripeConnectKey,
+												provider)
+			coupon = self.get_coupon(coupon, stripe_key.PrivateKey) \
+					 if stripe_key else None
+			manager = component.getUtility(store_interfaces.IPaymentProcessor,
+										   name=self.processor)
 			if coupon is not None:
 				result.NonDiscountedPrice = result.TotalPurchasePrice
 				purchase_price = manager.apply_coupon(result.TotalPurchasePrice, coupon)
