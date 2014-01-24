@@ -5,11 +5,10 @@ Content indexer.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import argparse
@@ -46,8 +45,9 @@ class VideoTrancriptIndexer(object):
 		transform(book, cr_interfaces.IVideoTranscriptIndexer, name=name)
 
 def main():
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
-
+	from nti.contentrendering.utils import EmptyMockDocument
+	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
+	
 	def register():
 		from zope.configuration import xmlconfig
 		from zope.configuration.config import ConfigurationMachine
@@ -67,7 +67,8 @@ def main():
 							choices=_type_map,
 							default='book',
 							help="The content type to index")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose",
+							action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	# process arguments
@@ -82,7 +83,9 @@ def main():
 		raise IOError("Invalid content directory")
 
 	if verbose:
-		logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s')
+		import logging
+		ei = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
+		logging.basicConfig(level=logging.DEBUG, format=ei)
 
 	# register zcml
 	register()

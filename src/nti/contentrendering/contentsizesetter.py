@@ -2,14 +2,14 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 contentSizeName = 'NTIRelativeScrollHeight'
 
-def transform(book,context=None):
+def transform(book, context=None):
 	"""
 	Use the toc file to find all the pages in the contentLocation.
 	Use phantomjs and js to render the page and extract the content size.
@@ -19,14 +19,12 @@ def transform(book,context=None):
 
 	eclipseTOC = book.toc
 	_storeContentSizes( book.toc.root_topic )
-
 	eclipseTOC.save()
 
 def _storeContentSizes(topic):
 	"""
 	:param topic: An `IEclipseMiniDomTopic`.
 	"""
-
 	contentHeight = topic.get_scroll_height()
 	if contentHeight <= 0:
 		# Some of these are expected because we don't
