@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Stripe subscribers.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -25,7 +26,8 @@ def stripe_customer_deleted(event):
 	user = event.user
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.customer_id = None
-	IAnnotations(user).pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
+	module = "%s.%s" % (su.__class__.__module__, su.__class__.__name__)
+	IAnnotations(user).pop(module, None)
 
 @component.adapter(stripe_interfaces.IRegisterStripeToken)
 def register_stripe_token(event):
@@ -41,4 +43,5 @@ def register_stripe_charge(event):
 	user = purchase.creator
 	su = stripe_interfaces.IStripeCustomer(user)
 	su.Charges.add(event.charge_id)
-	logger.debug("Purchase %s was associated with stripe charge %s", purchase.id, event.charge_id)
+	logger.debug("Purchase %s was associated with stripe charge %s",
+				 purchase.id, event.charge_id)

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Directives to be used in ZCML: registering static keys.
@@ -21,17 +22,22 @@ class IRegisterStripeKeyDirective(interface.Interface):
 	The arguments needed for registering a key
 	"""
 	alias = fields.TextLine(title="The human readable/writable key alias", required=True)
-	private_key = fields.TextLine(title="The private key value. Should not contain spaces", required=True)
+	private_key = fields.TextLine(title="The private key value. Should not contain spaces",
+								  required=True)
 	live_mode = fields.Bool(title="Live mode flag", required=False)
 	stripe_user_id = fields.TextLine(title="Stripe user id", required=False)
 	refresh_token = fields.TextLine(title="Refresh token", required=False)
-	public_key = fields.TextLine(title="The public key, Should not contain spaces", required=False)
+	public_key = fields.TextLine(title="The public key, Should not contain spaces",
+								 required=False)
 
-def registerStripeKey( _context, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
+def registerStripeKey(_context, alias, private_key, live_mode=None, stripe_user_id=None,
+					  refresh_token=None, public_key=None):
 	"""
 	Register a stripe key with the given alias
 	"""
-	sk = StripeConnectKey(alias, private_key, live_mode=live_mode, stripe_user_id=stripe_user_id, 
+	sk = StripeConnectKey(alias, private_key, live_mode=live_mode,
+						  stripe_user_id=stripe_user_id,
 						  refresh_token=refresh_token, public_key=public_key)
-	utility(_context, provides=stripe_interfaces.IStripeConnectKey, component=sk, name=alias)
+	utility(_context, provides=stripe_interfaces.IStripeConnectKey, component=sk,
+			name=alias)
 	logger.debug("Stripe key %s has been registered", alias)

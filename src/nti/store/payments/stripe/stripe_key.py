@@ -1,12 +1,14 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Stripe access key.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
@@ -17,12 +19,14 @@ from nti.utils.property import alias as _
 from ...utils import MetaStoreObject
 from . import interfaces as stripe_interfaces
 
-@interface.implementer(stripe_interfaces.IStripeConnectKey, zmime_interfaces.IContentTypeAware)
+@interface.implementer(stripe_interfaces.IStripeConnectKey,
+					   zmime_interfaces.IContentTypeAware)
 class StripeConnectKey(object):
 
 	__metaclass__ = MetaStoreObject
 
-	def __init__(self, alias, private_key, live_mode=None, stripe_user_id=None, refresh_token=None, public_key=None):
+	def __init__(self, alias, private_key, live_mode=None,
+				 stripe_user_id=None, refresh_token=None, public_key=None):
 		self.Alias = alias
 		self.LiveMode = live_mode
 		self.PublicKey = public_key
