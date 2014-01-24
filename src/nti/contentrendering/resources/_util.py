@@ -3,9 +3,12 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-import os, os.path
+logger = __import__('logging').getLogger(__name__)
+
+import os
 import shutil
 from hashlib import sha1
 
@@ -26,7 +29,6 @@ class _ExternalHasher(object):
 		"""
 		skeys = sorted([str(x) for x in toDigests])
 		dkey = ' '.join(skeys)
-
 		return self.digest(dkey)
 
 	def digest(self, toDigest):
