@@ -1,52 +1,69 @@
 Dependencies (macports):
-- gcc45				# 2012-03-07
+- gcc48				# 2012-03-07 (Optional)
 - llvm-gcc-4.2		# 2012-03-07 (Optional)
 - python27			# 2011-08-31
-
-- nginx				# 2011-12-31, 1.0.11 (Optional)
-- py27-epydoc		# 2012-01-01, 3.0.1  (Optional)
-- HAProxy			# 2010-01-04, 1.5dev (Optional)
-- stunnel			# "", latest, (Optional)
 - pypy				# 2012-09-10 (Optional), if it takes a long time to install, try to build with build.jobs=1
 
 - mercurial 		# 2012-02-24 (Optional)
-- libmemcached		# 2012-02-24, 1.0.4 (Optional)
-- mysql5-devel		# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o (Optional)
+- mysql56			# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o (Optional)
 
-- gsed				# 2013-06-12
-- spidermonkey		# 2013-06-122 install as spidermonkey +fileobject
-- jslint			# 2013-06-12
+- gsed				# 2013-06-12 (optional)
+- spidermonkey		# 2013-06-122 install as spidermonkey +fileobject (optional)
+- jslint			# 2013-06-12 (optional)
+- libxml			# 2014-01-23
 - libxml2			# 2013-06-12
-- pkgconfig			# 2013-06-12
-- npm				# 2013-06-12
-- redis				# 2013-06-12
-- SuiteSparse		# 2013-06-12
-- swig-python		# 2013-06-12
+- nasm				# 2014-01-23
+- pcre				# 2014-01-23
+- cyrus-sasl2 		# 2014-01-23
+- graphviz-devel	# 2014-01-23
+- pkgconfig			# 2013-06-12 (optional)
 - mongodb			# 2012-06-13 (Optional)
-- subversion		# 2013-06-12 (Optional)
-- git-core 			# 2013-06-12 (Optional) install as git-core +subversion
 - mcrypt			# 2013-08-01 (Optional)
+- wget				# 2013-08-01 (Optional)
 
 Dependencies for content generation:
 - Full TeX distribution (including extras) - macports
-	- asymptote
-	- graphviz-devel
+	- asymptote (optional)
 	- libpng
 	- freetype
 	- pngcrush
-	- texlive
-	- texlive-latex
+	- texlive @2013_0+doc+medium 
+	- texlive-basic
 	- texlive-bibtex-extra
-	- texlive-latex-extra
-	- texlive-generic-extra
-	- texlive-math-extra
+ 	- texlive-bin
+ 	- texlive-bin-extra
+ 	- texlive-common
+ 	- texlive-context
 	- texlive-fonts-extra
-	- texlive-science 
+	- texlive-fonts-recommended
+	- texlive-fontutils
+	- texlive-generic-extra
+	- texlive-generic-recommended
+	- texlive-lang-czechslovak
+	- texlive-lang-english
+	- texlive-lang-european
+	- texlive-lang-french
+	- texlive-lang-german
+	- texlive-lang-greek
+ 	- texlive-lang-italian
+	- texlive-lang-polish
+	- texlive-lang-portuguese
+	- texlive-lang-spanish
+	- texlive-latex
+	- texlive-latex-extra
+	- texlive-latex-recommended
+	- texlive-luatex
+	- texlive-math-extra
+	- texlive-metapost
+	- texlive-pictures
+	- texlive-plain-extra
 	- texlive-pstricks
-	- gtk2
+	- texlive-science
+	- texlive-xetex
+	- gtk2 (optional)
 	- pdf2svg
+	- poppler
 	- ImageMagick
-	- wget
 	- xpdf (optional)
 
 - phantomjs >= 1.9
