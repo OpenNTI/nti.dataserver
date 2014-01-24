@@ -17,7 +17,6 @@ import redis
 import struct
 import logging
 from urlparse import urlparse
-import ConfigParser
 
 import ZODB.interfaces
 from ZODB.interfaces import IConnection
@@ -187,33 +186,24 @@ class MinimalDataserver(object):
 
 	def _setup_cache( self, conf ):
 		"""
-		Creates and returns a memcache instance to use. If we are
-		using RelStorage, we piggy back off its settings so we don't have to configure
-		twice.
+		Creates and returns a memcache instance to use.
 		""" # otherwise, our fallback now is to the local cache.
 		cache = None
-		try:
-			cache = self.db.storage.base._cache.clients_global_first[0]
-			if type(cache).__name__ != 'Client': # no cache servers configured (the local client could still be there)
-				cache = None
-		except AttributeError:
-			pass
 
-		if cache is None:
-			# Import the python implementation
-			import memcache
-			try:
-				cache_servers = conf.main_conf.get( 'memcached', 'servers' )
-			except ConfigParser.Error:
-				logger.warn("Main configuration missing memcached/servers. Update buildout.")
-				cache_servers = '127.0.0.1:11211'
-			# use the default local server if there is no configuration; if one is not available
-			# then nothing happens (the instance is constructed but does nothing)
-			# TODO: Mock this in tests
-			cache = memcache.Client(cache_servers.split())
+		# Import the python implementation
+		import memcache
+		cache_servers = conf.main_conf.get( 'memcached', 'servers' )
+		# That will throw a ConfigParser.Error if the config is out of date;
+		# but in buildout, it should always be up-to-date
+
+		cache = memcache.Client(cache_servers.split())
+		logger.debug( "Using MemCache servers at %s", cache_servers )
 
 		import pickle
 		cache.pickleProtocol = pickle.HIGHEST_PROTOCOL
+		# TODO: also do that for any outstanding relstorage we can get to,
+		# in each database and in each open connection, if any
+
 
 		import threading
 		# The underlying memcache object is not necessarily greenlet/thread safe
@@ -238,8 +228,10 @@ class MinimalDataserver(object):
 					return self.cache.delete(*args,**kwargs)
 
 		component.getGlobalSiteManager().registerUtility( _Client(cache), interfaces.IMemcacheClient )
-		# There is no need to explicitly close this UDP-based service. (?)
-		# It is also not necessary to re-open it on a fork.
+		# NOTE: This is not UDP based, it is TCP based, so we have to be careful
+		# to close it. Our fork function uses disconnect_all, which simply
+		# terminates the open sockets, if any; they all open back up
+		# as needed in the children.
 		return cache
 
 
