@@ -670,6 +670,13 @@ class IUserActivityProvider(interface.Interface):
 	# TODO: This will move like the above. There may be a better
 	# interface from zope.contentprovider or something to use
 
+	def getActivity():
+		"""
+		Return a list or dict of the activity.
+
+		The returned value should have a proper ``lastModified`` value.
+		"""
+
 class IApplicationSettings(mapping.IFullMapping):
 	"""
 	The application settings dictionary.

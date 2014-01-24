@@ -20,10 +20,12 @@ from hamcrest import is_
 from hamcrest import is_not as does_not
 is_not = does_not
 from hamcrest import contains
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_property
 from hamcrest import has_length
 from hamcrest import has_key
+from hamcrest import greater_than
 
 from nti.testing.time import time_monotonically_increases
 
@@ -233,6 +235,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 	def _do_test_user_can_POST_new_forum_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		# Override the method in super()
+		activity_res = self.fetch_user_activity()
 		post_res = self._do_simple_tests_for_POST_of_topic_entry( data, content_type=content_type, status_only=status_only, expected_data=expected_data )
 		if status_only:
 			return post_res
@@ -253,7 +256,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		# and it has no contents
 		testapp.get( contents_href, status=200 )
 
-		# It shows up in the blog contents
+		# It shows up in the forum contents
 		res = testapp.get( self.forum_pretty_contents_url )
 		blog_items = res.json_body['Items']
 		assert_that( blog_items, contains( has_entry( 'title', data['title'] ) ) )
@@ -270,6 +273,12 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		assert_that( pq( b'entry title' ).text(), is_( data['title'] ) )
 		assert_that( pq( b'entry summary' ).text(), is_( '<div><br />' + data['body'][0] + '</div>' ) )
 
+		# It shows up in the activity stream for the creator, and
+		# the modification date and etag of the data changed
+		new_activity_res = self.fetch_user_activity()
+		assert_that( new_activity_res.json_body['Items'], has_item(has_entry('NTIID', entry_ntiid)))
+		assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified )))
+		assert_that( new_activity_res.etag, is_not(activity_res.etag))
 		return post_res
 
 	@WithSharedApplicationMockDS

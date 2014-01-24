@@ -23,6 +23,8 @@ from nti.dataserver import activitystream_change
 
 from nti.appserver.traversal import find_interface
 
+from nti.externalization.interfaces import LocatedExternalList
+
 ###
 # Users have a 'global activity store' that keeps things that we're not
 # handling as part of their contained objects. This matches the shared object storage
@@ -53,8 +55,13 @@ class NoCommentActivityProvider(object):
 	def getActivity( self ):
 		activity = app_interfaces.IUserActivityStorage( self.user, None )
 		if activity is not None:
-			return [x for x in activity.getContainer( '', () )
-					if not frm_interfaces.IPersonalBlogComment.providedBy(x) and not frm_interfaces.IGeneralForumComment.providedBy(x)]
+			result = LocatedExternalList()
+			container = activity.getContainer( '', () )
+			result.lastModified = getattr(container, 'lastModified', 0)
+			for x in container:
+				if not frm_interfaces.IPersonalBlogComment.providedBy(x) and not frm_interfaces.IGeneralForumComment.providedBy(x):
+					result.append(x)
+			return result
 
 
 
