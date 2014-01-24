@@ -33,7 +33,8 @@ def create_purchase_item(ntiid, quantity=1, cls=PurchaseItem):
 	result = cls(NTIID=unicode(ntiid), Quantity=quantity)
 	return result
 
-@interface.implementer(store_interfaces.IPurchaseOrder, an_interfaces.IAttributeAnnotatable)
+@interface.implementer(store_interfaces.IPurchaseOrder,
+					   an_interfaces.IAttributeAnnotatable)
 class PurchaseOrder(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject

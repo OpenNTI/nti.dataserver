@@ -69,8 +69,7 @@ class Purchasable(content_bundle.ContentBundle):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (store_interfaces.IPurchasable.providedBy(other)
-									 and self.NTIID == other.NTIID)
+			return self is other or self.NTIID == other.NTIID
 		except AttributeError:
 			return NotImplemented
 

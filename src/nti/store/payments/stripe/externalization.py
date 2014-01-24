@@ -26,9 +26,9 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as stripe_interfaces
+from ...decorators import PricedItemDecorator
 from ... import interfaces as store_interfaces
 from ...externalization import PricedItemExternal
-from ...externalization import PricedItemDecorator
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
 

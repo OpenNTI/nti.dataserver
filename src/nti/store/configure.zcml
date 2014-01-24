@@ -44,19 +44,19 @@
 			 provides=".interfaces.IPurchaseError"
 			 for=".interfaces.INTIStoreException" />
 
-	<subscriber factory=".externalization.PurchasableDecorator"
+	<subscriber factory=".decorators.PurchasableDecorator"
 				for=".interfaces.IPurchasable"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
-	<subscriber factory=".externalization.CourseDecorator"
+	<subscriber factory=".decorators.CourseDecorator"
 				for=".interfaces.ICourse"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
-	<subscriber factory=".externalization.PurchaseAttemptDecorator"
+	<subscriber factory=".decorators.PurchaseAttemptDecorator"
 				for=".interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
-	<subscriber factory=".externalization.PricedItemDecorator"
+	<subscriber factory=".decorators.PricedItemDecorator"
 				for=".interfaces.IPricedItem"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 

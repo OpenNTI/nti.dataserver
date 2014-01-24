@@ -30,6 +30,7 @@ from nti.externalization.externalization import make_repr
 
 @interface.implementer(store_interfaces.ICourse)
 class Course(purchasable.Purchasable):
+
 	createDirectFieldProperties(store_interfaces.ICourse)
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
 
@@ -37,8 +38,7 @@ class Course(purchasable.Purchasable):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (store_interfaces.ICourse.providedBy(other)
-									 and self.NTIID == other.NTIID)
+			return self is other or self.NTIID == other.NTIID
 		except AttributeError:
 			return NotImplemented
 

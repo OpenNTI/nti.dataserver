@@ -168,7 +168,8 @@ def _purchase_invitation_accepted(invitation, event):
 		new_pid = purchase_history.register_purchase_attempt(rpa, event.user)
 		purchase_history.activate_items(event.user, rpa.Items)
 
-		# link purchase. This validates there are enough tokens and use has not accepted already
+		# link purchase. This validates there are enough tokens and
+		# use has not accepted already
 		invitation.register(event.user, new_pid)
 
 		# activate role(s)

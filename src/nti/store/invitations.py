@@ -26,11 +26,13 @@ from nti.externalization import integer_strings
 from . import MessageFactory as _
 from . import interfaces as store_interfaces
 
-interface.alsoProvides(store_interfaces.IStorePurchaseInvitation, invite_interfaces.IInvitation)
+interface.alsoProvides(store_interfaces.IStorePurchaseInvitation,
+					   invite_interfaces.IInvitation)
 
 class InvitationCapacityExceeded(Exception):
 	"""
-	Raised when a user is attempting to accept an invitation whose capacity has been exceeded.
+	Raised when a user is attempting to accept an invitation whose capacity
+	has been exceeded.
 	"""
 	i18n_message = _("The limit for this invitation code has been exceeded.")
 
@@ -59,7 +61,8 @@ class _StorePurchaseInvitation(JoinEntitiesInvitation):
 			raise InvitationCapacityExceeded()
 
 	def accept(self, user):
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		user = User.get_user(str(user)) \
+		if not nti_interfaces.IUser.providedBy(user) else user
 		super(_StorePurchaseInvitation, self).accept(user)
 
 def get_invitation_code(purchase):
