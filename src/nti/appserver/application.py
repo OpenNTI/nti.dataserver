@@ -16,10 +16,8 @@ if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it s
 	sys.modules['nti.monkey.gevent_patch_on_import'].check_threadlocal_status()
 
 import os
-import random
 import warnings
 import time
-import gevent
 
 import nti.dictserver.storage
 
@@ -30,7 +28,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import interfaces as nti_interfaces
 
-from zope import interface
 from zope import component
 from zope.event import notify
 from zope.configuration import xmlconfig
@@ -699,7 +696,7 @@ def createApplication( http_port,
 
 	app = pyramid_config.make_wsgi_app()
 
-	logger.debug( "Configured Dataserver in %.3fs", time.time() - begin_time )
+	logger.info("Configured Dataserver in %.3fs", time.time() - begin_time)
 	return app
 
 def _configure_async_changes( ds, indexmanager=None ):
