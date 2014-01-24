@@ -5,8 +5,10 @@ Chatserver functionality. This is all deprecated; prefer the nti.chatserver pack
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import zope.deprecation
 from zope.deprecation import deprecated

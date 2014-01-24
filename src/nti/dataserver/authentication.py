@@ -5,7 +5,7 @@ Classes and functions related to authentication.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,7 +24,8 @@ def _dynamic_memberships_that_participate_in_security( user, as_principals=True 
 	for community in getattr( user, 'dynamic_memberships', ()): # Mostly tests pass in a non-User user_factory
 		# Make sure it's a valid community
 		if 	nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(community) or \
-			(nti_interfaces.ICommunity.providedBy(community) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(community)):
+			(nti_interfaces.ICommunity.providedBy(community) and \
+			 not nti_interfaces.IUnscopedGlobalCommunity.providedBy(community)):
 			yield nti_interfaces.IPrincipal(community) if as_principals else community
 
 def _user_factory( username ):
@@ -151,7 +152,6 @@ class _ThreadLocalManager(_LocalBase):
 		except IndexError:
 			return self.default
 
-
 class _delegating_descriptor(object):
 	"""
 	A property-like descriptor that uses the thread-local objects of the given
@@ -164,7 +164,6 @@ class _delegating_descriptor(object):
 		if inst is None:
 			return self
 		return getattr( inst._locals.get(), self.name )
-
 
 @interface.implementer(nti_interfaces.IImpersonatedAuthenticationPolicy)
 class DelegatingImpersonatedAuthenticationPolicy(object):

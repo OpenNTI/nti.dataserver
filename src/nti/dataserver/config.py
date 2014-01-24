@@ -5,7 +5,7 @@ Dataserver config routines
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -160,7 +160,8 @@ class _Env(_ReadableEnv):
 		ini.set( 'supervisorctl', 'serverurl', 'unix://' + self.run_file( 'supervisord.sock' ) )
 
 		ini.add_section( 'rpcinterface:supervisor' )
-		ini.set( 'rpcinterface:supervisor', 'supervisor.rpcinterface_factory', 'supervisor.rpcinterface:make_main_rpcinterface' )
+		ini.set('rpcinterface:supervisor', 'supervisor.rpcinterface_factory',
+				'supervisor.rpcinterface:make_main_rpcinterface')
 
 		environment = ['DATASERVER_DIR=%(here)s/../',
 					   'PYTHONHASHSEED=random'] # Secure random against DoS

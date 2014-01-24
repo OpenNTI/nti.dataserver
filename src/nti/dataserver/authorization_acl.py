@@ -4,7 +4,7 @@ ACL providers for the various content types.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -130,7 +130,8 @@ class _ACE(object):
 		"""
 		return "%s:%s:%s" % (self.action,
 							 self.actor.id,
-							 'All' if self.permission is nti_interfaces.ALL_PERMISSIONS else [str(x.id) for x in self.permission])
+							 'All' 	if self.permission is nti_interfaces.ALL_PERMISSIONS \
+							 		else [str(x.id) for x in self.permission])
 
 	def __eq__(self,other):
 		# TODO: Work on this

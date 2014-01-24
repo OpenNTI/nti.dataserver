@@ -74,7 +74,7 @@ biggest win is simply reducing all the transactions to one. There's
 probably a big win in unifying the indexes. Try an KeywordIndex.
 
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -126,7 +126,9 @@ class _IMeetingTranscriptStorage(nti_interfaces.ICreated): # ICreated so they ge
 		"""Iterate all the messages in this transcript"""
 
 @interface.implementer(_IMeetingTranscriptStorage)
-class _AbstractMeetingTranscriptStorage(Persistent, datastructures.ZContainedMixin, datastructures.CreatedModDateTrackingObject):
+class _AbstractMeetingTranscriptStorage(Persistent,
+                                        datastructures.ZContainedMixin,
+                                        datastructures.CreatedModDateTrackingObject):
 	"""
 	The storage for the transcript of a single session. Private object, not public.
 	"""
