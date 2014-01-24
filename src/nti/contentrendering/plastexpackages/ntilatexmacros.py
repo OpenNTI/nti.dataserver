@@ -151,6 +151,30 @@ class ntiincludevideo(_OneText):
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
 
+# This command is a HACK to work around issues in the web app and pad with in-line Kaltura videos in the content.
+class ntiincludekalturavideo(Command):
+	args = '[ options:dict ] video_id:str'
+
+	def digest(self, tokens):
+		res = super(ntiincludekalturavideo, self).digest(tokens)
+
+		options = self.attributes.get( 'options', {} ) or {}
+		__traceback_info__ = options, self.attributes
+
+		video = self.attributes.get( 'video_id' ).split(':')
+
+		partner_id = video[0]
+		subpartner_id = video[0] + u'00'
+		uiconf_id = u'16401392'
+		player_id = u'kaltura_player_' + video[1]
+		entry_id = video[1]
+		self.video_source = "https://cdnapisec.kaltura.com/p/%s/sp/%s/embedIframeJs/uiconf_id/%s/partner_id/%s?iframeembed=true&playerId=%s&entry_id=%s&flashvars[streamerType]=auto" % (partner_id, subpartner_id, uiconf_id, partner_id, player_id, entry_id)
+		self.width = u'640'
+		self.height = u'390'
+
+		return res
+
+
 class ntivideoname(Command):
 	unicode = ''
 
