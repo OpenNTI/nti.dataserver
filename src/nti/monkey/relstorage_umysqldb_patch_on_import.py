@@ -15,8 +15,10 @@ def _patch():
 		import umysqldb
 		import pymysql.err
 		umysqldb.install_as_MySQLdb()
+
 		import umysqldb.connections
 		import umysqldb.cursors
+		from greenlet import GreenletExit
 	except ImportError:
 		import platform
 		py_impl = getattr(platform, 'python_implementation', lambda: None)
@@ -26,10 +28,43 @@ def _patch():
 			return
 		raise
 
+	import sys
 	# The underlying umysql driver doesn't handle dicts as arguments
 	# to queries (as of 2012-09-13). Until it does, we need to do that
 	# because RelStorage uses that in a few places
 	from umysqldb.connections import encoders, notouch
+
+	# Error handling used to work like this:
+	#
+	# - A Connection has an errorhandler (NOTE: as of 0.6, pymysql no
+	# longer does and as of 1.0.4dev2 neither does umysqldb)
+	#
+	# - A Cursor copies the Connection's errorhandler; both of these
+	# direct unexpected exceptions through the error handler.
+	#
+	# - pymysql's connections use pymysql.err.defaulterrorhandler,
+	# which translates anything that is NOT a subclass of
+	# pymysql.err.Error into that class (NOTE: as of 0.6, this is
+	# gone)
+	# That's all gone now.
+
+	# umysql contains its own mapping layer which first goes through
+	# pymysl.err.error_map, but that only handles a very small number
+	# of errors. First, umysql errors get mapped to a subclass of pymysql.err.Error,
+	# either an explicit one or OperationalError or InternalError.
+
+	# Next, RuntimeError subclasses get mapped to ProgrammingError
+	# or stay as is.
+
+	# The problem is that some errors are not mapped appropriately. In
+	# particular, IOError is prone to escaping as-is, which relstorage
+	# isn't expecting, thus defeating its try/except blocks.
+
+	# We must catch that here. There may be some other things we
+	# want to catch and map, but we'll do that on a case by case basis
+	# (previously, we mapped everything to Error, which may have been
+	# hiding some issues)
+
 	from pymysql.err import InternalError
 	class Connection(umysqldb.connections.Connection):
 
@@ -47,6 +82,12 @@ def _patch():
 				if not result.affected_rows:
 					logger.warn("Zero rowcount from GET_LOCK query: %s", result.__dict__, exc_info=ex )
 				if not result.rows:
+					# We see this a fair amount. The C code in umysql got a packet that
+					# its treating as an "OK" response, for which it just returns a tuple
+					#   (affected_rows, rowid)
+					# But no actual rows. In all cases, it has been returning affected_rows of 2?
+					# We *could* patch the rows variable here to be [0], indicating the lock was not
+					# taken, but given that OK response I'm not sure that's right just yet
 					logger.warn("Empty rows from GET_LOCK query: %s", result.__dict__, exc_info=ex )
 			except Exception:
 				logger.exception("Failed to debug lock problem")
@@ -63,6 +104,10 @@ def _patch():
 			try:
 				super(Connection,self).query( sql, args=args )
 				self.__debug_lock(sql)
+			except IOError:
+				self.__debug_lock(sql, True)
+				tb = sys.exc_info()[2]
+				raise InterfaceError, None, tb
 			except InternalError as e:
 				self.__debug_lock(sql, True)
 				if e.args == (0, 'Socket receive buffer full'):
@@ -107,68 +152,9 @@ def _patch():
 	umysqldb.Connection = Connection
 	umysqldb.Connect = Connection
 
-	# Error handling used to work like this:
-	#
-	# - A Connection has an errorhandler (NOTE: as of 0.6, pymysql no
-	# longer does)
-	#
-	# - A Cursor copies the Connection's errorhandler; both of these
-	# direct unexpected exceptions through the error handler.
-	#
-	# - pymysql's connections use pymysql.err.defaulterrorhandler,
-	# which translates anything that is NOT a subclass of
-	# pymysql.err.Error into that class (NOTE: as of 0.6, this is
-	# gone)
 
-	# umysql contains its own mapping layer and expects that to all
-	# happen before the errorhandler gets called, which in turn simply
-	# raises the error again
-	if Connection.errorhandler.im_func is not umysqldb.connections.defaulterrorhandler:
-		raise ImportError("Internals of umysqldb have changed")
+	from pymysql.err import InterfaceError, DatabaseError
 
-	# However, as of 0.6, PyMySQL removed support for the connection-level
-	# errorhandler attribute, which was in turn copied to the cursor
-	# (See https://github.com/PyMySQL/PyMySQL/commit/e8ae4ce8812392c993d5029a5ccbf5667310b3fa)
-	# Released versions of umysqldb as of 2013-10-08 still use
-	# this attribute on the cursor, leading to attribute errors.
-	# Nothing was ever setting this on a connection, so we can statically
-	# set it ourself.
-	if hasattr(umysqldb.cursors.Cursor, 'errorhandler'):
-		raise ImportError("Internals of umysqldb have changed")
-
-	# The problem is that some errors are not mapped appropriately. In
-	# particular, IOError is prone to escaping as-is, which relstorage
-	# isn't expecting, thus defeating its try/except blocks.
-	#
-	# Now that pymysql doesn't have complex behaviour possible,
-	# the simplest thing to do as to adjust mapping in our own
-	# errorhandler when needed
-	from pymysql.err import Error,InterfaceError,DatabaseError
-	import sys
-	def defaulterrorhandler(connection, cursor, errorclass, errorvalue):
-		del cursor
-		del connection
-
-		# IOErrors get mapped to InterfaceError
-		# if they get here
-		if issubclass(errorclass,IOError):
-			raise InterfaceError(errorclass, errorvalue)
-
-		if not issubclass(errorclass, Error):
-			raise Error(errorclass, errorvalue)
-
-		if isinstance(errorvalue, errorclass):
-			# saving stacktrace when errorhandler is called in catch
-			if sys.exc_info()[1] is errorvalue:
-				raise
-			raise errorvalue
-
-		raise errorclass(errorvalue)
-
-	Connection.errorhandler = defaulterrorhandler
-	# Because of how this is called, we can't just copy it from
-	# Connection or we get the wrong kind of bound method
-	umysqldb.cursors.Cursor.errorhandler = defaulterrorhandler
 
 	# Now got to patch relstorage to recognize some exceptions. If these
 	# don't get caught, relstorage may not properly close the connection, or fail

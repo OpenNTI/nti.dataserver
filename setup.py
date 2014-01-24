@@ -191,7 +191,7 @@ setup(
 		# This is fixed in 0.6.1, but umysqldb 1.0.3 already had a pin <0.6
 		# MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
 		'umysql == 2.61',
-		'umysqldb == 1.0.4dev', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
+		'umysqldb == 1.0.4dev2', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage >= 1.5.1',
 		'PyMySQL == 0.6.1',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
@@ -467,7 +467,7 @@ setup(
 		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
-		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev'
+		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
 	],
 	packages=find_packages('src'),
 	package_dir={'': 'src'},
