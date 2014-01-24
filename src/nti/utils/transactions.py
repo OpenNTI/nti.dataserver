@@ -342,6 +342,8 @@ class TransactionLoop(object):
 		object and dispose of these references. After this method runs,
 		the transaction object is useless.
 		"""
+		if tx is None:
+			return
 		for k in list(tx.__dict__):
 			tx.__dict__[k] = _GONE
 
@@ -354,6 +356,7 @@ class TransactionLoop(object):
 
 		while number:
 			number -= 1
+			tx = None # In case there's an exception /beginning/ the transaction, we still need the variable
 			try:
 				tx = transaction.begin()
 				if note and note != "Unknown":
