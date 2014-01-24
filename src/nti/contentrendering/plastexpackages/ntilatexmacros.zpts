@@ -14,6 +14,10 @@ name: ntiincludevideo
 # NOTE that this must stay consistent with sectionvideoadder.py (TODO: Can we use this template?)
 <div class="externalvideo" tal:attributes="id self/id"><iframe width="640" height="360" tal:attributes="src self/attributes/video_url" frameborder="0" allowfullscreen="true" ></iframe></div>
 
+name: ntiincludekalturavideo
+<iframe tal:attributes="src self/video_source; width self/width; height self/height" allowfullscreen webkitallowfullscreen mozAllowFullScreen frameborder="0"></iframe>
+
+
 name: ntivideoref
 <object class="ntivideo" tal:condition="self/to_render"
 	tal:attributes="type self/idref/label/mimeType; itemprop self/idref/label/itemprop; data-ntiid self/idref/label/ntiid">
