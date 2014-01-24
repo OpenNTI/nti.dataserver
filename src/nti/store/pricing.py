@@ -31,12 +31,14 @@ class PricedItem(priceable.Priceable):
 	createDirectFieldProperties(store_interfaces.IPricedItem)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.NTIID, self.Currency, self.PurchasePrice)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__,
+								 self.NTIID,
+								 self.Currency,
+								 self.PurchasePrice)
 
 	def __eq__(self, other):
 		try:
-			return self is other or (store_interfaces.IPricedItem.providedBy(other)
-									 and self.NTIID == other.NTIID)
+			return self is other or self.NTIID == other.NTIID
 		except AttributeError:
 			return NotImplemented
 
@@ -49,12 +51,15 @@ def create_priced_item(ntiid, purchase_price, purchase_fee=None, non_discounted_
 					   quantity=1, currency='USD'):
 	quantity = 1 if quantity is None else int(quantity)
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
-	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
-	result = PricedItem(NTIID=unicode(ntiid), PurchasePrice=float(purchase_price), PurchaseFee=purchase_fee,
-						NonDiscountedPrice=non_discounted_price, Quantity=quantity, Currency=currency)
+	non_discounted_price = float(non_discounted_price) \
+						   if non_discounted_price is not None else None
+	result = PricedItem(NTIID=unicode(ntiid), PurchasePrice=float(purchase_price),
+						PurchaseFee=purchase_fee, NonDiscountedPrice=non_discounted_price,
+						Quantity=quantity, Currency=currency)
 	return result
 
-@interface.implementer(store_interfaces.IPricingResults, zmime_interfaces.IContentTypeAware)
+@interface.implementer(store_interfaces.IPricingResults,
+					   zmime_interfaces.IContentTypeAware)
 class PricingResults(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject
@@ -66,9 +71,12 @@ def create_pricing_results(items=None, purchase_price=0.0, purchase_fee=0.0,
 						   non_discounted_price=None, currency='USD'):
 	items = list() if items is None else items
 	purchase_fee = float(purchase_fee) if purchase_fee is not None else None
-	non_discounted_price = float(non_discounted_price) if non_discounted_price is not None else None
-	result = PricingResults(Items=items, TotalPurchasePrice=purchase_price, TotalPurchaseFee=purchase_fee,
-						 	TotalNonDiscountedPrice=non_discounted_price, Currency=currency)
+	non_discounted_price = 	float(non_discounted_price) \
+							if non_discounted_price is not None else None
+	result = PricingResults(Items=items, TotalPurchasePrice=purchase_price,
+							TotalPurchaseFee=purchase_fee,
+							TotalNonDiscountedPrice=non_discounted_price,
+							Currency=currency)
 	return result
 
 @interface.implementer(store_interfaces.IPurchasablePricer)

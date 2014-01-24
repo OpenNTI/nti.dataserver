@@ -23,10 +23,7 @@ from nti.externalization.externalization import make_repr
 					   an_interfaces.IAttributeAnnotatable)
 class ContentBundle(SchemaConfigured):
 
-	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IContentBundle)
-
-	# Override Description to adapt to a content fragment
 	Description = AdaptingFieldProperty(store_interfaces.IContentBundle['Description'])
 
 	def __reduce__(self):
@@ -44,8 +41,7 @@ class ContentBundle(SchemaConfigured):
 
 	def __eq__(self, other):
 		try:
-			return self is other or (store_interfaces.IContentBundle.providedBy(other)
-									 and self.NTIID == other.NTIID)
+			return self is other or self.NTIID == other.NTIID
 		except AttributeError:
 			return NotImplemented
 

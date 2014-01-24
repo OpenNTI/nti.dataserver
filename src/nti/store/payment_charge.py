@@ -22,7 +22,8 @@ from nti.utils.schema import SchemaConfigured
 from . import utils
 from . import interfaces as store_interfaces
 
-@interface.implementer(store_interfaces.IUserAddress, zmime_interfaces.IContentTypeAware)
+@interface.implementer(store_interfaces.IUserAddress,
+					   zmime_interfaces.IContentTypeAware)
 class UserAddress(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject
@@ -34,7 +35,11 @@ class UserAddress(SchemaConfigured):
 	Country = FP(store_interfaces.IUserAddress['Country'])
 
 	def __str__(self):
-		return "%s\n%s,%s %s\n%s" % (self.Street, self.City, self.State, self.Zip, self.Country)
+		return "%s\n%s,%s %s\n%s" % (self.Street,
+									 self.City,
+									 self.State,
+									 self.Zip,
+									 self.Country)
 
 	__repr__ = __str__
 
@@ -58,16 +63,19 @@ class UserAddress(SchemaConfigured):
 		return xhash
 
 	@classmethod
-	def create(cls, address_line1, address_line2=None, city=None, state=None, zip_=None, country=None):
+	def create(cls, address_line1, address_line2=None, city=None, state=None,
+			   zip_=None, country=None):
 		city = city or u''
 		zip_ = zip_ or store_interfaces.IUserAddress['Zip'].default
 		country = country or store_interfaces.IUserAddress['Country'].default
 		street = "%s\n%s" % (address_line1, address_line2 or u'')
-		result = UserAddress(Street=street.strip(), City=city, State=state, Zip=zip_, Country=country)
+		result = UserAddress(Street=street.strip(), City=city, State=state,
+							 Zip=zip_, Country=country)
 		return result
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPaymentCharge, zmime_interfaces.IContentTypeAware)
+@interface.implementer(store_interfaces.IPaymentCharge,
+					   zmime_interfaces.IContentTypeAware)
 class PaymentCharge(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject

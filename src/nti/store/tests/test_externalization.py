@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_length
-from hamcrest import none
+from hamcrest import assert_that
 from hamcrest import greater_than_or_equal_to
 
 import os
@@ -31,20 +31,19 @@ from .. import pricing
 from .. import priceable
 from .. import purchasable
 from .. import purchase_order
-from .. import purchase_attempt
 from .. import purchase_error
+from .. import purchase_attempt
 from .. import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ConfiguringTestBase
 
-
-
 class TestStoreExternal(ConfiguringTestBase):
 
 	set_up_packages = ConfiguringTestBase.set_up_packages + \
-					  (('purchasables.zcml', 'nti.store.tests'), ('courses.zcml', 'nti.store.tests'))
+					  (('purchasables.zcml', 'nti.store.tests'),
+					   ('courses.zcml', 'nti.store.tests'))
 
 	processor = 'stripe'
 
@@ -74,7 +73,7 @@ class TestStoreExternal(ConfiguringTestBase):
 		pa = self._create_purchase_attempt(description='my charge', quantity=2)
 		pa.Error = purchase_error.create_purchase_error("An error",
 														type_='foo',
-														 code="a code")
+														code="a code")
 		hist.add_purchase(pa)
 
 		ext = to_external_object( pa )

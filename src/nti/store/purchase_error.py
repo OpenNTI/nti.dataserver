@@ -24,14 +24,16 @@ class PurchaseError(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject
 
-	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseError)
 
 	def __str__(self):
 		return self.Message
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.Type, self.Message, self.Code)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__,
+								 self.Type,
+								 self.Message,
+								 self.Code)
 
 	def __eq__(self, other):
 		try:

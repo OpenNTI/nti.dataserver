@@ -98,7 +98,9 @@ class _PurchaseIndex(Persistent):
 				if queried != uid:
 					try:
 						p._p_activate()
-					except KeyError: # It looks like queryId can hide the POSKeyError by generally catching KeyError
+					except KeyError:
+						# It looks like queryId can hide the POSKeyError
+						#  by generally catching KeyError
 						logger.exception("Broken object %r", p)
 					logger.warn("Found inconsistent purchase attempt for " +
 								"purchasable %s, ignoring: %r (%s %s). ids (%s, %s)",
@@ -248,7 +250,8 @@ _PurchaseHistoryFactory = an_factory(PurchaseHistory)
 
 def _get_user(user):
 	if user is not None:
-		user = User.get_user(str(user)) if not nti_interfaces.IUser.providedBy(user) else user
+		user = User.get_user(str(user)) \
+		if not nti_interfaces.IUser.providedBy(user) else user
 	return user
 
 def activate_items(user, items):

@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+
 from zope import component
 
 from nti.contentlibrary import interfaces as lib_interfaces

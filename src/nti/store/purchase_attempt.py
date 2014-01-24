@@ -47,7 +47,6 @@ class PurchaseAttempt(ModDateTrackingObject,
 	__external_class_name__ = "PurchaseAttempt"
 	__metaclass__ = utils.MetaStoreObject
 
-	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPurchaseAttempt)
 
 	@property
