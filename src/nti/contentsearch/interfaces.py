@@ -711,10 +711,18 @@ class ISearchHitComparator(interface.Interface):
 class IIndexHitMetaData(interface.Interface):
 	"""Class to track index hit meta data"""
 
-	last_modified = nti_schema.Number(title="Greatest last modified time",
-									  required=True, readonly=True)
-	type_count = schema.Dict(title="Index hit type count", required=True, readonly=True)
-	total_hit_count = schema.Int(title='Total hit count', required=True, readonly=True)
+	LastModified = nti_schema.Number(title="Greatest last modified time",
+									 required=True, readonly=True, default=0)
+
+	TypeCount = schema.Dict(nti_schema.ValidTextLine(title='type'),
+							nti_schema.Int(title='count'),
+							title="Index hit type count", required=True, readonly=True)
+
+	ContainerCount = schema.Dict(nti_schema.ValidTextLine(title='container'),
+								 nti_schema.Int(title='count'),
+								 title="Cointainer hit type count", required=True, readonly=True)
+
+	TotalHitCount = schema.Int(title='Total hit count', required=True, readonly=True, default=0)
 
 	def track(ihit):
 		"""

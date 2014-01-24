@@ -73,9 +73,9 @@
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
 	<adapter factory=".externalization._SearchHitExternalizer" />
+	<adapter factory=".externalization._IndexHitMetaDataExternal" />
 	<adapter factory=".externalization._SearchResultsExternalizer" />
 	<adapter factory=".externalization._SuggestResultsExternalizer" />
-	<adapter factory=".externalization._IndexHitMetaDataExternalizer" />
 	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />
 			
 	<!-- Decorators -->

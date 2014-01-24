@@ -21,7 +21,7 @@ from nti.externalization.internalization import update_from_external_object
 from ..search_results import IndexHit
 from ..search_query import QueryObject
 from .. import interfaces as search_interfaces
-from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE, HIT_META_DATA, TYPE_COUNT)
+from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE, HIT_META_DATA)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -71,9 +71,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[ITEMS], has_length(len(zanpakuto_commands)))
 		assert_that(eo, has_key(HIT_META_DATA))
 		md = eo[HIT_META_DATA]
-		assert_that(md, has_key(TYPE_COUNT))
-		tc = md[TYPE_COUNT]
-		assert_that(tc, has_entry('note', len(notes)))
+		assert_that(md, has_entry('TypeCount', has_entry('note', len(notes))))
 
 	@WithMockDSTrans
 	def test_externalize_suggest_results(self):
