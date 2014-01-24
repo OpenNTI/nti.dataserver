@@ -99,7 +99,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	def getObjectsForId( self, user, ntiid ):
 		# Collect the UGD recursively
-		result = list( super(UserActivityGetView,self).getObjectsForId(user, ntiid) )
+		result = super(UserActivityGetView,self).getObjectsForId(user, ntiid)
 		result = [x for x in result if x is not ()]
 		# At this point, we know we have a list of dicts-like objects (btrees and other containers)
 
