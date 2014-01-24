@@ -9,7 +9,7 @@
 	
 	<include package=".stripe" file="configure.zcml" />
 	
-	<subscriber factory=".externalization.PurchaseAttemptDecorator"
+	<subscriber factory=".decorators.PurchaseAttemptDecorator"
 				for="..interfaces.IPurchaseAttempt"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
