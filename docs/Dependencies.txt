@@ -64,6 +64,8 @@ Dependencies for content generation:
 	- pdf2svg
 	- poppler
 	- ImageMagick
+	- openexr
+	- liblqr
 	- xpdf (optional)
 
 - phantomjs >= 1.9
