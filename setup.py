@@ -232,7 +232,7 @@ setup(
 		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common >= 0.60.0',
-		'lxml', # Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.
+		'lxml', # Powerful and Pythonic HTML/XML processing library combining libxml2/libxslt with the ElementTree API. Also a pull parser.
 		'nameparser >= 0.2.8', # Human name parsing
 		'nltk >= 2.0.4',
 		# numpy is req'd by nltk, but not depended on. sigh.
