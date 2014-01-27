@@ -50,6 +50,7 @@ class _DataserverCreationFailed(Exception): pass
 def run_with_dataserver( environment_dir=None, function=None,
 						 as_main=True, verbose=False,
 						 config_features=(), xmlconfig_packages=(),
+						 context=None,
 						 minimal_ds=False):
 	"""
 	Execute the `function` in the (already running) dataserver
@@ -125,9 +126,9 @@ def run_with_dataserver( environment_dir=None, function=None,
 
 	return run( function=run_user_fun_transaction_wrapper, as_main=as_main, verbose=verbose,
 				config_features=config_features,
-				xmlconfig_packages=xmlconfig_packages, _print_exc=False )
+				xmlconfig_packages=xmlconfig_packages, context=context, _print_exc=False,)
 
-def run( function=None, as_main=True, verbose=False, config_features=(), xmlconfig_packages=(), _print_exc=True ):
+def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfig_packages=(), context=None, _print_exc=True):
 	"""
 	Execute the `function`, taking care to print exceptions and handle configuration.
 
@@ -162,7 +163,7 @@ def run( function=None, as_main=True, verbose=False, config_features=(), xmlconf
 		packages = ['nti.dataserver']
 		packages.extend( xmlconfig_packages )
 		try:
-			_configure( set_up_packages=packages, features=config_features )
+			_configure(set_up_packages=packages, features=config_features, context=context)
 		except Exception:
 			print_exception( *sys.exc_info() )
 			sys.exit( 5 )
