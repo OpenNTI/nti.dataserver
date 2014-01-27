@@ -160,8 +160,11 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 		logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
 
 		setHooks()
-		packages = ['nti.dataserver']
-		packages.extend( xmlconfig_packages )
+		if context is None:
+			packages = ['nti.dataserver']
+			packages.extend(xmlconfig_packages)
+		else:
+			packages = xmlconfig_packages
 		try:
 			_configure(set_up_packages=packages, features=config_features, context=context)
 		except Exception:
