@@ -160,7 +160,7 @@ get_post_title_and_ngrams = get_title_and_ngrams
 
 def get_object_content(obj, default=None, language='en'):
 	adapted = search_interfaces.IContentResolver(obj, None)
-	result = get_content(adapted.content, language)
+	result = get_content(adapted.content, language) if adapted is not None else None
 	return result.lower() if result else default
 
 def get_object_ngrams(obj, default=None, language='en'):
