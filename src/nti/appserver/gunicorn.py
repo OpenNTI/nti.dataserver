@@ -457,6 +457,8 @@ class _IGunicornDidForkWillExec(interface.Interface):
 	"""
 	arbiter = interface.Attribute( "The current master arbiter; will be going away" )
 
+_master_storages = {}
+
 @interface.implementer(_IGunicornWillFork)
 class _GunicornWillFork(ProcessWillFork):
 
@@ -471,15 +473,109 @@ class _GunicornDidForkWillExec(object):
 		self.arbiter = arbiter
 
 _fork_count = 1
+from zope.location.interfaces import ISublocations
+from zope.annotation import IAnnotations
+import transaction
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.interfaces import ICommunity
+from relstorage.storage import RelStorage
+
+def _cache_objects(db, pred=id):
+	conn = db.open()
+
+	def _act(k, seen=None):
+
+		if seen is None:
+			seen = set()
+
+		if id(k) in seen:
+			return
+		seen.add(id(k))
+		if ITopic.providedBy(k):
+			return
+		try:
+			k._p_activate()
+		except AttributeError:
+			pass
+		except KeyError:
+			return
+
+		subs = ISublocations(k, ())
+		if subs:
+			try:
+				subs = subs.sublocations()
+			except LookupError:
+				subs = ()
+
+		try:
+			for l in subs:
+				_act(l, seen)
+		except LookupError:
+			pass
+
+		try:
+			for v in k.values():
+				_act(v, seen)
+		except (AttributeError,LookupError):
+			pass
+
+		if ICommunity.providedBy(k):
+			# Go into courses and sub-course objects
+			# like the gradebook, assignment history, etc, which
+			# are all annotations
+			an = IAnnotations(k, ())
+			for k in an:
+				l = an.get(k)
+				_act(l, seen)
+
+	seen = set()
+	for user in conn.root()['nti.dataserver']['users'].values():
+		# Activate each user and his sublocations
+		if pred(user):
+			_act(user, seen)
+
+	transaction.abort()
+	conn.close()
 
 @component.adapter(_IGunicornWillFork)
 def _process_will_fork_listener( event ):
 	from nti.dataserver import interfaces as nti_interfaces
 	ds = component.queryUtility( nti_interfaces.IDataserver )
 	if ds:
+
+		# Prepopulate the cache before we fork to start all workers
+		# off with an even keel.
+		# This just ensures memcache is current, and
+		# gets the bytes storage in place; it doesn't yet
+		# do anything about connection level object caches
+		if not _master_storages and isinstance(ds.db.storage.base, RelStorage) and False:
+			logger.info("Warming cache in %s", os.getpid())
+			for name, db in ds.db.databases.items():
+				_master_storages[name] = db.storage
+			_cache_objects(ds.db)
+			logger.info("Done warming cache")
 		# Close the ds in the master, we don't need those connections
 		# sticking around here. It will be reopened in the child
 		ds.close()
+
+from zope.processlifetime import IDatabaseOpened
+@component.adapter(IDatabaseOpened)
+def _replace_storage_on_open(event):
+
+	if event.database.database_name in _master_storages:
+		logger.info("Installing cached storage in pid %s: %s", os.getpid(), _master_storages)
+		event.database.storage = _master_storages[event.database.database_name]
+
+from zope.processlifetime import IDatabaseOpenedWithRoot
+@component.adapter(IDatabaseOpenedWithRoot)
+def _cache_conn_objects(event):
+
+	if event.database.database_name in _master_storages:
+		logger.info("Caching objects in pid %s: %s", os.getpid(), _master_storages)
+		glts = [gevent.spawn(_cache_objects, event.database) for i in range(event.database.pool.getSize())]
+		gevent.joinall(glts)
+		logger.info("Done caching objects in pid %s", os.getpid())
+
 
 @component.adapter(_IGunicornDidForkWillExec)
 def _process_did_fork_will_exec( event ):

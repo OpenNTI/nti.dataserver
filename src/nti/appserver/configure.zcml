@@ -291,6 +291,8 @@
 	<configure zcml:condition="installed gevent">
 		<subscriber handler=".gunicorn._process_will_fork_listener" />
 		<subscriber handler=".gunicorn._process_did_fork_will_exec" />
+		<subscriber handler=".gunicorn._replace_storage_on_open" />
+		<subscriber handler=".gunicorn._cache_conn_objects" />
 	</configure>
 	<subscriber handler=".application._configure_pyramid_zodbconn" />
 
