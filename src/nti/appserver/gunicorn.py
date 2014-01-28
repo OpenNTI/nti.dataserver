@@ -541,14 +541,14 @@ def _cache_objects(db, pred=id):
 def _process_will_fork_listener( event ):
 	from nti.dataserver import interfaces as nti_interfaces
 	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if ds:
+	if ds and False:
 
 		# Prepopulate the cache before we fork to start all workers
 		# off with an even keel.
 		# This just ensures memcache is current, and
 		# gets the bytes storage in place; it doesn't yet
 		# do anything about connection level object caches
-		if not _master_storages and isinstance(ds.db.storage.base, RelStorage) and False:
+		if not _master_storages and isinstance(ds.db.storage.base, RelStorage):
 			logger.info("Warming cache in %s", os.getpid())
 			for name, db in ds.db.databases.items():
 				_master_storages[name] = db.storage
@@ -572,7 +572,7 @@ def _cache_conn_objects(event):
 
 	if event.database.database_name in _master_storages:
 		logger.info("Caching objects in pid %s: %s", os.getpid(), _master_storages)
-		glts = [gevent.spawn(_cache_objects, event.database) for i in range(event.database.pool.getSize())]
+		glts = [gevent.spawn(_cache_objects, event.database) for _ in range(event.database.pool.getSize())]
 		gevent.joinall(glts)
 		logger.info("Done caching objects in pid %s", os.getpid())
 
