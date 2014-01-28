@@ -541,14 +541,14 @@ def _cache_objects(db, pred=id):
 def _process_will_fork_listener( event ):
 	from nti.dataserver import interfaces as nti_interfaces
 	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if ds and False:
+	if ds:
 
 		# Prepopulate the cache before we fork to start all workers
 		# off with an even keel.
 		# This just ensures memcache is current, and
 		# gets the bytes storage in place; it doesn't yet
 		# do anything about connection level object caches
-		if not _master_storages and isinstance(ds.db.storage.base, RelStorage):
+		if False and not _master_storages and isinstance(ds.db.storage.base, RelStorage):
 			logger.info("Warming cache in %s", os.getpid())
 			for name, db in ds.db.databases.items():
 				_master_storages[name] = db.storage
