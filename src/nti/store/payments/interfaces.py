@@ -18,7 +18,8 @@ class ICouponPriceable(store_interfaces.IPriceable):
 	Coupon = nti_schema.ValidTextLine(title="The coupon", required=False)
 
 class IRegisterPurchaseData(interface.Interface):
-	object = schema.Object(store_interfaces.IPurchaseAttempt, title="The purchase", required=True)
+	object = schema.Object(store_interfaces.IPurchaseAttempt, title="The purchase",
+						   required=True)
 
 class RegisterPurchaseData(object):
 

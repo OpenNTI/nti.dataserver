@@ -64,12 +64,13 @@ def create_course(ntiid, name=None, provider=None, amount=None, currency=None, i
 	elif isinstance(startdate, datetime.date):
 		startdate = startdate.isoformat()
 
-	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title, Author=author,
-					Items=items, Description=description, Amount=amount, Currency=currency,
-					Preview=preview, Fee=fee, License=license_, Discountable=discountable,
-					BulkPurchase=bulk_purchase, Icon=icon, Thumbnail=thumbnail,
-					Communities=communities, Featured=featured, Department=department,
-					Signature=signature, StartDate=startdate, **kwargs)
+	result = Course(NTIID=ntiid, Name=name, Provider=provider, Title=title,
+					Author=author, Items=items, Description=description, Amount=amount,
+					Currency=currency, Preview=preview, Fee=fee, License=license_,
+					Discountable=discountable, BulkPurchase=bulk_purchase, Icon=icon,
+					Thumbnail=thumbnail, Communities=communities, Featured=featured,
+					Department=department, Signature=signature, StartDate=startdate,
+					**kwargs)
 
 	return result
 

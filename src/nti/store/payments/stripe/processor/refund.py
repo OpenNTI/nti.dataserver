@@ -11,19 +11,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import functools
 from datetime import date
 
 import zope.intid
 from zope import component
 from zope.event import notify
 
-from pyramid.threadlocal import get_current_request
-
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.store import NTIStoreException
-from nti.store import get_possible_site_names
 from nti.store import interfaces as store_interfaces
 
 from nti.externalization import integer_strings
@@ -39,13 +33,6 @@ class RefundProcessor(BaseProcessor):
 		"""
 		Refunds to a purchase attempt
 		"""
-		request = request or get_current_request()
-		site_names = get_possible_site_names(request, include_default=True)
-
-		# prepare transaction runner
-		transactionRunner = \
-				component.getUtility(nti_interfaces.IDataserverTransactionRunner)
-		transactionRunner = functools.partial(transactionRunner, site_names=site_names)
 
 		if amount is not None and amount <= 0:
 			raise NTIStoreException('Invalid refund amount')
@@ -96,17 +83,14 @@ class RefundProcessor(BaseProcessor):
 			
 		if charge:
 			cents_amount = int(amount * 100.0) if amount is not None else None
-			def do_refund():
-				logger.debug('Refunding %s...', trx_id)
-				local_purchase = zope_iids.queryObject(uid)
-				if not charge.refunded:
-					charge.refund(amount=cents_amount,
-								  refund_application_fee=refund_application_fee)
-				else:
-					logger.warn('Stripe charge already refunded')
-				notify(store_interfaces.PurchaseAttemptRefunded(local_purchase))
-			transactionRunner(do_refund)
-
+			logger.debug('Refunding %s...', trx_id)
+			local_purchase = zope_iids.queryObject(uid)
+			if not charge.refunded:
+				charge.refund(amount=cents_amount,
+							  refund_application_fee=refund_application_fee)
+			else:
+				logger.warn('Stripe charge already refunded')
+			notify(store_interfaces.PurchaseAttemptRefunded(local_purchase))
 		else:
 			raise NTIStoreException('Stripe purchase was found')
 
