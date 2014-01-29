@@ -2,6 +2,7 @@ Dependencies (macports):
 - gcc48				# 2012-03-07 (Optional)
 - llvm-gcc-4.2		# 2012-03-07 (Optional)
 - python27			# 2011-08-31
+- py27-setuptools	# 2011-08-31
 - pypy				# 2012-09-10 (Optional), if it takes a long time to install, try to build with build.jobs=1
 
 - mercurial 		# 2012-02-24 (Optional)
