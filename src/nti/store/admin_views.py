@@ -14,6 +14,7 @@ from . import MessageFactory as _
 
 import isodate
 from datetime import datetime
+from cStringIO import StringIO
 
 from pyramid import httpexceptions as hexc
 
@@ -147,6 +148,32 @@ class GetUsersPurchaseHistoryView(object):
 	def __init__(self, request):
 		self.request = request
 
+	def _to_csv(self, request, result):
+		response = request.response
+		response.content_type = b'text/csv; charset=UTF-8'
+		response.content_disposition = b'attachment; filename="purchases.csv"'
+		
+		header = ",".join(("username", 'name', 'email', 'transaction', 'date', 'amount'))
+		stream = StringIO()
+		stream.write(header)
+		stream.write("\n")
+		for entry in result['Items']:
+			username = entry['username']
+			name = entry['name']
+			email = entry['email']
+			transactions = entry['transactions']
+			for trx in transactions:
+				line = "%s,%s,%s,%s,%s,%s" % (username, name, email,
+											  trx['transaction'],
+											  trx['date'],
+											  trx['amount'])
+				stream.write(line)
+				stream.write("\n")
+		stream.flush()
+		stream.seek(0)
+		response.body_file = stream
+		return response
+		
 	def __call__(self):
 		request = self.request
 		params = CaseInsensitiveDict(**request.params)
@@ -167,6 +194,7 @@ class GetUsersPurchaseHistoryView(object):
 			_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 			usernames = _users.keys()
 
+		as_csv = utils.to_boolean(params.get('csv'))
 		all_succeeded = utils.to_boolean(params.get('succeeded'))
 		all_failed = utils.to_boolean(params.get('failed'))
 
@@ -196,7 +224,7 @@ class GetUsersPurchaseHistoryView(object):
 			if array:
 				profile = user_interfaces.IUserProfile(user)
 				name = getattr(profile, 'realname', None) or user.username
-				email = getattr(profile, 'email', None)
+				email = getattr(profile, 'email', None) or u''
 
 				transactions = []
 				entry = {'username':user.username, 'name':name, 'email':email,
@@ -205,8 +233,9 @@ class GetUsersPurchaseHistoryView(object):
 				for p in purchases:
 					code = invitations.get_invitation_code(p)
 					date = isodate.date_isoformat(datetime.fromtimestamp(p.StartTime))
-					amount = getattr(p.Pricing, 'TotalPurchasePrice', None)
+					amount = getattr(p.Pricing, 'TotalPurchasePrice', None) or u''
 					transactions.append({'transaction':code, 'date':date, 'amount':amount})
 				items.append(entry)
 
+		result = result if not as_csv else self._to_csv(request, result)
 		return result
