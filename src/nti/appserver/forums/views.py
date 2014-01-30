@@ -266,6 +266,9 @@ class CommunityBoardPostView(_AbstractForumPostView):
 
 	def _constructor(self, external_value):
 		# TODO: cleaner way to handle community forums with ACL
+		# TODO: We should do some validation of the entity names?
+		# By doing this, we potentially allow the user to create something he cannot
+		# subsequently access, violating a tenet by returning this
 		if external_value and 'ACL' in external_value:
 			result = ACLCommunityForum()
 			# at this point the ACE objects should have been created when _read_incoming_post is called
