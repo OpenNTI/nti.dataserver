@@ -48,6 +48,10 @@ class DeletePurchaseAttemptView(admin_views.DeletePurchaseAttemptView):
 class DeletePurchaseHistoryView(admin_views.DeletePurchaseHistoryView):
 	""" delete a purchase history """
 
+@view_config(name="get_users_purchase_history", **_view_admin_defaults)
+class GetUsersPurchaseHistoryView(admin_views.GetUsersPurchaseHistoryView):
+	""" get users purchase history """
+
 del _view_defaults
 del _post_view_defaults
 del _admin_view_defaults
