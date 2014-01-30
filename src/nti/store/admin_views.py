@@ -12,6 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import isodate
+from datetime import datetime
+
 from pyramid import httpexceptions as hexc
 
 from zope import component
@@ -20,12 +23,14 @@ from zope.annotation import IAnnotations
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import utils
+from . import invitations
 from . import purchasable
 from . import content_roles
 from . import purchase_history
@@ -168,7 +173,7 @@ class GetUsersPurchaseHistoryView(object):
 		clazz = purchase_history.PurchaseHistory
 		annotation_key = "%s.%s" % (clazz.__module__, clazz.__name__)
 
-		items = {}
+		items = []
 		result = LocatedExternalDict({'Items':items})
 		for username in usernames:
 			user = users.User.get_user(username)
@@ -186,9 +191,22 @@ class GetUsersPurchaseHistoryView(object):
 			elif all_failed:
 				array = [p for p in purchases if p.has_failed()]
 			else:
-				array = list(purchases)
+				array = purchases
 
 			if array:
-				items[user.username] = array
+				profile = user_interfaces.IUserProfile(user)
+				name = getattr(profile, 'realname', None) or user.username
+				email = getattr(profile, 'email', None)
+
+				transactions = []
+				entry = {'username':user.username, 'name':name, 'email':email,
+						 'transactions':transactions}
+
+				for p in purchases:
+					code = invitations.get_invitation_code(p)
+					date = isodate.date_isoformat(datetime.fromtimestamp(p.StartTime))
+					amount = getattr(p.Pricing, 'TotalPurchasePrice', None)
+					transactions.append({'transaction':code, 'date':date, 'amount':amount})
+				items.append(entry)
 
 		return result
