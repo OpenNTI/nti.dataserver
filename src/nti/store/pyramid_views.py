@@ -17,33 +17,26 @@ import time
 import gevent
 import numbers
 import itertools
-import simplejson
 import dateutil.parser
 
 from pyramid import httpexceptions as hexc
 
 from zope import component
-from zope.event import notify
-from zope import lifecycleevent
-from zope.annotation import IAnnotations
 
-from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import LocatedExternalDict
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from . import utils
 from . import priceable
 from . import enrollment
 from . import invitations
 from . import purchasable
-from . import content_roles
 from . import purchase_history
 from . import InvalidPurchasable
 from . import interfaces as store_interfaces
 from .payments import pyramid_views as pyramid_payment
+
 # bwc
 is_valid_pve_int = utils.is_valid_pve_int
 raise_field_error = utils.raise_field_error
@@ -153,7 +146,8 @@ class GetPurchasablesView(object):
 				dummy = Dummy()
 				dummy.__acl__ = acl
 				policy = ACLAuthorizationPolicy()
-				if not policy.permits(dummy, self.request.effective_principals, ACT_READ):
+				principals = self.request.effective_principals
+				if not policy.permits(dummy, principals, ACT_READ):
 					logger.debug('Removing purch %s', p)
 					purchasables.remove(p)
 
@@ -172,16 +166,7 @@ class GetCoursesView(GetPurchasablesView):
 
 # post - views
 
-class _PostView(object):
-
-	def __init__(self, request):
-		self.request = request
-
-	def readInput(self):
-		request = self.request
-		values = simplejson.loads(unicode(request.body, request.charset)) \
-				 if request.body else {}
-		return CaseInsensitiveDict(**values)
+_PostView = utils.AbstractPostView
 
 class RedeemPurchaseCodeView(_PostView):
 
@@ -292,101 +277,7 @@ class UnenrollCourseView(_PostView):
 		result = self.unenroll()
 		return result
 
-# admin - views (restricted access)
-
-class _BasePostPurchaseAttemptView(_PostView):
-
-	def __call__(self):
-		values = self.readInput()
-		purchase_id = values.get('purchaseID')
-		if not purchase_id:
-			raise_field_error(self.request, "purchaseID",
-							  _("Must specify a valid purchase attempt id"))
-
-		purchase = purchase_history.get_purchase_attempt(purchase_id)
-		if not purchase:
-			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
-
-		return purchase
-
-class RefundPurchaseAttemptView(_BasePostPurchaseAttemptView):
-
-	def __call__(self):
-		purchase = super(RefundPurchaseAttemptView, self).__call__()
-		if not purchase.has_succeeded():
-			raise_field_error(self.request, "purchaseID",
-							  _("Must specify a successful purchase attempt"))
-
-		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
-		result = LocatedExternalDict({'Items':[purchase],
-									  'Last Modified':purchase.lastModified})
-		return result
-
-class DeletePurchaseAttemptView(_BasePostPurchaseAttemptView):
-
-	def __call__(self):
-		purchase = super(DeletePurchaseAttemptView, self).__call__()
-		purchase_history.remove_purchase_attempt(purchase, purchase.creator)
-		logger.info("Purchase attempt '%s' has been deleted")
-		return hexc.HTTPNoContent()
-
-class DeletePurchaseHistoryView(_PostView):
-
-	def __call__(self):
-		username = self.request.authenticated_userid
-		user = users.User.get_user(username)
-		su = store_interfaces.IPurchaseHistory(user)
-
-		for p in su.values():
-			lifecycleevent.removed(p)
-
-		annotations = IAnnotations(user)
-		annotations.pop("%s.%s" % (su.__class__.__module__, su.__class__.__name__), None)
-
-		logger.info("Purchase history has been removed")
-
-		return hexc.HTTPNoContent()
-
-class PermissionPurchasableView(_PostView):
-
-	def __call__(self):
-		values = self.readInput()
-		username = values.get('username') or self.request.authenticated_userid
-		user = users.User.get_user(username)
-		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
-
-		purchasable_id = values.get('purchasableID', u'')
-		psble = purchasable.get_purchasable(purchasable_id)
-		if not psble:
-			raise hexc.HTTPNotFound(detail='Purchasable not found')
-
-		content_roles.add_users_content_roles(user, psble.Items)
-		logger.info("Activating %s for user %s" % (purchasable_id, user))
-		purchase_history.activate_items(user, purchasable_id)
-
-		return hexc.HTTPNoContent()
-
-class GetContentRolesView(object):
-
-	def __init__(self, request):
-		self.request = request
-
-	def __call__(self):
-		request = self.request
-		username = request.params.get('username') or  request.authenticated_userid
-		user = users.User.get_user(username)
-		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
-
-		roles = content_roles.get_users_content_roles(user)
-		result = LocatedExternalDict()
-		result['Username'] = username
-		result['Items'] = roles
-		return result
-
 # aliases
-
 StripePaymentView = pyramid_payment.StripePaymentView
 CreateStripeTokenView = pyramid_payment.CreateStripeTokenView
 GetStripeConnectKeyView = pyramid_payment.GetStripeConnectKeyView
