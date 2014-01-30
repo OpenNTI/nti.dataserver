@@ -490,7 +490,9 @@ def _configure_database( env, uris ):
 	db = db_from_uri( uris )
 	notify(DatabaseOpened(db))
 	# Now, simply broadcasting the DatabaseOpenedWithRoot option
-	# will trigger the installers from zope.generations
+	# will trigger the installers from zope.generations...which
+	# is ironic because the installers are what actually put the
+	# root in place
 	notify(DatabaseOpenedWithRoot(db))
 	db.close()
 

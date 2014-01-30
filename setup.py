@@ -34,6 +34,7 @@ entry_points = {
 		"nti_runzeo = nti.monkey.nti_runzeo:main",
 		"nti_zodbconvert = nti.monkey.nti_zodbconvert:main",
 		"nti_multi-zodb-gc = nti.monkey.nti_multi_zodb_gc:main",
+		"nti_multi-zodb-check-refs = nti.monkey.nti_multi_zodb_check_refs:main",
 		# XXX: NOTE: The following technique is NOT reliable and fails
 		# under buildout or any other scenario that results in this package
 		# not being the /last/ package installed.
@@ -327,6 +328,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
+		'zodbpickle',
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
