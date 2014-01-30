@@ -79,7 +79,7 @@ def is_valid_boolean(value):
 def to_boolean(value):
 	if isinstance(value, bool):
 		return value
-	v = value.lower()
+	v = value.lower() if isinstance(value, six.string_types) else value
 	if v in true_values:
 		return True
 	elif v in false_values:
