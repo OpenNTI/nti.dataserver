@@ -207,12 +207,12 @@ class GetUsersPurchaseHistoryView(object):
 			user = users.User.get_user(username)
 			if not user or not nti_interfaces.IUser.providedBy(user):
 				continue
-			annotations = IAnnotations(user)
+			annotations = IAnnotations(user, {})
 			if annotation_key not in annotations:
 				continue
 
-			purchases = purchase_history.get_purchase_history_by_item(user,
-																	  purchasable_id)
+			purchases = \
+				purchase_history.get_purchase_history_by_item(user, purchasable_id)
 
 			if all_succeeded:
 				array = [p for p in purchases if p.has_succeeded()]
@@ -223,8 +223,8 @@ class GetUsersPurchaseHistoryView(object):
 
 			if array:
 				profile = user_interfaces.IUserProfile(user)
-				name = getattr(profile, 'realname', None) or user.username
 				email = getattr(profile, 'email', None) or u''
+				name = getattr(profile, 'realname', None) or user.username
 
 				transactions = []
 				entry = {'username':user.username, 'name':name, 'email':email,
@@ -234,7 +234,8 @@ class GetUsersPurchaseHistoryView(object):
 					code = invitations.get_invitation_code(p)
 					date = isodate.date_isoformat(datetime.fromtimestamp(p.StartTime))
 					amount = getattr(p.Pricing, 'TotalPurchasePrice', None) or u''
-					transactions.append({'transaction':code, 'date':date, 'amount':amount})
+					transactions.append({'transaction':code, 'date':date,
+										 'amount':amount})
 				items.append(entry)
 
 		result = result if not as_csv else self._to_csv(request, result)
