@@ -14,6 +14,8 @@ import simplejson as json
 
 from pyramid import httpexceptions as hexc
 
+from nti.utils.maps import CaseInsensitiveDict
+
 def _json_error_map(o):
     result = list(o) if isinstance(o, set) else unicode(o)
     return result
@@ -50,3 +52,16 @@ def raise_field_error(request, field, message):
     exc_info = sys.exc_info()
     data = {u'field':field, u'message': message}
     raise_json_error(request, hexc.HTTPUnprocessableEntity, data, exc_info[2])
+
+class AbstractPostView(object):
+
+    def __init__(self, request):
+        self.request = request
+
+    def readInput(self):
+        request = self.request
+        values = json.loads(unicode(request.body, request.charset)) \
+                 if request.body else {}
+        return CaseInsensitiveDict(**values)
+
+_PostView = AbstractPostView  # BWC

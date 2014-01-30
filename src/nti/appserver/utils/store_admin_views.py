@@ -16,7 +16,7 @@ from nti.appserver.store import views
 
 from nti.dataserver import authorization as nauth
 
-from nti.store import pyramid_views
+from nti.store import admin_views
 
 _view_defaults = dict(route_name='objects.generic.traversal',
 					  renderer='rest',
@@ -33,23 +33,19 @@ _admin_view_defaults = _post_view_defaults.copy()
 _admin_view_defaults['permission'] = nauth.ACT_MODERATE
 
 @view_config(name="get_content_roles", **_view_admin_defaults)
-class GetContentRolesView(pyramid_views.GetContentRolesView):
+class GetContentRolesView(admin_views.GetContentRolesView):
 	""" return the a list /w the content roles """
 
 @view_config(name="permission_purchasable", **_admin_view_defaults)
-class PermissionPurchasableView(pyramid_views.PermissionPurchasableView):
+class PermissionPurchasableView(admin_views.PermissionPurchasableView):
 	""" permission a purchasable """
 
-@view_config(name="refund_purchase_attempt", **_admin_view_defaults)
-class RefundPurchaseAttemptView(pyramid_views.RefundPurchaseAttemptView):
-	""" delete a purchase attempt """
-
 @view_config(name="delete_purchase_attempt", **_admin_view_defaults)
-class DeletePurchaseAttemptView(pyramid_views.DeletePurchaseAttemptView):
+class DeletePurchaseAttemptView(admin_views.DeletePurchaseAttemptView):
 	""" delete a purchase attempt """
 
 @view_config(name="delete_purchase_history", **_admin_view_defaults)
-class DeletePurchaseHistoryView(pyramid_views.DeletePurchaseHistoryView):
+class DeletePurchaseHistoryView(admin_views.DeletePurchaseHistoryView):
 	""" delete a purchase history """
 
 del _view_defaults
