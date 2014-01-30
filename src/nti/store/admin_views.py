@@ -132,7 +132,8 @@ class GetContentRolesView(object):
 
 	def __call__(self):
 		request = self.request
-		username = request.params.get('username') or  request.authenticated_userid
+		params = CaseInsensitiveDict(**request.params)
+		username = params.get('username') or request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
 			raise hexc.HTTPNotFound(detail='User not found')
@@ -153,9 +154,9 @@ class GetUsersPurchaseHistoryView(object):
 		response.content_type = b'text/csv; charset=UTF-8'
 		response.content_disposition = b'attachment; filename="purchases.csv"'
 		
-		header = ",".join(("username", 'name', 'email', 'transaction', 'date', 'amount'))
+		header = ("username", 'name', 'email', 'transaction', 'date', 'amount', 'status')
 		stream = StringIO()
-		stream.write(header)
+		stream.write(",".join(header))
 		stream.write("\n")
 		for entry in result['Items']:
 			username = entry['username']
@@ -163,10 +164,11 @@ class GetUsersPurchaseHistoryView(object):
 			email = entry['email']
 			transactions = entry['transactions']
 			for trx in transactions:
-				line = "%s,%s,%s,%s,%s,%s" % (username, name, email,
-											  trx['transaction'],
-											  trx['date'],
-											  trx['amount'])
+				line = "%s,%s,%s,%s,%s,%s,%s," % (username, name, email,
+											 	  trx['transaction'],
+											  	  trx['date'],
+											 	  trx['amount'],
+											 	  trx['status'])
 				stream.write(line)
 				stream.write("\n")
 		stream.flush()
@@ -235,7 +237,7 @@ class GetUsersPurchaseHistoryView(object):
 					date = isodate.date_isoformat(datetime.fromtimestamp(p.StartTime))
 					amount = getattr(p.Pricing, 'TotalPurchasePrice', None) or u''
 					transactions.append({'transaction':code, 'date':date,
-										 'amount':amount})
+										 'amount':amount, 'status':p.State})
 				items.append(entry)
 
 		result = result if not as_csv else self._to_csv(request, result)
