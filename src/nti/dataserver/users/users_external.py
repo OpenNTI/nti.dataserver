@@ -297,15 +297,19 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 # get the 'complete' data by asking for the registered 'personal'
 # externalizer
 from pyramid.threadlocal import get_current_request
-@interface.implementer( IExternalObject )
-@component.adapter( nti_interfaces.IUser )
-def _UserExternalObject(user):
+
+def _named_externalizer(user):
 	# XXX This doesn't exactly belong at this layer. Come up with
 	# a better way to do this switching.
 	req = get_current_request()
 	if req is None or req.authenticated_userid is None or req.authenticated_userid != user.username:
-		return component.getAdapter(user,IExternalObject,name='summary')
-	return component.getAdapter(user,IExternalObject,name='personal-summary')
+		return 'summary'
+	return 'personal-summary'
+
+@interface.implementer( IExternalObject )
+@component.adapter( nti_interfaces.IUser )
+def _UserExternalObject(user):
+	return component.getAdapter(user,IExternalObject,name=_named_externalizer(user))
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
@@ -316,4 +320,7 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 			extDict[k] = None
 		return extDict
 
-_CoppaUserExternalObject = _CoppaUserSummaryExternalObject
+@interface.implementer( IExternalObject )
+@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+def _CoppaUserExternalObject(user):
+	return component.getAdapter(user,IExternalObject,name=_named_externalizer(user))

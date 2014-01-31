@@ -21,6 +21,7 @@ from hamcrest import (
 does_not = is_not
 from hamcrest import has_item
 from hamcrest import greater_than
+from hamcrest import has_key
 import unittest
 from nose.tools import assert_raises
 
@@ -894,6 +895,38 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( ntiids.find_object_with_ntiid( user1.NTIID.lower() ), is_( user1 ) )
 		assert_that( ntiids.find_object_with_ntiid( comm.NTIID.lower() ), is_( comm ) )
 
+
+	@WithMockDSTrans
+	def test_all_kinds_of_coppa_users_externalize_with_community(self):
+		comm = Community.create_entity(mock_dataserver.current_mock_ds, username='TheComunity')
+		from nti.dataserver.interfaces import ICoppaUserWithAgreement, ICoppaUserWithAgreementUpgraded, ICoppaUserWithoutAgreement, ICoppaUser
+		from zope import interface
+		from pyramid.threadlocal import manager # XXX wrong level
+		class Request(object):
+			authenticated_userid = None
+
+		for iface in ICoppaUserWithAgreement, ICoppaUserWithAgreementUpgraded, ICoppaUserWithoutAgreement, ICoppaUser:
+			__traceback_info__ = iface
+			user = User.create_user( mock_dataserver.current_mock_ds, username=unicode(iface.__name__) )
+			interface.alsoProvides(user, iface)
+			user.record_dynamic_membership( comm )
+			# When we're explicit
+			assert_that( to_external_object(user, name='personal-summary'),
+						 has_entry('DynamicMemberships', has_item(has_entry('Username', comm.username))))
+
+			# And when we're implicitly authenticated
+			try:
+				req = Request()
+				req.authenticated_userid = user.username
+				manager.push( {'request': req } )
+				assert_that( to_external_object(user),
+							 has_entry('DynamicMemberships', has_item(has_entry('Username', comm.username))))
+			finally:
+				manager.clear()
+
+			# but not otherwise
+			assert_that( to_external_object(user),
+						 does_not( has_key( 'DynamicMemberships')) )
 
 from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
