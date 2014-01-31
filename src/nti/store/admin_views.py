@@ -199,6 +199,7 @@ class GetUsersPurchaseHistoryView(object):
 		as_csv = utils.to_boolean(params.get('csv'))
 		all_succeeded = utils.to_boolean(params.get('succeeded'))
 		all_failed = utils.to_boolean(params.get('failed'))
+		inactive = utils.to_boolean(params.get('inactive')) or False
 
 		clazz = purchase_history.PurchaseHistory
 		annotation_key = "%s.%s" % (clazz.__module__, clazz.__name__)
@@ -223,7 +224,7 @@ class GetUsersPurchaseHistoryView(object):
 			else:
 				array = purchases
 
-			if array:
+			if array or inactive:
 				profile = user_interfaces.IUserProfile(user)
 				email = getattr(profile, 'email', None) or u''
 				name = getattr(profile, 'realname', None) or user.username
