@@ -159,8 +159,8 @@ class GetUsersPurchaseHistoryView(object):
 		stream.write(",".join(header))
 		stream.write("\n")
 		for entry in result['Items']:
-			username = entry['username'].encode('utf-8')
-			name = entry['name'].encode('utf-8')
+			username = entry['username'].encode('utf-8', 'replace')
+			name = entry['name'].encode('utf-8', 'replace')
 			email = entry['email']
 			transactions = entry['transactions']
 			for trx in transactions:
@@ -230,8 +230,8 @@ class GetUsersPurchaseHistoryView(object):
 				name = getattr(profile, 'realname', None) or user.username
 
 				transactions = []
-				entry = {'username':unicode(user.username),
-						 'name':unicode(name),
+				entry = {'username':user.username,
+						 'name':name,
 						 'email':email,
 						 'transactions':transactions}
 
