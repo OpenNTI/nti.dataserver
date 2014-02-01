@@ -82,18 +82,36 @@ logger = __import__('logging').getLogger(__name__)
 from zodbpickle.fastpickle import Unpickler
 from cStringIO import StringIO
 
+_all_missed_classes = set()
+
+from zope.app.broken.broken import Broken
+import ZODB.broken
+
+def _make_find_global():
+	Broken_ = Broken # make it local for speed
+	find_global = ZODB.broken.find_global
+
+	def type_(name, bases, dict):
+		logger.warn("Broken class reference to %s", dict['__module__'] + '.' + name)
+		_all_missed_classes.add(dict['__module__'] + '.' + name)
+		cls = type(name, bases, dict)
+		return cls
+
+	def _the_find_global(modulename, globalname):
+		return find_global(modulename, globalname, Broken_, type_)
+	return _the_find_global
+
+find_global = _make_find_global()
+
 def getrefs(p, storage_name, ignore):
 	"Return a sequence of (db_name, oid) pairs"
 	refs = []
 	u = Unpickler(StringIO(p))
 	u.persistent_load = refs # Just append to this list
+	u.find_global = find_global
 	b1 = u.noload() # Once for the class/type reference
-	try:
-		b2 = u.load() # again for the state
-	except ImportError:
-		# we couldn't access this object anyway, so any
-		# references it held are no good
-		logger.debug("Failed to load state for an object in %s", storage_name, exc_info=True)
+	b2 = u.load() # again for the state
+
 	for ref in refs:
 		if isinstance(ref, tuple):
 			# (oid, class meta data)
@@ -158,10 +176,13 @@ def main():
 
 	# Not a threaded process, no need to check for switches
 	sys.setcheckinterval( 100000 )
+	try:
+		ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
+	finally:
+		if _all_missed_classes:
+			logger.warn("The following classes are missing: %s", _all_missed_classes)
+	sys.exit(ec)
 
-	sys.exit(
-		load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
-	)
 
 if __name__ == '__main__':
 	main()
