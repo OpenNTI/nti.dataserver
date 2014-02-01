@@ -94,6 +94,7 @@ def _get_user_info_extract():
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_info_extract(request):
+	# TODO: Filtering in this
 	response = request.response
 	response.content_type = b'text/csv; charset=UTF-8'
 	response.content_disposition = b'attachment; filename="usr_info.csv"'

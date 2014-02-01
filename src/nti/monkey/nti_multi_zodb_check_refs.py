@@ -40,17 +40,12 @@ except ImportError:
 	relstorage_umysqldb_patch_on_import.patch()
 
 # See extensive comments.
-from nti.monkey.nti_multi_zodb_gc import getrefs
-import zc.zodbdgc
-zc.zodbdgc.getrefs = getrefs
-
+from nti.monkey.nti_multi_zodb_gc import fixrefs
 import sys
-# Not a threaded process, no need to check for switches
-sys.setcheckinterval( 100000 )
-
 from pkg_resources import load_entry_point
 
 def main():
+	fixrefs()
 	sys.exit(
 		load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-check-refs')()
 	)
