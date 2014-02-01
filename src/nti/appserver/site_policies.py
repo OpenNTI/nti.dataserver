@@ -18,3 +18,11 @@ zope.deferredimport.deprecatedFrom(
 	"IMathcountsCoppaUserWithAgreementUpgraded",
 	"IMathcountsCoppaUserWithoutAgreementUserProfile",
 	"IMathcountsCoppaUserWithAgreementUserProfile")
+
+
+zope.deferredimport.deprecatedFrom(
+	"Code should not access this directly; move your tests to the mathcounts site package."
+	" The only valid use is existing ZODB objects",
+	'nti.app.sites.mathcounts.profile',
+	"MathcountsCoppaUserWithoutAgreementUserProfile",
+	"MathcountsCoppaUserWithAgreementUserProfile" )
