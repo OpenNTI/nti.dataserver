@@ -132,16 +132,34 @@ def getrefs(p, storage_name, ignore):
 			else:
 				raise ValueError('Unknown persistent ref', kind, ref)
 
-import zc.zodbdgc
-zc.zodbdgc.getrefs = getrefs
+
+def configure():
+	"""
+	Some pickles in the wild (notably ACLs) need ZCA to be set up
+	in order to successfully load. The result of failing to do this
+	is a TypeError.
+	"""
+
+	from zope.component.hooks import setHooks
+	setHooks()
+	from nti.dataserver.utils import _configure
+	_configure(set_up_packages=('nti.dataserver',))
+
+def fixrefs():
+	import zc.zodbdgc
+	zc.zodbdgc.getrefs = getrefs
+	configure()
 
 import sys
-# Not a threaded process, no need to check for switches
-sys.setcheckinterval( 100000 )
 
 from pkg_resources import load_entry_point
 
 def main():
+	fixrefs()
+
+	# Not a threaded process, no need to check for switches
+	sys.setcheckinterval( 100000 )
+
 	sys.exit(
 		load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
 	)
