@@ -93,7 +93,7 @@ def getrefs(p, storage_name, ignore):
 	except ImportError:
 		# we couldn't access this object anyway, so any
 		# references it held are no good
-		logger.warn("Failed to load state for an object in %s", storage_name, exc_info=True)
+		logger.debug("Failed to load state for an object in %s", storage_name, exc_info=True)
 	for ref in refs:
 		if isinstance(ref, tuple):
 			# (oid, class meta data)
@@ -123,7 +123,6 @@ def getrefs(p, storage_name, ignore):
 					yield ref[:2]
 			elif kind == b'w':
 				if len(ref) == 1: # oid in this db
-					print("Found weak reference in this DB ")
 					yield storage_name, ref[0]
 				elif len(ref) == 2: # oid in other db
 					yield ref[1], ref[0]
