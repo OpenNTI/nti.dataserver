@@ -41,14 +41,18 @@ except ImportError:
 
 # See extensive comments.
 from nti.monkey.nti_multi_zodb_gc import fixrefs
+from nti.monkey.nti_multi_zodb_gc import report
 import sys
 from pkg_resources import load_entry_point
 
 def main():
 	fixrefs()
-	sys.exit(
-		load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-check-refs')()
-	)
+	try:
+		ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-check-refs')()
+	finally:
+		report()
+
+	sys.exit(ec)
 
 if __name__ == '__main__':
 	main()
