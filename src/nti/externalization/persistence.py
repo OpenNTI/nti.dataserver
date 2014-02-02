@@ -28,6 +28,8 @@ from .oids import toExternalOID
 from .interfaces import IExternalObject
 from .externalization import toExternalObject
 
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
 #disable: accessing protected members
 #pylint: disable=W0212
 
@@ -103,7 +105,9 @@ def _weakRef_toExternalOID(self):
 persistent.wref.WeakRef.toExternalOID = _weakRef_toExternalOID
 
 
-class PersistentExternalizableDictionary(persistent.mapping.PersistentMapping,datastructures.ExternalizableDictionaryMixin):
+class PersistentExternalizableDictionary(PersistentPropertyHolder,
+										 persistent.mapping.PersistentMapping,
+										 datastructures.ExternalizableDictionaryMixin):
 	"""
 	Dictionary mixin that provides :meth:`toExternalDictionary` to return a new dictionary
 	with each value in the dict having been externalized with
@@ -118,7 +122,8 @@ class PersistentExternalizableDictionary(persistent.mapping.PersistentMapping,da
 			result[key] = toExternalObject( value )
 		return result
 
-class PersistentExternalizableList(persistent.list.PersistentList):
+class PersistentExternalizableList(PersistentPropertyHolder,
+								   persistent.list.PersistentList):
 	"""
 	List mixin that provides :meth:`toExternalList` to return a new list
 	with each element in the sequence having been externalized with

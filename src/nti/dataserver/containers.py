@@ -294,6 +294,8 @@ class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
 
 collections.Mapping.register( LastModifiedBTreeContainer )
 
+ModDateTrackingBTreeContainer = LastModifiedBTreeContainer # BWC
+
 class CheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,LastModifiedBTreeContainer):
 	"""
 	A BTree container that validates constraints when items are added.
@@ -547,6 +549,8 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			if isinstance( v, numbers.Number ): # pragma: no cover
 				continue
 			yield v
+
+KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer = CaseInsensitiveLastModifiedBTreeContainer # BWC
 
 @interface.implementer(IFolder)
 class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer, SiteManagerContainer):

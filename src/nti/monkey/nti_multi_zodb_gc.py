@@ -167,6 +167,11 @@ def fixrefs():
 	zc.zodbdgc.getrefs = getrefs
 	configure()
 
+def report():
+	if _all_missed_classes:
+		logger.warn("The following classes are missing: %s", _all_missed_classes)
+
+
 import sys
 
 from pkg_resources import load_entry_point
@@ -179,8 +184,7 @@ def main():
 	try:
 		ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
 	finally:
-		if _all_missed_classes:
-			logger.warn("The following classes are missing: %s", _all_missed_classes)
+		report()
 	sys.exit(ec)
 
 
