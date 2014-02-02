@@ -23,7 +23,8 @@ class PropertyHoldingPersistent(object):
 	"""
 
 def _get_or_make_cache(cls):
-	cache = getattr(cls, '_v_persistentpropertyholder_cache', None)
+	# Needs to be its own property, not inherited
+	cache = cls.__dict__.get('_v_persistentpropertyholder_cache')
 	if cache is None:
 		cache = {}
 		# Walk through the inheritance tree, *from the root down*, collecting
