@@ -9,8 +9,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 # Patch for relstorage.
-import nti.monkey.relstorage_umysqldb_patch_on_import
-nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+# This MUST be done by the higher level, sometimes we want
+# to get MySQLdb
+#import nti.monkey.relstorage_umysqldb_patch_on_import
+#nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 import os
 import redis
