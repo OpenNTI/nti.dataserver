@@ -149,6 +149,14 @@ def getrefs(p, storage_name, ignore):
 			else:
 				raise ValueError('Unknown persistent ref', kind, ref)
 
+import zope.interface.declarations
+def Provides(*interfaces):
+	"""
+	Due to a bug in nti.mimetype, some very old objects
+	may have invalid values for __provides__. We fix this
+	by ignoring them, since the only contain class objects
+	"""
+	return zope.interface.declarations.ProvidesClass(interfaces[0])
 
 def configure():
 	"""
@@ -166,6 +174,8 @@ def fixrefs():
 	import zc.zodbdgc
 	zc.zodbdgc.getrefs = getrefs
 	configure()
+	# Only *after* we're configured
+	zope.interface.declarations.Provides = Provides
 
 def report():
 	if _all_missed_classes:
