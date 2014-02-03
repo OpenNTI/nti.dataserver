@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import stripe
 
 from zope import component
 
@@ -33,7 +34,12 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 			# stripe defines an 80 sec timeout for http requests
 			# at this moment we are to wait for coupon validation
 			if isinstance(coupon, six.string_types):
-				coupon = manager.get_coupon(coupon, api_key=api_key)
+				try:
+					coupon = manager.get_coupon(coupon, api_key=api_key)
+				except stripe.InvalidRequestError as e:
+					logger.error("Cannot retrieve coupon %s. %s", coupon, e)
+					raise InvalidStripeCoupon()
+
 			if coupon is not None:
 				validated_coupon = manager.validate_coupon(coupon, api_key=api_key)
 				if not validated_coupon:
