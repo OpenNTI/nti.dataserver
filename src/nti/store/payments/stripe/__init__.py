@@ -26,6 +26,9 @@ class StripeException(Exception):
 class InvalidStripeCoupon(StripeException):
 	pass
 
+class NoSuchStripeCoupon(StripeException):
+	pass
+
 @interface.implementer(stripe_interfaces.IStripePurchaseError)
 class StripePurchaseError(PurchaseError):
 	HttpStatus = FP(stripe_interfaces.IStripePurchaseError['HttpStatus'])

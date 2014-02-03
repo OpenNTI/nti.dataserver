@@ -35,6 +35,7 @@ from nti.store import interfaces as store_interfaces
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import stripe_purchase
+from . import NoSuchStripeCoupon
 from . import InvalidStripeCoupon
 from . import interfaces as stripe_interfaces
 
@@ -131,6 +132,8 @@ class PricePurchasableWithStripeCouponView(_PostStripeView):
 		try:
 			result = self.price(purchasable_id, quantity, coupon)
 			return result
+		except NoSuchStripeCoupon:
+			raise_field_error(self.request, "coupon", "cannot find stripe coupon")
 		except InvalidStripeCoupon:
 			raise_field_error(self.request, "coupon", "invalid stripe coupon")
 		except InvalidPurchasable:

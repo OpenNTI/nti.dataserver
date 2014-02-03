@@ -15,6 +15,7 @@ import stripe
 
 from zope import component
 
+from . import NoSuchStripeCoupon
 from . import InvalidStripeCoupon
 from . import interfaces as stripe_interfaces
 from ... import interfaces as store_interfaces
@@ -38,7 +39,7 @@ class StripePurchasablePricer(DefaultPurchasablePricer):
 					coupon = manager.get_coupon(coupon, api_key=api_key)
 				except stripe.InvalidRequestError as e:
 					logger.error("Cannot retrieve coupon %s. %s", coupon, e)
-					raise InvalidStripeCoupon()
+					raise NoSuchStripeCoupon()
 
 			if coupon is not None:
 				validated_coupon = manager.validate_coupon(coupon, api_key=api_key)
