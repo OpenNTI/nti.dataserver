@@ -44,7 +44,8 @@ class StripeIO(object):
 												customer_id,
 												api_key)
 			return customer
-		except stripe.InvalidRequestError:
+		except stripe.InvalidRequestError, e:
+			logger.error("Cannot retrieve customer %s. %s", customer_id, e)
 			return None
 
 	@classmethod
@@ -100,7 +101,8 @@ class StripeIO(object):
 			token = cls._do_stripe_operation(stripe.Token.retrieve,
 											 token, api_key=api_key)
 			return token
-		except stripe.InvalidRequestError:
+		except stripe.InvalidRequestError, e:
+			logger.error("Cannot retrieve token %s. %s", token, e)
 			return None
 	get_token = get_stripe_token
 
@@ -125,7 +127,8 @@ class StripeIO(object):
 			charge = cls._do_stripe_operation(stripe.Charge.retrieve, charge_id,
 											  api_key=api_key)
 			return charge
-		except stripe.InvalidRequestError:
+		except stripe.InvalidRequestError, e:
+			logger.error("Cannot retrieve charge %s. %s", charge_id, e)
 			return None
 	get_charge = get_stripe_charge
 
@@ -167,5 +170,6 @@ class StripeIO(object):
 			coupon = cls._do_stripe_operation(stripe.Coupon.retrieve,
 											  coupon_code, api_key=api_key)
 			return coupon
-		except stripe.InvalidRequestError:
+		except stripe.InvalidRequestError, e:
+			logger.error("Cannot retrieve coupon %s. %s", coupon_code, e)
 			return None
