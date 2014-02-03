@@ -73,7 +73,7 @@ from .base_forum_testing import UserCommunityFixture
 
 class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	__test__ = True
-	features = AbstractTestApplicationForumsBase.features + ('testmode_all_activity',) # blog comments arent in /Activity by default
+
 	extra_environ_default_user = AbstractTestApplicationForumsBase.default_username
 	forum_link_rel = 'Blog'
 	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'

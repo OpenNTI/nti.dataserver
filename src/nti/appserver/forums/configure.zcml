@@ -11,17 +11,18 @@
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
 
 	<!--
-		We are collecting both comments and community forum posts in activity.
-		The app isn't ready for comments yet, though, so we only return
-		them in test mode.
+		We are collecting both comments and community forum posts in
+		activity. There was a period of time when the app wasn't ready
+		for comments yet, though, so we didn't always provide them. That
+		has shifted now.
 	-->
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 zcml:condition="have testmode_all_activity"/>
+			 zcml:condition="not-have disable_forum_comments_in_activity"/>
 
 	<adapter factory=".activity.NoCommentActivityProvider"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 zcml:condition="not-have testmode_all_activity"/>
+			 zcml:condition="have disable_forum_comments_in_activity"/>
 
 	<cap:capability
 		id='nti.platform.blogging.createblogentry'
