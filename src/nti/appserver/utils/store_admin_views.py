@@ -40,6 +40,10 @@ class GetContentRolesView(admin_views.GetContentRolesView):
 class PermissionPurchasableView(admin_views.PermissionPurchasableView):
 	""" permission a purchasable """
 
+@view_config(name="unpermission_purchasable", **_admin_view_defaults)
+class UnPermissionPurchasableView(admin_views.UnPermissionPurchasableView):
+	""" Unpermission a purchasable """
+
 @view_config(name="delete_purchase_attempt", **_admin_view_defaults)
 class DeletePurchaseAttemptView(admin_views.DeletePurchaseAttemptView):
 	""" delete a purchase attempt """
