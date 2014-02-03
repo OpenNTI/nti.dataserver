@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 #disable: accessing protected members, too many methods
@@ -84,18 +84,27 @@ class TestStripeIO(unittest.TestCase):
 		
 	def test_invalid_token(self):
 		sio = stripe_io.StripeIO()
-		t = sio.get_stripe_token('tok_unknown')
-		assert_that(t, is_(None))
+		try:
+			sio.get_stripe_token('tok_unknown')
+			self.fail()
+		except:
+			pass
 		
 	def test_invalid_charge(self):
 		sio = stripe_io.StripeIO()
-		c = sio.get_stripe_charge('c_unknown')
-		assert_that(c, is_(None))
+		try:
+			sio.get_stripe_charge('c_unknown')
+			self.fail()
+		except:
+			pass
 		
 	def test_invalid_customer(self):
 		sio = stripe_io.StripeIO()
-		c = sio.get_stripe_customer('cus_unknown')
-		assert_that(c, is_(None))
+		try:
+			sio.get_stripe_customer('cus_unknown')
+			self.fail()
+		except:
+			pass
 		
 	def test_coupon(self):
 		code =  str(uuid.uuid4()).split('-')[0]
@@ -110,5 +119,8 @@ class TestStripeIO(unittest.TestCase):
 	def test_invalid_coupon(self):
 		code =  'notknown'
 		sio = stripe_io.StripeIO()
-		coupon = sio.get_stripe_coupon(code)
-		assert_that(coupon, is_(None))
+		try:
+			sio.get_stripe_coupon(code)
+			self.fail()
+		except:
+			pass

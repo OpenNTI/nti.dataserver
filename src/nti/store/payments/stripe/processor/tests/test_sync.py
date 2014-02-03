@@ -78,8 +78,11 @@ class TestSyncProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
 			sp.charge_id = 'invalid'
 
 		with mock_dataserver.mock_db_trans(ds):
-			charge = self.manager.sync_purchase(purchase_id, username=username)
-			assert_that(charge, is_(None))
+			try:
+				self.manager.sync_purchase(purchase_id, username=username)
+				self.fail()
+			except:
+				pass
 
 	@unittest.skipUnless(TEST_WITH_STRIPE, '')
 	@WithMockDSTrans
