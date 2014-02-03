@@ -22,6 +22,10 @@ import dateutil.parser
 from pyramid import httpexceptions as hexc
 
 from zope import component
+from zope import interface
+from zope.location.interfaces import IContained
+from zope.container import contained as zcontained
+from zope.traversing.interfaces import IPathAdapter
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -41,6 +45,20 @@ from .payments import pyramid_views as pyramid_payment
 is_valid_pve_int = utils.is_valid_pve_int
 raise_field_error = utils.raise_field_error
 is_valid_timestamp = utils.is_valid_timestamp
+
+@interface.implementer(IPathAdapter, IContained)
+class StorePathAdapter(zcontained.Contained):
+	"""
+	Exists to provide a namespace in which to place all of these views,
+	and perhaps to traverse further on.
+	"""
+
+	__name__ = 'store'
+
+	def __init__(self, context, request):
+		self.context = context
+		self.__parent__ = context
+		self.request = request
 
 class _PurchaseAttemptView(object):
 
