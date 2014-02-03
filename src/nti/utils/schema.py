@@ -546,7 +546,7 @@ class ValidURI(FieldValidationMixin,schema.URI):
 			e.args = ( value, e.__doc__, self.__name__ )
 			e.message = e.i18n_message = e.__doc__
 		else:
-			super(HTTPURL,self)._fixup_validation_error_args( e, value )
+			super(ValidURI,self)._fixup_validation_error_args( e, value )
 
 class HTTPURL(ValidURI):
 	"""
