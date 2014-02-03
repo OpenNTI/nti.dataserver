@@ -204,3 +204,11 @@ class TestPurchaseProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
 		with mock_dataserver.mock_db_trans(ds):
 			pa = purchase_history.get_purchase_attempt(purchase_id, username)
 			assert_that(pa.State, is_(store_interfaces.PA_STATE_FAILED))
+
+	@WithMockDSTrans
+	def test_fail_payment_invalid_coupon(self):
+		ds = self.ds
+		with mock_dataserver.mock_db_trans(ds):
+			with self.assertRaises(Exception):
+				self.create_purchase(amount=50, coupon="++invalidcoupon++")
+
