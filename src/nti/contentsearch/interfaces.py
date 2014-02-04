@@ -392,7 +392,7 @@ class IRedisStoreService(interface.Interface):
 
 # content
 
-class IBaseContent(zmime_interfaces.IContentTypeAware):
+class IBaseContent(interface.Interface):
 	pass
 
 class IWhooshContent(zmime_interfaces.IContentTypeAware):
