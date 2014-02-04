@@ -646,18 +646,6 @@ class IBaseHit(interface.Interface):
 	Query = schema.Object(ISearchQuery, title="Search query", required=False)
 	Score = nti_schema.Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
-class IIndexHit(IBaseHit):
-	"""
-	represent a search hit stored in a ISearchResults
-	"""
-	Ref = nti_schema.Variant(
-				(nti_schema.Object(nti_interfaces.IModeledContent,
-								   description="A :class:`.IModeledContent`"),
-				 nti_schema.Object(IWhooshContent, description="A :class:`.IWhooshContent`"),
-				 nti_schema.ValidTextLine(title='Object int id as string'),
-				 nti_schema.Number(title="Object int id")),
-				title="The hit object")
-
 class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
 	"""
 	represent an externalized search hit
@@ -711,15 +699,10 @@ class IWhooshNTICardSearchHit(INTICardSearchHit):
 class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):
-		"""
-		Compare arguments for for order. a or b can beither a IndexHit or ISearchHit
-		"""
+		pass
 
-class ISearchHitMetaData(interface.Interface):
+class ISearchHitMetaData(nti_interfaces.ILastModified):
 	"""Class to track search hit meta data"""
-
-	LastModified = nti_schema.Number(title="Greatest last modified time",
-									 required=True, readonly=True, default=0)
 
 	TypeCount = schema.Dict(nti_schema.ValidTextLine(title='type'),
 							nti_schema.Int(title='count'),
@@ -733,7 +716,7 @@ class ISearchHitMetaData(interface.Interface):
 	TotalHitCount = schema.Int(title='Total hit count', required=True,
 							   readonly=True, default=0)
 
-	def track(shit):
+	def track(hit):
 		"""
 		track any metadata from the specified search hit
 		"""
@@ -741,22 +724,23 @@ class ISearchHitMetaData(interface.Interface):
 	def __iadd__(other):
 		pass
 
-IIndexHitMetaData = ISearchHitMetaData
-
 class IBaseSearchResults(interface.Interface):
-	query = schema.Object(ISearchQuery, title="Search query", required=True)
+	Query = schema.Object(ISearchQuery, title="Search query", required=True)
 
-class ISearchResults(IBaseSearchResults):
+class ISearchResults(IBaseSearchResults, nti_interfaces.ILastModified):
 
 	hits = nti_schema.IndexedIterable(
-				value_type=nti_schema.Object(IBaseHit, description="A :class:`.IBaseHit`"),
-				title="index hit objects",
+				value_type=nti_schema.Object(ISearchHit, description="A :class:`.ISearchHit`"),
+				title="search hit objects",
 				required=True,
 				readonly=True)
 
-	metadata = schema.Object(IIndexHitMetaData, title="Search hit metadata", required=False)
+	metadata = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 
-	def add(hit_or_hits):
+	def add(hit, score=1.0):
+		"""add a search hit(s) to this result"""
+
+	def extend(hits):
 		"""add a search hit(s) to this result"""
 
 	def sort():
@@ -773,15 +757,16 @@ class ISuggestResults(IBaseSearchResults):
 						readonly=True,
 						value_type=nti_schema.ValidTextLine(title="suggested word"))
 
-	def add_suggestions(word_or_words):
+	def add(word):
+		"""add a word suggestion to this result"""
+
+	def extend(words):
 		"""add a word suggestion(s) to this result"""
 
-	add = add_suggestions
+	add_suggestions = add
 
 class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
-
-	def add(hit_or_hits):
-		"""add a search hit(s) to this result"""
+	pass
 
 class ISearchResultsCreator(interface.Interface):
 
@@ -818,10 +803,10 @@ class IWhooshAnalyzer(interface.Interface):
 # index events
 
 class ISearchCompletedEvent(interface.Interface):
-	user = schema.Object(nti_interfaces.IEntity, title="The search entity")
-	query = schema.Object(ISearchQuery, title="The search query")
-	metadata = schema.Object(IIndexHitMetaData, title="The result meta-data")
 	elpased = schema.Float(title="The search elapsed time")
+	query = schema.Object(ISearchQuery, title="The search query")
+	user = schema.Object(nti_interfaces.IEntity, title="The search entity")
+	metadata = schema.Object(ISearchHitMetaData, title="The result meta-data")
 
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(component.interfaces.ObjectEvent):

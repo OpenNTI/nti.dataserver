@@ -20,25 +20,15 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
-from . import search_hits
 from . import interfaces as search_interfaces
 
 from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS,
 					 	SUGGESTIONS, PHRASE_SEARCH, HIT_META_DATA)
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(search_interfaces.ISearchHit)
+@component.adapter(search_interfaces.ISearchHitMetaData)
 class _SearchHitMetaDataExternal(InterfaceObjectIO):
-
-	_excluded_out_ivars_ = {'Query'} | InterfaceObjectIO._excluded_out_ivars_
-	_ext_iface_upper_bound = search_interfaces.ISearchHit
-
-# search metadata
-
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(search_interfaces.IIndexHitMetaData)
-class _IndexHitMetaDataExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = search_interfaces.IIndexHitMetaData
+	_ext_iface_upper_bound = search_interfaces.ISearchHitMetaData
 
 # search results
 
@@ -103,14 +93,6 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		for hit in self.hits:
 
-			item = hit.obj if hit is not None else None
-			if item is None:
-				continue
-
-			score = hit.score
-			query = hit.query
-
-			hit = search_hits.get_search_hit(item, score, query)
 			if hit.OID in self.seen:
 				continue
 
@@ -157,22 +139,6 @@ class _SuggestAndSearchResultsExternalizer(_SearchResultsExternalizer,
 		result = _SearchResultsExternalizer.toExternalObject(self)
 		result[SUGGESTIONS] = self.suggestions
 		return result
-
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
-	
-	_excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
-	_excluded_in_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
-
-	@classmethod
-	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
-		return (search_interfaces.IIndexHit,)
-
-	@classmethod
-	def _ap_enumerate_module_names(cls):
-		return ('search_results',)
-
-_IndexHitInternalObjectIO.__class_init__()
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):

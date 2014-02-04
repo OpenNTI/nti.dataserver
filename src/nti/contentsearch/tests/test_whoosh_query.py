@@ -67,6 +67,6 @@ class TestWhooshQuery(ConfiguringTestBase):
 			whoosh_score = hits[0].score
 		
 		results = rim.search("shield")
-		repoze_score = results[0].score
+		repoze_score = list(results.hits)[0].Score
 		
 		assert_that(repoze_score, close_to(whoosh_score, 0.05))

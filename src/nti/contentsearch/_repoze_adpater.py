@@ -89,7 +89,7 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		for docid, score in doc_weights.items():
 			obj = self.get_object(docid)  # make sure we have access and cache it
 			if obj is not None:
-				results.add(search_results.IndexHit(docid, score))
+				results.add(obj, score)
 
 	@metricmethod
 	def _do_catalog_query(self, catalog, qo, type_name):
