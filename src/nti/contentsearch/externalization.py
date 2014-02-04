@@ -22,7 +22,7 @@ from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceO
 
 from . import interfaces as search_interfaces
 
-from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS,
+from .constants import (LAST_MODIFIED, HIT_COUNT, ITEMS,
 					 	SUGGESTIONS, PHRASE_SEARCH, HIT_META_DATA)
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
@@ -44,7 +44,7 @@ class _BaseSearchResultsExternalizer(object):
 
 	def toExternalObject(self):
 		eo = LocatedExternalDict()
-		eo[QUERY] = self.query.term
+		eo['Query'] = self.query.term
 		return eo
 
 @component.adapter(search_interfaces.ISearchResults)
