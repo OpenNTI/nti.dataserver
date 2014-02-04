@@ -1,0 +1,9 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   i18n_domain="zope">
+	<include package="zope.component" />
+
+	<utility component="._default_template_mailer" />
+	<utility component="._default_template_mailer"
+			 name='default' />
+</configure>

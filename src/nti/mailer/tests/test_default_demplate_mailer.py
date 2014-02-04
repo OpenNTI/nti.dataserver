@@ -19,10 +19,8 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 
 
-import nti.testing.base
-
-from . import SharedConfiguringTestBase
-from .._email_utils import create_simple_html_text_email
+from nti.app.testing.base  import SharedConfiguringTestBase
+from .._default_template_mailer import create_simple_html_text_email
 
 from zope import interface
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -50,10 +48,11 @@ class TestEmail(SharedConfiguringTestBase):
 		request = Request()
 		request.context = user
 
-		msg = create_simple_html_text_email('new_user_created_mathcounts',
+		msg = create_simple_html_text_email('new_user_created',
 											subject='Hi there',
 											recipients=['jason.madden@nextthought.com'],
 											template_args={'user': user, 'profile': profile, 'context': user },
+											package='nti.appserver',
 											request=request)
 		msg.sender = 'foo@bar'
 		base_msg = msg.to_message()
