@@ -204,9 +204,9 @@ def queue_simple_html_text_email(*args, **kwargs):
 	kwargs = dict(kwargs)
 	if '_level' not in kwargs:
 		kwargs['_level'] = 4
-	return send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
+	return _send_pyramid_mailer_mail( create_simple_html_text_email( *args, **kwargs ) )
 
-def send_pyramid_mailer_mail( message ):
+def _send_pyramid_mailer_mail( message ):
 	"""
 	Given a :class:`pyramid_mailer.message.Message`, transactionally deliver
 	it to the queue.
@@ -220,12 +220,12 @@ def send_pyramid_mailer_mail( message ):
 	# of repoze.sendmail.interfaces.IMailDelivery, one for queue and one
 	# for immediate, and those objects do the real work and also have a consistent
 	# interfaces. It's easy to change the pyramid_mail message into a email message
-	send_mail( pyramid_mail_message=message )
+	_send_mail( pyramid_mail_message=message )
 	return message
 
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
-def send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=None ):
+def _send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=None ):
 	"""
 	Sends a message transactionally. The first three arguments are exactly the
 	arguments that a :class:`repoze.sendmail.interfaces.IMailDelivery` takes; the
