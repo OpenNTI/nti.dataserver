@@ -55,7 +55,14 @@ class ITemplatedMailer(interface.Interface):
 		:return: The :class:`pyramid_mailer.message.Message` we sent.
 		"""
 
-	def create_simple_html_text_email(*args,**kwargs):
+	def create_simple_html_text_email(base_template,
+									  subject='',
+									  request=None,
+									  recipients=(),
+									  template_args=None,
+									  attachments=(),
+									  package=None,
+									  text_template_extension='.txt'):
 		"""
 		The same arguments and return types as :meth:`queue_simple_html_text_email`,
 		but without the actual transactional delivery.

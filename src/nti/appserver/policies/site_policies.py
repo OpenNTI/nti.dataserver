@@ -38,7 +38,7 @@ from pyramid.threadlocal import get_current_request
 from pyramid.path import package_of
 
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver._email_utils import queue_simple_html_text_email
+from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.contentfragments import censor
 
@@ -500,12 +500,13 @@ class AbstractSitePolicyEventListener(object):
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
-		queue_simple_html_text_email(self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
-									 subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
-									 recipients=[email],
-									 template_args={'user': user, 'profile': profile, 'context': user },
-									 request=event.request,
-									 package=self.__find_my_package())
+		component.getUtility(ITemplatedMailer).queue_simple_html_text_email(
+			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
+			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
+			recipients=[email],
+			template_args={'user': user, 'profile': profile, 'context': user },
+			request=event.request,
+			package=self.__find_my_package())
 
 	def _set_landing_page_cookie( self, user, event ):
 		if self.LANDING_PAGE_NTIID:
