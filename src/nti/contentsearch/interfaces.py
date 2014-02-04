@@ -15,14 +15,13 @@ from zope import component
 from zope import interface
 from zope.deprecation import deprecated
 from zope.mimetype import interfaces as zmime_interfaces
-from zope.interface.common.mapping import IMapping, IFullMapping
 
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils import schema as nti_schema
 
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
-class IRepozeDataStore(IFullMapping):
+class IRepozeDataStore(interface.Interface):
 	"""
 	This interface is implemented by persistent objects in databases
 	in the wild (notably, these objects were registered as persistent utilities,
@@ -392,7 +391,7 @@ class IRedisStoreService(interface.Interface):
 
 # content
 
-class IBaseContent(interface.Interface):
+class IBaseContent(nti_interfaces.ILastModified):
 	pass
 
 class IWhooshContent(zmime_interfaces.IContentTypeAware):
@@ -402,7 +401,6 @@ class IBookContent(IBaseContent):
 	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
 	title = nti_schema.ValidText(title="Content title", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
-	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshBookContent(IBookContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=True)
@@ -415,7 +413,6 @@ class IVideoTranscriptContent(IBaseContent):
 	title = nti_schema.ValidText(title="Video title", required=False)
 	start_millisecs = schema.Float(title="Start timestamp", required=True)
 	end_millisecs = schema.Float(title="End timestamp", required=True)
-	last_modified = nti_schema.Number(title="Last modified date", required=True)
 
 class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
@@ -426,7 +423,6 @@ class INTICardContent(IBaseContent):
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
 	title = nti_schema.ValidTextLine(title="Card title", required=True)
 	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
-	last_modified = nti_schema.Number(title="Last modified date", required=True)
 	description = nti_schema.ValidTextLine(title="Card description", required=True)
 	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
 	containerId = nti_schema.ValidTextLine(title="card container ntiid", required=False)
@@ -662,7 +658,7 @@ class IIndexHit(IBaseHit):
 				 nti_schema.Number(title="Object int id")),
 				title="The hit object")
 
-class ISearchHit(IBaseHit, IMapping):
+class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
 	"""
 	represent an externalized search hit
 	"""
@@ -672,25 +668,22 @@ class ISearchHit(IBaseHit, IMapping):
 	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
 	Creator = nti_schema.ValidTextLine(title="Search hit target creator", required=False)
 	ContainerId = nti_schema.ValidTextLine(title="Search hit container id", required=False)
-	LastModified = nti_schema.Number(title="last modified date for this hit", default=0, required=False)
 	TargetMimeType = nti_schema.ValidTextLine(title="Search hit target mimetype", required=True)
 
 class INoteSearchHit(ISearchHit):
-	Title = nti_schema.ValidTextLine(title="Note title", required=False)
+	pass
 
 class IHighlightSearchHit(ISearchHit):
 	pass
 
 class IRedactionSearchHit(ISearchHit):
-	RedactionExplanation = nti_schema.ValidTextLine(title="Redaction Explanation", required=False)
-	ReplacementContent = nti_schema.ValidTextLine(title="Redaction replacement content", required=False)
+	pass
 
 class IMessageInfoSearchHit(ISearchHit):
 	pass
 
 class IPostSearchHit(ISearchHit):
-	Title = nti_schema.ValidTextLine(title="Post title", required=False)
-	Tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Post tags"), required=False)
+	pass
 
 class IBookSearchHit(ISearchHit):
 	Title = nti_schema.ValidTextLine(title="Book title", required=False)
@@ -699,6 +692,7 @@ class IWhooshBookSearchHit(IBookSearchHit):
 	pass
 
 class IVideoTranscriptSearchHit(ISearchHit):
+	Title = nti_schema.ValidTextLine(title="Card title", required=False)
 	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
 	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=True)
 	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=True)
@@ -708,6 +702,7 @@ class IWhooshVideoTranscriptSearchHit(IVideoTranscriptSearchHit):
 
 class INTICardSearchHit(ISearchHit):
 	Href = nti_schema.ValidTextLine(title="Card HREF", required=True)
+	Title = nti_schema.ValidTextLine(title="Card title", required=False)
 	TargetNTIID = nti_schema.ValidTextLine(title="Card target NTIID", required=True)
 
 class IWhooshNTICardSearchHit(INTICardSearchHit):

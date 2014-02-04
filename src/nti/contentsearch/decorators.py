@@ -26,7 +26,7 @@ from . import search_highlights
 from . import interfaces as search_interfaces
 
 from .constants import (tags_, content_, title_, replacementContent_,
-					    redactionExplanation_)
+						redactionExplanation_)
 
 from .constants import (SNIPPET, FRAGMENTS, TOTAL_FRAGMENTS, FIELD)
 
@@ -46,7 +46,7 @@ class _SearchHitHighlightDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
-		query = original.query
+		query = original.Query
 		text = external.get(SNIPPET, None)
 		hi = self.hilight_text(query, text)
 		self.set_snippet(hi, external)
@@ -64,7 +64,7 @@ class _SearchHitHighlightDecorator(object):
 class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def decorate_on_source_fields(self, hit, external, sources):
-		query = hit.query
+		query = hit.Query
 		content_hi = None
 		for field, text in sources:
 			hi = _word_fragments_highlight(query, text)
@@ -83,7 +83,7 @@ class _MultipleFieldSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 class _NoteSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
+		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.Title))
 		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IRedactionSearchHit)
@@ -91,9 +91,9 @@ class _NoteSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator
 class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET, None)),
-					(replacementContent_, hit.get_replacement_content()),
-					(redactionExplanation_, hit.get_redaction_explanation()))
+		t_sources = ((content_, external.get(SNIPPET)),
+					(replacementContent_, hit.ReplacementContent),
+					(redactionExplanation_, hit.RedactionExplanation))
 		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IPostSearchHit)
@@ -101,9 +101,9 @@ class _RedactionSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDeco
 class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET, None)),
-					(title_, hit.get_title()),
-					(tags_, hit.get_tags()))
+		t_sources = ((content_, external.get(SNIPPET)),
+					 (title_, hit.Title),
+					 (tags_, hit.Tags))
 		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.IWhooshNTICardSearchHit)
@@ -111,7 +111,7 @@ class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator
 class _NTICardSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
 
 	def decorateExternalObject(self, hit, external):
-		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.get_title()))
+		t_sources = ((content_, external.get(SNIPPET)), (title_, hit.Title))
 		self.decorate_on_source_fields(hit, external, t_sources)
 
 @component.adapter(search_interfaces.ISearchResults)
