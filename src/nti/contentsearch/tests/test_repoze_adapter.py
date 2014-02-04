@@ -28,7 +28,7 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.constants import (tags_)
-from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID,
+from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, ITEMS, NTIID,
 										 PHRASE_SEARCH, ID, FIELD)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
@@ -109,7 +109,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		results = rim.search("shield")
 		hits = toExternalObject(results)
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_entry('Query', 'shield'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits, has_entry(PHRASE_SEARCH, False))
 
@@ -147,11 +147,11 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		hits = toExternalObject(rim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
-		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_entry('Query', 'shield'))
 
 		hits = toExternalObject(rim.search("blow"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'blow'))
+		assert_that(hits, has_entry('Query', 'blow'))
 
 	@WithMockDSTrans
 	def test_delete_note(self):
@@ -163,7 +163,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		hits = toExternalObject(rim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 0))
-		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_entry('Query', 'shield'))
 
 	@WithMockDSTrans
 	def test_suggest(self):
@@ -173,7 +173,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		hits = toExternalObject(rim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
-		assert_that(hits, has_entry(QUERY, 'ra'))
+		assert_that(hits, has_entry('Query', 'ra'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]

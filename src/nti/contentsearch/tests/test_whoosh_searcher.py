@@ -32,7 +32,7 @@ from ..whoosh_storage import create_directory_index
 from ..whoosh_searcher import WhooshContentSearcher
 from ..whoosh_schemas import create_video_transcript_schema
 
-from ..constants import (HIT, HIT_COUNT, QUERY, ITEMS, SUGGESTIONS)
+from ..constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
@@ -112,7 +112,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'shield'))
+		assert_that(hits, has_entry('Query', 'shield'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]
@@ -131,7 +131,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_search_video(self):
 		hits = toExternalObject(self.bim.search("secret"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'secret'))
+		assert_that(hits, has_entry('Query', 'secret'))
 		assert_that(hits, has_key(ITEMS))
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
@@ -147,7 +147,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_search_nticard(self):
 		hits = toExternalObject(self.bim.search("Xcution"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'Xcution'))
+		assert_that(hits, has_entry('Query', 'Xcution'))
 		assert_that(hits, has_key(ITEMS))
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
@@ -163,7 +163,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_longword_search(self):
 		hits = toExternalObject(self.bim.search("multiplication"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, 'multiplication'))
+		assert_that(hits, has_entry('Query', 'multiplication'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]
@@ -175,7 +175,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_search_start(self):
 		hits = toExternalObject(self.bim.search("ra*"))
 		assert_that(hits, has_entry(HIT_COUNT, 3))
-		assert_that(hits, has_entry(QUERY, 'ra*'))
+		assert_that(hits, has_entry('Query', 'ra*'))
 		assert_that(hits, has_key(ITEMS))
 		items = hits[ITEMS]
 		assert_that(items, has_length(3))
@@ -192,7 +192,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_suggest(self):
 		hits = toExternalObject(self.bim.suggest("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 4))
-		assert_that(hits, has_entry(QUERY, 'ra'))
+		assert_that(hits, has_entry('Query', 'ra'))
 		assert_that(hits, has_key(ITEMS))
 
 		items = hits[ITEMS]
@@ -202,7 +202,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'rage'))
+		assert_that(hits, has_entry('Query', u'rage'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))
