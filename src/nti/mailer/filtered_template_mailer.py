@@ -17,6 +17,8 @@ from zope import interface
 
 from .interfaces import ITemplatedMailer
 
+from pyramid.threadlocal import get_current_request
+
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
 
@@ -33,7 +35,7 @@ class _BaseFilteredMailer(object):
 class NextThoughtOnlyMailer(_BaseFilteredMailer):
 	"""
 	This mailer ensures we only send email to nextthought.com
-	addresses.
+	addresses. It should only be registered in \"testing\" sites.
 	"""
 
 	def create_simple_html_text_email(self,
@@ -44,7 +46,8 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 									  template_args=None,
 									  attachments=(),
 									  package=None,
-									  text_template_extension='.txt'):
+									  text_template_extension='.txt',
+									  **kwargs):
 		# Implementation wise, we know that all activity
 		# gets directed through this method, so we only need to filter
 		# here.
@@ -57,6 +60,11 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 			return 'dummy.email+' + local + '@nextthought.com'
 		filtered_recip = [_tx(addr) for addr in recipients]
 
+		if '_level' in kwargs:
+			kwargs['_level'] = kwargs['_level'] + 1
+		else:
+			kwargs['_level'] = 4
+
 		return self._default_mailer.create_simple_html_text_email(base_template,
 																  subject=subject,
 																  request=request,
@@ -64,4 +72,58 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 																  template_args=template_args,
 																  attachments=attachments,
 																  package=package,
-																  text_template_extension=text_template_extension)
+																  text_template_extension=text_template_extension,
+																  **kwargs)
+
+class ImpersonatedMailer(NextThoughtOnlyMailer):
+	"""
+	This mailer, which is suitable for registration everywhere,
+	takes into account the impersonation status of the current request.
+	If the request is impersonated, then non `@nextthought.com` addresses
+	are intercepted, otherwise mail is sent normally.
+
+	.. note:: This is tied to the implementation of :func:`nti.appserver.logon.impersonate_user`
+	"""
+
+	def create_simple_html_text_email(self,
+									  base_template,
+									  subject='',
+									  request=None,
+									  recipients=(),
+									  template_args=None,
+									  attachments=(),
+									  package=None,
+									  text_template_extension='.txt',
+									  **kwargs):
+		environ = ()
+		_request = request
+		if _request is None or not hasattr(_request, 'environ'): # In case we're zope proxied?
+			_request = get_current_request()
+
+		environ = getattr(_request, 'environ', ())
+
+		if 'REMOTE_USER_DATA' in environ and environ['REMOTE_USER_DATA']:
+			# This is how we know we are impersonated. In this case,
+			# we want to filter everything. (see nti.appserver.logon)
+			# Hmm, maybe we want to redirect to the impersonating user?
+			# That would couple us pretty tightly to the DS though right now
+			# since we don't have an principal directory utility
+			mailer = super(ImpersonatedMailer,self).create_simple_html_text_email
+		else:
+			# Not impersonating, no need to filter
+			mailer = self._default_mailer.create_simple_html_text_email
+
+		if '_level' in kwargs:
+			kwargs['_level'] = kwargs['_level'] + 1
+		else:
+			kwargs['_level'] = 4
+
+		return mailer(base_template,
+					  subject=subject,
+					  request=request,
+					  recipients=recipients,
+					  template_args=template_args,
+					  attachments=attachments,
+					  package=package,
+					  text_template_extension=text_template_extension,
+					  **kwargs)
