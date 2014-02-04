@@ -27,7 +27,7 @@ from nti.externalization.externalization import toExternalObject
 
 from ..whoosh_index import Book
 
-from ..constants import (HIT_COUNT, QUERY, ITEMS)
+from ..constants import (HIT_COUNT, ITEMS)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 
@@ -70,7 +70,7 @@ class TestWhooshIndex(ConfiguringTestBase):
 		with idx.searcher() as s:
 			d = toExternalObject(bk.search(s, "shield"))
 			assert_that(d, has_entry(HIT_COUNT, 1))
-			assert_that(d, has_entry(QUERY, 'shield'))
+			assert_that(d, has_entry('Query', 'shield'))
 			assert_that(d, has_key(ITEMS))
 			items = d[ITEMS]
 			assert_that(items, has_length(1))

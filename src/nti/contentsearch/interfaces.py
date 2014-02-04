@@ -701,6 +701,16 @@ class ISearchHitComparator(interface.Interface):
 	def compare(a, b):
 		pass
 
+class ISearchHitPredicate(interface.Interface):
+	"""
+	Search hit filter - implemented as subscriber"
+	"""
+
+	def allow(hit):
+		"""
+		filter for a search hit to be in the results
+		"""
+
 class ISearchHitMetaData(nti_interfaces.ILastModified):
 	"""Class to track search hit meta data"""
 

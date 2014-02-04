@@ -33,7 +33,7 @@
 			 for=".interfaces.ISearchHit" />
 		
 	<adapter factory=".search_hits.SearchHit"
-			 for="*"
+			 for="dict"
 			 provides=".interfaces.ISearchHit" />
 			 
 	<adapter factory=".search_hits.SearchHit"
@@ -116,6 +116,12 @@
 	<utility factory=".search_comparators._RelevanceSearchHitComparator" name="relevance" />
 	<utility factory=".search_comparators._LastModifiedSearchHitComparator" name="last_modified" />
 	
+	<!-- Search hit subscribers -->
+	
+	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
+				provides=".interfaces.ISearchHitPredicate"
+				for=".interfaces.ISearchHit" />
+				
 	<!-- Content Resolvers -->
 
 	<subscriber factory=".content_utils._DefaultTagKeywordResolver"

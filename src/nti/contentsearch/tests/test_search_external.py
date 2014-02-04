@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
@@ -29,7 +28,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from ..search_query import QueryObject
 from .. import interfaces as search_interfaces
-from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, HIT_META_DATA)
+from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, SUGGESTIONS, HIT_META_DATA)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -69,7 +68,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		searchResults.extend(notes)
 
 		eo = toExternalObject(searchResults)
-		assert_that(eo, has_entry(QUERY, u'wind'))
+		assert_that(eo, has_entry('Query', u'wind'))
 		assert_that(eo, has_entry(HIT_COUNT, len(zanpakuto_commands)))
 		assert_that(eo, has_key(LAST_MODIFIED))
 		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
@@ -85,7 +84,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		sr.add_suggestions(domain_words)
 		eo = toExternalObject(sr)
-		assert_that(eo, has_entry(QUERY, u'bravo'))
+		assert_that(eo, has_entry('Query', u'bravo'))
 		assert_that(eo, has_entry(HIT_COUNT, len(domain_words)))
 		assert_that(eo, has_key(LAST_MODIFIED))
 		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
@@ -112,7 +111,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		searchResults.extend(notes)
 
 		eo = toExternalObject(searchResults)
-		assert_that(eo, has_entry(QUERY, u'theotokos'))
+		assert_that(eo, has_entry('Query', u'theotokos'))
 		assert_that(eo, has_entry(HIT_COUNT, len(commands)))
 		assert_that(eo, has_key(LAST_MODIFIED))
 		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
