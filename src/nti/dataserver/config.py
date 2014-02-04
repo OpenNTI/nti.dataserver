@@ -11,8 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 # Patch for relstorage.
-import nti.monkey.relstorage_umysqldb_patch_on_import
-nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+# MUST be done at a higher level
+#import nti.monkey.relstorage_umysqldb_patch_on_import
+#nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 import os
 import stat
