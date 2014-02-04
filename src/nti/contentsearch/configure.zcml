@@ -29,6 +29,9 @@
 						 .interfaces.IVideoTranscriptContent"
 		modules=".search_query .content_types .search_fragments" />
 		
+	<adapter factory=".externalization._SearchHitInternalObjectIO" 
+			 for=".interfaces.ISearchHit" />
+		
 	<adapter factory=".externalization._IndexHitInternalObjectIO" 
 			 for=".interfaces.IIndexHit" />
 		
@@ -72,7 +75,6 @@
 			 for=".interfaces.IWhooshNTICardContent"
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
-	<adapter factory=".externalization._SearchHitExternalizer" />
 	<adapter factory=".externalization._IndexHitMetaDataExternal" />
 	<adapter factory=".externalization._SearchResultsExternalizer" />
 	<adapter factory=".externalization._SuggestResultsExternalizer" />

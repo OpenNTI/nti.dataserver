@@ -26,18 +26,6 @@ from . import interfaces as search_interfaces
 from .constants import (LAST_MODIFIED, QUERY, HIT_COUNT, ITEMS,
 					 	SUGGESTIONS, PHRASE_SEARCH, HIT_META_DATA)
 
-@interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(search_interfaces.ISearchHit)
-class _SearchHitExternalizer(object):
-
-	__slots__ = ('hit',)
-
-	def __init__(self, hit):
-		self.hit = hit
-
-	def toExternalObject(self):
-		return self.hit
-
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 @component.adapter(search_interfaces.ISearchHit)
 class _SearchHitMetaDataExternal(InterfaceObjectIO):
@@ -110,7 +98,7 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 
 		# process hits
 		count = 0
-		last_modified = 0
+		lastModified = 0
 		limit = self.query.limit
 
 		for hit in self.hits:
@@ -123,11 +111,11 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 			query = hit.query
 
 			hit = search_hits.get_search_hit(item, score, query)
-			if hit.oid in self.seen:
+			if hit.OID in self.seen:
 				continue
 
-			self.seen.add(hit.oid)
-			last_modified = max(last_modified, hit.last_modified)
+			self.seen.add(hit.OID)
+			lastModified = max(lastModified, hit.lastModified)
 
 			external = toExternalObject(hit)
 			items.append(external)
@@ -137,11 +125,11 @@ class _SearchResultsExternalizer(_BaseSearchResultsExternalizer):
 				break
 
 		result[HIT_COUNT] = len(items)
-		result[LAST_MODIFIED] = last_modified
+		result[LAST_MODIFIED] = lastModified
 		result[HIT_META_DATA] = toExternalObject(self.results.metadata)
 
 		# set for IUGDExternalCollection
-		result.lastModified = last_modified
+		result.lastModified = lastModified
 		result.mimeType = self.results.mimeType
 
 		return result
@@ -185,3 +173,19 @@ class _IndexHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 		return ('search_results',)
 
 _IndexHitInternalObjectIO.__class_init__()
+
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
+
+	_excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
+	_excluded_in_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
+
+	@classmethod
+	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
+		return (search_interfaces.ISearchHit,)
+
+	@classmethod
+	def _ap_enumerate_module_names(cls):
+		return ('search_hits',)
+
+_SearchHitInternalObjectIO.__class_init__()

@@ -25,6 +25,7 @@ class BookContent(SchemaConfigured):
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
 	intid = alias('docnum')
+	last_modified = alias('lastModified')
 	containerId = ContainerId = alias('ntiid')
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
@@ -32,10 +33,12 @@ class VideoTranscriptContent(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
+	last_modified = alias('lastModified')
+
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class NTICardContent(SchemaConfigured):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
 	
 	content = alias('description')
-
+	last_modified = alias('lastModified')

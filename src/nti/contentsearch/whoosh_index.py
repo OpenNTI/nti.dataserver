@@ -135,7 +135,7 @@ class Book(_SearchableContent):
 												 ntiid=hit[ntiid_],
 									 			 title=hit[title_],
 									 			 content=hit[content_],
-									 			 last_modified=last_modified)
+									 			 lastModified=last_modified)
 				result.append((data, score))
 		return result
 
@@ -160,7 +160,7 @@ class VideoTranscript(_SearchableContent):
 							content=hit[content_],
 							videoId=hit[videoId_],
 				 			containerId=hit[containerId_],
-							last_modified=common.epoch_time(hit[last_modified_]),
+							lastModified=common.epoch_time(hit[last_modified_]),
 				 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
 				 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
 			result.append((data, score))
@@ -189,7 +189,7 @@ class NTICard(_SearchableContent):
 									title=hit[title_],
 									creator=hit[creator_],
 									description=hit[content_],
-									last_modified=last_modified,
+									lastModified=last_modified,
 							 		containerId=hit[containerId_],
 							 		target_ntiid=hit[target_ntiid_])
 			result.append((data, score))
