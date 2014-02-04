@@ -7,6 +7,15 @@ __docformat__ = "restructuredtext en"
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+
+from hamcrest import is_
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
+
 from zope import component
 
 from nti.dataserver.users import User
@@ -21,7 +30,7 @@ from nti.externalization.internalization import update_from_external_object
 from ..search_results import IndexHit
 from ..search_query import QueryObject
 from .. import interfaces as search_interfaces
-from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, SCORE, HIT_META_DATA)
+from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, QUERY, SUGGESTIONS, HIT_META_DATA)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -29,8 +38,6 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
 from . import domain as domain_words
-
-from hamcrest import (assert_that, has_entry, has_key, has_length, greater_than_or_equal_to, is_, has_property)
 
 class TestSearchExternal(ConfiguringTestBase):
 
@@ -134,7 +141,7 @@ class TestSearchExternal(ConfiguringTestBase):
 		items = eo[ITEMS]
 		for idx, hit in enumerate(items):
 			score = len(items) - idx
-			assert_that(hit[SCORE], is_(score))
+			assert_that(hit['Score'], is_(score))
 
 	@WithMockDSTrans
 	def test_search_query(self):

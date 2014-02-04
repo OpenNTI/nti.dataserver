@@ -32,7 +32,7 @@ from ..common import get_type_name
 from ..content_types import BookContent
 from .. import interfaces as search_interfaces
 
-from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT, SNIPPET)
+from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -85,7 +85,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x085a:5573657273'))
-		assert_that(d, has_entry(SNIPPET,
+		assert_that(d, has_entry('Snippet',
 								 u'You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems'))
 
 	def test_seach_hit_redaction_dict(self):
@@ -94,7 +94,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x1876:5573657273'))
-		assert_that(d, has_entry(SNIPPET, u'serving a sentence in a Michigan jail'))
+		assert_that(d, has_entry('Snippet', u'serving a sentence in a Michigan jail'))
 
 	def test_search_hit_note_dict(self):
 		d = self._externalize(search_hits._NoteSearchHit, self.note, 'waves')
@@ -102,7 +102,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:carlos.sanchez@nextthought.com-OID-0x0860:5573657273'))
-		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and'))
+		assert_that(d, has_entry('Snippet', u'All Waves, Rise now and Become my Shield, Lightning, Strike now and'))
 
 	def test_search_hit_messgeinfo_dict(self):
 		d = self._externalize(search_hits._MessageInfoSearchHit, self.messageinfo, '')
@@ -110,7 +110,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
 		assert_that(d, has_entry(CREATOR, u'troy.daley@nextthought.com'))
 		assert_that(d, has_entry(NTIID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x8a:53657373696f6e73'))
-		assert_that(d, has_entry(SNIPPET, u'Zanpakuto and Zangetsu'))
+		assert_that(d, has_entry('Snippet', u'Zanpakuto and Zangetsu'))
 
 	@WithMockDSTrans
 	def test_search_hit_note_ds(self):
@@ -128,7 +128,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'It is not enough to mean well, we actually have to do well'))
+		assert_that(d, has_entry('Snippet', u'It is not enough to mean well, we actually have to do well'))
 
 	@WithMockDSTrans
 	def test_search_hit_hightlight_ds(self):
@@ -145,7 +145,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'Kon saw it! The Secret of a Beautiful Office Lady'))
+		assert_that(d, has_entry('Snippet', u'Kon saw it! The Secret of a Beautiful Office Lady'))
 
 	@WithMockDSTrans
 	def test_search_hit_redaction_ds(self):
@@ -164,7 +164,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
-		assert_that(d, has_entry(SNIPPET, u'overcome it everytime I have been on the verge of death'))
+		assert_that(d, has_entry('Snippet', u'overcome it everytime I have been on the verge of death'))
 
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')
@@ -179,4 +179,4 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(TYPE, 'Content'))
 		assert_that(d, has_entry(CONTAINER_ID, containerId))
 		assert_that(d, has_entry(NTIID, containerId))
-		assert_that(d, has_entry(SNIPPET, u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+		assert_that(d, has_entry('Snippet', u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))

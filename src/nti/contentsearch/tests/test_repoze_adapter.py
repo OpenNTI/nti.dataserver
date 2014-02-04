@@ -7,6 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.users import User
@@ -21,16 +28,14 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.constants import (tags_)
-from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-						 				NTIID, PHRASE_SEARCH, ID, FIELD)
+from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, NTIID,
+										 PHRASE_SEARCH, ID, FIELD)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import zanpakuto_commands
-
-from hamcrest import (is_not, has_key, has_item, has_entry, has_length, assert_that)
 
 class TestRepozeUserAdapter(ConfiguringTestBase):
 
@@ -116,7 +121,7 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		assert_that(hit, has_entry(NTIID, is_not(None)))
 		assert_that(hit, has_entry(CONTAINER_ID, 'tag:nextthought.com,2011-10:bleach-manga'))
 		assert_that(hit,
-					has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+					has_entry('Snippet', 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 		hits = rim.search("*")
 		assert_that(hits, has_length(0))
@@ -211,8 +216,9 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 		user = self._create_user(username=username)
 		redaction = Redaction()
 		redaction.selectedText = u'Fear'
-		update_from_external_object(redaction, {'replacementContent': u'Ichigo',
-												'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
+		update_from_external_object(redaction,
+					{'replacementContent': u'Ichigo',
+					 'redactionExplanation': u'Have overcome it everytime I have been on the verge of death'})
 		redaction.creator = username
 		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 		redaction = user.addContainedObject(redaction)
