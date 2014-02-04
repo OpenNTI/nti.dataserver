@@ -20,6 +20,7 @@
 	<include package="z3c.ptcompat" /> <!-- regular pagetemplate usage uses chamelean engine -->
 	<include package="z3c.macro" />
 	<include package="nti.dataserver" />
+	<include package="nti.mailer" />
 
 	<include package="." file="meta.zcml" />
 
