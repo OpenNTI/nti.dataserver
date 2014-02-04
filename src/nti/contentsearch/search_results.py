@@ -23,6 +23,7 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.utils.sort import isorted
 from nti.utils.property import alias
 
+from . import search_hits
 from . import discriminators
 from . import interfaces as search_interfaces
 
@@ -67,6 +68,8 @@ class IndexHit(zcontained.Contained):
 		xhash ^= hash(self.Ref)
 		xhash ^= hash(self.Score)
 		return xhash
+
+create_search_hit = search_hits.get_search_hit  # alias
 
 @interface.implementer(search_interfaces.IIndexHitMetaData)
 class IndexHitMetaData(object):
@@ -214,8 +217,11 @@ class _SearchResults(_BaseSearchResults):
 			self._add(hits)
 		else:
 			items = [hits] if not isinstance(hits, collections.Iterable) else hits
-			for item in items or ():
-				self._add(item)
+			self.extend(items)
+
+	def extend(self, items):
+		for item in items or ():
+			self._add(item)
 
 	def sort(self, sortOn=None):
 		sortOn = sortOn or self.query.sortOn
@@ -258,11 +264,14 @@ class _SuggestResults(_BaseSearchResults):
 	def add_suggestions(self, items):
 		items = [items] if isinstance(items, six.string_types) or \
 						   not isinstance(items, collections.Iterable) else items
-		for item in items or ():
-			if isinstance(item, six.string_types):
-				self._words.add(unicode(item))
+		self._extend(items)  # avoid any possible conflict w/ _SuggestAndSearchResults
 
 	add = add_suggestions
+
+	def _extend(self, items):
+		for item in items or ():
+			self._words.add(unicode(item))
+	extend = _extend
 
 	def __iadd__(self, other):
 		if 	search_interfaces.ISuggestResults.providedBy(other) or \
@@ -294,6 +303,9 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	def add(self, items):
 		_SearchResults.add(self, items)
+
+	def extend(self, items):
+		_SearchResults.extend(self, items)
 
 	def __iadd__(self, other):
 		_SearchResults.__iadd__(self, other)

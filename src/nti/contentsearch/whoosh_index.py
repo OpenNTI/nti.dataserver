@@ -103,7 +103,7 @@ class _SearchableContent(object):
 
 		# return all source objects
 		objects = self.get_objects_from_whoosh_hits(search_hits, docids)
-		results.add(objects)
+		results.extend(objects)
 
 		return results
 
@@ -136,7 +136,7 @@ class Book(_SearchableContent):
 									 			 title=hit[title_],
 									 			 content=hit[content_],
 									 			 last_modified=last_modified)
-				result.append(search_results.IndexHit(data, score))
+				result.append((data, score))
 		return result
 
 class VideoTranscript(_SearchableContent):
@@ -163,7 +163,7 @@ class VideoTranscript(_SearchableContent):
 							last_modified=common.epoch_time(hit[last_modified_]),
 				 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
 				 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
-			result.append(search_results.IndexHit(data, score))
+			result.append((data, score))
 		return result
 
 class NTICard(_SearchableContent):
@@ -192,6 +192,6 @@ class NTICard(_SearchableContent):
 									last_modified=last_modified,
 							 		containerId=hit[containerId_],
 							 		target_ntiid=hit[target_ntiid_])
-			result.append(search_results.IndexHit(data, score))
+			result.append((data, score))
 		return result
 
