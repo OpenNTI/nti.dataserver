@@ -706,9 +706,9 @@ class ISearchHitPredicate(interface.Interface):
 	Search hit filter - implemented as subscriber"
 	"""
 
-	def allow(hit):
+	def allow(item, score=1.0):
 		"""
-		filter for a search hit to be in the results
+		allow a search hit into the results
 		"""
 
 class ISearchHitMetaData(nti_interfaces.ILastModified):

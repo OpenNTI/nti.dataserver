@@ -7,20 +7,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
 from . import interfaces as search_interfaces
 
 @interface.implementer(search_interfaces.ISearchHitPredicate)
-@component.adapter(search_interfaces.ISearchHit)
 class _DefaultSearchHitPredicate(object):
 	
 	__slots__ = ()
 
-	def __init__(self, hit):
+	def __init__(self, *args):
 		pass
 
-	def allow(self, hit):
+	def allow(self, item, score=1.0):
 		return True
 
