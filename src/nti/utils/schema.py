@@ -589,7 +589,7 @@ class DataURI(ValidURI):
 		if isinstance(value,dataurl.DataURL):
 			return value
 
-		result = super(DataURI,self).fromUnicode(value)
+		super(DataURI, self).fromUnicode(value)
 		return dataurl.DataURL(value)
 
 class _ValueTypeAddingDocMixin(object):
