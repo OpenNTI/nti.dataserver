@@ -120,7 +120,7 @@
 	
 	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
 				provides=".interfaces.ISearchHitPredicate"
-				for=".interfaces.ISearchHit" />
+				for="*" />
 				
 	<!-- Content Resolvers -->
 

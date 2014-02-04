@@ -26,9 +26,9 @@ from . import interfaces as search_interfaces
 
 create_search_hit = search_hits.get_search_hit  # alias
 
-def allow_search_hit(hit):
-	filters = component.subscribers((hit,), search_interfaces.ISearchHitPredicate)
-	result = all((f.allow(hit) for f in filters))
+def allow_search_hit(item, score):
+	filters = component.subscribers((item,), search_interfaces.ISearchHitPredicate)
+	result = all((f.allow(item, score) for f in filters))
 	return result
 
 @interface.implementer(search_interfaces.ISearchHitMetaData)
@@ -150,10 +150,9 @@ class _SearchResults(_BaseSearchResults):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
-		hit = create_search_hit(item, score, self.Query)
-		if allow_search_hit(hit):
+		if allow_search_hit(item, score):
 			self.sorted = False
-			hit.__parent__ = self  # make sure the parent is set
+			hit = create_search_hit(item, score, self.Query, self)
 			self._hits.append(hit)
 			self._ihitmeta.track(item)
 
