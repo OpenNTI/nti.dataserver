@@ -64,7 +64,7 @@ class _MetaSearchHit(type):
 		return t
 
 @interface.implementer(search_interfaces.ISearchHit)
-class BaseSearchHit(dict):
+class _BaseSearchHit(dict):
 
 	__metaclass__ = _MetaSearchHit
 
@@ -111,13 +111,13 @@ class BaseSearchHit(dict):
 		return self.get(LAST_MODIFIED, 0)
 	last_modified = lastModified
 
-_BaseSearchHit = BaseSearchHit  # BWC
+BaseSearchHit = _BaseSearchHit  # BWC
 
 def get_value(obj, name, default=u''):
 	result = getattr(obj, name, None)
 	return result if result else default
 
-class SearchHit(BaseSearchHit):
+class _SearchHit(_BaseSearchHit):
 
 	adapter_interface = search_interfaces.IUserContentResolver
 
@@ -142,11 +142,11 @@ class SearchHit(BaseSearchHit):
 									name='text')
 		return text
 
-_SearchHit = SearchHit  # BWC
+SearchHit = _SearchHit  # BWC
 
 @component.adapter(nti_interfaces.INote)
 @interface.implementer(search_interfaces.INoteSearchHit)
-class _NoteSearchHit(SearchHit):
+class _NoteSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.INoteContentResolver
 
 	Title = alias('title')
@@ -161,12 +161,12 @@ class _NoteSearchHit(SearchHit):
 
 @component.adapter(nti_interfaces.IHighlight)
 @interface.implementer(search_interfaces.IHighlightSearchHit)
-class _HighlightSearchHit(SearchHit):
+class _HighlightSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IHighlightContentResolver
 
 @component.adapter(nti_interfaces.IRedaction)
 @interface.implementer(search_interfaces.IRedactionSearchHit)
-class _RedactionSearchHit(SearchHit):
+class _RedactionSearchHit(_SearchHit):
 
 	adapter_interface = search_interfaces.IRedactionContentResolver
 
@@ -187,13 +187,12 @@ class _RedactionSearchHit(SearchHit):
 
 @component.adapter(chat_interfaces.IMessageInfo)
 @interface.implementer(search_interfaces.IMessageInfoSearchHit)
-class _MessageInfoSearchHit(SearchHit):
+class _MessageInfoSearchHit(_SearchHit):
 	adapter_interface = search_interfaces.IMessageInfoContentResolver
-
 
 @component.adapter(for_interfaces.IPost)
 @interface.implementer(search_interfaces.IPostSearchHit)
-class _PostSearchHit(SearchHit):
+class _PostSearchHit(_SearchHit):
 
 	adapter_interface = search_interfaces.IPostContentResolver
 
@@ -217,7 +216,7 @@ class _PostSearchHit(SearchHit):
 
 @component.adapter(search_interfaces.IWhooshBookContent)
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)
-class _WhooshBookSearchHit(BaseSearchHit):
+class _WhooshBookSearchHit(_BaseSearchHit):
 
 	def __init__(self, hit):
 		super(_WhooshBookSearchHit, self).__init__(hit, self.get_oid(hit))
@@ -238,7 +237,7 @@ class _WhooshBookSearchHit(BaseSearchHit):
 
 @component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
-class _WhooshVideoTranscriptSearchHit(BaseSearchHit):
+class _WhooshVideoTranscriptSearchHit(_BaseSearchHit):
 
 	def __init__(self, hit):
 		super(_WhooshVideoTranscriptSearchHit, self).__init__(hit, self.get_oid(hit))
@@ -263,7 +262,7 @@ class _WhooshVideoTranscriptSearchHit(BaseSearchHit):
 
 @component.adapter(search_interfaces.IWhooshNTICardContent)
 @interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
-class _WhooshNTICardSearchHit(BaseSearchHit):
+class _WhooshNTICardSearchHit(_BaseSearchHit):
 
 	Title = alias('title')
 
