@@ -38,6 +38,13 @@ class _SearchHitExternalizer(object):
 	def toExternalObject(self):
 		return self.hit
 
+@interface.implementer(ext_interfaces.IInternalObjectIO)
+@component.adapter(search_interfaces.ISearchHit)
+class _SearchHitMetaDataExternal(InterfaceObjectIO):
+
+	_excluded_out_ivars_ = {'Query'} | InterfaceObjectIO._excluded_out_ivars_
+	_ext_iface_upper_bound = search_interfaces.ISearchHit
+
 # search metadata
 
 @interface.implementer(ext_interfaces.IInternalObjectIO)
