@@ -689,17 +689,26 @@ class IPostSearchHit(ISearchHit):
 	Title = nti_schema.ValidTextLine(title="Post title", required=False)
 	Tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Post tags"), required=False)
 
-class IWhooshBookSearchHit(ISearchHit):
+class IBookSearchHit(ISearchHit):
 	Title = nti_schema.ValidTextLine(title="Book title", required=False)
 
-class IWhooshVideoTranscriptSearchHit(ISearchHit):
+class IWhooshBookSearchHit(IBookSearchHit):
+	pass
+
+class IVideoTranscriptSearchHit(ISearchHit):
 	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
 	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=True)
 	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=True)
 
-class IWhooshNTICardSearchHit(ISearchHit):
+class IWhooshVideoTranscriptSearchHit(IVideoTranscriptSearchHit):
+	pass
+
+class INTICardSearchHit(ISearchHit):
 	Href = nti_schema.ValidTextLine(title="Card HREF", required=True)
 	TargetNTIID = nti_schema.ValidTextLine(title="Card target NTIID", required=True)
+
+class IWhooshNTICardSearchHit(INTICardSearchHit):
+	pass
 
 class ISearchHitComparator(interface.Interface):
 
@@ -708,29 +717,33 @@ class ISearchHitComparator(interface.Interface):
 		Compare arguments for for order. a or b can beither a IndexHit or ISearchHit
 		"""
 
-class IIndexHitMetaData(interface.Interface):
-	"""Class to track index hit meta data"""
+class ISearchHitMetaData(interface.Interface):
+	"""Class to track search hit meta data"""
 
 	LastModified = nti_schema.Number(title="Greatest last modified time",
 									 required=True, readonly=True, default=0)
 
 	TypeCount = schema.Dict(nti_schema.ValidTextLine(title='type'),
 							nti_schema.Int(title='count'),
-							title="Index hit type count", required=True, readonly=True)
+							title="Search hit type count", required=True, readonly=True)
 
-	ContainerCount = schema.Dict(nti_schema.ValidTextLine(title='container'),
-								 nti_schema.Int(title='count'),
-								 title="Cointainer hit type count", required=True, readonly=True)
+	ContainerCount = schema.Dict(
+						nti_schema.ValidTextLine(title='container'),
+						nti_schema.Int(title='count'),
+						title="Cointainer hit type count", required=True, readonly=True)
 
-	TotalHitCount = schema.Int(title='Total hit count', required=True, readonly=True, default=0)
+	TotalHitCount = schema.Int(title='Total hit count', required=True,
+							   readonly=True, default=0)
 
-	def track(ihit):
+	def track(shit):
 		"""
-		track any metadata from the specified index hit
+		track any metadata from the specified search hit
 		"""
 
 	def __iadd__(other):
 		pass
+
+IIndexHitMetaData = ISearchHitMetaData
 
 class IBaseSearchResults(interface.Interface):
 	query = schema.Object(ISearchQuery, title="Search query", required=True)
