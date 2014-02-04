@@ -14,6 +14,10 @@ from nti.contentsearch import get_indexable_types
 from nti.contentsearch.utils import find_user_dfls
 from nti.contentsearch import interfaces as search_interfaces
 
+text_fields = (constants.content_, constants.ngrams_, constants.creator_,
+			   constants.title_, constants.redactionExplanation_,
+			   constants.redactionExplanation_)
+
 def remove_rim_catalogs(rim, content_types=()):
 	"""
 	Remove all the repoze catalogs from the specified entity manager
@@ -56,7 +60,7 @@ def get_catalog_and_docids(entity):
 				# We cannot choose a random one of these from iterating across values()
 				# the result would be undefined. Instead we try to find one we think
 				# should be there
-				for catalog_field_name in constants.text_fields:
+				for catalog_field_name in text_fields:
 					catalog_field_possessing_docids = catalog.get(catalog_field_name)
 					if catalog_field_possessing_docids:
 						break

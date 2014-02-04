@@ -17,25 +17,18 @@ from nti.mimetype.mimetype import MIME_BASE
 ID 				 = unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			 = u'Hit'
 OID 			 = unicode(ext_interfaces.StandardExternalFields.OID)
-HREF 			 = u'Href'
 TYPE 			 = u'Type'
 BODY			 = u'Body'
 POST			 = u'Post'
-INTID			 = u'INTID'
-SCORE			 = u'Score'
 NTIID 			 = unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			 = unicode(ext_interfaces.StandardExternalFields.CLASS)
 QUERY 			 = u'Query'
-TITLE			 = u'Title'
 FIELD 			 = u'Field'
 ITEMS			 = u'Items'
 CONTENT			 = u'Content'
-SNIPPET 		 = u'Snippet'
-VIDEO_ID		 = u'VideoID'
 NTI_CARD		 = u'NTICard'
 FRAGMENTS		 = u'Fragments'
 DESCRIPTION		 = u'Description'
-TARGET_NTIID	 = u'TargetNTIID'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
 VIDEO_TRANSCRIPT = u'VideoTranscript'
@@ -43,15 +36,11 @@ CREATOR 		 = unicode(ext_interfaces.StandardExternalFields.CREATOR)
 AUTO_TAGS		 = u'AutoTags'
 MIME_TYPE		 = unicode(ext_interfaces.StandardExternalFields.MIMETYPE)
 HIT_COUNT 		 = u'Hit Count'
-TARGET_OID		 = u'TargetOID'
 MESSAGE_INFO	 = u'MessageInfo'
 SUGGESTIONS		 = u'Suggestions'
 HIT_META_DATA	 = u'HitMetaData'
-END_MILLISECS	 = u'EndMilliSecs'
 PHRASE_SEARCH 	 = u'PhraseSearch'
 COLLECTION_ID	 = u'CollectionId'
-START_MILLISECS	 = u'StartMilliSecs'
-TARGET_MIME_TYPE = u'Target' + ext_interfaces.StandardExternalFields.MIMETYPE
 CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 
@@ -112,9 +101,6 @@ last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
 
 created_time_fields = (ext_interfaces.StandardInternalFields.CREATED_TIME,
 					   ext_interfaces.StandardExternalFields.CREATED_TIME)
-
-text_fields = (content_, ngrams_, creator_, title_, redactionExplanation_,
-			   redactionExplanation_)
 
 book_prefix = u''
 vtrans_prefix = u'vtrans_'

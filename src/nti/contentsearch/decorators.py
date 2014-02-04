@@ -28,7 +28,9 @@ from . import interfaces as search_interfaces
 from .constants import (tags_, content_, title_, replacementContent_,
 						redactionExplanation_)
 
-from .constants import (SNIPPET, FRAGMENTS, TOTAL_FRAGMENTS, FIELD)
+from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD)
+
+SNIPPET = 'Snippet'
 
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)

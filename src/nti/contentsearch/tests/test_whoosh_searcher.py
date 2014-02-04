@@ -32,9 +32,7 @@ from ..whoosh_storage import create_directory_index
 from ..whoosh_searcher import WhooshContentSearcher
 from ..whoosh_schemas import create_video_transcript_schema
 
-from ..constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, QUERY, ITEMS, SNIPPET,
-						 NTIID, SUGGESTIONS, SCORE, START_MILLISECS, END_MILLISECS,
-						 VIDEO_ID, TITLE, HREF, TARGET_NTIID)
+from ..constants import (HIT, HIT_COUNT, QUERY, ITEMS, SUGGESTIONS)
 
 from . import zanpakuto_commands
 from . import ConfiguringTestBase
@@ -121,11 +119,11 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(items, has_length(1))
 
 		item = items[0]
-		assert_that(item, has_entry(CLASS, HIT))
-		assert_that(item, has_entry(NTIID, is_not(None)))
-		assert_that(item, has_entry(SCORE, is_not(None)))
-		assert_that(item, has_entry(CONTAINER_ID, is_not(None)))
-		assert_that(item, has_entry(SNIPPET, 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+		assert_that(item, has_entry('Class', HIT))
+		assert_that(item, has_entry('NTIID', is_not(None)))
+		assert_that(item, has_entry('Score', is_not(None)))
+		assert_that(item, has_entry('ContainerId', is_not(None)))
+		assert_that(item, has_entry('Snippet', 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 	def test_search_video(self):
 		hits = toExternalObject(self.bim.search("secret"))
@@ -134,14 +132,14 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(hits, has_key(ITEMS))
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
-		assert_that(items[0], has_entry(CLASS, HIT))
-		assert_that(items[0], has_entry(NTIID, is_not(None)))
-		assert_that(items[0], has_entry(SCORE, is_not(None)))
-		assert_that(items[0], has_entry(VIDEO_ID, is_not(None)))
-		assert_that(items[0], has_entry(CONTAINER_ID, is_not(None)))
-		assert_that(items[0], has_entry(SNIPPET, 'Secret of the Substitute Badge'))
-		assert_that(items[0], has_entry(START_MILLISECS, 1630.0))
-		assert_that(items[0], has_entry(END_MILLISECS, 22780.0))
+		assert_that(items[0], has_entry('Class', HIT))
+		assert_that(items[0], has_entry('NTIID', is_not(None)))
+		assert_that(items[0], has_entry('Score', is_not(None)))
+		assert_that(items[0], has_entry('VideoID', is_not(None)))
+		assert_that(items[0], has_entry('ContainerId', is_not(None)))
+		assert_that(items[0], has_entry('Snippet', 'Secret of the Substitute Badge'))
+		assert_that(items[0], has_entry('StartMilliSecs', 1630.0))
+		assert_that(items[0], has_entry('EndMilliSecs', 22780.0))
 
 	def test_search_nticard(self):
 		hits = toExternalObject(self.bim.search("Xcution"))
@@ -150,14 +148,14 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(hits, has_key(ITEMS))
 		items = hits[ITEMS]
 		assert_that(items, has_length(1))
-		assert_that(items[0], has_entry(CLASS, HIT))
-		assert_that(items[0], has_entry(NTIID, is_not(None)))
-		assert_that(items[0], has_entry(SCORE, is_not(None)))
-		assert_that(items[0], has_entry(CONTAINER_ID, is_not(None)))
-		assert_that(items[0], has_entry(SNIPPET, 'Xcution attacks Ginjo'))
-		assert_that(items[0], has_entry(TITLE, is_not(None)))
-		assert_that(items[0], has_entry(HREF, 'http://www.bleachget.com'))
-		assert_that(items[0], has_entry(TARGET_NTIID, is_not(None)))
+		assert_that(items[0], has_entry('Class', HIT))
+		assert_that(items[0], has_entry('NTIID', is_not(None)))
+		assert_that(items[0], has_entry('Score', is_not(None)))
+		assert_that(items[0], has_entry('ContainerId', is_not(None)))
+		assert_that(items[0], has_entry('Snippet', 'Xcution attacks Ginjo'))
+		assert_that(items[0], has_entry('Title', is_not(None)))
+		assert_that(items[0], has_entry('Href', 'http://www.bleachget.com'))
+		assert_that(items[0], has_entry('TargetNTIID', is_not(None)))
 
 	def test_longword_search(self):
 		hits = toExternalObject(self.bim.search("multiplication"))
@@ -168,7 +166,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		items = hits[ITEMS]
 		item = items[0]
 		assert_that(item,
-			has_entry(SNIPPET,
+			has_entry('Snippet',
 					 'Multiplication and subtraction of fire and ice, show your might'))
 
 	def test_search_start(self):
@@ -179,14 +177,14 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(3))
 		for item in items:
-			assert_that(item, has_entry(SCORE, is_(1.0)))
+			assert_that(item, has_entry('Score', is_(1.0)))
 
 	def test_partial_search_start(self):
 		hits = toExternalObject(self.bim.search("bl"))
 		items = hits[ITEMS]
 		assert_that(items, has_length(2))
 		for item in items:
-			assert_that(item, has_entry(SCORE, is_not(None)))
+			assert_that(item, has_entry('Score', is_not(None)))
 
 	def test_suggest(self):
 		hits = toExternalObject(self.bim.suggest("ra"))
