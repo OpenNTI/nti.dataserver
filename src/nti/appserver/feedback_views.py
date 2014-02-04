@@ -11,13 +11,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import textwrap
-
+from zope import component
 from pyramid.view import view_config
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import _email_utils
+from nti.mailer.interfaces import ITemplatedMailer
 from . import httpexceptions as hexc
 from ._external_object_io import read_body_as_external_object
 
@@ -68,20 +68,20 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 
 	cur_domain = request_details.get('HTTP_HOST', request_details.get('SERVER_NAME'))
 	cur_domain = cur_domain.split(':')[0] # drop port
-
-	_email_utils.queue_simple_html_text_email( 'platform_feedback_email',
-											   subject=subject % (userid, cur_domain),
-											   recipients=[to],
-											   template_args={'userid': userid,
-															  'report_type': report_type,
-															  'data': json_body,
-															  'filled_body': '\n    '.join( textwrap.wrap( json_body[body_key], 60 ) ),
-															  'context': json_body,
-															  'request': request,
-															  'tables': tables,
-															  'request_info_table': request_info_table,
-															  'request_details_table': request_detail_table },
-											   request=request )
+	mailer = component.getUtility(ITemplatedMailer)
+	mailer.queue_simple_html_text_email( 'platform_feedback_email',
+										 subject=subject % (userid, cur_domain),
+										 recipients=[to],
+										 template_args={'userid': userid,
+														'report_type': report_type,
+														'data': json_body,
+														'filled_body': '\n    '.join( textwrap.wrap( json_body[body_key], 60 ) ),
+														'context': json_body,
+														'request': request,
+														'tables': tables,
+														'request_info_table': request_info_table,
+														'request_details_table': request_detail_table },
+										 request=request )
 
 	return hexc.HTTPNoContent()
 

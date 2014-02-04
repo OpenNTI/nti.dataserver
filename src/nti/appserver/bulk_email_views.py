@@ -130,8 +130,8 @@ from nti.dataserver.users import index as user_index
 from nti.utils._compat import sleep
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
-from ._email_utils import create_simple_html_text_email
-from ._email_utils import do_html_text_templates_exist
+from nti.mailer.interfaces import ITemplatedMailer
+
 from . import httpexceptions as hexc
 
 from pyramid.view import view_config
@@ -234,6 +234,10 @@ class _Process(object):
 	def sesconn(self):
 		return boto.ses.connect_to_region( 'us-east-1' )
 
+	@Lazy
+	def mailer(self):
+		return component.getUtility(ITemplatedMailer)
+
 	def add_recipients( self, *recipient_data ):
 		"""
 		Save the given recipient data.
@@ -275,11 +279,13 @@ class _Process(object):
 
 			sender = self.compute_sender_for_recipient( recipient_data )
 
-			pmail_msg = create_simple_html_text_email( self.template_name,
-													   subject=self.subject,
-													   request=self.request,
-													   recipients=[recipient_data['email']],
-													   template_args=recipient_data.get('template_args') )
+			pmail_msg = self.mailer.create_simple_html_text_email(
+				self.template_name,
+				subject=self.subject,
+				request=self.request,
+				recipients=[recipient_data['email']],
+				template_args=recipient_data.get('template_args') )
+
 			pmail_msg.sender = sender
 			mail_msg = pmail_msg.to_message()
 			msg_string = mail_msg.as_string()
@@ -448,7 +454,7 @@ class _BulkEmailView(object):
 		factory = self._FACTORIES[self._name]
 		template_name = getattr( factory, 'template_name', None ) or self.request.subpath[0]
 
-		if not do_html_text_templates_exist(template_name):
+		if not component.getUtility(ITemplatedMailer).do_html_text_templates_exist(template_name):
 			raise hexc.HTTPNotFound()
 
 		process = factory(template_name)

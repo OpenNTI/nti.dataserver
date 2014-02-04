@@ -3,7 +3,10 @@
 		   i18n_domain="zope">
 	<include package="zope.component" />
 
-	<utility component="._default_template_mailer" />
+	<!-- The no-name, default, utility takes impersonation into
+	account on all sites -->
+	<utility factory=".filtered_template_mailer.ImpersonatedMailer" />
+	<!-- We make the fallback available too -->
 	<utility component="._default_template_mailer"
 			 name='default' />
 </configure>
