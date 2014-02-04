@@ -32,9 +32,6 @@
 	<adapter factory=".externalization._SearchHitInternalObjectIO" 
 			 for=".interfaces.ISearchHit" />
 		
-	<adapter factory=".externalization._IndexHitInternalObjectIO" 
-			 for=".interfaces.IIndexHit" />
-		
 	<adapter factory=".search_hits.SearchHit"
 			 for="*"
 			 provides=".interfaces.ISearchHit" />
@@ -75,7 +72,7 @@
 			 for=".interfaces.IWhooshNTICardContent"
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
-	<adapter factory=".externalization._IndexHitMetaDataExternal" />
+	<adapter factory=".externalization._SearchHitMetaDataExternal" />
 	<adapter factory=".externalization._SearchResultsExternalizer" />
 	<adapter factory=".externalization._SuggestResultsExternalizer" />
 	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />

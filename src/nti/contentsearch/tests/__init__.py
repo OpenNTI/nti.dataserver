@@ -7,11 +7,9 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import nti.dataserver as dataserver
-import nti.contentsearch as contentsearch
 from nti.appserver.tests.test_application import SharedApplicationTestBase
 
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
 			"Alpha beta", "Gamma delta epsilon omega.",
@@ -40,9 +38,8 @@ zanpakuto_commands =  (	"Shoot To Kill",
 						"Multiplication and subtraction of fire and ice, show your might")
 
 
-class ConfiguringTestBase(DSConfiguringTestBase):
-	set_up_packages = (dataserver, contentsearch)
-
+class ConfiguringTestBase(SharedConfiguringTestBase):
+	set_up_packages = ('nti.dataserver', 'nti.contentsearch')
 
 class ApplicationTestBase(SharedApplicationTestBase):
 	pass

@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import numbers
 import collections
 
 from zope import interface
@@ -21,76 +20,27 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
-from nti.utils.property import alias
 
 from . import search_hits
-from . import discriminators
 from . import interfaces as search_interfaces
-
-@interface.implementer(search_interfaces.IIndexHit)
-class IndexHit(zcontained.Contained):
-
-	__external_can_create__ = True
-	mime_type = mimeType = 'application/vnd.nextthought.search.indexhit'
-
-	ref = alias('Ref')
-	score = alias('Score')
-
-	def __init__(self, obj=None, score=None):
-		super(IndexHit,self).__init__()
-		self.Ref = obj
-		self.Score = score
-
-	@property
-	def obj(self):
-		result = self.Ref
-		if isinstance(self.Ref, (numbers.Integral, six.string_types)):
-			result = discriminators.get_object(int(self.ref))
-		return result
-
-	@property
-	def Query(self):
-		return None if self.__parent__ is None else self.__parent__.query
-	query = Query
-
-	def __repr__(self):
-		return '%s(%s,%s)' % (self.__class__.__name__, self.Ref, self.score)
-	__str__ = __repr__
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.Ref == other.Ref and self.Score == other.Score)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.Ref)
-		xhash ^= hash(self.Score)
-		return xhash
 
 create_search_hit = search_hits.get_search_hit  # alias
 
-@interface.implementer(search_interfaces.IIndexHitMetaData)
-class IndexHitMetaData(object):
+@interface.implementer(search_interfaces.ISearchHitMetaData)
+class SearchHitMetaData(object):
 
 	unspecified_container = u'+++unspecified_container+++'
-	mime_type = mimeType = nti_mimetype_with_class('IndexHitMetaData')
+	mime_type = mimeType = nti_mimetype_with_class('SearchHitMetaData')
+
+	createdTime = lastModified = 0
 
 	def __init__(self):
-		self.lastModified = 0
 		self.type_count = collections.defaultdict(int)
 		self.container_count = collections.defaultdict(int)
 
 	@property
-	def last_modified(self):
-		return self.lastModified
-	LastModified = last_modified
-
-	@property
-	def total_hit_count(self):
+	def TotalHitCount(self):
 		return sum(self.type_count.values())
-	TotalHitCount = total_hit_count
 
 	@property
 	def TypeCount(self):
@@ -100,9 +50,7 @@ class IndexHitMetaData(object):
 	def ContainerCount(self):
 		return dict(self.container_count)
 
-	def track(self, ihit):
-		selected = ihit.obj
-
+	def track(self, selected):
 		# container count
 		resolver = search_interfaces.IContainerIDResolver(selected, None)
 		containerId = resolver.containerId if resolver else self.unspecified_container
@@ -136,7 +84,7 @@ class _MetaSearchResults(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = nti_mimetype_with_class(name[1:])
+		t.mime_type = t.mimeType = nti_mimetype_with_class(name[1:].lower())
 		t.parameters = dict()
 		return t
 
@@ -146,8 +94,7 @@ class _BaseSearchResults(zcontained.Contained):
 
 	def __init__(self, query):
 		super(_BaseSearchResults,self).__init__()
-		assert search_interfaces.ISearchQuery.providedBy(query)
-		self._query = query
+		self.query = search_interfaces.ISearchQuery(query)
 
 	def __str__(self):
 		return self.__repr__()
@@ -156,8 +103,8 @@ class _BaseSearchResults(zcontained.Contained):
 		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
 
 	@property
-	def query(self):
-		return self._query
+	def Query(self):
+		return self.query
 
 	@property
 	def hits(self):
@@ -170,9 +117,6 @@ class _BaseSearchResults(zcontained.Contained):
 	def __len__(self):
 		return len(self.hits)
 
-	def __getitem__(self, n):
-		return self.hits[n]
-
 	def __iter__(self):
 		return iter(self.hits)
 
@@ -182,10 +126,12 @@ class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
+	createdTime = lastModified = 0
+
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
-		self._ihitmeta = IndexHitMetaData()
+		self._ihitmeta = SearchHitMetaData()
 
 	@property
 	def hits(self):
@@ -195,29 +141,19 @@ class _SearchResults(_BaseSearchResults):
 	def metadata(self):
 		return self._ihitmeta
 
-	def _add(self, item):
-		ihit = None
-		if search_interfaces.IIndexHit.providedBy(item):
-			if item.ref is not None:
-				ihit = item
-		elif isinstance(item, tuple):
-			if item[0] is not None:
-				ihit = IndexHit(item[0], item[1])
-		elif item is not None:
-			ihit = IndexHit(item, 1.0)
+	def _add(self, item, score=1.0):
+		if isinstance(item, (list, tuple)):
+			item, score = item[0], item[1]
 
-		if ihit is not None:
+		if item is not None:
 			self.sorted = False
-			ihit.__parent__ = self  # make sure the parent is set
-			self._hits.append(ihit)
-			self._ihitmeta.track(ihit)
+			hit = create_search_hit(item, score, self.Query)
+			hit.__parent__ = self  # make sure the parent is set
+			self._hits.append(hit)
+			self._ihitmeta.track(item)
 
-	def add(self, hits):
-		if search_interfaces.IIndexHit.providedBy(hits) or isinstance(hits, tuple):
-			self._add(hits)
-		else:
-			items = [hits] if not isinstance(hits, collections.Iterable) else hits
-			self.extend(items)
+	def add(self, hit, score=1.0):
+		self._add(hit, score)
 
 	def extend(self, items):
 		for item in items or ():
@@ -301,8 +237,8 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	suggestions = property(get_words)
 
-	def add(self, items):
-		_SearchResults.add(self, items)
+	def add(self, item, score=1.0):
+		_SearchResults.add(self, item, score)
 
 	def extend(self, items):
 		_SearchResults.extend(self, items)

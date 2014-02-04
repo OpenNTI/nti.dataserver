@@ -11,24 +11,22 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.contentprocessing import rank_words
 
+from nti.utils.property import Lazy
+
 from . import common
 from . import constants
-from . import search_query
 from . import whoosh_query
 from . import content_types
 from . import search_results
 from . import whoosh_schemas as schemas
-
-from nti.utils.property import Lazy
+from . import interfaces as search_interfaces
 
 from .constants import (content_, ntiid_, last_modified_, videoId_, creator_,
 						containerId_, title_, end_timestamp_, start_timestamp_,
 					 	href_, target_ntiid_)
 
-# alias BWC
-
-video_date_to_millis = common.video_date_to_millis
-empty_suggest_and_search_results = search_results.empty_suggest_and_search_results
+video_date_to_millis = common.video_date_to_millis  # BWC
+empty_suggest_and_search_results = search_results.empty_suggest_and_search_results  # BWC
 
 class _SearchableContent(object):
 
@@ -47,7 +45,7 @@ class _SearchableContent(object):
 		return self._schema
 
 	def _parse_query(self, query, **kwargs):
-		qo = search_query.QueryObject.create(query, **kwargs)
+		qo = search_interfaces.ISearchQuery(query)
 		parsed_query = whoosh_query.parse_query(qo, self.schema)
 		return qo, parsed_query
 
@@ -57,7 +55,7 @@ class _SearchableContent(object):
 		return results
 
 	def suggest_and_search(self, searcher, query, *args, **kwargs):
-		qo = search_query.QueryObject.create(query, **kwargs)
+		qo = search_interfaces.ISearchQuery(query, **kwargs)
 		if ' ' in qo.term or qo.IsPrefixSearch or qo.IsPhraseSearch:
 			results = empty_suggest_and_search_results(qo)
 			results += self.search(searcher, qo)
@@ -82,12 +80,12 @@ class _SearchableContent(object):
 		return results
 
 	def suggest(self, searcher, word, *args, **kwargs):
-		qo = search_query.QueryObject.create(word, **kwargs)
+		qo = search_interfaces.ISearchQuery(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or self.default_word_max_dist
 		results = search_results.empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
-		results.add(records)
+		results.extend(records)
 		return results
 
 	def _execute_search(self, searcher, parsed_query, queryobject, docids=None,
@@ -121,13 +119,11 @@ class Book(_SearchableContent):
 		return self._schema or schemas.create_book_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
-		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
 			if docids is None or docnum not in docids:
 				if docids is not None:
 					docids.add(docnum)
-
 				score = hit.score or 1.0
 				last_modified = common.epoch_time(hit[last_modified_])
 				data = content_types.BookContent(docnum=docnum,
@@ -136,8 +132,7 @@ class Book(_SearchableContent):
 									 			 title=hit[title_],
 									 			 content=hit[content_],
 									 			 lastModified=last_modified)
-				result.append((data, score))
-		return result
+				yield (data, score)
 
 class VideoTranscript(_SearchableContent):
 
@@ -149,22 +144,23 @@ class VideoTranscript(_SearchableContent):
 		return self._schema or schemas.create_video_transcript_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
-		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
-			score = hit.score or 1.0
-			data = content_types.VideoTranscriptContent(
-							score=score,
-							docnum=docnum,
-							title=hit[title_],
-							content=hit[content_],
-							videoId=hit[videoId_],
-				 			containerId=hit[containerId_],
-							lastModified=common.epoch_time(hit[last_modified_]),
-				 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
-				 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
-			result.append((data, score))
-		return result
+			if docids is None or docnum not in docids:
+				if docids is not None:
+					docids.add(docnum)
+				score = hit.score or 1.0
+				data = content_types.VideoTranscriptContent(
+								score=score,
+								docnum=docnum,
+								title=hit[title_],
+								content=hit[content_],
+								videoId=hit[videoId_],
+					 			containerId=hit[containerId_],
+								lastModified=common.epoch_time(hit[last_modified_]),
+					 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
+					 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
+				yield (data, score)
 
 class NTICard(_SearchableContent):
 
@@ -176,22 +172,22 @@ class NTICard(_SearchableContent):
 		return self._schema or schemas.create_nti_card_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
-		result = []
 		for hit in search_hits:
 			docnum = hit.docnum
-			score = hit.score or 1.0
-			last_modified = common.epoch_time(hit[last_modified_])
-			data = content_types.NTICardContent(
-									score=score,
-									docnum=docnum,
-									href=hit[href_],
-									ntiid=hit[ntiid_],
-									title=hit[title_],
-									creator=hit[creator_],
-									description=hit[content_],
-									lastModified=last_modified,
-							 		containerId=hit[containerId_],
-							 		target_ntiid=hit[target_ntiid_])
-			result.append((data, score))
-		return result
-
+			if docids is None or docnum not in docids:
+				if docids is not None:
+					docids.add(docnum)
+				score = hit.score or 1.0
+				last_modified = common.epoch_time(hit[last_modified_])
+				data = content_types.NTICardContent(
+										score=score,
+										docnum=docnum,
+										href=hit[href_],
+										ntiid=hit[ntiid_],
+										title=hit[title_],
+										creator=hit[creator_],
+										description=hit[content_],
+										lastModified=last_modified,
+								 		containerId=hit[containerId_],
+								 		target_ntiid=hit[target_ntiid_])
+				yield (data, score)

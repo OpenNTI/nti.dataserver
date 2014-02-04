@@ -7,23 +7,29 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_item
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import os
 import json
 
 from zope import component
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 
 from nti.testing.matchers import verifiably_provides
 
 from nti.ntiids.ntiids import make_ntiid
 
-from ..search_query import QueryObject
 from .. import interfaces as search_interfaces
 from ..search_results import empty_search_results
-from ..search_results import empty_suggest_results
 from ..search_results import merge_search_results
+from ..search_results import empty_suggest_results
 from ..search_results import merge_suggest_results
 from ..search_results import empty_suggest_and_search_results
 
@@ -31,7 +37,8 @@ from . import zanpakuto_commands
 from . import ConfiguringTestBase
 from . import domain as domain_words
 
-from hamcrest import (assert_that, has_length, is_, is_not, has_item)
+import nti.dataserver.tests.mock_dataserver as mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 class TestSearchResults(ConfiguringTestBase):
 
@@ -42,8 +49,16 @@ class TestSearchResults(ConfiguringTestBase):
 		with open(path, "r") as f:
 			cls.messageinfo = json.load(f)
 
+	@classmethod
+	def _create_user(cls, username='nt@nti.com', password='temp001'):
+		ds = mock_dataserver.current_mock_ds
+		usr = User.create_user(ds, username=username, password=password)
+		return usr
+
+	@WithMockDSTrans
 	def test_search_results(self):
-		qo = QueryObject.create("test")
+		user = self._create_user()
+		qo = search_interfaces.ISearchQuery("test")
 		sr = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
 		assert_that(sr, verifiably_provides(search_interfaces.ISearchResults))
@@ -56,17 +71,17 @@ class TestSearchResults(ConfiguringTestBase):
 			note.body = [unicode(cmd)]
 			note.creator = 'nt@nti.com'
 			note.containerId = containerid
+			note = user.addContainedObject(note)
 			notes.append(note)
 
-		sr.add(notes)
+		sr.extend(notes)
 		assert_that(len(sr), is_(len(notes)))
-		for x, note in enumerate(notes):
-			assert_that(note, is_(sr[x].obj))
 
 		note = Note()
 		note.body = [u'test']
 		note.creator = 'nt@nti.com'
 		note.containerId = containerid
+		note = user.addContainedObject(note)
 		sr.add(note)
 
 		count = 0
@@ -78,7 +93,7 @@ class TestSearchResults(ConfiguringTestBase):
 		assert_that(count, is_(expected))
 
 	def test_suggest_results(self):
-		qo = QueryObject.create("test")
+		qo = search_interfaces.ISearchQuery("test")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		assert_that(sr, is_not(None))
 		assert_that(sr, verifiably_provides(search_interfaces.ISuggestResults))
@@ -101,8 +116,10 @@ class TestSearchResults(ConfiguringTestBase):
 
 		assert_that(count, is_(expected))
 
+	@WithMockDSTrans
 	def test_suggest_and_search_results(self):
-		qo = QueryObject.create("test")
+		user = self._create_user()
+		qo = search_interfaces.ISearchQuery("test")
 		sr = component.getUtility(search_interfaces.ISuggestAndSearchResultsCreator)(qo)
 		assert_that(sr, is_not(None))
 		assert_that(sr, verifiably_provides(search_interfaces.ISuggestAndSearchResults))
@@ -120,31 +137,34 @@ class TestSearchResults(ConfiguringTestBase):
 			note.body = [unicode(cmd)]
 			note.creator = 'nt@nti.com'
 			note.containerId = containerid
+			note = user.addContainedObject(note)
 			notes.append(note)
-		sr.add(notes)
+		sr.extend(notes)
 		assert_that(sr, has_length(len(notes)))
 
 	def test_empty_search_results(self):
-		d = empty_search_results(QueryObject.create("myQuery"))
+		d = empty_search_results(search_interfaces.ISearchQuery("myQuery"))
 		assert_that(d, has_length(0))
 		assert_that(d.hits, is_([]))
 
 	def test_empty_suggest_result(self):
-		d = empty_suggest_results(QueryObject.create("myQuery"))
+		d = empty_suggest_results(search_interfaces.ISearchQuery("myQuery"))
 		assert_that(d, has_length(0))
 		assert_that(d.suggestions, has_length(0))
 
 	def test_empty_suggest_and_search_result(self):
-		d = empty_suggest_and_search_results(QueryObject.create("myQuery"))
+		d = empty_suggest_and_search_results(search_interfaces.ISearchQuery("myQuery"))
 		assert_that(d, has_length(0))
 		assert_that(d.hits, is_([]))
 		assert_that(d.suggestions, has_length(0))
 
+	@WithMockDSTrans
 	def test_merge_search_results(self):
-		a = empty_search_results(QueryObject.create("myQuery"))
+		user = self._create_user()
+		a = empty_search_results(search_interfaces.ISearchQuery("myQuery"))
 		a.prop1 = 'value0'
 
-		b = empty_search_results(QueryObject.create("myQuery"))
+		b = empty_search_results(search_interfaces.ISearchQuery("myQuery"))
 		b.prop1 = 'value1'
 		b.prop2 = 'value2'
 
@@ -154,26 +174,23 @@ class TestSearchResults(ConfiguringTestBase):
 			note.body = [unicode(cmd)]
 			note.creator = 'nt@nti.com'
 			note.containerId = containerid
+			note = user.addContainedObject(note)
 			result = b if x % 2 == 0 else a
-			result.add(note)
+			result.add(note, 1.0)
 
 		assert_that(a.prop1, is_('value0'))
 
-		offset = len(a)
 		a = merge_search_results(a, b)
 		assert_that(a, has_length(len(zanpakuto_commands)))
-		for x, tp in enumerate(b):
-			expected = a[offset + x]
-			assert_that(tp, is_(expected))
 
 		assert_that(a.prop1, is_('value1'))
 		assert_that(a.prop2, is_('value2'))
 
 	def test_merge_suggest_results(self):
-		a = empty_suggest_results(QueryObject.create("myQuery"))
+		a = empty_suggest_results(search_interfaces.ISearchQuery("myQuery"))
 		a.prop1 = 'value0'
 
-		b = empty_suggest_results(QueryObject.create("myQuery"))
+		b = empty_suggest_results(search_interfaces.ISearchQuery("myQuery"))
 		b.prop1 = 'value1'
 		b.prop2 = 'value2'
 

@@ -123,7 +123,10 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(item, has_entry('NTIID', is_not(None)))
 		assert_that(item, has_entry('Score', is_not(None)))
 		assert_that(item, has_entry('ContainerId', is_not(None)))
-		assert_that(item, has_entry('Snippet', 'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
+		assert_that(item,
+					has_entry(
+						'Snippet',
+						'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 
 	def test_search_video(self):
 		hits = toExternalObject(self.bim.search("secret"))
@@ -196,11 +199,10 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 		assert_that(items, has_length(4))
 		assert_that(items, contains_inanyorder('rage', 'rankle', 'rain', 'raise'))
 
-
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry(QUERY, u'ra'))
+		assert_that(hits, has_entry(QUERY, u'rage'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))

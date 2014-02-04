@@ -33,10 +33,11 @@ from .constants import (HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE,
 						VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE,
 						NTI_CARD_MIME_TYPE)
 
-def get_search_hit(obj, score=1.0, query=None):
+def get_search_hit(obj, score=1.0, query=None, parent=None):
 	hit = search_interfaces.ISearchHit(obj)
 	hit.Score = score
 	hit.Query = query
+	hit.__parent__ = parent
 	return hit
 
 def get_hit_id(obj):
