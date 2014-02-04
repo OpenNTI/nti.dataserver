@@ -392,10 +392,13 @@ class IRedisStoreService(interface.Interface):
 
 # content
 
+class IBaseContent(zmime_interfaces.IContentTypeAware):
+	pass
+
 class IWhooshContent(zmime_interfaces.IContentTypeAware):
 	pass
 
-class IBookContent(interface.Interface):
+class IBookContent(IBaseContent):
 	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
 	title = nti_schema.ValidText(title="Content title", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
@@ -405,7 +408,7 @@ class IWhooshBookContent(IBookContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=True)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
-class IVideoTranscriptContent(interface.Interface):
+class IVideoTranscriptContent(IBaseContent):
 	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
 	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
@@ -418,7 +421,7 @@ class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
-class INTICardContent(interface.Interface):
+class INTICardContent(IBaseContent):
 	href = nti_schema.ValidTextLine(title="card href", required=False)
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
 	title = nti_schema.ValidTextLine(title="Card title", required=True)
