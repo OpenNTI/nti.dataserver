@@ -12,8 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import collections
 
-from gevent.local import local
-
 from zope import interface
 from zope import component
 from zope.container import contained as zcontained
@@ -51,27 +49,27 @@ def _get_subscriptions(item, provided=search_interfaces.ISearchHitPredicate):
 	subscriptions = adapters.subscriptions([interface.providedBy(item)], provided)
 	return tuple(subscriptions)
 
-class _FilterCache(local):
+class _FilterCache(object):
+
+	__slots__ = ('cache',)
 
 	def __init__(self):
-		super(_FilterCache, self).__init__()
-		self._cache = {}
+		self.cache = {}
 
 	def _lookup(self, item):
 		subscriptions = _get_subscriptions(item)
-		predicate = self._cache.get(subscriptions, None)
+		predicate = self.cache.get(subscriptions, None)
 		if predicate is None:
 			predicate = _get_predicate(subscriptions)
-			self._cache[subscriptions] = predicate
+			self.cache[subscriptions] = predicate
 		return predicate
 		
 	def eval(self, item, score=1.0):
 		predicate = self._lookup(item)
 		return predicate(item, score)
 
-_filter_cache = _FilterCache()
-def allow_search_hit(item, score):
-	result = _filter_cache.eval(item, score)
+def _allow_search_hit(filter_cache, item, score):
+	result = filter_cache.eval(item, score)
 	return result
 
 @interface.implementer(search_interfaces.ISearchHitMetaData)
@@ -180,6 +178,7 @@ class _SearchResults(_BaseSearchResults):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
 		self._ihitmeta = SearchHitMetaData()
+		self._filter_cache = _FilterCache()
 
 	@property
 	def hits(self):
@@ -193,7 +192,7 @@ class _SearchResults(_BaseSearchResults):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
-		if allow_search_hit(item, score):
+		if _allow_search_hit(self._filter_cache, item, score):
 			self.sorted = False
 			hit = create_search_hit(item, score, self.Query, self)
 			self._hits.append(hit)
