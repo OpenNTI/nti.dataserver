@@ -22,6 +22,8 @@ from . import interfaces
 
 import sys
 import isodate
+import pytz
+import time
 from nti.utils.schema import InvalidValue
 
 def _parse_with(func, string):
@@ -56,6 +58,22 @@ def _date_from_string( string ):
 	# but programatically we actually require ISO format
 	return _parse_with( isodate.parse_date, string )
 
+def _as_utc_naive(dt, assume_local=True):
+	# Now convert to GMT, but as a 'naive' object.
+	if not dt.tzinfo:
+		if assume_local:
+			# They did not specify a timezone, assume they authored
+			# in the native timezone, so make it reflect that
+			# First, get the timezone name
+			add = '+' if time.timezone > 0 else ''
+			tzname = 'Etc/GMT' + add + str((time.timezone / 60 / 60))
+			dt = dt.replace(tzinfo=pytz.timezone(tzname))
+		else:
+			dt = dt.replace(tzinfo=pytz.UTC)
+
+	# Convert to UTC, then back to naive
+	dt = dt.astimezone(pytz.UTC).replace(tzinfo=None)
+	return dt
 
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDateTime)
@@ -63,14 +81,19 @@ def _datetime_from_string( string ):
 	"""
 	This adapter allows any field which comes in as a string is
 	IOS8601 format to be transformed into a datetime. The schema field
-	should be an ``Object`` field with a type of ``IDateTime``
-	or an instance of ``ValidDateTime``
+	should be an ``Object`` field with a type of ``IDateTime`` or an
+	instance of ``ValidDateTime``. Wrap this with an
+	``AdaptingFieldProperty``.
+
+	Datetime values produced by this object will always be in GMT/UTC
+	time, and they will always be datetime naive objects.
 
 	If you need a schema field that accepts human input, rather than
 	programattic input, you probably want to use a custom field that
 	uses :func:`zope.datetime.parse` in its ``fromUnicode`` method.
 	"""
-	return _parse_with( isodate.parse_datetime, string )
+	dt =_parse_with( isodate.parse_datetime, string )
+	return _as_utc_naive(dt)
 
 @component.adapter(zope.interface.common.idatetime.IDate)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
@@ -92,7 +115,10 @@ class _datetime_to_string(object):
 		self.date = date
 
 	def toExternalObject(self):
-		return isodate.datetime_isoformat(self.date)
+		# Convert to UTC, assuming that a missing timezone
+		# is already in UTC
+		dt = _as_utc_naive(self.date, assume_local=False)
+		return isodate.datetime_isoformat(dt) + 'Z' # indicate it is UTC on the wire
 
 @component.adapter(zope.interface.common.idatetime.ITimeDelta)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
