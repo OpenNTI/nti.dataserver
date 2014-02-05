@@ -120,7 +120,8 @@
 	
 	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
 				provides=".interfaces.ISearchHitPredicate"
-				for="*" />
+				for="*"
+				zcml:condition="have devmode" />
 				
 	<!-- Content Resolvers -->
 
