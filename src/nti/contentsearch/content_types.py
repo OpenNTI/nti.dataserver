@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.container import contained as zcontained
 
 from nti.dataserver import mimetype
 
@@ -20,7 +21,7 @@ from nti.utils.schema import createDirectFieldProperties
 from . import interfaces as search_interfaces
 
 @interface.implementer(search_interfaces.IWhooshBookContent)
-class BookContent(SchemaConfigured):
+class BookContent(SchemaConfigured, zcontained.Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
@@ -29,14 +30,14 @@ class BookContent(SchemaConfigured):
 	containerId = ContainerId = alias('ntiid')
 
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class VideoTranscriptContent(SchemaConfigured):
+class VideoTranscriptContent(SchemaConfigured, zcontained.Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
 	last_modified = alias('lastModified')
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
-class NTICardContent(SchemaConfigured):
+class NTICardContent(SchemaConfigured, zcontained.Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
 	
