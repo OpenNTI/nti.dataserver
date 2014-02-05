@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import collections
 
+from gevent.local import local
+
 from zope import interface
 from zope import component
 from zope.container import contained as zcontained
@@ -26,9 +28,50 @@ from . import interfaces as search_interfaces
 
 create_search_hit = search_hits.get_search_hit  # alias
 
+def _lookup_subscribers(subscriptions=()):
+	result = []
+	for subscription in subscriptions:
+		subscriber = subscription() # construct w/ passing any item
+		if subscriber is not None:
+			result.append(subscriber)
+	return result
+
+def _get_predicate(subscriptions=()):
+	filters = _lookup_subscribers(subscriptions)
+	if not filters:
+		result = lambda *args:True
+	else:
+		def uber_filter(item, score=1.0):
+			return all((f.allow(item, score) for f in filters))
+		result = uber_filter
+	return result
+	
+def _get_subscriptions(item, provided=search_interfaces.ISearchHitPredicate):
+	adapters = component.getSiteManager().adapters
+	subscriptions = adapters.subscriptions([interface.providedBy(item)], provided)
+	return tuple(subscriptions)
+
+class _FilterCache(local):
+
+	def __init__(self):
+		super(_FilterCache, self).__init__()
+		self._cache = {}
+
+	def _lookup(self, item):
+		subscriptions = _get_subscriptions(item)
+		predicate = self._cache.get(subscriptions, None)
+		if predicate is None:
+			predicate = _get_predicate(subscriptions)
+			self._cache[subscriptions] = predicate
+		return predicate
+		
+	def eval(self, item, score=1.0):
+		predicate = self._lookup(item)
+		return predicate(item, score)
+
+_filter_cache = _FilterCache()
 def allow_search_hit(item, score):
-	filters = component.subscribers((item,), search_interfaces.ISearchHitPredicate)
-	result = all((f.allow(item, score) for f in filters))
+	result = _filter_cache.eval(item, score)
 	return result
 
 @interface.implementer(search_interfaces.ISearchHitMetaData)
