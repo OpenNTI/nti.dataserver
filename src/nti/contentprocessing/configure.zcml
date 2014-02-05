@@ -13,13 +13,13 @@
 
 	<utility name="text/html"
 			 factory=".metadata_extractors._HTMLExtractor" />
-			 
+
 	<utility name="application/pdf"
 			 factory=".metadata_extractors._PDFExtractor" />
-			 
+
 	<utility name="http"
 			 component=".metadata_extractors._http_scheme_handler" />
-			 
+
 	<utility name="https"
 			 component=".metadata_extractors._http_scheme_handler" />
 
@@ -50,7 +50,7 @@
 	<include package=".keyword" file="configure.zcml" />
 	<include package=".stemmers" file="configure.zcml" />
 	<include package=".concepttagging" file="configure.zcml" />
-	
+
 	<alchemy:registerAlchemyAPIKey
 		name="NTI-TEST"
 		value="afe98c5b8fb8586e930d1b2128386d40c136e6d3"

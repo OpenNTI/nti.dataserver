@@ -122,7 +122,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 								   censored=True,
 								   environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'})
 		# Single word body
-		data = {'body': ['crap'],
+		data = {'body': ['fuvg'.decode('rot13')],
 				'title': 'crap',
 				'tags': ['crap'],
 				'ContainerId': "tag:nextthought.com,2011-10:mathcounts-HTML-testmathcounts2013.warm_up_1",
@@ -137,6 +137,34 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 								  'title', '****',
 								  'tags', only_contains( '****' )) )
 
+		# Single word body, as posted by the app
+		data = {"MimeType":"application/vnd.nextthought.note",
+				"references":[],
+				"applicableRange":{"start":{"role":"start",
+											"elementTagName":"IMG",
+											"elementId":"e9503dbcfdcbe526b2c5c2ae28dc0567",
+											"Class":"ElementDomContentPointer",
+											"MimeType":"application/vnd.nextthought.contentrange.elementdomcontentpointer"},
+								   "end":{"role":"end",
+										  "elementTagName":"IMG",
+										  "elementId":"e9503dbcfdcbe526b2c5c2ae28dc0567",
+										  "Class":"ElementDomContentPointer",
+										  "MimeType":"application/vnd.nextthought.contentrange.elementdomcontentpointer"},
+								   "ancestor":{"role":"ancestor",
+											   "elementTagName":"DIV",
+											   "elementId":"NTIContent",
+											   "Class":"ElementDomContentPointer",
+											   "MimeType":"application/vnd.nextthought.contentrange.elementdomcontentpointer"},
+								   "Class":"DomContentRangeDescription",
+								   "MimeType":"application/vnd.nextthought.contentrange.domcontentrangedescription"},
+				"body":[b"\xc3\xa2\xe2\x82\xac\xe2\x80\xb9" + bytes(b"fuvg".decode('rot13'))],
+				"style":"suppressed",
+				"sharedWith":[],
+				"ContainerId":"tag:nextthought.com,2011-10:mathcounts-HTML-mathcounts2012.mathcounts_2011_2012_school_handbook"}
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Pages', data, extra_environ=extra_environ )
+
+		assert_that( res.json_body,
+					 has_entries( 'body', only_contains( u'\xe2\u20ac\u2039****' ) ) )
 
 
 	@WithSharedApplicationMockDS

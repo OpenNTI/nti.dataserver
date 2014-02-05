@@ -38,6 +38,18 @@ def test_defaults():
 	assert_that( strat.censor_ranges('crap', scanner.scan('crap')),
 				 is_('****'))
 
+	# Per trello #3251, the webapp sometimes sends in a bunch of junk
+	# data at the beginning of the string. Test that we censor and strip
+	# that if it gets here.
+	# In general, this is also a test that we recognize certain other
+	# unicode punctuation characters as delimiters, namely angle quotes,
+	# and it also tests that we correctly normalize to unicode given incoming
+	# bytes
+	web_data = b"\xc3\xa2\xe2\x82\xac\xe2\x80\xb9" + bytes(b"fuvg".decode(b'rot13'))
+	assert_that( strat.censor_ranges(web_data, scanner.scan(web_data)),
+				 is_(u'\xe2\u20ac\u2039****'))
+
+
 def test_mike_words():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
 	strat = component.getUtility(frag_interfaces.ICensoredContentStrategy)

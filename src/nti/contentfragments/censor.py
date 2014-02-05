@@ -80,10 +80,14 @@ class BasicScanner(object):
 		return True
 
 	def do_scan(self, fragment, ranges):
+		"""
+		do_scan is passed a fragment that is guaranteed to be unicode and lower case.
+		"""
 		raise NotImplementedError()
 
 	def scan(self, content_fragment):
 		yielded = []  # A simple, inefficient way of making sure we don't send overlapping ranges
+		content_fragment = content_fragment.decode('utf-8') if isinstance(content_fragment, bytes) else content_fragment
 		content_fragment = content_fragment.lower()
 		return self.do_scan(content_fragment, yielded)
 
@@ -155,7 +159,6 @@ class PipeLineMatchScanner(BasicScanner):
 		self.scanners = tuple(scanners)
 
 	def do_scan(self, content_fragment, yielded):
-		content_fragment = content_fragment.lower()
 		for s in self.scanners:
 			matched_ranges = s.do_scan(content_fragment, yielded)
 			for match_range in matched_ranges:
