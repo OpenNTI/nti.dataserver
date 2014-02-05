@@ -3,7 +3,7 @@
 """
 Simply sends an event to generate an email invoice
 
-$Id: nti_create_user.py 25675 2013-10-16 23:23:55Z jason.madden $
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
