@@ -66,7 +66,7 @@ def _as_utc_naive(dt, assume_local=True):
 			# in the native timezone, so make it reflect that
 			# First, get the timezone name
 			add = '+' if time.timezone > 0 else ''
-			tzname = 'Etc/GMT' + add + str((time.timezone / 60 / 60))
+			tzname = 'Etc/GMT' + add + str((time.timezone // 60 // 60))
 			dt = dt.replace(tzinfo=pytz.timezone(tzname))
 		else:
 			dt = dt.replace(tzinfo=pytz.UTC)
@@ -77,7 +77,7 @@ def _as_utc_naive(dt, assume_local=True):
 
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDateTime)
-def _datetime_from_string( string ):
+def datetime_from_string( string, assume_local=False ):
 	"""
 	This adapter allows any field which comes in as a string is
 	IOS8601 format to be transformed into a datetime. The schema field
@@ -91,9 +91,16 @@ def _datetime_from_string( string ):
 	If you need a schema field that accepts human input, rather than
 	programattic input, you probably want to use a custom field that
 	uses :func:`zope.datetime.parse` in its ``fromUnicode`` method.
+
+	:keyword assume_local: If `False`, the default, then when
+		we parse a string that does not include timezone information,
+		we will assume that it is already meant to be in UTC.
+		Otherwise, if set to true, when we parse such a string we
+		will assume that it is meant to be in the \"local\" timezone
+		and adjust accordingly.
 	"""
 	dt =_parse_with( isodate.parse_datetime, string )
-	return _as_utc_naive(dt)
+	return _as_utc_naive(dt, assume_local=assume_local)
 
 @component.adapter(zope.interface.common.idatetime.IDate)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
