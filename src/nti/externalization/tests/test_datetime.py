@@ -17,20 +17,22 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_entry
+from hamcrest import none
+from hamcrest import has_property
 from hamcrest import calling
 from hamcrest import raises
 
 from nti.testing import base
 from nti.testing import matchers
 from . import externalizes
+from ..datetime import _datetime_to_string
 
 from zope import component
 from nti.utils.schema import InvalidValue
 from datetime import date
 from datetime import timedelta
 from zope.interface.common.idatetime import IDate
+from zope.interface.common.idatetime import IDateTime
 
 
 setUpModule = lambda: base.module_setup( set_up_packages=(__name__,))
@@ -47,6 +49,13 @@ def test_date_from_string():
 def test_date_to_string():
 	the_date = IDate('1982-01-31')
 	assert_that( the_date, externalizes( is_( '1982-01-31' )))
+
+def test_datetime_from_string_returns_naive():
+	assert_that(IDateTime('1992-01-31T00:00Z'),
+				has_property('tzinfo', none()))
+	# Round trips
+	assert_that(_datetime_to_string(IDateTime('1992-01-31T00:00Z')).toExternalObject(),
+				is_('1992-01-31T00:00:00Z'))
 
 def test_timedelta_to_string():
 
