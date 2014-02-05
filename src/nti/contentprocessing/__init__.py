@@ -27,7 +27,9 @@ default_punk_char_expression = (ur'[\?|!|(|)|"|\''
 								u'$|\u20ac' # dollar and euro
 								ur'|&|+|\-|<|>|=|_|\~|\\|/|\|]')
 
-default_punk_char_expression_plus = default_punk_char_expression[:-1] + ur'|\s]'
+default_punk_char_expression_plus = (default_punk_char_expression[:-1] +
+									 ur'|\s'
+									 ur'|\u200b|\u2060]') # zero-width space, word joiner
 
 default_word_tokenizer_pattern = re.compile(default_word_tokenizer_expression,
 											re.I | re.MULTILINE | re.DOTALL | re.UNICODE)

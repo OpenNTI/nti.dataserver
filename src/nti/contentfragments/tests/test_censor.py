@@ -49,6 +49,10 @@ def test_defaults():
 	assert_that( strat.censor_ranges(web_data, scanner.scan(web_data)),
 				 is_(u'\xe2\u20ac\u2039****'))
 
+	# zero-width space is recognized
+	assert_that( strat.censor_ranges(u'\u200bcrap', scanner.scan(u'\u200bcrap')),
+				 is_(u'\u200b****'))
+
 
 def test_mike_words():
 	scanner = component.getUtility(frag_interfaces.ICensoredContentScanner)
