@@ -56,6 +56,10 @@ class DeletePurchaseHistoryView(admin_views.DeletePurchaseHistoryView):
 class GetUsersPurchaseHistoryView(admin_views.GetUsersPurchaseHistoryView):
 	""" get users purchase history """
 
+@view_config(name="generate_purchase_invoice", **_view_admin_defaults)
+class GeneratePurchaseInvoice(admin_views.GeneratePurchaseInvoice):
+	""" generate a purchase invoice """
+	
 del _view_defaults
 del _post_view_defaults
 del _admin_view_defaults
