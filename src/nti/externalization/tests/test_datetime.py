@@ -26,6 +26,7 @@ from nti.testing import base
 from nti.testing import matchers
 from . import externalizes
 from ..datetime import _datetime_to_string
+from ..datetime import datetime_from_string
 
 from zope import component
 from nti.utils.schema import InvalidValue
@@ -56,6 +57,16 @@ def test_datetime_from_string_returns_naive():
 	# Round trips
 	assert_that(_datetime_to_string(IDateTime('1992-01-31T00:00Z')).toExternalObject(),
 				is_('1992-01-31T00:00:00Z'))
+
+def test_native_timezone_conversion():
+	# XXX Note: this depends on the timezone we run tests
+	# in
+	assert_that( datetime_from_string('2014-01-20T00:00', assume_local=True),
+				 is_( IDateTime('2014-01-20T06:00Z')))
+
+	# Specified sticks, assuming non-local
+	assert_that(IDateTime('2014-01-20T06:00'),
+				is_( IDateTime('2014-01-20T06:00Z')))
 
 def test_timedelta_to_string():
 
