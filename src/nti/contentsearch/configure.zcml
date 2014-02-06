@@ -15,23 +15,9 @@
 	<!-- make sure stop words are registered before evertything else -->
 
 	<utility factory=".content_utils._DefaultStopWords" />
-
-	<!-- Externalization -->
-	
-	<include package="nti.externalization" file="meta.zcml" />
-	<include package="nti.externalization" />
-	
-	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ISearchQuery
-						 .interfaces.IBookContent
-						 .interfaces.INTICardContent
-						 .interfaces.ISearchFragment
-						 .interfaces.IVideoTranscriptContent"
-		modules=".search_query .content_types .search_fragments" />
-		
-	<adapter factory=".externalization._SearchHitInternalObjectIO" 
-			 for=".interfaces.ISearchHit" />
-		
+			 	 
+	<!-- Adapters -->
+	 
 	<adapter factory=".search_hits.SearchHit"
 			 for="dict"
 			 provides=".interfaces.ISearchHit" />
@@ -73,10 +59,32 @@
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 			 		 
 	<adapter factory=".externalization._SearchHitMetaDataExternal" />
-	<adapter factory=".externalization._SearchResultsExternalizer" />
-	<adapter factory=".externalization._SuggestResultsExternalizer" />
-	<adapter factory=".externalization._SuggestAndSearchResultsExternalizer" />
 			
+	<!-- Externalization -->
+	
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+	
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.ISearchQuery
+						 .interfaces.IBookContent
+						 .interfaces.INTICardContent
+						 .interfaces.ISearchFragment
+						 .interfaces.IVideoTranscriptContent"
+		modules=".search_query .content_types .search_fragments" />
+		
+	<adapter factory=".externalization._SearchHitInternalObjectIO" 
+			 for=".interfaces.ISearchHit" />
+		
+	<adapter factory=".externalization._SearchResultsInternalObjectIO" 
+			 for=".interfaces.ISearchResults" />
+		
+	<adapter factory=".externalization._SearchResultsInternalObjectIO" 
+			 for=".interfaces.ISuggestResults" />
+			 
+	<adapter factory=".externalization._SearchResultsInternalObjectIO" 
+			 for=".interfaces.ISuggestAndSearchResults" />
+			 
 	<!-- Decorators -->
 		
 	<subscriber factory=".decorators._SearchHitHighlightDecorator"
@@ -103,6 +111,14 @@
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 	
+	<subscriber factory=".decorators._SearchResultsDecorator"
+				for=".interfaces.ISearchResults"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+	
+	<subscriber factory=".decorators._SuggestResultsDecorator"
+				for=".interfaces.ISuggestResults"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<!-- Internalization -->
 			
 	<adapter factory=".internalization._QueryObjectUpdater"

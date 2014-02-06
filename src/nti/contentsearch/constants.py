@@ -16,6 +16,7 @@ from nti.mimetype.mimetype import MIME_BASE
 
 ID 				 = unicode(ext_interfaces.StandardExternalFields.ID)
 HIT 			 = u'Hit'
+HITS 			 = u'Hits'
 OID 			 = unicode(ext_interfaces.StandardExternalFields.OID)
 TYPE 			 = u'Type'
 BODY			 = u'Body'
@@ -24,10 +25,12 @@ NTIID 			 = unicode(ext_interfaces.StandardExternalFields.NTIID)
 CLASS 			 = unicode(ext_interfaces.StandardExternalFields.CLASS)
 FIELD 			 = u'Field'
 ITEMS			 = u'Items'
+QUERY			 = u'Query'
 CONTENT			 = u'Content'
 NTI_CARD		 = u'NTICard'
 FRAGMENTS		 = u'Fragments'
 DESCRIPTION		 = u'Description'
+SUGGESTIONS		 = u'Suggestions'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
 VIDEO_TRANSCRIPT = u'VideoTranscript'

@@ -20,7 +20,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
-from nti.utils.property import Lazy
+from nti.utils.property import Lazy, alias
 
 from . import search_hits
 from . import interfaces as search_interfaces
@@ -132,6 +132,8 @@ class _MetaSearchResults(type):
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
 		t.mime_type = t.mimeType = nti_mimetype_with_class(name[1:].lower())
+		setattr(t, '__external_can_create__', True)
+		setattr(t, '__external_class_name__', name[1:])
 		t.parameters = dict()
 		return t
 
@@ -173,20 +175,24 @@ class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
+	HitMetaData = metadata = alias('_ihitmeta')
+
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
+		self._seen = set()  # TODO: Temp fix this will go away
 		self._ihitmeta = SearchHitMetaData()
 
-	@property
-	def Hits(self):
+	def _get_hits(self):
+		if not self.sorted:
+			self.sort()
 		return self._hits
-	hits = Hits
 
-	@property
-	def HitMetaData(self):
-		return self._ihitmeta
-	metadata = HitMetaData
+	def _set_hits(self, hits):
+		for hit in hits or ():
+			self._add_hit(hit)
+
+	Hits = hits = property(_get_hits, _set_hits)
 
 	@property
 	def lastModified(self):
@@ -200,15 +206,22 @@ class _SearchResults(_BaseSearchResults):
 	def _filterCache(self):
 		return _FilterCache()
 
+	def _add_hit(self, hit):
+		if hit.OID not in self._seen:
+			self._hits.append(hit)
+			self._seen.add(hit.OID)
+			self.sorted = False
+			return True
+		return False
+
 	def _add(self, item, score=1.0):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
 		if _allow_search_hit(self._filterCache, item, score):
-			self.sorted = False
 			hit = create_search_hit(item, score, self.Query, self)
-			self._hits.append(hit)
-			self._ihitmeta.track(item)
+			if self._add_hit(hit):
+				self._ihitmeta.track(item)
 
 	def add(self, hit, score=1.0):
 		self._add(hit, score)
@@ -230,8 +243,7 @@ class _SearchResults(_BaseSearchResults):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
-			self.sorted = False
-			self._hits.extend(other.hits)
+			self._set_hits(other._hits)
 			self._ihitmeta += other._ihitmeta
 
 		return self
@@ -241,6 +253,8 @@ class _SearchResults(_BaseSearchResults):
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
+
+	lastModified = createdTime = 0
 
 	def __init__(self, query):
 		super(_SuggestResults, self).__init__(query)
@@ -280,7 +294,7 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	@property
 	def Hits(self):
-		return self._hits
+		return self._get_hits()
 	hits = Hits
 
 	@property
@@ -359,10 +373,8 @@ def _preflight(a, b):
 def _merge(a, b):
 	a += b
 	for k, vb in b.__dict__.items():
-		if not k.startswith('_'):
-			va = a.__dict__.get(k, None)
-			if vb != va:
-				a.__dict__[k] = vb
+		if not k.startswith('_') and k not in a.__dict__:
+			a.__dict__[k] = vb
 	return a
 
 def merge_search_results(a, b):
