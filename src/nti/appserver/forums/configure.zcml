@@ -48,10 +48,10 @@
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdAddedEvent"/>
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost zope.intid.interfaces.IIntIdAddedEvent"/>
 
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment zope.intid.interfaces.IIntIdRemovedEvent" />
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost zope.intid.interfaces.IIntIdRemovedEvent" />
 
 	<!--
 	Normal Blog entries are in /Activity automatically by dint of being stored as a user container.
