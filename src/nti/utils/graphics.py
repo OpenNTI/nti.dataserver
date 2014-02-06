@@ -4,13 +4,16 @@ Graphics utilities
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 import math
 
-rgb_pattern = re.compile(u'rgb\((?P<r>(\d+)(\.\d+)?),(?P<g>(\d+)(\.\d+)?),(?P<b>(\d+)(\.\d+)?)\)', re.UNICODE)
+pattern = u'rgb\((?P<r>(\d+)(\.\d+)?),(?P<g>(\d+)(\.\d+)?),(?P<b>(\d+)(\.\d+)?)\)'
+rgb_pattern = re.compile(pattern, re.UNICODE)
 
 class AffineMatrix(object):
 
@@ -128,7 +131,8 @@ def check_rgb_color(fill, default="rgb(0,0,0)"):
 		m = rgb_pattern.search(fill_mod)
 		if m is not None:
 			d = m.groupdict()
-			fill = "rgb(%s,%s,%s)" % (int(float(d['r'])), int(float(d['g'])), int(float(d['b'])))
+			fill = "rgb(%s,%s,%s)" % \
+					(int(float(d['r'])), int(float(d['g'])), int(float(d['b'])))
 	return fill or default
 
 def plot_bezier_curve(draw, xvals, yvals, fill=None, width=None, m=None):
