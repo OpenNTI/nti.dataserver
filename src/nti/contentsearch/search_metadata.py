@@ -42,7 +42,7 @@ class SearchTypeMetaData(SchemaConfigured):
 		return self.Name
 
 	def __str__(self):
-		return "%s(%r,%r)" % (self.__class__.__name__, self.Name, self.MimeType)
+		return "%s,%s" % (self.Name, self.MimeType)
 
 	__repr__ = make_repr()
 
