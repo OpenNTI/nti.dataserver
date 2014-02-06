@@ -739,13 +739,13 @@ class IBaseSearchResults(interface.Interface):
 
 class ISearchResults(IBaseSearchResults, nti_interfaces.ILastModified):
 
-	hits = nti_schema.IndexedIterable(
+	Hits = nti_schema.IndexedIterable(
 				value_type=nti_schema.Object(ISearchHit, description="A :class:`.ISearchHit`"),
 				title="search hit objects",
 				required=True,
 				readonly=True)
 
-	metadata = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
+	HitMetaData = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 
 	def add(hit, score=1.0):
 		"""add a search hit(s) to this result"""
@@ -761,7 +761,7 @@ class ISearchResults(IBaseSearchResults, nti_interfaces.ILastModified):
 
 class ISuggestResults(IBaseSearchResults):
 
-	suggestions = nti_schema.IndexedIterable(
+	Suggestions = nti_schema.IndexedIterable(
 						title="suggested words",
 						required=True,
 						readonly=True,
