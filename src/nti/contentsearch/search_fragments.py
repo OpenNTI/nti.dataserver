@@ -16,9 +16,6 @@ from zope.interface.common.sequence import IFiniteSequence
 
 from nti.externalization.externalization import make_repr
 
-from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
-
 from . import interfaces as search_interfaces
 
 Range = namedtuple('Range', ('start', 'end'))
@@ -98,10 +95,12 @@ def create_from_terms(text, termset, check_word, punkt_pattern):
 	return result
 	
 @interface.implementer(search_interfaces.ISearchFragment, IFiniteSequence)
-class SearchFragment(SchemaConfigured):
+class SearchFragment(object):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
-	createDirectFieldProperties(search_interfaces.ISearchFragment)
+
+	text = u''
+	matches = []
 
 	def __len__(self):
 		return len(self.matches)

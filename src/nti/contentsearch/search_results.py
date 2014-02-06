@@ -77,25 +77,31 @@ def _allow_search_hit(filter_cache, item, score):
 class SearchHitMetaData(object):
 
 	unspecified_container = u'+++unspecified_container+++'
+
+	__external_can_create__ = True
 	mime_type = mimeType = nti_mimetype_with_class('SearchHitMetaData')
 
-	createdTime = lastModified = 0
+	lastModified = createdTime = 0
 
 	def __init__(self):
 		self.type_count = collections.defaultdict(int)
 		self.container_count = collections.defaultdict(int)
 
+	def _get_type_count(self):
+		return dict(self.type_count)
+	def _set_type_count(self, tc):
+		self.type_count.update(tc or {})
+	TypeCount = property(_get_type_count, _set_type_count)
+
+	def _get_container_count(self):
+		return dict(self.container_count)
+	def _set_container_count(self, cc):
+		self.container_count.update(cc or {})
+	ContainerCount = property(_get_container_count, _set_container_count)
+
 	@property
 	def TotalHitCount(self):
 		return sum(self.type_count.values())
-
-	@property
-	def TypeCount(self):
-		return dict(self.type_count)
-
-	@property
-	def ContainerCount(self):
-		return dict(self.container_count)
 
 	def track(self, selected):
 		# container count
@@ -141,19 +147,15 @@ class _BaseSearchResults(zcontained.Contained):
 
 	sorted = False
 
-	def __init__(self, query):
-		super(_BaseSearchResults,self).__init__()
-		self.query = search_interfaces.ISearchQuery(query)
+	Query = alias('query')
 
-	def __str__(self):
-		return self.__repr__()
+	def __init__(self, query=None):
+		super(_BaseSearchResults,self).__init__()
+		self.query = search_interfaces.ISearchQuery(query, None)
 
 	def __repr__(self):
 		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
-
-	@property
-	def Query(self):
-		return self.query
+	__str__ = __repr__
 
 	@property
 	def Hits(self):
@@ -175,13 +177,13 @@ class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
-	HitMetaData = metadata = alias('_ihitmeta')
+	metadata = alias('HitMetaData')
 
-	def __init__(self, query):
+	def __init__(self, query=None):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
 		self._seen = set()  # TODO: Temp fix this will go away
-		self._ihitmeta = SearchHitMetaData()
+		self.HitMetaData = SearchHitMetaData()
 
 	def _get_hits(self):
 		if not self.sorted:
@@ -196,11 +198,11 @@ class _SearchResults(_BaseSearchResults):
 
 	@property
 	def lastModified(self):
-		return self._ihitmeta.lastModified
+		return self.metadata.lastModified
 
 	@property
 	def createdTime(self):
-		return self._ihitmeta.createdTime
+		return self.metadata.createdTime
 
 	@Lazy
 	def _filterCache(self):
@@ -221,7 +223,7 @@ class _SearchResults(_BaseSearchResults):
 		if _allow_search_hit(self._filterCache, item, score):
 			hit = create_search_hit(item, score, self.Query, self)
 			if self._add_hit(hit):
-				self._ihitmeta.track(item)
+				self.metadata.track(item)
 
 	def add(self, hit, score=1.0):
 		self._add(hit, score)
@@ -231,7 +233,7 @@ class _SearchResults(_BaseSearchResults):
 			self._add(item)
 
 	def sort(self, sortOn=None):
-		sortOn = sortOn or self.query.sortOn
+		sortOn = sortOn or (self.query.sortOn if self.query else u'')
 		comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
 											name=sortOn)
 		if comparator is not None:
@@ -244,7 +246,7 @@ class _SearchResults(_BaseSearchResults):
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
 			self._set_hits(other._hits)
-			self._ihitmeta += other._ihitmeta
+			self.metadata += other.metadata
 
 		return self
 
@@ -256,18 +258,21 @@ class _SuggestResults(_BaseSearchResults):
 
 	lastModified = createdTime = 0
 
-	def __init__(self, query):
+	def __init__(self, query=None):
 		super(_SuggestResults, self).__init__(query)
 		self._words = set()
 
-	@property
-	def Suggestions(self):
+	def _get_words(self):
 		return sorted(self._words)
-	suggestions = Hits = hits = Suggestions
+
+	def _set_words(self, words):
+		self._words.update(words or ())
+
+	suggestions = Suggestions = Hits = hits = property(_get_words, _set_words)
 
 	def add_suggestions(self, items):
-		items = [items] if isinstance(items, six.string_types) or \
-						   not isinstance(items, collections.Iterable) else items
+		items = (items,) if isinstance(items, six.string_types) or \
+						 not isinstance(items, collections.Iterable) else items
 		self._extend(items)  # avoid any possible conflict w/ _SuggestAndSearchResults
 
 	add = add_suggestions
@@ -288,19 +293,13 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	__metaclass__ = _MetaSearchResults
 
-	def __init__(self, query):
+	def __init__(self, query=None):
 		_SearchResults.__init__(self, query)
 		_SuggestResults.__init__(self, query)
 
-	@property
-	def Hits(self):
-		return self._get_hits()
-	hits = Hits
-
-	@property
-	def Suggestions(self):
-		return sorted(self._words)
-	suggestions = Suggestions
+	Hits = hits = property(_SearchResults._get_hits, _SearchResults._set_hits)
+	suggestions = Suggestions = property(_SuggestResults._get_words,
+										 _SuggestResults._set_words)
 
 	def add(self, item, score=1.0):
 		_SearchResults.add(self, item, score)
@@ -316,19 +315,19 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 @interface.implementer(search_interfaces.ISearchResultsCreator)
 class _SearchResultCreator(object):
 
-	def __call__(self, query):
+	def __call__(self, query=None):
 		return _SearchResults(query)
 
 @interface.implementer(search_interfaces.ISuggestResultsCreator)
 class _SuggestResultsCreator(object):
 
-	def __call__(self, query):
+	def __call__(self, query=None):
 		return _SuggestResults(query)
 
 @interface.implementer(search_interfaces.ISuggestAndSearchResultsCreator)
 class _SuggestAndSearchResultsCreator(object):
 
-	def __call__(self, query):
+	def __call__(self, query=None):
 		return _SuggestAndSearchResults(query)
 
 # sort

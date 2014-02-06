@@ -27,7 +27,7 @@ class _SearchHitMetaDataExternal(InterfaceObjectIO):
 class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	_excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
-	_excluded_in_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
+	_excluded_in_ivars_ = {'Query'}
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):

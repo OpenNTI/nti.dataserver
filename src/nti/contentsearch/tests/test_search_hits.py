@@ -80,7 +80,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(hit, is_not(None))
 
 	def test_search_hit_hightlight_dict(self):
-		d = self._externalize(search_hits._HighlightSearchHit, self.hightlight, 'divide')
+		d = self._externalize(search_hits.HighlightSearchHit, self.hightlight, 'divide')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
@@ -89,7 +89,7 @@ class TestSearchHits(ConfiguringTestBase):
 								 u'You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems'))
 
 	def test_seach_hit_redaction_dict(self):
-		d = self._externalize(search_hits._RedactionSearchHit, self.redaction, '')
+		d = self._externalize(search_hits.RedactionSearchHit, self.redaction, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-Howes_converted.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
@@ -97,7 +97,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry('Snippet', u'serving a sentence in a Michigan jail'))
 
 	def test_search_hit_note_dict(self):
-		d = self._externalize(search_hits._NoteSearchHit, self.note, 'waves')
+		d = self._externalize(search_hits.NoteSearchHit, self.note, 'waves')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:AOPS-HTML-prealgebra.0'))
 		assert_that(d, has_entry(CREATOR, u'carlos.sanchez@nextthought.com'))
@@ -105,7 +105,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry('Snippet', u'All Waves, Rise now and Become my Shield, Lightning, Strike now and'))
 
 	def test_search_hit_messgeinfo_dict(self):
-		d = self._externalize(search_hits._MessageInfoSearchHit, self.messageinfo, '')
+		d = self._externalize(search_hits.MessageInfoSearchHit, self.messageinfo, '')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:zope.security.management.system_user-OID-0x82:53657373696f6e73'))
 		assert_that(d, has_entry(CREATOR, u'troy.daley@nextthought.com'))
@@ -122,7 +122,7 @@ class TestSearchHits(ConfiguringTestBase):
 		mock_dataserver.current_transaction.add(note)
 		note = usr.addContainedObject(note)
 		oidstr = to_external_ntiid_oid(note)
-		d = self._externalize(search_hits._NoteSearchHit, note, 'well')
+		d = self._externalize(search_hits.NoteSearchHit, note, 'well')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(TYPE, 'Note'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
@@ -139,7 +139,7 @@ class TestSearchHits(ConfiguringTestBase):
 		highlight.containerId = make_ntiid(nttype='bleach', specific='manga')
 		highlight = usr.addContainedObject(highlight)
 		oidstr = to_external_ntiid_oid(highlight)
-		d = self._externalize(search_hits._HighlightSearchHit, highlight, 'secret')
+		d = self._externalize(search_hits.HighlightSearchHit, highlight, 'secret')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(TYPE, 'Highlight'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
@@ -158,7 +158,7 @@ class TestSearchHits(ConfiguringTestBase):
 		redaction.containerId = make_ntiid(nttype='bleach', specific='manga')
 		redaction = usr.addContainedObject(redaction)
 		oidstr = to_external_ntiid_oid(redaction)
-		d = self._externalize(search_hits._RedactionSearchHit, redaction, 'death')
+		d = self._externalize(search_hits.RedactionSearchHit, redaction, 'death')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(TYPE, 'Redaction'))
 		assert_that(d, has_entry(CONTAINER_ID, u'tag:nextthought.com,2011-10:bleach-manga'))
@@ -174,7 +174,7 @@ class TestSearchHits(ConfiguringTestBase):
 		hit.ntiid = containerId
 		hit.last_modified = time.time()
 		hit.content = u'All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'
-		d = self._externalize(search_hits._WhooshBookSearchHit, hit, 'shield')
+		d = self._externalize(search_hits.WhooshBookSearchHit, hit, 'shield')
 		assert_that(d, has_entry(CLASS, HIT))
 		assert_that(d, has_entry(TYPE, 'Content'))
 		assert_that(d, has_entry(CONTAINER_ID, containerId))

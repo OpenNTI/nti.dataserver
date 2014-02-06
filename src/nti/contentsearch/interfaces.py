@@ -637,6 +637,20 @@ class IPostRepozeCatalogFieldCreator(interface.Interface):
 class IRepozeSearchQueryValidator(ISearchQueryValidator):
 	pass
 
+# highlights
+
+class ISearchFragment(interface.Interface):
+
+	text = schema.Text(title="fragment text", required=True, default=u'')
+
+	matches = nti_schema.ListOrTuple(
+					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
+										   min_length=2,
+										   max_length=2),
+					title="Iterable with pair tuples where a match occurs",
+					min_length=0,
+					required=True,
+					default=[])
 # search results
 
 class IBaseHit(interface.Interface):
@@ -650,13 +664,15 @@ class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
 	"""
 	represent an externalized search hit
 	"""
-	OID = nti_schema.ValidTextLine(title="hit unique id", required=False)
+	OID = nti_schema.ValidTextLine(title="hit unique id", required=True)
 	NTIID = nti_schema.ValidTextLine(title="hit object ntiid", required=False)
 	Snippet = nti_schema.ValidTextLine(title="text found", required=False, default=u'')
 	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
 	Creator = nti_schema.ValidTextLine(title="Search hit target creator", required=False)
 	ContainerId = nti_schema.ValidTextLine(title="Search hit container id", required=False)
 	TargetMimeType = nti_schema.ValidTextLine(title="Search hit target mimetype", required=True)
+	Fragments = nti_schema.ListOrTuple(value_type=schema.Object(ISearchFragment, title="the fragment"),
+									   title="search fragments", required=False)
 
 class INoteSearchHit(ISearchHit):
 	pass
@@ -682,8 +698,8 @@ class IWhooshBookSearchHit(IBookSearchHit):
 class IVideoTranscriptSearchHit(ISearchHit):
 	Title = nti_schema.ValidTextLine(title="Card title", required=False)
 	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
-	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=True)
-	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=True)
+	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=False)
+	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=False)
 
 class IWhooshVideoTranscriptSearchHit(IVideoTranscriptSearchHit):
 	pass
@@ -716,12 +732,12 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 
 	TypeCount = schema.Dict(nti_schema.ValidTextLine(title='type'),
 							nti_schema.Int(title='count'),
-							title="Search hit type count", required=True, readonly=True)
+							title="Search hit type count", required=True)
 
 	ContainerCount = schema.Dict(
 						nti_schema.ValidTextLine(title='container'),
 						nti_schema.Int(title='count'),
-						title="Cointainer hit type count", required=True, readonly=True)
+						title="Cointainer hit type count", required=True)
 
 	TotalHitCount = schema.Int(title='Total hit count', required=True,
 							   readonly=True, default=0)
@@ -742,8 +758,7 @@ class ISearchResults(IBaseSearchResults):
 	Hits = nti_schema.IndexedIterable(
 				value_type=nti_schema.Object(ISearchHit, description="A :class:`.ISearchHit`"),
 				title="search hit objects",
-				required=True,
-				readonly=True)
+				required=True)
 
 	HitMetaData = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 
@@ -764,7 +779,6 @@ class ISuggestResults(IBaseSearchResults):
 	Suggestions = nti_schema.IndexedIterable(
 						title="suggested words",
 						required=True,
-						readonly=True,
 						value_type=nti_schema.ValidTextLine(title="suggested word"))
 
 	def add(word):
@@ -776,7 +790,11 @@ class ISuggestResults(IBaseSearchResults):
 	add_suggestions = add
 
 class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
-	pass
+
+	Suggestions = nti_schema.IndexedIterable(
+						title="suggested words",
+						required=False,
+						value_type=nti_schema.ValidTextLine(title="suggested word"))
 
 class ISearchResultsCreator(interface.Interface):
 
@@ -793,19 +811,6 @@ class ISuggestAndSearchResultsCreator(interface.Interface):
 	def __call__(query):
 		"""return a new instance of a ISuggestAndSearchResults"""
 
-# highlights
-
-class ISearchFragment(interface.Interface):
-
-	text = schema.Text(title="fragment text", required=True, default=u'')
-
-	matches = nti_schema.ListOrTuple(
-					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
-										   min_length=2,
-										   max_length=2),
-					title="Iterable with pair tuples where a match occurs",
-					min_length=0,
-					required=True)
 
 class IWhooshAnalyzer(interface.Interface):
 	pass
