@@ -4,9 +4,8 @@
 Mailers that somehow filter their arguments before
 actually creating or queuing mail.
 
-.. $Id$
+$Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -95,7 +94,6 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 									  package=None,
 									  text_template_extension='.txt',
 									  **kwargs):
-		environ = ()
 		_request = request
 		if _request is None or not hasattr(_request, 'environ'): # In case we're zope proxied?
 			_request = get_current_request()
