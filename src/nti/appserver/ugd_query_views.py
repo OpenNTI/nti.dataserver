@@ -261,7 +261,10 @@ def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	return _creator_based_predicate_factory( following_usernames )
 
 def _ifollowandme_predicate_factory( request ):
-	return _ifollow_predicate_factory( request, True )
+	return _ifollow_predicate_factory( request, and_me=True )
+
+def _ifollowdirectly_predicate_factory(request):
+	return _ifollow_predicate_factory(request, expand_nested=False)
 
 def _favorite_predicate_factory( request ):
 	auth_userid = request.authenticated_userid
@@ -303,6 +306,7 @@ SORT_DIRECTION_DEFAULT = {
 FILTER_NAMES = {
 	'TopLevel': _toplevel_filter,
 	'IFollow': (_ifollow_predicate_factory,),
+	'IFollowDirectly': (_ifollowdirectly_predicate_factory,),
 	'IFollowAndMe': (_ifollowandme_predicate_factory,),
 	'Favorite': (_favorite_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
@@ -650,16 +654,27 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 
 			* ``MeOnly``: it causes only things that I have done to be included.
 
-			* ``IFollow``: it causes only things done (created) by people I am directly following
-			  to be returned (right now, adding to a FriendsList also defaults to establishing
-			  the following relationship, so you can think of this as "My Contacts"). If I am following
-			  a dynamic sharing target that provides an iterable list of members (such as a
-			  :class:`~nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`), then those members are
-			  included as people I am following.
-			  Note that this *does not* imply or include things that I have done. This is very efficient.
+			* ``IFollow``: it causes only things done (created) by
+			  people I am following to be returned (right now, adding
+			  someone to a FriendsList defaults to establishing the
+			  following relationship between the creator and the new
+			  member; likewise, adding someone to a DynamicFriendsList
+			  causes the member to not only follow the creator, but to
+			  follow the DFL itself). If I am following a dynamic
+			  sharing target that provides an iterable list of members
+			  (such as a :class:`~nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`),
+			  then those members are included as people I am
+			  following. Note that this *does not* imply or include
+			  things that I have done. This is very efficient.
 
 			* ``IFollowAndMe``: Just like ``IFollow``, but also adds things that I have done.
 			  Again, this is very efficient.
+
+			* ``IFollowDirectly``: Just like ``IFollow``, except
+			  creators obtained by following dynamic sharing targets
+			  are excluded. If your intent is to only return objects
+			  created by those you have directly followed, this is
+			  your filter.
 
 			* ``Favorite``: it causes only objects that the current user has
 			  :mod:`favorited <nti.appserver.liking_views>` the object to be returned.
@@ -674,7 +689,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			  value.
 
 			They can be combined by separating them with a comma. Note that ``MeOnly`` and
-			``IFollow`` are mutually exclusive and specifying them both will result in
+			``IFollow`` (variants) are mutually exclusive and specifying them both will result in
 			empty results. It is also probably the case that ``MeOnly`` and ``Favorite`` are
 			logically mutually exclusive (users probably don't favorite their own objects).
 
@@ -742,7 +757,6 @@ class _UGDView(_view_utils.AbstractAuthenticatedView):
 			forward or backwards through the data (as, for example, the very last
 			page will have no ``batch-next`` link), rather than trying to construct URLs based
 			on the values in ``TotalItemCount`` or ``FilteredTotalItemCount``.
-
 		"""
 
 		needs_security, security_check = self._get_security_check()

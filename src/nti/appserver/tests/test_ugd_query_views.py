@@ -500,12 +500,12 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 						 has_entry( 'Items',
 									contains(
 										has_entry( 'RecursiveLikeCount', 1 ) ) ) )
-		
+
 		for _path in path, activity_path:
 			__traceback_info__ = _path
 			res = testapp.get( _path, params={'filter': 'TopLevel,IFollowAndMe', 'filterOperator':'union'}, extra_environ=self._make_extra_environ())
 			assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
-			
+
 		res = testapp.get( path, params={'sortOn': 'LikeCount'}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		# Descending by default
@@ -699,8 +699,8 @@ class TestApplicationUGDQueryViews(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'ID', hl_id_follow ) ) ) )
 
-		# And I can make that just highlights
-		res = testapp.get( path, params={'filter': 'TopLevel,IFollow', 'accept': contenttypes.Highlight.mime_type}, extra_environ=self._make_extra_environ())
+		# And I can make that just highlights (and since this is not a DFL relationship, direct following has the same result)
+		res = testapp.get( path, params={'filter': 'TopLevel,IFollowDirectly', 'accept': contenttypes.Highlight.mime_type}, extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'ID', hl_id_follow ) ) ) )
