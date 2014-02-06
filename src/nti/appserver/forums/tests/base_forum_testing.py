@@ -790,6 +790,9 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		for app in testapp, testapp2:
 			self._check_comment_in_topic_feed( app, topic_url, comment_data )
 
+		act_res = testapp.get( '/dataserver2/users/' + fixture.user2_username + '/Activity' )
+		assert_that( act_res.json_body['Items'], contains( has_entry( 'title', comment_data['title'] ) ) )
+
 		# And the contents link
 		new_content_href = self.require_link_href_with_rel( self.testapp.get( topic_url ).json_body, 'contents' )
 		assert_that( new_content_href, is_not( content_href ) )
