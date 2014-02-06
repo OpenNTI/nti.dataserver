@@ -15,6 +15,8 @@ import six
 from zope import component
 from zope import interface
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -50,8 +52,7 @@ class QueryObject(SchemaConfigured):
 	def __str__(self):
 		return self.term
 
-	def __repr__(self):
-		return 'QueryObject(%r)' % self.term
+	__repr__ = make_repr()
 
 	def __getitem__(self, key):
 		return getattr(self, key)

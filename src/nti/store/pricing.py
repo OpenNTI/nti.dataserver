@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -27,14 +29,9 @@ class PricedItem(priceable.Priceable):
 
 	__metaclass__ = utils.MetaStoreObject
 
-	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPricedItem)
 
-	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__,
-								 self.NTIID,
-								 self.Currency,
-								 self.PurchasePrice)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -64,8 +61,9 @@ class PricingResults(SchemaConfigured):
 
 	__metaclass__ = utils.MetaStoreObject
 
-	# create all interface fields
 	createDirectFieldProperties(store_interfaces.IPricingResults)
+
+	__repr__ = make_repr()
 
 def create_pricing_results(items=None, purchase_price=0.0, purchase_fee=0.0,
 						   non_discounted_price=None, currency='USD'):

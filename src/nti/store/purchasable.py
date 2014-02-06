@@ -26,6 +26,7 @@ from nti.dataserver import authorization
 from nti.dataserver import authorization_acl as a_acl
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.externalization import make_repr
 from nti.externalization.datastructures import LocatedExternalList
 from nti.externalization.datastructures import LocatedExternalDict
 
@@ -63,9 +64,7 @@ class Purchasable(content_bundle.ContentBundle):
 	# Override Description to adapt to a content fragment
 	Description = AdaptingFieldProperty(store_interfaces.IPurchasable['Description'])
 
-	def __repr__(self):
-		return "%s(%s,%s,%s,%s)" % (self.__class__, self.Description,
-									self.NTIID, self.Currency, self.Amount)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

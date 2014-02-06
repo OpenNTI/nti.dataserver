@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -29,11 +31,7 @@ class PurchaseError(SchemaConfigured):
 	def __str__(self):
 		return self.Message
 
-	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__,
-								 self.Type,
-								 self.Message,
-								 self.Code)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

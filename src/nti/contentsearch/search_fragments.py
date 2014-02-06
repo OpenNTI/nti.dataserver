@@ -14,6 +14,8 @@ from collections import namedtuple
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
 
@@ -109,7 +111,8 @@ class SearchFragment(SchemaConfigured):
 
 	def __str__(self):
 		return "%s(%r,%r)" % (self.__class__.__name__, self.text, self.matches)
-	__repr__ = __str__
+
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

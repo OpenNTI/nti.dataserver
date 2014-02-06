@@ -22,6 +22,8 @@ from nti.contentfragments import interfaces as frg_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
+from nti.externalization.externalization import make_repr
+
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.utils.property import alias
@@ -78,6 +80,8 @@ class _BaseSearchHit(object):
 		self.Score = score
 		self.Type = original.__class__.__name__
 		self.TargetMimeType = nti_mimetype_from_object(original, False) or u''
+
+	__repr__ = make_repr()
 
 BaseSearchHit = _BaseSearchHit  # BWC
 

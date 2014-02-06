@@ -18,6 +18,7 @@ from ...tests import create_purchase
 from ...tests import create_random_user
 from ...tests import ConfiguringTestBase
 from ...tests import create_purchase_attempt
+from ...tests import create_and_register_purchase_attempt
 
 TEST_WITH_STRIPE = True
 

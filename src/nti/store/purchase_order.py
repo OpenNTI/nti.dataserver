@@ -17,6 +17,8 @@ from zope.cachedescriptors.property import Lazy
 from zope.annotation import interfaces as an_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 
 from . import utils
@@ -51,8 +53,10 @@ class PurchaseOrder(SchemaConfigured):
 		items = [item.copy() for item in self.Items]
 		return self.__class__(Items=tuple(items), Quantity=self.Quantity)
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.Items, self.Quantity)
+	def __str__(self):
+		return "(%s,%s)" % (self.Items, self.Quantity)
+
+	__repr__ = make_repr()
 
 	def __getitem__(self, index):
 		return self.Items[index]
