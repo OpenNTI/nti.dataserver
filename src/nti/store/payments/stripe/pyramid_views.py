@@ -183,7 +183,7 @@ class StripePaymentView(_PostStripeView):
 
 		quantity = values.get('quantity', None)
 		if quantity is not None and not is_valid_pve_int(quantity):
-			raise hexc.HTTPBadRequest(detail="Invalid quantity")
+			raise_field_error(self.request, "quantity", "Invalid quantity")
 		quantity = int(quantity) if quantity else None
 
 		description = description or "%s's payment for '%r'" % (username, purchasable_id)
@@ -220,14 +220,10 @@ class StripePaymentView(_PostStripeView):
 									   name=self.processor)
 		def process_purchase():
 			logger.info("Processing purchase %s", purchase_id)
-			try:
-				manager.process_purchase(purchase_id=purchase_id, username=username,
-										 token=token, expected_amount=expected_amount,
-										 api_key=stripe_key.PrivateKey,
-										 request=request)
-			except NTIStoreException:
-				# TODO: How should this actually be handled?
-				logger.exception("Failed to process purchase %s", purchase_id)
+			manager.process_purchase(purchase_id=purchase_id, username=username,
+									 token=token, expected_amount=expected_amount,
+									 api_key=stripe_key.PrivateKey,
+									 request=request)
 
 		transaction.get().addAfterCommitHook(
 							lambda s: s and request.nti_gevent_spawn(process_purchase))
@@ -251,7 +247,7 @@ class StripeRefundPaymentView(_PostStripeView):
 			raise_field_error(self.request, 'amount', "Invalid amount")
 		amount = float(amount) if amount is not None else None
 
-		refund_application_fee = values.get('RefundApplicationFee',
+		refund_application_fee = values.get('refundApplicationFee',
 								 values.get('refund_application_fee', None))
 
 		if refund_application_fee is not None:
@@ -271,9 +267,9 @@ class StripeRefundPaymentView(_PostStripeView):
 			manager.refund_purchase(trx_id, amount=amount,
 									refund_application_fee=refund_application_fee,
 									request=request)
-		except NTIStoreException, e:
+		except NTIStoreException as e:
 			logger.exception("Error while refunding transaction")
-			raise_field_error(self.request, e, str(e))
+			raise hexc.HTTPUnprocessableEntity(detail=str(e))
 
 		# return
 		uid = integer_strings.from_external_string(trx_id)
@@ -300,8 +296,8 @@ class GeneratePurchaseInvoiceWitStripe(_PostStripeView):
 		transaction = values.get('transaction', \
 								 values.get('purchaseId', values.get('code')))
 		if not transaction:
-			raise hexc.HTTPUnprocessableEntity(
-							detail='Must specified a valid transaction or purchase code')
+			raise_field_error(self.request, "transaction",
+							 "Must specified a valid transaction or purchase code")
 
 		purchase = self._get_purchase(transaction)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
