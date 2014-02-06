@@ -307,7 +307,7 @@ class GeneratePurchaseInvoiceWitStripe(_PostStripeView):
 
 		manager = component.getUtility(store_interfaces.IPaymentProcessor,
 									   name=self.processor)
-		payment_charge = manager.get_payment_charge(self, purchase)
+		payment_charge = manager.get_payment_charge(purchase)
 			
 		notify(store_interfaces.PurchaseAttemptSuccessful(purchase,
 														  payment_charge,
