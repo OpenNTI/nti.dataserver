@@ -14,8 +14,8 @@ import six
 import time
 
 from nti.store.payments import _BasePaymentProcessor
-
-from .base import BaseProcessor
+from nti.store.payments.stripe import InvalidStripeCoupon
+from nti.store.payments.stripe.processor.base import BaseProcessor
 
 class CouponProcessor(_BasePaymentProcessor, BaseProcessor):
 
@@ -41,7 +41,7 @@ class CouponProcessor(_BasePaymentProcessor, BaseProcessor):
     def get_and_validate_coupon(self, coupon=None, api_key=None):
         coupon = self.get_coupon(coupon, api_key=api_key) if coupon else None
         if coupon is not None and not self.validate_coupon(coupon, api_key=api_key):
-            raise ValueError("Invalid coupon")
+            raise InvalidStripeCoupon()
         return coupon
 
     def apply_coupon(self, amount, coupon, api_key=None):
