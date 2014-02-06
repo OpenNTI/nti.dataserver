@@ -26,39 +26,37 @@
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides=".interfaces.ISearchHit" />
 
-	<adapter factory=".search_hits._HighlightSearchHit"
+	<adapter factory=".search_hits.HighlightSearchHit"
 			 for="nti.dataserver.interfaces.IHighlight"
 			 provides=".interfaces.IHighlightSearchHit" />
 
-	<adapter factory=".search_hits._NoteSearchHit"
+	<adapter factory=".search_hits.NoteSearchHit"
 			 for="nti.dataserver.interfaces.INote"
 			 provides=".interfaces.INoteSearchHit" />
 
-	<adapter factory=".search_hits._MessageInfoSearchHit"
+	<adapter factory=".search_hits.MessageInfoSearchHit"
 			 for="nti.chatserver.interfaces.IMessageInfo"
 			 provides=".interfaces.IMessageInfoSearchHit" />
 
-	<adapter factory=".search_hits._RedactionSearchHit"
+	<adapter factory=".search_hits.RedactionSearchHit"
 			 for="nti.dataserver.interfaces.IRedaction"
 			 provides=".interfaces.IRedactionSearchHit" />
 
-	<adapter factory=".search_hits._PostSearchHit"
+	<adapter factory=".search_hits.PostSearchHit"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides=".interfaces.IPostSearchHit" />
 
-	<adapter factory=".search_hits._WhooshBookSearchHit"
+	<adapter factory=".search_hits.WhooshBookSearchHit"
 			 for=".interfaces.IWhooshBookContent"
 			 provides=".interfaces.IWhooshBookSearchHit" />
 
-	<adapter factory=".search_hits._WhooshVideoTranscriptSearchHit"
+	<adapter factory=".search_hits.WhooshVideoTranscriptSearchHit"
 			 for=".interfaces.IWhooshVideoTranscriptContent"
 			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
 	
-	<adapter factory=".search_hits._WhooshNTICardSearchHit"
+	<adapter factory=".search_hits.WhooshNTICardSearchHit"
 			 for=".interfaces.IWhooshNTICardContent"
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
-			 		 
-	<adapter factory=".externalization._SearchHitMetaDataExternal" />
 			
 	<!-- Externalization -->
 	
@@ -69,10 +67,12 @@
 		root_interfaces=".interfaces.ISearchQuery
 						 .interfaces.IBookContent
 						 .interfaces.INTICardContent
-						 .interfaces.ISearchFragment
-						 .interfaces.IVideoTranscriptContent"
+						 .interfaces.IVideoTranscriptContent
+						 .interfaces.ISearchFragment"
 		modules=".search_query .content_types .search_fragments" />
-		
+		 		 
+	<adapter factory=".externalization._SearchHitMetaDataExternal" />
+			
 	<adapter factory=".externalization._SearchHitInternalObjectIO" 
 			 for=".interfaces.ISearchHit" />
 		
@@ -125,6 +125,22 @@
 			 for=".interfaces.ISearchQuery"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 			 
+	<adapter factory=".internalization._SearchHitMetaDataUpdater"
+			 for=".interfaces.ISearchHitMetaData"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+		
+	<adapter factory=".internalization._SearchResultsUpdater"
+			 for=".interfaces.ISearchResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+	
+	<adapter factory=".internalization._SearchResultsUpdater"
+			 for=".interfaces.ISuggestAndSearchResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+	
+	<adapter factory=".internalization._SuggestResultsUpdater"
+			 for=".interfaces.ISuggestResults"
+			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
+			 		 	 	 
 	<!-- Search hit comparators -->
 	
 	<utility factory=".search_comparators._TypeSearchHitComparator" name="type" />
@@ -252,6 +268,6 @@
 
 	<!-- Mime factories -->
 	
+	<ext:registerMimeFactories module=".search_hits" />
 	<ext:registerMimeFactories module=".search_results" />
-	
 </configure>

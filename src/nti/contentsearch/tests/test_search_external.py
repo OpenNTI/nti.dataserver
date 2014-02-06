@@ -4,11 +4,12 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import is_
 from hamcrest import has_key
+from hamcrest import equal_to
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -66,6 +67,7 @@ class TestSearchExternal(ConfiguringTestBase):
 			mock_dataserver.current_transaction.add(note)
 			note = usr.addContainedObject( note )
 		searchResults.extend(notes)
+		old_hits = list(searchResults.Hits)
 
 		eo = toExternalObject(searchResults)
 		assert_that(eo, has_entry('Query', u'wind'))
@@ -78,11 +80,20 @@ class TestSearchExternal(ConfiguringTestBase):
 		md = eo[HIT_META_DATA]
 		assert_that(md, has_entry('TypeCount', has_entry('note', len(notes))))
 
+		# internalize
+		factory = find_factory_for(eo)
+		new_results = factory()
+		update_from_external_object(new_results, eo)
+		new_hits = list(new_results.Hits)
+		assert_that(new_hits, has_length(len(old_hits)))
+		assert_that(new_hits, equal_to(old_hits))
+
 	@WithMockDSTrans
 	def test_externalize_suggest_results(self):
 		qo = QueryObject.create("bravo")
 		sr = component.getUtility(search_interfaces.ISuggestResultsCreator)(qo)
 		sr.add_suggestions(domain_words)
+		old_suggestions = list(sr.Suggestions)
 		eo = toExternalObject(sr)
 		assert_that(eo, has_entry('Query', u'bravo'))
 		assert_that(eo, has_entry(HIT_COUNT, len(domain_words)))
@@ -90,6 +101,14 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo[LAST_MODIFIED], greater_than_or_equal_to(0))
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(domain_words)))
+
+		# internalize
+		factory = find_factory_for(eo)
+		new_results = factory()
+		update_from_external_object(new_results, eo)
+		new_suggestions = list(new_results.Suggestions)
+		assert_that(new_suggestions, has_length(len(old_suggestions)))
+		assert_that(new_suggestions, equal_to(old_suggestions))
 
 	@WithMockDSTrans
 	def test_externalize_search_suggest_results(self):
@@ -108,6 +127,8 @@ class TestSearchExternal(ConfiguringTestBase):
 			mock_dataserver.current_transaction.add(note)
 			note = usr.addContainedObject( note )
 		searchResults.extend(notes)
+		old_hits = list(searchResults.Hits)
+		old_suggestions = list(searchResults.Suggestions)
 
 		eo = toExternalObject(searchResults)
 		assert_that(eo, has_entry('Query', u'theotokos'))
@@ -117,6 +138,16 @@ class TestSearchExternal(ConfiguringTestBase):
 		assert_that(eo, has_key(ITEMS))
 		assert_that(eo[ITEMS], has_length(len(commands)))
 		assert_that(eo[SUGGESTIONS], has_length(len(suggestions)))
+
+		# internalize
+		factory = find_factory_for(eo)
+		new_results = factory()
+		update_from_external_object(new_results, eo)
+		new_hits = list(new_results.Hits)
+		new_suggestions = list(new_results.Suggestions)
+
+		assert_that(new_hits, equal_to(old_hits))
+		assert_that(new_suggestions, equal_to(old_suggestions))
 
 	@WithMockDSTrans
 	def test_search_results_sort_relevance(self):
