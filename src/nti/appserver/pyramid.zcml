@@ -89,4 +89,6 @@
 	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 
+	<!-- Exception views -->
+	<pyramid:scan package=".excviews" />
 </configure>
