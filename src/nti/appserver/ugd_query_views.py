@@ -263,8 +263,14 @@ def _bookmark_predicate_factory( request ):
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
 def _only_me_predicate_factory( request ):
-	me = get_remote_user(request)
-	return lambda o: getattr( o.creator, 'username', o.creator ) == me.username
+	# broken objects might get here and they won't have
+	# a valid creator
+	me_username = request.authenticated_userid
+	def _filter(obj):
+		creator = getattr(obj, 'creator', None)
+		creator_username = getattr(creator, 'username', creator)
+		return creator_username == me_username
+	return _filter
 
 def _toplevel_filter( x ):
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
