@@ -17,6 +17,8 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
+from nti.externalization.externalization import make_repr
+
 from nti.mimetype.mimetype import MIME_BASE
 
 from nti.utils.schema import SchemaConfigured
@@ -41,7 +43,8 @@ class SearchTypeMetaData(SchemaConfigured):
 
 	def __str__(self):
 		return "%s(%r,%r)" % (self.__class__.__name__, self.Name, self.MimeType)
-	__repr__ = __str__
+
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

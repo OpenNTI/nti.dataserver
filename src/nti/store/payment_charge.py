@@ -11,11 +11,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import functools
-from datetime import datetime
 
 from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
+
+from nti.externalization.externalization import make_repr
 
 from nti.utils.schema import SchemaConfigured
 
@@ -40,8 +41,7 @@ class UserAddress(SchemaConfigured):
 									 self.State,
 									 self.Zip,
 									 self.Country)
-
-	__repr__ = __str__
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -90,9 +90,7 @@ class PaymentCharge(SchemaConfigured):
 	def __str__(self):
 		return "%s:%s" % (self.Currency, self.Amount)
 
-	def __repr__(self):
-		d = datetime.fromtimestamp(self.Created)
-		return "%s(%s,%s,%s)" % (self.__class__, d, self.Currency, self.Amount)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

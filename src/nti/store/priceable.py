@@ -14,6 +14,8 @@ from zope import interface
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.schema import SchemaConfigured
 
 from . import utils
@@ -60,8 +62,7 @@ class Priceable(SchemaConfigured):
 	def __str__(self):
 		return self.NTIID
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.NTIID, self.Quantity)
+	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:

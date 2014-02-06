@@ -14,6 +14,8 @@ from zope.container import contained as zcontained
 
 from nti.dataserver import mimetype
 
+from nti.externalization.externalization import make_repr
+
 from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
 from nti.utils.schema import createDirectFieldProperties
@@ -29,12 +31,16 @@ class BookContent(SchemaConfigured, zcontained.Contained):
 	last_modified = alias('lastModified')
 	containerId = ContainerId = alias('ntiid')
 
+	__repr__ = make_repr()
+
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
 class VideoTranscriptContent(SchemaConfigured, zcontained.Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
 	last_modified = alias('lastModified')
+
+	__repr__ = make_repr()
 
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class NTICardContent(SchemaConfigured, zcontained.Contained):
@@ -43,3 +49,6 @@ class NTICardContent(SchemaConfigured, zcontained.Contained):
 	
 	content = alias('description')
 	last_modified = alias('lastModified')
+
+	__repr__ = make_repr()
+
