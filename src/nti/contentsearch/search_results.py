@@ -20,6 +20,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
+from nti.utils.property import Lazy
 
 from . import search_hits
 from . import interfaces as search_interfaces
@@ -153,18 +154,18 @@ class _BaseSearchResults(zcontained.Contained):
 		return self.query
 
 	@property
-	def hits(self):
+	def Hits(self):
 		raise NotImplementedError()
 
 	@property
 	def total(self):
-		return len(self.hits)
+		return len(self.Hits)
 
 	def __len__(self):
-		return len(self.hits)
+		return len(self.Hits)
 
 	def __iter__(self):
-		return iter(self.hits)
+		return iter(self.Hits)
 
 @interface.implementer(search_interfaces.ISearchResults,
 					   zmime_interfaces.IContentTypeAware)
@@ -176,15 +177,16 @@ class _SearchResults(_BaseSearchResults):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
 		self._ihitmeta = SearchHitMetaData()
-		self._filter_cache = _FilterCache()
 
 	@property
-	def hits(self):
+	def Hits(self):
 		return self._hits
+	hits = Hits
 
 	@property
-	def metadata(self):
+	def HitMetaData(self):
 		return self._ihitmeta
+	metadata = HitMetaData
 
 	@property
 	def lastModified(self):
@@ -194,11 +196,15 @@ class _SearchResults(_BaseSearchResults):
 	def createdTime(self):
 		return self._ihitmeta.createdTime
 
+	@Lazy
+	def _filterCache(self):
+		return _FilterCache()
+
 	def _add(self, item, score=1.0):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
-		if _allow_search_hit(self._filter_cache, item, score):
+		if _allow_search_hit(self._filterCache, item, score):
 			self.sorted = False
 			hit = create_search_hit(item, score, self.Query, self)
 			self._hits.append(hit)
@@ -240,14 +246,10 @@ class _SuggestResults(_BaseSearchResults):
 		super(_SuggestResults, self).__init__(query)
 		self._words = set()
 
-	def get_hits(self):
-		"""
-		The suggested words, sorted alphabetically. Immutable.
-		"""
+	@property
+	def Suggestions(self):
 		return sorted(self._words)
-
-	hits = property(get_hits)
-	suggestions = hits
+	suggestions = Hits = hits = Suggestions
 
 	def add_suggestions(self, items):
 		items = [items] if isinstance(items, six.string_types) or \
@@ -276,18 +278,15 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 		_SearchResults.__init__(self, query)
 		_SuggestResults.__init__(self, query)
 
-	def get_hits(self):
+	@property
+	def Hits(self):
 		return self._hits
+	hits = Hits
 
-	hits = property(get_hits)
-
-	def get_words(self):
-		"""
-		The suggested words, sorted alphabetically. Immutable.
-		"""
+	@property
+	def Suggestions(self):
 		return sorted(self._words)
-
-	suggestions = property(get_words)
+	suggestions = Suggestions
 
 	def add(self, item, score=1.0):
 		_SearchResults.add(self, item, score)
