@@ -172,8 +172,6 @@ class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
 
-	createdTime = lastModified = 0
-
 	def __init__(self, query):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
@@ -187,6 +185,14 @@ class _SearchResults(_BaseSearchResults):
 	@property
 	def metadata(self):
 		return self._ihitmeta
+
+	@property
+	def lastModified(self):
+		return self._ihitmeta.lastModified
+
+	@property
+	def createdTime(self):
+		return self._ihitmeta.createdTime
 
 	def _add(self, item, score=1.0):
 		if isinstance(item, (list, tuple)):
