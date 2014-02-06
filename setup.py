@@ -340,7 +340,7 @@ setup(
 		'zope.browserresource >= 4.0.1',
 		'zope.catalog >= 4.0.0a1' if HAVE_ZCONT else '',  # zope.container dependency
 		'zope.cachedescriptors >= 4.0.0',
-		'zope.component[persistentregistry] >= 4.1.0',
+		'zope.component[persistentregistry]',
 		# Schema vocabularies based on querying ZCA; useful
 		# for views and other metadata. cf zope.vocabularyregistry
 		'zope.componentvocabulary >= 2.0.0a1',
@@ -371,7 +371,7 @@ setup(
 		'zope.i18n >= 4.0.0a4',
 		'zope.i18nmessageid >= 4.0.2',
 		'zope.index >= 4.0.1',
-		'zope.interface >= 4.0.5',
+		'zope.interface',
 		'zope.intid >= 4.0.0a1' if HAVE_ZCONT else '',
 		'zope.keyreference >= 4.0.0a2',
 		'zope.lifecycleevent >= 4.0.3',	 # Object Added/Removed/etc events
