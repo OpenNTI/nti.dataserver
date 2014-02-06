@@ -234,21 +234,31 @@ def _combine_predicate( new, old, operator=Operator.intersection ):
 		result = lambda obj: new(obj) and old(obj)
 	return result
 
+def _creator_based_predicate_factory(accepted_usernames):
+	# broken objects might get here and they won't have
+	# a valid creator
+	def _filter(obj):
+		creator = getattr(obj, 'creator', None)
+		creator_username = getattr(creator, 'username', creator)
+		return creator_username in accepted_usernames
+	return _filter
+
+
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
 	following_usernames = set()
 	if and_me:
 		following_usernames.add( me.username )
-	for entity in me.entities_followed:
-		entity_username = getattr( entity, 'username', None )
-		if entity_username:
-			following_usernames.add( entity_username )
+	for followed in me.entities_followed:
+		followed_username = getattr( followed, 'username', None )
+		if followed_username:
+			following_usernames.add( followed_username )
 		if expand_nested:
 			# Expand things that should be expanded, such as DFLs
-			for nested_username in nti_interfaces.IUsernameIterable(entity, ()):
+			for nested_username in nti_interfaces.IUsernameIterable(followed, ()):
 				following_usernames.add( nested_username )
 
-	return lambda o: getattr( o.creator, 'username', o.creator ) in following_usernames
+	return _creator_based_predicate_factory( following_usernames )
 
 def _ifollowandme_predicate_factory( request ):
 	return _ifollow_predicate_factory( request, True )
@@ -263,14 +273,8 @@ def _bookmark_predicate_factory( request ):
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
 def _only_me_predicate_factory( request ):
-	# broken objects might get here and they won't have
-	# a valid creator
 	me_username = request.authenticated_userid
-	def _filter(obj):
-		creator = getattr(obj, 'creator', None)
-		creator_username = getattr(creator, 'username', creator)
-		return creator_username == me_username
-	return _filter
+	return _creator_based_predicate_factory( (me_username,) )
 
 def _toplevel_filter( x ):
 	# This won't work for the Change objects. (Try Acquisition?) Do we need it for them?
