@@ -15,12 +15,17 @@ import transaction
 
 import zope.intid
 from zope import component
+from zope.event import notify
 
 from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
 
 from nti.externalization import integer_strings
 from nti.externalization.datastructures import LocatedExternalDict
 
+from nti.ntiids import ntiids
+
+from nti.store import invitations
 from nti.store.utils import to_boolean
 from nti.store import purchase_history
 from nti.store import NTIStoreException
@@ -276,3 +281,40 @@ class StripeRefundPaymentView(_PostStripeView):
 		purchase = zope_iids.queryObject(uid)
 		return LocatedExternalDict({'Items':[purchase],
 									'Last Modified':purchase.lastModified})
+
+class GeneratePurchaseInvoiceWitStripe(_PostStripeView):
+
+	def _get_purchase(self, key):
+		try:
+			integer_strings.from_external_string(key)
+			purchase = invitations.get_purchase_by_code(key)
+		except ValueError:
+			if ntiids.is_valid_ntiid_string(key):
+				purchase = ntiids.find_object_with_ntiid(key)
+			else:
+				purchase = None
+		return purchase
+
+	def __call__(self):
+		values = self.readInput()
+		transaction = values.get('transaction', \
+								 values.get('purchaseId', values.get('code')))
+		if not transaction:
+			raise hexc.HTTPUnprocessableEntity(
+							detail='Must specified a valid transaction or purchase code')
+
+		purchase = self._get_purchase(transaction)
+		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
+			raise hexc.HTTPNotFound(detail='Transaction not found')
+		elif not purchase.has_succeeded():
+			raise hexc.HTTPUnprocessableEntity(detail='Purchase was not successfull')
+
+		manager = component.getUtility(store_interfaces.IPaymentProcessor,
+									   name=self.processor)
+		payment_charge = manager.get_payment_charge(self, purchase)
+			
+		notify(store_interfaces.PurchaseAttemptSuccessful(purchase,
+														  payment_charge,
+														  request=get_current_request()))
+
+		return hexc.HTTPNoContent()

@@ -141,6 +141,18 @@ class IStripePaymentProcessor(store_interfaces.IPaymentProcessor):
 		:token Credit Card token
 		"""
 
+	def get_payment_charge(purchase_id, username=None):
+		"""
+		return a payment charge object (or None) for the specified purchase
+		"""
+		
+	def refund_purchase(trx_id, amount=None, refund_application_fee=None):
+		"""
+		Returns a purchase
+
+		:trx_id Transaction id
+		"""
+		
 class IStripePriceable(store_interfaces.IPriceable):
 	Coupon = nti_schema.ValidTextLine(title='the coupon', required=False)
 

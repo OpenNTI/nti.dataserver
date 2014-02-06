@@ -13,6 +13,7 @@ from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import uuid
 import stripe
@@ -108,6 +109,16 @@ class TestPurchaseProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
 
 		assert_that(eventtesting.getEvents(store_interfaces.IPurchaseAttemptSuccessful),
 										   has_length(1))
+
+		# test payment charge
+		with mock_dataserver.mock_db_trans(ds):
+			charge = self.manager.get_payment_charge(purchase_id, username)
+			assert_that(charge, is_not(none()))
+			assert_that(charge, has_property("Amount", is_not(none())))
+			assert_that(charge, has_property("Address", is_not(none())))
+			assert_that(charge, has_property("Created", is_not(none())))
+			assert_that(charge, has_property("Currency", is_not(none())))
+			assert_that(charge, has_property("CardLast4", is_not(none())))
 
 		with mock_dataserver.mock_db_trans(ds):
 			user = User.get_user(username)

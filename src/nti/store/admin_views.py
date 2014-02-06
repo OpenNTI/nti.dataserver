@@ -17,10 +17,8 @@ from datetime import datetime
 from cStringIO import StringIO
 
 from pyramid import httpexceptions as hexc
-from pyramid.threadlocal import get_current_request
 
 from zope import component
-from zope.event import notify
 from zope import lifecycleevent
 from zope.annotation import IAnnotations
 
@@ -38,6 +36,7 @@ from . import purchasable
 from . import content_roles
 from . import purchase_history
 from . import interfaces as store_interfaces
+from .payments import pyramid_views as pyramid_payment
 
 _PostView = utils.AbstractPostView
 raise_field_error = utils.raise_field_error
@@ -146,22 +145,6 @@ class GetContentRolesView(object):
 		result['Items'] = roles
 		return result
 
-class GeneratePurchaseInvoice(_PostView):
-
-	def __call__(self):
-		values = self.readInput()
-		transaction = values.get('transaction', values.get('code'))
-		purchase = invitations.get_purchase_by_code(transaction)
-		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
-			raise hexc.HTTPNotFound(detail='Transaction not found')
-		elif not purchase.has_succeeded():
-			raise hexc.HTTPUnprocessableEntity(detail='Purchase was not successfull')
-
-		notify(store_interfaces.PurchaseAttemptSuccessful(purchase,
-														  request=get_current_request()))
-
-		return hexc.HTTPNoContent()
-
 class GetUsersPurchaseHistoryView(object):
 
 	def __init__(self, request):
@@ -263,3 +246,5 @@ class GetUsersPurchaseHistoryView(object):
 
 		result = result if not as_csv else self._to_csv(request, result)
 		return result
+
+GeneratePurchaseInvoice = pyramid_payment.GeneratePurchaseInvoiceWitStripe  # rexport

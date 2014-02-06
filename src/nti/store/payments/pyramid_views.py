@@ -17,4 +17,5 @@ StripePaymentView = stripe_pyramid.StripePaymentView
 CreateStripeTokenView = stripe_pyramid.CreateStripeTokenView
 GetStripeConnectKeyView = stripe_pyramid.GetStripeConnectKeyView
 StripeRefundPaymentView = stripe_pyramid.StripeRefundPaymentView
+GeneratePurchaseInvoiceWitStripe = stripe_pyramid.GeneratePurchaseInvoiceWitStripe
 PricePurchasableWithStripeCouponView = stripe_pyramid.PricePurchasableWithStripeCouponView

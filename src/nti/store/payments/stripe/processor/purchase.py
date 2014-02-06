@@ -10,9 +10,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 import sys
 import math
 import functools
+
+import stripe
 
 from zope import component
 from zope.event import notify
@@ -23,15 +26,13 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.store import purchase_history
 from nti.store import NTIStoreException
+from nti.store.payments.stripe import utils
 from nti.store import get_possible_site_names
 from nti.store import interfaces as store_interfaces
-
-from .coupon import CouponProcessor
-from .pricing import PricingProcessor
-
-from .. import utils
-from .. import stripe_customer
-from .. import interfaces as stripe_interfaces
+from nti.store.payments.stripe import stripe_customer
+from nti.store.payments.stripe import interfaces as stripe_interfaces
+from nti.store.payments.stripe.processor.coupon import CouponProcessor
+from nti.store.payments.stripe.processor.pricing import PricingProcessor
 
 class PurchaseProcessor(stripe_customer.StripeCustomer,
 						CouponProcessor,
@@ -160,3 +161,27 @@ class PurchaseProcessor(stripe_customer.StripeCustomer,
 			# report exception
 			raise t, v, tb
 
+	def get_payment_charge(self, purchase, username=None, api_key=None):
+		purchase_id = purchase  # save original
+
+		if isinstance(purchase, six.string_types):
+			purchase = purchase_history.get_purchase_attempt(purchase, username)
+
+		if purchase is None:
+			raise NTIStoreException(
+						"Could not find purchase attempt %s" % purchase_id)
+
+		api_key = api_key or self.get_api_key(purchase)
+		if not api_key:
+			raise NTIStoreException(
+						"Could not find a stripe key for purchase %s" % purchase_id)
+
+		spurchase = stripe_interfaces.IStripePurchaseAttempt(purchase)
+		charge_id = spurchase.ChargeID
+		try:
+			charge = self.get_stripe_charge(charge_id, api_key=api_key)  \
+				 	 if charge_id else None
+			result = utils.create_payment_charge(charge) if charge else None
+		except stripe.InvalidRequestError:
+			result = None
+		return result
