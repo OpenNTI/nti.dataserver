@@ -734,10 +734,10 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 	def __iadd__(other):
 		pass
 
-class IBaseSearchResults(interface.Interface):
+class IBaseSearchResults(nti_interfaces.ILastModified):
 	Query = schema.Object(ISearchQuery, title="Search query", required=True)
 
-class ISearchResults(IBaseSearchResults, nti_interfaces.ILastModified):
+class ISearchResults(IBaseSearchResults):
 
 	Hits = nti_schema.IndexedIterable(
 				value_type=nti_schema.Object(ISearchHit, description="A :class:`.ISearchHit`"),

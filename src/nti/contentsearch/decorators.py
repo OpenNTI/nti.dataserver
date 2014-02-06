@@ -28,7 +28,8 @@ from . import interfaces as search_interfaces
 from .constants import (tags_, content_, title_, replacementContent_,
 						redactionExplanation_)
 
-from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD)
+from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS,
+						QUERY, HIT_COUNT, PHRASE_SEARCH)
 
 SNIPPET = 'Snippet'
 
@@ -139,3 +140,30 @@ class _SearchResultsLinkDecorator(object):
 				link_next_href = request.current_route_path(_query=_query)
 				link_next = Link(link_next_href, rel=rel)
 				external.setdefault('Links', []).append(link_next)
+
+
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _ResultsDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateCommon(self, original, external):
+		external[QUERY] = original.Query.term
+		external[HIT_COUNT] = len(external[ITEMS])
+		external[PHRASE_SEARCH] = original.Query.is_phrase_search
+
+	def decorateExternalObject(self, original, external):
+		external[ITEMS] = external.pop(HITS, [])
+		self.decorateCommon(original, external)
+
+@component.adapter(search_interfaces.ISearchResults)
+class _SearchResultsDecorator(_ResultsDecorator):
+	pass
+
+@component.adapter(search_interfaces.ISuggestResults)
+class _SuggestResultsDecorator(_ResultsDecorator):
+
+	def decorateExternalObject(self, original, external):
+		if not search_interfaces.ISuggestAndSearchResults.providedBy(original):
+			external[ITEMS] = external.pop(SUGGESTIONS, [])
+			self.decorateCommon(original, external)

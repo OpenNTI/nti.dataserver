@@ -202,7 +202,7 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	def test_suggest_and_search(self):
 		hits = toExternalObject(self.bim.suggest_and_search("ra"))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
-		assert_that(hits, has_entry('Query', u'rage'))
+		assert_that(hits, has_entry('Query', u'ra'))
 		assert_that(hits, has_key(ITEMS))
 		assert_that(hits[ITEMS], has_length(1))
 		assert_that(hits[SUGGESTIONS], has_length(4))

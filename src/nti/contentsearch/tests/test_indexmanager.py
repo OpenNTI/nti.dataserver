@@ -288,7 +288,7 @@ class TestIndexManager(ConfiguringTestBase):
 
 		q = QueryObject(term='atain', username=user.username)
 		hits = self.im.user_data_search(query=q)
-		assert_that(hits, has_length(2))
+		assert_that(hits, has_length(1))
 
 		hits = toExternalObject(hits)
 		assert_that(hits, has_entry(HIT_COUNT, 1))

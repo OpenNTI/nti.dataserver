@@ -183,7 +183,7 @@ class TestSearchResults(ConfiguringTestBase):
 		a = merge_search_results(a, b)
 		assert_that(a, has_length(len(zanpakuto_commands)))
 
-		assert_that(a.prop1, is_('value1'))
+		assert_that(a.prop1, is_('value0'))
 		assert_that(a.prop2, is_('value2'))
 
 	def test_merge_suggest_results(self):
@@ -202,5 +202,5 @@ class TestSearchResults(ConfiguringTestBase):
 		for x in ('a', 'b', 'c'):
 			assert_that(a, has_item(x))
 
-		assert_that(a.prop1, is_('value1'))
+		assert_that(a.prop1, is_('value0'))
 		assert_that(a.prop2, is_('value2'))
