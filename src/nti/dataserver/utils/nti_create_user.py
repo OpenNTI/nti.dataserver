@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-Create an entity
+Creates an entity
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -34,9 +37,10 @@ def _create_user(factory, username, password, realname, communities=(), options=
 		# Provide the unnamed, default utility to do this
 		class FixedShardPlacer(nti_shards.AbstractShardPlacer):
 			def placeNewUser( self, user, user_directory, *args ):
-				self.place_user_in_shard_named( user, user_directory, options.shard )
+				self.place_user_in_shard_named(user, user_directory, options.shard)
 
-		component.provideUtility(FixedShardPlacer(), provides=nti_interfaces.INewUserPlacer)
+		component.provideUtility(FixedShardPlacer(),
+								 provides=nti_interfaces.INewUserPlacer)
 	elif options.site:
 		# The easiest way to make this happen is to do what the test cases
 		# do, and mock out a pyramid setup with a current request.
@@ -51,9 +55,12 @@ def _create_user(factory, username, password, realname, communities=(), options=
 						request=request,
 						hook_zca=False)
 		config.setup_registry()
-		request.headers['origin'] = 'http://' + options.site if not options.site.startswith( 'http' ) else options.site
+		request.headers['origin'] = \
+					'http://' + options.site \
+					if not options.site.startswith('http') else options.site
 		# zope_site_tween tweaks some things on the request that we need to as well
-		request.possible_site_names = (options.site if not options.site.startswith('http') else options.site[7:],)
+		request.possible_site_names = \
+			(options.site if not options.site.startswith('http') else options.site[7:],)
 
 	user = factory.im_self.get_entity(username)
 	if user:
@@ -83,7 +90,8 @@ def _create_user(factory, username, password, realname, communities=(), options=
 				user.record_dynamic_membership(community)
 				user.follow( community )
 
-		if options.coppa and not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( user ):
+		if 	options.coppa and \
+			not nti_interfaces.ICoppaUserWithoutAgreement.providedBy(user):
 			logger.info("Applying coppa to %s", user)
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
@@ -97,7 +105,8 @@ def create_user(args=None):
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to create")
 	arg_parser.add_argument('password', nargs='?')
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
+							dest='verbose')
 	arg_parser.add_argument('-t', '--type',
 							 dest='type',
 							 choices=_type_map,
@@ -150,7 +159,8 @@ def create_user(args=None):
 	run_with_dataserver(environment_dir=env_dir,
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
-						 function=lambda: _create_user(_type_map[args.type], username, password, args.name, args.communities, args))
+						 function=lambda: _create_user(_type_map[args.type], username,
+													   password, args.name, args.communities, args))
 
 def main(args=None):
 	create_user(args)
