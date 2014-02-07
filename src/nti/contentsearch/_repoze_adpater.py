@@ -100,29 +100,31 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 			result = queryobject._apply(catalog, names=None)
 		return result
 
-	def _do_search(self, qo, searchOn=(), creator_method=None):
-		creator_method = creator_method or search_results.empty_search_results
-		results = creator_method(qo)
-		if qo.is_empty: return results
+	def _do_search(self, qo, searchOn, results):
+		if qo.is_empty:
+			return results
 
-		for type_name in searchOn:
+		for type_name in searchOn or ():
 			catalog = self.get_catalog(type_name)
 			doc_weights = self._do_catalog_query(catalog, qo, type_name)
 			self._get_hits_from_docids(results, doc_weights, type_name)
-
 		return results
 
-	def search(self, query, *args, **kwargs):
+	def search(self, query, store=None, *args, **kwargs):
 		qo = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
-		results = self._do_search(qo, searchOn)
+		results = store if store is not None else \
+				  search_results.empty_search_results(qo)
+		results = self._do_search(qo, searchOn, results)
 		return results
 
-	def suggest(self, query, *args, **kwargs):
+	def suggest(self, query, store=None, *args, **kwargs):
 		qo = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(qo.searchOn)
-		results = search_results.empty_suggest_results(qo)
-		if qo.is_empty: return results
+		results = store if store is not None else \
+				  search_results.empty_suggest_results(qo)
+		if qo.is_empty:
+			return results
 
 		threshold = qo.threshold
 		prefix = qo.prefix or len(qo.term)
@@ -133,31 +135,26 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 				words_t = textfield.suggest(term=qo.term,
 											threshold=threshold,
 											prefix=prefix)
-				results.add(map(lambda t: t[0], words_t))
+				results.extend(map(lambda t: t[0], words_t))
 
 		return results
 
-	def suggest_and_search(self, query, limit=None, *args, **kwargs):
+	def suggest_and_search(self, query, limit=None, store=None, *args, **kwargs):
 		queryobject = search_query.QueryObject.create(query, **kwargs)
 		searchOn = self._adapt_search_on_types(queryobject.searchOn)
+		results = store if store is not None else \
+				  search_results.empty_suggest_and_search_results(queryobject)
 		if 	' ' in queryobject.term or queryobject.is_prefix_search or \
 			queryobject.is_phrase_search:
-			results = \
-				self._do_search(
-						queryobject,
-						searchOn,
-						creator_method=search_results.empty_suggest_and_search_results)
+			results = self._do_search(queryobject, searchOn, results)
 		else:
-			result = self.suggest(queryobject, searchOn=searchOn)
-			suggestions = result.suggestions
+			result = self.suggest(queryobject)
+			suggestions = result.Suggestions
 			if suggestions:
 				suggestions = rank_words(query.term, suggestions)
 				queryobject.term = suggestions[0]
 
-			results = \
-				self._do_search(queryobject,
-						  searchOn,
-						  creator_method=search_results.empty_suggest_and_search_results)
+			results = self._do_search(queryobject, searchOn, results)
 			results.add_suggestions(suggestions)
 
 		return results

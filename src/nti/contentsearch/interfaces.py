@@ -8,8 +8,6 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-import sys
-
 from zope import schema
 from zope import component
 from zope import interface
@@ -102,21 +100,21 @@ class ISearchQueryParser(interface.Interface):
 
 class ISearcher(interface.Interface):
 
-	def search(query):
+	def search(query, *args, **kwargs):
 		"""
 		search the content using the specified query
 
 		:param query: Search query
 		"""
 
-	def suggest(query):
+	def suggest(query, *args, **kwargs):
 		"""
 		perform a word suggestion
 
 		:param query: Search query
 		"""
 
-	def suggest_and_search(query):
+	def suggest_and_search(query, *args, **kwargs):
 		"""
 		do a word suggestion and perform a search
 

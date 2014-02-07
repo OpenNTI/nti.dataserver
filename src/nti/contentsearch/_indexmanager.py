@@ -104,57 +104,58 @@ class IndexManager(object):
 		searcher = component.queryUtility(search_interfaces.IContentSearcher, name=name)
 		return searcher
 
-	def content_search(self, query):
+	def content_search(self, query, store=None):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_search_results(query)
+		results = store if store is not None else \
+				  search_results.empty_search_results(query)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
-			r = searcher.search(query)
-			results = search_results.merge_search_results(results, r) \
-					  if r is not None else results
+			r = searcher.search(query, store=results)
+			results = search_results.merge_search_results(results, r)
 		return results
 
-	def content_suggest_and_search(self, query):
+	def content_suggest_and_search(self, query, store=None):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_and_search_results(query)
+		results = store if store is not None else \
+				  search_results.empty_suggest_and_search_results(query)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
-			r = searcher.suggest_and_search(query)
-			results = search_results.merge_suggest_and_search_results(results, r) \
-					  if r is not None else results
+			r = searcher.suggest_and_search(query, store=results)
+			results = search_results.merge_suggest_and_search_results(results, r)
 		return results
 
-	def content_suggest(self, query, *args, **kwargs):
+	def content_suggest(self, query, store=None, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_results(query)
+		results = store if store is not None else \
+				  search_results.empty_suggest_results(query)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
-			r = searcher.suggest(query)
-			results = search_results.merge_suggest_results(results, r) \
-					  if r is not None else results
+			r = searcher.suggest(query, store=results)
+			results = search_results.merge_suggest_results(results, r)
 		return results
 
-	def user_data_search(self, query, *args, **kwargs):
+	def user_data_search(self, query, store=None, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
 		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
-		results = controller.search(query) if controller is not None \
+		results = controller.search(query, store=store) if controller is not None \
 				  else search_results.empty_search_results(query)
 		return results
 
-	def user_data_suggest_and_search(self, query, *args, **kwargs):
+	def user_data_suggest_and_search(self, query, store=None, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
 		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
-		results = controller.suggest_and_search(query) if controller is not None \
+		results = controller.suggest_and_search(query, store=store) \
+				  if controller is not None \
 				  else search_results.empty_suggest_and_search_results(query)
 		return results
 
-	def user_data_suggest(self, query, *args, **kwargs):
+	def user_data_suggest(self, query, store=None, *args, **kwargs):
 		query = search_query.QueryObject.create(query)
 		entity = self.get_entity(query.username)
 		controller = search_interfaces.IEntityIndexController(entity, None)
-		results = controller.suggest(query) if controller is not None \
+		results = controller.suggest(query, store=store) if controller is not None \
 				  else search_results.empty_suggest_results(query)
 		return results
 

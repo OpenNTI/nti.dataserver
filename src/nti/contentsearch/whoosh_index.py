@@ -50,13 +50,15 @@ class _SearchableContent(object):
 
 	def search(self, searcher, query, store=None, *args, **kwargs):
 		qo, parsed_query = self._parse_query(query, **kwargs)
-		store = store or search_results.empty_search_results(qo)
+		store = store if store is not None else \
+				search_results.empty_search_results(qo)
 		results = self._execute_search(searcher, parsed_query, qo, store=store)
 		return results
 
 	def suggest_and_search(self, searcher, query, store=None, *args, **kwargs):
 		qo = search_interfaces.ISearchQuery(query, **kwargs)
-		store = store or search_results.empty_suggest_and_search_results(qo)
+		store = store if store is not None else \
+				search_results.empty_suggest_and_search_results(qo)
 		if ' ' in qo.term or qo.IsPrefixSearch or qo.IsPhraseSearch:
 			results = self.search(searcher, qo, store)
 		else:
@@ -79,7 +81,8 @@ class _SearchableContent(object):
 		qo = search_interfaces.ISearchQuery(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or self.default_word_max_dist
-		results = store or search_results.empty_suggest_results(qo)
+		results = store if store is not None else \
+				  search_results.empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		results.extend(records)
 		return results
