@@ -84,7 +84,7 @@ def _purchase_attempt_successful(event):
 	if store_interfaces.IEnrollmentPurchaseAttempt.providedBy(purchase):
 		# legacy if block, ensure never hit
 		raise AssertionError("Should not be able to get here")
-	logger.info('%r completed successfully', purchase)
+	logger.info('%r completed successfully', purchase.id)
 
 def _return_items(purchase, user=None, remove_roles=True):
 	if purchase is None:
@@ -146,7 +146,7 @@ def _purchase_attempt_failed(event):
 	purchase.Error = event.error
 	purchase.EndTime = time.time()
 	_update_state(purchase, store_interfaces.PA_STATE_FAILED)
-	logger.info('%r failed. %s', purchase, purchase.Error)
+	logger.info('%r failed. %s', purchase.id, purchase.Error)
 
 @component.adapter(store_interfaces.IPurchaseAttemptSynced)
 def _purchase_attempt_synced(event):
