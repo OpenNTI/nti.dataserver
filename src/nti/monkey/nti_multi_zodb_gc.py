@@ -17,29 +17,14 @@ only in the C extension (which may or may not compile).
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.monkey import relstorage_timestamp_repr_patch_on_import
-from nti.monkey import relstorage_zlibstorage_patch_on_import
-from nti.monkey import relstorage_external_gc_patch_on_import
-from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
+from nti.monkey import relstorage_patch_all_except_gevent_import
 
-
-relstorage_timestamp_repr_patch_on_import.patch()
-relstorage_zlibstorage_patch_on_import.patch()
-relstorage_external_gc_patch_on_import.patch()
-relstorage_explicitly_close_memcache_patch_on_import.patch()
-
-try:
-	import MySQLdb
-except ImportError:
-	# This may or may not work.
-	from nti.monkey import relstorage_umysqldb_patch_on_import
-	relstorage_umysqldb_patch_on_import.patch()
+relstorage_patch_all_except_gevent_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
-
 
 # zc.zodbdgc 0.6.1 on Python 2.7 runs into an issue with
 # the `noload` operation of the unpickler being broken. Specifically,
