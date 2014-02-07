@@ -214,3 +214,25 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 		result = None
 
 	return result
+
+def interactive_setup(root=".",  config_features=(), xmlconfig_packages=()):
+	"""
+	Set up the environment for interactive use, configuring the
+	database and dataserver site. The root database ('Users')
+	is returned.
+
+	This should be done very early on in an interactive session.
+	"""
+
+	logging.basicConfig(level=logging.INFO)
+	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
+
+	setHooks()
+	packages = ['nti.dataserver']
+	packages.extend(xmlconfig_packages)
+	_configure(set_up_packages=packages, features=config_features)
+
+	from nti.dataserver.config import temp_get_config
+	env = temp_get_config(root)
+	dbs = env.connect_databases()
+	return dbs[0]
