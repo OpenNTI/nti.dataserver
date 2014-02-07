@@ -46,8 +46,8 @@ if gunicorn.version_info != (18,0):
 # which causes our logging to be VERY misleading
 # a fix is committed that we replicate below,
 # so when the version changes, review
-# this patch
-
+# this patch.
+# We also have a change to make the 'u' variable actually do something
 from gunicorn import glogging
 def _glogging_atoms(self, resp, req, environ, request_time):
 	""" Gets atoms for log formating.
@@ -56,7 +56,7 @@ def _glogging_atoms(self, resp, req, environ, request_time):
 	atoms = {
 		'h': environ.get('REMOTE_ADDR', '-'),
 		'l': '-',
-		'u': '-',  # would be cool to get username from basic auth header
+		'u': environ.get('REMOTE_USER', '-'),
 		't': self.now(),
 		'r': "%s %s %s" % (environ['REQUEST_METHOD'],
 						   environ['RAW_URI'], environ["SERVER_PROTOCOL"]),
