@@ -227,6 +227,9 @@ def interactive_setup(root=".",  config_features=(), xmlconfig_packages=()):
 	logging.basicConfig(level=logging.INFO)
 	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
 
+	import nti.monkey.relstorage_patch_all_except_gevent_on_import
+	nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
+
 	setHooks()
 	packages = ['nti.dataserver']
 	packages.extend(xmlconfig_packages)
