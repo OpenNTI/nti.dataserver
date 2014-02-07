@@ -26,7 +26,6 @@ from .constants import (content_, ntiid_, last_modified_, videoId_, creator_,
 					 	href_, target_ntiid_)
 
 video_date_to_millis = common.video_date_to_millis  # BWC
-empty_suggest_and_search_results = search_results.empty_suggest_and_search_results  # BWC
 
 class _SearchableContent(object):
 
@@ -49,61 +48,54 @@ class _SearchableContent(object):
 		parsed_query = whoosh_query.parse_query(qo, self.schema)
 		return qo, parsed_query
 
-	def search(self, searcher, query, *args, **kwargs):
+	def search(self, searcher, query, store=None, *args, **kwargs):
 		qo, parsed_query = self._parse_query(query, **kwargs)
-		results = self._execute_search(searcher, parsed_query, qo)
+		store = store or search_results.empty_search_results(qo)
+		results = self._execute_search(searcher, parsed_query, qo, store=store)
 		return results
 
-	def suggest_and_search(self, searcher, query, *args, **kwargs):
+	def suggest_and_search(self, searcher, query, store=None, *args, **kwargs):
 		qo = search_interfaces.ISearchQuery(query, **kwargs)
+		store = store or search_results.empty_suggest_and_search_results(qo)
 		if ' ' in qo.term or qo.IsPrefixSearch or qo.IsPhraseSearch:
-			results = empty_suggest_and_search_results(qo)
-			results += self.search(searcher, qo)
+			results = self.search(searcher, qo, store)
 		else:
-			result = self.suggest(searcher, qo)
-			suggestions = list(result.suggestions)
+			suggest_results = self.suggest(searcher, qo)
+			suggestions = list(suggest_results.suggestions)
 			if suggestions:
 				suggestions = rank_words(qo.term, suggestions)
 				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
 
 				results = \
-					self._execute_search(
-							searcher,
-							parsed_query, qo,
-							creator_method=empty_suggest_and_search_results)
+					self._execute_search(searcher, parsed_query, qo, store=store)
 
 				results.add_suggestions(suggestions)
 			else:
-				results = empty_suggest_and_search_results(qo)
-				results += self.search(searcher, qo)
+				results = self.search(searcher, qo, store)
 
 		return results
 
-	def suggest(self, searcher, word, *args, **kwargs):
+	def suggest(self, searcher, word, store=None, *args, **kwargs):
 		qo = search_interfaces.ISearchQuery(word, **kwargs)
 		prefix = qo.prefix or len(qo.term)
 		maxdist = qo.maxdist or self.default_word_max_dist
-		results = search_results.empty_suggest_results(qo)
+		results = store or search_results.empty_suggest_results(qo)
 		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
 		results.extend(records)
 		return results
 
-	def _execute_search(self, searcher, parsed_query, queryobject, docids=None,
-						creator_method=None):
-		creator_method = creator_method or search_results.empty_search_results
-		results = creator_method(queryobject)
-
+	def _execute_search(self, searcher, parsed_query, queryobject, store, docids=None):
 		# execute search
 		search_hits = searcher.search(parsed_query, limit=None)
 		length = len(search_hits)
 		if not length:
-			return results
+			return store
 
 		# return all source objects
 		objects = self.get_objects_from_whoosh_hits(search_hits, docids)
-		results.extend(objects)
+		store.extend(objects)
 
-		return results
+		return store
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids):
 		raise NotImplementedError()
