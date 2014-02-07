@@ -24,4 +24,4 @@ def patch():
         from nti.monkey import relstorage_umysqldb_patch_on_import
         relstorage_umysqldb_patch_on_import.patch()
 
-logger = __import__('logging').getLogger(__name__)
+patch()
