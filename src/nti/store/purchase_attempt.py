@@ -69,9 +69,7 @@ class PurchaseAttempt(ModDateTrackingObject,
 	def __str__(self):
 		return "%s,%s" % (self.Items, self.State)
 
-
 	__repr__ = make_repr()
-
 
 	def __eq__(self, other):
 		try:
