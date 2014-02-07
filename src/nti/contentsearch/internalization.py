@@ -21,7 +21,7 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from . import interfaces as search_interfaces
 
-from .constants import (ITEMS, HITS, SUGGESTIONS, QUERY)
+from .constants import (ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY)
 
 
 def _readonly(iface):
@@ -69,7 +69,9 @@ class _SearchHitMetaDataUpdater(object):
 		return result
 
 def _transform_query(parsed):  # legacy query spec
-	if QUERY in parsed and isinstance(parsed[QUERY], six.string_types):
+	if SEARCH_QUERY in parsed:
+		parsed[QUERY] = parsed[SEARCH_QUERY]
+	elif QUERY in parsed and isinstance(parsed[QUERY], six.string_types):
 		query = search_interfaces.ISearchQuery(parsed[QUERY])
 		parsed[QUERY] = query
 

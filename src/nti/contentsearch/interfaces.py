@@ -42,7 +42,7 @@ class ISearchQuery(interface.Interface):
 	language = nti_schema.ValidTextLine(title="Query search term language", required=False,
 										default='en')
 
-	limit = schema.Int(title="search results limit", required=False, default=sys.maxint)
+	limit = schema.Int(title="search results limit", required=False, default=None)
 
 	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
 
