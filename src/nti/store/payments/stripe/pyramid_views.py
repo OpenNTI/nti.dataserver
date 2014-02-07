@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import simplejson
 import transaction
 
 import zope.intid
@@ -35,9 +34,8 @@ from nti.store.utils import is_valid_amount
 from nti.store.utils import is_valid_pve_int
 from nti.store.utils import is_valid_boolean
 from nti.store.utils import raise_field_error
+from nti.store.utils.pyramid import AbstractPostView
 from nti.store import interfaces as store_interfaces
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from . import stripe_purchase
 from . import NoSuchStripeCoupon
@@ -56,12 +54,8 @@ class _BaseStripeView(object):
 		result = component.queryUtility(stripe_interfaces.IStripeConnectKey, keyname)
 		return result
 
-class _PostStripeView(_BaseStripeView):
-
-	def readInput(self):
-		request = self.request
-		values = simplejson.loads(unicode(request.body, request.charset))
-		return CaseInsensitiveDict(**values)
+class _PostStripeView(_BaseStripeView, AbstractPostView):
+	pass
 
 class GetStripeConnectKeyView(_BaseStripeView):
 
