@@ -22,6 +22,7 @@ is_not = does_not
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_entry
+from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import has_length
 from hamcrest import has_key
@@ -307,6 +308,15 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		publish_res, _ = self._POST_and_publish_topic_entry()
 		topic_url = publish_res.location
 
+		# The creator of the community topic doesn't see it in his RUGD
+		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
+
+		# Now, the non-creator has the topic in his stream as created
+		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		assert_that( res.json_body['Items'][0], has_entry( 'ChangeType', 'Shared' ) )
+		created_event_time = res.json_body['Items'][0]['Last Modified']
+
 		# non-creator adds comment
 		comment_data = self._create_comment_data_for_POST()
 		testapp2.post_json( topic_url, comment_data, status=201 )
@@ -316,20 +326,22 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
 		assert_that( res.json_body['Items'][0], has_entry( 'ChangeType', 'Created' ) )
 
-
-		# the commentor gets the topic created by the other user (as Modified)
+		# For the commenter, the comment did not change the event in the stream for the topic, it stays
+		# exactly the same
 		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )#, status=404 )
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
-		assert_that( res.json_body['Items'][0], has_entry( 'ChangeType', 'Modified' ) )
+		assert_that( res.json_body['Items'][0], has_entries( 'ChangeType', 'Shared',
+															 'Last Modified', created_event_time ) )
 
-		# The creator gets the topic he created in his UGD,
-		# but not the comment (???)
-		res = self.fetch_user_root_rugd( testapp, fixture.user_username )
-		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
 
-		# The commentor also gets just the topic in his UGD
-		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username )
-		assert_that( res.json_body, has_entry( 'TotalItemCount', 1 ) )
+		# The creator of the topic never sees it in his RUGD, not
+		# even after a comment is added
+		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
+
+		# The commentor also has neither the topic he didn't create,
+		# nor the comment he did create, in his RUGD.
+		self.fetch_user_root_rugd( testapp2, fixture.user2_username, status=404 )
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_creator_cannot_change_sharing_on_community_topic( self ):

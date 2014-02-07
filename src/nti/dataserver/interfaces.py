@@ -413,6 +413,15 @@ class IMutedInStream(interface.Interface):
 	object out of the local stream cache.
 	"""
 
+class INotModifiedInStreamWhenContainerModified(interface.Interface):
+	"""
+	When applied to :class:`IContainer` instances, this is a marker
+	interface that says when a :class:`IContainerModifiedEvent` is fired,
+	as is done when children are added or removed from the container,
+	the stream is not updated. This prevents spurious changing of
+	shared/created events into (newer) modified events.
+	"""
+
 # ## Groups/Roles/ACLs
 
 # some aliases

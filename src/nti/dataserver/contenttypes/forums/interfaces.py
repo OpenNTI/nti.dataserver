@@ -107,7 +107,8 @@ class ITopic(IContentContainer,
 			 IAcquirer,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.IUserTaggedContent,
-			 nti_interfaces.INeverStoredInSharedStream):
+			 nti_interfaces.INeverStoredInSharedStream,
+			 nti_interfaces.INotModifiedInStreamWhenContainerModified):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
@@ -135,7 +136,11 @@ class ITopic(IContentContainer,
 							  description="May be a IDeletedObjectPlaceholder",
 							  required=False)
 
-class IForum(IContentContainer,IContained,IAcquirer,nti_interfaces.ITitledDescribedContent):
+class IForum(IContentContainer,
+			 IContained,
+			 IAcquirer,
+			 nti_interfaces.ITitledDescribedContent,
+			 nti_interfaces.INotModifiedInStreamWhenContainerModified):
 	"""
 	A forum is contained by a board. A forum itself contains arbitrarily
 	many topics and is folderish for those topics. Forums are a level of permissioning, with only certain people
