@@ -111,8 +111,16 @@ def stream_didAddIntIdForContainedObject(contained, event):
 	for target in creation_targets:
 		_enqueue_change_to_target(target, event, accum)
 
+from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
+from zope.container.interfaces import IContainerModifiedEvent
+
 @component.adapter(nti_interfaces.IContained, IObjectModifiedEvent)
 def stream_didModifyObject( contained, event ):
+	if (IContainerModifiedEvent.providedBy(event)
+		and INotModifiedInStreamWhenContainerModified.providedBy(contained)):
+		# Bypass. See INotModifiedInStreamWhenContainerModified for rationale
+		return
+
 	current_sharing_targets = _stream_preflight(contained)
 	if current_sharing_targets is None:
 		return
