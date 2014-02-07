@@ -30,17 +30,17 @@ def get_entity(entity):
 			 if not nti_interfaces.IEntity.providedBy(entity) else entity
 	return result
 
-def uim_search(user, query):
+def uim_search(user, query, store=None):
 	user = get_entity(user)
 	uim = search_interfaces.IRepozeEntityIndexManager(user, None)
-	result = uim.search(query=query) if uim is not None else None
+	result = uim.search(query=query, store=store) if uim is not None else None
 	return result
 
-def entity_data_search(user, query, trax=True):
+def entity_data_search(user, query, store=None, trax=True):
 	transactionRunner = \
 			component.getUtility(nti_interfaces.IDataserverTransactionRunner) \
 			if trax else None
-	func = functools.partial(uim_search, user=user, query=query)
+	func = functools.partial(uim_search, user=user, query=query, store=store)
 	result = transactionRunner(func) if trax else func()
 	return result
 
@@ -89,38 +89,41 @@ class _RepozeEntityIndexController(object):
 		return result
 
 	@metric
-	def search(self, query):
+	def search(self, query, store=None):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_search_results(query)
+		results = store if store is not None else \
+				  search_results.empty_search_results(query)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
-			procs = [gevent.spawn(entity_data_search, username, query)
+			procs = [gevent.spawn(entity_data_search, username, query, results)
 					 for username in entities]
 			gevent.joinall(procs)
 			for proc in procs:
 				rest = proc.value
-				results = search_results.merge_search_results (results, rest)
+				results = search_results.merge_search_results(results, rest)
 		else:
 			for name in entities:
-				rest = uim_search(name, query)
-				results = search_results.merge_search_results (results, rest)
+				rest = uim_search(name, query, store=results)
+				results = search_results.merge_search_results(results, rest)
 		return results
 
 	@metric
-	def suggest_and_search(self, query):
+	def suggest_and_search(self, query, store=None):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_and_search_results(query)
+		results = store if store is not None else \
+				  search_results.empty_suggest_and_search_results(query)
 		for uim in self._get_search_uims(query.username):
-			rest = uim.suggest_and_search(query=query)
-			results = search_results.merge_suggest_and_search_results (results, rest)
+			rest = uim.suggest_and_search(query=query, store=results)
+			results = search_results.merge_suggest_and_search_results(results, rest)
 		return results
 
 	@metric
-	def suggest(self, query):
+	def suggest(self, query, store=None):
 		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_results(query)
+		results = store if store is not None else \
+				  search_results.empty_suggest_results(query)
 		for uim in self._get_search_uims(query.username):
-			rest = uim.suggest(query=query)
+			rest = uim.suggest(query=query, store=results)
 			results = search_results.merge_suggest_results(results, rest)
 		return results
 
