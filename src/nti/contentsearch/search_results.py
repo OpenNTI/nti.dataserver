@@ -365,6 +365,8 @@ def _preflight(a, b):
 		result = (b, True)
 	elif a is not None and b is None:
 		result = (a, True)
+	elif a is b:
+		result = (a, True)
 	else:
 		result = (None, False)
 	return result
