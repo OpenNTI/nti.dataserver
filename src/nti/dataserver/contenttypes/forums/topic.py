@@ -14,7 +14,6 @@ from zope import interface
 from zope import component
 from zope.event import notify
 from zope import lifecycleevent
-from zope.cachedescriptors.property import Lazy
 from zope.container.interfaces import INameChooser
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.schema.fieldproperty import FieldProperty
@@ -29,9 +28,15 @@ from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
+from nti.dataserver.interfaces import ICommunity
 
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
+
+from nti.utils.property import Lazy
+from nti.utils.property import CachedProperty
+
+from nti.dataserver.traversal import find_interface
 
 from nti.wref import interfaces as wref_interfaces
 
@@ -177,17 +182,20 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 	mimeType = None
 
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
-	# TODO: The permissioning isn't quite right on this. The sharing targets are the
-	# creators sharing targets but we really want just the community
+
+	@CachedProperty('__parent__')
+	def _community(self):
+		"Return the community we are embedded in"
+		return find_interface(self,ICommunity,strict=False)
 
 	@property
 	def _ntiid_creator_username(self):
 		" The community, not the user "
-		try:
-			return self.__parent__.creator.username
-		except AttributeError:
-			return None
-		
+		community = self._community
+		if community:
+			return community.username
+
+
 	@property
 	def sharingTargetsWhenPublished(self):
 		# HACK: We need to check the of the community forum has an ACL
@@ -196,7 +204,7 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 		# TODO: Remove hack
 		_forum = self.__parent__
 		if for_interfaces.IACLEnabled.providedBy(_forum):
-			# don't include the creator of the forum (e.g. community) if we have a ACL
+			# don't include the creator of the forum if we have a ACL
 			result = set()
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
@@ -205,8 +213,12 @@ class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 						result.add(entity)
 			result.discard(None)
 			return result
-		else:
-			return super(CommunityHeadlineTopic, self).sharingTargetsWhenPublished
+
+		# Instead of returning the default set from super, which would return
+		# the dynamic memberships of the *creator* of this object, we
+		# restrict it to the community in which we are embedded
+		return [self._community] if self._community else ()
+
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
