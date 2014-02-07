@@ -24,8 +24,11 @@ class _BaseFilteredMailer(object):
 	@property
 	def _default_mailer(self):
 		# We look up the utility by name, because we expect
-		# to be registered in sub-sites to override the main utility
-		return component.getUtility(ITemplatedMailer, name='default')
+		# to be registered in sub-sites to override the main utility.
+		# (Note that we use query here because zope.component arguably has
+		# a bug in accessing new random attributes DURING ZCML TIME so registrations
+		# are unreliable)
+		return component.queryUtility(ITemplatedMailer, name='default')
 
 	def __getattr__(self, name):
 		return getattr(self._default_mailer, name)
