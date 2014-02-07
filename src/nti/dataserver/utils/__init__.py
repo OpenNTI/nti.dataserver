@@ -12,6 +12,7 @@ import zope.exceptions.log
 from zope import component
 from zope.dottedname import resolve as dottedname
 from zope.component.hooks import setHooks
+from zope.component.hooks import setSite
 from zope.configuration import xmlconfig, config
 
 
@@ -215,13 +216,21 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 
 	return result
 
-def interactive_setup(root=".",  config_features=(), xmlconfig_packages=()):
+def interactive_setup(root=".",
+					  config_features=(),
+					  xmlconfig_packages=(),
+					  in_site=True):
 	"""
 	Set up the environment for interactive use, configuring the
 	database and dataserver site. The root database ('Users')
 	is returned.
 
 	This should be done very early on in an interactive session.
+
+	:keyword in_site: If ``True`` (the default), then the database
+		will be opened and the ``nti.dataserver`` site will be made
+		the current ZCA site. The return value will be
+		(db, opened-connection, db-root)
 	"""
 
 	logging.basicConfig(level=logging.INFO)
@@ -238,4 +247,12 @@ def interactive_setup(root=".",  config_features=(), xmlconfig_packages=()):
 	from nti.dataserver.config import temp_get_config
 	env = temp_get_config(root)
 	dbs = env.connect_databases()
-	return dbs[0]
+	if not in_site:
+		return dbs[0]
+
+	conn = dbs[0].open()
+	root = conn.root()
+	ds_folder = root['nti.dataserver']
+	setSite(ds_folder)
+
+	return (dbs[0], conn, root)
