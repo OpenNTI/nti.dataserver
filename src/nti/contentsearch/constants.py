@@ -44,6 +44,7 @@ HIT_META_DATA	 = u'HitMetaData'
 PHRASE_SEARCH 	 = u'PhraseSearch'
 CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
 LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
+CREATED_TIME 	 = unicode(ext_interfaces.StandardExternalFields.CREATED_TIME)
 
 id_				 = unicode(ext_interfaces.StandardInternalFields.ID)
 oid_			 = u'oid'

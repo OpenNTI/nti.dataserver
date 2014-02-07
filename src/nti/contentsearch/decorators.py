@@ -29,7 +29,7 @@ from .constants import (tags_, content_, title_, replacementContent_,
 						redactionExplanation_)
 
 from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS,
-						QUERY, HIT_COUNT, PHRASE_SEARCH)
+						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME)
 
 SNIPPET = 'Snippet'
 
@@ -50,6 +50,7 @@ class _SearchHitHighlightDecorator(object):
 
 	def decorateExternalObject(self, original, external):
 		query = original.Query
+		external.pop(CREATED_TIME, None)
 		text = external.get(SNIPPET, None)
 		hi = self.hilight_text(query, text)
 		self.set_snippet(hi, external)
@@ -148,6 +149,7 @@ class _ResultsDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateCommon(self, original, external):
+		external.pop(CREATED_TIME, None)
 		external[QUERY] = original.Query.term
 		external[HIT_COUNT] = len(external[ITEMS])
 		external[PHRASE_SEARCH] = original.Query.is_phrase_search
