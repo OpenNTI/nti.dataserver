@@ -29,7 +29,7 @@ from .constants import (tags_, content_, title_, replacementContent_,
 						redactionExplanation_)
 
 from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS,
-						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME)
+						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME, SEARCH_QUERY)
 
 SNIPPET = 'Snippet'
 
@@ -150,6 +150,7 @@ class _ResultsDecorator(object):
 
 	def decorateCommon(self, original, external):
 		external.pop(CREATED_TIME, None)
+		external[SEARCH_QUERY] = external[QUERY]
 		external[QUERY] = original.Query.term
 		external[HIT_COUNT] = len(external[ITEMS])
 		external[PHRASE_SEARCH] = original.Query.is_phrase_search

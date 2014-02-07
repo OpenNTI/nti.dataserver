@@ -8,6 +8,8 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import equal_to
 from hamcrest import has_entry
@@ -58,6 +60,7 @@ class TestSearchExternal(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_externalize_search_results(self):
 		qo = QueryObject.create("wind")
+		qo.limit = 100
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		searchResults = component.getUtility(search_interfaces.ISearchResultsCreator)(qo)
 
@@ -84,6 +87,10 @@ class TestSearchExternal(ConfiguringTestBase):
 		factory = find_factory_for(eo)
 		new_results = factory()
 		update_from_external_object(new_results, eo)
+
+		assert_that(new_results, has_property('Query', is_not(none())))
+		assert_that(new_results, has_property('Query', has_property('limit', is_(100))))
+
 		new_hits = list(new_results.Hits)
 		assert_that(new_hits, has_length(len(old_hits)))
 		assert_that(new_hits, equal_to(old_hits))
