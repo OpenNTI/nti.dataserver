@@ -265,6 +265,7 @@ def GeneralForumCommunityAdapter(community):
 		if len(board) == 1:
 			# Whatever the single forum is
 			return board.values()[0]
+
 		forum = board.get( CommunityForum.__default_name__ )
 		if forum is not None:
 			return forum

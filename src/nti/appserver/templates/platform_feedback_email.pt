@@ -63,7 +63,7 @@
 					<tbody style="font-family: monospace;">
 						<tr tal:repeat="item table/data">
 							<td tal:content="python:item[0]">Variable Name</td>
-							<td tal:content="python:item[1]">Variable Value</td>
+							<td tal:content="structure python:item[1]">Variable Value</td>
 						</tr>
 					</tbody>
 				</table>

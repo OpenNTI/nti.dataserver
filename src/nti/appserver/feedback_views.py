@@ -11,6 +11,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import textwrap
+from pprint import pprint
+from cStringIO import StringIO
+from cgi import escape as html_escape
+
 from zope import component
 from pyramid.view import view_config
 
@@ -36,12 +40,36 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	# No need to repeat it here
 	del request_info[body_key]
 
+	def _enc(v):
+		if isinstance(v,unicode):
+			v = v.encode('utf-8', errors='ignore')
+		return v
+
+	def _formatted(v, as_html=False, text_pfx=''):
+		if not isinstance(v,basestring):
+			if isinstance(v,dict):
+				v = sorted([(_enc(kk),_enc(vv)) for kk, vv in v.items()])
+			if isinstance(v,list):
+				v = [_enc(vv) for vv in v]
+			buf = StringIO()
+			pprint(v, stream=buf, width=50)
+			v = buf.getvalue()
+		v = _enc(v)
+
+		if as_html:
+			v = html_escape(v)
+			v = v.replace('\n', '<br />')
+		else:
+			v = v.replace('\n', '\n' + text_pfx)
+		return v
+
 	def _format_table(tbl):
 		if not tbl:
 			return ''
+		# Make everything line up nicely, even with multiple lines in a value
 		key_width = len(max(tbl, key=len))
-
-		lines = [(str(k).ljust( key_width + 10 ) + repr(v))
+		val_line_pfx = ' ' * (key_width + 10)
+		lines = [(str(k).ljust( key_width + 10 ) + _formatted(v, text_pfx=val_line_pfx))
 				 for k, v
 				 in sorted(tbl.items())]
 		return '\n\n    '.join( lines )
@@ -62,9 +90,16 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	# The template expects 'body' so ensure that's what it gets
 	json_body['body'] = json_body[body_key]
 
-	# Pre sort and name the tables so the template doesn't have to
-	tables = [{'name': 'Request Information', 'data': sorted(request_info.items())},
-			  {'name': 'Request Details',     'data': sorted(request_details.items())}]
+	# Pre sort and name the tables so the template doesn't have to. Also do some
+	# pretty printing for the incoming info items
+	def _format_html_items(items):
+		request_info_items = []
+		for k, v in items:
+			request_info_items.append((k,_formatted(v, True)))
+		return sorted(request_info_items)
+
+	tables = [{'name': 'Request Information', 'data': _format_html_items(request_info.items())},
+			  {'name': 'Request Details',     'data': _format_html_items(request_details.items())}]
 
 	cur_domain = request_details.get('HTTP_HOST', request_details.get('SERVER_NAME'))
 	cur_domain = cur_domain.split(':')[0] # drop port

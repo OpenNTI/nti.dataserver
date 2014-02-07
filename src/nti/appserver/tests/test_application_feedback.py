@@ -90,12 +90,20 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 	def test_post_crash_sends_email(self):
 		url = '/dataserver2/@@send-crash-report'
 		msg = self._do_test_email(url, 'Crash Report From ossmkitty on localhost', 'message',
-								  {'file': 'thing.js', 'line': 82 })
+								  {'file': 'thing.js', 'line': 82,
+								   'collectedLog': ['an', 'array', 'of', 'strings',
+													'that sometimes', 'can get to be',
+													'really long'],
+								   'stacktrace': {'sometimes': 'comes in', 'as a': 'dict'}})
 
-		assert_that( decodestring(msg.as_string()),
-					 contains_string( "    file          u'thing.js'" ) )
-
-		assert_that( decodestring(msg.as_string()),
+		msg_string = decodestring(msg.as_string())
+		assert_that( msg_string,
+					 contains_string( "file                  thing.js" ) )
+		assert_that( msg_string,
+					 contains_string( "collectedLog          ['an',\n"))
+		assert_that( msg_string,
+					 contains_string( "<td>[&lt;class 'greenlet.GreenletExit'&gt;,<br /> &lt;type"))
+		assert_that( msg_string,
 					 does_not( contains_string('HTTP_COOKIE')))
 
 		assert_that( msg, has_entry( 'To', 'crash.reports@nextthought.com'))
@@ -124,4 +132,4 @@ class TestApplicationFeedback(SharedApplicationTestBase):
 								  {'file': 'thing.js', 'line': 82 })
 
 		assert_that( decodestring(msg.as_string()),
-					 contains_string('REMOTE_USER_DATA                   \'sjohnson@nextthought.com\'') )
+					 contains_string("REMOTE_USER_DATA                   sjohnson@nextthought.com") )
