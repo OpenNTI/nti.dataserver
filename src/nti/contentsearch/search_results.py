@@ -349,14 +349,26 @@ def empty_search_results(query):
 	result = component.getUtility(search_interfaces.ISearchResultsCreator)(query)
 	return result
 
+def get_or_create_search_results(query, store=None):
+	results = store if store is not None else empty_search_results(query)
+	return results
+
 def empty_suggest_and_search_results(query):
 	result = component.getUtility(
 						search_interfaces.ISuggestAndSearchResultsCreator)(query)
 	return result
 
+def get_or_create_suggest_and_search_results(query, store=None):
+	results = store if store is not None else empty_suggest_and_search_results(query)
+	return results
+
 def empty_suggest_results(query):
 	result = component.getUtility(search_interfaces.ISuggestResultsCreator)(query)
 	return result
+
+def get_or_create_suggest_results(query, store=None):
+	results = store if store is not None else empty_suggest_results(query)
+	return results
 
 def _preflight(a, b):
 	if a is None and b is None:

@@ -44,46 +44,39 @@ class _SearchableContent(object):
 		return self._schema
 
 	def _parse_query(self, query, **kwargs):
-		qo = search_interfaces.ISearchQuery(query)
-		parsed_query = whoosh_query.parse_query(qo, self.schema)
-		return qo, parsed_query
+		query = search_interfaces.ISearchQuery(query)
+		parsed_query = whoosh_query.parse_query(query, self.schema)
+		return query, parsed_query
 
 	def search(self, searcher, query, store=None, *args, **kwargs):
-		qo, parsed_query = self._parse_query(query, **kwargs)
-		store = store if store is not None else \
-				search_results.empty_search_results(qo)
-		results = self._execute_search(searcher, parsed_query, qo, store=store)
+		query, parsed_query = self._parse_query(query, **kwargs)
+		store = search_results.get_or_create_search_results(query, store)
+		results = self._execute_search(searcher, parsed_query, query, store=store)
 		return results
 
 	def suggest_and_search(self, searcher, query, store=None, *args, **kwargs):
-		qo = search_interfaces.ISearchQuery(query, **kwargs)
-		store = store if store is not None else \
-				search_results.empty_suggest_and_search_results(qo)
-		if ' ' in qo.term or qo.IsPrefixSearch or qo.IsPhraseSearch:
-			results = self.search(searcher, qo, store)
+		query = search_interfaces.ISearchQuery(query)
+		store = search_results.get_or_create_suggest_and_search_results(query, store)
+		if ' ' in query.term or query.IsPrefixSearch or query.IsPhraseSearch:
+			results = self.search(searcher, query, store)
 		else:
-			suggest_results = self.suggest(searcher, qo)
-			suggestions = list(suggest_results.suggestions)
+			suggest_results = self.suggest(searcher, query)
+			suggestions = list(suggest_results.Suggestions)
 			if suggestions:
-				suggestions = rank_words(qo.term, suggestions)
+				suggestions = rank_words(query.term, suggestions)
 				qo, parsed_query = self._parse_query(suggestions[0], **kwargs)
-
-				results = \
-					self._execute_search(searcher, parsed_query, qo, store=store)
-
+				results = self._execute_search(searcher, parsed_query, qo, store=store)
 				results.add_suggestions(suggestions)
 			else:
-				results = self.search(searcher, qo, store)
-
+				results = self.search(searcher, query, store)
 		return results
 
 	def suggest(self, searcher, word, store=None, *args, **kwargs):
-		qo = search_interfaces.ISearchQuery(word, **kwargs)
-		prefix = qo.prefix or len(qo.term)
-		maxdist = qo.maxdist or self.default_word_max_dist
-		results = store if store is not None else \
-				  search_results.empty_suggest_results(qo)
-		records = searcher.suggest(content_, qo.term, maxdist=maxdist, prefix=prefix)
+		query = search_interfaces.ISearchQuery(word)
+		prefix = query.prefix or len(query.term)
+		maxdist = query.maxdist or self.default_word_max_dist
+		results = search_results.get_or_create_suggest_results(query, store)
+		records = searcher.suggest(content_, query.term, maxdist=maxdist, prefix=prefix)
 		results.extend(records)
 		return results
 
@@ -94,10 +87,8 @@ class _SearchableContent(object):
 		if not length:
 			return store
 
-		# return all source objects
 		objects = self.get_objects_from_whoosh_hits(search_hits, docids)
 		store.extend(objects)
-
 		return store
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids):

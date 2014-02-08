@@ -23,7 +23,6 @@ from nti.contentprocessing import rank_words
 
 from . import common
 from . import constants
-from . import search_query
 from . import _repoze_index
 from . import _repoze_query
 from . import search_results
@@ -111,52 +110,45 @@ class _RepozeEntityIndexManager(_search_indexmanager._SearchEntityIndexManager):
 		return results
 
 	def search(self, query, store=None, *args, **kwargs):
-		qo = search_query.QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_search_on_types(qo.searchOn)
-		results = store if store is not None else \
-				  search_results.empty_search_results(qo)
-		results = self._do_search(qo, searchOn, results)
+		query = search_interfaces.ISearchQuery(query)
+		searchOn = self._adapt_search_on_types(query.searchOn)
+		results = search_results.get_or_create_search_results(query, store)
+		results = self._do_search(query, searchOn, results)
 		return results
 
 	def suggest(self, query, store=None, *args, **kwargs):
-		qo = search_query.QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_search_on_types(qo.searchOn)
-		results = store if store is not None else \
-				  search_results.empty_suggest_results(qo)
-		if qo.is_empty:
+		query = search_interfaces.ISearchQuery(query)
+		searchOn = self._adapt_search_on_types(query.searchOn)
+		results = search_results.get_or_create_suggest_results(query, store)
+		if query.is_empty:
 			return results
 
-		threshold = qo.threshold
-		prefix = qo.prefix or len(qo.term)
+		threshold = query.threshold
+		prefix = query.prefix or len(query.term)
 		for type_name in searchOn:
 			catalog = self.get_catalog(type_name)
 			textfield = catalog.get(constants.content_, None)
 			if zopyx_search_interfaces.ICatalogTextIndexNG3.providedBy(textfield):
-				words_t = textfield.suggest(term=qo.term,
+				words_t = textfield.suggest(term=query.term,
 											threshold=threshold,
 											prefix=prefix)
 				results.extend(map(lambda t: t[0], words_t))
-
 		return results
 
 	def suggest_and_search(self, query, limit=None, store=None, *args, **kwargs):
-		queryobject = search_query.QueryObject.create(query, **kwargs)
-		searchOn = self._adapt_search_on_types(queryobject.searchOn)
-		results = store if store is not None else \
-				  search_results.empty_suggest_and_search_results(queryobject)
-		if 	' ' in queryobject.term or queryobject.is_prefix_search or \
-			queryobject.is_phrase_search:
-			results = self._do_search(queryobject, searchOn, results)
+		query = search_interfaces.ISearchQuery(query)
+		searchOn = self._adapt_search_on_types(query.searchOn)
+		results = search_results.get_or_create_suggest_and_search_results(query, store)
+		if ' ' in query.term or query.IsPrefixSearch or query.IsPhraseSearch:
+			results = self._do_search(query, searchOn, results)
 		else:
-			result = self.suggest(queryobject)
-			suggestions = result.Suggestions
+			suggest_results = self.suggest(query)
+			suggestions = suggest_results.Suggestions
 			if suggestions:
 				suggestions = rank_words(query.term, suggestions)
-				queryobject.term = suggestions[0]
-
-			results = self._do_search(queryobject, searchOn, results)
+				query.term = suggestions[0]
+			results = self._do_search(query, searchOn, results)
 			results.add_suggestions(suggestions)
-
 		return results
 
 	# ----------------
