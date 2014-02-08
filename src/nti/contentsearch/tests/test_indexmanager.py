@@ -58,12 +58,14 @@ class TestIndexManager(ConfiguringTestBase):
 		cls.now = time.time()
 		indexname = 'bleach'
 		cls.book_idx_dir = tempfile.mkdtemp(dir="/tmp")
-		_, storage = create_directory_index(indexname, create_book_schema(), cls.book_idx_dir)
+		_, storage = create_directory_index(indexname, create_book_schema(),
+											cls.book_idx_dir)
 		cls.bim = WhooshContentSearcher(indexname, storage)
 
 		writer = cls.bim.get_index(indexname).writer()
 		for k, x in enumerate(phrases):
-			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
+			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k),
+											  nttype='bleach', specific='manga')),
 								title=unicode(x),
 								content=unicode(x),
 								quick=unicode(x),
@@ -88,7 +90,9 @@ class TestIndexManager(ConfiguringTestBase):
 	@WithMockDSTrans
 	def test_add_book(self):
 		self.im = self.create_index_mananger()
-		assert_that(self.im.add_book(indexname='unknown', ntiid='unknown', indexdir='/tmp'), is_(False))
+		assert_that(self.im.add_book(indexname='unknown', ntiid='unknown',
+									 indexdir='/tmp'),
+					is_(False))
 
 	@WithMockDSTrans
 	def test_search_book(self):
@@ -112,7 +116,8 @@ class TestIndexManager(ConfiguringTestBase):
 		conn = mock_dataserver.current_transaction
 
 		username = str(uuid.uuid4()).split('-')[-1] + '@nti.com'
-		usr = User.create_user(mock_dataserver.current_mock_ds, username=username, password='temp001')
+		usr = User.create_user(mock_dataserver.current_mock_ds, username=username,
+							   password='temp001')
 
 		for x in strings:
 			note = Note()
@@ -190,7 +195,8 @@ class TestIndexManager(ConfiguringTestBase):
 		_, usr = self._add_notes_and_index()
 		self.wait_delay()
 
-		q = QueryObject(term='not_to_be_found', username=usr.username, searchOn=('note',))
+		q = QueryObject(term='not_to_be_found', username=usr.username,
+						searchOn=('note',))
 		hits = self.im.user_data_search(query=q)
 		assert_that(hits, has_length(0))
 

@@ -60,7 +60,7 @@ class IndexManager(object):
 		query = search_query.QueryObject.create(query)
 		results = search_results.empty_search_results(query)
 		start = time.time()
-		if False and self.parallel_search:
+		if self.parallel_search:
 			greenlet = gevent.spawn(self.content_search, query=query, store=results)
 			ugd_results = self.user_data_search(query=query, store=results)
 			cnt_results = greenlet.get()
