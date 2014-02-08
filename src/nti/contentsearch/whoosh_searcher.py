@@ -139,33 +139,30 @@ class WhooshContentSearcher(object):
 	@metric
 	def search(self, query, store=None, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
-		results = store if store is not None else \
-				  search_results.empty_search_results(query)
+		store = search_results.get_or_create_search_results(query, store)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
-				rs = s.search(query, store=results)
-				results = search_results.merge_search_results(results, rs)
-		return results
+				rs = s.search(query, store=store)
+				store = search_results.merge_search_results(store, rs)
+		return store
 
 	def suggest_and_search(self, query, store=None, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
-		results = store if store is not None else \
-				  search_results.empty_suggest_and_search_results(query)
+		store = search_results.get_or_create_suggest_and_search_results(query, store)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
-				rs = s.suggest_and_search(query, store=results)
-				results = search_results.merge_suggest_and_search_results(results, rs)
-		return results
+				rs = s.suggest_and_search(query, store=store)
+				store = search_results.merge_suggest_and_search_results(store, rs)
+		return store
 
 	def suggest(self, query, store=None, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
-		results = store if store is not None else \
-				  search_results.empty_suggest_results(query)
+		store = search_results.get_or_create_suggest_results(query, store)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
-				rs = s.suggest(query, store=results)
-				results = search_results.merge_suggest_results(results, rs)
-		return results
+				rs = s.suggest(query, store=store)
+				store = search_results.merge_suggest_results(store, rs)
+		return store
 
 	def close(self):
 		for s in self._searchables.values():

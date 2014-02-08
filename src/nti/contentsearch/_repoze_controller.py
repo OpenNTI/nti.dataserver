@@ -21,7 +21,6 @@ from perfmetrics import metric
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import search_query
 from . import search_results
 from . import interfaces as search_interfaces
 
@@ -90,9 +89,8 @@ class _RepozeEntityIndexController(object):
 
 	@metric
 	def search(self, query, store=None):
-		query = search_query.QueryObject.create(query)
-		results = store if store is not None else \
-				  search_results.empty_search_results(query)
+		query = search_interfaces.ISearchQuery(query)
+		results = search_results.get_or_create_search_results(query, store)
 		entities = self._get_search_entities(query.username)
 		if self.parallel_search:
 			procs = [gevent.spawn(entity_data_search, username, query, results)
@@ -109,9 +107,8 @@ class _RepozeEntityIndexController(object):
 
 	@metric
 	def suggest_and_search(self, query, store=None):
-		query = search_query.QueryObject.create(query)
-		results = store if store is not None else \
-				  search_results.empty_suggest_and_search_results(query)
+		query = search_interfaces.ISearchQuery(query)
+		results = search_results.get_or_create_suggest_and_search_results(query, store)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest_and_search(query=query, store=results)
 			results = search_results.merge_suggest_and_search_results(results, rest)
@@ -119,9 +116,8 @@ class _RepozeEntityIndexController(object):
 
 	@metric
 	def suggest(self, query, store=None):
-		query = search_query.QueryObject.create(query)
-		results = store if store is not None else \
-				  search_results.empty_suggest_results(query)
+		query = search_interfaces.ISearchQuery(query)
+		results = search_results.get_or_create_suggest_results(query, store)
 		for uim in self._get_search_uims(query.username):
 			rest = uim.suggest(query=query, store=results)
 			results = search_results.merge_suggest_results(results, rest)
