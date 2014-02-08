@@ -10,6 +10,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+import gevent
+import functools
+
 from zope import component
 from zope import interface
 
@@ -56,10 +60,22 @@ class IndexManager(object):
 	def search(self, query):
 		query = search_query.QueryObject.create(query)
 		results = search_results.empty_search_results(query)
-		cnt_results = self.content_search(query=query, store=results)
-		ugd_results = self.user_data_search(query=query, store=results)
-		results = search_results.merge_search_results(cnt_results, ugd_results)
-		logger.debug("Query '%s' returned %s hit(s)" % (query.term, len(results)))
+		start = time.time()
+		if False and self.parallel_search:
+			funcs = [functools.partial(f, query=query, store=results)  \
+					 for f in (self.content_search, self.user_data_search)]
+			transaction_runner = \
+					component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			procs = [gevent.spawn(transaction_runner, runner) for runner in funcs]
+			gevent.joinall(procs)
+			for proc in procs:
+				results = search_results.merge_search_results(results, proc.value)
+		else:
+			cnt_results = self.content_search(query=query, store=results)
+			ugd_results = self.user_data_search(query=query, store=results)
+			results = search_results.merge_search_results(cnt_results, ugd_results)
+		logger.debug("Query '%s' returned %s hit(s). Took %.3f(secs)" %
+					 (query, len(results), time.time() - start))
 		return results
 
 	@metric
