@@ -25,6 +25,8 @@ from nti.wref import interfaces as wref_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import missing_user
 
+from nti.utils.property import read_alias
+
 @functools.total_ordering
 @interface.implementer(wref_interfaces.ICachingWeakRef)
 @component.adapter(nti_interfaces.IEntity)
@@ -44,6 +46,10 @@ class WeakRef(object):
 
 		The username being referenced. Note that this is normalized to lower case.
 
+	.. py:attribute:: intid
+
+		The intid of the entity being referenced.
+
 	.. todo:: This is very similar to :class:`nti.intid.wref.WeakRef`.
 
 	"""
@@ -59,6 +65,8 @@ class WeakRef(object):
 		# _v_entity_cache is a volatile attribute. It's either None, meaning we have
 		# no idea, the resolved Entity object, or False
 		self._v_entity_cache = entity
+
+	intid = read_alias('_entity_id')
 
 	def __getstate__( self ):
 		return self.username, self._entity_id

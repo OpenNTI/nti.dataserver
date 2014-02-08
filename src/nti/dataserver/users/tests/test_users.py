@@ -457,6 +457,9 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 			user2.follow( user1 )
 			user2_changes = list()
 			def _noticeChange( change ):
+				if change.type == nti_interfaces.SC_MODIFIED:
+					from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
+
 				user2_changes.append( copy.copy( change ) )
 				User._noticeChange( user2, change )
 			user2._noticeChange = _noticeChange
@@ -967,3 +970,29 @@ class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
 			assert_that( user._p_mtime, greater_than( 0 ) )
 
 			update_from_external_object( user, {} )
+
+from nti.testing.matchers import validly_provides
+from hamcrest import contains_inanyorder
+
+class TestCommunity(mock_dataserver.SharedConfiguringTestBase):
+
+	@WithMockDSTrans
+	def test_community_enumarable_adapter(self):
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
+		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
+		comm = Community.create_entity( self.ds, username='AoPS' )
+
+		user.record_dynamic_membership(comm)
+		user2.record_dynamic_membership(comm)
+
+		container = nti_interfaces.IEntityContainer(comm)
+		assert_that(container,
+					validly_provides(nti_interfaces.ILengthEnumerableEntityContainer,
+									 nti_interfaces.IIntIdIterable))
+
+		assert user in container
+		assert user2 in container
+		assert_that( container, has_length(2) )
+
+		assert_that( container.iter_intids(),
+					 contains_inanyorder( user._ds_intid, user2._ds_intid ))
