@@ -65,8 +65,8 @@
 	<adapter provides="nti.dataserver.interfaces.IEnumerableEntityContainer"
 			 factory=".friends_lists._DynamicFriendsListEntityIterable" />
 
-	<!-- Communities can report memberships -->
-	<adapter provides="nti.dataserver.interfaces.IEntityContainer"
+	<!-- Communities can report memberships, iterate them, report length, iterate intids -->
+	<adapter provides="nti.dataserver.interfaces.ILengthEnumerableEntityContainer"
 			 factory=".users.CommunityEntityContainer" />
 
 

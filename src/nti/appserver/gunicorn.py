@@ -391,7 +391,7 @@ class _ServerFactory(object):
 			"""
 
 			def __thread_name__(self):
-				# The WorkerGreenlets themselves are cached and reused,
+				# The WorkerGreenlets themselves are cached and reused (XXX: Where?),
 				# but the request we can cache on
 				prequest = get_current_request()
 				if not prequest:

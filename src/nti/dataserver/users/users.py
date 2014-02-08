@@ -254,6 +254,12 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 	def iter_member_usernames(self):
 		return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_members')
 
+	def iter_intids_of_possible_members(self):
+		self._p_activate()
+		if '_members' in self.__dict__:
+			for wref in self._members:
+				yield wref.intid
+
 @component.adapter(nti_interfaces.IUser,nti_interfaces.IStartDynamicMembershipEvent)
 def _add_member_to_community(entity, event):
 	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
@@ -264,17 +270,25 @@ def _remove_member_from_community(entity, event):
 	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
 		event.target._del_member(entity)
 
-@interface.implementer(nti_interfaces.IEntityContainer)
+@interface.implementer(nti_interfaces.IEntityIntIdIterable,
+					   nti_interfaces.ILengthEnumerableEntityContainer)
 @component.adapter(nti_interfaces.ICommunity)
 class CommunityEntityContainer(object):
 
 	def __init__( self, context ):
 		self.context = context
 
+	def __len__(self):
+		return len(self.context.iter_member_usernames())
+
+	def __iter__(self):
+		return self.context.iter_members()
+
+	def iter_intids(self):
+		return self.context.iter_intids_of_possible_members()
+
 	def __contains__( self, entity ):
 		try:
-			#return self.context in entity.dynamic_memberships
-			#return entity.is_dynamic_member_of(self.context)
 			return entity in self.context
 		except AttributeError:
 			return False

@@ -721,6 +721,23 @@ class IUsernameIterable(interface.Interface):
 		that have already been deleted.
 		"""
 
+class IIntIdIterable(interface.Interface):
+	"""
+	Something that can iterate across intids.
+	Typically this will be used as a mixin interface,
+	with the containing object defining what sort of
+	reference the intid will be to.
+
+	In general, the caller cannot assume that the intids
+	are entirely valid, and should use ``queryObject``
+	instead of ``getObject``.
+	"""
+
+	def iter_intids():
+		"""
+		Return an iterable across intids.
+		"""
+
 class IEntityIterable(interface.Interface):
 	"""
 	Something that can iterate across entities (usually but not always :class:`IUser`), typically
@@ -732,6 +749,12 @@ class IEntityIterable(interface.Interface):
 		Return iterator across entity objects.
 		"""
 
+class IEntityIntIdIterable(IEntityIterable,
+						   IIntIdIterable):
+	"""
+	Iterate across both entities and their intids easily.
+	"""
+
 class IEntityContainer(interface.Interface):
 	"""
 	Something that can report whether an entity "belongs" to it.
@@ -742,10 +765,21 @@ class IEntityContainer(interface.Interface):
 		Is the entity a member of this container?
 		"""
 
-class IEnumerableEntityContainer(IEntityContainer, IEntityIterable):
+class IEnumerableEntityContainer(IEntityContainer,
+								 IEntityIntIdIterable):
 	"""
 	Something that can enumerate and report on entity memberships.
 	"""
+
+class ILengthEnumerableEntityContainer(IEnumerableEntityContainer):
+	"""
+	Something that can report on (approximately) how many entities
+	it contains. (The implementation is allowed to be loose in the case
+	of weakrefs.)
+	"""
+
+	def __len__():
+		"About how many entities in this container?"
 
 class IOpenIdUser(IUser):
 	"""

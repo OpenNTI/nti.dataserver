@@ -71,6 +71,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 
 	def __nonzero__( self ):
 		return True # despite what we contain
+	__bool__ = __nonzero__
 
 	def __iter__(self):
 		"""
@@ -91,6 +92,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			return nti_interfaces.IWeakRef(entity, None) in self._friends_wref_set
 		except TypeError:
 			return False # "Object has default comparison"
+
+	def iter_intids(self):
+		for wref in self._friends_wref_set:
+			yield wref.intid
 
 	def addFriend( self, friend ):
 		"""
@@ -142,7 +147,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			self.updateLastMod()
 			return result
 		return 0
-	
+
 	def removeFriend( self, friend ):
 		"""
 		Remove the `friend` from this object.
@@ -304,7 +309,8 @@ class _FriendsListUsernameIterable(object):
 	def __iter__(self):
 		return (x.username for x in self.context)
 
-@interface.implementer(nti_interfaces.IEnumerableEntityContainer)
+@interface.implementer(nti_interfaces.IEntityIntIdIterable,
+					   nti_interfaces.ILengthEnumerableEntityContainer)
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListEntityIterable(object):
 
@@ -314,8 +320,14 @@ class _FriendsListEntityIterable(object):
 	def __iter__(self):
 		return self.context #(x for x in self.context)
 
+	def __len__(self):
+		return len(self.context)
+
 	def __contains__(self, other):
 		return other in self.context
+
+	def iter_intids(self):
+		return self.context.iter_intids()
 
 from nti.dataserver.sharing import DynamicSharingTargetMixin
 
@@ -422,6 +434,8 @@ class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 		names.add( self.context.creator.username )
 		return iter(names)
 
+from zope.intid.interfaces import IIntIds
+
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	"""
@@ -431,13 +445,28 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	that the creator gets notices.
 	"""
 
+	# Note that our __len__, inherited from super,
+	# is inconsistent with what we iterate over.
+
 	def __iter__( self ):
-		result = set( super(_DynamicFriendsListEntityIterable,self).__iter__() )
-		result.add( self.context.creator )
-		return iter(result)
+		# Creators are not supposed to be a member of their own
+		# friends lists, so we can iterate directly without
+		# an intermediate set
+		for x in super(_DynamicFriendsListEntityIterable,self).__iter__():
+			yield x
+		if self.context.creator:
+			yield self.context.creator
 
 	def __contains__(self, other):
 		return super(_DynamicFriendsListEntityIterable,self).__contains__(other) or other == self.context.creator
+
+	def iter_intids(self):
+		for x in super(_DynamicFriendsListEntityIterable,self).iter_intids():
+			yield x
+		if self.context.creator:
+			cid = component.getUtility(IIntIds).queryId(self.context.creator)
+			if cid:
+				yield cid
 
 
 from nti.dataserver import datastructures

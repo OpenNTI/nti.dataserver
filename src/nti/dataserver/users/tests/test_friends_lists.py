@@ -225,6 +225,52 @@ def test_delete_dynamic_friendslist_clears_memberships():
 	assert_that( list(user2.entities_followed), does_not( has_item( fl1 ) ) )
 	assert_that( user2, has_property( '_dynamic_memberships', has_length( 1 ) ) )
 
+from nti.dataserver.interfaces import IEntityContainer
+from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
+from nti.dataserver.interfaces import IIntIdIterable
+from nti.testing.matchers import validly_provides
+from hamcrest import contains_inanyorder
+from zope.intid.interfaces import IIntIds
+from zope import component
+
+@WithMockDSTrans
+def test_dfl_container():
+	owner = users.User.create_user( username='owner@bar' )
+	user = users.User.create_user( username='1foo@bar' )
+	user2 = users.User.create_user( username='2foo2@bar' )
+	user3 = users.User.create_user( username='3foo3@bar' )
+	user4 = users.User.create_user( username='4foo4@bar' )
+	user5 = users.User.create_user( username='5foo5@bar' )
+	user6 = users.User.create_user( username='6foo6@bar' )
+	user7 = users.User.create_user( username='7foo7@bar' )
+	user8 = users.User.create_user( username='8foo8@BAR' )
+
+	all_users = user, user2, user3, user4, user5, user6, user7, user8
+
+	fl = users.DynamicFriendsList( 'MyList' )
+	# Needs an intid before we can add people to it
+	component.getUtility(IIntIds).register(fl)
+	fl.creator = owner
+	for x in all_users:
+		fl.addFriend(x)
+
+	container = IEntityContainer(fl)
+	assert_that(container,
+				validly_provides(ILengthEnumerableEntityContainer,
+								 IIntIdIterable))
+
+	members = all_users + (owner, )
+	for x in members:
+		__traceback_info__ = x
+		assert x in container
+
+	assert_that( container, has_length(8) )
+
+	assert_that( container.iter_intids(),
+				 contains_inanyorder( *(x._ds_intid for x in members) ) )
+	assert_that( list(container),
+				 contains_inanyorder( *members ) )
+
 
 
 from nti.dataserver.tests.test_authorization_acl import permits
@@ -411,7 +457,7 @@ def test_replace_dfl_sharing_with_a_member():
 def test_remove_friends():
 	owner = users.User.create_user(username='owner@bar')
 	fl1 = users.DynamicFriendsList(username='Friends')
-	fl1.creator = owner 
+	fl1.creator = owner
 	owner.addContainedObject( fl1 )
 
 	collected = []
@@ -419,8 +465,8 @@ def test_remove_friends():
 		user = users.User.create_user(username='%sfoo@bar' % x)
 		fl1.addFriend( user )
 		collected.append(user)
-		
-	
+
+
 	result = fl1.removeFriends(*collected[50:])
 	assert_that(result, is_(50))
 	assert_that(fl1, has_length(50))

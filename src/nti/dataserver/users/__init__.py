@@ -14,8 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
-from . import interfaces
-
 # BWC re-exports
 from .users import Entity, FriendsList, DynamicFriendsList, Principal, _Password
 from .users import Community, Everyone, _FriendsListUsernameIterable, Device
