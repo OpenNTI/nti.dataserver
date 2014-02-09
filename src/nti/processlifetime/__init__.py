@@ -26,6 +26,21 @@ DatabaseOpened = DatabaseOpened
 IProcessStarting = IProcessStarting
 ProcessStarting = ProcessStarting
 
+class IAfterDatabaseOpenedEvent(interface.Interface):
+	"""
+	In the startup sequence, this should be notified after the
+	:class:`IDatabaseOpened` event has been notified for each
+	database, but before the root is available. This allows the
+	application a chance to do some intermediate processing.
+	"""
+	database = interface.Attribute("The main database.")
+
+@interface.implementer(IAfterDatabaseOpenedEvent)
+class AfterDatabaseOpenedEvent(object):
+
+	def __init__(self, database):
+		self.database = database
+
 
 class IProcessWillFork(interface.Interface):
 	"""

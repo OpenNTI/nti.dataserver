@@ -112,60 +112,40 @@ class MinimalDataserver(object):
 		if self.db is not None:
 			self.db.close()
 
-		# Although _setup_dbs returns a tuple, we don't actually want to hold a ref
-		# to any database except the root database. All access to multi-databases
-		# should go through an open connection.
-		self.db, _, _ = self._setup_dbs( self._parentDir, None, None ) # TODO: 3 args for backwards compat
+		# We don't actually want to hold a ref to any database except
+		# the root database. All access to multi-databases should go
+		# through an open connection.
+		self.db = self._setup_dbs( self._parentDir, None, None ) # TODO: 3 args for backwards compat
 
-		# In zope, IDatabaseOpened is fired by XXX.
+		# In zope, IDatabaseOpened is fired by
+		# zope.app.appsetup.appsetup.
 		# zope.app.appsetup.bootstrap.bootStrapSubscriber listens for
 		# this event, and ensures that the database has a IRootFolder
 		# object. Once that happens, then bootStrapSubscriber fires
 		# IDatabaseOpenedWithRoot.
 
-		# zope.generations installers/evolvers are triggered on IDatabaseOpenedWithRoot
-		# We notify both in that same order (sometimes action is taken on IDatabaseOpened
-		# which impacts how zope.generations does its work on OpenedWithRoot)
+		# zope.generations installers/evolvers are triggered on
+		# IDatabaseOpenedWithRoot We notify both in that same order
+		# (sometimes action is taken on IDatabaseOpened which impacts
+		# how zope.generations does its work on OpenedWithRoot).
 
-		def _make_class_factory(db):
-			"""Support objects defining their own replacement object.
-			This is useful for classes that used to be persistent but aren't anymore."""
-			orig_class_factory = db.classFactory
-			def nti_classFactory(connection, modulename, globalname):
-				result = orig_class_factory(connection, modulename, globalname)
-				replace = getattr(result, '_v_nti_pseudo_broken_replacement_name', None)
-				if replace is not None:
-					result = orig_class_factory(connection, modulename, replace)
-				return result
-			return nti_classFactory
-
-		# TODO: Should we be the ones doing this?
-
-		for db in self.db.databases.values():
-			notify( DatabaseOpened( db ) )
-			# This will allow zope.app.broken to set up a nice class factory.
-			# We need to rewrap that class factory to respect our pseudo-broken
-			# support
-			db.classFactory = _make_class_factory(db)
-			# Unfortunately, if a Connection was already opened, it
-			# caches the class factory...and we would open a connection
-			# to evolve the database. So we must go through and also
-			# set those to the right value
-			db.pool.map(lambda conn: setattr(conn._reader, '_factory', db.classFactory))
+		# First, connect_databases notifies DatabaseOpened (and AfterDatabaseOpened),
+		# then we notify the OpenedWithRoot.
 
 		notify( DatabaseOpenedWithRoot( self.db ) )
 
 
 	def _setup_dbs( self, *args ):
 		"""
-		Creates the database connections. Returns a tuple (userdb, sessiondb, searchdb);
-		The first object in the tuple is the root database, and all databases are arranged
-		in a multi-database setup.
+		Creates the database connections. Returns the root database.
+
+		Notifies the database opened and after-database opened, but not
+		the database-opened-with-root event.
 
 		All arguments are ignored.
 		"""
-		db, ses_db, search_db = self.conf.connect_databases()
-		return db, ses_db, search_db
+		db = self.conf.connect_databases() # Handles notifications, component registry
+		return db
 
 	def _setup_redis( self, conf ):
 		__traceback_info__ = self, conf, conf.main_conf
@@ -328,7 +308,40 @@ class MinimalDataserver(object):
 		self._open_dbs()
 		self._setup_redis( self.conf )
 
+import functools
+from nti.processlifetime import IAfterDatabaseOpenedEvent
+@component.adapter(IAfterDatabaseOpenedEvent)
+def _after_database_opened_listener(event):
+	"""
+	After the database opened event has been fired, which
+	lets :mod:`zope.app.broken` install a nice class
+	factory for the database, we install a class factory
+	that supports objects defining their own replacement,
+	even if they aren't broken. This is useful for classes
+	that used to be persistent but no longer are.
+	"""
 
+	def _make_class_factory(db):
+		"""Support objects defining their own replacement object.
+		This is useful for classes that used to be persistent but aren't anymore."""
+		orig_class_factory = db.classFactory
+		@functools.wraps(orig_class_factory)
+		def nti_classFactory(connection, modulename, globalname):
+			result = orig_class_factory(connection, modulename, globalname)
+			replace = getattr(result, '_v_nti_pseudo_broken_replacement_name', None)
+			if replace is not None:
+				result = orig_class_factory(connection, modulename, replace)
+			return result
+		return nti_classFactory
+
+	db = event.database
+	db.classFactory = _make_class_factory(db)
+
+	# Unfortunately, if a Connection was already opened, it
+	# caches the class factory...and we would open a connection
+	# to evolve the database. So we must go through and also
+	# set those to the right value
+	db.pool.map(lambda conn: setattr(conn._reader, '_factory', db.classFactory))
 
 # After a fork, the dataserver has to be re-opened if it existed
 # at the time of fork. (Note that if we are not preloading the app,

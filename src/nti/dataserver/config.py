@@ -486,7 +486,7 @@ def db_from_uri( uris ):
 	from repoze.zodbconn.uri import db_from_uri as _real_db_from_uri
 	return _real_db_from_uri( uris )
 
-def _configure_database( env, uris ):
+def _configure_database_while_writing_config( env, uris ):
 	install_zlib_client_resolver()
 	db = db_from_uri( uris )
 	notify(DatabaseOpened(db))
@@ -517,11 +517,39 @@ def temp_get_config( root, demo=False, uri_name='zeo_uris.ini' ):
 
 def temp_configure_database( root, uri_name='zodb_file_uris.ini' ):
 	env = temp_get_config( root, uri_name=uri_name )
-	_configure_database( env, env._ini.get('ZODB', 'uris') )
+	_configure_database_while_writing_config( env, env._ini.get('ZODB', 'uris') )
+
+
+from zope import component
+from ZODB.interfaces import IDatabase
+from nti.processlifetime import AfterDatabaseOpenedEvent
 
 def _make_connect_databases(env, ini=None, root=None):
 	ini = {} if ini is None else ini
 	def connect_databases():
+		"""
+		Open and connect the ZODB databases configured.
+
+		If this object has an attribute ``zeo_make_db``, then
+		it should be a callable that returns a database. Otherwise,
+		we will use the zeo_uris INI file.
+
+		Side effects: Each ZODB DB opened is registered as a global
+		component with its name (the 'Users' database is also
+		registered as the default, unnamed utility if there is no
+		unnamed database). Once that is done, the
+		:class:`IDatabaseOpened` event is notified for each database
+		(in no particular order). We then notify
+		:class:`IAfterDatabaseOpenedEvent` for each database; this event
+		comes before :class:`IDatabaseOpenedWithRoot` (which is only
+		notified once, for the root database) and allows a chance for
+		some application-specific bootstrap steps to be done. (Note
+		that this method *does not* notify the root event, the caller
+		should do that if the entire application is being
+		bootstrapped.)
+
+		:return: The root database (conventionally named Users).
+		"""
 		__traceback_info__ = root, env.zeo_conf, env.zeo_client_conf, ini
 		env.zeo_launched = True
 		if not hasattr( env, 'zeo_uris' ):
@@ -531,20 +559,31 @@ def _make_connect_databases(env, ini=None, root=None):
 		else:
 			db = db_from_uri( env.zeo_uris )
 
-		# TODO: Conventionally, zope registers DBs in the component
-		# registry by name. We should probably do this as well.
+		for name, xdb in db.databases.items():
+			# Bug in ZODB: database doesn't declare it implements
+			if not IDatabase.providedBy(xdb):
+				interface.directlyProvides(xdb, IDatabase)
+			component.getGlobalSiteManager().registerUtility(xdb, IDatabase, name)
+
+		if '' not in db.databases:
+			component.getGlobalSiteManager().registerUtility(db.databases['Users'], IDatabase)
+
+		for xdb in db.databases.values():
+			notify(DatabaseOpened(xdb))
+
+		for xdb in db.databases.values():
+			notify(AfterDatabaseOpenedEvent(xdb))
 
 		# See notes in _configure_zeo about names and cases
-		# Sessions/Search DB has gone. Provide access to it if it is still in the config, otherwise
-		# fake it
-		return (db.databases['Users'], db.databases.get('Sessions'), db.databases.get('Search'))
+		return db.databases['Users']
+
 	return connect_databases
 
 def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False, write_rqworker=False):
 	env = _Env(root_dir, create=(not update_existing), only_new=update_existing)
 	uris = _configure_zeo( env )
 	if not update_existing:
-		_configure_database( env, uris )
+		_configure_database_while_writing_config( env, uris )
 
 	_configure_redis( env )
 	if write_rqworker:
