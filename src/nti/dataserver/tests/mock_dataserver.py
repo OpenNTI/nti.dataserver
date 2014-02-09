@@ -66,8 +66,11 @@ class ChangePassingMockDataserver(Dataserver ):
 		self.conf.zeo_uris = ["memory://1?database_name=Users&demostorage=true",
 							  ]
 		self.conf.zeo_launched = True
-		def make_db():
-			databases = {}
+
+		if self._mock_database:
+			# Replace the connect function with this trivial one
+			self.conf.zeo_make_db = lambda: self._mock_database
+		else:
 			# DemoStorage supports blobs if its 'changes' storage supports blobs or is not given;
 			# a plain MappingStorage does not.
 			# It might be nice to use TemporaryStorage here for the 'base', but it's incompatible
@@ -75,13 +78,8 @@ class ChangePassingMockDataserver(Dataserver ):
 			# objects, which breaks DemoStorages' base-to-change handling logic
 			# Blobs are used for storing "files", which are used for image data, which comes up
 			# in at least evolve25
-			storage = DemoStorage( base=self._storage_base )
-			db = ZODB.DB( storage, databases=databases, database_name='Users' )
-			return db
+			self.conf.zeo_make_db = lambda: ZODB.DB( DemoStorage(base=self._storage_base), database_name='Users')
 
-		self.conf.zeo_make_db = make_db
-		if self._mock_database:
-			self.conf.connect_databases = lambda: (self._mock_database.databases['Users'], None, None )
 		return super( ChangePassingMockDataserver, self )._setup_dbs( *args )
 
 

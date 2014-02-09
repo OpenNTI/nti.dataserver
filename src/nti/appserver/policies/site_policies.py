@@ -391,7 +391,7 @@ _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
 def _to_date( string, field=None ):
 	try:
 		return IDate(string) if string else None
-	except InvalidValue as e:
+	except InvalidValue:
 		return None
 
 # Validation errors. The class names will be used as codes,

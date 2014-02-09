@@ -246,13 +246,13 @@ def interactive_setup(root=".",
 
 	from nti.dataserver.config import temp_get_config
 	env = temp_get_config(root)
-	dbs = env.connect_databases()
+	db = env.connect_databases()
 	if not in_site:
-		return dbs[0]
+		return db
 
-	conn = dbs[0].open()
+	conn = db.open()
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
 	setSite(ds_folder)
 
-	return (dbs[0], conn, root)
+	return (db, conn, root)
