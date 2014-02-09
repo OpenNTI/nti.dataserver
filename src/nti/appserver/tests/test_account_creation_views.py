@@ -159,6 +159,18 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'email' ) )
 
+	@WithMockDSTrans
+	def test_create_censored_username( self ):
+		self.request.content_type = b'application/vnd.nextthought+json'
+		self.request.body = to_json_representation( {'Username': 'FatBastard',
+													 'password': 'pass132word',
+													 'email': 'foo@bar.com' } )
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as e:
+			self.the_view( self.request )
+
+		assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
+		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 
 
 	@WithMockDSTrans

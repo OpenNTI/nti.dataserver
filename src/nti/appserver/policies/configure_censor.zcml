@@ -50,7 +50,11 @@
 	<!-- All FriendsLists names are censored, all the time -->
 	<!-- Just like we do for user account usernames -->
 	<subscriber handler=".site_policies._censor_usernames"
-				for="nti.dataserver.interfaces.IFriendsList zope.lifecycleevent.IObjectCreatedEvent" />
+				for="nti.dataserver.interfaces.IFriendsList
+					 zope.lifecycleevent.IObjectCreatedEvent" />
+	<subscriber handler=".site_policies._censor_usernames"
+				for="nti.dataserver.interfaces.IUser
+					 nti.dataserver.users.interfaces.IWillCreateNewEntityEvent" /> <!-- This event so preflight works -->
 
 	<!--
 		 Try to catch some fields in profiles as well, when they are
