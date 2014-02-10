@@ -222,7 +222,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 	def __set__( self, inst, value ):
 		self.__activate( inst )
 		val = inst.__dict__.get( self.__name__, None )
-		if val is None:
+		if val is None or isinstance(val, int):
 			if not value:
 				return # not in dict, but they gave us the default value, so ignore it
 			val = self.factory( value )
