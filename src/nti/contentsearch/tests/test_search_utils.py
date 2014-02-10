@@ -15,12 +15,12 @@ from hamcrest import greater_than_or_equal_to
 from nti.ntiids.ntiids import make_ntiid
 
 from ..constants import invalid_type_
-from ..pyramid_views import create_queryobject
+from ..search_utils import create_queryobject
 from .. import interfaces as search_interfaces
 
 from . import ConfiguringTestBase
 
-class TestPyramidViews(ConfiguringTestBase):
+class TestSearchUtils(ConfiguringTestBase):
 
 	def test_create_query_object_accept(self):
 
