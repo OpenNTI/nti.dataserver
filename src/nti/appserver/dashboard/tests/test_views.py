@@ -87,7 +87,7 @@ class TestDashboardViews(SharedApplicationTestBase):
 		assert_that(items[0], has_entry('Score', 10))
 		assert_that(items[0], has_entry('Total', 1))
 		assert_that(items[0], has_entry('Username', u'rukia@nt.com'))
-		assert_that(items[1], has_entry('Score', 8))
+		assert_that(items[1], has_entry('Score', 5))
 		assert_that(items[1], has_entry('Total', 1))
 		assert_that(items[1], has_entry('Username', u'aizen@nt.com'))
 		assert_that(items[2], has_entry('Score', 1))

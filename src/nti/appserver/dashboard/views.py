@@ -114,7 +114,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 	def _score(self, obj):
 		result = 0
-		sharingTargets = getattr(obj, 'flattenedSharingTargets', ())
+		sharingTargets = getattr(obj, 'sharingTargets', ())
 		for st in sharingTargets or ():
 			if nti_interfaces.IUser.providedBy(st):
 				result += 1
