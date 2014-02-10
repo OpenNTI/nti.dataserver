@@ -114,7 +114,7 @@ class TestFunctions(ConfiguringTestBase):
 
 	def test_catching_component(self):
 		class Raises(object):
-			def toExternalObject(self):
+			def toExternalObject(self, **kwargs):
 				assert False
 
 		assert_that( toExternalObject( [Raises()], catch_components=(AssertionError,), catch_component_action=catch_replace_action ),
@@ -231,7 +231,7 @@ class TestToExternalObject(ConfiguringTestBase):
 		class Test(object):
 			interface.implements(ITest,IExternalObject)
 
-			def toExternalObject(self):
+			def toExternalObject(self, **kwargs):
 				return {}
 
 		test = Test()

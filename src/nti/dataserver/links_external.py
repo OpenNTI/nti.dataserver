@@ -150,7 +150,7 @@ class LinkExternal(object):
 	def __init__( self, context ):
 		self.context = context
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		return render_link( self.context )
 
 ILink_providedBy = nti_interfaces.ILink.providedBy

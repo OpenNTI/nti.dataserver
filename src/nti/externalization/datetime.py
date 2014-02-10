@@ -110,7 +110,7 @@ class _date_to_string(object):
 	def __init__( self, date ):
 		self.date = date
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		return isodate.date_isoformat(self.date)
 
 @component.adapter(zope.interface.common.idatetime.IDateTime)
@@ -121,7 +121,7 @@ class _datetime_to_string(object):
 	def __init__( self, date ):
 		self.date = date
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		# Convert to UTC, assuming that a missing timezone
 		# is already in UTC
 		dt = _as_utc_naive(self.date, assume_local=False)
@@ -142,5 +142,5 @@ class _duration_to_string(object):
 	def __init__( self, date ):
 		self.date = date
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		return isodate.duration_isoformat(self.date)

@@ -73,7 +73,7 @@ class TestChatTranscript(SharedConfiguringTestBase):
 					ID = 'tag:nextthought.com,2011-10:sjohnson@nextthought.com-OID-1'
 					id = ID
 
-					def toExternalObject(self):
+					def toExternalObject(self, **kwargs):
 						return "Meet"
 
 				class Msg(persistent.Persistent):
@@ -83,7 +83,7 @@ class TestChatTranscript(SharedConfiguringTestBase):
 					sharedWith = ('me',)
 
 
-					def toExternalObject(self):
+					def toExternalObject(self, **kwargs):
 						return "Msg"
 
 				msg = Msg()

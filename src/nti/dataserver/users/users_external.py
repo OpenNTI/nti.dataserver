@@ -63,7 +63,7 @@ class _AbstractEntitySummaryExternalObject(object):
 		self.entity = entity
 
 	_DECORATE = False
-	def _do_toExternalObject( self ):
+	def _do_toExternalObject( self, **kwargs ):
 		"""
 		Inspects the context entity and produces its external summary form.
 		:return: Standard dictionary minus Last Modified plus the properties of this class.
@@ -71,7 +71,7 @@ class _AbstractEntitySummaryExternalObject(object):
 
 		"""
 		entity = self.entity
-		extDict = to_standard_external_dictionary( entity, decorate=False )
+		extDict = to_standard_external_dictionary( entity, decorate=False, **kwargs )
 		# Notice that we delete the last modified date. Because this is
 		# not a real representation of the object, we don't want people to cache based
 		# on it.
@@ -91,11 +91,11 @@ class _AbstractEntitySummaryExternalObject(object):
 		extDict.__acl__ = functools.partial( auth.ACL, entity )
 		return extDict
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		# Break this into two steps to ensure that we only try to
 		# decorate the external mapping when all the objects in the hierarchy
 		# have completed their work and the mapping is complete
-		extDict = self._do_toExternalObject( )
+		extDict = self._do_toExternalObject( **kwargs )
 		if self._DECORATE:
 			decorate_external_mapping( self.entity, extDict )
 		return extDict
@@ -107,24 +107,24 @@ class _EntitySummaryExternalObject(_AbstractEntitySummaryExternalObject):
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
 	_DECORATE = True
-	def _do_toExternalObject( self ):
-		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject()
+	def _do_toExternalObject( self, **kwargs ):
+		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['IsDynamicSharing'] = nti_interfaces.IDynamicSharingTarget.providedBy( self.entity )
 		return extDict
 
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
 
-	def _do_toExternalObject(self):
-		extDict = super(_DynamicFriendListSummaryExternalObject, self)._do_toExternalObject()
+	def _do_toExternalObject(self, **kwargs):
+		extDict = super(_DynamicFriendListSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['Locked'] = self.entity.Locked
 		return extDict
 
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
-	def _do_toExternalObject( self ):
+	def _do_toExternalObject( self, **kwargs ):
 		""" :return: The value of :meth:`toSummaryExternalObject` """
-		result = super(_EntityExternalObject,self)._do_toExternalObject()
+		result = super(_EntityExternalObject,self)._do_toExternalObject(**kwargs)
 		# restore last modified since we are the true representation
 		result['Last Modified'] = getattr( self.entity, 'lastModified', 0 )
 		return result
@@ -132,8 +132,8 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListExternalObject(_EntityExternalObject):
 
-	def _do_toExternalObject(self):
-		extDict = super(_FriendsListExternalObject,self)._do_toExternalObject()
+	def _do_toExternalObject(self, **kwargs):
+		extDict = super(_FriendsListExternalObject,self)._do_toExternalObject(**kwargs)
 		theFriends = []
 		for friend in iter(self.entity): #iter self to weak refs and dups
 			if isinstance( friend, users.Entity ):
@@ -175,8 +175,8 @@ class _FriendsListExternalObject(_EntityExternalObject):
 @component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 
-	def _do_toExternalObject(self):
-		extDict = super(_DynamicFriendsListExternalObject, self)._do_toExternalObject()
+	def _do_toExternalObject(self, **kwargs):
+		extDict = super(_DynamicFriendsListExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['Locked'] = self.entity.Locked
 		return extDict
 
@@ -189,8 +189,8 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 	# These could probably be put as tags on the interface fields, but the number of
 	# profile interfaces in use makes that a chore. At the moment, this is the simpler option
 
-	def _do_toExternalObject( self ):
-		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( )
+	def _do_toExternalObject( self, **kwargs ):
+		extDict = super(_UserSummaryExternalObject,self)._do_toExternalObject( **kwargs )
 
 		extDict['lastLoginTime'] = self.entity.lastLoginTime
 		if self.public_summary_profile_fields:
@@ -209,12 +209,12 @@ class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
 @component.adapter( nti_interfaces.IUser )
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
-	def _do_toExternalObject( self ):
+	def _do_toExternalObject( self, **kwargs ):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
 		from nti.dataserver._Dataserver import InappropriateSiteError # circular imports
-		extDict = super(_UserPersonalSummaryExternalObject,self)._do_toExternalObject()
+		extDict = super(_UserPersonalSummaryExternalObject,self)._do_toExternalObject(**kwargs)
 		def _externalize_subordinates( l, name='summary' ):
 			result = []
 			for ent_name in l:
@@ -232,7 +232,11 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 				if e:
 					try:
-						result.append( toExternalObject( e, name=name ) )
+						kw = kwargs
+						if 'name' in kw:
+							kw = kwargs.copy()
+							kw.pop('name')
+						result.append( toExternalObject( e, name=name, **kw ) )
 					except TypeError: # Thrown if we fail in certain parts of externalization (e.g., links)
 						# TODO: Better exception?
 						# TODO: It may not be good to do this, that may hide errors that need to be corrected
@@ -314,8 +318,8 @@ def _UserExternalObject(user):
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject):
 
-	def _do_toExternalObject( self ):
-		extDict = super(_CoppaUserPersonalSummaryExternalObject,self)._do_toExternalObject( )
+	def _do_toExternalObject( self, **kwargs ):
+		extDict = super(_CoppaUserPersonalSummaryExternalObject,self)._do_toExternalObject( **kwargs )
 		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 'location', 'home_page'):
 			extDict[k] = None
 		return extDict

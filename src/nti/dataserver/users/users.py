@@ -353,8 +353,8 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 		# Make ID not be writable
 		return self.deviceId.encode('hex')
 
-	def toExternalObject(self):
-		result = super(Device, self).toExternalDictionary()
+	def toExternalObject(self, **kwargs):
+		result = super(Device, self).toExternalDictionary(**kwargs)
 		return result
 
 	def updateFromExternalObject(self, ext):

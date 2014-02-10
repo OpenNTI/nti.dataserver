@@ -84,8 +84,8 @@ class _ContentPackageExternal(object):
 	def __init__( self, package ):
 		self.package = package
 
-	def toExternalObject( self ):
-		result = to_standard_external_dictionary( self.package )
+	def toExternalObject( self, **kwargs ):
+		result = to_standard_external_dictionary( self.package, **kwargs )
 		result.__name__ = self.package.__name__
 		result.__parent__ = self.package.__parent__
 
@@ -146,8 +146,8 @@ class _ContentPackageExternal(object):
 @component.adapter(interfaces.ILegacyCourseConflatedContentPackage)
 class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 
-	def toExternalObject( self ):
-		result = super(_LegacyCourseConflatedContentPackageExternal,self).toExternalObject()
+	def toExternalObject( self, **kwargs ):
+		result = super(_LegacyCourseConflatedContentPackageExternal,self).toExternalObject(**kwargs)
 
 		result['isCourse'] = self.package.isCourse
 		result['courseName'] = self.package.courseName

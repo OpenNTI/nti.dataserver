@@ -141,8 +141,8 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 			# be polite and put it back
 			ext_parsed['shapeList'] = list(self.context.shapeList)
 
-	def toExternalObject(self, mergeFrom=None):
-		result = super(CanvasInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom)
+	def toExternalObject(self, mergeFrom=None, **kwargs):
+		result = super(CanvasInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		result['shapeList'] = [x.toExternalObject() for x in self.context.shapeList]
 		result['viewportRatio'] = self.context.viewportRatio
 		return result
@@ -359,7 +359,7 @@ class _CanvasShape(ExternalizableInstanceDict):
 			assert(stroke_width <= 100.0)
 			self._stroke_width = stroke_width
 
-	def toExternalDictionary(self, mergeFrom=None):
+	def toExternalDictionary(self, mergeFrom=None, **kwargs):
 		# Implementation note: For now, because we are not
 		# doing anything fancy with keeping track of identical objects
 		# when we update a canvas, we are also eliding these same fields like Point.
@@ -380,11 +380,11 @@ class _CanvasShape(ExternalizableInstanceDict):
 		mergeFrom['fillColor'] = self.fillColor
 		mergeFrom['fillOpacity'] = self.fillOpacity
 
-		return super(_CanvasShape, self).toExternalDictionary(mergeFrom=mergeFrom)
+		return super(_CanvasShape, self).toExternalDictionary(mergeFrom=mergeFrom, **kwargs)
 	__external_use_minimal_base__ = True  # Avoid the call to standard_dictionary, and just use the minimal fields
 
-	def toExternalObject(self):
-		return self.toExternalDictionary()
+	def toExternalObject(self, **kwargs):
+		return self.toExternalDictionary(**kwargs)
 
 	def __eq__(self, other):
 		# Implementation note: when toExternalDictionary changes,
@@ -465,8 +465,8 @@ class _CanvasUrlShape(_CanvasShape):
 
 	__getitem__ = url.make_getitem()
 
-	def toExternalDictionary(self, mergeFrom=None):
-		result = super(_CanvasUrlShape, self).toExternalDictionary(mergeFrom=mergeFrom)
+	def toExternalDictionary(self, mergeFrom=None, **kwargs):
+		result = super(_CanvasUrlShape, self).toExternalDictionary(mergeFrom=mergeFrom, **kwargs)
 		if self._file is not None:
 			# See __getitem__
 			# TODO: This is pretty tightly coupled to the app layer

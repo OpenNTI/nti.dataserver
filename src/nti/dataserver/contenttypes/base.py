@@ -100,8 +100,8 @@ class UserContentRootInternalObjectIOMixin(object):
 		# See also chatserver.messageinfo.
 		return removeAllProxies(self.context)
 
-	def toExternalObject( self, mergeFrom=None ):
-		extDict = super(UserContentRootInternalObjectIOMixin,self).toExternalObject(mergeFrom=mergeFrom)
+	def toExternalObject( self, mergeFrom=None, **kwargs ):
+		extDict = super(UserContentRootInternalObjectIOMixin,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		extDict['sharedWith'] = getattr( self.context, 'sharedWith', () ) # optional
 		return extDict
 

@@ -137,7 +137,8 @@ class _ChangeExternalObject(object):
 	def __init__( self, change ):
 		self.change = change
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
+		kwargs.pop('name', None)
 		change = self.change
 		wrapping = change.object
 
@@ -161,5 +162,5 @@ class _ChangeExternalObject(object):
 		#	del result['OID']
 		result['Item'] = None
 		if wrapping is not None:
-			result['Item'] = toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else '') )
+			result['Item'] = toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else ''), **kwargs )
 		return result
