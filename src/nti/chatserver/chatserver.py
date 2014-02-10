@@ -59,12 +59,6 @@ EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 
 
-class PersistentMappingMeetingStorage(Persistent):
-	"""
-	Deprecated stub having no functionality anymore.
-	"""
-deprecated( "PersistentMappingMeetingStorage", "This class is a stub for bwc only." )
-
 @interface.implementer(interfaces.IMeetingStorage)
 class TestingMappingMeetingStorage(object):
 	"""

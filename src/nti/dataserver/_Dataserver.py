@@ -388,8 +388,7 @@ class Dataserver(MinimalDataserver):
 		self.session_manager = self._setup_session_manager( )
 		self.other_closeables.append( self.session_manager )
 
-		room_name = 'meeting_rooms'
-		self.chatserver = self._setup_chat( room_name )
+		self.chatserver = self._setup_chat( )
 
 		# Currently a no-op as we do this all in-process at the moment
 		_, other_closeables = self._setup_change_distribution()
@@ -409,7 +408,7 @@ class Dataserver(MinimalDataserver):
 		# The session service will read a component from our local site manager
 		return sessions.SessionService()
 
-	def _setup_chat( self, room_name ):
+	def _setup_chat( self ):
 		return  Chatserver( self.session_manager,
 							 meeting_storage=meeting_storage.CreatorBasedAnnotationMeetingStorage(),
 							 meeting_container_storage=meeting_container_storage.MeetingContainerStorage( ) )
