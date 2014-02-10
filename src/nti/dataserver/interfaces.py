@@ -749,6 +749,12 @@ class IEntityIterable(interface.Interface):
 		Return iterator across entity objects.
 		"""
 
+class ISharingTargetEntityIterable(IEntityIterable):
+	"""
+	Something that can iterate across entities that should be expanded
+	for sharing purposes.
+	"""
+
 class IEntityIntIdIterable(IEntityIterable,
 						   IIntIdIterable):
 	"""
@@ -780,6 +786,13 @@ class ILengthEnumerableEntityContainer(IEnumerableEntityContainer):
 
 	def __len__():
 		"About how many entities in this container?"
+
+class ISharingTargetEnumerableIntIdEntityContainer(ILengthEnumerableEntityContainer,
+												   IEntityIntIdIterable,
+												   ISharingTargetEntityIterable):
+	"""
+	Unify the super-interfaces for ease of registration.
+	"""
 
 class IOpenIdUser(IUser):
 	"""
