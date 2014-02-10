@@ -37,6 +37,25 @@ from .interfaces import INonExternalizableReplacer, INonExternalizableReplacemen
 from .interfaces import ILocatedExternalSequence
 from .interfaces import LocatedExternalDict
 
+# Local for speed
+StandardExternalFields_CLASS = StandardExternalFields.CLASS
+StandardExternalFields_CONTAINER_ID = StandardExternalFields.CONTAINER_ID
+StandardExternalFields_CREATED_TIME = StandardExternalFields.CREATED_TIME
+StandardExternalFields_CREATOR = StandardExternalFields.CREATOR
+StandardExternalFields_ID = StandardExternalFields.ID
+StandardExternalFields_LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
+StandardExternalFields_MIMETYPE = StandardExternalFields.MIMETYPE
+StandardExternalFields_NTIID = StandardExternalFields.NTIID
+StandardExternalFields_OID = StandardExternalFields.OID
+
+StandardInternalFields_CONTAINER_ID = StandardInternalFields.CONTAINER_ID
+StandardInternalFields_CREATED_TIME = StandardInternalFields.CREATED_TIME
+StandardInternalFields_CREATOR = StandardInternalFields.CREATOR
+StandardInternalFields_ID = StandardInternalFields.ID
+StandardInternalFields_LAST_MODIFIED = StandardInternalFields.LAST_MODIFIED
+StandardInternalFields_LAST_MODIFIEDU = StandardInternalFields.LAST_MODIFIEDU
+StandardInternalFields_NTIID = StandardInternalFields.NTIID
+
 # It turns out that the name we use for externalization (and really the registry, too)
 # we must keep thread-local. We call into objects without any context,
 # and they call back into us, and otherwise we would lose
@@ -123,9 +142,9 @@ def _to_external_object_state(obj, state, top_level=False):
 		# Note that for speed, before calling 'recall' we are performing the primitive check
 		result = obj
 		if obj_has_usable_external_object: # either an adapter or the original object
-			result = obj.toExternalObject()
+			result = obj.toExternalObject(request=state.request, name=state.name)
 		elif hasattr( obj, "toExternalDictionary" ):
-			result = obj.toExternalDictionary()
+			result = obj.toExternalDictionary(request=state.request, name=state.name)
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
 		elif isinstance(obj, MAPPING_TYPES ):
@@ -310,31 +329,32 @@ isSyntheticKey = _isMagicKey
 def _datetime_to_epoch( dt ):
 	return time.mktime( dt.timetuple() ) if dt is not None else None
 
-def _choose_field(result, self, ext_name, converter=lambda x: x, fields=(), sup_iface=None, sup_fields=(), sup_converter=lambda x: x):
+def _choose_field(result, self, ext_name,
+				  converter=lambda x: x,
+				  fields=(),
+				  sup_iface=None, sup_fields=(), sup_converter=lambda x: x):
+
 	for x in fields:
 		try:
-			value = getattr(self, x, None)
+			value = getattr(self, x)
+		except AttributeError:
+			continue
 		except ZODB.POSException.POSKeyError:
 			logger.exception("Could not get attribute %s for object %s", x, self)
 			continue
-		if value is not None:
-			result[ext_name] = converter(value)
-			return
 
-	# Nothing. Can we adapt it?
-	self = sup_iface(self, None) if sup_iface else None
-	for x in sup_fields:
-		__traceback_info__ = self, x
-		try:
-			value = getattr(self, x, None)
-		except ZODB.POSException.POSKeyError:
-			logger.exception("Could not get attribute %s for object %s", x, self)
-			continue
 		if value is not None:
-			value = sup_converter( value )
+			value = converter(value)
 			if value is not None:
 				result[ext_name] = value
+				return value
 
+	# Nothing. Can we adapt it?
+	if sup_iface is not None and sup_fields:
+		self = sup_iface(self, None)
+		if self is not None:
+			return _choose_field(result, self, ext_name,
+								 converter=sup_converter, fields=sup_fields)
 
 def to_standard_external_last_modified_time( context, default=None, _write_into=None ):
 	"""
@@ -349,10 +369,10 @@ def to_standard_external_last_modified_time( context, default=None, _write_into=
 	# The _write_into argument is for the benefit of to_standard_external_dictionary
 	holder = _write_into if _write_into is not None else dict()
 
-	_choose_field( holder, context, StandardExternalFields.LAST_MODIFIED,
-				   fields=(StandardInternalFields.LAST_MODIFIED, StandardInternalFields.LAST_MODIFIEDU),
+	_choose_field( holder, context, StandardExternalFields_LAST_MODIFIED,
+				   fields=(StandardInternalFields_LAST_MODIFIED, StandardInternalFields_LAST_MODIFIEDU),
 				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('modified',), sup_converter=_datetime_to_epoch)
-	return holder.get( StandardExternalFields.LAST_MODIFIED, default)
+	return holder.get( StandardExternalFields_LAST_MODIFIED, default)
 
 def to_standard_external_created_time( context, default=None, _write_into=None ):
 	"""
@@ -367,12 +387,28 @@ def to_standard_external_created_time( context, default=None, _write_into=None )
 	# The _write_into argument is for the benefit of to_standard_external_dictionary
 	holder = _write_into if _write_into is not None else dict()
 
-	_choose_field( holder, context, StandardExternalFields.CREATED_TIME,
-				   fields=(StandardInternalFields.CREATED_TIME,),
+	_choose_field( holder, context, StandardExternalFields_CREATED_TIME,
+				   fields=(StandardInternalFields_CREATED_TIME,),
 				   sup_iface=dub_interfaces.IDCTimes, sup_fields=('created',), sup_converter=_datetime_to_epoch)
 
-	return holder.get( StandardExternalFields.CREATED_TIME, default )
+	return holder.get( StandardExternalFields_CREATED_TIME, default )
 
+
+def _ext_class_if_needed(self, result):
+	if StandardExternalFields_CLASS in result:
+		return
+
+	cls = getattr(self, '__external_class_name__', None)
+	if cls:
+		result[StandardExternalFields_CLASS] = cls
+	elif (not self.__class__.__name__.startswith('_')
+		  and self.__class__.__module__ not in ( 'nti.externalization',
+												 'nti.externalization.datastructures',
+												 'nti.externalization.persistence',
+												 'nti.externalization.interfaces' )):
+		result[StandardExternalFields_CLASS] = self.__class__.__name__
+
+from pyramid.threadlocal import get_current_request # XXX Layer violation
 
 def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven,
 									 registry=component, decorate=True,
@@ -398,53 +434,48 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven,
 	if mergeFrom:
 		result.update( mergeFrom )
 
+	if request is _NotGiven:
+		request = get_current_request()
 
-	_choose_field( result, self, StandardExternalFields.ID,
-				   fields=(StandardInternalFields.ID, StandardExternalFields.ID) )
+	result_id = _choose_field( result, self, StandardExternalFields_ID,
+							fields=(StandardInternalFields_ID, StandardExternalFields_ID) )
 	# As we transition over to structured IDs that contain OIDs, we'll try to use that
 	# for both the ID and OID portions
-	if ntiids.is_ntiid_of_type( result.get( StandardExternalFields.ID ), ntiids.TYPE_OID ):
+	if ntiids.is_ntiid_of_type( result_id, ntiids.TYPE_OID ):
 		# If we are trying to use OIDs as IDs, it's possible that the
 		# ids are in the old, version 1 format, without an intid component. If that's the case,
 		# then update them on the fly, but only for notes because odd things happen to other
 		# objects (chat rooms?) if we do this to them
-		result_id = result[StandardExternalFields.ID]
+		result_id = result[StandardExternalFields_ID]
 		std_oid = to_external_ntiid_oid( self )
 		if std_oid and std_oid.startswith( result_id ) and self.__class__.__name__ == 'Note':
-			result[StandardExternalFields.ID] = std_oid
-
-		result[StandardExternalFields.OID] = result[StandardExternalFields.ID]
+			result[StandardExternalFields_ID] = std_oid
+		result[StandardExternalFields_OID] = result[StandardExternalFields_ID]
 	else:
 		oid = to_external_ntiid_oid( self, default_oid=None ) #toExternalOID( self )
 		if oid:
-			result[StandardExternalFields.OID] = oid
+			result[StandardExternalFields_OID] = oid
 
-	_choose_field( result, self, StandardExternalFields.CREATOR,
-				   fields=(StandardInternalFields.CREATOR, StandardExternalFields.CREATOR),
+	_choose_field( result, self, StandardExternalFields_CREATOR,
+				   fields=(StandardInternalFields_CREATOR, StandardExternalFields_CREATOR),
 				   converter=unicode )
 
 	to_standard_external_last_modified_time( self, _write_into=result )
 	to_standard_external_created_time( self, _write_into=result )
 
-	if StandardExternalFields.CLASS not in result:
-		cls = getattr(self, '__external_class_name__', None)
-		if cls:
-			result[StandardExternalFields.CLASS] = cls
-		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence', 'nti.externalization.interfaces' ) \
-			   and not self.__class__.__name__.startswith( '_' ):
-			result[StandardExternalFields.CLASS] = self.__class__.__name__
+	_ext_class_if_needed(self, result)
 
-	_choose_field( result, self, StandardExternalFields.CONTAINER_ID,
-				   fields=(StandardInternalFields.CONTAINER_ID,) )
+	_choose_field( result, self, StandardExternalFields_CONTAINER_ID,
+				   fields=(StandardInternalFields_CONTAINER_ID,) )
 	try:
-		_choose_field( result, self, StandardExternalFields.NTIID,
-					   fields=(StandardInternalFields.NTIID, StandardExternalFields.NTIID) )
+		_choose_field( result, self, StandardExternalFields_NTIID,
+					   fields=(StandardInternalFields_NTIID, StandardExternalFields_NTIID) )
 		# During the transition, if there is not an NTIID, but we can find one as the ID or OID,
 		# provide that
-		if StandardExternalFields.NTIID not in result:
-			for field in (StandardExternalFields.ID, StandardExternalFields.OID):
+		if StandardExternalFields_NTIID not in result:
+			for field in (StandardExternalFields_ID, StandardExternalFields_OID):
 				if ntiids.is_valid_ntiid_string( result.get( field ) ):
-					result[StandardExternalFields.NTIID] = result[field]
+					result[StandardExternalFields_NTIID] = result[field]
 					break
 	except ntiids.InvalidNTIIDError:
 		logger.exception( "Failed to get NTIID for object %s", type(self) ) # printing self probably wants to externalize
@@ -454,8 +485,6 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven,
 		decorate_external_mapping( self, result, registry=registry, request=request )
 
 	return result
-
-from pyramid.threadlocal import get_current_request # XXX Layer violation
 
 def decorate_external_mapping( self, result, registry=component, request=_NotGiven ):
 	for decorator in registry.subscribers( (self,), IExternalMappingDecorator ):
@@ -471,22 +500,17 @@ def decorate_external_mapping( self, result, registry=component, request=_NotGiv
 toExternalDictionary = to_standard_external_dictionary
 deprecation.deprecated('toExternalDictionary', 'Prefer to_standard_external_dictionary' )
 
-def to_minimal_standard_external_dictionary( self, mergeFrom=None ):
+def to_minimal_standard_external_dictionary( self, mergeFrom=None, **kwargs ):
 	"Does no decoration. Useful for non-'object' types. `self` should have a `mime_type` field."
 
 	result = LocatedExternalDict()
 	if mergeFrom:
 		result.update( mergeFrom )
-	if StandardExternalFields.CLASS not in result:
-		cls = getattr(self, '__external_class_name__', None)
-		if cls:
-			result[StandardExternalFields.CLASS] = cls
-		elif self.__class__.__module__ not in ( 'nti.externalization', 'nti.externalization.datastructures', 'nti.externalization.persistence', 'nti.externalization.interfaces' ) \
-			   and not self.__class__.__name__.startswith( '_' ):
-			result[StandardExternalFields.CLASS] = self.__class__.__name__
+	_ext_class_if_needed(self, result)
+
 	mime_type = getattr( self, 'mime_type', None )
 	if mime_type:
-		result[StandardExternalFields.MIMETYPE] = mime_type
+		result[StandardExternalFields_MIMETYPE] = mime_type
 	return result
 
 def make_repr():

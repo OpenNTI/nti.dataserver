@@ -23,7 +23,7 @@ import ZODB
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization import datastructures
+from nti.externalization.externalization import to_external_object
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
@@ -37,9 +37,9 @@ class EnclosureExternalObject(object):
 	def __init__( self, enclosed ):
 		self.enclosed = enclosed
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		# TODO: I have no idea how best to do this
-		return datastructures.toExternalObject( self.enclosed.data )
+		return to_external_object( self.enclosed.data, **kwargs )
 
 @interface.implementer(ext_interfaces.IExternalObject)
 @component.adapter(ZODB.interfaces.IBroken)
@@ -55,7 +55,7 @@ class BrokenExternalObject(object):
 	def __init__( self, broken ):
 		self.broken = broken
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		# Broken objects mean there's been a persistence
 		# issue. Ok to log it because since its broken, it won't try to call back to us
 		logger.debug("Broken object found %s, %s", type(self.broken), self.broken)

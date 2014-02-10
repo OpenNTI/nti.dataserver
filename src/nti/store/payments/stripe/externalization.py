@@ -43,7 +43,7 @@ class StripeCouponExternalizer(object):
 	def __init__(self, coupon):
 		self.coupon = coupon
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		result = LocatedExternalDict()
 		result['ID'] = self.coupon.id
 		if _makenone(self.coupon.duration):
@@ -71,5 +71,3 @@ class StripePurchaseErrorExternal(InterfaceObjectIO):
 @component.adapter(stripe_interfaces.IStripePricedItem)
 class StripePricedItemExternal(PricedItemExternal):
 	_ext_iface_upper_bound = stripe_interfaces.IStripePricedItem
-
-

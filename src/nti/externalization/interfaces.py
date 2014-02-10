@@ -66,7 +66,7 @@ class IInternalObjectExternalizer(interface.Interface):
 		external dictionary. If not present, the local name of the object's class is
 		used instead. """)
 
-	def toExternalObject():
+	def toExternalObject(**kwargs):
 		""" Optional, see this :func:`~nti.externalization.externalization.to_external_object`."""
 
 	# def updateFromExternalObject( parsed, *args, **kwargs ):

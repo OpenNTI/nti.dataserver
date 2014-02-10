@@ -174,11 +174,11 @@ class LibraryCollectionDetailExternalizer(object):
 	def __init__(self, collection ):
 		self._collection = collection
 
-	def toExternalObject(self):
+	def toExternalObject(self, **kwargs):
 		library = self._collection.library
 		result = LocatedExternalDict( {
 			'title': "Library",
-			'titles' : [to_external_object(x) for x in library.contentPackages] } )
+			'titles' : [to_external_object(x, **kwargs) for x in library.contentPackages] } )
 		result.__name__ = self._collection.__name__
 		result.__parent__ = self._collection.__parent__
 		return result

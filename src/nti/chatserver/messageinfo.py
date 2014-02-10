@@ -227,8 +227,8 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectI
 		# See also nti.dataserver.contenttypes.base
 		return removeAllProxies(self.context)
 
-	def toExternalObject( self, mergeFrom=None ):
-		result = super(MessageInfoInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom )
+	def toExternalObject( self, mergeFrom=None, **kwargs ):
+		result = super(MessageInfoInternalObjectIO,self).toExternalObject( mergeFrom=mergeFrom, **kwargs )
 		msg = self.context
 		if msg.body is not None:
 			# alias for old code.

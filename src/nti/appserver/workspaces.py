@@ -339,7 +339,7 @@ class CollectionSummaryExternalizer(object):
 	def __init__( self, collection ):
 		self._collection = collection
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		collection = self._collection
 		ext_collection = LocatedExternalDict()
 		ext_collection.__name__ = collection.__name__
@@ -368,16 +368,17 @@ class ContainerCollectionDetailExternalizer(object):
 	def __init__(self, collection ):
 		self._collection = collection
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		collection = self._collection
 		container = collection.container
 		# Feeds can include collections, as a signal of places that
 		# can be posted to in order to add items to the feed.
 		# Since these things are useful to have at the top level, we do
 		# that as well
-		summary_collection = toExternalObject( collection, name='summary' )
+		kwargs.pop('name', None)
+		summary_collection = toExternalObject( collection, name='summary', **kwargs )
 		# Copy the basic attributes
-		ext_collection = to_standard_external_dictionary( collection )
+		ext_collection = to_standard_external_dictionary( collection, **kwargs )
 		# Then add the summary info as top-level...
 		ext_collection.update( summary_collection )
 		# ... and nested
@@ -437,10 +438,10 @@ class ContainerCollectionDetailExternalizer(object):
 			return item
 
 		if isinstance( container, collections.Mapping ):
-			ext_collection['Items'] = { k: fixup(v,toExternalObject(v)) for k,v in container.iteritems()
+			ext_collection['Items'] = { k: fixup(v,toExternalObject(v,**kwargs)) for k,v in container.iteritems()
 										if not isSyntheticKey( k )}
 		else:
-			ext_collection['Items'] = [fixup(v,toExternalObject(v)) for v in container]
+			ext_collection['Items'] = [fixup(v,toExternalObject(v, **kwargs)) for v in container]
 
 		# Need to add hrefs to each item.
 		# In the near future, this will be taken care of automatically.
@@ -475,11 +476,12 @@ class WorkspaceExternalizer(object):
 	def __init__( self, workspace ):
 		self._workspace = workspace
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
+		kwargs.pop('name', None)
 		result = LocatedExternalDict()
 		result[StandardExternalFields.CLASS] = 'Workspace'
 		result['Title'] = self._workspace.name or getattr( self._workspace, '__name__', None )
-		items = [toExternalObject( collection, name='summary' )
+		items = [toExternalObject( collection, name='summary', **kwargs )
 				 for collection
 				 in self._workspace.collections]
 		result['Items'] = items
@@ -612,8 +614,8 @@ class _NTIIDEntryExternalizer(object):
 	def __init__( self, context ):
 		self.context = context
 
-	def toExternalObject(self):
-		result = to_standard_external_dictionary( self.context )
+	def toExternalObject(self, **kwargs):
+		result = to_standard_external_dictionary( self.context, **kwargs )
 		return result
 
 from nti.dataserver.links_external import render_link
@@ -790,20 +792,20 @@ class ServiceExternalizer(object):
 	def __init__( self, service ):
 		self.context = service
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		result = LocatedExternalDict()
 		result.__parent__ = self.context.__parent__
 		result.__name__ = self.context.__name__
 		result[StandardExternalFields.CLASS] = 'Service'
 		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Service' )
-		result['Items'] = [toExternalObject(ws) for ws in self.context.workspaces]
+		result['Items'] = [toExternalObject(ws, **kwargs) for ws in self.context.workspaces]
 		return result
 
 @component.adapter(app_interfaces.IUserService)
 class UserServiceExternalizer(ServiceExternalizer):
 
-	def toExternalObject(self):
-		result = super(UserServiceExternalizer,self).toExternalObject()
+	def toExternalObject(self, **kwargs):
+		result = super(UserServiceExternalizer,self).toExternalObject(**kwargs)
 		# TODO: This is almost hardcoded. Needs replaced with something dynamic.
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...

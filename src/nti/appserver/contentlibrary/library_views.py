@@ -431,7 +431,7 @@ class _LibraryTOCRedirectClassView(object):
 		# We cannot render a raw link using the code in pyramid_renderers, but
 		# we need to return one to get the right mime type header. So we
 		# fake it by rendering here
-		def _t_e_o():
+		def _t_e_o(**kwargs):
 			return {"Class": "Link", "MimeType": self.link_mt, "href": href, "rel": "content", 'Last Modified': lastModified or None}
 		link.toExternalObject = _t_e_o
 		interface.alsoProvides( link, loc_interfaces.ILocationInfo )

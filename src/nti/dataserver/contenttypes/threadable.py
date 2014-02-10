@@ -195,8 +195,8 @@ class ThreadableExternalizableMixin(object):
 	#: for them. Otherwise, there will be a null value or gap. See :const:`nti.ntiids.ntiids.TYPE_MISSING`
 	_ext_write_missing_references = True
 
-	def toExternalObject(self,mergeFrom=None):
-		extDict = super(ThreadableExternalizableMixin,self).toExternalObject(mergeFrom=mergeFrom)
+	def toExternalObject(self,mergeFrom=None, **kwargs):
+		extDict = super(ThreadableExternalizableMixin,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		if self._ext_can_write_threads():
 			assert isinstance( extDict, collections.Mapping )
 			context = self._ext_replacement()

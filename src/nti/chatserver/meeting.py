@@ -240,7 +240,7 @@ class _Meeting( threadable.ThreadableMixin,
 	def shadow_user( self, username ):
 		return self._policy().shadow_user( username )
 
-	def toExternalDictionary( self, mergeFrom=None ):
+	def toExternalDictionary( self, mergeFrom=None, **kwargs ):
 		result = dict(mergeFrom) if mergeFrom else dict()
 		result['Class'] = 'RoomInfo' # TODO: Use __external_class_name__ ?
 		# TODO: Need to make this have a mime type.
@@ -249,7 +249,7 @@ class _Meeting( threadable.ThreadableMixin,
 		result['Occupants'] = list(self.occupant_names)
 		result['MessageCount'] = self.MessageCount
 		# TODO: Handling shadowing and so on.
-		return super(_Meeting,self).toExternalDictionary( mergeFrom=result )
+		return super(_Meeting,self).toExternalDictionary( mergeFrom=result, **kwargs )
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		addl_ts_needs_reset = self.inReplyTo

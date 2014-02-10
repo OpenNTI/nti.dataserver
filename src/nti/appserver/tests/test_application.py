@@ -68,7 +68,7 @@ class ContainedExternal(ZContainedMixin):
 			return self._str
 		return "<%s %s>" % (self.__class__.__name__, self.to_container_key())
 
-	def toExternalObject( self ):
+	def toExternalObject( self, **kwargs ):
 		return str(self)
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))

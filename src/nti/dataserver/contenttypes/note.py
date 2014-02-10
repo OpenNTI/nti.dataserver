@@ -120,8 +120,8 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 	__external_resolvers__ = { 'body': _resolve_external_body }
 
 
-	def toExternalObject( self, mergeFrom=None ):
-		ext = super(NoteInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom)
+	def toExternalObject( self, mergeFrom=None, **kwargs ):
+		ext = super(NoteInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		if ext['body'] in ( Note.body, [''], None ): # don't write out the base state, it confuses updating and isn't valid
 			del ext['body']
 		return ext
