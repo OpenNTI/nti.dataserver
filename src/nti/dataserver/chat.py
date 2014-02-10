@@ -36,7 +36,6 @@ deprecated('_ModeratedChatRoom', 'Prefer _ModeratedMeeting' )
 
 from nti.chatserver.chatserver import Chatserver
 from nti.chatserver._handler import ChatHandlerFactory
-from nti.chatserver.chatserver import PersistentMappingMeetingStorage
 
 deprecated('Chatserver', 'Prefer nti.chatserver')
 deprecated('MessageInfo', 'Prefer nti.chatserver')

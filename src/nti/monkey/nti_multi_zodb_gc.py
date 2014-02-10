@@ -95,7 +95,12 @@ def getrefs(p, storage_name, ignore):
 	u.persistent_load = refs # Just append to this list
 	u.find_global = find_global
 	b1 = u.noload() # Once for the class/type reference
-	b2 = u.load() # again for the state
+	try:
+		b2 = u.load() # again for the state
+	except AttributeError as e:
+		if e.message != "'DATETIME' object has no attribute 'numtype'":
+			# Ancient whoosh error
+			raise
 
 	for ref in refs:
 		if isinstance(ref, tuple):
