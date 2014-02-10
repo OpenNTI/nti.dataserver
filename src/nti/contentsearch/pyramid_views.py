@@ -30,7 +30,7 @@ class BaseView(object):
 
 	@property
 	def query(self):
-		return search_utils.create_queryobject(self.request)
+		return search_utils.construct_queryobject(self.request)
 
 	@property
 	def indexmanager(self):

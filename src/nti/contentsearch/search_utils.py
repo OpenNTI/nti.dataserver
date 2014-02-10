@@ -41,15 +41,12 @@ def clean_search_query(query, language='en'):
 
 	return result
 
-
 accepted_keys = {'ntiid', 'accept', 'exclude'}
 
-def create_queryobject(request, username=None, term=None, ntiid=None):
+def create_queryobject(username, params, matchdict):
 
 	indexable_type_names = common.get_indexable_types()
-
-	params, matchdict = request.params, request.matchdict
-	username = username or matchdict.get('user', None) or request.authenticated_userid
+	username = username or matchdict.get('user', None)
 
 	# parse params:
 	args = dict(params)
@@ -57,13 +54,13 @@ def create_queryobject(request, username=None, term=None, ntiid=None):
 		if name not in search_interfaces.ISearchQuery and name not in accepted_keys:
 			del args[name]
 
-	term = term or matchdict.get('term', u'')
+	term = matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
 	args['term'] = term
 
 	args['username'] = username
 
-	ntiid = ntiid or matchdict.get('ntiid', None)
+	ntiid = matchdict.get('ntiid', None)
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
 	if ntiid:
@@ -103,3 +100,8 @@ def create_queryobject(request, username=None, term=None, ntiid=None):
 
 	return search_query.QueryObject(**args)
 
+def construct_queryobject(request):
+	username = request.matchdict.get('user', None)
+	username = username or request.authenticated_userid
+	result = create_queryobject(username, request.params, request.matchdict)
+	return result
