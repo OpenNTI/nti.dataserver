@@ -154,16 +154,12 @@ class _BaseSearchResults(zcontained.Contained):
 		self.query = search_interfaces.ISearchQuery(query, None)
 
 	def __repr__(self):
-		return '%s(hits=%s)' % (self.__class__.__name__, self.total)
+		return '%s(hits=%s)' % (self.__class__.__name__, len(self))
 	__str__ = __repr__
 
 	@property
 	def Hits(self):
 		raise NotImplementedError()
-
-	@property
-	def total(self):
-		return len(self.Hits)
 
 	def __len__(self):
 		return len(self.Hits)
@@ -185,15 +181,16 @@ class _SearchResults(_BaseSearchResults):
 		self._seen = set()  # TODO: Temp fix this will go away
 		self.HitMetaData = SearchHitMetaData()
 
+	def _raw_hits(self):
+		return self._hits
+
 	def _get_hits(self):
 		if not self.sorted:
 			self.sort()
 		return self._hits
-
 	def _set_hits(self, hits):
 		for hit in hits or ():
 			self._add_hit(hit)
-
 	Hits = hits = property(_get_hits, _set_hits)
 
 	@property
@@ -224,6 +221,8 @@ class _SearchResults(_BaseSearchResults):
 			hit = create_search_hit(item, score, self.Query, self)
 			if self._add_hit(hit):
 				self.metadata.track(item)
+			else:
+				del hit
 
 	def add(self, hit, score=1.0):
 		self._add(hit, score)
@@ -241,11 +240,14 @@ class _SearchResults(_BaseSearchResults):
 			reverse = not self.query.is_descending_sort_order
 			self._hits.sort(comparator.compare, reverse=reverse)
 
+	def __len__(self):
+		return len(self._raw_hits())
+
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
-			self._set_hits(other._hits)
+			self._set_hits(other._raw_hits())
 			self.metadata += other.metadata
 
 		return self
@@ -264,10 +266,8 @@ class _SuggestResults(_BaseSearchResults):
 
 	def _get_words(self):
 		return sorted(self._words)
-
 	def _set_words(self, words):
 		self._words.update(words or ())
-
 	suggestions = Suggestions = Hits = hits = property(_get_words, _set_words)
 
 	def add_suggestions(self, items):
@@ -336,9 +336,12 @@ def sort_hits(hits, reverse=False, sortOn=None):
 	comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
 										name=sortOn) if sortOn else None
 	if comparator is not None:
-		if reverse:
-			comparator = lambda x, y: comparator(y, x)
-		return isorted(hits, comparator)
+		if isinstance(hits, list):
+			return hits.sort(comparator.compare, reverse=reverse)
+		else:
+			if reverse:
+				comparator = lambda x, y: comparator(y, x)
+			return isorted(hits, comparator)
 	else:
 		iterator = reverse(hits) if reverse else iter(hits)
 		return iterator
