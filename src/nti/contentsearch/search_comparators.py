@@ -144,10 +144,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 
 	@classmethod
 	def get_containerId(cls, item):
-		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.NTIID
-		else:
-			result = None
+		result = getattr(item, 'ContainerId', None)
 		return result
 
 	@classmethod
