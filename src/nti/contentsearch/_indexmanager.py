@@ -172,25 +172,28 @@ class IndexManager(object):
 	def index_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
 			target = self.get_entity(target)
-			controller = search_interfaces.IEntityIndexController(target)
-			controller.index_content(data)
+			controller = search_interfaces.IEntityIndexController(target, None)
+			if controller is not None:
+				controller.index_content(data)
 
 	def update_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
 			target = self.get_entity(target)
-			controller = search_interfaces.IEntityIndexController(target)
-			controller.update_content(data)
+			controller = search_interfaces.IEntityIndexController(target, None)
+			if controller is not None:
+				controller.update_content(data)
 
 	def delete_user_content(self, target, data, *args, **kwargs):
 		if data is not None:
 			target = self.get_entity(target)
-			controller = search_interfaces.IEntityIndexController(target)
-			controller.delete_content(data)
+			controller = search_interfaces.IEntityIndexController(target, None)
+			if controller is not None:
+				controller.delete_content(data)
 
 	def unindex(self, target, uid):
 		target = self.get_entity(target)
-		controller = search_interfaces.IEntityIndexController(target)
-		return controller.unindex(uid)
+		controller = search_interfaces.IEntityIndexController(target, None)
+		return controller.unindex(uid) if controller is not None else None
 
 	def close(self):
 		for bm in self.books.itervalues():
