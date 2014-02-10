@@ -62,14 +62,13 @@ def _enqueue_change_to_target( target, change, accum=None ):
 	# we now have an implementation of that interface. However, that's
 	# different than what we were doing before, and probably inefficient,
 	# and probably needs some normalization.
-	if not nti_interfaces.ICommunity.providedBy(target):
-		for nested_entity in nti_interfaces.IEnumerableEntityContainer(target, ()):
-			# NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
-			# be duplicate change objects that get eliminated at read time.
-			# But this ensures that the stream gets an object, bumps the notification
-			# count, and sends a real-time notice to connected sockets.
-			# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
-			_enqueue_change_to_target( nested_entity, change, accum=accum )
+	for nested_entity in nti_interfaces.ISharingTargetEntityIterable(target, ()):
+		# NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
+		# be duplicate change objects that get eliminated at read time.
+		# But this ensures that the stream gets an object, bumps the notification
+		# count, and sends a real-time notice to connected sockets.
+		# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
+		_enqueue_change_to_target( nested_entity, change, accum=accum )
 
 # TODO: These listeners should probably be registered on something
 # higher, like IModeledContent?

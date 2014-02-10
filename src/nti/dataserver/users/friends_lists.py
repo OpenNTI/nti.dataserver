@@ -309,8 +309,7 @@ class _FriendsListUsernameIterable(object):
 	def __iter__(self):
 		return (x.username for x in self.context)
 
-@interface.implementer(nti_interfaces.IEntityIntIdIterable,
-					   nti_interfaces.ILengthEnumerableEntityContainer)
+@interface.implementer(nti_interfaces.ISharingTargetEnumerableIntIdEntityContainer)
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListEntityIterable(object):
 

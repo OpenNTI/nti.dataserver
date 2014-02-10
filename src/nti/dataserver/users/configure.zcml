@@ -56,14 +56,13 @@
 	<!-- FriendsLists can iterate usernames -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._FriendsListUsernameIterable" />
-	<adapter factory=".friends_lists._FriendsListEntityIterable"
-			 provides="nti.dataserver.interfaces.IEnumerableEntityContainer" />
+	<adapter factory=".friends_lists._FriendsListEntityIterable" />
+
 
 	<!-- DFLs do so specially -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
-	<adapter provides="nti.dataserver.interfaces.IEnumerableEntityContainer"
-			 factory=".friends_lists._DynamicFriendsListEntityIterable" />
+	<adapter factory=".friends_lists._DynamicFriendsListEntityIterable" />
 
 	<!-- Communities can report memberships, iterate them, report length, iterate intids -->
 	<adapter provides="nti.dataserver.interfaces.ILengthEnumerableEntityContainer"
