@@ -260,6 +260,12 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 			for wref in self._members:
 				yield wref.intid
 
+	def iter_usernames_of_possible_members(self):
+		self._p_activate()
+		if '_members' in self.__dict__:
+			for wref in self._members:
+				yield wref.username
+
 @component.adapter(nti_interfaces.IUser,nti_interfaces.IStartDynamicMembershipEvent)
 def _add_member_to_community(entity, event):
 	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
@@ -286,6 +292,9 @@ class CommunityEntityContainer(object):
 
 	def iter_intids(self):
 		return self.context.iter_intids_of_possible_members()
+
+	def iter_usernames(self):
+		return self.context.iter_usernames_of_possible_members()
 
 	def __contains__( self, entity ):
 		try:

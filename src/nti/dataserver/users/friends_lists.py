@@ -319,6 +319,9 @@ class _FriendsListEntityIterable(object):
 	def __iter__(self):
 		return self.context #(x for x in self.context)
 
+	def iter_usernames(self):
+		return (x.username for x in self.context)
+
 	def __len__(self):
 		return len(self.context)
 
@@ -466,6 +469,12 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 			cid = component.getUtility(IIntIds).queryId(self.context.creator)
 			if cid:
 				yield cid
+
+	def iter_usernames(self):
+		for x in super(_DynamicFriendsListEntityIterable,self).iter_usernames():
+			yield x
+		if self.context.creator:
+			yield self.context.creator
 
 
 from nti.dataserver import datastructures
