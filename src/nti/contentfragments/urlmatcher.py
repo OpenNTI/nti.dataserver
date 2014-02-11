@@ -5,13 +5,15 @@ An Improved Liberal, Accurate Regex Pattern for Matching URLs
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import re
 import six
-import html5lib
+
 from lxml import etree
+
+import html5lib
 from html5lib import treebuilders
 
 from zope import interface
@@ -23,14 +25,16 @@ class GrubberHyperlinkFormatter(object):
 
 	# http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 
-	grubber_v1 = (u'((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+',
-				  u'[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+',
-				  u'(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:\'".,<>?',
-				  u'\xab\xbb\u201c\u201d\u2018\u2019]))')
+	grubber_v1 = (
+		u'((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+',
+		u'[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+',
+		u'(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:\'".,<>?',
+		u'\xab\xbb\u201c\u201d\u2018\u2019]))')
 
-	grubber_v2 = (u'((?:https?://|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+',
-				  u'|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+',
-				  u'\\)))*\\)|[^\\s`!()\\[\\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
+	grubber_v2 = (
+		u'((?:https?://|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)(?:[^\\s()<>]+',
+		u'|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+',
+		u'\\)))*\\)|[^\\s`!()\\[\\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
 	grubber_v1_pattern = re.compile(''.join(grubber_v1))
 	grubber_v2_pattern = re.compile(''.join(grubber_v2))
@@ -93,14 +97,18 @@ class GrubberHyperlinkFormatter(object):
 
 	def format(self, html_fragment):
 		if interfaces.IHTMLContentFragment.providedBy(html_fragment):
-			html_fragment = self._parse_and_linkify(html_fragment, html_fragment.__class__)
-		elif isinstance(html_fragment, six.string_types) and self.grubber_v1_pattern.search(html_fragment):
+			html_fragment = self._parse_and_linkify(html_fragment,
+													html_fragment.__class__)
+		elif isinstance(html_fragment, six.string_types) and \
+			 self.grubber_v1_pattern.search(html_fragment):
 			# A plain string that matches
-			html_fragment = self._parse_and_linkify(html_fragment, interfaces.HTMLContentFragment)
+			html_fragment = self._parse_and_linkify(html_fragment,
+													interfaces.HTMLContentFragment)
 		return html_fragment
 
 	def _parse_and_linkify(self, content, dest_class):
-		p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False)
+		p = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"),
+								namespaceHTMLElements=False)
 		doc = p.parse(content)
 		for node in doc.iter():
 			self._link_finder(node)
