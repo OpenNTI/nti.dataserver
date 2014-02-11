@@ -738,6 +738,17 @@ class IIntIdIterable(interface.Interface):
 		Return an iterable across intids.
 		"""
 
+class IEntityUsernameIterable(interface.Interface):
+	"""
+	A specific way to iterate across usernames.
+	"""
+
+	def iter_usernames():
+		"""
+		Return an iterable across the usernames
+		of this object.
+		"""
+
 class IEntityIterable(interface.Interface):
 	"""
 	Something that can iterate across entities (usually but not always :class:`IUser`), typically
@@ -772,9 +783,13 @@ class IEntityContainer(interface.Interface):
 		"""
 
 class IEnumerableEntityContainer(IEntityContainer,
-								 IEntityIntIdIterable):
+								 IEntityIntIdIterable,
+								 IEntityUsernameIterable):
 	"""
 	Something that can enumerate and report on entity memberships.
+
+	Often, iterating the usernames may be more efficient than extracting
+	the usernames from iterating the entities.
 	"""
 
 class ILengthEnumerableEntityContainer(IEnumerableEntityContainer):
