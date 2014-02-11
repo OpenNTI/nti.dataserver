@@ -19,6 +19,12 @@ from zope.configuration import xmlconfig, config
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
 
+# We are often, but not always, called from main,
+# so we need to be sure the relevant non-gevent
+# patches are applied
+import nti.monkey.relstorage_patch_all_except_gevent_on_import
+nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
+
 def _configure(self=None, set_up_packages=(), features=(), context=None):
 
 	# zope.component.globalregistry conveniently adds
@@ -235,9 +241,6 @@ def interactive_setup(root=".",
 
 	logging.basicConfig(level=logging.INFO)
 	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
-
-	import nti.monkey.relstorage_patch_all_except_gevent_on_import
-	nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
 
 	setHooks()
 	packages = ['nti.dataserver']
