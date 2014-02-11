@@ -48,6 +48,7 @@ LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
 CREATED_TIME 	 = unicode(ext_interfaces.StandardExternalFields.CREATED_TIME)
 
 id_				 = unicode(ext_interfaces.StandardInternalFields.ID)
+acl_			 = u'acl'
 oid_			 = u'oid'
 body_ 			 = u'body'
 text_			 = u'text'
