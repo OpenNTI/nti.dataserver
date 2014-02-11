@@ -430,10 +430,10 @@ setup(
 			# 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			#'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',	# auto-api docs
-			'httpie >= 0.7.2',
-			'ipython >= 1.1.0',	 # the extra notebook is web based, pulls in tornado
+			'httpie',
+			'ipython',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
-			'pip >= 1.3.1',
+			'pip',
 			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
 			'pudb >= 2013.5.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint' if not IS_PYPY else '',  # install astroid
