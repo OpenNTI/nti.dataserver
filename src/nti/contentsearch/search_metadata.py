@@ -30,7 +30,7 @@ from .constants import (POST_MIME_TYPE, NTI_CARD_MIME_TYPE, BOOK_CONTENT_MIME_TY
 						VIDEO_TRANSCRIPT_MIME_TYPE)
 
 from .constants import (nticard_, content_, videotranscript_, transcript_, note_,
-						highlight_, redaction_, messageinfo_, post_)
+						highlight_, redaction_, messageinfo_, post_, forum_)
 
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
@@ -108,6 +108,20 @@ def _personalblogentrypost_metadata():
 							  MimeType=(MIME_BASE + ".forums.personalblogentrypost"),
 							  IsUGD=True, Order=9,
 							  Interface=forum_interfaces.IPersonalBlogEntryPost)
+
+@interface.implementer(search_interfaces.ISearchTypeMetaData)
+def _generalforum_metadata():
+	return SearchTypeMetaData(Name=forum_,
+							  MimeType=(MIME_BASE + ".forums.generalforum"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.IGeneralForum)
+
+@interface.implementer(search_interfaces.ISearchTypeMetaData)
+def _communityforum_metadata():
+	return SearchTypeMetaData(Name=forum_,
+							  MimeType=(MIME_BASE + ".forums.communityforum"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.ICommunityForum)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _nticard_metadata():

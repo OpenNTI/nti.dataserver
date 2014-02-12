@@ -62,8 +62,12 @@ class TestCommon(ConfiguringTestBase):
 		assert_that(mmap, has_entry('application/vnd.nextthought.videotranscript', 'videotranscript'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogentrypost', 'post'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'post'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.generalforum', 'forum'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.communityforum', 'forum'))
 
 	def test_get_type_from_mimetype(self):
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.generalforum'), is_('forum'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.communityforum'), is_('forum'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.post'), is_('post'))

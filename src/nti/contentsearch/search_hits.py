@@ -36,7 +36,7 @@ from . import interfaces as search_interfaces
 
 from .constants import (HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE,
 						VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE,
-						NTI_CARD_MIME_TYPE)
+						NTI_CARD_MIME_TYPE, FORUM)
 
 def get_search_hit(obj, score=1.0, query=None, parent=None):
 	hit = search_interfaces.ISearchHit(obj)
@@ -193,6 +193,21 @@ class PostSearchHit(SearchHit):
 	def get_tags(cls, adapted):
 		t = get_field_value(adapted, "tags" , ())
 		return unicode(' '.join(t))
+
+@component.adapter(for_interfaces.IGeneralForum)
+@interface.implementer(search_interfaces.IForumSearchHit)
+class ForumSearchHit(SearchHit):
+	adapter_interface = search_interfaces.IForumContentResolver
+
+	Title = None
+
+	title = alias('Title')
+
+	def set_hit_info(self, original, score):
+		adapted = super(ForumSearchHit, self).set_hit_info(original, score)
+		self.TYPE = FORUM
+		self.Title = get_field_value(adapted, "title")
+		return adapted
 
 @component.adapter(search_interfaces.IWhooshBookContent)
 @interface.implementer(search_interfaces.IWhooshBookSearchHit)

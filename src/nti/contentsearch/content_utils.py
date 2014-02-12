@@ -43,7 +43,7 @@ from .constants import (text_, body_, selectedText_, replacementContent_,
 						redactionExplanation_, keywords_, tag_fields,
 						last_modified_fields, sharedWith_, highlight_, note_, post_,
 						tags_, messageinfo_, redaction_, canvas_, canvastextshape_,
-						references_, title_, inReplyTo_, recipients_, channel_,
+						references_, title_, inReplyTo_, recipients_, channel_, forum_,
 					 	flattenedSharingTargetNames_, createdTime_, lastModified_,
 					 	created_time_fields, content_, videotranscript_, nticard_)
 
@@ -332,12 +332,30 @@ class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
 		super(_HeadlineTopicContentResolver, self).__init__(obj.headline)
 		self.topic = obj
 
+@component.adapter(forum_interfaces.IGeneralForum)
+@interface.implementer(search_interfaces.IForumContentResolver)
+class _ForumContentResolver(_AbstractIndexDataResolver):
+
+	@property
+	def type(self):
+		return forum_
+
+	def get_title(self):
+		return self.obj.title
+	title = property(get_title)
+
+	def get_content(self):
+		result = self.obj.description
+		return result if result else None
+	content = property(get_content)
+
 @component.adapter(IDict)
 @interface.implementer(search_interfaces.IHighlightContentResolver,
 					   search_interfaces.INoteContentResolver,
 					   search_interfaces.IRedactionContentResolver,
 					   search_interfaces.IMessageInfoContentResolver,
-					   search_interfaces.IPostContentResolver)
+					   search_interfaces.IPostContentResolver,
+					   search_interfaces.IForumContentResolver)
 class _DictContentResolver(object):
 
 	__slots__ = ('obj',)

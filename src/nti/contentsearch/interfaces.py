@@ -579,6 +579,12 @@ class IPostContentResolver(IBlogContentResolver):
 class IHeadlineTopicContentResolver(IBlogContentResolver):
 	pass
 
+class IForumContentResolver(_ContentMixinResolver,
+							ICreatorResolver,
+						  	IShareableContentResolver,
+						  	ITitleResolver):
+	pass
+
 class IBookContentResolver(_ContentMixinResolver):
 	pass
 
@@ -690,6 +696,9 @@ class IMessageInfoSearchHit(IUserDataSearchHit):
 	pass
 
 class IPostSearchHit(IUserDataSearchHit):
+	pass
+
+class IForumSearchHit(IUserDataSearchHit):
 	pass
 
 class IContentSearchHit(ISearchHit):
