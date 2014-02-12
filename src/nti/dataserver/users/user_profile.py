@@ -26,6 +26,8 @@ from nti.zodb import urlproperty
 from nti.dataserver import interfaces as nti_interfaces
 from . import interfaces
 
+from nti.utils.property import CachedProperty
+
 class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
 	"""
 	Migration from existing data fields in instance dictionaries to
@@ -85,13 +87,18 @@ class FriendlyNamed(persistent.Persistent):
 	def context(self):
 		return self.__parent__
 
-	def get_searchable_realname_parts(self):
+	@CachedProperty('realname')
+	def _searchable_realname_parts(self):
 		# This implementation is quite naive, returning
 		# first middle and last if they are not blank. How does
 		# this handle more complex naming scenarios?
 		if self.realname:
 			return [x for x in nameparser.HumanName(self.realname)[1:4] if x]
 		# Returning none keeps the entity out of the index
+
+	def get_searchable_realname_parts(self):
+		return self._searchable_realname_parts
+
 
 class _AvatarUrlProperty(urlproperty.UrlProperty):
 	"""
