@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
+import hashlib
 
 from zope import component
 from zope import interface
@@ -105,6 +106,19 @@ class QueryObject(SchemaConfigured):
 		xhash ^= hash(self.term.lower())
 		return xhash
 	
+	def digest(self):
+		names = ('term', 'limit', 'indexid', 'surround', 'maxchars', 'prefix',
+				 'threshold', 'maxdist')
+		md5 = hashlib.md5()
+		for name in names:
+			value = getattr(self, name, None)
+			md5.update(str(value).lower())
+		searchOn = sorted(self.searchOn or ())
+		searchOn = ','.join(searchOn)
+		md5.update(searchOn.lower())
+		result = md5.hexdigest()
+		return result
+
 	# ---------------
 
 	@classmethod
