@@ -5,7 +5,7 @@ Functions and architecture for general activity streams.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -67,7 +67,8 @@ def _enqueue_change_to_target( target, change, accum=None ):
 		# be duplicate change objects that get eliminated at read time.
 		# But this ensures that the stream gets an object, bumps the notification
 		# count, and sends a real-time notice to connected sockets.
-		# TODO: Can we make it be just the later? Or remove _get_dynamic_sharing_targets_for_read?
+		# TODO: Can we make it be just the later?
+		# Or remove _get_dynamic_sharing_targets_for_read?
 		_enqueue_change_to_target( nested_entity, change, accum=accum )
 
 # TODO: These listeners should probably be registered on something
@@ -130,11 +131,20 @@ def stream_didModifyObject( contained, event ):
 		return
 
 	if nti_interfaces.IObjectSharingModifiedEvent.providedBy(event):
-		_stream_enqeue_modification(contained.creator, Change.MODIFIED, contained, current_sharing_targets, event.oldSharingTargets)
+		_stream_enqeue_modification(contained.creator,
+									Change.MODIFIED,
+									contained,
+									current_sharing_targets,
+									event.oldSharingTargets)
 	else:
-		_stream_enqeue_modification(contained.creator, Change.MODIFIED, contained, current_sharing_targets)
+		_stream_enqeue_modification(contained.creator,
+									Change.MODIFIED,
+									contained,
+									current_sharing_targets)
 
-def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets, origSharing=None):
+def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
+								origSharing=None):
+
 	assert changeType == Change.MODIFIED
 
 	current_sharing_targets = set(current_sharing_targets)
@@ -160,8 +170,8 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets, 
 	if origSharing != newSharing:
 		# OK, the sharing changed and its not a new or dead
 		# object. People that it used to be shared with will get a
-		# DELETE notice (if it is no longer indirectly shared with them at all; if it is, just
-		# a MODIFIED notice). People that it is now shared with will
+		# DELETE notice (if it is no longer indirectly shared with them at all;
+		# if it is, just a MODIFIED notice). People that it is now shared with will
 		# get a SHARED notice--these people should not later get
 		# a MODIFIED notice for this action.
 		deleteChange = Change( Change.DELETED, obj )
@@ -173,11 +183,12 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets, 
 				# Shared with him indirectly, not directly. We need to be sure
 				# this stuff gets cleared from his caches, thus the delete notice.
 				# but we don't want this to leave us because to the outside world it
-				# is still shared. (Notice we also do NOT send a modified event to this user:
-				# we dont want to put this data back into his caches.)
+				# is still shared. (Notice we also do NOT send a modified event
+				# to this user: we dont want to put this data back into his caches.)
 				deleteChange.send_change_notice = False
 			else:
-				deleteChange.send_change_notice = True # TODO: mutating this isn't really right, it is a shared persisted object
+				# TODO: mutating this isn't really right, it is a shared persisted object
+				deleteChange.send_change_notice = True
 			_enqueue_change_to_target( shunnedPerson, deleteChange, seenTargets )
 		for lovedPerson in newSharing - origSharing:
 			_enqueue_change_to_target( lovedPerson, sharedChange, seenTargets )
