@@ -94,7 +94,6 @@ class _SearchableContent(object):
 	def get_objects_from_whoosh_hits(self, search_hits, docids):
 		raise NotImplementedError()
 
-
 class Book(_SearchableContent):
 
 	type = constants.book_
