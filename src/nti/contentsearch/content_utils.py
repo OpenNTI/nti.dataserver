@@ -595,7 +595,12 @@ class _NTICardContentResolver(_BasicContentResolver):
 	createdTime = lastModified = property(get_last_modified)
 
 @interface.implementer(search_interfaces.IACLResolver)
-class _ACLResolver(_BasicContentResolver):
+class _ACLResolver(object):
+
+	__slots__ = ('obj',)
+
+	def __init__(self, obj):
+		self.obj = obj
 
 	@property
 	def acl(self):
@@ -608,7 +613,6 @@ class _ACLResolver(_BasicContentResolver):
 		if resolver is not None:
 			result.update([x.lower() for x in resolver.sharedWith])
 		return list(result) if result else None
-
 
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
