@@ -207,6 +207,18 @@ class _SearchResults(_BaseSearchResults):
 	Hits = hits = property(_get_hits, _set_hits)
 
 	@property
+	def ContentHits(self):
+		for hit in self._raw_hits():
+			if search_interfaces.IContentSearchHit.providedBy(hit):
+				yield hit
+
+	@property
+	def UserDataHits(self):
+		for hit in self._raw_hits():
+			if search_interfaces.IUserDataSearchHit.providedBy(hit):
+				yield hit
+
+	@property
 	def lastModified(self):
 		return self.metadata.lastModified
 
@@ -356,13 +368,14 @@ def sort_hits(hits, reverse=False, sortOn=None):
 										name=sortOn) if sortOn else None
 	if comparator is not None:
 		if isinstance(hits, list):
-			return hits.sort(comparator.compare, reverse=reverse)
+			hits.sort(comparator.compare, reverse=reverse)
+			return iter(hits)
 		else:
 			if reverse:
 				comparator = lambda x, y: comparator(y, x)
 			return isorted(hits, comparator)
 	else:
-		iterator = reverse(hits) if reverse else iter(hits)
+		iterator = reversed(hits) if reverse else iter(hits)
 		return iterator
 
 # legacy results

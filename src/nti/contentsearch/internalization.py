@@ -23,7 +23,6 @@ from . import interfaces as search_interfaces
 
 from .constants import (ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY)
 
-
 def _readonly(iface):
 	result = set()
 	for name in schema.getFieldNames(iface):

@@ -2,9 +2,9 @@
 """
 Sort utilities
 
-$Id: _search_utils.py 16109 2013-02-20 22:29:23Z carlos.sanchez $
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from itertools import ifilter, tee
@@ -15,10 +15,10 @@ def isorted(iterable, comparator=None):
 	
 	http://code.activestate.com/recipes/280501-lazy-sorting/
 	"""
-	iterable = iter(iterable)
 	try:
+		iterable = iter(iterable)
 		pivot = iterable.next()
-	except:
+	except (TypeError, StopIteration):
 		return
 
 	comparator = comparator if comparator else lambda x,y: x < y
