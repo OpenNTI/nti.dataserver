@@ -31,24 +31,24 @@ class BaseView(object):
 		self.request = request
 
 	def _get_batch_size_start(self):
+		# Get batch info from request. They are also available in the search query
 		return search_utils.get_batch_size_start(self.request.params)
 
-	def _batch_results(self, result):
+	def _batch_results(self, results):
 		batch_size, batch_start = self._get_batch_size_start()
 		if 	batch_size is None or batch_start is None or \
-			not search_interfaces.ISearchResults.providedBy(result):
-			return result
+			not search_interfaces.ISearchResults.providedBy(results):
+			return results, results
 		else:
-			new_result = result.clone(hits=False)
-			if batch_start < len(result):
-				batch_hits = Batch(result.Hits, batch_start, batch_size)
-				new_result.Hits = batch_hits  # Set hits this iterates
+			new_results = results.clone(hits=False)
+			if batch_start < len(results):
+				batch_hits = Batch(results.Hits, batch_start, batch_size)
+				new_results.Hits = batch_hits  # Set hits this iterates
 				# this is a bit hackish, but it avoids building a new
 				# batch object plus the link decorator needs the orignal
 				# batch object
-				new_result.Batch = batch_hits  # save for decorator
-			result = new_result
-		return result
+				new_results.Batch = batch_hits  # save for decorator
+			return new_results, results
 
 	@property
 	def query(self):
@@ -69,7 +69,7 @@ class BaseView(object):
 	def search(self, query):
 		now = time.time()
 		result = self.indexmanager.search(query=query)
-		result = self._batch_results(result)
+		result, _ = self._batch_results(result)
 		elapsed = time.time() - now
 		metadata = getattr(result, 'HitMetaData', None)
 		entity = Entity.get_entity(query.username)
