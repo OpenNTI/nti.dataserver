@@ -91,7 +91,7 @@ class QueryObject(SchemaConfigured):
 
 	@property
 	def IsBatching(self):
-		return self.batchStart is not None and self.batchSize
+		return True if self.batchStart is not None and self.batchSize else False
 	is_batching = IsBatching
 	
 	def __eq__(self, other):

@@ -43,6 +43,21 @@ def clean_search_query(query, language='en'):
 
 accepted_keys = {'ntiid', 'accept', 'exclude'}
 
+def get_batch_size_start(params):
+	batch_size = params.get('batchSize', None)
+	batch_start = params.get('batchStart', None)
+	if batch_size is not None and batch_start is not None:
+		try:
+			batch_size = int(batch_size)
+			batch_start = int(batch_start)
+		except ValueError:
+			raise hexc.HTTPBadRequest()
+		if batch_size <= 0 or batch_start < 0:
+			raise hexc.HTTPBadRequest()
+	else:
+		batch_size = batch_start = None
+	return batch_size, batch_start
+
 def create_queryobject(username, params, matchdict):
 
 	indexable_type_names = common.get_indexable_types()
@@ -87,17 +102,7 @@ def create_queryobject(username, params, matchdict):
 			eset.discard(None)
 			args['searchOn'] = common.sort_search_types(indexable_type_names - eset)
 
-	batchSize = args.get('batchSize', None)
-	batchStart = args.get('batchStart', None)
-	if batchSize is not None and batchStart is not None:
-		try:
-			batchSize = int(batchSize)
-			batchStart = int(batchStart)
-		except ValueError:
-			raise hexc.HTTPBadRequest()
-		if batchSize <= 0 or batchStart < 0:
-			raise hexc.HTTPBadRequest()
-
+	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
 	return search_query.QueryObject(**args)
 
 def construct_queryobject(request):

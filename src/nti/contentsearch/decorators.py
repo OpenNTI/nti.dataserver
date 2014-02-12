@@ -13,8 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from z3c.batching.batch import Batch
-
 from pyramid.threadlocal import get_current_request
 
 from nti.externalization import interfaces as ext_interfaces
@@ -126,23 +124,23 @@ class _SearchResultsLinkDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
-		query = original.query
+		query = original.Query
 		request = get_current_request()
-		if request is None or not query.is_batching :
+		batch_hits = getattr(original, 'Batch', None)
+		if request is None or not query.IsBatching or batch_hits is None:
 			return
 
-		# Insert links to the next and previous batch
-		result_list = Batch(original.hits, query.batchStart, query.batchSize)
-		next_batch, prev_batch = result_list.next, result_list.previous
+		next_batch, prev_batch = batch_hits.next, batch_hits.previous
 		for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-			if batch is not None and batch != result_list:
+			if batch is not None and batch != batch_hits:
 				batch_params = request.params.copy()
 				batch_params['batchStart'] = batch.start
 				_query = sorted(batch_params.items())
 				link_next_href = request.current_route_path(_query=_query)
 				link_next = Link(link_next_href, rel=rel)
 				external.setdefault('Links', []).append(link_next)
-
+		# clean
+		original.Batch = None
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _ResultsDecorator(object):

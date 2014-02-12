@@ -73,9 +73,6 @@ class ISearchQuery(interface.Interface):
 	IsEmpty = schema.Bool(title="Returns true if this is an empty search",
 						   required=True, readonly=True)
 
-	IsBatching = schema.Bool(title="Returns true if this is a batch search",
-							 required=True, readonly=True)
-
 	IsPrefixSearch = schema.Bool(title="Returns true if the search is for prefix search",
 								 required=True, readonly=True)
 
@@ -84,6 +81,9 @@ class ISearchQuery(interface.Interface):
 
 	IsDescendingSortOrder = schema.Bool(title="Returns true if the sortOrder is descending",
 								 		required=True, readonly=True)
+
+	IsBatching = schema.Bool(title="Returns true if this is a batch search",
+							 required=True, readonly=True)
 
 
 class ISearchQueryValidator(interface.Interface):

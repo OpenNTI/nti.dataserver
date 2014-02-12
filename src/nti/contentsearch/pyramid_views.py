@@ -16,6 +16,8 @@ from zope import interface
 from zope.event import notify
 from zope.location import locate
 
+from z3c.batching.batch import Batch
+
 from nti.dataserver.users import Entity
 
 from . import search_utils
@@ -27,6 +29,29 @@ class BaseView(object):
 
 	def __init__(self, request):
 		self.request = request
+
+	def _get_batch_size_start(self):
+		return search_utils.get_batch_size_start(self.request.params)
+
+	def _batch_results(self, result):
+		batch_size, batch_start = self._get_batch_size_start()
+		if 	batch_size is None or batch_start is None or \
+			not search_interfaces.ISearchResults.providedBy(result):
+			return result
+		else:
+			new_result = result.__class__()
+			new_result.Query = result.Query
+			new_result.HitMetaData += result.HitMetaData
+
+			if batch_start < len(result):
+				batch_hits = Batch(result.Hits, batch_start, batch_size)
+				new_result.Hits = batch_hits  # Set hits this iterates
+				# this is a bit hackish, but it avoids building a new
+				# batch object plus the link decorator needs the orignal
+				# batch object
+				new_result.Batch = batch_hits  # save for decorator
+			result = new_result
+		return result
 
 	@property
 	def query(self):
@@ -47,8 +72,9 @@ class BaseView(object):
 	def search(self, query):
 		now = time.time()
 		result = self.indexmanager.search(query=query)
-		metadata = result.metadata
+		result = self._batch_results(result)
 		elapsed = time.time() - now
+		metadata = getattr(result, 'HitMetaData', None)
 		entity = Entity.get_entity(query.username)
 		notify(search_interfaces.SearchCompletedEvent(entity, query, metadata, elapsed))
 		return result
