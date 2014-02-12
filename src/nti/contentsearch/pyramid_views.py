@@ -69,11 +69,10 @@ class BaseView(object):
 	def search(self, query):
 		now = time.time()
 		result = self.indexmanager.search(query=query)
-		result, _ = self._batch_results(result)
+		result, original = self._batch_results(result)
 		elapsed = time.time() - now
-		metadata = getattr(result, 'HitMetaData', None)
 		entity = Entity.get_entity(query.username)
-		notify(search_interfaces.SearchCompletedEvent(entity, query, metadata, elapsed))
+		notify(search_interfaces.SearchCompletedEvent(entity, original, elapsed))
 		return result
 
 	def __call__(self):

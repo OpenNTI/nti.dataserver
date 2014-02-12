@@ -29,7 +29,6 @@ from nti.externalization.externalization import make_repr
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.utils.property import alias
-# from zope.schema.fieldproperty import createFieldProperties
 
 from . import discriminators
 from . import interfaces as search_interfaces
@@ -38,11 +37,10 @@ from .constants import (HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE,
 						VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE,
 						NTI_CARD_MIME_TYPE, FORUM)
 
-def get_search_hit(obj, score=1.0, query=None, parent=None):
+def get_search_hit(obj, score=1.0, query=None):
 	hit = search_interfaces.ISearchHit(obj)
 	hit.Score = score
 	hit.Query = query
-	hit.__parent__ = parent
 	return hit
 
 def get_hit_id(obj):
@@ -73,9 +71,6 @@ class BaseSearchHit(object):
 
 	__metaclass__ = _MetaSearchHit
 
-	__parent__ = None
-	__name__ = alias('OID')
-
 	Score = lastModified = 0
 
 	Fragments = TargetMimeType = ContainerId = None
@@ -96,7 +91,6 @@ class BaseSearchHit(object):
 	def clone(self):
 		result = self.__class__()
 		result.__dict__.update(self.__dict__)
-		result.__parent__ = None
 		return result
 
 	__repr__ = make_repr()
