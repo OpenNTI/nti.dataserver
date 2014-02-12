@@ -49,7 +49,7 @@ def get_hit_id(obj):
 	if obj is None:
 		result = None
 	elif nti_interfaces.IModeledContent.providedBy(obj) or \
-		 for_interfaces.IGeneralForum.providedBy(obj):
+		 nti_interfaces.ITitledContent.providedBy(obj):
 		result = unicode(discriminators.get_uid(obj))
 	elif isinstance(obj, collections.Mapping):
 		result = obj.get(OID, None)
