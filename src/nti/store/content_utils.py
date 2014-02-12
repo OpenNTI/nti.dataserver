@@ -31,5 +31,5 @@ def get_collection_root(ntiid, library=None, registry=component):
 
 def get_collection_root_ntiid(ntiid, library=None, registry=component):
     croot = get_collection_root(ntiid, library, registry)
-    result = croot.ntiid.lower() if croot else None
+    result = croot.ntiid if croot else None
     return result
