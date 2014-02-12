@@ -39,10 +39,7 @@ class BaseView(object):
 			not search_interfaces.ISearchResults.providedBy(result):
 			return result
 		else:
-			new_result = result.__class__()
-			new_result.Query = result.Query
-			new_result.HitMetaData += result.HitMetaData
-
+			new_result = result.clone(hits=False)
 			if batch_start < len(result):
 				batch_hits = Batch(result.Hits, batch_start, batch_size)
 				new_result.Hits = batch_hits  # Set hits this iterates
