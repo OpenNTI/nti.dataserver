@@ -126,7 +126,11 @@
 	<subscriber factory=".decorators._SuggestResultsDecorator"
 				for=".interfaces.ISuggestResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+			
+	<subscriber factory=".decorators._SearchHitMetaDataDecorator"
+				for=".interfaces.ISearchHitMetaData"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+					
 	<!-- Internalization -->
 			
 	<adapter factory=".internalization._QueryObjectUpdater"

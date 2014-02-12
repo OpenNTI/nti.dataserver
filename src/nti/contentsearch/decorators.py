@@ -177,3 +177,11 @@ class _SuggestResultsDecorator(_ResultsDecorator):
 		if not search_interfaces.ISuggestAndSearchResults.providedBy(original):
 			external[ITEMS] = external.pop(SUGGESTIONS, [])
 			self.decorateCommon(original, external)
+
+@component.adapter(search_interfaces.ISearchHitMetaData)
+class _SearchHitMetaDataDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalObject(self, original, external):
+		external.pop(ext_interfaces.StandardExternalFields.CREATED_TIME, None)

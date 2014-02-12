@@ -185,13 +185,13 @@ class _SearchResults(_BaseSearchResults):
 	def clone(self, meta=True, hits=False):
 		result = self.__class__()
 		result.Query = self.Query
-		if meta and hits:
-			result += self
-		else:
-			if meta:
-				result.HitMetaData += self.HitMetaData
-			if hits:
-				result.Hits = self.Hits
+		if meta:
+			result.HitMetaData += self.HitMetaData
+		if hits:
+			for hit in self._raw_hits():
+				clone = hit.clone()
+				clone.__parent__ = result
+				result._add_hit(clone)
 		return result
 
 	def _raw_hits(self):
