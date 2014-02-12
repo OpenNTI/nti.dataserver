@@ -8,9 +8,11 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import os
 import json
@@ -129,6 +131,14 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(CREATOR, u'nt@nti.com'))
 		assert_that(d, has_entry(NTIID, oidstr))
 		assert_that(d, has_entry('Snippet', u'It is not enough to mean well, we actually have to do well'))
+
+		hit = search_interfaces.ISearchHit(note)
+		clone = hit.clone()
+		assert_that(id(hit), is_not(id(clone)))
+		assert_that(clone, has_property('OID', is_not(none())))
+		assert_that(clone, has_property('Snippet', is_not(none())))
+		assert_that(clone, has_property('NTIID', is_not(none())))
+		assert_that(clone, has_property('Type', is_not(none())))
 
 	@WithMockDSTrans
 	def test_search_hit_hightlight_ds(self):

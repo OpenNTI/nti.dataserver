@@ -48,7 +48,8 @@ def get_search_hit(obj, score=1.0, query=None, parent=None):
 def get_hit_id(obj):
 	if obj is None:
 		result = None
-	elif nti_interfaces.IModeledContent.providedBy(obj):
+	elif nti_interfaces.IModeledContent.providedBy(obj) or \
+		 for_interfaces.IGeneralForum.providedBy(obj):
 		result = unicode(discriminators.get_uid(obj))
 	elif isinstance(obj, collections.Mapping):
 		result = obj.get(OID, None)
@@ -72,9 +73,12 @@ class BaseSearchHit(object):
 
 	__metaclass__ = _MetaSearchHit
 
+	__parent__ = None
+	__name__ = alias('OID')
+
 	Score = lastModified = 0
 
-	Fragments = TargetMimeType = ContainerId= None
+	Fragments = TargetMimeType = ContainerId = None
 	Type = NTIID = Query = Creator = Snippet = None
 
 	createdTime = alias('lastModified')
@@ -88,6 +92,12 @@ class BaseSearchHit(object):
 		self.Score = score
 		self.Type = unicode(original.__class__.__name__)
 		self.TargetMimeType = unicode(nti_mimetype_from_object(original, False) or u'')
+
+	def clone(self):
+		result = self.__class__()
+		result.__dict__.update(self.__dict__)
+		result.__parent__ = None
+		return result
 
 	__repr__ = make_repr()
 
