@@ -182,6 +182,18 @@ class _SearchResults(_BaseSearchResults):
 		self._seen = set()  # TODO: Temp fix this will go away
 		self.HitMetaData = SearchHitMetaData()
 
+	def clone(self, meta=True, hits=False):
+		result = self.__class__()
+		result.Query = self.Query
+		if meta and hits:
+			result += self
+		else:
+			if meta:
+				result.HitMetaData += self.HitMetaData
+			if hits:
+				result.Hits = self.Hits
+		return result
+
 	def _raw_hits(self):
 		return self._hits
 
@@ -301,6 +313,12 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 	Hits = hits = property(_SearchResults._get_hits, _SearchResults._set_hits)
 	suggestions = Suggestions = property(_SuggestResults._get_words,
 										 _SuggestResults._set_words)
+
+	def clone(self, meta=True, hits=False, suggestions=True):
+		result = _SearchResults.clone(self, meta, hits)
+		if suggestions:
+			result.Suggestions = self.Suggestions
+		return result
 
 	def add(self, item, score=1.0):
 		_SearchResults.add(self, item, score)
