@@ -672,28 +672,38 @@ class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
 	Fragments = nti_schema.ListOrTuple(value_type=schema.Object(ISearchFragment, title="the fragment"),
 									   title="search fragments", required=False)
 
-class INoteSearchHit(ISearchHit):
+class IUserDataSearchHit(ISearchHit):
+	"""
+	marker interface for user generated data search hits
+	"""
+
+class INoteSearchHit(IUserDataSearchHit):
 	pass
 
-class IHighlightSearchHit(ISearchHit):
+class IHighlightSearchHit(IUserDataSearchHit):
 	pass
 
-class IRedactionSearchHit(ISearchHit):
+class IRedactionSearchHit(IUserDataSearchHit):
 	pass
 
-class IMessageInfoSearchHit(ISearchHit):
+class IMessageInfoSearchHit(IUserDataSearchHit):
 	pass
 
-class IPostSearchHit(ISearchHit):
+class IPostSearchHit(IUserDataSearchHit):
 	pass
 
-class IBookSearchHit(ISearchHit):
+class IContentSearchHit(ISearchHit):
+	"""
+	marker interface for content search hits
+	"""
+
+class IBookSearchHit(IContentSearchHit):
 	Title = nti_schema.ValidTextLine(title="Book title", required=False)
 
 class IWhooshBookSearchHit(IBookSearchHit):
 	pass
 
-class IVideoTranscriptSearchHit(ISearchHit):
+class IVideoTranscriptSearchHit(IContentSearchHit):
 	Title = nti_schema.ValidTextLine(title="Card title", required=False)
 	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
 	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=False)
@@ -702,7 +712,7 @@ class IVideoTranscriptSearchHit(ISearchHit):
 class IWhooshVideoTranscriptSearchHit(IVideoTranscriptSearchHit):
 	pass
 
-class INTICardSearchHit(ISearchHit):
+class INTICardSearchHit(IContentSearchHit):
 	Href = nti_schema.ValidTextLine(title="Card HREF", required=True)
 	Title = nti_schema.ValidTextLine(title="Card title", required=False)
 	TargetNTIID = nti_schema.ValidTextLine(title="Card target NTIID", required=True)
@@ -754,9 +764,19 @@ class IBaseSearchResults(nti_interfaces.ILastModified):
 class ISearchResults(IBaseSearchResults):
 
 	Hits = nti_schema.IndexedIterable(
-				value_type=nti_schema.Object(ISearchHit, description="A :class:`.ISearchHit`"),
+				value_type=nti_schema.Object(ISearchHit, description="A ISearchHit`"),
 				title="search hit objects",
 				required=True)
+
+	ContentHits = schema.Iterable(
+						title="content search hit objects",
+						required=False,
+						readonly=True)
+
+	UserDataHits = schema.Iterable(
+						title="user generated data search hit objects",
+						required=False,
+						readonly=True)
 
 	HitMetaData = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 

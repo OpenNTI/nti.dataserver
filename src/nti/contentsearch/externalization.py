@@ -43,6 +43,10 @@ _SearchHitInternalObjectIO.__class_init__()
 @interface.implementer(ext_interfaces.IInternalObjectIO)
 class _SearchResultsInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
+	_excluded = {'ContentHits', 'UserDataHits'}
+	_excluded_out_ivars_ = _excluded | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
+	_excluded_in_ivars_ = _excluded | AutoPackageSearchingScopedInterfaceObjectIO._excluded_in_ivars_
+
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces(cls, search_interfaces):
 		return (search_interfaces.ISearchResults,
