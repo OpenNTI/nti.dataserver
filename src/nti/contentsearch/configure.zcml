@@ -46,6 +46,10 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides=".interfaces.IPostSearchHit" />
 
+	<adapter factory=".search_hits.ForumSearchHit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum"
+			 provides=".interfaces.IForumSearchHit" />
+			 
 	<adapter factory=".search_hits.WhooshBookSearchHit"
 			 for=".interfaces.IWhooshBookContent"
 			 provides=".interfaces.IWhooshBookSearchHit" />
@@ -95,6 +99,10 @@
 				for=".interfaces.IPostSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
+	<subscriber factory=".decorators._ForumSearchHitHighlightDecorator"
+				for=".interfaces.IForumSearchHit"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<subscriber factory=".decorators._NoteSearchHitHighlightDecorator"
 				for=".interfaces.INoteSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
@@ -201,6 +209,10 @@
 			 provides=".interfaces.IHeadlineTopicContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic" />
 			 
+	<adapter factory=".content_utils._ForumContentResolver"
+			 provides=".interfaces.IForumContentResolver"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum" />
+			 
 	<adapter factory=".content_utils._VideoTranscriptContentResolver"
 			 provides=".interfaces.IVideoTranscriptContentResolver"
 			 for=".interfaces.IVideoTranscriptContent" />
@@ -245,7 +257,10 @@
 	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
 	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
 	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
-		
+	
+	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
+	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
+			
 	<!-- Search highlights -->
 
 	<utility factory=".search_highlights.create_default_analyzer" name="en" />

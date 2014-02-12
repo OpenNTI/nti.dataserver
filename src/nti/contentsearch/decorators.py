@@ -109,6 +109,14 @@ class _PostSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator
 					 (tags_, hit.Tags))
 		self.decorate_on_source_fields(hit, external, t_sources)
 
+@component.adapter(search_interfaces.IForumSearchHit)
+@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+class _ForumSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
+
+	def decorateExternalObject(self, hit, external):
+		t_sources = ((title_, hit.Title), (content_, external.get(SNIPPET)))
+		self.decorate_on_source_fields(hit, external, t_sources)
+
 @component.adapter(search_interfaces.IWhooshNTICardSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _NTICardSearchHitHighlightDecorator(_MultipleFieldSearchHitHighlightDecorator):
