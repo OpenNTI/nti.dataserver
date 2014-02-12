@@ -249,7 +249,7 @@ class _SearchResults(_BaseSearchResults):
 			search_interfaces.ISuggestAndSearchResults.providedBy(other):
 
 			self._set_hits(other._raw_hits())
-			self.metadata += other.metadata
+			self.HitMetaData += other.HitMetaData
 
 		return self
 
