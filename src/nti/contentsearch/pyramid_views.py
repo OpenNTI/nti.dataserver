@@ -30,6 +30,33 @@ class BaseView(object):
 	def __init__(self, request):
 		self.request = request
 
+	@property
+	def query(self):
+		return search_utils.construct_queryobject(self.request)
+
+	@property
+	def indexmanager(self):
+		return self.request.registry.getUtility(search_interfaces.IIndexManager)
+
+	def locate(self, obj, parent):
+		# TODO: (Instead of modification info, we should be using etags here, anyway).
+		locate(obj, parent, self.name)
+		# TODO: Make cachable?
+		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
+		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
+		return obj
+
+	def search(self, query):
+		raise NotImplementedError()
+
+	def __call__(self):
+		query = self.query
+		result = self.search(query=query)
+		result = self.locate(result, self.request.root)
+		return result
+
+class BaseSearchView(BaseView):
+
 	def _get_batch_size_start(self):
 		# Get batch info from request. They are also available in the search query
 		return search_utils.get_batch_size_start(self.request.params)
@@ -50,22 +77,6 @@ class BaseView(object):
 				new_results.Batch = batch_hits  # save for decorator
 			return new_results, results
 
-	@property
-	def query(self):
-		return search_utils.construct_queryobject(self.request)
-
-	@property
-	def indexmanager(self):
-		return self.request.registry.getUtility(search_interfaces.IIndexManager)
-
-	def _locate(self, obj, parent):
-		# TODO: (Instead of modification info, we should be using etags here, anyway).
-		locate(obj, parent, self.name)
-		# TODO: Make cachable?
-		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
-		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
-		return obj
-
 	def search(self, query):
 		now = time.time()
 		result = self.indexmanager.search(query=query)
@@ -75,16 +86,22 @@ class BaseView(object):
 		notify(search_interfaces.SearchCompletedEvent(entity, original, elapsed))
 		return result
 
-	def __call__(self):
-		query = self.query
-		result = self.search(query=query)
-		result = self._locate(result, self.request.root)
-		return result
-
-class SearchView(BaseView):
+class SearchView(BaseSearchView):
 	name = 'Search'
 Search = SearchView  # BWC
 
-class UserDataSearchView(BaseView):
+class UserDataSearchView(BaseSearchView):
 	name = 'UserSearch'
 UserSearch = UserDataSearchView  # BWC
+
+class SuggestView(BaseView):
+	name = 'Suggest'
+
+	def search(self, query):
+		now = time.time()
+		result = self.indexmanager.suggest(query=query)
+		elapsed = time.time() - now
+		entity = Entity.get_entity(query.username)
+		notify(search_interfaces.SearchCompletedEvent(entity, result, elapsed))
+		return result
+Suggest = SuggestView  # BWC
