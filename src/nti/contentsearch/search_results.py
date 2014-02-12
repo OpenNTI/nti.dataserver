@@ -190,7 +190,6 @@ class _SearchResults(_BaseSearchResults):
 		if hits:
 			for hit in self._raw_hits():
 				clone = hit.clone()
-				clone.__parent__ = result
 				result._add_hit(clone)
 		return result
 
@@ -243,7 +242,7 @@ class _SearchResults(_BaseSearchResults):
 			item, score = item[0], item[1]
 
 		if _allow_search_hit(self._filterCache, item, score):
-			hit = create_search_hit(item, score, self.Query, self)
+			hit = create_search_hit(item, score, self.Query)
 			if self._add_hit(hit):
 				self.metadata.track(item)
 			else:

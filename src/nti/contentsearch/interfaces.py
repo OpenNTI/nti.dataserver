@@ -853,12 +853,19 @@ class ISearchCompletedEvent(interface.Interface):
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(component.interfaces.ObjectEvent):
 
-	def __init__(self, user, query, metadata, elapsed=0):
+	def __init__(self, user, result, elapsed=0):
 		super(SearchCompletedEvent, self).__init__(user)
-		self.query = query
+		self.result = result
 		self.elapsed = elapsed
-		self.metadata = metadata
 
 	@property
 	def user(self):
 		return self.object
+
+	@property
+	def query(self):
+		return self.result.Query
+
+	@property
+	def metadata(self):
+		return getattr(self.result, 'HitMetaData', None)
