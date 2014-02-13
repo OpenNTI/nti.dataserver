@@ -278,16 +278,16 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			entity = users.Entity.get_entity( self.default_entityname )
 
-			all_subs = set()
+			all_subs = dict()
 			def _recur( i ):
-				all_subs.add( i )
+				all_subs[id(i)] = i
 				subs = ISublocations( i, None )
 				if subs:
 					for x in subs.sublocations():
 						_recur( x )
 			_recur( entity )
 
-			assert_that( all_subs, has_item( is_( self.forum_type ) ) )
+			assert_that( all_subs.values(), has_item( is_( self.forum_type ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_PUT_to_edit_existing_forum_topic_headline( self ):
