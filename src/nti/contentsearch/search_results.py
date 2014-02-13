@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import time
 import collections
 
 from zope import interface
@@ -85,7 +86,10 @@ class SearchHitMetaData(object):
 	lastModified = createdTime = 0
 
 	def __init__(self):
+		self.SearchTime = 0
+		self._ref = time.time()
 		self.type_count = collections.defaultdict(int)
+		self.type_time = collections.defaultdict(float)
 		self.container_count = collections.defaultdict(int)
 
 	def _get_type_count(self):
@@ -120,6 +124,8 @@ class SearchHitMetaData(object):
 		type_name = resolver.type if resolver else 0
 		self.type_count[type_name] = self.type_count[type_name] + 1
 
+		self.SearchTime = time.time() - self._ref
+
 	def __iadd__(self, other):
 		# container count
 		for k, v in other.container_count.items():
@@ -128,9 +134,12 @@ class SearchHitMetaData(object):
 		# last modified
 		self.lastModified = max(self.lastModified, other.lastModified)
 
-		# container count
+		# type count
 		for k, v in other.type_count.items():
 			self.type_count[k] = self.type_count[k] + v
+
+		# search time
+		self.SearchTime = max(self.SearchTime, other.SearchTime)
 
 		return self
 
