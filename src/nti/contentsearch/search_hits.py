@@ -198,6 +198,13 @@ class PostSearchHit(SearchHit):
 		t = get_field_value(adapted, "tags" , ())
 		return unicode(' '.join(t))
 
+@component.adapter(for_interfaces.IHeadlineTopic)
+class HeadlineTopicSearchHit(PostSearchHit):
+
+	def __init__(self, original=None, score=1.0):
+		original = getattr(original, 'headline', None)
+		super(HeadlineTopicSearchHit, self).__init__(original, get_hit_id(original), score)
+
 @component.adapter(for_interfaces.IGeneralForum)
 @interface.implementer(search_interfaces.IForumSearchHit)
 class ForumSearchHit(SearchHit):
