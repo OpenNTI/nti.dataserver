@@ -203,7 +203,7 @@ class HeadlineTopicSearchHit(PostSearchHit):
 
 	def __init__(self, original=None, score=1.0):
 		original = getattr(original, 'headline', None)
-		super(HeadlineTopicSearchHit, self).__init__(original, get_hit_id(original), score)
+		super(HeadlineTopicSearchHit, self).__init__(original, score)
 
 @component.adapter(for_interfaces.IGeneralForum)
 @interface.implementer(search_interfaces.IForumSearchHit)
