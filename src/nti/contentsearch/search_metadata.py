@@ -3,6 +3,8 @@
 """
 Search metadata.
 
+Defines mappings from internal types to mime types
+
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -81,8 +83,9 @@ def _transcript_metadata():
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _messageinfo_metadata():
-	return SearchTypeMetaData(Name=messageinfo_, MimeType=(MIME_BASE + "." + messageinfo_),
-							  IsUGD=True, Order=8, Interface=chat_interfaces.IMessageInfo)
+	return SearchTypeMetaData(
+						Name=messageinfo_, MimeType=(MIME_BASE + "." + messageinfo_),
+						IsUGD=True, Order=8, Interface=chat_interfaces.IMessageInfo)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _post_metadata():
