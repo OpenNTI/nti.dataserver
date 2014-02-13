@@ -46,6 +46,10 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost"
 			 provides=".interfaces.IPostSearchHit" />
 
+	<adapter factory=".search_hits.HeadlineTopicSearchHit"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic"
+			 provides=".interfaces.IPostSearchHit" />
+			 
 	<adapter factory=".search_hits.ForumSearchHit"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum"
 			 provides=".interfaces.IForumSearchHit" />
