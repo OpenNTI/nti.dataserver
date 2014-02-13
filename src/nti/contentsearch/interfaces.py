@@ -751,6 +751,8 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 							nti_schema.Int(title='count'),
 							title="Search hit type count", required=True)
 
+	SearchTime = nti_schema.Number(title='Search time', required=True, default=0)
+
 	ContainerCount = schema.Dict(
 						nti_schema.ValidTextLine(title='container'),
 						nti_schema.Int(title='count'),

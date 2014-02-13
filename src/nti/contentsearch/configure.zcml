@@ -213,10 +213,6 @@
 			 provides=".interfaces.IPostContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 			 
-	<adapter factory=".content_utils._HeadlineTopicContentResolver"
-			 provides=".interfaces.IHeadlineTopicContentResolver"
-			 for="nti.dataserver.contenttypes.forums.interfaces.IHeadlineTopic" />
-			 
 	<adapter factory=".content_utils._ForumContentResolver"
 			 provides=".interfaces.IForumContentResolver"
 			 for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum" />
