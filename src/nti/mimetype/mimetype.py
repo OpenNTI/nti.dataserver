@@ -229,7 +229,7 @@ def nti_mimetype_from_object( obj, use_class=True ):
 		# representation, which wants the mimetype, which gets to this function.
 		# Infinite recursion.
 		# But do log the __class__ value in case the type has been proxied
-		logger.warn( "Falling back to class to get MIME for %s/%s", clazz, getattr(obj, '__class__', clazz ) )
+		logger.debug( "Falling back to class to get MIME for %s/%s", clazz, getattr(obj, '__class__', clazz ) )
 		return nti_mimetype_with_class( clazz.__name__ )
 
 	if isinstance( obj, basestring ) and mimeTypeConstraint( obj ):
