@@ -83,13 +83,11 @@ class SearchHitMetaData(object):
 	__external_can_create__ = True
 	mime_type = mimeType = nti_mimetype_with_class('SearchHitMetaData')
 
-	lastModified = createdTime = 0
+	SearchTime = lastModified = createdTime = 0
 
 	def __init__(self):
-		self.SearchTime = 0
 		self._ref = time.time()
 		self.type_count = collections.defaultdict(int)
-		self.type_time = collections.defaultdict(float)
 		self.container_count = collections.defaultdict(int)
 
 	def _get_type_count(self):
