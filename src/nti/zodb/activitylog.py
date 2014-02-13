@@ -46,7 +46,8 @@ class LogActivityMonitor(_AbstractActivityMonitor):
 	"""
 
 	def _closedConnection(self, loads, stores, db_name ):
-		logger.debug( "closedConnection=%s", {'loads': loads, 'stores': stores, 'database': db_name } )
+		logger.debug( "closedConnection={'loads': %5d, 'stores': %5d, 'database': %s}",
+					  loads, stores, db_name )
 
 
 from perfmetrics import statsd_client
