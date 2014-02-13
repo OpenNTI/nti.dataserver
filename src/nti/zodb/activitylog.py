@@ -71,9 +71,10 @@ class StatsdActivityMonitor(_AbstractActivityMonitor):
 
 def register_subscriber( event ):
 	"""
-	Subscriber to the :class:`zope.processlifetime.IDatabaseOpenedEvent`
+	Subscriber to the :class:`zope.processlifetime.IDatabaseOpenedWithRoot`
 	that registers an activity monitor.
 	"""
-
+	# IDatabaseOpened fires for each database, so if we sub to that we'd do this many times.
+	# WithRoot fires only once.
 	for database in event.database.databases.values():
 		database.setActivityMonitor( StatsdActivityMonitor( LogActivityMonitor( database.getActivityMonitor() ) ) )
