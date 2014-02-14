@@ -396,6 +396,12 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 		assert_that(forum_contents_res3.json_body, has_entry('FilteredTotalItemCount', 0))
 
+		forum_contents_res3 = self.testapp.get(forum_contents_href,
+											   params={b'searchTerm': 'blog'},
+											   status=200)
+
+		assert_that(forum_contents_res3.json_body, has_entry('FilteredTotalItemCount', 2))
+
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
