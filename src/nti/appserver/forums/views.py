@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import datetime
 import operator
+import itertools
 from abc import ABCMeta, abstractmethod
 
 from zope import component
@@ -471,6 +472,28 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
 	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
+
+	def _get_searchTerm(self):
+		param = self.request.params.get('searchTerm', None)
+		return param
+
+	def _make_complete_predicate(self, *args, **kwargs):
+		predicate = super(ForumContentsGetView, self)._make_complete_predicate(*args, **kwargs)
+		searchTerm = self._get_searchTerm()
+		if searchTerm:
+			searchTerm = searchTerm.lower()
+			def filter_searchTerm(x):
+				result = True
+				if frm_interfaces.ITopic.providedBy(x):
+					chained = itertools.chain([x.title], x.tags or (), x.headline.tags or ())
+					words = {w.lower() for w in chained}
+					for w in words:
+						if searchTerm in w:
+							return True
+					return False
+				return result
+			predicate = _combine_predicate(filter_searchTerm, predicate)
+		return predicate
 
 	def __call__( self ):
 		result = super(ForumContentsGetView,self).__call__()
