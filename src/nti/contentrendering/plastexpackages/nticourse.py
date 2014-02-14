@@ -174,16 +174,16 @@ def _parse_date_at_invoke(self):
 	# How to represent that? Probably need some schema transformation
 	# step in nti.externalization? Or some auixilliary data fields?
 	options = self.attributes.get('options') or ()
-	def _parse(key):
+	def _parse(key, default_time):
 		if key in options:
 			val = options[key]
 			if 'T' not in val:
-				# If they give no timestamp, make it midnight
-				val += 'T00:00'
+				# If they give no timestamp, make it default_time
+				val += default_time
 			return isodate.parse_datetime(val)
 
-	not_before = _parse('not_before_date')
-	not_after = _parse('not_after_date')
+	not_before = _parse('not_before_date', 'T00:00')
+	not_after = _parse('not_after_date', 'T23:59')
 
 	if not_before is not None and not_after is not None:
 		# Both are required.
