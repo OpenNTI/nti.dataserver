@@ -232,11 +232,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		assert_that( res.json_body, has_entry( 'body', data['body'] ) )
 		assert_that( res.json_body, has_entry( 'ContainerId', entry_ntiid) )
 		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
-		post_href = res.json_body['href']
+		# post_href = res.json_body['href']
 
 		edit_url = self.require_link_href_with_rel( res.json_body, 'edit' )
 		self.require_link_href_with_rel( res.json_body, 'like' ) # comments can be liked
-		flag_href = self.require_link_href_with_rel( res.json_body, 'flag' ) # comments can be flagged
+		self.require_link_href_with_rel(res.json_body, 'flag')  # comments can be flagged
 		data['body'] = ['Changed my body']
 		data['title'] = 'Changed my title'
 
@@ -253,7 +253,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 		# ... actual contents
 		res = testapp.get( entry_contents_url )
 		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
-		contents_mod_time = res.json_body['Last Modified']
+		# contents_mod_time = res.json_body['Last Modified']
 
 		# MVD Can be flagged...
 		#res = testapp.post( flag_href )
@@ -644,7 +644,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	def test_user_can_edit_sharing(self):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
-		testapp2 = fixture.testapp2
+		# testapp2 = fixture.testapp2
 
 		# Create the blog
 		data = self._create_post_data_for_POST()
