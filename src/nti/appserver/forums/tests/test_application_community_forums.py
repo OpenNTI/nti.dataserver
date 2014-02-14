@@ -351,7 +351,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 		res = self._POST_topic_entry()
 
 		topic_url = res.location
-		headline_url = self.require_link_href_with_rel( res.json_body['headline'], 'edit' )
+		self.require_link_href_with_rel(res.json_body['headline'], 'edit')
 
 		eventtesting.clearEvents()
 
@@ -390,6 +390,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 
 		assert_that( forum_contents_res2.json_body, has_entry( 'TotalItemCount', 2 ) )
 
+		forum_contents_res3 = self.testapp.get( forum_contents_href,
+												params={b'searchTerm': 'notfound'},
+												status=200)
+
+		assert_that(forum_contents_res3.json_body, has_entry('FilteredTotalItemCount', 0))
 
 
 	@WithSharedApplicationMockDS
