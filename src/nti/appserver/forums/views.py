@@ -488,7 +488,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			def filter_searchTerm(x):
 				if not frm_interfaces.ITopic.providedBy(x):
 					return True
-
+				# process the post
+				x = x.headline
 				# get content
 				resolver = search_interfaces.IContentResolver(x, None)
 				content = [(getattr(resolver, 'content', None) or u'')]
@@ -501,7 +502,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 				# prepare regexp and search
 				term = content_utils.clean_special_characters(searchTerm.lower())
 				match = re.match(".*%s.*" % term, content,
-								 re.MULTILINE | re.DOTALL | re.UNICODE)
+								 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
 				return match is not None
 
 			predicate = _combine_predicate(filter_searchTerm, predicate)
