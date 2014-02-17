@@ -400,7 +400,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
 											   params={b'searchTerm': 'blog'},
 											   status=200)
 
-		assert_that(forum_contents_res3.json_body, has_entry('FilteredTotalItemCount', 2))
+		assert_that(forum_contents_res3.json_body, has_entry(u'TotalItemCount', 2))
 
 
 	@WithSharedApplicationMockDS

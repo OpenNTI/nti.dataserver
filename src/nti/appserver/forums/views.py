@@ -10,9 +10,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import re
+
 import datetime
 import operator
-import itertools
 from abc import ABCMeta, abstractmethod
 
 from zope import component
@@ -45,6 +46,9 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.contentprocessing import content_utils
+from nti.contentsearch import interfaces as search_interfaces
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -481,17 +485,25 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 		predicate = super(ForumContentsGetView, self)._make_complete_predicate(*args, **kwargs)
 		searchTerm = self._get_searchTerm()
 		if searchTerm:
-			searchTerm = searchTerm.lower()
 			def filter_searchTerm(x):
-				result = True
-				if frm_interfaces.ITopic.providedBy(x):
-					chained = itertools.chain([x.title], x.tags or (), x.headline.tags or ())
-					words = {w.lower() for w in chained}
-					for w in words:
-						if searchTerm in w:
-							return True
-					return False
-				return result
+				if not frm_interfaces.ITopic.providedBy(x):
+					return True
+
+				# get content
+				resolver = search_interfaces.IContentResolver(x, None)
+				content = [(getattr(resolver, 'content', None) or u'')]
+				resolver = search_interfaces.ITitleResolver(x, None)
+				content.append(getattr(resolver, 'title', None) or u'')
+				resolver = search_interfaces.ITagsResolver(x, None)
+				content.extend(getattr(resolver, 'tags', None) or ())
+				content = u' '.join(content)
+				
+				# prepare regexp and search
+				term = content_utils.clean_special_characters(searchTerm.lower())
+				match = re.match(".*%s.*" % term, content,
+								 re.MULTILINE | re.DOTALL | re.UNICODE)
+				return match is not None
+
 			predicate = _combine_predicate(filter_searchTerm, predicate)
 		return predicate
 
