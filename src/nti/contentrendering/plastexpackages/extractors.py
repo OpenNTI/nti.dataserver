@@ -100,7 +100,7 @@ class _CourseExtractor(object):
 			toc_el.setAttribute('date', ','.join(date_strings))
 		toc_el.setAttribute('topic-ntiid', lesson_node.ntiid)
 		toc_el.setAttribute( 'levelnum', str(level))
-		toc_el.setAttribute( 'isOutlineStubOnly', str(lesson_node.is_outline_stub_only).lower())
+		toc_el.setAttribute( 'isOutlineStubOnly', 'true' if lesson_node.is_outline_stub_only else 'false')
 
 		for sub_lesson in lesson_node.subsections:
 			if not sub_lesson.tagName.startswith('course'):
