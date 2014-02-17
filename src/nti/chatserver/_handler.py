@@ -5,7 +5,7 @@ Chatserver functionality.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -111,7 +111,8 @@ class _ChatHandler(object):
 	__emits__ = ('recvMessageForAttention', 'presenceOfUserChangedTo',
 				 'data_noticeIncomingChange', 'failedToEnterRoom',
 				 'setPresenceOfUsersTo')
-	_session_consumer_args_search_ = ('nti.chatserver.meeting','nti.chatserver.messageinfo', 'nti.chatserver.presenceinfo')
+	_session_consumer_args_search_ = ('nti.chatserver.meeting', 'nti.chatserver.messageinfo',
+									  'nti.chatserver.presenceinfo')
 
 
 	event_prefix = 'chat' #: the namespace of events we handle
@@ -140,7 +141,9 @@ class _ChatHandler(object):
 		raise TypeError()
 
 	def __str__( self ):
-		return "%s(%s %s)" % (self.__class__.__name__, self.session.owner, self.session.session_id)
+		return "%s(%s %s)" % (self.__class__.__name__,
+							  self.session.owner,
+							  self.session.session_id)
 
 
 	def _get_chatserver(self):
@@ -158,7 +161,8 @@ class _ChatHandler(object):
 		state = IChatHandlerSessionState(self.session)
 		if not state.message_post_rate_limit.consume():
 			if 'DATASERVER_SYNC_CHANGES' in os.environ: # hack for testing
-				logger.warn( "Allowing message rate for %s to exceed throttle %s during integration testings.", self, state.message_post_rate_limit )
+				logger.warn("Allowing message rate for %s to exceed throttle %s during integration testings.",
+							self, state.message_post_rate_limit)
 			else:
 				raise MessageRateExceeded()
 
