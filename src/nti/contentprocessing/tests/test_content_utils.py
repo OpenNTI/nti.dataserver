@@ -17,6 +17,7 @@ from nti.contentprocessing.content_utils import rank_words
 from nti.contentprocessing.content_utils import get_content
 from nti.contentprocessing.content_utils import split_content
 from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing.content_utils import clean_special_characters
 from nti.contentprocessing.content_utils import get_content_translation_table
 
 from nti.contentprocessing.tests import ConfiguringTestBase
@@ -49,6 +50,14 @@ class TestContentUtils(ConfiguringTestBase):
 
 		u = unichr(40960) + u'bleach' + unichr(1972)
 		assert_that(get_content(u), is_(u'\ua000bleach'))
+
+	def test_clean_special(self):
+
+		source = 'Zanpakuto Zangetsu'
+		assert_that(clean_special_characters(source), is_(source))
+
+		source = '?*?.\\+(ichigo^^{['
+		assert_that(clean_special_characters(source), is_('ichigo'))
 
 	def test_rank_words(self):
 		terms = sorted(self.sample_words)

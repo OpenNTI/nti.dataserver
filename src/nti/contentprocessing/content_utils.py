@@ -32,6 +32,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 
 from . import space_pattern
 from . import non_alpha_pattern
+from . import special_regexp_chars
 from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
 from . import default_punk_char_expression
@@ -148,3 +149,12 @@ def _default_content_translation_table():
 		repl = splits[4] or None if len(splits) >= 5 else None
 		result[int(splits[0])] = repl
 	return result
+
+def clean_special_characters(s, replacement=u''):
+	"""
+	remove regular expression special chars
+	"""
+	if s:
+		for c in special_regexp_chars:
+			s = s.replace(c, replacement)
+	return s

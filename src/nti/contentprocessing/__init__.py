@@ -12,8 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 import re
 import sys
 
-
-# define global constants
 default_ngram_minsize = 2
 default_ngram_maxsize = 20  # average word size in English in 5.10
 default_word_tokenizer_expression = r"(?x)([A-Z]\.)+ | \$?\d+(\.\d+)?%? | \w+([-']\w+)*"
@@ -42,6 +40,8 @@ default_punk_char_pattern_plus = re.compile(default_punk_char_expression_plus,
 
 space_pattern = re.compile(r'\s+', re.UNICODE)
 
+special_regexp_chars = ('.', '\\', '^', '$', '.', '|', '?', '*', '+', '(', ')', '[', '{')
+
 def _makenon_alpha_re():
 	non_alpha = [u'[^']
 	for i in range(sys.maxunicode):
@@ -54,7 +54,7 @@ def _makenon_alpha_re():
 non_alpha_pattern = _makenon_alpha_re()
 del _makenon_alpha_re
 
-# export common functions
+# reexport common functions
 from .content_utils import normalize
 from .content_utils import rank_words
 from .content_utils import split_content
