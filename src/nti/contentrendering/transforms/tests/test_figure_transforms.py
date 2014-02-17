@@ -170,8 +170,9 @@ def test_challProbParPicTransform():
 
 	"""
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+
 	figureTransform( dom )
-	#We expect the leftpic to have been moved down a level and belong to the last challenge problem as opposed to the first one.
+	#We expect the parpic to have been moved down a level and belong to the last challenge problem as opposed to the first one.
 	revProbWithPic = dom.getElementsByTagName( 'chall')[2];
 	assert_that( revProbWithPic.firstChild.nodeName, is_( 'parpic' ))
 
@@ -222,7 +223,7 @@ This angle's name is easy to remember: a \Def{straight angle}
 	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
 	figureTransform( dom )
-	#We expect the leftpic to have been moved down into the solution.
+	#We expect the parpic to have been moved down into the solution.
 	solutionWithPic = dom.getElementsByTagName( 'solution')[0];
 	assert_that( solutionWithPic.firstChild.nodeName, is_( 'parpic' ))
 

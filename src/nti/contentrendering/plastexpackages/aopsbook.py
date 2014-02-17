@@ -8,9 +8,9 @@ from zope import interface
 from nti.contentrendering import plastexids
 from nti.contentrendering.resources import interfaces as res_interfaces
 
-from amsopn import DeclareMathOperator
-from picins import picskip
-from picins import parpic
+from .amsopn import DeclareMathOperator
+from .picins import picskip
+from .picins import parpic
 
 from plasTeX import Base, Command
 from plasTeX.Base.LaTeX import Index
@@ -767,16 +767,6 @@ class leftpic(rightpic):
 	pass
 
 
-class parpic(Base.Command):
-	args = '( size:dimen ) ( offset:dimen ) [Options:str] [Position] {Picture}'
-	blockType = True
-
-	def invoke(self, tex):
-		res = super( parpic, self).invoke(tex)
-
-		return res
-
-
 class fig(Base.figure):
 	pass
 
@@ -825,13 +815,13 @@ class thehints(Base.List):
 					replaceHint.parentNode.replaceChild( child, replaceHint )
 					# SAJ: child sometimes contains par elements. If they are not removed, invalid
 					# markup is produced. The child elements can contain the par elements because
-					# we model them in a list environment and items in a list environment can 
-					# contain block elements. However when we perform the replacement above, we 
+					# we model them in a list environment and items in a list environment can
+					# contain block elements. However when we perform the replacement above, we
 					# are taking the node and placing it inside of an element that will be modeled
 					# as an HTML5 p element, which cannot contain block, or in HTML5 speak 'flow',
 					# elements.
 					#
-					# Since we never print the hints as a list or otherwise use them in a list 
+					# Since we never print the hints as a list or otherwise use them in a list
 					# fashion, we should look at changing how we model the hints.
 					for node in child.getElementsByTagName('par'):
 						child.removeChild( node )

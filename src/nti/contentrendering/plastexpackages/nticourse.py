@@ -164,7 +164,7 @@ class courselesson(chapter):
 	counter = 'courselesson'
 	forcePars = False
 
-	is_outline_stub_only = False
+	is_outline_stub_only = None
 
 import isodate
 
@@ -199,8 +199,9 @@ def _parse_date_at_invoke(self):
 from paste.deploy.converters import asbool
 
 def _parse_isoutline_at_invoke(self):
-	options = self.attributes.get('options') or {}
-	return asbool(options.get('is_outline_stub_only'))
+	options = self.attributes.get('options')
+	if options and 'is_outline_stub_only' in options:
+		return asbool(options.get('is_outline_stub_only'))
 
 def _make_invoke(cls):
 	def invoke(self, tex):
@@ -220,7 +221,7 @@ class courselessonsection(section):
 	counter = 'course' + section.counter
 	args = '* [ toc ] title {options:dict:str}'
 
-	is_outline_stub_only = False
+	is_outline_stub_only = None
 
 class courselessonsubsection(subsection):
 	"""
@@ -233,7 +234,7 @@ class courselessonsubsection(subsection):
 	counter = 'course' + subsection.counter
 	args = '* [ toc ] title {options:dict:str}'
 
-	is_outline_stub_only = False
+	is_outline_stub_only = None
 
 class courselessonsubsubsection(subsubsection):
 	"""
@@ -245,7 +246,7 @@ class courselessonsubsubsection(subsubsection):
 	counter = 'course' + subsubsection.counter
 	args = '* [ toc ] title {options:dict:str}'
 
-	is_outline_stub_only = False
+	is_outline_stub_only = None
 
 for _c in courselesson, courselessonsection, courselessonsubsection, courselessonsubsubsection:
 	_c.invoke = _make_invoke(_c)
