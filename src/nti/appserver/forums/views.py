@@ -477,6 +477,19 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
 	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
 
+	def _get_topic_content(self, topic):
+		# process the post
+		x = topic.headline
+		# get content
+		resolver = search_interfaces.IContentResolver(x, None)
+		content = [(getattr(resolver, 'content', None) or u'')]
+		resolver = search_interfaces.ITitleResolver(x, None)
+		content.append(getattr(resolver, 'title', None) or u'')
+		resolver = search_interfaces.ITagsResolver(x, None)
+		content.extend(getattr(resolver, 'tags', None) or ())
+		content = u' '.join(content)
+		return content
+
 	def _get_searchTerm(self):
 		param = self.request.params.get('searchTerm', None)
 		return param
@@ -488,18 +501,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 			def filter_searchTerm(x):
 				if not frm_interfaces.ITopic.providedBy(x):
 					return True
-				# process the post
-				x = x.headline
-				# get content
-				resolver = search_interfaces.IContentResolver(x, None)
-				content = [(getattr(resolver, 'content', None) or u'')]
-				resolver = search_interfaces.ITitleResolver(x, None)
-				content.append(getattr(resolver, 'title', None) or u'')
-				resolver = search_interfaces.ITagsResolver(x, None)
-				content.extend(getattr(resolver, 'tags', None) or ())
-				content = u' '.join(content)
-				
-				# prepare regexp and search
+				content = self._get_topic_content(x)
 				term = content_utils.clean_special_characters(searchTerm.lower())
 				match = re.match(".*%s.*" % term, content,
 								 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
