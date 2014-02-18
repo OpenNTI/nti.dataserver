@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 import datetime
+import operator
 import transaction
 
 try:
@@ -57,6 +58,8 @@ def get_remote_user(request=None, dataserver=None):
 		result = users.User.get_user(request.authenticated_userid, dataserver=dataserver)
 	return result
 
+_marker = object()
+
 class AbstractView(object):
 	"""
 	Base class for views. Defines the ``request`` and ``dataserver`` property.
@@ -94,13 +97,23 @@ class AbstractView(object):
 		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
 
-	def _batch_tuple_iterable(self, result, tuples, number_items_needed, batch_size=None, batch_start=None):
+	def _batch_tuple_iterable(self, result, tuples,
+							  number_items_needed=_marker,
+							  batch_size=_marker,
+							  batch_start=_marker,
+							  selector=operator.itemgetter(1)):
+		if batch_size is _marker and batch_start is _marker:
+			batch_size, batch_start = self._get_batch_size_start()
+
 		if batch_size is not None and batch_start is not None:
 			# Ok, reify up to batch_size + batch_start + 2 items from merged
+			if number_items_needed is _marker:
+				number_items_needed = batch_size + batch_start + 2
+
 			result_list = []
 			count = 0
-			for _, x in tuples:
-				result_list.append( x )
+			for x in tuples:
+				result_list.append( selector(x) )
 				count += 1
 				if count > number_items_needed:
 					break
@@ -130,7 +143,7 @@ class AbstractView(object):
 			result['Items'] = result_list
 		else:
 			# Not batching.
-			result_list = [x[1] for x in tuples]
+			result_list = [selector(x) for x in tuples]
 			result['Items'] = result_list
 
 
