@@ -15,6 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 # The current version of invalidate does not correctly
 # move forward during invalidation if the value is not
 # the first item in the ring
+# https://github.com/zopefoundation/persistent/pull/4
 from persistent.interfaces import GHOST
 from persistent.picklecache import PickleCache
 def _invalidate(self, oid):
@@ -47,6 +48,18 @@ def _p_accessed(self):
 		pass
 
 Persistent._p_accessed = _p_accessed
+
+# Persistent in 4.0.6 also has a problem setting the
+# state if the dictionary has exactly two keys
+# https://github.com/zopefoundation/persistent/pull/5
+_orig_setstate = Persistent.__setstate__
+
+def __setstate__(self, state):
+	if isinstance(state, dict):
+		state = state, ()
+	_orig_setstate(self, state)
+
+Persistent.__setstate__ = __setstate__
 
 # In pypy (and possibly in zodbpickle) under python2,
 # ZODB 4's ObjectWriter assumes it's working with cPickle
