@@ -38,6 +38,7 @@ PickleCache._invalidate = _invalidate
 # the MRU time in the picklecache during initial
 # serialiaztion: the new object isn't in the picklecache
 # yet!
+# https://github.com/zopefoundation/persistent/pull/6
 from persistent.persistence import Persistent
 _orig_p_accessed = Persistent._p_accessed
 
