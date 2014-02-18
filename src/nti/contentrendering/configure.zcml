@@ -2,6 +2,9 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   xmlns:zcml="http://namespaces.zope.org/zcml"
 		   i18n_domain="zope">
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+
 	<include package="zope.component" />
 	<include package="zope.traversing" /> <!-- For rendering -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
@@ -9,6 +12,7 @@
 	<!--
 	Loading it (non-dev mode)
 	slows script startup way down.
+	We should really break this dependency.
 	-->
 	<include package="nti.contentprocessing" />
 

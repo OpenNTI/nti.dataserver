@@ -29,6 +29,9 @@ relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
 relstorage_explicitly_close_memcache_patch_on_import.patch()
 
+from . import python_persistent_bugs_patch_on_import
+python_persistent_bugs_patch_on_import.patch()
+
 
 # NOTE: Not importing patch_all, don't want gevent
 

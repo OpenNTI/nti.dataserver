@@ -266,6 +266,10 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	from . import relstorage_umysqldb_patch_on_import
 	relstorage_umysqldb_patch_on_import.patch()
 
+	from . import python_persistent_bugs_patch_on_import
+	python_persistent_bugs_patch_on_import.patch()
+
+
 else:
 	logger = __import__('logging').getLogger(__name__)
 	logger.info( "Not monkey patching any gevent libraries" )

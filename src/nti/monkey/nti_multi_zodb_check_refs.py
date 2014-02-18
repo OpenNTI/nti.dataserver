@@ -25,6 +25,9 @@ from . import relstorage_patch_all_except_gevent_on_import
 
 relstorage_patch_all_except_gevent_on_import.patch()
 
+from . import python_persistent_bugs_patch_on_import
+python_persistent_bugs_patch_on_import.patch()
+
 # See extensive comments.
 from nti.monkey.nti_multi_zodb_gc import fixrefs
 from nti.monkey.nti_multi_zodb_gc import report
