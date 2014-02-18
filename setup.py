@@ -65,15 +65,7 @@ import platform
 py_impl = getattr(platform, 'python_implementation', lambda: None)
 IS_PYPY = py_impl() == 'PyPy'
 
-try:
-	import zope.container
-except ImportError:
-	# FIXME: Under buildout, this runs
-	# in the system python, which means
-	# we can never properly detect this
-	HAVE_ZCONT = True
-else:
-	HAVE_ZCONT = True
+HAVE_ZCONT = True
 
 TESTS_REQUIRE = [
 	'WebTest', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
@@ -349,8 +341,9 @@ setup(
 		# for its proxying. A patch to its setup.py can make it install (see https://github.com/zopefoundation/zope.proxy/blob/master/setup.py), but it won't work
 		# reliably; nonetheless it is required because so many other things require zope.container:
 		# z3c.table, zope.catalog, zope.copypastemove, zope.file, zope.intid, zope.pluggableauth, zope.site
-		# If you do install it you can run this script again to get the missing deps
-		'zope.container[zcml,zodb] >= 4.0.0a3' if not IS_PYPY else '',	# 4.0.0a3 or greater is required in the 4 series
+		# If you do install it you can run this script again to get the missing deps.
+		# We have a branch of it that supports pypy
+		'zope.container[zcml,zodb]',	# 4.0.0a3 or greater is required in the 4 series
 		'zope.contentprovider >= 4.0.0a1',
 		'zope.contenttype >= 4.0.1',  # A utility module for content-type handling.
 		'zope.copy >= 4.0.2',
