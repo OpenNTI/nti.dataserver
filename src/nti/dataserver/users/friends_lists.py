@@ -474,7 +474,8 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 		for x in super(_DynamicFriendsListEntityIterable,self).iter_usernames():
 			yield x
 		if self.context.creator:
-			yield self.context.creator
+			creator = self.context.creator
+			yield getattr(creator, 'username', creator)
 
 
 from nti.dataserver import datastructures
