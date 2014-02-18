@@ -66,7 +66,7 @@ Persistent.__setstate__ = __setstate__
 # ZODB 4's ObjectWriter assumes it's working with cPickle
 # and sets the wrong attribute to get the
 # persistent ids.
-
+# https://github.com/zopefoundation/ZODB/pull/17
 import cPickle
 from nti.utils.property import alias
 if hasattr(cPickle.Pickler, 'persistent_id') and not hasattr(cPickle.Pickler, 'inst_persistent_id'):
