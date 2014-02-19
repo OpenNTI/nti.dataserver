@@ -46,8 +46,3 @@ Utils
 -----
 
 .. automodule:: nti.appserver._util
-
-Page Templates
---------------
-
-.. automodule:: nti.appserver.z3c_zpt
