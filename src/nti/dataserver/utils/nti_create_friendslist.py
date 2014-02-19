@@ -5,12 +5,19 @@ Creates a friend list
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import pprint
 import argparse
+
+from zope import component
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
@@ -19,7 +26,9 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import to_external_object
 
-def create_friends_list(owner, username, realname=None, members=(), dynamic=False, locked=False):
+def create_friends_list(owner, username, realname=None, members=(), dynamic=False,
+						locked=False):
+
 	factory = users.DynamicFriendsList if dynamic else users.FriendsList
 	dfl = factory(username=unicode(username))
 	dfl.creator = owner
@@ -38,20 +47,35 @@ def create_friends_list(owner, username, realname=None, members=(), dynamic=Fals
 
 	return dfl
 
-def _create_fl(args):
+def _process_args(args):
 	owner = users.User.get_user(args.owner)
 	if not owner or not nti_interfaces.IUser.providedBy(owner):
 		print( "No owner found", args, file=sys.stderr )
 		sys.exit( 2 )
 
-	result = create_friends_list(owner, args.username, args.name, args.members, args.dynamic, args.locked)
+	site = args.site
+	if site:
+		from pyramid.testing import DummyRequest
+		from pyramid.testing import setUp as psetUp
+
+		request = DummyRequest()
+		config = psetUp(registry=component.getGlobalSiteManager(),
+						request=request,
+						hook_zca=False)
+		config.setup_registry()
+		request.headers['origin'] = 'http://' + site if not site.startswith('http') else site
+		request.possible_site_names = (site if not site.startswith('http') else site[7:],)
+
+	result = create_friends_list(owner, args.username, args.name, args.members,
+								 args.dynamic, args.locked)
 	if args.verbose:
 		pprint.pprint(to_external_object(result))
 	return result
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Create a (Dynamic)FriendsList" )
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser = argparse.ArgumentParser(description="Create a [Dynamic]FriendsList")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
+							dest='verbose')
 	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('owner', help="The username of the owner")
 	arg_parser.add_argument('username', help="The username of the new DFL")
@@ -66,6 +90,9 @@ def main():
 							help="Lock the DFL. Only valid used with --dynamic",
 							action='store_true',
 							dest='locked')
+	arg_parser.add_argument('--site',
+							dest='site',
+							help="Request SITE.")
 	arg_parser.add_argument('-m', '--members',
 							dest='members',
 							nargs="+",
@@ -76,7 +103,8 @@ def main():
 
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
-						 function=lambda: _create_fl(args) )
+						 function=lambda: _process_args(args))
+	sys.exit(0)
 
 if __name__ == '__main__':
 	main()
