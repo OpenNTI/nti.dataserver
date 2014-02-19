@@ -44,6 +44,11 @@
 	<adapter factory="nti.appserver._adapters._ComprehensiveUserSearchPolicy"
 			 for="nti.dataserver.interfaces.IUser"
 			 provides="nti.appserver.interfaces.IUserSearchPolicy" />
+	<!-- We also make that same adapter available by name so it can be used in other sites -->
+	<adapter factory="nti.appserver._adapters._ComprehensiveUserSearchPolicy"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.interfaces.IIntIdUserSearchPolicy"
+			 name="comprehensive"/>
 
 	<!--
 	General site policies
