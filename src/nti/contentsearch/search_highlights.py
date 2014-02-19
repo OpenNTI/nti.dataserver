@@ -65,14 +65,17 @@ class HighlightInfo(object):
 		for sf in self.fragments:
 			count += len(sf)
 		return count
+	matchCount = match_count
 
 	@property
 	def fragment_count(self):
 		return self.total_fragments
+	fragmentCount = fragment_count
 
 	@property
 	def search_fragments(self):
 		return self.fragments
+	searchFragments = search_fragments
 
 empty_hi_marker = HighlightInfo()
 
