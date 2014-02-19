@@ -11,7 +11,7 @@ from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import has_length
 from nti.testing.matchers import verifiably_provides
-
+import unittest
 from zope.component.hooks import site
 from zope.event import notify
 
@@ -33,7 +33,8 @@ import fudge
 class PersistentContained(contained.Contained,persistent.Persistent):
 	pass
 
-class TestInstall(mock_dataserver.SharedConfiguringTestBase):
+class TestInstall(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@mock_dataserver.WithMockDSTrans
 	def test_install_creates_intid_utility_and_contained_objects_are_registered(self):

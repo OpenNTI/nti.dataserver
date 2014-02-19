@@ -14,6 +14,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import contains
 from hamcrest import has_length
+import unittest
 
 from zope import component
 from zope.intid import interfaces as intid_interfaces
@@ -28,7 +29,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging
 from nti.dataserver.contenttypes import Note as _Note
 
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer, WithMockDSTrans
 
 from nti.contentrange.contentrange import ContentRangeDescription
 def Note():
@@ -36,7 +37,9 @@ def Note():
 	n.applicableRange = ContentRangeDescription()
 	return n
 
-class TestFlagging(SharedConfiguringTestBase):
+class TestFlagging(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	@time_monotonically_increases

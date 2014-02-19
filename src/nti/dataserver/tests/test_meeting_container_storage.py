@@ -7,6 +7,7 @@ from hamcrest import (assert_that, is_,
 					  has_item, has_items)
 from hamcrest import is_not
 does_not = is_not
+import unittest
 from zope import (interface, component)
 
 try:
@@ -22,11 +23,14 @@ from nti.ntiids import ntiids
 import nti.dataserver.meeting_container_storage as mcs
 from zope.annotation import interfaces as ant_interfaces
 
-from mock_dataserver import WithMockDS, SharedConfiguringTestBase
-import mock_dataserver
+from mock_dataserver import WithMockDS
+from . import mock_dataserver
 
 
-class TestMeetingContainer(SharedConfiguringTestBase):
+class TestMeetingContainer(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 	occupant_names = ()
 	ID_FL1 = ntiids.make_ntiid( provider='foo@bar', nttype=ntiids.TYPE_MEETINGROOM_GROUP, specific='fl1' )
 
@@ -78,7 +82,10 @@ class MockMeeting(object):
 	occupant_names = ()
 
 
-class TestFriendsListAdaptor( SharedConfiguringTestBase ):
+class TestFriendsListAdaptor( unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 	occupant_names = ()
 	@WithMockDS
 	def test_create_and_empty( self ):

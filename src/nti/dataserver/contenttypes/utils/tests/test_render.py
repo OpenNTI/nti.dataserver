@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import unittest
+
 from PIL import Image
 
 from .. import render
@@ -14,11 +16,12 @@ from ... import canvas
 
 from nti.externalization.internalization import update_from_external_object
 
-from . import ConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
 from hamcrest import (assert_that, is_, none)
 
-class TestRender(ConfiguringTestBase):
+class TestRender(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	def test_parse_number(self):
 		assert_that(render.parse_number('0.012%'), is_(0.012))

@@ -16,6 +16,7 @@ from hamcrest import assert_that, is_,  not_none
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import contains
+import unittest
 from nose.tools import assert_raises
 
 from nti.dataserver import users
@@ -35,15 +36,18 @@ import unittest
 
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
-
-from .mock_dataserver import SharedConfiguringTestBase, WithMockDS,  mock_db_trans
+from . import mock_dataserver
+from .mock_dataserver import  WithMockDS,  mock_db_trans
 from nti.chatserver.meeting import _Meeting as Meeting
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver import interfaces as chat_interfaces
 
 from persistent.list import PersistentList
 
-class TestChatTranscript(SharedConfiguringTestBase):
+class TestChatTranscript(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 	@WithMockDS
 	def test_add_msg_no_container(self):
 		with mock_db_trans():
@@ -130,7 +134,9 @@ class PicklableMsg(persistent.Persistent):
 
 
 
-class TestChatTranscriptEvents(SharedConfiguringTestBase):
+class TestChatTranscriptEvents(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@unittest.skip("Performance testing only; uses cProfile" )
 	def test_cprofile_adding_to_transcripts(self):

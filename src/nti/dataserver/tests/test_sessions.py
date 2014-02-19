@@ -6,6 +6,7 @@
 from hamcrest import assert_that,  is_, none, is_not, has_property
 from hamcrest import has_length
 from hamcrest import contains
+import unittest
 from nose.tools import assert_raises
 
 from zope import component
@@ -51,7 +52,9 @@ def test_session_cannot_change_owner():
 		s.owner = 'me'
 		# Must be assigned at creation time
 
-class TestSessionService(mock_dataserver.SharedConfiguringTestBase):
+class TestSessionService(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()
