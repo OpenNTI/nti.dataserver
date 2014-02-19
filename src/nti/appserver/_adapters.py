@@ -283,6 +283,15 @@ def _make_min_max_btree_range( search_term ):
 	max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
 	return min_inclusive, max_exclusive
 
+def _intids_to_provided( intids, provided, matches ):
+	# Ok, resolve the intids to actual objects
+	id_util = component.getUtility(IIntIds)
+	for intid in intids:
+		match = id_util.getObject( intid )
+		if provided( match ):
+			matches.add( match )
+	return matches
+
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _UsernameSearchPolicy(object):
@@ -290,6 +299,22 @@ class _UsernameSearchPolicy(object):
 
 	def __init__( self, context ):
 		self.context = context
+
+	def do_query_intids(self, search_term, _result=None ):
+		# XXX: Do we have a username index we can use?
+		matching_intid_sets = _result if _result is not None else list()
+
+		matching_objects = self.query(search_term,
+									  # No need to pay for hashing/comparisons, just collect
+									  _result=list())
+		if matching_objects:
+			id_util = component.getUtility(IIntIds)
+			ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+			id_set = ent_catalog.family.IF.Set()
+			for x in matching_objects:
+				id_set.add(id_util.getId(x))
+			matching_intid_sets.append( id_set )
+		return matching_intid_sets
 
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
 		dataserver = component.getUtility(nti_interfaces.IDataserver)
@@ -362,8 +387,10 @@ class _AliasUserSearchPolicy(object):
 		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ), excludemax=True )
 
 
-	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
-		matches = _result or set()
+	def do_query_intids( self, search_term, _result=None ):
+		"""
+		Returns a sequence of sets of intids.
+		"""
 
 		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 		# We accumulate intermediate results in their intid format.
@@ -378,7 +405,7 @@ class _AliasUserSearchPolicy(object):
 		# Anecdotally, using a single call to multiunion is even faster
 		# (according to repoze.catalog) and paves the way to using intid sets
 		# through the entire query process
-		matching_intid_sets = list()
+		matching_intid_sets = _result if _result is not None else list()
 
 		for index_name in self._index_names:
 			index = ent_catalog[index_name]
@@ -389,15 +416,18 @@ class _AliasUserSearchPolicy(object):
 				# things mapped to it to our set of matches
 				matching_intid_sets.append( intids )
 
-		if matching_intid_sets:
-			matching_intids = ent_catalog.family.IF.multiunion( matching_intid_sets )
-			# Ok, resolve the intids to actual objects
-			id_util = component.getUtility(IIntIds)
-			for intid in matching_intids:
-				match = id_util.getObject( intid )
-				if provided( match ):
-					matches.add( match )
+		return matching_intid_sets
 
+
+	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
+		matches = _result if _result is not None else set()
+
+		matching_intid_sets = self.do_query_intids(search_term)
+
+		if matching_intid_sets:
+			ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+			matching_intids = ent_catalog.family.IF.multiunion( matching_intid_sets )
+			matches = _intids_to_provided( matching_intids, provided, matches )
 		return matches
 
 
@@ -421,7 +451,7 @@ class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ), excludemax=True )
 
 
-@interface.implementer(app_interfaces.IUserSearchPolicy)
+@interface.implementer(app_interfaces.IIntIdUserSearchPolicy)
 class _ComprehensiveUserSearchPolicy(object):
 	"""
 	Searches on username, plus the profile fields.
@@ -432,10 +462,22 @@ class _ComprehensiveUserSearchPolicy(object):
 		self._username_policy = _UsernameSearchPolicy(context)
 		self._name_policy = _RealnameAliasUserSearchPolicy(context)
 
+	def query_intids(self, search_term):
+		intid_sets = list()
+		intid_sets = self._username_policy.do_query_intids( search_term, _result=intid_sets )
+		intid_sets = self._name_policy.do_query_intids( search_term, _result=intid_sets )
+		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+		if intid_sets:
+			return ent_catalog.family.IF.multiunion( intid_sets )
+
+		return ent_catalog.family.IF.Set()
+
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy ):
 		result = set()
-		result = self._username_policy.query( search_term, provided=provided, _result=result )
-		result = self._name_policy.query( search_term, provided=provided, _result=result )
+		intids = self.query_intids(search_term)
+		if intids:
+			result = _intids_to_provided( intids, provided, result )
+
 		return result
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)

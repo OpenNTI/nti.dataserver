@@ -653,6 +653,17 @@ class IUserSearchPolicy(interface.Interface):
 			policy.
 		"""
 
+class IIntIdUserSearchPolicy(IUserSearchPolicy):
+
+	def query_intids( search_term ):
+		"""
+		Return the intid of all entity objects that match the query.
+
+		:param string search_term: The (already lowercased) term to search for.
+
+		:return: A (BTree) set of intids of entities that match.
+		"""
+
 ###
 # Additional indexed data storage
 ###
