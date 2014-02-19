@@ -322,6 +322,7 @@ setup(
 		# 'zetalibrary',
 		'zodbpickle',
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
+		'zope.app.dependable', # simple dependency tracking; re-exported from zope.container
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
 		'zope.annotation >= 4.2.0',
 		'zope.authentication >= 4.1.0',
