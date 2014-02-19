@@ -33,6 +33,7 @@ Content
 	content-resolving
 	content-glossaries
 	content-cards
+	content-presentation-assets
 
 
 Deployment and Setup
@@ -133,6 +134,7 @@ Other Documents
 	whiteboard-apis-v1
 	api
 
+	store
 
 
 Third-Party Cross Refs
