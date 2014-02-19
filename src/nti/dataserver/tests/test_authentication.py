@@ -8,6 +8,7 @@ from __future__ import print_function, unicode_literals
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_in
+import unittest
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authentication
@@ -26,8 +27,8 @@ def test_effective_prins_no_username():
 	assert_that( authentication.effective_principals( '' ), is_( () ) )
 
 
-class TestPrincipals(mock_dataserver.SharedConfiguringTestBase):
-
+class TestPrincipals(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@mock_dataserver.WithMockDSTrans
 	def test_effective_principals(self):

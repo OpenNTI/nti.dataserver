@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
@@ -23,7 +23,7 @@ from hamcrest import has_entry
 from nti.testing.matchers import verifiably_provides
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.externalization import to_external_object
@@ -34,7 +34,8 @@ from nti.dataserver.users import missing_user
 import BTrees.OOBTree
 import cPickle
 
-class TestWref(SharedConfiguringTestBase):
+class TestWref(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_pickle( self ):

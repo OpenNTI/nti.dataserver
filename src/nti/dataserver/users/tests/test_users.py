@@ -117,7 +117,8 @@ def test_cannot_create_with_invalid_name():
 		users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
 
 
-class TestUser(mock_dataserver.SharedConfiguringTestBase):
+class TestUser(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_type_error(self):
@@ -934,7 +935,9 @@ class TestUser(mock_dataserver.SharedConfiguringTestBase):
 from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
 
-class TestFeedbackEvent(mock_dataserver.SharedConfiguringTestBase):
+class TestFeedbackEvent(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 
 	@WithMockDSTrans
 	def test_devicefeedback(self):
@@ -952,7 +955,7 @@ class TestFeedbackEvent(mock_dataserver.SharedConfiguringTestBase):
 
 import zope.schema.interfaces
 
-class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
+class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase): # NO LAYER, note use of features
 	features = ()
 
 	@WithMockDS
@@ -974,7 +977,9 @@ class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase):
 from nti.testing.matchers import validly_provides
 from hamcrest import contains_inanyorder
 
-class TestCommunity(mock_dataserver.SharedConfiguringTestBase):
+class TestCommunity(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 
 	@WithMockDSTrans
 	def test_community_enumarable_adapter(self):

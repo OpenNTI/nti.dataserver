@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
+import unittest
 from hamcrest import assert_that, is_not, is_in, is_, has_entry
 
 from .. import enclosures
@@ -21,7 +21,9 @@ from . import implements
 
 from . import mock_dataserver
 
-class TestSimpleEnclosureMixin(mock_dataserver.SharedConfiguringTestBase):
+class TestSimpleEnclosureMixin(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 	def test_iface(self):
 		assert_that( enclosures.SimplePersistentEnclosure, implements( interfaces.IEnclosedContent ))
 

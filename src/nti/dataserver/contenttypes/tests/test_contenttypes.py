@@ -21,6 +21,7 @@ from hamcrest import instance_of
 from hamcrest import greater_than
 from hamcrest import all_of
 from hamcrest import contains
+import unittest
 
 from zope.annotation import interfaces as an_interfaces
 from zope import component
@@ -90,7 +91,8 @@ def Redaction():
 	h.applicableRange = ContentRangeDescription()
 	return h
 
-class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
+class RedactionTest(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@mock_dataserver.WithMockDSTrans
 	def test_redaction_external(self):
@@ -140,7 +142,8 @@ class RedactionTest(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( ext, has_entry( 'sharedWith', set(['joe@ou.edu']) ) )
 
 
-class _BaseSelectedRangeTest(mock_dataserver.SharedConfiguringTestBase):
+class _BaseSelectedRangeTest(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	CONSTRUCTOR = staticmethod(Highlight)
 
@@ -200,7 +203,9 @@ class BookmarkTest(_BaseSelectedRangeTest):
 from nti.dataserver import liking
 import contentratings.interfaces
 
-class NoteTest(mock_dataserver.SharedConfiguringTestBase):
+class NoteTest(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 
 	def test_note_is_favoritable(self):
 		"Notes should be favoritable, and can become IUserRating"
@@ -703,7 +708,9 @@ class NoteTest(mock_dataserver.SharedConfiguringTestBase):
 
 
 
-class TestCanvas(mock_dataserver.SharedConfiguringTestBase):
+class TestCanvas(unittest.TestCase):
+	layer = mock_dataserver.SharedConfiguringTestLayer
+
 
 	def test_canvas_affine_transform_external(self):
 

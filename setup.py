@@ -74,6 +74,8 @@ TESTS_REQUIRE = [
 	'fudge',
 	'ipdb >= 0.8',	# easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
+	'nose2',
+	'nose2-cov',
 	'nose-timer >= 0.2.0',
 	'nose-progressive >= 1.5',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
@@ -469,5 +471,6 @@ setup(
 	include_package_data=True,
 	namespace_packages=['nti', ],
 	zip_safe=False,
-	entry_points=entry_points
+	entry_points=entry_points,
+	test_suite='nose2.compat.unittest.collector'
 	)

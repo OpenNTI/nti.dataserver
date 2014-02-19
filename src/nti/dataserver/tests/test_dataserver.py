@@ -16,7 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 
-
+import unittest
 from hamcrest import assert_that, equal_to, is_, none, not_none, has_property, not_none
 from . import mock_dataserver
 from nose.tools import assert_raises
@@ -36,7 +36,9 @@ import persistent
 from zope import component
 
 
-class TestDataserver( mock_dataserver.SharedConfiguringTestBase ):
+class TestDataserver(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@mock_dataserver.WithMockDS
 	def test_run_job_in_site(self):

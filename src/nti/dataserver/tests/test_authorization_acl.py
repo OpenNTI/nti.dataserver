@@ -2,7 +2,7 @@
 from __future__ import print_function, unicode_literals, absolute_import
 #pylint: disable=R0904
 
-
+import unittest
 from hamcrest import assert_that, has_length,  is_
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not, same_instance
@@ -31,7 +31,9 @@ except:
 
 from . import mock_dataserver
 
-class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
+class TestACLProviders(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@mock_dataserver.WithMockDSTrans
 	def test_non_shared(self):
@@ -153,7 +155,9 @@ class TestACLProviders(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( acl_prov, denies( 'enrolled@bar',
 									   auth.ACT_UPDATE ) )
 
-class TestACE(mock_dataserver.SharedConfiguringTestBase):
+class TestACE(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	def test_to_from_string(self):
 		# To string
@@ -203,7 +207,9 @@ class TestACE(mock_dataserver.SharedConfiguringTestBase):
 		from_file = auth_acl.acl_from_file( temp_file )
 		assert_that( from_file, is_( acl ) )
 
-class TestHasPermission(mock_dataserver.SharedConfiguringTestBase):
+class TestHasPermission(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	def setUp(self):
 		super(TestHasPermission,self).setUp()
@@ -234,7 +240,9 @@ class TestHasPermission(mock_dataserver.SharedConfiguringTestBase):
 from nti.contentlibrary.filesystem import FilesystemContentPackage, FilesystemContentUnit
 from nti.contentlibrary.contentunit import _clear_caches
 
-class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
+class TestLibraryEntryAclProvider(unittest.TestCase):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@classmethod
 	def setUpClass(cls):
@@ -259,6 +267,9 @@ class TestLibraryEntryAclProvider(mock_dataserver.SharedConfiguringTestBase):
 
 	def setUp(self):
 		super(TestLibraryEntryAclProvider,self).setUp()
+		# Our use of a layer prevents our setUpClass from running
+		if not hasattr(self, 'library_entry'):
+			self.setUpClass()
 
 		self.library_entry.ntiid = None
 		try:

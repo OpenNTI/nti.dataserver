@@ -14,13 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import has_property
 from nti.testing.matchers import validly_provides
 from zope.component.hooks import getSite, setSite
-from .mock_dataserver import SharedConfiguringTestBase
+from .mock_dataserver import SharedConfiguringTestLayer
 
 from zope.interface import Interface
 from zope import interface
@@ -48,7 +48,9 @@ from zope.component import globalSiteManager as BASE
 class IFoo(Interface):
 	pass
 
-class TestSiteSubscriber(SharedConfiguringTestBase):
+class TestSiteSubscriber(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 
 	def testProxyHostComps(self):

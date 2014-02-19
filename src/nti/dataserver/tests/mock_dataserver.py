@@ -20,6 +20,7 @@ from zope.dottedname import resolve as dottedname
 from nti.dataserver import interfaces as nti_interfaces
 from nti.testing.base import ConfiguringTestBase as _BaseConfiguringTestBase
 from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
+from nti.testing.base import SharedConfiguringTestLayer as _BaseSharedConfiguringTestLayer
 
 from . import mock_redis
 
@@ -287,3 +288,25 @@ class SharedConfiguringTestBase(_TestBaseMixin,_BaseSharedConfiguringTestBase):
 	as a property on this object (when used inside a function decorated with :func:`WithMockDS`
 	or :func:`WithMockDSTrans`).
 	"""
+
+class SharedConfiguringTestLayer(_TestBaseMixin, _BaseSharedConfiguringTestLayer):
+	"""
+	A test layer that does two things: first, sets up the
+	:mod:`nti.dataserver` module during class setup. Second, if the
+	test instance and test class have no ``ds`` attribute, a property
+	is mixed in to provide access to the the value of
+	:data:`current_mock_ds` available as a property on this object
+	(when used inside a function decorated with :func:`WithMockDS` or
+	:func:`WithMockDSTrans`).
+	"""
+
+	description = "nti.dataserver is ZCML configured"
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpSubclass(cls)
+
+	@classmethod
+	def testSetUp(cls, test):
+		if isinstance(type(test), type) and 'ds' not in type(test).__dict__:
+			type(test).ds = _TestBaseMixin.ds

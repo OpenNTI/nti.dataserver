@@ -14,18 +14,18 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from hamcrest import assert_that, is_, not_none, has_entry
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer, WithMockDSTrans
 
-
-from zope.interface.verify import verifyObject
-from zope import component
+import unittest
 
 
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.users import User
 from nti.externalization.externalization import toExternalObject
 
-class TestChange(SharedConfiguringTestBase):
+class TestChange(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_to_external(self):
