@@ -6,7 +6,7 @@ from __future__ import print_function
 
 from hamcrest import (assert_that, is_, none, starts_with,
 					  has_entry, has_length, has_item, has_key,
-					  contains_string, ends_with, all_of, has_entries)
+					  contains_string, all_of, has_entries)
 from hamcrest import greater_than
 from hamcrest import not_none
 from hamcrest.library import has_property
@@ -22,21 +22,36 @@ from nti.testing.time import time_monotonically_increases
 from nti.testing.matchers import is_empty
 import unittest
 
-from nti.appserver.application import createApplication, _configure_async_changes
-from nti.contentlibrary.filesystem import StaticFilesystemLibrary as Library
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to application_webtest",
+	"nti.app.testing.application_webtest",
+	"SharedApplicationTestBase" )
+
+zope.deferredimport.deprecatedFrom(
+	"Import directly",
+	"nti.appserver.application",
+	"createApplication" )
+zope.deferredimport.deprecatedFrom(
+	"Moved to application_webtest",
+	"nti.app.testing.base",
+	"ConfiguringTestBase",
+	"SharedConfiguringTestBase")
+
+
+
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentsearch import interfaces as search_interfaces
+
 from nti.externalization.externalization import to_json_representation
 import nti.contentsearch
-import nti.contentsearch.interfaces
+
 import pyramid.config
 
-
-from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase
 import webob.datetime_utils
 import datetime
 import time
-import os.path
 
 import urllib
 from nti.dataserver import users
@@ -79,8 +94,11 @@ class PersistentContainedExternal(ContainedExternal,Persistent):
 
 
 from nti.app.testing.webtest import TestApp
-from nti.app.testing.application_webtest import SharedApplicationTestBase
-from nti.app.testing.application_webtest import ApplicationTestBase
+from nti.testing.layers import find_test
+from nti.app.testing.application_webtest import ApplicationTestLayer
+from nti.app.testing.application_webtest import NonDevmodeApplicationTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges
@@ -88,9 +106,22 @@ from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
 from nti.app.testing.site import trivial_transaction_in_root_site as _trivial_db_transaction_cm
 
-class TestApplicationNonDevmode(SharedApplicationTestBase):
-	APP_IN_DEVMODE = False
-	features = tuple( set(SharedApplicationTestBase.features) - {'devmode'})
+class NonDevmodeButAnySiteApplicationTestLayer(NonDevmodeApplicationTestLayer):
+
+	@classmethod
+	def setUp(cls):
+		# Allow requests from unconfigured domains
+		# XXX HACK
+		from nti.appserver.tweens.zope_site_tween import _DevmodeMissingSitePolicy
+		component.getGlobalSiteManager().registerUtility(_DevmodeMissingSitePolicy)
+
+	@classmethod
+	def tearDown(cls):
+		from nti.appserver.tweens.zope_site_tween import _ProductionMissingSitePolicy
+		component.getGlobalSiteManager().registerUtility(_ProductionMissingSitePolicy)
+
+class TestApplicationNonDevmode(NonDevmodeApplicationLayerTest):
+
 
 	@WithSharedApplicationMockDS(users=False,testapp=True)
 	def test_non_configured_site_raises_error_in_production(self):
@@ -101,7 +132,7 @@ class TestApplicationNonDevmode(SharedApplicationTestBase):
 
 
 
-class TestApplication(SharedApplicationTestBase):
+class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_plone_18n_resources(self):
@@ -206,7 +237,7 @@ class TestApplication(SharedApplicationTestBase):
 		res = testapp.get( '/dataserver2',
 						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
 						   status=200 )
-		assert_that(res.json_body['CapabilityList'], has_length(1))
+		assert_that(res.json_body['CapabilityList'], has_length(2))
 
 
 	@WithSharedApplicationMockDS
@@ -1138,7 +1169,7 @@ class TestApplication(SharedApplicationTestBase):
 
 
 
-class TestApplicationSearch(SharedApplicationTestBase):
+class TestApplicationSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_search_empty_term_user_ugd_book(self):
@@ -1255,7 +1286,26 @@ class TestApplicationSearch(SharedApplicationTestBase):
 
 
 from pyramid import traversal
-class TestApplicationLibraryBase(ApplicationTestBase):
+
+class _ApplicationLibraryTestLayer(ApplicationTestLayer):
+
+	@classmethod
+	def setUp(cls):
+		# Must implement!
+		pass
+	@classmethod
+	def tearDown(cls):
+		# Must implement!
+		pass
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		test = test or find_test()
+		test.config.registry.registerUtility( test._setup_library() )
+
+class TestApplicationLibraryBase(ApplicationLayerTest):
+	layer = _ApplicationLibraryTestLayer
+
 	_check_content_link = True
 	_stream_type = 'Stream'
 	child_ntiid = ntiids.make_ntiid( provider='ou', specific='test2', nttype='HTML' )
@@ -1320,7 +1370,7 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 
 		return Lib()
 
-
+	@WithSharedApplicationMockDS
 	def test_library_accept_json(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1346,7 +1396,7 @@ class TestApplicationLibraryBase(ApplicationTestBase):
 
 class TestApplicationLibrary(TestApplicationLibraryBase):
 
-
+	@WithSharedApplicationMockDS
 	def test_library_redirect(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1358,7 +1408,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.status_int, is_( 303 ) )
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_library_redirect_with_fragment(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1372,7 +1422,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.status_int, is_( 303 ) )
 		assert_that( res.headers, has_entry( 'Location', 'http://localhost/prealgebra/sect_0002.html' ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_library_accept_link(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
@@ -1386,7 +1436,7 @@ class TestApplicationLibrary(TestApplicationLibraryBase):
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.link+json' ) )
 		assert_that( res.json_body, has_entry( 'href', '/prealgebra/sect_0002.html' ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_directly_set_page_shared_settings_using_field(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user()
@@ -1450,6 +1500,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 	_check_content_link = False
 	_stream_type = 'RecursiveStream'
 
+	@WithSharedApplicationMockDS
 	def test_one_dfl_entry_default_share(self):
 		"""If a user is a member of exactly ONE DFL, then that is his default sharing."""
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -1471,7 +1522,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		assert_that( res.json_body, has_entry( 'sharingPreference', has_entry( 'sharedWith', [fl1_ntiid] ) ) )
 
-
+	@WithSharedApplicationMockDS
 	def test_set_root_page_prefs_inherits(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()

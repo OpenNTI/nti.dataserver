@@ -6,7 +6,11 @@
 
 	<utility component=".zope_site_tween._DevmodeMissingSitePolicy"
 			 zcml:condition="have devmode" />
-	<utility component=".zope_site_tween._ProductionMissingSitePolicy"
-			 zcml:condition="not-have devmode" />
+	<configure zcml:condition="not-have devmode">
+		<utility component=".zope_site_tween._DevmodeMissingSitePolicy"
+				 zcml:condition="have devmode_missing_site_policy" />
+		<utility component=".zope_site_tween._ProductionMissingSitePolicy"
+			 zcml:condition="not-have devmode_missing_site_policy" />
+	</configure>
 
 </configure>

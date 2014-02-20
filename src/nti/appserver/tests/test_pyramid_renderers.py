@@ -2,26 +2,18 @@
 
 
 from hamcrest import (assert_that, is_)
-from . import ConfiguringTestBase
+from nti.app.testing.layers import NewRequestLayerTest
 
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
 from pyramid.request import Request
 
 from nti.appserver.pyramid_renderers import find_content_type
 from nti.externalization.externalization import toExternalObject
 from ZODB.broken import Broken
 
-class TestContentType(ConfiguringTestBase):
+class TestContentType(NewRequestLayerTest):
 
-	def setUp( self ):
-		config = psetUp()
-		self.request = Request.blank( '/' )
-		self.request.registry = config.registry
-
-	def tearDown( self ):
-		del self.request
-		ptearDown()
+	def beginRequest( self, request_factory=Request.blank, request_args=('/') ):
+		return super(TestContentType,self).beginRequest(request_factory, request_args)
 
 	def test_no_accept_no_param(self):
 
@@ -57,7 +49,7 @@ class TestContentType(ConfiguringTestBase):
 		assert_that( find_content_type( self.request, data=self ),
 					 is_( 'application/vnd.nextthought.testcontenttype+json' ) )
 
-class TestRender(ConfiguringTestBase):
+class TestRender(NewRequestLayerTest):
 
 
 	def test_broken(self):

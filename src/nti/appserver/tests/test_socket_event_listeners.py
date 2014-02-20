@@ -18,8 +18,10 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.chatserver import interfaces as chat_interfaces
 from nti.chatserver.presenceinfo import PresenceInfo
 
-from nti.appserver.tests import ConfiguringTestBase, ITestMailDelivery
+from nti.appserver.tests import ITestMailDelivery
 from nti.dataserver.tests import mock_dataserver
+
+from nti.app.testing.layers import NewRequestLayerTest
 
 from zope import interface
 from zope import component
@@ -57,7 +59,7 @@ class MockChange(object):
 	object = None
 	send_change_notice = True
 
-class TestEvents(ConfiguringTestBase):
+class TestEvents(NewRequestLayerTest):
 
 	def test_without_components(self):
 		session_disconnected_broadcaster( None, None )

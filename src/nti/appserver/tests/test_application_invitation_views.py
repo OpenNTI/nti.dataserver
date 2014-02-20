@@ -21,11 +21,13 @@ import urllib
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver import users
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
 from ..invitation_views import REL_TRIVIAL_DEFAULT_INVITATION_CODE
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 
-class TestApplicationInvitationUserViews(SharedApplicationTestBase):
+class TestApplicationInvitationUserViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_link_in_user(self):
@@ -96,7 +98,7 @@ class TestApplicationInvitationUserViews(SharedApplicationTestBase):
 					  extra_environ=self._make_extra_environ(),
 					  status=400 )
 
-class TestApplicationInvitationDFLViews(SharedApplicationTestBase):
+class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_link_in_dfl(self):

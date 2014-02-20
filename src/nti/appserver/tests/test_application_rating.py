@@ -27,9 +27,9 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.app.testing.webtest import TestApp
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.app.testing.application_webtest import SharedApplicationTestBase
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
-class TestApplicationRating(SharedApplicationTestBase):
+class TestApplicationRating(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_rate_note(self):

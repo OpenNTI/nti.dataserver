@@ -2,7 +2,7 @@
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
@@ -19,7 +19,7 @@ from nti.appserver.ugd_edit_views import UGDPutView as _UGDPutView
 from nti.appserver.ugd_edit_views import UGDPostView as _UGDPostView
 from nti.appserver.ugd_edit_views import UGDDeleteView as _UGDDeleteView
 
-from nti.appserver.tests import SharedConfiguringTestBase
+from nti.app.testing.layers import NewRequestLayerTest
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 
@@ -36,21 +36,21 @@ from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
+class TestContentType(unittest.TestCase):
+	def test_content_type(self):
+		assert_that( class_name_from_content_type( None ), is_( none() ) )
+		assert_that( class_name_from_content_type( 'text/plain' ), is_( none() ) )
 
-def test_content_type():
-	assert_that( class_name_from_content_type( None ), is_( none() ) )
-	assert_that( class_name_from_content_type( 'text/plain' ), is_( none() ) )
+		assert_that( class_name_from_content_type( 'application/vnd.nextthought+json' ), is_( none() ) )
 
-	assert_that( class_name_from_content_type( 'application/vnd.nextthought+json' ), is_( none() ) )
-
-	assert_that( class_name_from_content_type( 'application/vnd.nextthought.class+json' ),
-				 is_( 'class' ) )
-	assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.class+json' ),
-				 is_( 'class' ) )
-	assert_that( class_name_from_content_type( 'application/vnd.nextthought.class' ),
-				 is_( 'class' ) )
-	assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.flag.class' ),
-				 is_( 'class' ) )
+		assert_that( class_name_from_content_type( 'application/vnd.nextthought.class+json' ),
+					 is_( 'class' ) )
+		assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.class+json' ),
+					 is_( 'class' ) )
+		assert_that( class_name_from_content_type( 'application/vnd.nextthought.class' ),
+					 is_( 'class' ) )
+		assert_that( class_name_from_content_type( 'application/vnd.nextthought.version.flag.class' ),
+					 is_( 'class' ) )
 
 # def test_user_pseudo_resources_exist():
 # 	user = users.User( 'jason.madden@nextthought.com' )
@@ -97,11 +97,7 @@ class _ContainedObject(object):
 from zope.component import eventtesting
 from zope.lifecycleevent import IObjectModifiedEvent, IObjectRemovedEvent, IObjectAddedEvent
 from nti.appserver._dataserver_pyramid_traversal import _NTIIDsContainerResource
-class TestUGDModifyViews(SharedConfiguringTestBase):
-
-	@classmethod
-	def setUpClass(cls):
-		super(TestUGDModifyViews,cls).setUpClass()
+class TestUGDModifyViews(NewRequestLayerTest):
 
 	def _establish_context( self, view, user=None, ext_value=None, add_contained_object=False ):
 

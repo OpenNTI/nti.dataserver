@@ -19,7 +19,7 @@ import BTrees
 from BTrees.Length import Length
 import persistent
 from nti.zodb.containers import time_to_64bit_int, bit64_int_to_time, ZERO_64BIT_INT
-
+from nti.externalization.externalization import make_repr
 from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
 
@@ -134,8 +134,7 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 	def __len__(self):
 		return len(self.context)
 
-	def __repr__( self ):
-		return '<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__)
+	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__))
 
 	def __setitem__( self, key, val ):
 		raise TypeError('Immutable Object')
@@ -291,8 +290,7 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 				return default
 			raise
 
-	def __repr__( self ):
-		return '<%s at %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__ )
+	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__))
 
 	## Some dict-like conveniences
 	__getitem__ = getContainer

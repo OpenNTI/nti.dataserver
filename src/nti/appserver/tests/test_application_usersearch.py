@@ -28,11 +28,13 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.tests import mock_dataserver
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as REL_ACCOUNT_PROFILE
 
 
-class TestApplicationUserSearch(SharedApplicationTestBase):
+class TestApplicationUserSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_user_search_has_dfl(self):

@@ -24,3 +24,30 @@ from nti.app.testing.base import SharedConfiguringTestBase
 SharedConfiguringTestBase = SharedConfiguringTestBase
 from nti.app.testing.base import NewRequestSharedConfiguringTestBase
 NewRequestSharedConfiguringTestBase = NewRequestSharedConfiguringTestBase
+
+from zope import component
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.app.testing.application_webtest import ApplicationTestLayer
+import os
+import os.path
+
+class ExLibraryApplicationTestLayer(ApplicationTestLayer):
+
+	@classmethod
+	def _setup_library( cls, *args, **kwargs ):
+		from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+
+	@classmethod
+	def setUp(cls):
+		# Must implement!
+		cls.__old_library = component.getUtility(IContentPackageLibrary)
+		component.provideUtility(cls._setup_library(), IContentPackageLibrary)
+
+	@classmethod
+	def tearDown(cls):
+		# Must implement!
+		component.provideUtility(cls.__old_library, IContentPackageLibrary)
+
+	# TODO: May need to recreate the application with this library?

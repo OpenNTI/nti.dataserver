@@ -369,7 +369,9 @@ class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'birthdate': '1982-01-31'} )
 		new_user = self.the_view( self.request )
-		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
+		# XXX: At one point we were asserting this was 0. Why was that ever
+		# the case?
+		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 24 ) ) )
 
 		self.request.body = to_json_representation( {'Username': 'jason@example',
 													 'birthdate': '1982-01-31'} )
@@ -527,12 +529,16 @@ class TestCreateView(unittest.TestCase,_AbstractValidationViewBase):
 		finally:
 			component.getGlobalSiteManager().unregisterUtility( utility, provided=INewUserPlacer, name='example.com' )
 
-from .test_application import TestApp
-from .test_application import WithSharedApplicationMockDS, SharedApplicationTestBase
+from nti.app.testing.webtest import TestApp
+from nti.app.testing.application_webtest import AppTestBaseMixin
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.dataserver.tests import mock_dataserver
 
-class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
+class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 
 	@WithSharedApplicationMockDS
 	def test_create_user( self):
@@ -557,18 +563,10 @@ class _AbstractApplicationCreateUserTest(SharedApplicationTestBase):
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
 		return res
 
-class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
-	features = ()
-	APP_IN_DEVMODE = False
+from .test_application import NonDevmodeButAnySiteApplicationTestLayer
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestApplicationCreateUserNonDevmode,cls).setUpClass()
-		# Allow requests from unconfigured domains
-		# XXX HACK
-		from nti.appserver.tweens.zope_site_tween import _DevmodeMissingSitePolicy
-		component.getGlobalSiteManager().registerUtility(_DevmodeMissingSitePolicy)
-
+class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, NonDevmodeApplicationLayerTest):
+	layer = NonDevmodeButAnySiteApplicationTestLayer
 	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
@@ -576,7 +574,7 @@ class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest):
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
 		return mailer
 
-class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
+class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_create_user( self ):
@@ -624,7 +622,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest):
 
 		_ = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
-class TestApplicationPreflightUser(SharedApplicationTestBase):
+class TestApplicationPreflightUser(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
+
 
 	@WithSharedApplicationMockDS
 	def test_preflight_user( self ):
@@ -644,7 +643,8 @@ class TestApplicationPreflightUser(SharedApplicationTestBase):
 
 			assert_that( res, has_property( 'status_int', 200 ) )
 
-class TestApplicationProfile(SharedApplicationTestBase):
+class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
+
 	@WithSharedApplicationMockDS
 	def test_preflight_user( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
