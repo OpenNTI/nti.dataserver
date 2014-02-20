@@ -24,16 +24,15 @@ from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.metadata_extractors import get_metadata_from_content_location
 
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from . import ExLibraryApplicationTestLayer
+
 from nti.appserver.traversal import find_interface
 
-class TestApplicationMetadataResolvers(SharedApplicationTestBase):
+class TestApplicationMetadataResolvers(ApplicationLayerTest):
+	layer = ExLibraryApplicationTestLayer
 	child_ntiid =  b'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.history_and_career_opportuniities'
-
-	@classmethod
-	def _setup_library( cls, *args, **kwargs ):
-		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
-
 
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)

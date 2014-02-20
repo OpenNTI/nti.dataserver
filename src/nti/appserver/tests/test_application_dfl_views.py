@@ -21,11 +21,13 @@ import urllib
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver import users
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
 from ..dfl_views import REL_MY_MEMBERSHIP
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestApplicationDFLViews(SharedApplicationTestBase):
+class TestApplicationDFLViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_link_in_dfl(self):

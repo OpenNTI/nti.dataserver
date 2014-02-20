@@ -38,8 +38,8 @@ from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles, _checksum, _openidcallback)
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
-from nti.appserver.tests import NewRequestSharedConfiguringTestBase
-from .test_application import SharedApplicationTestBase
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
 from .test_application import WithSharedApplicationMockDS
 from .test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
@@ -60,8 +60,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
 from nti.dataserver import users
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
-from nti.contentlibrary import interfaces as lib_interfaces
 
 from zope.component.hooks import setSite, clearSite
 from nti.dataserver.site import get_site_for_site_names
@@ -75,7 +73,7 @@ class DummyView(object):
 	def __call__( self ):
 		return self.response
 
-class TestApplicationLogon(SharedApplicationTestBase):
+class TestApplicationLogon(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_mallowstreet_account_creation(self):
@@ -160,13 +158,16 @@ class TestApplicationLogon(SharedApplicationTestBase):
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
 		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
 
+from . import ExLibraryApplicationTestLayer
 
-class TestLogonViews(NewRequestSharedConfiguringTestBase):
+class TestLogonViews(ApplicationLayerTest):
+	layer = ExLibraryApplicationTestLayer
 
 	def setUp(self):
 		super(TestLogonViews,self).setUp()
 		eventtesting.clearEvents()
 		del _user_created_events[:]
+		component.provideHandler( _handle_user_create_event )
 		self.log_handler = zope.testing.loghandler.Handler(self)
 
 	def tearDown(self):
@@ -174,44 +175,45 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
 		if policy:
 			component.globalSiteManager.unregisterUtility( policy, provided=pyramid.interfaces.IAuthenticationPolicy )
+		component.getGlobalSiteManager().unregisterHandler(_handle_user_create_event)
 		super(TestLogonViews,self).tearDown()
 
-	@classmethod
-	def setUpClass( self, request_factory=DummyRequest, request_args=() ):
-		super(TestLogonViews,self).setUpClass( request_factory=request_factory, request_args=request_args )
-		component.provideHandler( _handle_user_create_event )
+	# @classmethod
+	# def setUpClass( self, request_factory=DummyRequest, request_args=() ):
+	# 	super(TestLogonViews,self).setUpClass( request_factory=request_factory, request_args=request_args )
+	# 	component.provideHandler( _handle_user_create_event )
 
-		self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
-		self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
-		self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
-		self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
-		self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
+	# 	self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
+	# 	self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
+	# 	self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
+	# 	self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
+	# 	self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
 
-		self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
-		self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
-		self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
+	# 	self.config.add_route( name='logon.forgot.username', pattern='/dataserver2/logon.forgot.username' )
+	# 	self.config.add_route( name='logon.forgot.passcode', pattern='/dataserver2/logon.forgot.passcode' )
+	# 	self.config.add_route( name='logon.reset.passcode', pattern='/dataserver2/logon.reset.passcode' )
 
-		self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
+	# 	self.config.add_route( name='logon.logout', pattern='/dataserver2/logon.logout' )
 
-		self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
-		self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
+	# 	self.config.add_route( name='objects.generic.traversal', pattern='/dataserver2/*traverse' )
+	# 	self.config.add_route( name='user.root.service', pattern='/dataserver2{_:/?}' )
 
-		self.config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
-							  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
+	# 	self.config.add_route(name='logon.nti.impersonate', pattern='/dataserver2/logon.nti.impersonate',
+	# 						  factory='nti.appserver._dataserver_pyramid_traversal.dataserver2_root_resource_factory')
 
 
-		# Provide a library
-		library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
-		component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
+	# 	# Provide a library
+	# 	library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+	# 	component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
 
 	@WithMockDSTrans
 	def test_unathenticated_ping(self):
-		"An unauthenticated ping returns one link, to the handshake."
+		#"An unauthenticated ping returns one link, to the handshake."
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 6 ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-2].target, ends_with( '/dataserver2/handshake' ) )
+		assert_that( result.links[-2].target, ends_with( '/dataserver2/logon.handshake' ) )
 		assert_that( result.links[0].target, ends_with( '/dataserver2/account.create') )
 		assert_that( result.links[0].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
 		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
@@ -219,7 +221,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
-		"An authenticated ping returns two links, to the handshake and the root"
+		#"An authenticated ping returns two links, to the handshake and the root"
 
 		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 		class Policy(object):
@@ -278,7 +280,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		assert_that( result.links[3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[3].target, contains_string( 'oidcsum=1290829754' ) )
 
-		assert_that( result.links[0].target, is_( '/dataserver2/logon.facebook.1?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[0].target, is_( '/dataserver2/logon.facebook1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
 		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
@@ -302,7 +304,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.password?' ) )
+		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.nti.password?' ) )
 		assert_that( result.links[-3].target, contains_string( '/dataserver2/logon.google?') )
 		assert_that( result.links[-3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[-3].target, contains_string( 'oidcsum=1290829754' ) )
@@ -315,7 +317,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( 7 ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-3].target, is_( '/dataserver2/logon.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( result.links[-3].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.openid?') )
 		assert_that( result.links[-2].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
 		assert_that( result.links[-2].target, contains_string( 'oidcsum=1290829754' ) )
@@ -334,6 +336,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 		# TODO: This test is assuming we have access to google.com
 		get_current_request().params['oidcsum'] = '1234'
+		# XXX: This test fails when run by zope.testrunner. Why? It works fine in nose
 		self.log_handler.add( 'pyramid_openid.view' )
 		result = google_login( None, get_current_request() )
 		assert_that( result, is_( hexc.HTTPFound ) )
@@ -536,7 +539,7 @@ class TestLogonViews(NewRequestSharedConfiguringTestBase):
 
 	@WithMockDSTrans
 	def test_update_provider_content_access_in_library(self):
-		"""If we supply the title of a work, the works actual NTIID gets used."""
+		#"""If we supply the title of a work, the works actual NTIID gets used."""
 		# There are two things with the same title in the library, but different ntiids
 		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology"
 		# label="COSMETOLOGY" ntiid="tag:nextthought.com,2011-10:MN-HTML-uncensored.cosmetology"

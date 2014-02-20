@@ -24,11 +24,13 @@ from nti.appserver.feedback_views import REL_SEND_FEEDBACK
 from nti.dataserver.tests import mock_dataserver
 from nti.testing.matchers import is_empty
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
 from . import ITestMailDelivery
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 
-class TestApplicationFeedback(SharedApplicationTestBase):
+class TestApplicationFeedback(ApplicationLayerTest):
 
 	extra_environ_default_user = 'ossmkitty'
 

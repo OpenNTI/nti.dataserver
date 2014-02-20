@@ -8,12 +8,15 @@ from zope import component
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from .test_application import TestApp
 
 
 
-class TestSocketioViews(SharedApplicationTestBase):
+class TestSocketioViews(ApplicationLayerTest):
 
 
 	@WithSharedApplicationMockDS

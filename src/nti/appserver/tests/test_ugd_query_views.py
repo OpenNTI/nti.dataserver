@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
@@ -30,26 +30,30 @@ from nti.appserver.ugd_query_views import _UGDStreamView
 from nti.appserver.ugd_query_views import _UGDAndRecursiveStreamView
 from nti.appserver import pyramid_authorization
 
-from nti.appserver.tests import ConfiguringTestBase, SharedConfiguringTestBase, NewRequestSharedConfiguringTestBase
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, WithSharedApplicationMockDSWithChanges
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
+from nti.app.testing.base import TestBaseMixin
+from nti.app.testing.layers import NewRequestLayerTest
+
 from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 from datetime import datetime
-import simplejson as json
-import time
+
+
 from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.externalization import to_external_object
+
 from nti.externalization.externalization import to_json_representation as to_external_representation
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import nti.dataserver.contenttypes
-from nti.dataserver.activitystream_change import Change
+
 from nti.testing.time import time_monotonically_increases
 from zope import interface
 from zope import component
@@ -75,15 +79,16 @@ class ObjectWithInt(object):
 	def register(self):
 		component.getUtility(IIntIds).register(self)
 
-class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
+class TestUGDQueryViews(NewRequestLayerTest):
 
 	HANDLE_GC = False
 
-	@classmethod
-	def setUpClass( cls ):
-		class SecurityPolicy(type(pyramid_authorization.ACLAuthorizationPolicy()), DummySecurityPolicy):
-			pass
-		super(TestUGDQueryViews,cls).setUpClass( security_policy_factory=SecurityPolicy )
+	class SecurityPolicy(type(pyramid_authorization.ACLAuthorizationPolicy()), DummySecurityPolicy):
+		pass
+
+	def setUp( self ):
+		super(TestUGDQueryViews,self).setUp()
+		self.security_policy = self.provide_security_policy_from_factory(self.SecurityPolicy)
 
 	@WithMockDSTrans
 	def test_ugd_not_found_404(self):
@@ -361,58 +366,59 @@ class TestUGDQueryViews(NewRequestSharedConfiguringTestBase):
 		assert_that( objs, is_( [[change], (), ()] ) )
 
 
-def test_lists_and_dicts_to_collection():
-	def _check_items( combined, items, lm=0 ):
-		combined = lists_and_dicts_to_ext_collection( combined )
-		assert_that( combined, has_entry( 'Last Modified', lm ) )
-		assert_that( combined, has_entry( 'Items', items ) )
 
-	# empty input: empty output
-	yield _check_items, (), []
+	def test_lists_and_dicts_to_collection(self):
+		def _check_items( combined, items, lm=0 ):
+			combined = lists_and_dicts_to_ext_collection( combined )
+			assert_that( combined, has_entry( 'Last Modified', lm ) )
+			assert_that( combined, has_entry( 'Items', items ) )
 
-	# trivial lists
-	yield _check_items, (['a'],['b'],['c']), ['a','b','c']
+		# empty input: empty output
+		yield _check_items, (), []
 
-	# Numbers ignored
-	yield _check_items, ([1], ['a'], [2]), ['a']
+		# trivial lists
+		yield _check_items, (['a'],['b'],['c']), ['a','b','c']
 
-	# Lists with dups
-	i, j = 'a', 'b'
-	k = i
-	yield _check_items, ([i], [j], [k]), [i,j]
+		# Numbers ignored
+		yield _check_items, ([1], ['a'], [2]), ['a']
 
-	# trivial dicts. Keys are ignored, only values matter
-	yield _check_items, ({1: 'a'}, {1: 'b'}, {1: 'a'}), ['a','b']
+		# Lists with dups
+		i, j = 'a', 'b'
+		k = i
+		yield _check_items, ([i], [j], [k]), [i,j]
 
-	# A list and a dict
-	yield _check_items, (['a'], {'k': 'v'}, ['v'], ['d']), ['a', 'v', 'd']
+		# trivial dicts. Keys are ignored, only values matter
+		yield _check_items, ({1: 'a'}, {1: 'b'}, {1: 'a'}), ['a','b']
 
-	# Tracking last mod of the collections
-	col1 = UserList.UserList()
-	col2 = UserList.UserList()
-	col1.lastModified = 1
+		# A list and a dict
+		yield _check_items, (['a'], {'k': 'v'}, ['v'], ['d']), ['a', 'v', 'd']
 
-	yield _check_items, (col1,col2), [], 1
+		# Tracking last mod of the collections
+		col1 = UserList.UserList()
+		col2 = UserList.UserList()
+		col1.lastModified = 1
 
-	col2.lastModified = 32
-	yield _check_items, (col1,col2), [], 32
+		yield _check_items, (col1,col2), [], 1
 
-	# We require the modification to come from the collection,
-	# not individual objects
-	class O(object):
-		lastModified = 42
-		def __repr__(self): return "<class O>"
-	o = O()
-	col1.append( o )
-	yield _check_items, (col1,col2), [o], 32
+		col2.lastModified = 32
+		yield _check_items, (col1,col2), [], 32
 
-from .test_application import SharedApplicationTestBase
+		# We require the modification to come from the collection,
+		# not individual objects
+		class O(object):
+			lastModified = 42
+			def __repr__(self): return "<class O>"
+		o = O()
+		col1.append( o )
+		yield _check_items, (col1,col2), [o], 32
+
+
 from nti.contentrange import contentrange
-from nti.dataserver import contenttypes
 from nti.dataserver import liking
 from .test_application import TestApp
+contenttypes = nti.dataserver.contenttypes
 
-class TestApplicationUGDQueryViews(SharedApplicationTestBase):
+class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_rstream_circled_exclude(self):
@@ -1175,8 +1181,9 @@ def _do_test_mime_filter_exclude_subclass_order(filter_factory, wrap=False):
 	assert_that( not_mime_filter( note ), is_true() )
 
 
-def test_mime_filter_exclude_subclass_order():
-	_do_test_mime_filter_exclude_subclass_order( _MimeFilter )
+class TestMime(unittest.TestCase):
+	def test_mime_filter_exclude_subclass_order(self):
+		_do_test_mime_filter_exclude_subclass_order( _MimeFilter )
 
-def test_mime_filter_stream_exclude_subclass_order():
-	_do_test_mime_filter_exclude_subclass_order( _ChangeMimeFilter, True )
+	def test_mime_filter_stream_exclude_subclass_order(self):
+		_do_test_mime_filter_exclude_subclass_order( _ChangeMimeFilter, True )

@@ -5,10 +5,9 @@ from __future__ import print_function
 #pylint: disable=W0212,R0904
 
 
-from .test_application import SharedApplicationTestBase
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
-
-class TestApplicationEnclosures(SharedApplicationTestBase):
+class TestApplicationEnclosures(ApplicationLayerTest):
 	# TODO: This used to have tests for modeled content
 	# and file enclosures, but only in Class/Section info objects,
 	# never in other enclosure containers

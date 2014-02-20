@@ -31,14 +31,14 @@ from nti.dataserver import chat_transcripts
 
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS, PersistentContainedExternal
+from .test_application import PersistentContainedExternal
 from .. import flagging_views
 
 from urllib import quote as UQ
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestApplicationFlagging(SharedApplicationTestBase):
-
-	features = SharedApplicationTestBase.features + ('forums',)
+class TestApplicationFlagging(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_flag_note(self):

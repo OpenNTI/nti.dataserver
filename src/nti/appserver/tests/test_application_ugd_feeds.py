@@ -29,14 +29,14 @@ from zope import component
 import anyjson as json
 
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges
-from nti.app.testing.application_webtest import SharedApplicationTestBase
+from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.dataserver.tests import mock_dataserver
 
 from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.appserver.interfaces import IUserViewTokenCreator
 
-class TestFeeds(SharedApplicationTestBase):
+class TestFeeds(ApplicationLayerTest):
 
 	def _check_atom(self, res):
 		assert_that( res.content_type, is_( 'application/atom+xml'))

@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_property
@@ -24,15 +24,17 @@ import os
 
 from boto.sqs.message import RawMessage
 
-import nti.testing.base
+from nti.app.testing.layers import SharedConfiguringTestLayer
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
-from . import ConfiguringTestBase
-from .test_application import ApplicationTestBase
+
 from .test_application import TestApp
 
 from nti.appserver import bounced_email_workflow
@@ -65,7 +67,8 @@ class _HasLinkMatcher(BaseMatcher):
 
 has_link = _HasLinkMatcher
 
-class TestBouncedEmailworkflow(ConfiguringTestBase):
+class TestBouncedEmailworkflow(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
 
 	def test_process_transient_messages(self):
 		messages = _read_msgs()
@@ -106,8 +109,9 @@ class TestBouncedEmailworkflow(ConfiguringTestBase):
 		assert_that( u3, has_link( bounced_email_workflow.REL_INVALID_CONTACT_EMAIL ) )
 		assert_that( u4, has_link( bounced_email_workflow.REL_INVALID_CONTACT_EMAIL ) )
 
-class TestApplicationBouncedEmailWorkflow(ApplicationTestBase):
+class TestApplicationBouncedEmailWorkflow(ApplicationLayerTest):
 
+	@WithSharedApplicationMockDS
 	def test_delete_states(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()

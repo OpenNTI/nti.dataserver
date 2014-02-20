@@ -513,10 +513,12 @@ def to_minimal_standard_external_dictionary( self, mergeFrom=None, **kwargs ):
 		result[StandardExternalFields_MIMETYPE] = mime_type
 	return result
 
-def make_repr():
+def make_repr(default=None):
+	if default is None:
+		default = lambda self: "%s().__dict__.update( %s )" % (self.__class__.__name__, self.__dict__ )
 	def __repr__( self ):
 		try:
-			return "%s().__dict__.update( %s )" % (self.__class__.__name__, self.__dict__ )
+			return default(self)
 		except ZODB.POSException.ConnectionStateError:
 			return '%s(Ghost)' % self.__class__.__name__
 		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
