@@ -15,7 +15,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
+import unittest
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import assert_that
@@ -24,32 +24,34 @@ from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains_string
-from hamcrest import is_not as does_not
+does_not = is_not
 from hamcrest import has_property
 from hamcrest import greater_than
 from hamcrest import has_item
-from hamcrest import greater_than_or_equal_to
+
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 from nose.tools import assert_raises
 import itertools
 
-from nti.appserver.workspaces import UserService
+
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
-from nti.appserver.policies import site_policies
-from nti.appserver.tests import NewRequestSharedConfiguringTestBase as SharedConfiguringTestBase, ITestMailDelivery
+
+
+from nti.app.testing.testing import ITestMailDelivery
+from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
+from nti.app.testing.base import TestBaseMixin
 
 import pyramid.httpexceptions as hexc
 
 from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.externalization import to_json_representation
-from nti.externalization.externalization import to_external_object
+
 from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.component import eventtesting
@@ -58,16 +60,12 @@ from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 from zope.annotation.interfaces import IAnnotations
 
 import datetime
-import unittest
 
 
-class _AbstractValidationViewBase(SharedConfiguringTestBase):
+class _AbstractValidationViewBase(TestBaseMixin):
 	""" Base for the things where validation should fail """
 
 	the_view = None
-
-	def setUp(self):
-		super(_AbstractValidationViewBase,self).setUp()
 
 	@WithMockDSTrans
 	def test_create_invalid_realname(self):
@@ -198,18 +196,13 @@ class _AbstractValidationViewBase(SharedConfiguringTestBase):
 		# last one is too short.
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string('Username is too short. Please use at least' ) ) )
 
+from nti.app.testing.layers import NonDevmodeNewRequestSharedConfiguringTestLayer
 
-class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
+class _AbstractNotDevmodeViewBase(TestBaseMixin):
 	# The tests that depend on not having devmode installed (stricter default validation) should be here
 	# Since they run so much slower due to the mimetype registration
-	features = ()
-
-	set_up_packages = _AbstractValidationViewBase.set_up_packages
 
 	the_view = None
-
-	def setUp(self):
-		super(_AbstractNotDevmodeViewBase,self).setUp()
 
 	@WithMockDSTrans
 	def test_create_censored_username( self ):
@@ -358,8 +351,8 @@ class _AbstractNotDevmodeViewBase(SharedConfiguringTestBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidURI' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', 'The specified URI is not valid.' ) )
 
-class TestPreflightView(_AbstractValidationViewBase):
-
+class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
+	layer = NewRequestSharedConfiguringTestLayer
 
 	def setUp( self ):
 		super(TestPreflightView,self).setUp()
@@ -389,8 +382,8 @@ class TestPreflightView(_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'message', 'The email address you have entered is not valid.' ) )
 
 
-class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
-
+class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
+	layer = NonDevmodeNewRequestSharedConfiguringTestLayer
 	def setUp( self ):
 		super(TestCreateViewNotDevmode,self).setUp()
 		self.the_view = account_create_view
@@ -436,8 +429,8 @@ class TestCreateViewNotDevmode(_AbstractNotDevmodeViewBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
 
-class TestCreateView(_AbstractValidationViewBase):
-
+class TestCreateView(unittest.TestCase,_AbstractValidationViewBase):
+	layer = NewRequestSharedConfiguringTestLayer
 	def setUp( self ):
 		super(TestCreateView,self).setUp()
 		self.the_view = account_create_view

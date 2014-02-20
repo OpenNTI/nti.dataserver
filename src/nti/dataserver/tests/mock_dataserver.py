@@ -20,7 +20,6 @@ from zope.dottedname import resolve as dottedname
 from nti.dataserver import interfaces as nti_interfaces
 from nti.testing.base import ConfiguringTestBase as _BaseConfiguringTestBase
 from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguringTestBase
-from nti.testing.base import SharedConfiguringTestLayer as _BaseSharedConfiguringTestLayer
 
 from . import mock_redis
 
@@ -289,7 +288,22 @@ class SharedConfiguringTestBase(_TestBaseMixin,_BaseSharedConfiguringTestBase):
 	or :func:`WithMockDSTrans`).
 	"""
 
-class SharedConfiguringTestLayer(_TestBaseMixin, _BaseSharedConfiguringTestLayer):
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+from nti.testing.layers import find_test
+
+class DSInjectorMixin(object):
+
+	@classmethod
+	def setUpTestDS(cls, test=None):
+		test = test or find_test()
+		if isinstance(type(test), type) and 'ds' not in type(test).__dict__:
+			type(test).ds = _TestBaseMixin.ds
+
+
+class SharedConfiguringTestLayer(ZopeComponentLayer,
+								 ConfiguringLayerMixin,
+								 DSInjectorMixin):
 	"""
 	A test layer that does two things: first, sets up the
 	:mod:`nti.dataserver` module during class setup. Second, if the
@@ -302,11 +316,16 @@ class SharedConfiguringTestLayer(_TestBaseMixin, _BaseSharedConfiguringTestLayer
 
 	description = "nti.dataserver is ZCML configured"
 
-	@classmethod
-	def setUp(cls):
-		cls.setUpSubclass(cls)
+	set_up_packages = ('nti.dataserver',)
 
 	@classmethod
-	def testSetUp(cls, test):
-		if isinstance(type(test), type) and 'ds' not in type(test).__dict__:
-			type(test).ds = _TestBaseMixin.ds
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		cls.setUpTestDS(test)
