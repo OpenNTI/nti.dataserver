@@ -33,18 +33,18 @@ import os
 import os.path
 
 class ExLibraryApplicationTestLayer(ApplicationTestLayer):
-
+	library_dir = os.path.join( os.path.dirname(__file__), 'ExLibrary' )
 	@classmethod
 	def _setup_library( cls, *args, **kwargs ):
-		from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
-		return FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
+		from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+		return FileLibrary( cls.library_dir )
 
 	@classmethod
 	def setUp(cls):
 		# Must implement!
 		cls.__old_library = component.getUtility(IContentPackageLibrary)
 		component.provideUtility(cls._setup_library(), IContentPackageLibrary)
-
+		getattr(component.getUtility(IContentPackageLibrary), 'contentPackages')
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
