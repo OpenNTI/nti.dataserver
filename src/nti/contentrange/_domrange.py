@@ -8,6 +8,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+def updating(f):
+	# Call parent range's update function after setting start or end nodes
+	def inner_func(*args, **kwargs):
+		f(*args, **kwargs)
+		if args[0].parent is not None: args[0].parent.update()
+	return inner_func
+
 class position(object):
 	node = None
 	offset = 0
@@ -15,13 +22,6 @@ class position(object):
 		self.parent = parent
 		if node is not None and offset is not None:
 			self.set(node,offset)
-
-	def updating(f):
-		# Call parent range's update function after setting start or end nodes
-		def inner_func(*args, **kwargs):
-			f(*args, **kwargs)
-			if args[0].parent is not None: args[0].parent.update()
-		return inner_func
 
 	@updating
 	def set(self, node, offset):
