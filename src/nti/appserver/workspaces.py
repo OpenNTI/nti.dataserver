@@ -429,7 +429,7 @@ class ContainerCollectionDetailExternalizer(object):
 				# TODO: This if test is probably not needed anymore, with zope.location.traversing
 				# it will either work or raise
 				try:
-					valid_traversal_path = traversal.normal_resource_path( v_ )
+					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
 					if valid_traversal_path and valid_traversal_path.startswith( '/' ):
 						item['href'] = valid_traversal_path
 				except TypeError:
@@ -452,7 +452,7 @@ class ContainerCollectionDetailExternalizer(object):
 					 else ext_collection['Items']):
 			if 'href' not in item and 'ID' in item:
 				temp_res.__name__ = item['ID']
-				item['href'] = traversal.normal_resource_path( temp_res )
+				item['href'] = nti_traversal.normal_resource_path( temp_res )
 
 		return ext_collection
 
