@@ -31,7 +31,8 @@ class DefaultFilter(object):
 				(strength >= self.no_limit_strength)
 
 	def __repr__(self):
-		return "DefaultFilter(%s, %s)" % (self.no_limit_strength, self.single_strength_min_occur)
+		return "DefaultFilter(%s, %s)" % (self.no_limit_strength,
+										  self.single_strength_min_occur)
 
 	__str__ = __repr__
 
@@ -81,9 +82,9 @@ class NormRecord(object):
 
 	def __repr__(self):
 		return "NormRecord(%s, %s, %s, %s)" % (self.norm,
-												self.relevance,
-												self.strength,
-												self.terms)
+											   self.relevance,
+											   self.strength,
+											   self.terms)
 
 	__str__ = __repr__
 

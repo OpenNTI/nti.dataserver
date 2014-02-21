@@ -150,11 +150,11 @@ def _default_content_translation_table():
 		result[int(splits[0])] = repl
 	return result
 
-def clean_special_characters(s, replacement=u''):
+def clean_special_characters(source, replacement=u''):
 	"""
 	remove regular expression special chars
 	"""
-	if s:
+	if source:
 		for c in special_regexp_chars:
-			s = s.replace(c, replacement)
-	return s
+			source = source.replace(c, replacement)
+	return source
