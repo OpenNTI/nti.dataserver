@@ -97,6 +97,26 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
+							  	  _LastModifiedSearchHitComparator):
+
+	@classmethod
+	def compare_creator(cls, a, b):
+		a_creator = a.Creator
+		b_creator = b.Creator
+		result = cmp(a_creator.lower(), b_creator.lower())
+		return result
+
+	@classmethod
+	def compare(cls, a, b):
+		result = cls.compare_creator(a, b)
+		if result == 0:
+			result = cls.compare_lm(b, a)  # more recent first
+		if result == 0:
+			result = cls.compare_score(a, b)
+		return result
+
 @repoze.lru.lru_cache(300)
 def _path_intersection(x, y):
 	result = []
