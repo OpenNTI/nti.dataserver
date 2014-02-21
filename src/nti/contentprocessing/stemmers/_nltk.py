@@ -4,8 +4,10 @@ NLTK based stemmers
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import nltk
 
@@ -15,6 +17,8 @@ from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
 class _PorterStemmer(object):
+
+    __slots__ = ('stemmer',)
 
     def __init__(self):
         self.stemmer = nltk.PorterStemmer()
