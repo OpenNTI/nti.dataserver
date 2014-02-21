@@ -26,7 +26,7 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 from nti.chatserver.messageinfo import MessageInfo
 from nti.chatserver.presenceinfo import PresenceInfo
 
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+
 
 from nti.contentrange import contentrange
 
@@ -42,8 +42,9 @@ from nti.socketio import interfaces as sio_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.appserver.tests.test_application import TestApp
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
+from nti.app.testing.webtest import TestApp
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 #class TestApplicationAssessment(ApplicationTestBase):
 #	child_ntiid =  'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
@@ -55,10 +56,6 @@ bad_word      =  'shpxvat'.encode( 'rot13' ).decode( 'utf-8' )
 censored_word = u'*******'
 
 class _CensorTestMixin(object):
-
-	@classmethod
-	def _setup_library( cls, *args, **kwargs ):
-		return FileLibrary(os.path.join(os.path.dirname(__file__), '../../tests/ExLibrary'))
 
 	def _do_test_censor_note( self, containerId, censored=True, extra_ifaces=(), environ=None,
 							  bad_val=bad_val, censored_val=censored_val,
@@ -103,12 +100,15 @@ class _CensorTestMixin(object):
 								  'title', exp_val,
 								  'tags', only_contains( exp_word )) )
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.appserver.tests import ExLibraryApplicationTestLayer
 
-class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
+class TestApplicationCensoring(_CensorTestMixin,ApplicationLayerTest):
+	layer = ExLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS
 	def test_censor_note_not_in_library_disabled_by_default(self):
-		"If we post a note to a container we don't recognize, we don't get censored."
+		#"If we post a note to a container we don't recognize, we don't get censored."
 		self._do_test_censor_note( 'tag:not_in_library', censored=False )
 
 	@WithSharedApplicationMockDS
@@ -117,7 +117,7 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 
 	@WithSharedApplicationMockDS
 	def test_censoring_enabled_in_mathcounts_site(self):
-		"Regardless of who you are this site censors"
+		#"Regardless of who you are this site censors"
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
 								   environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'})
@@ -230,14 +230,20 @@ class TestApplicationCensoring(_CensorTestMixin,SharedApplicationTestBase):
 			assert_that(args[0], is_(PresenceInfo))
 			assert_that(args[0], has_property('status', censored_val))
 
-class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,SharedApplicationTestBase):
+class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,ApplicationLayerTest):
+	layer = ExLibraryApplicationTestLayer
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestApplicationCensoringWithDefaultPolicyForAllUsers,cls).setUpClass()
+	def setUp(self):
+		super(TestApplicationCensoringWithDefaultPolicyForAllUsers,self).setUp()
 		component.provideAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
 								  adapts=(nti.dataserver.interfaces.IUser, None) )
 		component.provideAdapter(censor_policies.user_filesystem_censor_policy)
+
+	def tearDown(self):
+		gsm = component.getGlobalSiteManager()
+		gsm.unregisterAdapter( nti.contentfragments.censor.DefaultCensoredContentPolicy,
+							   required=(nti.dataserver.interfaces.IUser, None) )
+		gsm.unregisterAdapter(censor_policies.user_filesystem_censor_policy)
 
 	@WithSharedApplicationMockDS
 	def test_censoring_can_be_disabled_by_file_in_library( self ):

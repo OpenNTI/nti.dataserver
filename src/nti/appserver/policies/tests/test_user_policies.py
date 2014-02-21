@@ -7,14 +7,9 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import PyPDF2 as pyPdf
+import unittest
 
-from .. import user_policies
+class TestPlaceholder(unittest.TestCase):
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-
-from hamcrest import (assert_that, is_)
-
-class TestUserPolicies(SharedApplicationTestBase):
-
-	pass
+	def test_zope_testrunner_gets_bitchy_if_the_module_defines_no_test_cases(self):
+		pass
