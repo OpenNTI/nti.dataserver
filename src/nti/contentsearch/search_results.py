@@ -119,7 +119,7 @@ class SearchHitMetaData(object):
 
 		# type count
 		resolver = search_interfaces.ITypeResolver(selected, None)
-		type_name = resolver.type if resolver else 0
+		type_name = resolver.type if resolver else u'unknown'
 		self.type_count[type_name] = self.type_count[type_name] + 1
 
 		self.SearchTime = time.time() - self._ref
@@ -186,7 +186,7 @@ class _SearchResults(_BaseSearchResults):
 	def __init__(self, query=None):
 		super(_SearchResults, self).__init__(query)
 		self._hits = []
-		self._seen = set()  # TODO: Temp fix this will go away
+		self._seen = set()
 		self.HitMetaData = SearchHitMetaData()
 
 	def clone(self, meta=True, hits=False):
