@@ -21,9 +21,9 @@ class ZopyYXStemmer(object):
     __slots__ = ('stemmer',)
 
     def __init__(self, language='english'):
-        self._stemmer = stemmer.Stemmer(language)
+        self.stemmer = stemmer.Stemmer(language)
 
     def stem(self, token):
         token = unicode(token)
-        result = self._stemmer.stem((token,))
+        result = self.stemmer.stem((token,))
         return result[0] if result else token
