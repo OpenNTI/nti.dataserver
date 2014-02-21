@@ -116,7 +116,10 @@ import tempfile
 import shutil
 import os
 
-def _mock_ds_wrapper_for( func, factory=MockDataserver, teardown=None, base_storage=None ):
+def _mock_ds_wrapper_for( func,
+						  factory=MockDataserver,
+						  teardown=None,
+						  base_storage=None ):
 
 	def f( *args ):
 		global current_mock_ds
@@ -169,9 +172,10 @@ def WithMockDS( *args, **kwargs ):
 		mock_ds_factory = ChangePassingMockDataserver
 
 	if 'database' in kwargs:
+		database = kwargs.pop('database')
 		def factory(*args, **kwargs):
 			md = mock_ds_factory.__new__(mock_ds_factory)
-			md._mock_database = kwargs['database']
+			md._mock_database = database
 			md.__init__()
 			return md
 	elif 'temporary_filestorage' in kwargs and kwargs['temporary_filestorage']:
@@ -188,6 +192,8 @@ def WithMockDS( *args, **kwargs ):
 			md._mock_database = db
 			md.__init__()
 			return md
+	elif 'factory' in kwargs:
+		factory = kwargs.pop('factory')
 	else:
 		factory = mock_ds_factory
 
