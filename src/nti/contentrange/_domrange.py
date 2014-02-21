@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 class position(object):
 	node = None
@@ -60,7 +62,7 @@ class position(object):
 				return -1
 			return 1
 		if other_index < self_index:
-			 return 1
+			return 1
 		return -1
 
 class Range(object):
@@ -175,5 +177,5 @@ def childIndex(node):
 
 def get_root(node):
 	if node.parentNode is None or node.parentNode.nodeType == node.DOCUMENT_NODE:
-		 return node
+		return node
 	return get_root(node.parentNode)
