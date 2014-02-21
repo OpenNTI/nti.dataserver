@@ -19,12 +19,35 @@ from nti.app.testing.application_webtest import ApplicationTestLayer
 import os
 import os.path
 
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+
 class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
 	library_dir = os.path.join( os.path.dirname(__file__), 'library' )
 
 	@classmethod
 	def _setup_library( cls, *args, **kwargs ):
-		from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+		return FileLibrary( cls.library_dir )
+
+	@classmethod
+	def setUp(cls):
+		# Must implement!
+		cls.__old_library = component.getUtility(IContentPackageLibrary)
+		component.provideUtility(cls._setup_library(), IContentPackageLibrary)
+		getattr(component.getUtility(IContentPackageLibrary), 'contentPackages')
+	@classmethod
+	def tearDown(cls):
+		# Must implement!
+		component.provideUtility(cls.__old_library, IContentPackageLibrary)
+
+	# TODO: May need to recreate the application with this library?
+
+import nti.contentlibrary.tests
+
+class ContentLibraryApplicationTestLayer(ApplicationTestLayer):
+	library_dir = os.path.join( os.path.dirname(nti.contentlibrary.tests.__file__) )
+
+	@classmethod
+	def _setup_library( cls, *args, **kwargs ):
 		return FileLibrary( cls.library_dir )
 
 	@classmethod

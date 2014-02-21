@@ -14,19 +14,17 @@ from hamcrest import has_entries
 from hamcrest import is_not
 does_not = is_not
 
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-class TestApplicationContentCard(SharedApplicationTestBase):
+from . import ContentLibraryApplicationTestLayer
+
+class TestApplicationContentCard(ApplicationLayerTest):
+	layer = ContentLibraryApplicationTestLayer
 	child_ntiid = b'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1'
 
 	card_ntiid = child_ntiid
-
-	@classmethod
-	def _setup_library( cls, *args, **kwargs ):
-		import nti.contentlibrary.tests
-		return FileLibrary(os.path.dirname(nti.contentlibrary.tests.__file__))
 
 
 	@WithSharedApplicationMockDS(testapp=True, users=True)

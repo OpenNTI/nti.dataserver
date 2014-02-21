@@ -16,7 +16,7 @@ from pyramid import traversal
 
 from nti.appserver import interfaces as app_interfaces
 
-from nti.appserver.tests import NewRequestSharedConfiguringTestBase
+import unittest
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -76,23 +76,36 @@ class ContentUnitInfo(object):
 	contentUnit = None
 	lastModified = 0
 
-def test_unicode_in_page_href():
-	unit = ContentUnit()
-	unit.ntiid = u'\u2122'
-	request = Request.blank('/')
-	request.invoke_subrequest = Router(component.getGlobalSiteManager()).invoke_subrequest
-	request.environ['REMOTE_USER'] = 'foo'
-	request.environ['repoze.who.identity'] = {}
-	with assert_raises(HTTPNotFound):
-		find_page_info_view_helper( request, unit )
 
-class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
-
+from nti.app.testing.layers import NewRequestLayerTest
+from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
+from pyramid.interfaces import IAuthorizationPolicy
+from pyramid.interfaces import IAuthenticationPolicy
+class _SecurityPolicyNewRequestSharedConfiguringTestLayer(NewRequestSharedConfiguringTestLayer):
 	rem_username = 'foo@bar'
 
-	def setUp( self ):
-		config = super(TestContainerPrefs,self).setUp()
-		config.testing_securitypolicy( self.rem_username )
+	@classmethod
+	def setUp(cls):
+		config = NewRequestSharedConfiguringTestLayer.config
+		cls.__old_author = config.registry.queryUtility(IAuthorizationPolicy)
+		cls.__old_authen = config.registry.queryUtility(IAuthenticationPolicy)
+		cls.__new_policy = config.testing_securitypolicy(cls.rem_username)
+
+
+	@classmethod
+	def tearDown(cls):
+		config = NewRequestSharedConfiguringTestLayer.config
+		config.registry.unregisterUtility(cls.__new_policy, IAuthorizationPolicy)
+		config.registry.unregisterUtility(cls.__new_policy, IAuthenticationPolicy)
+		if cls.__old_author:
+			config.registry.registerUtility(cls.__old_author, IAuthorizationPolicy)
+		if cls.__old_authen:
+			config.registry.registerUtility(cls.__old_authen, IAuthenticationPolicy)
+
+class TestContainerPrefs(NewRequestLayerTest):
+	layer = _SecurityPolicyNewRequestSharedConfiguringTestLayer
+	rem_username = layer.rem_username
+
 
 	def _do_check_root_inherited(self, ntiid=None, sharedWith=None, state='inherited', provenance=ntiids.ROOT):
 
@@ -277,11 +290,11 @@ class TestContainerPrefs(NewRequestSharedConfiguringTestBase):
 		assert_that( result_map, has_entry( 'sharingPreference',
 											has_entry( 'sharedWith', ['2@3'] ) ) )
 
-from nti.app.testing.application_webtest import SharedApplicationTestBase
-
+from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.dataserver.tests import mock_dataserver
 from urllib import quote
-class TestApplication(SharedApplicationTestBase):
+class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_library_main(self):
@@ -297,3 +310,15 @@ class TestApplication(SharedApplicationTestBase):
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		assert_that( res.json_body, has_entries( 'href', href,
 												 'titles', is_([])))
+
+	@WithSharedApplicationMockDS
+	def test_unicode_in_page_href(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			unit = ContentUnit()
+			unit.ntiid = u'\u2122'
+			request = Request.blank('/')
+			request.invoke_subrequest = Router(component.getGlobalSiteManager()).invoke_subrequest
+			request.environ['REMOTE_USER'] = 'foo'
+			request.environ['repoze.who.identity'] = {}
+			with assert_raises(HTTPNotFound):
+				find_page_info_view_helper( request, unit )

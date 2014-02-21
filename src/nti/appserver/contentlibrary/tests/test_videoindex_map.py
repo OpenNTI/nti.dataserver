@@ -7,30 +7,37 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import os
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import has_property
+
 
 from zope import component
 
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as FileLibrary
+
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.contentlibrary import _videoindex_map as vim_module
 
-from nti.testing.base import SharedConfiguringTestBase
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from . import CourseTestContentApplicationTestLayer
 
-from hamcrest import (assert_that, is_, has_entry, has_length, has_property)
 
-class TestVideoIndexMap(SharedConfiguringTestBase):
+class TestVideoIndexMap(ApplicationLayerTest):
+	layer = CourseTestContentApplicationTestLayer
 
 	def setUp(self):
-		library = FileLibrary(os.path.join(os.path.dirname(__file__), 'library'))
-		component.provideUtility(library, lib_interfaces.IFilesystemContentPackageLibrary)
-		video_map = vim_module.VideoIndexMap()
-		component.provideUtility(video_map, app_interfaces.IVideoIndexMap)
+		self.video_map = vim_module.VideoIndexMap()
+		component.provideUtility(self.video_map, app_interfaces.IVideoIndexMap)
+
+	def tearDown(self):
+		component.getGlobalSiteManager().unregisterUtility(self.video_map, app_interfaces.IVideoIndexMap)
 
 	def test_check_video_map(self):
-		library = component.getUtility(lib_interfaces.IFilesystemContentPackageLibrary)
+		library = component.getUtility(lib_interfaces.IContentPackageLibrary)
 		content_package = library.contentPackages[0]
 		vi_map = component.getUtility(app_interfaces.IVideoIndexMap)
 
@@ -44,4 +51,3 @@ class TestVideoIndexMap(SharedConfiguringTestBase):
 		# remove
 		vim_module.remove_video_items_from_old_content(content_package, None)
 		assert_that(vi_map, has_property('by_container', has_length(0)))
-
