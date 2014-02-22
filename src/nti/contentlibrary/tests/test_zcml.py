@@ -22,7 +22,7 @@ from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_property
 from hamcrest import has_entry
-import nti.testing.base
+
 from nti.testing.matchers import verifiably_provides
 import fudge
 
@@ -78,17 +78,29 @@ BOTO_ZCML_STRING = HEAD_ZCML_STRING + """
 		</configure>
 		"""
 
-class TestZcml(nti.testing.base.ConfiguringTestBase):
+from . import ContentlibraryLayerTest
+from zope.configuration import xmlconfig, config
 
+class TestZcml(ContentlibraryLayerTest):
+
+
+	def setUp(self):
+		super(TestZcml,self).setUp()
+		xsite = BASECOPPA
+		xsite.__init__( xsite.__parent__, name=xsite.__name__, bases=xsite.__bases__ )
 
 	def test_filesystem_site_registrations(self):
-		"Can we add new registrations in a sub-site?"
+		#"Can we add new registrations in a sub-site?"
 
-		self.configure_packages( ('nti.contentlibrary', 'nti.externalization') )
-		self.configure_string( ZCML_STRING )
+		context = config.ConfigurationMachine()
+		context.package = self.get_configuration_package()
+		xmlconfig.registerCommonDirectives( context )
+
+		xmlconfig.string( ZCML_STRING, context )
+
 		assert_that( BASECOPPA.__bases__, is_( (component.globalSiteManager,) ) )
 
-		assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
+		#assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
 		with site( _TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )
@@ -104,13 +116,17 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
 
 	@fudge.patch('boto.connect_s3')
 	def test_register_boto(self, fake_connect):
-
+		#"Can we add new boto registrations in a sub-site?"
 		fake_conn = fake_connect.expects_call().returns_fake()
 		fake_bucket = fake_conn.expects( 'get_bucket' ).returns_fake()
 		fake_bucket.expects('list').returns( [] )
 
-		self.configure_string( BOTO_ZCML_STRING )
-		assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
+		context = config.ConfigurationMachine()
+		context.package = self.get_configuration_package()
+		xmlconfig.registerCommonDirectives( context )
+
+		xmlconfig.string( BOTO_ZCML_STRING, context )
+		#assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
 		with site( _TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )

@@ -30,11 +30,10 @@ from cStringIO import StringIO
 import gzip
 import boto.exception
 
-from nti.testing.base import SharedConfiguringTestBase
+from . import ContentlibraryLayerTest
 from nti.testing.matchers import validly_provides
 
-class TestBotoS3(SharedConfiguringTestBase):
-	set_up_packages = ('nti.externalization', 'nti.contentlibrary')
+class TestBotoS3(ContentlibraryLayerTest):
 
 	def test_unit_provides(self):
 		@interface.implementer(interfaces.IS3Bucket)
@@ -152,11 +151,19 @@ class TestBotoS3(SharedConfiguringTestBase):
 					 has_property( 'href', 'http://content.nextthought.com/mathcounts2012/index.html' ) )
 
 		# but we can replace that...
-		externalization.map_all_buckets_to( 'test_key_mapper.cloudfront.amazon.com' )
+		try:
+			externalization.map_all_buckets_to( 'test_key_mapper.cloudfront.amazon.com' )
 
-		assert_that( interfaces.IAbsoluteContentUnitHrefMapper( key ),
-					 has_property( 'href', '//test_key_mapper.cloudfront.amazon.com/mathcounts2012/index.html' ) )
-
+			assert_that( interfaces.IAbsoluteContentUnitHrefMapper( key ),
+						 has_property( 'href', '//test_key_mapper.cloudfront.amazon.com/mathcounts2012/index.html' ) )
+		finally:
+			# Make sure and clean it up
+			site_man = component.getGlobalSiteManager()
+			site_man.unregisterAdapter( required=(interfaces.IS3Key,),
+										provided=interfaces.IAbsoluteContentUnitHrefMapper )
+			site_man.registerAdapter( externalization._S3KeyHrefMapper )
+			assert_that( component.getAdapter( key, interfaces.IAbsoluteContentUnitHrefMapper ),
+						 has_property( 'href', 'http://content.nextthought.com/mathcounts2012/index.html' ) )
 
 	def test_read_contents( self ):
 		class Key(object):
