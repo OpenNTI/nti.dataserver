@@ -1,4 +1,7 @@
 #!/usr/bin/env python2.7
+
+from __future__ import unicode_literals, absolute_import, print_function
+
 # disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
@@ -6,7 +9,7 @@
 from hamcrest import assert_that,  is_, none, is_not, has_property
 from hamcrest import has_length
 from hamcrest import contains
-import unittest
+
 from nose.tools import assert_raises
 
 from zope import component
@@ -20,8 +23,8 @@ import nti.dataserver.sessions as sessions
 from nti.dataserver import session_storage
 from nti.dataserver import users
 
-import mock_dataserver
-from mock_dataserver import WithMockDSTrans
+from . import mock_dataserver
+from .mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.tests import mock_redis
 
@@ -45,16 +48,9 @@ class MockSessionService(sessions.SessionService):
 
 		return sessions.SessionService.create_session( self, *args, **kwargs )
 
-def test_session_cannot_change_owner():
-	s = sessions.Session()
-	assert_that( s, has_property( 'owner', none() ) )
-	with assert_raises( AttributeError ):
-		s.owner = 'me'
-		# Must be assigned at creation time
 
-class TestSessionService(unittest.TestCase):
+class TestSessionService(mock_dataserver.DataserverLayerTest):
 
-	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	def setUp(self):
 		super(TestSessionService,self).setUp()
@@ -63,6 +59,13 @@ class TestSessionService(unittest.TestCase):
 		self.session_service = MockSessionService()
 		self.storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 		component.provideUtility( self.storage, provides=nti_interfaces.ISessionServiceStorage )
+
+	def test_session_cannot_change_owner(self):
+		s = sessions.Session()
+		assert_that( s, has_property( 'owner', none() ) )
+		with assert_raises( AttributeError ):
+			s.owner = 'me'
+			# Must be assigned at creation time
 
 
 	def test_get_set_proxy_session(self):
@@ -122,8 +125,8 @@ class TestSessionService(unittest.TestCase):
 		assert_that( session, is_not( none() ) )
 		assert_that( self.session_service.get_session( session.session_id ), is_( session ) )
 
-		self.session_service.queue_message_from_client( session.session_id, 'foobar' )
-		self.session_service.queue_message_to_client( session.session_id, 'foobar' )
+		self.session_service.queue_message_from_client( session.session_id, b'foobar' )
+		self.session_service.queue_message_to_client( session.session_id, b'foobar' )
 		transaction.commit()
 
 		to_client = list(self.session_service.get_messages_to_client( session.session_id ))
@@ -223,5 +226,5 @@ class TestSessionService(unittest.TestCase):
 
 
 
-def test_session_service_storage():
-	assert_that( session_storage.OwnerBasedAnnotationSessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )
+	def test_session_service_storage(self):
+		assert_that( session_storage.OwnerBasedAnnotationSessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )

@@ -33,9 +33,8 @@ import fudge
 from nti.deprecated import hides_warnings
 
 
+class TestEvolve24(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
 
-class TestEvolve24(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
 
 	@hides_warnings
 	@WithMockDS

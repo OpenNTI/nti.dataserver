@@ -37,8 +37,8 @@ from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 from nti.dataserver.contenttypes import Note
 
 
-class TestEvolve39(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
+class TestEvolve39(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
+
 
 	@hides_warnings
 	@WithMockDS

@@ -18,17 +18,17 @@ from nti.testing.matchers import validly_provides as verifiably_provides
 from pyramid.testing import DummySecurityPolicy
 from nti.dataserver.tests import mock_dataserver
 
-def test_delegating_provides():
+class TestMisc(unittest.TestCase):
+	def test_delegating_provides(self):
 
-	assert_that( authentication.DelegatingImpersonatedAuthenticationPolicy( DummySecurityPolicy( '' ) ),
-				 verifiably_provides( nti_interfaces.IImpersonatedAuthenticationPolicy ) )
+		assert_that( authentication.DelegatingImpersonatedAuthenticationPolicy( DummySecurityPolicy( '' ) ),
+					 verifiably_provides( nti_interfaces.IImpersonatedAuthenticationPolicy ) )
 
-def test_effective_prins_no_username():
-	assert_that( authentication.effective_principals( '' ), is_( () ) )
+	def test_effective_prins_no_username(self):
+		assert_that( authentication.effective_principals( '' ), is_( () ) )
 
 
-class TestPrincipals(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+class TestPrincipals(mock_dataserver.DataserverLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_effective_principals(self):

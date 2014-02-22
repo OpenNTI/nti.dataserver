@@ -22,8 +22,8 @@ from nti.deprecated import hides_warnings
 
 from hamcrest import (assert_that, has_property, close_to)
 
-class TestEvolve33(mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
+class TestEvolve33(mock_dataserver.DataserverLayerTest):
+
 
 	@hides_warnings
 	@WithMockDS
@@ -70,7 +70,3 @@ class TestEvolve33(mock_dataserver.ConfiguringTestBase):
 			assert_that(tx.d, close_to(0.05125, 0.0001))
 			assert_that(tx.tx, close_to(0.57375, 0.0001))
 			assert_that(tx.ty, close_to(0.06875, 0.0001))
-
-if __name__ == '__main__':
-	import unittest
-	unittest.main()

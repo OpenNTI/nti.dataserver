@@ -24,6 +24,7 @@ from zope.deprecation import deprecated
 from nti.dataserver.contenttypes import threadable
 
 from nti.externalization import datastructures
+from nti.externalization.externalization import make_repr
 
 from nti.utils.property import alias
 from nti.utils.property import read_alias
@@ -261,8 +262,7 @@ class _Meeting( threadable.ThreadableMixin,
 			self._addl_transcripts_to.update( new_targets )
 		except AttributeError: pass
 
-	def __repr__(self):
-		return "<%s %s %s>" % (self.__class__.__name__, self.ID, self._occupant_names)
+	__repr__ = make_repr(lambda self: "<%s %s %s>" % (self.__class__.__name__, self.ID, self._occupant_names))
 
 _ChatRoom = _Meeting
 deprecated('_ChatRoom', 'Prefer _Meeting' )

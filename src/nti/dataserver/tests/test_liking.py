@@ -17,17 +17,17 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_entry
 from nose.tools import assert_raises
-
-import nti.testing.base
 
 from nti.dataserver import liking
 
-def test_favorite_safe():
+import unittest
 
-	with assert_raises(TypeError):
-		liking.favorites_object( object(), 'foo' )
+class TestLiking(unittest.TestCase):
 
-	assert_that( liking.favorites_object( object(), 'foo', safe=True ), is_( False ) )
+	def test_favorite_safe(self):
+
+		with assert_raises(TypeError):
+			liking.favorites_object( object(), 'foo' )
+
+		assert_that( liking.favorites_object( object(), 'foo', safe=True ), is_( False ) )

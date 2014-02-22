@@ -20,19 +20,20 @@ from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
 
-import nti.testing.base
+import unittest
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
 
 from nti.chatserver.meeting import _Meeting as Meeting
 from nti.chatserver import interfaces as chat_interfaces
 
-def test_interface():
+class TestMeeting(unittest.TestCase):
+	def test_interface(self):
 
-	assert_that( Meeting(), verifiably_provides( chat_interfaces.IMeeting ) )
+		assert_that( Meeting(), verifiably_provides( chat_interfaces.IMeeting ) )
 
-	meeting = Meeting()
-	meeting.creator = 'foo'
-	meeting.RoomId = '1'
+		meeting = Meeting()
+		meeting.creator = 'foo'
+		meeting.RoomId = '1'
 
-	assert_that( meeting, validly_provides( chat_interfaces.IMeeting ) )
+		assert_that( meeting, validly_provides( chat_interfaces.IMeeting ) )

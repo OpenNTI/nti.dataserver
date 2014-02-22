@@ -33,8 +33,8 @@ import fudge
 class PersistentContained(contained.Contained,persistent.Persistent):
 	pass
 
-class TestInstall(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+class TestInstall(mock_dataserver.DataserverLayerTest):
+
 
 	@mock_dataserver.WithMockDSTrans
 	def test_install_creates_intid_utility_and_contained_objects_are_registered(self):

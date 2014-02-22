@@ -30,11 +30,10 @@ from nti.externalization.tests import externalizes
 from nti.externalization.externalization import to_external_object
 from nti.externalization import internalization
 
-import nti.testing.base
+from . import ForumLayerTest
 from nti.testing.matchers import aq_inContextOf
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
-tearDownModule = nti.testing.base.module_teardown
+
 
 from zope import interface
 from nti.testing.matchers import verifiably_provides, validly_provides
@@ -47,154 +46,156 @@ from ..post import Post, PersonalBlogComment, PersonalBlogEntryPost
 
 from ExtensionClass import Base
 
-def test_post_interfaces():
-	post = Post()
-	assert_that( post, verifiably_provides( IPost ) )
+class TestPost(ForumLayerTest):
 
-	assert_that( post, validly_provides( IPost ) )
+	def test_post_interfaces(self):
+		post = Post()
+		assert_that( post, verifiably_provides( IPost ) )
 
-	assert_that( Post, has_property( 'mime_type', 'application/vnd.nextthought.forums.post' ) )
+		assert_that( post, validly_provides( IPost ) )
 
-def test_comment_interfaces():
-	post = PersonalBlogComment()
-	assert_that( post, verifiably_provides( IPersonalBlogComment ) )
+		assert_that( Post, has_property( 'mime_type', 'application/vnd.nextthought.forums.post' ) )
 
-	assert_that( post, validly_provides( IPersonalBlogComment ) )
+	def test_comment_interfaces(self):
+		post = PersonalBlogComment()
+		assert_that( post, verifiably_provides( IPersonalBlogComment ) )
 
-	assert_that( PersonalBlogComment, has_property( 'mimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
+		assert_that( post, validly_provides( IPersonalBlogComment ) )
 
-
-def test_comment_sharing_target_aq():
-
-	class Parent(Base):
-		sharingTargets = None
-		child = None
-
-	post = Parent()
-	post.sharingTargets = set( ['a', 'b', 'c'] )
-	child = PersonalBlogComment()
-	child.__parent__ = post
-	post.child = child
-
-	assert_that( post.child, aq_inContextOf( post ) )
-	assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
-
-def test_blog_post_sharing_target_aq():
-
-	class Parent(Base):
-		sharingTargets = None
-		child = None
-
-	post = Parent()
-	post.sharingTargets = set( ['a', 'b', 'c'] )
-	child = PersonalBlogEntryPost()
-	child.__parent__ = post # PARENT MUST BE SET FIRST
-	post.child = child
-
-	assert_that( post.child, aq_inContextOf( post ) )
-	assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
+		assert_that( PersonalBlogComment, has_property( 'mimeType', 'application/vnd.nextthought.forums.personalblogcomment' ) )
 
 
-def test_post_constraints():
-	with assert_raises( InvalidContainerType ):
-		container = CheckingLastModifiedBTreeContainer()
-		container['k'] = Post()
+	def test_comment_sharing_target_aq(self):
 
-	with assert_raises( InvalidContainerType ):
-		container = CheckingLastModifiedBTreeContainer()
-		container['k'] = PersonalBlogComment()
+		class Parent(Base):
+			sharingTargets = None
+			child = None
 
-def test_post_derived_containerId():
+		post = Parent()
+		post.sharingTargets = set( ['a', 'b', 'c'] )
+		child = PersonalBlogComment()
+		child.__parent__ = post
+		post.child = child
 
-	@interface.implementer(ITopic)
-	class Parent(Base):
-		pass
+		assert_that( post.child, aq_inContextOf( post ) )
+		assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
 
-	parent = Parent()
-	parent.NTIID = 'foo_bar_baz'
-	post = Post()
-	post.title = 'foo'
-	post.__parent__ = parent
+	def test_blog_post_sharing_target_aq(self):
 
-	assert_that( post.containerId, is_( parent.NTIID ) )
-	del parent.NTIID
-	with assert_raises(AttributeError):
-		post.containerId
+		class Parent(Base):
+			sharingTargets = None
+			child = None
 
-	post.__dict__['containerId'] = 1 # Legacy
-	assert_that( post.containerId, is_( 1 ) )
+		post = Parent()
+		post.sharingTargets = set( ['a', 'b', 'c'] )
+		child = PersonalBlogEntryPost()
+		child.__parent__ = post # PARENT MUST BE SET FIRST
+		post.child = child
 
-	from .. import _CreatedNamedNTIIDMixin
-	class Parent2(_CreatedNamedNTIIDMixin):
-		username = None
-		@property
-		def _ntiid_creator_username(self):
-			return self.username
-		_ntiid_type = 'baz'
-
-	post.__parent__ = Parent2()
-	assert_that( post.containerId, is_( None ) )
-	post.__parent__.username = 'foo'
-	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo-baz' ) )
-	post.__parent__.username = 'foo2'
-	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz' ) )
-
-	post.__parent__.__name__ = 'local'
-	assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz-local' ) )
+		assert_that( post.child, aq_inContextOf( post ) )
+		assert_that( post.child.sharingTargets, is_( post.sharingTargets ) )
 
 
-def test_post_externalizes():
+	def test_post_constraints(self):
+		with assert_raises( InvalidContainerType ):
+			container = CheckingLastModifiedBTreeContainer()
+			container['k'] = Post()
 
-	@interface.implementer(ITopic)
-	class Parent(Base):
-		NTIID = 'foo_bar_baz'
+		with assert_raises( InvalidContainerType ):
+			container = CheckingLastModifiedBTreeContainer()
+			container['k'] = PersonalBlogComment()
 
-	parent = Parent()
-	post = Post()
-	post.title = 'foo'
-	post.__parent__ = parent
+	def test_post_derived_containerId(self):
 
-	assert_that( post,
-				 externalizes( all_of(
-					 has_entries( 'title', 'foo',
-								  'Class', 'Post',
-								  'MimeType', 'application/vnd.nextthought.forums.post',
-								  'body', none(),
-								  'ContainerId', parent.NTIID,
-								  'sharedWith', is_empty() ),
-					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+		@interface.implementer(ITopic)
+		class Parent(Base):
+			pass
 
-	ext_post = to_external_object( post )
+		parent = Parent()
+		parent.NTIID = 'foo_bar_baz'
+		post = Post()
+		post.title = 'foo'
+		post.__parent__ = parent
 
-	factory = internalization.find_factory_for( ext_post )
-	new_post = factory()
-	new_post.__parent__ = parent
-	internalization.update_from_external_object( new_post, ext_post )
+		assert_that( post.containerId, is_( parent.NTIID ) )
+		del parent.NTIID
+		with assert_raises(AttributeError):
+			post.containerId
 
-	assert_that( new_post, is_( post ) )
+		post.__dict__['containerId'] = 1 # Legacy
+		assert_that( post.containerId, is_( 1 ) )
+
+		from .. import _CreatedNamedNTIIDMixin
+		class Parent2(_CreatedNamedNTIIDMixin):
+			username = None
+			@property
+			def _ntiid_creator_username(self):
+				return self.username
+			_ntiid_type = 'baz'
+
+		post.__parent__ = Parent2()
+		assert_that( post.containerId, is_( None ) )
+		post.__parent__.username = 'foo'
+		assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo-baz' ) )
+		post.__parent__.username = 'foo2'
+		assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz' ) )
+
+		post.__parent__.__name__ = 'local'
+		assert_that( post.containerId, is_( 'tag:nextthought.com,2011-10:foo2-baz-local' ) )
+
+
+	def test_post_externalizes(self):
+
+		@interface.implementer(ITopic)
+		class Parent(Base):
+			NTIID = 'foo_bar_baz'
+
+		parent = Parent()
+		post = Post()
+		post.title = 'foo'
+		post.__parent__ = parent
+
+		assert_that( post,
+					 externalizes( all_of(
+						 has_entries( 'title', 'foo',
+									  'Class', 'Post',
+									  'MimeType', 'application/vnd.nextthought.forums.post',
+									  'body', none(),
+									  'ContainerId', parent.NTIID,
+									  'sharedWith', is_empty() ),
+						is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+		ext_post = to_external_object( post )
+
+		factory = internalization.find_factory_for( ext_post )
+		new_post = factory()
+		new_post.__parent__ = parent
+		internalization.update_from_external_object( new_post, ext_post )
+
+		assert_that( new_post, is_( post ) )
 
 
 
-def test_comment_externalizes():
+	def test_comment_externalizes(self):
 
-	post = PersonalBlogComment()
-	post.title = 'foo'
+		post = PersonalBlogComment()
+		post.title = 'foo'
 
-	assert_that( post,
-				 externalizes( all_of(
-					 has_entries( 'title', 'foo',
-								  'Class', 'PersonalBlogComment',
-								  'MimeType', 'application/vnd.nextthought.forums.personalblogcomment',
-								  'body', none(),
-								  'sharedWith', is_empty(),
-								  'references', [],
-								  'inReplyTo', None),
-					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+		assert_that( post,
+					 externalizes( all_of(
+						 has_entries( 'title', 'foo',
+									  'Class', 'PersonalBlogComment',
+									  'MimeType', 'application/vnd.nextthought.forums.personalblogcomment',
+									  'body', none(),
+									  'sharedWith', is_empty(),
+									  'references', [],
+									  'inReplyTo', None),
+						is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
-	ext_post = to_external_object( post )
+		ext_post = to_external_object( post )
 
-	factory = internalization.find_factory_for( ext_post )
-	new_post = factory()
-	internalization.update_from_external_object( new_post, ext_post )
+		factory = internalization.find_factory_for( ext_post )
+		new_post = factory()
+		internalization.update_from_external_object( new_post, ext_post )
 
-	assert_that( new_post, is_( post ) )
+		assert_that( new_post, is_( post ) )
