@@ -25,22 +25,18 @@ from nti.contentlibrary import filesystem
 from nti.contentlibrary import boto_s3
 from nti.contentlibrary import interfaces
 
-import nti.testing.base
 from nti.testing.matchers import validly_provides
-import nti.contentlibrary
+
 import nti.externalization
 from zope import interface
 from nti.externalization.interfaces import IExternalObject
 
-# Nose module-level setup and teardown
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.externalization,nti.contentlibrary) )
-tearDownModule = nti.testing.base.module_teardown
-
-from unittest import TestCase
 import boto.s3.key
 import fudge
 
-class TestExternalization(TestCase):
+from . import ContentlibraryLayerTest
+
+class TestExternalization(ContentlibraryLayerTest):
 
 	def test_doesnt_dual_escape(self):
 		unit = filesystem.FilesystemContentPackage(
@@ -143,4 +139,4 @@ class TestExternalization(TestCase):
 			index=index,
 			prefix='http://content.nextthought.com',
 			archive_unit=boto_s3.BotoS3ContentUnit( key=boto.s3.key.Key( bucket=bucket, name='prealgebra/archive.zip' ) ),
-				installable=True )
+			installable=True )

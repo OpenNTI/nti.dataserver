@@ -154,6 +154,17 @@ class UnicodeContentFragment(unicode):
 			result = self.__class__(result)
 		return result
 
+	def lower(self):
+		result = unicode.lower(self)
+		if result == self:
+			return self # NOTE this is slightly different than what a normal string does
+		return self.__class__(result)
+	def upper(self):
+		result = unicode.upper(self)
+		if result == self:
+			return self # NOTE this is slightly different than what a normal string does
+		return self.__class__(result)
+
 	# shut pylint up about 'bad container'; raise same error super does
 	def __delitem__(self, i):
 		raise TypeError()

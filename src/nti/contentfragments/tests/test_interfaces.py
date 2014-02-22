@@ -120,3 +120,5 @@ class TestMisc(unittest.TestCase):
 			assert_that( s1.translate( {ord('s'): 't'} ), is_( 'tafe') )
 
 			assert_that( unicode(s1), is_( t ) )
+			assert_that( s1.lower(), is_(t))
+			assert_that( s1.upper(), is_(t))

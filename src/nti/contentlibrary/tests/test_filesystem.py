@@ -16,12 +16,11 @@ from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_key
 
-from nti.testing.base import SharedConfiguringTestBase
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
 
 from nti.contentlibrary import interfaces, filesystem
-import nti.contentlibrary
+
 import nti.externalization
 import nti.externalization.externalization
 from nti.externalization.externalization import to_external_object
@@ -29,9 +28,10 @@ from nti.externalization.externalization import to_external_object
 import anyjson as json
 import os.path
 
-class TestFilesystemContentUnit(SharedConfiguringTestBase):
+from . import ContentlibraryLayerTest
 
-	set_up_packages = (nti.contentlibrary, nti.externalization,)
+class TestFilesystemContentUnit(ContentlibraryLayerTest):
+
 
 	def test_filesystem_content_interfaces(self):
 
@@ -44,25 +44,7 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 		assert_that( unit, verifiably_provides( interfaces.IFilesystemContentPackage ) )
 
 
-	def test_adapter_prefs(self):
-		# TODO: This test does not really belong here
-		self.configure_packages( set_up_packages=('nti.appserver',),
-								 features=('devmode',) )
-		import zope.dottedname.resolve as dottedname
-		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
 
-		unit = filesystem.FilesystemContentPackage(
-			filename='prealgebra/index.html',
-			href = 'index.html',
-			root = 'prealgebra',
-			icon = 'icons/The%20Icon.png' )
-
-		assert_that( IPrefs( unit, None ), is_( none() ) )
-
-		unit.sharedWith = ['foo']
-
-		assert_that( IPrefs( unit ), verifiably_provides( IPrefs ) )
-		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )
 
 	def test_from_filesystem(self):
 
@@ -110,3 +92,26 @@ class TestFilesystemContentUnit(SharedConfiguringTestBase):
 		pack_ext = to_external_object( library[0] )
 		assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
 		assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )
+
+from nti.app.testing.layers import AppTestLayer
+
+class TestAppFilesystem(ContentlibraryLayerTest):
+	layer = AppTestLayer
+
+	def test_adapter_prefs(self):
+		# TODO: This test does not really belong here
+		import zope.dottedname.resolve as dottedname
+		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
+
+		unit = filesystem.FilesystemContentPackage(
+			filename='prealgebra/index.html',
+			href = 'index.html',
+			root = 'prealgebra',
+			icon = 'icons/The%20Icon.png' )
+
+		assert_that( IPrefs( unit, None ), is_( none() ) )
+
+		unit.sharedWith = ['foo']
+
+		assert_that( IPrefs( unit ), verifiably_provides( IPrefs ) )
+		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )
