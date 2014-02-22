@@ -17,8 +17,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_entries
 
@@ -40,10 +38,10 @@ from nti.chatserver import messageinfo
 from nti.chatserver import interfaces as chat_interfaces
 
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans,  SharedConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-
-class TestMessageInfo(SharedConfiguringTestBase):
+class TestMessageInfo(DataserverLayerTest):
 
 
 	def test_interfaces( self ):

@@ -31,8 +31,8 @@ from nti.deprecated import hides_warnings
 
 
 
-class TestEvolve27(mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
+class TestEvolve27(mock_dataserver.DataserverLayerTest):
+
 
 	@hides_warnings
 	@WithMockDS

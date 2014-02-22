@@ -81,7 +81,8 @@ class chat(object):
 
 
 
-from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans,  SharedConfiguringTestBase
+from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.test_authorization_acl import permits, denies
 from zope.dottedname import resolve as dottedname
@@ -95,11 +96,11 @@ from zope.dottedname import resolve as dottedname
 # nti.externalization.internalization.register_legacy_search_module( 'nti.chatserver.messageinfo' )
 
 
-class TestChatRoom(SharedConfiguringTestBase):
+class TestChatRoom(DataserverLayerTest):
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestChatRoom,cls).setUpClass()
+
+	def setUp(self):
+		super(TestChatRoom,self).setUp()
 		component.provideUtility( ACLAuthorizationPolicy() )
 
 
@@ -238,7 +239,7 @@ class TestChatRoom(SharedConfiguringTestBase):
 		room.approve_message(msg.MessageId)
 		assert_that( room._moderation_state._moderation_queue, is_not(has_key(msg.MessageId)))
 
-class _ChatserverTestBase(SharedConfiguringTestBase):
+class _ChatserverTestBase(DataserverLayerTest):
 
 	class PH(object):
 		def __init__( self, strict_events=False ):
@@ -349,9 +350,9 @@ class _ChatserverTestBase(SharedConfiguringTestBase):
 
 class TestChatserver(_ChatserverTestBase):
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestChatserver,cls).setUpClass()
+
+	def setUp(self):
+		super(TestChatserver,self).setUp()
 		component.provideUtility( ACLAuthorizationPolicy() )
 
 
@@ -1055,14 +1056,13 @@ class TestChatserver(_ChatserverTestBase):
 from pyramid.testing import setUp as psetUp
 from pyramid.testing import tearDown as ptearDown
 
-
+from nti.app.testing.layers import SharedConfiguringTestLayer as AppTestLayer
 class TestFunctionalChatserver(_ChatserverTestBase):
-
-	set_up_packages = ('nti.appserver',)
+	layer = AppTestLayer
 
 	@WithMockDSTrans
 	def test_send_event_to_users_correct_edit_links_Pyramid_functional(self):
-		"An Edit link is only sent to users that have write permissions."
+		#"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
 		acl_fact = dottedname.resolve('nti.appserver.pyramid_authorization.ACLAuthorizationPolicy' )
 		req_fact = dottedname.resolve( 'nti.appserver.tests.DummyRequest' )

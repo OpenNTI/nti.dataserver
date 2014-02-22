@@ -19,132 +19,132 @@ from hamcrest import has_entry
 
 from nose.tools import assert_raises
 
-import nti.testing.base
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import is_false
 from nti.dataserver.tests import mock_dataserver
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
-from nti.dataserver import interfaces as nti_interfaces
+
 from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import User
 from nti.externalization.externalization import to_external_object
 
-def test_email_address_invalid_domain():
-	with assert_raises(interfaces.EmailAddressInvalid):
-		interfaces._checkEmailAddress( 'poop@poop.poop' ) # real-world example
+class TestUserProfile(DataserverLayerTest):
 
-	interfaces._checkEmailAddress( 'poop@poop.poop.com' )
-	interfaces._checkEmailAddress( 'poop@poop.poop.co' )
+	def test_email_address_invalid_domain(self):
+		with assert_raises(interfaces.EmailAddressInvalid):
+			interfaces._checkEmailAddress( 'poop@poop.poop' ) # real-world example
 
-def test_default_user_profile():
-	user = User( username="foo@bar" )
+		interfaces._checkEmailAddress( 'poop@poop.poop.com' )
+		interfaces._checkEmailAddress( 'poop@poop.poop.co' )
 
-	prof = interfaces.ICompleteUserProfile( user )
-	assert_that( prof,
-				 verifiably_provides( interfaces.ICompleteUserProfile ) )
-	assert_that( prof,
-				 has_property( 'avatarURL', contains_string( 'http://' ) ) )
-	assert_that( prof,
-				 has_property( 'opt_in_email_communication', is_false() ) )
+	def test_default_user_profile(self):
+		user = User( username="foo@bar" )
 
-
-	with assert_raises(interfaces.EmailAddressInvalid):
-		prof.email = u"foo"
-
-	prof.email = 'foo@bar.com'
-
-	prof2 = interfaces.ICompleteUserProfile( user )
-	assert_that( prof2.email, is_( 'foo@bar.com' ) )
-	assert_that( prof,
-				 verifiably_provides( interfaces.ICompleteUserProfile ) )
-
-	# Because of inheritance, even if we ask for IFriendlyNamed, we get ICompleteUserProfile
-	prof2 = interfaces.IFriendlyNamed( user )
-	assert_that( prof2.email, is_( 'foo@bar.com' ) )
-	assert_that( prof,
-				 verifiably_provides( interfaces.ICompleteUserProfile ) )
-
-def test_non_blank_fields():
-	user = User( username="foo@bar" )
-
-	prof = interfaces.ICompleteUserProfile( user )
-
-	for field in ('about', 'affiliation', 'role', 'location', 'description'):
-		with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
-			setattr( prof, field, '   ' ) # spaces
-		with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
-			setattr( prof, field, '\t' ) # tab
-
-		setattr( prof, field, '  \t bc' )
-
-def test_updating_realname_from_external():
-	user = User( username="foo@bar" )
-
-	user.updateFromExternalObject( {'realname': 'Foo Bar' } )
-
-	prof = interfaces.ICompleteUserProfile( user )
-	assert_that( prof,
-				 has_property( 'realname', 'Foo Bar' ) )
-
-	interface.alsoProvides( user, interfaces.IImmutableFriendlyNamed )
-	user.updateFromExternalObject( {'realname': 'Changed Name' } )
-
-	prof = interfaces.ICompleteUserProfile( user )
-	assert_that( prof,
-				 has_property( 'realname', 'Foo Bar' ) )
+		prof = interfaces.ICompleteUserProfile( user )
+		assert_that( prof,
+					 verifiably_provides( interfaces.ICompleteUserProfile ) )
+		assert_that( prof,
+					 has_property( 'avatarURL', contains_string( 'http://' ) ) )
+		assert_that( prof,
+					 has_property( 'opt_in_email_communication', is_false() ) )
 
 
-def test_updating_avatar_url_from_external():
-	user = User( username="foo@bar" )
+		with assert_raises(interfaces.EmailAddressInvalid):
+			prof.email = u"foo"
 
-	user.updateFromExternalObject( {'avatarURL': 'http://localhost/avatarurl' } )
+		prof.email = 'foo@bar.com'
 
-	prof = interfaces.ICompleteUserProfile( user )
-	assert_that( prof,
-				 has_property( 'avatarURL', 'http://localhost/avatarurl' ) )
+		prof2 = interfaces.ICompleteUserProfile( user )
+		assert_that( prof2.email, is_( 'foo@bar.com' ) )
+		assert_that( prof,
+					 verifiably_provides( interfaces.ICompleteUserProfile ) )
 
-def test_user_profile_with_legacy_dict():
-	user = User( "foo@bar" )
-	user._alias = 'bizbaz'
-	user._realname = 'boo'
+		# Because of inheritance, even if we ask for IFriendlyNamed, we get ICompleteUserProfile
+		prof2 = interfaces.IFriendlyNamed( user )
+		assert_that( prof2.email, is_( 'foo@bar.com' ) )
+		assert_that( prof,
+					 verifiably_provides( interfaces.ICompleteUserProfile ) )
 
-	prof = interfaces.ICompleteUserProfile( user )
-	assert_that( prof, verifiably_provides( interfaces.ICompleteUserProfile ) )
+	def test_non_blank_fields(self):
+		user = User( username="foo@bar" )
 
-	assert_that( prof, has_property( 'alias', 'bizbaz' ) )
-	assert_that( prof, has_property( 'realname', 'boo' ) )
+		prof = interfaces.ICompleteUserProfile( user )
 
-	prof.alias = 'haha'
-	prof.realname = 'hehe'
+		for field in ('about', 'affiliation', 'role', 'location', 'description'):
+			with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+				setattr( prof, field, '   ' ) # spaces
+			with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
+				setattr( prof, field, '\t' ) # tab
 
-	assert_that( prof, has_property( 'alias', 'haha' ) )
-	assert_that( prof, has_property( 'realname', 'hehe' ) )
+			setattr( prof, field, '  \t bc' )
+
+	def test_updating_realname_from_external(self):
+		user = User( username="foo@bar" )
+
+		user.updateFromExternalObject( {'realname': 'Foo Bar' } )
+
+		prof = interfaces.ICompleteUserProfile( user )
+		assert_that( prof,
+					 has_property( 'realname', 'Foo Bar' ) )
+
+		interface.alsoProvides( user, interfaces.IImmutableFriendlyNamed )
+		user.updateFromExternalObject( {'realname': 'Changed Name' } )
+
+		prof = interfaces.ICompleteUserProfile( user )
+		assert_that( prof,
+					 has_property( 'realname', 'Foo Bar' ) )
 
 
-	assert_that( user.__dict__, does_not( has_key( '_alias' ) ) )
-	assert_that( user.__dict__, does_not( has_key( '_realname' ) ) )
+	def test_updating_avatar_url_from_external(self):
+		user = User( username="foo@bar" )
 
-def test_everyone_names():
-	everyone = Everyone()
+		user.updateFromExternalObject( {'avatarURL': 'http://localhost/avatarurl' } )
 
-	names = interfaces.IFriendlyNamed( everyone )
-	assert_that( names, has_property( 'alias', 'Public' ) )
-	assert_that( names, has_property( 'realname', 'Everyone' ) )
+		prof = interfaces.ICompleteUserProfile( user )
+		assert_that( prof,
+					 has_property( 'avatarURL', 'http://localhost/avatarurl' ) )
 
-@mock_dataserver.WithMockDSTrans
-def test_externalizing_extended_fields():
-	user = User.create_user( username="foo@bar" )
+	def test_user_profile_with_legacy_dict(self):
+		user = User( "foo@bar" )
+		user._alias = 'bizbaz'
+		user._realname = 'boo'
 
-	ext_user = to_external_object( user )
-	assert_that( ext_user, has_entry( 'location', None ) )
+		prof = interfaces.ICompleteUserProfile( user )
+		assert_that( prof, verifiably_provides( interfaces.ICompleteUserProfile ) )
 
-	prof = interfaces.ICompleteUserProfile( user )
-	prof.location = 'foo bar'
+		assert_that( prof, has_property( 'alias', 'bizbaz' ) )
+		assert_that( prof, has_property( 'realname', 'boo' ) )
 
-	ext_user = to_external_object( user )
-	assert_that( ext_user, has_entry( 'location', 'foo bar' ) )
+		prof.alias = 'haha'
+		prof.realname = 'hehe'
+
+		assert_that( prof, has_property( 'alias', 'haha' ) )
+		assert_that( prof, has_property( 'realname', 'hehe' ) )
+
+
+		assert_that( user.__dict__, does_not( has_key( '_alias' ) ) )
+		assert_that( user.__dict__, does_not( has_key( '_realname' ) ) )
+
+	def test_everyone_names(self):
+		everyone = Everyone()
+
+		names = interfaces.IFriendlyNamed( everyone )
+		assert_that( names, has_property( 'alias', 'Public' ) )
+		assert_that( names, has_property( 'realname', 'Everyone' ) )
+
+	@mock_dataserver.WithMockDSTrans
+	def test_externalizing_extended_fields(self):
+		user = User.create_user( username="foo@bar" )
+
+		ext_user = to_external_object( user )
+		assert_that( ext_user, has_entry( 'location', None ) )
+
+		prof = interfaces.ICompleteUserProfile( user )
+		prof.location = 'foo bar'
+
+		ext_user = to_external_object( user )
+		assert_that( ext_user, has_entry( 'location', 'foo bar' ) )

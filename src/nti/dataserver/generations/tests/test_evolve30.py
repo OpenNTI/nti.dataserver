@@ -25,8 +25,8 @@ import fudge
 from nti.deprecated import hides_warnings
 
 
-class TestEvolve30(mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
+class TestEvolve30(mock_dataserver.DataserverLayerTest):
+
 
 	@hides_warnings
 	@WithMockDS

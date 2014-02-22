@@ -25,7 +25,7 @@ import unittest
 
 from zope.annotation import interfaces as an_interfaces
 from zope import component
-from nose.tools import with_setup
+
 import nti.testing.base
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import is_true
@@ -41,6 +41,7 @@ import nti.dataserver.users as users
 
 import zope.schema.interfaces
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentfragments import interfaces as frg_interfaces
@@ -60,13 +61,13 @@ from nti.externalization.internalization import update_from_external_object
 
 from zc import intid as zc_intid
 
-@with_setup(lambda: nti.testing.base.module_setup( set_up_packages=(nti.contentfragments,) ),
-			nti.testing.base.module_teardown )
-def test_sanitize_html_contenttypes():
-	text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
-	shape = CanvasTextShape()
-	update_from_external_object( shape, {'text': text} )
-	assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
+class TestSanitize(DataserverLayerTest):
+
+	def test_sanitize_html_contenttypes(self):
+		text = '<html><body><span style="color: rgb(0, 0, 0);">Hi, all.  I\'ve found the following </span><font color="#0000ff"><u>video series </u></font>to be very helpful as you learn algebra.  Let me know if questions or if you find others.</body></html>\n'
+		shape = CanvasTextShape()
+		update_from_external_object( shape, {'text': text} )
+		assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
 
 def Note():
@@ -91,8 +92,7 @@ def Redaction():
 	h.applicableRange = ContentRangeDescription()
 	return h
 
-class RedactionTest(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+class TestRedaction(DataserverLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_redaction_external(self):
@@ -142,14 +142,13 @@ class RedactionTest(unittest.TestCase):
 		assert_that( ext, has_entry( 'sharedWith', set(['joe@ou.edu']) ) )
 
 
-class _BaseSelectedRangeTest(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+class _BaseSelectedRangeTest(DataserverLayerTest):
 
 	CONSTRUCTOR = staticmethod(Highlight)
 
 	@mock_dataserver.WithMockDSTrans
 	def test_add_range_to_existing(self):
-		"Old objects that are missing applicableRange/selectedText can be updated"
+		#"Old objects that are missing applicableRange/selectedText can be updated"
 		h = self.CONSTRUCTOR()
 		#del h.applicableRange
 		#del h.selectedText
@@ -177,7 +176,7 @@ class _BaseSelectedRangeTest(unittest.TestCase):
 
 
 
-class HighlightTest(_BaseSelectedRangeTest):
+class TestHighlight(_BaseSelectedRangeTest):
 
 	def test_external_style(self):
 		highlight = self.CONSTRUCTOR()
@@ -196,19 +195,18 @@ class HighlightTest(_BaseSelectedRangeTest):
 		assert_that( ex.exception.field, has_property( '__name__', 'style' ) )
 
 
-class BookmarkTest(_BaseSelectedRangeTest):
+class TestBookmark(_BaseSelectedRangeTest):
 
 	CONSTRUCTOR = staticmethod(Bookmark)
 
 from nti.dataserver import liking
 import contentratings.interfaces
 
-class NoteTest(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+class TestNote(DataserverLayerTest):
 
 
 	def test_note_is_favoritable(self):
-		"Notes should be favoritable, and can become IUserRating"
+		#"Notes should be favoritable, and can become IUserRating"
 		n = Note()
 		assert_that( n, verifiably_provides( nti_interfaces.IFavoritable ) )
 		assert_that( n, verifiably_provides( nti_interfaces.INote ) )
@@ -218,7 +216,7 @@ class NoteTest(unittest.TestCase):
 
 
 	def test_note_is_likeable(self):
-		"Notes should be likeable, and can become IUserRating"
+		#"Notes should be likeable, and can become IUserRating"
 		n = Note()
 		assert_that( n, verifiably_provides( nti_interfaces.ILikeable ) )
 		ratings = liking._lookup_like_rating_for_write( n )
@@ -232,7 +230,7 @@ class NoteTest(unittest.TestCase):
 		assert_that( liking.like_count( self ), is_( 0 ) )
 
 	def test_reading_note_adds_no_annotations(self):
-		"Externalizing a note produces LikeCount attribute, but doesn't add annotations"
+		#"Externalizing a note produces LikeCount attribute, but doesn't add annotations"
 		n = Note()
 		assert_that( n, verifiably_provides( nti_interfaces.ILikeable ) )
 		ratings = liking._lookup_like_rating_for_read( n )
@@ -247,7 +245,7 @@ class NoteTest(unittest.TestCase):
 		assert_that( ext, has_entry( 'LikeCount', 0 ) )
 
 	def test_liking_makes_it_to_ext(self):
-		"Externalizing a note produces correct LikeCount attribute"
+		#"Externalizing a note produces correct LikeCount attribute"
 		n = Note()
 		# first time does something
 		assert_that( liking.like_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
@@ -300,16 +298,16 @@ class NoteTest(unittest.TestCase):
 
 
 	def test_liking_changes_last_mod(self):
-		"Liking an object changes its modification time and that of its container"
+		#"Liking an object changes its modification time and that of its container"
 		self._do_test_rate_changes_last_mod( liking.like_object, liking.unlike_object )
 
 	def test_favoriting_changes_last_mod(self):
-		"Liking an object changes its modification time and that of its container"
+		#"Liking an object changes its modification time and that of its container"
 		self._do_test_rate_changes_last_mod( liking.favorite_object, liking.unfavorite_object )
 
 
 	def test_favoriting(self):
-		"Notes can be favorited and unfavorited"
+		#"Notes can be favorited and unfavorited"
 		n = Note()
 		# first time does something
 		assert_that( liking.favorite_object( n, 'foo@bar' ), verifiably_provides( contentratings.interfaces.IUserRating ) )
@@ -688,7 +686,7 @@ class NoteTest(unittest.TestCase):
 
 	@WithMockDS
 	def test_inherit_anchor_properties_if_note_already_has_jar(self):
-		"Notes created through the app will have a __parent__ and be a KeyRef and so have a jar"
+		#"Notes created through the app will have a __parent__ and be a KeyRef and so have a jar"
 		n = Note()
 		n.applicableRange = DomContentRangeDescription( ancestor=ElementDomContentPointer( elementTagName='p' ) )
 
@@ -708,9 +706,7 @@ class NoteTest(unittest.TestCase):
 
 
 
-class TestCanvas(unittest.TestCase):
-	layer = mock_dataserver.SharedConfiguringTestLayer
-
+class TestCanvas(DataserverLayerTest):
 
 	def test_canvas_affine_transform_external(self):
 
@@ -839,6 +835,10 @@ class TestCanvas(unittest.TestCase):
 		with self.assertRaises(AssertionError):
 			update_from_external_object( c, { "strokeWidth": 100.1 } )
 
+	def test_update_shape_rgba(self):
+		check_update_props('strokeRGBAColor')
+		check_update_props('fillRGBAColor', 'fillColor', 'fillOpacity', 1.0)
+
 
 def check_update_props( ext_name='strokeRGBAColor',
 						col_name='strokeColor',
@@ -883,8 +883,3 @@ def check_update_props( ext_name='strokeRGBAColor',
 	update_from_external_object( c, { col_name: "rgb( 21.0, 18.1, F0   )" } )
 	assert_that( get_opac(), is_( 0.33 ) )
 	assert_that( get_col(), is_( "rgb(231.0,124.1,21.0)" ) )
-
-
-def test_update_shape_rgba():
-	yield check_update_props, 'strokeRGBAColor'
-	yield check_update_props, 'fillRGBAColor', 'fillColor', 'fillOpacity', 1.0

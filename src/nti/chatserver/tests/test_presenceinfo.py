@@ -23,7 +23,7 @@ from hamcrest import has_item
 from hamcrest import has_entries
 from hamcrest import has_property
 
-import nti.testing.base
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
 from nose.tools import assert_raises
@@ -35,41 +35,41 @@ from ..interfaces import IPresenceInfo
 
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
-
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.chatserver','nti.mimetype','nti.contentfragments') )
-tearDownModule = nti.testing.base.module_teardown
-
-def test_implements():
-
-	info = presenceinfo.PresenceInfo()
-	assert_that( info, verifiably_provides( IPresenceInfo ) )
-
-
-	assert_that( info, validly_provides( IPresenceInfo ) )
-
-	with assert_raises(TooLong):
-		info.status = 'foo' * 140 # too big
-
-def test_construct():
-	info = presenceinfo.PresenceInfo( type='unavailable', show='away', username='me' )
-	assert_that( info, has_property('type', 'unavailable' ) )
-	assert_that( info, has_property('show', 'away') )
-	assert_that( info, has_property('username', 'me') )
-
 from nti.externalization.tests import externalizes
-def test_externalizes():
-	info = presenceinfo.PresenceInfo()
-	assert_that( info, externalizes( has_entries( 'show', 'chat', 'status', '', 'type', 'available',
-												  'Class', 'PresenceInfo', 'MimeType', 'application/vnd.nextthought.presenceinfo') ) )
 
-	factory = internalization.find_factory_for( toExternalObject( info ) )
-	assert_that( factory,
-				 is_not( none() ) )
-	assert_that( list(factory.getInterfaces()),
-				 has_item( IPresenceInfo ) )
+class TestPresenceInfo(DataserverLayerTest):
+
+	def test_implements(self):
+
+		info = presenceinfo.PresenceInfo()
+		assert_that( info, verifiably_provides( IPresenceInfo ) )
 
 
-	internalization.update_from_external_object( info, {'status': 'My status', 'Last Modified': 1234} )
-	assert_that( info.status, is_( 'My status' ) )
-	assert_that( info.lastModified, is_( 1234 ) )
-	assert_that( info, validly_provides( IPresenceInfo ) )
+		assert_that( info, validly_provides( IPresenceInfo ) )
+
+		with assert_raises(TooLong):
+			info.status = 'foo' * 140 # too big
+
+	def test_construct(self):
+		info = presenceinfo.PresenceInfo( type='unavailable', show='away', username='me' )
+		assert_that( info, has_property('type', 'unavailable' ) )
+		assert_that( info, has_property('show', 'away') )
+		assert_that( info, has_property('username', 'me') )
+
+
+	def test_externalizes(self):
+		info = presenceinfo.PresenceInfo()
+		assert_that( info, externalizes( has_entries( 'show', 'chat', 'status', '', 'type', 'available',
+													  'Class', 'PresenceInfo', 'MimeType', 'application/vnd.nextthought.presenceinfo') ) )
+
+		factory = internalization.find_factory_for( toExternalObject( info ) )
+		assert_that( factory,
+					 is_not( none() ) )
+		assert_that( list(factory.getInterfaces()),
+					 has_item( IPresenceInfo ) )
+
+
+		internalization.update_from_external_object( info, {'status': 'My status', 'Last Modified': 1234} )
+		assert_that( info.status, is_( 'My status' ) )
+		assert_that( info.lastModified, is_( 1234 ) )
+		assert_that( info, validly_provides( IPresenceInfo ) )

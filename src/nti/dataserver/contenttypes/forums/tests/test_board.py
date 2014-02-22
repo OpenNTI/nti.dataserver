@@ -24,7 +24,6 @@ from nose.tools import assert_raises
 
 from zope import interface
 
-import nti.testing.base
 from nti.testing.matchers import is_empty
 from Acquisition import Implicit
 from nti.testing.matchers import aq_inContextOf
@@ -36,57 +35,61 @@ from zope.container.interfaces import InvalidItemType
 from ..board import Board, CommunityBoard
 from ..interfaces import IBoard, IForum
 
+from . import ForumLayerTest
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver.contenttypes.forums', 'nti.contentfragments') )
-tearDownModule = nti.testing.base.module_teardown
+class TestBoard(ForumLayerTest):
 
-def test_board_interfaces():
-	post = Board()
-	assert_that( post, verifiably_provides( IBoard ) )
-	assert_that( post, validly_provides( IBoard ) )
+	def test_board_interfaces(self):
+		post = Board()
+		assert_that( post, verifiably_provides( IBoard ) )
+		assert_that( post, validly_provides( IBoard ) )
 
-def test_community_board_interfaces():
-	post = CommunityBoard()
-	assert_that( post, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
-	assert_that( CommunityBoard, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
+	def test_community_board_interfaces(self):
+		post = CommunityBoard()
+		assert_that( post, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
+		assert_that( CommunityBoard, has_property( 'mimeType', 'application/vnd.nextthought.forums.communityboard'))
 
 
-def test_board_constraints():
-	@interface.implementer(IForum)
-	class Forum(Implicit):
-		__parent__ = __name__ = None
+	def test_board_constraints(self):
+		@interface.implementer(IForum)
+		class Forum(Implicit):
+			__parent__ = __name__ = None
+			def __iter__(self):
+				return iter(())
 
-	board = Board()
-	# Allowed
-	board['k'] = Forum()
+		board = Board()
+		# Allowed
+		board['k'] = Forum()
 
-	# And acquired
-	assert_that( board['k'], aq_inContextOf( board ) )
+		# And acquired
+		assert_that( board['k'], aq_inContextOf( board ) )
 
-	with assert_raises( InvalidItemType ):
-		# Not allowed
-		board['z'] = Board()
+		with assert_raises( InvalidItemType ):
+			# Not allowed
+			board['z'] = Board()
 
-def test_blog_externalizes():
+	def test_blog_externalizes(self):
 
-	post = Board()
-	post.title = 'foo'
-	post.description = 'the long\ndescription'
+		post = Board()
+		post.title = 'foo'
+		post.description = 'the long\ndescription'
 
-	@interface.implementer(IForum)
-	class X(Implicit):
-		__parent__ = __name__ = None
+		@interface.implementer(IForum)
+		class X(Implicit):
+			__parent__ = __name__ = None
+			def __iter__(self):
+				return iter(())
 
-	assert_that( post,
-				 externalizes( all_of(
-					 has_entries( 'title', 'foo',
-								  'description', 'the long\ndescription',
-								  'Class', 'Board',
-								  'MimeType', 'application/vnd.nextthought.forums.board',
-								  'ForumCount', 0,
-								  'sharedWith', is_empty() ),
-					is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+		assert_that( post,
+					 externalizes( all_of(
+						 has_entries( 'title', 'foo',
+									  'description', 'the long\ndescription',
+									  'Class', 'Board',
+									  'MimeType', 'application/vnd.nextthought.forums.board',
+									  'ForumCount', 0,
+									  'sharedWith', is_empty() ),
+						is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
 
-	post['k'] = X()
-	assert_that( post,
-				 externalizes( has_entry( 'ForumCount', 1 ) ) )
+		post['k'] = X()
+		assert_that( post,
+					 externalizes( has_entry( 'ForumCount', 1 ) ) )

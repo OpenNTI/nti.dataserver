@@ -22,12 +22,9 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import contains_inanyorder
-from unittest import TestCase
-import nti.testing.base
-from nti.testing.matchers import validly_provides
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver','nti.contentrange','nti.contentfragments') )
-tearDownModule = nti.testing.base.module_teardown
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.testing.matchers import validly_provides
 
 from nti.dataserver.contenttypes import Note as _Note
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
@@ -35,7 +32,6 @@ from nti.contentrange.contentrange import ContentRangeDescription
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests import mock_dataserver
 
 
 class _Mutable_P_Mtime_Note(_Note):
@@ -72,7 +68,7 @@ class ReferenceObject(WeakRef):
 	def to_external_ntiid_oid( self ):
 		return self.external_ntiid_oid
 
-class TestThreadable(TestCase):
+class TestThreadable(DataserverLayerTest):
 	def test_write_external_reply_to(self):
 		top = ReferenceObject()
 		note = Note()
@@ -129,7 +125,7 @@ class TestThreadable(TestCase):
 
 	@WithMockDSTrans
 	def test_adding_and_removing_maintains_reply_chains(self):
-		self.ds = mock_dataserver.current_mock_ds
+		#self.ds = mock_dataserver.current_mock_ds
 		container = CaseInsensitiveLastModifiedBTreeContainer()
 		self.ds.dataserver_folder['container'] = container
 

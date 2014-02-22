@@ -52,6 +52,7 @@ from zope.container.interfaces import InvalidItemType
 from zope.location import interfaces as loc_interfaces
 
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 import persistent.wref
@@ -73,51 +74,53 @@ class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
 	def __repr__(self):
 		return repr( (self.__class__.__name__, self.containerId, self.id) )
 
-def test_create_friends_list_through_registry():
-	def _test( name, dynamic_sharing=False ):
-		user = User( 'foo12' )
-		created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
-		assert_that( created, is_(FriendsList) )
-		assert_that( created.username, is_( 'Friend' ) )
-		assert_that( created, provides( IFriendsList ) )
+class TestMisc(unittest.TestCase):
 
-		if dynamic_sharing:
-			assert_that( created, verifiably_provides( nti_interfaces.IDynamicSharingTarget ) )
-		else:
-			assert_that( created, does_not( provides( nti_interfaces.IDynamicSharingTarget ) ) )
+	def test_create_friends_list_through_registry(self):
+		def _test( name, dynamic_sharing=False ):
+			user = User( 'foo12' )
+			created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
+			assert_that( created, is_(FriendsList) )
+			assert_that( created.username, is_( 'Friend' ) )
+			assert_that( created, provides( IFriendsList ) )
 
-	yield _test, 'FriendsLists'
-	# case insensitive
-	yield _test, 'friendslists'
-	# can create dynamic
-	yield _test, 'Friendslists', True
+			if dynamic_sharing:
+				assert_that( created, verifiably_provides( nti_interfaces.IDynamicSharingTarget ) )
+			else:
+				assert_that( created, does_not( provides( nti_interfaces.IDynamicSharingTarget ) ) )
 
-def test_adding_wrong_type_to_friendslist():
-	friends = FriendsListContainer()
-	with assert_raises(InvalidItemType):
-		friends['k'] = 'v'
+		_test( 'FriendsLists' )
+		# case insensitive
+		_test( 'friendslists' )
+		# can create dynamic
+		_test( 'Friendslists', True )
 
-def test_friends_list_case_insensitive():
-	user = User( 'foo@bar' )
-	fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
-	user.addContainedObject( fl )
+	def test_adding_wrong_type_to_friendslist(self):
+		friends = FriendsListContainer()
+		with assert_raises(InvalidItemType):
+			friends['k'] = 'v'
 
-	assert_that( user.getContainedObject( "FriendsLists", "Friend" ),
-				 is_( user.getContainedObject( 'FriendsLists', "friend" ) ) )
+	def test_friends_list_case_insensitive(self):
+		user = User( 'foo@bar' )
+		fl = user.maybeCreateContainedObjectWithType( 'FriendsLists', {'Username': 'Friend' } )
+		user.addContainedObject( fl )
 
-
-def test_everyone_has_creator():
-	assert_that( users.Everyone(), has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
-
-def test_cannot_create_with_invalid_name():
-	with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
-		users.Entity( username=nti_interfaces.SYSTEM_USER_NAME )
-
-	with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
-		users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
+		assert_that( user.getContainedObject( "FriendsLists", "Friend" ),
+					 is_( user.getContainedObject( 'FriendsLists', "friend" ) ) )
 
 
-class TestUser(unittest.TestCase):
+	def test_everyone_has_creator(self):
+		assert_that( users.Everyone(), has_property( 'creator', nti_interfaces.SYSTEM_USER_NAME ) )
+
+	def test_cannot_create_with_invalid_name(self):
+		with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
+			users.Entity( username=nti_interfaces.SYSTEM_USER_NAME )
+
+		with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
+			users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
+
+
+class TestUser(DataserverLayerTest):
 	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@WithMockDSTrans
@@ -131,6 +134,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_can_find_friendslist_with_ntiid(self):
+
 		user1 = User.create_user( self.ds, username='foo@bar' )
 		user2 = User.create_user( self.ds, username='foo2@bar' )
 
@@ -322,7 +326,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDS(with_changes=True)
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_with_dfl(self):
-		"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
+		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -359,7 +363,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDS(with_changes=True)
 	def test_share_note_directly_and_indirectly_with_community_unshare_with_community(self):
-		"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
+		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -402,7 +406,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDS(with_changes=True)
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_directly(self):
-		"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
+		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -445,7 +449,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDS(with_changes=True)
 	def test_share_note_directly_and_indirectly_with_community_unshare_directly(self):
-		"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
+		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -458,9 +462,6 @@ class TestUser(unittest.TestCase):
 			user2.follow( user1 )
 			user2_changes = list()
 			def _noticeChange( change ):
-				if change.type == nti_interfaces.SC_MODIFIED:
-					from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 				user2_changes.append( copy.copy( change ) )
 				User._noticeChange( user2, change )
 			user2._noticeChange = _noticeChange
@@ -727,7 +728,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_getContainedStream_Note_shared_community_cache(self):
-		"We should be able to get the contained stream if there are things shared with a community in the cache"
+		#"We should be able to get the contained stream if there are things shared with a community in the cache"
 		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
 		comm = Community( 'AoPS' )
@@ -755,7 +756,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_getContainedStream_more_items_in_comm_cache_than_cap_returns_newest(self):
-		"""If a community we follow has a larger stream cache than our cap parameter, we get only the newest from the cache."""
+		#"""If a community we follow has a larger stream cache than our cap parameter, we get only the newest from the cache."""
 		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
 		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
 		comm = Community( 'AoPS' )
@@ -827,7 +828,7 @@ class TestUser(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_sublocations_are_set(self):
-		"We should never get duplicate values for sublocations"
+		#"We should never get duplicate values for sublocations"
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 
 		note = Note()
@@ -935,7 +936,7 @@ class TestUser(unittest.TestCase):
 from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
 
-class TestFeedbackEvent(unittest.TestCase):
+class TestFeedbackEvent(DataserverLayerTest):
 	layer = mock_dataserver.SharedConfiguringTestLayer
 
 
@@ -955,7 +956,7 @@ class TestFeedbackEvent(unittest.TestCase):
 
 import zope.schema.interfaces
 
-class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase): # NO LAYER, note use of features
+class TestUserNotDevMode(mock_dataserver.NotDevmodeDataserverLayerTest):
 	features = ()
 
 	@WithMockDS
@@ -977,7 +978,7 @@ class TestUserNotDevMode(mock_dataserver.SharedConfiguringTestBase): # NO LAYER,
 from nti.testing.matchers import validly_provides
 from hamcrest import contains_inanyorder
 
-class TestCommunity(unittest.TestCase):
+class TestCommunity(DataserverLayerTest):
 	layer = mock_dataserver.SharedConfiguringTestLayer
 
 

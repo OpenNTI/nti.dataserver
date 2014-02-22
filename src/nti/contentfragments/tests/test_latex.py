@@ -5,20 +5,23 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 
-from nti.testing.base import SharedConfiguringTestBase
 from nti.testing.matchers import implements, verifiably_provides
 
-import nti.contentfragments
+
 from nti.contentfragments import interfaces
 from nti.contentfragments import latex as contentfragments
 
-from zope import interface
+
 from zope import component
 
-import os
-from hamcrest import assert_that, has_length, greater_than_or_equal_to, is_, none
+from hamcrest import assert_that
+from hamcrest import greater_than_or_equal_to
+from hamcrest import is_
+from hamcrest import none
 
 
 def _tex_convert( val ):
@@ -29,10 +32,10 @@ def _tex_convert( val ):
 def _tex_assert( val, answer ):
 	assert_that( _tex_convert( val ), is_(answer) )
 
+from . import ContentfragmentsLayerTest
 
-class TestLatexTransforms(SharedConfiguringTestBase):
+class TestLatexTransforms(ContentfragmentsLayerTest):
 
-	set_up_packages = (nti.contentfragments,)
 
 	def _convert( self, val ):
 		return _tex_convert( val )

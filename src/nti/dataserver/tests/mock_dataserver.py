@@ -331,7 +331,49 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def tearDown(cls):
 		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
 
 	@classmethod
 	def testSetUp(cls, test=None):
+		test = test or find_test()
 		cls.setUpTestDS(test)
+
+import unittest
+class DataserverLayerTest(_TestBaseMixin,unittest.TestCase):
+	layer = SharedConfiguringTestLayer
+
+import zope.testing.cleanup
+class NotDevmodeSharedConfiguringTestLayer(ZopeComponentLayer,
+										   ConfiguringLayerMixin,
+										   DSInjectorMixin):
+	"""
+	A test layer that does two things: first, sets up the
+	:mod:`nti.dataserver` module during class setup (with no features). Second, if the
+	test instance and test class have no ``ds`` attribute, a property
+	is mixed in to provide access to the the value of
+	:data:`current_mock_ds` available as a property on this object
+	(when used inside a function decorated with :func:`WithMockDS` or
+	:func:`WithMockDSTrans`).
+	"""
+
+	description = "nti.dataserver is ZCML configured without devmode"
+
+	set_up_packages = ('nti.dataserver',)
+	features = ()
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		test = test or find_test()
+		cls.setUpTestDS(test)
+
+class NotDevmodeDataserverLayerTest(_TestBaseMixin,unittest.TestCase):
+	layer = NotDevmodeSharedConfiguringTestLayer

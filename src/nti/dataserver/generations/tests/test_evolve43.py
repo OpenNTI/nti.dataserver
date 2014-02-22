@@ -39,8 +39,8 @@ from nti.deprecated import hides_warnings
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 
 
-class TestEvolve43(nti.dataserver.tests.mock_dataserver.ConfiguringTestBase):
-	set_up_packages = (nti.dataserver,)
+class TestEvolve43(nti.dataserver.tests.mock_dataserver.DataserverLayerTest):
+
 
 	@hides_warnings
 	@WithMockDS
