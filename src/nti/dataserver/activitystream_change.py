@@ -17,7 +17,7 @@ from zope import component
 
 from ZODB.POSException import POSError
 
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 

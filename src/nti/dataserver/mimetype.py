@@ -8,30 +8,14 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-from zope import interface
-from zope.mimetype.interfaces import IContentTypeAware
-
-from nti.dataserver import interfaces
-
-from nti.mimetype.mimetype import MIME_BASE
-from nti.mimetype.mimetype import MIME_EXT_JSON
-from nti.mimetype.mimetype import MIME_BASE_JSON
-from nti.mimetype.mimetype import MIME_EXT_PLIST
-from nti.mimetype.mimetype import MIME_BASE_PLIST
-
-from nti.mimetype.mimetype import is_nti_mimetype
-from nti.mimetype.mimetype import nti_mimetype_class
-from nti.mimetype.mimetype import nti_mimetype_with_class
-from nti.mimetype.mimetype import nti_mimetype_from_object
-
-from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
-
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?
 def __setup_interfaces():
+	from zope import interface
+	from zope.mimetype.interfaces import IContentTypeAware
+	from nti.dataserver import interfaces
+	from nti.mimetype.mimetype import nti_mimetype_with_class
 
 	for x in interfaces.__dict__.itervalues():
 		if interface.interfaces.IInterface.providedBy( x ):
@@ -41,3 +25,7 @@ def __setup_interfaces():
 				interface.alsoProvides( x, IContentTypeAware )
 
 __setup_interfaces()
+del __setup_interfaces
+
+import nti.deprecated
+nti.deprecated.moved('nti.mimetype.mimetype')

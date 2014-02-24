@@ -43,6 +43,8 @@ class _warnings(object):
 
 zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
 
+moved = zope.deprecation.moved # encourage importing from here so we're sure our patch is applied
+
 # deferred import has the same problems
 zope.deferredimport.deferredmodule.__dict__['DeprecationWarning'] = FutureWarning
 zope.deferredimport.deferredmodule.__dict__['warnings'] = _warnings()
