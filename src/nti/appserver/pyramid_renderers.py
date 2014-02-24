@@ -34,8 +34,8 @@ from nti.dataserver.links import Link
 from nti.dataserver import traversal as nti_traversal
 from nti.dataserver.links_external import render_link
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.mimetype import nti_mimetype_from_object
-from nti.dataserver.mimetype import (MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE)
+from nti.mimetype.mimetype import nti_mimetype_from_object
+from nti.mimetype.mimetype import (MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE)
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_json_representation_externalized
@@ -69,7 +69,7 @@ def find_content_type( request, data=None ):
 		if content_type_aware:
 			full_type = content_type_aware.mimeType
 		else:
-			full_type = nti_mimetype_from_object( data )
+			full_type = nti_mimetype_from_object( data, use_class=False )
 
 		if full_type and not full_type.startswith( MIME_BASE ):
 			# If it wasn't something we control, then
