@@ -45,32 +45,20 @@ from zc import intid as zc_intid
 from persistent import Persistent
 import transaction
 
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
-from nti.appserver.application import createApplication # TODO: Break this dep
+
 import nti.testing.base
 
-def setUpModule():
-	# Must create the application so that the views
-	# are registered, since we depend on those
-	# registrations to generate links
-	config = psetUp(registry=component.getGlobalSiteManager(),request=None,hook_zca=False)
-	config.setup_registry()
 
-	createApplication( 8080,
-					   None,
-					   create_ds=mock_dataserver.MockDataserver,
-					   force_create_indexmanager=True,
-					   pyramid_config=config,
-					   devmode=True,
-					   testmode=True,
-					   zcml_features=('devmode','forums') )
+# Must create the application so that the views
+# are registered, since we depend on those
+# registrations to generate links.
+# TODO: Break this dep.
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
-def tearDownModule():
-	ptearDown()
-	nti.testing.base.module_teardown()
 
-class TestContainerEnumerationWorkspace(unittest.TestCase):
+class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 
 
 	def test_parent(self):
@@ -147,7 +135,7 @@ class MockRoot(object):
 	__parent__ = None
 	__name__ = None
 
-class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
+class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
 	def test_root_ntiid(self):
 		class MockUser(object):
@@ -219,7 +207,7 @@ class TestUserEnumerationWorkspace(unittest.TestCase,tests.TestBaseMixin):
 
 
 
-class TestHomogeneousTypedContainerCollection (unittest.TestCase):
+class TestHomogeneousTypedContainerCollection(ApplicationLayerTest):
 
 
 	def test_parent(self):
@@ -245,7 +233,7 @@ class TestHomogeneousTypedContainerCollection (unittest.TestCase):
 		assert_that( cew.name, is_( 'NewName' ) )
 		assert_that( cew.__name__, is_( 'NewName' ) )
 
-class TestUserService(unittest.TestCase,tests.TestBaseMixin):
+class TestUserService(ApplicationLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_external_coppa_capabilities(self):
@@ -287,7 +275,7 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
-		"A user's Pages collection only claims to accept things that are externally creatable."
+		#"A user's Pages collection only claims to accept things that are externally creatable."
 		# We prove this via a negative, so unfortunately this is not such
 		# a great test
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
@@ -298,7 +286,7 @@ class TestUserService(unittest.TestCase,tests.TestBaseMixin):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_restricted(self):
-		"A set of restrictions apply by default to what can be created"
+		#"A set of restrictions apply by default to what can be created"
 
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		ws = UEW(user)
@@ -326,25 +314,19 @@ from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLib
 
 import pyramid.interfaces
 
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import DummyRequest
+from nti.app.testing.layers import NewRequestLayerTest
 from nti.appserver import pyramid_authorization
 
 
-class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMixin):
+class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 
-	@classmethod
-	def setUpClass( cls, request_factory=DummyRequest, request_args=(), security_policy_factory=None, force_security_policy=True ):
-		"""
-		:return: The `Configurator`, which is also in ``self.config``.
-		"""
-
-		super(TestLibraryCollectionDetailExternalizer,cls).setUpClass()
-
-		cls.config = psetUp(registry=component.getGlobalSiteManager(),request=cls.request,hook_zca=False)
 
 	def setUp(self):
 		super(TestLibraryCollectionDetailExternalizer,self).setUp()
+
+		self.__policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
+		self.__acl_policy = component.queryUtility( pyramid.interfaces.IAuthorizationPolicy )
+
 		self.temp_dir = tempfile.mkdtemp()
 		self.entry_dir =  os.path.join( self.temp_dir, 'TheEntry' )
 		os.mkdir( self.entry_dir )
@@ -363,9 +345,7 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
 				return [nti_interfaces.IPrincipal(x) for x in [self.authenticated_userid(request), nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.EVERYONE_GROUP_NAME]]
-		### XXX Breaks test isolation
-		self.beginRequest()
-		self.request.registry = component.getGlobalSiteManager()
+
 		self.policy = Policy()
 		component.provideUtility( self.policy )
 		self.acl_policy = pyramid_authorization.ACLAuthorizationPolicy()
@@ -379,6 +359,11 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 		shutil.rmtree( self.temp_dir )
 		component.getGlobalSiteManager().unregisterUtility( self.policy )
 		component.getGlobalSiteManager().unregisterUtility( self.acl_policy )
+		if self.__policy:
+			component.provideUtility(self.__policy)
+		if self.__acl_policy:
+			component.provideUtility(self.__acl_policy)
+
 		super(TestLibraryCollectionDetailExternalizer,self).tearDown()
 
 	def test_no_acl_file(self):
@@ -436,8 +421,9 @@ class TestLibraryCollectionDetailExternalizer(unittest.TestCase,tests.TestBaseMi
 
 
 from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-class TestFriendsListContainerCollection(unittest.TestCase,tests.TestBaseMixin):
+class TestFriendsListContainerCollection(DataserverLayerTest,tests.TestBaseMixin):
 	set_up_packages = ('nti.dataserver',)
 
 	@mock_dataserver.WithMockDSTrans

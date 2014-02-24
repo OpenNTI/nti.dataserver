@@ -22,30 +22,26 @@ from nti.dataserver import users
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.appserver.policies import user_policies
-from nti.appserver.policies import site_policies
 from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests import ITestMailDelivery
-from nti.appserver.tests.test_application import TestApp
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
-class TestApplicationCoppaAdmin(SharedApplicationTestBase):
 
-	IF_ROOT = None
-	IF_WOUT_AGREEMENT = None
-	IF_WITH_AGREEMENT = None
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestApplicationCoppaAdmin,cls).setUpClass()
-		from nti.app.sites.mathcounts.policy import MathcountsSitePolicyEventListener
-		cls.IF_ROOT = MathcountsSitePolicyEventListener.IF_ROOT
-		cls.IF_WOUT_AGREEMENT = MathcountsSitePolicyEventListener.IF_WOUT_AGREEMENT
-		cls.IF_WITH_AGREEMENT = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT
+from nti.app.sites.mathcounts.policy import MathcountsSitePolicyEventListener
+
+class TestApplicationCoppaAdmin(ApplicationLayerTest):
+
+	IF_ROOT = MathcountsSitePolicyEventListener.IF_ROOT
+	IF_WOUT_AGREEMENT = MathcountsSitePolicyEventListener.IF_WOUT_AGREEMENT
+	IF_WITH_AGREEMENT = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT
 
 	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):

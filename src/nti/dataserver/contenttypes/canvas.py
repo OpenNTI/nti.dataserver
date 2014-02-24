@@ -22,7 +22,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.contentfragments import interfaces as frg_interfaces

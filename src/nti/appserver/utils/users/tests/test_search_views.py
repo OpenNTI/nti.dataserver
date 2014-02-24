@@ -7,6 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import has_entry
+from hamcrest import greater_than
+
 import simplejson
 
 from nti.contentsearch import interfaces as search_interfaces
@@ -18,12 +25,12 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import to_json_representation
 
-from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, has_entry)
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
 zanpakuto_commands = (
 						"Shoot To Kill",
@@ -39,7 +46,7 @@ zanpakuto_commands = (
 						"Call forth the Twilight"
 					  )
 
-class TestApplicationUserExporViews(SharedApplicationTestBase):
+class TestApplicationUserExporViews(ApplicationLayerTest):
 
 	def _create_note(self, msg, owner, containerId=None, sharedWith=()):
 		note = Note()

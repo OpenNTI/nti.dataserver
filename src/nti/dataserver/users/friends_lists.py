@@ -22,7 +22,7 @@ from nti.ntiids import ntiids
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 
 from .entity import Entity
 

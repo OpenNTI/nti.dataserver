@@ -31,7 +31,7 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver._util import raise_json_error
 
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.mimetype import nti_mimetype_class
+from nti.mimetype.mimetype import nti_mimetype_class
 import nti.externalization.internalization
 
 

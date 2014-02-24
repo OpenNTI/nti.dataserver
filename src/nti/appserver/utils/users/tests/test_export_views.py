@@ -7,6 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import has_entry
+from hamcrest import greater_than
+
 import simplejson
 
 from io import BytesIO
@@ -17,14 +24,14 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import externalization
 
-from nti.appserver.tests.test_application import TestApp
-
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, has_entry, greater_than)
 
-class TestApplicationUserExporViews(SharedApplicationTestBase):
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
+
+class TestApplicationUserExporViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_user_info_extract(self):
