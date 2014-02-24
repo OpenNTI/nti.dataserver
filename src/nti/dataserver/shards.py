@@ -22,7 +22,7 @@ from nti.dataserver import datastructures as ds
 from nti.dataserver import interfaces as nti_interfaces
 
 @interface.implementer(nti_interfaces.IShardInfo)
-class ShardInfo(persistent.Persistent,ds.CreatedModDateTrackingObject,SiteManagerContainer):
+class ShardInfo(ds.PersistentCreatedModDateTrackingObject,SiteManagerContainer):
 	"""
 	Something giving information about a database shard.
 
