@@ -314,6 +314,7 @@ setup(
 		'z3c.schema',
 		'z3c.table >= 2.0.0a1',	 # Flexible table rendering
 		'zc.blist >= 1.0b2',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
+		'zc.catalog',
 		'zc.dict >= 1.3b1',	 # BTree based dicts that are subclassable
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
