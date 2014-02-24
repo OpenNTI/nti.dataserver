@@ -23,15 +23,13 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-from nti.appserver.tests.test_application import WithSharedApplicationMockDS
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSWithChanges
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
 from hamcrest import (assert_that, is_, has_length, has_entry)
 
-class TestDashboardViews(SharedApplicationTestBase):
-
-	features = SharedApplicationTestBase.features + ('forums',)
+class TestDashboardViews(ApplicationLayerTest):
 
 	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=()):
 		note = Note()
@@ -143,7 +141,7 @@ class TestDashboardViews(SharedApplicationTestBase):
 			for username in usernames:
 				user = self._create_user(username=username)
 				usrlst.append(user)
-				
+
 			c = users.Community.create_community(self.ds, username='Bleach')
 			for u in usrlst:
 				u.record_dynamic_membership(c)

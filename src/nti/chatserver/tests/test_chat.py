@@ -239,7 +239,7 @@ class TestChatRoom(DataserverLayerTest):
 		room.approve_message(msg.MessageId)
 		assert_that( room._moderation_state._moderation_queue, is_not(has_key(msg.MessageId)))
 
-class _ChatserverTestBase(DataserverLayerTest):
+class _ChatserverTestMixin(object):
 
 	class PH(object):
 		def __init__( self, strict_events=False ):
@@ -348,7 +348,7 @@ class _ChatserverTestBase(DataserverLayerTest):
 		assert_that( room.Moderators, is_( set(['sjohnson']) ) )
 		return room, chatserver
 
-class TestChatserver(_ChatserverTestBase):
+class TestChatserver(DataserverLayerTest,_ChatserverTestMixin):
 
 
 	def setUp(self):
@@ -1053,87 +1053,69 @@ class TestChatserver(_ChatserverTestBase):
 		assert_that( my_contacts['args'][0], is_empty() )
 
 
-from pyramid.testing import setUp as psetUp
-from pyramid.testing import tearDown as ptearDown
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+import pyramid.interfaces
 
-from nti.app.testing.layers import SharedConfiguringTestLayer as AppTestLayer
-class TestFunctionalChatserver(_ChatserverTestBase):
-	layer = AppTestLayer
+class TestFunctionalChatserver(ApplicationLayerTest,_ChatserverTestMixin):
 
-	@WithMockDSTrans
+	@WithSharedApplicationMockDS
 	def test_send_event_to_users_correct_edit_links_Pyramid_functional(self):
 		#"An Edit link is only sent to users that have write permissions."
 		# This is a high-level test involving the appserver as well
-		acl_fact = dottedname.resolve('nti.appserver.pyramid_authorization.ACLAuthorizationPolicy' )
-		req_fact = dottedname.resolve( 'nti.appserver.tests.DummyRequest' )
-		request = req_fact()
-		request.environ['paste.testing'] = True # see nti.appserver.tests.__init__
-		#request.registry = component.getSiteManager()
-		config = psetUp(registry=component.getGlobalSiteManager(), # because com.getSiteManager() returns the DS LocalSiteManager
-						request=request,
-						hook_zca=False)
-		config.setup_registry()
-		config.testing_securitypolicy( nti_interfaces.IPrincipal( 'sjohnson' ) )
-		config.set_authorization_policy( acl_fact() )
-		config.set_authentication_policy( nti_authentication.DelegatingImpersonatedAuthenticationPolicy( config.registry.getUtility(nti_interfaces.IAuthenticationPolicy) ) )
-		try:
-			sessions = self.Sessions()
-			sessions[1] = self.Session( 'sjohnson', strict_events=True )
-			sessions[2] = self.Session( 'jason', strict_events=True )
-			chatserver = chat.Chatserver( sessions )
+		with mock_dataserver.mock_db_trans(self.ds):
+			auth_policy = component.getUtility(pyramid.interfaces.IAuthenticationPolicy)
+			with auth_policy.impersonating_userid('sjohnson')():
 
-			note = Note()
-			note.creator = sessions[1].the_user
-			note.addSharingTarget( sessions[2].the_user )
-			self.ds.root._p_jar.add( note )
-			# If there's no __parent__, there's no link
-			note.__parent__ = self.ds.root
+				sessions = self.Sessions()
+				sessions[1] = self.Session( 'sjohnson', strict_events=True )
+				sessions[2] = self.Session( 'jason', strict_events=True )
+				chatserver = chat.Chatserver( sessions )
 
-			# Check the permissions
-			assert_that( note, permits( 'sjohnson', auth.ACT_READ ) )
-			assert_that( note, permits( 'sjohnson', auth.ACT_UPDATE ) )
-			assert_that( note, denies( 'jason', auth.ACT_UPDATE ) )
-			assert_that( note, permits( 'jason', auth.ACT_READ ) )
+				note = Note()
+				note.creator = sessions[1].the_user
+				note.addSharingTarget( sessions[2].the_user )
+				self.ds.root._p_jar.add( note )
+				# If there's no __parent__, there's no link
+				note.__parent__ = self.ds.root
 
-			# Broadcast the event to the owner
-			chatserver.send_event_to_user( 'sjohnson', 'event', note )
-			assert_that( sessions[1].socket.events, has_length( 1 ) )
-			note_to_owner = sessions[1].socket.events[0]['args'][0]
-			assert_that( note_to_owner, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+				# Check the permissions
+				assert_that( note, permits( 'sjohnson', auth.ACT_READ ) )
+				assert_that( note, permits( 'sjohnson', auth.ACT_UPDATE ) )
+				assert_that( note, denies( 'jason', auth.ACT_UPDATE ) )
+				assert_that( note, permits( 'jason', auth.ACT_READ ) )
 
-			# Broadcast the event to the shared with
-			chatserver.send_event_to_user( 'jason', 'event', note )
-			assert_that( sessions[2].socket.events, has_length( 1 ) )
-			note_to_shared = sessions[2].socket.events[0]['args'][0]
-			__traceback_info__ = note_to_shared.get( 'Links' )
-			assert_that( note_to_shared, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
-			assert_that( note_to_shared, is_not( note_to_owner ) )
+				# Broadcast the event to the owner
+				chatserver.send_event_to_user( 'sjohnson', 'event', note )
+				assert_that( sessions[1].socket.events, has_length( 1 ) )
+				note_to_owner = sessions[1].socket.events[0]['args'][0]
+				assert_that( note_to_owner, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
+
+				# Broadcast the event to the shared with
+				chatserver.send_event_to_user( 'jason', 'event', note )
+				assert_that( sessions[2].socket.events, has_length( 1 ) )
+				note_to_shared = sessions[2].socket.events[0]['args'][0]
+				__traceback_info__ = note_to_shared.get( 'Links' )
+				assert_that( note_to_shared, has_entry( 'Links', is_not( has_item( has_entry( 'rel', 'edit' ) ) ) ) )
+				assert_that( note_to_shared, is_not( note_to_owner ) )
 
 
-			msg_info = chat.MessageInfo()
-			msg_info.creator = sessions[1].the_user.username
-			msg_info.recipients = [sessions[2].the_user.username]
-			msg_info.sharedWith = msg_info.recipients
-			msg_info.containerId = 'foobar'
-			# Make sure it has a parent and oid
-			storage = chat_interfaces.IMessageInfoStorage( msg_info )
-			storage.add_message( msg_info )
+				msg_info = chat.MessageInfo()
+				msg_info.creator = sessions[1].the_user.username
+				msg_info.recipients = [sessions[2].the_user.username]
+				msg_info.sharedWith = msg_info.recipients
+				msg_info.containerId = 'foobar'
+				# Make sure it has a parent and oid
+				storage = chat_interfaces.IMessageInfoStorage( msg_info )
+				storage.add_message( msg_info )
 
 
+				assert_that( msg_info, permits( 'sjohnson', auth.ACT_UPDATE ) )
+				assert_that( msg_info, denies( 'jason', auth.ACT_UPDATE ) )
+				assert_that( msg_info, permits( 'jason', auth.ACT_READ ) )
 
-			assert_that( msg_info, permits( 'sjohnson', auth.ACT_UPDATE ) )
-			assert_that( msg_info, denies( 'jason', auth.ACT_UPDATE ) )
-			assert_that( msg_info, permits( 'jason', auth.ACT_READ ) )
-
-			del sessions[2].socket.events[:]
-			chatserver.send_event_to_user( 'jason', 'event', msg_info )
-			assert_that( sessions[2].socket.events, has_length( 1 ) )
-			ext_msg = sessions[2].socket.events[0]['args'][0]
-			assert_that( ext_msg, has_entry( 'Links', has_item( has_entry( 'rel', 'flag' ) ) ) )
-
-
-		finally:
-			ptearDown()
-
-			# Our test functions are leaking
-			transaction.doom()
+				del sessions[2].socket.events[:]
+				chatserver.send_event_to_user( 'jason', 'event', msg_info )
+				assert_that( sessions[2].socket.events, has_length( 1 ) )
+				ext_msg = sessions[2].socket.events[0]['args'][0]
+				assert_that( ext_msg, has_entry( 'Links', has_item( has_entry( 'rel', 'flag' ) ) ) )

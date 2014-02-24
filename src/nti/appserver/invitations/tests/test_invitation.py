@@ -14,37 +14,31 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
-from hamcrest import is_
+
 from hamcrest import has_property
 from hamcrest import contains
-from hamcrest import none
 
-from zope import component
-from zope import interface
-from zope.keyreference.interfaces import IKeyReference
-
-import nti.testing.base
 from nti.testing.matchers import verifiably_provides
 
 from .. import interfaces
-from .. import utility
-from .. import invitation
-from nti.dataserver.generations.install import install_intids
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.dataserver',) )
-tearDownModule = nti.testing.base.module_teardown
+from .. import invitation
+
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 from zope.component import eventtesting
 
-def test_valid_interface():
+class TestInvitation(DataserverLayerTest):
+	def test_valid_interface(self):
 
-	assert_that( invitation.PersistentInvitation(), verifiably_provides( interfaces.IInvitation ) )
+		assert_that( invitation.PersistentInvitation(), verifiably_provides( interfaces.IInvitation ) )
 
-def test_accept_event():
-	eventtesting.clearEvents()
+	def test_accept_event(self):
+		eventtesting.clearEvents()
 
-	invite = invitation.PersistentInvitation()
-	invite.accept( invite )
+		invite = invitation.PersistentInvitation()
+		invite.accept( invite )
 
-	assert_that( eventtesting.getEvents( interfaces.IInvitationAcceptedEvent ),
-				 contains( has_property( 'object', invite ) ) )
+		assert_that( eventtesting.getEvents( interfaces.IInvitationAcceptedEvent ),
+					 contains( has_property( 'object', invite ) ) )

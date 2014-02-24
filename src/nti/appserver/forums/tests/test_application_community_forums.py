@@ -42,8 +42,8 @@ from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
 
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 from nti.app.testing.webtest import TestApp as _TestApp
 
 from pyquery import PyQuery
@@ -57,16 +57,15 @@ from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
 
-from .base_forum_testing import AbstractTestApplicationForumsBase
+from .base_forum_testing import AbstractTestApplicationForumsBaseMixin
 from .base_forum_testing import UserCommunityFixture
 from .base_forum_testing import _plain
 
 
-class TestApplicationCommunityForums(AbstractTestApplicationForumsBase):
+class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,ApplicationLayerTest):
 	__test__ = True
 
-	features = SharedApplicationTestBase.features + ('forums',)
-	extra_environ_default_user = AbstractTestApplicationForumsBase.default_username
+	extra_environ_default_user = AbstractTestApplicationForumsBaseMixin.default_username
 	default_community = 'TheCommunity'
 	default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME

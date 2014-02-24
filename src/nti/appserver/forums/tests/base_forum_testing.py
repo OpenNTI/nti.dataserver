@@ -56,9 +56,9 @@ from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver
 
 
-
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+from nti.app.testing.base import TestBaseMixin
+from nti.app.testing.application_webtest import AppTestBaseMixin
+from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 
 from urllib import quote as UQ
 from pyquery import PyQuery
@@ -117,11 +117,10 @@ class UserCommunityFixture(object):
 	def __getattr__( self, name ):
 		return getattr( self.test, name )
 
-class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
+class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 	#: make nosetests only run subclasses of this that set __test__ to True
 	__test__ = False
 
-	features = SharedApplicationTestBase.features + ('forums',)
 	default_username = 'original_user@foo' # Not an admin user by default 'sjohnson@nextthought.com'
 	default_entityname = default_username
 	forum_ntiid = 'tag:nextthought.com,2011-10:' + default_username + '-Forum:PersonalBlog-Blog'
@@ -1138,3 +1137,5 @@ class AbstractTestApplicationForumsBase(SharedApplicationTestBase):
 		return res
 
 	_do_test_user_can_POST_new_forum_entry = _do_simple_tests_for_POST_of_topic_entry
+
+AbstractTestApplicationForumsBaseMixin = AbstractTestApplicationForumsBase
