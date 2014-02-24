@@ -43,3 +43,35 @@ class ConfiguringTestBase(SharedConfiguringTestBase):
 
 class ApplicationTestBase(SharedApplicationTestBase):
 	pass
+
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
+from nti.testing.layers import find_test
+from nti.testing.layers import GCLayerMixin
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+
+from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
+
+import zope.testing.cleanup
+
+class SharedConfiguringTestLayer(ZopeComponentLayer,
+								 GCLayerMixin,
+								 ConfiguringLayerMixin,
+								 DSInjectorMixin):
+
+	set_up_packages = ('nti.dataserver', 'nti.contentsearch')
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		cls.setUpTestDS(test)
