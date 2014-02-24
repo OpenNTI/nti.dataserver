@@ -28,8 +28,8 @@ from nti.testing import matchers
 
 import BTrees
 
-from ..field import CaseInsensitiveAttributeFieldIndex
-from ..field import IntegerAttributeIndex
+from ..index import CaseInsensitiveAttributeFieldIndex
+from ..index import IntegerAttributeIndex
 
 class TestCaseInsensitiveAttributeIndex(unittest.TestCase):
 
@@ -69,6 +69,18 @@ class TestIntegerAttributeIndex(unittest.TestCase):
 
 		assert_that( calling(self.index.index_doc).with_args(1, self),
 					 raises(TypeError))
+
+	def test_query(self):
+		index = self.index
+		index.index_doc( 1, self )
+
+		# BWC code
+		# exact match
+		assert_that( index.apply( (self.field, self.field)),
+					 contains( 1 ))
+		# range
+		assert_that( index.apply( (1, 2048)),
+					 contains( 1 ) )
 
 	def test_index_sort(self):
 		index = self.index

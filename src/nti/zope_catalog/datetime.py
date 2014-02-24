@@ -11,7 +11,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
+from zc.catalog.interfaces import INormalizer
+
 from nti.zodb.containers import time_to_64bit_int
+from nti.zodb.containers import bit64_int_to_time
 from persistent import Persistent
 
 from pytz import UTC
@@ -22,29 +27,40 @@ from zc.catalog.index import DateTimeNormalizer
 
 from nti.utils.property import CachedProperty
 
-class TimestampTo64BitIntNormalizer(object):
+class _AbstractNormalizerMixin(object):
+	def any(self, value, index):
+		return self.value(value),
+
+	def all(self, value, index):
+		return self.value(value)
+
+	def minimum(self, value, index, exclude=False):
+		return self.value(value)
+
+	def maximum(self, value, index, exclude=False):
+		return self.value(value)
+
+@interface.implementer(INormalizer)
+class TimestampTo64BitIntNormalizer(_AbstractNormalizerMixin):
 	"""
 	Normalizes incoming floating point objects representing Unix
 	timestamps to 64-bit integers. Use this with a
-	:class:`zc.catalog.catalogindex.NormalizationWrapper`
+	:class:`zc.catalog.catalogindex.NormalizationWrapper`. Note
+	that when you do so, the values returned by a method like
+	:meth:`zc.catalog.interfaces.IIndexValues` will be integer
+	representations, not floating point timestamps.
 	"""
 	__slots__ = ()
 
 	def value(self, value):
 		return time_to_64bit_int(value)
 
-	# The provided date-time normalizer supports taking
-	# datetime.date objects for the various range queries
-	# and turning those into sequences. For example, if you ask
-	# for 'any' on July 4, you get a normalized query that is all
-	# datetime values in the index from July 0, 00:00 to July 4 23:59.
-	# We could do that to, if we need to, but for the moment we don't care
-	# because we don't do these kind of searches with this index...?
-	# We don't implement those methods so that if we try to query,
-	# we fail loudly
+	def original_value(self, value):
+		return bit64_int_to_time(value)
 
-
-class TimestampNormalizer(Persistent):
+@interface.implementer(INormalizer)
+class TimestampNormalizer(Persistent,
+						  _AbstractNormalizerMixin):
 	"""
 	Normalizes incoming Unix timestamps to have a set
 	resolution, by default minutes.
@@ -73,7 +89,17 @@ class TimestampNormalizer(Persistent):
 		return time.mktime(dt.timetuple())
 
 
-class TimestampToNormalized64BitIntNormalizer(Persistent):
+	# The provided date-time normalizer supports taking
+	# datetime.date objects for the various range queries
+	# and turning those into sequences. For example, if you ask
+	# for 'any' on July 4, you get a normalized query that is all
+	# datetime values in the index from July 0, 00:00 to July 4 23:59.
+	# We could do that too, if we need to, but for the moment we don't care
+	# because we don't do these kind of searches with this index...?
+
+@interface.implementer(INormalizer)
+class TimestampToNormalized64BitIntNormalizer(Persistent,
+											  _AbstractNormalizerMixin):
 	"""
 	Normalizes incoming Unix timestamps to have a set resolution,
 	by default minutes, and then converts them to integers
