@@ -34,7 +34,7 @@ from nti.apns import interfaces as apns_interfaces
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.activitystream_change import Change

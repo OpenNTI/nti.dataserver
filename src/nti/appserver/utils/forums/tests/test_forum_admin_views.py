@@ -7,6 +7,16 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import has_entry
+from hamcrest import has_key
+from hamcrest import is_not
+from hamcrest import none
+from hamcrest import has_property
+
 from nti.dataserver import users
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
@@ -14,16 +24,15 @@ from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.externalization import to_json_representation, to_external_ntiid_oid, toExternalObject
 
-from nti.appserver.tests.test_application import TestApp
-
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
 
-from hamcrest import (assert_that, is_, has_length, none, is_not, has_key, has_entry, has_property)
 
-class TestForumAdminViews(SharedApplicationTestBase):
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
-	features = SharedApplicationTestBase.features + ('forums',)
+
+class TestForumAdminViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_set_community_forum_acl(self):
@@ -40,10 +49,10 @@ class TestForumAdminViews(SharedApplicationTestBase):
 		path = '/dataserver2/@@set_community_forum_acl'
 		environ = self._make_extra_environ()
 		data = to_json_representation({'community': 'bleach',
-									   'ACL': [ {"Action": "Allow", 
-												 "Class": "ForumACE", 
-												 "Entities": ["aizen@nt.com"], 
-												 "MimeType": "application/vnd.nextthought.forums.ace", 
+									   'ACL': [ {"Action": "Allow",
+												 "Class": "ForumACE",
+												 "Entities": ["aizen@nt.com"],
+												 "MimeType": "application/vnd.nextthought.forums.ace",
 												 "Permissions": ["All"] } ] })
 		res = testapp.post(path, data, extra_environ=environ)
 		assert_that(res.status_int, is_(204))
@@ -73,10 +82,10 @@ class TestForumAdminViews(SharedApplicationTestBase):
 		path = '/dataserver2/@@set_community_board_acl'
 		environ = self._make_extra_environ()
 		data = to_json_representation({'community': 'bleach',
-									   'ACL': [ {"Action": "Allow", 
-												 "Class": "ForumACE", 
-												 "Entities": ["aizen@nt.com"], 
-												 "MimeType": "application/vnd.nextthought.forums.ace", 
+									   'ACL': [ {"Action": "Allow",
+												 "Class": "ForumACE",
+												 "Entities": ["aizen@nt.com"],
+												 "MimeType": "application/vnd.nextthought.forums.ace",
 												 "Permissions": ["All"] },
 												{"Action": "Allow",
 												 "Class": "ForumACE",

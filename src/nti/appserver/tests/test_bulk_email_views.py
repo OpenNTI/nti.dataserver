@@ -24,16 +24,18 @@ from hamcrest import has_property
 
 from nose.tools import assert_raises
 
-import nti.testing.base
+
 
 from nti.appserver import bulk_email_views
 import time
 
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
 import fudge
 from fudge.inspector import arg
 
-class TestBulkEmailProcess(SharedApplicationTestBase):
+class TestBulkEmailProcess(ApplicationLayerTest):
 
 	def setUp(self):
 		super(TestBulkEmailProcess,self).setUp()

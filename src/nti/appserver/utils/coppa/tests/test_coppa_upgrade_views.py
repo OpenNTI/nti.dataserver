@@ -27,29 +27,23 @@ from nti.dataserver.users import interfaces as users_interfaces
 
 from nti.externalization.externalization import to_json_representation
 
-from nti.appserver.tests.test_application import TestApp
-
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+
 
 from nti.testing.matchers import verifiably_provides
 
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
-class TestApplicationCoppaUpgradeViews(SharedApplicationTestBase):
+from nti.app.sites.mathcounts.policy import MathcountsSitePolicyEventListener
 
-	IF_ROOT = None
-	IF_WOUT_AGREEMENT = None
-	IF_WITH_AGREEMENT = None
-	IF_WITH_AGREEMENT_UPGRADED = None
+class TestApplicationCoppaUpgradeViews(ApplicationLayerTest):
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestApplicationCoppaUpgradeViews,cls).setUpClass()
-		from nti.app.sites.mathcounts.policy import MathcountsSitePolicyEventListener
-		cls.IF_ROOT = MathcountsSitePolicyEventListener.IF_ROOT
-		cls.IF_WOUT_AGREEMENT = MathcountsSitePolicyEventListener.IF_WOUT_AGREEMENT
-		cls.IF_WITH_AGREEMENT = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT
-		cls.IF_WITH_AGREEMENT_UPGRADED = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT_UPGRADED
+	IF_ROOT = MathcountsSitePolicyEventListener.IF_ROOT
+	IF_WOUT_AGREEMENT = MathcountsSitePolicyEventListener.IF_WOUT_AGREEMENT
+	IF_WITH_AGREEMENT = MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT
+	IF_WITH_AGREEMENT_UPGRADED =  MathcountsSitePolicyEventListener.IF_WITH_AGREEMENT_UPGRADED
 
 	@WithSharedApplicationMockDS
 	def test_rollback(self):

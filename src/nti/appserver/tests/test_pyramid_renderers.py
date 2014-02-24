@@ -11,7 +11,7 @@ from nti.externalization.externalization import toExternalObject
 from ZODB.broken import Broken
 
 class TestContentType(NewRequestLayerTest):
-
+	mimeType= 'application/vnd.nextthought.testcontenttype'
 	def beginRequest( self, request_factory=Request.blank, request_args=('/') ):
 		return super(TestContentType,self).beginRequest(request_factory, request_args)
 

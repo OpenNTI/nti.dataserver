@@ -7,11 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import os
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import has_entry
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
-
-from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
 from nti.dataserver import users
 from nti.dataserver.contenttypes import Note
@@ -24,16 +26,15 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSWithChanges
 
-from hamcrest import (assert_that, is_, has_length, has_entry)
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
+from . import ExLibraryApplicationTestLayer
 
-class TestRelevantUGDView(SharedApplicationTestBase):
 
-	@classmethod
-	def _setup_library(cls, *args, **kwargs):
-		return FileLibrary(os.path.join(os.path.dirname(__file__), 'ExLibrary'))
+
+class TestRelevantUGDView(ApplicationLayerTest):
+	layer = ExLibraryApplicationTestLayer
 
 	def _create_note(self, user, msg, title=None, containerId=None, sharedWith=(), inReplyTo=None):
 		note = Note()

@@ -20,7 +20,7 @@ import zope.traversing.interfaces
 
 from nti.dataserver import traversal
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.mimetype import nti_mimetype_from_object
+from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator

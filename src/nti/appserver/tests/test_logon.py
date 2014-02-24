@@ -169,12 +169,15 @@ class TestLogonViews(ApplicationLayerTest):
 		del _user_created_events[:]
 		component.provideHandler( _handle_user_create_event )
 		self.log_handler = zope.testing.loghandler.Handler(self)
+		self.__policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
 
 	def tearDown(self):
 		self.log_handler.close()
 		policy = component.queryUtility( pyramid.interfaces.IAuthenticationPolicy )
 		if policy:
 			component.globalSiteManager.unregisterUtility( policy, provided=pyramid.interfaces.IAuthenticationPolicy )
+		if self.__policy:
+			component.provideUtility(self.__policy)
 		component.getGlobalSiteManager().unregisterHandler(_handle_user_create_event)
 		super(TestLogonViews,self).tearDown()
 
@@ -233,8 +236,7 @@ class TestLogonViews(ApplicationLayerTest):
 
 
 		get_current_request().registry.registerUtility( Policy() )
-		from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
-		get_current_request().registry.registerUtility( ACLAuthorizationPolicy() )
+
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
@@ -269,8 +271,7 @@ class TestLogonViews(ApplicationLayerTest):
 				return [self.authenticated_userid(request)]
 
 		component.provideUtility( Policy() )
-		from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
-		component.provideUtility( ACLAuthorizationPolicy() )
+
 		get_current_request().params['username'] = 'jason.madden@nextthought.com'
 
 		result = handshake( get_current_request() )

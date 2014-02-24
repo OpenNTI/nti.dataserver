@@ -32,16 +32,18 @@ from nose.tools import assert_raises
 
 from zope import component
 from zope import interface
-from zope.lifecycleevent import modified, created, added
+from zope.lifecycleevent import modified, added
 
 import urllib
-import pyramid.httpexceptions as hexc
-from .test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
-from .test_application import TestApp
+
+
+from nti.app.testing.webtest import TestApp
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
 from . import ITestMailDelivery
 
-class TestApplicationUsernameRecovery(SharedApplicationTestBase):
+class TestApplicationUsernameRecovery(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
@@ -143,7 +145,7 @@ class TestApplicationUsernameRecovery(SharedApplicationTestBase):
 		assert_that( decodestring(msg.body), contains_string( user_username ) )
 		assert_that( decodestring(msg.body), contains_string( user2_username ) )
 
-class TestApplicationPasswordRecovery(SharedApplicationTestBase):
+class TestApplicationPasswordRecovery(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_recover_user_logged_in( self ):
@@ -326,7 +328,7 @@ from zope.annotation.interfaces import IAnnotations
 from nti.appserver import account_recovery_views
 import datetime
 
-class TestApplicationPasswordReset(SharedApplicationTestBase):
+class TestApplicationPasswordReset(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_reset_user_logged_in( self ):

@@ -10,7 +10,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver import datastructures
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users

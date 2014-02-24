@@ -7,6 +7,9 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import assert_that
+from hamcrest import has_entry
+
 import json
 
 from zope.annotation import IAnnotations
@@ -18,12 +21,12 @@ from nti.dataserver import users
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.dicts import LastModifiedDict
 
-from nti.appserver.tests.test_application import TestApp
-from nti.appserver.tests.test_application import SharedApplicationTestBase, WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.webtest import TestApp
 
-from hamcrest import (assert_that, has_entry)
 
-class TestLinkProviderAdminViews(SharedApplicationTestBase):
+class TestLinkProviderAdminViews(ApplicationLayerTest):
 
 	def _test_reset(self, view_name, link_name):
 		with mock_dataserver.mock_db_trans(self.ds):
