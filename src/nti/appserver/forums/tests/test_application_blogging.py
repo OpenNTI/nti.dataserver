@@ -52,8 +52,8 @@ from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
-
+from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from urllib import quote as UQ
 from pyquery import PyQuery
@@ -68,13 +68,13 @@ frm_ext = frm_ext
 
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
-from .base_forum_testing import AbstractTestApplicationForumsBase
+from .base_forum_testing import AbstractTestApplicationForumsBaseMixin
 from .base_forum_testing import UserCommunityFixture
 
-class TestApplicationBlogging(AbstractTestApplicationForumsBase):
+class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,ApplicationLayerTest):
 	__test__ = True
 
-	extra_environ_default_user = AbstractTestApplicationForumsBase.default_username
+	extra_environ_default_user = AbstractTestApplicationForumsBaseMixin.default_username
 	forum_link_rel = 'Blog'
 	forum_content_type = 'application/vnd.nextthought.forums.personalblog+json'
 	forum_headline_class_type = 'Post'
@@ -209,7 +209,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBase):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@time_monotonically_increases
 	def test_user_can_POST_new_comment_PUT_to_edit_flag_and_DELETE( self ):
-		"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
+		#"""POSTing an IPost to the URL of an existing IStoryTopic adds a comment"""
 
 		testapp = self.testapp
 

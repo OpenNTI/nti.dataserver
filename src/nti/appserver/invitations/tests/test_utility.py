@@ -16,43 +16,48 @@ from hamcrest import none
 from zope import component
 from zope import interface
 from zope.keyreference.interfaces import IKeyReference
+from zope.intid import IIntIds
 
-import nti.testing.base
 from nti.testing.matchers import verifiably_provides
 
 from .. import interfaces
 from .. import utility
 from .. import invitation
-from nti.dataserver.generations.install import install_intids
 
-setUpModule = lambda: nti.testing.base.module_setup(set_up_packages=('nti.dataserver',))
-tearDownModule = nti.testing.base.module_teardown
 
-def test_valid_interface():
-	assert_that(utility.PersistentInvitations(), verifiably_provides(interfaces.IInvitations))
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-def test_add_remove_invitation():
+class TestUtility(DataserverLayerTest):
 
-	invites = utility.PersistentInvitations()
-	invite = invitation.PersistentInvitation()
-	invite.code = 'my code'
+	def test_valid_interface(self):
+		assert_that(utility.PersistentInvitations(), verifiably_provides(interfaces.IInvitations))
 
-	invites.registerInvitation(invite)
-	assert_that(invite, has_property('code', 'my code'))
+	@WithMockDSTrans
+	def test_add_remove_invitation(self):
 
-	assert_that(invites.getInvitationByCode('my code'), is_(invite))
+		invites = utility.PersistentInvitations()
+		ids = component.getUtility(IIntIds)
+		ids.register(invites)
+		ids._p_jar.add(invites)
 
-	install_intids(component)
+		invite = invitation.PersistentInvitation()
+		invite.code = 'my code'
 
-	invite = invitation.PersistentInvitation()
-	interface.alsoProvides(invite, IKeyReference)
+		invites.registerInvitation(invite)
+		assert_that(invite, has_property('code', 'my code'))
 
-	invites.registerInvitation(invite)
-	assert_that(invite, has_property('code', is_not(none())))
+		assert_that(invites.getInvitationByCode('my code'), is_(invite))
 
-	assert_that(invites.getInvitationByCode(invite.code), is_(invite))
+		invite = invitation.PersistentInvitation()
+		interface.alsoProvides(invite, IKeyReference)
 
-	for x in invites.sublocations():
-		assert_that(x, has_property('__parent__', invites))
+		invites.registerInvitation(invite)
+		assert_that(invite, has_property('code', is_not(none())))
 
-	invites.removeInvitation(invite)
+		assert_that(invites.getInvitationByCode(invite.code), is_(invite))
+
+		for x in invites.sublocations():
+			assert_that(x, has_property('__parent__', invites))
+
+		invites.removeInvitation(invite)
