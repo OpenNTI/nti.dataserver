@@ -17,6 +17,7 @@ from zope.container.interfaces import IContained
 from zope.security.proxy import removeSecurityProxy
 
 from zc.intid.utility import IntIds as _ZCIntIds
+from zc.intid.utility import RemovedEvent
 
 from nti.utils._compat import aq_base
 
@@ -87,7 +88,7 @@ class IntIds(_ZCIntIds):
 		del self.refs[uid]
 		setattr(ob, self.attribute, None)
 		if notify:
-			zope_event.notify(_ZCIntIds.RemovedEvent(ob, self, uid))
+			zope_event.notify(RemovedEvent(ob, self, uid))
 
 	def __repr__( self ):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,

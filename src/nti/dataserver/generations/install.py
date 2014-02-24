@@ -144,39 +144,7 @@ def install_intids( dataserver_folder ):
 	return intids
 
 def install_user_catalog( dataserver_folder, intids ):
-	lsm = dataserver_folder.getSiteManager()
-	catalog = Catalog(family=BTrees.family64)
-
-	catalog.__name__ = user_index.CATALOG_NAME
-	catalog.__parent__ = dataserver_folder
-	intids.register( catalog )
-	lsm.registerUtility( catalog, provided=ICatalog, name=user_index.CATALOG_NAME )
-
-	for name, clazz in ( ('alias', user_index.AliasIndex),
-						 ('email', user_index.EmailIndex),
-						 ('contact_email', user_index.ContactEmailIndex),
-						 ('password_recovery_email_hash', user_index.PasswordRecoveryEmailHashIndex),
-						 ('realname', user_index.RealnameIndex),
-						 ('realname_parts', user_index.RealnamePartsIndex),
-						 ('contact_email_recovery_hash', user_index.ContactEmailRecoveryHashIndex)):
-		index = clazz( family=BTrees.family64 )
-		intids.register( index )
-		# As a very minor optimization for unit tests, if we
-		# already set the name and parent of the index,
-		# the ObjectAddedEvent won't be fired
-		# when we add the index to the catalog.
-		# ObjectAdded/Removed events *must* fire during evolution,
-		# though.
-		index.__name__ = name; index.__parent__ = catalog; catalog[name] = index
-
-	opt_in_comm_index = user_index.TopicIndex( family=BTrees.family64 )
-	opt_in_comm_set = user_index.OptInEmailCommunicationFilteredSet( 'opt_in_email_communication', family=BTrees.family64 )
-	opt_in_comm_index.addFilter( opt_in_comm_set )
-	intids.register( opt_in_comm_index )
-	opt_in_comm_index.__name__ = 'topics'; opt_in_comm_index.__parent__ = catalog; catalog['topics'] = opt_in_comm_index
-
-	return catalog
-
+	return user_index.install_user_catalog( dataserver_folder, intids )
 
 def install_password_utility( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()

@@ -15,9 +15,9 @@ from zope import interface
 
 from nti.dataserver.users import interfaces as user_interfaces
 
-from zope.catalog.field import IFieldIndex
+
 from zope.catalog.interfaces import ICatalogIndex
-from zope.catalog.attribute import AttributeIndex
+
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 import zope.catalog.field
 
@@ -31,25 +31,9 @@ from zope.index.topic.filter import FilteredSetBase
 #: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
-@interface.implementer(IFieldIndex)
-class NormalizingFieldIndex(zope.index.field.FieldIndex,
-							zope.container.contained.Contained):
-	def normalize( self, value ):
-		return value
 
-	def index_doc(self, docid, value):
-		super(NormalizingFieldIndex,self).index_doc( docid, self.normalize(value) )
-
-	def apply( self, query ):
-		return super(NormalizingFieldIndex,self).apply( tuple([self.normalize(x) for x in query]) )
-
-class CaseInsensitiveFieldIndex(AttributeIndex,
-								NormalizingFieldIndex):
-
-	def normalize( self, value ):
-		if value:
-			value = value.lower()
-		return value
+# Old name for BWC
+from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
 
 class AliasIndex(CaseInsensitiveFieldIndex):
 
@@ -122,3 +106,45 @@ class TopicIndex(zope.index.topic.TopicIndex,
 
 	# If we're not ICatalogIndex, we don't get updated when
 	# we get put in a catalog.
+
+from zope.catalog.interfaces import ICatalog
+from zc.intid import IIntIds
+
+from zope.catalog.catalog import Catalog
+
+def install_user_catalog( site_manager_container, intids=None ):
+	lsm = site_manager_container.getSiteManager()
+	if intids is None:
+		intids = lsm.getUtility(IIntIds)
+
+	catalog = Catalog(family=intids.family)
+	catalog.__name__ = CATALOG_NAME
+	catalog.__parent__ = site_manager_container
+	intids.register( catalog )
+	lsm.registerUtility( catalog, provided=ICatalog, name=CATALOG_NAME )
+
+	for name, clazz in ( ('alias', AliasIndex),
+						 ('email', EmailIndex),
+						 ('contact_email', ContactEmailIndex),
+						 ('password_recovery_email_hash', PasswordRecoveryEmailHashIndex),
+						 ('realname', RealnameIndex),
+						 ('realname_parts', RealnamePartsIndex),
+						 ('contact_email_recovery_hash', ContactEmailRecoveryHashIndex)):
+		index = clazz( family=intids.family )
+		intids.register( index )
+		# As a very minor optimization for unit tests, if we
+		# already set the name and parent of the index,
+		# the ObjectAddedEvent won't be fired
+		# when we add the index to the catalog.
+		# ObjectAdded/Removed events *must* fire during evolution,
+		# though.
+		index.__name__ = name; index.__parent__ = catalog; catalog[name] = index
+
+	opt_in_comm_index = TopicIndex( family=intids.family)
+	opt_in_comm_set = OptInEmailCommunicationFilteredSet( 'opt_in_email_communication',
+														  family=intids.family)
+	opt_in_comm_index.addFilter( opt_in_comm_set )
+	intids.register( opt_in_comm_index )
+	opt_in_comm_index.__name__ = 'topics'; opt_in_comm_index.__parent__ = catalog; catalog['topics'] = opt_in_comm_index
+
+	return catalog
