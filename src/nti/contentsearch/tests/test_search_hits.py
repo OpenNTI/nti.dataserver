@@ -17,6 +17,7 @@ from hamcrest import has_property
 import os
 import json
 import time
+import unittest
 
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
@@ -39,28 +40,33 @@ from ..constants import (NTIID, CREATOR, CONTAINER_ID, CLASS, TYPE, HIT)
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestSearchHits(ConfiguringTestBase):
+class TestSearchHits(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	@classmethod
-	def setUpClass(cls):
-		super(TestSearchHits, cls).setUpClass()
-		path = os.path.join(os.path.dirname(__file__), 'highlight.json')
+	def _load_json(cls, name):
+		path = os.path.join(os.path.dirname(__file__), name)
 		with open(path, "r") as f:
-			cls.hightlight = json.load(f)
+			return json.load(f)
+		
+	@property
+	def hightlight(self):
+		return self._load_json('highlight.json')
 
-		path = os.path.join(os.path.dirname(__file__), 'note.json')
-		with open(path, "r") as f:
-			cls.note = json.load(f)
+	@property
+	def note(self):
+		return self._load_json('note.json')
 
-		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
-		with open(path, "r") as f:
-			cls.messageinfo = json.load(f)
+	@property
+	def messageinfo(self):
+		return self._load_json('message_info.json')
 
-		path = os.path.join(os.path.dirname(__file__), 'redaction.json')
-		with open(path, "r") as f:
-			cls.redaction = json.load(f)
+	@property
+	def redaction(self):
+		return self._load_json('redaction.json')
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
@@ -90,6 +96,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry('Snippet',
 								 u'You know how to add, subtract, multiply, and divide. In fact, you may already know how to solve many of the problems'))
 
+	@WithMockDSTrans
 	def test_seach_hit_redaction_dict(self):
 		d = self._externalize(search_hits.RedactionSearchHit, self.redaction, '')
 		assert_that(d, has_entry(CLASS, HIT))
@@ -176,6 +183,7 @@ class TestSearchHits(ConfiguringTestBase):
 		assert_that(d, has_entry(NTIID, oidstr))
 		assert_that(d, has_entry('Snippet', u'overcome it everytime I have been on the verge of death'))
 
+	@WithMockDSTrans
 	def test_search_hit_book(self):
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		hit = BookContent()

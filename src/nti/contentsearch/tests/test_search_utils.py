@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import unittest
+
 from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -18,9 +20,11 @@ from ..constants import invalid_type_
 from ..search_utils import create_queryobject
 from .. import interfaces as search_interfaces
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestSearchUtils(ConfiguringTestBase):
+class TestSearchUtils(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def test_create_query_object_accept(self):
 

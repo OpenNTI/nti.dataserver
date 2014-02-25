@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from nti.appserver.tests.test_application import SharedApplicationTestBase
+from nti.app.testing.application_webtest import SharedApplicationTestBase
 
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
 
@@ -45,6 +45,8 @@ class ApplicationTestBase(SharedApplicationTestBase):
 	pass
 
 
+from nti.app.testing.application_webtest import ApplicationTestLayer
+
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
 
@@ -75,3 +77,13 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def testSetUp(cls, test=None):
 		cls.setUpTestDS(test)
+
+class SearchApplicationTestLayer(ApplicationTestLayer):
+
+	@classmethod
+	def setUp(cls):
+		pass
+
+	@classmethod
+	def tearDown(cls):
+		pass

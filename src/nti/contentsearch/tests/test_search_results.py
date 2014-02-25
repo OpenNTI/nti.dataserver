@@ -15,6 +15,7 @@ from hamcrest import assert_that
 
 import os
 import json
+import unittest
 
 from zope import component
 from zope.mimetype.interfaces import IContentTypeAware
@@ -34,20 +35,21 @@ from ..search_results import merge_suggest_results
 from ..search_results import empty_suggest_and_search_results
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
 from . import domain as domain_words
+from . import SharedConfiguringTestLayer
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-class TestSearchResults(ConfiguringTestBase):
+class TestSearchResults(unittest.TestCase):
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestSearchResults, cls).setUpClass()
+	layer = SharedConfiguringTestLayer
+
+	@property
+	def messageinfo(self):
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
-			cls.messageinfo = json.load(f)
+			return json.load(f)
 
 	@classmethod
 	def _create_user(cls, username='nt@nti.com', password='temp001'):

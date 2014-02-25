@@ -16,6 +16,7 @@ import os
 import time
 import shutil
 import tempfile
+import unittest
 from datetime import datetime
 
 from whoosh.filedb.filestore import RamStorage
@@ -31,21 +32,27 @@ from ..constants import (HIT_COUNT, ITEMS)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 
+from . import find_test
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestWhooshIndex(ConfiguringTestBase):
-
-	@classmethod
-	def setUpClass(cls):
-		super(TestWhooshIndex, cls).setUpClass()
-		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
-		os.environ['DATASERVER_DIR'] = cls.db_dir
+class WhooshIndexTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.db_dir, True)
-		super(TestWhooshIndex, cls).tearDownClass()
+	def testSetUp(cls, test=None):
+		super(WhooshIndexTestLayer, cls).testSetUp(test)
+		cls.test = test = test or find_test()
+		test.db_dir = tempfile.mkdtemp(dir="/tmp")
+		os.environ['DATASERVER_DIR'] = test.db_dir
+
+	@classmethod
+	def tearDown(cls):
+		super(WhooshIndexTestLayer, cls).tearDown()
+		shutil.rmtree(cls.test.db_dir, True)
+
+class TestWhooshIndex(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, ds=None, username='nt@nti.com', password='temp001'):
 		ds = ds or mock_dataserver.current_mock_ds
