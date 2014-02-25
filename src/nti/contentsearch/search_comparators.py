@@ -117,7 +117,7 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
-@repoze.lru.lru_cache(maxsize=1000)
+@repoze.lru.lru_cache(maxsize=1000, timeout=60)
 def _path_intersection(x, y):
 	result = []
 	stop = min(len(x), len(y))
@@ -128,7 +128,7 @@ def _path_intersection(x, y):
 			break
 	return tuple(result)
 
-@repoze.lru.lru_cache(maxsize=1000, timeout=30)
+@repoze.lru.lru_cache(maxsize=1000, timeout=60)
 def get_ntiid_path(item):
 	result = content_utils.get_ntiid_path(item)
 	return result
