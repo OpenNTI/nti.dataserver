@@ -15,6 +15,8 @@ from zope import interface
 
 from zope.catalog.field import IFieldIndex
 from zope.catalog.attribute import AttributeIndex
+from zope.catalog.interfaces import ICatalogIndex
+
 
 import zope.catalog.field
 

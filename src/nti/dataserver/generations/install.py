@@ -33,9 +33,6 @@ from zope.site.folder import Folder, rootFolder
 
 import zope.intid
 import zc.intid
-from zope.catalog.interfaces import ICatalog
-from zope.catalog.catalog import Catalog
-
 
 import z3c.password.interfaces
 
@@ -50,6 +47,7 @@ from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
 
 from nti.dataserver.users import index as user_index
+from nti.dataserver import metadata_index
 
 def install_chat( context ):
 	pass
@@ -118,6 +116,7 @@ def install_main( context ):
 
 	intids = install_intids( dataserver_folder )
 	install_user_catalog( dataserver_folder, intids )
+	install_metadata_catalog( dataserver_folder, intids )
 
 	everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
 	intids.register( everyone ) # Events didn't fire
@@ -145,6 +144,9 @@ def install_intids( dataserver_folder ):
 
 def install_user_catalog( dataserver_folder, intids ):
 	return user_index.install_user_catalog( dataserver_folder, intids )
+
+def install_metadata_catalog( dataserver_folder, intids ):
+	return metadata_index.install_metadata_catalog(dataserver_folder, intids)
 
 def install_password_utility( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()

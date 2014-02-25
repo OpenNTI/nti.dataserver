@@ -15,9 +15,6 @@ from zope import interface
 
 from nti.dataserver.users import interfaces as user_interfaces
 
-
-from zope.catalog.interfaces import ICatalogIndex
-
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 import zope.catalog.field
 
@@ -34,6 +31,8 @@ CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
 # Old name for BWC
 from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
+
+from nti.zope_catalog.topic import TopicIndex
 
 class AliasIndex(CaseInsensitiveFieldIndex):
 
@@ -93,19 +92,6 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 		else:
 			# The normal PythonFilteredSet seems to have a bug and never unindexes?
 			self.unindex_doc( docid )
-
-@interface.implementer(ICatalogIndex)
-class TopicIndex(zope.index.topic.TopicIndex,
-				 zope.container.contained.Contained):
-	"""
-	A topic index that implements IContained and ICatalogIndex for use with
-	OptInEmailCommunicationFilteredSet.
-	"""
-
-	# If we're not IContained, we get location proxied.
-
-	# If we're not ICatalogIndex, we don't get updated when
-	# we get put in a catalog.
 
 from zope.catalog.interfaces import ICatalog
 from zc.intid import IIntIds
