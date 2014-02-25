@@ -93,7 +93,9 @@ class FriendlyNamed(persistent.Persistent):
 		# first middle and last if they are not blank. How does
 		# this handle more complex naming scenarios?
 		if self.realname:
-			return [x for x in nameparser.HumanName(self.realname)[1:4] if x]
+			# because we are cached, be sure to return an immutable
+			# value
+			return tuple([x for x in nameparser.HumanName(self.realname)[1:4] if x])
 		# Returning none keeps the entity out of the index
 
 	def get_searchable_realname_parts(self):
