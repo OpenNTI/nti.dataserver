@@ -1,22 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+
+import unittest
+
 from ..content_utils import get_content
 
 from ..search_highlights import word_fragments_highlight
 
-from . import ConfiguringTestBase, zanpakuto_commands
+from . import zanpakuto_commands
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_, has_length)
-
-class TestSearchHighlight(ConfiguringTestBase):
+class TestSearchHighlight(unittest.TestCase):
 	
+	layer = SharedConfiguringTestLayer
+
 	def test_word_fragments(self):
 		text = unicode(get_content('All Waves, Rise now and Become my Shield, Lightning, Strike now and Become my Blade'))
 		

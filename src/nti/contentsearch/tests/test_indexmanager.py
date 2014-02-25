@@ -16,6 +16,7 @@ import time
 import uuid
 import shutil
 import tempfile
+import unittest
 from datetime import datetime
 
 from zope import component
@@ -42,16 +43,28 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import phrases
+from nti.contentsearch.tests import find_test
 from nti.contentsearch.tests import zanpakuto_commands
-from nti.contentsearch.tests import ConfiguringTestBase
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
-class TestIndexManager(ConfiguringTestBase):
+class IndexManagerTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def setUpClass(cls):
-		super(TestIndexManager, cls).setUpClass()
-		cls.now = time.time()
-		cls._add_book_data()
+	def testSetUp(cls, test=None):
+		super(IndexManagerTestLayer, cls).testSetUp(test)
+		cls.test = test = test or find_test()
+		test.now = time.time()
+		test._add_book_data()
+
+	@classmethod
+	def tearDown(cls):
+		super(IndexManagerTestLayer, cls).tearDown()
+		cls.test.bim.close()
+		shutil.rmtree(cls.test.book_idx_dir, True)
+
+class TestIndexManager(unittest.TestCase):
+
+	layer = IndexManagerTestLayer
 
 	@classmethod
 	def _add_book_data(cls):
@@ -72,12 +85,6 @@ class TestIndexManager(ConfiguringTestBase):
 								related=u'',
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
-
-	@classmethod
-	def tearDownClass(cls):
-		cls.bim.close()
-		shutil.rmtree(cls.book_idx_dir, True)
-		super(TestIndexManager, cls).tearDownClass()
 
 	def create_index_mananger(self):
 		result = create_index_manager_with_repoze(parallel_search=False)

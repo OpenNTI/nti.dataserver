@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 from hamcrest import close_to
 from hamcrest import assert_that
 
+import unittest
+
 from whoosh import fields
 from whoosh.filedb.filestore import RamStorage
 
@@ -26,9 +28,11 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestWhooshQuery(ConfiguringTestBase):
+class TestWhooshQuery(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	schema = fields.Schema(	docid = fields.ID(stored=True, unique=True),
 							content = fields.TEXT(stored=True))

@@ -1,26 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import has_key
+from hamcrest import assert_that
+
+import unittest
 
 import BTrees
 
 from .._repoze_index import create_catalog
 
 from ..constants import (content_, keywords_, references_, note_, ntiid_,
-						 last_modified_, containerId_, creator_, recipients_, sharedWith_,
-						 highlight_, redaction_, replacementContent_, redactionExplanation_,
-						 messageinfo_)
+						 last_modified_, containerId_, creator_, recipients_,
+						 sharedWith_, highlight_, redaction_, replacementContent_,
+						 redactionExplanation_, messageinfo_)
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, has_key, is_)
+class TestRepozeIndex(unittest.TestCase):
 
-class TestRepozeIndex(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def _test_common_catalog(self, catalog):
 		assert_that(catalog.family, is_(BTrees.family64))

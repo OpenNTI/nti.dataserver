@@ -11,6 +11,8 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
 
+import unittest
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.contenttypes import Highlight
@@ -28,9 +30,11 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestSearchComparators(ConfiguringTestBase):
+class TestSearchComparators(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds

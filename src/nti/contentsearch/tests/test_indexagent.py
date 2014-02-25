@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import unittest
+
 from nti.dataserver.contenttypes import Note
 from nti.dataserver.activitystream_change import Change
 
@@ -16,7 +18,7 @@ from ..indexagent import _process_event
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
 from hamcrest import (is_, assert_that)
 
@@ -30,7 +32,9 @@ def decorator(f):
 	execute.__name__ = f.__name__
 	return execute
 
-class TestIndexAgent(ConfiguringTestBase):
+class TestIndexAgent(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	exception = None
 	note_proc = None

@@ -14,6 +14,8 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 
+import unittest
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.users import User
@@ -27,17 +29,18 @@ from nti.externalization.internalization import update_from_external_object
 from nti.ntiids.ntiids import make_ntiid
 
 from nti.contentsearch import interfaces as search_interfaces
-from nti.contentsearch.constants import (tags_)
-from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, ITEMS, NTIID,
-										 PHRASE_SEARCH, ID, FIELD)
+from nti.contentsearch.constants import (HIT, CLASS, CONTAINER_ID, HIT_COUNT, ITEMS,
+										 NTIID, PHRASE_SEARCH)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.tests import ConfiguringTestBase
 from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
-class TestRepozeUserAdapter(ConfiguringTestBase):
+class TestRepozeUserAdapter(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
@@ -325,47 +328,4 @@ class TestRepozeUserAdapter(ConfiguringTestBase):
 
 		hits = rim.search('Zangetsu')
 		assert_that(hits, has_length(0))
-
-from nti.appserver.tests.test_application import SharedApplicationTestBase
-from nti.appserver.tests.test_application import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
-
-class TestAppRepozeUserAdapter(SharedApplicationTestBase):
-
-	features = SharedApplicationTestBase.features + ('forums',)
-
-	extra_environ_default_user = b'ichigo@bleach.com'
-
-	@WithSharedApplicationMockDS(testapp=True, users=True)
-	def test_post_dict(self):
-
-		data = { 'Class': 'Post',
-				 'title': 'Unohana',
-				 'body': ["Begging her not to die Kenpachi screams out in rage as his opponent fades away"],
-				 'tags': ['yachiru', 'haori'] }
-
-		username = self.extra_environ_default_user
-		testapp = self.testapp
-		testapp.post_json('/dataserver2/users/%s/Blog' % username, data, status=201)
-
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = User.get_user(username)
-			rim = search_interfaces.IRepozeEntityIndexManager(user)
-			hits = rim.search('Kenpachi')
-			assert_that(hits, has_length(1))
-
-			hits = rim.search('Unohana'.upper())
-			assert_that(hits, has_length(1))
-
-			hits = rim.search('yachiru')
-			assert_that(hits, has_length(1))
-			hits = toExternalObject(hits)
-			assert_that(hits, has_key(ITEMS))
-			items = hits[ITEMS]
-			assert_that(items, has_length(1))
-			hit = items[0]
-			assert_that(hit, has_entry(ID, 'Unohana'))
-			assert_that(hit, has_entry(FIELD, tags_))
-
-			hits = rim.search('yachiru'.upper())
-			assert_that(hits, has_length(1))
 

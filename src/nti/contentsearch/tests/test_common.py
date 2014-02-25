@@ -13,7 +13,9 @@ from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import less_than_or_equal_to
 
+import unittest
 from datetime import datetime
+
 from ..common import epoch_time
 from ..common import get_datetime
 from ..common import is_all_query
@@ -21,9 +23,11 @@ from ..common import get_mime_type_map
 from ..common import get_type_from_mimetype
 from ..common import date_to_videotimestamp
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestCommon(ConfiguringTestBase):
+class TestCommon(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def test_all_query(self):
 		assert_that(is_all_query('?'), is_(True))

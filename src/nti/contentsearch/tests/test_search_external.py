@@ -18,6 +18,8 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import greater_than_or_equal_to
 
+import unittest
+
 from zope import component
 
 from nti.dataserver.users import User
@@ -37,10 +39,12 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
 from . import domain as domain_words
+from . import SharedConfiguringTestLayer
 
-class TestSearchExternal(ConfiguringTestBase):
+class TestSearchExternal(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds

@@ -16,6 +16,7 @@ from hamcrest import assert_that
 
 import os
 import json
+import unittest
 
 from nti.chatserver.messageinfo import MessageInfo
 
@@ -44,20 +45,26 @@ from .. import discriminators
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from . import find_test
+from . import SharedConfiguringTestLayer
 
-class TestContentUtils(ConfiguringTestBase):
+class ContentUtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def setUpClass(cls):
-		super(TestContentUtils, cls).setUpClass()
+	def testSetUp(cls, test=None):
+		super(ContentUtilsTestLayer, cls).testSetUp(test)
+		test = test or find_test()
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
-			cls.messageinfo = json.load(f)
+			test.messageinfo = json.load(f)
 
 		path = os.path.join(os.path.dirname(__file__), 'note2.json')
 		with open(path, "r") as f:
-			cls.note = json.load(f)
+			test.note = json.load(f)
+
+class TestContentUtils(unittest.TestCase):
+
+	layer = ContentUtilsTestLayer
 
 	def _create_note(self, msg, username, containerId=None, tags=('ichigo',), canvas=None):
 		note = Note()
