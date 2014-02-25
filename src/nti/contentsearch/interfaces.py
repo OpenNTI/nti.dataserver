@@ -851,13 +851,14 @@ class ISearchCompletedEvent(interface.Interface):
 	query = schema.Object(ISearchQuery, title="The search query")
 	user = schema.Object(nti_interfaces.IEntity, title="The search entity")
 	metadata = schema.Object(ISearchHitMetaData, title="The result meta-data")
+	results = schema.Object(IBaseSearchResults, title="The results")
 
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(component.interfaces.ObjectEvent):
 
-	def __init__(self, user, result, elapsed=0):
+	def __init__(self, user, results, elapsed=0):
 		super(SearchCompletedEvent, self).__init__(user)
-		self.result = result
+		self.results = results
 		self.elapsed = elapsed
 
 	@property
