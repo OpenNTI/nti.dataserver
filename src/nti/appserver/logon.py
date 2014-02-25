@@ -52,7 +52,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver.links import Link
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 

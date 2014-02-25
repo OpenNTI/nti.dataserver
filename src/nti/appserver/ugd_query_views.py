@@ -43,7 +43,7 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.sharing import SharingContextCache
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
-from nti.dataserver.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
+from nti.mimetype.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
 liking_like_count = liking.like_count  # minor optimization
 
 from nti.externalization.oids import to_external_ntiid_oid

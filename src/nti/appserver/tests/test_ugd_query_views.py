@@ -353,7 +353,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_rstream_circled(self):
-		"Requesting the root NTIID includes your circling."
+		#"Requesting the root NTIID includes your circling."
 		view = _RecursiveUGDStreamView( get_current_request() )
 		user = users.User.create_user( self.ds,  username='jason.madden@nextthought.com' )
 		actor = users.User.create_user( self.ds,  username='carlos.sanchez@nextthought.com' )
@@ -367,8 +367,9 @@ class TestUGDQueryViews(NewRequestLayerTest):
 
 
 
-	def test_lists_and_dicts_to_collection(self):
+	def _lists_and_dicts_to_collection_generator(self):
 		def _check_items( combined, items, lm=0 ):
+			__traceback_info__ = combined, items, lm
 			combined = lists_and_dicts_to_ext_collection( combined )
 			assert_that( combined, has_entry( 'Last Modified', lm ) )
 			assert_that( combined, has_entry( 'Items', items ) )
@@ -412,6 +413,15 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		col1.append( o )
 		yield _check_items, (col1,col2), [o], 32
 
+	def test_lists_and_dicts_to_collection(self):
+		# nose2 seems to have some issue with directly using
+		# generator functions (aside from them not being supported
+		# by zope-testrunner at all); but it works fine when we
+		# do it manually
+		for tpl in self._lists_and_dicts_to_collection_generator():
+			call = tpl[0]
+			args = tpl[1:]
+			call(*args)
 
 from nti.contentrange import contentrange
 from nti.dataserver import liking
