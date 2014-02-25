@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import has_entry
 
 
-from nti.app.testing.base  import SharedConfiguringTestBase
+from nti.app.testing.layers  import AppLayerTest
 from ..filtered_template_mailer import NextThoughtOnlyMailer
 from ..filtered_template_mailer import ImpersonatedMailer
 from ..interfaces import ITemplatedMailer
@@ -42,7 +42,7 @@ class Request(object):
 	response = None
 	application_url = 'foo'
 
-class _BaseMailTest(SharedConfiguringTestBase):
+class _BaseMixin(object):
 
 	mailer = None
 
@@ -70,13 +70,9 @@ class _BaseMailTest(SharedConfiguringTestBase):
 		base_msg = msg.to_message()
 		assert_that( base_msg, has_entry('To', to) )
 
-class TestNextThoughtOnlyEmail(_BaseMailTest):
+class TestNextThoughtOnlyEmail(AppLayerTest,_BaseMixin):
 
 	mailer = NextThoughtOnlyMailer
-
-	def test_provides(self):
-		assert_that( NextThoughtOnlyMailer(),
-					 validly_provides(ITemplatedMailer))
 
 	def test_create_mail_message_to_nextthought(self):
 		self._check( 'jason.madden@nextthought.com', 'jason.madden@nextthought.com')
@@ -84,7 +80,7 @@ class TestNextThoughtOnlyEmail(_BaseMailTest):
 	def test_create_mail_message_to_other(self):
 		self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com')
 
-class TestImpersonatedEmail(_BaseMailTest):
+class TestImpersonatedEmail(AppLayerTest,_BaseMixin):
 
 	mailer = ImpersonatedMailer
 

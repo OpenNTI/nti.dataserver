@@ -19,14 +19,14 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 
 
-from nti.app.testing.base  import SharedConfiguringTestBase
+from nti.app.testing.layers  import AppLayerTest
 from .._default_template_mailer import create_simple_html_text_email
 
 from zope import interface
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 
-class TestEmail(SharedConfiguringTestBase):
+class TestEmail(AppLayerTest):
 
 	def test_create_mail_message_with_non_ascii_name(self):
 		class User(object):

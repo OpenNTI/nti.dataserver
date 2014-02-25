@@ -38,7 +38,7 @@ import nti.externalization.interfaces as ext_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import links
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.ntiids import ntiids
 from nti.dataserver import authorization as nauth
 from nti.dataserver import traversal as nti_traversal

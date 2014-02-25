@@ -39,7 +39,7 @@ from nti.dataserver import containers
 from nti.dataserver import authorization as nauth
 from nti.dataserver import authorization_acl as nacl
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.mimetype import  nti_mimetype_with_class
+from nti.mimetype.mimetype import  nti_mimetype_with_class
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator

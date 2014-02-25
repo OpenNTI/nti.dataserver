@@ -369,9 +369,10 @@ class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'birthdate': '1982-01-31'} )
 		new_user = self.the_view( self.request )
-		# XXX: At one point we were asserting this was 0. Why was that ever
-		# the case?
-		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 24 ) ) )
+		# XXX: We've gone back and forth on asserting whether this should
+		# be 0 or 24. 0 actually doesn't make any sense to me, but it was the original
+		# value
+		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 
 		self.request.body = to_json_representation( {'Username': 'jason@example',
 													 'birthdate': '1982-01-31'} )
