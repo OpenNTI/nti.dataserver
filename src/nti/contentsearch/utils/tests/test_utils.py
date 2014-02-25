@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_item
+from hamcrest import has_length
+from hamcrest import assert_that
+
+import unittest
 
 from nti.dataserver import users
 from nti.dataserver.users import User
@@ -27,11 +35,11 @@ import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_not, has_key, has_length, has_item)
+class TestUtils(unittest.TestCase):
 
-class TestUtils(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds

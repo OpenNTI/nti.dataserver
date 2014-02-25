@@ -20,8 +20,6 @@ except ImportError:
 from zope import interface
 from zope.proxy import ProxyBase
 
-from perfmetrics import metric
-
 from whoosh import index
 
 from . import constants
@@ -68,7 +66,6 @@ class _Searchable(object):
 	def __repr__(self):
 		return '%s(indexname=%s)' % (self.__class__.__name__, self.indexname)
 
-	@metric
 	def search(self, query, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
 		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
@@ -136,7 +133,6 @@ class WhooshContentSearcher(object):
 			result = not query.searchOn or s.classname in query.searchOn
 		return result
 
-	@metric
 	def search(self, query, store=None, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
 		store = search_results.get_or_create_search_results(query, store)

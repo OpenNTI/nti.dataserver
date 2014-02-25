@@ -15,6 +15,7 @@ import uuid
 import random
 import shutil
 import tempfile
+import unittest
 
 from whoosh import fields
 from whoosh import query
@@ -23,20 +24,26 @@ from whoosh.compat import text_type
 from ..whoosh_storage import DirectoryStorage
 
 from . import domain
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
 sample_schema = fields.Schema(id=fields.ID(stored=True, unique=True),
 							  content=fields.TEXT(stored=True))
 
-class _IndexStorageTest(object):
+class TestDirectoryStorage(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	indexdir = None
 	idx_storage = None
 
-	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.indexdir, True)
-		super(_IndexStorageTest, cls).tearDownClass()
+	def setUp(self):
+		super(TestDirectoryStorage, self).setUpClass()
+		self.indexdir = tempfile.mkdtemp(dir="/tmp")
+		self.idx_storage = DirectoryStorage(self.indexdir)
+
+	def tearDown(self):
+		super(TestDirectoryStorage, self).tearDown()
+		shutil.rmtree(self.indexdir, True)
 
 	@property
 	def storage(self):
@@ -97,10 +104,3 @@ class _IndexStorageTest(object):
 			results = s.search(q, limit=None)
 			assert_that(results, has_length(0))
 
-class TestDirectoryStorage(ConfiguringTestBase, _IndexStorageTest):
-
-	@classmethod
-	def setUpClass(cls):
-		cls.indexdir = tempfile.mkdtemp(dir="/tmp")
-		cls.idx_storage = DirectoryStorage(cls.indexdir)
-		super(TestDirectoryStorage, cls).setUpClass()
