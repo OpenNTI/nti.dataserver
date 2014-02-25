@@ -22,7 +22,6 @@ from zope.dublincore import interfaces as dc_interfaces
 from persistent import Persistent
 from persistent.list import PersistentList
 
-from nti.dataserver import mimetype
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
 from nti.dataserver.contenttypes import threadable
@@ -32,6 +31,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
+
+from nti.mimetype import mimetype
 
 from nti.utils.proxy import removeAllProxies
 from nti.utils.property import alias, read_alias
