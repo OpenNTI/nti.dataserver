@@ -90,14 +90,19 @@ class SearchHitMetaData(object):
 		self.type_count = collections.defaultdict(int)
 		self.container_count = collections.defaultdict(int)
 
+	@classmethod
+	def _sort_dict(cls, data):
+		items = data.items()
+		return collections.OrderedDict(sorted(items, key=lambda x: x[1], reverse=True))
+
 	def _get_type_count(self):
-		return dict(self.type_count)
+		return self._sort_dict(self.type_count)
 	def _set_type_count(self, tc):
 		self.type_count.update(tc or {})
 	TypeCount = property(_get_type_count, _set_type_count)
 
 	def _get_container_count(self):
-		return dict(self.container_count)
+		return self._sort_dict(self.container_count)
 	def _set_container_count(self, cc):
 		self.container_count.update(cc or {})
 	ContainerCount = property(_get_container_count, _set_container_count)
