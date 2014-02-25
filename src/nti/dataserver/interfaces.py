@@ -9,6 +9,9 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface
+from zope import component
+
+import six
 
 from zope.annotation.interfaces import IAnnotatable
 
@@ -540,6 +543,35 @@ class IMutableGroupMember(IGroupMember):
 
 def valid_entity_username(entity_name):
 	return not username_is_reserved(entity_name)
+
+
+class ICreatedUsername(interface.Interface):
+	"""
+	Something created by an identified entity, expressed
+	as a (globally unique) username.
+	"""
+	creator_username = DecodingValidTextLine(
+		title=u'The username',
+		constraint=valid_entity_username,
+		readonly=True
+		)
+
+@interface.implementer(ICreatedUsername)
+@component.adapter(ICreated)
+class DefaultCreatedUsername(object):
+
+	def __init__(self, context):
+		self.context = context
+
+	@property
+	def creator_username(self):
+		try:
+			username = self.context.creator.username
+			if isinstance(username, six.string_types):
+				return username
+		except (AttributeError,TypeError):
+			return None
+
 
 class IShouldHaveTraversablePath(interface.Interface):
 	"""
@@ -1244,7 +1276,7 @@ class IShareableModeledContent(IShareable, IModeledContent):
 	# its not defined in an interface, we can't associate an ObjectModifiedEvent
 	# with the correct interface. See nti.externalization.internalization.update_from_external_object
 	sharedWith = UniqueIterable(
-		title="An alias for `flattenedSharingTargetNames`, taking externalization of local usernames into account",
+		title="The names of the entities we are shared directly with, taking externalization of local usernames into account",
 		value_type=DecodingValidTextLine(title="The username or NTIID"),
 		required=False,
 		default=frozenset())

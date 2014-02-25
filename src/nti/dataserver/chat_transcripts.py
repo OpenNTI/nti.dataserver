@@ -97,7 +97,7 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.dataserver import links
 from nti.dataserver import users
-from nti.dataserver import mimetype
+from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver import interfaces as nti_interfaces
@@ -121,7 +121,7 @@ class _IMeetingTranscriptStorage(nti_interfaces.ICreated): # ICreated so they ge
 
 	def remove_message(msg):
 		"""Remove the message from this transcript."""
-		
+
 	def itervalues():
 		"""Iterate all the messages in this transcript"""
 
@@ -287,7 +287,7 @@ class _UserTranscriptStorageAdapter(object):
 	def transcript_summaries(self):
 		result = []
 		for container in self._user.getAllContainers().values():
-			if isinstance(container, float ): 
+			if isinstance(container, float ):
 				continue
 			for storage in container.values():
 				if _IMeetingTranscriptStorage.providedBy( storage ):

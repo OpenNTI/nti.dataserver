@@ -22,7 +22,9 @@ from .datetime import _AbstractNormalizerMixin
 class StringTokenNormalizer(_AbstractNormalizerMixin):
 	"""
 	A normalizer for strings that are treated like tokens:
-	strings are lower-cased and guaranteed to be unicode.
+	strings are lower-cased and guaranteed to be unicode
+	and leading and trailing spaces are removed.
+
 	"""
 
 	def value(self, value):
@@ -31,4 +33,4 @@ class StringTokenNormalizer(_AbstractNormalizerMixin):
 
 		if isinstance(value, bytes):
 			value = value.decode('utf-8')
-		return value.lower()
+		return value.lower().strip()

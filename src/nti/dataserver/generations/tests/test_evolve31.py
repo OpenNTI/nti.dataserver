@@ -45,6 +45,7 @@ class TestEvolve31(mock_dataserver.DataserverLayerTest):
 
 		with mock_db_trans( ) as conn:
 			jason = users.User.get_user( dataserver=mock_dataserver.current_mock_ds, username='jason.madden@nextthought.com' )
+
 			ent_catalog = component.getUtility(ICatalog, name='nti.dataserver.++etc++entity-catalog')
 
 			results = list(ent_catalog.searchResults( email=('Jason.madden@nextthought.com','jason.madden@nextthought.com') ))
