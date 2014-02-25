@@ -117,16 +117,21 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
-@repoze.lru.lru_cache(300)
+@repoze.lru.lru_cache(maxsize=1000)
 def _path_intersection(x, y):
 	result = []
-	_limit = min(len(x), len(y))
-	for i in xrange(0, _limit):
+	stop = min(len(x), len(y))
+	for i in xrange(0, stop):
 		if x[i] == y[i]:
 			result.append(x[i])
 		else:
 			break
 	return tuple(result)
+
+@repoze.lru.lru_cache(maxsize=1000, timeout=30)
+def get_ntiid_path(item):
+	result = content_utils.get_ntiid_path(item)
+	return result
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
@@ -155,17 +160,18 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 
 	@classmethod
 	def get_ntiid_path(cls, item):
+		result = ()
 		if isinstance(item, six.string_types):
-			result = content_utils.get_ntiid_path(item)
+			result = get_ntiid_path(item)
 		elif search_interfaces.ISearchHit.providedBy(item):
-			result = content_utils.get_ntiid_path(item.Query.location)
-		else:
-			result = ()
+			result = get_ntiid_path(item.Query.location)
 		return result
 
 	@classmethod
 	def get_containerId(cls, item):
-		result = getattr(item, 'ContainerId', None)
+		result = None
+		if search_interfaces.ISearchHit.providedBy(item):
+			result = item.ContainerId
 		return result
 
 	@classmethod
