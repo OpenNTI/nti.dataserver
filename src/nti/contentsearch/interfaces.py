@@ -867,8 +867,8 @@ class SearchCompletedEvent(component.interfaces.ObjectEvent):
 
 	@property
 	def query(self):
-		return self.result.Query
+		return self.results.Query
 
 	@property
 	def metadata(self):
-		return getattr(self.result, 'HitMetaData', None)
+		return getattr(self.results, 'HitMetaData', None)
