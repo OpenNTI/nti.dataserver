@@ -16,6 +16,8 @@ from zope import interface
 
 import repoze.lru
 
+from nti.ntiids import ntiids
+
 from . import common
 from . import content_utils
 from . import interfaces as search_interfaces
@@ -161,7 +163,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_ntiid_path(cls, item):
 		result = ()
-		if isinstance(item, six.string_types):
+		if 	isinstance(item, six.string_types) and \
+			not ntiids.is_ntiid_of_type(item, ntiids.TYPE_OID):
 			result = get_ntiid_path(item)
 		elif search_interfaces.ISearchHit.providedBy(item):
 			result = get_ntiid_path(item.Query.location)
