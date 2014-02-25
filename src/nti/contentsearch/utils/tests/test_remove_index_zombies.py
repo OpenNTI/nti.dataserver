@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import nti.dataserver
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+
+import unittest
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 
 from nti.ntiids.ntiids import make_ntiid
 
-import nti.contentsearch
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.utils import _repoze_utils as rpz_utils
 from nti.contentsearch.utils import nti_remove_index_zombies as nti_riz
@@ -23,13 +27,11 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.contentsearch.tests import zanpakuto_commands
 
-from nti.testing.base import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (is_, has_length, assert_that)
+class TestReindexUserContent(unittest.TestCase):
 
-class TestReindexUserContent(ConfiguringTestBase):
-
-	set_up_packages = (nti.dataserver, nti.contentsearch)
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds

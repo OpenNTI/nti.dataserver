@@ -16,8 +16,8 @@ from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 
 import time
-import shutil
 import tempfile
+import unittest
 from datetime import datetime
 
 from nti.ntiids.ntiids import make_ntiid
@@ -35,9 +35,79 @@ from ..whoosh_schemas import create_video_transcript_schema
 from ..constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
 
 from . import zanpakuto_commands
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestWhooshContentSearcher(ConfiguringTestBase):
+def setUpIndexes(test):
+	test.now = time.time()
+	baseindexname = 'bleach'
+	test.idx_dir = tempfile.mkdtemp(dir="/tmp")
+
+	# create file schemas
+	factories = (('', create_book_schema),
+				 (constants.vtrans_prefix, create_video_transcript_schema),
+				 (constants.nticard_prefix, create_nti_card_schema))
+
+	for postfix, func in factories:
+		indexname = postfix + baseindexname
+		_ , test.storage = create_directory_index(indexname, func(), test.idx_dir)
+
+	# create content manager
+	test.bim = WhooshContentSearcher(baseindexname, storage=test.storage)
+
+	# add book entries
+	writer = test.bim.get_index(baseindexname).writer()
+	for k, x in enumerate(zanpakuto_commands):
+		writer.add_document(ntiid=unicode(make_ntiid(provider=str(k),
+													 nttype='bleach',
+													 specific='manga')),
+							title=unicode(x),
+							content=unicode(x),
+							quick=unicode(x),
+							related=u'',
+							last_modified=datetime.fromtimestamp(test.now))
+	writer.commit()
+
+	# add video entries
+	writer = test.bim.get_index('vtrans_%s' % baseindexname).writer()
+	for e, x in test.episodes:
+		writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo',
+														   nttype='bleach',
+														   specific='manga')),
+							videoId=unicode(make_ntiid(provider='bleachget',
+													   nttype='bleach',
+													   specific=e)),
+							content=x,
+							quick=x,
+							title=unicode(e),
+							start_timestamp=videotimestamp_to_datetime(u'00:00:01,630'),
+							end_timestamp=videotimestamp_to_datetime('00:00:22,780'),
+							last_modified=datetime.fromtimestamp(test.now))
+	writer.commit()
+
+	# add nticard entries
+	writer = test.bim.get_index('nticard_%s' % baseindexname).writer()
+	for e, x in test.nticards:
+		writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo',
+														   nttype='bleach',
+														   specific='manga')),
+							ntiid=unicode(make_ntiid(provider='bleachget',
+													 nttype='bleach',
+													 specific=e)),
+							type=u'summary',
+							content=x,
+							quick=x,
+							title=e,
+							creator=u'tite kubo',
+							href=u'http://www.bleachget.com',
+							target_ntiid=unicode(make_ntiid(provider='tite_kubo',
+														    nttype='bleach',
+														    specific='episodes')),
+							last_modified=datetime.fromtimestamp(test.now))
+	writer.commit()
+
+class TestWhooshContentSearcher(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	episodes = ((u'e365', u'Secret of the Substitute Badge'),
 				(u'e007', u'Greetings from a Stuffed Toy'))
@@ -45,69 +115,9 @@ class TestWhooshContentSearcher(ConfiguringTestBase):
 	nticards = ((u'c001', u'Xcution attacks Ginjo'),
 				(u'c002', u'Fullbring, The Detested Power'))
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestWhooshContentSearcher, cls).setUpClass()
-		cls.now = time.time()
-		baseindexname = 'bleach'
-		cls.idx_dir = tempfile.mkdtemp(dir="/tmp")
-
-		# create file schemas
-		factories = (('', create_book_schema),
-					 (constants.vtrans_prefix, create_video_transcript_schema),
-					 (constants.nticard_prefix, create_nti_card_schema))
-
-		for postfix, func in factories:
-			indexname = postfix + baseindexname
-			_ , cls.storage = create_directory_index(indexname, func(), cls.idx_dir)
-
-		# create content manager
-		cls.bim = WhooshContentSearcher(baseindexname, storage=cls.storage)
-
-		# add book entries
-		writer = cls.bim.get_index(baseindexname).writer()
-		for k, x in enumerate(zanpakuto_commands):
-			writer.add_document(ntiid=unicode(make_ntiid(provider=str(k), nttype='bleach', specific='manga')),
-								title=unicode(x),
-								content=unicode(x),
-								quick=unicode(x),
-								related=u'',
-								last_modified=datetime.fromtimestamp(cls.now))
-		writer.commit()
-
-		# add video entries
-		writer = cls.bim.get_index('vtrans_%s' % baseindexname).writer()
-		for e, x in cls.episodes:
-			writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='manga')),
-								videoId=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
-								content=x,
-								quick=x,
-								title=unicode(e),
-								start_timestamp=videotimestamp_to_datetime(u'00:00:01,630'),
-								end_timestamp=videotimestamp_to_datetime('00:00:22,780'),
-								last_modified=datetime.fromtimestamp(cls.now))
-		writer.commit()
-
-		# add nticard entries
-		writer = cls.bim.get_index('nticard_%s' % baseindexname).writer()
-		for e, x in cls.nticards:
-			writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='manga')),
-								ntiid=unicode(make_ntiid(provider='bleachget', nttype='bleach', specific=e)),
-								type=u'summary',
-								content=x,
-								quick=x,
-								title=e,
-								creator=u'tite kubo',
-								href=u'http://www.bleachget.com',
-								target_ntiid=unicode(make_ntiid(provider='tite_kubo', nttype='bleach', specific='episodes')),
-								last_modified=datetime.fromtimestamp(cls.now))
-		writer.commit()
-
-	@classmethod
-	def tearDownClass(cls):
-		cls.bim.close()
-		shutil.rmtree(cls.idx_dir, True)
-		super(TestWhooshContentSearcher, cls).tearDownClass()
+	def setUp(self):
+		if not hasattr(self, 'bim'):
+			setUpIndexes(self)
 
 	def test_search(self):
 		hits = toExternalObject(self.bim.search("shield"))
