@@ -5,13 +5,15 @@ Defines the interfaces that make up the contract of this package.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from zope import interface
+logger = __import__('logging').getLogger(__name__)
+
 from zope import schema
+from zope import interface
 
 from nti.utils.schema import IndexedIterable as TypedIterable
-
 
 class IRepresentableContentUnit(interface.Interface):
 	"""

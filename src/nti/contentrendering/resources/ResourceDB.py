@@ -3,30 +3,28 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-logger = __import__( 'logging' ).getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
-import os,  codecs
+import os
+import codecs
+from collections import defaultdict
 from copy import deepcopy as _clone
-
-
-from zope import interface
-from zope import component
 
 try:
 	import cPickle as mPickle
 except ImportError:
 	import pickle as mPickle
 
+from zope import interface
+from zope import component
 
-
-from collections import defaultdict
-
+from . import interfaces
+from ._util import digester, copy
 from .resourcetypeoverrides import ResourceTypeOverrides, normalize_source
 from .contentunitrepresentations import ContentUnitRepresentations
-from ._util import digester, copy
-from . import interfaces
 
 class ResourceDB(object):
 	"""

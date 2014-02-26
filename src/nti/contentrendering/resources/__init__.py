@@ -5,20 +5,17 @@ of portions of a document (such as images and math expressions).
 
 $Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
-
-import logging
-logger = logging.getLogger(__name__)
-
-
+logger = __import__('logging').getLogger(__name__)
 
 from zope.deprecation import deprecated
 
+import zope.dottedname.resolve as dottedname
+
 from plasTeX.Filenames import Filenames
 from plasTeX.Imagers import WorkingFile
-
-import zope.dottedname.resolve as dottedname
 
 # try:
 # 	import Image as PILImage
@@ -38,13 +35,11 @@ def _set_default_resource_types():
 								   interfaces.IRepresentationPreferences )
 		cls.resourceTypes = types
 
-
-	Arrays = dottedname.resolve( 'plasTeX.Base.Arrays' )
-
-#	tabularTypes = ('png', 'svg')
-#	_implement( Arrays.tabular, tabularTypes )
-#	_implement( Arrays.TabularStar, tabularTypes )
-#	_implement( Arrays.tabularx, tabularTypes )
+#  	Arrays = dottedname.resolve('plasTeX.Base.Arrays')
+# 	tabularTypes = ('png', 'svg')
+# 	_implement(Arrays.tabular, tabularTypes)
+# 	_implement(Arrays.TabularStar, tabularTypes)
+# 	_implement(Arrays.tabularx, tabularTypes)
 
 	Boxes = dottedname.resolve( 'plasTeX.Base.Boxes' )
 
@@ -73,6 +68,7 @@ def _set_default_resource_types():
 	_implement( includegraphics, ('png',) )
 
 	from plasTeX.Packages import amsmath
+
 	# TODO: Many of these are probably unnecessary as they share
 	# common superclasses
 	_implement( amsmath.align, displayMathTypes )
@@ -94,8 +90,6 @@ def _set_default_resource_types():
 	import sys
 	sys.modules['graphicx'] = sys.modules['nti.contentrendering.plastexpackages.graphicx']
 
-
-
 # While import side-effects are usually bad, setting up the default
 # resource types is required to make this package actually work, and
 # is extremely unlikely to cause any conflicts or difficulty
@@ -113,9 +107,8 @@ class Resource(object):
 	def __str__(self):
 		return '%s' % self.path
 
-
 from .contentunitrepresentations import ContentUnitRepresentations
 from .contentunitrepresentations import ResourceRepresentations
 
 ResourceSet = ResourceRepresentations
-deprecated( 'ResourceSet', 'Prefer the name ResourceRepresentations')
+deprecated('ResourceSet', 'Prefer the name ResourceRepresentations')

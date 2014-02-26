@@ -7,21 +7,21 @@ A resource converter to create MathXML.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import codecs
 import os
 import sys
-
+import codecs
 
 import xml.sax
-from xml.sax.xmlreader import InputSource
 from xml.dom import minidom
-#from plasTeX.Imagers import *
+from xml.sax.xmlreader import InputSource
 
 import nti.contentrendering.resources as resources
+
 from . import converters
 
 def findfile(path):
@@ -96,4 +96,4 @@ ResourceGenerator = TTMBatchConverter
 ResourceSetGenerator = XMLMathCompilerDriver
 
 from zope.deprecation import deprecated
-deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )
+deprecated(['ResourceGenerator', 'ResourceSetGenerator'], 'Prefer the new names in this module')

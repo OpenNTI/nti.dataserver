@@ -7,7 +7,8 @@ A resource converter the copies a resource into the resource system with no cove
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -15,11 +16,10 @@ import os
 import tempfile
 
 import nti.contentrendering.resources as resources
-
 from nti.contentrendering.jsonpbuilder import _JSONPWrapper
-from . import converters
-from ._util import copy
 
+from ._util import copy
+from . import converters
 
 _RESOURCE_TYPE = 'jsonp'
 
@@ -54,12 +54,12 @@ class JSONPBatchConverterDriver(object):
 		return [plain, jsonp]
 
 	def convert_batch(self, content_units):	
-		# Here we need to convert the incoming blog to jsonp and write both versions to the resource folder.
+		# Here we need to convert the incoming blog to jsonp and write both versions to
+		# the resource folder.
 		resources = []
 		for unit in content_units:
 			resources.extend(self._convert_unit(unit))
 		return resources
-
 
 class JSONPBatchConverter(converters.AbstractContentUnitRepresentationBatchConverter):
 	"""
@@ -75,4 +75,4 @@ ResourceGenerator = JSONPBatchConverter
 ResourceSetGenerator = JSONPBatchConverterDriver
 
 from zope.deprecation import deprecated
-deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )
+deprecated(['ResourceGenerator', 'ResourceSetGenerator'], 'Prefer the new names in this module')
