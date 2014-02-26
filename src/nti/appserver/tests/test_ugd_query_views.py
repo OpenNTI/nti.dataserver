@@ -1158,6 +1158,64 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_reply_to_me(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			# Note that we index normalized to the minute, so we need to give
+			# these substantially different created times
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n_containerId = top_n.containerId = u'tag:nti:foo'
+			top_n.body = ("Top",)
+			top_n.createdTime = 100
+			user.addContainedObject( top_n )
+			top_n_id = top_n.id
+			top_n.lastModified = 1
+
+			reply_n = contenttypes.Note()
+			reply_n.applicableRange = contentrange.ContentRangeDescription()
+			reply_n.containerId = u'tag:nti:foo'
+			reply_n.body = ('Reply',)
+			reply_n.inReplyTo = top_n
+			reply_n.addReference(top_n)
+			reply_n.createdTime = 200
+			jason.addContainedObject( reply_n )
+
+
+			reply_ext_ntiid = to_external_ntiid_oid( reply_n )
+
+			reply_n = contenttypes.Note()
+			reply_n.applicableRange = contentrange.ContentRangeDescription()
+			reply_n.containerId = u'tag:nti:foo'
+			reply_n.body = ('Reply2',)
+			reply_n.inReplyTo = top_n
+			reply_n.addReference(top_n)
+			reply_n.createdTime = 300
+			jason.addContainedObject( reply_n )
+
+			reply2_ext_ntiid = to_external_ntiid_oid( reply_n )
+
+		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 2))
+		assert_that( res.json_body, has_entry( 'Items', has_length(2) ))
+		# They are sorted descending by time by default
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('NTIID', reply2_ext_ntiid),
+														has_entry('NTIID', reply_ext_ntiid))))
+
+		# We can sort ascending if we want
+		res = self.testapp.get(path, params={'sortOrder': 'ascending'})
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('NTIID', reply_ext_ntiid),
+														has_entry('NTIID', reply2_ext_ntiid))))
+
 from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
 

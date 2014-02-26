@@ -91,7 +91,7 @@ class TestMetadataIndex(DataserverLayerTest):
 		for query in ( {'repliesToCreator': {'any_of':
 											 ('greg.higgins@nextthought.com',)}},
 					   {'containerId': {'any_of':
-										('foo:bar',)}},
+										(note.containerId,)}},
 					   {'creator': {'any_of':
 									('jason.madden@nextthought.com',),},
 						'mimeType': {'any_of':
@@ -119,7 +119,7 @@ class TestMetadataIndex(DataserverLayerTest):
 		for query in ( {'repliesToCreator': {'any_of':
 											 ('greg.higgins@nextthought.com',)}},
 					   {'containerId': {'any_of':
-										('other:container',)}},
+										(root_note.containerId,)}},
 					   {'creator': {'any_of':
 									('greg.higgins@nextthought.com',),},
 						'mimeType': {'any_of':
@@ -127,6 +127,33 @@ class TestMetadataIndex(DataserverLayerTest):
 					   {'sharedWith': {'all_of':
 									   ('greg.higgins@nextthought.com',)}},
 					   {'topics': 'topLevelContent'}):
+			__traceback_info__ = query
+			results = list(catalog.searchResults(**query))
+
+			__traceback_info__ = query, [(type(x), getattr(x, 'creator', None)) for x in results]
+			assert_that( results, is_empty() )
+
+	@WithMockDSTrans
+	def test_deleting_note(self):
+		greg, jason, root_note, note, catalog = self._fixture()
+
+		self._check_catalog( catalog, note, root_note )
+
+		# Now delete root creator
+		jason.deleteContainedObject( note.containerId, note.id )
+
+
+		for query in ( {'repliesToCreator': {'any_of':
+											 ('greg.higgins@nextthought.com',)}},
+					   {'containerId': {'any_of':
+										(note.containerId,)}},
+					   {'creator': {'any_of':
+									('jason.madden@nextthought.com',),},
+						'mimeType': {'any_of':
+									 ('application/vnd.nextthought.note',)}},
+					   {'sharedWith': {'all_of':
+									   ('greg.higgins@nextthought.com',)}},
+					   ):
 			__traceback_info__ = query
 			results = list(catalog.searchResults(**query))
 

@@ -626,7 +626,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView,
 					try:
 						return x.isSharedWith(remote_user) # TODO: Might need to OR this with is_readable?
 					except AttributeError:
-						return is_readable(x)
+						return is_readable(x, self.request)
 			predicate = security_check
 		return needs_security, predicate
 
@@ -934,8 +934,10 @@ class _RecursiveUGDView(_UGDView):
 		return containers
 
 	def _filter_inaccessible_object(self, obj):
-		# HACK FOR ACL community topics. Make sure the object
-		# can be read (along w/ its parent) before being returned
+		# XXX HACK FOR "ACL" community topics. Make sure the object
+		# can be read (along w/ its parent) before being returned.
+		# Note that this completely discards what at ACL is supposed to mean
+		# XXX cf forums.views
 		# TODO: Remove hack
 		if 	nti_interfaces.IStreamChangeEvent.providedBy(obj) and \
 			(for_interfaces.ICommunityHeadlineTopic.providedBy(obj.object) or \
@@ -1137,6 +1139,78 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += page_data
 		all_data += stream_data
 		return all_data
+
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+from zope.catalog.interfaces import ICatalog
+from zope.catalog.catalog import ResultSet
+
+
+@interface.implementer(INamedLinkView)
+class _NotableRecursiveUGDView(_UGDView):
+	"""
+	A view of things that might be of interest to the remote user.
+	This definition is fixed by the server, so client-applied filters
+	are not supported. This view is intended to be used for \"notifications\"
+	or as a special type of \"stream\", so sorting is also defined by the server
+	as lastModified/descending (newest first) (although you can set ``sortOrder``
+	to ``ascending``).
+
+	Notable objects include:
+
+	* Direct replies to :class:`.IThreadable` objects I created;
+
+	* Objects directly shared to me;
+
+	* Top-level objects created by certain people (people that are returned
+		from subscription adapters to :class:`.IXXXXX`)
+	"""
+
+	# We inherit from _UGDView to pick up some useful functions, but
+	# we don't actually use much of it. In particular, we answer all
+	# of our queries with the catalog.
+
+	_support_cross_user = False
+
+	# Default to paging us
+	_DEFAULT_BATCH_SIZE = 100
+	_DEFAULT_BATCH_START = 0
+
+	def __call__( self ):
+		self.check_cross_user()
+		# pre-flight the batch
+		batch_size, batch_start = self._get_batch_size_start()
+		limit = batch_start + batch_size + 2
+
+		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		if catalog is None:
+			raise hexc.HTTPNotFound("No catalog")
+
+		# TODO: See about optimizing this query plan. ZCatalog has a
+		# CatalogPlanner object that we might could use.
+		result = {}
+		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
+		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
+		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+
+		# Notice right now, no security checks. by definition this set of objects
+		# is viewable by me
+
+		matching_intids = catalog.family.IF.union(intids_shared_to_me, intids_replied_to_me)
+		# Make sure none of the stuff we created got in
+		matching_intids = catalog.family.IF.difference(matching_intids, intids_created_by_me)
+
+		result['TotalItemCount'] = len(matching_intids)
+		sorted_intids = list(catalog['createdTime'].sort(matching_intids,
+														 limit=limit,
+														 reverse=self.request.params.get('sortOrder') != 'ascending'))
+		uidutil = component.getUtility(IIntIds)
+		items = ResultSet(sorted_intids, uidutil)
+		self._batch_tuple_iterable(result, items,
+								   number_items_needed=limit,
+								   batch_size=batch_size,
+								   batch_start=batch_start,
+								   selector=lambda x: x)
+		return result
 
 #: The link relationship type that can be used
 #: to get all the visible replies to a Note
