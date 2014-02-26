@@ -163,7 +163,7 @@
 	<utility factory=".search_comparators._ScoreSearchHitComparator" name="score" />
 	<utility factory=".search_comparators._CreatorSearchHitComparator" name="creator" />
 	<utility factory=".search_comparators._RelevanceSearchHitComparator" name="relevance" />
-	<utility factory=".search_comparators._LastModifiedSearchHitComparator" name="last_modified" />
+	<utility factory=".search_comparators._LastModifiedSearchHitComparator" name="lastModified" />
 	
 	<!-- Search hit subscribers -->
 	
