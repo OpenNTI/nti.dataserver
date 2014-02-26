@@ -1175,8 +1175,6 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 			top_n.body = ("Top",)
 			top_n.createdTime = 100
 			user.addContainedObject( top_n )
-			top_n_id = top_n.id
-			top_n.lastModified = 1
 
 			reply_n = contenttypes.Note()
 			reply_n.applicableRange = contentrange.ContentRangeDescription()
@@ -1215,6 +1213,61 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID', reply_ext_ntiid),
 														has_entry('NTIID', reply2_ext_ntiid))))
+
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_top_level_shared_directl_to_me(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			# Note that we index normalized to the minute, so we need to give
+			# these substantially different created times
+
+			# Create two top level notes, one shared to me and one not,
+			# as well as a reply to the one shared to me; we should only
+			# find the top-level note shared with me notable
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n.containerId = u'tag:nti:foo'
+			top_n.body = ("Top",)
+			top_n.createdTime = 100
+			jason.addContainedObject( top_n )
+
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n.containerId = u'tag:nti:foo'
+			top_n.body = ("Top2",)
+			top_n.createdTime = 100
+			top_n.addSharingTarget(user)
+			jason.addContainedObject( top_n )
+
+
+			reply_n = contenttypes.Note()
+			reply_n.applicableRange = contentrange.ContentRangeDescription()
+			reply_n.containerId = u'tag:nti:foo'
+			reply_n.body = ('Reply',)
+			reply_n.inReplyTo = top_n
+			reply_n.addReference(top_n)
+			reply_n.createdTime = 200
+			reply_n.addSharingTarget(user)
+			jason.addContainedObject( reply_n )
+
+
+			top_ext_ntiid = to_external_ntiid_oid( top_n )
+
+
+		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
+		assert_that( res.json_body, has_entry( 'Items', has_length(1) ))
+		# They are sorted descending by time by default
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('NTIID', top_ext_ntiid))))
+
 
 from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
