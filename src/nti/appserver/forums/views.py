@@ -367,6 +367,8 @@ class ForumGetView(GenericGetView):
 		result = super(ForumGetView, self).__call__()
 		if result is not None:
 			current = result
+			# XXX FIXME: WTF are we doing here?
+			# This is completely bypassing the ACL model.
 			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
 				readable = is_readable(current, skip_cache=True)
 				current = getattr(current, '__parent__', None)
@@ -470,12 +472,24 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 				**_r_view_defaults )
 class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
-	Adds support for sorting by ``NewestDescendantCreatedTime`` of the individual topics,
-	and makes sure that the Last Modified time reflects that value.
+	Adds support for sorting by ``NewestDescendantCreatedTime`` of the
+	individual topics, and makes sure that the Last Modified time
+	reflects that value.
+
+	Parameters:
+
+	sortOn
+		Adds ``NewestDescendantCreatedTime`` and ``PostCount``
+
+	searchTerm
+		An extremely expensive way to search because it requires
+		fetching all the objects from the database. Why not just
+		do a real search?
 	"""
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
 	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
+	SORT_KEYS['PostCount'] = operator.attrgetter('PostCount')
 
 	def _get_topic_content(self, topic):
 		# process the post
