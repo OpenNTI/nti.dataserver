@@ -120,6 +120,16 @@ class NonDevmodeButAnySiteApplicationTestLayer(NonDevmodeApplicationTestLayer):
 		from nti.appserver.tweens.zope_site_tween import _ProductionMissingSitePolicy
 		component.getGlobalSiteManager().registerUtility(_ProductionMissingSitePolicy)
 
+	@classmethod
+	def testSetUp( cls ):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		# Must implement
+		pass
+
+
 class TestApplicationNonDevmode(NonDevmodeApplicationLayerTest):
 
 
@@ -1564,7 +1574,8 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 
 import nti.appserver._util
 
-def test_dump_stacks():
-	seq = nti.appserver._util.dump_stacks()
+class TestUtil(unittest.TestCase):
+	def test_dump_stacks(self):
+		seq = nti.appserver._util.dump_stacks()
 
-	assert_that( seq, has_item( contains_string( 'dump_stacks' ) ) )
+		assert_that( seq, has_item( contains_string( 'dump_stacks' ) ) )

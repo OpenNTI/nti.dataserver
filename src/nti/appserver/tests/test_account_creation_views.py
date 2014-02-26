@@ -371,7 +371,9 @@ class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 		new_user = self.the_view( self.request )
 		# XXX: We've gone back and forth on asserting whether this should
 		# be 0 or 24. 0 actually doesn't make any sense to me, but it was the original
-		# value
+		# value.
+		# We get 0 in nose or nose2, but 24 in the zope testrunner, so there's
+		# some difference in the way layers are being handled
 		assert_that( new_user, has_entry( 'AvatarURLChoices', has_length( 0 ) ) )
 
 		self.request.body = to_json_representation( {'Username': 'jason@example',

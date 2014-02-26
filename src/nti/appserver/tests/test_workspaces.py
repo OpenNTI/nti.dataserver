@@ -46,16 +46,11 @@ from persistent import Persistent
 import transaction
 
 
-import nti.testing.base
-
-
 # Must create the application so that the views
 # are registered, since we depend on those
 # registrations to generate links.
 # TODO: Break this dep.
 from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.app.testing.webtest import TestApp
 
 
 class TestContainerEnumerationWorkspace(ApplicationLayerTest):
@@ -424,7 +419,6 @@ from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 class TestFriendsListContainerCollection(DataserverLayerTest,tests.TestBaseMixin):
-	set_up_packages = ('nti.dataserver',)
 
 	@mock_dataserver.WithMockDSTrans
 	def test_container_with_dfl_memberships(self):
