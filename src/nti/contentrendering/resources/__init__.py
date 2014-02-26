@@ -41,10 +41,10 @@ def _set_default_resource_types():
 
 	Arrays = dottedname.resolve( 'plasTeX.Base.Arrays' )
 
-	tabularTypes = ('png', 'svg')
-	_implement( Arrays.tabular, tabularTypes )
-	_implement( Arrays.TabularStar, tabularTypes )
-	_implement( Arrays.tabularx, tabularTypes )
+#	tabularTypes = ('png', 'svg')
+#	_implement( Arrays.tabular, tabularTypes )
+#	_implement( Arrays.TabularStar, tabularTypes )
+#	_implement( Arrays.tabularx, tabularTypes )
 
 	Boxes = dottedname.resolve( 'plasTeX.Base.Boxes' )
 
