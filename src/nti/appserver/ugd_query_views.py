@@ -1159,7 +1159,7 @@ class _NotableRecursiveUGDView(_UGDView):
 
 	* Direct replies to :class:`.IThreadable` objects I created;
 
-	* Objects directly shared to me;
+	* Top-level objects directly shared to me;
 
 	* Top-level objects created by certain people (people that are returned
 		from subscription adapters to :class:`.IXXXXX`)
@@ -1189,13 +1189,15 @@ class _NotableRecursiveUGDView(_UGDView):
 		# CatalogPlanner object that we might could use.
 		result = {}
 		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
+		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
+		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
 
 		# Notice right now, no security checks. by definition this set of objects
 		# is viewable by me
 
-		matching_intids = catalog.family.IF.union(intids_shared_to_me, intids_replied_to_me)
+		matching_intids = catalog.family.IF.union(toplevel_intids_shared_to_me, intids_replied_to_me)
 		# Make sure none of the stuff we created got in
 		matching_intids = catalog.family.IF.difference(matching_intids, intids_created_by_me)
 
