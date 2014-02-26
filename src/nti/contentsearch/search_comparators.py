@@ -105,8 +105,8 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 
 	@classmethod
 	def compare_creator(cls, a, b):
-		a_creator = a.Creator or u''
-		b_creator = b.Creator or u''
+		a_creator = a.Creator
+		b_creator = b.Creator
 		result = cmp(a_creator.lower(), b_creator.lower())
 		return result
 

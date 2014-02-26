@@ -74,7 +74,8 @@ class BaseSearchHit(object):
 	Score = lastModified = 0
 
 	Fragments = TargetMimeType = ContainerId = None
-	Type = NTIID = Query = Creator = Snippet = None
+	Type = NTIID = Query = Snippet = None
+	Creator = nti_interfaces.SYSTEM_USER_NAME
 
 	createdTime = alias('lastModified')
 
