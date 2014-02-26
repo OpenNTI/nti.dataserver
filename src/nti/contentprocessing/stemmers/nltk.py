@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-ZOPYX based stemmers
+NLTK based stemmers
 
 $Id$
 """
@@ -9,21 +10,21 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
+import nltk
 
-from zopyx.txng3.ext import stemmer
+from zope import interface
 
 from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
-class ZopyYXStemmer(object):
+class _PorterStemmer(object):
 
     __slots__ = ('stemmer',)
 
-    def __init__(self, language='english'):
-        self.stemmer = stemmer.Stemmer(language)
+    def __init__(self):
+        self.stemmer = nltk.PorterStemmer()
 
     def stem(self, token):
         token = unicode(token)
-        result = self.stemmer.stem((token,))
-        return result[0] if result else token
+        result = self.stemmer.stem(token)
+        return result if result else token

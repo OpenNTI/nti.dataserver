@@ -1,34 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import assert_that
+
 import os
 import unittest
 
-from .._alchemy import _AlchemyLanguage
-from .._alchemy import _AlchemyTextLanguageDectector
+from ..alchemy import _AlchemyLanguage
+from ..alchemy import _AlchemyTextLanguageDectector
 
-from . import ConfiguringTestBase
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_, is_not, none)
+class TestAlchemyLangDetector(unittest.TestCase):
 
-class TestAlchemyLangDetector(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestAlchemyLangDetector, cls).setUpClass()
+	@property
+	def sample_en(self):
 		name = os.path.join(os.path.dirname(__file__), 'sample_en.txt')
 		with open(name, "r") as f:
-			cls.sample_content_en = f.read()
+			return f.read()
 
 	@unittest.SkipTest
 	def test_alchemy_detector(self):
-		lang = _AlchemyTextLanguageDectector()(self.sample_content_en, "NTI-TEST")
+		lang = _AlchemyTextLanguageDectector()(self.sample_en, "NTI-TEST")
 		assert_that(lang, is_not(none()))
 		assert_that(lang.code, is_('en'))
 

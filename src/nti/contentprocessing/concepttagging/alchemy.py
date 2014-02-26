@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Alchemy concept tagging
@@ -15,7 +16,7 @@ import requests
 from zope import component
 from zope import interface
 
-from . import _concept
+from . import concept
 from . import interfaces as cp_interfaces
 from .. import interfaces as tagging_interfaces
 
@@ -38,12 +39,12 @@ def get_ranked_concepts(content, name=u'', **kwargs):
 			text = relevance = None
 			for k, v in entry.items():
 				if k not in ('text', 'relevance'):
-					sources.append(_concept.ConceptSource(k, v))
+					sources.append(concept.ConceptSource(k, v))
 				elif k == 'text':
 					text = v
 				elif v is not None:
 					relevance = float(v)
-			result.append(_concept.Concept(text, relevance, sources))
+			result.append(concept.Concept(text, relevance, sources))
 	else:
 		result = ()
 		logger.error('Invalid request status while getting concept tags from Alchemy')

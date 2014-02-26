@@ -10,15 +10,19 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_not
 from hamcrest import assert_that
 
+import unittest
+
 from zope import component
 
 from nti.contentprocessing.taggers import interfaces
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
 from nti.testing.matchers import verifiably_provides
 
-class TestNLTK(ConfiguringTestBase):
+class TestNLTK(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	features = () # disable devmode to register the tagger
 

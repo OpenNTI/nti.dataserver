@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Content processing interfaces
@@ -15,51 +16,71 @@ from nti.utils.schema import Object
 from nti.utils.schema import ListOrTuple
 
 class IContentTranslationTable(interface.Interface):
-	"""marker interface for content translationt table"""
+	"""
+	marker interface for content translationt table
+	"""
 
 class IContentTokenizer(interface.Interface):
 
 	def tokenize(data):
-		"""tokenize the specifeid text data"""
+		"""
+		tokenize the specifeid text data
+		"""
 
 class INgramComputer(interface.Interface):
 	minsize = schema.Int(title="Min ngram size.", required=True)
 	maxsize = schema.Int(title="Max ngram size", required=False)
 
 	def compute(text):
-		"""compute the ngrams for the specified text"""
+		"""
+		compute the ngrams for the specified text
+		"""
 
 class IWordSimilarity(interface.Interface):
 
 	def compute(a, b):
-		"""compute a similarity ratio for the specified words"""
+		"""
+		compute a similarity ratio for the specified words
+		"""
 
 	def rank(word, terms, reverse=True):
-		"""return the specified terms based on the distance to the specified word"""
-
+		"""
+		return the specified terms based on the distance to the specified word
+		"""
 
 class IWordTokenizerExpression(interface.Interface):
-	"""marker interface for word tokenizer regular expression"""
+	"""
+	marker interface for word tokenizer regular expression
+	"""
 
 class IWordTokenizerPattern(interface.Interface):
-	"""marker interface for word tokenizer regular expression pattern"""
+	"""
+	marker interface for word tokenizer regular expression pattern
+	"""
 
 class IPunctuationCharExpression(interface.Interface):
-	"""marker interface for punctuation regular expression"""
+	"""
+	marker interface for punctuation regular expression
+	"""
 
 class IPunctuationCharExpressionPlus(interface.Interface):
-	"""marker interface for punctuation + space regular expression"""
+	"""
+	marker interface for punctuation + space regular expression
+	"""
 
 class IPunctuationCharPattern(interface.Interface):
-	"""marker interface for punctuation regular expression pattern"""
+	"""
+	marker interface for punctuation regular expression pattern
+	"""
 
 class IPunctuationCharPatternPlus(interface.Interface):
-	"""marker interface for punctuation + space regular expression pattern"""
+	"""
+	marker interface for punctuation + space regular expression pattern
+	"""
 
 class IAlchemyAPIKey(interface.Interface):
 	name = interface.Attribute("Key name or alias")
 	value = interface.Attribute("The actual key value")
-
 
 ####
 # Metadata extraction
@@ -131,8 +152,8 @@ class IContentMetadataExtractorArgs(interface.Interface):
 	Arguments for extracting content metadata.
 	"""
 
-	stream = interface.Attribute( "A file-like object for reading the content" )
-	bidirectionalstream = interface.Attribute( "A file-like object for reading the content, supports seeking" )
+	stream = interface.Attribute("A file-like object for reading the content")
+	bidirectionalstream = interface.Attribute("A file-like object for reading the content, supports seeking")
 	bytes = interface.Attribute("Raw bytes of the content.")
 	text = interface.Attribute("Decoded text of the content.")
 

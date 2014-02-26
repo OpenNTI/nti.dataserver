@@ -15,23 +15,24 @@ import os
 import unittest
 
 from .. import extract_key_words
-from .._alchemy import _AlchemyAPIKeyWorExtractor
+from ..alchemy import _AlchemyAPIKeyWorExtractor
 
-from ...tests import ConfiguringTestBase
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
-class TestKeyWordExtract(ConfiguringTestBase):
+class TestKeyWordExtract(unittest.TestCase):
 
-	features = ()  # force loading the tagger
+	layer = SharedConfiguringTestLayer
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestKeyWordExtract, cls).setUpClass()
+	# features = ()  # force loading the tagger
+
+	@property
+	def sample(self):
 		name = os.path.join(os.path.dirname(__file__), 'sample.txt')
 		with open(name, "r") as f:
-			cls.sample_content = f.read()
+			return f.read()
 
 	def test_term_extract(self):
-		terms = extract_key_words(self.sample_content)
+		terms = extract_key_words(self.sample)
 		terms = [(r.token, r.frequency, r.strength) for r in terms]
 		assert_that(sorted(terms),
 					is_(sorted([('blood', 4, 1),
@@ -43,7 +44,7 @@ class TestKeyWordExtract(ConfiguringTestBase):
 
 	@unittest.SkipTest
 	def test_alchemy_extract(self):
-		terms = _AlchemyAPIKeyWorExtractor()(self.sample_content, "NTI-TEST")
+		terms = _AlchemyAPIKeyWorExtractor()(self.sample, "NTI-TEST")
 		terms = [(r.token, r.relevance) for r in terms]
 		assert_that(terms, has_length(15))
 		assert_that(terms[0], is_((u'blood cells', 0.998273)))

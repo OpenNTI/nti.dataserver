@@ -11,6 +11,8 @@ from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
 
+import unittest
+
 from zope import component
 
 from nti.contentprocessing.content_utils import rank_words
@@ -20,9 +22,11 @@ from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.content_utils import clean_special_characters
 from nti.contentprocessing.content_utils import get_content_translation_table
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
-class TestContentUtils(ConfiguringTestBase):
+class TestContentUtils(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	sample_words = ("alfa", "bravo", "charlie", "delta", "echo")
 
