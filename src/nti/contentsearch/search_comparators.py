@@ -163,11 +163,11 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_ntiid_path(cls, item):
 		result = ()
-		if 	isinstance(item, six.string_types) and \
-			not ntiids.is_ntiid_of_type(item, ntiids.TYPE_OID):
-			result = get_ntiid_path(item)
-		elif search_interfaces.ISearchHit.providedBy(item):
+		if search_interfaces.ISearchHit.providedBy(item):
 			result = get_ntiid_path(item.Query.location)
+		elif isinstance(item, six.string_types) and item and \
+			 not ntiids.is_ntiid_of_type(item, ntiids.TYPE_OID):
+			result = get_ntiid_path(item)
 		return result
 
 	@classmethod
@@ -181,8 +181,8 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	def compare(cls, a, b):
 		# compare location
 		location_path = cls.get_ntiid_path(a)
-		a_path = content_utils.get_ntiid_path(cls.get_containerId(a))
-		b_path = content_utils.get_ntiid_path(cls.get_containerId(b))
+		a_path = cls.get_ntiid_path(cls.get_containerId(a))
+		b_path = cls.get_ntiid_path(cls.get_containerId(b))
 		a_score_path = cls.score_path(location_path, a_path)
 		b_score_path = cls.score_path(location_path, b_path)
 		result = cmp(b_score_path, a_score_path)
