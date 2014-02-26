@@ -10,16 +10,17 @@ Views
 As mentioned in :doc:`content-resolving`, there are a number of
 different collections of user generated data and ways to access them,
 including directly (``UserGeneratedData``) and recursively
-(``RecursiveUserGeneratedData``), a view of incoming changes only
-(``Stream``) and incomnig changes recursively (``RecursiveStream``),
-plus some optimized combinations of the two
-(``RecursiveUGDAndStreamView``).
+(``RecursiveUserGeneratedData``), only including "notable" items
+(``RUGDByOthersThatIMightBeInterestedIn`` --- only defined for the
+root NTIID) a view of incoming changes only (``Stream``) and incomnig
+changes recursively (``RecursiveStream``), plus some optimized
+combinations of the two (``RecursiveUGDAndStreamView``).
 
 A special view for showing "activity" of a user, which includes
 content-related UGD plus other activity (such as forum/blog activity)
 is found in the
 :class:`nti.appserver.user_activity_views.UserActivityGetView`, which
-is located vias means of a special link relationship.
+is located via means of a special link relationship.
 
 Security
 --------
