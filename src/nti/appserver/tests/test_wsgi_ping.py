@@ -13,13 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
-# from hamcrest import assert_that
-# from hamcrest import is_
-# from hamcrest import has_key
-# from hamcrest import has_entry
-
-# import nti.testing.base
+import unittest
 
 from webtest import TestApp
 
@@ -29,8 +23,10 @@ from nti.app.testing.testing import monkey_patch_check_headers
 # This makes sure it catches headers too
 monkey_patch_check_headers()
 
-def test_ping_returns_bytes():
-	app = wsgi_ping.ping_handler_factory(None)
-	app = TestApp( app )
+class TestPing(unittest.TestCase):
 
-	app.get( '/_ops/ping' )
+	def test_ping_returns_bytes(self):
+		app = wsgi_ping.ping_handler_factory(None)
+		app = TestApp( app )
+
+		app.get( '/_ops/ping' )

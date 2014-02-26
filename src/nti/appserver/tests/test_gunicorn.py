@@ -27,16 +27,15 @@ from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyReq
 from pyramid.request import Request
 from cStringIO import StringIO
 
-import nti.testing.base
-import socket
 import gevent.pool
 from nose.tools import assert_raises
 
 from nti.appserver import gunicorn
-from nti.appserver.gunicorn import _PasterServerApplication
+from gunicorn import config as gconfig
 
 
 import fudge
+
 class MockConfig(object):
 	is_ssl = False # added 0.17.1
 	max_requests = None
@@ -82,11 +81,10 @@ class MockSocket(object):
 	family = 1
 	cfg_addr = ('',8081)
 
-from gunicorn import config as gconfig
 
+from nti.app.testing.layers import AppLayerTest
 
-class TestGeventApplicationWorker(nti.testing.base.SharedConfiguringTestBase):
-	set_up_packages = ('nti.appserver',)
+class TestGeventApplicationWorker(AppLayerTest):
 
 	def test_prefork(self):
 		gunicorn._pre_fork( 1, 2 )

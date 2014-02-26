@@ -11,4 +11,5 @@ class TestApplicationEnclosures(ApplicationLayerTest):
 	# TODO: This used to have tests for modeled content
 	# and file enclosures, but only in Class/Section info objects,
 	# never in other enclosure containers
-	pass
+	def test_zope_testrunner_gets_bitchy_if_the_module_defines_no_test_cases(self):
+		pass

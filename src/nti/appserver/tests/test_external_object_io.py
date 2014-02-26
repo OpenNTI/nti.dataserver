@@ -25,71 +25,70 @@ from hamcrest import contains
 from hamcrest import has_entries
 from nose.tools import assert_raises
 
-import nti.testing.base
+from nti.app.testing.layers import AppLayerTest
 from . import DummyRequest
 
 from nti.appserver import _external_object_io as obj_io
 from nti.appserver import httpexceptions as hexc
 
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=('nti.appserver',) )
-tearDownModule = nti.testing.base.module_teardown
-
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
 from nti.utils import schema
 
-def test_integration_note_body_validation_empty_error_message():
-	n = contenttypes.Note()
-	n.applicableRange = contentrange.ContentRangeDescription()
-	n.containerId = u'tag:nti:foo'
+class TestIO(AppLayerTest):
 
-	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-		obj_io.update_object_from_external_object( n, { 'body': ['',''] }, request=DummyRequest() )
+	def test_integration_note_body_validation_empty_error_message(self):
+		n = contenttypes.Note()
+		n.applicableRange = contentrange.ContentRangeDescription()
+		n.containerId = u'tag:nti:foo'
 
-
-	assert_that( exc.exception.json_body, has_entry( 'field', 'body' ) )
-
-def test_wrong_contained_type():
-
-	class IThing(interface.Interface):
-		__name__ = schema.ValidTextLine(title="The name") # unicode
-
-	@interface.implementer(IThing)
-	class Thing(object):
-		__name__ = b'not-unicode'
-
-	field = schema.UniqueIterable(
-		value_type=schema.Object(IThing, __name__='field'))
-	field.__name__ = 'field'
-
-	# So, a set of things having a unicode __name__
-
-	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-		try:
-			field.validate( set([Thing()]) )
-		except ValidationError as e:
-			obj_io.handle_validation_error( DummyRequest(), e )
-
-	assert_that( exc.exception.json_body, has_entry( 'field', 'field' ) )
-	assert_that( exc.exception.json_body, has_entry( 'suberrors', contains( has_entry( 'suberrors', contains( has_entries( 'declared', 'IThing', 'field', '__name__', 'code', 'WrongType' ) ) ) ) ) )
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			obj_io.update_object_from_external_object( n, { 'body': ['',''] }, request=DummyRequest() )
 
 
-def test_translating_non_unicode_bytes_messages():
+		assert_that( exc.exception.json_body, has_entry( 'field', 'body' ) )
 
-	# This one translates fine
-	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-		try:
-			raise ValidationError( b'abcd' )
-		except ValidationError as e:
-			obj_io.handle_validation_error( DummyRequest(), e )
+	def test_wrong_contained_type(self):
 
-	assert_that( exc.exception.json_body, has_entry( 'message', 'abcd' ) )
+		class IThing(interface.Interface):
+			__name__ = schema.ValidTextLine(title="The name") # unicode
 
-	# This one does not
-	with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
-		try:
-			raise ValidationError( b'abcd\xff' )
-		except ValidationError as e:
-			obj_io.handle_validation_error( DummyRequest(), e )
+		@interface.implementer(IThing)
+		class Thing(object):
+			__name__ = b'not-unicode'
 
-	assert_that( exc.exception.json_body, has_entry( 'message', '' ) )
+		field = schema.UniqueIterable(
+			value_type=schema.Object(IThing, __name__='field'))
+		field.__name__ = 'field'
+
+		# So, a set of things having a unicode __name__
+
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			try:
+				field.validate( set([Thing()]) )
+			except ValidationError as e:
+				obj_io.handle_validation_error( DummyRequest(), e )
+
+		assert_that( exc.exception.json_body, has_entry( 'field', 'field' ) )
+		assert_that( exc.exception.json_body, has_entry( 'suberrors', contains( has_entry( 'suberrors', contains( has_entries( 'declared', 'IThing', 'field', '__name__', 'code', 'WrongType' ) ) ) ) ) )
+
+
+	def test_translating_non_unicode_bytes_messages(self):
+
+		# This one translates fine
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			try:
+				raise ValidationError( b'abcd' )
+			except ValidationError as e:
+				obj_io.handle_validation_error( DummyRequest(), e )
+
+		assert_that( exc.exception.json_body, has_entry( 'message', 'abcd' ) )
+
+		# This one does not
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			try:
+				raise ValidationError( b'abcd\xff' )
+			except ValidationError as e:
+				obj_io.handle_validation_error( DummyRequest(), e )
+
+		assert_that( exc.exception.json_body, has_entry( 'message', '' ) )

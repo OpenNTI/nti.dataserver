@@ -51,3 +51,13 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 		component.provideUtility(cls.__old_library, IContentPackageLibrary)
 
 	# TODO: May need to recreate the application with this library?
+
+	@classmethod
+	def testSetUp(cls):
+		# must implement!
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		# must implement!
+		pass

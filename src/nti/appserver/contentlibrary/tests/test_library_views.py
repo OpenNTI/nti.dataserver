@@ -102,6 +102,14 @@ class _SecurityPolicyNewRequestSharedConfiguringTestLayer(NewRequestSharedConfig
 		if cls.__old_authen:
 			config.registry.registerUtility(cls.__old_authen, IAuthenticationPolicy)
 
+	@classmethod
+	def testSetUp(cls):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		pass
+
 class TestContainerPrefs(NewRequestLayerTest):
 	layer = _SecurityPolicyNewRequestSharedConfiguringTestLayer
 	rem_username = layer.rem_username

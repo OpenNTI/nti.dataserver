@@ -32,81 +32,83 @@ from repoze.who.interfaces import IChallenger, IRequestClassifier
 
 import unittest
 
-def test_non_challenging_challenge():
+class TestMisc(unittest.TestCase):
 
-	challenger = _NonChallengingBasicAuthPlugin('nti')
-	assert_that( challenger, validly_provides(IChallenger) )
+	def test_non_challenging_challenge(self):
 
-	# Challenging produces as 401, but without a WWW-Authenticate header
-	unauth = challenger.challenge( {}, '401', {}, [] )
-	assert_that( unauth.headers, does_not( has_key( 'WWW-Authenticate' ) ) )
-	assert_that( unauth.headers, has_key( 'Content-Type' ) )
+		challenger = _NonChallengingBasicAuthPlugin('nti')
+		assert_that( challenger, validly_provides(IChallenger) )
 
-	# forgetting adds no headers
-	assert_that( challenger.forget( {}, {} ), is_( () ) )
+		# Challenging produces as 401, but without a WWW-Authenticate header
+		unauth = challenger.challenge( {}, '401', {}, [] )
+		assert_that( unauth.headers, does_not( has_key( 'WWW-Authenticate' ) ) )
+		assert_that( unauth.headers, has_key( 'Content-Type' ) )
 
-def test_request_classifier():
+		# forgetting adds no headers
+		assert_that( challenger.forget( {}, {} ), is_( () ) )
 
-	assert_that( _nti_request_classifier, validly_provides(IRequestClassifier) )
+	def test_request_classifier(self):
 
-	# The default
-	environ = {}
-	environ['REQUEST_METHOD'] = 'GET'
+		assert_that( _nti_request_classifier, validly_provides(IRequestClassifier) )
 
-	assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
+		# The default
+		environ = {}
+		environ['REQUEST_METHOD'] = 'GET'
 
-	# XHR
-	environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
-	assert_that( _nti_request_classifier( environ ),
-				 is_( CLASS_BROWSER_APP ) )
-	environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'.upper() # case-insensitive
-	assert_that( _nti_request_classifier( environ ),
-				 is_( CLASS_BROWSER_APP ) )
+		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
 
-	del environ['HTTP_X_REQUESTED_WITH']
+		# XHR
+		environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
+		assert_that( _nti_request_classifier( environ ),
+					 is_( CLASS_BROWSER_APP ) )
+		environ['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'.upper() # case-insensitive
+		assert_that( _nti_request_classifier( environ ),
+					 is_( CLASS_BROWSER_APP ) )
 
-	environ['HTTP_REFERER'] = 'http://foo'
+		del environ['HTTP_X_REQUESTED_WITH']
 
-	# A referrer alone isn't enough
-	assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
+		environ['HTTP_REFERER'] = 'http://foo'
 
-	# Add  a user agent
-	environ['HTTP_USER_AGENT'] = 'Mozilla'
-	__traceback_info__ = environ
-	assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
+		# A referrer alone isn't enough
+		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
 
-	# But a default accept changes back to browser
-	environ['HTTP_ACCEPT'] = '*/*'
-	assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
+		# Add  a user agent
+		environ['HTTP_USER_AGENT'] = 'Mozilla'
+		__traceback_info__ = environ
+		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
-	environ['HTTP_ACCEPT'] = 'text/plain'
-	assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
+		# But a default accept changes back to browser
+		environ['HTTP_ACCEPT'] = '*/*'
+		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
 
-def test_decode_bad_auth():
-	req = Request.blank('/')
+		environ['HTTP_ACCEPT'] = 'text/plain'
+		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
-	# blank password
-	req.authorization = ('Basic', 'username:'.encode('base64') )
+	def test_decode_bad_auth(self):
+		req = Request.blank('/')
 
-	username, password = _decode_username_request( req )
+		# blank password
+		req.authorization = ('Basic', 'username:'.encode('base64') )
 
-	assert_that( username, is_( 'username' ) )
-	assert_that( password, is_( '' ) )
+		username, password = _decode_username_request( req )
 
-	# malformed header
-	req.authorization = ('Basic', 'username'.encode('base64') )
+		assert_that( username, is_( 'username' ) )
+		assert_that( password, is_( '' ) )
 
-	username, password = _decode_username_request( req )
+		# malformed header
+		req.authorization = ('Basic', 'username'.encode('base64') )
 
-	assert_that( username, is_( none() ) )
-	assert_that( password, is_( none() ) )
+		username, password = _decode_username_request( req )
 
-	# blank username
-	req.authorization = ('Basic', ':foo'.encode('base64') )
-	username, password = _decode_username_request( req )
+		assert_that( username, is_( none() ) )
+		assert_that( password, is_( none() ) )
 
-	assert_that( username, is_( '' ) )
-	assert_that( password, is_( 'foo' ) )
+		# blank username
+		req.authorization = ('Basic', ':foo'.encode('base64') )
+		username, password = _decode_username_request( req )
+
+		assert_that( username, is_( '' ) )
+		assert_that( password, is_( 'foo' ) )
 
 
 from ..pyramid_auth import _KnownUrlTokenBasedAuthenticator
