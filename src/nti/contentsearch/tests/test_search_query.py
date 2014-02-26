@@ -14,7 +14,11 @@ import unittest
 
 from ..search_query import QueryObject
 
+from . import SharedConfiguringTestLayer
+
 class TestSearchQuery(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def test_queryobject_ctor(self):
 		qo = QueryObject(term=u'term')

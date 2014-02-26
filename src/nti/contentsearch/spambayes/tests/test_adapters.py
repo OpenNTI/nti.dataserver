@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
+
 import unittest
 
 from nti.dataserver.users import User
@@ -11,12 +23,12 @@ from nti.contentsearch.spambayes.interfaces import ISpamClassifier
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+from nti.contentsearch.spambayes.tests import SharedConfiguringTestLayer
 
-from hamcrest import (is_, assert_that)
-
-class TestAdapters(ConfiguringTestBase):
+class TestAdapters(unittest.TestCase):
 		
+	layer = SharedConfiguringTestLayer
+
 	@WithMockDSTrans
 	def test_user_classifer(self):
 		ds = mock_dataserver.current_mock_ds
@@ -44,6 +56,4 @@ class TestAdapters(ConfiguringTestBase):
 		
 		manager.unmark_spam(note)
 		assert_that(manager.is_spam(note), is_(False))
-		
-if __name__ == '__main__':
-	unittest.main()
+

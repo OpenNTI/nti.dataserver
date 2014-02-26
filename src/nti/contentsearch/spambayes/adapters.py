@@ -4,8 +4,10 @@ Spambayes object adapters
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
@@ -18,11 +20,11 @@ from zope import component
 from zope import interface
 from zope.annotation import factory as an_factory
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.contentfragments import interfaces as frg_interfaces
 
-from .. import interfaces as cts_interfaces
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.contentsearch import interfaces as cts_interfaces
 
 from .storage import PersistentClassifier
 from . import interfaces as sps_interfaces
@@ -67,7 +69,8 @@ class _EnitySpamManager(_EntitySpamClassifier):
 			result = adapted.get_content() if adapted is not None else None
 
 		if result:
-			result = component.getAdapter(result, frg_interfaces.IPlainTextContentFragment, name='text')
+			result = component.getAdapter(result, frg_interfaces.IPlainTextContentFragment,
+										  name='text')
 		return result
 
 	def is_marked(self, obj):

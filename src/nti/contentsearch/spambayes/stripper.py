@@ -4,8 +4,10 @@ Spambayes text parsing routines
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 
@@ -240,7 +242,8 @@ breaking_entity_re = re.compile(r"""
     >
 """, re.VERBOSE)
 
-word_re = re.compile("(?x)(?:[A-Z]\\.)+ | \\$?\\d+(?:\\.\\d+)?%? | \\w+(?:[-']\\w+)*", re.MULTILINE | re.DOTALL | re.UNICODE)
+word_re = re.compile("(?x)(?:[A-Z]\\.)+ | \\$?\\d+(?:\\.\\d+)?%? | \\w+(?:[-']\\w+)*",
+					 re.MULTILINE | re.DOTALL | re.UNICODE)
 
 @interface.implementer(cp_interfaces.IContentTranslationTable)
 def _default_translation_table():
