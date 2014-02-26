@@ -146,7 +146,7 @@ def can_create(obj, request=None, skip_cache=False):
 	Can the current user create over the specified object? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_writable_cache', ACT_CREATE, obj, request, skip_cache=skip_cache)
+	return _caching_permission_check('_acl_is_creatable_cache', ACT_CREATE, obj, request, skip_cache=skip_cache)
 
 def is_writable(obj, request=None, skip_cache=False):
 	"""
@@ -175,8 +175,9 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 	# during the course of a single request due to authentication (used when broadcasting events)
 	# so our cache must be aware of this
 	principals, authn_policy, reg = _get_effective_principals(request)
+	cache_key = (id(obj), principals)
 
-	cached_val = the_cache.get((id(obj), principals), _marker) if not skip_cache else _marker
+	cached_val = the_cache.get(cache_key, _marker) if not skip_cache else _marker
 	if cached_val is not _marker:
 		return cached_val
 
@@ -201,7 +202,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 			pass
 
 	if not skip_cache:
-		the_cache[(id(obj), principals)] = check_value
+		the_cache[cache_key] = check_value
 
 	return check_value
 

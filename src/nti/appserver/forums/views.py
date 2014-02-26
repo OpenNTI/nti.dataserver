@@ -370,7 +370,7 @@ class ForumGetView(GenericGetView):
 			# XXX FIXME: WTF are we doing here?
 			# This is completely bypassing the ACL model.
 			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
-				readable = is_readable(current, skip_cache=True)
+				readable = is_readable(current)
 				current = getattr(current, '__parent__', None)
 			if not readable:
 				raise hexc.HTTPForbidden()

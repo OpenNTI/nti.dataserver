@@ -183,7 +183,10 @@ class ForumObjectContentsLinkProvider(object):
 		is_coppa = nti_interfaces.ICoppaUserWithoutAgreement.providedBy(current_user)
 
 		# Check the create permission in the forum acl.
-		if request is None or (not is_coppa and can_create(context, request, skip_cache=True)):
+		# FIXME: We shouldn't need to specifically check is_coppa like this.
+		# That should either be handled by the ACL or, failing that,
+		# by the content vocabulary
+		if request is None or (not is_coppa and can_create(context, request)):
 			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
@@ -270,6 +273,6 @@ class SecurityAwareBoardForumCountDecorator(object):
 		i = 0
 		request = get_current_request()
 		for x in context.values():
-			if is_readable(x, request, skip_cache=True):
+			if is_readable(x, request):
 				i += 1
 		mapping['ForumCount'] = i

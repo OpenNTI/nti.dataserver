@@ -79,10 +79,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return getattr( context, '_p_jar', None ) or (self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		try:
-			return is_writable(context, request=self.request)
-		except TypeError: # "unhashable type"
-			return is_writable(context, request=self.request, skip_cache=True)
+		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
 		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
