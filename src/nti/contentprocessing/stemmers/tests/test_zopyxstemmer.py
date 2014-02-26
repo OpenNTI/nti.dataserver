@@ -1,28 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+from hamcrest import is_
+from hamcrest import assert_that
 
 import unittest
 
 from zope import component
 
 from nti.contentprocessing.stemmers import interfaces
-from nti.contentprocessing.stemmers._zopyx import ZopyYXStemmer
+from nti.contentprocessing.stemmers.zopyx import ZopyYXStemmer
 
-from nti.contentprocessing.tests import ConfiguringTestBase
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
-from hamcrest import assert_that, is_
+class TestZopyYXStemmer(unittest.TestCase):
 
-class TestZopyYXStemmer(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def test_stemmer(self):
 		stemmer = ZopyYXStemmer()

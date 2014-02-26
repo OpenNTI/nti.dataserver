@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Concept tagging interfaces
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -25,8 +26,8 @@ class IConcept(interface.Interface):
 	"""
 	text = nti_schema.ValidTextLine(title="concept text", required=True)
 	relevance = nti_schema.Number(title="concept relevance", required=False)
-	sources = schema.List(title="Concept sources", min_length=0,
-						  value_type=schema.Object(IConceptSource, title="The source"))
+	sources = nti_schema.ListOrTuple(title="Concept sources", min_length=0,
+						 			 value_type=schema.Object(IConceptSource, title="The source"))
 
 class IConceptTagger(interface.Interface):
 

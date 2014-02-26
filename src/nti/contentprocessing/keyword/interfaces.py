@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Keyword extractor interfaces
@@ -25,8 +26,8 @@ class ITermExtractKeyWord(IContentKeyWord):
 	"""
 	frequency = schema.Int(title="word frequency", required=False)
 	strength = schema.Int(title="word strength", required=False)
-	terms = schema.List(value_type=nti_schema.ValidTextLine(title="Term"),
-						title="terms associated with token", required=False)
+	terms = nti_schema.ListOrTuple(value_type=nti_schema.ValidTextLine(title="Term"),
+								   title="terms associated with token", required=False)
 
 class ITermExtractFilter(interface.Interface):
 	"""
