@@ -360,6 +360,57 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
+	def test_contents_of_forum_can_be_sorted_by_post_count( self ):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+
+		# Create one topic
+		topic_res1 = self._POST_topic_entry()
+		entry_url = topic_res1.location
+		# comment on it
+		data = self._create_comment_data_for_POST()
+		comment_res1 = testapp.post_json( entry_url, data, status=201 )
+		comment_ts1 = comment_res1.json_body['CreatedTime']
+
+		# Create another topic
+		res = self._POST_topic_entry()
+		assert_that( res.location, is_not( entry_url ) )
+		entry_url = res.location
+		# comment on it
+		data = self._create_comment_data_for_POST()
+		comment_res2 = testapp.post_json( entry_url, data, status=201 )
+		comment_ts2 = comment_res2.json_body['CreatedTime']
+		# And again
+		data = self._create_comment_data_for_POST()
+		comment_res2 = testapp.post_json( entry_url, data, status=201 )
+		comment_ts2 = comment_res2.json_body['CreatedTime']
+
+		# And a topic with no comments
+		self._POST_topic_entry()
+
+		contents_res = testapp.get( self.forum_pretty_contents_url,
+									params={'sortOn': 'PostCount',
+											'sortOrder': 'descending'} )
+
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 3 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'PostCount', 2 ),
+																has_entry( 'PostCount', 1 ),
+																has_entry( 'PostCount', 0 ) ) )
+
+		contents_res = testapp.get( self.forum_pretty_contents_url,
+									params={'sortOn': 'PostCount',
+											'sortOrder': 'ascending'} )
+
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 3 ) ) )
+		assert_that( contents_res.json_body['Items'], contains( has_entry( 'PostCount', 0 ),
+																has_entry( 'PostCount', 1 ),
+																has_entry( 'PostCount', 2 ) ) )
+
+
+
+
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
 	def test_contents_of_forum_can_be_sorted_by_comment_creation_date( self ):
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
@@ -383,7 +434,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		comment_res2 = testapp.post_json( entry_url, data, status=201 )
 		comment_ts2 = comment_res2.json_body['CreatedTime']
 
-		contents_res = testapp.get( self.forum_pretty_contents_url, params={'sortOn': 'NewestDescendantCreatedTime', 'sortOrder': 'descending'} )
+		contents_res = testapp.get( self.forum_pretty_contents_url,
+									params={'sortOn': 'NewestDescendantCreatedTime', 'sortOrder': 'descending'} )
 		orig_content_lm = contents_res.last_modified
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 2 ) ) )
 		assert_that( contents_res.json_body['Items'], contains( has_entry( 'NewestDescendantCreatedTime', comment_ts2 ),
