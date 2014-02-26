@@ -18,18 +18,18 @@ from zope import interface
 from zope.schema.interfaces import ValidationError
 
 from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import has_key
+
 from hamcrest import has_entry
 from hamcrest import contains
 from hamcrest import has_entries
 from nose.tools import assert_raises
 
 from nti.app.testing.layers import AppLayerTest
-from . import DummyRequest
+from nti.app.testing.request_response import DummyRequest
 
-from nti.appserver import _external_object_io as obj_io
-from nti.appserver import httpexceptions as hexc
+from .. import error
+from .. import internalization as obj_io
+from pyramid import httpexceptions as hexc
 
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
@@ -67,10 +67,15 @@ class TestIO(AppLayerTest):
 			try:
 				field.validate( set([Thing()]) )
 			except ValidationError as e:
-				obj_io.handle_validation_error( DummyRequest(), e )
+				error.handle_validation_error( DummyRequest(), e )
 
 		assert_that( exc.exception.json_body, has_entry( 'field', 'field' ) )
-		assert_that( exc.exception.json_body, has_entry( 'suberrors', contains( has_entry( 'suberrors', contains( has_entries( 'declared', 'IThing', 'field', '__name__', 'code', 'WrongType' ) ) ) ) ) )
+		assert_that( exc.exception.json_body,
+					 has_entry( 'suberrors',
+								contains( has_entry( 'suberrors',
+													 contains( has_entries( 'declared', 'IThing',
+																			'field', '__name__',
+																			'code', 'WrongType' ) ) ) ) ) )
 
 
 	def test_translating_non_unicode_bytes_messages(self):
@@ -80,7 +85,7 @@ class TestIO(AppLayerTest):
 			try:
 				raise ValidationError( b'abcd' )
 			except ValidationError as e:
-				obj_io.handle_validation_error( DummyRequest(), e )
+				error.handle_validation_error( DummyRequest(), e )
 
 		assert_that( exc.exception.json_body, has_entry( 'message', 'abcd' ) )
 
@@ -89,6 +94,6 @@ class TestIO(AppLayerTest):
 			try:
 				raise ValidationError( b'abcd\xff' )
 			except ValidationError as e:
-				obj_io.handle_validation_error( DummyRequest(), e )
+				error.handle_validation_error( DummyRequest(), e )
 
 		assert_that( exc.exception.json_body, has_entry( 'message', '' ) )
