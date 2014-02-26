@@ -1,14 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
+
 import unittest
 
 from zope import component
 
 from nti.contentprocessing import interfaces as cp_interfaces
 
-from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+from nti.contentsearch.spambayes.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_)
+class TestTokenzier(unittest.TestCase):
 
-class TestTokenzier(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	spam_msg = "Your Status: Approved-Today Today's Date: August 2nd, 2012 Advance Amount: 1,500.00"
 	
@@ -30,6 +42,3 @@ class TestTokenzier(ConfiguringTestBase):
 		
 		text = self.do_tokenize(msg, max_word_size=4, generate_long_skips=False)
 		assert_that(text, is_("nato and"))
-		
-if __name__ == '__main__':
-	unittest.main()

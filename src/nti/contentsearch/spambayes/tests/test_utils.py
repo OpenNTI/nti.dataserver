@@ -1,16 +1,30 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than_or_equal_to
+
 import os
 import shutil
-import unittest
 import tempfile
+import unittest
 
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.utils.emessage import create_sql3classifier_db
 
-from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+from nti.contentsearch.spambayes.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_, greater_than_or_equal_to, has_length)
+class TestUtils(unittest.TestCase):
 
-class TestUtils(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 	
 	def setUp(self):
 		super(TestUtils, self).setUp()
@@ -31,6 +45,3 @@ class TestUtils(ConfiguringTestBase):
 		text = 'You Will Sell A Product Which Costs Nothing'
 		prob = sc.spamprob(tokenize(text), False)
 		assert_that(prob, greater_than_or_equal_to(0.99))
-
-if __name__ == '__main__':
-	unittest.main()

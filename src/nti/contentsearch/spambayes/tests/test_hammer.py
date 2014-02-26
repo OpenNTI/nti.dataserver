@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import re
 import os
@@ -21,23 +17,29 @@ import unittest
 from nti.contentsearch.spambayes.tokenizer import tokenize
 from nti.contentsearch.spambayes.classifier import Classifier
 
-from nti.contentsearch.spambayes.tests import ConfiguringTestBase
+from nti.contentsearch.spambayes.tests import SharedConfiguringTestLayer
 
-class TestHammer(ConfiguringTestBase):
+class TestHammer(unittest.TestCase):
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestHammer,cls).setUpClass()
+	layer = SharedConfiguringTestLayer
+
+	@property
+	def ham(self):
+		ham = []
 		path = os.path.dirname(__file__)
-		cls.ham = []
 		for name in glob.glob(os.path.join(path, "_ham*.txt")):
 			with open(name, "r") as f:
-				cls.ham.append(f.read())
+				ham.append(f.read())
+		return ham
 
-		cls.spam = []
+	@property
+	def spam(self):
+		spam = []
+		path = os.path.dirname(__file__)
 		for name in glob.glob(os.path.join(path, "_spam*.txt")):
 			with open(name, "r") as f:
-				cls.spam.append(f.read())
+				spam.append(f.read())
+		return spam
 
 	def setUp(self):
 		super(TestHammer, self).setUp()
@@ -84,11 +86,10 @@ class TestHammer(ConfiguringTestBase):
 		body = '\n'.join(textwrap.wrap(' '.join(body)))
 		return unicode(body)
 
-	def test_trainer( self ):
+	def test_trainer(self):
 		"""
 		Trains and classifies repeatedly.
 		"""
-		# 1000000
 		length = 100
 		for i in range(1, length):
 			# train.
@@ -98,11 +99,11 @@ class TestHammer(ConfiguringTestBase):
 			# classify.
 			is_spam = random.choice([True, False])
 			msg = self.make_message(is_spam)
-			prob = self.classify(msg)
+			self.classify(msg)
 
-			#if i < 10 or i % 100 == 0:
+			# if i < 10 or i % 100 == 0:
 			#	print "%6.6d: %d, %.4f" % (i, is_spam, prob)
 
 			if i == length-1:
-				t = tokenize(msg)
+				tokenize(msg)
 				#print "arc prob %.4f" % self.bayes.arc_spamprob(t)
