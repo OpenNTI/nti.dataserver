@@ -18,7 +18,7 @@ from zope import interface
 from zope.schema.interfaces import ValidationError
 
 from hamcrest import assert_that
-
+from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import contains
 from hamcrest import has_entries
@@ -36,6 +36,14 @@ from nti.dataserver import contenttypes
 from nti.utils import schema
 
 class TestIO(AppLayerTest):
+
+	def test_read_urlencoded(self):
+		request = DummyRequest()
+		request.body = b'%7B%22opt_in_email_communication%22%3Atrue%7D='
+		request.content_type = b'application/x-www-form-urlencoded; charset=UTF-8'
+
+		assert_that( obj_io.read_body_as_external_object(request),
+					 is_( {'opt_in_email_communication': True }))
 
 	def test_integration_note_body_validation_empty_error_message(self):
 		n = contenttypes.Note()

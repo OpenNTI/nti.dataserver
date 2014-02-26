@@ -75,9 +75,9 @@ class BatchingUtilsMixin(object):
 				batch_size = int(batch_size)
 				batch_start = int(batch_start)
 			except ValueError:
-				raise hexc.HTTPBadRequest()
+				raise hexc.HTTPBadRequest("Batch size/start not integers")
 			if batch_size <= 0 or batch_start < 0:
-				raise hexc.HTTPBadRequest()
+				raise hexc.HTTPBadRequest("Batch size/start out of range")
 
 			return batch_size, batch_start
 
@@ -252,7 +252,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			# could also come from other places. We call it all client error.
 			logger.exception( "Failed to parse/transform value %s", value )
 			_, _, tb = sys.exc_info()
-			ex = hexc.HTTPBadRequest()
+			ex = hexc.HTTPBadRequest("Failed to parse/transform value")
 			raise ex, None, tb
 
 	def _transformInput( self, value ):

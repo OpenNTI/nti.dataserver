@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import collections
 import sys
 import simplejson
+from webob.compat import url_unquote
 
 from zope import component
 
@@ -70,10 +71,20 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 	"""
 	value = input_data if input_data is not None else request.body
 	ext_format = 'json'
-	if (request.content_type or '').endswith( 'plist' ) \
-		   or (request.content_type or '') == 'application/xml' \
-		   or request.GET.get('format') == 'plist': # pragma: no cover
+	content_type = getattr(request, 'content_type', '')
+	if (content_type.endswith( 'plist' )
+		or content_type == 'application/xml'
+		or request.GET.get('format') == 'plist'): # pragma: no cover
 		ext_format = 'plist'
+
+	if content_type.startswith('application/x-www-form-urlencoded') and '=' in value:
+		# Hmm, uh-oh. How did this happen?
+		# We've seen this come in from the browser, but we're expecting JSON;
+		# the standard WebOb way to decode it doesn't work in these cases.
+		# Try it here
+		value = url_unquote(value)
+		if value.endswith('='):
+			value = value[:-1]
 
 	__traceback_info__ = ext_format, value
 	if ext_format != 'json': # pragma: no cover
@@ -120,7 +131,7 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# could also come from other places. We call it all client error.
 		logger.exception( "Failed to parse/transform value %s", value )
 		_, _, tb = sys.exc_info()
-		ex = hexc.HTTPBadRequest()
+		ex = hexc.HTTPBadRequest("Failed to parse/transform input")
 		raise ex, None, tb
 
 
