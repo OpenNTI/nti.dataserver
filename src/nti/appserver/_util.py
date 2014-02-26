@@ -11,9 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import collections
-import simplejson as json
-
 from pyramid.threadlocal import get_current_request
 from pyramid.security import remember
 
@@ -224,46 +221,20 @@ def dump_stacks_view(request):
 	request.response.content_type = b'text/plain'
 	return request.response
 
-def _json_error_map(o):
-	if isinstance(o, set):
-		return list(o)
-	return unicode(o)
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.externalization.internalization",
+	"nti.app.externalization.internalization",
+	"create_modeled_content_object",
+	"class_name_from_content_type",
+	"read_body_as_external_object",
+	"update_object_from_external_object")
 
-def raise_json_error( request,
-					  factory,
-					  v,
-					  tb ):
-	"""
-	Attempts to raise an error during processing of a pyramid request.
-	We expect the client to specify that they want JSON errors.
-
-	:param v: The detail message. Can be a string or a dictionary. A dictionary
-		may contain the keys `field`, `message` and `code`.
-	:param factory: The factory (class) to produce an HTTP exception.
-	:param tb: The traceback from `sys.exc_info`.
-	"""
-	#logger.exception( "Failed to create user; returning expected error" )
-	mts = (b'application/json', b'text/plain')
-	accept_type = b'application/json'
-	if getattr(request, 'accept', None):
-		accept_type = request.accept.best_match( mts )
-
-	if isinstance( v, collections.Mapping ) and v.get( 'field' ) == 'username':
-		# Our internal schema field is username, but that maps to Username on the outside
-		v['field'] = 'Username'
-
-	if accept_type == b'application/json':
-		try:
-			v = json.dumps( v, ensure_ascii=False, default=_json_error_map )
-		except TypeError:
-			v = json.dumps( {'UnrepresentableError': unicode(v) } )
-	else:
-		v = unicode(v)
-
-	result = factory()
-	result.text = v
-	result.content_type = accept_type
-	raise result, None, tb
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.externalization.error",
+	"nti.app.externalization.error",
+	"raise_json_error")
 
 def link_belongs_to_user( link, user ):
 	link.__parent__ = user

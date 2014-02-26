@@ -25,6 +25,7 @@ from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
 from nti.appserver import _view_utils
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
@@ -333,7 +334,8 @@ TOP_TOPICS_VIEW = u'TopTopics'
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.IForum)
 @view_defaults(name=TOP_TOPICS_VIEW, **_r_view_defaults)
-class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
+class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView,
+						   BatchingUtilsMixin):
 
 	_DEFAULT_DECAY = 0.94
 	_DEFAULT_BATCH_SIZE = query_views._RecursiveUGDStreamView._DEFAULT_BATCH_SIZE
@@ -369,22 +371,6 @@ class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView):
 			except ValueError:
 				raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 		return decay
-
-	def _get_batch_size_start(self):
-		batch_size = self.request.params.get('batchSize', self._DEFAULT_BATCH_SIZE)
-		batch_start = self.request.params.get('batchStart', self._DEFAULT_BATCH_START)
-		if batch_size is not None and batch_start is not None:
-			try:
-				batch_size = int(batch_size)
-				batch_start = int(batch_start)
-			except ValueError:
-				raise _hexc.HTTPBadRequest()
-			if batch_size <= 0 or batch_start < 0:
-				raise _hexc.HTTPBadRequest()
-			result = (batch_size, batch_start)
-		else:
-			result = (self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START)
-		return result
 
 	def _batch(self, mapping, result_list, batch_size=None, batch_start=None):
 		if batch_size is not None and batch_start is not None:

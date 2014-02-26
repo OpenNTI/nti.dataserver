@@ -16,6 +16,7 @@ from zope import interface
 from zope.event import notify
 from zope.location import locate
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from z3c.batching.batch import Batch
 
 from nti.dataserver.users import Entity
@@ -55,11 +56,8 @@ class BaseView(object):
 		result = self.locate(result, self.request.root)
 		return result
 
-class BaseSearchView(BaseView):
-
-	def _get_batch_size_start(self):
-		# Get batch info from request. They are also available in the search query
-		return search_utils.get_batch_size_start(self.request.params)
+class BaseSearchView(BaseView,
+					 BatchingUtilsMixin):
 
 	def _batch_results(self, results):
 		batch_size, batch_start = self._get_batch_size_start()

@@ -1653,3 +1653,20 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 
 # BWC exports
 from nti.wref.interfaces import IWeakRef, IWeakRefToMissing, ICachingWeakRef
+
+
+# XXX Now make all the interfaces previously
+# declared implement the correct interface
+# This is mostly an optimization, right?
+def __setup_interfaces():
+	from nti.mimetype.mimetype import nti_mimetype_with_class
+	import sys
+	for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
+		if interface.interfaces.IInterface.providedBy( x ):
+			if x.extends( IModeledContent ) and not IContentTypeAware.providedBy( x ):
+				name = x.__name__[1:] # strip the leading I
+				x.mime_type = nti_mimetype_with_class( name )
+				interface.alsoProvides( x, IContentTypeAware )
+
+__setup_interfaces()
+del __setup_interfaces

@@ -382,8 +382,11 @@ def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
 @interface.implementer(INamedLinkView)
-class _UGDView(_view_utils.AbstractAuthenticatedView):
+class _UGDView(_view_utils.AbstractAuthenticatedView,
+			   BatchingUtilsMixin):
 	"""
 	The base view for user generated data.
 	"""
