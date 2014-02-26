@@ -15,14 +15,13 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 import unittest
-import sys
 from hamcrest import assert_that, is_, none
 
 from hamcrest import is_not as does_not
 from hamcrest import has_key
 
-from ..mimetype import nti_mimetype_class as class_name_from_content_type
-from ..mimetype import nti_mimetype_from_object as as_mimetype
+from nti.mimetype.mimetype import nti_mimetype_class as class_name_from_content_type
+from nti.mimetype.mimetype import nti_mimetype_from_object as as_mimetype
 from ..interfaces import IFriendsList
 from ..users import FriendsList
 

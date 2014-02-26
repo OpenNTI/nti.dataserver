@@ -16,6 +16,8 @@ logger = __import__('logging').getLogger(__name__)
 #: should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 
+from zope import component
+
 from .interfaces import IContained as INTIContained
 from .interfaces import ICreatedUsername
 from .interfaces import IModeledContent
@@ -180,3 +182,37 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 
 
 	return catalog
+
+from .interfaces import IEntity
+from zope.lifecycleevent import IObjectRemovedEvent
+
+@component.adapter(IEntity, IObjectRemovedEvent)
+def clear_replies_to_creator_when_creator_removed(entity, event):
+	"""
+	When a creator is removed, all of the things that were direct
+	replies to that creator are now \"orphans\", with a value
+	for ``inReplyTo``. We clear out the index entry for ``repliesToCreator``
+	for this entity in that case.
+
+	The same scenario holds for things that were shared directly
+	to that user.
+	"""
+
+	catalog = component.queryUtility(ICatalog, name=CATALOG_NAME)
+	if catalog is None:
+		# Not installed yet
+		return
+
+	# These we can simply remove, this creator doesn't exist anymore
+	index = catalog['repliesToCreator']
+	results = catalog.searchResults(repliesToCreator={'any_of': (entity.username,)})
+	for uid in results.uids:
+		index.unindex_doc(uid)
+
+	# These, though, may still be shared, so we need to reindex them
+	index = catalog['sharedWith']
+	results = catalog.searchResults(sharedWith={'all_of': (entity.username,)})
+	uidutil = results.uidutil
+	for uid in results.uids:
+		obj = uidutil.getObject(uid)
+		index.index_doc(uid, obj)
