@@ -53,7 +53,7 @@ def get_ntiid_path(ntiid, library=None, registry=component):
 			  if library is None else library
 	if library and ntiid:
 		paths = library.pathToNTIID(ntiid)
-		result = tuple([p.ntiid for p in paths]) if paths else ()
+		result = tuple(p.ntiid for p in paths) if paths else ()
 	return result
 
 def get_collection_root(ntiid, library=None, registry=component):
