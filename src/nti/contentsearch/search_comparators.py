@@ -128,7 +128,7 @@ def _path_intersection(x, y):
 			result.append(x[i])
 		else:
 			break
-	return tuple(result)
+	return result
 
 @repoze.lru.lru_cache(maxsize=2000, timeout=60)
 def get_ntiid_path(item):
