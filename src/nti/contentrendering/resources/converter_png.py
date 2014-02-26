@@ -7,7 +7,8 @@ A resource converter to create PNGs.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -231,7 +232,6 @@ class _GSPDFPNG2(plasTeX.Imagers.gspdfpng.GSPDFPNG):
 
 		# Copy or convert the image as needed
 		path = self.newFilename()
-		newext = os.path.splitext(path)[-1]
 		oldext = os.path.splitext(name)[-1]
 		try:
 			directory = os.path.dirname(path)
@@ -301,7 +301,7 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 			if image is None or image.width is None or image.height is None:
 				raise Exception( "Unable to generate image for '%s' (%s)" % (source, image) )
 			for scale in self.scales:
-			   	newImage = self.makeImage( os.path.join( tempdir,
+				newImage = self.makeImage(os.path.join(tempdir,
 									 self.__newNameFromOrig(image.path,
 												scale,
 												False)),

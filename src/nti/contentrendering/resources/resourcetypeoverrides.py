@@ -8,11 +8,13 @@ the resource. For details, see the factor :func:`ResourceTypeOverrides`.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 
-logger = __import__( 'logging' ).getLogger( __name__ )
 def _lwarn( *args ):
 	logger.warn( *args )
 
@@ -66,7 +68,6 @@ def _load_overrides_from_file(location, warn):
 			with open(sourcePath, 'r') as sourceFile:
 				source = sourceFile.read()
 				result[normalize_source(source)] = types
-
 
 	return result
 

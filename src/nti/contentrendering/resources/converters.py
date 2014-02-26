@@ -6,22 +6,24 @@ objects.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-import sys
+logger = __import__('logging').getLogger(__name__)
+
 import os
 import re
-import subprocess
+import six
+import sys
 import time
+import shutil
+import tempfile
+import subprocess
+
 try:
 	from cStringIO import StringIO
 except ImportError:
 	from StringIO import StringIO
-
-import shutil
-import tempfile
-
-import six
 
 from zope import interface
 

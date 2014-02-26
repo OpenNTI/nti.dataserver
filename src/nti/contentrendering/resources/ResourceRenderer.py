@@ -1,22 +1,26 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 import os
 
-from plasTeX.Renderers import RenderableMixin as BaseRenderableMixin
-from plasTeX.Renderers import Renderer as BaseRenderer
-from plasTeX.Renderers import mixin, unmix, renderable_as_unicode
 from plasTeX.DOM import Node
+from plasTeX.Imagers import Dimension
 from plasTeX.Logging import getLogger
 from plasTeX.Filenames import Filenames
-from plasTeX.Imagers import Dimension
-
+from plasTeX.Renderers import Renderer as BaseRenderer
+from plasTeX.Renderers import mixin, unmix, renderable_as_unicode
+from plasTeX.Renderers import RenderableMixin as BaseRenderableMixin
 
 import zope.dottedname.resolve as dottedname
+
 from . import interfaces
 
-logger = getLogger( __name__ )
+logger = getLogger(__name__)
 
 def createResourceRenderer(baserenderername, resourcedb, unmix=True):
 	"""

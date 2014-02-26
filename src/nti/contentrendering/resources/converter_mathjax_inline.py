@@ -3,23 +3,24 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.contentrendering import run_phantom_on_page
-import codecs, os, re
-
+import os
+import re
+import cgi
+import codecs
 import tempfile
 
-import cgi
+from pkg_resources import resource_exists, resource_filename
 
+from nti.contentrendering import javascript_path
+from nti.contentrendering import run_phantom_on_page
 from nti.contentrendering.resources import converters, _util
 from nti.contentrendering.resources.contentunitrepresentations import FilesystemContentUnitRepresentation
 
-
-from nti.contentrendering import javascript_path
-from pkg_resources import resource_exists, resource_filename
 def _require_resource_filename( mathjaxconfigname ):
 	if not resource_exists( 'nti.contentrendering', '/js/' + mathjaxconfigname ): # pragma: no cover
 		raise EnvironmentError( "Unable to get default mathjax config" )
@@ -40,8 +41,6 @@ def _find_theme_mathjaxconfig(name):
 			for f in files:
 				if os.path.exists( f ):
 					return f
-
-
 
 class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDriver):
 
@@ -68,7 +67,8 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">\
 		<head>\
 		<link rel="stylesheet" href="styles/styles.css" />\
-		<script type="text/javascript" src="%s/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>' % os.path.dirname(self.mathjaxconfigfile))
+		<script type="text/javascript" src="%s/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>' % \
+		os.path.dirname(self.mathjaxconfigfile))
 
 		self.write('<script type="text/javascript" src="%s"></script>' % self.mathjaxconfigfile)
 		self.write('<script type="text/javascript" src="%s"></script>' % self.configName)
@@ -150,7 +150,6 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 		return files
 
-
 class MathjaxInlineBatchConverter(converters.AbstractConcurrentConditionalCompilingContentUnitRepresentationBatchConverter):
 
 	concurrency = 4
@@ -171,7 +170,6 @@ class MathjaxInlineBatchConverter(converters.AbstractConcurrentConditionalCompil
 
 ResourceSetGenerator = MathjaxInlineCompilerDriver
 ResourceGenerator = MathjaxInlineBatchConverter
-
 
 from zope.deprecation import deprecated
 deprecated( ['ResourceGenerator','ResourceSetGenerator'], 'Prefer the new names in this module' )
