@@ -53,6 +53,7 @@ class TestMetadataIndex(DataserverLayerTest):
 		note.creator = jason
 		note.containerId = "foo:bar"
 		note.addSharingTarget(greg)
+		note.tags = Note.tags.fromObject([greg.NTIID])
 		jason.addContainedObject( note )
 
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
@@ -71,7 +72,9 @@ class TestMetadataIndex(DataserverLayerTest):
 						'mimeType': {'any_of':
 									 ('application/vnd.nextthought.note',)}},
 					   {'sharedWith': {'all_of':
-									   ('greg.higgins@nextthought.com',)}}):
+									   ('greg.higgins@nextthought.com',)}},
+					   {'taggedTo': {'any_of':
+									 ('greg.higgins@nextthought.com',)}}):
 			__traceback_info__ = query
 			results = list(catalog.searchResults(**query))
 			__traceback_info__ = query, [(type(x), getattr(x, 'creator', None)) for x in results]
@@ -97,7 +100,9 @@ class TestMetadataIndex(DataserverLayerTest):
 						'mimeType': {'any_of':
 									 ('application/vnd.nextthought.note',)}},
 					   {'sharedWith': {'all_of':
-									   ('greg.higgins@nextthought.com',)}}):
+									   ('greg.higgins@nextthought.com',)}},
+					   {'taggedTo': {'any_of':
+									 ('greg.higgins@nextthought.com',)}} ):
 			__traceback_info__ = query
 			results = list(catalog.searchResults(**query))
 			__traceback_info__ = query, [(type(x), getattr(x, 'creator', None)) for x in results]
@@ -126,6 +131,8 @@ class TestMetadataIndex(DataserverLayerTest):
 									 ('application/vnd.nextthought.note',)}},
 					   {'sharedWith': {'all_of':
 									   ('greg.higgins@nextthought.com',)}},
+					   {'taggedTo': {'any_of':
+									 ('greg.higgins@nextthought.com',)}},
 					   {'topics': 'topLevelContent'}):
 			__traceback_info__ = query
 			results = list(catalog.searchResults(**query))
@@ -139,7 +146,7 @@ class TestMetadataIndex(DataserverLayerTest):
 
 		self._check_catalog( catalog, note, root_note )
 
-		# Now delete root creator
+		# Now delete the note
 		jason.deleteContainedObject( note.containerId, note.id )
 
 
@@ -153,6 +160,8 @@ class TestMetadataIndex(DataserverLayerTest):
 									 ('application/vnd.nextthought.note',)}},
 					   {'sharedWith': {'all_of':
 									   ('greg.higgins@nextthought.com',)}},
+					   {'taggedTo': {'all_of':
+									 ('greg.higgins@nextthought.com',)}},
 					   ):
 			__traceback_info__ = query
 			results = list(catalog.searchResults(**query))

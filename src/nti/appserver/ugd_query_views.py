@@ -1196,6 +1196,7 @@ class _NotableRecursiveUGDView(_UGDView):
 		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
+		intids_tagged_to_me = catalog['taggedTo'].apply({'any_of': (self.remoteUser.username,)})
 
 		important_creator_usernames = set()
 		for provider in component.subscribers( (self.remoteUser, request),
@@ -1206,23 +1207,30 @@ class _NotableRecursiveUGDView(_UGDView):
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
 
 		safely_viewable_intids = catalog.family.IF.union(toplevel_intids_shared_to_me, intids_replied_to_me)
-		# Make sure none of the stuff we created got in
-		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
-		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
 
-		# Sadly, to be able to provide the "TotalItemCount" we have to apply
-		# security to all the intids by other creators; if we didn't have to do that
-		# we could imagine doing so incrementally, as needed, on the theory that there are
-		# probably more things shared directly with me or replied to me than created
-		# by others that I happen to be able to see
+		# Sadly, to be able to provide the "TotalItemCount" we have to
+		# apply security to all the intids not guaranteed to be
+		# viewable; if we didn't have to do that we could imagine
+		# doing so incrementally, as needed, on the theory that there
+		# are probably more things shared directly with me or replied
+		# to me than created by others that I happen to be able to see
+
+		questionable_intids = catalog.family.IF.union( toplevel_intids_by_priority_creators,
+													   intids_tagged_to_me )
+
 		uidutil = component.getUtility(IIntIds)
 		_, security_check = self._get_security_check()
-		for questionable_uid in toplevel_intids_by_priority_creators:
+		for questionable_uid in questionable_intids:
 			if questionable_uid in safely_viewable_intids:
 				continue
 			questionable_obj = uidutil.getObject(questionable_uid)
 			if security_check(questionable_obj):
 				safely_viewable_intids.add(questionable_uid)
+
+		# Make sure none of the stuff we created got in
+		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
+
 
 		result['TotalItemCount'] = len(safely_viewable_intids)
 		sorted_intids = list(catalog['createdTime'].sort(safely_viewable_intids,

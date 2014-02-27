@@ -26,6 +26,7 @@ from .interfaces import IThreadable
 from .interfaces import IFriendsList
 from .interfaces import IDevice
 from .interfaces import ILastModified
+from .interfaces import IUserTaggedContent
 from .contenttypes.forums.interfaces import IHeadlinePost
 
 from zope.catalog.interfaces import ICatalog
@@ -55,12 +56,16 @@ class MimeTypeIndex(ValueIndex):
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import TYPE_UUID
 from nti.ntiids.ntiids import TYPE_INTID
+from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
 from nti.ntiids.ntiids import is_ntiid_of_types
+from nti.ntiids.ntiids import find_object_with_ntiid
 
-class _ValidatingContainerId(object):
+class ValidatingContainerId(object):
 	"""
+	The "interface" we adapt to to find the container id.
+
 	Rejects certain types of contained IDs from being indexed
-	by \"failing\" to adapt them:
+	by returning a None value:
 
 	* OID container IDs. These are seen on MessageInfo objects,
 	  and, as they are always unique, are not helpful to index.
@@ -79,14 +84,14 @@ class _ValidatingContainerId(object):
 			if is_ntiid_of_types( cid, self._IGNORED_TYPES ):
 				self.containerId = None
 			else:
-				self.containerId = cid
+				self.containerId = unicode(cid)
 
 	def __reduce__(self):
 		raise TypeError()
 
 class ContainerIdIndex(ValueIndex):
 	default_field_name = 'containerId'
-	default_interface = _ValidatingContainerId
+	default_interface = ValidatingContainerId
 # Will we use that with a string token normalizer?
 
 # How to index creators? username? and just really
@@ -109,10 +114,64 @@ class SharedWithRawIndex(RawSetIndex):
 def SharedWithIndex(family=None):
 	# SharedWith is a mixin property, currently,
 	# the interface it is defined on is not really
-	# the one we want
+	# the one we want, therefore we just ask for it from
+	# anyone
 	return NormalizationWrapper(field_name='sharedWith',
 								normalizer=StringTokenNormalizer(),
 								index=SharedWithRawIndex(family=family),
+								is_collection=True )
+
+class TaggedToRawIndex(RawSetIndex):
+	pass
+
+class TaggedTo(object):
+	"""
+	The \"interface\" we adapt to in order to
+	find entities that are tagged to by the object.
+
+	We take anything that is :class:`.IUserTaggedContent`` and look inside the
+	'tags' sequence defined by it. If we find something that looks
+	like an NTIID for a named entity, we look up the entity, and if
+	it exists, we return its username. This lets us be queried
+	just like creator and replies.
+	"""
+
+	__slots__ = ('context',)
+
+	# Tags are normally lower cased, but depending on when we get called
+	# it's vaguely possible that we might see an upper-case value?
+	_ENTITY_TYPES = {TYPE_NAMED_ENTITY, TYPE_NAMED_ENTITY.lower()}
+
+	def __init__( self, context, default ):
+		self.context = IUserTaggedContent(context, None)
+
+	@property
+	def tagged_usernames(self):
+		if self.context is None:
+			return ()
+
+		raw_tags = self.context.tags
+		# Most things don't have tags
+		if not raw_tags:
+			return ()
+
+		username_tags = set()
+		for raw_tag in raw_tags:
+			if is_ntiid_of_types( raw_tag, self._ENTITY_TYPES ):
+				entity = find_object_with_ntiid( raw_tag )
+				if entity is not None:
+					username_tags.add( entity.username )
+		return username_tags
+
+def TaggedToIndex(family=None):
+	"""
+	Indexes the usernames of people mentioned in tags.
+	"""
+
+	return NormalizationWrapper(field_name='tagged_usernames',
+								normalizer=StringTokenNormalizer(),
+								index=TaggedToRawIndex(family=family),
+								interface=TaggedTo,
 								is_collection=True )
 
 class CreatorOfInReplyToRawIndex(RawValueIndex):
@@ -124,6 +183,8 @@ class CreatorOfInReplyTo(object):
 	name an object is in reply-to.
 	"""
 
+	__slots__ = ('context',)
+
 	def __init__( self, context, default ):
 		self.context = context
 
@@ -133,6 +194,9 @@ class CreatorOfInReplyTo(object):
 			return ICreatedUsername(self.context.inReplyTo).creator_username
 		except (TypeError,AttributeError):
 			return None
+
+	def __reduce__(self):
+		raise TypeError()
 
 def CreatorOfInReplyToIndex(family=None):
 	"Indexes all the replies to a particular user"
@@ -201,6 +265,7 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 						 ('createdTime', CreatedTimeIndex),
 						 ('sharedWith', SharedWithIndex),
 						 ('repliesToCreator', CreatorOfInReplyToIndex),
+						 ('taggedTo', TaggedToIndex),
 						 ('topics', TopicIndex)):
 		index = clazz( family=intids.family )
 		intids.register( index )
@@ -243,10 +308,12 @@ def clear_replies_to_creator_when_creator_removed(entity, event):
 		return
 
 	# These we can simply remove, this creator doesn't exist anymore
-	index = catalog['repliesToCreator']
-	results = catalog.searchResults(repliesToCreator={'any_of': (entity.username,)})
-	for uid in results.uids:
-		index.unindex_doc(uid)
+	for ix_name in 'repliesToCreator', 'taggedTo':
+		index = catalog[ix_name]
+		query = {ix_name: {'any_of': (entity.username,)} }
+		results = catalog.searchResults(**query)
+		for uid in results.uids:
+			index.unindex_doc(uid)
 
 	# These, though, may still be shared, so we need to reindex them
 	index = catalog['sharedWith']
