@@ -85,7 +85,10 @@ import BTrees
 from zope import intid
 from zope import interface
 from zope import component
-from zope.cachedescriptors.property import CachedProperty, Lazy
+
+from nti.zope_catalog.interfaces import INoAutoIndexEver
+
+from nti.utils.property import CachedProperty, Lazy
 
 import ZODB.POSException
 
@@ -112,7 +115,8 @@ from nti.ntiids import ntiids
 from nti.utils.schema import Object
 from nti.utils.property import read_alias
 
-class _IMeetingTranscriptStorage(nti_interfaces.ICreated): # ICreated so they get an ACL
+class _IMeetingTranscriptStorage(nti_interfaces.ICreated, # ICreated so they get an ACL
+								 INoAutoIndexEver):
 
 	meeting = Object(chat_interfaces.IMeeting, title="The meeting we hold messages to; may go null")
 
@@ -126,9 +130,9 @@ class _IMeetingTranscriptStorage(nti_interfaces.ICreated): # ICreated so they ge
 		"""Iterate all the messages in this transcript"""
 
 @interface.implementer(_IMeetingTranscriptStorage)
-class _AbstractMeetingTranscriptStorage(Persistent,
-                                        datastructures.ZContainedMixin,
-                                        datastructures.CreatedModDateTrackingObject):
+class _AbstractMeetingTranscriptStorage(datastructures.PersistentCreatedModDateTrackingObject,
+                                        datastructures.ZContainedMixin):
+
 	"""
 	The storage for the transcript of a single session. Private object, not public.
 	"""

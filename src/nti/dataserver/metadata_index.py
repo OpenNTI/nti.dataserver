@@ -31,7 +31,7 @@ from .contenttypes.forums.interfaces import IHeadlinePost
 from zope.catalog.interfaces import ICatalog
 from zc.intid import IIntIds
 
-from zope.catalog.catalog import Catalog
+from nti.zope_catalog.catalog import Catalog
 
 
 from zc.catalog.catalogindex import ValueIndex
@@ -52,9 +52,41 @@ class MimeTypeIndex(ValueIndex):
 	default_field_name = 'mimeType'
 	default_interface = IContentTypeAware
 
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import TYPE_UUID
+from nti.ntiids.ntiids import TYPE_INTID
+from nti.ntiids.ntiids import is_ntiid_of_types
+
+class _ValidatingContainerId(object):
+	"""
+	Rejects certain types of contained IDs from being indexed
+	by \"failing\" to adapt them:
+
+	* OID container IDs. These are seen on MessageInfo objects,
+	  and, as they are always unique, are not helpful to index.
+	  Likewise for UUID and INTIDs, although in practice these
+	  are not yet used.
+	"""
+
+	__slots__ = ('containerId',)
+
+	_IGNORED_TYPES = {TYPE_OID,TYPE_UUID,TYPE_INTID}
+
+	def __init__(self, obj, default):
+		contained = INTIContained(obj, default)
+		if contained is not None:
+			cid = contained.containerId
+			if is_ntiid_of_types( cid, self._IGNORED_TYPES ):
+				self.containerId = None
+			else:
+				self.containerId = cid
+
+	def __reduce__(self):
+		raise TypeError()
+
 class ContainerIdIndex(ValueIndex):
 	default_field_name = 'containerId'
-	default_interface = INTIContained
+	default_interface = _ValidatingContainerId
 # Will we use that with a string token normalizer?
 
 # How to index creators? username? and just really

@@ -149,12 +149,25 @@ def is_ntiid_of_type( ntiid, nttype ):
 		portion equivalent to the given nttype (i.e., ignoring
 		subtypes).
 	"""
-	result = None
-	the_type = get_type( ntiid )
-	if nttype and (the_type or '').split( ':', 2 )[0] == nttype:
-		result = the_type
+	return nttype and is_ntiid_of_types( ntiid, (nttype,) )
 
-	return result
+def is_ntiid_of_types( ntiid, nttypes ):
+	"""
+	Check if the given ``ntiid`` is valid and of one of the given types
+	(ignoring subtypes).
+
+	:param nttypes: A sequence of types to check.
+
+	:return: A True value if the ntiid is valid and has a type
+		portion equivalent to the given nttype (i.e., ignoring
+		subtypes).
+	"""
+
+	the_type = get_type( ntiid )
+	if the_type: # strip subtypes
+		the_type = the_type.split(':', 2)[0]
+		if the_type in nttypes:
+			return the_type
 
 def escape_provider( provider ):
 	"""
