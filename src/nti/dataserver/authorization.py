@@ -345,6 +345,10 @@ class _UserPrincipal(_AbstractPrincipal):
 	title = alias('id')
 	description = alias('id')
 
+	def __conform__(self, iface):
+		if iface.providedBy(self.context):
+			return self.context
+
 
 @interface.implementer(nti_interfaces.IGroupAwarePrincipal)
 @component.adapter(nti_interfaces.IUser)
