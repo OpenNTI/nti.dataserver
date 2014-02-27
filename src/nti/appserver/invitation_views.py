@@ -30,7 +30,11 @@ from nti.externalization import integer_strings
 from nti.externalization import interfaces as ext_interfaces
 
 from . import httpexceptions as hexc
-from . import _external_object_io as obj_io
+
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import handle_possible_validation_error
+from nti.app.externalization import internalization as obj_io
+
 
 # : The link relationship type to which an authenticated
 # : user can ``POST`` data to accept outstanding invitations. Also the name of a
@@ -71,9 +75,9 @@ def accept_invitations_view(request):
 
 	except invite_interfaces.InvitationValidationError as e:
 		e.field = 'invitation_codes'
-		obj_io.handle_validation_error(request, e)
+		handle_validation_error(request, e)
 	except Exception as e:  # pragma: no cover
-		obj_io.handle_possible_validation_error(request, e)
+		handle_possible_validation_error(request, e)
 
 	return hexc.HTTPNoContent()
 

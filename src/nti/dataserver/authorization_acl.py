@@ -416,6 +416,12 @@ class _CreatedACLProvider(object):
 	"""
 	ACL provider for class:`nti_interfaces.ICreated` objects.
 	The creator of an object is allowed all permissions.
+
+	.. py:attribute:: _DENY_ALL
+
+		Subclasses can set this to ``True`` (default is ``False``) to force explicitly
+		denying all access to everyone not otherwise listed as having access.
+
 	"""
 
 	def __init__( self, created ):
@@ -424,6 +430,15 @@ class _CreatedACLProvider(object):
 	context = alias('_created')
 	_REQUIRE_CREATOR = False
 	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
+	_DENY_ALL = True
+
+
+	def _do_get_deny_all(self):
+		"""
+		If the context object has the special attribute __acl_deny_all__,
+		that takes priority over our value for _DENY_ALL
+		"""
+		return getattr( self._created, '__acl_deny_all__', self._DENY_ALL )
 
 	def _do_get_perms_for_creator(self):
 		return self._PERMS_FOR_CREATOR
@@ -442,6 +457,18 @@ class _CreatedACLProvider(object):
 			raise ValueError( "Unable to get creator", self._created )
 		return result
 
+	def _extend_acl_before_deny( self, acl ):
+		"""
+		Called after the creator and sharing target acls have been added, and after optional extensions, but
+		before the deny-everyone is added (and only if it will be added). You can add additional options here.
+		"""
+		return
+
+	def _handle_deny_all(self, acl):
+		if self._do_get_deny_all():
+			self._extend_acl_before_deny( acl )
+			acl.append( _ace_denying_all( type(self) ) )
+		return acl
 	@Lazy
 	def __acl__( self ):
 		"""
@@ -451,8 +478,8 @@ class _CreatedACLProvider(object):
 				the creator (if there is a creator), and one denying all rights to everyone else.
 		"""
 		acl = self._creator_acl( )
-		acl.append( _ace_denying_all( type(self) ) )
-		return acl
+		return self._handle_deny_all(acl)
+
 
 
 class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
@@ -466,13 +493,11 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 		Subclasses can set this to ``True`` (default is ``False``) to force explicitly
 		denying all access to everyone not otherwise listed as having access.
+
 	"""
 
-	_DENY_ALL = False
 	_PERMS_FOR_SHARING_TARGETS = (authorization.ACT_READ,)
-
-	def _do_get_deny_all(self):
-		return self._DENY_ALL
+	_DENY_ALL = False # Override superclass
 
 	def _get_sharing_target_names(self):
 		"""
@@ -489,12 +514,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 			logger.warn( "POSKeyError getting sharing target names.")
 			return ()
 
-	def _extend_acl_before_deny( self, acl ):
-		"""
-		Called after the creator and sharing target acls have been added, and after optional extensions, but
-		before the deny-everyone is added (and only if it will be added). You can add additional options here.
-		"""
-		return
+
 
 	def _extend_acl_after_creator_and_sharing( self, acl ):
 		"""
@@ -527,10 +547,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 			__traceback_info__ = name
 			self._extend_for_sharing_target( name, result )
 		self._extend_acl_after_creator_and_sharing( result )
-		if self._do_get_deny_all():
-			self._extend_acl_before_deny( result )
-			result.append( _ace_denying_all( type(self) ) )
-		return result
+		return self._handle_deny_all( result )
 
 
 @component.adapter(nti_interfaces.IShareableModeledContent)
