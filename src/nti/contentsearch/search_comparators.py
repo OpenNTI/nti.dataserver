@@ -169,7 +169,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = get_ntiid_path(item.Query.location)
 		elif isinstance(item, six.string_types) and item and \
-			 not ntiids.is_ntiid_of_type(item, cls.IGNORED_TYPES):
+			 not ntiids.is_ntiid_of_types(item, cls.IGNORED_TYPES):
 			result = get_ntiid_path(item)
 		return result
 
