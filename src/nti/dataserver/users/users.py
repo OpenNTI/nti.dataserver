@@ -12,15 +12,19 @@ import os
 import six
 import sys
 import time
+import BTrees
 import numbers
 import warnings
 import functools
 import collections
 
+from persistent.list import PersistentList
+
 import zope.intid
 from zope import interface
 from zope import component
 from zope import annotation
+from zope import lifecycleevent
 from ZODB.interfaces import IConnection
 from zope.deprecation import deprecated
 from zope.component.factory import Factory
@@ -677,6 +681,35 @@ class User(Principal):
 		return self.xxx_hack_filter_non_memberships( super(User,self)._get_entities_followed_for_read(),
 													 "Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read" )
 
+	@Lazy
+	def _circled_events_storage(self):
+		"""
+		Right now, normally change events are not owned by anyone,
+		they are simply referenced from the stream cache based on the
+		intid of the *changed* object. Events are not sent for change
+		events otherwise and thus they do not get their own intid.
+
+		We want to keep a history of circled events however and we want
+		to index them. If we just send the events to do this, we wind
+		up with \"orphan\" change events in the index and intid utilities
+		(because they are not owned by anyone, when the user gets cleaned up,
+		we wouldn't know to clean the events up).
+
+		The solution is to store them here and return them as sublocations so that
+		they do get cleaned up. We don't expect there to be many, so we
+		use a simple list.
+		"""
+		self._p_changed = True
+		result = PersistentList()
+		result.__parent__ = self
+		return result
+
+	@Lazy
+	def _circled_events_intids_storage(self):
+		"As an optimization, we store the intids for our circled events"
+		self._p_changed = True
+		result = BTrees.family64.IF.Set()
+		return result
 
 	def accept_shared_data_from( self, source ):
 		""" Accepts if not ignored; auto-follows as well.
@@ -696,12 +729,27 @@ class User(Principal):
 			# by the person?
 			change = Change( Change.CIRCLED, source )
 			change.creator = source
-			change.containerId = '' # Not anchored, show at root and below
+			# Not anchored, show at root and below. This overrides
+			# the containerId gained from the source.
+			change.containerId = ''
+			# Also override the parent attribute copied from the source
+			# to be us so we can treat this object like one of our sublocations
+			change.__parent__ = self
+			assert change.__name__ == source.username
 			change.useSummaryExternalObject = True # Don't send the whole user
 			# Bypass the whole mess of broadcasting and going through the DS and change listeners,
 			# and just notice the incoming change.
 			# TODO: Clean this up, go back to event based.
 			self._noticeChange( change )
+
+			# Now store this object and broadcast events for it so it gets
+			# indexed.
+			self._circled_events_storage.append( change )
+			lifecycleevent.created( change )
+			lifecycleevent.added( change )
+			# Note we're directly accessing it
+			self._circled_events_intids_storage.add( change._ds_intid )
+
 			return change # which is both True and useful
 
 	def is_accepting_shared_data_from( self, source ):
@@ -826,6 +874,10 @@ class User(Principal):
 		for v in self.containers.itervalues():
 			if getattr( v, '__parent__', None ) is self:
 				yield v
+
+		# Now our circled events, these need to get deleted/indexed etc
+		for change in self._circled_events_storage:
+			yield change
 
 		# If we have annotations, then if the annotated value thinks of
 		# us as a parent, we need to return that. See zope.annotation.factory

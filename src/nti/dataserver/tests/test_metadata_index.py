@@ -17,7 +17,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
+from hamcrest import not_none
 from hamcrest import contains
 
 from nti.testing import base
@@ -82,6 +82,7 @@ class TestMetadataIndex(DataserverLayerTest):
 
 		assert_that( list( catalog.searchResults(topics='topLevelContent') ),
 					 contains(root_note) )
+
 
 	@WithMockDSTrans
 	def test_deleting_creator_of_reply(self):
@@ -168,3 +169,23 @@ class TestMetadataIndex(DataserverLayerTest):
 
 			__traceback_info__ = query, [(type(x), getattr(x, 'creator', None)) for x in results]
 			assert_that( results, is_empty() )
+
+	@WithMockDSTrans
+	def test_circled_events(self):
+		greg = users.User.create_user( dataserver=self.ds,
+									   username='greg.higgins@nextthought.com' )
+		jason = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
+
+		change = jason.accept_shared_data_from( greg )
+		assert_that( change, is_( not_none() ))
+
+		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+		assert_that( list( catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
+												 containerId=('',''),) ),
+					 contains(change) )
+
+		users.User.delete_user(jason.username)
+
+		assert_that( list( catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
+												 containerId=('',''),) ),
+					 is_empty() )
