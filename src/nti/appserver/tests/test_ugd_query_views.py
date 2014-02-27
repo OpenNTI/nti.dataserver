@@ -1219,12 +1219,16 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains(has_entry('NTIID', reply_ext_ntiid),
 														has_entry('NTIID', reply2_ext_ntiid))))
 
+		# We can limit the batch to a time range if we want
+		res = self.testapp.get(path, params={'batchBefore': 299})
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('NTIID', reply_ext_ntiid) ) ) )
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
 								 default_authenticate=True)
 	@time_monotonically_increases
-	def test_notable_ugd_top_level_shared_directl_to_me(self):
+	def test_notable_ugd_top_level_shared_directly_to_me(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user()
 			jason = self._get_user('jason')
