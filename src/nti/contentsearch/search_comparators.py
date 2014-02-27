@@ -138,6 +138,9 @@ def get_ntiid_path(item):
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 
+	IGNORED_TYPES = {ntiids.TYPE_OID, ntiids.TYPE_UUID, ntiids.TYPE_INTID,
+					 ntiids.TYPE_MEETINGROOM}
+
 	@classmethod
 	def score_path(cls, reference, p):
 
@@ -166,7 +169,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		if search_interfaces.ISearchHit.providedBy(item):
 			result = get_ntiid_path(item.Query.location)
 		elif isinstance(item, six.string_types) and item and \
-			 not ntiids.is_ntiid_of_type(item, ntiids.TYPE_OID):
+			 not ntiids.is_ntiid_of_type(item, cls.IGNORED_TYPES):
 			result = get_ntiid_path(item)
 		return result
 
