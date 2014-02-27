@@ -1158,6 +1158,11 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 
+from nti.externalization.internalization import update_from_external_object
+
+class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
+
+
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
 								 default_authenticate=True)
@@ -1267,6 +1272,55 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		# They are sorted descending by time by default
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID', top_ext_ntiid))))
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_tagged_to_me(self):
+		# Before it's shared with me, I can't see it, even
+		# though it's tagged to me
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			top_n = contenttypes.Note()
+			top_n.applicableRange = contentrange.ContentRangeDescription()
+			top_n.containerId = u'tag:nti:foo'
+			top_n.body = ("Top",)
+			top_n.createdTime = 100
+			top_n.tags = contenttypes.Note.tags.fromObject([user.NTIID])
+			jason.addContainedObject( top_n )
+
+			ext_ntiid = to_external_ntiid_oid( top_n )
+			top_n_id = top_n.id
+
+		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 0))
+		assert_that( res.json_body, has_entry( 'Items', has_length(0) ))
+
+
+		# Now I share it indirectly with me. The sharing is indirect
+		# to verify we hit on the tagged property, not the sharedWith property
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			community = users.Community.create_community( self.ds, username='MathCounts' )
+			user.record_dynamic_membership( community )
+			jason.record_dynamic_membership( community )
+
+			top_n = jason.getContainedObject( 'tag:nti:foo', top_n_id )
+
+			update_from_external_object( top_n, {'sharedWith': ['MathCounts']}, context=self.ds)
+
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
+		assert_that( res.json_body, has_entry( 'Items', has_length(1) ))
+
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('NTIID',ext_ntiid))))
 
 
 from nti.testing.matchers import is_true, is_false
