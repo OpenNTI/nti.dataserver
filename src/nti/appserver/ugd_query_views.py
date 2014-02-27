@@ -1029,7 +1029,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		change to consider returning. Thus, the most efficient way to page through
 		this object is to *not* use ``batchStart``, but instead to set ``batchBefore``
 		to the timestamp of the *oldest* change in the previous batch (always leaving
-		``batchBefore`` at zero). Effectively, this defaults to the current time.
+		``batchStart`` at zero). Effectively, this defaults to the current time.
 		(Note: the next/previous link relations do not currently take this into account.)
 
 	"""
@@ -1165,6 +1165,20 @@ class _NotableRecursiveUGDView(_UGDView):
 
 	* Top-level objects created by certain people (people that are returned
 		from subscription adapters to :class:`.IUserPresentationPriorityCreators`)
+
+
+	An addition to the usual ``batchStart`` and ``batchSize`` parameters, you may also
+	use:
+
+	batchBefore
+		If given, this is the timestamp (floating point number in fractional
+		unix seconds, as returned in ``Last Modified``) of the *youngest*
+		object to consider returning. Thus, the most efficient way to page through
+		this object is to *not* use ``batchStart``, but instead to set ``batchBefore``
+		to the timestamp of the *oldest* change in the previous batch (always leaving
+		``batchStart`` at zero). Effectively, this defaults to the current time.
+		(Note: the next/previous link relations do not currently take this into account.)
+
 	"""
 
 	# We inherit from _UGDView to pick up some useful functions, but
@@ -1238,6 +1252,19 @@ class _NotableRecursiveUGDView(_UGDView):
 
 
 		result['TotalItemCount'] = len(safely_viewable_intids)
+
+		# Also if we didn't have to provide TotalItemCount, our
+		# handling of before could be much more efficient
+		# (we could do this join early on)
+		if self.request.params.get('batchBefore'):
+			try:
+				before = float(self.request.params.get( 'batchBefore' ))
+			except ValueError: # pragma no cover
+				raise hexc.HTTPBadRequest()
+			intids_in_time_range = catalog['createdTime'].apply({'between': (None, before,)})
+			safely_viewable_intids = catalog.family.IF.intersection(safely_viewable_intids, intids_in_time_range)
+
+
 		sorted_intids = list(catalog['createdTime'].sort(safely_viewable_intids,
 														 limit=limit,
 														 reverse=request.params.get('sortOrder') != 'ascending'))
