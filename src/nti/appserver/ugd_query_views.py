@@ -33,6 +33,7 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IUGDExternalCollection
 from nti.appserver.interfaces import IPageContainerResource
 from nti.appserver.interfaces import INamedLinkView
+from nti.appserver.interfaces import IUserPresentationPriorityCreators
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -614,6 +615,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView,
 			remote_user = self.remoteUser
 			my_ids = self.remoteUser.xxx_intids_of_memberships_and_self
 			family = component.getUtility(IIntIds).family
+			request = self.request
 			def security_check(x):
 				try:
 					if remote_user == x.creator:
@@ -626,7 +628,7 @@ class _UGDView(_view_utils.AbstractAuthenticatedView,
 					try:
 						return x.isSharedWith(remote_user) # TODO: Might need to OR this with is_readable?
 					except AttributeError:
-						return is_readable(x, self.request)
+						return is_readable(x, request)
 			predicate = security_check
 		return needs_security, predicate
 
@@ -1162,7 +1164,7 @@ class _NotableRecursiveUGDView(_UGDView):
 	* Top-level objects directly shared to me;
 
 	* Top-level objects created by certain people (people that are returned
-		from subscription adapters to :class:`.IXXXXX`)
+		from subscription adapters to :class:`.IUserPresentationPriorityCreators`)
 	"""
 
 	# We inherit from _UGDView to pick up some useful functions, but
@@ -1170,12 +1172,14 @@ class _NotableRecursiveUGDView(_UGDView):
 	# of our queries with the catalog.
 
 	_support_cross_user = False
+	_force_apply_security = True
 
 	# Default to paging us
 	_DEFAULT_BATCH_SIZE = 100
 	_DEFAULT_BATCH_START = 0
 
 	def __call__( self ):
+		request = self.request
 		self.check_cross_user()
 		# pre-flight the batch
 		batch_size, batch_start = self._get_batch_size_start()
@@ -1192,20 +1196,39 @@ class _NotableRecursiveUGDView(_UGDView):
 		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
-		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
 
-		# Notice right now, no security checks. by definition this set of objects
-		# is viewable by me
+		important_creator_usernames = set()
+		for provider in component.subscribers( (self.remoteUser, request),
+											   IUserPresentationPriorityCreators ):
+			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
 
-		matching_intids = catalog.family.IF.union(toplevel_intids_shared_to_me, intids_replied_to_me)
+		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
+		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
+
+		safely_viewable_intids = catalog.family.IF.union(toplevel_intids_shared_to_me, intids_replied_to_me)
 		# Make sure none of the stuff we created got in
-		matching_intids = catalog.family.IF.difference(matching_intids, intids_created_by_me)
+		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
 
-		result['TotalItemCount'] = len(matching_intids)
-		sorted_intids = list(catalog['createdTime'].sort(matching_intids,
-														 limit=limit,
-														 reverse=self.request.params.get('sortOrder') != 'ascending'))
+		# Sadly, to be able to provide the "TotalItemCount" we have to apply
+		# security to all the intids by other creators; if we didn't have to do that
+		# we could imagine doing so incrementally, as needed, on the theory that there are
+		# probably more things shared directly with me or replied to me than created
+		# by others that I happen to be able to see
 		uidutil = component.getUtility(IIntIds)
+		_, security_check = self._get_security_check()
+		for questionable_uid in toplevel_intids_by_priority_creators:
+			if questionable_uid in safely_viewable_intids:
+				continue
+			questionable_obj = uidutil.getObject(questionable_uid)
+			if security_check(questionable_obj):
+				safely_viewable_intids.add(questionable_uid)
+
+		result['TotalItemCount'] = len(safely_viewable_intids)
+		sorted_intids = list(catalog['createdTime'].sort(safely_viewable_intids,
+														 limit=limit,
+														 reverse=request.params.get('sortOrder') != 'ascending'))
+
 		items = ResultSet(sorted_intids, uidutil)
 		self._batch_tuple_iterable(result, items,
 								   number_items_needed=limit,

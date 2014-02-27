@@ -34,12 +34,16 @@ import nti.appserver.httpexceptions as hexc
 from nti.appserver.policies import site_policies
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver._util import logon_user_with_request
-from nti.appserver import _external_object_io as obj_io
+
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.invitations.utility import accept_invitations
-from nti.appserver._util import raise_json_error as _raise_error
 from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.link_providers import interfaces as link_interfaces
+
+from nti.app.externalization.error import raise_json_error as _raise_error
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import handle_possible_validation_error
+from nti.app.externalization import internalization as obj_io
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
@@ -124,7 +128,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						'code': e.__class__.__name__ },
 					  exc_info[2] )
 	except zope.schema.interfaces.RequiredMissing as e:
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error( request, e )
 	except z3c.password.interfaces.InvalidPassword as e:
 		# Turns out that even though these are ValidationError, we have to handle
 		# them specially because the library doesn't follow the usual pattern
@@ -147,10 +151,10 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						   'message': str(e),
 						   'code': e.__class__.__name__},
 						exc_info[2] )
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error( request, e )
 	except invite_interfaces.InvitationValidationError as e:
 		e.field = 'invitation_codes'
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error( request, e )
 	except nti.utils.schema.InvalidValue as e:
 		if e.value is _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
@@ -176,9 +180,9 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 		policy, _site = site_policies.find_site_policy( request=request )
 		if policy:
 			e = policy.map_validation_exception( externalValue, e )
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error( request, e )
 	except zope.schema.interfaces.ValidationError as e:
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error( request, e )
 	except IntIdMissingError as e:
 		# Hmm. This is a serious type of KeyError, one unexpected
 		# it deserves a 500
@@ -195,7 +199,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 					   'code': 'DuplicateUsernameError'},
 					   exc_info[2] )
 	except Exception as e:
-		obj_io.handle_possible_validation_error( request, e )
+		handle_possible_validation_error( request, e )
 
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_allowing_all

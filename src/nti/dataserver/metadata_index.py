@@ -26,6 +26,7 @@ from .interfaces import IThreadable
 from .interfaces import IFriendsList
 from .interfaces import IDevice
 from .interfaces import ILastModified
+from .contenttypes.forums.interfaces import IHeadlinePost
 
 from zope.catalog.interfaces import ICatalog
 from zc.intid import IIntIds
@@ -109,9 +110,15 @@ def CreatorOfInReplyToIndex(family=None):
 								interface=CreatorOfInReplyTo)
 
 def isTopLevelContentObjectFilter(extent, docid, document):
+	# TODO: This is messy
 	if IModeledContent.providedBy(document):
 		if IFriendsList.providedBy(document) or IDevice.providedBy(document):
 			# These things are modeled content, for some reason
+			return False
+		# HeadlinePosts (which are IMutedInStream) are threadable,
+		# but we don't consider them top-level, we consider the
+		# containing Topic to be top-level
+		if IHeadlinePost.providedBy(document):
 			return False
 
 		if IInspectableWeakThreadable.providedBy(document):
