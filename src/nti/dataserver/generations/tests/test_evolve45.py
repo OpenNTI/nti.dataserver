@@ -18,14 +18,17 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
-from hamcrest import has_entry
+from hamcrest import is_not as does_not
+from hamcrest import has_item
 
 from nti.testing import base
 from nti.testing import matchers
+from nti.testing.matchers import is_empty
 
 import fudge
 
 from zope import component
+from zope import lifecycleevent
 from nti.dataserver.generations.evolve45 import evolve
 from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 
@@ -71,6 +74,17 @@ class TestEvolve45(mock_dataserver.DataserverLayerTest):
 			jason.addContainedObject( note )
 			note_id = note.id
 
+			# Set up an old-style change
+			change = jason.accept_shared_data_from(greg)
+			del jason._circled_events_intids_storage
+			del jason._circled_events_storage
+			lifecycleevent.removed(change)
+			catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+			assert_that( list( catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
+												 containerId=('',''),) ),
+						 does_not( has_item( change )) )
+
+
 		with mock_db_trans(  ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
 			evolve( context )
@@ -102,3 +116,6 @@ class TestEvolve45(mock_dataserver.DataserverLayerTest):
 
 			assert_that( list( catalog.searchResults(topics='topLevelContent') ),
 						 contains(root_note) )
+			assert_that( list( catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
+												 containerId=('',''),) ),
+						 has_item(change) )

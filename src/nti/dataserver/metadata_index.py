@@ -34,17 +34,16 @@ from zc.intid import IIntIds
 
 from nti.zope_catalog.catalog import Catalog
 
-
-from zc.catalog.catalogindex import ValueIndex
-from zc.catalog.index import ValueIndex as RawValueIndex
-from zc.catalog.index import SetIndex as RawSetIndex
-
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.zope_catalog.topic import TopicIndex
 from nti.zope_catalog.topic import ExtentFilteredSet
+
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
+from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+from nti.zope_catalog.index import ValueIndex as RawValueIndex
+from nti.zope_catalog.index import SetIndex as RawSetIndex
 
 from nti.zope_catalog.string import StringTokenNormalizer
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer

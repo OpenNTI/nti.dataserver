@@ -33,7 +33,8 @@ def _weak_ref_to( obj ):
 	except TypeError:
 		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
 
-@interface.implementer(nti_interfaces.IStreamChangeEvent,nti_interfaces.IZContained)
+@interface.implementer(nti_interfaces.IStreamChangeEvent,
+					   nti_interfaces.IZContained)
 class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
@@ -45,6 +46,10 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	these objects only keep a weak reference to the modified object. For that same
 	reason, they only keep a weak reference to their `creator`
 	"""
+
+	mimeType = mimetype.nti_mimetype_with_class( b'Change' )
+	mime_type = mimeType
+	parameters = None
 
 	CREATED  = nti_interfaces.SC_CREATED
 	MODIFIED = nti_interfaces.SC_MODIFIED
@@ -146,7 +151,7 @@ class _ChangeExternalObject(object):
 		result.__parent__ = getattr( wrapping, '__parent__', getattr( change, '__parent__', None ) )
 		result.__name__ = getattr( wrapping, '__name__', getattr( change, '__name__', None ) )
 		result[StandardExternalFields.CLASS] = 'Change'
-		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Change' )
+		result[StandardExternalFields.MIMETYPE] = Change.mimeType
 
 
 		result[StandardExternalFields.LAST_MODIFIED] = change.lastModified

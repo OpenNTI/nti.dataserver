@@ -102,6 +102,23 @@ class CaseInsensitiveAttributeFieldIndex(AttributeIndex,
 # to wrap another AttributeIndex, only a plain ValueIndex or SetIndex. Note
 # that it is somewhat painful to construct
 
+class ValueIndex(_ZCApplyMixin,
+				 _ZCAbstractIndexMixin,
+				 zc.catalog.index.ValueIndex):
+	pass
+
+class AttributeValueIndex(ValueIndex,
+						  zc.catalog.catalogindex.ValueIndex):
+	pass
+
+class SetIndex(_ZCAbstractIndexMixin,
+			   zc.catalog.index.SetIndex):
+	pass
+
+class AttributeSetIndex(SetIndex,
+						zc.catalog.catalogindex.SetIndex):
+	pass
+
 class IntegerValueIndex(_ZCApplyMixin,
 						_ZCAbstractIndexMixin,
 						zc.catalog.index.ValueIndex):

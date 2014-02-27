@@ -15,6 +15,7 @@ generation = 45
 
 from zope import interface
 from zope import component
+from zope import lifecycleevent
 from zope.component.hooks import site, setHooks
 
 from zc import intid as zc_intid
@@ -48,6 +49,21 @@ def evolve( context ):
 	try:
 		with site( ds_folder ):
 			logger.info( "Installing catalog" )
+
+			# First, make the circled changes available.
+			# See users.py
+			for user in ds_folder['users'].values():
+				for change in user.getContainedStream(''):
+					if not change.object: # pragma: no cover
+						continue
+
+					# The ONLY things in the root stream are circled events
+					user._circled_events_storage.append( change )
+					change.__parent__ = user
+					lifecycleevent.created( change )
+					lifecycleevent.added( change )
+					user._circled_events_intids_storage.add( change._ds_intid )
+
 			catalog = install_metadata_catalog( ds_folder, component.getUtility(zc_intid.IIntIds ) )
 			catalog.updateIndexes()
 			logger.info( "Done installing catalog")

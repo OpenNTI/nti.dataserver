@@ -1322,6 +1322,26 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID',ext_ntiid))))
 
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_circled(self):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			user.accept_shared_data_from(jason)
+
+		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'ChangeType', 'Circled' ))))
+
+
+
 
 from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter

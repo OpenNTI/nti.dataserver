@@ -396,7 +396,9 @@ SC_DELETED = "Deleted"
 SC_SHARED = "Shared"
 SC_CIRCLED = "Circled"
 
-class IStreamChangeEvent(interface.interfaces.IObjectEvent):
+class IStreamChangeEvent(interface.interfaces.IObjectEvent,
+						 ILastModified,
+						 IContentTypeAware):
 	"""
 	A change that goes in the activity stream for a user.
 	If the object was :class:`IContained`, then this object will be as well.

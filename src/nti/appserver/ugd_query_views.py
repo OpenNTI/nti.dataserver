@@ -1197,6 +1197,9 @@ class _NotableRecursiveUGDView(_UGDView):
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 		intids_tagged_to_me = catalog['taggedTo'].apply({'any_of': (self.remoteUser.username,)})
+		# We use low-level optimization to get this next one; otherwise
+		# we'd need some more indexes to make it efficient
+		intids_of_my_circled_events = self.remoteUser._circled_events_intids_storage
 
 		important_creator_usernames = set()
 		for provider in component.subscribers( (self.remoteUser, request),
@@ -1206,7 +1209,9 @@ class _NotableRecursiveUGDView(_UGDView):
 		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
 
-		safely_viewable_intids = catalog.family.IF.union(toplevel_intids_shared_to_me, intids_replied_to_me)
+		safely_viewable_intids = catalog.family.IF.multiunion((toplevel_intids_shared_to_me,
+															   intids_replied_to_me,
+															   intids_of_my_circled_events))
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
 		# apply security to all the intids not guaranteed to be

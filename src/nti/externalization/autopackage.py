@@ -52,8 +52,9 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 	@classmethod
 	def _ap_compute_external_mimetype( cls, package_name, a_type, ext_class_name ):
 		# 'nti.assessment', FooBar, 'FooBar' => vnd.nextthought.assessment.foobar
+		# Recall that mimetypes should be byte strings
 		local = package_name.rsplit( '.', 1 )[-1]
-		return 'application/vnd.nextthought.' + local + '.' + ext_class_name.lower()
+		return bytes(b'application/vnd.nextthought.' + local + b'.' + ext_class_name.lower())
 
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces( cls, interfaces ): # TODO: We can probably do something with this
