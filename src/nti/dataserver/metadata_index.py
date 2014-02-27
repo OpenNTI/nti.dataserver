@@ -206,6 +206,9 @@ def CreatorOfInReplyToIndex(family=None):
 
 def isTopLevelContentObjectFilter(extent, docid, document):
 	# TODO: This is messy
+	if getattr(document, '__is_toplevel_content__', False):
+		return True
+
 	if IModeledContent.providedBy(document):
 		if IFriendsList.providedBy(document) or IDevice.providedBy(document):
 			# These things are modeled content, for some reason
