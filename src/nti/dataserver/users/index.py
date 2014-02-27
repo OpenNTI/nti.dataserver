@@ -96,7 +96,10 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 from zope.catalog.interfaces import ICatalog
 from zc.intid import IIntIds
 
-from zope.catalog.catalog import Catalog
+# NOTE: In the past this was a standard zope.catalog.catalog.Catalog;
+# if we actually need the features of the new catalog, we will
+# need to migrate.
+from nti.zope_catalog.catalog import Catalog
 
 def install_user_catalog( site_manager_container, intids=None ):
 	lsm = site_manager_container.getSiteManager()
