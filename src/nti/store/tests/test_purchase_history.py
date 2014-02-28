@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import not_none
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import time
+import unittest
 
 from zope.event import notify
 
@@ -22,11 +29,11 @@ from nti.store import interfaces as store_interfaces
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.store.tests import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_, has_length, none, not_none)
+class TestPurchaseHistory(unittest.TestCase):
 
-class TestPurchaseHistory(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	processor = 'stripe'
 
@@ -34,12 +41,14 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
-	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN):
 		pi = purchase_order.create_purchase_item(item, 1)
 		assert_that(hash(pi), is_(not_none()))
 		po = purchase_order.create_purchase_order(pi, quantity=quantity)
 		assert_that(hash(po), is_(not_none()))
-		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor, state=state)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor,
+													  state=state)
 		assert_that(hash(pa), is_(not_none()))
 		return pa
 
@@ -115,7 +124,8 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		hist = store_interfaces.IPurchaseHistory(user, None)
 
 		item = u'xyz-book'
-		pending = self._create_purchase_attempt(item, state=store_interfaces.PA_STATE_STARTED)
+		pending = self._create_purchase_attempt(item,
+												state=store_interfaces.PA_STATE_STARTED)
 		hist.add_purchase(pending)
 
 		pa = purchase_history.get_pending_purchase_for(user, item)
@@ -133,7 +143,8 @@ class TestPurchaseHistory(ConfiguringTestBase):
 	def test_refund(self):
 		user = self._create_user()
 		book = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology'
-		purchase = self._create_purchase_attempt(book, state=store_interfaces.PA_STATE_SUCCESS)
+		purchase = self._create_purchase_attempt(book,
+												 state=store_interfaces.PA_STATE_SUCCESS)
 		purchase_history.register_purchase_attempt(purchase, user)
 		notify(store_interfaces.PurchaseAttemptRefunded(purchase))
 		assert_that(purchase.State, is_(store_interfaces.PA_STATE_REFUNDED))
@@ -144,10 +155,12 @@ class TestPurchaseHistory(ConfiguringTestBase):
 		user_2 = self._create_user(username='nt2@nti.com',)
 		book = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology'
 
-		pa_1 = self._create_purchase_attempt(book, quantity=5, state=store_interfaces.PA_STATE_SUCCESS)
+		pa_1 = self._create_purchase_attempt(book, quantity=5,
+											 state=store_interfaces.PA_STATE_SUCCESS)
 		purchase_history.register_purchase_attempt(pa_1, user_1)
 
-		pa_2 = self._create_purchase_attempt(book, state=store_interfaces.PA_STATE_SUCCESS)
+		pa_2 = self._create_purchase_attempt(book,
+											 state=store_interfaces.PA_STATE_SUCCESS)
 		purchase_history.register_purchase_attempt(pa_2, user_2)
 
 		pa_1.register(user_2, pa_2.id)

@@ -1,26 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import assert_that
+from hamcrest import has_property
+
 from zope import component
 from zope.component.hooks import site
 
-from nti.dataserver.site import _TrivialSite
 from nti.appserver.policies.sites import BASECOPPA
 
-from ..interfaces import IPurchasable
+from nti.dataserver.site import _TrivialSite
+
+from nti.store.interfaces import IPurchasable
 
 import nti.testing.base
 from nti.testing.matchers import verifiably_provides
-
-from hamcrest import (assert_that, is_, none, has_property)
 
 HEAD_ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -72,7 +74,9 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
 		self.configure_string(ZCML_STRING)
 		assert_that(BASECOPPA.__bases__, is_((component.globalSiteManager,)))
 
-		assert_that(component.queryUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"), is_(none()))
+		assert_that(component.queryUtility(IPurchasable,
+										   name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse"),
+				    is_(none()))
 
 		with site(_TrivialSite(BASECOPPA)):
 			pur = component.getUtility(IPurchasable, name="tag:nextthought.com,2011-10:PRMIA-purchasable-RiskCourse")

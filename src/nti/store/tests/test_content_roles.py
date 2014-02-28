@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import os
+import unittest
 
 from zope import component
 
@@ -19,13 +24,13 @@ from nti.dataserver.users import User
 from nti.store import content_roles
 from nti.store.content_utils import get_collection_root
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from hamcrest import (assert_that, is_, has_length)
+class TestContentRoles(unittest.TestCase):
 
-class TestContentRoles(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def setUp(self):
 		library = FileLibrary(os.path.join(os.path.dirname(__file__), 'library'))
@@ -65,5 +70,3 @@ class TestContentRoles(ConfiguringTestBase):
 		unit = get_collection_root(ntiid, library)
 		d = list(content_roles.get_descendants(unit))
 		assert_that(d, has_length(3))
-
-

@@ -7,25 +7,31 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
+
+import unittest
+
 from zope import component
 
 from nti.dataserver.users import User
 
-import nti.store as store
-import nti.dataserver as dataserver
-
-from .. import purchasable
-from .. import interfaces as store_interfaces
+from nti.store import purchasable
+from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, greater_than_or_equal_to, has_property)
+class TestCourse(unittest.TestCase):
 
-class TestCourse(ConfiguringTestBase):
-
-	set_up_packages = (dataserver, store) + (('courses.zcml', 'nti.store.tests'),)
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		usr = User.create_user(self.ds, username=username, password=password)

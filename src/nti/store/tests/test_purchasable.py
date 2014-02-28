@@ -1,28 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_in
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than_or_equal_to
+
+import unittest
+
 from zope import component
 
 from nti.dataserver.users import User
 
-from .. import purchasable
-from .. import purchase_order
-from .. import purchase_attempt
-from .. import interfaces as store_interfaces
+from nti.store import purchasable
+from nti.store import purchase_order
+from nti.store import purchase_attempt
+from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, has_key, has_length, is_not, none, is_, is_in, greater_than_or_equal_to)
+class TestPurchasable(unittest.TestCase):
 
-class TestPurchasable(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	processor = 'stripe'
 
@@ -56,17 +67,20 @@ class TestPurchasable(ConfiguringTestBase):
 		assert_that(m, has_key('iid_1'))
 		assert_that(m, has_key('iid_2'))
 
-	def _create_purchase_attempt(self, item=u'iid_3', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+	def _create_purchase_attempt(self, item=u'iid_3', quantity=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN):
 		pi = purchase_order.create_purchase_item(item, 1)
 		po = purchase_order.create_purchase_order(pi, quantity=quantity)
-		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor, state=state)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor,
+													  state=state)
 		return pa
 
 	@WithMockDSTrans
 	def test_purchased(self):
 		user = self._create_user()
 		hist = store_interfaces.IPurchaseHistory(user, None)
-		pa = self._create_purchase_attempt(u'iid_3', state=store_interfaces.PA_STATE_SUCCESS)
+		pa = self._create_purchase_attempt(u'iid_3',
+											state=store_interfaces.PA_STATE_SUCCESS)
 		hist.add_purchase(pa)
 
 		m = purchasable.get_available_items('nt@nti.com')
