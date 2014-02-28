@@ -87,8 +87,11 @@ def evolve( context ):
 				for index in catalog.values():
 					try:
 						index.index_doc(uid, obj)
-					except (POSKeyError, TypeError):
-						pass
+					except (POSKeyError, TypeError) as e:
+						# we may get TypeError: __setstate__() takes exactly 2 arguments (1 given)
+						# error or creator cannot be resolved (if a user has been deleted)
+						# catch and continue
+						logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
 				
 			logger.info( "Done installing catalog")
 	finally:
