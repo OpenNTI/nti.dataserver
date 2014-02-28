@@ -72,7 +72,8 @@
 	<include package="nti.externalization" />
 	
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ISearchQuery
+		root_interfaces=".interfaces.IDateTimeRange
+						 .interfaces.ISearchQuery
 						 .interfaces.IBookContent
 						 .interfaces.INTICardContent
 						 .interfaces.IVideoTranscriptContent

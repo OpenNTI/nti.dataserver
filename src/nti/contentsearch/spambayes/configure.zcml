@@ -20,7 +20,7 @@
 	<utility factory=".settings._DefaultTokenizerSettings" />
 	<utility factory=".settings._DefaultClassifierSettings" />
 
-	<utility factory="._stripper._default_translation_table" name="spambayes" />
+	<utility factory=".stripper._default_translation_table" name="spambayes" />
 		
 	<utility factory=".tokenizer._ContentTokenizer" name="spam_tokenizer" />
 		
