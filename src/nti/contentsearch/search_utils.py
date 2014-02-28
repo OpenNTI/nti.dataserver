@@ -41,7 +41,8 @@ def clean_search_query(query, language='en'):
 
 	return result
 
-accepted_keys = {'ntiid', 'accept', 'exclude'}
+accepted_keys = {'ntiid', 'accept', 'exclude', 'createdAfter', 'createdBefore',
+				 'modifiedAfter', 'modifiedBefore'}
 
 def get_batch_size_start(params):
 	batch_size = params.get('batchSize', None)
@@ -63,14 +64,14 @@ def check_time(value):
 		value = float(value)
 	except ValueError:
 		raise hexc.HTTPBadRequest()
-	if value  < 0:
+	if value < 0:
 		raise hexc.HTTPBadRequest()
 	return value
 	
 def _parse_dateRange(args, fields):
 	result = None
 	for idx, name in enumerate(fields):
-		value = args.get(name)
+		value = args.pop(name, None)
 		value = check_time(value) if value is not None else None
 		if value is not None:
 			result = result or search_query.DateTimeRange()
@@ -79,7 +80,8 @@ def _parse_dateRange(args, fields):
 			else:  # before
 				result.endTime = value
 
-	if result is not None and result.endTime < result.startTime:
+	if 	result is not None and result.endTime is not None and \
+		result.startTime is not None and result.endTime < result.startTime:
 		raise hexc.HTTPBadRequest()
 	return result
 
@@ -131,6 +133,7 @@ def create_queryobject(username, params, matchdict):
 	
 	creationTime = _parse_dateRange(args, ('createdAfter', 'createdBefore',))
 	modificationTime = _parse_dateRange(args, ('modifiedAfter', 'modifiedBefore'))
+
 	args['creationTime'] = creationTime
 	args['modificationTime'] = modificationTime
 
