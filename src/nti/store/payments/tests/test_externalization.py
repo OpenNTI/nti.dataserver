@@ -1,30 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_entry
+from hamcrest import assert_that
+
+import unittest
 
 from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from ... import purchase_order
-from ... import purchase_attempt
-from ... import interfaces as store_interfaces
+from nti.store import purchase_order
+from nti.store import purchase_attempt
+from nti.store import interfaces as store_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_, is_not, has_entry)
+class TestPaymentsExternal(unittest.TestCase):
 
-class TestPaymentsExternal(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def _create_user(self, username='nt@nti.com', password='temp001'):
 		ds = mock_dataserver.current_mock_ds
