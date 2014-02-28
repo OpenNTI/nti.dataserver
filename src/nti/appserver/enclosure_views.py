@@ -5,7 +5,7 @@ Views relating to working with enclosures.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__( 'logging' ).getLogger( __name__ )
@@ -16,14 +16,15 @@ from pyramid import traversal
 
 from zope.location.location import LocationProxy
 
+from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
+from nti.app.externalization.internalization import class_name_from_content_type
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.appserver import httpexceptions as hexc
-from nti.appserver import _external_object_io as obj_io
-from nti.appserver._view_utils import UploadRequestUtilsMixin
 from nti.appserver._view_utils import AbstractAuthenticatedView
-from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import enclosures
-from nti.dataserver.mimetype import MIME_BASE, nti_mimetype_from_object
+from nti.mimetype.mimetype import MIME_BASE, nti_mimetype_from_object
 from nti.dataserver.interfaces import (ISimpleEnclosureContainer, IEnclosedContent)
 
 import nti.externalization.internalization
@@ -44,7 +45,9 @@ def _force_update_modification_time( obj, lastModified, max_depth=-1 ):
 		return
 	_force_update_modification_time( parent, lastModified, max_depth )
 
-class EnclosurePostView(AbstractAuthenticatedView, UploadRequestUtilsMixin, ModeledContentUploadRequestUtilsMixin):
+class EnclosurePostView(AbstractAuthenticatedView,
+						UploadRequestUtilsMixin,
+						ModeledContentUploadRequestUtilsMixin):
 	"""
 	View for creating new enclosures.
 	"""
@@ -53,7 +56,10 @@ class EnclosurePostView(AbstractAuthenticatedView, UploadRequestUtilsMixin, Mode
 		context = self.request.context # A _AbstractObjectResource OR an ISimpleEnclosureContainer
 		# Enclosure containers are defined to be IContainerNamesContainer,
 		# which means they will choose their name based on what we give them
-		enclosure_container = context if ISimpleEnclosureContainer.providedBy( context ) else getattr( context, 'resource', None )
+		enclosure_container = context \
+							  if ISimpleEnclosureContainer.providedBy(context) \
+							  else getattr(context, 'resource', None)
+
 		if enclosure_container is None:
 			# Posting data to something that cannot take it. This was probably
 			# actually meant to be a PUT to update existing data
@@ -65,7 +71,7 @@ class EnclosurePostView(AbstractAuthenticatedView, UploadRequestUtilsMixin, Mode
 			content_type = content_type[0:content_type.index('+')]
 
 		# First, see if they're giving us something we can model
-		datatype = obj_io.class_name_from_content_type( content_type )
+		datatype = class_name_from_content_type(content_type)
 		datatype = datatype + 's' if datatype else None
 		# Pass in all the information we have, as if it was a full externalized object
 		modeled_content = nti.externalization.internalization.find_factory_for( {StandardExternalFields.MIMETYPE: content_type,
@@ -125,7 +131,9 @@ class EnclosurePostView(AbstractAuthenticatedView, UploadRequestUtilsMixin, Mode
 
 		return enclosure
 
-class EnclosurePutView(AbstractAuthenticatedView,UploadRequestUtilsMixin,ModeledContentUploadRequestUtilsMixin):
+class EnclosurePutView(AbstractAuthenticatedView,
+					   UploadRequestUtilsMixin,
+					   ModeledContentUploadRequestUtilsMixin):
 	"""
 	View for editing an existing enclosure.
 	"""

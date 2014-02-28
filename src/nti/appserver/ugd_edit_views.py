@@ -5,7 +5,7 @@ User-generated data CRUD functions.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -19,6 +19,9 @@ from zope.container.interfaces import InvalidContainerType
 
 import time
 
+from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.externalization import toExternalObject
@@ -29,11 +32,8 @@ from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 from nti.appserver import httpexceptions as hexc
 from .interfaces import INewObjectTransformer
 from nti.appserver._view_utils import AbstractAuthenticatedView
-from nti.appserver._view_utils import ModeledContentEditRequestUtilsMixin
-from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 def _id(x): return x
-
 
 class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """

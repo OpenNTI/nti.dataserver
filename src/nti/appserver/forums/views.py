@@ -5,7 +5,7 @@ Views and other functions related to forums and blogs.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,12 +27,13 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
 from pyramid import httpexceptions as hexc
 
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.utils._compat import aq_base
 
 from nti.appserver.traversal import find_interface
 from nti.appserver._util import uncached_in_response
 from nti.appserver._view_utils import AbstractAuthenticatedView
-from nti.appserver._view_utils import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_edit_views import UGDPutView

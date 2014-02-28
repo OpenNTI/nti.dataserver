@@ -5,7 +5,7 @@ View functions relating to searching for users.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -23,15 +23,13 @@ from ZODB.utils import u64
 from pyramid.view import view_config
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver import interfaces as app_interfaces
-from .interfaces import NamedLinkPathAdapter
 
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
-from nti.dataserver import mimetype as nti_mimetype
+from nti.mimetype import mimetype as nti_mimetype
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.users import interfaces as user_interfaces

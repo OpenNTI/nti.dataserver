@@ -30,9 +30,11 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import user_profile
 
 
-from nti.appserver._util import raise_json_error
+from nti.app.externalization.error import raise_json_error
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.internalization import update_object_from_external_object
+
 from nti.appserver._email_utils import queue_simple_html_text_email
-from nti.appserver import _external_object_io as obj_io
 
 from pyramid.view import view_config
 
@@ -71,7 +73,7 @@ def _preflight_email_based_request(request):
 	try:
 		user_interfaces.checkEmailAddress( email_assoc_with_account )
 	except zope.schema.interfaces.ValidationError as e:
-		obj_io.handle_validation_error( request, e )
+		handle_validation_error(request, e)
 
 	return email_assoc_with_account
 
@@ -302,7 +304,7 @@ def reset_passcode_view(request):
 	if user.has_password():
 		del user.password
 
-	obj_io.update_object_from_external_object( user, {'password': new_password }, notify=False, request=request )
+	update_object_from_external_object(user, {'password': new_password }, notify=False, request=request)
 
 	# Great, it worked. Kill the annotation so that it CANNOT be used again
 	# (otherwise the window of vulnerability is larger than it needs to be)
