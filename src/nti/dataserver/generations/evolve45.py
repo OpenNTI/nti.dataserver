@@ -25,6 +25,8 @@ from zope.dottedname import resolve as dottedname
 
 from zc import intid as zc_intid
 
+from ZODB.POSException import POSKeyError
+
 from .install import install_metadata_catalog
 
 from nti.dataserver.interfaces import IDataserver
@@ -80,7 +82,14 @@ def evolve( context ):
 				_register_grades(user, IGrade, _store_grade_created_event)
 
 			catalog = install_metadata_catalog( ds_folder, component.getUtility(zc_intid.IIntIds ) )
-			catalog.updateIndexes()
+			
+			for uid, obj in catalog._visitSublocations() :
+				for index in catalog.values():
+					try:
+						index.index_doc(uid, obj)
+					except POSKeyError:
+						pass
+				
 			logger.info( "Done installing catalog")
 	finally:
 		gsm.unregisterUtility(mock_ds)
