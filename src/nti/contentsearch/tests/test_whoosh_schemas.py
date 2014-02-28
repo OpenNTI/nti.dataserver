@@ -28,16 +28,14 @@ from . import SharedConfiguringTestLayer
 class WhooshSchemaTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def testSetUp(cls, test=None):
-		super(WhooshSchemaTestLayer, cls).testSetUp(test)
-		cls.test = test = test or find_test()
-		test.db_dir = tempfile.mkdtemp(dir="/tmp")
+	def _create_index(cls):
+		cls.schema = create_book_schema()
+		cls.db_dir = tempfile.mkdtemp(dir="/tmp")
 
-		test.schema = create_book_schema()
-		index.create_in(test.db_dir, test.schema, "sample")
-		test.index = index.open_dir(test.db_dir, indexname="sample")
+		index.create_in(cls.db_dir, cls.schema, "sample")
+		cls.index = index.open_dir(cls.db_dir, indexname="sample")
 
-		writer = test.index.writer()
+		writer = cls.index.writer()
 		path = os.path.join(os.path.dirname(__file__), 'sample.txt')
 		with open(path, "r") as f:
 			for k, x in enumerate(f.readlines()):
@@ -49,10 +47,23 @@ class WhooshSchemaTestLayer(SharedConfiguringTestLayer):
 		writer.commit()
 
 	@classmethod
+	def setUp(cls):
+		super(WhooshSchemaTestLayer, cls).setUp()
+		cls._create_index()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		super(WhooshSchemaTestLayer, cls).testSetUp(test)
+		cls.test = test or find_test()
+		cls.test.schema = cls.schema
+		cls.test.db_dir = cls.db_dir
+		cls.test.index = cls.index
+
+	@classmethod
 	def tearDown(cls):
 		super(WhooshSchemaTestLayer, cls).tearDown()
-		cls.test.index.close()
-		shutil.rmtree(cls.test.db_dir, True)
+		cls.index.close()
+		shutil.rmtree(cls.db_dir, True)
 
 class TestWhooshSchemas(unittest.TestCase):
 			
