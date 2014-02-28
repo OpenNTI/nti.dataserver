@@ -26,7 +26,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
 
-from nti.dataserver.mimetype import nti_mimetype_with_class
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 union_operator = query_views.Operator.union
 intersection_operator = query_views.Operator.intersection
