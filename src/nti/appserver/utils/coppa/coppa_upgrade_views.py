@@ -32,11 +32,10 @@ from nti.appserver.utils import _JsonBodyView
 from nti.appserver.policies import user_policies
 from nti.appserver.policies import site_policies
 from nti.appserver import httpexceptions as hexc
-from nti.appserver.policies import interfaces as sp_interfaces
 
-from nti.appserver import _external_object_io as obj_io
 from nti.appserver.link_providers import flag_link_provider
-from nti.appserver._util import raise_json_error as _raise_error
+from nti.app.externalization.error import raise_json_error as _raise_error
+from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.utils import schema as nti_schema
 from nti.utils.maps import CaseInsensitiveDict
@@ -237,7 +236,7 @@ def _validate_user_data(data, request):
 			 **_post_update_view_defaults)
 def upgrade_preflight_coppa_user_view(request):
 
-	externalValue = obj_io.read_body_as_external_object(request)
+	externalValue = read_body_as_external_object(request)
 
 	placeholder_data = {'Username': request.context.username,
 						'birthdate': '1982-01-31',
@@ -262,7 +261,7 @@ def upgrade_preflight_coppa_user_view(request):
 def upgrade_coppa_user_view(request):
 
 	# validate input
-	externalValue = obj_io.read_body_as_external_object(request)
+	externalValue = read_body_as_external_object(request)
 	iface = _validate_user_data(externalValue, request)
 
 	# make sure user can be upgraded
