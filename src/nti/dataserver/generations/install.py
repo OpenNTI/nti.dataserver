@@ -6,9 +6,9 @@ from __future__ import print_function, unicode_literals
 
 __docformat__ = 'restructuredtext'
 
-generation = 44
+generation = 45
 
-# Allow going forward to 45 for testing
+# Allow going forward/backward for testing
 import os
 generation = int(os.getenv('DATASERVER_TEST_GENERATION', generation))
 
