@@ -94,3 +94,35 @@ from nti.store.tests import ConfiguringTestBase as StoreConfiguringTestBase
 class ConfiguringTestBase(StoreConfiguringTestBase):
     set_up_packages = StoreConfiguringTestBase.set_up_packages + \
                       (('purchasables.zcml', 'nti.store.payments.stripe.tests'),)
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
+from nti.testing.layers import find_test
+from nti.testing.layers import GCLayerMixin
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+
+from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
+
+from nti.store.tests import SharedConfiguringTestLayer as StoreSharedConfiguringTestLayer
+
+class SharedConfiguringTestLayer(ZopeComponentLayer,
+                                 GCLayerMixin,
+                                 ConfiguringLayerMixin,
+                                 DSInjectorMixin):
+
+    set_up_packages = StoreSharedConfiguringTestLayer.set_up_packages + \
+                       (('purchasables.zcml', 'nti.store.payments.stripe.tests'),)
+
+    @classmethod
+    def setUp(cls):
+        cls.setUpPackages()
+
+    @classmethod
+    def tearDown(cls):
+        cls.tearDownPackages()
+
+    @classmethod
+    def testSetUp(cls, test=None):
+        cls.setUpTestDS(test)
