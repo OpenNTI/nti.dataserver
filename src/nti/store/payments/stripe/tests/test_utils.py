@@ -29,7 +29,6 @@ class UtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def setUp(cls):
-		super(UtilsTestLayer, cls).setUp()
 		code = str(uuid.uuid4())
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
@@ -37,13 +36,11 @@ class UtilsTestLayer(SharedConfiguringTestLayer):
 		
 	@classmethod
 	def testSetUp(cls, test=None):
-		super(UtilsTestLayer, cls).testSetUp(test)
 		cls.test = test or find_test()
 		cls.test.coupon = cls.coupon
 
 	@classmethod
 	def tearDown(cls):
-		super(UtilsTestLayer, cls).tearDown()
 		cls.test.coupon.delete()
 		stripe.api_key = cls.api_key
 
