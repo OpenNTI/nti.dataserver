@@ -87,7 +87,7 @@ def evolve( context ):
 				for index in catalog.values():
 					try:
 						index.index_doc(uid, obj)
-					except POSKeyError:
+					except (POSKeyError, TypeError):
 						pass
 				
 			logger.info( "Done installing catalog")
