@@ -18,12 +18,14 @@ from cgi import escape as html_escape
 from zope import component
 from pyramid.view import view_config
 
+from nti.app.externalization.internalization import read_body_as_external_object
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.mailer.interfaces import ITemplatedMailer
+
 from . import httpexceptions as hexc
-from ._external_object_io import read_body_as_external_object
 
 #: The link relationship type to which an authenticated
 #: user can POST data to send feedback. Also the name of a

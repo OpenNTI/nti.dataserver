@@ -7,7 +7,10 @@ In addition to providing access to the content, this
 
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import time
@@ -27,9 +30,11 @@ from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 from pyramid.view import view_config, view_defaults
 
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.appserver import interfaces as app_interfaces
+from nti.appserver._view_utils import AbstractAuthenticatedView
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
-from nti.appserver._view_utils import AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
