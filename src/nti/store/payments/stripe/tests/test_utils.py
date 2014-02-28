@@ -1,39 +1,55 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_length
+from hamcrest import assert_that
+
 import uuid
 import stripe
+import unittest
 
 from zope import component
 
 from nti.store import interfaces as store_interfaces
 from ..stripe_purchase import create_stripe_priceable
 
-from . import ConfiguringTestBase
+from . import find_test
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, has_length, is_not, none, is_)
-
-class TestUtils(ConfiguringTestBase):
+class UtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def setUpClass(cls):
-		super(TestUtils, cls).setUpClass()
+	def setUp(cls):
+		super(UtilsTestLayer, cls).setUp()
+		code = str(uuid.uuid4())
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
-		code = str(uuid.uuid4())
 		cls.coupon = stripe.Coupon.create(percent_off=25, duration='once', id=code)
+		
+	@classmethod
+	def testSetUp(cls, test=None):
+		super(UtilsTestLayer, cls).testSetUp(test)
+		cls.test = test or find_test()
+		cls.test.coupon = cls.coupon
 
 	@classmethod
-	def tearDownClass(cls):
-		super(TestUtils, cls).tearDownClass()
-		cls.coupon.delete()
+	def tearDown(cls):
+		super(UtilsTestLayer, cls).tearDown()
+		cls.test.coupon.delete()
 		stripe.api_key = cls.api_key
+
+class TestUtils(unittest.TestCase):
+
+	layer = UtilsTestLayer
 
 	def test_price(self):
 		pricer = component.getUtility(store_interfaces.IPurchasablePricer, name="stripe")

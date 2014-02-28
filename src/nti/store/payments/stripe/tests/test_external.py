@@ -1,36 +1,41 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import assert_that
+
 import uuid
 import stripe
+import unittest
 
 from nti.externalization.externalization import toExternalObject
 
 from .. import StripePurchaseError
 from ..stripe_purchase import create_stripe_priceable, StripePricedPurchasable
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_not, none, has_key, has_entry)
+class TestExternal(unittest.TestCase):
 
-class TestExternal(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestExternal, cls).setUpClass()
-		cls.api_key = stripe.api_key
+	def setUp(self):
+		super(TestExternal, self).setUp()
+		self.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
 
-	@classmethod
-	def tearDownClass(cls):
-		super(TestExternal, cls).tearDownClass()
-		stripe.api_key = cls.api_key
+	def tearDown(self):
+		super(TestExternal, self).tearDown()
+		stripe.api_key = self.api_key
 
 	def test_stripe_coupon(self):
 		code = str(uuid.uuid4())
@@ -43,7 +48,8 @@ class TestExternal(ConfiguringTestBase):
 		c.delete()
 
 	def test_purchase_error(self):
-		spe = StripePurchaseError(Type=u"Error", Message=u"My message", Code=u"My code", Param=u"My param")
+		spe = StripePurchaseError(Type=u"Error", Message=u"My message",
+								  Code=u"My code", Param=u"My param")
 		ext = toExternalObject(spe)
 		assert_that(ext, is_not(none()))
 		assert_that(ext, has_entry('Type', 'Error'))
@@ -61,7 +67,8 @@ class TestExternal(ConfiguringTestBase):
 
 	def test_stripe_priced_purchasable(self):
 		p = StripePricedPurchasable(NTIID="bleach", Quantity=10, Coupon='mycoupon',
-									PurchaseFee=5.0, PurchasePrice=100.0, NonDiscountedPrice=105.0)
+									PurchaseFee=5.0, PurchasePrice=100.0,
+									NonDiscountedPrice=105.0)
 		ext = toExternalObject(p)
 		assert_that(ext, is_not(none()))
 		assert_that(ext, has_entry('NTIID', 'bleach'))

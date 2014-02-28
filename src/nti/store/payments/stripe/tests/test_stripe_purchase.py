@@ -13,13 +13,17 @@ from hamcrest import is_not
 from hamcrest import has_length
 from hamcrest import assert_that
 
+import unittest
+
 from nti.store.payments.stripe import stripe_purchase
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-class TestStripePurchase(ConfiguringTestBase):
+class TestStripePurchase(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	book_id = 'xyz-book'
 

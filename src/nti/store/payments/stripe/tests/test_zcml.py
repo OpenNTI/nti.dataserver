@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import assert_that
+
+import unittest
 
 from zope import component
 
@@ -13,11 +21,11 @@ from nti.externalization.externalization import toExternalObject
 
 from .. import interfaces as stripe_interfaces
 
-from . import ConfiguringTestBase
+from . import SharedConfiguringTestLayer
 
-from hamcrest import (assert_that, is_not, none, has_key, has_entry)
+class TestZcml(unittest.TestCase):
 
-class TestZcml(ConfiguringTestBase):
+	layer = SharedConfiguringTestLayer
 
 	def test_default_registrations(self):
 		cap_name = 'NTI-TEST'
