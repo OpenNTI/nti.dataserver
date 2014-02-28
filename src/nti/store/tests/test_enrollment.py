@@ -1,26 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import assert_that
+
+import unittest
+
 from nti.dataserver.users import User
 
-from .. import enrollment
+from nti.store import enrollment
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
 from nose.tools import assert_raises
-from hamcrest import (assert_that, is_)
 
-class TestEnrollment(ConfiguringTestBase):
+class TestEnrollment(unittest.TestCase):
 
-	set_up_packages = ConfiguringTestBase.set_up_packages + (('courses.zcml', 'nti.store.tests'),)
+	layer = SharedConfiguringTestLayer
 
 	course_id = 'tag:nextthought.com,2011-10:OU-course-CLC3403LawAndJustice'
 

@@ -17,6 +17,7 @@ from hamcrest import assert_that
 from hamcrest import greater_than_or_equal_to
 
 import os
+import unittest
 
 from zope import component
 
@@ -27,23 +28,21 @@ from nti.dataserver.users import User
 
 from nti.externalization.externalization import to_external_object
 
-from .. import pricing
-from .. import priceable
-from .. import purchasable
-from .. import purchase_order
-from .. import purchase_error
-from .. import purchase_attempt
-from .. import interfaces as store_interfaces
+from nti.store import pricing
+from nti.store import priceable
+from nti.store import purchasable
+from nti.store import purchase_order
+from nti.store import purchase_error
+from nti.store import purchase_attempt
+from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
-class TestStoreExternal(ConfiguringTestBase):
+class TestStoreExternal(unittest.TestCase):
 
-	set_up_packages = ConfiguringTestBase.set_up_packages + \
-					  (('purchasables.zcml', 'nti.store.tests'),
-					   ('courses.zcml', 'nti.store.tests'))
+	layer = SharedConfiguringTestLayer
 
 	processor = 'stripe'
 

@@ -1,27 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import not_none
+from hamcrest import assert_that
+
+import unittest
+
 from nti.dataserver.users import User
 
-from .. import invitations
-from .. import purchase_order
-from .. import purchase_attempt
-from .. import interfaces as store_interfaces
+from nti.store import invitations
+from nti.store import purchase_order
+from nti.store import purchase_attempt
+from nti.store import interfaces as store_interfaces
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import ConfiguringTestBase
+from nti.store.tests import SharedConfiguringTestLayer
 
 from nose.tools import assert_raises
-from hamcrest import (assert_that, is_, not_none)
 
-class TestInvitations(ConfiguringTestBase):
+class TestInvitations(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	processor = 'stripe'
 
@@ -29,10 +36,12 @@ class TestInvitations(ConfiguringTestBase):
 		usr = User.create_user(self.ds, username=username, password=password)
 		return usr
 
-	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None, state=store_interfaces.PA_STATE_UNKNOWN):
+	def _create_purchase_attempt(self, item=u'xyz-book', quantity=None,
+								 state=store_interfaces.PA_STATE_UNKNOWN):
 		pi = purchase_order.create_purchase_item(item, 1)
 		po = purchase_order.create_purchase_order(pi, quantity=quantity)
-		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor, state=state)
+		pa = purchase_attempt.create_purchase_attempt(po, processor=self.processor,
+													  state=state)
 		return pa
 
 	@WithMockDSTrans
