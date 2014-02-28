@@ -18,11 +18,17 @@ from zope import component
 from zope import lifecycleevent
 from zope.component.hooks import site, setHooks
 
+from zope.annotation.interfaces import IAnnotations
+from zope.generations.utility import findObjectsProviding
+
+from zope.dottedname import resolve as dottedname
+
 from zc import intid as zc_intid
 
 from .install import install_metadata_catalog
 
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ICommunity
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):
@@ -46,12 +52,19 @@ def evolve( context ):
 	mock_ds = MockDataserver(ds_folder, context.connection)
 	gsm = component.getGlobalSiteManager()
 	gsm.registerUtility(mock_ds)
+
+	# We have a very incestuous relationship with indexing
+	# existing grades
+	IGrade = dottedname.resolve('nti.app.products.gradebook.interfaces.IGrade')
+	_store_grade_created_event = dottedname.resolve('nti.app.products.gradebook.subscribers._store_grade_created_event')
+
 	try:
 		with site( ds_folder ):
 			logger.info( "Installing catalog" )
 
 			# First, make the circled changes available.
 			# See users.py
+			# Then index grades; see nti.app.products.gradebook.subscribers
 			for user in ds_folder['users'].values():
 				for change in user.getContainedStream(''):
 					if not change.object: # pragma: no cover
@@ -64,8 +77,34 @@ def evolve( context ):
 					lifecycleevent.added( change )
 					user._circled_events_intids_storage.add( change._ds_intid )
 
+				_register_grades(user, IGrade, _store_grade_created_event)
+
 			catalog = install_metadata_catalog( ds_folder, component.getUtility(zc_intid.IIntIds ) )
 			catalog.updateIndexes()
 			logger.info( "Done installing catalog")
 	finally:
 		gsm.unregisterUtility(mock_ds)
+
+def _register_grades(user, IGrade, _store_grade_created_event):
+	if IGrade is None:
+		return
+
+	if not ICommunity.providedBy(user):
+		return
+
+	# We go directly through annotations so we're not dependent
+	# on any site configuration where ICourseInstance, etc,
+	# might be registered
+	courses = IAnnotations(user).get('LegacyCourses')
+	if not courses:
+		return
+
+	changes = [] # for testing we keep a list
+	for course in courses.values():
+		gradebook = IAnnotations(course).get('GradeBook')
+		grades = findObjectsProviding(gradebook, IGrade)
+		for grade in grades:
+			change = _store_grade_created_event(grade, None)
+			changes.append(change)
+
+	return changes
