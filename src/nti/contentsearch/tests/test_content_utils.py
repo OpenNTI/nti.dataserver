@@ -51,16 +51,22 @@ from . import SharedConfiguringTestLayer
 class ContentUtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def testSetUp(cls, test=None):
-		super(ContentUtilsTestLayer, cls).testSetUp(test)
-		test = test or find_test()
+	def setUp(cls):
+		super(ContentUtilsTestLayer, cls).setUp()
 		path = os.path.join(os.path.dirname(__file__), 'message_info.json')
 		with open(path, "r") as f:
-			test.messageinfo = json.load(f)
+			cls.messageinfo = json.load(f)
 
 		path = os.path.join(os.path.dirname(__file__), 'note2.json')
 		with open(path, "r") as f:
-			test.note = json.load(f)
+			cls.note = json.load(f)
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		super(ContentUtilsTestLayer, cls).testSetUp(test)
+		test = test or find_test()
+		test.note = cls.note
+		test.messageinfo = cls.messageinfo
 
 class TestContentUtils(unittest.TestCase):
 

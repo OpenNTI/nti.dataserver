@@ -50,26 +50,9 @@ from nti.contentsearch.tests import SharedConfiguringTestLayer
 class IndexManagerTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
-	def testSetUp(cls, test=None):
-		super(IndexManagerTestLayer, cls).testSetUp(test)
-		cls.test = test = test or find_test()
-		test.now = time.time()
-		test._add_book_data()
-
-	@classmethod
-	def tearDown(cls):
-		super(IndexManagerTestLayer, cls).tearDown()
-		cls.test.bim.close()
-		shutil.rmtree(cls.test.book_idx_dir, True)
-
-class TestIndexManager(unittest.TestCase):
-
-	layer = IndexManagerTestLayer
-
-	@classmethod
 	def _add_book_data(cls):
-		cls.now = time.time()
 		indexname = 'bleach'
+		cls.now = time.time()
 		cls.book_idx_dir = tempfile.mkdtemp(dir="/tmp")
 		_, storage = create_directory_index(indexname, create_book_schema(),
 											cls.book_idx_dir)
@@ -85,6 +68,29 @@ class TestIndexManager(unittest.TestCase):
 								related=u'',
 								last_modified=datetime.fromtimestamp(cls.now))
 		writer.commit()
+
+	@classmethod
+	def setUp(cls):
+		super(IndexManagerTestLayer, cls).setUp()
+		cls._add_book_data()
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		super(IndexManagerTestLayer, cls).testSetUp(test)
+		cls.test = test or find_test()
+		cls.test.now = cls.now
+		cls.test.bim = cls.bim
+		cls.test.book_idx_dir = cls.book_idx_dir
+
+	@classmethod
+	def tearDown(cls):
+		super(IndexManagerTestLayer, cls).tearDown()
+		cls.bim.close()
+		shutil.rmtree(cls.book_idx_dir, True)
+
+class TestIndexManager(unittest.TestCase):
+
+	layer = IndexManagerTestLayer
 
 	def create_index_mananger(self):
 		result = create_index_manager_with_repoze(parallel_search=False)
