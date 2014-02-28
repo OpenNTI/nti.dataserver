@@ -41,6 +41,36 @@ def _default_query_adapter(query, *args, **kwargs):
 		query = QueryObject.create(query, *args, **kwargs)
 	return query
 
+@interface.implementer(search_interfaces.IDateTimeRange)
+class DateTimeRange(SchemaConfigured):
+	
+	__external_can_create__ = True
+	mime_type = mimeType = 'application/vnd.nextthought.search.datetimerange'
+
+	createDirectFieldProperties(search_interfaces.IDateTimeRange)
+
+	__repr__ = make_repr()
+
+	def __eq__(self, other):
+		try:
+			return self is other or (self.startTime == other.startTime and
+									 self.endTime == other.endTime)
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.endTime)
+		xhash ^= hash(self.startTime)
+		return xhash
+
+	def digest(self):
+		md5 = hashlib.md5()
+		md5.update(str(self.endTime))
+		md5.update(str(self.startTime))
+		result = md5.hexdigest()
+		return result
+
 @interface.implementer(search_interfaces.ISearchQuery)
 class QueryObject(SchemaConfigured):
 
@@ -108,14 +138,22 @@ class QueryObject(SchemaConfigured):
 	
 	def digest(self):
 		names = ('term', 'limit', 'indexid', 'surround', 'maxchars', 'prefix',
-				 'threshold', 'maxdist')
+				 'threshold', 'maxdist', 'creator')
 		md5 = hashlib.md5()
 		for name in names:
 			value = getattr(self, name, None)
-			md5.update(str(value).lower())
+			if value is not None:
+				md5.update(str(value).lower())
+
 		searchOn = sorted(self.searchOn or ())
 		searchOn = ','.join(searchOn)
 		md5.update(searchOn.lower())
+
+		for name in ('creationTime', 'modificationTime'):
+			value = getattr(self, name, None)
+			if value is not None:
+				md5.update(value.digest())
+
 		result = md5.hexdigest()
 		return result
 

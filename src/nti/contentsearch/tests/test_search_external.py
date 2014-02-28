@@ -32,6 +32,7 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
 from ..search_query import QueryObject
+from ..search_query import DateTimeRange 
 from .. import interfaces as search_interfaces
 from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, SUGGESTIONS, HIT_META_DATA)
 
@@ -184,7 +185,9 @@ class TestSearchExternal(unittest.TestCase):
 
 	@WithMockDSTrans
 	def test_search_query(self):
-		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',))
+		creationTime = DateTimeRange(startTime=0, endTime=100)
+		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',),
+								creationTime=creationTime)
 		# externalize
 		eo = toExternalObject(qo)
 		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
@@ -192,6 +195,11 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(eo, has_entry(u'sortOn', u'relevance'))
 		assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
 		assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
+		assert_that(eo, has_key(u'creationTime'))
+		entry = eo['creationTime']
+		assert_that(entry, has_entry(u'startTime', is_(0)))
+		assert_that(entry, has_entry(u'endTime', is_(100)))
+
 		# internalize
 		factory = find_factory_for(eo)
 		new_query = factory()
@@ -199,3 +207,4 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(new_query, has_property('term', 'sode no shirayuki'))
 		assert_that(new_query, has_property('sortOn', 'relevance'))
 		assert_that(new_query, has_property('searchOn', is_(['note'])))
+		assert_that(new_query, has_property('creationTime', is_(equal_to(qo.creationTime))))

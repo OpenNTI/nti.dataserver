@@ -33,6 +33,10 @@ class IRepozeDataStore(interface.Interface):
 
 # search query
 
+class IDateTimeRange(interface.Interface):
+	startTime = nti_schema.Number(title="Start date/time", required=False)
+	endTime = nti_schema.Number(title="End date/time", required=False)
+
 class ISearchQuery(interface.Interface):
 
 	term = nti_schema.ValidTextLine(title="Query search term", required=True)
@@ -46,6 +50,10 @@ class ISearchQuery(interface.Interface):
 
 	searchOn = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Content types to search on"),
 									  required=False)
+
+	creator = nti_schema.ValidTextLine(title="creator", required=False)
+	creationTime = nti_schema.Object(IDateTimeRange, title="created date-time range", required=False)
+	modificationTime = nti_schema.Object(IDateTimeRange, title="last modified time-date range", required=False)
 
 	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
 
