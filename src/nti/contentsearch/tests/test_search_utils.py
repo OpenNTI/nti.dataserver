@@ -12,15 +12,16 @@ import unittest
 from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 from hamcrest import greater_than_or_equal_to
 
 from nti.ntiids.ntiids import make_ntiid
 
-from ..constants import invalid_type_
-from ..search_utils import create_queryobject
-from .. import interfaces as search_interfaces
+from nti.contentsearch.constants import invalid_type_
+from nti.contentsearch.search_utils import create_queryobject
+from nti.contentsearch import interfaces as search_interfaces
 
-from . import SharedConfiguringTestLayer
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
 class TestSearchUtils(unittest.TestCase):
 
@@ -47,7 +48,6 @@ class TestSearchUtils(unittest.TestCase):
 		assert_that(qo.searchOn, is_([invalid_type_]))
 
 	def test_create_query_object_exclude(self):
-
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
 		params = {'exclude':'application/vnd.nextthought.forums.personalblogentrypost,application/vnd.nextthought.note',
@@ -111,3 +111,17 @@ class TestSearchUtils(unittest.TestCase):
 		assert_that(qo.sortOn, 'relevance')
 		assert_that(qo.sortOrder, 'descending')
 		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(5)))
+		
+	def test_query_times(self):
+		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
+		matchdict = {'term':'arrancar', 'ntiid':ntiid}
+		
+		params = {'createdAfter': 100,
+				  'createdBefore': 125.5,
+				  'modifiedAfter':101,
+				  'modifiedBefore': 135.5}
+		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
+		assert_that(qo, has_property('creationTime', has_property('startTime', is_(100))))
+		assert_that(qo, has_property('creationTime', has_property('endTime', is_(125.5))))
+		assert_that(qo, has_property('modificationTime', has_property('startTime', is_(101))))
+		assert_that(qo, has_property('modificationTime', has_property('endTime', is_(135.5))))
