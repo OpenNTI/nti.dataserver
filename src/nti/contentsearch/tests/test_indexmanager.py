@@ -71,12 +71,10 @@ class IndexManagerTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def setUp(cls):
-		super(IndexManagerTestLayer, cls).setUp()
 		cls._add_book_data()
 
 	@classmethod
 	def testSetUp(cls, test=None):
-		super(IndexManagerTestLayer, cls).testSetUp(test)
 		cls.test = test or find_test()
 		cls.test.now = cls.now
 		cls.test.bim = cls.bim
@@ -84,7 +82,6 @@ class IndexManagerTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def tearDown(cls):
-		super(IndexManagerTestLayer, cls).tearDown()
 		cls.bim.close()
 		shutil.rmtree(cls.book_idx_dir, True)
 

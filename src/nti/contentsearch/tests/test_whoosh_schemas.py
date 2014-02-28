@@ -48,12 +48,10 @@ class WhooshSchemaTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def setUp(cls):
-		super(WhooshSchemaTestLayer, cls).setUp()
 		cls._create_index()
 
 	@classmethod
 	def testSetUp(cls, test=None):
-		super(WhooshSchemaTestLayer, cls).testSetUp(test)
 		cls.test = test or find_test()
 		cls.test.schema = cls.schema
 		cls.test.db_dir = cls.db_dir
@@ -61,7 +59,6 @@ class WhooshSchemaTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def tearDown(cls):
-		super(WhooshSchemaTestLayer, cls).tearDown()
 		cls.index.close()
 		shutil.rmtree(cls.db_dir, True)
 

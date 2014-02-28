@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -16,6 +16,7 @@ from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 
 import time
+import shutil
 import tempfile
 import unittest
 from datetime import datetime
@@ -24,18 +25,25 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
-from .. import constants
-from ..common import videotimestamp_to_datetime
-from ..whoosh_schemas import create_book_schema
-from ..whoosh_schemas import create_nti_card_schema
-from ..whoosh_storage import create_directory_index
-from ..whoosh_searcher import WhooshContentSearcher
-from ..whoosh_schemas import create_video_transcript_schema
+from nti.contentsearch import constants
+from nti.contentsearch.common import videotimestamp_to_datetime
+from nti.contentsearch.whoosh_schemas import create_book_schema
+from nti.contentsearch.whoosh_schemas import create_nti_card_schema
+from nti.contentsearch.whoosh_storage import create_directory_index
+from nti.contentsearch.whoosh_searcher import WhooshContentSearcher
+from nti.contentsearch.whoosh_schemas import create_video_transcript_schema
 
-from ..constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
+from nti.contentsearch.constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
 
-from . import zanpakuto_commands
-from . import SharedConfiguringTestLayer
+from nti.contentsearch.tests import find_test
+from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import SharedConfiguringTestLayer
+
+episodes = ((u'e365', u'Secret of the Substitute Badge'),
+			(u'e007', u'Greetings from a Stuffed Toy'))
+
+nticards = ((u'c001', u'Xcution attacks Ginjo'),
+			(u'c002', u'Fullbring, The Detested Power'))
 
 def setUpIndexes(test):
 	test.now = time.time()
@@ -69,7 +77,7 @@ def setUpIndexes(test):
 
 	# add video entries
 	writer = test.bim.get_index('vtrans_%s' % baseindexname).writer()
-	for e, x in test.episodes:
+	for e, x in episodes:
 		writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo',
 														   nttype='bleach',
 														   specific='manga')),
@@ -86,7 +94,7 @@ def setUpIndexes(test):
 
 	# add nticard entries
 	writer = test.bim.get_index('nticard_%s' % baseindexname).writer()
-	for e, x in test.nticards:
+	for e, x in nticards:
 		writer.add_document(containerId=unicode(make_ntiid(provider='tite_kubo',
 														   nttype='bleach',
 														   specific='manga')),
@@ -104,23 +112,31 @@ def setUpIndexes(test):
 														    specific='episodes')),
 							last_modified=datetime.fromtimestamp(test.now))
 	writer.commit()
+	
+class WhooshContentSearcherTestLayer(SharedConfiguringTestLayer):
+
+	@classmethod
+	def setUp(cls):
+		setUpIndexes(cls)
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		cls.test = test or find_test()
+		cls.test.bim = cls.bim
+		cls.test.idx_dir = cls.idx_dir
+		cls.test.storage = cls.storage
+
+	@classmethod
+	def tearDown(cls):
+		cls.bim.close()
+		shutil.rmtree(cls.idx_dir, True)
 
 class TestWhooshContentSearcher(unittest.TestCase):
 
-	layer = SharedConfiguringTestLayer
-
-	episodes = ((u'e365', u'Secret of the Substitute Badge'),
-				(u'e007', u'Greetings from a Stuffed Toy'))
-
-	nticards = ((u'c001', u'Xcution attacks Ginjo'),
-				(u'c002', u'Fullbring, The Detested Power'))
-
-	def setUp(self):
-		if not hasattr(self, 'bim'):
-			setUpIndexes(self)
+	layer = WhooshContentSearcherTestLayer
 
 	def test_search(self):
-		hits = toExternalObject(self.bim.search("shield"))
+		hits = toExternalObject(self.bim.search('shield'))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry('Query', 'shield'))
 		assert_that(hits, has_key(ITEMS))
@@ -155,7 +171,7 @@ class TestWhooshContentSearcher(unittest.TestCase):
 		assert_that(items[0], has_entry('EndMilliSecs', 22780.0))
 
 	def test_search_nticard(self):
-		hits = toExternalObject(self.bim.search("Xcution"))
+		hits = toExternalObject(self.bim.search('Xcution'))
 		assert_that(hits, has_entry(HIT_COUNT, 1))
 		assert_that(hits, has_entry('Query', 'Xcution'))
 		assert_that(hits, has_key(ITEMS))
