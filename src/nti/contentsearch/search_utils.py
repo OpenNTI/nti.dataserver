@@ -58,6 +58,31 @@ def get_batch_size_start(params):
 		batch_size = batch_start = None
 	return batch_size, batch_start
 
+def check_time(value):
+	try:
+		value = float(value)
+	except ValueError:
+		raise hexc.HTTPBadRequest()
+	if value  < 0:
+		raise hexc.HTTPBadRequest()
+	return value
+	
+def _parse_dateRange(args, fields):
+	result = None
+	for idx, name in enumerate(fields):
+		value = args.get(name)
+		value = check_time(value) if value is not None else None
+		if value is not None:
+			result = result or search_query.DateTimeRange()
+			if idx == 0: #after 
+				result.startTime = value
+			else:  # before
+				result.endTime = value
+
+	if result is not None and result.endTime < result.startTime:
+		raise hexc.HTTPBadRequest()
+	return result
+
 def create_queryobject(username, params, matchdict):
 
 	indexable_type_names = common.get_indexable_types()
@@ -103,6 +128,12 @@ def create_queryobject(username, params, matchdict):
 			args['searchOn'] = common.sort_search_types(indexable_type_names - eset)
 
 	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
+	
+	creationTime = _parse_dateRange(args, ('createdAfter', 'createdBefore',))
+	modificationTime = _parse_dateRange(args, ('modifiedAfter', 'modifiedBefore'))
+	args['creationTime'] = creationTime
+	args['modificationTime'] = modificationTime
+
 	return search_query.QueryObject(**args)
 
 def construct_queryobject(request):
