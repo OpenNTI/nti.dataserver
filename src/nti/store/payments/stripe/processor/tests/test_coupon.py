@@ -11,13 +11,15 @@ from hamcrest import is_
 from hamcrest import assert_that
 
 import time
+import unittest
 
-from ..coupon import CouponProcessor
+from nti.store.payments.stripe.processor.coupon import CouponProcessor
 
-from . import ConfiguringTestBase
-from . import TestBaseProcessorMixin
+from nti.store.payments.stripe.processor.tests import StripeProcessorTestLayer
 
-class TestCouponProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
+class TestCouponProcessor(unittest.TestCase):
+
+	layer = StripeProcessorTestLayer
 
 	def setUp(self):
 		super(TestCouponProcessor, self).setUp()

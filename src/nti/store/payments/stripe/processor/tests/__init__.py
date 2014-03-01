@@ -13,27 +13,29 @@ from hamcrest import assert_that
 
 import stripe
 
-from ...tests import create_user
-from ...tests import create_purchase
-from ...tests import create_random_user
-from ...tests import ConfiguringTestBase
-from ...tests import create_purchase_attempt
-from ...tests import create_and_register_purchase_attempt
+from nti.store.payments.stripe.tests import find_test
+from nti.store.payments.stripe.tests import create_user
+from nti.store.payments.stripe.tests import create_purchase
+from nti.store.payments.stripe.tests import create_random_user
+from nti.store.payments.stripe.tests import ConfiguringTestBase
+from nti.store.payments.stripe.tests import create_purchase_attempt
+from nti.store.payments.stripe.tests import SharedConfiguringTestLayer
+from nti.store.payments.stripe.tests import create_and_register_purchase_attempt
 
 TEST_WITH_STRIPE = True
 
-class TestBaseProcessorMixin(object):
-
-    book_id = 'xyz-book'
+class StripeProcessorTestLayer(SharedConfiguringTestLayer):
 
     @classmethod
-    def setUpClass(cls):
-        super(TestBaseProcessorMixin, cls).setUpClass()
+    def setUp(cls):
         cls.api_key = stripe.api_key
         stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
 
     @classmethod
-    def tearDownClass(cls):
-        super(TestBaseProcessorMixin, cls).tearDownClass()
-        stripe.api_key = cls.api_key
+    def testSetUp(cls, test=None):
+        cls.test = test or find_test()
+        cls.test.book_id = 'xyz-book'
 
+    @classmethod
+    def tearDown(cls):
+        stripe.api_key = cls.api_key

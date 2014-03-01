@@ -22,18 +22,19 @@ from nti.externalization import integer_strings
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
 
+from nti.store.payments.stripe.processor.refund import RefundProcessor
+from nti.store.payments.stripe.processor.purchase import PurchaseProcessor
+
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from ..refund import RefundProcessor
-from ..purchase import PurchaseProcessor
+from nti.store.payments.stripe.processor.tests import create_purchase
+from nti.store.payments.stripe.processor.tests import TEST_WITH_STRIPE
+from nti.store.payments.stripe.processor.tests import StripeProcessorTestLayer
 
-from . import create_purchase
-from . import TEST_WITH_STRIPE
-from . import ConfiguringTestBase
-from . import TestBaseProcessorMixin
+class TestRefundProcessor(unittest.TestCase):
 
-class TestRefundProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
+	layer = StripeProcessorTestLayer
 
 	def setUp(self):
 		super(TestRefundProcessor, self).setUp()
