@@ -17,17 +17,16 @@ import unittest
 
 from nti.dataserver.users import User
 
-from .. import StripeException
-from .. import interfaces as stripe_interfaces
-
 from nti.store import purchase_order
 from nti.store import purchase_attempt
 from nti.store import interfaces as store_interfaces
+from nti.store.payments.stripe import StripeException
+from nti.store.payments.stripe import interfaces as stripe_interfaces
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import SharedConfiguringTestLayer
+from nti.store.tests import SharedConfiguringTestLayer
 
 class TestStripeAdapters(unittest.TestCase):
 

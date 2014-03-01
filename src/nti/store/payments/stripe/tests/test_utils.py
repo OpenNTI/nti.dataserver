@@ -20,10 +20,11 @@ import unittest
 from zope import component
 
 from nti.store import interfaces as store_interfaces
-from ..stripe_purchase import create_stripe_priceable
+from nti.store.payments.stripe.stripe_purchase import create_stripe_priceable
 
-from . import find_test
-from . import SharedConfiguringTestLayer
+from nti.store.tests import SharedConfiguringTestLayer
+
+from nti.testing.layers import find_test
 
 class UtilsTestLayer(SharedConfiguringTestLayer):
 

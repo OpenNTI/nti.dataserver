@@ -19,7 +19,7 @@ from nti.store.payments.stripe import stripe_purchase
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import SharedConfiguringTestLayer
+from nti.store.tests import SharedConfiguringTestLayer
 
 class TestStripePurchase(unittest.TestCase):
 
