@@ -1281,7 +1281,7 @@ class _NotableRecursiveUGDView(_UGDView):
 #: to get all the visible replies to a Note
 REL_REPLIES = 'replies'
 
-from .pyramid_renderers import _md5_etag
+from nti.app.renderers.caching import md5_etag
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IThreadable)
@@ -1313,7 +1313,7 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 		# Use the reply count and the maximum modification date
 		# of the child as a "ETag" value to allow caching of the @@replies indefinitely
 		max_last_modified = _reference_list_recursive_max_last_modified( context )
-		etag = _md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
+		etag = md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
 		extra_elements = (etag,)
 
 		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )

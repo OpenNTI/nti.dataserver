@@ -6,9 +6,11 @@ from nti.app.testing.layers import NewRequestLayerTest
 
 from pyramid.request import Request
 
-from nti.appserver.pyramid_renderers import find_content_type
+
 from nti.externalization.externalization import toExternalObject
 from ZODB.broken import Broken
+
+from ..rest import find_content_type
 
 class TestContentType(NewRequestLayerTest):
 	mimeType= 'application/vnd.nextthought.testcontenttype'

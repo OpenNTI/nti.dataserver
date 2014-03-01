@@ -122,7 +122,7 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 # that share no common ancestor. (We could be declared on IContainer,
 # but its not clear what if any IContainers we externalize besides
 # the forum objects)
-from nti.appserver.pyramid_renderers import md5_etag, _get_remote_username
+from nti.app.renderers.caching import md5_etag
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 class ForumObjectContentsLinkProvider(object):
@@ -137,7 +137,7 @@ class ForumObjectContentsLinkProvider(object):
 	def add_link(cls, rel, context, mapping, request, elements=None):
 		_links = mapping.setdefault(LINKS, [])
 		elements = elements or (VIEW_CONTENTS,
-								md5_etag(context.lastModified, _get_remote_username()).replace('/', '_'))
+								md5_etag(context.lastModified, request.authenticated_userid).replace('/', '_'))
 		link = Link(context, rel=rel, elements=elements)
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
@@ -176,7 +176,7 @@ class ForumObjectContentsLinkProvider(object):
 		# This works because everytime one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
-		elements = (VIEW_CONTENTS, md5_etag(context.lastModified, _get_remote_username()).replace('/','_'))
+		elements = (VIEW_CONTENTS, md5_etag(context.lastModified, request.authenticated_userid).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
 		current_user = get_remote_user(get_current_request())

@@ -14,7 +14,7 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver.pyramid_renderers import md5_etag, _get_remote_username
+from nti.app.renderers.caching import md5_etag
 from nti.appserver.forums.decorators import ForumObjectContentsLinkProvider
 
 from nti.externalization import interfaces as ext_interfaces
@@ -33,9 +33,7 @@ class ForumObjectTopTopicsLinkProvider(ForumObjectContentsLinkProvider):
 		context = aq_base(context)
 		request = get_current_request()
 		if context.__parent__:
-			elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, _get_remote_username()).replace('/', '_'))
+			elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, request.authenticated_userid).replace('/', '_'))
 			self.add_link(TOP_TOPICS_VIEW, context, mapping, request, elements)
 		else:
 			logger.warn("No parent; failing to add %s link to %s", TOP_TOPICS_VIEW, context)
-
-

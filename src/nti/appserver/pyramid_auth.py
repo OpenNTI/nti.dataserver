@@ -36,7 +36,7 @@ from nti.dataserver import authentication as nti_authentication
 from nti.dataserver import authorization as nti_authorization
 
 from . import httpexceptions as hexc
-from .pyramid_renderers import default_vary_on
+from nti.app.renderers.caching import default_vary_on
 from .interfaces import IUserViewTokenCreator
 from .interfaces import ILogonWhitelist
 
@@ -331,18 +331,27 @@ def _nti_request_classifier( environ ):
 		if environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
+		elif environ.get('paste.testing') is True:
+			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP )
 		else:
 			# Hmm. Going to have to do some guessing. Sigh.
 			# First, we sniff for something that looks like it's sent by
 			# a true web browser, like Chrome or Firefox
 			# Then, if there is an Accept value given other than the default that's
 			# sent by user agents like, say, NetNewsWire, then it was probably
-			# set programatically
+			# set programatically.
 			if ('HTTP_REFERER' in environ
 				 and 'Mozilla' in environ.get( 'HTTP_USER_AGENT', '' )
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
 	return result
+
+from pyramid.interfaces import IRequest
+@interface.implementer(IRequestClassifier)
+@component.adapter(IRequest)
+def _nti_request_classifier_for_request(request):
+	return _nti_request_classifier
+
 
 @interface.provider(IChallengeDecider)
 def _nti_challenge_decider( environ, status, headers ):

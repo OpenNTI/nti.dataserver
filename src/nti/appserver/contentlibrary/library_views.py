@@ -86,6 +86,10 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	subrequest.method = b'GET'
 	subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
 	subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+	for k in request.environ:
+		if k.startswith('paste.') or k.startswith('HTTP_'):
+			if k not in subrequest.environ:
+				subrequest.environ[k] = request.environ[k]
 	subrequest.accept = PAGE_INFO_MT_JSON
 	return request.invoke_subrequest( subrequest )
 
@@ -523,7 +527,7 @@ class MainLibraryGetView(GenericGetView):
 		#self.request.context = ICollection(self.request.context)
 		return super(MainLibraryGetView,self).__call__()
 
-from nti.appserver.pyramid_renderers import AbstractReliableLastModifiedCacheController
+from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 @component.adapter(lib_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheController):
 
