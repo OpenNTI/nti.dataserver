@@ -39,7 +39,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 		cls.tearDownPackages()
 		zope.testing.cleanup.cleanUp()
 
-
 	@classmethod
 	def testSetUp(cls):
 		cls.setUpTestDS()
