@@ -14,9 +14,10 @@ from nti.testing.layers import find_test
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
-import zope.testing.cleanup
 
 from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
+
+import zope.testing.cleanup
 
 phrases = (	"Yellow brown", "Blue red green render purple?",
 			"Alpha beta", "Gamma delta epsilon omega.",
