@@ -1,21 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import nti.store as store
-import nti.appserver as appserver
-import nti.dataserver as dataserver
-
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase as DSSharedConfiguringTestBase
-
-class ConfiguringTestBase(DSSharedConfiguringTestBase):
-	set_up_packages = (dataserver, store, ('configure_invitations.zcml', appserver)) + (('purchasables.zcml', 'nti.store.tests'),)
-
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
@@ -35,7 +25,8 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	set_up_packages = ('nti.dataserver', 'nti.store',
 					   ('configure_invitations.zcml', 'nti.appserver'),
 					   ('purchasables.zcml', 'nti.store.tests'),
-					   ('courses.zcml', 'nti.store.tests'))
+					   ('courses.zcml', 'nti.store.tests'),
+					   ('purchasables.zcml', 'nti.store.payments.stripe.tests'))
 
 	@classmethod
 	def setUp(cls):

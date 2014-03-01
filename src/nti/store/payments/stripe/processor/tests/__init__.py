@@ -13,14 +13,15 @@ from hamcrest import assert_that
 
 import stripe
 
-from nti.store.payments.stripe.tests import find_test
+from nti.store.tests import SharedConfiguringTestLayer
+
 from nti.store.payments.stripe.tests import create_user
 from nti.store.payments.stripe.tests import create_purchase
 from nti.store.payments.stripe.tests import create_random_user
-from nti.store.payments.stripe.tests import ConfiguringTestBase
 from nti.store.payments.stripe.tests import create_purchase_attempt
-from nti.store.payments.stripe.tests import SharedConfiguringTestLayer
 from nti.store.payments.stripe.tests import create_and_register_purchase_attempt
+
+from nti.testing.layers import find_test
 
 TEST_WITH_STRIPE = True
 

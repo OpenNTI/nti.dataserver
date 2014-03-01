@@ -19,9 +19,9 @@ from zope import component
 
 from nti.externalization.externalization import toExternalObject
 
-from .. import interfaces as stripe_interfaces
+from nti.store.payments.stripe import interfaces as stripe_interfaces
 
-from . import SharedConfiguringTestLayer
+from nti.store.tests import SharedConfiguringTestLayer
 
 class TestZcml(unittest.TestCase):
 

@@ -19,10 +19,10 @@ import unittest
 
 from nti.externalization.externalization import toExternalObject
 
-from .. import StripePurchaseError
-from ..stripe_purchase import create_stripe_priceable, StripePricedPurchasable
+from nti.store.payments.stripe import StripePurchaseError
+from nti.store.payments.stripe.stripe_purchase import create_stripe_priceable, StripePricedPurchasable
 
-from . import SharedConfiguringTestLayer
+from nti.store.tests import SharedConfiguringTestLayer
 
 class TestExternal(unittest.TestCase):
 
