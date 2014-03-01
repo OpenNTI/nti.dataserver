@@ -5,18 +5,24 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
 from hamcrest import assert_that
 from hamcrest import has_entry
 
 import os.path
 
-from nti.contentrendering.tests import simpleLatexDocumentText, ConfiguringTestBase
+from nti.contentrendering.tests import simpleLatexDocumentText
+from . import ContentrenderingLayerTest
 from nti.contentrendering.tests import RenderContext
 
 from nti.contentrendering import nti_render
 from zope.dublincore import xmlmetadata
 
-class TestNTIRender(ConfiguringTestBase):
+class TestNTIRender(ContentrenderingLayerTest):
 
 	def test_write_metadata(self):
 		preludes = (br'\author{Jason}', br'\author{Steve}', br'\title{Staggering Work}')

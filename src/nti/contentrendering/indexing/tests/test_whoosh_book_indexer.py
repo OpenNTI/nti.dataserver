@@ -24,21 +24,19 @@ from ..whoosh_book_indexer import _BookFileWhooshIndexer
 from ..whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
 from ...utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
-from . import ConfiguringTestBase
+from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 
-class TestWhooshBookIndexer(ConfiguringTestBase):
+class TestWhooshBookIndexer(NonDevmodeContentrenderingLayerTest):
 
-	features = ()  # to load the tagger
+	#  non devmode to load the tagger
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestWhooshBookIndexer, cls).setUpClass()
-		cls.idxdir = tempfile.mkdtemp(dir="/tmp")
+	def setUp(self):
+		super(TestWhooshBookIndexer, self).setUp()
+		self.idxdir = tempfile.mkdtemp(dir="/tmp")
 
-	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.idxdir, True)
-		super(TestWhooshBookIndexer, cls).tearDownClass()
+	def tearDown(self):
+		shutil.rmtree(self.idxdir, True)
+		super(TestWhooshBookIndexer, self).tearDown()
 
 	def _test_book_indexer(self, clazz, bio_expected, homeo_expected):
 		indexname = 'biology'

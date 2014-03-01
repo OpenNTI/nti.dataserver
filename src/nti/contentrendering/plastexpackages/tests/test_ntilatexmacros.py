@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import
+
 import os
 from hamcrest import assert_that, contains_string
 import unittest
@@ -9,21 +10,14 @@ import unittest
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
-import nti.testing.base
 import fudge
 
-import nti.contentrendering
-import nti.assessment
-import nti.externalization
 
 def _simpleLatexDocument(maths):
 	return simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}',
 											  br'\usepackage{graphicx}'),
 									bodies=maths )
 
-# Nose module-level setup and teardown
-setUpModule = lambda: nti.testing.base.module_setup( set_up_packages=(nti.contentrendering,nti.assessment,nti.externalization) )
-tearDownModule = nti.testing.base.module_teardown
 
 from zope import interface
 from nti.contentrendering import interfaces as cdr_interfaces
@@ -35,9 +29,10 @@ class _MockRenderedBook(object):
 	document = None
 	contentLocation = None
 
+from . import ExtractorTestLayer
 
 class TestNTICard(unittest.TestCase):
-
+	layer = ExtractorTestLayer
 	toc = None
 
 	def setUp(self):

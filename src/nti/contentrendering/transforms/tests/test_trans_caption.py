@@ -9,8 +9,6 @@ from hamcrest import has_length
 from hamcrest import has_entry
 import unittest
 
-import plasTeX
-from plasTeX.Base.LaTeX.Crossref import label
 
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -22,40 +20,42 @@ def _simpleLatexDocument(maths):
 						  br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}'),
 					bodies=maths )
 
-def test_captionTransform():
-	example = br"""
-\begin{figure*}
-\includegraphics{sample}
-\caption*{Caption 1}
-\end{figure*}
+class TestCaptionTransform(unittest.TestCase):
 
-\begin{figure*}
-\ntiincludeannotationgraphics{sample}
-\caption*{Caption 2}
-\end{figure*}
+	def test_captionTransform(self):
+		example = br"""
+	\begin{figure*}
+	\includegraphics{sample}
+	\caption*{Caption 1}
+	\end{figure*}
 
-\begin{figure*}
-\ntiincludenoannotationgraphics{sample}
-\caption*{Caption 3}
-\end{figure*}
+	\begin{figure*}
+	\ntiincludeannotationgraphics{sample}
+	\caption*{Caption 2}
+	\end{figure*}
 
-\begin{table}
-\begin{tabular}{ll}
-& \\
-\end{tabular}
-\caption*{Caption4}
-\end{table}
-	"""
+	\begin{figure*}
+	\ntiincludenoannotationgraphics{sample}
+	\caption*{Caption 3}
+	\end{figure*}
 
-	dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+	\begin{table}
+	\begin{tabular}{ll}
+	& \\
+	\end{tabular}
+	\caption*{Caption4}
+	\end{table}
+		"""
 
-	captions = dom.getElementsByTagName('caption')
-	assert_that( captions, has_length(4))
+		dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
 
-	#run the transform
-	captionTransform( dom )
+		captions = dom.getElementsByTagName('caption')
+		assert_that( captions, has_length(4))
 
-	assert_that( captions[0].style, has_entry( 'display', 'none' ) )
-	assert_that( captions[1].style, has_entry( 'display', 'none' ) )
-	assert_that( captions[2].style, has_entry( 'display', 'none' ) )
-	assert_that( captions[3].style, is_not(has_entry( 'display', 'none' )) )
+		#run the transform
+		captionTransform( dom )
+
+		assert_that( captions[0].style, has_entry( 'display', 'none' ) )
+		assert_that( captions[1].style, has_entry( 'display', 'none' ) )
+		assert_that( captions[2].style, has_entry( 'display', 'none' ) )
+		assert_that( captions[3].style, is_not(has_entry( 'display', 'none' )) )

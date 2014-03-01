@@ -31,6 +31,69 @@ from nti.testing.base import SharedConfiguringTestBase as _ConfiguringTestBase
 class ConfiguringTestBase(_ConfiguringTestBase):
 	set_up_packages = (nti.contentrendering,)
 
+import zope.testing.cleanup
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+
+
+class SharedConfiguringTestLayer(ZopeComponentLayer,
+								 ConfiguringLayerMixin):
+
+	description = "nti.contentrendering is ZCML configured"
+
+	set_up_packages = ('nti.contentrendering',)
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
+
+	@classmethod
+	def testSetUp(cls):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		pass
+
+
+class NonDevmodeSharedConfiguringTestLayer(ZopeComponentLayer,
+										   ConfiguringLayerMixin):
+
+	description = "nti.contentrendering is ZCML configured without devmode"
+
+	set_up_packages = ('nti.contentrendering',)
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
+
+	@classmethod
+	def testSetUp(cls):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		pass
+
+
+import unittest
+
+class ContentrenderingLayerTest(unittest.TestCase):
+	layer = SharedConfiguringTestLayer
+class NonDevmodeContentrenderingLayerTest(unittest.TestCase):
+	layer = NonDevmodeSharedConfiguringTestLayer
+
+
 def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_encoding=None, chdir=False, working_dir=None):
 	document = plasTeX.TeXDocument()
 	if input_encoding:

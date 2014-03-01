@@ -14,8 +14,6 @@ from zope.deprecation import deprecated
 
 import zope.dottedname.resolve as dottedname
 
-from plasTeX.Filenames import Filenames
-from plasTeX.Imagers import WorkingFile
 
 # try:
 # 	import Image as PILImage
@@ -27,7 +25,7 @@ from zope import interface
 from . import interfaces
 
 
-def _set_default_resource_types():
+def _set_default_resource_types(tabular=False):
 
 	def _implement( cls, types ):
 		interface.classImplements( cls,
@@ -35,11 +33,12 @@ def _set_default_resource_types():
 								   interfaces.IRepresentationPreferences )
 		cls.resourceTypes = types
 
-#  	Arrays = dottedname.resolve('plasTeX.Base.Arrays')
-# 	tabularTypes = ('png', 'svg')
-# 	_implement(Arrays.tabular, tabularTypes)
-# 	_implement(Arrays.TabularStar, tabularTypes)
-# 	_implement(Arrays.tabularx, tabularTypes)
+	if tabular:
+		Arrays = dottedname.resolve('plasTeX.Base.Arrays')
+		tabularTypes = ('png', 'svg')
+		_implement(Arrays.tabular, tabularTypes)
+		_implement(Arrays.TabularStar, tabularTypes)
+		_implement(Arrays.tabularx, tabularTypes)
 
 	Boxes = dottedname.resolve( 'plasTeX.Base.Boxes' )
 

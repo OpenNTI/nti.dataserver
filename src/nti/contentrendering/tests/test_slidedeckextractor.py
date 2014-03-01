@@ -16,7 +16,7 @@ from zope import component
 from .. import interfaces
 from .. import slidedeckextractor
 
-from . import ConfiguringTestBase
+from . import ContentrenderingLayerTest
 from nti.testing.matchers import verifiably_provides
 
 
@@ -24,7 +24,7 @@ import fudge
 from hamcrest import assert_that
 from hamcrest import has_length
 
-class TestSlideDeckExtractor(ConfiguringTestBase):
+class TestSlideDeckExtractor(ContentrenderingLayerTest):
 
 	def setUp(self):
 		super(TestSlideDeckExtractor, self).setUp()

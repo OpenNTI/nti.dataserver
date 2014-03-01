@@ -1,28 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
 
-import os
-import shutil
-from hamcrest import assert_that, is_, has_length, contains_string
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
+
+from hamcrest import assert_that
 from hamcrest import has_property
 
-import tempfile
-import StringIO
-
-import plasTeX
-from plasTeX.TeX import TeX
-
-
-from nti.contentrendering.tests import simpleLatexDocumentText, ConfiguringTestBase
+from nti.contentrendering.tests import simpleLatexDocumentText
+from nti.contentrendering.tests import ContentrenderingLayerTest
 from nti.contentrendering.tests import RenderContext
 
-from nti.contentrendering.resources import ResourceRenderer, Resource
+from nti.contentrendering.resources import ResourceRenderer
 
-class TestResourceRenderer(ConfiguringTestBase):
+class TestResourceRenderer(ContentrenderingLayerTest):
 
 	def test_resourcerenderer(self):
 		body = br"""
