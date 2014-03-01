@@ -27,7 +27,7 @@ from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
 from nti.externalization.oids import to_external_ntiid_oid
 
-from .pyramid_renderers import AbstractAuthenticatedRequestAwareDecorator
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy

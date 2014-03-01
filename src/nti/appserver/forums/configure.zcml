@@ -124,7 +124,7 @@
 		 For caching purposes, we can treat topics like modeled content; they have
 		 a guaranteed-good last modified time
 	-->
-	<adapter factory="nti.appserver.pyramid_renderers._ModeledContentCacheController"
+	<adapter factory="nti.app.renderers.caching._ModeledContentCacheController"
 			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
 
 	<!-- Traversal -->

@@ -204,7 +204,9 @@ def _service_odata_views(pyramid_config):
 
 
 def _renderer_settings(pyramid_config):
-	pyramid_config.add_renderer(name='rest', factory='nti.appserver.pyramid_renderers.REST')
+	# the name rest is deprecated...
+	pyramid_config.add_renderer(name='rest', factory='nti.app.renderers.renderers.DefaultRenderer')
+	pyramid_config.add_renderer(name=None, factory='nti.app.renderers.renderers.DefaultRenderer')
 
 	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with the existing Zope stuff
 	pyramid_config.add_renderer(name='.pt', factory='nti.app.pyramid_zope.z3c_zpt.renderer_factory')

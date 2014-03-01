@@ -72,25 +72,12 @@
 
 	<include package="." file="configure_workspaces.zcml" />
 
-	<adapter factory=".pyramid_renderers.uncacheable_factory" />
-	<adapter factory=".pyramid_renderers.private_uncacheable_factory" />
-	<adapter factory=".pyramid_renderers.unmodified_factory" />
-	<adapter factory=".pyramid_renderers._EntityCacheController" />
-	<adapter factory=".pyramid_renderers._UserCacheController" />
-	<adapter factory=".pyramid_renderers._ModeledContentCacheController" />
-	<adapter factory=".pyramid_renderers._UGDExternalCollectionCacheController" />
-	<adapter factory=".pyramid_renderers._LongerCachedUGDExternalCollectionCacheController" />
-	<adapter factory=".pyramid_renderers._UserActivityViewCacheController" />
-	<adapter factory=".pyramid_renderers._ZopeFileCacheController" />
-	<adapter factory=".pyramid_renderers._ContentUnitInfoCacheController" />
-	<adapter factory=".pyramid_renderers._ETagCachedUGDExternalCollectionCacheController" />
-	<adapter factory=".pyramid_renderers._TranscriptCacheController" />
+	<include package="nti.app.renderers" />
 
-	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
-			 for=".interfaces.IUseTheRequestContextUGDExternalCollection" />
-
-	<adapter factory=".pyramid_renderers.UseTheRequestContextCacheController"
+	<adapter factory="nti.app.renderers.caching.UseTheRequestContextCacheController"
 			 for=".interfaces.ILibraryCollection" />
+	<adapter factory=".pyramid_auth._nti_request_classifier_for_request" />
+
 
 	<subscriber factory="._adapters._DFLUserLikeDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
@@ -165,7 +152,6 @@
 	<subscriber factory="._adapters._DeletedObjectPlaceholderDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
-	<adapter factory=".pyramid_renderers.render_enclosure_factory" />
 
 	<!-- Assessment -->
 
@@ -366,9 +352,5 @@
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
 
-
-	<utility zcml:condition="have testmode"
-			 component=".pyramid_renderers._throw_action"
-			 provides=".pyramid_renderers.ICatchComponentAction" />
 
 </configure>
