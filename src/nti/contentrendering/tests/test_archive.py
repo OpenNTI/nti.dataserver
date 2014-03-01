@@ -11,16 +11,22 @@ import os
 import shutil
 import tempfile
 
+from hamcrest import assert_that
+from hamcrest import has_length
+from hamcrest import is_in
+from hamcrest import is_not
+from hamcrest import none
+
 from zope import component
 
 from .. import archive
 from .. import interfaces
 
-from . import ConfiguringTestBase
+from . import ContentrenderingLayerTest
 
-from hamcrest import (assert_that, has_length, is_in, is_not, none)
 
-class TestArchive(ConfiguringTestBase):
+
+class TestArchive(ContentrenderingLayerTest):
 
 	def setUp(self):
 		super(TestArchive, self).setUp()

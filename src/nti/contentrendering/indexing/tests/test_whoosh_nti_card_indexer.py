@@ -23,21 +23,20 @@ from whoosh.query import (Term)
 from ...RenderedBook import _EclipseTOCMiniDomTopic
 from ..whoosh_nti_card_indexer import _DefaultWhooshNTICardIndexer
 
-from . import ConfiguringTestBase
+from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 
-class TestNTICardIndexer(ConfiguringTestBase):
+class TestNTICardIndexer(NonDevmodeContentrenderingLayerTest):
 
-	features = ()  # to load the tagger
+	# non devmode to load the tagger
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestNTICardIndexer, cls).setUpClass()
-		cls.idxdir = tempfile.mkdtemp(dir="/tmp")
 
-	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.idxdir, True)
-		super(TestNTICardIndexer, cls).tearDownClass()
+	def setUp(self):
+		super(TestNTICardIndexer, self).setUp()
+		self.idxdir = tempfile.mkdtemp(dir="/tmp")
+
+	def tearDown(self):
+		shutil.rmtree(self.idxdir, True)
+		super(TestNTICardIndexer, self).tearDown()
 
 	def _index_file(self, path, indexname, nodename, indexer=None):
 		indexer = indexer or _DefaultWhooshNTICardIndexer()

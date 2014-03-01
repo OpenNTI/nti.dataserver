@@ -1,31 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 
-from hamcrest import assert_that, is_
+from hamcrest import assert_that
+from hamcrest import is_
 from hamcrest import contains
 
 
-
-
-import plasTeX
-from plasTeX.TeX import TeX
-
-
-from nti.contentrendering.tests import simpleLatexDocumentText, ConfiguringTestBase, buildDomFromString
+from nti.contentrendering.tests import simpleLatexDocumentText
+from nti.contentrendering.tests import ContentrenderingLayerTest
+from nti.contentrendering.tests import buildDomFromString
 
 
 from nti.contentrendering.resources import interfaces
-from nti.contentrendering.resources.converters import ImagerContentUnitRepresentationBatchConverter, AbstractLatexCompilerDriver, AbstractCompilingContentUnitRepresentationBatchConverter
+from nti.contentrendering.resources.converters import ImagerContentUnitRepresentationBatchConverter
+from nti.contentrendering.resources.converters import AbstractLatexCompilerDriver
+from nti.contentrendering.resources.converters import AbstractCompilingContentUnitRepresentationBatchConverter
 
 from nti.testing.matchers import verifiably_provides
 
-class TestImagerContentUnitRepresentationBatchConverter(ConfiguringTestBase):
+class TestImagerContentUnitRepresentationBatchConverter(ContentrenderingLayerTest):
 
 
 	def test_generator(self):
@@ -52,7 +60,7 @@ class TestImagerContentUnitRepresentationBatchConverter(ConfiguringTestBase):
 		assert_that( converter.process_batch( [] ), is_( () ) )
 
 
-class TestAbstractLatexCompiler(ConfiguringTestBase):
+class TestAbstractLatexCompiler(ContentrenderingLayerTest):
 
 	def test_generator(self):
 		class Driver(AbstractLatexCompilerDriver):

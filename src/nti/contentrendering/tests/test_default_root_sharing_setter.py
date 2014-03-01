@@ -16,8 +16,7 @@ from hamcrest import is_
 from hamcrest import has_property
 from hamcrest import not_none
 
-from . import ConfiguringTestBase
-from nti.contentrendering import RenderedBook
+from . import ContentrenderingLayerTest
 from nti.contentrendering import default_root_sharing_setter
 from nti.testing.matchers import verifiably_provides
 from nti.contentrendering import interfaces
@@ -27,7 +26,6 @@ import io
 import os
 import platform
 is_pypy = platform.python_implementation() == 'PyPy'
-from unittest import skipIf
 
 
 TEST_CONTENT = 'NextThoughtGenericTutorial-rendered-book'
@@ -35,10 +33,12 @@ TEST_CONTENT = 'NextThoughtGenericTutorial-rendered-book'
 def _resource( name ):
 	return os.path.join( os.path.dirname( __file__ ), name )
 
-def test_module_provides():
-	assert_that( default_root_sharing_setter, verifiably_provides(interfaces.IRenderedBookTransformer ) )
 
-class TestTransforms(ConfiguringTestBase):
+class TestTransforms(ContentrenderingLayerTest):
+
+
+	def test_module_provides(self):
+		assert_that( default_root_sharing_setter, verifiably_provides(interfaces.IRenderedBookTransformer ) )
 
 	def test_file_sharedWith(self):
 		"""

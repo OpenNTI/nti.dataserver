@@ -17,6 +17,8 @@ from nti.testing.layers import ConfiguringLayerMixin
 
 from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
 
+import zope.testing.cleanup
+
 class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 GCLayerMixin,
 								 ConfiguringLayerMixin,
@@ -35,7 +37,13 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def tearDown(cls):
 		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
+
 
 	@classmethod
-	def testSetUp(cls, test=None):
-		cls.setUpTestDS(test)
+	def testSetUp(cls):
+		cls.setUpTestDS()
+
+	@classmethod
+	def testTearDown(cls):
+		pass

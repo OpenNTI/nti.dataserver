@@ -9,22 +9,28 @@ logger = __import__('logging').getLogger(__name__)
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import assert_that
+from hamcrest import has_length
+from hamcrest import is_not
+from hamcrest import none
+from hamcrest import is_
+
 import os
 
 from zope import component
 
 from .. import interfaces as media_interfaces
 
-from . import ConfiguringTestBase
+from nti.contentrendering.tests import ContentrenderingLayerTest
 
-from hamcrest import (assert_that, has_length, is_not, none, is_)
 
-class TestVideoTranscriptParser(ConfiguringTestBase):
+
+class TestVideoTranscriptParser(ContentrenderingLayerTest):
 
 	def test_srt_parser(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/automatic_captions_systemic_risk_drivers.srt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="srt")
-		with open(path, "rt") as source:
+		with open(path, "r") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(str(transcript), is_not(none()))
@@ -37,7 +43,7 @@ class TestVideoTranscriptParser(ConfiguringTestBase):
 	def test_sbv_parser(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/nextthought_captions_002_000.sbv')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="sbv")
-		with open(path, "rt") as source:
+		with open(path, "r") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(transcript, has_length(78))
@@ -48,7 +54,7 @@ class TestVideoTranscriptParser(ConfiguringTestBase):
 	def test_webvtt_parser_1(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/sample_web.vtt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
-		with open(path, "rt") as source:
+		with open(path, "r") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(transcript, has_length(6))
@@ -60,7 +66,7 @@ class TestVideoTranscriptParser(ConfiguringTestBase):
 	def test_webvtt_parser_2(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/abcdef.vtt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
-		with open(path, "rt") as source:
+		with open(path, "r") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(transcript, has_length(10))

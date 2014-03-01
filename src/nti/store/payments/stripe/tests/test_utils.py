@@ -34,11 +34,15 @@ class UtilsTestLayer(SharedConfiguringTestLayer):
 		cls.api_key = stripe.api_key
 		stripe.api_key = u'sk_test_3K9VJFyfj0oGIMi7Aeg3HNBp'
 		cls.coupon = stripe.Coupon.create(percent_off=25, duration='once', id=code)
-		
+
 	@classmethod
 	def testSetUp(cls, test=None):
 		cls.test = test or find_test()
 		cls.test.coupon = cls.coupon
+
+	@classmethod
+	def testTearDown(cls):
+		pass
 
 	@classmethod
 	def tearDown(cls):

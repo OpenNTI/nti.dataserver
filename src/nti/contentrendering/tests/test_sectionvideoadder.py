@@ -1,3 +1,23 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import same_instance
+
 import os
 import shutil
 import tempfile
@@ -6,14 +26,11 @@ from nti.contentrendering import interfaces
 from nti.contentrendering import sectionvideoadder
 from nti.contentrendering.utils import EmptyMockDocument, NoPhantomRenderedBook
 from nti.testing.matchers import provides
-from nti.contentrendering.tests import ConfiguringTestBase
+from nti.contentrendering.tests import ContentrenderingLayerTest
 
-from hamcrest import assert_that, is_, same_instance
 
-def test_class_provides():
-	assert_that( sectionvideoadder.YouTubeRelatedVideoAdder, provides(interfaces.IStaticYouTubeEmbedVideoAdder ) )
 
-class _AbstractSectionTransformer(ConfiguringTestBase):
+class _AbstractSectionTransformer(object):
 
 	base_path = None
 	video_path = None
@@ -35,6 +52,11 @@ class _AbstractSectionTransformer(ConfiguringTestBase):
 		shutil.rmtree( self.temp_d )
 		#print self.temp_d
 
+
+	def test_class_provides(self):
+		assert_that( sectionvideoadder.YouTubeRelatedVideoAdder, provides(interfaces.IStaticYouTubeEmbedVideoAdder ) )
+
+
 	def test_add_videos(self):
 
 		book = NoPhantomRenderedBook( EmptyMockDocument(), self.contentLocation )
@@ -44,7 +66,7 @@ class _AbstractSectionTransformer(ConfiguringTestBase):
 		assert_that( count, is_( self.expected_video_count ) )
 
 
-class TestSectionTransforms(_AbstractSectionTransformer):
+class TestSectionTransforms(_AbstractSectionTransformer, ContentrenderingLayerTest):
 	"""
 	Tests the earlier functionality, using simple, hard-coded replacements.
 	"""
@@ -52,7 +74,7 @@ class TestSectionTransforms(_AbstractSectionTransformer):
 	video_path = 'nti-youtube-embedded-section-videos.txt'
 	expected_video_count = 110
 
-class TestConfiguredSelectorTransforms(_AbstractSectionTransformer):
+class TestConfiguredSelectorTransforms(_AbstractSectionTransformer,ContentrenderingLayerTest):
 	"""
 	Tests that newer, configured replacements happen as expected, including
 	changing the selector and using an NTIID

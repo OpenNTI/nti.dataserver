@@ -22,21 +22,19 @@ from whoosh.query import Term
 from ...RenderedBook import _EclipseTOCMiniDomTopic
 from ..whoosh_video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
 
-from . import ConfiguringTestBase
+from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 
-class TestWhooshVideoTranscriptIndexer(ConfiguringTestBase):
+class TestWhooshVideoTranscriptIndexer(NonDevmodeContentrenderingLayerTest):
 
-	features = ()  # to load the tagger
+	 # non devmode to load the tagger
 
-	@classmethod
-	def setUpClass(cls):
-		super(TestWhooshVideoTranscriptIndexer, cls).setUpClass()
-		cls.idxdir = tempfile.mkdtemp(dir="/tmp")
+	def setUp(self):
+		super(TestWhooshVideoTranscriptIndexer, self).setUp()
+		self.idxdir = tempfile.mkdtemp(dir="/tmp")
 
-	@classmethod
-	def tearDownClass(cls):
-		shutil.rmtree(cls.idxdir, True)
-		super(TestWhooshVideoTranscriptIndexer, cls).tearDownClass()
+	def tearDown(self):
+		shutil.rmtree(self.idxdir, True)
+		super(TestWhooshVideoTranscriptIndexer, self).tearDown()
 
 	def _index_file(self, path, indexname, nodename, indexer=None):
 		indexer = indexer or _DefaultWhooshVideoTranscriptIndexer()

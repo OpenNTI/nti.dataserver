@@ -1,4 +1,16 @@
-from . import ConfiguringTestBase
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
+from . import ContentrenderingLayerTest
 from nti.contentrendering import tociconsetter
 from nti.testing.matchers import provides
 from nti.contentrendering import interfaces
@@ -10,10 +22,7 @@ from hamcrest import has_length
 from hamcrest import is_
 from hamcrest import none
 
-def test_module_provides():
-	assert_that( tociconsetter, provides(interfaces.IRenderedBookTransformer ) )
-
-class TestTransforms(ConfiguringTestBase):
+class TestTransforms(ContentrenderingLayerTest):
 
 	def _chapters_of( self, book ):
 		return [x for x in book.toc.dom.getElementsByTagName( "toc" )[0].childNodes
@@ -26,8 +35,12 @@ class TestTransforms(ConfiguringTestBase):
 		assert_that( self._chapters_of(book)[1].getAttribute( 'icon' ), is_( 'icons/chapters/Biology2.png' ) )
 
 
+	def test_module_provides(self):
+		assert_that( tociconsetter, provides(interfaces.IRenderedBookTransformer ) )
+
+
 	def test_transforms_no_jobname(self):
-		"""With no jobname no icons are changed"""
+		#"""With no jobname no icons are changed"""
 		book = NoPhantomRenderedBook( EmptyMockDocument(), os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
 		self._assert_base_state( book )
 
@@ -39,7 +52,7 @@ class TestTransforms(ConfiguringTestBase):
 
 
 	def test_transforms_with_jobname_icon_intact(self):
-		"""With a jobname existing icons stay in place"""
+		#"""With a jobname existing icons stay in place"""
 		tex_doc = EmptyMockDocument()
 		tex_doc.userdata['jobname'] = 'prealgebra'
 		book = NoPhantomRenderedBook( tex_doc, os.path.join( os.path.dirname( __file__ ),  'intro-biology-rendered-book' ) )
@@ -53,7 +66,7 @@ class TestTransforms(ConfiguringTestBase):
 
 
 	def test_transforms_with_jobname_on_disk_icon(self):
-		"""With a jobname, only topics with no icon that have an icon on disk are set"""
+		#"""With a jobname, only topics with no icon that have an icon on disk are set"""
 		tex_doc = EmptyMockDocument()
 		tex_doc.userdata['jobname'] = 'testing'
 		context = interfaces.JobComponents( 'testing' )

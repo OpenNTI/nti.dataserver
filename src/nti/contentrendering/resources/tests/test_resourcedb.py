@@ -1,33 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
 
 import os
 
-from hamcrest import assert_that, is_, not_none, same_instance
-from hamcrest import contains, none
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import not_none
+from hamcrest import same_instance
+from hamcrest import none
 
 
+from nti.contentrendering.tests import simpleLatexDocumentText
+from nti.contentrendering.tests import RenderContext
+from nti.contentrendering.tests import ContentrenderingLayerTest
 
 
-import plasTeX
-from plasTeX.TeX import TeX
+from nti.contentrendering.resources.converters import ImagerContentUnitRepresentationBatchConverter, AbstractCompilingContentUnitRepresentationBatchConverter
 
-
-from nti.contentrendering.tests import simpleLatexDocumentText, ConfiguringTestBase, buildDomFromString, RenderContext
-
-
-from nti.contentrendering.resources import interfaces
-from nti.contentrendering.resources.converters import ImagerContentUnitRepresentationBatchConverter, AbstractLatexCompilerDriver, AbstractCompilingContentUnitRepresentationBatchConverter
-
-from nti.testing.matchers import verifiably_provides
 
 from nti.contentrendering.resources.ResourceDB import ResourceDB
 
-class TestResourceDB(ConfiguringTestBase):
+class TestResourceDB(ContentrenderingLayerTest):
 
 	def setUp( self ):
 		super(TestResourceDB,self).setUp()
@@ -90,7 +96,9 @@ class TestResourceDB(ConfiguringTestBase):
 		assert_that( ResourceDB._normalize_source( string_4 ), is_( result ) )
 		assert_that( ResourceDB._normalize_source( string_5 ), is_( string_5 ) )
 
-class TestResourceDBTabular(ConfiguringTestBase):
+from .. import _set_default_resource_types
+
+class TestResourceDBTabular(ContentrenderingLayerTest):
 
 	body = br"""
 		\begin{center}
@@ -110,6 +118,7 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		self.ctx = RenderContext( simpleLatexDocumentText( preludes=(br'\usepackage{graphicx}',br'\usepackage{multicol}'),
 														   bodies=( self.body, ) ) )
 		self.ctx.__enter__()
+		_set_default_resource_types(tabular=True)
 
 	def tearDown( self ):
 		self.ctx.__exit__( None, None, None )
@@ -146,7 +155,7 @@ class TestResourceDBTabular(ConfiguringTestBase):
 		# assert_that( open( os.path.join( os.path.dirname(__file__), 'tabular_hlines.svg' ), 'rb' ).read(),
 		# 			 is_( open( resource_svg, 'rb' ).read() ) )
 
-class TestResourceDBAnimatedGIF(ConfiguringTestBase):
+class TestResourceDBAnimatedGIF(ContentrenderingLayerTest):
 
 	def setUp( self ):
 		super(TestResourceDBAnimatedGIF,self).setUp()

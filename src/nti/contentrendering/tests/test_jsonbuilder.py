@@ -1,5 +1,17 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# $Id$
 
-from . import ConfiguringTestBase
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
+from . import ContentrenderingLayerTest
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 from nti.contentrendering import jsonpbuilder
 from nti.testing.matchers import provides
@@ -18,9 +30,6 @@ from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import none
 import simplejson as json
-
-def test_module_provides():
-	assert_that( jsonpbuilder, provides(interfaces.IRenderedBookTransformer ) )
 
 def _loadJSONP( filename ):
 	jsonpdata = None
@@ -43,12 +52,17 @@ def _verifyJSONPContents( orig_filename, ntiid, jsonpFunctionName ):
 	assert_that( data[1], has_entry('content', refData) )
 	assert_that( data[1], has_entry('version', '1' ) )
 
-class TestTransforms(ConfiguringTestBase):
+class TestTransforms(ContentrenderingLayerTest):
+
+
+	def test_module_provides(self):
+		assert_that( jsonpbuilder, provides(interfaces.IRenderedBookTransformer ) )
+
 
 	def test_transform(self):
-		"""Verify the transform produces correct JSONP output for the ToC file, index.html, and the
-		root icon file.
-		"""
+		#"""Verify the transform produces correct JSONP output for the ToC file, index.html, and the
+		#root icon file.
+		#"""
 
 		# Make a copy of the rendered book
 		book_copy = os.path.join( os.path.dirname( __file__ ),  'test-tmp' )
