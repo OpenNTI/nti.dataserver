@@ -225,7 +225,8 @@ def main():
 	logger.info("Perform prerender transforms.")
 	transforms.performTransforms(document, context=components)
 
-	if outFormat == 'images' or outFormat == 'xhtml':
+	db = None
+	if outFormat in ('images', 'xhtml', 'text'):
 		logger.info("Generating images")
 		db = generateImages(document)
 
@@ -235,9 +236,14 @@ def main():
 		logger.info("Begin post render")
 		postRender(document, jobname=jobname, context=components, dochecking=dochecking, doindexing=doindexing)
 
-	if outFormat == 'xml':
+	elif outFormat == 'xml':
 		logger.info("To Xml.")
 		toXml(document, jobname)
+
+	elif outFormat == 'text':
+		logger.info("Begin render")
+		render(document, 'Text', db)
+
 
 	logger.info("Write metadata.")
 	write_dc_metadata(document, jobname)
