@@ -14,25 +14,24 @@ from hamcrest import assert_that
 import stripe
 import unittest
 
-from nti.store.payments.stripe import interfaces as stripe_interfaces
-
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
+from nti.store.payments.stripe.processor.sync import SyncProcessor
+from nti.store.payments.stripe import interfaces as stripe_interfaces
+from nti.store.payments.stripe.processor.purchase import PurchaseProcessor
+
+from nti.store.payments.stripe.processor.tests import create_purchase
+from nti.store.payments.stripe.processor.tests import TEST_WITH_STRIPE
+from nti.store.payments.stripe.processor.tests import create_random_user
+from nti.store.payments.stripe.processor.tests import StripeProcessorTestLayer
+from nti.store.payments.stripe.processor.tests import create_and_register_purchase_attempt
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from ..sync import SyncProcessor
-from ..purchase import PurchaseProcessor
+class TestSyncProcessor(unittest.TestCase):
 
-from . import create_purchase
-from . import TEST_WITH_STRIPE
-from . import create_random_user
-from . import ConfiguringTestBase
-from . import TestBaseProcessorMixin
-from . import create_and_register_purchase_attempt
-
-class TestSyncProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
+	layer = StripeProcessorTestLayer
 
 	def setUp(self):
 		super(TestSyncProcessor, self).setUp()

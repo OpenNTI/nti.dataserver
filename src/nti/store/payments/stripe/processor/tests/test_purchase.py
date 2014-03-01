@@ -23,26 +23,25 @@ from zope.annotation import IAnnotations
 
 from nti.dataserver.users import User
 
-from nti.store.payments.stripe import interfaces as stripe_interfaces
-
 from nti.store import purchase_history
 from nti.store import interfaces as store_interfaces
+from nti.store.payments.stripe import interfaces as stripe_interfaces
+from nti.store.payments.stripe.processor.purchase import PurchaseProcessor
+
+from zope.component import eventtesting
+
+from nti.store.payments.stripe.processor.tests import create_purchase
+from nti.store.payments.stripe.processor.tests import TEST_WITH_STRIPE
+from nti.store.payments.stripe.processor.tests import create_random_user
+from nti.store.payments.stripe.processor.tests import StripeProcessorTestLayer
+from nti.store.payments.stripe.processor.tests import create_and_register_purchase_attempt
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from zope.component import eventtesting
+class TestPurchaseProcessor(unittest.TestCase):
 
-from ..purchase import PurchaseProcessor
-
-from . import create_purchase
-from . import TEST_WITH_STRIPE
-from . import create_random_user
-from . import ConfiguringTestBase
-from . import TestBaseProcessorMixin
-from . import create_and_register_purchase_attempt
-
-class TestPurchaseProcessor(TestBaseProcessorMixin, ConfiguringTestBase):
+	layer = StripeProcessorTestLayer
 
 	def setUp(self):
 		super(TestPurchaseProcessor, self).setUp()
