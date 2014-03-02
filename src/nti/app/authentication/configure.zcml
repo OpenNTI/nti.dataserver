@@ -11,4 +11,7 @@
 
 	<subscriber handler=".subscribers._decode_username_request_event" />
 
+	<adapter factory=".user_token.DefaultIdentifiedUserTokenAuthenticator"
+			 for="basestring" />
+
 </configure>

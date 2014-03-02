@@ -22,8 +22,6 @@ from hamcrest import none
 
 from nti.testing.matchers import validly_provides
 
-from pyramid.request import Request
-
 from nti.appserver.pyramid_auth import _NonChallengingBasicAuthPlugin
 from nti.appserver.pyramid_auth import _nti_request_classifier
 from nti.appserver.pyramid_auth import CLASS_BROWSER_APP
@@ -85,6 +83,7 @@ class TestMisc(unittest.TestCase):
 
 
 from ..pyramid_auth import _KnownUrlTokenBasedAuthenticator
+from nti.app.authentication.user_token import DefaultIdentifiedUserTokenAuthenticator
 import fudge
 class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 
@@ -103,9 +102,11 @@ class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 											'PATH_INFO': '/foo/bar'} ),
 					 is_( none() ) )
 
-	@fudge.patch('nti.appserver.pyramid_auth._NTIUsers.user_password')
-	def test_identify_token(self, mock_pwd):
+	@fudge.patch('nti.app.authentication.user_token.DefaultIdentifiedUserTokenAuthenticator._get_user_password',
+				 'zope.component.getAdapter')
+	def test_identify_token(self, mock_pwd, mock_get):
 		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( 'abcde' )
+		mock_get.is_callable().returns(DefaultIdentifiedUserTokenAuthenticator('secret'))
 
 		token = self.plugin.getTokenForUserId( 'user' )
 		environ = {'QUERY_STRING': 'token=' + token,
@@ -119,3 +120,9 @@ class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( '1234' )
 		assert_that( self.plugin.authenticate( environ, identity ),
 					 is_( none() ) )
+
+		# Back to original
+		mock_pwd.is_callable().returns_fake().provides( 'getPassword' ).returns( 'abcde' )
+		identity = self.plugin.identify( environ )
+		assert_that( self.plugin.authenticate( environ, identity ),
+					 is_( 'user' ) )
