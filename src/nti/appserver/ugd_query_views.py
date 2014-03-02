@@ -5,7 +5,7 @@ Views for querying user generated data.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,13 +24,13 @@ from pyramid.view import view_config
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 
+from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import _util
 from nti.appserver import _view_utils
 from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
-from nti.appserver.interfaces import IUGDExternalCollection
 from nti.appserver.interfaces import IPageContainerResource
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IUserPresentationPriorityCreators

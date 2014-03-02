@@ -5,7 +5,7 @@ Implements vocabularies that limit what a user can create.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,7 +24,6 @@ from nti.dataserver import users
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.internalization import default_externalized_object_factory_finder
-
 
 # TODO: zope.schema.vocabulary provides a vocab registry
 # Should we make use of that? Especially since these registries

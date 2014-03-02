@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 
 import zope.deferredimport
 zope.deferredimport.initialize()
+
 zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the mathcounts site package."
 	" The only valid use is existing ZODB objects",

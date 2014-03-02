@@ -27,15 +27,16 @@ from nti.appserver.policies import site_policies
 import nti.dataserver.interfaces as nti_interfaces
 
 import nti.socketio.interfaces
-import nti.socketio.session_consumer
 from nti.socketio.dataserver_session import Session
 
 # b/c
 import sys
 import UserDict
+
 socketio_server = UserDict.UserDict()
 socketio_server['Session'] = Session
 socketio_server.Session = Session
+
 sys.modules['nti.dataserver.socketio_server'] = socketio_server
 nti.dataserver.socketio_server = socketio_server
 

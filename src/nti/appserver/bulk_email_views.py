@@ -101,7 +101,7 @@ resumability. A status page can:
 .. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -126,8 +126,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization as nauth
 from nti.dataserver.users import index as user_index
 
-
 from nti.utils._compat import sleep
+
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
 from nti.mailer.interfaces import ITemplatedMailer

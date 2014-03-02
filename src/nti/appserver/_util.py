@@ -6,7 +6,7 @@ Common utility classes and functions for the appserver.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -23,7 +23,9 @@ from nti.externalization import oids as ext_oids
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.appserver import interfaces as app_interfaces
+from nti.app.renderers import interfaces as app_interfaces
+
+from nti.appserver.interfaces import UserLogonEvent
 
 from nti.dataserver import links
 from nti.dataserver import users
@@ -166,7 +168,7 @@ def logon_user_with_request( user, request, response=None ):
 	if not nti_interfaces.IUser.providedBy( user ):
 		raise ValueError( "No valid user given" )
 
-	notify( app_interfaces.UserLogonEvent( user, request ) )
+	notify(UserLogonEvent(user, request))
 
 	response = response or getattr( request, 'response' )
 	if response:

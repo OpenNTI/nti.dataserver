@@ -12,13 +12,14 @@ of these locks while a previous greenlet already has it.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 # Note that we must not import *anything* before the patch
 from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
-
 
 import sys
 from pkg_resources import load_entry_point, get_distribution
