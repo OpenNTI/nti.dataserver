@@ -5,7 +5,7 @@ Utilities relating to views.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,11 +22,10 @@ except ImportError: #PyPy?
 
 from zope import interface
 
-
 from zope.schema import interfaces as sch_interfaces
 
-
 from pyramid import traversal
+
 import webob.datetime_utils
 
 from pyramid import httpexceptions as hexc
@@ -39,6 +38,7 @@ from nti.externalization.externalization import to_standard_external_last_modifi
 from nti.mimetype import mimetype
 
 from z3c.batching.batch import Batch
+
 from nti.dataserver.links import Link
 
 from .error import handle_validation_error
@@ -47,7 +47,6 @@ from .error import handle_possible_validation_error
 from .internalization import create_modeled_content_object
 from .internalization import update_object_from_external_object
 from .internalization import read_body_as_external_object
-
 
 _marker = object()
 

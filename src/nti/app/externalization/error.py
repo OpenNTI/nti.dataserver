@@ -32,8 +32,6 @@ from zope.interface import Invalid
 from zope.schema.interfaces import RequiredMissing
 from zope.schema.interfaces import ValidationError
 
-
-
 def _json_error_map(o):
 	if isinstance(o, set):
 		return list(o)
