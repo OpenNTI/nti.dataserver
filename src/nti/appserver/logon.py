@@ -27,13 +27,14 @@ the function :func:`impersonate_user` for more details.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from . import MessageFactory as _
 
 import logging
 logger = logging.getLogger(__name__)
+
 # Clean up the logging of openid, which writes to stderr by default. Patching
 # the module like this is actually the recommended approach
 import openid.oidutil
@@ -47,8 +48,13 @@ from zope.event import notify
 from zope.i18n import translate
 
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization import interfaces as ext_interfaces
+
+from nti.app.renderers import interfaces as app_renderes_interfaces
+
 from nti.appserver import interfaces as app_interfaces
+
 from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver.links import Link
@@ -273,7 +279,7 @@ def ping( request ):
 	return _Pong( links )
 
 @interface.implementer( ext_interfaces.IExternalObject,
-						app_interfaces.IPrivateUncacheableInResponse)
+						app_renderes_interfaces.IPrivateUncacheableInResponse)
 class _Pong(dict):
 
 	__external_class_name__ = 'Pong'
@@ -561,7 +567,7 @@ class _ExistingOpenIdUserLoginLinkProvider(object):
 
 
 @interface.implementer( ext_interfaces.IExternalObject,
-						app_interfaces.IPrivateUncacheableInResponse)
+						app_renderes_interfaces.IPrivateUncacheableInResponse)
 class _Handshake(dict):
 
 	__external_class_name__ = 'Handshake'
@@ -647,7 +653,7 @@ def _specified_username_logon( request, allow_no_username=True, require_matching
 
 	# Mark this response up as if it were entirely private and not to be cached
 	private_data = _Handshake(())
-	app_interfaces.IResponseCacheController( private_data )( private_data, {'request': request} )
+	app_renderes_interfaces.IResponseCacheController(private_data)(private_data, {'request': request})
 
 	return response
 

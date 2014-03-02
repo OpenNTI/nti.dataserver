@@ -5,7 +5,7 @@ AppSever adpapters.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -162,9 +162,6 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 			allowed_fields.add( k )
 
 		self._allowed_fields = allowed_fields
-
-from nti.utils import create_gravatar_url
-
 
 from nti.dataserver.users import DynamicFriendsList
 

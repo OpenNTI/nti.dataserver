@@ -5,7 +5,7 @@ Views relating to user activity.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -16,7 +16,10 @@ from zope.annotation import factory as an_factory
 
 from pyramid.view import view_config
 
+from nti.app.renderers.interfaces import IUserActivityExternalCollection
+
 from nti.appserver import interfaces as app_interfaces
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
@@ -69,7 +72,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	"""
 
-	result_iface = app_interfaces.IUserActivityExternalCollection
+	result_iface = IUserActivityExternalCollection
 
 	FILTER_NAMES = RecursiveUGDQueryView.FILTER_NAMES.copy()
 	FILTER_NAMES['TopLevel'] = _always_toplevel_filter

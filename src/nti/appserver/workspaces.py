@@ -6,7 +6,7 @@ Service document and user workspaces support.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,7 +27,6 @@ from zope.schema import vocabulary
 
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
-from nti.contentlibrary import interfaces as content_interfaces
 
 from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.externalization import toExternalObject, isSyntheticKey
@@ -38,15 +37,17 @@ import nti.externalization.interfaces as ext_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import links
-from nti.mimetype import mimetype
-from nti.ntiids import ntiids
-from nti.dataserver import authorization as nauth
 from nti.dataserver import traversal as nti_traversal
+
+from nti.mimetype import mimetype
+
+from nti.ntiids import ntiids
 
 from nti.utils.property import alias
 
+from nti.app.renderers import rest
+
 import nti.appserver.interfaces as app_interfaces
-import nti.appserver.pyramid_renderers as rest
 from nti.appserver.capabilities import interfaces as cap_interfaces
 
 from . import traversal

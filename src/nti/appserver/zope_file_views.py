@@ -35,7 +35,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils import dataurl
 
-from . import interfaces as app_interfaces
+from nti.app.renderers import interfaces as app_interfaces
 from . import httpexceptions as hexc
 
 def _do_view( request, view ):

@@ -23,6 +23,8 @@ from ZODB.utils import u64
 from pyramid.view import view_config
 from pyramid.threadlocal import get_current_request
 
+from nti.app.renderers import interfaces as app_renderers_interfaces
+
 from nti.appserver import httpexceptions as hexc
 from nti.appserver._view_utils import get_remote_user
 from nti.appserver import interfaces as app_interfaces
@@ -159,7 +161,7 @@ def _ResolveUserView(request):
 	if result:
 		# If we matched one user entity, see if we can get away without rendering it
 		# TODO: This isn't particularly clean
-		app_interfaces.IPreRenderResponseCacheController(result[0])(result[0], {'request': request} )
+		app_renderers_interfaces.IPreRenderResponseCacheController(result[0])(result[0], {'request': request})
 		# special case the remote user being the same user; we don't want to cache
 		# ourself based simply on modification date as that doesn't take into account
 		# dynamic links; we do need to render
@@ -198,7 +200,7 @@ def _ResolveUsersView(request):
 		item = _resolve_user(term, remote_user)
 		if item:
 			match = item[0]
-			app_interfaces.IPreRenderResponseCacheController(match)(match, {'request': request})
+			app_renderers_interfaces.IPreRenderResponseCacheController(match)(match, {'request': request})
 			result[match.username] = toExternalObject(match, name=('personal-summary'
 													  if match == remote_user
 													  else 'summary'))
@@ -247,7 +249,7 @@ def _format_result(result, remote_user, dataserver):
 	return _provide_location(result, dataserver)
 
 def _provide_location(result, dataserver):
-	interface.alsoProvides(result, app_interfaces.IUnModifiedInResponse)
+	interface.alsoProvides(result, app_renderers_interfaces.IUnModifiedInResponse)
 	interface.alsoProvides(result, zmime_interfaces.IContentTypeAware)
 	result.mimeType = nti_mimetype.nti_mimetype_with_class(None)
 	result.__parent__ = dataserver.root

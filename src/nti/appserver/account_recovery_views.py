@@ -8,11 +8,13 @@ For the general design, see `Everything you ever wanted to know about building a
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
 from nti.appserver import MessageFactory as _
+
 import uuid
 import datetime
 import urllib
@@ -21,7 +23,6 @@ import urlparse
 from zope import component
 from zope.annotation import interfaces as an_interfaces
 
-import zope.schema
 import zope.schema.interfaces
 
 from nti.dataserver import users
