@@ -24,7 +24,6 @@ from nti.testing.matchers import validly_provides
 
 from pyramid.request import Request
 
-from nti.appserver.pyramid_auth import _decode_username_request
 from nti.appserver.pyramid_auth import _NonChallengingBasicAuthPlugin
 from nti.appserver.pyramid_auth import _nti_request_classifier
 from nti.appserver.pyramid_auth import CLASS_BROWSER_APP
@@ -83,32 +82,6 @@ class TestMisc(unittest.TestCase):
 
 		environ['HTTP_ACCEPT'] = 'text/plain'
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
-
-	def test_decode_bad_auth(self):
-		req = Request.blank('/')
-
-		# blank password
-		req.authorization = ('Basic', 'username:'.encode('base64') )
-
-		username, password = _decode_username_request( req )
-
-		assert_that( username, is_( 'username' ) )
-		assert_that( password, is_( '' ) )
-
-		# malformed header
-		req.authorization = ('Basic', 'username'.encode('base64') )
-
-		username, password = _decode_username_request( req )
-
-		assert_that( username, is_( none() ) )
-		assert_that( password, is_( none() ) )
-
-		# blank username
-		req.authorization = ('Basic', ':foo'.encode('base64') )
-		username, password = _decode_username_request( req )
-
-		assert_that( username, is_( '' ) )
-		assert_that( password, is_( 'foo' ) )
 
 
 from ..pyramid_auth import _KnownUrlTokenBasedAuthenticator

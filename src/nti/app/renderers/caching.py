@@ -31,9 +31,15 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import flagging
 from nti.dataserver import interfaces as nti_interfaces
 
-
+from .interfaces import IETagCachedUGDExternalCollection
+from .interfaces import ILongerCachedUGDExternalCollection
 from .interfaces import IPreRenderResponseCacheController
+from .interfaces import IPrivateUncacheableInResponse
 from .interfaces import IResponseCacheController
+from .interfaces import IUGDExternalCollection
+from .interfaces import IUnModifiedInResponse
+from .interfaces import IUncacheableInResponse
+from .interfaces import IUserActivityExternalCollection
 
 
 def default_vary_on( request ):
@@ -140,7 +146,7 @@ def default_cache_controller( data, system ):
 def default_cache_controller_factory(d):
 	return default_cache_controller
 
-@interface.provider( app_interfaces.IResponseCacheController )
+@interface.provider(IResponseCacheController)
 def uncacheable_cache_controller( data, system ):
 	request = system['request']
 	response = request.response
@@ -157,12 +163,12 @@ def uncacheable_cache_controller( data, system ):
 
 	return response
 
-@interface.implementer(app_interfaces.IResponseCacheController)
-@component.adapter(app_interfaces.IUncacheableInResponse)
+@interface.implementer(IResponseCacheController)
+@component.adapter(IUncacheableInResponse)
 def uncacheable_factory( data ):
 	return uncacheable_cache_controller
 
-@interface.provider(app_interfaces.IResponseCacheController)
+@interface.provider(IResponseCacheController)
 def private_uncacheable_cache_controller(data, system):
 	response = uncacheable_cache_controller(data, system)
 	# Our typical reason for doing this is
@@ -183,13 +189,13 @@ def private_uncacheable_cache_controller(data, system):
 
 	return response
 
-@interface.implementer(app_interfaces.IResponseCacheController)
-@component.adapter(app_interfaces.IPrivateUncacheableInResponse)
+@interface.implementer(IResponseCacheController)
+@component.adapter(IPrivateUncacheableInResponse)
 def private_uncacheable_factory( data ):
 	return private_uncacheable_cache_controller
 
 
-@interface.provider( app_interfaces.IResponseCacheController )
+@interface.provider(IResponseCacheController)
 def unmodified_cache_controller( data, system ):
 	"""
 	Use this when the response shouldn't be cached based on last modified dates, and we have
@@ -206,8 +212,8 @@ def unmodified_cache_controller( data, system ):
 	response = default_cache_controller( data, system )
 	response.last_modified = None # in case it changed
 
-@interface.implementer(app_interfaces.IResponseCacheController)
-@component.adapter(app_interfaces.IUnModifiedInResponse)
+@interface.implementer(IResponseCacheController)
+@component.adapter(IUnModifiedInResponse)
 def unmodified_factory( data ):
 	return unmodified_cache_controller
 
@@ -219,7 +225,7 @@ def md5_etag( *args ):
 	return digest.digest().encode( 'base64' ).replace( '\n', '' ).strip( '=' )
 _md5_etag = md5_etag
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 def UseTheRequestContextCacheController(context):
 	"""
 	Instead of using the return value from the view, use the context of the request.
@@ -234,9 +240,9 @@ def UseTheRequestContextCacheController(context):
 	# here would already have been called on the context before the view executed;
 	# we are called after the view. Nothing should have changed on the context object in the
 	# meantime.
-	return app_interfaces.IPreRenderResponseCacheController( get_current_request().context )
+	return IPreRenderResponseCacheController( get_current_request().context )
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 class AbstractReliableLastModifiedCacheController(object):
 	"""
 	Things that have reliable last modified dates go here
@@ -295,7 +301,7 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 		return self.context._p_oid, self.context._p_serial
 
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IEntity)
 class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
 	"""
@@ -308,7 +314,7 @@ class _EntityCacheController(_AbstractReliableLastModifiedCacheController):
 	def _context_specific(self):
 		return (self.context.username,)
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IUser)
 class _UserCacheController(_EntityCacheController):
 	"""
@@ -318,7 +324,7 @@ class _UserCacheController(_EntityCacheController):
 	# to the external rep of a user, we needed to include
 	# that in the etag. We no longer do that.
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IModeledContent)
 class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheController):
 	"""
@@ -344,7 +350,7 @@ class _ModeledContentCacheController(_AbstractReliableLastModifiedCacheControlle
 		except AttributeError:
 			return self.context.__name__, str(flagged)
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.ITranscript)
 class _TranscriptCacheController(_ModeledContentCacheController):
 	"""
@@ -359,8 +365,8 @@ class _TranscriptCacheController(_ModeledContentCacheController):
 			flags = tuple( [flagging.flags_object( m, self.remote_user ) for m in self.context.Messages] )
 		return super(_TranscriptCacheController,self)._context_specific + flags
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
-@component.adapter(app_interfaces.IUGDExternalCollection)
+@interface.implementer(IPreRenderResponseCacheController)
+@component.adapter(IUGDExternalCollection)
 class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheController):
 	"""
 	UGD collections coming from this specific place have reliable last-modified dates.
@@ -372,12 +378,12 @@ class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheCo
 	def _context_specific(self):
 		return self.context.__name__, len(self.context)
 
-@component.adapter(app_interfaces.ILongerCachedUGDExternalCollection)
+@component.adapter(ILongerCachedUGDExternalCollection)
 class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
 
 	max_age = 120 # XXX arbitrary
 
-@component.adapter(app_interfaces.IETagCachedUGDExternalCollection)
+@component.adapter(IETagCachedUGDExternalCollection)
 class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
 	# We are guaranteed to get great caching because every time the data changes
 	# we change the link we generate. We don't need to take our own
@@ -394,7 +400,7 @@ class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCach
 from nti.appserver._view_utils import get_remote_user
 
 
-@component.adapter(app_interfaces.IUserActivityExternalCollection)
+@component.adapter(IUserActivityExternalCollection)
 class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 	"""
 	If the owner asks for his own activity, we allow for less caching.
@@ -411,7 +417,7 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
 
-@interface.implementer(app_interfaces.IPreRenderResponseCacheController)
+@interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)
 class _ContentUnitInfoCacheController(object):
 	# rendering this doesn't take long, and we need the rendering
