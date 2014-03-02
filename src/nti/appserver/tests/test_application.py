@@ -48,6 +48,8 @@ from nti.externalization.externalization import to_json_representation
 import nti.contentsearch
 
 import pyramid.config
+from pyramid.events import NewRequest
+
 
 import webob.datetime_utils
 import datetime
@@ -71,7 +73,8 @@ from urllib import quote as UQ
 from persistent import Persistent
 from zope import interface
 from zope import component
-from zope.deprecation import __show__
+from zope.event import notify
+
 
 from zope.keyreference.interfaces import IKeyReference
 
@@ -174,7 +177,12 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( auth_policy.unauthenticated_userid(self.request), is_( none() ) )
 		self._make_extra_environ( update_request=True )
 		with mock_dataserver.mock_db_trans(self.ds):
-			assert_that( auth_policy.unauthenticated_userid(self.request), is_( self.extra_environ_default_user.lower() ) )
+			# Until we actually begin the request, it's not even there
+			assert_that( auth_policy.unauthenticated_userid(self.request),
+						 is_( none() ) )
+			notify(NewRequest(self.request))
+			assert_that( auth_policy.unauthenticated_userid(self.request),
+						 self.extra_environ_default_user.lower() )
 
 	def test_locale_negotionion( self ):
 		from zope.i18n.interfaces import IUserPreferredLanguages

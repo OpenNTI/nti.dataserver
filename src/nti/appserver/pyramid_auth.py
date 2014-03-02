@@ -8,8 +8,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__ )
 
-import binascii
-
 from zope import interface
 from zope import component
 
@@ -26,7 +24,6 @@ from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 from repoze.who.classifiers import default_request_classifier
 from repoze.who.interfaces import IAuthenticator, IIdentifier, IChallenger, IChallengeDecider, IRequestClassifier
 
-from pyramid.request import Request
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 from pyramid_who.classifiers import forbidden_challenger
 
@@ -39,40 +36,6 @@ from . import httpexceptions as hexc
 from nti.app.renderers.caching import default_vary_on
 from .interfaces import IUserViewTokenCreator
 from .interfaces import ILogonWhitelist
-
-def _decode_username_request( request ):
-	"""
-	Decodes %40 in a Basic Auth username into an @. Modifies
-	the request.
-
-	Our usernames are in domain syntax. This sometimes confuses
-	browsers who expect to use an @ to separate user and password,
-	so clients often workaround this by percent-encoding the username.
-	Reverse that step here. This should be an outer layer before
-	authkit gets to do anything.
-
-	:return: Tuple (user,pass).
-	"""
-
-	authmeth, auth = request.authorization or ('','')
-	if authmeth.lower() != b'basic':
-		return (None,None)
-
-	# Remember here we're working with byte headers
-	try:
-		username, password = auth.strip().decode('base64').split(b':',1)
-	except (ValueError,binascii.Error): # pragma: no cover
-		return (None,None)
-
-	# we only get here with two strings, although either could be empty
-	canonical_username = username.lower().replace( b'%40', b'@' ).strip() if username else username
-	if canonical_username != username:
-		username = canonical_username
-		auth = (username + b':' + password).encode( 'base64' ).strip()
-		request.authorization = (authmeth, auth)
-		request.remote_user = username
-
-	return (username, password)
 
 class _NTIUsers(object):
 
@@ -326,6 +289,7 @@ def _nti_request_classifier( environ ):
 	result = default_request_classifier( environ )
 
 	if result == 'browser':
+		ua = environ.get('HTTP_USER_AGENT', '').lower()
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
 		if environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
@@ -333,6 +297,8 @@ def _nti_request_classifier( environ ):
 			result = CLASS_BROWSER_APP
 		elif environ.get('paste.testing') is True:
 			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP )
+		elif 'python' in ua or 'httpie' in ua:
+			result = CLASS_BROWSER_APP
 		else:
 			# Hmm. Going to have to do some guessing. Sigh.
 			# First, we sniff for something that looks like it's sent by
@@ -341,7 +307,7 @@ def _nti_request_classifier( environ ):
 			# sent by user agents like, say, NetNewsWire, then it was probably
 			# set programatically.
 			if ('HTTP_REFERER' in environ
-				 and 'Mozilla' in environ.get( 'HTTP_USER_AGENT', '' )
+				 and 'mozilla' in ua
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
 	return result
@@ -479,17 +445,6 @@ class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):
 			'userdata': request.environ.get('REMOTE_USER_DATA', b'')
 			}
 		return api.remember(identity)
-
-	def _getAPI( self, request ):
-		environ = request.environ
-		if 'repoze.who.identity' not in environ: # First time
-
-			try:
-				_decode_username_request( request )
-			except AttributeError: # DummyRequest
-				_decode_username_request( Request( environ ) )
-
-		return self._api_factory( environ )
 
 class NTIForbiddenView(object):
 	"""
