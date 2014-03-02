@@ -105,7 +105,7 @@ class _NTIUsersAuthenticatorPlugin(object):
 				return identity['login']
 		except KeyError: # pragma: no cover
 			return None
-
+from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
 @interface.implementer(IAuthenticator,
 					   IIdentifier,
 					   IUserViewTokenCreator)
@@ -170,17 +170,9 @@ class _KnownUrlTokenBasedAuthenticator(object):
 
 		query_dict = self.parse_dict_querystring( environ )
 		token = query_dict['token']
-
-		try:
-			_, userid, tokens, user_data = self.auth_tkt.parse_ticket( self.secret,
-																  token,
-																  '0.0.0.0' )
-		except self.auth_tkt.BadTicket: # pragma: no cover
-			return None
-
-		identity = {}
-		identity['nti.pyramid_auth.token.userid'] = userid
-		identity['nti.pyramid_auth.token.userdata'] = user_data
+		identity =  component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).getIdentityFromToken(token)
+		if identity is not None:
+			environ['IDENTITY_TYPE'] = 'token'
 		return identity
 
 	def forget(self, environ, identity): # pragma: no cover
@@ -189,31 +181,11 @@ class _KnownUrlTokenBasedAuthenticator(object):
 		return []
 
 	def authenticate(self, environ, identity):
-		if 'nti.pyramid_auth.token.userid' not in identity:
-			return None
+		if environ.get('IDENTITY_TYPE') != 'token':
+			return
 
-		userid = identity['nti.pyramid_auth.token.userid']
-		# This part is where the password tie-in is implemented.
-		userdata = identity['nti.pyramid_auth.token.userdata']
 		environ[b'AUTH_TYPE'] = b'token'
-		# We would be storing hashed and salted password data for the
-		# user, currently in bcrypt. Exposing the bcrypt hash and salt
-		# is not a security problem, as the raw password cannot be obtained
-		# from the bcrypt value (not in a feasible amount of time anyway),
-		# and there is no entry point to the system that will accept the
-		# raw bcrypt value and directly compare it to produce an authentication
-		# result---the user must give the real password.
-		#
-		# That said, I'm not comfortable exposing it directly. Therefore, we
-		# take *another* hash on top of that. This needs to be fast, unlike bcrypt,
-		# because we produce and write out these tokens frequently.
-		user_passwd = _NTIUsers.user_password( userid )
-		if user_passwd:
-			raw_data = user_passwd.getPassword()
-			hexdigest = self.sha256( raw_data ).hexdigest()
-			return  userid if hexdigest == userdata else None
-
-		return None # No user or password has changed.
+		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
 	def getTokenForUserId( self, userid ):
 		"""
@@ -221,15 +193,7 @@ class _KnownUrlTokenBasedAuthenticator(object):
 		used to identify the user in the future. If the user
 		does not exist or cannot get a token, return None.
 		"""
-
-		user_pw = _NTIUsers.user_password( userid )
-		if user_pw is None:
-			return None
-
-		raw_data = user_pw.getPassword()
-		hexdigest = self.sha256( raw_data ).hexdigest()
-		tkt = self.auth_tkt.AuthTicket(self.secret, userid, '0.0.0.0', user_data=hexdigest)
-		return tkt.cookie_value()
+		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).getTokenForUserId(userid)
 
 @interface.implementer(IAuthenticator,IIdentifier)
 class _FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
