@@ -35,7 +35,7 @@ from nti.dataserver import authorization as nti_authorization
 from . import httpexceptions as hexc
 from nti.app.renderers.caching import default_vary_on
 from .interfaces import IUserViewTokenCreator
-from .interfaces import ILogonWhitelist
+from nti.app.authentication.interfaces import ILogonWhitelist
 
 class _NTIUsers(object):
 
@@ -58,13 +58,6 @@ class _NTIUsers(object):
 			return False
 		user_password = user.password
 		return user_password.checkPassword( password ) if user_password else False
-
-	@classmethod
-	def user_can_login(cls, username):
-		if cls.user_exists(username):
-			whitelist = component.getUtility(ILogonWhitelist)
-			return username in whitelist
-
 
 	def _query_groups( self, username, components ):
 		":return: The groups of an authenticated user."
@@ -96,96 +89,17 @@ class _NTIUsers(object):
 		identity[CACHE_KEY] = result
 		return result
 
-@interface.implementer(IAuthenticator)
-class _NTIUsersAuthenticatorPlugin(object):
+from nti.app.authentication.who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
+from nti.app.authentication.who_authenticators import KnownUrlTokenBasedAuthenticator
 
-	def authenticate( self, environ, identity ):
-		try:
-			if _NTIUsers.user_can_login(identity['login']) and _NTIUsers.user_has_password( identity['login'], identity['password'] ):
-				return identity['login']
-		except KeyError: # pragma: no cover
-			return None
 from nti.app.authentication.interfaces import IIdentifiedUserTokenAuthenticator
-@interface.implementer(IAuthenticator,
-					   IIdentifier,
-					   IUserViewTokenCreator)
-class _KnownUrlTokenBasedAuthenticator(object):
-	"""
-	A :mod:`repoze.who` plugin that acts in the role of identifier
-	(determining who the remote user is claiming to be)
-	as well as authenticator (matching the claimed remote credentials
-	to the real credentials). This information is not sent in the
-	headers (Authenticate or Cookie) but instead, for the use of
-	copy-and-paste, retrieved directly from query parameters in the
-	URL (specifically, the 'token' parameter).
 
-	This is similar in principal to the AuthTkt cookie we use
-	in HTTP headers, but there is one crucial difference:
-	the authtkt cookie is generally time limited (to mitigate damage due to a
-	publicized cookie) but does not have any relationship to the
-	user's password (the password can change, and existing tkts stay
-	valid).
+@interface.implementer(IUserViewTokenCreator)
+class _UserViewTokenCreator(object):
 
-	In this case, we want the value to stay valid as long as possible.
-	The user is being directly given this token and told to safeguard it,
-	and to plug it into something they won't look at often (an RSS reader).
-	So rather than using a timestamp value to mitigate damage due to a
-	public token, we instead tie it to the password. If the user fears the
-	password has been lost, he is advised to change the password.
-
-	Because it is part of the URL, this information is visible in the
-	logs for the entire HTTP pipeline. To limit the overuse of this, we
-	only want to allow it for particular URLs, as based on the path.
-	"""
-
-	# We actually piggyback off the authtkt implementation, using
-	# a version of the user's password as the 'user data'
-
-	from repoze.who.plugins.auth_tkt import auth_tkt
-	from paste.request import parse_dict_querystring
-	parse_dict_querystring = staticmethod(parse_dict_querystring)
-	from hashlib import sha256
-
-	def __init__( self, secret, allowed_views=() ):
-		"""
-		Creates a combo :class:`.IIdentifier` and :class:`.IAuthenticator`
-		using an auth-tkt like token.
-
-		:param string secret: The encryption secret. May be the same as the
-			auth_tkt secret.
-		:param sequence allowed_views: A set of view names (final path sequences)
-			that will be allowed to be authenticated by this plugin.
-		"""
+	def __init__(self, secret, allowed_views):
 		self.secret = secret
 		self.allowed_views = allowed_views
-
-	def identify( self, environ ):
-		# Obviously if there is no token we can't identify
-		if b'QUERY_STRING' not in environ or b'token' not in environ[b'QUERY_STRING']:
-			return
-		if b'PATH_INFO' not in environ:
-			return
-		if not any((environ['PATH_INFO'].endswith(view) for view in self.allowed_views)):
-			return
-
-		query_dict = self.parse_dict_querystring( environ )
-		token = query_dict['token']
-		identity =  component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).getIdentityFromToken(token)
-		if identity is not None:
-			environ['IDENTITY_TYPE'] = 'token'
-		return identity
-
-	def forget(self, environ, identity): # pragma: no cover
-		return []
-	def remember(self, environ, identity): # pragma: no cover
-		return []
-
-	def authenticate(self, environ, identity):
-		if environ.get('IDENTITY_TYPE') != 'token':
-			return
-
-		environ[b'AUTH_TYPE'] = b'token'
-		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
 	def getTokenForUserId( self, userid ):
 		"""
@@ -296,7 +210,8 @@ def _nti_challenge_decider( environ, status, headers ):
 
 def _create_who_apifactory( secure_cookies=True,
 							cookie_secret='$Id$',
-							cookie_timeout=ONE_WEEK ):
+							cookie_timeout=ONE_WEEK,
+							token_allowed_views=('feed.rss', 'feed.atom')):
 
 	# Note that the cookie name and header names needs to be bytes,
 	# not unicode. Otherwise we wind up with unicode objects in the
@@ -305,23 +220,27 @@ def _create_who_apifactory( secure_cookies=True,
 	basicauth = BasicAuthPlugin(b'NTI')
 	basicauth_interactive = _NonChallengingBasicAuthPlugin(b'NTI')
 
+	def user_can_login(username):
+		whitelist = component.getUtility(ILogonWhitelist)
+		return username in whitelist and User.get_user(username) is not None
+
 	auth_tkt = AuthTktCookiePlugin(cookie_secret,
 								   b'nti.auth_tkt',
 								   secure=secure_cookies,
 								   timeout=cookie_timeout,
 								   reissue_time=600,
 								   # For extra safety, we can refuse to return authenticated ids
-								   # if they don't exist. If we are called too early, outside the site,
+								   # if they don't exist or are denied logon. If we are called too early, outside the site,
 								   # this can raise an exception, but the only place that matters, logging,
 								   # already deals with it (gunicorn.py). Because it's an exception,
 								   # it prevents any of the caching from kicking in
-								   userid_checker=_NTIUsers.user_can_login)
+								   userid_checker=user_can_login)
 
 	# Create a last-resort identifier and authenticator that
 	# can be used only for certain views, here, our
 	# known RSS/Atom views. This is clearly not very configurable.
-	token_tkt = _KnownUrlTokenBasedAuthenticator( cookie_secret,
-												  allowed_views=('feed.rss', 'feed.atom') )
+	token_tkt = KnownUrlTokenBasedAuthenticator( cookie_secret,
+												 allowed_views=token_allowed_views )
 
 	# Claimed identity (username) can come from the cookie,
 	# or HTTP Basic auth, or in special cases, from the token query param
@@ -333,7 +252,7 @@ def _create_who_apifactory( secure_cookies=True,
 	# Or possibly HTTP Basic auth, or in special cases, from the
 	# token query param
 	authenticators = [('auth_tkt', auth_tkt),
-					  ('htpasswd', _NTIUsersAuthenticatorPlugin()),
+					  ('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()),
 					  ('token_tkt', token_tkt)]
 	challengers = [ # Order matters when multiple classifications match
 				   ('basicauth-interactive', basicauth_interactive),
@@ -371,11 +290,15 @@ def create_authentication_policy( secure_cookies=True,
 		view that must be installed to make it effective, and a :class:`.IUserViewTokenCreator`
 		that should be registered as a named utility.
 	"""
-	api_factory = _create_who_apifactory(secure_cookies=secure_cookies, cookie_secret=cookie_secret, cookie_timeout=cookie_timeout )
+	token_allowed_views = ('feed.rss', 'feed.atom')
+	api_factory = _create_who_apifactory(secure_cookies=secure_cookies,
+										 cookie_secret=cookie_secret,
+										 cookie_timeout=cookie_timeout,
+										 token_allowed_views=token_allowed_views)
 	result = NTIAuthenticationPolicy(cookie_timeout=cookie_timeout,api_factory=api_factory)
 	# And make it capable of impersonation
 	result = nti_authentication.DelegatingImpersonatedAuthenticationPolicy( result )
-	return result, NTIForbiddenView(api_factory), api_factory.authenticators[-1][1]
+	return result, NTIForbiddenView(api_factory), _UserViewTokenCreator(cookie_secret, token_allowed_views)
 
 @interface.implementer(IAuthenticationPolicy)
 class NTIAuthenticationPolicy(WhoV2AuthenticationPolicy):

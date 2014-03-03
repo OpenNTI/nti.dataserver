@@ -22,7 +22,7 @@
 	<include package="nti.dataserver" />
 	<include package="nti.mailer" />
 
-	<include package="." file="meta.zcml" />
+	<include package="nti.app.authentication" file="meta.zcml" />
 
 	<subscriber handler=".subscribers.requestEventNotify" />
 
