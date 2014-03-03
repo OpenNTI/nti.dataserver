@@ -16,8 +16,10 @@ from zope import interface
 from zope.event import notify
 from zope.location import locate
 
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from z3c.batching.batch import Batch
+
+from nti.app.renderers import interfaces as app_interfaces
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.dataserver.users import Entity
 
@@ -43,7 +45,6 @@ class BaseView(object):
 		# TODO: (Instead of modification info, we should be using etags here, anyway).
 		locate(obj, parent, self.name)
 		# TODO: Make cachable?
-		from nti.appserver import interfaces as app_interfaces  # Avoid circular imports
 		interface.alsoProvides(obj, app_interfaces.IUncacheableInResponse)
 		return obj
 
