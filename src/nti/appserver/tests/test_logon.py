@@ -158,7 +158,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
 		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=False)
 	def test_password_logon(self):
 		testapp = self.testapp
 		res = testapp.get( '/dataserver2/logon.nti.password',
@@ -169,6 +169,9 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# The auth_tkt cookie contains both the original and new username
 		assert_that( testapp.cookies['nti.auth_tkt'],
 					 contains_string( 'sjohnson%40nextthought.com!'))
+
+		# Now that we have the cookie, we should be able to request ourself
+		testapp.get('/dataserver2/users/sjohnson@nextthought.com')
 
 from . import ExLibraryApplicationTestLayer
 
