@@ -65,3 +65,6 @@ class TestClassifier(unittest.TestCase):
 		# Temporary hack for old iPad apps
 		environ['HTTP_USER_AGENT'] = "NTIFoundation DataLoader NextThought/1.0.2/34053 (x86_64; 7.0.3)"
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
+
+		environ['HTTP_USER_AGENT'] = "NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
+		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )

@@ -61,10 +61,10 @@ def application_request_classifier( environ ):
 			# sent by user agents like, say, NetNewsWire, then it was probably
 			# set programatically.
 			# NOTE: For the moment we actually also look for things from the iPad
-			# (ntifoundation) for BWC, but we soon expect it to set the X-Requested-With
+			# (ntifoundation, nextthought) for BWC, but we soon expect it to set the X-Requested-With
 			# header.
 			if ('HTTP_REFERER' in environ
-				 and ('mozilla' in ua or 'ntifoundation' in ua)
+				 and ('mozilla' in ua or 'ntifoundation' in ua or 'nextthought' in ua)
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
 	return result
