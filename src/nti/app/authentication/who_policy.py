@@ -73,7 +73,9 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		# This has at least three problems. The first is that the identifier
 		# that actually identified the principal is not used, instead it is
 		# hardcoded to self._identifier_id (this only matters if we're remembering
-		# the same user)
+		# the same user); note, however, that we need to be careful about reusing
+		# this if we were identified via an IIdentifier that doesn't actually
+		# remember.
 		# Second, the AuthTkt plugin will only set cookie expiration headers right
 		# if a max_age is included in the identity.
 		# Third, for the auth tkt to also be able to set REMOTE_USER_DATA
@@ -100,7 +102,9 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 			'tokens': request.environ.get('REMOTE_USER_TOKENS', ()),
 			'userdata': request.environ.get('REMOTE_USER_DATA', b'')
 			}
-		if principal != identity.get('repoze.who.userid') or 'identifier' not in identity:
+		if (principal != identity.get('repoze.who.userid') # start from scratch for a changed user
+			or 'identifier' not in identity # also from scratch, remembering unconditionally, usually from app code
+			or 'AUTH_TYPE' not in request.environ): # also from scratch (typically basic auth)
 			fake_identity['identifier'] = api.name_registry[self._identifier_id]
 		identity.update(fake_identity)
 		return api.remember(identity)
