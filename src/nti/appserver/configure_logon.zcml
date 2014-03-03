@@ -7,10 +7,6 @@
 	<include package="zope.component" />
 	<include package=".link_providers" file="meta.zcml" />
 
-	<!-- By default, everyone can logon. Use logon:whitelist in a
-	     sub-site to change that -->
-	<utility factory=".interfaces.EveryoneLogonWhitelist" />
-
 	<!-- Logon -->
 	<subscriber handler=".logon._user_did_logon" />
 

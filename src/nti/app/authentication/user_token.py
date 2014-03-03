@@ -20,13 +20,8 @@ from nti.dataserver.users import User
 @interface.implementer(IIdentifiedUserTokenAuthenticator)
 class DefaultIdentifiedUserTokenAuthenticator(object):
 	"""
-	A :mod:`repoze.who` plugin that acts in the role of identifier
-	(determining who the remote user is claiming to be)
-	as well as authenticator (matching the claimed remote credentials
-	to the real credentials). This information is not sent in the
-	headers (Authenticate or Cookie) but instead, for the use of
-	copy-and-paste, retrieved directly from query parameters in the
-	URL (specifically, the 'token' parameter).
+	A token that can identify and authenticate a user over long
+	periods of time.
 
 	This is similar in principal to the AuthTkt cookie we use
 	in HTTP headers, but there is one crucial difference:
@@ -68,6 +63,10 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 			return None
 
 		try:
+			# The first return value is the timestamp the ticket was
+			# created; in the future if desired we can use this to limit
+			# the valid lifetime of the token. The third return value
+			# is "user roles", a tuple of strings meant to give role names
 			_, userid, _, user_data = self.auth_tkt.parse_ticket( self.secret,
 																  token,
 																  '0.0.0.0' )

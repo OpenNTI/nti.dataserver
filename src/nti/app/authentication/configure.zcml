@@ -15,4 +15,12 @@
 			 for="basestring" />
 
 
+	<utility factory=".pluggableauth.DataserverUsersAuthenticatorPlugin"
+			 name="Dataserver Global User Authenticator" />
+
+	<!-- By default, everyone can logon. Use logon:whitelist in a
+	     sub-site to change that -->
+	<utility factory=".interfaces.EveryoneLogonWhitelist" />
+
+
 </configure>

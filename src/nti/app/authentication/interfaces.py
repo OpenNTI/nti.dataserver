@@ -76,3 +76,21 @@ class IUserTokenAuthenticator(IUserTokenCreator,
 class IIdentifiedUserTokenAuthenticator(IIdentifiedUserTokenCreator,
 										IUserTokenAuthenticator):
 	pass
+
+
+class ILogonWhitelist(interface.Interface):
+	"""
+	A container of usernames that are allowed to login (be authenticated).
+	"""
+
+	def __contains__(username):
+		"Return true if the username can login."
+
+@interface.implementer(ILogonWhitelist)
+class EveryoneLogonWhitelist(object):
+	"""
+	Everyone is allowed to logon.
+	"""
+
+	def __contains__(self, username):
+		return True
