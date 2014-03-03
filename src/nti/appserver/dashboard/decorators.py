@@ -11,29 +11,39 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.container.interfaces import ILocation
 
-from pyramid.threadlocal import get_current_request
+from nti.dataserver.links import Link
 
 from nti.app.renderers.caching import md5_etag
-from nti.appserver.forums.decorators import ForumObjectContentsLinkProvider
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils._compat import aq_base
 
 from .views import TOP_TOPICS_VIEW
+# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
+LINKS = ext_interfaces.StandardExternalFields.LINKS
+
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-class ForumObjectTopTopicsLinkProvider(ForumObjectContentsLinkProvider):
+class ForumObjectTopTopicsLinkProvider(AbstractAuthenticatedRequestAwareDecorator):
 
-	__metaclass__ = SingletonDecorator
+	@classmethod
+	def add_link(cls, rel, context, mapping, request, elements):
+		_links = mapping.setdefault(LINKS, [])
+		link = Link(context, rel=rel, elements=elements)
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
+		return link
 
-	def decorateExternalMapping(self, context, mapping):
+	def _predicate(self, context, result):
+		return self._is_authenticated and aq_base(context).__parent__ is not None
+
+	def _do_decorate_external(self, context, mapping):
 		context = aq_base(context)
-		request = get_current_request()
-		if context.__parent__:
-			elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, request.authenticated_userid).replace('/', '_'))
-			self.add_link(TOP_TOPICS_VIEW, context, mapping, request, elements)
-		else:
-			logger.warn("No parent; failing to add %s link to %s", TOP_TOPICS_VIEW, context)
+		elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, self.authenticated_userid).replace('/', '_'))
+		self.add_link(TOP_TOPICS_VIEW, context, mapping, self.request, elements)
