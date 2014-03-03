@@ -480,7 +480,8 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	Parameters:
 
 	sortOn
-		Adds ``NewestDescendantCreatedTime`` and ``PostCount``
+		Adds ``NewestDescendantCreatedTime`` and ``PostCount``. Both
+		of these break ties based on the time the object was created.
 
 	searchTerm
 		An extremely expensive way to search because it requires
@@ -489,8 +490,16 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 	"""
 
 	SORT_KEYS = ForumsContainerContentsGetView.SORT_KEYS.copy()
-	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime')
-	SORT_KEYS['PostCount'] = operator.attrgetter('PostCount')
+	SORT_KEYS['NewestDescendantCreatedTime'] = operator.attrgetter('NewestDescendantCreatedTime', 'createdTime')
+	SORT_KEYS['PostCount'] = operator.attrgetter('PostCount', 'createdTime')
+
+	def _make_heapq_NewestDescendantCreatedTime_descending_key(self, plain_key):
+		def _negate_tuples(x):
+			tpl = plain_key(x)
+			return (-tpl[0],-tpl[1])
+
+		return _negate_tuples
+	_make_heapq_PostCount_descending_key = _make_heapq_NewestDescendantCreatedTime_descending_key
 
 	def _get_topic_content(self, topic):
 		# process the post
