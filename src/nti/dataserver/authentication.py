@@ -38,14 +38,11 @@ def _user_factory( username ):
 # separation of concerns
 from pyramid.threadlocal import get_current_request
 
-class _FakeRequest(object):
-	# A dictionary
-	_v_nti_ds_authentication_eff_prin_cache = ()
-
 def effective_principals( username,
 						  registry=component,
 						  authenticated=True,
-						  user_factory=_user_factory):
+						  user_factory=_user_factory,
+						  request=None ):
 	"""
 	Find and return the principals for the given username. This will include
 	the username itself (obviously), plus a principal for Everyone, plus
@@ -67,9 +64,8 @@ def effective_principals( username,
 	user = username if hasattr(username,'username') else user_factory( username )
 	username = user.username if hasattr(user, 'username') else username # canonicalize
 
-	request = get_current_request()
-	if not request:
-		request = _FakeRequest()
+	request = get_current_request() if request is None else request
+
 	key = (username, authenticated)
 	if key in getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ()):
 		return request._v_nti_ds_authentication_eff_prin_cache[key]
@@ -97,9 +93,10 @@ def effective_principals( username,
 		result.add( domain )
 		result.add( nti_interfaces.IPrincipal( domain ) )
 
-	if not getattr(request, '_v_nti_ds_authentication_eff_prin_cache', ()):
-		request._v_nti_ds_authentication_eff_prin_cache = dict()
-	request._v_nti_ds_authentication_eff_prin_cache[key] = result
+	if request is not None:
+		if not hasattr(request, '_v_nti_ds_authentication_eff_prin_cache'):
+			request._v_nti_ds_authentication_eff_prin_cache = dict()
+		request._v_nti_ds_authentication_eff_prin_cache[key] = result
 
 	return result
 
