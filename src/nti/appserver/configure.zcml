@@ -264,11 +264,11 @@
 		 presence, both individually and as a group.
 	-->
 	<class class="nti.dataserver.users.FriendsList">
-		<implements interface=".interfaces.IUnModifiedInResponse" />
+		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>
 
 	<class class=".workspaces.FriendsListContainerCollection">
-		<implements interface=".interfaces.IUnModifiedInResponse" />
+		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>
 
 
