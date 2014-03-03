@@ -1,6 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
 
-from hamcrest import (assert_that, is_, has_entry, has_items,
-					  has_key,   is_not )
+
+$Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import has_entry
+from hamcrest import has_items
+from hamcrest import has_key
+from hamcrest import is_not
 from hamcrest import same_instance
 from hamcrest import contains
 
@@ -17,7 +36,6 @@ from ZODB.broken import Broken
 from nose.tools import assert_raises
 from nti.testing.matchers import has_attr
 
-import nti.externalization
 from nti.externalization.persistence import getPersistentState
 from nti.externalization import externalization
 from nti.externalization.oids import toExternalOID, fromExternalOID
@@ -29,9 +47,9 @@ from nti.externalization.datastructures import ExternalizableDictionaryMixin
 from zope import component
 import nti.testing.base
 
-from . import ConfiguringTestBase
+from . import ExternalizationLayerTest
 
-class TestFunctions(ConfiguringTestBase):
+class TestFunctions(ExternalizationLayerTest):
 
 	def test_getPersistentState(self):
 		# Non-persistent objects are changed
@@ -176,7 +194,7 @@ from nti.externalization.datastructures import ExternalizableInstanceDict
 
 does_not = is_not
 
-class TestExternalizableInstanceDict(ConfiguringTestBase):
+class TestExternalizableInstanceDict(ExternalizationLayerTest):
 	class C(ExternalizableInstanceDict):
 		def __init__( self ):
 			super(TestExternalizableInstanceDict.C,self).__init__()
@@ -224,7 +242,7 @@ from ..interfaces import IExternalObject, IExternalObjectDecorator, StandardExte
 import datetime
 from nti.testing.matchers import verifiably_provides
 
-class TestToExternalObject(ConfiguringTestBase):
+class TestToExternalObject(ExternalizationLayerTest):
 
 	def test_decorator(self):
 		class ITest(interface.Interface): pass

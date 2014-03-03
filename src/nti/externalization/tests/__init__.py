@@ -56,3 +56,36 @@ def externalizes( matcher=None ):
 import nti.testing.base
 class ConfiguringTestBase(nti.testing.base.ConfiguringTestBase):
 	set_up_packages = (nti.externalization,)
+
+
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
+import zope.testing.cleanup
+
+
+
+class SharedConfiguringTestLayer(ZopeComponentLayer,
+								 ConfiguringLayerMixin):
+
+	set_up_packages = ('nti.externalization',)
+
+	@classmethod
+	def setUp(cls):
+		cls.setUpPackages()
+
+	@classmethod
+	def tearDown(cls):
+		cls.tearDownPackages()
+		zope.testing.cleanup.cleanUp()
+
+	@classmethod
+	def testSetUp(cls):
+		pass
+
+	@classmethod
+	def testTearDown(cls):
+		pass
+
+import unittest
+class ExternalizationLayerTest(unittest.TestCase):
+	layer = SharedConfiguringTestLayer

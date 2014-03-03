@@ -10,6 +10,8 @@ traversal can then use listeners to set sub-sites as they are
 encountered (see :mod:`~nti.appserver.traversal`), while also
 maintaining the host-level configuration.
 
+We consider the request to be properly created after this tween takes effect,
+so it broadcasts a :class:`IObjectCreatedEvent` to that purpose.
 
 Request Modifications
 =====================
@@ -39,6 +41,7 @@ import gevent
 from zope import interface
 from zope import component
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
+from zope.lifecycleevent import created
 
 from pyramid.threadlocal import manager
 from pyramid.threadlocal import get_current_request
@@ -146,6 +149,7 @@ class site_tween(object):
 		# See comments in the class doc about why we cannot set the Pyramid request/current site
 		try:
 			self._configure_transaction( request )
+			created(request)
 			return self.handler(request)
 		finally:
 			clearSite()
