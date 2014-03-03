@@ -596,8 +596,12 @@ class _UGDView(_view_utils.AbstractAuthenticatedView,
 		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
 		# so in that case we invert the key function
 		if sort_order == 'descending':
-			def sort_key_function(x):
-				return -(_sort_key_function(x))
+			maker_name = '_make_heapq_' + sort_on + '_descending_key'
+			if hasattr(self, maker_name):
+				sort_key_function = getattr(self, maker_name)(_sort_key_function)
+			else:
+				def sort_key_function(x):
+					return -(_sort_key_function(x))
 		else:
 			sort_key_function = _sort_key_function
 		return sort_key_function
