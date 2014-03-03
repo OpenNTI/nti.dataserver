@@ -180,9 +180,10 @@ class TestApplication(ApplicationLayerTest):
 			# Until we actually begin the request, it's not even there
 			assert_that( auth_policy.unauthenticated_userid(self.request),
 						 is_( none() ) )
-			notify(NewRequest(self.request))
+			from zope.lifecycleevent import created
+			created(self.request)
 			assert_that( auth_policy.unauthenticated_userid(self.request),
-						 self.extra_environ_default_user.lower() )
+						 is_(self.extra_environ_default_user.lower() ) )
 
 	def test_locale_negotionion( self ):
 		from zope.i18n.interfaces import IUserPreferredLanguages

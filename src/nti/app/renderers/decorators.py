@@ -65,11 +65,15 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 	# Notice these two methods have the same implementation
 	# but do not call each other, for speed.
 	def _predicate(self, context, result):
-		return bool(self.request.authenticated_userid)
+		return bool(self.authenticated_userid)
 	@Lazy
 	def _is_authenticated(self):
-		return bool(self.request.authenticated_userid)
+		return bool(self.authenticated_userid)
 
 	@Lazy
 	def remoteUser(self):
 		return get_remote_user(self.request)
+
+	@property
+	def authenticated_userid(self):
+		return self.request.authenticated_userid

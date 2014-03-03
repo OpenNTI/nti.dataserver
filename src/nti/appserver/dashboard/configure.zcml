@@ -8,12 +8,14 @@
 	<include package="zope.component" />
 
 	<!-- Externalization -->
-				
+
 	<subscriber factory=".decorators.ForumObjectTopTopicsLinkProvider"
-				for="nti.dataserver.contenttypes.forums.interfaces.IBoard"
+				for="nti.dataserver.contenttypes.forums.interfaces.IBoard
+					 pyramid.interfaces.IRequest"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<subscriber factory=".decorators.ForumObjectTopTopicsLinkProvider"
-				for="nti.dataserver.contenttypes.forums.interfaces.IForum"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum
+					 pyramid.interfaces.IRequest"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 </configure>

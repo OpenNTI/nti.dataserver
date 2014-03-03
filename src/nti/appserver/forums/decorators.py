@@ -147,6 +147,9 @@ class ForumObjectContentsLinkProvider(object):
 
 	def decorateExternalMapping(self, context, mapping):
 		request = get_current_request()
+		if request is None or not request.authenticated_userid:
+			return
+
 		# We only do this for parented objects. Otherwise, we won't
 		# be able to render the links. A non-parented object is usually
 		# a weakref to an object that has been left around
@@ -155,8 +158,7 @@ class ForumObjectContentsLinkProvider(object):
 		# without considering acquired info (NTIIDs from the User would mess
 		# up rendering)
 		context = aq_base( context )
-		if not context.__parent__: # pragma: no cover
-			logger.warn( "No parent; failing to add %s link to %s", VIEW_CONTENTS, context )
+		if context.__parent__ is None: # pragma: no cover
 			return
 
 		# TODO: This can be generalized by using the component
