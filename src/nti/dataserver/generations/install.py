@@ -63,12 +63,14 @@ def install_main( context ):
 
 	# The root folder
 	root_folder = rootFolder()
+	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
+	assert root_folder._p_jar is conn
 	# The root is generally presumed to be an ISite, so make it so
 	root_sm = LocalSiteManager( root_folder ) # site is IRoot, so __base__ is the GSM
 	assert root_sm.__parent__ is root_folder
 	assert root_sm.__bases__ == (component.getGlobalSiteManager(),)
 	conn.add( root_sm ) # Ensure we have a connection so we can become KeyRefs
-	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
+	assert root_sm._p_jar is conn
 	root_folder.setSiteManager( root_sm )
 	assert ISite.providedBy( root_folder )
 

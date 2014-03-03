@@ -14,15 +14,15 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import assert_that
+from hamcrest import calling
+from hamcrest import raises
 
-from nose.tools import assert_raises
-
-from . import ConfiguringTestBase
+from . import ExternalizationLayerTest
 from zope.interface.common.idatetime import IDate
 from nti.utils.schema import InvalidValue
 
-class TestDate(ConfiguringTestBase):
+class TestDate(ExternalizationLayerTest):
 
 	def test_exception(self):
-		with assert_raises(InvalidValue):
-			IDate('xx')
+		assert_that( calling(IDate).with_args('xx'), raises(InvalidValue) )

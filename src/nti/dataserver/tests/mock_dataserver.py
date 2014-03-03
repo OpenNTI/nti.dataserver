@@ -307,9 +307,9 @@ class DSInjectorMixin(object):
 			type(test).ds = _TestBaseMixin.ds
 
 
-class SharedConfiguringTestLayer(ZopeComponentLayer,
-								 ConfiguringLayerMixin,
-								 DSInjectorMixin):
+class DataserverTestLayer(ZopeComponentLayer,
+						  ConfiguringLayerMixin,
+						  DSInjectorMixin):
 	"""
 	A test layer that does two things: first, sets up the
 	:mod:`nti.dataserver` module during class setup. Second, if the
@@ -319,8 +319,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	(when used inside a function decorated with :func:`WithMockDS` or
 	:func:`WithMockDSTrans`).
 	"""
-
-	description = "nti.dataserver is ZCML configured"
 
 	set_up_packages = ('nti.dataserver',)
 
@@ -338,9 +336,15 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 		test = test or find_test()
 		cls.setUpTestDS(test)
 
+	@classmethod
+	def testTearDown(cls):
+		pass
+
 import unittest
 class DataserverLayerTest(_TestBaseMixin,unittest.TestCase):
-	layer = SharedConfiguringTestLayer
+	layer = DataserverTestLayer
+
+SharedConfiguringTestLayer = DataserverTestLayer # bwc
 
 import zope.testing.cleanup
 class NotDevmodeSharedConfiguringTestLayer(ZopeComponentLayer,

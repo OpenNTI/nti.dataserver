@@ -10,8 +10,9 @@ from nti.externalization.persistence import PersistentExternalizableList, Persis
 
 import unittest
 from persistent import Persistent
-from nose.tools import assert_raises
 
+from hamcrest import calling
+from hamcrest import raises
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
@@ -38,8 +39,8 @@ class TestPersistentExternalizableWeakList(unittest.TestCase):
 		obj = PersistentExternalizableWeakList()
 
 		# Cannot set non-persistent objects
-		with assert_raises( AttributeError ):
-			obj.append( object() )
+		assert_that( calling( obj.append ).with_args(object()),
+					 raises(AttributeError) )
 
 		pers = Persistent()
 		obj.append( pers )
@@ -57,8 +58,7 @@ class TestPersistentExternalizableWeakList(unittest.TestCase):
 		assert_that( obj.index( pers2 ), is_( 0 ) )
 
 		assert_that( obj.pop(), is_( pers2 ) )
-		with assert_raises( IndexError ):
-			obj.pop()
+		assert_that( calling(obj.pop), raises(IndexError) )
 
 		assert_that( obj, is_( obj ) )
 

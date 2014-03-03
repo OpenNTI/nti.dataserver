@@ -14,13 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from pyramid.interfaces import IRequest
-from pyramid.interfaces import INewRequest
+from zope.lifecycleevent import IObjectCreatedEvent
 
 from pyramid.request import Request
 
 import binascii
 
-@component.adapter(IRequest, INewRequest)
+@component.adapter(IRequest, IObjectCreatedEvent)
 def _decode_username_request_event( request, event ):
 	"""
 	Decodes %40 in a Basic Auth username into an @, and canonizes the
