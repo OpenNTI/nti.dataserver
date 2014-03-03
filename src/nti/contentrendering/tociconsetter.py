@@ -1,5 +1,14 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+NTISlideDeck extractor
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
@@ -12,10 +21,7 @@ import nti.contentrendering
 from nti.contentrendering import interfaces
 from nti.contentrendering import RenderedBook
 
-import logging
-logger = logging.getLogger(__name__)
-
-interface.moduleProvides( interfaces.IRenderedBookTransformer )
+interface.moduleProvides(interfaces.IRenderedBookTransformer)
 
 def main(args):
 	""" Main program routine """
@@ -159,4 +165,4 @@ class SimpleConventionBackgroundImageFinder(SimpleConventionIconFinder):
 	find_background_image = SimpleConventionIconFinder.find_icon
 
 if __name__ == '__main__':
-	main( sys.argv[1:] )
+	main(sys.argv[1:])
