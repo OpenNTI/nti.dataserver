@@ -64,3 +64,11 @@ def _decode_username_request(request):
 		request.remote_user = username
 
 	return (username, password)
+
+from zope.authentication.loginpassword import LoginPassword
+
+@component.adapter(IRequest)
+class BasicAuthLoginPassword(LoginPassword):
+
+	def __init__(self, request):
+		super(BasicAuthLoginPassword,self).__init__( *_decode_username_request(request) )

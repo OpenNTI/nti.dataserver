@@ -10,8 +10,9 @@
 	<include package="zope.security" />
 
 	<subscriber handler=".subscribers._decode_username_request_event" />
-
+	<adapter factory=".subscribers.BasicAuthLoginPassword" />
 	<adapter factory=".user_token.DefaultIdentifiedUserTokenAuthenticator"
 			 for="basestring" />
+
 
 </configure>
