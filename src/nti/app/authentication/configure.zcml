@@ -22,5 +22,6 @@
 	     sub-site to change that -->
 	<utility factory=".interfaces.EveryoneLogonWhitelist" />
 
+	<adapter factory=".who_classifiers.application_request_classifier_for_request" />
 
 </configure>

@@ -78,7 +78,6 @@
 
 	<adapter factory="nti.app.renderers.caching.UseTheRequestContextCacheController"
 			 for=".interfaces.ILibraryCollection" />
-	<adapter factory=".pyramid_auth._nti_request_classifier_for_request" />
 
 
 	<subscriber factory="._adapters._DFLUserLikeDecorator"
