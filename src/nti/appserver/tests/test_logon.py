@@ -158,6 +158,18 @@ class TestApplicationLogon(ApplicationLayerTest):
 		cookie_headers = res.headers.dict_of_lists()['set-cookie']
 		assert_that( cookie_headers, has_item( 'username=nobody@nowhere; Path=/' ) )
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_password_logon(self):
+		testapp = self.testapp
+		res = testapp.get( '/dataserver2/logon.nti.password',
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.headers.dict_of_lists()['set-cookie'],
+					 has_length(4) ) # username, 3 variations on auth_tkt for domains
+		assert_that( testapp.cookies, has_key( 'nti.auth_tkt' ) )
+		# The auth_tkt cookie contains both the original and new username
+		assert_that( testapp.cookies['nti.auth_tkt'],
+					 contains_string( 'sjohnson%40nextthought.com!'))
+
 from . import ExLibraryApplicationTestLayer
 
 class TestLogonViews(ApplicationLayerTest):
