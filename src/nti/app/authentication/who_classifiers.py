@@ -56,12 +56,15 @@ def application_request_classifier( environ ):
 		else:
 			# Hmm. Going to have to do some guessing. Sigh.
 			# First, we sniff for something that looks like it's sent by
-			# a true web browser, like Chrome or Firefox
+			# a true web browser, like Chrome or Firefox.
 			# Then, if there is an Accept value given other than the default that's
 			# sent by user agents like, say, NetNewsWire, then it was probably
 			# set programatically.
+			# NOTE: For the moment we actually also look for things from the iPad
+			# (ntifoundation) for BWC, but we soon expect it to set the X-Requested-With
+			# header.
 			if ('HTTP_REFERER' in environ
-				 and 'mozilla' in ua
+				 and ('mozilla' in ua or 'ntifoundation' in ua)
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
 	return result
