@@ -206,6 +206,13 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	inputClass = dict
 	content_predicate = id
 
+	#: Subclasses can define this as a tuple of types to
+	#: catch that we can't be sure are client or server errors.
+	#: We catch TypeError and LookupError (which includes KeyError)
+	#: by default, often they're a failed
+	#: interface adaptation, but that could be because of bad input
+	_EXTRA_INPUT_ERRORS = (TypeError,LookupError)
+
 	def __call__( self ):
 		"""
 		Subclasses may implement a `_do_call` method if they do not override
@@ -219,13 +226,12 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		except interface.Invalid as e:
 			transaction.doom()
 			handle_possible_validation_error( self.request, e )
-		except (TypeError,LookupError): # pragma: no cover
+		except self._EXTRA_INPUT_ERRORS: # pragma: no cover
 			# These are borderline server/client errors. They could
-			# be either, depending on details...often they're a failed
-			# interface adaptation, but that could be because of bad input
+			# be either, depending on details...
 			transaction.doom()
 			logger.warn("Failed to accept input. Client or server problem?", exc_info=True)
-			raise hexc.HTTPUnprocessableEntity()
+			raise hexc.HTTPUnprocessableEntity("Unexpected internal error; see logs")
 
 
 	def readInput(self, value=None):
