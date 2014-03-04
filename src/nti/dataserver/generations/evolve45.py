@@ -25,8 +25,6 @@ from zope.dottedname import resolve as dottedname
 
 from zc import intid as zc_intid
 
-from ZODB.POSException import POSKeyError
-
 from .install import install_metadata_catalog
 
 from nti.dataserver.interfaces import IDataserver

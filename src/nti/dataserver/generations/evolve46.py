@@ -54,7 +54,8 @@ def evolve( context ):
 			logger.info( "Updating catalog" )
 			catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 			# This fires an event which triggers re-indexing
-			catalog['lastModified'] = LastModifiedIndex(family=BTrees.family64)
+			if 'lastModified' not in catalog:
+				catalog['lastModified'] = LastModifiedIndex(family=BTrees.family64)
 			logger.info( "Done updating catalog")
 	finally:
 		gsm.unregisterUtility(mock_ds)
