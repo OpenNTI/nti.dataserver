@@ -67,6 +67,9 @@ def application_request_classifier( environ ):
 				 and ('mozilla' in ua or 'ntifoundation' in ua or 'nextthought' in ua)
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
+			elif ('ntifoundation' in ua or 'nextthought' in ua):
+				# extra special casing for ipad
+				result = CLASS_BROWSER_APP
 	return result
 
 @interface.implementer(IRequestClassifier)
