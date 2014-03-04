@@ -31,7 +31,7 @@ from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
 from nti.appserver import httpexceptions as hexc
 from .interfaces import INewObjectTransformer
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 def _id(x): return x
 

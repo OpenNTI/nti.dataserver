@@ -13,9 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+import pyramid.interfaces
 from pyramid.view import view_config
 
-from nti.appserver import _util
+from nti.app.renderers.caching import uncached_in_response
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import liking
@@ -24,14 +26,14 @@ from nti.dataserver import authorization as nauth
 from nti.externalization import interfaces as ext_interfaces
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.ILikeable)
-class LikeLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.ILikeable,pyramid.interfaces.IRequest)
+class LikeLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Adds the appropriate like or unlike link.
 	"""
 	false_view = 'like'
 	true_view = 'unlike'
-	predicate = staticmethod(liking.likes_object)
+	link_predicate = staticmethod(liking.likes_object)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -48,7 +50,7 @@ def _LikeView(request):
 
 	"""
 	liking.like_object( request.context, request.authenticated_userid )
-	return _util.uncached_in_response( request.context )
+	return uncached_in_response( request.context )
 
 
 @view_config( route_name='objects.generic.traversal',
@@ -66,18 +68,18 @@ def _UnlikeView(request):
 
 	"""
 	liking.unlike_object( request.context, request.authenticated_userid )
-	return _util.uncached_in_response( request.context )
+	return uncached_in_response( request.context )
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IFavoritable)
-class FavoriteLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.IFavoritable,pyramid.interfaces.IRequest)
+class FavoriteLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Adds the appropriate favorite or unfavorite link.
 	"""
 
 	false_view = 'favorite'
 	true_view = 'unfavorite'
-	predicate = staticmethod(liking.favorites_object)
+	link_predicate = staticmethod(liking.favorites_object)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -94,7 +96,7 @@ def _FavoriteView(request):
 
 	"""
 	liking.favorite_object( request.context, request.authenticated_userid )
-	return _util.uncached_in_response( request.context )
+	return uncached_in_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -111,4 +113,4 @@ def _UnfavoriteView(request):
 
 	"""
 	liking.unfavorite_object( request.context, request.authenticated_userid )
-	return _util.uncached_in_response( request.context )
+	return uncached_in_response( request.context )

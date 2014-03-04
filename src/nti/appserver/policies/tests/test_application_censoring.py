@@ -252,14 +252,14 @@ class TestApplicationCensoringWithDefaultPolicyForAllUsers(_CensorTestMixin,Appl
 
 	@WithSharedApplicationMockDS
 	def test_censoring_cannot_be_disabled_for_kids( self ):
-		"The ICoppaUser flag trumps the no-censoring flag"
+		#"The ICoppaUser flag trumps the no-censoring flag"
 		self._do_test_censor_note( "tag:nextthought.com,2011-10:MN-HTML-Uncensored.cosmetology",
 								   censored=True,
 								   extra_ifaces=(nti_interfaces.ICoppaUser,) )
 
 	@WithSharedApplicationMockDS
 	def test_censor_note_not_in_library_enabled_for_kids(self):
-		"If we post a note to a container we don't recognize, we  get censored if we are a kid"
+		#"If we post a note to a container we don't recognize, we  get censored if we are a kid"
 		self._do_test_censor_note( 'tag:not_in_library',
 								   censored=True,
 								   extra_ifaces=(nti_interfaces.ICoppaUser,) )

@@ -26,7 +26,7 @@ from pyramid.threadlocal import get_current_request
 from nti.app.renderers import interfaces as app_renderers_interfaces
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._view_utils import get_remote_user
+from nti.app.authentication import get_remote_user
 from nti.appserver import interfaces as app_interfaces
 
 from nti.dataserver import users

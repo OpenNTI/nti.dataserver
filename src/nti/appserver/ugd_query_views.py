@@ -27,9 +27,9 @@ from pyramid.interfaces import IViewClassifier
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import _util
-from nti.appserver import _view_utils
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._view_utils import get_remote_user
+from nti.app.authentication import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IPageContainerResource
 from nti.appserver.interfaces import INamedLinkView
@@ -386,7 +386,7 @@ CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAny
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 @interface.implementer(INamedLinkView)
-class _UGDView(_view_utils.AbstractAuthenticatedView,
+class _UGDView(AbstractAuthenticatedView,
 			   BatchingUtilsMixin):
 	"""
 	The base view for user generated data.
@@ -1286,10 +1286,12 @@ class _NotableRecursiveUGDView(_UGDView):
 REL_REPLIES = 'replies'
 
 from nti.app.renderers.caching import md5_etag
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
+import pyramid.interfaces
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IThreadable)
-class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.IThreadable,pyramid.interfaces.IRequest)
+class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Decorates the external object based on the presence of things that
 	reference it.
@@ -1304,24 +1306,23 @@ class ReferenceListBasedDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	"""
 	false_view = REL_REPLIES
 	true_view = REL_REPLIES
-	predicate = staticmethod(lambda context, current_user: True)
+	link_predicate = staticmethod(lambda context, current_user: True)
 
-	def decorateExternalMapping( self, context, mapping ):
+	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
 		# Also add the reply count, if we have that information available
-
 		reply_count = _reference_list_length( context )
 		if reply_count >= 0:
 			mapping['ReferencedByCount'] = reply_count
 
 		mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( context )
+
 		# Use the reply count and the maximum modification date
 		# of the child as a "ETag" value to allow caching of the @@replies indefinitely
 		max_last_modified = _reference_list_recursive_max_last_modified( context )
 		etag = md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
 		extra_elements = (etag,)
 
-		super(RepliesLinkDecorator,self).decorateExternalMapping( context, mapping, extra_elements=extra_elements )
-
+		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context, mapping, extra_elements=extra_elements )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 from nti.dataserver.datastructures import LastModifiedCopyingUserList

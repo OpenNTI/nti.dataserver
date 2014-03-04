@@ -11,10 +11,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from abc import ABCMeta
 from abc import abstractmethod
 
 from nti.utils.property import alias
+from nti.utils.property import Lazy
+
+from nti.app.authentication import get_remote_user
 
 class AbstractRequestAwareDecorator(object):
 	"""
@@ -45,12 +50,6 @@ class AbstractRequestAwareDecorator(object):
 		"Implement this to do your actual decoration"
 		raise NotImplementedError()
 
-
-from nti.utils.property import Lazy
-# XXX FIXME: This needs to move, probably
-# to nti.app.authentication
-from nti.appserver._view_utils import get_remote_user
-
 class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 	"""
 	A base class that ensures authenticated requests.
@@ -77,3 +76,91 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 	@property
 	def authenticated_userid(self):
 		return self.request.authenticated_userid
+
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.interfaces import StandardExternalFields
+StandardExternalFields_LINKS = StandardExternalFields.LINKS
+from nti.dataserver.links import Link
+
+from zope.location.interfaces import ILocation
+
+class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+	"""
+	A decorator which checks the state of a predicate of two functions
+	(the object and username) and adds one of two links depending on
+	the value of the predicate. The links are to views on the original
+	object having the same name as the ``rel`` attribute of the
+	generated link.
+
+	Subclasses define the following attributes:
+
+	.. py:attribute:: link_predicate
+
+		The function of two paramaters (object and username) to call
+
+	.. py:attribute:: false_view
+
+		The name of the view to use when the predicate is false.
+
+	.. py:attribute:: true_view
+
+		The name of the view to use when the predicate is true.
+
+	If the resolved view name (i.e., one of ``false_view`` or
+	``true_view``) is ``None``, then no link will be added.
+
+	.. note:: This may cause the returned objects to be user-specific,
+		which may screw with caching.
+	"""
+
+	false_view = None
+	true_view = None
+	link_predicate = None
+
+
+	def _do_decorate_external( self, context, mapping ):
+		"""
+		:param extra_elements: A tuple of elements that are unconditionally added to
+			the generated link.
+		"""
+		return self._do_decorate_external_link(context, mapping)
+
+
+	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
+		"""
+		:param extra_elements: A tuple of elements that are unconditionally added to
+			the generated link.
+		"""
+		current_username = self.authenticated_userid
+
+		# We only do this for parented objects. Otherwise, we won't
+		# be able to render the links. A non-parented object is usually
+		# a weakref to an object that has been left around
+		# in somebody's stream
+		if not context.__parent__:
+			return
+
+		predicate_passed = self.link_predicate( context, current_username )
+		# We're assuming that because you can see it, you can (un)like it.
+		# this matches the views
+
+		rel = self.true_view if predicate_passed else self.false_view
+		if rel is None: # Disabled in this case
+			return
+
+		# Use the NTIID rather than the 'physical' path because the 'physical'
+		# path may not quite be traversable at this point
+		target_ntiid = to_external_ntiid_oid( context )
+		if target_ntiid is None:
+			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )
+			return
+
+		link = Link( target_ntiid, rel=rel, elements=('@@' + rel,) + extra_elements)
+		interface.alsoProvides( link, ILocation )
+		link.__name__ = ''
+		link.__parent__ = context
+
+		_links = mapping.setdefault( StandardExternalFields_LINKS, [] )
+		_links.append( link )
+
+		return link

@@ -212,11 +212,13 @@
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry"/>
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
+					 pyramid.interfaces.IRequest"/>
 
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic"/>
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+					 pyramid.interfaces.IRequest"/>
 
 	<!-- Feeds -->
 	<adapter factory="nti.appserver._table_utils.HeadlineTopicContentProvider"

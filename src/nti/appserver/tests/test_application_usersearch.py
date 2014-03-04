@@ -278,7 +278,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_user_search_mathcounts_policy(self):
-		"On the mathcounts site, we cannot search for realname or alias"
+		#"On the mathcounts site, we cannot search for realname or alias"
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
 			interface.alsoProvides( u1, nti_interfaces.ICoppaUser )
@@ -338,7 +338,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_search_empty_200(self):
-		"Searching with an empty term returns empty results"
+		#"Searching with an empty term returns empty results"
 		# The results are not defined across the search types,
 		# we just test that it doesn't raise a 404
 		self.testapp.get( '/dataserver2/UserSearch/', status=200 )

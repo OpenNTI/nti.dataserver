@@ -15,19 +15,16 @@ from zope.location.location import LocationProxy
 from pyramid.view import view_defaults
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._view_utils import AbstractView
+from nti.app.base.abstract_views import AbstractView
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.dataserver import authorization as nauth
 
 class _ServiceGetView(AbstractAuthenticatedView):
 
 	def __call__( self ):
-		user = self.getRemoteUser()
-		if not user:
-			raise hexc.HTTPForbidden()
-		service = self.request.registry.getAdapter( user, app_interfaces.IService )
+		service = app_interfaces.IService(self.remoteUser)
 		#service.__parent__ = self.request.context
 		return service
 
@@ -94,4 +91,3 @@ class _EmptyContainerGetView(AbstractView):
 
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()
-

@@ -16,7 +16,7 @@ from zope.container.interfaces import ILocation
 
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver._util import AbstractTwoStateViewLinkDecorator
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
@@ -29,7 +29,7 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.utils._compat import aq_base
 
 from .._util import link_belongs_to_user
-from .._view_utils import get_remote_user
+from nti.app.authentication import get_remote_user
 from ..pyramid_authorization import is_readable, can_create
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
@@ -106,15 +106,17 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	false_view = VIEW_PUBLISH
 	true_view = VIEW_UNPUBLISH
 
-	def predicate( self, context, current_username ):
-		if nti_interfaces.IDefaultPublished.providedBy( context ):
-			return True
+	def link_predicate( self, context, current_username ):
+		return nti_interfaces.IDefaultPublished.providedBy( context )
 
-	def decorateExternalMapping( self, context, mapping ):
+	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
 		# The owner is the only one that gets the links
-		current_user = get_remote_user( get_current_request() )
+		current_user = self.remoteUser
 		if current_user and current_user == context.creator:
-			super(PublishLinkDecorator,self).decorateExternalMapping( context, mapping )
+			super(PublishLinkDecorator,self)._do_decorate_external_link( context, mapping )
+
+	def _do_decorate_external(self, context, mapping):
+		super(PublishLinkDecorator,self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
 		mapping['PublicationState'] = 'DefaultPublished' if nti_interfaces.IDefaultPublished.providedBy(context) else None
 

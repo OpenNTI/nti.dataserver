@@ -395,10 +395,7 @@ class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCach
 	def _context_lastModified(self):
 		return 0
 
-# XXX FIXME: This needs to move, probably
-# to nti.app.authentication
-from nti.appserver._view_utils import get_remote_user
-
+from nti.app.authentication import get_remote_user
 
 @component.adapter(IUserActivityExternalCollection)
 class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
@@ -438,3 +435,31 @@ class _ContentUnitInfoCacheController(object):
 
 	def __call__( self, context, system ):
 		return system['request'].response
+
+
+from zope.proxy.decorator import SpecificationDecoratorBase
+@interface.implementer(IUncacheableInResponse)
+class _UncacheableInResponseProxy(SpecificationDecoratorBase):
+	"""
+	A proxy that itself implements UncacheableInResponse. Note
+	that we must extend SpecificationDecoratorBase if we're going
+	to be implementing things, otherwise if we try to do `interface.alsoProvides`
+	on a plain ProxyBase object it falls through to the original object,
+	which defeats the point.
+	"""
+
+	# when/if these are pickled, they are pickled as their original type,
+	# not the proxy.
+
+
+
+def uncached_in_response( context ):
+	"""
+	Cause the `context` value to not be cacheable when used in a Pyramid
+	response.
+
+	Because the context object is likely to be persistent, this uses a
+	proxy and causes the proxy to also implement
+	:class:`nti.appserver.interfaces.IUncacheableInResponse`
+	"""
+	return context if IUncacheableInResponse.providedBy(context) else _UncacheableInResponseProxy( context )

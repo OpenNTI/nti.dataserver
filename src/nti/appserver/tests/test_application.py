@@ -586,7 +586,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_put_device(self):
-		"Putting a non-existant device is not possible"
+		#"Putting a non-existant device is not possible"
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
 
@@ -635,7 +635,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_post_canvas_image_roundtrip_download_views(self):
-		" Images posted as data urls come back as real links which can be fetched "
+		#" Images posted as data urls come back as real links which can be fetched "
 		data = {u'Class': 'Canvas',
 				'ContainerId': 'tag:foo:bar',
 				u'MimeType': u'application/vnd.nextthought.canvas',
@@ -668,7 +668,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_post_canvas_in_note_image_roundtrip_download_views(self):
-		" Images posted as data urls come back as real links which can be fetched "
+		#" Images posted as data urls come back as real links which can be fetched "
 		canvas_data = {u'Class': 'Canvas',
 					   'ContainerId': 'tag:foo:bar',
 					   u'MimeType': u'application/vnd.nextthought.canvas',
@@ -765,7 +765,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_post_friendslist_friends_field(self):
-		"We can put to ++fields++friends"
+		#"We can put to ++fields++friends"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 			self._create_user('troy.daley@nextthought.com')
@@ -867,7 +867,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_edit_note_returns_editlink(self):
-		"The object returned by POST should have enough ACL to regenerate its Edit link"
+		#"The object returned by POST should have enough ACL to regenerate its Edit link"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -889,7 +889,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_like_unlike_note(self):
-		"We get the appropriate @@like or @@unlike links for a note"
+		#"We get the appropriate @@like or @@unlike links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -935,7 +935,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_favorite_unfavorite_note(self):
-		"We get the appropriate @@favorite or @@unfavorite links for a note"
+		#"We get the appropriate @@favorite or @@unfavorite links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -978,7 +978,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_edit_note_sharing_coppa_user(self):
-		"Unsigned coppa users cannot share anything after creation"
+		#"Unsigned coppa users cannot share anything after creation"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
@@ -1004,7 +1004,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_create_note_sharing_coppa_user(self):
-		"Unsigned coppa users cannot share anything at creation"
+		#"Unsigned coppa users cannot share anything at creation"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
@@ -1032,7 +1032,7 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_edit_note_sharing_only(self):
-		"We can POST to a specific sub-URL to change the sharing"
+		#"We can POST to a specific sub-URL to change the sharing"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -1091,20 +1091,20 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_edit_user_password_only(self):
-		"We can POST to a specific sub-URL to change the password"
+		#"We can POST to a specific sub-URL to change the password"
 		data = json.dumps( {'password': 'newp4ssw0r8', 'old_password': 'temp001' } )
 		self._edit_user_ext_field( 'password', data )
 
 	@WithSharedApplicationMockDS
 	def test_edit_user_count_only(self):
-		"We can POST to a specific sub-URL to change the notification count"
+		#"We can POST to a specific sub-URL to change the notification count"
 
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
 	@WithSharedApplicationMockDS
 	def test_edit_user_avatar_url(self):
-		"We can POST to a specific sub-URL to change the avatarURL"
+		#"We can POST to a specific sub-URL to change the avatarURL"
 
 		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
 
@@ -1216,10 +1216,10 @@ class TestApplicationSearch(ApplicationLayerTest):
 				# Nor one that doesn't exist
 				testapp.get( path, extra_environ=self._make_extra_environ(user='user_dne@biz'), status=401)
 
-	@unittest.skip("Carlos is change the implementation and _get_user_index_manager is gone")
+	@unittest.skip("Carlos is changing the implementation and _get_user_index_manager is gone")
 	@WithSharedApplicationMockDS
 	def test_ugd_search_no_data_returns_empty(self):
-		"Any search term against a user whose index DNE returns empty results"
+		#"Any search term against a user whose index DNE returns empty results"
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user()
 		testapp = TestApp( self.app )
@@ -1236,10 +1236,10 @@ class TestApplicationSearch(ApplicationLayerTest):
 			assert_that( ixman._get_user_index_manager( 'user@dne.org', create=False ), is_( none() ) )
 			assert_that( ixman._get_user_index_manager( 'sjohnson@nextthought.com', create=False ), is_( none() ) )
 
-	@unittest.skip("Carlos is change the implementation and _get_user_index_manager is gone")
+	@unittest.skip("Carlos is changing the implementation and _get_user_index_manager is gone")
 	@WithSharedApplicationMockDS
 	def test_ugd_search_other_user(self):
-		"Security prevents searching other user's data"
+		#"Security prevents searching other user's data"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 
@@ -1521,7 +1521,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 
 	@WithSharedApplicationMockDS
 	def test_one_dfl_entry_default_share(self):
-		"""If a user is a member of exactly ONE DFL, then that is his default sharing."""
+		#"""If a user is a member of exactly ONE DFL, then that is his default sharing."""
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user()
 			u2 = self._create_user( username="user2@nti" )

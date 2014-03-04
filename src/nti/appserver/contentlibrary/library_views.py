@@ -33,7 +33,7 @@ from pyramid.view import view_config, view_defaults
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver import interfaces as app_interfaces
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.contentlibrary import interfaces as lib_interfaces

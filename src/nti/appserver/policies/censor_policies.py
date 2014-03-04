@@ -29,7 +29,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.socketio import interfaces as sio_interfaces
 
-from nti.appserver._view_utils import get_remote_user
+from nti.app.authentication import get_remote_user
 
 from . import site_policies
 

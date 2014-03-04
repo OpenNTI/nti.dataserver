@@ -32,8 +32,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.utils._compat import aq_base
 
 from nti.appserver.traversal import find_interface
-from nti.appserver._util import uncached_in_response
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.renderers.caching import uncached_in_response
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_edit_views import UGDPutView

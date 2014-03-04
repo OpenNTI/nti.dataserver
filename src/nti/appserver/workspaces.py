@@ -549,7 +549,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 		return sorted( result, key=lambda x: x.name )
 
-from ._view_utils import get_remote_user
+from nti.app.authentication import get_remote_user
 @interface.implementer(app_interfaces.IContentUnitInfo)
 class _NTIIDEntry(object):
 

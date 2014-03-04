@@ -28,7 +28,7 @@ class TestApplicationGlossary(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_path_with_parens_no_container_no_verify(self):
-		"We can hit the glossary of a new container. Does no real verification."
+		#"We can hit the glossary of a new container. Does no real verification."
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user( )
 
