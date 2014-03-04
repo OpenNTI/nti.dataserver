@@ -739,7 +739,9 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		# is shared with ...
 		for app in testapp, testapp2:
 			res = self.fetch_user_activity( app, self.default_username )
-			assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+			assert_that( res.json_body, has_entry('Items',
+												  # Expecting exactly one match, the topic
+												  contains( has_entries( 'title', data['title'] ) ) ) )
 
 		# Until it is unpublished,
 		testapp.post( self.require_link_href_with_rel( publish_res.json_body, 'unpublish' ) )

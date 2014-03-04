@@ -441,11 +441,11 @@ from zope.proxy.decorator import SpecificationDecoratorBase
 @interface.implementer(IUncacheableInResponse)
 class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 	"""
-	A proxy that itself implements UncacheableInResponse. Note
-	that we must extend SpecificationDecoratorBase if we're going
-	to be implementing things, otherwise if we try to do `interface.alsoProvides`
-	on a plain ProxyBase object it falls through to the original object,
-	which defeats the point.
+	A proxy that itself implements UncacheableInResponse. Note that we
+	must extend SpecificationDecoratorBase if we're going to be
+	implementing things, otherwise if we try to do
+	`interface.alsoProvides` on a plain ProxyBase object it falls
+	through to the original object, which defeats the point.
 	"""
 
 	# when/if these are pickled, they are pickled as their original type,

@@ -26,7 +26,6 @@ from pyramid.interfaces import IViewClassifier
 
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
-from nti.appserver import _util
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.appserver import httpexceptions as hexc
 from nti.app.authentication import get_remote_user
@@ -54,6 +53,11 @@ from nti.externalization.externalization import to_standard_external_created_tim
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.ntiids import ntiids
+
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+from zope.catalog.interfaces import ICatalog
+from zope.catalog.catalog import ResultSet
+
 
 class Operator(object):
 	union = 0
@@ -581,8 +585,8 @@ class _UGDView(AbstractAuthenticatedView,
 
 		return predicate
 
-	def _make_sort_key_function(self):
-		"Returns a key function for sorting based on current params"
+	def _get_sort_key_order(self):
+		"Return a tuple of sort_on, sort_order"
 		# The request keys match what z3c.table does
 		sort_on = self.request.params.get( 'sortOn', self._DEFAULT_SORT_ON )
 		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
@@ -592,7 +596,12 @@ class _UGDView(AbstractAuthenticatedView,
 			sort_on = self._DEFAULT_SORT_ON
 
 		sort_order = self.request.params.get( 'sortOrder', self.SORT_DIRECTION_DEFAULT.get( sort_on, 'ascending' ) )
+		return sort_on, sort_order
 
+	def _make_sort_key_function(self):
+		"Returns a key function for sorting based on current params"
+		sort_on, sort_order = self._get_sort_key_order()
+		_sort_key_function = self.SORT_KEYS.get( sort_on, self.SORT_KEYS[self._DEFAULT_SORT_ON] )
 		# heapq needs to have the smallest item first. It doesn't work with reverse sorting.
 		# so in that case we invert the key function
 		if sort_order == 'descending':
@@ -887,6 +896,7 @@ class _RecursiveUGDView(_UGDView):
 
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
+	_can_special_case_root = True
 
 	def __call__(self):
 		# A hack to accept subviews, specifically for feeds. This should
@@ -903,9 +913,79 @@ class _RecursiveUGDView(_UGDView):
 				self.request.subpath = ()
 				return view(self.request.context, self.request)
 
+		# Special case when a user is asking for his own data for the root;
+		# we can be much faster (and include non-contained data like forums)
+		# through using the catalog
+		if (self._can_special_case_root
+			and self.user == self.remoteUser
+			and self.ntiid == ntiids.ROOT
+			and 'application/vnd.nextthought.transcriptsummary' not in self._get_accept_types()
+			and 'MeOnly' in self._get_filter_names()
+			and self._get_sort_key_order()[0] in ('lastModified','createdTime', '', None)
+			and not self.request.params.get('batchAround')):
+
+			return self._special_case_root()
+
 		return super(_RecursiveUGDView,self).__call__()
 
+	def _special_case_root(self):
+		"""
+		When we meet the conditions above, we can use intids to effeciently
+		and effectively answer the query.
 
+		Note that we ignore filter operation.
+		"""
+		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		if catalog is None:
+			raise hexc.HTTPNotFound("No catalog")
+
+		result = dict()
+
+		# Our starting set
+		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+		result['TotalItemCount'] = len(intids_created_by_me)
+		result['FilteredTotalItemCount'] = result['TotalItemCount']
+
+		# We need to get the last modified date
+		# (TODO: Actually, this may not be correct? The last modified date could
+		# actually be newer if we deleted data?)
+		last_mod_idx = catalog['lastModified']
+		newest_intids = last_mod_idx.sort(intids_created_by_me, limit=1, reverse=True)
+		newest_intid = next(iter(newest_intids))
+		uidutil = component.getUtility(IIntIds)
+		newest_obj = uidutil.queryObject(newest_intid)
+		try:
+			last_modified = newest_obj.lastModified
+		except AttributeError:
+			last_modified = 0
+		result['Last Modified'] = last_modified
+
+		if self._get_accept_types():
+			matched_types_intids = catalog['mimeType'].apply({'any_of': self._get_accept_types()})
+			intids_created_by_me = catalog.family.IF.intersection(intids_created_by_me, matched_types_intids)
+			result['FilteredTotalItemCount'] = len(intids_created_by_me)
+		if self._get_exclude_types():
+			not_matched_types_intids = catalog['mimeType'].apply({'any_of': self._get_exclude_types()})
+			intids_created_by_me = catalog.family.IF.difference(intids_created_by_me, not_matched_types_intids)
+			result['FilteredTotalItemCount'] = len(intids_created_by_me)
+
+		batch_size, batch_start = self._get_batch_size_start()
+		sort_on, sort_order = self._get_sort_key_order()
+		number_items_needed = None
+		if batch_size and batch_start:
+			number_items_needed = batch_start + batch_size + 2
+		if sort_on in catalog:
+			intids_created_by_me = catalog[sort_on].sort(intids_created_by_me,
+														 limit=number_items_needed,
+														 reverse=sort_order != 'ascending')
+
+		items = ResultSet(intids_created_by_me, uidutil)
+		self._batch_tuple_iterable(result, items,
+								   number_items_needed=number_items_needed,
+								   batch_size=batch_size,
+								   batch_start=batch_start,
+								   selector=lambda x: x)
+		return result
 
 	def _get_filter_names( self ):
 		"""
@@ -1043,6 +1123,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 	# But if we have to fallback from the stream and look directly in the
 	# shared containers, it is sadly incorrect
 	_iter_ntiids_stream_only = False
+	_can_special_case_root = False
 
 	get_owned = users.User.getContainedStream
 	get_shared = None
@@ -1145,11 +1226,6 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += page_data
 		all_data += stream_data
 		return all_data
-
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
-from zope.catalog.interfaces import ICatalog
-from zope.catalog.catalog import ResultSet
-
 
 @interface.implementer(INamedLinkView)
 class _NotableRecursiveUGDView(_UGDView):

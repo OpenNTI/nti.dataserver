@@ -71,7 +71,13 @@ class UserActivityGetView(RecursiveUGDQueryView):
 	  ACL only allows their owner/creator to see them anyway).
 
 	"""
-
+	# We rely very much on the internal implementation
+	# of the super class, specifically that it will call
+	# getObjectsForId, which is where we hook in, and that it
+	# will use our _NotDeleted filter. If we let it go directly
+	# to the catalog, it skips us and gets the wrong answers
+	# (Too much or too little data).
+	_can_special_case_root = False
 	result_iface = IUserActivityExternalCollection
 
 	FILTER_NAMES = RecursiveUGDQueryView.FILTER_NAMES.copy()

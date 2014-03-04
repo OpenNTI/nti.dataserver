@@ -308,7 +308,15 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		topic_url = publish_res.location
 
 		# The creator of the community topic doesn't see it in his RUGD
+		# without applying some filters
 		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
+
+		res = self.fetch_user_root_rugd(testapp, fixture.user_username,
+										params={'filter': 'MeOnly',
+												'accept': 'application/vnd.nextthought.forums.communityheadlinetopic'})
+		assert_that(res.json_body, has_entry('FilteredTotalItemCount', 1))
+		assert_that(res.json_body, has_entry('TotalItemCount', 2)) # Both topic and comment
+		assert_that(res.json_body['Items'], has_item(has_entry('title', publish_res.json_body['title'])) )
 
 		# Now, the non-creator has the topic in his stream as created
 		res = self.fetch_user_root_rstream( testapp2, fixture.user2_username )
@@ -338,8 +346,11 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		self.fetch_user_root_rugd( testapp, fixture.user_username, status=404 )
 
 		# The commentor also has neither the topic he didn't create,
-		# nor the comment he did create, in his RUGD.
+		# nor the comment he did create, in his RUGD, without applying filters
 		self.fetch_user_root_rugd( testapp2, fixture.user2_username, status=404 )
+
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'MeOnly'})
+		assert_that( res.json_body, has_entry('TotalItemCount', 1) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)

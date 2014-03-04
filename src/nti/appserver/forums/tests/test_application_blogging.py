@@ -190,8 +190,10 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		assert_that( res.json_body['Items'], has_length( 1 ) ) # make sure no dups
 
 		# And in the user root recursive data stream
-		res = self.fetch_user_root_rugd()
-		assert_that( res.json_body['Items'], contains( has_entry( 'title', data['title'] ) ) )
+		res = self.fetch_user_root_rugd(params={'filter': 'MeOnly',
+												'exclude': 'application/vnd.nextthought.forums.personalblogentrypost'})
+		assert_that( res.json_body, has_entry('Items',
+											  contains( has_entry( 'title', data['title'] ) ) ) )
 
 		# MVD and, if favorited, filtered to the favorites
 		#testapp.post( fav_href )
