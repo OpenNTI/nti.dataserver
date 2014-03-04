@@ -16,12 +16,19 @@ from zope import interface
 from zope.event import notify
 from zope.location import locate
 
+from pyramid import httpexceptions as hexc
+
 from z3c.batching.batch import Batch
 
 from nti.app.renderers import interfaces as app_interfaces
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+from nti.app.externalization.internalization import read_body_as_external_object
+from nti.app.externalization.internalization import update_object_from_external_object
 
 from nti.dataserver.users import Entity
+
+from nti.externalization.internalization import find_factory_for
 
 from . import search_utils
 from . import interfaces as search_interfaces
@@ -104,3 +111,26 @@ class SuggestView(BaseView):
 		notify(search_interfaces.SearchCompletedEvent(entity, result, elapsed))
 		return result
 Suggest = SuggestView  # BWC
+
+class HighlightSearchHitsView(AbstractAuthenticatedView):
+
+	def readInput(self):
+		return read_body_as_external_object(self.request)
+	
+	def createResults(self):
+		externalValue = self.readInput()
+		result = find_factory_for(externalValue)
+		result = result() if result else None
+		if not search_interfaces.ISearchResults.providedBy(result):
+			raise hexc.HTTPBadRequest(detail="invalid type")
+		update_object_from_external_object(result, externalValue)
+		return result
+
+	def __call__(self):
+		result = self.createResults()
+		result.Query.applyHighlights = True
+		for hit in result.Hits:  # make sure we null out Fragments field
+			hit.Fragments = None
+		return result
+HighlightResults = HighlightSearchHitsView  # BWC
+
