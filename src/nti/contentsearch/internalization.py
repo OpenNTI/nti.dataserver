@@ -94,6 +94,11 @@ class _SearchResultsUpdater(object):
 
 		_transform_query(parsed)
 		result = InterfaceObjectIO(self.obj, iface).updateFromExternalObject(parsed)
+
+		# make sure we restore the query object to the hits
+		for hit in self.obj._raw_hits():
+			hit.Query = self.obj.Query
+
 		return result
 
 @interface.implementer(ext_interfaces.IInternalObjectUpdater)
