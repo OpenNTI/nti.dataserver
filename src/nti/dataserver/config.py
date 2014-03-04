@@ -483,6 +483,8 @@ def _configure_zeo( env_root ):
 
 def db_from_uri( uris ):
 	# defer import for pypy
+	# XXX: Drop this dependency and simply use
+	# ZODB.config.databaseFromFile against zodb_conf.xml
 	from repoze.zodbconn.uri import db_from_uri as _real_db_from_uri
 	return _real_db_from_uri( uris )
 
