@@ -31,17 +31,18 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
-from ..search_query import QueryObject
-from ..search_query import DateTimeRange 
-from .. import interfaces as search_interfaces
-from ..constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, SUGGESTIONS, HIT_META_DATA)
+from nti.contentsearch.search_query import QueryObject
+from nti.contentsearch.search_query import DateTimeRange
+from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.constants import (LAST_MODIFIED, HIT_COUNT, ITEMS, SUGGESTIONS,
+										 HIT_META_DATA)
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import zanpakuto_commands
-from . import domain as domain_words
-from . import SharedConfiguringTestLayer
+from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import domain as domain_words
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
 class TestSearchExternal(unittest.TestCase):
 
@@ -99,6 +100,9 @@ class TestSearchExternal(unittest.TestCase):
 		new_hits = list(new_results.Hits)
 		assert_that(new_hits, has_length(len(old_hits)))
 		assert_that(new_hits, equal_to(old_hits))
+		for hit in new_hits:
+			print(hit)
+			assert_that(hit, has_property('Query', is_(equal_to(new_results.Query))))
 
 	@WithMockDSTrans
 	def test_externalize_suggest_results(self):
