@@ -82,17 +82,8 @@ def evolve( context ):
 				_register_grades(user, IGrade, _store_grade_created_event)
 
 			catalog = install_metadata_catalog( ds_folder, component.getUtility(zc_intid.IIntIds ) )
-			
-			for uid, obj in catalog._visitSublocations() :
-				for index in catalog.values():
-					try:
-						index.index_doc(uid, obj)
-					except (POSKeyError, TypeError) as e:
-						# we may get TypeError: __setstate__() takes exactly 2 arguments (1 given)
-						# error or creator cannot be resolved (if a user has been deleted)
-						# catch and continue
-						logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
-				
+			catalog.updateIndexes(ignore_persistence_exceptions=True)
+
 			logger.info( "Done installing catalog")
 	finally:
 		gsm.unregisterUtility(mock_ds)

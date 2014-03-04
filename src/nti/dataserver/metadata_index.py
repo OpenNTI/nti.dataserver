@@ -30,6 +30,7 @@ from .interfaces import IUserTaggedContent
 from .contenttypes.forums.interfaces import IHeadlinePost
 
 from zope.catalog.interfaces import ICatalog
+from zope.catalog.interfaces import ICatalogIndex
 from zc.intid import IIntIds
 
 from nti.zope_catalog.catalog import Catalog
@@ -245,6 +246,15 @@ def CreatedTimeIndex(family=None):
 								index=CreatedTimeRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
+class LastModifiedRawIndex(RawIntegerValueIndex):
+	pass
+
+def LastModifiedIndex(family=None):
+	return NormalizationWrapper(field_name='lastModified',
+								interface=ILastModified,
+								index=LastModifiedRawIndex(family=family),
+								normalizer=TimestampToNormalized64BitIntNormalizer())
+
 
 def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
@@ -265,11 +275,13 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 						 ('containerId', ContainerIdIndex),
 						 ('creator', CreatorIndex),
 						 ('createdTime', CreatedTimeIndex),
+						 ('lastModified', LastModifiedIndex),
 						 ('sharedWith', SharedWithIndex),
 						 ('repliesToCreator', CreatorOfInReplyToIndex),
 						 ('taggedTo', TaggedToIndex),
 						 ('topics', TopicIndex)):
 		index = clazz( family=intids.family )
+		assert ICatalogIndex.providedBy(index)
 		intids.register( index )
 		# As a very minor optimization for unit tests, if we
 		# already set the name and parent of the index,
