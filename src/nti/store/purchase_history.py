@@ -180,7 +180,10 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return item in self._items_activated
 
 	def register_purchase(self, purchase):
-		locate(purchase, self, repr(purchase))
+		# fire b4 registering
+		lifecycleevent.created(purchase)
+		# locate
+		locate(purchase, self, str(len(self)))
 		# fire event to get an iid
 		lifecycleevent.added(purchase)
 		self._index.add(purchase)
