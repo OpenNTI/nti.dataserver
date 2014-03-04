@@ -74,6 +74,8 @@ class ISearchQuery(interface.Interface):
 	maxdist = schema.Int(title="Maximun edit distance from the given word to look at",
 						 required=False, default=15, min=2)
 
+	applyHighlights = schema.Bool(title="Apply search hit hilights", required=False, default=True)
+
 	batchSize = schema.Int(title="page size", required=False)
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
 						    required=False, min=0)
