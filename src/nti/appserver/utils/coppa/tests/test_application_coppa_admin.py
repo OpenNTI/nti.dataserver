@@ -45,7 +45,7 @@ class TestApplicationCoppaAdmin(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_approve_coppa(self):
-		"Basic tests of the coppa admin page"
+		#"Basic tests of the coppa admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			self._create_user()
 			coppa_user = self._create_user( username='ossmkitty' )

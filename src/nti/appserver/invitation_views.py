@@ -15,9 +15,10 @@ from zope import component
 
 from zc import intid as zc_intid
 
+import pyramid.interfaces
 from pyramid.view import view_config
 
-from nti.appserver import _util
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.invitations import interfaces as invite_interfaces
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
@@ -130,10 +131,10 @@ def get_default_trivial_invitation_code(request):
 	return {'invitation_code': code}
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
-class DFLGetInvitationLinkProvider(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList,pyramid.interfaces.IRequest)
+class DFLGetInvitationLinkProvider(AbstractTwoStateViewLinkDecorator):
 
 	true_view = REL_TRIVIAL_DEFAULT_INVITATION_CODE
 
-	def predicate(self, context, username):
-		return is_writable(context) and not context.Locked
+	def link_predicate(self, context, username):
+		return is_writable(context, self.request) and not context.Locked

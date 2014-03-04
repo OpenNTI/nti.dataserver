@@ -24,7 +24,7 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
-from nti.appserver import _view_utils
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
@@ -105,7 +105,7 @@ def _check_container(ntiid, user, registry=component):
 			raise hexc.HTTPNotFound()
 
 @interface.implementer(app_interfaces.INamedLinkView)
-class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
+class _TopUserSummaryView(AbstractAuthenticatedView):
 
 	def __init__(self, request, the_user=None, the_ntiid=None):
 		super(_TopUserSummaryView, self).__init__(request)
@@ -264,7 +264,7 @@ class _TopUserSummaryView(_view_utils.AbstractAuthenticatedView):
 
 ##### Min/Max dashboard view ####
 @interface.implementer(app_interfaces.INamedLinkView)
-class _UniqueMinMaxSummaryView(_view_utils.AbstractAuthenticatedView):
+class _UniqueMinMaxSummaryView(AbstractAuthenticatedView):
 
 	def __init__(self, request, the_user=None, the_ntiid=None):
 		super(_UniqueMinMaxSummaryView, self).__init__(request)
@@ -334,7 +334,7 @@ TOP_TOPICS_VIEW = u'TopTopics'
 @view_config(context=frm_interfaces.IBoard)
 @view_config(context=frm_interfaces.IForum)
 @view_defaults(name=TOP_TOPICS_VIEW, **_r_view_defaults)
-class ForumTopTopicGetView(_view_utils.AbstractAuthenticatedView,
+class ForumTopTopicGetView(AbstractAuthenticatedView,
 						   BatchingUtilsMixin):
 
 	_DEFAULT_DECAY = 0.94

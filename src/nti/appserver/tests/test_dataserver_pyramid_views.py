@@ -127,7 +127,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_put_summary_obj(self):
-		"We can put an object that summarizes itself before we get to the renderer"
+		#"We can put an object that summarizes itself before we get to the renderer"
 		view = _UGDPutView( get_current_request() )
 		self._establish_context( view )
 
@@ -137,7 +137,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_put_to_user_fires_events(self):
-		"If we put to the User, events fire"""
+		#"If we put to the User, events fire"""
 
 		view = _UGDPutView( get_current_request() )
 
@@ -159,7 +159,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_put_to_contained_object_fires_events(self):
-		"Putting to a contained object fires events to update the object and the container modification times"""
+		#"Putting to a contained object fires events to update the object and the container modification times"""
 
 		view = _UGDPutView( get_current_request() )
 
@@ -178,7 +178,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_delete_to_contained_object_fires_events(self):
-		"Deleting a contained object fires events to update the object and the container modification times"""
+		#"Deleting a contained object fires events to update the object and the container modification times"""
 		self.beginRequest()
 		view = _UGDDeleteView( get_current_request() )
 
@@ -196,7 +196,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 
 	@WithMockDSTrans
 	def test_post_existing_friendslist_id(self):
-		"We get a good error posting to a friendslist that already exists"
+		#"We get a good error posting to a friendslist that already exists"
 		self.beginRequest()
 		view = _UGDPostView( get_current_request() )
 

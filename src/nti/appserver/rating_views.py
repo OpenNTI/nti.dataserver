@@ -17,8 +17,10 @@ from zope import component
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
+import pyramid.interfaces
 
-from nti.appserver import _util
+from nti.app.renderers.caching import uncached_in_response
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.externalization import interfaces as ext_interfaces
 
@@ -29,11 +31,11 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.utils.maps import CaseInsensitiveDict
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IRatable)
-class RatingLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.IRatable,pyramid.interfaces.IRequest)
+class RatingLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	false_view = 'rate'
 	true_view = 'unrate'
-	predicate = staticmethod(ranking.rates_object)
+	link_predicate = staticmethod(ranking.rates_object)
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -55,7 +57,7 @@ def _RateView(request):
 		raise hexc.HTTPUnprocessableEntity(detail='invaing rating')
 
 	ranking.rate_object(request.context, request.authenticated_userid, rating)
-	return _util.uncached_in_response( request.context )
+	return uncached_in_response( request.context )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -65,4 +67,4 @@ def _RateView(request):
 			  name='unrate')
 def _RemoveRatingView(request):
 	ranking.unrate_object(request.context, request.authenticated_userid)
-	return _util.uncached_in_response(request.context)
+	return uncached_in_response(request.context)

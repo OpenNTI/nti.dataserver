@@ -432,7 +432,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_rstream_circled_exclude(self):
-		"Requesting the root NTIID includes your circling."
+		#"Requesting the root NTIID includes your circling."
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			actor = users.User.create_user( self.ds,  username='carlos.sanchez@nextthought.com' )

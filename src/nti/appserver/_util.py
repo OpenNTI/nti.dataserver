@@ -11,128 +11,31 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.threadlocal import get_current_request
 from pyramid.security import remember
 
 from zope import interface
 from zope.event import notify
 from zope.location.interfaces import ILocation
-from zope.proxy.decorator import SpecificationDecoratorBase
-
-from nti.externalization import oids as ext_oids
-from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.interfaces import StandardExternalFields
-
-from nti.app.renderers import interfaces as app_interfaces
 
 from nti.appserver.interfaces import UserLogonEvent
 
-from nti.dataserver import links
+
 from nti.dataserver import users
 from nti.dataserver.interfaces import ICreated
 from nti.dataserver import interfaces as nti_interfaces
 
-class AbstractTwoStateViewLinkDecorator(object):
-	"""
-	A decorator which checks the state of a predicate of two functions (the object and username)
-	and adds one of two links depending on the value of the predicate. The links
-	are to views on the original object having the same name as the ``rel`` attribute of the generated
-	link.
 
-	Subclasses define the following attributes:
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.renderers.caching",
+	"nti.app.renderers.caching",
+	# This was a class, just in case there are pickles this should stay
+	# here even after all clients are updated
+	"_UncacheableInResponseProxy",
+	"uncached_in_response"
+	)
 
-	.. py:attribute:: predicate
-
-		The function of two paramaters (object and username) to call
-
-	.. py:attribute:: false_view
-
-		The name of the view to use when the predicate is false.
-
-	.. py:attribute:: true_view
-
-		The name of the view to use when the predicate is true.
-
-	If the resolved view name (i.e., one of ``false_view`` or ``true_view``) is ``None``,
-	then no link will be added.
-
-	.. note:: This may cause the returned objects to be user-specific,
-		which may screw with caching.
-	"""
-
-	__metaclass__ = SingletonDecorator
-
-	false_view = None
-	true_view = None
-	predicate = None
-
-
-	def decorateExternalMapping( self, context, mapping, extra_elements=() ):
-		"""
-		:param extra_elements: Elements that are unconditionally added to
-			the generated link.
-		"""
-		request = get_current_request()
-		current_username = request.authenticated_userid if request else None
-		if not current_username:
-			return
-
-		# We only do this for parented objects. Otherwise, we won't
-		# be able to render the links. A non-parented object is usually
-		# a weakref to an object that has been left around
-		# in somebody's stream
-		if not context.__parent__:
-			return
-
-		predicate_passed = self.predicate( context, current_username )
-		# We're assuming that because you can see it, you can (un)like it.
-		# this matches the views
-
-		rel = self.true_view if predicate_passed else self.false_view
-		if rel is None: # Disabled in this case
-			return
-
-		# Use the NTIID rather than the 'physical' path because the 'physical'
-		# path may not quite be traversable at this point
-		target_ntiid = ext_oids.to_external_ntiid_oid( context )
-		if target_ntiid is None:
-			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )
-			return
-
-		link = links.Link( target_ntiid, rel=rel, elements=('@@' + rel,) + extra_elements)
-		interface.alsoProvides( link, ILocation )
-		link.__name__ = ''
-		link.__parent__ = context
-
-		_links = mapping.setdefault( StandardExternalFields.LINKS, [] )
-		_links.append( link )
-
-		return link
-
-@interface.implementer(app_interfaces.IUncacheableInResponse)
-class _UncacheableInResponseProxy(SpecificationDecoratorBase):
-	"""
-	A proxy that itself implements UncacheableInResponse. Note
-	that we must extend SpecificationDecoratorBase if we're going
-	to be implementing things, otherwise if we try to do `interface.alsoProvides`
-	on a plain ProxyBase object it falls through to the original object,
-	which defeats the point.
-	"""
-
-	# when/if these are pickled, they are pickled as their original type,
-	# not the proxy.
-
-
-
-def uncached_in_response( context ):
-	"""
-	Cause the `context` value to not be cacheable when used in a pyramid
-	response.
-
-	Because the context object is likely to be persistent, this uses
-	a proxy and causes the proxy to also implement :class:`nti.appserver.interfaces.IUncacheableInResponse`
-	"""
-	return context if app_interfaces.IUncacheableInResponse.providedBy(context) else _UncacheableInResponseProxy( context )
 
 def logon_userid_with_request( userid, request, response=None ):
 	"""

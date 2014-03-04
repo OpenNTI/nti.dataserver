@@ -19,9 +19,9 @@ from zc import intid as zc_intid
 
 from pyramid.request import Request
 from pyramid.view import view_config
+import pyramid.interfaces
 import pyramid.httpexceptions  as hexc
 
-from nti.appserver import _util
 from nti.app.renderers import interfaces as app_interfaces
 
 from nti.dataserver import flagging
@@ -34,13 +34,16 @@ from nti.externalization.internalization import update_from_external_object
 
 from .interfaces import IModeratorDealtWithFlag  # BWC export
 
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
+from nti.app.renderers.caching import uncached_in_response
+
 FLAG_VIEW = 'flag'
 UNFLAG_VIEW = 'unflag'
 FLAG_AGAIN_VIEW = 'flag.metoo'
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IFlaggable)
-class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
+@component.adapter(nti_interfaces.IFlaggable,pyramid.interfaces.IRequest)
+class FlagLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Adds the appropriate flag links. Note that once something is flagged,
 	it remains so as far as normal users are concerned, until it is moderated.
@@ -49,21 +52,18 @@ class FlagLinkDecorator(_util.AbstractTwoStateViewLinkDecorator):
 	"""
 	false_view = FLAG_VIEW
 	true_view = FLAG_AGAIN_VIEW
-	predicate = staticmethod(flagging.flags_object)
+	link_predicate = staticmethod(flagging.flags_object)
 
-	def decorateExternalMapping( self, context, mapping ):
+	def _predicate(self, context, mapping):
 		# Flagged and handled once. Cannot be flagged again. This
 		# is only used on IMessageInfo objects which are otherwise
 		# immutable. TODO: This probably needs handled differently.
-		if IModeratorDealtWithFlag.providedBy( context ): # pragma: no cover
-			return
-
-		super(FlagLinkDecorator,self).decorateExternalMapping( context, mapping )
+		return self._is_authenticated and not IModeratorDealtWithFlag.providedBy(context)
 
 def _do_flag(f, request):
 	try:
 		f( request.context, request.authenticated_userid )
-		return _util.uncached_in_response( request.context )
+		return uncached_in_response( request.context )
 	except KeyError: # pragma: no cover
 		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
 		raise hexc.HTTPNotFound()

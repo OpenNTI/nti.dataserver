@@ -21,7 +21,7 @@ from nti.app.externalization.internalization import class_name_from_content_type
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver._view_utils import AbstractAuthenticatedView
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.dataserver import enclosures
 from nti.mimetype.mimetype import MIME_BASE, nti_mimetype_from_object

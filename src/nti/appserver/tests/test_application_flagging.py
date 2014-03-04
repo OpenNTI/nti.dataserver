@@ -42,7 +42,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_flag_note(self):
-		"We get the appropriate @@flag or @@flag.metoo links for a note"
+		#"We get the appropriate @@flag or @@flag.metoo links for a note"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -78,7 +78,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_note(self):
-		"Basic tests of the moderation (flagging) admin page"
+		#"Basic tests of the moderation (flagging) admin page"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 			n = contenttypes.Note()
@@ -161,7 +161,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_note_content(self):
-		"Test how notes are rendered in moderation view"
+		#"Test how notes are rendered in moderation view"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = self._create_user()
 
@@ -194,7 +194,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 												"<div class='canvas'>&lt;CANVAS OBJECT of length 0&gt;") )
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_chat_message(self):
-		"Test moderation of a chat message"
+		#"Test moderation of a chat message"
 		with mock_dataserver.mock_db_trans( self.ds ) as conn:
 			user = self._create_user()
 			user2 = self._create_user( username='foo@bar.com' )

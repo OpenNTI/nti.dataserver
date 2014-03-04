@@ -14,17 +14,17 @@ from zope import interface
 from zope import component
 
 from pyramid.view import view_config
+import pyramid.interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
-from nti.appserver._view_utils import get_remote_user
-from nti.appserver._util import AbstractTwoStateViewLinkDecorator
+from nti.app.authentication import get_remote_user
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 LINKS = ext_interfaces.StandardExternalFields.LINKS
 
@@ -62,13 +62,13 @@ def exit_dfl_view(context, request):
 	return context
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList,pyramid.interfaces.IRequest)
 class DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 
 	true_view = REL_MY_MEMBERSHIP
 
-	def predicate( self, context, current_username ):
-		user = users.User.get_user( current_username )
+	def link_predicate( self, context, current_username ):
+		user = self.remoteUser
 		result = user is not None and user in context and not context.Locked
 		return result
 
@@ -80,6 +80,11 @@ class DFLEditLinkRemoverDecorator(object):
 
 	def decorateExternalObject(self, context, external):
 		if context.Locked:
+			# The order in which decorators are called is completely
+			# undefined. The only reason this happens to work now
+			# is the distinction between IExternalObjectDecorator
+			# and IExternalMappingDecorator; if any of the registrations
+			# change this will break.
 			edit_idx = -1
 			links = external.get(LINKS, ())
 			for idx, link in enumerate(links):
