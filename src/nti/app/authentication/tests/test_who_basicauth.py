@@ -23,6 +23,7 @@ from hamcrest import is_not as does_not
 from nti.testing.matchers import validly_provides
 
 from ..who_basicauth import ApplicationBasicAuthPlugin
+from repoze.who.interfaces import IChallenger
 
 class TestBasicAuth(unittest.TestCase):
 	def test_non_challenging_challenge(self):

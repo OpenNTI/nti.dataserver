@@ -37,8 +37,8 @@ class UtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def testSetUp(cls, test=None):
-		cls.test = test or find_test()
-		cls.test.coupon = cls.coupon
+		test = test or find_test()
+		test.coupon = cls.coupon
 
 	@classmethod
 	def testTearDown(cls):
@@ -46,7 +46,7 @@ class UtilsTestLayer(SharedConfiguringTestLayer):
 
 	@classmethod
 	def tearDown(cls):
-		cls.test.coupon.delete()
+		cls.coupon.delete()
 		stripe.api_key = cls.api_key
 
 class TestUtils(unittest.TestCase):
