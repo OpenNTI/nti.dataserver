@@ -67,7 +67,7 @@ class NormalizingFieldIndex(zope.index.field.FieldIndex,
 	"""
 	A field index that normalizes before indexing or searching.
 
-	.. note:: For more flexibility, use a :class:`zc.catalog.catalogindex.NormalizationWrapper`.
+	.. note:: For more flexibility, use a :class:`NormalizationWrapper`.
 	"""
 
 	#: We default to 64-bit trees
@@ -125,7 +125,7 @@ class IntegerValueIndex(_ZCApplyMixin,
 	"""
 	A \"raw\" index that is optimized for, and only supports,
 	storing integer values. To normalize, use a :class:`zc.catalog.index.NormalizationWrapper`;
-	to store in a catalog and normalize, use a  :class:`zc.catalog.catalogindex.NormalizationWrapper`
+	to store in a catalog and normalize, use a  :class:`NormalizationWrapper`
 	(which is an attribute index).
 	"""
 	def clear(self):
@@ -143,7 +143,7 @@ class IntegerAttributeIndex(IntegerValueIndex,
 	will have to return an object that has the right attribute.
 	"""
 
-
+@interface.implementer(ICatalogIndex) # The superclass forgets this
 class NormalizationWrapper(_ZCApplyMixin,
 						   zc.catalog.catalogindex.NormalizationWrapper):
 	"""
