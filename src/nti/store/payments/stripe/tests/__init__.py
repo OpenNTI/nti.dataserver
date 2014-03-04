@@ -18,8 +18,6 @@ from nti.dataserver.users import User
 from nti.store import purchase_history
 from nti.store.payments.stripe import stripe_purchase
 
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 
 def create_user(username='nt@nti.com', password='temp001', **kwargs):
