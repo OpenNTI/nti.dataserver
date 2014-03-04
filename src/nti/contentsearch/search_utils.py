@@ -22,6 +22,9 @@ from . import interfaces as search_interfaces
 
 _extractor_pe = re.compile('[?*]*(.*)')
 
+def is_true(v):
+	return v is not None and str(v).lower() in ('1', 'true', 'yes', 'y', 't')
+
 def clean_search_query(query, language='en'):
 	temp = re.sub('[*?]', '', query)
 	result = unicode(query) if temp else u''
@@ -136,6 +139,7 @@ def create_queryobject(username, params, matchdict):
 
 	args['creationTime'] = creationTime
 	args['modificationTime'] = modificationTime
+	args['applyHighlights'] = is_true(args.get('applyHighlights', True))
 
 	return search_query.QueryObject(**args)
 
