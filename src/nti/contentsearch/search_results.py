@@ -236,7 +236,7 @@ class _SearchResults(_BaseSearchResults):
 
 	@Lazy
 	def _limit(self):
-		return self.query.limit or sys.maxint
+		return getattr(self.query, 'limit', None) or sys.maxint
 
 	@Lazy
 	def _filterCache(self):
