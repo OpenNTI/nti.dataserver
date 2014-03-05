@@ -101,7 +101,6 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(new_hits, has_length(len(old_hits)))
 		assert_that(new_hits, equal_to(old_hits))
 		for hit in new_hits:
-			print(hit)
 			assert_that(hit, has_property('Query', is_(equal_to(new_results.Query))))
 
 	@WithMockDSTrans

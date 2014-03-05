@@ -137,13 +137,17 @@ class QueryObject(SchemaConfigured):
 		return xhash
 	
 	def digest(self):
-		names = ('term', 'limit', 'indexid', 'surround', 'maxchars', 'prefix',
+		names = ('term', 'limit', 'indexid', 'prefix',
 				 'threshold', 'maxdist', 'creator')
 		md5 = hashlib.md5()
 		for name in names:
 			value = getattr(self, name, None)
 			if value is not None:
 				md5.update(str(value).lower())
+
+		if self.applyHighlights:
+			md5.update(str(self.maxchars).lower())
+			md5.update(str(self.surround).lower())
 
 		searchOn = sorted(self.searchOn or ())
 		searchOn = ','.join(searchOn)

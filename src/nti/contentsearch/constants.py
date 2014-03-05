@@ -27,6 +27,7 @@ CLASS 			 = unicode(ext_interfaces.StandardExternalFields.CLASS)
 FIELD 			 = u'Field'
 ITEMS			 = u'Items'
 QUERY			 = u'Query'
+SNIPPET			 = u'Snippet'
 CONTENT			 = u'Content'
 NTI_CARD		 = u'NTICard'
 FRAGMENTS		 = u'Fragments'
