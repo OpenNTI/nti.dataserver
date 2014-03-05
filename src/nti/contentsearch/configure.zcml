@@ -262,8 +262,10 @@
 	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
 	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
 	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
+	<utility factory=".search_metadata._generalforumcomment_metadata" name="generalforumcomment" />
 	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
-	
+	<utility factory=".search_metadata._communityheadlinepost_metadata" name="communityheadlinepost" />
+		
 	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
 	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
 			
