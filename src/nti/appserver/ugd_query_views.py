@@ -896,7 +896,7 @@ class _RecursiveUGDView(_UGDView):
 
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
-	_can_special_case_root = False
+	_can_special_case_root = True
 
 	def __call__(self):
 		# A hack to accept subviews, specifically for feeds. This should
@@ -939,7 +939,10 @@ class _RecursiveUGDView(_UGDView):
 		if catalog is None:
 			raise hexc.HTTPNotFound("No catalog")
 
-		result = dict()
+		result = LocatedExternalDict()
+		result.__parent__ = self.request.context
+		result.__name__ = self.ntiid
+		result.__data_owner__ = self.remoteUser
 
 		# Our starting set
 		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
@@ -960,10 +963,12 @@ class _RecursiveUGDView(_UGDView):
 			last_modified = 0
 		result['Last Modified'] = last_modified
 
-		if self._get_accept_types():
-			matched_types_intids = catalog['mimeType'].apply({'any_of': self._get_accept_types()})
+		accept_types = self._get_accept_types()
+		if accept_types and '*/*' not in accept_types:
+			matched_types_intids = catalog['mimeType'].apply({'any_of': accept_types})
 			intids_created_by_me = catalog.family.IF.intersection(intids_created_by_me, matched_types_intids)
 			result['FilteredTotalItemCount'] = len(intids_created_by_me)
+
 		if self._get_exclude_types():
 			not_matched_types_intids = catalog['mimeType'].apply({'any_of': self._get_exclude_types()})
 			intids_created_by_me = catalog.family.IF.difference(intids_created_by_me, not_matched_types_intids)
@@ -972,7 +977,7 @@ class _RecursiveUGDView(_UGDView):
 		batch_size, batch_start = self._get_batch_size_start()
 		sort_on, sort_order = self._get_sort_key_order()
 		number_items_needed = None
-		if batch_size and batch_start:
+		if batch_size is not None and batch_start is not None:
 			number_items_needed = batch_start + batch_size + 2
 		if sort_on in catalog:
 			intids_created_by_me = catalog[sort_on].sort(intids_created_by_me,
