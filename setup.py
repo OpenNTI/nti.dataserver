@@ -214,8 +214,8 @@ setup(
 		# 1.7 is a modern rewrite with much better unicode and Py3k support
 		'feedgenerator >= 1.7',
 		'futures',
-		'gevent >= 1.0',
-		'greenlet',
+		'gevent >= 1.0' if not IS_PYPY else '',
+		'greenlet' if not IS_PYPY else '', # pypy has its own greenlet implementation
 		'gunicorn >= 18.0',
 		'hiredis',	 # Redis C parser
 		# HTML5 parsing library
@@ -322,7 +322,7 @@ setup(
 		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
 		# 'zetalibrary',
-		'zodbpickle',
+		'zodbpickle' if not IS_PYPY else '', # extensions fail to build
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
 		'zope.app.dependable', # simple dependency tracking; re-exported from zope.container
 		'zope.applicationcontrol >= 4.0.0a1',  # Info about the app. currently unused
@@ -430,7 +430,7 @@ setup(
 			'ipython',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip',
-			'pip-tools >= 0.3.4',  # command pip-review, pip-dump
+			#'pip-tools >= 0.3.4',  # command pip-review, pip-dump -- replaced by bin/checkversions
 			'pudb >= 2013.5.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
 			'pylint' if not IS_PYPY else '',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.9',
