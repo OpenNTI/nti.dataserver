@@ -93,7 +93,7 @@ class BatchingUtilsMixin(object):
 
 		if batch_size is not None and batch_start is not None:
 			# Ok, reify up to batch_size + batch_start + 2 items from merged
-			if number_items_needed is _marker:
+			if number_items_needed is _marker or number_items_needed is None:
 				number_items_needed = batch_size + batch_start + 2
 
 			result_list = []
