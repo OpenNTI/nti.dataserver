@@ -177,8 +177,14 @@ class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
 	_ntiid_include_parent_name = True
 
 @interface.implementer(for_interfaces.ICommunityHeadlineTopic)
-class CommunityHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
-							 GeneralHeadlineTopic):
+class CommunityHeadlineTopic(GeneralHeadlineTopic):
+	# Note: This used to extend (sharing.AbstractDefaultPublishableSharedWithMixin,GeneralHeadlineTopic)
+	# in that order. But AbstractDefaultPublishableSharedWithMixin is already a base
+	# class of GeneralHeadlineTopic, so there should be no need to move it to the front
+	# again. By doing so, we create a situation where PyPy complained:
+	# "TypeError: cycle among base classes: AbstractDefaultPublishableSharedWithMixin < GeneralHeadlineTopic < AbstractDefaultPublishableSharedWithMixin"
+	# No tests break if we remove the extra mention, and there should be no persistence issues as it's just
+	# a mixin.
 	mimeType = None
 
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
