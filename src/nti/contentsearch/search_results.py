@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import sys
 import time
 import collections
 
@@ -185,6 +186,7 @@ class _SearchResults(_BaseSearchResults):
 
 	def __init__(self, query=None):
 		super(_SearchResults, self).__init__(query)
+		self.count = 0
 		self._hits = []
 		self._seen = set()
 		self.HitMetaData = SearchHitMetaData()
@@ -233,14 +235,19 @@ class _SearchResults(_BaseSearchResults):
 		return self.metadata.createdTime
 
 	@Lazy
+	def _limit(self):
+		return self.query.limit or sys.maxint
+
+	@Lazy
 	def _filterCache(self):
 		return _FilterCache()
 
 	def _add_hit(self, hit):
-		if hit.OID not in self._seen:
+		if hit.OID not in self._seen and self.count < self._limit:
 			self._hits.append(hit)
 			self._seen.add(hit.OID)
 			self.sorted = False
+			self.count += 1
 			return True
 		return False
 
@@ -272,7 +279,7 @@ class _SearchResults(_BaseSearchResults):
 			self._hits.sort(comparator.compare, reverse=reverse)
 
 	def __len__(self):
-		return len(self._raw_hits())
+		return self.count
 
 	def __iadd__(self, other):
 		if 	search_interfaces.ISearchResults.providedBy(other) or \
