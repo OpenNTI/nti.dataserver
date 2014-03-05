@@ -23,7 +23,11 @@ import array
 from pkg_resources import resource_filename
 
 import html5lib
-from lxml import etree
+try:
+	from lxml import etree
+except ImportError: # pypy?
+	from xml import etree
+
 from html5lib import treebuilders
 
 from zope import interface
