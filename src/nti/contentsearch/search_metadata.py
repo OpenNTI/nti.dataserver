@@ -106,11 +106,25 @@ def _personalblogcomment_metadata():
 							  Interface=forum_interfaces.IPersonalBlogComment)
 	
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
+def _generalforumcomment_metadata():
+	return SearchTypeMetaData(Name=post_,
+							  MimeType=(MIME_BASE + ".forums.generalforumcomment"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.IGeneralForumComment)
+
+@interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _personalblogentrypost_metadata():
 	return SearchTypeMetaData(Name=post_,
 							  MimeType=(MIME_BASE + ".forums.personalblogentrypost"),
 							  IsUGD=True, Order=9,
 							  Interface=forum_interfaces.IPersonalBlogEntryPost)
+
+@interface.implementer(search_interfaces.ISearchTypeMetaData)
+def _communityheadlinepost_metadata():
+	return SearchTypeMetaData(Name=post_,
+							  MimeType=(MIME_BASE + ".forums.communityheadlinepost"),
+							  IsUGD=True, Order=9,
+							  Interface=forum_interfaces.ICommunityHeadlinePost)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _generalforum_metadata():
