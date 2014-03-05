@@ -38,11 +38,24 @@ except ImportError: # pypy?
 	def aq_base( o ):
 		return o
 
+def patch_acquisition():
+	import sys
+	import types
+	if 'Acquisition' not in sys.modules:
+		Acquisition = types.ModuleType(str("Acquisition"))
+		Acquisition.Implicit = Implicit
+		Acquisition.aq_base = aq_base
+		sys.modules[Acquisition.__name__] = Acquisition
+
 try:
 	from gevent import Greenlet
 	from gevent import sleep
 	from gevent.queue import Queue
 except ImportError:
 	from Queue import Queue
-	from greenlet import greenlet as Greenlet
+	try:
+		from greenlet import greenlet as Greenlet
+	except ImportError:
+		class Greenlet(object):
+			pass
 	from time import sleep

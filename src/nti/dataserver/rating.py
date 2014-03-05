@@ -20,6 +20,8 @@ from zope.annotation import interfaces as an_interfaces
 from pyramid.threadlocal import get_current_request
 
 from persistent.interfaces import IPersistent
+from nti.utils._compat import patch_acquisition
+patch_acquisition()
 
 from contentratings.rating import NPRating
 from contentratings.category import BASE_KEY

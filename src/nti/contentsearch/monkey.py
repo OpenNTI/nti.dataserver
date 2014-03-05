@@ -55,9 +55,10 @@ def patch_zopyx():
 			module.unionResultSets = ntizopy_rs.unionResultSets
 			module.inverseResultSet = ntizopy_rs.inverseResultSet
 			module.intersectionResultSets = ntizopy_rs.intersectionResultSets
-	except ImportError, e:
-		logger.exeption("Error patching zopyx", e)
-		raise
+	except ImportError:
+		logger.exception("Error patching zopyx")
+		# Don't raise, lets us work from existing buildouts using pypy
+		# raise
 
 def patch():
 	patch_zopyx()

@@ -13,12 +13,14 @@ __docformat__ = "restructuredtext en"
 def _patch():
 	try:
 		import umysqldb
+		import umysql
+		assert umysql # not used here, but must be importable for this to work
 		import pymysql.err
-		umysqldb.install_as_MySQLdb()
 
 		import umysqldb.connections
 		import umysqldb.cursors
 		from greenlet import GreenletExit
+		umysqldb.install_as_MySQLdb()
 	except ImportError:
 		import platform
 		py_impl = getattr(platform, 'python_implementation', lambda: None)

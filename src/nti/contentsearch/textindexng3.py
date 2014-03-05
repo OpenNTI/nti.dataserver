@@ -14,7 +14,11 @@ from BTrees.LFBTree import LFBucket
 
 from zope import interface
 
-from zopyx.txng3.core.index import Index
+try:
+	from zopyx.txng3.core.index import Index
+except ImportError:
+	class Index(object):
+		pass
 from zopyx.txng3.core.interfaces import ILexicon
 from zopyx.txng3.core.config import DEFAULT_LEXICON
 from zopyx.txng3.core.config import DEFAULT_RANKING
@@ -167,7 +171,7 @@ class TextIndexNG3(object):
 
 @interface.implementer(zopyx_search_interfaces.ICatalogTextIndexNG3)
 class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
-	""" 
+	"""
 	Full-text index.
 	Query types supported:
 	- Contains

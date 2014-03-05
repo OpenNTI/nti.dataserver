@@ -30,7 +30,7 @@ python_persistent_bugs_patch_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
-# zc.zodbdgc 0.6.1 on Python 2.7 runs into an issue with
+# zc.zodbdgc 0.6.1 on Python 2.7+ runs into an issue with
 # the `noload` operation of the unpickler being broken. Specifically,
 # when `persistent_load` is used together with `noload` to find references,
 # multi-database references are never found. Each multi-database
@@ -41,8 +41,14 @@ logger = __import__('logging').getLogger(__name__)
 # otherwise lead to an IndexError), but that breaks
 # multi-db references. Instead, we must actually use the `load` operation,
 # not the noload operation. This slows things down, and requires
-# that there are no broken class references?
-
+# that we have a broken object factory and some other tweaks to be sure
+# that we can actually load all the data.
+# See
+# https://mail.zope.org/pipermail/zodb-dev/2014-January/015168.html
+# https://mail.zope.org/pipermail/zodb-dev/2014-January/015165.html
+# http://bugs.python.org/issue1101399
+# http://hg.python.org/releasing/2.7.6/rev/d0f005e6fadd
+# https://github.com/zopefoundation/zodbpickle/issues/9
 
 # See ZODB.serialize for a description of the possible ref types:
 # ZODB persistent references are of the form::
@@ -68,8 +74,18 @@ logger = __import__('logging').getLogger(__name__)
 # [oid]
 # 	A persistent weak reference
 
-from zodbpickle.fastpickle import Unpickler
+try:
+	from zodbpickle.fastpickle import Unpickler
+except ImportError: # PyPy?
+	from cPickle import Unpickler
+
 from cStringIO import StringIO
+
+_has_noload = True
+try:
+	Unpickler(StringIO(b'')).noload
+except AttributeError:
+	_has_noload = False
 
 _all_missed_classes = set()
 
@@ -78,16 +94,17 @@ import ZODB.broken
 
 def _make_find_global():
 	Broken_ = Broken # make it local for speed
-	find_global = ZODB.broken.find_global
+	_find_global = ZODB.broken.find_global
 
-	def type_(name, bases, dict):
-		logger.warn("Broken class reference to %s", dict['__module__'] + '.' + name)
-		_all_missed_classes.add(dict['__module__'] + '.' + name)
-		cls = type(name, bases, dict)
+	def type_(name, bases, tdict):
+		logger.warn("Broken class reference to %s", tdict['__module__'] + '.' + name)
+		_all_missed_classes.add(tdict['__module__'] + '.' + name)
+		cls = type(name, bases, tdict)
 		return cls
 
 	def _the_find_global(modulename, globalname):
-		return find_global(modulename, globalname, Broken_, type_)
+		return _find_global(modulename, globalname, Broken_, type_)
+
 	return _the_find_global
 
 find_global = _make_find_global()
@@ -98,7 +115,17 @@ def getrefs(p, storage_name, ignore):
 	u = Unpickler(StringIO(p))
 	u.persistent_load = refs # Just append to this list
 	u.find_global = find_global
-	b1 = u.noload() # Once for the class/type reference
+	if _has_noload:
+		b1 = u.noload() # Once for the class/type reference
+	else:
+		# if we don't have noload, we also probably don't support the
+		# optimized case of appending to the list, so we
+		# need to give it a callable
+		u.persistent_load = refs.append
+		# PyPy calls find_global 'find_class'; is that not a standard
+		# attribute?
+		u.find_class = find_global
+		b1 = u.load()
 	try:
 		b2 = u.load() # again for the state
 	except AttributeError as e:

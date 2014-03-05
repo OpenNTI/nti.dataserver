@@ -50,7 +50,13 @@ class Serializer(serializer.HTMLSerializer):
 
 from html5lib.filters import sanitizer
 
-import lxml.etree
+try:
+	import lxml.etree
+except ImportError: # PyPy?
+	import xml.etree
+	class lxml(object):
+		etree = xml.etree
+
 
 from . import interfaces as frg_interfaces
 

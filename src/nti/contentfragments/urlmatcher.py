@@ -10,8 +10,10 @@ __docformat__ = "restructuredtext en"
 
 import re
 import six
-
-from lxml import etree
+try:
+	from lxml import etree
+except ImportError: # pypy?
+	from xml import etree
 
 import html5lib
 from html5lib import treebuilders
@@ -22,13 +24,13 @@ from . import interfaces
 
 # http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 # https://gist.github.com/gruber/249502
-	
+
 grubber_v1 = \
 	(u'((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+',
 	 u'[.][a-z]{2,4}/)(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+',
 	 u'(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:\'".,<>?',
 	 u'\xc2\xab\xc2\xbb\xe2\x80\x9c\xe2\x80\x9d\xe2\x80\x98\xe2\x80\x99]))')
-	
+
 @interface.implementer(interfaces.IHyperlinkFormatter)
 class GrubberHyperlinkFormatter(object):
 
