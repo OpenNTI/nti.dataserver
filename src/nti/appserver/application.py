@@ -158,36 +158,6 @@ def _dictionary_views(pyramid_config, settings):
 	except Exception:
 		logger.exception("Failed to add dictionary server")
 
-def _search_views(pyramid_config):
-	# All the search views should accept an empty term (i.e., nothing after the trailing slash)
-	# by NOT generating a 404 response but producing a 200 response with the same body
-	# as if the term did not match anything. (This is what google does; the two alternatives
-	# are to generate a 404--unfriendly and weird--or to treat it as a wildcard matching
-	# everything--makes sense, but not scalable.)
-
-	pyramid_config.add_route(name='search.user', pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}',
-							 traverse="/dataserver2/users/{user}")
-	pyramid_config.add_view(route_name='search.user',
-							view='nti.contentsearch.pyramid_views.UserSearch',
-							renderer='rest',
-							permission=nauth.ACT_SEARCH)
-
-	# Unified search for content and user data. It should follow the same
-	# security policies for user data search
-	pyramid_config.add_route(name='search2.unified', pattern='/dataserver2/users/{user}/Search/UnifiedSearch/{ntiid}/{term:.*}',
-							 traverse="/dataserver2/users/{user}")
-	pyramid_config.add_view(route_name='search2.unified',
-							view='nti.contentsearch.pyramid_views.Search',
-							renderer='rest',
-							permission=nauth.ACT_SEARCH)
-
-	pyramid_config.add_route(name='suggest.unified', pattern='/dataserver2/users/{user}/Search/UnifiedSuggest/{ntiid}/{term:.*}',
-							 traverse="/dataserver2/users/{user}")
-	pyramid_config.add_view(route_name='suggest.unified',
-							view='nti.contentsearch.pyramid_views.Suggest',
-							renderer='rest',
-							permission=nauth.ACT_SEARCH)
-
 def _service_odata_views(pyramid_config):
 	# service
 	pyramid_config.add_route(name='user.root.service', pattern='/dataserver2{_:/?}',
@@ -656,7 +626,6 @@ def createApplication( http_port,
 	_renderer_settings(pyramid_config)
 	_library_settings(pyramid_config, server, library)
 
-	_search_views(pyramid_config)
 	_service_odata_views(pyramid_config)
 
 	# Declarative configuration.

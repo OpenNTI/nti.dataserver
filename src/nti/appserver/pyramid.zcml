@@ -26,6 +26,11 @@
 					  route_name="stacktraces" />
 	</configure>
 
+		
+	<!-- Search Traversal -->
+	
+	<include package="nti.contentsearch" file="pyramid.zcml" />	
+		
 	<!--
 		 NOTE: The order of registration matters,
 		 especially since we are mixing traversal with pattern dispatch.
