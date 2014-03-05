@@ -28,14 +28,17 @@ from .constants import (tags_, content_, title_, replacementContent_,
 						redactionExplanation_)
 
 from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS,
-						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME, SEARCH_QUERY)
-
-SNIPPET = 'Snippet'
+						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME, SEARCH_QUERY,
+						SNIPPET)
 
 def _word_fragments_highlight(query=None, text=None):
 	query = search_interfaces.ISearchQuery(query, None)
 	if query and text:
+		surround = query.surround or 50
+		maxchars = query.maxchars or 300
 		result = search_highlights.word_fragments_highlight(query, text,
+															maxchars=maxchars,
+															surround=surround,
 															lang=query.language)
 	else:
 		result = search_highlights.empty_hi_marker

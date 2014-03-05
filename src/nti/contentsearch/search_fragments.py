@@ -15,8 +15,6 @@ from collections import namedtuple
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.externalization.externalization import make_repr
-
 from . import interfaces as search_interfaces
 
 Range = namedtuple('Range', ('start', 'end'))
@@ -100,8 +98,7 @@ class SearchFragment(object):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
 
-	text = u''
-	matches = []
+	__slots__ = ('text', 'matches')
 
 	def __len__(self):
 		return len(self.matches)
@@ -112,7 +109,7 @@ class SearchFragment(object):
 	def __str__(self):
 		return "%s(%r,%r)" % (self.__class__.__name__, self.text, self.matches)
 
-	__repr__ = make_repr()
+	__repr__ = __str__
 
 	def __eq__(self, other):
 		try:

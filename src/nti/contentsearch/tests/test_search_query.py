@@ -12,9 +12,9 @@ from hamcrest import assert_that
 
 import unittest
 
-from ..search_query import QueryObject
+from nti.contentsearch.search_query import QueryObject
 
-from . import SharedConfiguringTestLayer
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
 class TestSearchQuery(unittest.TestCase):
 
@@ -24,12 +24,14 @@ class TestSearchQuery(unittest.TestCase):
 		qo = QueryObject(term=u'term')
 		assert_that(qo.term, is_(u'term'))
 		assert_that(qo.query, is_(u'term'))
-		assert_that(qo.digest(), is_('801a344e2fcdefaa3b1a7404ac4cb298'))
+		assert_that(qo.digest(), is_('fb6a1d355c683292b7c71b5980823243'))
 		qo.searchOn = ('note',)
-		assert_that(qo.digest(), is_('5e3f199f05ac538a1056457e01064134'))
+		assert_that(qo.digest(), is_('e558e610776bb4a4f5f3d289db64f94d'))
 		qo.searchOn = ('note', 'redaction')
-		assert_that(qo.digest(), is_('dc21e26578516fe69dcb93f9f7098dd0'))
+		assert_that(qo.digest(), is_('06a99f8a1958ecb9280936db814e87fc'))
 		qo.searchOn = ('redaction', 'note')
-		assert_that(qo.digest(), is_('dc21e26578516fe69dcb93f9f7098dd0'))
+		assert_that(qo.digest(), is_('06a99f8a1958ecb9280936db814e87fc'))
 		qo.indexid = 'xyz'
-		assert_that(qo.digest(), is_('4c4588d0b93044fedb32eb50ced00d18'))
+		assert_that(qo.digest(), is_('ffc69c392775747d75855e56d697d25a'))
+		qo.applyHighlights = False
+		assert_that(qo.digest(), is_('cd93c78072ac3e34558fc934c0238b29'))

@@ -63,7 +63,7 @@ class ISearchQuery(interface.Interface):
 										 default='descending', required=False)
 
 	surround = schema.Int(title="Hightlight surround chars", required=False,
-						  default=20, min=1)
+						  default=50, min=1)
 
 	maxchars = schema.Int(title="Hightlight max chars", required=False,
 						  default=300, min=1)

@@ -28,12 +28,12 @@ from . import search_fragments
 from . import interfaces as search_interfaces
 
 null_formatter = highlight.NullFormatter()
+basic_fragment_scorer = highlight.BasicFragmentScorer()
 
 @interface.implementer(search_interfaces.IWhooshAnalyzer)
 def create_default_analyzer(lang='en'):
 	expression = component.getUtility(cp_interfaces.IWordTokenizerExpression, name=lang)
-	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False),
-				 analysis.LowercaseFilter() ]
+	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False)]
 	return analysis.CompositeAnalyzer(*analyzers)
 
 def retokenize(text, lang='en'):
@@ -175,7 +175,8 @@ def _no_hit_match(sf, maxchars=300, tokens=()):
 	if len(text) > maxchars:
 		tkn = None
 		for t in tokens:
-			if t.endchar >= maxchars: break
+			if t.endchar >= maxchars:
+				break
 			tkn = t
 		sf.text = text[:t.endchar] + '...' if tkn else u''
 	return sf
@@ -187,7 +188,8 @@ def _set_matched_filter(tokens, termset):
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 							 order=highlight.FIRST, lang='en'):
-	# get lang.  punkt char regex patter
+
+	# get lang. punkt char regex patter
 	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus,
 										 name=lang)
 
@@ -198,11 +200,12 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 
 	# prepare fragmenter
 	formatter = null_formatter  #  highlight.UppercaseFormatter()
-	scorer = highlight.BasicFragmentScorer()
+	scorer = basic_fragment_scorer
 	fragmenter = create_fragmenter(maxchars, surround)
 
 	# sadly we need to retokenize to find term matches
-	tokens = retokenize(text, lang)
+	# user lowercase to match query terms
+	tokens = retokenize(text.lower(), lang)
 
 	# compute whoosh fragments
 	tokens = _set_matched_filter(tokens, termset)
@@ -228,7 +231,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 			# At this point we could not find a match then,
 			# it's easier to tokenize again rather than to copy the tokens.
 			# Rememer The analyzer returns an generator
-			tokens = retokenize(text, lang)
+			tokens = retokenize(text, lang)  # use original text
 			sf = _no_hit_match(sf, maxchars, tokens)
 			snippet = sf.text
 			total_fragments = 1
