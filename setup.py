@@ -76,7 +76,7 @@ TESTS_REQUIRE = [
 	'nose >= 1.3.0',
 	'nose2',
 	'nose2-cov',
-	'nose-timer >= 0.2.0',
+	'nose-timer',
 	'nose-progressive >= 1.5',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.8.0',
@@ -201,7 +201,7 @@ setup(
 		'contentratings == 1.1',  # requires small patch to work without acquisition
 		'cryptacular >= 1.4.1',	 # see z3c.crypt
 		'cssselect >= 0.9.1',  # Used by pyquery
-		'cython >= 0.19.2',
+		'cython',
 		# Adds support for detecting aborts to transactions which
 		# otherwise only detect failed commits
 		'dm.transaction.aborthook >= 1.0',
