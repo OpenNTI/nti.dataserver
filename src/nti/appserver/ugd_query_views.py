@@ -896,7 +896,7 @@ class _RecursiveUGDView(_UGDView):
 
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
-	_can_special_case_root = True
+	_can_special_case_root = False
 
 	def __call__(self):
 		# A hack to accept subviews, specifically for feeds. This should
