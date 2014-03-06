@@ -206,35 +206,51 @@ import contextlib
 
 current_transaction = None
 
-@contextlib.contextmanager
-def mock_db_trans(ds=None):
-	global current_transaction
-	ds = ds or current_mock_ds
+class mock_db_trans(object):
 
-	transaction.begin()
-	conn = ds.db.open()
-	current_transaction = conn
-	sitemanc = conn.root()['nti.dataserver']
+	def __init__(self, ds=None):
+		self.ds = ds or current_mock_ds
+		self._site_cm = None
 
-	with site( sitemanc ):
+	def __enter__(self):
+		transaction.begin()
+		self.conn = conn = self.ds.db.open()
+		global current_transaction
+		current_transaction = conn
+		sitemanc = conn.root()['nti.dataserver']
+
+		self._site_cm = site( sitemanc )
+		self._site_cm.__enter__()
 		assert component.getSiteManager() == sitemanc.getSiteManager()
-		component.provideUtility( ds, nti_interfaces.IDataserver )
+		component.provideUtility( self.ds, nti_interfaces.IDataserver )
 		assert component.getUtility( nti_interfaces.IDataserver )
 
-		try:
-			yield conn
-			if not transaction.isDoomed():
-				transaction.commit()
-			else:
-				transaction.abort()
-		except Exception:
-			transaction.abort()
-			raise
-		finally:
-			conn.close()
-			current_transaction = None
+		return conn
 
-	reset_db_caches(ds)
+	def __exit__(self, t, v, tb):
+		result = self._site_cm.__exit__(t, v, tb) # if this raises we're in trouble
+		global current_transaction
+		body_raised = t is not None
+		try:
+			try:
+				if not transaction.isDoomed():
+					transaction.commit()
+				else:
+					transaction.abort()
+			except Exception:
+				transaction.abort()
+				raise
+			finally:
+				current_transaction = None
+				self.conn.close()
+		except Exception:
+			# Don't let our exception override the original exception
+			if not body_raised:
+				raise
+			logger.exception("Failed to cleanup trans, but body raised exception too")
+
+		reset_db_caches(self.ds)
+		return result
 
 def reset_db_caches(ds=None):
 	ds = ds or current_mock_ds or component.queryUtility( nti_interfaces.IDataserver )
