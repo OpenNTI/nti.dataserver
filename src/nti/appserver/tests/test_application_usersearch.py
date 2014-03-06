@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
 from hamcrest import has_entry
@@ -87,7 +90,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
 		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
-		res = testapp.get( str(path), extra_environ=self._make_extra_environ('sjohnson@nextthought.com'))
+		res = testapp.get(str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
 
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
@@ -192,7 +195,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 			user2_username = user2.username
 			# A user after it, alphabetically
 			user3 = self._create_user( username='z' + user.username )
-			user3_username = user3.username
+
 			# A user before it, alphabetically
 			user4 = self._create_user( username='a' + user.username )
 			user4_username = user4.username
@@ -371,7 +374,6 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 			dfl.creator = user1
 			user1.addContainedObject( dfl )
 			dfl.addFriend( user2 )
-			dfl_ntiid = dfl.NTIID
 
 			user2_ntiid = user2.NTIID
 			user1_username = user1.username
