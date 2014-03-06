@@ -195,9 +195,6 @@ class _RelatedWorkExtractor(object):
 				else:
 					icon = ''
 
-				if el.description == '':
-					el.description = el.relatedwork.description
-
 				visibility = (el.visibility or el.relatedwork.visibility)
 
 				uri = el.uri
@@ -221,7 +218,9 @@ class _RelatedWorkExtractor(object):
 
 				title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
 				creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
-				description = unicode(el.description)
+				# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
+				# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
+				description = unicode(el.description.replace('&amp;', '&'))
 
 				content = {
 					'label': title,
@@ -259,7 +258,9 @@ class _RelatedWorkExtractor(object):
 
 			title = unicode(''.join(render_children( el.renderer, el.title )))
 			creator = unicode(''.join(render_children( el.renderer, el.creator )))
-			description = unicode( el.description )
+			# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
+			# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
+			description = unicode(el.description.replace('&amp;', '&'))
 
 			content = {
 				'label': title,

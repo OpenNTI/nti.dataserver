@@ -789,13 +789,13 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 
 	@readproperty
 	def description(self):
-		texts = []
-		for child in self.allChildNodes:
-			# Try to extract the text children, ignoring the caption and label, etc
-			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
-				texts.append( unicode( child ) )
-
-		return _incoming_sources_as_plain_text( texts )
+		sources = []
+		node_types = ['label', 'worktitle', 'workcreator', 'worksource', 'includegraphics']
+		for child in self.childNodes:
+			if child.nodeName not in node_types:
+				sources.append(child)
+		output = render_children( self.renderer, sources )
+		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
@@ -822,7 +822,7 @@ class relatedworkrefname(Base.Command):
 
 @interface.implementer(crd_interfaces.IEmbeddedContainer)
 class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
-	args = '[ options:dict ] label:idref uri:url desc:str < NTIID:str >'
+	args = '[ options:dict ] label:idref uri:url desc < NTIID:str >'
 
 	counter = 'relatedworkref'
 	blockType = True
@@ -851,7 +851,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		self.uri = self.attributes['uri']
 		if hasattr(self.uri, 'source'):
 			self.uri = self.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
-		self.description = self.attributes['desc']
+		self._description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
 		# Remove the empty NTIID key so auto NTIID generation works
@@ -867,6 +867,14 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		self.target_ntiid = None
 
 		return tok
+
+	@readproperty
+	def description(self):
+		if len(self._description.childNodes) == 0:
+			return self.relatedwork.description
+		else:
+			output = render_children( self.renderer, self._description )
+			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
