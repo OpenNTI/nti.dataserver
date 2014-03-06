@@ -36,31 +36,42 @@ def ConcurrentExecutor(max_workers=None):
 
 	.. note:: This strategy may change.
 	"""
-	if _is_pypy:
-		if max_workers is None:
-			max_workers = multiprocessing.cpu_count()
-		return concurrent.futures.ThreadPoolExecutor( max_workers )
 
 	# Notice that we did not import the direct class because it gets swizzled at
 	# runtime. For that same reason, we subclass dynamically at runtime.
-	class _Executor(concurrent.futures.ProcessPoolExecutor):
+	if _is_pypy and False: # JAM: Why did I force pypy onto threaded workers?
+		if max_workers is None:
+			max_workers = multiprocessing.cpu_count()
+		base = concurrent.futures.ThreadPoolExecutor
+		throw = True
+	else:
+		base = concurrent.futures.ProcessPoolExecutor
+		throw = False
+
+	class _Executor(base):
 		# map() channels through submit() so this captures all activity
 		def submit( self, fn, *args, **kwargs ):
-			_fn = _nothrow(fn)
+			_fn = _nothrow(fn, _throw=throw)
 			_fn = functools.update_wrapper( _fn, fn )
 			return super(_Executor,self).submit( _fn, *args, **kwargs )
 
-	return _Executor(max_workers=max_workers)
+	return _Executor(max_workers)
 
 import pickle
 class _nothrow(object):
 	"""
-	For submission to executors, a callable that doesn't throw (and avoids hangs.)
+	For submission to executors, a callable that doesn't throw (and
+	avoids hangs.) Throwing used to result in hanging a process
+	worker, but it may no longer be the case that it does in versions
+	of :mod:`concurrent.futures` newer than 2.1.4. However,
+	we still provide useful printing.
 
 	For pickling, must be a top-level object.
 	"""
-	def __init__(self, fn):
+
+	def __init__(self, fn, _throw=False):
 		self.__fn = fn
+		self.__throw = _throw
 
 	def __call__( self, *args, **kwargs):
 		try:
@@ -70,6 +81,8 @@ class _nothrow(object):
 			from zope.exceptions import print_exception
 			import sys
 			print_exception( *sys.exc_info() )
+			if self.__throw:
+				raise
 			# We'd like to return something useful, but
 			# the exception itself may not be serializable
 			# (and usually isn't if it has arguments and is an
