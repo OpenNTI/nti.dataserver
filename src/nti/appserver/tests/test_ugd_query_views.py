@@ -1187,6 +1187,22 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
+		# Repeat across the whole thing
+		for i in range(3,18):
+			__traceback_info__ = i
+			expected_ntiids = ntiids[i-1:i+2]
+
+			ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[i],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+			assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+			assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+			matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+			assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+
+
 from nti.externalization.internalization import update_from_external_object
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
