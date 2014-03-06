@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 import time
 
 from zope import component
+from zope import lifecycleevent
 
 from nti.dataserver.users import Community
 from nti.dataserver import interfaces as nti_interfaces
@@ -30,6 +31,7 @@ def _update_state(purchase, state):
 	if purchase is not None:
 		purchase.updateLastMod()
 		purchase.State = state
+		lifecycleevent.modified(purchase)
 
 @component.adapter(store_interfaces.IPurchaseAttemptStarted)
 def _purchase_attempt_started(event):
@@ -153,6 +155,7 @@ def _purchase_attempt_synced(event):
 	purchase = event.object
 	purchase.Synced = True
 	purchase.updateLastMod()
+	lifecycleevent.modified(purchase)
 	logger.info('%r has been synched' % purchase)
 
 @component.adapter(store_interfaces.IStorePurchaseInvitation,
