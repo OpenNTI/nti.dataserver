@@ -92,8 +92,13 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
 		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
+		# the owner can find it
 		res = testapp.get( str(path), extra_environ=self._make_extra_environ() )
+		member = res.json_body['Items'][0]
+		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
+		# a member can find it
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ('jason@nextthought.com') )
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
 
