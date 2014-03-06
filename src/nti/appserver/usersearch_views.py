@@ -341,9 +341,10 @@ def _make_visibility_test(remote_user):
 			# User can see himself
 			if x == remote_user:
 				return True
-			# User can see communities he's a member of
-			if isinstance( x, users.Community ):
-				return x.username in remote_com_names
+			# User can see dynamic memberships he's a member of
+			# or owns
+			if nti_interfaces.IDynamicSharingTarget.providedBy(x):
+				return x.username in remote_com_names or getattr(x, 'creator', None) == remote_user
 			# No one can see the Koppa Kids
 			# FIXME: Hardcoding this site/user policy
 			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( x ):
