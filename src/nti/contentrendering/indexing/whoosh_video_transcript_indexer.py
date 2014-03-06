@@ -170,10 +170,10 @@ class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 			data_lang = node_utils.get_attribute(node, 'data-lang') or 'en'
 			for p in node.iterchildren():
 				self._capture_param(p, params)
-		
+
 			if 'src' in params and 'lang' not in params:
 				params['lang'] = data_lang
-		
+
 		return params if 'src' in params else None
 
 	def _process_videosource(self, node):
@@ -206,7 +206,7 @@ class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 					video_sources.append(vidsrc)
 			else:
 				self._capture_param(p, params)
-				
+
 		title = params.get('title', u'')
 
 		# makre sure we have a ntiid for the video

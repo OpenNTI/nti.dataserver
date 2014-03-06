@@ -29,7 +29,7 @@ from zope import interface
 from zope import component
 
 from nti.testing.matchers import is_empty
-from Acquisition import Implicit
+from nti.utils._compat import Implicit
 from nti.testing.matchers import aq_inContextOf
 from nti.testing.matchers import verifiably_provides, validly_provides
 
