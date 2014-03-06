@@ -1158,6 +1158,35 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 
+		# We can ask for a very small page and the first item and get it
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[0],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[0:3]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# Page forward one manually; this one can actually be centered, so
+		# the matches are the same
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[1],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# One more forward shifts the range
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[2],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[1:4]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
 from nti.externalization.internalization import update_from_external_object
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):

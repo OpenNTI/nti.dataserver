@@ -865,19 +865,42 @@ class _UGDView(AbstractAuthenticatedView,
 			# Ok, they have requested that we compute a beginning index for them.
 			# We do this by materializing the list in memory and walking through
 			# to find the index of the requested object.
-			batch_start = None
+			batch_start = None # ignore input
 			result_list = []
+			match_index = None
 			for i, key_value in enumerate(merged):
+				result_list.append( key_value )
+
 				# Only keep testing until we find what we need
 				if batch_start is None:
 					if to_external_ntiid_oid( key_value[1] ) == batchAround:
-						batch_start = max( 1, i - (batch_size // 2) - 1 )
-				result_list.append( key_value )
+						batch_start = max( 0, i - (batch_size // 2) - 1 )
+						match_index = i
+				else:
+					# we found our match, it's in the list
+					if i > number_items_needed:
+						# We can stop materializing now
+						break
+
 			merged = result_list
+
 			if batch_start is None:
 				# Well, we got here without finding the matching value.
 				# So return an empty page.
 				batch_start = len(result_list)
+			elif match_index < batch_start:
+				# For very small batches, when the match is at
+				# the beginning of the list (typically),
+				# we could wind up returning a list that doesn't include
+				# the around value. Do our best to make sure that
+				# doesn't happen.
+				batch_start = max( 0, match_index - (batch_size // 2))
+			if batch_start is not None and  batch_size == 3:
+				# For non-even batch sizes, it's hard to evenly center
+				# with generic math, or at least I'm stupid and missing what
+				# the right algorithm is in all cases. Special case this
+				# common size to get it right
+				batch_start = max( 0, match_index - 1 )
 
 		self._batch_tuple_iterable(result, merged, number_items_needed, batch_size, batch_start)
 		return result
