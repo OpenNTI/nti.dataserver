@@ -20,6 +20,7 @@ from zope.annotation import interfaces as an_interfaces
 from zope.mimetype import interfaces as zmime_interfaces
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.datastructures import ModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -36,7 +37,8 @@ from . import purchase_order
 from . import interfaces as store_interfaces
 
 @functools.total_ordering
-@interface.implementer(store_interfaces.IPurchaseAttempt,
+@interface.implementer(nti_interfaces.ICreated,
+					   store_interfaces.IPurchaseAttempt,
 					   an_interfaces.IAttributeAnnotatable,
 					   zmime_interfaces.IContentTypeAware)
 class PurchaseAttempt(ModDateTrackingObject,

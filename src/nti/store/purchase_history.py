@@ -43,9 +43,9 @@ class _PurchaseIndex(Persistent):
 
 	def __init__(self):
 		self.__len = Length()
-		self.purchases = self.family.II.LLTreeSet()
 		self.item_index = self.family.OO.OOBTree()
 		self.time_index = self.family.II.LLBTree()
+		self.purchases = self.family.II.LLTreeSet()
 
 	def add(self, purchase):
 		iid = component.getUtility(zope.intid.IIntIds).getId(purchase)
@@ -180,12 +180,9 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 		return item in self._items_activated
 
 	def register_purchase(self, purchase):
-		# fire b4 registering
-		lifecycleevent.created(purchase)
-		# locate
 		locate(purchase, self, str(len(self)))
-		# fire event to get an iid
-		lifecycleevent.added(purchase)
+		lifecycleevent.created(purchase)
+		lifecycleevent.added(purchase)  # fire to get an iid
 		self._index.add(purchase)
 
 	add_purchase = register_purchase
