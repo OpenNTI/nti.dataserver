@@ -9,8 +9,7 @@ the object is removed from the intid catalog
 
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -26,7 +25,6 @@ from nti.wref import interfaces as wref_interfaces
 
 from nti.externalization import integer_strings
 from nti.ntiids import ntiids
-
 
 class _AbstractWeakRef(object):
 	"""
