@@ -8,16 +8,18 @@ of behaviour.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import event as zope_event
 from zope.container.interfaces import IContained
 from zope.security.proxy import removeSecurityProxy
 
-from zc.intid.utility import IntIds as _ZCIntIds
 from zc.intid.utility import RemovedEvent
+from zc.intid.utility import IntIds as _ZCIntIds
 
 from nti.utils._compat import aq_base
 
@@ -89,7 +91,7 @@ class IntIds(_ZCIntIds):
 		setattr(ob, self.attribute, None)
 		if notify:
 			zope_event.notify(RemovedEvent(ob, self, uid))
-
+	
 	def __repr__( self ):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
 									   self.attribute,

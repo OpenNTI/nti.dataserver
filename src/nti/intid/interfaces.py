@@ -5,10 +5,8 @@ Intid intefaces
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 # The reason for the __str__ override bypassing KeyError
 # is to get usable exceptions printed from unit tests
@@ -33,3 +31,4 @@ class ObjectMissingError(KeyError):
 	"""
 	def __str__(self):
 		return Exception.__str__( self )
+
