@@ -28,8 +28,7 @@ from . import integer_strings
 #disable: accessing protected members
 #pylint: disable=W0212
 
-def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=False,
-				  intid_check=True):
+def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=False):
 	"""
 	For a persistent object, returns its persistent OID in a pasreable
 	external format (see :func:`fromExternalOID`). If the object has not been saved, and
@@ -95,7 +94,7 @@ def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=Fal
 		oid = oid + b':' + db_name.encode( 'hex' )
 
 	intutility = component.queryUtility( zc_intid.IIntIds )
-	if intid_check and intutility is not None:
+	if intutility is not None:
 		intid = intutility.queryId( self )
 		if not intid and add_to_intids:
 			intid = intutility.register( self )
@@ -115,7 +114,7 @@ to_external_oid = toExternalOID
 
 ParsedOID = collections.namedtuple('ParsedOID', ['oid', 'db_name', 'intid'] )
 
-def fromExternalOID( ext_oid ):
+def fromExternalOID(ext_oid):
 	"""
 	Given a string, as produced by :func:`toExternalOID`, parses it into its
 	component parts.
@@ -166,7 +165,7 @@ from_external_oid = fromExternalOID
 DEFAULT_EXTERNAL_CREATOR = system_user.id
 
 def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
-						  add_to_intids=False, intid_check=True):
+						  add_to_intids=False):
 	"""
 	:return: An NTIID string utilizing the object's creator and persistent
 		id.
@@ -200,8 +199,7 @@ def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
 	oid = toExternalOID( contained,
 						 default=default_oid,
 						 add_to_connection=add_to_connection,
-						 add_to_intids=add_to_intids,
-						 intid_check=intid_check)
+						 add_to_intids=add_to_intids)
 	if not oid:
 		return None
 
