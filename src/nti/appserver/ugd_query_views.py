@@ -896,7 +896,7 @@ class _UGDView(AbstractAuthenticatedView,
 				# the around value. Do our best to make sure that
 				# doesn't happen.
 				batch_start = max( 0, match_index - (batch_size // 2))
-			if batch_start is not None and  batch_size == 3:
+			if batch_start is not None and batch_size == 3 and match_index is not None:
 				# For non-even batch sizes, it's hard to evenly center
 				# with generic math, or at least I'm stupid and missing what
 				# the right algorithm is in all cases. Special case this
