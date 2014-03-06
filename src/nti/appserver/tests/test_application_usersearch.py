@@ -46,6 +46,8 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = self._create_user()
 			user2 = self._create_user(username='jason@nextthought.com' )
+			user_not_in_dfl = self._create_user(username='otheruser@nextthought.com')
+			user_not_in_dfl_username = user_not_in_dfl.username
 			dfl = users.DynamicFriendsList( username='Friends' )
 			user_interfaces.IFriendlyNamed( dfl ).alias = "Close Associates"
 			dfl.creator = user1
@@ -90,7 +92,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		# It should take what the DS gives it.
 		# TODO: The security on this isn't very tight
 		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
-		res = testapp.get(str(path), extra_environ=self._make_extra_environ('jason@nextthought.com'))
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ() )
 
 		member = res.json_body['Items'][0]
 		assert_that( member, has_entry( 'Username', dfl_ntiid ) )
@@ -116,6 +118,12 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		assert_that( res.json_body['Items'], has_items(
 														has_entry( 'alias', 'Close Associates' ) ) )
+
+		# a non-member cannot find the dfl
+		path = '/dataserver2/ResolveUser/' + dfl_ntiid.lower()
+		res = testapp.get( str(path), extra_environ=self._make_extra_environ(user_not_in_dfl_username))
+		assert_that(res.json_body['Items'], has_length(0))
+
 
 	@WithSharedApplicationMockDS
 	def test_user_search(self):
