@@ -14,7 +14,7 @@ from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import greater_than
 
-from nti.appserver._external_object_io import class_name_from_content_type
+from nti.app.externalization.internalization import class_name_from_content_type
 from nti.appserver.ugd_edit_views import UGDPutView as _UGDPutView
 from nti.appserver.ugd_edit_views import UGDPostView as _UGDPostView
 from nti.appserver.ugd_edit_views import UGDDeleteView as _UGDDeleteView
