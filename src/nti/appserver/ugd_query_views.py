@@ -876,6 +876,7 @@ class _UGDView(AbstractAuthenticatedView,
 					if to_external_ntiid_oid( key_value[1] ) == batchAround:
 						batch_start = max( 0, i - (batch_size // 2) - 1 )
 						match_index = i
+						number_items_needed = batch_start + batch_size + 2
 				else:
 					# we found our match, it's in the list
 					if i > number_items_needed:
