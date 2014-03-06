@@ -5,7 +5,7 @@ Functions for externalizing OIDs.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -28,15 +28,16 @@ from . import integer_strings
 #disable: accessing protected members
 #pylint: disable=W0212
 
-def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=False ):
+def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=False,
+				  intid_check=True):
 	"""
 	For a persistent object, returns its persistent OID in a pasreable
 	external format (see :func:`fromExternalOID`). If the object has not been saved, and
 	`add_to_connection` is `False` (the default) returns the `default`.
 
-	:param add_to_connection: If the object is persistent but not yet added to a connection,
-		setting this to true will attempt to add it to the nearest connection in
-		its containment tree, thus letting it have an OID.
+	:param add_to_connection: If the object is persistent but not yet added to a
+		connection, setting this to true will attempt to add it to the nearest connection
+		in its containment tree, thus letting it have an OID.
 	:param add_to_intids: If we can obtain an OID for this object, but it does
 		not have an intid, and an intid utility is available, then if this is
 		``True`` (not the default) we will register it with the utility.
@@ -55,7 +56,9 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 	except AttributeError:
 		pass
 
-	self = removeAllProxies( self ) # because if it was proxied, we should still read the right thing above; this saves time
+	# because if it was proxied, we should still read the right thing above;
+	# this saves time
+	self = removeAllProxies(self)
 	try:
 		oid = self._p_oid
 	except AttributeError:
@@ -92,7 +95,7 @@ def toExternalOID( self, default=None, add_to_connection=False, add_to_intids=Fa
 		oid = oid + b':' + db_name.encode( 'hex' )
 
 	intutility = component.queryUtility( zc_intid.IIntIds )
-	if intutility is not None:
+	if intid_check and intutility is not None:
 		intid = intutility.queryId( self )
 		if not intid and add_to_intids:
 			intid = intutility.register( self )
@@ -131,7 +134,8 @@ def fromExternalOID( ext_oid ):
 	__traceback_info__ = ext_oid
 	# Sometimes raw _p_oid values do contain a b':', so simply splitting
 	# on that is not reliable, so try to detect raw _p_oid directly
-	if isinstance( ext_oid, bytes ) and len(ext_oid) == 8 and not ext_oid.startswith( b'0x' ) and ext_oid.count(b':') != 2:
+	if 	isinstance(ext_oid, bytes) and len(ext_oid) == 8 and \
+		not ext_oid.startswith(b'0x') and ext_oid.count(b':') != 2:
 		# The last conditions might be overkill, but toExternalOID is actually
 		# returning bytes, and it could conceivably be exactly 8 chars long;
 		# however, a raw oid could also start with the two chars 0x and contain two colons
@@ -161,16 +165,17 @@ from_external_oid = fromExternalOID
 
 DEFAULT_EXTERNAL_CREATOR = system_user.id
 
-def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False, add_to_intids=False ):
+def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
+						  add_to_intids=False, intid_check=True):
 	"""
 	:return: An NTIID string utilizing the object's creator and persistent
 		id.
 	:param str default_oid: The default value for the externalization of the OID.
-		If this is ``None`` (the default), and no external OID can be found (using :func:`toExternalOID`),
-		then this function will return None.
-	:param add_to_connection: If the object is persistent but not yet added to a connection,
-		setting this to true will attempt to add it to the nearest connection in
-		its containment tree, thus letting it have an OID.
+		If this is ``None`` (the default), and no external OID can be found
+		(using :func:`toExternalOID`), then this function will return None.
+	:param add_to_connection: If the object is persistent but not yet added to a
+		connection, setting this to true will attempt to add it to the nearest
+		connection in its containment tree, thus letting it have an OID.
 	"""
 
 	__traceback_info__ = type(contained)
@@ -195,18 +200,19 @@ def to_external_ntiid_oid( contained, default_oid=None, add_to_connection=False,
 	oid = toExternalOID( contained,
 						 default=default_oid,
 						 add_to_connection=add_to_connection,
-						 add_to_intids=add_to_intids )
+						 add_to_intids=add_to_intids,
+						 intid_check=intid_check)
 	if not oid:
 		return None
 
 	creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
-	ext_oid = ntiids.make_ntiid( provider=(creator
-										   if isinstance( creator, six.string_types )
-										   else getattr( creator, 'username', DEFAULT_EXTERNAL_CREATOR )),
+	ext_oid = ntiids.make_ntiid(provider=(creator
+										   if isinstance(creator, six.string_types)
+										   else getattr(creator, 'username', DEFAULT_EXTERNAL_CREATOR)),
 								specific=oid,
-								nttype=ntiids.TYPE_OID )
+								nttype=ntiids.TYPE_OID)
 	try:
-		setattr( contained, '_v_to_external_ntiid_oid', ext_oid )
+		setattr(contained, '_v_to_external_ntiid_oid', ext_oid)
 	except (AttributeError,TypeError): # TypeError is a BrokenModified
 		pass
 	return ext_oid
