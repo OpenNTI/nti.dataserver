@@ -1142,12 +1142,13 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[10], 'batchSize': 10, 'batchStart': 1} )
 		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
-		# Because we are in the middle of a batchSize page, we only get a next, one
-		# that consumes all the data (and overlaps this one)
+		# Because we are in the middle of a batchSize page, we get a next that
+		# exactly matches, but doesn't generate a full page of data
 		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
-		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=10' ) )
-		# We get no prev
-		self.forbid_link_with_rel( ugd_res.json_body, 'batch-prev' )
+		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=14' ) )
+		# Likewise, prev matches exactly
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
 
 		expected_ntiids = ntiids[4:14]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
@@ -1191,16 +1192,29 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		for i in range(3,18):
 			__traceback_info__ = i
 			expected_ntiids = ntiids[i-1:i+2]
+			matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 
 			ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchAround': ntiids[i],
-																  'batchSize': 3,
-																  'batchStart': 0} )
+																	  'batchSize': 3,
+																	  'batchStart': 0} )
 			assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
 			assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
-
-			matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 			assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
+			href = ugd_res.json_body['href']
+			assert_that( href, contains_string('batchStart=' + str(i-1)) )
+			# The first time through, we don't have enough data for a prev link
+			if i > 3:
+				batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+				# previous batch is batch size, minus one to center it
+				assert_that( batch_prev, contains_string('batchStart=' + str((i-4)) ))
+			# The first time through, we are still off by one for next because of
+			# adjusting to center
+			if i > 3:
+				batch_next = self.require_link_href_with_rel(ugd_res.json_body, 'batch-next')
+				# Next batch is batch size plus two (one item in this batch, index is starte
+				# of next batch)
+				assert_that( batch_next, contains_string('batchStart=' + str((i+2)) ))
 
 
 from nti.externalization.internalization import update_from_external_object
