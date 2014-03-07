@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-.. $Id$
+$Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -39,11 +37,9 @@ import time
 import socket
 import geventwebsocket.exceptions
 
-
 # For ease of distinguishing in logs we subclass
 class _WebsocketSessionEventProxy(SessionEventProxy):
 	pass
-
 
 class _AbstractWebSocketOperator(object):
 	session_owner = ''
