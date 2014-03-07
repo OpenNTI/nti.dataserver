@@ -11,9 +11,13 @@ thus always import `Object` from this module.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
+
 import sys
 
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object as ObjectBase
@@ -572,6 +576,7 @@ class HTTPURL(ValidURI):
 		return result
 
 from . import dataurl
+
 class DataURI(ValidURI):
 	"""
 	A URI field that ensures and requires its value to be

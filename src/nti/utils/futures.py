@@ -6,11 +6,10 @@ Utility classes and objects for working with :mod:`concurrent.futures`.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
 
 import functools
 import multiprocessing
@@ -58,6 +57,7 @@ def ConcurrentExecutor(max_workers=None):
 	return _Executor(max_workers)
 
 import pickle
+
 class _nothrow(object):
 	"""
 	For submission to executors, a callable that doesn't throw (and

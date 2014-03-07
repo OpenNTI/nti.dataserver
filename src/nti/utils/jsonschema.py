@@ -6,7 +6,7 @@ For producing a JSON schema appropriate for use by clients, based on a Zope sche
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,7 +21,6 @@ UI_TYPE_EMAIL = 'nti.dataserver.users.interfaces.EmailAddress'
 UI_TYPE_HASHED_EMAIL = UI_TYPE_EMAIL + ":Hashed" # So that a begins-with test will match either, making validation easier
 #: Something that can be set once, typically during account creation
 UI_TYPE_ONE_TIME_CHOICE = 'nti.dataserver.users.interfaces.OneTimeChoice'
-
 
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
@@ -153,7 +152,6 @@ class JsonSchemafier(object):
 					# common case, these will all be the same type
 					if not item_schema.get( 'base_type' ) and all( (isinstance(x,basestring) for x in tokens) ):
 						item_schema['base_type'] = 'string'
-
 
 			ext_schema[k] = item_schema
 
