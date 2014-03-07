@@ -83,6 +83,11 @@ class BatchingUtilsMixin(object):
 		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
 
+	#: A sequence of names of query params that will be dropped from
+	#: links we generate for batch-next and batch-prev, typically
+	#: because they do not have relevance in a next/prev query.
+	_BATCH_LINK_DROP_PARAMS = ('batchAround','batchBefore')
+
 	def _batch_tuple_iterable(self, result, tuples,
 							  number_items_needed=_marker,
 							  batch_size=_marker,
@@ -92,7 +97,13 @@ class BatchingUtilsMixin(object):
 			batch_size, batch_start = self._get_batch_size_start()
 
 		if batch_size is not None and batch_start is not None:
+			# These may have changed from the request params, or be
+			# defaults, tell the client what we really used
+			self.request.GET['batchSize'] = str(batch_size)
+			self.request.GET['batchStart'] = str(batch_start)
+
 			# Ok, reify up to batch_size + batch_start + 2 items from merged
+
 			if number_items_needed is _marker or number_items_needed is None:
 				number_items_needed = batch_size + batch_start + 2
 
@@ -111,17 +122,34 @@ class BatchingUtilsMixin(object):
 				result_list = Batch( result_list, batch_start, batch_size )
 				# Insert links to the next and previous batch
 				# NOTE: If our batch_start is not a multiple of the batch_size,
-				# we may not get a previous (if there are fewer than batch_size previous elements?)
-				# Also in that case, our next may be set up to reach the end of the data, overlapping this
-				# one if need be.
-				next_batch, prev_batch = result_list.next, result_list.previous
-				for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-					if batch is not None and batch != result_list:
-						batch_params = self.request.params.copy()
+				# then using IBatch.next and IBatch.previous fails as it expects
+				# to the index of the batch to correlate with the previous
+				# batch start. So we manually do the math for start
+
+				# Previous first. We want to try to go back exactly the page
+				# size, otherwise to zero.
+				if batch_start > 0:
+					prev_batch_start = max(0, batch_start - batch_size)
+				else:
+					# No where to go back
+					prev_batch_start = None
+
+				# Next, we want to go to the batch exactly after this one, if
+				# possible. It may not have a full page of data, though.
+				# Note that we always count on having at least a few extra items
+				if batch_start + batch_size < number_items_needed:
+					next_batch_start = batch_start + batch_size
+				else:
+					next_batch_start = None
+
+				for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
+					if batch is not None:
+						batch_params = self.request.GET.copy()
 						# Pop some things that don't work
-						batch_params.pop( 'batchAround', '' )
-						# TODO: batchBefore
-						batch_params['batchStart'] = batch.start
+						for n in self._BATCH_LINK_DROP_PARAMS:
+							batch_params.pop( n, None )
+
+						batch_params['batchStart'] = batch
 						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
 						link_next = Link( link_next_href, rel=rel )
 						result.setdefault( 'Links', [] ).append( link_next )
