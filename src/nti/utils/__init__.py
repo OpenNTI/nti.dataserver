@@ -1,5 +1,10 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -8,7 +13,6 @@ import urlparse
 
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
-
 
 from zope.dottedname import resolve as dottedname
 
@@ -44,7 +48,6 @@ def create_gravatar_url( username,
 	query = b's=%s&d=%s' % (size,defaultGravatarType)
 	fragment = ''
 	return str(urlparse.urlunparse( (scheme,netloc,path,params,query,fragment) ))
-
 
 import os
 

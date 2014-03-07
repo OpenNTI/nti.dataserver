@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 $Id$
 """
 
@@ -14,8 +12,9 @@ logger = __import__('logging').getLogger(__name__)
 # Originally from http://david.wglick.org/2009/visualizing-the-zodb-with-graphviz/
 # heavily modified to support multi databases
 
-from ZODB.utils import u64
 import collections
+
+from ZODB.utils import u64
 
 def _node_name( oid, oiddbname ):
 	return b'%s.%s' % (oiddbname, u64(oid))
@@ -93,8 +92,6 @@ def _export_database(f, conn, base_oid, reference_callback, name_predicate, done
 			f.write(b'%s [label="%s.%s"]\n' % (_node_name(oid, conn_name), module, klass))
 
 
-
-
 def _walk_database(conn, root_oid, reference_callback=None, name_predicate=None, done_oids=None):
 	conn_name = conn.db().database_name
 
@@ -115,7 +112,7 @@ def _walk_database(conn, root_oid, reference_callback=None, name_predicate=None,
 
 		try:
 			# fetch the pickle
-			p, serial = conn._storage.load(oid)
+			p, _ = conn._storage.load(oid)
 		except Exception:
 			#import traceback; traceback.print_exc()
 			print("Failed to find", repr(oid), "in", conn_name)

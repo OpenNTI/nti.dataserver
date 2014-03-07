@@ -3,15 +3,15 @@
 """
 Utilities having to do with property definitions and access.
 
-
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
 
 import operator
+
 from zope.annotation.interfaces import IAnnotations
 
 def alias(prop_name, doc=None):

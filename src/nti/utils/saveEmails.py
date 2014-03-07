@@ -1,4 +1,14 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Utilities for working with various kinds of transparent proxies.
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import cgi
 import os
@@ -8,7 +18,6 @@ import sys
 if sys.platform == 'darwin':
 	import cgitb
 	cgitb.enable()
-
 
 DB_FILE = os.path.expanduser( "~/database/address.sqlite3" )
 STATEMENT = "INSERT INTO ADDRS VALUES (?)"
@@ -33,16 +42,16 @@ if addr:
 	with sqlite3.connect( DB_FILE ) as conn:
 		conn.execute( STATEMENT, (addr,) )
 
-print 'Content-Type: text/plain'
+print('Content-Type: text/plain')
+
 if os.environ.get( 'HTTP_REFERER' ) and value:
-	print 'Status: 301 Moved'
+	print('Status: 301 Moved')
 	# Let them know they subscribed. We're assuming it comes from
 	# a URL that doesn't have a query already
 	#print 'Location:', (os.environ['HTTP_REFERER'] + '?subscribed=true')
-	print 'Location: http://nextthought.com/thankyou.html?subscribed=true'
+	print('Location: http://nextthought.com/thankyou.html?subscribed=true')
 	print
 else:
 	print
-
 	print ('Subscribed ' + addr) if value else 'Not subscribed'
 

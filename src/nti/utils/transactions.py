@@ -7,10 +7,10 @@ This module depends on the :mod:`dm.transaction.aborthook` module
 and directly provides the :func:`add_abort_hooks` function; you should
 call this if you need such functionality.
 
-"""
-#$Id$
+$Id$
 
-from __future__ import print_function, unicode_literals, absolute_import
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)

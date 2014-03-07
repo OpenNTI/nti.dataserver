@@ -5,8 +5,10 @@ Defines an ldap registration object
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.annotation import interfaces as an_interfaces
@@ -29,7 +31,6 @@ class LDAP(SchemaConfigured):
 
 	def __repr__(self):
 		return "%s(%s,%s)" % (self.__class__, self.URL, self.Usermame)
-
 
 	def __eq__(self, other):
 		try:
