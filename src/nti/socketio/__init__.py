@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
 --------
 Versions
 --------
@@ -33,6 +32,5 @@ Chrome 16 is version 13 (which seems to be compatible with 7/8)
 
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"

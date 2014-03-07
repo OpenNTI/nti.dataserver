@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -57,7 +57,6 @@ class SocketIOSocket(object):
 	def ack(self, msg_id, params):
 		self.send( self.protocol.make_ack( msg_id, params ) )
 
-
 @interface.implementer(interfaces.ISocketIOMessage)
 class AbstractMessage(dict):
 	msg_type = -1
@@ -99,7 +98,6 @@ class ErrorMessage(AbstractMessage):
 
 class NoopMessage(AbstractMessage):
 	msg_type = 8
-
 
 @interface.implementer( interfaces.ISocketIOProtocolFormatter )
 class SocketIOProtocolFormatter1(object):
@@ -211,7 +209,6 @@ class SocketIOProtocolFormatter1(object):
 
 		if msg_type == b"2": # heartbeat
 			return HeartbeatMessage()
-
 
 		message = None
 		msg_endpoint, data = tail.split(b":", 1)

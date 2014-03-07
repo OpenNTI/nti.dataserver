@@ -5,8 +5,7 @@ Handles a socket.io session.
 
 $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,7 +26,6 @@ import nti.externalization.internalization
 from nti.externalization.externalization import toExternalObject
 
 from nti.socketio import interfaces as sio_interfaces
-
 
 class UnauthenticatedSessionError(ValueError):
 	"Raised when a session consumer is called but is not authenticated."
@@ -205,7 +203,6 @@ def _exception_to_event( the_error ):
 
 	return {'message': msg,
 			'code': the_error.__class__.__name__ }
-
 
 _registered_legacy_search_mods = set()
 

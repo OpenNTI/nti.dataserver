@@ -3,7 +3,7 @@
 """
 The XHR polling transport.
 
-.. $Id$
+$Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -25,7 +25,6 @@ from ._base import SessionEventProxy
 from ._base import Empty
 from ._base import Greenlet
 from ._base import decode_packet_to_session
-
 
 import contextlib
 
