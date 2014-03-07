@@ -296,7 +296,7 @@ class IRedeemedPurchaseAttempt(IPurchaseAttempt):
 	RedemptionTime = schema.Number(title='Redemption time', required=True)
 	RedemptionCode = schema.ValidTextLine(title='Redemption Code', required=True)
 
-class IEnrollmentPurchaseAttempt(IPurchaseAttempt):
+class IEnrollmentPurchaseAttempt(IEnrollmentAttempt):
 	Processor = schema.ValidTextLine(title='Enrollment institution', required=False)
 
 class IPurchaseAttemptEvent(IObjectEvent):
