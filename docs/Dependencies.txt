@@ -15,6 +15,7 @@ Dependencies (macports):
 - libxml2			# 2013-06-12
 - nasm				# 2014-01-23
 - pcre				# 2014-01-23
+- lua				# 2014-03-06
 - cyrus-sasl2 		# 2014-01-23
 - graphviz-devel	# 2014-01-23
 - pkgconfig			# 2013-06-12 (optional)
