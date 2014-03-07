@@ -181,8 +181,13 @@ class PurchaseHistory(zcontained.Contained, Persistent):
 
 	def register_purchase(self, purchase):
 		locate(purchase, self, str(len(self)))
+		# add to connection b4 firing event
+		owner_jar = getattr(self, '_p_jar', None)
+		if owner_jar and getattr(purchase, '_p_jar', None) is None:
+			owner_jar.add(purchase)
+		# fire events
 		lifecycleevent.created(purchase)
-		lifecycleevent.added(purchase)  # fire to get an iid
+		lifecycleevent.added(purchase)  # get an iid
 		self._index.add(purchase)
 
 	add_purchase = register_purchase
