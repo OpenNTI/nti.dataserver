@@ -289,7 +289,7 @@ class CommunityEntityContainer(object):
 		self.context = context
 
 	def __len__(self):
-		return len(self.context.iter_member_usernames())
+		return len(set(self.context.iter_usernames_of_possible_members()))
 
 	def __iter__(self):
 		return self.context.iter_members()
