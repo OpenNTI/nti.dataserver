@@ -40,8 +40,17 @@ def root_resource_factory( request ):
 	:return: An :class:`IRootFolder"
 	"""
 	dataserver = component.getUtility( nti_interfaces.IDataserver )
-	root = dataserver.root_folder
-	return root
+	try:
+		root = dataserver.root_folder
+		return root
+	except nti_interfaces.InappropriateSiteError:
+		# If an exception occurs and we have the debug toolbar
+		# installed, it makes a new subrequest without using
+		# our tweens, so our site isn't setup. If we raise
+		# here, we obscure the original exception
+		if request.path.startswith( '/_debug_toolbar/' ):
+			return {}
+		raise
 
 def dataserver2_root_resource_factory( request ):
 	"""
