@@ -38,6 +38,10 @@ class TestIO(AppLayerTest):
 		assert_that( obj_io.read_body_as_external_object(request),
 					 is_( {'opt_in_email_communication': True }))
 
+		request.body = b'%7B%22opt_in_email_communication\xe2%22%3Atrue%7D='
+		assert_that( obj_io.read_body_as_external_object(request),
+					 is_( {'opt_in_email_communication\xe2': True }))
+
 	def test_integration_note_body_validation_empty_error_message(self):
 		n = contenttypes.Note()
 		n.applicableRange = contentrange.ContentRangeDescription()

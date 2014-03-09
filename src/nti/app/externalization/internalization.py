@@ -58,6 +58,10 @@ def class_name_from_content_type( request ):
 	content_type = content_type or ''
 	return nti_mimetype_class( content_type )
 
+# Native string types for these values to avoid encoding
+# problems
+_mt_encoded = str('application/x-www-form-urlencoded')
+_equal = str('=')
 
 def read_body_as_external_object( request, input_data=None, expected_type=collections.Mapping ):
 	"""
@@ -77,13 +81,13 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		or request.GET.get('format') == 'plist'): # pragma: no cover
 		ext_format = 'plist'
 
-	if content_type.startswith('application/x-www-form-urlencoded') and '=' in value:
+	if content_type.startswith(_mt_encoded) and _equal in value:
 		# Hmm, uh-oh. How did this happen?
 		# We've seen this come in from the browser, but we're expecting JSON;
 		# the standard WebOb way to decode it doesn't work in these cases.
 		# Try it here
 		value = url_unquote(value)
-		if value.endswith('='):
+		if value.endswith(_equal):
 			value = value[:-1]
 
 	__traceback_info__ = ext_format, value
@@ -107,8 +111,11 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		#	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
 		#				   for k, v
 		#				   in pairs) )
-
-		value = simplejson.loads(unicode(value, request.charset))
+		try:
+			value = simplejson.loads(unicode(value, request.charset))
+		except UnicodeError:
+			# Try the most common web encoding
+			value = simplejson.loads(unicode(value, 'iso-8859-1'))
 
 		if not isinstance( value, expected_type ):
 			raise TypeError( type(value) )
