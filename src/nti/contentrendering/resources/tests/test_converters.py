@@ -88,3 +88,24 @@ class TestAbstractLatexCompiler(ContentrenderingLayerTest):
 			source = "abc"
 
 		assert_that( converter.process_batch( [ContentUnit] ), contains( ContentUnit.source ) )
+
+from .. converter_svg import _do_convert
+import unittest
+import shutil
+import tempfile
+
+class TestSvgConverter(unittest.TestCase):
+
+	def test_converter(self):
+		tempdir = tempfile.mkdtemp()
+		cwd = os.getcwd()
+		os.chdir(tempdir)
+		try:
+			filename, w, h = _do_convert( 1, os.path.join(os.path.dirname(__file__), 'datastructure_comparison.pdf'))
+		finally:
+			os.chdir(cwd)
+			shutil.rmtree( tempdir )
+
+		assert_that( filename, is_('img1.svg'))
+		assert_that( w, is_(360))
+		assert_that( h, is_(216))
