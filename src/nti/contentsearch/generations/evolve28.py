@@ -24,11 +24,10 @@ def remove_user_index_data(user):
 	if mapping is not None:
 		for cat_name, catalog in mapping.items():
 			for key, index in catalog.items():
-				m = getattr(index, "unindexAll", None)
+				m = getattr(index, "clear", None)
 				if m is not None and callable(m):
-					c = m()  # unindex all docs
-					logger.info("%s object(s) unindexed for user %s in index %s/%s",
-								c, user, cat_name, key)
+					m()  # remove all docs
+					logger.info("Index %s/%s was cleared for user %s", cat_name, key, user)
 		mapping.clear()
 		del annotations[name]
 
