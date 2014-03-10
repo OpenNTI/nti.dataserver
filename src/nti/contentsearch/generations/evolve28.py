@@ -20,7 +20,15 @@ from nti.dataserver import interfaces as nti_interfaces
 def remove_user_index_data(user):
 	annotations = an_interfaces.IAnnotations(user, {})
 	name = "nti.contentsearch._repoze_adpater._RepozeEntityIndexManager"
-	if name in annotations:
+	mapping = annotations.get(name, None)
+	if mapping is not None:
+		for catalog in mapping.values():
+			for key, index in catalog.items():
+				m = getattr(index, "unindexAll", None)
+				if m is not None and callable(m):
+					c = m()  # unindex all docs
+					logger.info("%s object(s) unindexed for user %s in index %s", c, user, key)
+		mapping.clear()
 		del annotations[name]
 
 def do_evolve(context):
@@ -42,7 +50,7 @@ def do_evolve(context):
 					if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
 						remove_user_index_data(user)
 
-	logger.debug('Evolution done!!!')
+	logger.info('Evolution done!!!')
 
 def evolve(context):
 	"""
