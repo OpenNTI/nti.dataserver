@@ -25,6 +25,7 @@ try:
 except ImportError:
 	from whoosh.support.levenshtein import relative
 
+
 from nltk.tokenize import RegexpTokenizer
 
 import repoze.lru
@@ -111,7 +112,7 @@ class _ContentTokenizer(object):
 	@classmethod
 	def to_plain_text(cls, content):
 		text = \
-			component.getAdapter(content, 
+			component.getAdapter(content,
 								 frg_interfaces.IPlainTextContentFragment, name='text')
 		return text
 
