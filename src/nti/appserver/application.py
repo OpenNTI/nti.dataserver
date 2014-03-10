@@ -350,6 +350,7 @@ def _enclosure_views(pyramid_config):
 							permission=nauth.ACT_READ, request_method='GET')
 
 	# Restore GET for the things we can POST enclosures to
+	# XXX: This is a pretty broad registration, we should almost certainly tone that down
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
 							renderer='rest', context='zope.container.interfaces.IContained',
 							permission=nauth.ACT_READ, request_method='GET')

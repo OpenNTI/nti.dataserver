@@ -14,7 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-
 from repoze.who.interfaces import IRequestClassifier
 from repoze.who.interfaces import IChallengeDecider
 
@@ -29,6 +28,10 @@ from pyramid_who.classifiers import forbidden_challenger
 #: of the browser
 CLASS_BROWSER_APP = 'application-browser'
 
+#: A request classification that's meant to indicate
+#: a browser being used interactively.
+CLASS_BROWSER = 'browser'
+
 @interface.provider(IRequestClassifier)
 def application_request_classifier( environ ):
 	"""
@@ -42,7 +45,7 @@ def application_request_classifier( environ ):
 
 	result = default_request_classifier( environ )
 
-	if result == 'browser':
+	if result == CLASS_BROWSER:
 		ua = environ.get('HTTP_USER_AGENT', '').lower()
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
@@ -50,8 +53,16 @@ def application_request_classifier( environ ):
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
 		elif environ.get('paste.testing') is True:
+			# From unit tests, we want to behave like an application
 			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP )
+		elif environ.get('HTTP_X_NTI_CLASSIFICATION') and environ['REMOTE_ADDR'] == '127.0.0.1':
+			# Local overrides for testing
+			result = environ.get('HTTP_X_NTI_CLASSIFICATION')
+
 		elif 'python' in ua or 'httpie' in ua:
+			# From integration tests ('python requests') or from a command-line
+			# tool, we also want to behave like an application (this might change
+			# as we need to do more HTML testing)
 			result = CLASS_BROWSER_APP
 		else:
 			# Hmm. Going to have to do some guessing. Sigh.
@@ -67,7 +78,7 @@ def application_request_classifier( environ ):
 				 and ('mozilla' in ua or 'ntifoundation' in ua or 'nextthought' in ua)
 				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
 				result = CLASS_BROWSER_APP
-			elif ('ntifoundation' in ua or 'nextthought' in ua):
+			elif 'ntifoundation' in ua or 'nextthought' in ua:
 				# extra special casing for ipad
 				result = CLASS_BROWSER_APP
 	return result

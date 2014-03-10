@@ -36,13 +36,21 @@ class ForbiddenView(object):
 		api_factory = component.getUtility(IAPIFactory)
 		result = request.exception
 		api = api_factory( request.environ )
-		if api.challenge_decider(request.environ, request.exception.status, request.exception.headers):
-			challenge_app = api.challenge(request.exception.status, request.exception.headers)
+		# The who api needs an actual list of headers
+		headers = request.exception.headers.items()
+		if api.challenge_decider(request.environ, request.exception.status, headers):
+			challenge_app = api.challenge(request.exception.status, headers)
 			if challenge_app is not None:
-				# Although these generically can return "apps" that are supposed to be WSGI callables,
-				# in reality they only return instances of paste.httpexceptions.HTTPClientError.
-				# Which happens to map one-to-one to the pyramid exception framework
-				result = hexc.__dict__[type(challenge_app).__name__](headers=challenge_app.headers)
+				result = challenge_app
+				if type(challenge_app) not in hexc.__dict__.values():
+					# Although these generically can return "apps" that
+					# are supposed to be WSGI callables, in reality they
+					# only return instances of
+					# paste.httpexceptions.HTTPClientError. Which happens
+					# to map one-to-one to the pyramid exception framework.
+					# Some of our custom classes directly return the pyramid result, so we
+					# don't want to undo what they did.
+					result = hexc.__dict__[type(challenge_app).__name__](headers=challenge_app.headers)
 
 		result.vary = default_vary_on( request ) # TODO: Do this with a response factory or something similar
 		return result
