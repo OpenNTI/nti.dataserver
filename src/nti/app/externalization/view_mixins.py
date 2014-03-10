@@ -96,69 +96,135 @@ class BatchingUtilsMixin(object):
 		if batch_size is _marker and batch_start is _marker:
 			batch_size, batch_start = self._get_batch_size_start()
 
-		if batch_size is not None and batch_start is not None:
-			# These may have changed from the request params, or be
-			# defaults, tell the client what we really used
-			self.request.GET['batchSize'] = str(batch_size)
-			self.request.GET['batchStart'] = str(batch_start)
-
-			# Ok, reify up to batch_size + batch_start + 2 items from merged
-
-			if number_items_needed is _marker or number_items_needed is None:
-				number_items_needed = batch_size + batch_start + 2
-
-			result_list = []
-			count = 0
-			for x in tuples:
-				result_list.append( selector(x) )
-				count += 1
-				if count > number_items_needed:
-					break
-
-			if batch_start >= len(result_list):
-				# Batch raises IndexError
-				result_list = []
-			else:
-				result_list = Batch( result_list, batch_start, batch_size )
-				# Insert links to the next and previous batch
-				# NOTE: If our batch_start is not a multiple of the batch_size,
-				# then using IBatch.next and IBatch.previous fails as it expects
-				# to the index of the batch to correlate with the previous
-				# batch start. So we manually do the math for start
-
-				# Previous first. We want to try to go back exactly the page
-				# size, otherwise to zero.
-				if batch_start > 0:
-					prev_batch_start = max(0, batch_start - batch_size)
-				else:
-					# No where to go back
-					prev_batch_start = None
-
-				# Next, we want to go to the batch exactly after this one, if
-				# possible. It may not have a full page of data, though.
-				# Note that we always count on having at least a few extra items
-				if batch_start + batch_size < number_items_needed:
-					next_batch_start = batch_start + batch_size
-				else:
-					next_batch_start = None
-
-				for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
-					if batch is not None:
-						batch_params = self.request.GET.copy()
-						# Pop some things that don't work
-						for n in self._BATCH_LINK_DROP_PARAMS:
-							batch_params.pop( n, None )
-
-						batch_params['batchStart'] = batch
-						link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
-						link_next = Link( link_next_href, rel=rel )
-						result.setdefault( 'Links', [] ).append( link_next )
-
-			result['Items'] = result_list
-		else:
+		if batch_size is None or batch_start is None:
 			# Not batching.
 			result_list = [selector(x) for x in tuples]
 			result['Items'] = result_list
+			return result
+
+		# These may have changed from the request params, or be
+		# defaults, tell the client what we really used
+		self.request.GET['batchSize'] = str(batch_size)
+		self.request.GET['batchStart'] = str(batch_start)
+
+		# Ok, reify up to batch_size + batch_start + 2 items from merged
+
+		if number_items_needed is _marker or number_items_needed is None:
+			number_items_needed = batch_size + batch_start + 2
+
+		result_list = []
+		count = 0
+		for x in tuples:
+			result_list.append( selector(x) )
+			count += 1
+			if count > number_items_needed:
+				break
+
+		if batch_start >= len(result_list):
+			# Batch raises IndexError
+			result_list = []
+		else:
+			result_list = Batch( result_list, batch_start, batch_size )
+			# Insert links to the next and previous batch
+			# NOTE: If our batch_start is not a multiple of the batch_size,
+			# then using IBatch.next and IBatch.previous fails as it expects
+			# to the index of the batch to correlate with the previous
+			# batch start. So we manually do the math for start
+
+			# Previous first. We want to try to go back exactly the page
+			# size, otherwise to zero.
+			if batch_start > 0:
+				prev_batch_start = max(0, batch_start - batch_size)
+			else:
+				# No where to go back
+				prev_batch_start = None
+
+			# Next, we want to go to the batch exactly after this one, if
+			# possible. It may not have a full page of data, though.
+			# Note that we always count on having at least a few extra items
+			if batch_start + batch_size < number_items_needed:
+				next_batch_start = batch_start + batch_size
+			else:
+				next_batch_start = None
+
+			for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
+				if batch is not None:
+					batch_params = self.request.GET.copy()
+					# Pop some things that don't work
+					for n in self._BATCH_LINK_DROP_PARAMS:
+						batch_params.pop( n, None )
+
+					batch_params['batchStart'] = batch
+					link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+					link_next = Link( link_next_href, rel=rel )
+					result.setdefault( 'Links', [] ).append( link_next )
+
+		result['Items'] = result_list
+
+	def _batch_around(self, iterator, test):
+		"""
+		Given an iterator of items, and a test function that returns true when the desired
+		batch-around item is found, handle the batching. The request params for
+		`batch_start` will be updated, so any value cached for it should be
+		discarded. We only do this if batch_size is given.
+
+		:return: A sequence of the items consumed from the iterator to find the
+			object to center the batch on. Note that this may be every object
+			if we did not find the creator. If no batch size was given, this
+			will be the iterator.
+		"""
+		batch_size, batch_start = self._get_batch_size_start()
+		if not batch_size:
+			return []
+
+		number_items_needed = batch_start + batch_size + 2
+		# Ok, they have requested that we compute a beginning index for them.
+		# We do this by materializing the list in memory and walking through
+		# to find the index of the requested object.
+		batch_start = None # ignore input
+		result_list = []
+		match_index = None
+		for i, key_value in enumerate(iterator):
+			result_list.append( key_value )
+
+			# Only keep testing until we find what we need
+			if batch_start is None:
+				if test(key_value):
+					batch_start = max( 0, i - (batch_size // 2) - 1 )
+					match_index = i
+					number_items_needed = batch_start + batch_size + 2
+			else:
+				# we found our match, it's in the list
+				if i > number_items_needed:
+					# We can stop materializing now
+					break
+
+		if batch_start is None:
+			# Well, we got here without finding the matching value.
+			# So return an empty page.
+			batch_start = len(result_list)
+		elif match_index <= batch_start:
+			# For very small batches, when the match is at
+			# the beginning of the list (typically),
+			# we could wind up returning a list that doesn't include
+			# the around value. Do our best to make sure that
+			# doesn't happen.
+			batch_start = max( 0, match_index - (batch_size // 2))
+
+		# Likewise, if the batch_size is very small and the match is at the end
+		# typically with batch_size == 1
+		if match_index is not None and match_index >= batch_size + batch_start:
+			batch_start = match_index
+
+		if batch_start is not None and batch_size == 3 and match_index is not None:
+			# For non-even batch sizes, it's hard to evenly center
+			# with generic math, or at least I'm stupid and missing what
+			# the right algorithm is in all cases. Special case this
+			# common size to get it right
+			batch_start = max( 0, match_index - 1 )
+
+		self.request.GET['batchStart'] = str(batch_start)
+		return result_list
 
 class UploadRequestUtilsMixin(object):
 	"""
