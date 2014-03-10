@@ -19,7 +19,9 @@ import plasTeX.Imagers
 from . import converters
 from .. import ConcurrentExecutor as ProcessPoolExecutor
 
-def _do_convert(page):
+from PyPDF2 import PdfFileReader
+
+def _do_convert(page, input_filename='images.pdf'):
 	"""
 	Convert a page of a PDF into SVG using ``pdf2svg`` (which must be
 	accessible on the system PATH).
@@ -35,23 +37,27 @@ def _do_convert(page):
 	filename = 'img%d.svg' % page
 	# TODO: in other converters we've observed hangs if exceptions are raised
 	# in the process pool. Happen here?
-	subprocess.check_call( ('pdf2svg', 'images.pdf', filename, str(page) ) )
+	subprocess.check_call( ('pdf2svg', input_filename, filename, str(page) ) )
 
-	if not open(filename).read().strip():
-		os.remove(filename)
-		logger.warn( 'Failed to convert %s', filename )
-		return None
+	with open(filename, 'rb') as f:
+		if not f.read().strip():
+			os.remove(filename)
+			logger.warn( 'Failed to convert %s', filename )
+			return None
 
 	#Then remove the width and height boxes since this interacts badly with
 	#HTML embedding
-	os.system( "sed -i -e 's/width=.*pt\"//' %s" % filename )
+	exitcode = os.system( "sed -i -e 's/width=.*pt\"//' %s" % filename )
+	if exitcode:
+		logger.warn('Failed to convert %s', filename)
+		return None
 
 	# Get the width and height from the media box since we're not cropping it
 	# in Python code
-	cmd = "pdfinfo -box -f %(page)d -l %(page)d images.pdf | grep MediaBox | awk '{print $4,$5}'" % {'page': page}
-	result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
-	__traceback_info__ = cmd, result
-	width_in_pt, height_in_pt = result[0].split()
+	with open(input_filename, 'rb') as f:
+		mediaBox = PdfFileReader(f).getPage(page).mediaBox
+		width_in_pt, height_in_pt = mediaBox.getWidth(), mediaBox.getHeight()
+
 	return (filename, width_in_pt, height_in_pt)
 
 class PDF2SVG(plasTeX.Imagers.VectorImager):
