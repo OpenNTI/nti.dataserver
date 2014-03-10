@@ -19,6 +19,8 @@ import os
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
+from hamcrest import has_length
+from hamcrest import has_property
 
 
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -89,23 +91,59 @@ class TestAbstractLatexCompiler(ContentrenderingLayerTest):
 
 		assert_that( converter.process_batch( [ContentUnit] ), contains( ContentUnit.source ) )
 
-from .. converter_svg import _do_convert
+from .. converter_svg import _do_convert, PDF2SVG
 import unittest
 import shutil
 import tempfile
 
+from .. import converter_svg
+
 class TestSvgConverter(unittest.TestCase):
 
-	def test_converter(self):
+	input_filename = os.path.join(os.path.dirname(__file__), 'datastructure_comparison.pdf')
+
+	def test_do_convert(self):
 		tempdir = tempfile.mkdtemp()
 		cwd = os.getcwd()
 		os.chdir(tempdir)
 		try:
-			filename, w, h = _do_convert( 1, os.path.join(os.path.dirname(__file__), 'datastructure_comparison.pdf'))
+			filename  = _do_convert( 1, self.input_filename )
 		finally:
 			os.chdir(cwd)
 			shutil.rmtree( tempdir )
 
 		assert_that( filename, is_('img1.svg'))
-		assert_that( w, is_(360))
-		assert_that( h, is_(216))
+
+	def test_converter(self):
+		tempdir = tempfile.mkdtemp()
+		cwd = os.getcwd()
+		os.chdir(tempdir)
+		class Executor(object):
+			def __init__(self, **kwargs):
+				pass
+			def map(self, *args):
+				return map(*args)
+
+			def __enter__(self):
+				return self
+
+			def __exit__(self, t, v, tb):
+				return
+
+		class Image(object):
+			pass
+
+		orig_exec = converter_svg.ProcessPoolExecutor
+		converter_svg.ProcessPoolExecutor = Executor
+		try:
+			with open(self.input_filename, 'rb') as f:
+				imager = PDF2SVG.__new__(PDF2SVG)
+				imager.images = {'key' + str(i): Image() for i in range(24)}
+				_, images = imager.executeConverter(f)
+
+			assert_that( images, has_length(24) )
+			assert_that( imager.images['key0'], has_property('width', 462.8))
+		finally:
+			converter_svg.ProcessPoolExecutor = orig_exec
+			os.chdir(cwd)
+			shutil.rmtree( tempdir )
