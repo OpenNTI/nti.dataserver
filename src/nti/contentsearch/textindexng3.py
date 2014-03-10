@@ -4,8 +4,10 @@ Defines a zopyx TextIndex.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 
@@ -231,6 +233,13 @@ class CatalogTextIndexNG3(CatalogIndex, TextIndexNG3):
 	def _indexed(self):
 		return self.get_docids()
 
+	def unindexAll(self):
+		count = 0
+		for docid in self._indexed():
+			self.unindex_object(docid)
+			count += 1
+		return count
+		
 	def applyContains(self, value, *args, **kwargs):
 		return self.apply(value, *args, **kwargs)
 
