@@ -22,12 +22,13 @@ def remove_user_index_data(user):
 	name = "nti.contentsearch._repoze_adpater._RepozeEntityIndexManager"
 	mapping = annotations.get(name, None)
 	if mapping is not None:
-		for catalog in mapping.values():
+		for cat_name, catalog in mapping.items():
 			for key, index in catalog.items():
 				m = getattr(index, "unindexAll", None)
 				if m is not None and callable(m):
 					c = m()  # unindex all docs
-					logger.info("%s object(s) unindexed for user %s in index %s", c, user, key)
+					logger.info("%s object(s) unindexed for user %s in index %s/%s",
+								c, user, cat_name, key)
 		mapping.clear()
 		del annotations[name]
 
