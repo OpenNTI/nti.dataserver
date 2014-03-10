@@ -65,6 +65,7 @@ class _StripePurchaseAttempt(zcontained.Contained, Persistent):
 	token_id = alias('TokenID')
 	charge_id = alias('ChargeID')
 
+_StripePurchase = _StripePurchaseAttempt  # BWC
 _StripePurchaseAttemptFactory = an_factory(_StripePurchaseAttempt)
 
 @component.adapter(basestring)
