@@ -1,6 +1,6 @@
-========
-Buildout
-========
+==========
+ Buildout
+==========
 
 As mentioned today at scrum, we'd like to begin the process of
 deprecating the old-style monolithic dataserver packaging in favor of
@@ -58,10 +58,18 @@ Currently, our buildout configurations and bootstrap can be found at
 ``https://repos.nextthought.com/svn/nti-svn/NextThoughtPlatform/trunk/nti.dataserver-buildout``,
 you'll need to check this directory out.
 
-Running ``bootstrap.py`` creates the basic skeleton of an application
+.. warning:: We use ``bootstrap.sh`` rather than ``bootstrap.py`` to
+			 better handle changes in the version of ``setuptools``.
+			 Without this script a change to ``setuptools`` requires
+			 rebuilding everything. Watch for commit messages that change
+			 the version of ``setuptools`` and tell you to rerun
+			 ``bootstrap.sh`` and do so after updating to that version or
+			 you will be in for a surprise.
+
+Running ``bootstrap.sh`` creates the basic skeleton of an application
 environment, including the ``bin/buildout`` script in the current
 directory. (Somewhat more confusingly, the directory in which
-``bootstrap.py`` is run and which holds ``bin/buildout`` is also
+``bootstrap.sh`` is run and which holds ``bin/buildout`` is also
 sometimes called a buildout---think of it like an instance of a
 class.) This script is then given a configuration file and takes care
 of setting up and maintaining the application environment, including
@@ -91,31 +99,35 @@ Initial Setup
 	 $ export REPO=https://repos.nextthought.com/svn/nti-svn
 	 $ svn co $REPO/NextThoughtPlatform/trunk/nti.dataserver-buildout
 
-3. (Optional) The default locations for the web app, login app, and
-   content directory are all relative to the buildout configuration.
-   This lets one setup be used across machines for frontend and
-   backend developers alike. To use these locations, checkout the
-   projects (or move existing checkouts into place)::
+3. (Optional) The default locations for the content directory is
+   relative to the buildout configuration. This lets one setup be used
+   across machines for frontend and backend developers alike. To use
+   these locations, checkout the projects (or move existing checkouts
+   into place)::
 
-	 $ svn co $REPO/NextThoughtWebApp/trunk NextThoughtWebApp
-	 $ svn co $REPO/NextThoughtLoginApp/trunk NextThoughtLoginApp
 	 $ mkdir DataserverGlobalLibrary
 	 $ ls -F
 	 nti.dataserver-buildout/
-	 NextThoughtLoginApp/
-	 NextThoughtWebApp/
 	 DataserverGlobalLibrary/
+
+   Although the default locations for the webapp and login app are
+   also relative to the buildout configuration, the production
+   configuration and most developer configurations checkout these
+   inside the buildout and adjust the configuration appropriately (see
+   ``webapp.cfg``).
 
 4. Bootstrap the buildout::
 
 	 $ cd nti.dataserver-buildout
-	 $ python ./bootstrap.py
+	 $ ./bootstrap.sh
 
 This will generate some files and directories, notably the script
 ``bin/buildout``.
 
-5. Install the buildout using the appropriate configuration. For local
-   development, this is currently ``developer_zeo_environment.cfg`` (subject to
+5. Install the buildout using the appropriate configuration. For most
+   local development, this is currently
+   ``developer_zeo_environment.cfg``; backend/server developers will
+   want to use ``python_developer_environment.cfg`` (subject to
    change)::
 
 	 $ bin/buildout -c developer_zeo_environment.cfg
@@ -134,7 +146,8 @@ the command line.
 Also, the ``parts/omelette`` directory is a convenient way to browse
 (and grep/ack) all the source code used in the application.
 
-This step can be lengthy; see the Tips section for a way to speed it up.
+This step can be lengthy; see the :ref:`tips-section` section for a
+way to speed it up.
 
 Running the Dataserver
 ----------------------
@@ -156,15 +169,25 @@ To update your environment, performing the equivalent of what ``pip``
 and ``setup.py`` were used for, as well as taking into account any
 configuration changes required, simply re-run buildout::
 
-  $ bin/buildout -c zeo_environment.cfg
+  $ bin/buildout -c developer_zeo_environment.cfg
 
-.. note:: This command *can* be used to also update all of the sources
-		  checked out from version control. It does not do so by
-		  default. You can either manually update the sources (in the
-		  sources directory) as desired (for example, you might update
-		  just a subset, though that may not always work), or you can
-		  configure buildout to update the sources for you as
-		  explained below (you probably want to do this).
+A powerful command called ``develop`` is installed in the buildout. It
+can be used to simplify that command (remembering your configuration
+file and options)::
+
+  $ bin/develop rebuild
+  Last used buildout arguments: -c python_developer_environment.cfg
+  INFO: Running buildout.
+  ...
+
+The ``develop`` command is also used to automatically update all or a
+subset of the code checked out::
+
+  $ bin/develop up
+  INFO: Queued 'nti.app.assessment' for update.
+  INFO: Queued 'nti.app.client_preferences' for update.
+
+See :ref:`develop-command` for more information.
 
 Migrating An Existing Environment
 =================================
@@ -206,14 +229,14 @@ example::
   $ cp -R $OLD_ENV/data/data.fs.blobs data/Users.blobs
 
 Differences
-===========
+-----------
 
 * Once you have bootstrapped the buildout, you are not required to
   continue to ``workon`` the virtual environment in the future as all
   the scripts in the ``bin`` directory explicitly refer to the correct
   dependencies. (However, this can be convenient, see the relevant tip.)
 
-* ``bootstrap.py`` and ``bin/buildout`` replace ``pip install -r
+* ``bootstrap.sh`` and ``bin/buildout`` replace ``pip install -r
   requirements.txt``, ``setup.py`` and ``nti_init_env``
 
 * ``supervisord_dev.conf`` no longer exists. Instead, just pass the
@@ -229,6 +252,8 @@ Differences
   the buildout). Instead, you need to provide arguments to the
   templates if you need to customize something. Contact us for more
   information.
+
+.. _tips-section:
 
 Tips
 ====
@@ -321,7 +346,7 @@ Tips
 	raise DistributionNotFound(req)
 	DistributionNotFound: pycrypto>=2.6
 
-	$ $VIRTUAL_ENV/bin/python bootstrap.py
+	$ ./bootstrap.sh
 	$ bin/bootstrap -c ....
 
 
@@ -329,55 +354,34 @@ Having Buildout Automatically Update Sources
 --------------------------------------------
 
 Running ``bin/buildout`` can automatically update checked out project
-sources. This is not enabled by default due to an incompatibility with
-very recent versions of Subversion. A patch fixes it, but it has not
-been released yet, so if you want buildout to automatically update
-the sources, you need to enable the setting and then apply the patch
-manually. [#f2]_
+sources. This is not enabled by default for developers, but is for
+production environments. To update sources at ``bin/buildout`` time,
+supply the ``always-checkout`` argument::
 
-Enabling the setting is easy. In your local buildout configuration
-(``~/.buildout/default.cfg``), set ``vcs-update`` to true::
+    $ bin/buildout -c python_developer_environment.cfg buildout:always-checkout=true
+    mr.developer: Queued 'NextThoughtLoginApp' for checkout.
+    ...
 
-  [buildout]
-  vcs-update = true
+Once you do this, the ``bin/devolop`` command remembers this setting::
 
-Applying the patch is also easy. You need to get the updated version
-of gp.vcsdevelop.get_pip and apply it to your local gp.vcsdevelop egg,
-which you will find in your ``buildout:eggs-directory``. (This makes
-the most sense if you are using a shared egg directory as explained
-above.) The patch is obtained from::
+    $ bin/develop rebuild
+    Last used buildout arguments: -c python_developer_environment.cfg buildout:always-checkout=true
+    INFO: Running buildout.
+    mr.developer: Queued 'NextThoughtLoginApp' for checkout.
+    ...
 
-  https://bitbucket.org/gawel/gpvcsdevelop/raw/613c596874cfdd04ce17abd5c9bc08c14d18e99e/gp/vcsdevelop/get-pip.py
+.. _develop-command:
 
-For example::
+The Develop Command
+-------------------
 
-  $ PATCH=https://bitbucket.org/gawel/gpvcsdevelop/raw/613c596874cfdd04ce17abd5c9bc08c14d18e99e/gp/vcsdevelop/get-pip.py
-  $ EGGS=~/Projects/buildout-eggs
-  $ curl $PATCH > $EGGS/gp.vcsdevelop-2.2.3-py2.7.egg/gp/vcsdevelop/get_pip.py
-  # There are two copies, for some reason, with slightly different names
-  $ curl $PATCH > $EGGS/gp.vcsdevelop-2.2.3-py2.7.egg/gp/vcsdevelop/get-pip.py
+The ``bin/develop`` command is a powerful command for simplifying many
+aspects of working with buildout.
 
-If you run buildout and you get errors like the following, the patch
-is not correctly applied. Check the paths mentioned in the error to be
-sure it went to the right place::
+.. command-output:: develop --help
 
-  Unrecognized .svn/entries format in sources/pywikipedia
-  While:
-    Installing.
-    Loading extensions.
-
-  An internal error occurred due to a bug in either zc.buildout or in a
-  recipe being used:
-  Traceback (most recent call last):
-  File "/Users/jmadden/Projects/buildout-eggs/zc.buildout-2.2.1-py2.7.egg/zc/buildout/buildout.py", line 1942, in main
-  ...
-  File "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/urllib.py", line 1217, in unquote
-    bits = s.split('%')
-  AttributeError: 'NoneType' object has no attribute 'split'
 
 .. rubric:: Footnotes
 
 .. [1] Despite what you may have seen at New Guy's desk today. That was
 	   all him.
-.. [#f2] I apologize for this, I haven't yet been able to find a good way
-		 to automate this.
