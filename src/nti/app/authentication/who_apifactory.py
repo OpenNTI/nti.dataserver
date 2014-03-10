@@ -16,10 +16,11 @@ logger = __import__('logging').getLogger(__name__)
 import nti.monkey.paste_auth_tkt_sha512_patch_on_import
 nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
 
-
 from zope import component
 
 from .interfaces import ILogonWhitelist
+from nti.appserver.interfaces import IApplicationSettings
+from repoze.who.interfaces import IChallenger
 
 from .who_classifiers import application_request_classifier
 from .who_classifiers import forbidden_or_missing_challenge_decider
@@ -27,9 +28,11 @@ from .who_authenticators import KnownUrlTokenBasedAuthenticator
 from .who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
 from .who_basicauth import ApplicationBasicAuthPlugin
 from .who_basicauth import BasicAuthPlugin
+from .who_redirector import BrowserRedirectorPlugin
 
 from repoze.who.api import APIFactory
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
+from repoze.who.plugins.redirector import RedirectorPlugin
 
 from nti.dataserver.users import User
 
@@ -58,23 +61,26 @@ def create_who_apifactory( secure_cookies=True,
 	# Note that the cookie name and header names needs to be bytes,
 	# not unicode. Otherwise we wind up with unicode objects in the
 	# headers, which are supposed to be ascii. Things like the Cookie
-	# module (used by webtest) then fail
-	basicauth = BasicAuthPlugin(b'NTI')
-	basicauth_interactive = ApplicationBasicAuthPlugin(b'NTI')
+	# module (used by webtest) then fail. Actually, not bytes specifically,
+	# but the native string type.
+	basicauth = BasicAuthPlugin(str('NTI'))
+	basicauth_interactive = ApplicationBasicAuthPlugin(str('NTI'))
 
 	def user_can_login(username):
 		whitelist = component.getUtility(ILogonWhitelist)
 		return username in whitelist and User.get_user(username) is not None
 
 	auth_tkt = AuthTktCookiePlugin(cookie_secret,
-								   b'nti.auth_tkt',
+								   str('nti.auth_tkt'),
 								   secure=secure_cookies,
 								   timeout=cookie_timeout,
 								   reissue_time=600,
 								   # For extra safety, we can refuse to return authenticated ids
-								   # if they don't exist or are denied logon. If we are called too early, outside the site,
-								   # this can raise an exception, but the only place that matters, logging,
-								   # already deals with it (gunicorn.py). Because it's an exception,
+								   # if they don't exist or are denied logon.
+								   # If we are called too early, outside the site,
+								   # this can raise an exception, but the only place that
+								   # matters, logging, already deals with it (gunicorn.py).
+								   # Because it's an exception,
 								   # it prevents any of the caching from kicking in
 								   userid_checker=user_can_login)
 
@@ -84,8 +90,20 @@ def create_who_apifactory( secure_cookies=True,
 	token_tkt = KnownUrlTokenBasedAuthenticator( cookie_secret,
 												 allowed_views=token_allowed_views )
 
+	# For browsers (NOT application browsers), we want to do authentication via a
+	# redirect to the login app.
+	settings = component.getUtility(IApplicationSettings)
+	login_root = settings.get('login_app_root', '/login/')
+
+	# A plugin that will redirect to the login app, telling the login
+	# app what path to return to (where we came from)
+	redirector = BrowserRedirectorPlugin(str(login_root),
+										 came_from_param=str('return'))
+
 	# Claimed identity (username) can come from the cookie,
 	# or HTTP Basic auth, or in special cases, from the token query param
+	# The plugin that identified a request will be the one asked to forget
+	# it if a challenge is issued.
 	identifiers = [('auth_tkt', auth_tkt),
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth),
@@ -96,7 +114,10 @@ def create_who_apifactory( secure_cookies=True,
 	authenticators = [('auth_tkt', auth_tkt),
 					  ('htpasswd', DataserverGlobalUsersAuthenticatorPlugin()),
 					  ('token_tkt', token_tkt)]
-	challengers = [ # Order matters when multiple classifications match
+	# Order matters when multiple plugins accept the classification
+	# of the request; the first plugin that returns a result from
+	# its challenge() method stops iteration.
+	challengers = [('browser-redirector', redirector),
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth), ]
 	mdproviders = []
