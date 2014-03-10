@@ -48,7 +48,7 @@ def _do_convert(page):
 
 	# Get the width and height from the media box since we're not cropping it
 	# in Python code
-	cmd = "pdfinfo -box -f %d images.pdf | grep MediaBox | awk '{print $4,$5}'" % (page)
+	cmd = "pdfinfo -box -f %(page)d -l %(page)d images.pdf | grep MediaBox | awk '{print $4,$5}'" % {'page': page}
 	result = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()
 	__traceback_info__ = cmd, result
 	width_in_pt, height_in_pt = result[0].split()
