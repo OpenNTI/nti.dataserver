@@ -21,6 +21,7 @@ from hamcrest import is_
 from hamcrest import contains
 from hamcrest import has_length
 from hamcrest import has_property
+from hamcrest import close_to
 
 
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -142,7 +143,7 @@ class TestSvgConverter(unittest.TestCase):
 				_, images = imager.executeConverter(f)
 
 			assert_that( images, has_length(24) )
-			assert_that( imager.images['key0'], has_property('width', 462.8))
+			assert_that( imager.images['key0'], has_property('width', close_to(462.0, 2.0)) )
 		finally:
 			converter_svg.ProcessPoolExecutor = orig_exec
 			os.chdir(cwd)
