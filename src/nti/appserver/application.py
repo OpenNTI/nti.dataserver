@@ -156,7 +156,7 @@ def _dictionary_views(pyramid_config, settings):
 		pyramid_config.registry.registerUtility(dictionary)
 		logger.debug("Adding dictionary")
 	except Exception:
-		logger.exception("Failed to add dictionary server")
+		logger.warn("Failed to add dictionary server", exc_info=True)
 
 def _service_odata_views(pyramid_config):
 	# service
