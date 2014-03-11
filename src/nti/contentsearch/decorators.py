@@ -83,6 +83,8 @@ class _SearchHitHighlightDecorator(object):
 			external[FRAGMENTS] = toExternalObject(hi.fragments)
 			external[TOTAL_FRAGMENTS] = hi.total_fragments
 
+SearchHitHighlightDecorator = _SearchHitHighlightDecorator  # export
+
 @component.adapter(search_interfaces.INoteSearchHit)
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class _NoteSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
