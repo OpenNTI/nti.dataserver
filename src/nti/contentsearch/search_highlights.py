@@ -144,14 +144,16 @@ def get_context_fragments(fragment, termset, query, maxchars, surround, punkt_pa
 					end = -idx
 					break
 
-		s = text[start:end]
-		snippet.append(s)
+		slc = text[start:end]
+		if len(slc) == len(text):  # all the text selected
+			return [fragment], text
+		snippet.append(slc)
 
 		# keep track of # chars
-		count += len(s)
+		count += len(slc)
 
 		# create fragment
-		sf = search_fragments.create_from_terms(s, termset, query.IsPhraseSearch,
+		sf = search_fragments.create_from_terms(slc, termset, query.IsPhraseSearch,
 												punkt_pattern)
 		fragments.append(sf)
 		if count > maxchars:
@@ -188,7 +190,6 @@ def _set_matched_filter(tokens, termset):
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 							 order=highlight.FIRST, lang='en'):
-
 	# get lang. punkt char regex patter
 	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus,
 										 name=lang)
