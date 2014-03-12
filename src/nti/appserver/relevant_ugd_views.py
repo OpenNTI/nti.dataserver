@@ -15,6 +15,8 @@ from zope import interface
 
 from pyramid import httpexceptions as _hexc
 
+from nti.app.renderers.interfaces import IUGDExternalCollection
+
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
@@ -28,12 +30,36 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+LAST_MODIFIED = ext_interfaces.StandardExternalFields.LAST_MODIFIED
+
 union_operator = query_views.Operator.union
 intersection_operator = query_views.Operator.intersection
 
-class _RelevantUGDView(query_views._UGDView):
+def _flatten_list_and_dicts(result, lists_and_dicts, predicate=None):
+	lastMod = 0
+	for list_or_dict in lists_and_dicts:
+		if list_or_dict is None:
+			continue
+		try:
+			lastMod = max(lastMod, list_or_dict.lastModified)
+		except AttributeError:
+			pass
+		try:
+			to_iter = list_or_dict.itervalues()
+			lastMod = max(lastMod, list_or_dict.get('Last Modified', 0))
+		except (AttributeError, TypeError):
+			to_iter = list_or_dict
 
+		for item in to_iter:
+			if item is not None and (predicate is None or predicate(item)):
+				result.add(item)  # add to set
+				lastMod = max(lastMod, getattr(item, 'lastModified', 0))
+	result.lastModified = lastMod
+
+class _LastModifiedSet(set):
 	lastModified = 0
+
+class _RelevantUGDView(query_views._UGDView):
 
 	def _make_accept_predicate( self ):
 		accept_types = ('application/vnd.nextthought.redaction',)
@@ -50,7 +76,9 @@ class _RelevantUGDView(query_views._UGDView):
 			the_filter = self.FILTER_NAMES[filter_name]
 			if isinstance(the_filter, tuple):
 				the_filter = the_filter[0](self.request)
-			predicate = query_views._combine_predicate(the_filter, predicate, operator=operator)
+			predicate = query_views._combine_predicate(the_filter,
+													   predicate,
+													   operator=operator)
 
 		# things shared w/ me and are top level
 		top_level = self.FILTER_NAMES[top_level_filter]
@@ -58,7 +86,9 @@ class _RelevantUGDView(query_views._UGDView):
 			x_sharedWith = getattr(x, 'sharedWith', ())
 			if self.user.username in x_sharedWith and top_level(x):
 				return True
-		predicate = query_views._combine_predicate(filter_shared_with, predicate, operator=operator)
+		predicate = query_views._combine_predicate(filter_shared_with,
+												   predicate,
+												   operator=operator)
 
 		return predicate
 
@@ -68,9 +98,9 @@ class _RelevantUGDView(query_views._UGDView):
 		except hexc.HTTPNotFound:
 			objects = ({}, {})
 
-		result = set()
+		result = _LastModifiedSet()
 		predicate = self._make_complete_predicate()
-		result.update(query_views._flatten_list_and_dicts(objects, predicate))
+		_flatten_list_and_dicts(result, objects, predicate)
 		return result
 
 	def _get_items(self, ntiid, result=None):
@@ -82,9 +112,9 @@ class _RelevantUGDView(query_views._UGDView):
 		except _hexc.HTTPNotFound:
 			return ()
 
-		result = set() if result is None else result
+		result = _LastModifiedSet() if result is None else result
 		predicate = self._make_complete_predicate()
-		result.update(query_views._flatten_list_and_dicts(all_objects, predicate))
+		_flatten_list_and_dicts(result, all_objects, predicate)
 		return result
 
 	def _get_library_path(self, ntiid):
@@ -93,7 +123,7 @@ class _RelevantUGDView(query_views._UGDView):
 		return paths[-1] if paths else None
 
 	def _scan_quizzes(self, ntiid, result=None):
-		result = set() if result is None else result
+		result = _LastModifiedSet() if result is None else result
 		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
 		# quizzes are often subcontainers, so we look at the parent
 		# and its children
@@ -105,7 +135,7 @@ class _RelevantUGDView(query_views._UGDView):
 		return result
 
 	def _scan_videos(self, ntiid, result=None):
-		result = set() if result is None else result
+		result = _LastModifiedSet() if result is None else result
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if video_map:
 			unit = self._get_library_path(ntiid)
@@ -121,15 +151,11 @@ class _RelevantUGDView(query_views._UGDView):
 		self._scan_quizzes(self.ntiid, items)
 		self._scan_videos(self.ntiid, items)
 
-		# get last modified
-		LAST_MODIFIED = ext_interfaces.StandardExternalFields.LAST_MODIFIED
-		lmobj = reduce(lambda x, y: x if x.lastModified > y.lastModified else y, items, self)
-
 		# return
 		result = LocatedExternalDict()
-		result['Items'] = items
+		result['Items'] = list(items)
 		result['Total'] = len(items)
 		result.mimeType = nti_mimetype_with_class(None)
-		result.lastModified = result[LAST_MODIFIED] = lmobj.lastModified
-		interface.alsoProvides(result, app_interfaces.IUGDExternalCollection)
+		result.lastModified = result[LAST_MODIFIED] = items.lastModified
+		interface.alsoProvides(result, IUGDExternalCollection)
 		return result
