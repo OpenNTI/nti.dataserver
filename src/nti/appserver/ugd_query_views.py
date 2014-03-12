@@ -942,12 +942,14 @@ class _RecursiveUGDView(_UGDView):
 		# actually be newer if we deleted data?)
 		last_mod_idx = catalog['lastModified']
 		newest_intids = last_mod_idx.sort(intids_created_by_me, limit=1, reverse=True)
-		newest_intid = next(iter(newest_intids))
 		uidutil = component.getUtility(IIntIds)
-		newest_obj = uidutil.queryObject(newest_intid)
 		try:
+			newest_intid = next(iter(newest_intids))
+			newest_obj = uidutil.queryObject(newest_intid)
 			last_modified = newest_obj.lastModified
-		except AttributeError:
+		except (StopIteration,AttributeError):
+			# If a user hasn't created any objects, then we get stop iteration.
+			# if for some reason the intid catalog is inconsistent we get AttributeError
 			last_modified = 0
 		result['Last Modified'] = last_modified
 
