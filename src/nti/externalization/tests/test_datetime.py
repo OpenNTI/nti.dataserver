@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+import os
+import time
 
 from hamcrest import assert_that
 from hamcrest import is_
@@ -57,12 +59,30 @@ class TestDatetime(ExternalizationLayerTest):
 	def test_native_timezone_conversion(self):
 		# XXX Note: this depends on the timezone we run tests
 		# in
-		assert_that( datetime_from_string('2014-01-20T00:00', assume_local=True),
-					 is_( IDateTime('2014-01-20T06:00Z')))
+		tz = os.environ.get('TZ')
+		try:
+			# Put us in an environment with no DST
+			os.environ['TZ'] = 'CST+06'
+			time.tzset()
+			assert_that( datetime_from_string('2014-01-20T00:00', assume_local=True),
+						 is_( IDateTime('2014-01-20T06:00Z')))
 
-		# Specified sticks, assuming non-local
-		assert_that(IDateTime('2014-01-20T06:00'),
-					is_( IDateTime('2014-01-20T06:00Z')))
+			# Specified sticks, assuming non-local
+			assert_that(IDateTime('2014-01-20T06:00'),
+						is_( IDateTime('2014-01-20T06:00Z')))
+
+			# Now put us in DST.
+			# XXX Not reliable on those days
+			os.environ['TZ'] = 'CST+06CDT+05,1,2'
+			time.tzset()
+			assert_that( datetime_from_string('2014-01-20T00:00', assume_local=True),
+						 is_( IDateTime('2014-01-20T06:00Z')))
+		finally:
+			if tz:
+				os.environ['TZ'] = tz
+			else:
+				del os.environ['TZ']
+			time.tzset()
 
 	def test_timedelta_to_string(self):
 
