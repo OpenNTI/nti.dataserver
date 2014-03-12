@@ -21,9 +21,7 @@ _cc = ISO7812CreditCard()
 def is_valid_creditcard_number(s):
 	"""
 	Returns True if the credit card number ``s`` is valid, False otherwise.
-
 	"""
-
 	if isinstance(s, numbers.Integral):
 		s = str(s)
 	elif isinstance(s, basestring):

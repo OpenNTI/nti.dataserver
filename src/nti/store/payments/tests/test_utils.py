@@ -29,7 +29,9 @@ class TestPaymentUtils(unittest.TestCase):
 		assert_that(utils.is_valid_creditcard_number("5105105105105XY0"), is_(False))
 
 	def test_validate_credit_card(self):
-		utils.validate_credit_card(5105105105105100, "01", "12", "647")
+		with assert_raises(ValidationError):
+			utils.validate_credit_card(5105105105105100, "01", "12", "647")
+
 		with assert_raises(ValidationError):
 			utils.validate_credit_card(5105105105105101, "01", "12", "647")
 
