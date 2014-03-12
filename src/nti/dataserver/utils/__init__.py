@@ -1,20 +1,25 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Having to do with mime types.
 
-import logging
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 import sys
+import logging
 import functools
 
 from zope.exceptions.exceptionformatter import print_exception
 import zope.exceptions.log
 
 from zope import component
-from zope.dottedname import resolve as dottedname
-from zope.component.hooks import setHooks
 from zope.component.hooks import setSite
+from zope.component.hooks import setHooks
 from zope.configuration import xmlconfig, config
-
+from zope.dottedname import resolve as dottedname
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
@@ -86,7 +91,6 @@ def run_with_dataserver( environment_dir=None, function=None,
 	:return: The results of the `function`
 	"""
 
-
 	@functools.wraps(function)
 	def run_user_fun_print_exception():
 		"""Run the user-given function in the environment; print exceptions
@@ -110,7 +114,8 @@ def run_with_dataserver( environment_dir=None, function=None,
 		component.provideUtility( ds , nti_interfaces.IDataserver)
 
 		try:
-			return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( run_user_fun_print_exception )
+			runner = component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+			return runner(run_user_fun_print_exception)
 		except AttributeError:
 			# we have seen this if the function closed the dataserver manually, but left
 			# the transaction open. Committing then fails. badly.
@@ -164,7 +169,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 
 	if as_main:
 		logging.basicConfig(level=logging.WARN if not verbose else logging.INFO)
-		logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
+		logging.root.handlers[0].setFormatter(zope.exceptions.log.Formatter('[%(name)s] %(levelname)s: %(message)s'))
 
 		setHooks()
 		if context is None:
@@ -211,10 +216,9 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 		except:
 			pass
 
-
 	if result is _user_function_failed:
 		if as_main:
-			print( "Failed to execute", getattr( fun, '__name__', fun ), type(_user_ex), _user_ex_str, _user_ex_repr )
+			print("Failed to execute", getattr(fun, '__name__', fun), type(_user_ex), _user_ex_str, _user_ex_repr)
 			sys.exit( 6 )
 		# returning none in this case is backwards compatibile behaviour. we'd really
 		# like to raise...something
