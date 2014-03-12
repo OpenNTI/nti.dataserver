@@ -26,14 +26,13 @@ These are not necessarily persistent and part of the traversal tree.
 This there are two things to accomplish: make the dataserver site the current site, and
 also construct a site that descends from that site and contains any applicable policies.
 
-.. $Id$
+$Id$
 """
 
 # turn off warning for not calling superclass, calling indirect superclass and accessing protected methods.
 # we're deliberately doing both
-#pylint: disable=W0233,W0231,W0212
-
-from __future__ import print_function, unicode_literals, absolute_import
+# pylint: disable=W0233,W0231,W0212
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)

@@ -163,7 +163,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 	"""
 
 	if as_main:
-		logging.basicConfig(level=logging.WARN if not verbose else logging.INFO)
+		logging.basicConfig(level=logging.WARN if not verbose else logging.DEBUG)
 		logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter( '[%(name)s] %(levelname)s: %(message)s' ) )
 
 		setHooks()
