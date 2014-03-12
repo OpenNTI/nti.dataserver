@@ -3,10 +3,10 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-
-logger = __import__( 'logging' ).getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 
@@ -23,8 +23,6 @@ from zope.keyreference.interfaces import IKeyReference
 from zope.annotation import interfaces as an_interfaces
 
 from zc import intid as zc_intid
-
-from repoze.lru import lru_cache
 
 import ZODB.POSException
 from ZODB.interfaces import IConnection
@@ -43,7 +41,7 @@ from nti.utils.property import CachedProperty
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
-		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
+		return component.queryUtility(nti_interfaces.IDataserver, context=context, default=default)
 	return component.getUtility( nti_interfaces.IDataserver, context=context )
 
 
@@ -137,7 +135,8 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		# to find a IConnection find the user's IConnection *first*, before they find
 		# the `root_users` connection
 		if not preflight_only:
-			placer = component.queryUtility( nti_interfaces.INewUserPlacer ) or component.getUtility( nti_interfaces.INewUserPlacer, name='default' )
+			placer = component.queryUtility(nti_interfaces.INewUserPlacer) or \
+					 component.getUtility(nti_interfaces.INewUserPlacer, name='default')
 			placer.placeNewUser( user, root_users, dataserver.shards )
 
 			IKeyReference( user ) # Ensure it gets added to the database

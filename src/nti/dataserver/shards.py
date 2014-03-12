@@ -5,12 +5,10 @@ Objects relating to database sharding.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-import persistent
 
 from zope import interface
 from zope import component
@@ -30,8 +28,8 @@ class ShardInfo(ds.PersistentCreatedModDateTrackingObject,SiteManagerContainer):
 
 	.. note:: As you can see, there's much more that needs to be done to this,
 		in addition to making use of the policies that might be installed for a specific
-		shard by making it a Site. For example, we might want to lock certain shards to avoid putting
-		new users in them; that state would need to be tracked here.
+		shard by making it a Site. For example, we might want to lock certain shards to
+		avoid putting new users in them; that state would need to be tracked here.
 	"""
 
 @interface.implementer(nti_interfaces.IShardLayout)
@@ -91,9 +89,10 @@ class AbstractShardPlacer(object):
 			return False
 
 		root_conn = IConnection(user_directory)
-		shard_conn = root_conn.get_connection( shard_name ) # TODO: Handling the case where we can't get a connection
+		# TODO: Handling the case where we can't get a connection
+		shard_conn = root_conn.get_connection(shard_name)
 		if shard_conn and shard_conn is not root_conn:
-			logger.info( "Assigning new user %s to shard %s", user.username, shard_name )
+			logger.info("Assigning new user %s to shard %s", user.username, shard_name)
 			shard_conn.add( user )
 
 			# Also put it in the root directory of this shard, so that this shard
@@ -137,5 +136,6 @@ class HashedShardPlacer(TrivialShardPlacer,AbstractShardPlacer):
 				# Note that we can't do that ourself, because the root shard uses a
 				# 'users' container that fires events, and the user object is probably not
 				# ready for that yet.
-				logger.debug( "Failed to assign new user %s to shard %s out of %s", user.username, shard_name, shard_buckets )
+				logger.debug("Failed to assign new user %s to shard %s out of %s",
+							 user.username, shard_name, shard_buckets)
 				TrivialShardPlacer.placeNewUser( self, user, user_directory, shards )

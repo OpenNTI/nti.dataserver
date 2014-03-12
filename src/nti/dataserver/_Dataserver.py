@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,7 +27,7 @@ import zope.deprecation
 from zope import interface
 from zope import component
 from zope.event import notify
-from zope.processlifetime import DatabaseOpened, DatabaseOpenedWithRoot
+from zope.processlifetime import DatabaseOpenedWithRoot
 
 from zc import intid as zc_intid
 
@@ -169,8 +169,7 @@ class MinimalDataserver(object):
 	def _setup_cache( self, conf ):
 		"""
 		Creates and returns a memcache instance to use.
-		""" # otherwise, our fallback now is to the local cache.
-		cache = None
+		"""
 
 		# Import the python implementation
 		import memcache
@@ -209,7 +208,8 @@ class MinimalDataserver(object):
 				with self.lock:
 					return self.cache.delete(*args,**kwargs)
 
-		component.getGlobalSiteManager().registerUtility( _Client(cache), interfaces.IMemcacheClient )
+		gsm = component.getGlobalSiteManager()
+		gsm.registerUtility(_Client(cache), interfaces.IMemcacheClient)
 		# NOTE: This is not UDP based, it is TCP based, so we have to be careful
 		# to close it. Our fork function uses disconnect_all, which simply
 		# terminates the open sockets, if any; they all open back up
@@ -219,7 +219,10 @@ class MinimalDataserver(object):
 
 	@property
 	def dataserver_folder(self):
-		"Returns an object implementing :class:`IDataserverFolder`. This object will have a parent implementing :class:`IRootFolder`"
+		"""
+		Returns an object implementing :class:`IDataserverFolder`.
+		This object will have a parent implementing :class:`IRootFolder`
+		"""
 		# We expect to be in a transaction and have a site manager
 		# installed that came from the database
 		lsm = component.getSiteManager()
@@ -233,10 +236,8 @@ class MinimalDataserver(object):
 		raise InappropriateSiteError( "Using Dataserver outside of site manager" )
 
 	@property
-	#@zope.deprecation.deprecate("Use dataserver_folder; this returns the same as it, not an IRootFolder.")
 	def root(self):
 		return self.dataserver_folder
-
 
 	@property
 	def root_folder(self):
@@ -310,6 +311,7 @@ class MinimalDataserver(object):
 
 import functools
 from nti.processlifetime import IAfterDatabaseOpenedEvent
+
 @component.adapter(IAfterDatabaseOpenedEvent)
 def _after_database_opened_listener(event):
 	"""
@@ -354,7 +356,6 @@ def _process_did_fork_listener( event ):
 	if ds:
 		# Re-open in place. pre-fork we called ds.close()
 		ds._reopen()
-
 
 @interface.implementer(interfaces.IDataserver)
 class Dataserver(MinimalDataserver):
@@ -538,6 +539,6 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 				result = None
 
 		return result
-	except (KeyError,UnicodeDecodeError,struct.error):
+	except (KeyError, UnicodeDecodeError, struct.error):
 		logger.exception( "Failed to resolve oid '%s' using '%s'", oid_string.encode('hex'), connection )
 		return None
