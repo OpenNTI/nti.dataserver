@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
 
 import random
 import collections
@@ -23,11 +28,10 @@ from nti.ntiids.ntiids import make_ntiid
 from nti.appserver.tests.test_application import TestApp
 
 from nti.dataserver.tests import mock_dataserver
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
-
-from hamcrest import (assert_that, is_, has_length, has_entry)
 
 class TestDashboardViews(ApplicationLayerTest):
 

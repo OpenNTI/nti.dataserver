@@ -5,7 +5,7 @@ Views for user dashboard
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,12 +20,15 @@ from zope import interface
 
 from z3c.batching.batch import Batch
 
+import pyramid.httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
 from nti.appserver.utils import is_true
 from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
@@ -47,7 +50,7 @@ from nti.externalization.externalization import to_standard_external_created_tim
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.ntiids import ntiids
-from .. import httpexceptions as hexc
+
 from nti.utils._compat import aq_base
 
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest')
@@ -99,8 +102,7 @@ def _check_container(ntiid, user, registry=component):
 		if (user.getContainer(ntiid) is None
 			and user.getSharedContainer(ntiid, defaultValue=None) is None
 			and (lib is None
-				 or (
-					 getattr(lib, "pathToNTIID", None)
+				 or (getattr(lib, "pathToNTIID", None)
 					 and not lib.pathToNTIID(ntiid)))):
 			raise hexc.HTTPNotFound()
 
@@ -263,6 +265,7 @@ class _TopUserSummaryView(AbstractAuthenticatedView):
 		return result
 
 ##### Min/Max dashboard view ####
+
 @interface.implementer(app_interfaces.INamedLinkView)
 class _UniqueMinMaxSummaryView(AbstractAuthenticatedView):
 
