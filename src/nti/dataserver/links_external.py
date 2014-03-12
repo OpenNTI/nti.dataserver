@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -53,11 +53,12 @@ def render_link( link, nearest_site=None ):
 	"""
 	:param link: The link to render. Optionally, the link may be
 		:class:`loc_interfaces.ILocation` if we need to find a site. The target
-		of the link can be a string, in which case it should be a complete path or an NTIID,
-		or it can be an object with a complete lineage. If the target is an NTIID string, we
-		will try to find the creating user of the link (or its target) to provide a more localized
-		representation; the link or its target has to implement :class:`nti_interfaces.ICreated`
-		for this to work or we will use the nearest site (probably the root).
+		of the link can be a string, in which case it should be a complete path or an
+		NTIID, or it can be an object with a complete lineage. If the target is an NTIID
+		string, we will try to find the creating user of the link (or its target) to
+		provide a more localized representation; the link or its target has to implement
+		:class:`nti_interfaces.ICreated` for this to work or we will use the nearest
+		site (probably the root).
 	:type link: :class:`nti_interfaces.ILink`
 	"""
 	__traceback_info__ = link, nearest_site
@@ -71,8 +72,10 @@ def render_link( link, nearest_site=None ):
 	ntiid = getattr( target, 'ntiid', None ) \
 		or getattr( target, 'NTIID', None ) \
 		or (isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target) and target)
+
 	if ntiid and not nti_interfaces.IShouldHaveTraversablePath.providedBy( target ):
-		# Although (enclosures and entities and other things with IShouldHaveTraversablePath) have an NTIID, we want to avoid using it
+		# Although (enclosures and entities and other things with IShouldHaveTraversablePath)
+		# have an NTIID, we want to avoid using it
 		# if possible because it has a much nicer pretty url.
 		href = ntiid
 		# We're using ntiid as a backdoor for arbitrary strings.
@@ -101,7 +104,6 @@ def render_link( link, nearest_site=None ):
 		# at dev time.
 		__traceback_info__ = rel, link.elements # next fun puts target in __traceback_info__
 		href = traversal.normal_resource_path( target )
-
 
 	assert href
 

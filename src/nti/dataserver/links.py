@@ -5,7 +5,7 @@ Implementation of the link data type.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -95,7 +95,9 @@ class Link(object):
 
 	def __eq__( self, other ):
 		try:
-			return self is other or (self.rel == other.rel and self.target == other.target and self.elements == other.elements)
+			return self is other or (self.rel == other.rel and \
+									 self.target == other.target and \
+									 self.elements == other.elements)
 		except AttributeError:
 			return NotImplemented
 

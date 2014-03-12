@@ -1,21 +1,28 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Utility to initialize an environment
 
-from __future__ import unicode_literals, print_function
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import simplejson as json
 
 from zc import intid as zc_intid
+
 from zope import interface
 from zope import component
 from zope.component.hooks import site, getSite
+
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
 from nti.dataserver.users import User, Community, FriendsList
-
-import logging
-logger = logging.getLogger( __name__ )
 
 def load_jfile(jfile):
 	path = os.path.join(os.path.dirname(__file__), jfile)
@@ -39,8 +46,6 @@ def exampleDatabaseInitializerSubscriber( event ):
 			component.provideUtility(
 				ExampleDatabaseInitializer(),
 				name='nti.dataserver-example' )
-
-
 
 @interface.implementer(gen_interfaces.IInstallableSchemaManager)
 class ExampleDatabaseInitializer(object):
@@ -74,7 +79,8 @@ class ExampleDatabaseInitializer(object):
 				   'chris.utz', 'carlos.sanchez', 'jonathan.grimes',
 				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
 				   'aaron.eskam', 'kaley.white', 'greg.higgins',
-				   'leo.parker', 'troy.daley', 'steve.johnson','vitalik.buterin' ):
+				   'leo.parker', 'troy.daley', 'steve.johnson', 'vitalik.buterin',
+				   'josh.zuech', 'chris.hansen', 'sean.jones'):
 			USERS.append( (uid + '@nextthought.com',
 						   uid.replace( '.', ' ').title(),
 						   uid + '@nextthought.com') )
@@ -92,7 +98,6 @@ class ExampleDatabaseInitializer(object):
 		USERS.append( ('cathy@buseygroup.com', 'Cathy Busey') )
 		USERS.append( ('clay@buseygroup.com', 'Clay Stanley') )
 		USERS.append( ('brian@buseygroup.com', 'Brian Busey') )
-
 
 		# Example people. Notice that we give them @nextthought.com
 		# emails so we can control the gravatars
@@ -232,8 +237,6 @@ class ExampleDatabaseInitializer(object):
 
 			if not is_test_user:
 				self._add_friendslists_to_user( user )
-#			else:
-#				self._add_test_user_friendlist(user)
 
 		map(create_add_user, USERS)
 
