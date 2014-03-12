@@ -154,8 +154,6 @@ REL_GENERAL_PRIVACY_PAGE = 'content.permanent_general_privacy_page'
 REL_CONTACT_EMAIL_SENDS_CONSENT = 'contact-email-sends-consent-request'
 
 from pyramid.renderers import render
-from pyramid.renderers import get_renderer
-from pyramid_mailer.message import Message
 from pyramid_mailer.message import Attachment
 
 CONTACT_EMAIL_RECOVERY_ANNOTATION = __name__ + '.contact_email_recovery_hash'
@@ -254,9 +252,20 @@ def send_consent_request_on_coppa_account( user, profile, email, request, rate_l
 											 filename=attachment_filename )
 	attachment = Attachment(attachment_filename, "application/pdf", attachment_stream )
 
+	# If the IEmailAddressable for the profile is the same as the email (which may be a value
+	# we get initially, or a value we have for contact_email later), we can use that as the
+	# recipient. Otherwise, we need to dummy up an implementation of IEmailAddressable that
+	# returns the email and can be adapted to a IPrincipal representing the user account.
+	# In this way we can always get back to the user account using VERP. See nti.mailer.
+	if getattr(user_interfaces.IEmailAddressable(profile, None), 'email', None) == email:
+		recip = (profile,)
+	else:
+		# TODO: The dummy object.
+		recip = (email,)
+
 	_email_utils.queue_simple_html_text_email( 'coppa_consent_request_email',
 											   subject=_("Please Confirm Your Child's NextThought Account"),
-											   recipients=[email],
+											   recipients=recip,
 											   template_args=dict(user=user, profile=profile, context=user),
 											   attachments=[attachment],
 											   package=dottedname.resolve('nti.appserver'), # XXX: Hack, see above
