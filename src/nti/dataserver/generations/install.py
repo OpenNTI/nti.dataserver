@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-"""zope.generations installer for nti.dataserver
+"""
+zope.generations installer for nti.dataserver
+
 $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-__docformat__ = 'restructuredtext'
+logger = __import__('logging').getLogger(__name__)
 
 generation = 46
 
@@ -21,7 +24,6 @@ class _DataserverSchemaManager(SchemaManager):
 														 minimum_generation=generation,
 														 package_name='nti.dataserver.generations')
 
-
 def evolve( context ):
 	result = install_main( context )
 	install_chat( context )
@@ -35,8 +37,8 @@ from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
 
-import zope.intid
 import zc.intid
+import zope.intid
 
 import z3c.password.interfaces
 
@@ -45,7 +47,6 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import session_storage
 from nti.dataserver import containers as container
-from nti.dataserver import intid_utility
 from nti.dataserver import flagging
 from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
@@ -53,9 +54,10 @@ from nti.dataserver import password_utility
 from nti.dataserver.users import index as user_index
 from nti.dataserver import metadata_index
 
+from nti.intid import utility as intid_utility
+
 def install_chat( context ):
 	pass
-
 
 def install_main( context ):
 	conn = context.connection
@@ -98,7 +100,6 @@ def install_main( context ):
 	assert conn.db().database_name != 'unnamed', "Must give a name"
 	assert shards[conn.db().database_name].__name__
 
-
 	# TODO: the 'users' key should probably be several different keys, one for each type of
 	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
 	# simplified through dropping UserRootResource in favor of normal traversal
@@ -106,7 +107,6 @@ def install_main( context ):
 	# become either zope.pluggableauth.plugins.principalfolder.PrincipalFolder
 	# or similar implementations of IAuthenticatorPlugin.
 	install_root_folders( dataserver_folder )
-
 
 	# Install the site manager and register components
 	root['nti.dataserver_root'] = root_folder
@@ -166,7 +166,6 @@ def install_password_utility( dataserver_folder ):
 
 def install_flag_storage( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()
-
 	lsm.registerUtility( flagging.IntIdGlobalFlagStorage(), provided=nti_interfaces.IGlobalFlagStorage )
 
 def install_root_folders( parent_folder,
