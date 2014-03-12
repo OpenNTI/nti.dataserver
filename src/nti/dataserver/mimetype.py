@@ -10,5 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import nti.deprecated
-nti.deprecated.moved('nti.mimetype.mimetype')
+import zope.deprecation
+zope.deprecation.moved('nti.mimetype.mimetype')
+
