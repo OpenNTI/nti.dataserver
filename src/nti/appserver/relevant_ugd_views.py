@@ -27,6 +27,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
@@ -52,12 +53,9 @@ def _flatten_list_and_dicts(result, lists_and_dicts, predicate=None):
 
 		for item in to_iter:
 			if item is not None and (predicate is None or predicate(item)):
-				result.add(item)  # add to set
+				result.append(item)  # add to list
 				lastMod = max(lastMod, getattr(item, 'lastModified', 0))
 	result.lastModified = lastMod
-
-class _LastModifiedSet(set):
-	lastModified = 0
 
 class _RelevantUGDView(query_views._UGDView):
 
@@ -98,7 +96,7 @@ class _RelevantUGDView(query_views._UGDView):
 		except hexc.HTTPNotFound:
 			objects = ({}, {})
 
-		result = _LastModifiedSet()
+		result = LocatedExternalList()
 		predicate = self._make_complete_predicate()
 		_flatten_list_and_dicts(result, objects, predicate)
 		return result
@@ -112,7 +110,7 @@ class _RelevantUGDView(query_views._UGDView):
 		except _hexc.HTTPNotFound:
 			return ()
 
-		result = _LastModifiedSet() if result is None else result
+		result = LocatedExternalList() if result is None else result
 		predicate = self._make_complete_predicate()
 		_flatten_list_and_dicts(result, all_objects, predicate)
 		return result
@@ -123,7 +121,7 @@ class _RelevantUGDView(query_views._UGDView):
 		return paths[-1] if paths else None
 
 	def _scan_quizzes(self, ntiid, result=None):
-		result = _LastModifiedSet() if result is None else result
+		result = LocatedExternalList() if result is None else result
 		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
 		# quizzes are often subcontainers, so we look at the parent
 		# and its children
@@ -135,7 +133,7 @@ class _RelevantUGDView(query_views._UGDView):
 		return result
 
 	def _scan_videos(self, ntiid, result=None):
-		result = _LastModifiedSet() if result is None else result
+		result = LocatedExternalList() if result is None else result
 		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 		if video_map:
 			unit = self._get_library_path(ntiid)
@@ -153,7 +151,7 @@ class _RelevantUGDView(query_views._UGDView):
 
 		# return
 		result = LocatedExternalDict()
-		result['Items'] = list(items)
+		result['Items'] = items
 		result['Total'] = len(items)
 		result.mimeType = nti_mimetype_with_class(None)
 		result.lastModified = result[LAST_MODIFIED] = items.lastModified
