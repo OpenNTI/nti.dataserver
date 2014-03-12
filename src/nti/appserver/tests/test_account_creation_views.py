@@ -598,7 +598,7 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 		from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 		from zope import interface
 		policy = GenericSitePolicyEventListener()
-		policy.DEFAULT_EMAIL_SENDER = 'test@nextthought.com'
+		policy.DEFAULT_EMAIL_SENDER = '\"Hello\" <test@nextthought.com>'
 
 		from z3c.baseregistry.baseregistry import BaseComponents
 		from nti.appserver.policies.sites import BASEADULT
@@ -614,7 +614,8 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_item( has_property( 'subject', 'Welcome to NextThought' ) ) )
-		assert_that( mailer.queue, has_item( has_entry('From', policy.DEFAULT_EMAIL_SENDER ) ) )
+
+		assert_that( mailer.queue, has_item( has_entry('From', contains_string('"Hello" <test+') ) ) )
 
 
 

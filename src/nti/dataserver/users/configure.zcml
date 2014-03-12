@@ -116,6 +116,8 @@
 	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
 			 for="nti.dataserver.interfaces.IEntity" />
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
+	<adapter factory=".user_profile._profile_to_principal" />
+	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
 			 zcml:condition="have devmode" />

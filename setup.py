@@ -224,6 +224,7 @@ setup(
 		# than 1.0b3)
 		'html5lib',
 		'isodate >= 0.4.9',	 # ISO8601 date/time/duration parser and formatter
+		'itsdangerous', # Simple helper library for signing data that roundtrips through untrusted environments
 		'joblib >= 0.7.1',	# Python functions as pipeline jobs.
 		'logilab-common',
 		'lxml', # Powerful and Pythonic HTML/XML processing library combining libxml2/libxslt with the ElementTree API. Also a pull parser.

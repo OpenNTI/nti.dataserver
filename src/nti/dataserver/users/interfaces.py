@@ -33,6 +33,8 @@ import zope.interface.interfaces
 from z3c.password import interfaces as pwd_interfaces
 from plone.i18n.locales import interfaces as locale_interfaces
 
+from nti.mailer.interfaces import IEmailAddressable
+
 import nti.utils.schema
 from nti.utils.schema import ValidText
 from nti.utils.schema import ValidTextLine
@@ -400,7 +402,8 @@ class IContactEmailRecovery(interface.Interface):
 	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
 
 
-class ICompleteUserProfile(IRestrictedUserProfile):
+class ICompleteUserProfile(IRestrictedUserProfile,
+						   IEmailAddressable):
 	"""
 	A complete user profile.
 	"""

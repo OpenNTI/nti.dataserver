@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/Sr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Mailing interfaces.
@@ -22,6 +22,13 @@ IMailer = IMailer # re-export, primarily for testing
 from repoze.sendmail.interfaces import IMailDelivery
 IMailDelivery = IMailDelivery # re-export, primarily for testing
 
+class IEmailAddressable(interface.Interface):
+	"""
+	Something containing an email address.
+	"""
+
+	email = interface.Attribute("The email address to send to")
+
 class ITemplatedMailer(interface.Interface):
 	"""
 	An object, typically registered as a utility,
@@ -41,6 +48,14 @@ class ITemplatedMailer(interface.Interface):
 		Transactionally queues an email for sending. The email has both a
 		plain text and an HTML version.
 
+		:keyword recipients: A sequence of RFC822 email addresses as strings,
+			or objects that can be adapted to an :class:`.IEmailAddressable`
+			object. If no recipients are given, this does nothing. If any
+			recipients are not strings, then if they cannot be adapted to
+			:class:`.IEmailAddressable` or if the ``email`` attribute of the
+			adapted object is false (none, empty) they will silently be dropped
+			from the list.
+
 		:keyword text_template_extension: The filename extension for the plain text template. Valid
 			values are ".txt" for Chameleon templates (this is the
 			default and preferred version) and ".mak" for Mako
@@ -52,7 +67,8 @@ class ITemplatedMailer(interface.Interface):
 			package (and its templates/ subdirectory if no subdirectory is specified).
 			If no package is given, the package of the caller of this function is used.
 
-		:return: The :class:`pyramid_mailer.message.Message` we sent.
+		:return: The :class:`pyramid_mailer.message.Message` we sent, if we sent one,
+			otherwise None.
 		"""
 
 	def create_simple_html_text_email(base_template,

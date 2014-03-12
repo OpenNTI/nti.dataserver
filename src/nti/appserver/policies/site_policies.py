@@ -30,6 +30,7 @@ from zope.interface.common.idatetime import IDate
 from zope.component.interfaces import IComponents
 from zope.schema import interfaces as sch_interfaces
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.security.interfaces import IPrincipal
 from zope.dottedname import resolve as dottedname
 
 from ZODB.loglevels import TRACE
@@ -496,14 +497,15 @@ class AbstractSitePolicyEventListener(object):
 		email = getattr(profile, 'email')
 		if not email:
 			return
-
+		assert getattr(user_interfaces.IEmailAddressable(profile, None), 'email', None) == email
+		assert getattr(IPrincipal(profile, None), 'id', None) == user.username
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
 		component.getUtility(ITemplatedMailer).queue_simple_html_text_email(
 			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
 			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
-			recipients=[email],
+			recipients=[profile],
 			template_args={'user': user, 'profile': profile, 'context': user },
 			request=event.request,
 			package=self.__find_my_package())

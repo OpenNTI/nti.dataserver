@@ -139,6 +139,12 @@ class UserProfile(FriendlyNamed):
 
 	username = property( lambda self: self.context.username )
 
+@component.adapter(interfaces.IUserProfile)
+@interface.implementer(nti_interfaces.IPrincipal)
+def _profile_to_principal(profile):
+	return nti_interfaces.IPrincipal(profile.context)
+
+
 def make_password_recovery_email_hash( email ):
 	if not email:
 		raise ValueError("Must provide email")
@@ -158,6 +164,16 @@ class RestrictedUserProfile(UserProfile):
 @interface.implementer(interfaces.IRestrictedUserProfileWithContactEmail)
 class RestrictedUserProfileWithContactEmail(RestrictedUserProfile):
 	pass
+
+# XXX: We actually will want to register this in the same
+# cases we register the profile itself, for the same kinds of users
+
+@component.adapter(interfaces.IRestrictedUserProfileWithContactEmail)
+@interface.implementer(interfaces.IEmailAddressable)
+class RestrictedUserProfileWithContactEmailAddressable(object):
+
+	def __init__(self, context):
+		self.email = context.contact_email
 
 @component.adapter(nti_interfaces.IUser)
 @interface.implementer(interfaces.ICompleteUserProfile)

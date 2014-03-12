@@ -26,6 +26,7 @@ from nti.dataserver.tests import mock_dataserver
 
 
 from zope import interface
+from zope.security.interfaces import IPrincipal
 
 from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
@@ -52,6 +53,8 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that( prof,
 					 has_property( 'opt_in_email_communication', is_false() ) )
 
+		# We can get to the principal representing the user
+		assert_that( IPrincipal(prof), has_property('id', user.username))
 
 		with assert_raises(interfaces.EmailAddressInvalid):
 			prof.email = u"foo"
@@ -68,6 +71,10 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that( prof2.email, is_( 'foo@bar.com' ) )
 		assert_that( prof,
 					 verifiably_provides( interfaces.ICompleteUserProfile ) )
+
+		# We can get to the email address
+		assert_that( interfaces.IEmailAddressable(user), has_property('email', 'foo@bar.com'))
+
 
 	def test_non_blank_fields(self):
 		user = User( username="foo@bar" )
