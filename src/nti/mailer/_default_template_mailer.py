@@ -248,10 +248,18 @@ def _send_mail( fromaddr=None, toaddrs=None, message=None, pyramid_mail_message=
 	if not fromaddr:
 		fromaddr = getattr( pyramidmailer, 'default_sender', None )
 
-	# NOTE: Amazon SES now supports labels for sending emails, making
-	# it possible to do 'VERP' (https://en.wikipedia.org/wiki/Variable_envelope_return_path),
-	# meaning we can directly identify the account we sent to (or even type of email) in case of a bounce
-	# This requires using 'labels' and modifying the sending address: foo+label@domain.com
+	# Amazon SES now supports labels for sending emails
+	# (http://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html),
+	# making it possible to do 'VERP'
+	# (https://en.wikipedia.org/wiki/Variable_envelope_return_path),
+	# meaning we can directly identify the account we sent to (or even
+	# type of email) in case of a bounce This requires using 'labels'
+	# and modifying the sending address: foo+label@domain.com.
+	# Note that SES makes no mention of the Sender header, instead
+	# putting the labels directly in the From line (which is what, for example,
+	# Facebook does) or in the Return-Path line (which is what trello does).
+	# However, SES only deals with the Return-Path header if you use its API,
+	# not if you use SMTP (http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notifications-via-email.html)
 
 	if toaddrs is None:
 		toaddrs = pyramid_mail_message.send_to # required

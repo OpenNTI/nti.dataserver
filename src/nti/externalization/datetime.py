@@ -63,10 +63,15 @@ def _as_utc_naive(dt, assume_local=True):
 	if not dt.tzinfo:
 		if assume_local:
 			# They did not specify a timezone, assume they authored
-			# in the native timezone, so make it reflect that
-			# First, get the timezone name
-			add = '+' if time.timezone > 0 else ''
-			tzname = 'Etc/GMT' + add + str((time.timezone // 60 // 60))
+			# in the (current) native timezone, so make it reflect that
+			# First, get the timezone name, using daylight name if appropriate
+			if time.daylight and time.altzone is not None and time.tzname[1]:
+				offset = time.altzone
+			else:
+				offset = time.timezone
+
+			add = '+' if offset > 0 else ''
+			tzname = 'Etc/GMT' + add + str((offset // 60 // 60))
 			dt = dt.replace(tzinfo=pytz.timezone(tzname))
 		else:
 			dt = dt.replace(tzinfo=pytz.UTC)
