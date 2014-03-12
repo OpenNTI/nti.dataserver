@@ -6,7 +6,7 @@ designed for persistence and storing in ZODB.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,6 +24,5 @@ class HighSecurityPasswordUtility(persistent.Persistent,z3c.password.password.Hi
 	"""
 	A password policy that is designed for persistent storage in the ZODB.
 	"""
-
 	__name__ = None
 	__parent__ = None

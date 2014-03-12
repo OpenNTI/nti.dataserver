@@ -5,7 +5,7 @@ Storage for sessions, providing an implementation of :class:`nti.dataserver.inte
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,8 +20,9 @@ import BTrees
 import persistent
 
 from nti.dataserver import users
-from nti.dataserver import intid_utility
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.intid import utility as intid_utility
 
 from nti.utils.sets import discard
 
@@ -36,7 +37,9 @@ def _session_id_set_for_session_owner( session_owner_or_user, family, default=No
 		(and not stored anywhere)
 	"""
 	__traceback_info__ = session_owner_or_user, default, create
-	user = users.User.get_user( session_owner_or_user ) if not nti_interfaces.IUser.providedBy( session_owner_or_user ) else session_owner_or_user
+	user = users.User.get_user(session_owner_or_user) \
+	if not nti_interfaces.IUser.providedBy(session_owner_or_user) else session_owner_or_user
+
 	if user is None and default is None:
 		raise KeyError( "No such user " + session_owner_or_user )
 	annotations = IAnnotations( user ) if default is None else IAnnotations( user, default )

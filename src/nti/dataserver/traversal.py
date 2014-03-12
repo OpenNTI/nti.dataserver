@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -16,7 +16,8 @@ from zope import component
 from zope.location import LocationIterator
 from zope.location import interfaces as loc_interfaces
 
-from pyramid.traversal import _join_path_tuple, find_interface as _p_find_interface # TODO: Remove the dependency on pyramid at this level
+# TODO: Remove the dependency on pyramid at this level
+from pyramid.traversal import _join_path_tuple, find_interface as _p_find_interface
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -76,7 +77,8 @@ def normal_resource_path( res ):
 def is_valid_resource_path( target ):
 	# We really want to check if this is a valid HTTP URL path. How best to do that?
 	# Not documented until we figure it out.
-	return isinstance( target, basestring ) and  (target.startswith( '/' ) or target.startswith( 'http://' ) or target.startswith( 'https://' ) )
+	return 	isinstance(target, basestring) and  (target.startswith('/') or \
+			target.startswith('http://') or target.startswith('https://'))
 
 def find_nearest_site(context):
 	"""
