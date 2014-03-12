@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,13 +29,15 @@ class _AbstractMeetingContainerAdapter(object):
 
 
 	Subclasses *must* define :attr:`_allowed_occupants` and *may* define
-	:attr:`_allowed_creators` (if they don't it is the same as :attr:`_allowed_occupants`).
+	:attr:`_allowed_creators`
+	(if they don't it is the same as :attr:`_allowed_occupants`).
 
 	This object defines the following attributes:
 
 	.. py:attribute:: context
 
-		The context object. The context object *must* be adaptable to :class:`zope.annotation.interfaces.IAnnotations`.
+		The context object. The context object *must* be adaptable to
+		:class:`zope.annotation.interfaces.IAnnotations`.
 	"""
 
 	#: The name of the annotation we use to store an active room on the context object.
@@ -118,7 +120,6 @@ class _AbstractMeetingContainerAdapter(object):
 
 		return result
 
-
 	def create_or_enter_meeting( self, chatserver, meeting_dict, constructor ):
 		"""
 		The combination of :meth:`create_or_enter_meeting` with :meth:`enter_active_meeting`.
@@ -136,10 +137,6 @@ class _AbstractMeetingContainerAdapter(object):
 
 	def meeting_became_empty( self, chatserver, meeting ):
 		del self._active_meeting
-		#try:
-		#	del ant_interfaces.IAnnotations(self.context)[self.ACTIVE_ROOM_ATTR]
-		#except KeyError:
-		#	pass
 
 @component.adapter( nti_interfaces.IFriendsList )
 class _FriendsListAdapter(_AbstractMeetingContainerAdapter):

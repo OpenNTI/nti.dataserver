@@ -5,7 +5,7 @@ Support for flagging modeled content.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -33,7 +33,6 @@ def flag_object(context, username):
 
 	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).flag(context)
 
-
 def flags_object(context, username):
 	"""
 	Returns whether the `context` object has been flagged. This may or may not
@@ -52,7 +51,6 @@ def unflag_object(context, username):
 	"""
 
 	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).unflag(context)
-
 
 @component.adapter(nti_interfaces.IFlaggable, intid_interfaces.IIntIdRemovedEvent)
 def _delete_flagged_object(flaggable, event):

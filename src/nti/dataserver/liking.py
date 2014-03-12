@@ -166,7 +166,6 @@ def favorites_object(context, username, safe=False):
 	"""
 	return _rates_object(context, username, FAVR_CAT_NAME, safe=safe)
 
-
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(interfaces.ILikeable)
 class LikeDecorator(object):
@@ -178,7 +177,6 @@ class LikeDecorator(object):
 
 	def decorateExternalMapping(self, context, mapping):
 		mapping['LikeCount'] = like_count( context ) # go through the function to be safe
-
 
 from zope.container.contained import Contained
 
@@ -203,14 +201,14 @@ class _BinaryUserRatings(Contained, Persistent):
 	"""
 
 	scale = 1
+	family = BTrees.family64
 
 	def __init__(self):
 		super(_BinaryUserRatings,self).__init__()
 		# Since we are simply recording the presence or absence of a user,
 		# can can use a simple set of strings
-		self._ratings = BTrees.family64.OO.TreeSet()
+		self._ratings = self.family.OO.TreeSet()
 		self._length = Length()
-
 
 	def rate(self, rating, username=None, session_key=None):
 		"""Set a rating for a particular user"""
