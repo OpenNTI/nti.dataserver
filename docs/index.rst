@@ -67,6 +67,7 @@ Users and Logon
 
 	user_logon
 	user_and_site_policies
+	user_management
 	user_groups
 	dfl_views
 
