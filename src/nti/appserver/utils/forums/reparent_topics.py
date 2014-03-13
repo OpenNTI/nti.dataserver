@@ -6,10 +6,12 @@ Temp utility to reparent topics
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
+from xlwt.antlr import illegalarg_ex
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import sys
 import argparse
 
@@ -58,15 +60,19 @@ def reparent_topics(community, forum_name, list_forums=False, verbose=False):
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Reparent topics")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('community', help="The name of the community")
+	arg_parser.add_argument( '--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('-l', '--listforums', help="List forums", action='store_true', dest='list_forums')
 	arg_parser.add_argument('-f', '--forum', help="Forum name", default=CommunityForum.__default_name__, dest='forum')
 	args = arg_parser.parse_args()
 
 	fourm = args.forum
-	env_dir = args.env_dir
+
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory ({})".format( args.env_dir ) )
+	
 	verbose = args.verbose
 	community = args.community
 	list_forums = args.list_forums
