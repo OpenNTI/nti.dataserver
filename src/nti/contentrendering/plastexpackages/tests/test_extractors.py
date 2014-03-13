@@ -126,7 +126,7 @@ class TestCourseExtractor(unittest.TestCase):
 			lesson = unit.childNodes[1]
 			assert_that( dict(lesson.attributes.items()),
 						 has_entries( 'levelnum', '1',
-									  'date', "2013-08-19T05:00:00+00:00,2013-08-22T04:59:59.999999+00:00",
+									  'date', "2013-08-19T05:00:00Z,2013-08-22T04:59:59Z",
 									  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.l2",
 									  'isOutlineStubOnly', 'false'))
 
@@ -137,7 +137,7 @@ class TestCourseExtractor(unittest.TestCase):
 			sub_lesson = sub_lessons[0]
 			assert_that( dict(sub_lesson.attributes.items()),
 						 has_entries( 'levelnum', '2',
-									  'date', "2013-12-31T06:00:00+00:00,2014-01-03T05:59:00+00:00",
+									  'date', "2013-12-31T06:00:00Z,2014-01-03T05:59:00Z",
 									  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.section_title_2"))
 
 			sub_sub_lessons = sub_lesson.childNodes
@@ -146,6 +146,6 @@ class TestCourseExtractor(unittest.TestCase):
 			sub_sub_lesson = sub_sub_lessons[0]
 			assert_that( dict(sub_sub_lesson.attributes.items()),
 						 has_entries( 'levelnum', '3',
-									  'date', "2014-01-04T05:59:00+00:00",
+									  'date', "2014-01-04T05:59:00Z",
 									  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.subsection_title_2",
 									  'isOutlineStubOnly', 'true'))

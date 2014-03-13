@@ -58,21 +58,45 @@ def _date_from_string( string ):
 	# but programatically we actually require ISO format
 	return _parse_with( isodate.parse_date, string )
 
-def _as_utc_naive(dt, assume_local=True):
+def _pytz_timezone(key):
+	try:
+		return pytz.timezone(key)
+	except (KeyError,AttributeError):
+		return None
+
+def _as_utc_naive(dt, assume_local=True, local_tzname=None):
 	# Now convert to GMT, but as a 'naive' object.
 	if not dt.tzinfo:
 		if assume_local:
 			# They did not specify a timezone, assume they authored
-			# in the (current) native timezone, so make it reflect that
-			# First, get the timezone name, using daylight name if appropriate
-			if time.daylight and time.altzone is not None and time.tzname[1]:
-				offset = time.altzone
-			else:
-				offset = time.timezone
+			# in the native timezone, meaning to use any DST rules in
+			# effect at the time specified, not the current time.
+			local_tzname = local_tzname or time.tzname
+			tzinfo = _pytz_timezone(local_tzname)
 
-			add = '+' if offset > 0 else ''
-			tzname = 'Etc/GMT' + add + str((offset // 60 // 60))
-			dt = dt.replace(tzinfo=pytz.timezone(tzname))
+			# Ok, not a value known to pytz. Is it a two-tuple like ('CST', 'CDT')
+			# that we can figure out the offset of ourself?
+			if (not tzinfo
+				and isinstance(local_tzname, tuple)
+				and len(local_tzname) == 2
+				and all((bool(x) for x in local_tzname))):
+				offset_hours = time.timezone // 3600
+				local_tzname = '%s%d%s' % (local_tzname[0], offset_hours, local_tzname[1])
+				tzinfo = _pytz_timezone(local_tzname)
+
+			if not tzinfo:
+				# well nuts. Do the best we can with the current info
+				# First, get the timezone name, using daylight name if appropriate
+				if time.daylight and time.altzone is not None and time.tzname[1]:
+					offset = time.altzone
+				else:
+					offset = time.timezone
+
+				add = '+' if offset > 0 else ''
+				local_tzname = 'Etc/GMT' + add + str((offset // 60 // 60))
+				tzinfo = pytz.timezone(local_tzname)
+
+			dt = tzinfo.localize(dt)
 		else:
 			dt = dt.replace(tzinfo=pytz.UTC)
 
@@ -82,7 +106,7 @@ def _as_utc_naive(dt, assume_local=True):
 
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDateTime)
-def datetime_from_string( string, assume_local=False ):
+def datetime_from_string( string, assume_local=False, local_tzname=None ):
 	"""
 	This adapter allows any field which comes in as a string is
 	IOS8601 format to be transformed into a datetime. The schema field
@@ -102,7 +126,15 @@ def datetime_from_string( string, assume_local=False ):
 		we will assume that it is already meant to be in UTC.
 		Otherwise, if set to true, when we parse such a string we
 		will assume that it is meant to be in the \"local\" timezone
-		and adjust accordingly.
+		and adjust accordingly. If the local timezone experiences
+		DST, then the time will be interpreted with the UTC offset
+		*as-of the DST rule in effect on the date parsed*, not
+		the current date, if possible. If not possible, the current
+		rule will be used.
+	:keyword local_tzname: If given, either a string acceptable to
+		:func:`pytz.timezone` to produce a ``tzinfo`` object,
+		or a two-tuple as given from :const:`time.timezone`. If not given,
+		local timezone will be determined automatically.
 	"""
 	dt =_parse_with( isodate.parse_datetime, string )
 	return _as_utc_naive(dt, assume_local=assume_local)

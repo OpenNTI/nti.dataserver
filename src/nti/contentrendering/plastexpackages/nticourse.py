@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 NTI course macros
@@ -13,17 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 from datetime import datetime
 from datetime import timedelta
 
-from plasTeX.Base import Command
-from plasTeX.Base import Crossref
-from plasTeX.Base import Environment
+from plasTeX import Command
+from plasTeX.Base.LaTeX.Crossref import ref
+from plasTeX import Environment
 from plasTeX.Base.LaTeX.Sectioning import part
 from plasTeX.Base.LaTeX.Sectioning import chapter
 from plasTeX.Base.LaTeX.Sectioning import section
 from plasTeX.Base.LaTeX.Sectioning import subsection
 from plasTeX.Base.LaTeX.Sectioning import subsubsection
 
-from pytz import timezone
-from pytz import all_timezones
+import pytz
 
 from nti.contentrendering import plastexids
 
@@ -43,6 +41,7 @@ class course(Environment, plastexids.NTIIDMixin):
 	_ntiid_suffix = 'course.'
 	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTICourse'
+	tz = None
 
 	def invoke(self, tex):
 		res = super(course,self).invoke(tex)
@@ -58,11 +57,16 @@ class course(Environment, plastexids.NTIIDMixin):
 				raise ValueError("Must specify a title using \\caption")
 
 			options = self.attributes.get( 'options', {} ) or {}
-			if 'tz' in options and options['tz'] in all_timezones:
-				self.tz = timezone(options['tz'])
+			if 'tz' in options:
+				# Blow up if the user gave us a bad timezone, rather
+				# then silently producing the wrong output
+				self.tz = pytz.timezone(options['tz'])
+				logger.warn('tz option is deprecated, use nti_render_conf.ini')
+				self.ownerDocument.userdata['document_timezone_name'] = options['tz']
 			else:
 				logger.warn('No valid timezone specified')
-				self.tz = timezone( DEFAULT_TZ )
+				self.tz = pytz.timezone( DEFAULT_TZ )
+				self.ownerDocument.userdata['document_timezone_name'] = DEFAULT_TZ
 
 			__traceback_info__ = options, self.attributes
 
@@ -134,7 +138,16 @@ class courseunit(Environment, plastexids.NTIIDMixin):
 class courselessonname(Command):
 	pass
 
-class courselessonref(Crossref.ref):
+
+from nti.externalization.datetime import datetime_from_string
+
+def _parse_local_date(self, val):
+	 # If they gave no timezone information,
+	# use the document's
+	return datetime_from_string( val,
+								 assume_local=True,
+								 local_tzname=self.ownerDocument.userdata.get('document_timezone_name') )
+class courselessonref(ref):
 	args = 'label:idref {date:str}'
 
 	date = ()
@@ -147,9 +160,15 @@ class courselessonref(Crossref.ref):
 			self.date = []
 			for date in dates:
 				if date:
-					date = date.split('/')
-					# FIXME: Non-standard date representation
-					self.date.append(datetime(int(date[2]), int(date[0]), int(date[1])))
+					if '/' in date:
+						date = date.split('/')
+						# FIXME: Non-standard date representation
+						iso_date = '%s-%s-%s' % (date[2], date[0], date[1])
+						logger.info("Interpreting %s to mean %s in ISO format (YYYY-MM-DD)", date, iso_date)
+						date = iso_date
+					if 'T' not in date:
+						date += 'T00:00'
+					self.date.append(_parse_local_date(self, date))
 				else:
 					self.date.append(datetime.today())
 			self.date[-1] = self.date[-1] + timedelta(days=1) - timedelta(microseconds=1)
@@ -166,8 +185,6 @@ class courselesson(chapter):
 
 	is_outline_stub_only = None
 
-import isodate
-
 def _parse_date_at_invoke(self):
 	# FIXME: We want these to be relative, not absolute, so they
 	# can be made absolute based on when the course begins.
@@ -180,7 +197,8 @@ def _parse_date_at_invoke(self):
 			if 'T' not in val:
 				# If they give no timestamp, make it default_time
 				val += default_time
-			return isodate.parse_datetime(val)
+			# Now parse it.
+			return _parse_local_date(self, val)
 
 	not_before = _parse('not_before_date', 'T00:00')
 	not_after = _parse('not_after_date', 'T23:59')
