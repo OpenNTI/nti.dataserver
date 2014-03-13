@@ -6,7 +6,6 @@ Temp utility to reparent topics
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
-from xlwt.antlr import illegalarg_ex
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -71,7 +70,7 @@ def main():
 
 	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError( "Invalid dataserver environment root directory ({})".format( args.env_dir ) )
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
 	
 	verbose = args.verbose
 	community = args.community

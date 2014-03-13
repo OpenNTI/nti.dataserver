@@ -25,9 +25,9 @@ import nti.dataserver.utils.example_database_initializer
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Initialize a base dataserver environment" )
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('pserve_ini_file', help="The path to the .ini file for pserve")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('--with-example', help="Populate the example data", action='store_true', dest='with_example')
 	arg_parser.add_argument('--configure-database-only',
 							help="Install (example, if specified) data in the database only. "
@@ -44,7 +44,12 @@ def main():
 	sys.exit(0)
 
 def init_env( args ):
-	root_dir = args.env_dir
+	
+	root_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not root_dir or not os.path.exists(root_dir) and not os.path.isdir(root_dir):
+		raise ValueError( "Invalid dataserver environment root directory", root_dir )
+	
+
 	pserve_ini = args.pserve_ini_file
 	pserve_ini = os.path.abspath( os.path.expanduser( pserve_ini ) )
 	if not os.path.exists( pserve_ini ):

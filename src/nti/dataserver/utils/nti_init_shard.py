@@ -14,12 +14,17 @@ from nti.dataserver.generations.install import install_shard
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Make an existing database connection available as a user shard" )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'shard_name', help="The name of the shard, matches the database name" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	shard_name = args.shard_name
 	init_shard(env_dir, shard_name)
 	sys.exit(0)

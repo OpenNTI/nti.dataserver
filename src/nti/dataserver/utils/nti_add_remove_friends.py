@@ -9,6 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import os
 import sys
 import pprint
 import argparse
@@ -69,9 +70,9 @@ def process_params(args):
 def main():
 	arg_parser = argparse.ArgumentParser( description="Add/Remvove friends from a FriendsList" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'owner', help="The owner of the friend list" )
 	arg_parser.add_argument( 'name', help="The name of friend list" )
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument( '-a', '--add',
 							 dest='add_members',
 							 nargs="+",
@@ -82,8 +83,10 @@ def main():
 							 help="The usernames of the entities to remove" )
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
-
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
 						 function=lambda: process_params(args) )

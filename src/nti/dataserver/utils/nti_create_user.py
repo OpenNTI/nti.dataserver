@@ -102,9 +102,9 @@ def _create_user(factory, username, password, realname, communities=(), options=
 
 def create_user(args=None):
 	arg_parser = argparse.ArgumentParser(description="Create a user-type object")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to create")
 	arg_parser.add_argument('password', nargs='?')
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
 	arg_parser.add_argument('-t', '--type',
@@ -150,7 +150,12 @@ def create_user(args=None):
 
 	args = arg_parser.parse_args(args=args)
 
-	env_dir = args.env_dir
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	username = args.username
 	password = args.password
 

@@ -7,7 +7,6 @@ gevent_patch_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
-import os
 import os.path
 import urlparse
 import time
@@ -28,7 +27,7 @@ import gevent.pool
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Cache all gravatar urls locally" )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument( '-d', '--directory',
 							 dest='export_dir',
@@ -39,7 +38,12 @@ def main():
 	out_dir = args.export_dir
 	if not os.path.exists( out_dir ):
 		os.mkdir( out_dir )
-	run_with_dataserver(environment_dir=args.env_dir,
+		
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
+	run_with_dataserver(environment_dir=env_dir,
 						verbose=args.verbose,
 						function=lambda: _downloadAvatarIcons( out_dir ) )
 

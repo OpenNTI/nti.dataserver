@@ -43,6 +43,8 @@ REL_INVALID_EMAIL = 'state-bounced-email'
 #: updating the profile to remove the flag.
 REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
 
+import os
+
 import anyjson as json
 import argparse
 import boto
@@ -163,8 +165,8 @@ def process_ses_feedback( messages, dataserver=None, mark_transient=True ):
 
 def process_sqs_messages():
 	arg_parser = argparse.ArgumentParser( description="Read SES feedback messages from an SQS queue and mark users that need updates." )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( 'queue', help="The SQS queue to read from. Default: %(default)s", default='SESFeedback', nargs='?' )
+	arg_parser.add_argument( '--env_dir', help="Dataserver environment root directory" )
 	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument( '--delete', help="After successful processing, delete messages from SQS queue. Default: %(default)s",
 							 action='store_true', dest='delete', default=False)
@@ -184,7 +186,8 @@ def process_sqs_messages():
 				msg = fb_q.read()
 		return process_ses_feedback( gen() )
 
-	env_dir = args.env_dir
+	env_dir = _get_env_dir( args.env_dir )
+	
 	proc_msgs = run_with_dataserver( environment_dir=env_dir,
 									 function=_proc,
 									 xmlconfig_packages=('nti.appserver',),
@@ -196,18 +199,25 @@ def process_sqs_messages():
 
 def mark_emails_bounced():
 	arg_parser = argparse.ArgumentParser( description="Search for accounts using an email address and mark them invalid." )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument( 'addrs', help="The email addresses to find.", nargs='+' )
-
+	arg_parser.add_argument( '--env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 
 	args = arg_parser.parse_args()
 
 	def _proc():
 		return _mark_accounts_with_bounces( args.addrs )
 
-	env_dir = args.env_dir
+	env_dir = _get_env_dir( args.env_dir )
+
 	run_with_dataserver( environment_dir=env_dir,
 						 function=_proc,
 						 xmlconfig_packages=('nti.appserver',),
 						 verbose=args.verbose )
+
+def _get_env_dir(env_dir):
+	result = os.getenv('DATASERVER_DIR', env_dir)
+	if not result or not os.path.exists(result) and not os.path.isdir(result):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
+	return result

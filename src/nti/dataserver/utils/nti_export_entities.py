@@ -93,8 +93,8 @@ def _process_args(args):
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('--site', dest='site', help="Application SITE. Use this to get profile info")
 	arg_parser.add_argument('--profile', help="Return profile info", action='store_true', dest='profile')
 	arg_parser.add_argument('--all', help="Process all entities", action='store_true', dest='all')
@@ -107,7 +107,10 @@ def main():
 							 help="Output export directory")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	conf_packages = () if not args.site else ('nti.appserver',)
 
 	# run export

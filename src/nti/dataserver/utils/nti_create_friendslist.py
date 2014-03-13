@@ -76,9 +76,9 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Create a [Dynamic]FriendsList")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('owner', help="The username of the owner")
 	arg_parser.add_argument('username', help="The username of the new DFL")
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-n', '--name',
 							dest='name',
 							help="The display name of the list")
@@ -99,8 +99,12 @@ def main():
 							help="The usernames of the entities to add; must already exist")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
-
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
 						 function=lambda: _process_args(args))

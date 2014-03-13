@@ -26,11 +26,16 @@ def _set_pass(username, password):
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Interactively change the password of an existing user account")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username whose password to change")
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	username = args.username
 
 	password = getpass.getpass("Password: ")
