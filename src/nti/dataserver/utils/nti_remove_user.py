@@ -49,7 +49,6 @@ def _delete_user(factory, username, site=None):
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Delete a user-type object" )
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to delete")
 	arg_parser.add_argument('-t', '--type',
 							dest='type',
@@ -59,10 +58,17 @@ def main():
 	arg_parser.add_argument('--site',
 							dest='site',
 							help="Delete the user as if done by a request in this application SITE.")
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
 	site = args.site
-	env_dir = args.env_dir
+	
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	username = args.username
 
 	run_with_dataserver( environment_dir=env_dir,

@@ -33,7 +33,6 @@ remove_user_content = remove_entity_content
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Unindex user content")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username")
 	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
 	arg_parser.add_argument('-i', '--include_dfls', help="Unindex content in user's dfls", action='store_true', dest='include_dfls')
@@ -41,13 +40,18 @@ def main():
 							 nargs="*",
 							 dest='idx_types',
 							 help="The content type(s) to unindex")
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
 	verbose = args.verbose
 	username = args.username
 	idx_types = args.idx_types
 	include_dfls = args.include_dfls
-	env_dir = os.path.expanduser(args.env_dir)
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	if not idx_types:
 		content_types = get_indexable_types()
 	else:

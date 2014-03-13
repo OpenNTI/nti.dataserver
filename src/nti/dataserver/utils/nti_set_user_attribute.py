@@ -87,10 +87,10 @@ def _change_attributes(args):
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to edit")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('-f', '--force', help="Force update of immutable fields", action='store_true', dest='force')
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('--site',
 							dest='site',
 							help="Change the the user attributes as if done by a request in this application SITE")
@@ -120,7 +120,14 @@ def main():
 	arg_parser = _create_args_parser()
 	args = arg_parser.parse_args()
 	conf_packages = () if not args.site else ('nti.appserver',)
-	run_with_dataserver( environment_dir=args.env_dir, 
+	
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
+	run_with_dataserver( environment_dir=env_dir, 
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 function=lambda: _change_attributes(args) )

@@ -61,14 +61,19 @@ def remove_zombies(usernames, verbose=False):
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Remove index zombies" )
-	arg_parser.add_argument( 'env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument( 'usernames',
 							 nargs="*",
 							 help="The username(s) to process" )
+	arg_parser.add_argument( '--env_dir', help="Dataserver environment root directory" )
+	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 	
-	env_dir = args.env_dir
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	usernames = args.usernames
 	verbose = args.verbose
 	run_with_dataserver( environment_dir=env_dir,

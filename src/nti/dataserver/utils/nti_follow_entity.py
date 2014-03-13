@@ -96,7 +96,6 @@ def _action( args ):
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Make a user (un)follow an existing entity; if a DynamicSharingTarget, they also join it." )
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to edit")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('-x', '--unfollow', help="Unfollow instead of follow", action='store_true', dest='unfollow')
@@ -105,10 +104,15 @@ def main():
 							nargs="+",
 							required=True,
 							help="The usernames of the entities to (un)follow")
+	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
-
+	import os
+	
+	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
+		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+	
 	run_with_dataserver( environment_dir=env_dir, function=lambda: _action(args) )
 
 if __name__ == '__main__':
