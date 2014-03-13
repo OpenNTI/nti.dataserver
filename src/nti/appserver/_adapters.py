@@ -250,7 +250,7 @@ class _UserPreferredLanguages(object):
 	"""
 	The preferred languages to use when externalizing for a particular user.
 
-	.. todo:: Right now, this is hardcoded to english. We need to store this.
+	.. todo:: Right now, this is hardcoded to english. We need to store this/derive from request.
 
 	"""
 	def __init__( self, context ):

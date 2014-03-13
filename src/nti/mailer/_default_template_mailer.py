@@ -242,8 +242,8 @@ def _send_pyramid_mailer_mail( message, recipients=None, request=None ):
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 from nti.appserver.interfaces import IApplicationSettings
 
+import itsdangerous
 
-from itsdangerous import Signer
 
 def _compute_from( fromaddr, recipients, request ):
 	"""
@@ -314,10 +314,10 @@ def _compute_from( fromaddr, recipients, request ):
 		# XXX Reusing the cookie secret, we should probably have our own
 		secret_key = settings.get('cookie_secret', '$Id$')
 
-		signer = Signer(secret_key, salt='email recipient')
+		signer = itsdangerous.Signer(secret_key, salt='email recipient')
 		principal_ids = signer.sign(principal_ids)
-		# finally obfuscate (trim the trailing ==\n)
-		principal_ids = principal_ids.encode('base64_codec')[:-3]
+		# finally obfuscate in a url/email safe way
+		principal_ids = itsdangerous.base64_encode(principal_ids)
 
 		local, domain = addr.split('@')
 		addr = local + '+' + principal_ids + '@' + domain

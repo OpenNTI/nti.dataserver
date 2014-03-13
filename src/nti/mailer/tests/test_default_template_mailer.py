@@ -78,7 +78,7 @@ class TestEmail(AppLayerTest):
 		class User(object):
 			username = 'the_user'
 			id = 'the_user'
-			email = 'jason.madden@nextthought.com'
+			email = 'thomas.stockdale@nextthought.com' # this address encodes badly to simple base64
 
 		class Profile(object):
 			realname = 'Suzë Schwartz'
