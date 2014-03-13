@@ -18,18 +18,20 @@ from zope.annotation import interfaces as an_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
 def remove_user_index_data(user):
+	count = 0
 	annotations = an_interfaces.IAnnotations(user, {})
 	name = "nti.contentsearch._repoze_adpater._RepozeEntityIndexManager"
 	mapping = annotations.get(name, None)
 	if mapping is not None:
-		for cat_name, catalog in mapping.items():
-			for key, index in catalog.items():
-				m = getattr(index, "clear", None)
-				if m is not None and callable(m):
-					m()  # remove all docs
-					logger.info("Index %s/%s was cleared for user %s", cat_name, key, user)
+		for _, catalog in mapping.items():
+			for _, index in catalog.items():
+				count += 1
+				clear = getattr(index, "clear", None)
+				if clear is not None and callable(clear):
+					clear()  # remove all docs
 		mapping.clear()
 		del annotations[name]
+	return count
 
 def do_evolve(context):
 	setHooks()
@@ -37,20 +39,21 @@ def do_evolve(context):
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
 
+	count = 0
 	with site(ds_folder):
 		assert 	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
 		users = ds_folder['users']
 		for user in users.values():
-			remove_user_index_data(user)
+			count += remove_user_index_data(user)
 			if nti_interfaces.IUser.providedBy(user):
 				source = user.friendsLists.values()
 				for obj in source:
 					if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(obj):
-						remove_user_index_data(user)
+						count += remove_user_index_data(user)
 
-	logger.info('Evolution done!!!')
+	logger.info('Evolution done. %s catalog-indexes removed', count)
 
 def evolve(context):
 	"""
