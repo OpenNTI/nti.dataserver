@@ -57,8 +57,7 @@ class TestDatetime(ExternalizationLayerTest):
 					is_('1992-01-31T00:00:00Z'))
 
 	def test_native_timezone_conversion(self):
-		# XXX Note: this depends on the timezone we run tests
-		# in
+		# First, test getting it from the environment
 		tz = os.environ.get('TZ')
 		try:
 			# Put us in an environment with no DST
@@ -77,12 +76,31 @@ class TestDatetime(ExternalizationLayerTest):
 			time.tzset()
 			assert_that( datetime_from_string('2014-01-20T00:00', assume_local=True),
 						 is_( IDateTime('2014-01-20T06:00Z')))
+
+			# Next, test setting a specific value as a tzname tuple.
+			# For this to work we have to be still with the offset in the environment
+			assert_that( datetime_from_string('2014-01-20T00:00',
+											  assume_local=True,
+											  local_tzname=('CST', 'CDT')),
+							 is_( IDateTime('2014-01-20T06:00Z')))
+
 		finally:
 			if tz:
 				os.environ['TZ'] = tz
 			else:
 				del os.environ['TZ']
 			time.tzset()
+
+			# Same result for the canonical name, don't need to be in environment
+			assert_that( datetime_from_string('2014-01-20T00:00',
+											  assume_local=True,
+											  local_tzname='US/Central'),
+							 is_( IDateTime('2014-01-20T06:00Z')))
+			assert_that( datetime_from_string('2014-01-20T00:00',
+											  assume_local=True,
+											  local_tzname='US/Eastern'),
+							 is_( IDateTime('2014-01-20T06:00Z')))
+
 
 	def test_timedelta_to_string(self):
 

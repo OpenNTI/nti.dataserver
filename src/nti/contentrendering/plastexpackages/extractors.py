@@ -17,7 +17,7 @@ import simplejson as json  # Needed for sort_keys, ensure_ascii
 from zope import component
 from zope import interface
 
-from pytz import utc as tz_utc
+from nti.externalization.externalization import to_external_object
 
 from plasTeX.Base.LaTeX import Document as LaTexDocument
 from plasTeX.Renderers import render_children
@@ -88,12 +88,10 @@ class _CourseExtractor(object):
 		date_strings = None
 		if lesson_dates:
 			date_strings = []
-			# SAJ: Add the course's timezone and translate to UTC
-			tz = course_node.tz
 			# TODO: These might be relative to the parent (e.g., +1 week)
-
 			for date in lesson_dates:
-				date_strings.append(tz_utc.normalize(tz.localize(date).astimezone(tz_utc)).isoformat())
+				# The correct timezone information has already been taken care of
+				date_strings.append( to_external_object(date ) )
 
 		toc_el = dom.createElement('lesson')
 		if date_strings:

@@ -170,6 +170,11 @@ def main():
 
 	document.userdata['working-dir'] = os.getcwd()
 	document.userdata['generated_time'] = isodate.datetime_isoformat(datetime.datetime.utcnow())
+	# This variable contains either a time.tzname tuple or a pytz timezone
+	# name
+	document.userdata['document_timezone_name'] = document.config['NTI'].get('timezone-name', 'US/Central')
+
+
 	document.userdata['transform_process'] = True
 
 	document.userdata['extra_scripts'] = document.config['NTI']['extra-scripts'].split()
