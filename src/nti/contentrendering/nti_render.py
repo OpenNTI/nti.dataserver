@@ -150,6 +150,7 @@ def main():
 	document.config.set('NTI', 'provider', os.environ.get('NTI_PROVIDER', 'AOPS'))
 	document.config.set('NTI', 'extra-scripts', '')
 	document.config.set('NTI', 'extra-styles', '')
+	document.config.set('NTI', 'timezone-name', 'US/Central')
 	conf_name = os.path.join(source_dir, "nti_render_conf.ini")
 	document.config.read((conf_name,))
 
@@ -172,7 +173,7 @@ def main():
 	document.userdata['generated_time'] = isodate.datetime_isoformat(datetime.datetime.utcnow())
 	# This variable contains either a time.tzname tuple or a pytz timezone
 	# name
-	document.userdata['document_timezone_name'] = document.config['NTI'].get('timezone-name', 'US/Central')
+	document.userdata['document_timezone_name'] = document.config['NTI']['timezone-name']
 
 
 	document.userdata['transform_process'] = True
