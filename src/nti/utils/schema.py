@@ -65,6 +65,8 @@ from zope.schema import Tuple
 Tuple = Tuple
 from zope.schema import FrozenSet
 FrozenSet = FrozenSet
+from zope.schema import Set
+Set = Set
 
 try:
 	from Acquisition.interfaces import IAcquirer
