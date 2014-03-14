@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/Sr/bin/env python
 """
 zope.generations installer for nti.dataserver
 
@@ -97,7 +97,8 @@ def install_main( context ):
 	shards = container.LastModifiedBTreeContainer()
 	dataserver_folder['shards'] = shards
 	shards[conn.db().database_name] = ds_shards.ShardInfo()
-	assert conn.db().database_name != 'unnamed', "Must give a name"
+	if conn.db().database_name == 'unnamed':
+		logger.warn("Using an unnamed root database")
 	assert shards[conn.db().database_name].__name__
 
 	# TODO: the 'users' key should probably be several different keys, one for each type of
