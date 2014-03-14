@@ -216,7 +216,9 @@ def mark_emails_bounced():
 						 verbose=args.verbose )
 
 def _get_env_dir(env_dir):
-	result = os.getenv('DATASERVER_DIR', env_dir)
+	result = env_dir
+	if not result:
+		result = os.getenv( 'DATASERVER_DIR' )
 	if not result or not os.path.exists(result) and not os.path.isdir(result):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
 	

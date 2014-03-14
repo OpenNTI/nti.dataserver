@@ -44,6 +44,7 @@ Deployment and Setup
 
 
 	nginx-gunicorn
+	deployment-scripts
 	relstorage-and-rds
 	content-in-cdn
 	passenger

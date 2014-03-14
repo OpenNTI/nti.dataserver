@@ -39,7 +39,9 @@ def main():
 	if not os.path.exists( out_dir ):
 		os.mkdir( out_dir )
 		
-	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	env_dir = args.env_dir
+	if not env_dir:
+		env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
 	
