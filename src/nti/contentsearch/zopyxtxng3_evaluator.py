@@ -16,15 +16,15 @@ from zopyx.txng3.core import parsetree as zopyx_parsetree
 from .zopyxtxng3_resultset import intersectionResultSets
 
 class Evaluator(zopyx_evaluator.Evaluator):
-	
+
 	def PhraseNode(self, node):
 		# Dealing with PhraseNodes is somewhat tricks
 		# node.getValue() should return a sequence of WordNodes representing
 		# the terms of the phrase
-		
+
 		# first tcreate he a copy of the ordered(!) terms
 		words = [n.getValue() for n in node.getValue()]
-	
+
 		idx = 0
 		while idx < len(words):
 			seq = words[idx]
@@ -35,17 +35,16 @@ class Evaluator(zopyx_evaluator.Evaluator):
 				words[idx] = seq.getValue()
 			else:
 				idx += 1
-		
+
 		# So first perform a simple word search for all terms
 		sets = [self(n) for n in node.getValue()]
-		
+
 		# Now intersect the results (AND). This descreases the number of documents
 		# to be checked.
-		rs = intersectionResultSets(sets) 
-		
+		rs = intersectionResultSets(sets)
+
 		# Now check if the found documents really contain the words as phrase
-		return zopyx_evaluator.lookup_by_phrase(self.searchrequest, 
-		                        				rs.getDocids(), 
+		return zopyx_evaluator.lookup_by_phrase(self.searchrequest,
+		                        				rs.getDocids(),
 		                        		  		words,
 		                        		    	self._getField(node))
-			

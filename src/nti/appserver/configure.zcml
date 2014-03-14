@@ -2,6 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:z3c="http://namespaces.zope.org/z3c"
+			xmlns:apidoc="http://namespaces.zope.org/apidoc"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -28,6 +29,22 @@
 
 	<include package=".tweens" />
 	<include package=".capabilities" />
+
+	<!-- apidoc -->
+	<!--
+		Unfortunately, we cannot document all our code in this way
+		for at least two reasons. First, something in the process
+		of documenting nti.contentlibrary.boto_s3 causes a connection
+		to be opened to S3, prompting for a new volume name
+		interactively. Second, documenting
+		nti.contentsearch.zopyxtxng3_evaluator somehow results in a
+		call to sys.exit() with the message "Usage: static-apidoc [options]"
+		which kills the process.
+	-->
+	<!--
+	<apidoc:rootModule module="nti"
+					   zcml:condition="have in-apidoc"/>
+	-->
 
 	<!-- I18N -->
 	<i18n:registerTranslations directory="locales" />
