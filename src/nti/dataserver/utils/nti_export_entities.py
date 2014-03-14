@@ -107,7 +107,9 @@ def main():
 							 help="Output export directory")
 	args = arg_parser.parse_args()
 
-	env_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	env_dir = args.env_dir
+	if not env_dir:
+		env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
 	

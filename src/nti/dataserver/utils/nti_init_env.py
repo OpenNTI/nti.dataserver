@@ -45,7 +45,9 @@ def main():
 
 def init_env( args ):
 	
-	root_dir = os.getenv('DATASERVER_DIR', args.env_dir)
+	root_dir = args.env_dir
+	if not root_dir:
+		root_dir = os.getenv( 'DATASERVER_DIR' )
 	if not root_dir or not os.path.exists(root_dir) and not os.path.isdir(root_dir):
 		raise ValueError( "Invalid dataserver environment root directory", root_dir )
 	
