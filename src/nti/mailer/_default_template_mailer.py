@@ -244,6 +244,13 @@ from nti.appserver.interfaces import IApplicationSettings
 
 import itsdangerous
 
+def _make_signer(default_key='$Id$'):
+	settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
+	# XXX Reusing the cookie secret, we should probably have our own
+	secret_key = settings.get('cookie_secret', default_key)
+
+	signer = itsdangerous.Signer(secret_key, salt='email recipient')
+	return signer
 
 def _compute_from( fromaddr, recipients, request ):
 	"""
@@ -310,11 +317,7 @@ def _compute_from( fromaddr, recipients, request ):
 		# First, get bytes to avoid any default-encoding
 		principal_ids = principal_ids.encode('utf-8')
 		# now sign
-		settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
-		# XXX Reusing the cookie secret, we should probably have our own
-		secret_key = settings.get('cookie_secret', '$Id$')
-
-		signer = itsdangerous.Signer(secret_key, salt='email recipient')
+		signer = _make_signer()
 		principal_ids = signer.sign(principal_ids)
 		# finally obfuscate in a url/email safe way
 		principal_ids = itsdangerous.base64_encode(principal_ids)
@@ -324,6 +327,24 @@ def _compute_from( fromaddr, recipients, request ):
 
 	return rfc822.dump_address_pair( (realname, addr) )
 
+def _principal_ids_from_addr(fromaddr, default_key=None):
+	if not fromaddr or '+' not in fromaddr:
+		return ()
+
+	_, addr = rfc822.parseaddr(fromaddr)
+	if '+' not in addr:
+		return ()
+
+	signed_and_encoded = addr.split('+', 1)[1].split('@')[0]
+	signed_and_decoded = itsdangerous.base64_decode(signed_and_encoded)
+
+	signer = _make_signer() if not default_key else _make_signer(default_key=default_key)
+	try:
+		pids = signer.unsign(signed_and_decoded)
+	except itsdangerous.BadSignature:
+		return ()
+	else:
+		return pids.split(',')
 
 def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	"""
