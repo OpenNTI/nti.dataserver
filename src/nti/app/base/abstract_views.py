@@ -21,12 +21,16 @@ from nti.app.authentication import get_remote_user as _get_remote_user
 
 class AbstractView(object):
 	"""
-	Base class for views. Defines the ``request`` and ``dataserver``
-	property. To be a valid view callable, you must implement ``__call__``.
+	Base class for views. Defines the ``request``, ``context`` and ``dataserver``
+	properties. To be a valid view callable, you must implement ``__call__``.
 	"""
 
 	def __init__(self, request):
 		self.request = request
+
+	@Lazy
+	def context(self):
+		return self.request.context
 
 	@Lazy
 	def dataserver(self):
