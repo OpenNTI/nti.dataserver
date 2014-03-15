@@ -19,11 +19,13 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 from hamcrest import not_none
 from hamcrest import is_
+from hamcrest import contains
 
 
 from nti.app.testing.layers  import AppLayerTest
 from .._default_template_mailer import create_simple_html_text_email
 from .._default_template_mailer import _pyramid_message_to_message
+from .._default_template_mailer import _principal_ids_from_addr
 
 from ..interfaces import IEmailAddressable
 from zope.security.interfaces import IPrincipal
@@ -119,3 +121,16 @@ class TestEmail(AppLayerTest):
 		# we can get to IPrincipal, so we have VERP
 		# The first part will be predictable, the rest won't
 		assert_that( msg.sender, contains_string('"NextThought" <no-reply+dGhlX3Vz') )
+
+	def test_pids_from_verp_email(self):
+		fromaddr = 'no-reply+a2FsZXkud2hpdGVAbmV4dHRob3VnaHQuY29tLjV4cXAyeTRoVURlMGVvOGtoXzM5SURZNlR4aw@nextthought.com'
+
+		pids = _principal_ids_from_addr(fromaddr, 'alpha.nextthought.com')
+		assert_that( pids, contains('kaley.white@nextthought.com'))
+
+		fromaddr = 'no-reply+TGV4aVpvbGwuLWJOUlNZVS1ZV3FEanFvUi10dGRkLV82R01z@nextthought.com'
+		pids = _principal_ids_from_addr(fromaddr, 'mathcounts.nextthought.com')
+		assert_that( pids, contains('LexiZoll'))
+
+		pids = _principal_ids_from_addr(fromaddr)
+		assert_that( pids, is_(()))
