@@ -178,8 +178,14 @@ def _renderer_settings(pyramid_config):
 	pyramid_config.add_renderer(name='rest', factory='nti.app.renderers.renderers.DefaultRenderer')
 	pyramid_config.add_renderer(name=None, factory='nti.app.renderers.renderers.DefaultRenderer')
 
-	# Override the stock Chameleon template renderer to use z3c.pt for better compatibility with the existing Zope stuff
+	# Override the stock Chameleon template renderer to use z3c.pt for
+	# better compatibility with the existing Zope stuff
 	pyramid_config.add_renderer(name='.pt', factory='nti.app.pyramid_zope.z3c_zpt.renderer_factory')
+
+	# Render PDF responses using a Zope Page Template that produces RML.
+	# Note that the template lookup is only done on the last component of the filename
+	# so we can't use ".rml.pt" or some-such
+	pyramid_config.add_renderer(name='.rml', factory="nti.app.renderers.pdf.PDFRendererFactory")
 
 def _library_settings(pyramid_config, server, library):
 	if library is not None:
