@@ -37,7 +37,7 @@ union_operator = query_views.Operator.union
 intersection_operator = query_views.Operator.intersection
 
 def _flatten_list_and_dicts(result, lists_and_dicts, predicate=None):
-	lastMod = 0
+	lastMod = getattr(result, 'lastModified', 0)
 	for list_or_dict in lists_and_dicts:
 		if list_or_dict is None:
 			continue
