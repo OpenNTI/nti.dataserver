@@ -325,9 +325,10 @@ def _isMagicKey( key ):
 
 isSyntheticKey = _isMagicKey
 
+from calendar import timegm as _calendar_gmtime
 
 def _datetime_to_epoch( dt ):
-	return time.mktime( dt.timetuple() ) if dt is not None else None
+	return _calendar_gmtime( dt.utctimetuple() ) if dt is not None else None
 
 def _choose_field(result, self, ext_name,
 				  converter=lambda x: x,

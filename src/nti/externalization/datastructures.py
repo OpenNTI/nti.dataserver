@@ -98,8 +98,10 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 						   StandardExternalFields.OID,
 						   StandardInternalFields.CREATOR,
 						   StandardExternalFields.CREATOR,
-						   'lastModified',
+						   StandardInternalFields.LAST_MODIFIED,
 						   StandardInternalFields.LAST_MODIFIEDU,
+						   # Also the IDCTimes created/modified values
+						   'created', 'modified',
 						   StandardExternalFields.CLASS,
 						   StandardInternalFields.CONTAINER_ID}
 	_ext_primitive_out_ivars_ = set()

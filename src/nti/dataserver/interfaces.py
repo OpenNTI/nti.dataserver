@@ -323,6 +323,27 @@ class ILastModified(interface.Interface):
 						 description="Typically set automatically by the object.",
 						 default=0.0)
 
+from datetime import datetime as _datetime
+from calendar import timegm as _calendar_timegm
+from zope.dublincore.interfaces import IDCTimes
+
+@interface.implementer(IDCTimes)
+class DCTimesLastModifiedMixin(object):
+	"""
+	A mixin that implements dublincore times using the timestamp
+	information from ILastModified. Requires no storage,
+	can be added to persistent objects at any time.
+
+	These datetimes are always naive datetime objects, normalized
+	to UTC.
+	"""
+
+	created = property( lambda self: _datetime.utcfromtimestamp( self.createdTime ),
+						lambda self, dt: setattr( self, 'createdTime', _calendar_timegm( dt.utctimetuple() ) ) )
+	modified = property( lambda self: _datetime.utcfromtimestamp( self.lastModified ),
+						lambda self, dt: self.updateLastModIfGreater( _calendar_timegm( dt.utctimetuple() ) ) )
+
+
 class ILastViewed(ILastModified):
 	"""
 	In addition to tracking modification and creation times, this

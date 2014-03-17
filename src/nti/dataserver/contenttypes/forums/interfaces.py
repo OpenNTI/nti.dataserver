@@ -18,6 +18,7 @@ from zope import interface
 from zope.schema import Int
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.interfaces import IContentContainer, IContained
+from zope.dublincore.interfaces import IDCTimes
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -78,7 +79,9 @@ NTIID_TYPE_POST = 'Post'
 #: The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
 NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 
-class IPost(IContained, IAcquirer,
+class IPost(IContained,
+			IAcquirer,
+			IDCTimes,
 			nti_interfaces.IModeledContent,
 			nti_interfaces.IReadableShared,
 			nti_interfaces.ITitledContent,
@@ -105,6 +108,8 @@ class ICommentPost(IPost,
 class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
+			 IDCTimes,
+			 nti_interfaces.ILastModified,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.IUserTaggedContent,
 			 nti_interfaces.INeverStoredInSharedStream,
@@ -139,6 +144,8 @@ class ITopic(IContentContainer,
 class IForum(IContentContainer,
 			 IContained,
 			 IAcquirer,
+			 IDCTimes,
+			 nti_interfaces.ILastModified,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.INotModifiedInStreamWhenContainerModified):
 	"""
@@ -162,7 +169,11 @@ class IForum(IContentContainer,
 								description="May be a IDeletedObjectPlaceholder",
 								required=False)
 
-class IBoard(IContentContainer,IContained,nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
+class IBoard(IContentContainer,
+			 IContained,
+			 IDCTimes,
+			 nti_interfaces.ILastModified,
+			 nti_interfaces.ITitledDescribedContent): # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
 	usually this number is relatively small). Each forum is distinctly named
