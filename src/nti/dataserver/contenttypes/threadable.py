@@ -3,9 +3,12 @@
 """
 Defines the base behaviours for things that are threadable.
 
-.. $Id$
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
@@ -17,11 +20,14 @@ import collections
 from persistent.list import PersistentList
 
 from nti.utils import sets
+
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.intid.containers import IntidResolvingIterable
+
+from nti.wref import interfaces as wref_interfaces
 
 @interface.implementer(nti_interfaces.IInspectableWeakThreadable)
 class ThreadableMixin(object):
@@ -71,7 +77,7 @@ class ThreadableMixin(object):
 			return self._inReplyTo()
 
 	def setInReplyTo( self, value ):
-		self._inReplyTo = nti_interfaces.IWeakRef( value ) if value is not None else None
+		self._inReplyTo = wref_interfaces.IWeakRef(value) if value is not None else None
 
 	inReplyTo = property( getInReplyTo, setInReplyTo )
 
@@ -99,7 +105,7 @@ class ThreadableMixin(object):
 		if value is not None:
 			if self._references is ThreadableMixin._references:
 				self._references = PersistentList()
-			self._references.append( nti_interfaces.IWeakRef( value ) )
+			self._references.append(wref_interfaces.IWeakRef(value))
 
 	def clearReferences( self ):
 		try:
@@ -221,7 +227,7 @@ class ThreadableExternalizableMixin(object):
 		# No object. Did we have a reference at one time?
 		if ref is not None and self._ext_write_missing_references:
 			# Yes. Can we write something out?
-			missing_ref = nti_interfaces.IWeakRefToMissing( ref, None )
+			missing_ref = wref_interfaces.IWeakRefToMissing(ref, None)
 			return missing_ref.make_missing_ntiid() if missing_ref is not None else None
 
 	def updateFromExternalObject( self, parsed, **kwargs ):
