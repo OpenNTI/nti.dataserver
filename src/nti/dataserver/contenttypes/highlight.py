@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 """
 Definitions of highlight objects.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
@@ -11,6 +16,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from .base import UserContentRoot
 UserContentRoot = UserContentRoot # BWC top-level import
+
 from .selectedrange import SelectedRange # BWC top-level import
 from nti.utils.schema import createDirectFieldProperties
 

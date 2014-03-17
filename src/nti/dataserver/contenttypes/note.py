@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 """
 Definition of the Note object.
+
+$Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 
@@ -15,11 +20,11 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 from zope import component
 from zope import interface
 
-
 from zope.annotation import interfaces as an_interfaces
 
 import zope.schema.interfaces
 from zope.schema.fieldproperty import FieldProperty
+
 from .highlight import Highlight
 from .threadable import ThreadableMixin
 from .base import _make_getitem
