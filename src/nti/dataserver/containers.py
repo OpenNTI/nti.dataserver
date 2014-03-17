@@ -240,7 +240,9 @@ except ImportError:
 		"No-op because Acquisition is not installed."
 
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
-class LastModifiedBTreeContainer(PersistentPropertyHolder,BTreeContainer):
+class LastModifiedBTreeContainer(PersistentPropertyHolder,
+								 BTreeContainer,
+								 interfaces.DCTimesLastModifiedMixin):
 	"""
 	A BTreeContainer that provides storage for lastModified and created
 	attributes (implements the :class:`interfaces.ILastModified` interface).
