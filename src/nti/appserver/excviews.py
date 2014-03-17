@@ -161,6 +161,12 @@ class ZODBStorageErrorExceptionView(EmailReportingExceptionView):
 	Reporter and handler for ZODB StorageErrors.
 	"""
 
+@view_config(context='redis.exceptions.ConnectionError')
+class RedisConnectionErrorExceptionView(EmailReportingExceptionView):
+	"""
+	Reporter and handler for Redis ConnectionErrors.
+	"""
+
 def _cleanup(base=None, seen=None):
 	"At the end of a test, reset all aux times to 0"
 	if seen is None:
