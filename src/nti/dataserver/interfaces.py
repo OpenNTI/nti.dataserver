@@ -1078,8 +1078,8 @@ class IUserTaggedContent(interface.Interface):
 							unique=True,
 							default=())
 
-from nti.mimetype import interfaces as mime_interfaces
-class IModeledContent(IContent, IContained, mime_interfaces.IContentTypeMarker):
+from nti.mimetype import interfaces as ds_mime_interfaces
+class IModeledContent(IContent, IContained, ds_mime_interfaces.IContentTypeMarker):
 	"""
 	Content accessible as objects.
 	Interfaces that extend this MUST directly provide IContentTypeAware.
@@ -1119,8 +1119,8 @@ class ISimpleEnclosureContainer(interface.Interface):
 		Delete the enclosure having the given name.
 		:raises KeyError: If no such enclosure exists.
 		"""
- 	def iterenclosures():
- 		"""
+	def iterenclosures():
+		"""
  		:return: An iteration across the :class:`IContent` contained
  			within this object.
  		"""
@@ -1666,12 +1666,18 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 
 
 ####
-# # Weak Refs and related
+# # Weak Refs and related BWC exports
 ####
 
-# BWC exports
-from nti.wref.interfaces import IWeakRef, IWeakRefToMissing, ICachingWeakRef
+import zope.deferredimport
+zope.deferredimport.initialize()
 
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.wref.interfaces",
+	"nti.wref.interfaces",
+	"IWeakRef",
+	"IWeakRefToMissing",
+	"ICachingWeakRef")
 
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
