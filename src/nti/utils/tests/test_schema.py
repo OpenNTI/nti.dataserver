@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
 from hamcrest import is_
@@ -37,6 +31,7 @@ from nti.utils.schema import DataURI
 from nti.utils.schema import IVariant
 from nti.utils.schema import Number
 from nti.utils.schema import ListOrTuple
+from nti.utils.schema import ValidRegularExpression
 from nti.utils.schema import ValidTextLine as TextLine
 from nti.utils.schema import IBeforeSequenceAssignedEvent
 from nti.utils.schema import IBeforeDictAssignedEvent
@@ -50,7 +45,6 @@ from zope.interface.common import interfaces as cmn_interfaces
 from zope.schema import interfaces as sch_interfaces
 from zope.schema import Dict
 from zope.schema.interfaces import InvalidURI
-
 
 def test_http_url():
 
@@ -79,8 +73,17 @@ def test_data_uri():
 	assert_that( url, has_property( 'mimeType', 'image/gif') )
 	assert_that( url, has_property( 'data', is_not( none() ) ) )
 
+def test_regex():
+	import re
+	field = ValidRegularExpression('[bankai|shikai]')
+	assert_that(field.constraint("bankai"), is_(True))
+	assert_that(field.constraint("shikai"), is_(True))
+	assert_that(field.constraint("Shikai"), is_(False))
+	assert_that(field.constraint("foo"), is_(False))
+	field = ValidRegularExpression('[bankai|shikai]', flags=re.IGNORECASE)
+	assert_that(field.constraint("Shikai"), is_(True))
 
-def test_variant( ):
+def test_variant():
 
 	syntax_or_lookup = Variant( (Object(cmn_interfaces.ISyntaxError),Object(cmn_interfaces.ILookupError), Object(IUnicode)) )
 
