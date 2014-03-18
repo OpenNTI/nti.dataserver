@@ -546,7 +546,7 @@ class DecodingValidTextLine(ValidTextLine):
 
 class ValidRegularExpression(ValidTextLine):
 
-	def __init__(self, pattern, flags=0, *args, **kwargs):
+	def __init__(self, pattern, flags=re.U | re.I | re.M, *args, **kwargs):
 		super(ValidRegularExpression, self).__init__(*args, **kwargs)
 		self.flags = flags
 		self.pattern = pattern
@@ -554,6 +554,8 @@ class ValidRegularExpression(ValidTextLine):
 
 	def constraint(self, value):
 		return self.prog.match(value) is not None
+
+ValidRegEx = ValidRegularExpression
 
 class ValidURI(FieldValidationMixin,schema.URI):
 

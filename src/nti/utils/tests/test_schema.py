@@ -74,14 +74,14 @@ def test_data_uri():
 	assert_that( url, has_property( 'data', is_not( none() ) ) )
 
 def test_regex():
-	import re
-	field = ValidRegularExpression('[bankai|shikai]')
+	field = ValidRegularExpression('[bankai|shikai]', flags=0)
 	assert_that(field.constraint("bankai"), is_(True))
 	assert_that(field.constraint("shikai"), is_(True))
 	assert_that(field.constraint("Shikai"), is_(False))
 	assert_that(field.constraint("foo"), is_(False))
-	field = ValidRegularExpression('[bankai|shikai]', flags=re.IGNORECASE)
+	field = ValidRegularExpression('[bankai|shikai]')
 	assert_that(field.constraint("Shikai"), is_(True))
+	assert_that(field.constraint("banKAI"), is_(True))
 
 def test_variant():
 
