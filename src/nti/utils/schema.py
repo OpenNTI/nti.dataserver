@@ -18,6 +18,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import re
 import sys
 
 from dm.zope.schema.schema import SchemaConfigured, schemadict, Object as ObjectBase
@@ -542,6 +543,17 @@ class DecodingValidTextLine(ValidTextLine):
 #		if not isinstance( value, self._type ) and isinstance( value, basestring ):
 #			value = value.decode( 'utf-8' ) # let raise UnicodeDecodeError
 #		super(DecodingValidTextLine,self).fromUnicode( value )
+
+class ValidRegularExpression(ValidTextLine):
+
+	def __init__(self, pattern, flags=0, *args, **kwargs):
+		super(ValidRegularExpression, self).__init__(*args, **kwargs)
+		self.flags = flags
+		self.pattern = pattern
+		self.prog = re.compile(pattern, flags)
+
+	def constraint(self, value):
+		return self.prog.match(value) is not None
 
 class ValidURI(FieldValidationMixin,schema.URI):
 
