@@ -58,6 +58,22 @@
 
 #NTIContent .math.equation {
 	font-size: 130%;
+	position: relative;
+}
+
+#NTIContent .equation-body {
+	text-align: center;
+}
+
+#NTIContent .equation-number {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	text-align: right;
+}
+
+#NTIContent .equation-number div {
+	margin-top: -0.6em;
 }
 
 #NTIContent .lineout {
