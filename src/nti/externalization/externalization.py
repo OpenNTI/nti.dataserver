@@ -4,16 +4,12 @@ Functions related to actually externalizing objects.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import logging
-logger = logging.getLogger( __name__ )
-
 import six
-import time
 import numbers
 import plistlib
 import collections
@@ -32,7 +28,8 @@ from zope.dublincore import interfaces as dub_interfaces
 from nti.ntiids import ntiids
 
 from .oids import to_external_ntiid_oid
-from .interfaces import IExternalObject, IExternalObjectDecorator, IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
+from .interfaces import IExternalObject, IExternalObjectDecorator
+from .interfaces import IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
 from .interfaces import INonExternalizableReplacer, INonExternalizableReplacement
 from .interfaces import ILocatedExternalSequence
 from .interfaces import LocatedExternalDict
