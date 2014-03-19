@@ -23,9 +23,15 @@ name: math ensuremath
 name: displaymath equation equation* eqnarray eqnarray* align align* gather gather* falign falign* \
       multiline multiline* alignat alignat* split
 <div class="math equation" tal:attributes="id self/id">
-<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python:self.source" />
-<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
+	<div class="equation-body">
+		<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+		<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python:self.source" />
+	</div>
+	<div tal:condition="self/ref" class="equation-number">
+		<div>
+			(<span tal:content="self/ref">1.1.1</span>)
+		</div>
+	</div>
 </div>
 
 
