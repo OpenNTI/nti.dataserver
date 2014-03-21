@@ -5,7 +5,7 @@ Functions and architecture for general activity streams.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,9 +27,11 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.datastructures import LocatedExternalDict
 
+from nti.wref import interfaces as wref_interfaces
+
 def _weak_ref_to( obj ):
 	try:
-		return nti_interfaces.IWeakRef( obj )
+		return wref_interfaces.IWeakRef(obj)
 	except TypeError:
 		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
 

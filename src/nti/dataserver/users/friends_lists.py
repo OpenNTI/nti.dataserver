@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Search pyramid views.
+
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-logger = __import__( 'logging' ).getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 import operator
 
@@ -24,9 +27,11 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
 from nti.mimetype import mimetype
 
-from .entity import Entity
-
 from nti.utils.property import CachedProperty
+
+from nti.wref import interfaces as wref_interfaces
+
+from .entity import Entity
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -89,7 +94,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		# We can very efficiently check the containment
 		# of the entity using the sorted set/wref
 		try:
-			return nti_interfaces.IWeakRef(entity, None) in self._friends_wref_set
+			return wref_interfaces.IWeakRef(entity, None) in self._friends_wref_set
 		except TypeError:
 			return False # "Object has default comparison"
 
@@ -121,7 +126,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 
 		result = False
 		if isinstance( friend, Entity ):
-			wref = nti_interfaces.IWeakRef( friend )
+			wref = wref_interfaces.IWeakRef(friend)
 			__traceback_info__ = friend, wref
 			assert wref.username.lower() == friend.username.lower()
 			result = self._friends_wref_set.add( wref )
@@ -228,7 +233,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		# if comparisons of the keys change over time.
 		self._friends_wref_set.clear()
 		for x in overlap_entities:
-			self._friends_wref_set.add( nti_interfaces.IWeakRef( x ) )
+			self._friends_wref_set.add(wref_interfaces.IWeakRef(x))
 
 		# Now actually Add the new ones so that we can fire the right events
 		for x in missing_entities:

@@ -51,6 +51,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids import ntiids
 
+from nti.wref import interfaces as wref_interfaces
+
 from nti.zodb import minmax
 
 def _get_shared_dataserver(context=None,default=None):
@@ -239,7 +241,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 		return self._lazy_create_ootreeset_for_wref()
 
 	def _note_member(self, entity):
-		self._members.add(nti_interfaces.IWeakRef(entity))
+		self._members.add(wref_interfaces.IWeakRef(entity))
 		self.updateLastMod()
 
 	def _del_member(self, entity):
@@ -248,7 +250,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 
 	def __contains__(self, other):
 		try:
-			return nti_interfaces.IWeakRef(other, None) in self._members
+			return wref_interfaces.IWeakRef(other, None) in self._members
 		except TypeError:
 			return False # "Object has default comparison""
 
@@ -324,10 +326,18 @@ class Everyone(Community):
 				del state[k]
 		super(Everyone,self).__setstate__( state )
 
+
 from nti.dataserver.users.friends_lists import FriendsList
 from nti.dataserver.users.friends_lists import _FriendsListMap # bwc
-from nti.dataserver.users.friends_lists import DynamicFriendsList
-from nti.dataserver.users.friends_lists import _FriendsListUsernameIterable # bwc
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.users.friends_lists",
+	"nti.dataserver.users.friends_lists",
+	"DynamicFriendsList",
+	"_FriendsListUsernameIterable")
 
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
@@ -431,6 +441,7 @@ class User(Principal):
 	as changed using setPersistentStateChanged().
 	"""
 
+	family = BTrees.family64
 	_ds_namespace = 'users'
 	mime_type = 'application/vnd.nextthought.user'
 
@@ -708,7 +719,7 @@ class User(Principal):
 	def _circled_events_intids_storage(self):
 		"As an optimization, we store the intids for our circled events"
 		self._p_changed = True
-		result = BTrees.family64.IF.Set()
+		result = self.family.IF.Set()
 		return result
 
 	def accept_shared_data_from( self, source ):
@@ -1065,7 +1076,6 @@ class _NoOpCm(object):
 		pass
 _NOOPCM = _NoOpCm()
 
-from nti.apns import interfaces as apns_interfaces
 @component.adapter(apns_interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
 	def feedback():

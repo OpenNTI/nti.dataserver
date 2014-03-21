@@ -44,6 +44,8 @@ from nti.externalization import interfaces as ext_interfaces
 
 from nti.ntiids import ntiids
 
+from nti.wref import interfaces as wref_interfaces
+
 from . import config
 from . import meeting_storage
 from . import meeting_container_storage
@@ -518,7 +520,7 @@ def get_object_by_oid( connection, oid_string, ignore_creator=False ):
 			# and ask it to find it.
 			#pass
 
-		if interfaces.IWeakRef.providedBy( result ):
+		if wref_interfaces.IWeakRef.providedBy(result):
 			result = result()
 
 		if result is not None and intid is not None:
