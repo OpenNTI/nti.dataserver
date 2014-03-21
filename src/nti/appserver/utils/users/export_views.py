@@ -11,7 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 import gzip
 import urllib
 from io import BytesIO
-from cStringIO import StringIO
 
 from pyramid.view import view_config
 
@@ -33,16 +32,6 @@ from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.externalization import to_json_representation_externalized
 
 from nti.ntiids import ntiids
-
-def _write_generator(generator, stream=None, seek0=True, separator="\n"):
-	stream = StringIO() if stream is None else stream
-	for line in generator():
-		stream.write(line)
-		stream.write(separator)
-	stream.flush()
-	if seek0:
-		stream.seek(0)
-	return stream
 
 _transcript_mime_type = u'application/vnd.nextthought.transcript'
 
