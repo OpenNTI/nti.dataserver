@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import gzip
+import urllib
 from io import BytesIO
 from cStringIO import StringIO
 
@@ -141,9 +142,9 @@ def object_resolver(request):
 	keys = set()
 	values = request.params
 	for name in ('id', 'key', 'oid', 'ntiid'):
-		oids = values.get(name, None) or u''
+		oids = urllib.unquote(values.get(name, None) or u'')
 		keys.update(oids.split())
-		oids = values.get(name + 's', None) or u''
+		oids = urllib.unquote(values.get(name + 's', None) or u'')
 		keys.update(oids.split())
 
 	result = LocatedExternalDict()
