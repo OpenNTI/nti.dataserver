@@ -31,6 +31,10 @@ from nti.contentrendering.resources import interfaces as resource_interfaces
 
 from nti.ntiids import ntiids
 
+# This import is for legacy compatability
+from .eurosym import euro
+from .eurosym import eur
+
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
 Base.figure.forcePars = False
@@ -463,13 +467,6 @@ class textdoublehyphen(Command):
 # Currency symbols
 class yen(Base.Command):
 	unicode = u'\xA5'
-
-class eur(Base.Command):
-	macroName = 'EUR'
-	unicode = u'\u20AC'
-
-class euro(Base.Command):
-	unicode = u'\u20AC'
 
 class textcent(Base.Command):
 	unicode = u'\xA2'
