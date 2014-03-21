@@ -5,7 +5,6 @@ Common utility classes and functions for the appserver.
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,11 +18,9 @@ from zope.location.interfaces import ILocation
 
 from nti.appserver.interfaces import UserLogonEvent
 
-
 from nti.dataserver import users
 from nti.dataserver.interfaces import ICreated
 from nti.dataserver import interfaces as nti_interfaces
-
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -35,7 +32,6 @@ zope.deferredimport.deprecatedFrom(
 	"_UncacheableInResponseProxy",
 	"uncached_in_response"
 	)
-
 
 def logon_userid_with_request( userid, request, response=None ):
 	"""
@@ -126,8 +122,6 @@ def dump_stacks_view(request):
 	request.response.content_type = b'text/plain'
 	return request.response
 
-import zope.deferredimport
-zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.externalization.internalization",
 	"nti.app.externalization.internalization",

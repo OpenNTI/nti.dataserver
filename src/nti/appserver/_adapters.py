@@ -529,7 +529,7 @@ class _AuthenticatedUserLinkAdder(object):
 		external[StandardExternalFields.LINKS] = links
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
-@component.adapter(app_interfaces.IDeletedObjectPlaceholder)
+@component.adapter(nti_interfaces.IDeletedObjectPlaceholder)
 class _DeletedObjectPlaceholderDecorator(object):
 	"""
 	Replaces the title, description, and body of deleted objects with I18N strings.
