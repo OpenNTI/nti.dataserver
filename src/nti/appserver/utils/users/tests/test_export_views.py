@@ -13,6 +13,8 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import greater_than
 
+import urllib
+
 import simplejson
 from io import BytesIO
 
@@ -124,8 +126,11 @@ class TestApplicationUserExporViews(ApplicationLayerTest):
 		testapp = TestApp(self.app)
 		environ = self._make_extra_environ()
 		path = '/dataserver2/@@object_resolver'
-		res = testapp.get(path, params={"keys":oid}, extra_environ=environ)
+		keys = urllib.quote("%s %s" % (oid, "notfound"))
+		res = testapp.get(path, params={"keys":keys}, extra_environ=environ)
 		assert_that(res.status_int, is_(200))
 		d = simplejson.loads(res.body)
 		assert_that(d, has_entry('Items', has_length(1)))
+		assert_that(d, has_entry('Unresolved', has_length(1)))
 		assert_that(d['Items'][0], has_entry('OID', oid))
+		assert_that(d['Unresolved'][0], is_('notfound'))
