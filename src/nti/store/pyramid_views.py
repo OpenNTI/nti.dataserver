@@ -132,7 +132,7 @@ class GetPurchaseAttemptView(object):
 		purchase_id = request.params.get('purchaseID')
 		if not purchase_id:
 			raise_field_error(request, "purchaseID",
-							  "Failed to provide a purchase attempt ID")
+							  _("Must specify a valid purchase attempt id"))
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
@@ -194,12 +194,12 @@ class RedeemPurchaseCodeView(_PostView):
 		purchasable_id = values.get('purchasableID')
 		if not purchasable_id:
 			raise_field_error(request, "purchasableID",
-							  _("Failed to provide a purchasable ID"))
+							  _("Must specify a valid purchasable id"))
 
 		invitation_code = values.get('invitationCode', values.get('invitation_code'))
 		if not invitation_code:
 			raise_field_error(request, "invitation_code",
-							  _("Failed to provide a invitation code"))
+							  _("Must specify a valid invitation code"))
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
@@ -241,14 +241,14 @@ class PricePurchasableView(_PostView):
 		# check quantity
 		quantity = values.get('quantity', 1)
 		if not is_valid_pve_int(quantity):
-			raise_field_error(self.request, 'quantity', _('invalid quantity'))
+			raise_field_error(self.request, 'quantity', _('Invalid quantity'))
 		quantity = int(quantity)
 
 		try:
 			result = self.price(purchasable_id, quantity)
 			return result
 		except InvalidPurchasable:
-			raise_field_error(self.request, 'purchasableID', _('purchasable not found'))
+			raise_field_error(self.request, 'purchasableID', _('Purchasable not found'))
 
 	def __call__(self):
 		result = self.price_purchasable()
@@ -264,7 +264,7 @@ class EnrollCourseView(_PostView):
 		try:
 			enrollment.enroll_course(username, course_id, description, self.request)
 		except enrollment.CourseNotFoundException:
-			raise_field_error(self.request, 'courseID', _('course not found'))
+			raise_field_error(self.request, 'courseID', _('Course not found'))
 
 		return hexc.HTTPNoContent()
 
@@ -282,7 +282,7 @@ class UnenrollCourseView(_PostView):
 			enrollment.unenroll_course(username, course_id, self.request)
 		except enrollment.CourseNotFoundException:
 			logger.error("Course %s not found" % course_id)
-			raise_field_error(self.request, 'courseID', _('course not found'))
+			raise_field_error(self.request, 'courseID', _('Course not found'))
 		except enrollment.UserNotEnrolledException:
 			logger.error("User %s not enrolled in %s" % (username, course_id))
 			raise_field_error(self.request, 'username', _('User not enrolled'))
