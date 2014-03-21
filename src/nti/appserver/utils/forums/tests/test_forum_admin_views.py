@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -26,11 +26,9 @@ from nti.externalization.externalization import to_json_representation, to_exter
 
 from nti.dataserver.tests import mock_dataserver
 
-
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.webtest import TestApp
-
 
 class TestForumAdminViews(ApplicationLayerTest):
 
