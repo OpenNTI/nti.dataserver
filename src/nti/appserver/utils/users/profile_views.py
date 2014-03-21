@@ -97,7 +97,8 @@ def _get_user_info(user):
 
 def _get_opt_in_comm(coppaOnly=False):
 
-	header = ['username', 'email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
+	header = ['username', 'email', 'createdTime', 'lastModified',
+			  'lastLoginTime', 'is_copaWithAgg']
 	yield ','.join(header).encode('utf-8')
 
 	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
@@ -134,14 +135,16 @@ def user_opt_in_email_communication(request):
 
 def _get_profile_info(coppaOnly=False):
 
-	header = ['username', 'email', 'contact_email', 'createdTime', 'lastModified', 'lastLoginTime', 'is_copaWithAgg']
+	header = ['username', 'email', 'contact_email', 'createdTime', 'lastModified',
+			  'lastLoginTime', 'is_copaWithAgg']
 	yield ','.join(header).encode('utf-8')
 
 	dataserver = component.getUtility( nti_interfaces.IDataserver)
 	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
 
 	for user in _users.values():
-		if not nti_interfaces.IUser.providedBy(user) or (coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user)):
+		if 	not nti_interfaces.IUser.providedBy(user) or \
+			(coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user)):
 			continue
 
 		profile = user_interfaces.IUserProfile(user)
