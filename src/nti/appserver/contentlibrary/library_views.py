@@ -34,6 +34,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.appserver import interfaces as app_interfaces
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.renderers import interfaces as app_renderers_interfaces
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.contentlibrary import interfaces as lib_interfaces
@@ -519,7 +520,7 @@ class MainLibraryGetView(GenericGetView):
 
 	def __call__(self):
 		# TODO: Should generic get view do this step?
-		controller = app_interfaces.IPreRenderResponseCacheController(self.request.context)
+		controller = app_renderers_interfaces.IPreRenderResponseCacheController(self.request.context)
 		controller( self.request.context, {'request': self.request } )
 		# GenericGetView currently wants to try to turn the context into an ICollection
 		# for externalization. We would like to be specific about that here, but
