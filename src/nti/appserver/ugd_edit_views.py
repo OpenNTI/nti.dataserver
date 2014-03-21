@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import transaction
@@ -101,7 +103,7 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 				# which must not overlap and cannot be auto-generated). In that case,
 				# there's nothing else we can do but inform the client
 				transaction.doom()
-				raise hexc.HTTPConflict("Cannot use an ID already in use")
+				raise hexc.HTTPConflict( _("Cannot use an ID already in use"))
 			else:
 				owner.addContainedObject( containedObject )
 

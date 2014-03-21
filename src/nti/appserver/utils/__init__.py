@@ -14,6 +14,9 @@ import collections
 
 from nti.utils.maps import CaseInsensitiveDict
 
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
+
 class _JsonBodyView(object):
 
     def __init__(self, request):

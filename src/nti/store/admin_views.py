@@ -52,7 +52,7 @@ class _BasePostPurchaseAttemptView(_PostView):
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id)
 		if not purchase:
-			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
+			raise hexc.HTTPNotFound(detail=_('Purchase attempt not found'))
 
 		return purchase
 
@@ -71,7 +71,7 @@ class DeletePurchaseHistoryView(_PostView):
 		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
+			raise hexc.HTTPNotFound(detail=_('User not found'))
 
 		annotations = IAnnotations(user)
 		clazz = purchase_history.PurchaseHistory
@@ -93,12 +93,12 @@ class PermissionPurchasableView(_PostView):
 		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
+			raise hexc.HTTPNotFound(detail=_('User not found'))
 
 		purchasable_id = values.get('purchasableID', u'')
 		purchasable_obj = purchasable.get_purchasable(purchasable_id)
 		if not purchasable_obj:
-			raise hexc.HTTPNotFound(detail='Purchasable not found')
+			raise hexc.HTTPNotFound(detail=_('Purchasable not found'))
 
 		content_roles.add_users_content_roles(user, purchasable_obj.Items)
 		logger.info("Activating %s for user %s" % (purchasable_id, user))
@@ -113,12 +113,12 @@ class UnPermissionPurchasableView(_PostView):
 		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
+			raise hexc.HTTPNotFound(detail=_('User not found'))
 
 		purchasable_id = values.get('purchasableID', u'')
 		purchasable_obj = purchasable.get_purchasable(purchasable_id)
 		if not purchasable_obj:
-			raise hexc.HTTPNotFound(detail='Purchasable not found')
+			raise hexc.HTTPNotFound(detail=_('Purchasable not found'))
 
 		content_roles.remove_users_content_roles(user, purchasable_obj.Items)
 		logger.info("Deactivating %s for user %s" % (purchasable_id, user))
@@ -137,7 +137,7 @@ class GetContentRolesView(object):
 		username = params.get('username') or request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
+			raise hexc.HTTPNotFound(detail=_('User not found'))
 
 		roles = content_roles.get_users_content_roles(user)
 		result = LocatedExternalDict()
@@ -187,7 +187,7 @@ class GetUsersPurchaseHistoryView(object):
 
 		purchasable_obj = purchasable.get_purchasable(purchasable_id)
 		if not purchasable_obj:
-			raise hexc.HTTPNotFound(detail='Purchasable not found')
+			raise hexc.HTTPNotFound(detail=_('Purchasable not found'))
 
 		usernames = params.get('usernames', None)
 		if usernames:

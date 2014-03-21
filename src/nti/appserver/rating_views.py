@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import simplejson
@@ -49,12 +51,12 @@ def _RateView(request):
 	values = CaseInsensitiveDict(**values)
 	rating = values.get('rating', values.get('ranking', values.get('rate', None)))
 	if rating is None:
-		raise hexc.HTTPUnprocessableEntity(detail='rating not specified')
+		raise hexc.HTTPUnprocessableEntity(detail= _('rating not specified'))
 
 	try:
 		rating = float(rating)
 	except ValueError:
-		raise hexc.HTTPUnprocessableEntity(detail='invaing rating')
+		raise hexc.HTTPUnprocessableEntity(detail= _('invaing rating'))
 
 	ranking.rate_object(request.context, request.authenticated_userid, rating)
 	return uncached_in_response( request.context )

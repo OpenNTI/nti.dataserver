@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import transaction
@@ -62,7 +64,7 @@ class GetStripeConnectKeyView(_BaseStripeView):
 	def __call__(self):
 		result = self.get_stripe_connect_key()
 		if result is None:
-			raise hexc.HTTPNotFound(detail='Provider not found')
+			raise hexc.HTTPNotFound(detail=_('Provider not found'))
 		return result
 
 class CreateStripeTokenView(_PostStripeView):
@@ -295,9 +297,9 @@ class GeneratePurchaseInvoiceWitStripe(_PostStripeView):
 
 		purchase = self._get_purchase(transaction)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
-			raise hexc.HTTPNotFound(detail='Transaction not found')
+			raise hexc.HTTPNotFound(detail=_('Transaction not found'))
 		elif not purchase.has_succeeded():
-			raise hexc.HTTPUnprocessableEntity(detail='Purchase was not successfull')
+			raise hexc.HTTPUnprocessableEntity(detail=_('Purchase was not successful'))
 
 		manager = component.getUtility(store_interfaces.IPaymentProcessor,
 									   name=self.processor)

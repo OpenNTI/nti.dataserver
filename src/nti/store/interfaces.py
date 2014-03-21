@@ -153,7 +153,7 @@ class IPaymentCharge(interface.Interface):
 	Amount = schema.Float(title="Change amount", required=True)
 	Created = schema.Float(title="Created timestamp", required=True)
 	Currency = schema.ValidTextLine(title='Currency amount', required=True, default='USD')
-	CardLast4 = schema.Int(title='CreditCard last 4 digists', required=False)
+	CardLast4 = schema.Int(title='CreditCard last 4 digits', required=False)
 	Name = schema.ValidTextLine(title='The customer/charge name', required=False)
 	Address = schema.Object(IUserAddress, title='User address', required=False)
 

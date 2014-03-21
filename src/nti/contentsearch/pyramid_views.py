@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import time
@@ -122,7 +124,7 @@ class HighlightSearchHitsView(AbstractAuthenticatedView):
 		result = find_factory_for(externalValue)
 		result = result() if result else None
 		if not search_interfaces.ISearchResults.providedBy(result):
-			raise hexc.HTTPBadRequest(detail="invalid type")
+			raise hexc.HTTPBadRequest(detail=_("invalid type"))
 		update_object_from_external_object(result, externalValue)
 		return result
 

@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 from ZODB.POSException import POSKeyError
@@ -155,7 +157,7 @@ def image_to_dataurl(request):
 	# TODO: We could insert scaling or other manipulations here
 	named_image = NamedImage( data=data, filename=filename )
 	if not named_image.contentType or not named_image.contentType.startswith( 'image' ):
-		raise hexc.HTTPBadRequest("Not an image upload")
+		raise hexc.HTTPBadRequest( _("Not an image upload"))
 
 	data_url = dataurl.encode( data, mime_type=named_image.contentType )
 

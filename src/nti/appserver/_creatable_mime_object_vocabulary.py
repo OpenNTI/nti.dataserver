@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
@@ -118,7 +120,7 @@ def _user_sensitive_factory_finder(ext_object):
 		# sent in (so we found the Class object, not the MimeType).
 		# This is potentially as small security hole, but the things that are blocked are
 		# not found by Class at this time.
-		raise hexc.HTTPForbidden("Cannot create that type of object:" + str(factory))
+		raise hexc.HTTPForbidden( _("Cannot create that type of object:") + str(factory))
 
 	return factory
 

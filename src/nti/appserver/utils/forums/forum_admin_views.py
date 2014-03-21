@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import collections
@@ -40,7 +42,7 @@ def _parse_external_forum_acl(acl):
 			if frm_interfaces.IForumACE.providedBy(entry):
 				ace_lst.append(entry)
 	if not ace_lst:
-		raise hexc.HTTPUnprocessableEntity(detail='Invalid ACL specification')
+		raise hexc.HTTPUnprocessableEntity(detail=_('Invalid ACL specification'))
 	return ace_lst
 
 def _validate_and_parse_external_forum_acl(acl):
@@ -63,14 +65,14 @@ class SetCommunityBoardACL(_JsonBodyView):
 		community = values.get('community', '')
 		community = users.Community.get_community(community)
 		if not community or not nti_interfaces.ICommunity.providedBy(community):
-			raise hexc.HTTPNotFound(detail='Community not found')
+			raise hexc.HTTPNotFound(detail=_('Community not found'))
 
 		acl = values.get('acl', ())
 		acl = _validate_and_parse_external_forum_acl(acl)
 
 		board = frm_interfaces.ICommunityBoard(community, None)
 		if board is None:
-			raise hexc.HTTPNotFound(detail='Board not found')
+			raise hexc.HTTPNotFound(detail=_('Board not found'))
 
 		if not frm_interfaces.IACLCommunityBoard.providedBy(board):
 			interface.alsoProvides(board, frm_interfaces.IACLCommunityBoard)
@@ -84,23 +86,23 @@ def _validate_community(values):
 	community = values.get('community', '')
 	community = users.Community.get_community(community)
 	if not community or not nti_interfaces.ICommunity.providedBy(community):
-		raise hexc.HTTPNotFound(detail='Community not found')
+		raise hexc.HTTPNotFound(detail=_('Community not found'))
 	return community
 
 def _validate_community_forum(community, values):
 	board = frm_interfaces.ICommunityBoard(community, None)
 	if board is None:
-		raise hexc.HTTPNotFound(detail='Board not found')
+		raise hexc.HTTPNotFound(detail=_('Board not found'))
 
 	forum = values.get('forum', None)
 	if not forum:  # default forum
 		forum = frm_interfaces.ICommunityForum(community, None)
 		if forum is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Community does not allow a forum')
+			raise hexc.HTTPUnprocessableEntity(detail=_('Community does not allow a forum'))
 	else:
 		forum = board.get(forum, None)
 		if forum is None:
-			raise hexc.HTTPNotFound(detail='Forum not found')
+			raise hexc.HTTPNotFound(detail=_('Forum not found'))
 	return forum
 
 @view_config(route_name='objects.generic.traversal',
@@ -115,7 +117,7 @@ class SetCommunityForumACL(_JsonBodyView):
 
 		board = frm_interfaces.ICommunityBoard(community, None)
 		if board is None:
-			raise hexc.HTTPNotFound(detail='Board not found')
+			raise hexc.HTTPNotFound(detail=_('Board not found'))
 
 		forum = _validate_community_forum(community, values)
 
@@ -140,16 +142,16 @@ class DeleteCommunityForum(_JsonBodyView):
 		community = values.get('community', '')
 		community = users.Community.get_community(community)
 		if not community or not nti_interfaces.ICommunity.providedBy(community):
-			raise hexc.HTTPNotFound(detail='Community not found')
+			raise hexc.HTTPNotFound(detail=_('Community not found'))
 
 		forum_name = values.get('forum', None)
 		if not forum_name:  # default forum
-			raise hexc.HTTPUnprocessableEntity(detail='Cannot delete default forum')
+			raise hexc.HTTPUnprocessableEntity(detail=_('Cannot delete default forum'))
 		else:
 			board = frm_interfaces.ICommunityBoard(community)
 			forum = board.get(forum_name, None)
 			if forum is None:
-				raise hexc.HTTPNotFound(detail='Forum not found')
+				raise hexc.HTTPNotFound(detail=_('Forum not found'))
 			del board[forum_name]
 			board.updateLastMod()
 
@@ -167,7 +169,7 @@ class RecreateCommunityForum(_JsonBodyView):
 		forum_name = values.get('forum', '')
 		community = users.Community.get_community(community)
 		if not community or not nti_interfaces.ICommunity.providedBy(community):
-			raise hexc.HTTPNotFound(detail='Community not found')
+			raise hexc.HTTPNotFound(detail=_('Community not found'))
 
 		if not forum_name:
 			forum_name = CommunityForum.__default_name__
@@ -175,7 +177,7 @@ class RecreateCommunityForum(_JsonBodyView):
 		board = frm_interfaces.ICommunityBoard(community, {})
 		forum = board.get(forum_name)
 		if forum is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Forum not found')
+			raise hexc.HTTPUnprocessableEntity(detail=_('Forum not found'))
 
 		# get copy of the data
 		data = dict(forum)
