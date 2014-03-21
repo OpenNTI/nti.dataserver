@@ -47,6 +47,7 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
+from nti.app.renderers import interfaces as app_renderers_interfaces
 
 from nti.contentprocessing import content_utils
 from nti.contentsearch import interfaces as search_interfaces
@@ -399,7 +400,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		self.user = find_interface(  self.request.context, nti_interfaces.IEntity )
 
 		if frm_interfaces.IBoard.providedBy( self.request.context ):
-			self.result_iface = app_interfaces.ILongerCachedUGDExternalCollection
+			self.result_iface = app_renderers_interfaces.ILongerCachedUGDExternalCollection
 
 		# If we were invoked with a subpath, then it must be the tokenized
 		# version so we can allow for good caching, as we will change the token
@@ -417,7 +418,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		# that the application never sees the updated contents URLs, making it impossible
 		# to HTTP cache them.
 		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
-			self.result_iface = app_interfaces.IETagCachedUGDExternalCollection
+			self.result_iface = app_renderers_interfaces.IETagCachedUGDExternalCollection
 
 	def __call__( self ):
 		try:
@@ -426,8 +427,8 @@ class ForumsContainerContentsGetView(UGDQueryView):
 			# (only ITopic is registered for this). If so, then we want to use
 			# this fact when we create the ultimate return ETag.
 			# We also want to bail now with 304 Not Modified if we can
-			app_interfaces.IPreRenderResponseCacheController( self.request.context )( self.request.context, {'request': self.request} )
-			self.result_iface = app_interfaces.IUseTheRequestContextUGDExternalCollection
+			app_renderers_interfaces.IPreRenderResponseCacheController(self.request.context)(self.request.context, {'request': self.request})
+			self.result_iface = app_renderers_interfaces.IUseTheRequestContextUGDExternalCollection
 		except TypeError:
 			pass
 
