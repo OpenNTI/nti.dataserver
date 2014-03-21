@@ -308,7 +308,7 @@ def handshake(request):
 
 	desired_username = request.params.get( 'username' )
 	if not desired_username:
-		return hexc.HTTPBadRequest(detail="Must provide username")
+		return hexc.HTTPBadRequest(detail=_("Must provide username"))
 
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
@@ -623,14 +623,14 @@ def _specified_username_logon( request, allow_no_username=True, require_matching
 			desired_usernames = [desired_usernames]
 
 	if len(desired_usernames) > 1:
-		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error='Multiple usernames' )
+		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error=_('Multiple usernames' ))
 
 	if desired_usernames:
 		desired_username = desired_usernames[0].lower()
 	elif allow_no_username:
 		desired_username = remote_user.username.lower()
 	else:
-		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error='No username' )
+		return _create_failure_response( request, error_factory=hexc.HTTPBadRequest, error=_('No username' ))
 
 
 	if require_matching_username and desired_username != remote_user.username.lower():

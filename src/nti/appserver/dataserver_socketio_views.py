@@ -29,6 +29,8 @@ import nti.dataserver.interfaces as nti_interfaces
 import nti.socketio.interfaces
 from nti.socketio.dataserver_session import Session
 
+from . import MessageFactory as _
+
 # b/c
 import sys
 import UserDict
@@ -130,13 +132,13 @@ def _get_session(session_id):
 		session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
 	except (KeyError,ValueError):
 		logger.warn( "Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True )
-		raise hexc.HTTPNotFound( "No session found or illegal session id" )
+		raise hexc.HTTPNotFound( _("No session found or illegal session id" ))
 
 	if session is None:
-		raise hexc.HTTPNotFound("No session found for %s" % session_id)
+		raise hexc.HTTPNotFound( "No session found for %s" % session_id)
 	if not session.owner:
 		logger.warn( "Found session with no owner. Cannot connect: %s", session )
-		raise hexc.HTTPNotFound("Session has no owner %s" % session_id )
+		raise hexc.HTTPNotFound( "Session has no owner %s" % session_id )
 	return session
 
 from .tweens.greenlet_runner_tween import HTTPOkGreenletsToRun
@@ -155,7 +157,7 @@ def _connect_view( request ):
 		or (transport not in ws_transports and 'wsgi.websocket' in environ):
 		# trying to use an upgraded websocket on something that is not websocket transport,
 		# or vice/versa
-		raise hexc.HTTPNotFound( 'Incorrect use of websockets' )
+		raise hexc.HTTPNotFound( _('Incorrect use of websockets' ))
 
 	session = _get_session(session_id)
 

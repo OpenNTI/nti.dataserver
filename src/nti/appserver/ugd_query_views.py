@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import sys
@@ -925,7 +927,7 @@ class _RecursiveUGDView(_UGDView):
 		"""
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
-			raise hexc.HTTPNotFound("No catalog")
+			raise hexc.HTTPNotFound( _("No catalog"))
 
 		result = LocatedExternalDict()
 		result.__parent__ = self.request.context
@@ -1276,7 +1278,7 @@ class _NotableRecursiveUGDView(_UGDView):
 
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
-			raise hexc.HTTPNotFound("No catalog")
+			raise hexc.HTTPNotFound( _("No catalog"))
 
 		# TODO: See about optimizing this query plan. ZCatalog has a
 		# CatalogPlanner object that we might could use.

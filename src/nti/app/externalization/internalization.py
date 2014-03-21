@@ -9,6 +9,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import collections
@@ -95,7 +97,7 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# We're officially dropping support for plist values.
 		# primarily due to the lack of support for null values, and
 		# unsure about encoding issues
-		raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
+		raise hexc.HTTPUnsupportedMediaType( _('XML no longer supported.'))
 
 	try:
 		# We need all string values to be unicode objects. simplejson (the usual implementation
@@ -138,7 +140,7 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# could also come from other places. We call it all client error.
 		logger.exception( "Failed to parse/transform value %s", value )
 		_, _, tb = sys.exc_info()
-		ex = hexc.HTTPBadRequest("Failed to parse/transform input")
+		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input"))
 		raise ex, None, tb
 
 

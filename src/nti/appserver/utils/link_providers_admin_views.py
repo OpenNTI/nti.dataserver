@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 from pyramid.view import view_config
@@ -45,7 +47,7 @@ class _ResetGenerationLink(_JsonBodyView):
 		username = values.get('username') or self.request.authenticated_userid
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail='User not found')
+			raise hexc.HTTPNotFound(detail=_('User not found'))
 
 		link_dict = IAnnotations(user).get(link_provider._GENERATION_LINK_KEY, None)
 		if link_dict is not None:

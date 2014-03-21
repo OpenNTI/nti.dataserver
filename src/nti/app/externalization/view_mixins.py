@@ -8,6 +8,8 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from . import MessageFactory as _
+
 logger = __import__('logging').getLogger(__name__)
 
 import sys
@@ -74,9 +76,9 @@ class BatchingUtilsMixin(object):
 				batch_size = int(batch_size)
 				batch_start = int(batch_start)
 			except ValueError:
-				raise hexc.HTTPBadRequest("Batch size/start not integers")
+				raise hexc.HTTPBadRequest( _("Batch size/start not integers"))
 			if batch_size <= 0 or batch_start < 0:
-				raise hexc.HTTPBadRequest("Batch size/start out of range")
+				raise hexc.HTTPBadRequest( _("Batch size/start out of range"))
 
 			return batch_size, batch_start
 
@@ -325,7 +327,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			# be either, depending on details...
 			transaction.doom()
 			logger.warn("Failed to accept input. Client or server problem?", exc_info=True)
-			raise hexc.HTTPUnprocessableEntity("Unexpected internal error; see logs")
+			raise hexc.HTTPUnprocessableEntity( _("Unexpected internal error; see logs"))
 
 
 	def readInput(self, value=None):
@@ -351,7 +353,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			# could also come from other places. We call it all client error.
 			logger.exception( "Failed to parse/transform value %s", value )
 			_, _, tb = sys.exc_info()
-			ex = hexc.HTTPBadRequest("Failed to parse/transform value")
+			ex = hexc.HTTPBadRequest( _("Failed to parse/transform value"))
 			raise ex, None, tb
 
 	def _transformInput( self, value ):
@@ -397,7 +399,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
 						  datatype, externalValue, containedObject, predicate )
-			raise hexc.HTTPUnprocessableEntity( 'Unsupported/missing Class' )
+			raise hexc.HTTPUnprocessableEntity( _('Unsupported/missing Class' ))
 		return containedObject
 
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):

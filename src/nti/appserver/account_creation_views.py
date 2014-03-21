@@ -266,7 +266,7 @@ def account_create_view(request):
 	"""
 
 	if request.authenticated_userid:
-		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
+		raise hexc.HTTPForbidden( _("Cannot create new account while logged on." ))
 
 	# TODO: We are hardcoding the factory. Should we do that?
 	externalValue = obj_io.read_body_as_external_object(request)
@@ -349,7 +349,7 @@ def account_preflight_view(request):
 	"""
 
 	if request.authenticated_userid:
-		raise hexc.HTTPForbidden( "Cannot create new account while logged on." )
+		raise hexc.HTTPForbidden( _("Cannot create new account while logged on." ))
 
 	externalValue = obj_io.read_body_as_external_object(request)
 

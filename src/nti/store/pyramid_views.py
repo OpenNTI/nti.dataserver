@@ -136,7 +136,7 @@ class GetPurchaseAttemptView(object):
 
 		purchase = purchase_history.get_purchase_attempt(purchase_id, username)
 		if purchase is None:
-			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
+			raise hexc.HTTPNotFound(detail=_('Purchase attempt not found'))
 		elif purchase.is_pending():
 			start_time = purchase.StartTime
 			if time.time() - start_time >= 90 and not purchase.is_synced():
@@ -203,10 +203,10 @@ class RedeemPurchaseCodeView(_PostView):
 
 		purchase = invitations.get_purchase_by_code(invitation_code)
 		if purchase is None or not store_interfaces.IPurchaseAttempt.providedBy(purchase):
-			raise hexc.HTTPNotFound(detail='Purchase attempt not found')
+			raise hexc.HTTPNotFound(detail=_('Purchase attempt not found'))
 
 		if purchase.Quantity is None:
-			raise hexc.HTTPUnprocessableEntity(detail='Not redeemable purchase')
+			raise hexc.HTTPUnprocessableEntity(detail=_('Not redeemable purchase'))
 
 		if purchasable_id not in purchase.Items:
 			raise_field_error(request, "invitation_code",
