@@ -1,0 +1,2 @@
+name: eur EUR
+<span tal:replace="self"></span>
