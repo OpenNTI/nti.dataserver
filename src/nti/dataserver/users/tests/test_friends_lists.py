@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
 from hamcrest import has_entry
@@ -24,8 +17,9 @@ from hamcrest import is_
 from hamcrest import same_instance
 from hamcrest import is_in
 from hamcrest import is_not as does_not
-is_not = does_not
 from hamcrest import greater_than_or_equal_to
+is_not = does_not
+
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.testing.matchers import is_true, is_false
 
@@ -161,7 +155,7 @@ class TestFriendsLists(DataserverLayerTest):
 			user2 = User.create_user( ds, username='foo12' )
 			user3 = User.create_user( ds, username='foo13' )
 
-			fl1 = users.DynamicFriendsList(username='Friends')
+			fl1 = DynamicFriendsList(username='Friends')
 			fl1.creator = user1 # Creator must be set
 
 			user1.addContainedObject( fl1 )
@@ -203,7 +197,7 @@ class TestFriendsLists(DataserverLayerTest):
 		user1 = User.create_user( ds, username='foo23' )
 		user2 = User.create_user( ds, username='foo12' )
 
-		fl1 = users.DynamicFriendsList(username='Friends')
+		fl1 = DynamicFriendsList(username='Friends')
 		fl1.creator = user1 # Creator must be set
 
 		user1.addContainedObject( fl1 )
@@ -250,7 +244,7 @@ def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
 		password_kwargs = {'password': passwords}
 	# Create a user with a DFL and two friends in the DFL
 	owner_user = users.User.create_user( username=owner_username, **password_kwargs )
-	parent_dfl = users.DynamicFriendsList( username="ParentFriendsList" )
+	parent_dfl = DynamicFriendsList(username="ParentFriendsList")
 	parent_dfl.creator = owner_user
 	owner_user.addContainedObject( parent_dfl )
 
@@ -297,7 +291,7 @@ class TestDFL(DataserverLayerTest):
 
 		all_users = user, user2, user3, user4, user5, user6, user7, user8
 
-		fl = users.DynamicFriendsList( 'MyList' )
+		fl = DynamicFriendsList('MyList')
 		# Needs an intid before we can add people to it
 		component.getUtility(IIntIds).register(fl)
 		fl.creator = owner
@@ -457,7 +451,7 @@ class TestDFL(DataserverLayerTest):
 	@WithMockDSTrans
 	def test_remove_friends(self):
 		owner = users.User.create_user(username='owner@bar')
-		fl1 = users.DynamicFriendsList(username='Friends')
+		fl1 = DynamicFriendsList(username='Friends')
 		fl1.creator = owner
 		owner.addContainedObject( fl1 )
 

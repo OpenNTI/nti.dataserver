@@ -115,6 +115,8 @@ from nti.ntiids import ntiids
 from nti.utils.schema import Object
 from nti.utils.property import read_alias
 
+from nti.wref import interfaces as wref_interfaces
+
 class _IMeetingTranscriptStorage(nti_interfaces.ICreated, # ICreated so they get an ACL
 								 INoAutoIndexEver):
 
@@ -141,7 +143,7 @@ class _AbstractMeetingTranscriptStorage(datastructures.PersistentCreatedModDateT
 
 	def __init__(self, meeting):
 		super(_AbstractMeetingTranscriptStorage,self).__init__()
-		self._meeting_ref = nti_interfaces.IWeakRef(meeting)
+		self._meeting_ref = wref_interfaces.IWeakRef(meeting)
 
 	@property
 	def meeting(self):
