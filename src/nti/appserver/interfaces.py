@@ -3,7 +3,7 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
@@ -21,7 +21,6 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder  # BWC
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
 from nti.utils.schema import Object
@@ -627,3 +626,12 @@ class IApplicationSettings(mapping.IFullMapping):
 	"""
 	The application settings dictionary.
 	"""
+
+####
+# BWC exports
+####
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.dataserver.interfaces ",
+	"nti.dataserver.interfaces",
+	"IDeletedObjectPlaceholder")
