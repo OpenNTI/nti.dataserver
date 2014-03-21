@@ -6,21 +6,15 @@ Classes for indexing information related to users.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-from zope import interface
 
 from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 import zope.catalog.field
-
-import zope.index.field
-import zope.index.topic
-import zope.container.contained
 
 from zope.index.topic.filter import FilteredSetBase
 
