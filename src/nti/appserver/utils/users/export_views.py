@@ -187,8 +187,8 @@ def export_users(request):
 
 exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
 
-def get_collection_root(ntiid, library=None, registry=component):
-	library = registry.queryUtility(lib_interfaces.IContentPackageLibrary) if library is None else library
+def get_collection_root(ntiid):
+	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 	paths = library.pathToNTIID(ntiid) if library else None
 	return paths[0] if paths else None
 
