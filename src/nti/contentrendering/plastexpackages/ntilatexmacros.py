@@ -245,6 +245,9 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 					partnerId, entryId = self.attributes['id'].split(':')
 					self.poster = '//www.kaltura.com/p/' + partnerId + '/thumbnail/entry_id/' + entryId + '/width/1280/'
 					self.thumbnail = '//www.kaltura.com/p/' + partnerId + '/thumbnail/entry_id/' + entryId + '/width/640/'
+				elif self.attributes['service'] == 'vimeo':
+					self.service = 'vimeo'
+					self.src['other'] = self.attributes['id']
 				else:
 					logger.warning('Unknown video type: %s', self.attributes['service'])
 
