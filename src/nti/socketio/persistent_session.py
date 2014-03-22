@@ -51,7 +51,7 @@ class AbstractSession(PersistentPropertyHolder):
 	_session_intid = None # from the intid utility
 	originating_site_names = ()
 
-	last_heartbeat_time = minmax.NumericPropertyDefaultingToZero( '_last_heartbeat_time', minmax.NumericMaximum, as_number=True )
+	last_heartbeat_time = minmax.NumericPropertyDefaultingToZero( str('_last_heartbeat_time'), minmax.NumericMaximum, as_number=True )
 
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
@@ -76,16 +76,16 @@ class AbstractSession(PersistentPropertyHolder):
 
 		for k in 'connection_confirmed', '_broadcast_connect':
 			if k in savedState or k in newState:
-				state[k] = True
+				state[str(k)] = True
 
 		# session_intid is set when this object is created and deleted, going from missing to int to None
 		# Once it's gone, we should never be resurrected
 		if savedState.get( '_session_intid', self ) is None:
-			state['_session_intid'] = None
+			state[str('_session_intid')] = None
 
 		# Originating_site_names is immutable once set
 		if 'originating_site_names' in savedState:
-			state['originating_site_names'] = savedState['originating_site_names']
+			state[str('originating_site_names')] = savedState['originating_site_names']
 
 		# The 'state' value goes through a defined sequence. We accept whichever one is
 		# farthest along
@@ -96,7 +96,7 @@ class AbstractSession(PersistentPropertyHolder):
 
 		for next_state in reversed(ordered_states):
 			if savedState.get( 'state', None ) == next_state or newState.get( 'state', None ) == next_state:
-				state['state'] = next_state
+				state[str('state')] = next_state
 				break
 
 		return state

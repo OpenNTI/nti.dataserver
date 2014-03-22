@@ -31,7 +31,7 @@ class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):
 	:class:`zope.container.interfaces.IContainer`, this is done when this object is modified.
 	"""
 
-	lastModified = NumericPropertyDefaultingToZero('_lastModified', NumericMaximum, as_number=True )
+	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'), NumericMaximum, as_number=True )
 
 	def __init__( self, *args, **kwargs ):
 		self.createdTime = time.time()

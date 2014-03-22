@@ -508,7 +508,7 @@ class User(Principal):
 	# resets. It is writable, number is not...
 	lastLoginTime = minmax.NumericPropertyDefaultingToZero(b'lastLoginTime', minmax.NumericMaximum, as_number=True)
 	# ...although, pending a more sophisticated notification tracking
-	# mechanism, we are allowing notification count to be set
+	# mechanism, we are allowing notification count to be set...
 	notificationCount = minmax.NumericPropertyDefaultingToZero( b'notificationCount', minmax.MergingCounter )
 
 	# TODO: If no AvatarURL is set when externalizing,

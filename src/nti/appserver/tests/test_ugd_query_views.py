@@ -41,7 +41,7 @@ import pyramid.httpexceptions as hexc
 import persistent
 import UserList
 from datetime import datetime
-
+from urllib import unquote
 
 from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
@@ -1263,8 +1263,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 			reply2_ext_ntiid = to_external_ntiid_oid( reply_n )
 
-		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
+		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn/' % ( self.extra_environ_default_user, ntiids.ROOT )
 		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'lastViewed', 0))
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 2))
 		assert_that( res.json_body, has_entry( 'Items', has_length(2) ))
 		# They are sorted descending by time by default
@@ -1282,6 +1283,15 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		res = self.testapp.get(path, params={'batchBefore': 299})
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID', reply_ext_ntiid) ) ) )
+
+		# We can update the lastViewed time
+
+		lv_href = self.require_link_href_with_rel(res.json_body, 'lastViewed')
+		assert_that(unquote(lv_href), is_(path + '/lastViewed') )
+		self.testapp.put_json( lv_href,
+							   1234 )
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'lastViewed', 1234))
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,

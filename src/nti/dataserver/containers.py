@@ -255,7 +255,7 @@ class LastModifiedBTreeContainer(PersistentPropertyHolder,
 	"""
 
 	createdTime = 0
-	lastModified = NumericPropertyDefaultingToZero('_lastModified', NumericMaximum, as_number=True )
+	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'), NumericMaximum, as_number=True )
 
 	def __init__( self ):
 		self.createdTime = time.time()
