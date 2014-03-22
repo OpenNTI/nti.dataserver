@@ -29,6 +29,7 @@ from pyramid.interfaces import IViewClassifier
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 from nti.appserver import httpexceptions as hexc
 from nti.app.authentication import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
@@ -1210,6 +1211,15 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += stream_data
 		return all_data
 
+
+_NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='GET',
+			 context='nti.appserver.interfaces.IRootPageContainerResource',
+			 permission=nauth.ACT_READ,
+			 name=_NOTABLE_NAME)
 @interface.implementer(INamedLinkView)
 class _NotableRecursiveUGDView(_UGDView):
 	"""
@@ -1338,7 +1348,64 @@ class _NotableRecursiveUGDView(_UGDView):
 								   batch_size=batch_size,
 								   batch_start=batch_start,
 								   selector=lambda x: x)
+		_NotableUGDLastViewed.write_last_viewed(request, self.remoteUser, result)
 		return result
+
+from zope.annotation.interfaces import IAnnotations
+from nti.dataserver.links import Link
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='PUT',
+			 context='nti.appserver.interfaces.IRootPageContainerResource',
+			 permission=nauth.ACT_READ,
+			 name='lastViewed')
+class _NotableUGDLastViewed(AbstractAuthenticatedView,
+							ModeledContentUploadRequestUtilsMixin):
+	"""
+	Maintains the 'lastViewed' time for each user's NotableUGD.
+	"""
+
+	# JAM: I know we'll need to access this elsewhere, from
+	# the emailing process, so there will need to be a more formal
+	# API for this. Currently we're storing it as an annotation
+	# on the user as a timestamp
+	KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
+
+	inputClass = Number
+
+	@classmethod
+	def write_last_viewed(cls, request, remote_user, result):
+		annotations = IAnnotations(remote_user)
+		last_viewed = annotations.get(cls.KEY, 0)
+
+		result['lastViewed'] = last_viewed
+		links = result.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
+		# If we use request.context to base the link on, which is really the Right Thing,
+		# we break because when that externalizes, we get the canonical location
+		# beneath NTIIDs instead of beneath Pages(NTIID)...which doesn't have
+		# these views registered.
+		path = request.path
+		if not path.endswith('/'):
+			path = path + '/'
+		links.append( Link( path,
+							rel='lastViewed',
+							elements=('lastViewed',),
+							method='PUT'))
+		return result
+
+	def _do_call(self):
+		# Note that we don't use the user in the traversal path,
+		# we use the user that's actually making the call.
+		# This is why we can get away with just the READ permission.
+		annotations = IAnnotations(self.remoteUser)
+		last_viewed = annotations.get(self.KEY, 0)
+
+		incoming_last_viewed = self.readInput()
+		if incoming_last_viewed > last_viewed:
+			last_viewed = incoming_last_viewed
+			annotations[self.KEY] = incoming_last_viewed
+		return incoming_last_viewed
+
 
 #: The link relationship type that can be used
 #: to get all the visible replies to a Note

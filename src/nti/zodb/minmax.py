@@ -177,7 +177,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 		:param name: The name of the property; this will be the key in the instance
 			dictionary. This should match the name of the property
 			(e.g., ``a = NumericPropertyDefaultingToZero( 'a',...)``) but is not required
-			to.
+			to. It must be a native string (bytes on py2, str/unicode on py3).
 		:param factory: The value object factory that determines the type of
 			conflict resolution used for this property. Typically :func:`NumericMaximum`,
 			:class:`NumericMinimum` or :class:`MergingCounter`.
@@ -187,6 +187,8 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			want to access its ``.value`` attribute. Setting this property always
 			takes the (raw) numeric value.
 		"""
+		if not isinstance(name, str): # force native string
+			raise ValueError("name must be native string")
 		self.__name__ = name
 		self.factory = factory
 		if as_number:
@@ -210,7 +212,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 
 	def __get__( self, inst, klass ):
 		if inst is None:
-			return klass
+			return self
 
 		self.__activate( inst )
 		if self.__name__ in inst.__dict__:
