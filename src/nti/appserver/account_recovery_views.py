@@ -3,11 +3,11 @@
 """
 Views related to recovering information about accounts (lost username and/or passcode)
 
-For the general design, see `Everything you ever wanted to know about building a secure password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-wanted-to-know.html>`_
+For the general design, see `Everything you ever wanted to know about building a secure
+password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-wanted-to-know.html>`_
 
 $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
