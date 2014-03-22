@@ -83,7 +83,8 @@ REL_ACCOUNT_PROFILE_UPGRADE = "account.profile.needs.updated"
 _PLACEHOLDER_USERNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_USERNAME
 _PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
-def _create_user(request, externalValue, preflight_only=False, require_password=True, user_factory=users.User.create_user):
+def _create_user(request, externalValue, preflight_only=False, require_password=True,
+				 user_factory=users.User.create_user):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
@@ -102,7 +103,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 		exc_info = sys.exc_info()
 		_raise_error( request, hexc.HTTPUnprocessableEntity,
 					  {'field': exc_info[1].args[0],
-					   'message': 'Missing data',
+					   'message': _('Missing data'),
 					   'code': 'RequiredMissing'},
 					  exc_info[2] )
 

@@ -11,6 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
+import sys
+import UserDict
+
 import transaction
 
 from zope import component
@@ -28,12 +33,6 @@ import nti.dataserver.interfaces as nti_interfaces
 
 import nti.socketio.interfaces
 from nti.socketio.dataserver_session import Session
-
-from . import MessageFactory as _
-
-# b/c
-import sys
-import UserDict
 
 socketio_server = UserDict.UserDict()
 socketio_server['Session'] = Session
