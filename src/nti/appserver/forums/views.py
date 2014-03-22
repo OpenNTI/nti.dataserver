@@ -667,7 +667,7 @@ class CommentDeleteView(UGDDeleteView):
 
 	def _do_delete_object( self, theObject ):
 		deleting = aq_base(theObject)
-		interface.alsoProvides( deleting, app_interfaces.IDeletedObjectPlaceholder )
+		interface.alsoProvides(deleting, nti_interfaces.IDeletedObjectPlaceholder)
 
 		# TODO: Events need to fire to unindex, once we figure
 		# out what those are?

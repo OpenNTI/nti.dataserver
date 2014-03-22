@@ -20,6 +20,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
 
 class _ServiceGetView(AbstractAuthenticatedView):
 
@@ -49,7 +50,7 @@ class _GenericGetView(AbstractView):
 		# in this module, or the object itself
 		resource = getattr( self.request.context, 'resource', self.request.context )
 
-		if app_interfaces.IDeletedObjectPlaceholder.providedBy( resource ):
+		if nti_interfaces.IDeletedObjectPlaceholder.providedBy(resource):
 			raise hexc.HTTPNotFound()
 
 		result = component.queryAdapter( resource,
