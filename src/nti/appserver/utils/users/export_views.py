@@ -113,10 +113,11 @@ def user_export_objects(request):
 	response.content_type = b'application/json; charset=UTF-8'
 	response.content_disposition = b'attachment; filename="objects.txt.gz"'
 
-	for _, obj in all_objects_iids(usernames, mime_types):
-		external = to_json_representation_externalized(obj)
-		gzstream.write(external)
-		gzstream.write(b"\n")
+	if usernames:
+		for _, obj in all_objects_iids(usernames, mime_types):
+			external = to_json_representation_externalized(obj)
+			gzstream.write(external)
+			gzstream.write(b"\n")
 
 	gzstream.flush()
 	gzstream.close()
