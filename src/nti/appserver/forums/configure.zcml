@@ -67,7 +67,7 @@
 	Anything that becomes a deleted placeholder should no longer be in /Activity.
 	-->
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
-				for="nti.appserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
+				for="nti.dataserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
 
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
