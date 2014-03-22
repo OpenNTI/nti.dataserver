@@ -38,10 +38,13 @@ from cStringIO import StringIO
 
 from zope import interface
 from zope import component
+from zope.location.interfaces import LocationError
+from zope.traversing.interfaces import ITraversable
+from zope.container.contained import Contained
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
 from pyramid import httpexceptions as hexc
-from pyramid.view import view_config, view_defaults
+from pyramid.view import view_config
 
 import nti.appserver.interfaces as app_interfaces
 
@@ -54,11 +57,37 @@ import nti.dictserver as dictserver
 import nti.dictserver.interfaces as dict_interfaces
 from nti.dictserver.storage import TrivialExcelCSVDataStorage
 
-@view_defaults(name='Glossary',
-			   route_name='objects.generic.traversal',
-			   request_method='GET',
-			   permission=nauth.ACT_READ,
-			   http_cache=datetime.timedelta(days=1) )
+@interface.implementer(app_interfaces.INamedLinkPathAdapter,
+					   ITraversable)
+class _GlossaryPathAdapter(Contained):
+	"""
+	A path adapter that we can traverse to in order to get
+	to the glossary.
+
+	Because we consume the sub-path in the glossary view itself,
+	we let traversal continue through us to keep returning us.
+	"""
+
+	__name__ = 'Glossary'
+
+	term = None
+	def __init__(self, context, request):
+		self.context = self.__parent__ = context
+		self.request = request
+		self.ntiid = context.ntiid
+
+	def traverse(self, key, remaining_path):
+		# Only one layer
+		if self.term:
+			raise LocationError(key)
+		self.term = key
+		return self
+
+@view_config(route_name='objects.generic.traversal',
+			 context=_GlossaryPathAdapter,
+			 request_method='GET',
+			 permission=nauth.ACT_READ,
+			 http_cache=datetime.timedelta(days=1) )
 @interface.implementer(app_interfaces.INamedLinkView)
 class GlossaryView(object):
 	"""
@@ -67,12 +96,9 @@ class GlossaryView(object):
 	def __init__( self, request ):
 		self.request = request
 
-	@view_config( context=app_interfaces.IPageContainerResource )
-	@view_config( context=app_interfaces.INewPageContainerResource )
-	@view_config( context=app_interfaces.IRootPageContainerResource )
 	def __call__(self):
 		request = self.request
-		term = request.subpath[0]
+		term = request.context.term
 
 		ntiid = request.context.ntiid
 

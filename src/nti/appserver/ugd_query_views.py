@@ -889,20 +889,6 @@ class _RecursiveUGDView(_UGDView):
 	_can_special_case_root = True
 
 	def __call__(self):
-		# A hack to accept subviews, specifically for feeds. This should
-		# probably change, and probably will have to when we do different
-		# authentication via tokens
-		if self.request.subpath:
-			view = component.getSiteManager().adapters.lookup(
-					(IViewClassifier, self.request.request_iface, IPageContainerResource),
-					IView,
-					name=self.request.subpath[0] )
-			if view is not None:
-				# Fake it out, it turns out to call back to us
-				self.request.view_name = self.request.subpath[0]
-				self.request.subpath = ()
-				return view(self.request.context, self.request)
-
 		# Special case when a user is asking for his own data for the root;
 		# we can be much faster (and include non-contained data like forums)
 		# through using the catalog

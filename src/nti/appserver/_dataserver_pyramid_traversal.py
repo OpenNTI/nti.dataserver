@@ -73,11 +73,9 @@ def users_root_resource_factory( request ):
 	dataserver = component.getUtility( nti_interfaces.IDataserver )
 	return dataserver.users_folder
 
-
 @interface.implementer(trv_interfaces.ITraversable,
-					   interfaces.IContainerResource,
 					   loc_interfaces.ILocation)
-class _ContainerResource(object):
+class _AbstractContainerResource(object):
 
 	__acl__ = ()
 
@@ -99,6 +97,10 @@ class _ContainerResource(object):
 	def user(self):
 		return pyramid.traversal.find_interface( self, nti_interfaces.IUser )
 
+
+@interface.implementer(interfaces.IContainerResource)
+class _ContainerResource(_AbstractContainerResource):
+
 	def traverse( self, key, remaining_path ):
 		contained_object = self.user.getContainedObject( self.__name__, key )
 		if contained_object is None:
@@ -112,24 +114,43 @@ class _ContainerResource(object):
 
 		return contained_object
 
-# TODO: These next three classes inherit from _ContainerResource and hence
-# implement IContainerResource, but that doesn't match the interface
-# hierarchy. They should probably be separate.
+class _AbstractPageContainerResource(_AbstractContainerResource):
+	"""
+	The Pages container's are generally not meant to be traversable
+	into the objects of the container, but we do want to allow
+	the use of named path adapters.
 
-class _NonTraversableContainerResource(_ContainerResource):
+	To further simplify migration, if we are attempting to traverse
+	to a named view of ourself, we traverse to ourself, so long as
+	there is a further path. This lets us use named views
+	both on this object (Pages(Root)/RecursiveUGD) and named views
+	that are subviews without an intermediate traversable object
+	(Pages(Root)/RecursiveUGD/feed.atom). Note that this is a hacky
+	shortcut.
+	"""
+
 	def traverse( self, key, remaining_path ):
-		raise loc_interfaces.LocationError( key )
+		try:
+			return adapter_request(self, self.request).traverse(key, remaining_path)
+		except KeyError:
 
-@interface.implementer(interfaces.INewContainerResource)
-class _NewContainerResource(_NonTraversableContainerResource):
-	"""
-	A leaf on the traversal tree. Exists to be a named thing that
-	we can match views with. Generally we only POST to this thing;
-	everything behind it (with a few exceptions, like glossaries) will be 404.
-	"""
+			# Is there a named view matching the key? If so we want to
+			# "traverse" to ourself, so long as we plan to keep going
+			if not remaining_path:
+				raise
+
+			if component.getSiteManager().adapters.lookup(
+					(IViewClassifier, self.request.request_iface, interface.providedBy(self)),
+					IView,
+					name=key ) is None:
+				raise
+
+			return self
+
+
 
 @interface.implementer(interfaces.INewPageContainerResource)
-class _NewPageContainerResource(_NonTraversableContainerResource):
+class _NewPageContainerResource(_AbstractPageContainerResource):
 	"""
 	A leaf on the traversal tree, existing only to be a named
 	thing that we can match views with for data that does
@@ -137,14 +158,14 @@ class _NewPageContainerResource(_NonTraversableContainerResource):
 	"""
 
 @interface.implementer(interfaces.IPageContainerResource)
-class _PageContainerResource(_NonTraversableContainerResource):
+class _PageContainerResource(_AbstractPageContainerResource):
 	"""
 	A leaf on the traversal tree. Exists to be a named thing that
 	we can match view names with. Should be followed by the view name.
 	"""
 
 @interface.implementer(interfaces.IRootPageContainerResource)
-class _RootPageContainerResource(_NonTraversableContainerResource):
+class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
 from nti.utils._compat import aq_base, IAcquirer
@@ -295,26 +316,31 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 			# Note that the container itself doesn't matter
 			# much, the _PageContainerResource only supports a few child items
 		else:
-			# This page does not exist. But do we have a specific view
+			# This page does not exist. But do we have a specific view or path adapter
 			# registered for a pseudo-container at that location? If so, let it have it
 			# (e.g., Relevant/RecursiveUGD for grandparents)
 			# In general, it is VERY WRONG to lie about the existence of a
 			# container here by faking of a PageContainerResource. We WANT to return
 			# a 404 response in that circumstance, as it is generally
 			# not cacheable and more data may arrive in the future.
-			if not remaining_path or component.getSiteManager().adapters.lookup(
-					 					(IViewClassifier, self.request.request_iface, interfaces.INewPageContainerResource),
-					 					IView,
-					 					name=remaining_path[0] ) is None:
-				raise loc_interfaces.LocationError( key )
+			if not remaining_path:
+				raise loc_interfaces.LocationError(key)
 
-			# OK, assume a new container.
-
-			# NOTE: This should be a LocationError as well. But it's
-			# not because of the dashboard and relevant UGD views.
 			resource = _NewPageContainerResource( None, self.request )
 			resource.__name__ = key
 			resource.__parent__ = self.context
+
+			if (component.queryMultiAdapter( (resource, self.request),
+											 trv_interfaces.IPathAdapter,
+											 name=remaining_path[0] ) is None
+				and component.getSiteManager().adapters.lookup(
+					(IViewClassifier, self.request.request_iface, interface.providedBy(resource)),
+					IView,
+					name=remaining_path[0] ) is None):
+				raise loc_interfaces.LocationError( key )
+
+			# OK, assume a new container. Sigh.
+
 
 
 		# These have the same ACL as the user itself (for now)
