@@ -24,6 +24,7 @@ from zope.dublincore import interfaces as dc_interfaces
 from zope.contentprovider.interfaces import IContentProvider
 from zope.contentprovider.provider import ContentProviderBase
 
+from pyramid.view import view_defaults
 from pyramid.view import view_config
 
 from nti.appserver import httpexceptions as hexc
@@ -187,21 +188,17 @@ def ChangePresentationDetails(_, change):
 
 	return EntryDetails(change.object, change.creator, title, (change.type,))
 
-@view_config( route_name='objects.generic.traversal',
-			  context='nti.appserver.interfaces.IPageContainerResource',
-			  name='feed.rss',
-			  permission=nauth.ACT_READ, request_method='GET',
-			  http_cache=datetime.timedelta(hours=1))
-@view_config( route_name='objects.generic.traversal',
-			  context='nti.appserver.interfaces.IPageContainerResource',
-			  name='feed.atom',
-			  permission=nauth.ACT_READ, request_method='GET',
-			  http_cache=datetime.timedelta(hours=1))
-@view_config( route_name='objects.generic.traversal',
-			  context='nti.appserver.interfaces.IRootPageContainerResource',
-			  name='feed.atom',
-			  permission=nauth.ACT_READ, request_method='GET',
-			  http_cache=datetime.timedelta(hours=1))
+@view_config( context='nti.appserver.interfaces.IPageContainerResource',
+			  name='feed.rss' )
+@view_config(context='nti.appserver.interfaces.IPageContainerResource',
+			  name='feed.atom' )
+@view_config( context='nti.appserver.interfaces.IRootPageContainerResource',
+			  name='feed.atom' )
+@view_config( context='nti.appserver.interfaces.IRootPageContainerResource',
+			  name='feed.rss' )
+@view_defaults( route_name='objects.generic.traversal',
+				permission=nauth.ACT_READ, request_method='GET',
+				http_cache=datetime.timedelta(hours=1))
 class UGDFeedView(AbstractFeedView):
 	_data_callable_factory = _RecursiveUGDStreamView
 

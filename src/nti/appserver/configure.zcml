@@ -184,7 +184,6 @@
 
 	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
-	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
 
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
@@ -343,6 +342,21 @@
 		factory=".tales.Currency"
 		provides="zope.traversing.interfaces.IPathAdapter"
 		name="currency" />
+
+	<!-- Glossary -->
+	<subscriber handler=".glossary_views.add_main_glossary_from_new_content" />
+	<adapter name="Glossary"
+			 factory=".glossary_views._GlossaryPathAdapter"
+			 provides=".interfaces.INamedLinkPathAdapter"
+			 for=".interfaces.IPageContainerResource pyramid.interfaces.IRequest" />
+	<adapter name="Glossary"
+			 factory=".glossary_views._GlossaryPathAdapter"
+			 provides=".interfaces.INamedLinkPathAdapter"
+			 for=".interfaces.IRootPageContainerResource pyramid.interfaces.IRequest" />
+	<adapter name="Glossary"
+			 factory=".glossary_views._GlossaryPathAdapter"
+			 provides=".interfaces.INamedLinkPathAdapter"
+			 for=".interfaces.INewPageContainerResource pyramid.interfaces.IRequest" />
 
 	<!-- Content restrictions -->
 	<!--

@@ -308,7 +308,7 @@ def handshake(request):
 
 	desired_username = request.params.get( 'username' )
 	if not desired_username:
-		return hexc.HTTPBadRequest(detail=_("Must provide username"))
+		return hexc.HTTPBadRequest(detail="Must provide username")
 
 	# TODO: Check for existence in the database before generating these.
 	# We also need to be validating whether we can do a openid login, etc.
