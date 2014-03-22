@@ -63,7 +63,7 @@ def all_objects_iids(users=(), mime_types=()):
 	usernames = {getattr(user, 'username', user).lower() for user in users or ()}
 	for uid, obj in intids.items():
 		try:
-			if IBroken.providedBy(obj) or nti_interfaces.IUser(obj):
+			if IBroken.providedBy(obj) or nti_interfaces.IUser.providedBy(obj):
 				continue
 
 			creator = getattr(obj, 'creator', None)
