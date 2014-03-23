@@ -97,7 +97,8 @@ INDEX_FACTORIES = \
 @interface.implementer(search_interfaces.IWhooshContentSearcher)
 class WhooshContentSearcher(object):
 
-	def __init__(self, baseindexname, storage, ntiid=None):
+	def __init__(self, baseindexname, storage, ntiid=None,
+				 parallel_search=False, *args, **kwargs):
 		self._searchables = {}
 		self.storage = storage
 		self.ntiid = ntiid if ntiid else baseindexname
@@ -108,6 +109,7 @@ class WhooshContentSearcher(object):
 			index = storage.get_index(indexname)
 			self._searchables[indexname] = \
 						_Searchable(factory(), indexname, index, classsname)
+		self.parallel_search = parallel_search and len(self._searchables) > 1
 
 	@property
 	def indices(self):
@@ -132,6 +134,12 @@ class WhooshContentSearcher(object):
 		if result:
 			result = not query.searchOn or s.classname in query.searchOn
 		return result
+
+	def _execute_search(self, searcher, method, query, store):
+		if self.is_valid_content_query(searcher, query):
+			method = getattr(searcher, method)
+			return method(query, store=store)
+		return None
 
 	def search(self, query, store=None, *args, **kwargs):
 		query = search_interfaces.ISearchQuery(query)
@@ -167,9 +175,9 @@ class WhooshContentSearcher(object):
 @interface.implementer(search_interfaces.IWhooshContentSearcherFactory)
 class _ContentSearcherFactory(object):
 
-	def __call__(self, indexname=None, ntiid=None, indexdir=None):
+	def __call__(self, indexname=None, ntiid=None, indexdir=None, *args, **kwargs):
 		if indexname and indexdir and os.path.exists(indexdir):
 			storage = whoosh_storage.DirectoryStorage(indexdir)
-			searcher = WhooshContentSearcher(indexname, storage, ntiid)
+			searcher = WhooshContentSearcher(indexname, storage, ntiid, *args, **kwargs)
 			return searcher if len(searcher) > 0 else None
 		return None
