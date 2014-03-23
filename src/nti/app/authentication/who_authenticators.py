@@ -18,9 +18,6 @@ from .interfaces import IIdentifiedUserTokenAuthenticator
 
 from repoze.who.interfaces import IAuthenticator
 from repoze.who.interfaces import IIdentifier
-from repoze.who.interfaces import IChallenger
-from repoze.who.interfaces import IChallengeDecider
-from repoze.who.interfaces import IRequestClassifier
 
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
@@ -55,10 +52,8 @@ class KnownUrlTokenBasedAuthenticator(object):
 	# We actually piggyback off the authtkt implementation, using
 	# a version of the user's password as the 'user data'
 
-	from repoze.who.plugins.auth_tkt import auth_tkt
 	from paste.request import parse_dict_querystring
 	parse_dict_querystring = staticmethod(parse_dict_querystring)
-	from hashlib import sha256
 
 	def __init__( self, secret, allowed_views=() ):
 		"""

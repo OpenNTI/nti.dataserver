@@ -26,11 +26,11 @@
 					  route_name="stacktraces" />
 	</configure>
 
-		
+
 	<!-- Search Traversal -->
-	
-	<include package="nti.contentsearch" file="pyramid.zcml" />	
-		
+
+	<include package="nti.contentsearch" file="pyramid.zcml" />
+
 	<!--
 		 NOTE: The order of registration matters,
 		 especially since we are mixing traversal with pattern dispatch.
@@ -96,4 +96,6 @@
 
 	<!-- Exception views -->
 	<pyramid:scan package=".excviews" />
+
+	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 </configure>
