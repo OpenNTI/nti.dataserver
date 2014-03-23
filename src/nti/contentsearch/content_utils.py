@@ -604,14 +604,14 @@ class _ACLResolver(object):
 
 	@property
 	def acl(self):
-		result = set()
 		obj = self.obj
+		result = set()
 		resolver = search_interfaces.ICreatorResolver(obj, None)
 		if resolver is not None:
 			result.add(resolver.creator.lower())
 		resolver = search_interfaces.IShareableContentResolver(obj, None)
 		if resolver is not None:
-			result.update([x.lower() for x in resolver.sharedWith])
+			result.update(x.lower() for x in resolver.sharedWith)
 		return list(result) if result else None
 
 @interface.implementer(search_interfaces.IStopWords)
