@@ -100,7 +100,9 @@ class IndexManager(object):
 		result = component.queryUtility(search_interfaces.IContentSearcher,
 									 	name=ntiid) is not None
 		if not result:
-			searcher = self.create_content_searcher(ntiid=ntiid, *args, **kwargs)
+			searcher = self.create_content_searcher(ntiid=ntiid,
+													parallel_search=self.parallel_search,
+												  	*args, **kwargs)
 			if searcher is not None:
 				component.provideUtility(searcher, search_interfaces.IContentSearcher,
 									 	 name=ntiid)
