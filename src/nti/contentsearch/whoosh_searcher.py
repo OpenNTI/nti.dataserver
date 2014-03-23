@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import gevent
 
 try:
 	from gevent.lock import BoundedSemaphore
@@ -142,12 +143,22 @@ class WhooshContentSearcher(object):
 		return None
 
 	def search(self, query, store=None, *args, **kwargs):
+		greenlets = []
 		query = search_interfaces.ISearchQuery(query)
 		store = search_results.get_or_create_search_results(query, store)
-		for s in self._searchables.values():
-			if self.is_valid_content_query(s, query):
-				rs = s.search(query, store=store)
+		for searcher in self._searchables.values():
+			if self.parallel_search:
+				greenlet = gevent.spawn(self._execute_search, searcher=searcher,
+										method="search", query=query, store=store)
+				greenlets.append(greenlet)
+			else:
+				rs = self._execute_search(searcher=searcher, method="search",
+										  query=query, store=store)
 				store = search_results.merge_search_results(store, rs)
+		if greenlets:
+			gevent.joinall(greenlets)
+			for greenlet in greenlets:
+				store = search_results.merge_search_results(store, greenlet.get())
 		return store
 
 	def suggest_and_search(self, query, store=None, *args, **kwargs):
