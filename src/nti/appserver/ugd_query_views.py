@@ -23,19 +23,17 @@ from zope import component
 from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
-from pyramid.interfaces import IView
-from pyramid.interfaces import IViewClassifier
 
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.appserver import httpexceptions as hexc
 from nti.app.authentication import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
-from nti.appserver.interfaces import IPageContainerResource
+
 from nti.appserver.interfaces import INamedLinkView
-from nti.appserver.interfaces import IUserPresentationPriorityCreators
+
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -628,24 +626,7 @@ class _UGDView(AbstractAuthenticatedView,
 				return True
 			predicate = security_check
 		else:
-			remote_user = self.remoteUser
-			my_ids = self.remoteUser.xxx_intids_of_memberships_and_self
-			family = component.getUtility(IIntIds).family
-			request = self.request
-			def security_check(x):
-				try:
-					if remote_user == x.creator:
-						return True
-				except AttributeError:
-					pass
-				try:
-					return x.xxx_isReadableByAnyIdOfUser(remote_user, my_ids, family)
-				except (AttributeError, TypeError):
-					try:
-						return x.isSharedWith(remote_user) # TODO: Might need to OR this with is_readable?
-					except AttributeError:
-						return is_readable(x, request)
-			predicate = security_check
+			predicate = self.make_sharing_security_check()
 		return needs_security, predicate
 
 	def _sort_filter_batch_objects( self, objects ):
@@ -1212,199 +1193,6 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		return all_data
 
 
-_NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
-
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 request_method='GET',
-			 context='nti.appserver.interfaces.IRootPageContainerResource',
-			 permission=nauth.ACT_READ,
-			 name=_NOTABLE_NAME)
-@interface.implementer(INamedLinkView)
-class _NotableRecursiveUGDView(_UGDView):
-	"""
-	A view of things that might be of interest to the remote user.
-	This definition is fixed by the server, so client-applied filters
-	are not supported. This view is intended to be used for \"notifications\"
-	or as a special type of \"stream\", so sorting is also defined by the server
-	as lastModified/descending (newest first) (although you can set ``sortOrder``
-	to ``ascending``).
-
-	Notable objects include:
-
-	* Direct replies to :class:`.IThreadable` objects I created;
-
-	* Top-level objects directly shared to me;
-
-	* Top-level objects created by certain people (people that are returned
-		from subscription adapters to :class:`.IUserPresentationPriorityCreators`)
-
-
-	An addition to the usual ``batchStart`` and ``batchSize`` parameters, you may also
-	use:
-
-	batchBefore
-		If given, this is the timestamp (floating point number in fractional
-		unix seconds, as returned in ``Last Modified``) of the *youngest*
-		object to consider returning. Thus, the most efficient way to page through
-		this object is to *not* use ``batchStart``, but instead to set ``batchBefore``
-		to the timestamp of the *oldest* change in the previous batch (always leaving
-		``batchStart`` at zero). Effectively, this defaults to the current time.
-		(Note: the next/previous link relations do not currently take this into account.)
-
-	"""
-
-	# We inherit from _UGDView to pick up some useful functions, but
-	# we don't actually use much of it. In particular, we answer all
-	# of our queries with the catalog.
-
-	_support_cross_user = False
-	_force_apply_security = True
-
-	# Default to paging us
-	_DEFAULT_BATCH_SIZE = 100
-	_DEFAULT_BATCH_START = 0
-
-	def __call__( self ):
-		request = self.request
-		self.check_cross_user()
-		# pre-flight the batch
-		batch_size, batch_start = self._get_batch_size_start()
-		limit = batch_start + batch_size + 2
-
-		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
-		if catalog is None:
-			raise hexc.HTTPNotFound( _("No catalog"))
-
-		# TODO: See about optimizing this query plan. ZCatalog has a
-		# CatalogPlanner object that we might could use.
-		result = {}
-		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
-		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
-		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
-		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
-		intids_tagged_to_me = catalog['taggedTo'].apply({'any_of': (self.remoteUser.username,)})
-		# We use low-level optimization to get this next one; otherwise
-		# we'd need some more indexes to make it efficient
-		intids_of_my_circled_events = self.remoteUser._circled_events_intids_storage
-
-		important_creator_usernames = set()
-		for provider in component.subscribers( (self.remoteUser, request),
-											   IUserPresentationPriorityCreators ):
-			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
-
-		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
-		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
-
-		safely_viewable_intids = catalog.family.IF.multiunion((toplevel_intids_shared_to_me,
-															   intids_replied_to_me,
-															   intids_of_my_circled_events))
-
-		# Sadly, to be able to provide the "TotalItemCount" we have to
-		# apply security to all the intids not guaranteed to be
-		# viewable; if we didn't have to do that we could imagine
-		# doing so incrementally, as needed, on the theory that there
-		# are probably more things shared directly with me or replied
-		# to me than created by others that I happen to be able to see
-
-		questionable_intids = catalog.family.IF.union( toplevel_intids_by_priority_creators,
-													   intids_tagged_to_me )
-
-		uidutil = component.getUtility(IIntIds)
-		_, security_check = self._get_security_check()
-		for questionable_uid in questionable_intids:
-			if questionable_uid in safely_viewable_intids:
-				continue
-			questionable_obj = uidutil.getObject(questionable_uid)
-			if security_check(questionable_obj):
-				safely_viewable_intids.add(questionable_uid)
-
-		# Make sure none of the stuff we created got in
-		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
-		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
-
-
-		result['TotalItemCount'] = len(safely_viewable_intids)
-
-		# Also if we didn't have to provide TotalItemCount, our
-		# handling of before could be much more efficient
-		# (we could do this join early on)
-		if self.request.params.get('batchBefore'):
-			try:
-				before = float(self.request.params.get( 'batchBefore' ))
-			except ValueError: # pragma no cover
-				raise hexc.HTTPBadRequest()
-			intids_in_time_range = catalog['createdTime'].apply({'between': (None, before,)})
-			safely_viewable_intids = catalog.family.IF.intersection(safely_viewable_intids, intids_in_time_range)
-
-
-		sorted_intids = list(catalog['createdTime'].sort(safely_viewable_intids,
-														 limit=limit,
-														 reverse=request.params.get('sortOrder') != 'ascending'))
-
-		items = ResultSet(sorted_intids, uidutil)
-		self._batch_tuple_iterable(result, items,
-								   number_items_needed=limit,
-								   batch_size=batch_size,
-								   batch_start=batch_start,
-								   selector=lambda x: x)
-		_NotableUGDLastViewed.write_last_viewed(request, self.remoteUser, result)
-		return result
-
-from zope.annotation.interfaces import IAnnotations
-from nti.dataserver.links import Link
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 request_method='PUT',
-			 context='nti.appserver.interfaces.IRootPageContainerResource',
-			 permission=nauth.ACT_READ,
-			 name='lastViewed')
-class _NotableUGDLastViewed(AbstractAuthenticatedView,
-							ModeledContentUploadRequestUtilsMixin):
-	"""
-	Maintains the 'lastViewed' time for each user's NotableUGD.
-	"""
-
-	# JAM: I know we'll need to access this elsewhere, from
-	# the emailing process, so there will need to be a more formal
-	# API for this. Currently we're storing it as an annotation
-	# on the user as a timestamp
-	KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
-
-	inputClass = Number
-
-	@classmethod
-	def write_last_viewed(cls, request, remote_user, result):
-		annotations = IAnnotations(remote_user)
-		last_viewed = annotations.get(cls.KEY, 0)
-
-		result['lastViewed'] = last_viewed
-		links = result.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
-		# If we use request.context to base the link on, which is really the Right Thing,
-		# we break because when that externalizes, we get the canonical location
-		# beneath NTIIDs instead of beneath Pages(NTIID)...which doesn't have
-		# these views registered.
-		path = request.path
-		if not path.endswith('/'):
-			path = path + '/'
-		links.append( Link( path,
-							rel='lastViewed',
-							elements=('lastViewed',),
-							method='PUT'))
-		return result
-
-	def _do_call(self):
-		# Note that we don't use the user in the traversal path,
-		# we use the user that's actually making the call.
-		# This is why we can get away with just the READ permission.
-		annotations = IAnnotations(self.remoteUser)
-		last_viewed = annotations.get(self.KEY, 0)
-
-		incoming_last_viewed = self.readInput()
-		if incoming_last_viewed > last_viewed:
-			last_viewed = incoming_last_viewed
-			annotations[self.KEY] = incoming_last_viewed
-		return incoming_last_viewed
 
 
 #: The link relationship type that can be used

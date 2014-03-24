@@ -98,4 +98,5 @@
 	<pyramid:scan package=".excviews" />
 
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
+	<include package="nti.app.notabledata" file="pyramid.zcml" />
 </configure>
