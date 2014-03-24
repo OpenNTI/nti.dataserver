@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 NTI course macros
@@ -266,7 +267,8 @@ class courselessonsubsubsection(subsubsection):
 
 	is_outline_stub_only = None
 
-for _c in courselesson, courselessonsection, courselessonsubsection, courselessonsubsubsection:
+for _c in (courselesson, courselessonsection, courselessonsubsection,
+		   courselessonsubsubsection):
 	_c.invoke = _make_invoke(_c)
 
 class courseinfoname(Command):
@@ -283,9 +285,9 @@ def ProcessOptions( options, document ):
 	document.context.newcounter('courseinfo')
 	document.context.newcounter('courseunit')
 
-	for counter_cls in courseunit, coursepart, courselesson, courselessonsection, courselessonsubsection, courselessonsubsubsection:
+	for counter_cls in (courseunit, coursepart, courselesson, courselessonsection,
+						courselessonsubsection, courselessonsubsubsection):
 		document.context.newcounter(counter_cls.counter)
-
 
 from zope import interface
 from plasTeX.interfaces import IOptionAwarePythonPackage
