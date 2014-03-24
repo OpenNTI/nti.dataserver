@@ -25,6 +25,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.utils.sort import isorted
 from nti.utils.property import Lazy, alias
 
+from . import common
+from . import constants
 from . import search_hits
 from . import interfaces as search_interfaces
 
@@ -108,9 +110,19 @@ class SearchHitMetaData(object):
 		return sum(self.type_count.values())
 
 	def track(self, selected):
+		self.SearchTime = time.time() - self._ref
+
+		resolver = search_interfaces.ITypeResolver(selected, None)
+		name = getattr(resolver, 'type', u'')
+		isVideo = common.get_mimetype_from_type(name) == constants.VIDEO_TRANSCRIPT_MIME_TYPE
+
 		# container count
-		resolver = search_interfaces.IContainerIDResolver(selected, None)
-		containerId = resolver.containerId if resolver else self.unspecified_container
+		if isVideo:  # a video it's its own container
+			resolver = search_interfaces.INTIIDResolver(selected, None)
+			containerId = resolver.ntiid if resolver else self.unspecified_container
+		else:
+			resolver = search_interfaces.IContainerIDResolver(selected, None)
+			containerId = resolver.containerId if resolver else self.unspecified_container
 		self.container_count[containerId] = self.container_count[containerId] + 1
 
 		# last modified
@@ -122,8 +134,6 @@ class SearchHitMetaData(object):
 		resolver = search_interfaces.ITypeResolver(selected, None)
 		type_name = resolver.type if resolver else u'unknown'
 		self.type_count[type_name] = self.type_count[type_name] + 1
-
-		self.SearchTime = time.time() - self._ref
 
 	def __iadd__(self, other):
 		# container count
