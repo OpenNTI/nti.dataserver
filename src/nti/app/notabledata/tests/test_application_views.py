@@ -19,7 +19,7 @@ from hamcrest import contains
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from urllib import unquote
-
+from datetime import datetime
 
 from nti.dataserver import users
 from nti.dataserver import contenttypes
@@ -62,6 +62,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 			reply_n.inReplyTo = top_n
 			reply_n.addReference(top_n)
 			reply_n.createdTime = 200
+			reply_n.lastModified = 1395693508
+
 			jason.addContainedObject( reply_n )
 
 
@@ -80,6 +82,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn/' % ( self.extra_environ_default_user, ntiids.ROOT )
 		res = self.testapp.get(path)
+		assert_that( res.last_modified.replace(tzinfo=None), is_( datetime.utcfromtimestamp(1395693508)))
 		assert_that( res.json_body, has_entry( 'lastViewed', 0))
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 2))
 		assert_that( res.json_body, has_entry( 'Items', has_length(2) ))
