@@ -1081,14 +1081,16 @@ class ntidiscussion(Base.Environment):
 		return tok
 
 def ProcessOptions( options, document ):
-	document.context.newcounter( 'ntilocalvideo' )
-	document.context.newcounter( 'ntivideo' )
-	document.context.newcounter( 'ntivideoroll' )
-	document.context.newcounter( 'ntiimagecollection' )
-	document.context.newcounter( 'nticard' )
-	document.context.newcounter( 'relatedwork' )
-	document.context.newcounter( 'relatedworkref', initial=-1 )
-	document.context.newcounter( 'ntidiscussion' )
+	document.context.newcounter('ntiaudio')
+	document.context.newcounter('ntilocalaudio')
+	document.context.newcounter('ntivideo')
+	document.context.newcounter('ntilocalvideo')
+	document.context.newcounter('ntivideoroll')
+	document.context.newcounter('ntiimagecollection')
+	document.context.newcounter('nticard')
+	document.context.newcounter('relatedwork')
+	document.context.newcounter('relatedworkref', initial=-1)
+	document.context.newcounter('ntidiscussion')
 
 from plasTeX.interfaces import IOptionAwarePythonPackage
 interface.moduleProvides(IOptionAwarePythonPackage)
