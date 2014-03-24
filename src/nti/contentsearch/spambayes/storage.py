@@ -1,11 +1,14 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Spambayes storage
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sqlite3 as sql
 
@@ -56,10 +59,10 @@ class SQL3Classifier(Trainer, ObjectDataManager):
 
 	def __init__(self, dbpath, *args, **kwargs):
 		Trainer.__init__(self, *args, **kwargs)
-		def callable():
+		def _callable():
 			self.db.commit()
 			self._cursor = self.db.cursor()
-		ObjectDataManager.__init__(self, call=callable)
+		ObjectDataManager.__init__(self, call=_callable)
 		self.dbpath = dbpath
 		self._registered = False
 		self._load(dbpath)

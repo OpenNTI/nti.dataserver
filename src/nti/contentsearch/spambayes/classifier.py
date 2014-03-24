@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 An implementation of a Bayes-like spam classifier.
 
@@ -36,8 +37,10 @@ This implementation is due to Tim Peters et alia.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import, generators
+from __future__ import print_function, unicode_literals, absolute_import, generators, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from collections import defaultdict
 

@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Spambayes email parsing routines
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -72,7 +73,9 @@ def _repair_damaged_base64(text):
 	return base64text + text[i:]
 
 def get_email_message(obj):
-	"""return an email message object. """
+	"""
+	return an email message object.
+	"""
 
 	if isinstance(obj, email.Message.Message):
 		return obj
@@ -92,7 +95,9 @@ def get_email_message(obj):
 	return msg
 
 def get_email_message_as_string(msg, unixfrom=False):
-	"""convert a message object to a string"""
+	"""
+	convert a message object to a string
+	"""
 
 	if isinstance(msg, six.string_types):
 		return msg
@@ -125,7 +130,8 @@ def get_email_message_as_string(msg, unixfrom=False):
 			# make sure it ends with a newline:
 			return "\n".join(parts)+"\n"
 
-def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=True, separator=None):
+def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=True,
+					   separator=None):
 	
 	directory = os.path.expanduser(directory)
 	indexfile = os.path.expanduser(indexfile) if indexfile else indexfile
@@ -149,7 +155,7 @@ def get_email_messages(directory, fnfilter='*', indexfile=None, default_spam=Tru
 					msg = get_email_message(fp)
 					is_spam = index.get(filename, default_spam)
 					yield msg, is_spam, source
-			except Exception, e:
+			except Exception as e:
 				if logger.isEnabledFor(logger.DEBUG):
 					logger.exception("Could not read message in file '%s'" % source)
 				else:
@@ -177,16 +183,20 @@ def _get_email_message_text_parts(obj):
 		result.append(repr(obj))
 	return result
 	
-def create_sql3classifier_db(dbpath, directory, include_ham=False, fnfilter='*', indexfile=None,
-							default_spam=True, separator=None, batch_size=1000, *args, **kwargs):
-	"""crearte a sql3classifier from a list of email message files"""
+def create_sql3classifier_db(dbpath, directory, include_ham=False, fnfilter='*',
+							 indexfile=None, default_spam=True, separator=None,
+							 batch_size=1000, *args, **kwargs):
+	"""
+	crearte a sql3classifier from a list of email message files
+	"""
 	
 	count = 0
 	total = 0
 	dbpath = os.path.expanduser(dbpath)
 	sql3 = SQL3Classifier(dbpath, *args, **kwargs)
 
-	for msg, is_spam, _ in get_email_messages(directory, fnfilter, indexfile, default_spam, separator):
+	for msg, is_spam, _ in get_email_messages(directory, fnfilter,
+											  indexfile, default_spam, separator):
 		
 		if not include_ham and not is_spam:
 			continue
