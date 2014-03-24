@@ -2,15 +2,17 @@
 """
 NTI course macros
 
-$Id: slidedeckextractor.py 21266 2013-07-23 21:52:35Z sean.jones $
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from datetime import datetime
 from datetime import timedelta
+
+import pytz
 
 from plasTeX import Command
 from plasTeX.Base.LaTeX.Crossref import ref
@@ -20,8 +22,6 @@ from plasTeX.Base.LaTeX.Sectioning import chapter
 from plasTeX.Base.LaTeX.Sectioning import section
 from plasTeX.Base.LaTeX.Sectioning import subsection
 from plasTeX.Base.LaTeX.Sectioning import subsubsection
-
-import pytz
 
 from nti.contentrendering import plastexids
 
@@ -142,7 +142,7 @@ class courselessonname(Command):
 from nti.externalization.datetime import datetime_from_string
 
 def _parse_local_date(self, val):
-	 # If they gave no timezone information,
+	# If they gave no timezone information,
 	# use the document's
 	return datetime_from_string( val,
 								 assume_local=True,
@@ -287,6 +287,7 @@ def ProcessOptions( options, document ):
 		document.context.newcounter(counter_cls.counter)
 
 
-from plasTeX.interfaces import IOptionAwarePythonPackage
 from zope import interface
+from plasTeX.interfaces import IOptionAwarePythonPackage
+
 interface.moduleProvides(IOptionAwarePythonPackage)
