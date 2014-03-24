@@ -105,7 +105,8 @@ class DeclareMediaResource( Base.Command ):
 
 	def invoke( self, tex ):
 		result = super(DeclareMediaResource, self).invoke( tex )
-		self.attributes['src'] = os.path.join( self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
+		self.attributes['src'] = os.path.join(
+			self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
 		return result
 
 ###############################################################################
@@ -123,7 +124,8 @@ class mediatranscript(Base.Command):
 
 	def invoke( self, tex ):
 		result = super(mediatranscript, self).invoke( tex )
-		self.attributes['src'] = os.path.join( self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
+		self.attributes['src'] = os.path.join(
+			self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
 		return result
 
 	def digest(self, tokens):
@@ -178,7 +180,8 @@ class ntiincludekalturavideo(Command):
 		uiconf_id = u'16401392'
 		player_id = u'kaltura_player_' + video[1]
 		entry_id = video[1]
-		self.video_source = "https://cdnapisec.kaltura.com/p/%s/sp/%s/embedIframeJs/uiconf_id/%s/partner_id/%s?iframeembed=true&playerId=%s&entry_id=%s&flashvars[streamerType]=auto" % (partner_id, subpartner_id, uiconf_id, partner_id, player_id, entry_id)
+		self.video_source = "https://cdnapisec.kaltura.com/p/%s/sp/%s/embedIframeJs/uiconf_id/%s/partner_id/%s?iframeembed=true&playerId=%s&entry_id=%s&flashvars[streamerType]=auto" % \
+							(partner_id, subpartner_id, uiconf_id, partner_id, player_id, entry_id)
 		self.width = u'640'
 		self.height = u'390'
 
@@ -424,7 +427,8 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		texts = []
 		for child in self.allChildNodes:
 			# Try to extract the text children, ignoring the caption and label, etc
-			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+			if 	child.nodeType == self.TEXT_NODE and \
+				(child.parentNode == self or child.parentNode.nodeName == 'par'):
 				texts.append( unicode( child ) )
 
 		return _incoming_sources_as_plain_text( texts )
@@ -842,7 +846,8 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		texts = []
 		for child in self.allChildNodes:
 			# Try to extract the text children, ignoring the caption and label, etc
-			if child.nodeType == self.TEXT_NODE and (child.parentNode == self or child.parentNode.nodeName == 'par'):
+			if 	child.nodeType == self.TEXT_NODE and \
+				(child.parentNode == self or child.parentNode.nodeName == 'par'):
 				texts.append( unicode( child ) )
 
 		return _incoming_sources_as_plain_text( texts )
@@ -981,7 +986,12 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 
 		self.uri = self.attributes['uri']
 		if hasattr(self.uri, 'source'):
-			self.uri = self.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
+			self.uri = self.uri.source.replace(' ', '') \
+									  .replace('\\&', '&') \
+									  .replace('\\_', '_') \
+									  .replace('\\%', '%') \
+									  .replace(u'\u2013', u'--') \
+									  .replace(u'\u2014', u'---')
 		self._description = self.attributes['desc']
 		self.relatedwork = self.idref['label']
 
