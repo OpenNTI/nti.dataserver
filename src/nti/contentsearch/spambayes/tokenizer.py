@@ -1,11 +1,14 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
 """
 Spambayes tokenizer
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import six
 import math
@@ -15,13 +18,15 @@ from zope import interface
 
 from nti.contentprocessing import interfaces as cp_interfaces
 
-from . import LN2
-from nti.contentsearch.spambayes.stripper import has_highbit_char
 from . import interfaces as sps_interfaces
-from nti.contentsearch.spambayes.stripper import _default_translation_table
-from nti.contentsearch.spambayes.stripper import (crack_uuencode, crack_urls, crack_html_style, crack_html_comment, crack_noframes)
-from nti.contentsearch.spambayes.stripper import (word_re, numeric_entity_re, breaking_entity_re, html_re, find_html_virus_clues,
-						numeric_entity_replacer)
+
+from . import LN2
+from .stripper import has_highbit_char
+from .stripper import _default_translation_table
+from .stripper import (crack_html_comment, crack_noframes)
+from .stripper import (crack_uuencode, crack_urls, crack_html_style)
+from .stripper import (find_html_virus_clues, numeric_entity_replacer)
+from .stripper import (word_re, numeric_entity_re, breaking_entity_re, html_re)
 
 def log2(n, log=math.log, c=LN2):
 	return log(n) / c
