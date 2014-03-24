@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
+Code related to sending application-level push notifications.
 
 .. $Id$
 """

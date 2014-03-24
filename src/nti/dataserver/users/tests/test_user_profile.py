@@ -9,6 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not as does_not
@@ -155,3 +156,13 @@ class TestUserProfile(DataserverLayerTest):
 
 		ext_user = to_external_object( user )
 		assert_that( ext_user, has_entry( 'location', 'foo bar' ) )
+
+from ..user_profile import FriendlyNamed
+class TestFriendlyNamed(unittest.TestCase):
+
+	def test_di_lu(self):
+		fn = FriendlyNamed(self)
+		fn.realname = 'Di Lu'
+
+		assert_that( fn.get_searchable_realname_parts(),
+					 is_(('Di', 'Lu')))

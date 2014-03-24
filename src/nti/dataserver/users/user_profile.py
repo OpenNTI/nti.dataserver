@@ -89,13 +89,24 @@ class FriendlyNamed(persistent.Persistent):
 
 	@CachedProperty('realname')
 	def _searchable_realname_parts(self):
-		# This implementation is quite naive, returning
-		# first middle and last if they are not blank. How does
+		# This implementation is fairly naive, returning
+		# first, middle, and last if they are not blank. How does
 		# this handle more complex naming scenarios?
 		if self.realname:
+			name = nameparser.HumanName(self.realname)
+			# We try to be a bit more sophisticated around certain
+			# naming scenarios.
+			if name.first == self.realname and ' ' in self.realname:
+				# It failed to parse. We've seen this with names like 'Di Lu',
+				# where 'Di' is in the prefix list as a common component
+				# of European last names. Take out any prefixes that match the components
+				# of this name and try again (avoid doing this if there are simply
+				# no components, as can happen on the mathcounts site or in tests)
+				prefixes = nameparser.constants.PREFIXES.symmetric_difference(self.realname.lower().split())
+				name = nameparser.HumanName(self.realname, prefixes_c=prefixes)
 			# because we are cached, be sure to return an immutable
 			# value
-			return tuple([x for x in nameparser.HumanName(self.realname)[1:4] if x])
+			return tuple([x for x in name[1:4] if x])
 		# Returning none keeps the entity out of the index
 
 	def get_searchable_realname_parts(self):
