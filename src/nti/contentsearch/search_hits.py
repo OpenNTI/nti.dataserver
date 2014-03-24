@@ -265,7 +265,7 @@ class WhooshVideoTranscriptSearchHit(BaseSearchHit):
 		self.NTIID = hit.videoId
 		self.Snippet = hit.content
 		self.VideoID = hit.videoId
-		self.ContainerId = hit.containerId
+		self.ContainerId = hit.NTIID  # make video the container
 		self.lastModified = hit.lastModified
 		self.EndMilliSecs = hit.end_millisecs
 		self.StartMilliSecs = hit.start_millisecs
