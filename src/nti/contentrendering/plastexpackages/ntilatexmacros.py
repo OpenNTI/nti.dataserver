@@ -5,7 +5,7 @@ Define NTI Latex Macros
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,10 +31,6 @@ from nti.contentrendering.resources import interfaces as resource_interfaces
 
 from nti.ntiids import ntiids
 
-# This import is for legacy compatability
-from .eurosym import euro
-from .eurosym import eur
-
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
 Base.figure.forcePars = False
@@ -42,6 +38,16 @@ Base.minipage.blockType = True
 Base.parbox.blockType = True
 Base.centerline.blockType = True
 Base.hrule.blockType = True
+
+# BWC
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentrendering.plastexpackages.eurosym",
+	"nti.contentrendering.plastexpackages.eurosym",
+	"eur",
+	"euro")
 
 class _OneText(Base.Command):
 	args = 'text:str'
@@ -178,6 +184,147 @@ class ntiincludekalturavideo(Command):
 
 		return res
 
+class ntimediaref(Base.Crossref.ref):
+	args = '[options:dict] label:idref'
+
+	def digest(self, tokens):
+		tok = super(ntimediaref, self).digest(tokens)
+
+		options = self.attributes.get('options', {}) or {}
+		self.visibility = u''
+		if 'visibility' in options.keys():
+			self.visibility = options['visibility']
+
+		self.to_render = False
+		if 'to_render' in options.keys():
+			if options['to_render'] in [ u'true', u'True' ]:
+				self.to_render = True
+
+		return tok
+
+# audio
+
+class ntiaudioname(Command):
+	unicode = ''
+
+class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
+
+	blockType = True
+	counter = 'ntiaudio'
+	args = '[ options:dict ]'
+
+	_ntiid_type = 'NTIAudio'
+	_ntiid_suffix = 'ntiaudio.'
+	_ntiid_title_attr_name = 'ref'
+	_ntiid_allow_missing_title = False
+	_ntiid_cache_map_name = '_ntiaudio_ntiid_map'
+
+	itemprop = "presentation-audio"
+	mime_type = mimeType = "application/vnd.nextthought.ntiaudio"
+
+	creator = None
+	num_sources = 0
+	title = 'No Title'
+	closed_caption = None
+
+	# A Float subclass to get \caption handling
+	class caption(Base.Floats.Caption):
+		counter = 'figure'
+
+	class ntiaudiosource(Command):
+		args = '[ options:dict ] service:str id:str'
+		blockType = True
+
+		priority = 0
+		poster = None
+		thumbnail = None
+
+		def digest(self, tokens):
+			"""
+			Handle creating the necessary datastructures for each audio type.
+			"""
+			super(ntiaudio.ntiaudiosource, self).digest(tokens)
+
+			self.priority = self.parentNode.num_sources
+			self.parentNode.num_sources += 1
+
+			self.src = {}
+			if self.attributes['service']:
+				# TODO: handle audio types
+				logger.warning('Unknown audio type: %s', self.attributes['service'])
+
+	def digest(self, tokens):
+		res = super(ntiaudio, self).digest(tokens)
+		if self.macroMode == self.MODE_BEGIN:
+			options = self.attributes.get('options', {}) or {}
+			__traceback_info__ = options, self.attributes
+
+			if 'show-card' in options:
+				self.itemprop = 'presentation-card'
+
+			if 'creator' in options:
+				self.creator = options['creator']
+
+			self.visibility = u'everyone'
+			if 'visibility' in options.keys():
+				self.visibility = options['visibility']
+
+		return res
+
+	@readproperty
+	def description(self):
+		texts = []
+		for child in self.allChildNodes:
+			# Try to extract the text children, ignoring the caption and label, etc
+			if 	child.nodeType == self.TEXT_NODE and \
+				(child.parentNode == self or child.parentNode.nodeName == 'par'):
+				texts.append(unicode(child))
+
+		return _incoming_sources_as_plain_text(texts)
+
+	@readproperty
+	def video_sources(self):
+		sources = self.getElementsByTagName('ntiaudiosource')
+		output = render_children(self.renderer, sources)
+		return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
+
+
+	@readproperty
+	def transcripts(self):
+		sources = self.getElementsByTagName('mediatranscript')
+		output = render_children(self.renderer, sources)
+		return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
+
+class ntiaudioref(ntimediaref):
+	pass
+
+class ntilocalaudioname(Command):
+	unicode = ''
+
+class ntilocalaudio(Base.Environment):
+
+	blockType = True
+	args = '[ options:dict ]'
+	counter = "ntilocalaudio"
+
+	def invoke(self, tex):
+		_t = super(ntilocalaudio, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return _t
+
+	def digest(self, tex):
+		super(ntilocalvideo, self).digest(tex)
+		audio = self.getElementsByTagName('ntiincludelocalaudio')[0]
+		self.src = {}
+		self.src['mp3'] = audio.attributes['src'] + u'.mp3'
+		self.title = audio.attributes.get('title', u'')
+		self.id = audio.id
+
+	class ntiincludelocalvideo(Base.Command):
+		args = '[ options:dict ] src [title]'
+
+# video
 
 class ntivideoname(Command):
 	unicode = ''
@@ -295,27 +442,11 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		output = render_children( self.renderer, sources )
 		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
-class ntivideoref(Base.Crossref.ref):
-	args = '[options:dict] label:idref'
-
-	def digest(self, tokens):
-		tok = super(ntivideoref, self).digest(tokens)
-
-		options = self.attributes.get( 'options', {} ) or {}
-		self.visibility = u''
-		if 'visibility' in options.keys():
-			self.visibility = options['visibility']
-
-		self.to_render = False
-		if 'to_render' in options.keys():
-			if options['to_render'] in [ u'true', u'True' ]:
-				self.to_render = True
-
-		return tok
-
+class ntivideoref(ntimediaref):
+	pass
 
 class ntilocalvideoname(Command):
-		unicode = ''
+	unicode = ''
 
 class ntilocalvideo( Base.Environment ):
 	args = '[ options:dict ]'
