@@ -16,6 +16,8 @@ from zope import component
 
 from .adapters import IUserNotableData
 from nti.appserver.interfaces import INamedLinkView
+from nti.app.renderers.interfaces import IUGDExternalCollection
+from nti.externalization.interfaces import LocatedExternalDict
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
@@ -23,6 +25,7 @@ from pyramid.httpexceptions import HTTPBadRequest
 from nti.appserver.ugd_query_views import _UGDView
 
 from nti.dataserver.authorization import ACT_READ
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -93,12 +96,28 @@ class _NotableRecursiveUGDView(_UGDView):
 			except ValueError: # pragma no cover
 				raise HTTPBadRequest()
 
-		result = {}
+		result = LocatedExternalDict()
+		result['Last Modified'] = result.lastModified = 0
+		result.__parent__ = self.request.context
+		result.__name__ = self.ntiid
+		result.mimeType = nti_mimetype_with_class( None )
+		interface.alsoProvides( result, IUGDExternalCollection )
+
 		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 													   IUserNotableData )
 		safely_viewable_intids = user_notable_data.get_notable_intids()
 
 		result['TotalItemCount'] = len(safely_viewable_intids)
+
+		# Our best LastModified time will be that of the most recently
+		# modified object; unfortunately, we have no way of tracking deletes...
+		most_recently_modified_object = list(user_notable_data.iter_notable_intids(
+			user_notable_data.sort_notable_intids(safely_viewable_intids,
+												  field_name='lastModified',
+												  limit=2,
+												  reverse=True) ))
+		if most_recently_modified_object:
+			result['Last Modified'] = result.lastModified = most_recently_modified_object[0].lastModified
 
 		# Also if we didn't have to provide TotalItemCount, our
 		# handling of before could be much more efficient
