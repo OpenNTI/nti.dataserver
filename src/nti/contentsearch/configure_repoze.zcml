@@ -8,12 +8,6 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<!-- Database creation and migration -->
-
-	<utility factory=".generations.install._ContentSearchSchemaManager"
-			 name="nti.dataserver-contentsearch"
-			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
-
 	<!-- Entity adapters -->
 	
 	<adapter factory="._repoze_adpater._RepozeEntityIndexManagerFactory"
