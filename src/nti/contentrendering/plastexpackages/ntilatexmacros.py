@@ -283,7 +283,7 @@ class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		return _incoming_sources_as_plain_text(texts)
 
 	@readproperty
-	def video_sources(self):
+	def audio_sources(self):
 		sources = self.getElementsByTagName('ntiaudiosource')
 		output = render_children(self.renderer, sources)
 		return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
@@ -321,7 +321,7 @@ class ntilocalaudio(Base.Environment):
 		self.title = audio.attributes.get('title', u'')
 		self.id = audio.id
 
-	class ntiincludelocalvideo(Base.Command):
+	class ntiincludelocalaudio(Base.Command):
 		args = '[ options:dict ] src [title]'
 
 # video
