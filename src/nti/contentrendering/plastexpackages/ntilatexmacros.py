@@ -252,8 +252,15 @@ class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 
 			self.src = {}
 			if self.attributes['service']:
-				# TODO: handle audio types
-				logger.warning('Unknown audio type: %s', self.attributes['service'])
+				if self.attributes['service'] == 'html5':
+					self.service = 'html5'
+					self.src['mp3'] = self.attributes['id'] + '.mp3'
+					self.src['m4a'] = self.attributes['id'] + '.m4a'
+					self.src['wav'] = self.attributes['id'] + '.wav'
+					self.src['ogg'] = self.attributes['id'] + '.ogg'
+					self.thumbnail = self.attributes['id'] + '-thumb.jpg'
+				else:
+					logger.warning('Unknown audio type: %s', self.attributes['service'])
 
 	def digest(self, tokens):
 		res = super(ntiaudio, self).digest(tokens)
@@ -298,33 +305,6 @@ class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 
 class ntiaudioref(ntimediaref):
 	pass
-
-class ntilocalaudioname(Command):
-	unicode = ''
-
-class ntilocalaudio(Base.Environment):
-
-	blockType = True
-	args = '[ options:dict ]'
-	counter = "ntilocalaudio"
-
-	def invoke(self, tex):
-		_t = super(ntilocalaudio, self).invoke(tex)
-		if 'options' not in self.attributes or not self.attributes['options']:
-			self.attributes['options'] = {}
-		return _t
-
-	def digest(self, tex):
-		super(ntilocalvideo, self).digest(tex)
-		audio = self.getElementsByTagName('ntiincludelocalaudio')[0]
-		self.src = {}
-		self.src['mp3'] = audio.attributes['src'] + u'.mp3'
-		self.src['m4a'] = audio.attributes['src'] + u'.m4a'
-		self.title = audio.attributes.get('title', u'')
-		self.id = audio.id
-
-	class ntiincludelocalaudio(Base.Command):
-		args = '[ options:dict ] src [title]'
 
 # video
 
