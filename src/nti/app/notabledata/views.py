@@ -130,11 +130,11 @@ class _NotableRecursiveUGDView(_UGDView):
 															   reverse=request.params.get('sortOrder') != 'ascending')
 
 		items = user_notable_data.iter_notable_intids(sorted_intids)
-		self._batch_tuple_iterable(result, items,
+		self._batch_items_iterable(result, items,
 								   number_items_needed=limit,
 								   batch_size=batch_size,
-								   batch_start=batch_start,
-								   selector=lambda x: x)
+								   batch_start=batch_start)
+
 		_NotableUGDLastViewed.write_last_viewed(request, self.remoteUser, result)
 		return result
 

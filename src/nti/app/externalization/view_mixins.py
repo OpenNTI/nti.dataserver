@@ -51,6 +51,7 @@ from .internalization import update_object_from_external_object
 from .internalization import read_body_as_external_object
 
 _marker = object()
+_tuple_selector = operator.itemgetter(1)
 
 class BatchingUtilsMixin(object):
 	"""
@@ -90,78 +91,108 @@ class BatchingUtilsMixin(object):
 	#: because they do not have relevance in a next/prev query.
 	_BATCH_LINK_DROP_PARAMS = ('batchAround','batchBefore')
 
-	def _batch_tuple_iterable(self, result, tuples,
+	def __batch_result_list(self, result, result_list,
+							batch_start, batch_size,
+							number_items_needed):
+		# These may have changed from the request params, or be
+		# defaults, tell the client what we really used if we generate
+		# links
+		self.request.GET['batchSize'] = str(batch_size)
+		self.request.GET['batchStart'] = str(batch_start)
+
+		if batch_start >= len(result_list):
+			# Batch raises IndexError in this case, avoid that
+			return []
+
+		result_list = Batch( result_list, batch_start, batch_size )
+		# Insert links to the next and previous batch
+		# NOTE: If our batch_start is not a multiple of the batch_size,
+		# then using IBatch.next and IBatch.previous fails as it expects
+		# to the index of the batch to correlate with the previous
+		# batch start. So we manually do the math for start
+
+		# Previous first. We want to try to go back exactly the page
+		# size, otherwise to zero.
+		if batch_start > 0:
+			prev_batch_start = max(0, batch_start - batch_size)
+		else:
+			# No where to go back
+			prev_batch_start = None
+
+		# Next, we want to go to the batch exactly after this one, if
+		# possible. It may not have a full page of data, though.
+		# Note that we always count on having at least a few extra items
+		if batch_start + batch_size < number_items_needed:
+			next_batch_start = batch_start + batch_size
+		else:
+			next_batch_start = None
+
+		for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
+			if batch is not None:
+				batch_params = self.request.GET.copy()
+				# Pop some things that don't work
+				for n in self._BATCH_LINK_DROP_PARAMS:
+					batch_params.pop( n, None )
+
+				batch_params['batchStart'] = batch
+				link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+				link_next = Link( link_next_href, rel=rel )
+				result.setdefault( 'Links', [] ).append( link_next )
+
+		return result_list
+
+	def _batch_items_iterable(self, result, items,
 							  number_items_needed=_marker,
 							  batch_size=_marker,
 							  batch_start=_marker,
-							  selector=operator.itemgetter(1)):
+							  selector=lambda x: x):
+		"""
+		Handle batching in a flexible way.
+
+		:param dict result: The dictionary in which we place the `Items` sequence
+			and possibly links for next/previous batch.
+		:param items: A sequence of the objects to batch. This may be a
+			generator or other iterator; we promise to only traverse it once,
+			and not need to get its length.
+		:keyword selector: This callable is applied to each element of the items sequence
+			to produce the final item in the batch.
+		"""
 		if batch_size is _marker and batch_start is _marker:
 			batch_size, batch_start = self._get_batch_size_start()
 
 		if batch_size is None or batch_start is None:
 			# Not batching.
-			result_list = [selector(x) for x in tuples]
+			result_list = [selector(x) for x in items]
 			result['Items'] = result_list
 			return result
 
-		# These may have changed from the request params, or be
-		# defaults, tell the client what we really used
-		self.request.GET['batchSize'] = str(batch_size)
-		self.request.GET['batchStart'] = str(batch_start)
 
 		# Ok, reify up to batch_size + batch_start + 2 items from merged
-
 		if number_items_needed is _marker or number_items_needed is None:
 			number_items_needed = batch_size + batch_start + 2
 
 		result_list = []
 		count = 0
-		for x in tuples:
+		for x in items:
 			result_list.append( selector(x) )
 			count += 1
 			if count > number_items_needed:
 				break
 
-		if batch_start >= len(result_list):
-			# Batch raises IndexError
-			result_list = []
-		else:
-			result_list = Batch( result_list, batch_start, batch_size )
-			# Insert links to the next and previous batch
-			# NOTE: If our batch_start is not a multiple of the batch_size,
-			# then using IBatch.next and IBatch.previous fails as it expects
-			# to the index of the batch to correlate with the previous
-			# batch start. So we manually do the math for start
+		result['Items'] = self.__batch_result_list(result, result_list,
+												   batch_start, batch_size,
+												   number_items_needed)
+		return result
 
-			# Previous first. We want to try to go back exactly the page
-			# size, otherwise to zero.
-			if batch_start > 0:
-				prev_batch_start = max(0, batch_start - batch_size)
-			else:
-				# No where to go back
-				prev_batch_start = None
-
-			# Next, we want to go to the batch exactly after this one, if
-			# possible. It may not have a full page of data, though.
-			# Note that we always count on having at least a few extra items
-			if batch_start + batch_size < number_items_needed:
-				next_batch_start = batch_start + batch_size
-			else:
-				next_batch_start = None
-
-			for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
-				if batch is not None:
-					batch_params = self.request.GET.copy()
-					# Pop some things that don't work
-					for n in self._BATCH_LINK_DROP_PARAMS:
-						batch_params.pop( n, None )
-
-					batch_params['batchStart'] = batch
-					link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
-					link_next = Link( link_next_href, rel=rel )
-					result.setdefault( 'Links', [] ).append( link_next )
-
-		result['Items'] = result_list
+	def _batch_tuple_iterable(self, *args, **kwargs):
+		"""
+		Like :meth:`_batch_items_iterable` except we default to the items iterator
+		being a sequence of tuples, like come from a dictionary's `items` method,
+		or have been used to sort with an auxiliary key in position 0.
+		"""
+		if 'selector' not in kwargs:
+			kwargs['selector'] = _tuple_selector
+		return self._batch_items_iterable(*args, **kwargs)
 
 	def _batch_around(self, iterator, test):
 		"""

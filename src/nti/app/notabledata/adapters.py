@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from array import array
+
 from zope import interface
 from zope import component
 
@@ -132,11 +134,23 @@ class UserNotableData(AbstractAuthenticatedView):
 	def __iter__(self):
 		return iter(ResultSet(self.get_notable_intids(), self._intids))
 
-	def sort_notable_intids(self, notable_intids, field_name='createdTime', limit=None, reverse=False):
-		# Sorting returns a generator which is fine unless we need to get a length...
-		return list(self._catalog[field_name].sort(notable_intids,
-												   limit=limit,
-												   reverse=reverse))
+	def sort_notable_intids(self, notable_intids,
+							field_name='createdTime',
+							limit=None,
+							reverse=False,
+							reify=False):
+		# Sorting returns a generator which is fine unless we need to get a length.
+		# In many cases we don't so we let the caller decide
+		_sorted = self._catalog[field_name].sort(notable_intids,
+												 limit=limit,
+												 reverse=reverse)
+		if not reify:
+			return _sorted
+
+		# For large lists, an array is more memory efficient then a list,
+		# since it uses native storage
+		array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i' # Py3 porting issue, long went away?
+		return array(str(array_type), _sorted)
 
 	def iter_notable_intids(self, notable_intids):
 		return ResultSet(notable_intids, self._intids)

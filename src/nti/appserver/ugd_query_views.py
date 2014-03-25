@@ -898,6 +898,7 @@ class _RecursiveUGDView(_UGDView):
 			raise hexc.HTTPNotFound( _("No catalog"))
 
 		result = LocatedExternalDict()
+		interface.alsoProvides(result,self.result_iface)
 		result.__parent__ = self.request.context
 		result.__name__ = self.ntiid
 		result.__data_owner__ = self.remoteUser
@@ -945,11 +946,11 @@ class _RecursiveUGDView(_UGDView):
 														 reverse=sort_order != 'ascending')
 
 		items = ResultSet(intids_created_by_me, uidutil)
-		self._batch_tuple_iterable(result, items,
+		self._batch_items_iterable(result, items,
 								   number_items_needed=number_items_needed,
 								   batch_size=batch_size,
-								   batch_start=batch_start,
-								   selector=lambda x: x)
+								   batch_start=batch_start)
+
 		return result
 
 	def _get_filter_names( self ):
