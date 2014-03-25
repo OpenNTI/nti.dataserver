@@ -419,6 +419,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		# thus removing them from his stream
 		self.fetch_user_root_rstream( testapp=user2_followerapp, username=user2_follower_username, status=404 )
 
+
+		# ...and in the notable data of the owner of the blog
+		res = self.fetch_user_recursive_notable_ugd(testapp=testapp, username=user_username)
+		_has_both_comments(res)
+
 		# Both of these the other user can update
 		data['title'] = 'Changed my title'
 		data['body'] = ['A different comment body']
