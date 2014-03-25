@@ -2,7 +2,10 @@
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
 	  xmlns:metal="http://xml.zope.org/namespaces/metal"
-	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	  xmlns:tal="http://xml.zope.org/namespaces/tal"
+	  xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+	  i18n:domain="nti.dataserver"
+	  i18n:source="en">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<title>Welcome To NextThought</title>
@@ -46,20 +49,20 @@
 			alt="NextThought Logo" />
 		</div>
 		</div>
-		<p>Hi <span tal:content="options/profile/realname" class="realname tterm">John Doe</span>!</p>
+		<p i18n:translate="">Hi <span tal:content="options/profile/realname" i18n:name="name" class="realname tterm">John Doe</span>!</p>
 
-		<p>
+		<p i18n:translate="">
 			Thank you for creating your new account and welcome to
 			NextThought!
 		</p>
 
 		<p>
-			<strong>Username:</strong> <span tal:content="options/user/username" class="tterm-color">username</span> <br />
-			<strong>Log in at:</strong> <a href="http://nextthought.com"
-							tal:attributes="href request/application_url"
-							tal:content="request/application_url">http://nextthought.com</a>
+			<strong i18n:translate="">Username:</strong> <span tal:content="options/user/username" class="tterm-color">username</span> <br />
+			<strong i18n:translate="">Log in at:</strong> <a href="http://nextthought.com"
+															 tal:attributes="href request/application_url"
+															 tal:content="request/application_url">http://nextthought.com</a>
 		</p>
-		<p>
+		<p i18n:translate="">
 			NextThought offers interactive content and rich features
 			to make learning both social and personal. Explore the
 			NextThought Help Center in your Library to get started and
@@ -68,14 +71,17 @@
 		</p>
 
 		<p>
-			Sincerely,<br />
+			<span i18n:translate="">Sincerely,</span><br />
 			NextThought
 		</p>
 
 		<p style="font-size: smaller">
-			If you feel this email was sent in error, or this account was created
-			without your consent, you may email us at
-			<a href="mailto:support@nextthought.com">support@nextthought.com</a>.
+			<span i18n:translate="">If you feel this email was sent in error, or this account was created
+				without your consent, you may email us at
+			<a i18n:name="support_email" href="mailto:support@nextthought.com"
+			   tal:content="options/support_email|default"
+			   tal:attributes="href string:mailto:${options/support_email|default}">support@nextthought.com</a>
+			</span>
 		</p>
 
 	</body>

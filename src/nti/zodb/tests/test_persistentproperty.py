@@ -26,12 +26,12 @@ from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, Nume
 def test_that_if_superclass_created_first_subclass_cache_is_correct():
 	class BaseWithProperty(PersistentPropertyHolder):
 
-		a = NumericPropertyDefaultingToZero( 'a', NumericMaximum, as_number=True )
-		b = NumericPropertyDefaultingToZero( 'b', MergingCounter )
+		a = NumericPropertyDefaultingToZero( b'a', NumericMaximum, as_number=True )
+		b = NumericPropertyDefaultingToZero( b'b', MergingCounter )
 
 	class DerivedWithProperty(BaseWithProperty):
 
-		c = NumericPropertyDefaultingToZero( 'c', NumericMinimum )
+		c = NumericPropertyDefaultingToZero( b'c', NumericMinimum )
 
 	base = BaseWithProperty()
 	assert_that( base._v_persistentpropertyholder_cache.keys(),
