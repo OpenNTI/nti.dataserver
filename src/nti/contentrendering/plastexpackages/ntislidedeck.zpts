@@ -20,6 +20,25 @@ name: ntislidedeck
 </object>
 
 # This 
+
+name: ntislideaudio
+<object tal:attributes="itemprop self/itemprop;
+		type self/mimeType;
+		style self/style/inline;
+		data-ntiid self/ntiid">
+	<param name="ntiid" tal:attributes="value self/ntiid"/>
+	<param name="thumbnail" tal:attributes="value self/thumbnail"/>
+	<param name="title" tal:attributes="value self/title"/>
+	<param name="creator" tal:attributes="value self/creator | nothing"/>
+	<param name="slidedeckid" tal:attributes="value self/slidedeck/idref/label/ntiid | string:default"/>
+	<param name="audio-ntiid" tal:attributes="value self/audio_ntiid"/>
+	<img tal:attributes="src self/thumbnail"/>
+	<div class="hidden" style="display:none" tal:content="self/media_sources"></div>
+	<span class="description" tal:content="self/description" tal:condition="self/description">
+		The description of the target.
+	</span>
+</object>
+
 name: ntislidevideo
 <object tal:attributes="itemprop self/itemprop;
 			type self/mimeType;
