@@ -30,6 +30,10 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+_BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
+
+_BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
+
 @interface.implementer(IUserNotableData)
 @component.adapter(IUser,interface.Interface)
 class UserNotableData(AbstractAuthenticatedView):
@@ -50,6 +54,28 @@ class UserNotableData(AbstractAuthenticatedView):
 	def _catalog(self):
 		return component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 
+	def __find_blog_comment_intids(self):
+		# We know that blog comments have a container ID that is the
+		# blog entry's NTIID. We know that the blog entry's NTIID is deterministic
+		# and boundable (we know the beginning and we can put an entry
+		# that is exactly after the last possible NTIID we would generate, and
+		# yet still before any other NTIID we would generate). So we first get all
+		# the blog NTIIDs, then we find things that use them as containers and which
+		# are comments (actually, we skip that last step; we know the only things
+		# that can be contained are the headline post and comments, and the headline
+		# post will be filtered out automatically because we created it).
+
+		# The base ntiid. Real ntiids will start with this, followed by a -
+		min_ntiid = _BLOG_ENTRY_NTIID % self.remoteUser.username
+		# the . character is the next one after the -
+		max_ntiid = min_ntiid + '.'
+
+		container_id_idx = self._catalog['containerId']
+		docids = container_id_idx.apply({'between': (min_ntiid, max_ntiid)})
+		container_ids = {container_id_idx.documents_to_values[x] for x in docids}
+
+		return container_id_idx.apply({'any_of': container_ids})
+
 	@CachedProperty
 	def _safely_viewable_notable_intids(self):
 		catalog = self._catalog
@@ -58,13 +84,17 @@ class UserNotableData(AbstractAuthenticatedView):
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 
+		intids_blog_comments = self.__find_blog_comment_intids()
+		toplevel_intids_blog_comments = toplevel_intids_extent.intersection(intids_blog_comments)
+
 		# We use low-level optimization to get this next one; otherwise
 		# we'd need some more indexes to make it efficient
 		intids_of_my_circled_events = self.remoteUser._circled_events_intids_storage
 
 		safely_viewable_intids = catalog.family.IF.multiunion((toplevel_intids_shared_to_me,
 															   intids_replied_to_me,
-															   intids_of_my_circled_events))
+															   intids_of_my_circled_events,
+															   toplevel_intids_blog_comments))
 
 		return safely_viewable_intids
 

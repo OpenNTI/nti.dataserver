@@ -29,7 +29,9 @@ class IUserNotableData(IIterable):
 	* Top-level objects directly shared to me;
 
 	* Top-level objects created by certain people (people that are returned
-		from subscription adapters to :class:`.IUserPresentationPriorityCreators`)
+		from subscription adapters to :class:`.IUserPresentationPriorityCreators`);
+
+	* Top-level comments in blog entries I create;
 
 	Iterating across this object iterates the notable objects that are
 	safely viewable (pass permission checks) by the user.

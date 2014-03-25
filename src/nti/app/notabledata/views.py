@@ -48,16 +48,6 @@ class _NotableRecursiveUGDView(_UGDView):
 	as lastModified/descending (newest first) (although you can set ``sortOrder``
 	to ``ascending``).
 
-	Notable objects include:
-
-	* Direct replies to :class:`.IThreadable` objects I created;
-
-	* Top-level objects directly shared to me;
-
-	* Top-level objects created by certain people (people that are returned
-		from subscription adapters to :class:`.IUserPresentationPriorityCreators`)
-
-
 	An addition to the usual ``batchStart`` and ``batchSize`` parameters, you may also
 	use:
 
