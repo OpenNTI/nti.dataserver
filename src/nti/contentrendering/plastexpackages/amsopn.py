@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Partial support for the amsopn package
+
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from plasTeX import Command
+logger = __import__('logging').getLogger(__name__)
 
-# SAJ: Partial support for the amsopn package.
+from plasTeX import Command
 
 class DeclareMathOperator(Command):
 	args = '* {name:str}{arguments:str} '

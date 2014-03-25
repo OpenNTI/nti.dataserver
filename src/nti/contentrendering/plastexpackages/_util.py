@@ -5,7 +5,7 @@ Helpers and utilities used for implementing other parts of the packages.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -31,7 +31,7 @@ def _asm_local_textcontent(self):
 	# We are doing an interface conversion here, because
 	# getting the unicode may be unescaping and we need to escap
 	# again (?)
-	return cfg_interfaces.ILatexContentFragment( ''.join( output ).strip() )
+	return cfg_interfaces.ILatexContentFragment(''.join(output).strip())
 
 def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	"""
@@ -46,14 +46,15 @@ def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	if not ignorable_renderables:
 		selected_children = self.childNodes
 	else:
-		selected_children = (node for node in self.childNodes if not isinstance(node, ignorable_renderables))
+		selected_children = (node for node in self.childNodes \
+							 if not isinstance(node, ignorable_renderables))
 
 	output = render_children( self.renderer, selected_children )
 
 	# Now return an actual HTML content fragment. Note that this
 	# has been rendered so there's no need to do the interface
 	# conversion
-	return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+	return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
 
 class LocalContentMixin(object):
 	"""
@@ -80,4 +81,4 @@ class LocalContentMixin(object):
 	_asm_local_content = readproperty(_asm_local_textcontent)
 
 	def _after_render( self, rendered ):
-		self._asm_local_content = _asm_rendered_textcontent( self, self._asm_ignorable_renderables )
+		self._asm_local_content = _asm_rendered_textcontent(self, self._asm_ignorable_renderables)
