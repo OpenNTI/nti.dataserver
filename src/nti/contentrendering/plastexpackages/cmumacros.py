@@ -5,16 +5,19 @@ CMU macros
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from plasTeX import Base
 from plasTeX.Base import ColumnType
 
 class _Ignored(Base.Command):
 	unicode = ''
+
 	def invoke(self, tex):
-			return []
+		return []
 
 class lecture(Base.chapter):
 	args = '* [shorttitle] title { label }'
@@ -64,9 +67,6 @@ class pause(Base.Command):
 class alert(Base.FontSelection.TextCommand):
 	args = '< overlay > self'
 
-class titlerow(Base.Command):
-	pass
-
 class colortabular(Base.Environment):
 	pass
 
@@ -81,12 +81,6 @@ class beamertemplatearticlebibitems(_Ignored):
 
 class alt(Base.Command):
 	args = '< overlay > default alternative'
-
-#	def invoke( self, tex ):		
-#		_t = self.parse(tex)
-#		print("Default is: %s" % self.attributes['default'])
-#		print("Alternative is: %s" % self.attributes['alternative'])
-#		return []
 
 # Custom column type for CMU tables
 ColumnType.new(str('Y'), {'text-align':'left'})

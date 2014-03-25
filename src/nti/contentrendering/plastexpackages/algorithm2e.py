@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Partial implementation of the algorithm package.
+
+Full support is planned.
+
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from plasTeX import Base
+logger = __import__('logging').getLogger(__name__)
 
-# SAJ: This is a partial implementation of the algorithm package.  Full support is planned.
+from plasTeX import Base
 
 class _Ignored(Base.Command):
     unicode = ''

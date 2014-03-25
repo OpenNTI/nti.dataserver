@@ -1,5 +1,14 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+Partial support for the amsopn package
+
+$Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 
@@ -279,12 +288,12 @@ class parts(Base.List):
 
 	class part(plastexids.StableIDMixin,Base.List.item):
 		args = ' [title] '
-	        #Ordinary list items can accept a value, this may or may not be used in AoPS code
-	        #args = ''
+		# Ordinary list items can accept a value, this may or may not be used in AoPS code
+		# args = ''
 		counter = 'partnum'
 
 		def invoke( self, tex ):
-                        #ignore the list implementation this also increments the counter.
+			# ignore the list implementation this also increments the counter.
 			_t = Base.Command.invoke(self,tex)
 
 			# Prevet the rendering of instances of \part[]
@@ -311,7 +320,7 @@ class parts(Base.List):
 
 		def digest(self, tokens):
 			super(parts.part, self).digest(tokens)
-                        #Remove trailing commas that we have in some parts
+			# Remove trailing commas that we have in some parts
 			removeCommasFromSectionWithHints(self)
 
 	class parthard(part):

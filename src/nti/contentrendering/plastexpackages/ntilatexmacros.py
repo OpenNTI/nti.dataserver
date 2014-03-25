@@ -1069,7 +1069,6 @@ class ntidiscussion(Base.Environment):
 
 def ProcessOptions( options, document ):
 	document.context.newcounter('ntiaudio')
-	document.context.newcounter('ntilocalaudio')
 	document.context.newcounter('ntivideo')
 	document.context.newcounter('ntilocalvideo')
 	document.context.newcounter('ntivideoroll')
