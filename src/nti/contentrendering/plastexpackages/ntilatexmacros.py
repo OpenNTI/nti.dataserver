@@ -67,18 +67,17 @@ class chaptertitlesuppressed( Base.chapter ):
 class sectiontitlesuppressed( Base.section ):
 	pass
 
-#TODO do pagerefs even make sense in our dom?
-#Try to find an intelligent page name for the reference
-#so we don't have to render the link text as '3'
+# TODO: do pagerefs even make sense in our dom?
+# Try to find an intelligent page name for the reference
+# so we don't have to render the link text as '3'
 class pageref(Crossref.pageref):
-
-	#we would hope to generate the pagename attribute in
-	#the invoke method but since it is dependent on the page
-	#splits used at render time we define a function to be called
-	#from the page template
+	# we would hope to generate the pagename attribute in
+	# the invoke method but since it is dependent on the page
+	# splits used at render time we define a function to be called
+	# from the page template
 	def getPageNameForRef(self):
-		#Look up the dom tree until we find something
-		#that would create a file
+		# Look up the dom tree until we find something
+		# that would create a file
 		fileNode = self.idref['label']
 		while not getattr(fileNode, 'title', None) and getattr(fileNode, 'parentNode', None):
 			fileNode = fileNode.parentNode
@@ -87,7 +86,6 @@ class pageref(Crossref.pageref):
 			return getattr(fileNode.title, 'textContent', fileNode.title)
 
 		return None
-
 
 class ntinavlist(Base.List):
 	pass
@@ -163,7 +161,8 @@ class ntiincludevideo(_OneText):
 			self.attributes['thumbnail'] = '//img.youtube.com/vi/' + self.attributes['video_id'] + '/1.jpg'
 		return result
 
-# This command is a HACK to work around issues in the web app and pad with in-line Kaltura videos in the content.
+# This command is a HACK to work around issues in the web app and pad with in-line
+# Kaltura videos in the content.
 class ntiincludekalturavideo(Command):
 	args = '[ options:dict ] video_id:str'
 
@@ -291,7 +290,6 @@ class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		output = render_children(self.renderer, sources)
 		return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
 
-
 	@readproperty
 	def transcripts(self):
 		sources = self.getElementsByTagName('mediatranscript')
@@ -321,6 +319,7 @@ class ntilocalaudio(Base.Environment):
 		audio = self.getElementsByTagName('ntiincludelocalaudio')[0]
 		self.src = {}
 		self.src['mp3'] = audio.attributes['src'] + u'.mp3'
+		self.src['m4a'] = audio.attributes['src'] + u'.m4a'
 		self.title = audio.attributes.get('title', u'')
 		self.id = audio.id
 
@@ -438,7 +437,6 @@ class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		sources = self.getElementsByTagName( 'ntivideosource' )
 		output = render_children( self.renderer, sources )
 		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
-
 
 	@readproperty
 	def transcripts(self):
