@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from dolmen.builtins.interfaces import IIterable
 
+# pylint:disable=I0011,E0213,E0211
+
 class IUserNotableData(IIterable):
 	"""
 	An object, typically registered as an adapter on the user,
@@ -47,13 +49,27 @@ class IUserNotableData(IIterable):
 			created before that time will be returned.
 		"""
 
-	def sort_notable_intids(notable_intids, field_name='createdTime', limit=None, reverse=False):
+	def sort_notable_intids(notable_intids,
+							field_name='createdTime',
+							limit=None,
+							reverse=False,
+							reify=False):
 		"""
 		Given (a possible subset of) the intids previously identified as notable
 		by this object, sort them according to `field_name` order.
 
 		:keyword createdTime: Defaulting to `createdTime`, this is the field on which to sort.
+		:keyword reify: If true, then the return value will be a list-like sequence supporting
+			indexing and having a length. If `False` (the default) the return value may
+			be a generator or index.
+		:return: An iterable or list-like sequence containing intids.
+		"""
 
+	def iter_notable_intids(notable_intids):
+		"""
+		Return an iterable over the objects represented by the intids
+		previously returned and possibly sorted by this object. The iterable
+		will have a length if the argument does.
 		"""
 
 	# TODO: Add a method and an efficient implementation to check whether an object
