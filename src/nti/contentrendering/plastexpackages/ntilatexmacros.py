@@ -238,7 +238,6 @@ class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 		blockType = True
 
 		priority = 0
-		poster = None
 		thumbnail = None
 
 		def digest(self, tokens):
