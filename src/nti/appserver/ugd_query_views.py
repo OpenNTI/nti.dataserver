@@ -922,7 +922,7 @@ class _RecursiveUGDView(_UGDView):
 			# If a user hasn't created any objects, then we get stop iteration.
 			# if for some reason the intid catalog is inconsistent we get AttributeError
 			last_modified = 0
-		result['Last Modified'] = last_modified
+		result['Last Modified'] = result.lastModified = last_modified
 
 		accept_types = self._get_accept_types()
 		if accept_types and '*/*' not in accept_types:
