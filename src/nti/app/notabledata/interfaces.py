@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from dolmen.builtins.interfaces import IIterable
+from nti.utils.schema import Number
 
 # pylint:disable=I0011,E0213,E0211
 
@@ -73,6 +74,13 @@ class IUserNotableData(IIterable):
 		previously returned and possibly sorted by this object. The iterable
 		will have a length if the argument does.
 		"""
+
+	# TODO: Arguably this should be a separate interface we adapt to or extend
+	lastViewed = Number(title="The timestamp the user last viewed this data",
+						description="This is not set implicitly, but should be set explicitly"
+						" by user action. 0 if never set.",
+						required=True,
+						default=0)
 
 	# TODO: Add a method and an efficient implementation to check whether an object
 	# is part of this notable set.

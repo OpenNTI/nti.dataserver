@@ -125,7 +125,7 @@ class _NotableRecursiveUGDView(_UGDView):
 								   batch_size=batch_size,
 								   batch_start=batch_start)
 
-		_NotableUGDLastViewed.write_last_viewed(request, self.remoteUser, result)
+		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
 		return result
 
 from zope.annotation.interfaces import IAnnotations
@@ -146,18 +146,11 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 	Maintains the 'lastViewed' time for each user's NotableUGD.
 	"""
 
-	# JAM: I know we'll need to access this elsewhere, from
-	# the emailing process, so there will need to be a more formal
-	# API for this. Currently we're storing it as an annotation
-	# on the user as a timestamp
-	KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
-
 	inputClass = Number
 
 	@classmethod
-	def write_last_viewed(cls, request, remote_user, result):
-		annotations = IAnnotations(remote_user)
-		last_viewed = annotations.get(cls.KEY, 0)
+	def write_last_viewed(cls, request, user_notable_data, result):
+		last_viewed = user_notable_data.lastViewed
 
 		result['lastViewed'] = last_viewed
 		links = result.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
@@ -178,11 +171,10 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		# Note that we don't use the user in the traversal path,
 		# we use the user that's actually making the call.
 		# This is why we can get away with just the READ permission.
-		annotations = IAnnotations(self.remoteUser)
-		last_viewed = annotations.get(self.KEY, 0)
+		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
+													   IUserNotableData )
 
 		incoming_last_viewed = self.readInput()
-		if incoming_last_viewed > last_viewed:
-			last_viewed = incoming_last_viewed
-			annotations[self.KEY] = incoming_last_viewed
-		return incoming_last_viewed
+		if incoming_last_viewed > user_notable_data.lastViewed:
+			user_notable_data.lastViewed = incoming_last_viewed
+		return user_notable_data.lastViewed

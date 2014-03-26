@@ -202,14 +202,14 @@ def WithMockDS( *args, **kwargs ):
 
 	return lambda func: _mock_ds_wrapper_for( func, factory, teardown, base_storage=kwargs.get('base_storage') )
 
-
-
-
-import contextlib
-
 current_transaction = None
 
 class mock_db_trans(object):
+	"""
+	A context manager that returns a connection. Use
+	inside a function decorated with :class:`WithMockDSTrans`
+	or similar.
+	"""
 
 	def __init__(self, ds=None):
 		self.ds = ds or current_mock_ds
