@@ -3,18 +3,29 @@
 """
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from plasTeX.Packages.graphicx import includegraphics  # Re-export
+logger = __import__('logging').getLogger(__name__)
 
-from . import graphics as _base_graphics
+from plasTeX.Packages.graphics import graphicspath as BaseGraphicspath
+from plasTeX.Packages.graphics import DeclareGraphicsExtensions as BaseDeclareGraphicsExtensions
 
-class DeclareGraphicsExtensions(_base_graphics.DeclareGraphicsExtensions):
+from .graphics import DeclareGraphicsRule as BaseDeclareGraphicsRule
+
+class DeclareGraphicsExtensions(BaseDeclareGraphicsExtensions):
 	packageName = 'graphicx'
 
-class DeclareGraphicsRule(_base_graphics.DeclareGraphicsRule):
+class DeclareGraphicsRule(BaseDeclareGraphicsRule):
 	packageName = 'graphicx'
 
-class graphicspath(_base_graphics.graphicspath):
+class graphicspath(BaseGraphicspath):
 	packageName = 'graphicx'
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+    "Moved to plasTeX.Packages.graphicx",
+    "plasTeX.Packages.graphicx",
+    "includegraphics")
