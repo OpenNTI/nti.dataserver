@@ -8,6 +8,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+# Necesary rexport
+from plasTeX.Packages.graphicx import includegraphics
+
 from plasTeX.Packages.graphics import graphicspath as BaseGraphicspath
 from plasTeX.Packages.graphics import DeclareGraphicsExtensions as BaseDeclareGraphicsExtensions
 
@@ -21,11 +24,3 @@ class DeclareGraphicsRule(BaseDeclareGraphicsRule):
 
 class graphicspath(BaseGraphicspath):
 	packageName = 'graphicx'
-
-import zope.deferredimport
-zope.deferredimport.initialize()
-
-zope.deferredimport.deprecatedFrom(
-    "Moved to plasTeX.Packages.graphicx",
-    "plasTeX.Packages.graphicx",
-    "includegraphics")

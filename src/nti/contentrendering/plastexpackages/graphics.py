@@ -8,20 +8,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+# Necesary Rexport
+from plasTeX.Packages.graphics import graphicspath
+from plasTeX.Packages.graphics import includegraphics
+from plasTeX.Packages.graphics import _locate_image_file
+from plasTeX.Packages.graphics import DeclareGraphicsExtensions
+
 from plasTeX import Command
 
 # Adds a stub version of the \DeclareGraphicsRule command
 class DeclareGraphicsRule(Command):
 	packageName = 'graphics'
 	args = '{extension:str}{type:str}{readfile:str}{command:str}'
-
-import zope.deferredimport
-zope.deferredimport.initialize()
-
-zope.deferredimport.deprecatedFrom(
-    "Moved to plasTeX.Packages.graphics",
-    "plasTeX.Packages.graphics",
-    "graphicspath",
-    "includegraphics",
-    "DeclareGraphicsExtensions",
-    "_locate_image_file")
