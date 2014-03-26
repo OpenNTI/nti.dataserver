@@ -38,12 +38,12 @@ class IFilesystemLibrary(interface.Interface):
 	"""
 
 	directory = zope.configuration.fields.Path(
-		title=_("Path to a directory containing content as subdirectories."),
+		title="Path to a directory containing content as subdirectories.",
 		required=True
 		)
 
 	prefix = schema.ValidTextLine(
-		title=_("The URL prefix for the content items"),
+		title="The URL prefix for the content items",
 		description="""If you do not give this, then the content items are assumed to be directly
 			accessible from the root of the URL space. This is most commonly needed
 			when setting up multiple libraries for different sub-sites; in that case each
@@ -77,13 +77,13 @@ class IS3Library(interface.Interface):
 	"""
 
 	bucket = schema.ValidTextLine(
-		title=_("The name of the S3 bucket that contains content"),
+		title="The name of the S3 bucket that contains content",
 		description="For example, dev-content.nextthought.com",
 		required=True
 		)
 
 	cdn_name = schema.ValidTextLine(
-		title=_("The name of a CDN distribution placed on top of the S3 bucket."),
+		title="The name of a CDN distribution placed on top of the S3 bucket.",
 		description="For example, d2wnvtui8zrua9.cloudfront.net",
 		required=False
 		)
