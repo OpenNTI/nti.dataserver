@@ -69,7 +69,7 @@ def _preflight_email_based_request(request):
 
 	email_assoc_with_account = request.params.get( 'email' )
 	if not email_assoc_with_account:
-		raise hexc.HTTPBadRequest(detail=_("Must provide email"))
+		raise hexc.HTTPBadRequest(detail="Must provide email")
 
 	try:
 		user_interfaces.checkEmailAddress( email_assoc_with_account )
@@ -144,12 +144,12 @@ def forgot_passcode_view(request):
 	username = request.params.get( 'username' ) or ''
 	username = username.strip()
 	if not username:
-		return hexc.HTTPBadRequest(detail=_("Must provide username"))
+		return hexc.HTTPBadRequest(detail="Must provide username")
 	username = username.lower() # normalize
 
 	success_redirect_value = request.params.get( 'success' )
 	if not success_redirect_value:
-		return hexc.HTTPBadRequest(detail=_("Must provide success"))
+		return hexc.HTTPBadRequest(detail="Must provide success")
 
 
 	matching_users = find_users_with_email( email_assoc_with_account,
@@ -275,11 +275,11 @@ def reset_passcode_view(request):
 
 	username = request.params.get( 'username' )
 	if not username:
-		return hexc.HTTPBadRequest(detail=_("Must provide username"))
+		return hexc.HTTPBadRequest(detail="Must provide username")
 
 	token = request.params.get( 'id' )
 	if not token:
-		return hexc.HTTPBadRequest(detail=_("Must provide id"))
+		return hexc.HTTPBadRequest(detail="Must provide id")
 
 	# Return the same error message for no-such-user, bad-token, and expired-token.
 	# To make it harder to phish in the system. The app can only say "start over"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: jason.madden@nextthought.com\n"
-"POT-Creation-Date: 2014-03-25 09:42-0500\n"
+"POT-Creation-Date: 2014-03-26 10:09-0500\n"
 "PO-Revision-Date: 2012-09-24 22:18-0500\n"
 "Last-Translator: Jason Madden <jason.madden@nextthought.com>\n"
 "Language-Team: en <LL@li.org>\n"
@@ -22,28 +22,12 @@ msgstr ""
 msgid "You cannot store that type of object here."
 msgstr ""
 
-#: src/nti/app/externalization/internalization.py:100
-msgid "XML no longer supported."
-msgstr ""
-
 #: src/nti/app/externalization/internalization.py:143
 msgid "Failed to parse/transform input"
 msgstr ""
 
-#: src/nti/app/externalization/view_mixins.py:80
-msgid "Batch size/start not integers"
-msgstr ""
-
-#: src/nti/app/externalization/view_mixins.py:82
-msgid "Batch size/start out of range"
-msgstr ""
-
 #: src/nti/app/externalization/view_mixins.py:361
 msgid "Unexpected internal error; see logs"
-msgstr ""
-
-#: src/nti/app/externalization/view_mixins.py:387
-msgid "Failed to parse/transform value"
 msgstr ""
 
 #: src/nti/app/externalization/view_mixins.py:433
@@ -94,30 +78,12 @@ msgstr ""
 msgid "Cannot look for forgotten accounts while logged on."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:72
-msgid "Must provide email"
-msgstr ""
-
 #: src/nti/appserver/account_recovery_views.py:109
 msgid "NextThought Username Reminder"
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:147
-#: src/nti/appserver/account_recovery_views.py:278
-#, fuzzy
-msgid "Must provide username"
-msgstr "Please provide your first and last names."
-
-#: src/nti/appserver/account_recovery_views.py:152
-msgid "Must provide success"
-msgstr ""
-
 #: src/nti/appserver/account_recovery_views.py:195
 msgid "NextThought Password Reset"
-msgstr ""
-
-#: src/nti/appserver/account_recovery_views.py:282
-msgid "Must provide id"
 msgstr ""
 
 #: src/nti/appserver/account_recovery_views.py:294
@@ -126,10 +92,6 @@ msgstr ""
 
 #: src/nti/appserver/dataserver_socketio_views.py:134
 msgid "No session found or illegal session id"
-msgstr ""
-
-#: src/nti/appserver/dataserver_socketio_views.py:159
-msgid "Incorrect use of websockets"
 msgstr ""
 
 #: src/nti/appserver/logon.py:413
@@ -164,62 +126,8 @@ msgstr ""
 msgid "Cannot use an ID already in use"
 msgstr ""
 
-#: src/nti/appserver/ugd_query_views.py:898
-msgid "No catalog"
-msgstr ""
-
 #: src/nti/appserver/zope_file_views.py:160
 msgid "Not an image upload"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Can the user chat?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:15
-msgid "Chat"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Can the user access UGD sharing features?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:20
-msgid "Sharing"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Can the user create new FriendsLists? (Enforced by the vocabulary)"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:25
-msgid "Create FriendsLists"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid ""
-"Can the user create new DynamicFriendsLists? (NOTE: NOT Enforced by the "
-"vocab)"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:30
-msgid "Create DynamicFriendsLists"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Can the user upload custom avatar pictures?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:35
-msgid "Upload Avatar"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:40
-msgid "Can the user change his/her password?"
-msgstr ""
-
-#: src/nti/appserver/capabilities/capabilities.zcml:40
-msgid "Change Password"
 msgstr ""
 
 #: src/nti/appserver/contentproviders/zcml.py:32
@@ -236,27 +144,6 @@ msgstr ""
 
 #: src/nti/appserver/contentproviders/zcml.py:43
 msgid "This should be a list of interfaces or classes"
-msgstr ""
-
-#: src/nti/appserver/dashboard/views.py:375
-#: src/nti/appserver/dashboard/views.py:377
-msgid "Invalid decay factor"
-msgstr ""
-
-#: src/nti/appserver/forums/configure.zcml:27
-msgid "Can the user create new blog entries?"
-msgstr ""
-
-#: src/nti/appserver/forums/configure.zcml:27
-msgid "Create Blog Entry"
-msgstr ""
-
-#: src/nti/appserver/forums/configure.zcml:32
-msgid "Can the user participate in community forums?"
-msgstr ""
-
-#: src/nti/appserver/forums/configure.zcml:32
-msgid "Participate in community forums"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -374,7 +261,7 @@ msgstr ""
 msgid "Log in at:"
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:66
+#: src/nti/appserver/templates/new_user_created.pt:65
 msgid ""
 "NextThought offers interactive content and rich features to make learning"
 " both social and personal. Explore the NextThought Help Center in your "
@@ -382,11 +269,11 @@ msgid ""
 "features NextThought has to offer."
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:75
+#: src/nti/appserver/templates/new_user_created.pt:74
 msgid "Sincerely,"
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:80
+#: src/nti/appserver/templates/new_user_created.pt:79
 msgid ""
 "If you feel this email was sent in error, or this account was created "
 "without your consent, you may email us at ${support_email}"
@@ -459,14 +346,6 @@ msgid ""
 "or shapes"
 msgstr "The message is too big. Please use less text or a smaller whiteboard."
 
-#: src/nti/chatserver/configure.zcml:50
-msgid "Moderate a chatroom"
-msgstr ""
-
-#: src/nti/chatserver/configure.zcml:53 src/nti/chatserver/configure.zcml:56
-msgid "Enter an existing chatroom"
-msgstr ""
-
 #: src/nti/contentlibrary/zcml.py:41
 msgid "Path to a directory containing content as subdirectories."
 msgstr ""
@@ -481,82 +360,6 @@ msgstr ""
 
 #: src/nti/contentlibrary/zcml.py:86
 msgid "The name of a CDN distribution placed on top of the S3 bucket."
-msgstr ""
-
-#: src/nti/contentsearch/pyramid_views.py:127
-msgid "invalid type"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:63
-msgid "A person we don't know"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:63
-msgid "Anonymous user"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:67
-msgid "People we don't know"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:67
-msgid "Anonymous users"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:71
-msgid "People we know"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:71
-msgid "Authenticated users"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:75
-msgid "All people"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:75
-msgid "Everybody"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:129
-msgid "Likes"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:134
-msgid "Favorites"
-msgstr ""
-
-#: src/nti/dataserver/configure.zcml:139
-msgid "Rating"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:14
-msgid "Create new object"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:17
-msgid "Delete existing object"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:20
-msgid "Edit existing object"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:23
-msgid "Search for objects"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:26
-msgid "Moderate existing objects"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:29
-msgid "Administer COPPA agreements"
-msgstr ""
-
-#: src/nti/dataserver/configure_acls.zcml:32
-msgid "Impersonate another user"
 msgstr ""
 
 #: src/nti/dataserver/contenttypes/forums/forum.py:278
@@ -704,37 +507,3 @@ msgstr ""
 #: src/nti/utils/schema.py:265
 msgid "${field} is too short."
 msgstr "${field} is too short. Please use at least ${minLength} characters."
-
-#~ msgid "Discussion Board"
-#~ msgstr ""
-
-#~ msgid "Welcome to the OU Digital Course Platform"
-#~ msgstr ""
-
-#~ msgid "The username is not allowed. Please choose another."
-#~ msgstr ""
-
-#~ msgid ""
-#~ msgstr ""
-
-#~ msgid "Must specify a successfully completed purchase attempt"
-#~ msgstr ""
-
-#~ msgid "Entity not found"
-#~ msgstr ""
-
-#~ msgid "Failed to provide a purchasable ID"
-#~ msgstr ""
-
-#~ msgid "Failed to provide a invitation code"
-#~ msgstr ""
-
-#~ msgid "invalid quantity"
-#~ msgstr ""
-
-#~ msgid "purchasable not found"
-#~ msgstr ""
-
-#~ msgid "course not found"
-#~ msgstr ""
-
