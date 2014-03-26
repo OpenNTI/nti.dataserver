@@ -46,7 +46,6 @@ class AbstractCachingRenderer(object):
 			# This cannot happen
 			raise Exception( "Can only get here with a body" )
 
-
 		try:
 			IPreRenderResponseCacheController(data)( data, system ) # optional
 		except TypeError:

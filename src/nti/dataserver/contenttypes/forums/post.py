@@ -12,6 +12,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope import component
+from zope.lifecycleevent import IObjectModifiedEvent
 from zope.schema.fieldproperty import FieldProperty
 from zope.annotation import interfaces as an_interfaces
 
@@ -67,6 +69,21 @@ class Post(
 @interface.implementer(for_interfaces.IHeadlinePost)
 class HeadlinePost(Post):
 	pass
+
+@component.adapter( for_interfaces.IHeadlinePost, IObjectModifiedEvent )
+def _update_forum_when_headline_modified( modified_object, event ):
+	"""
+	When a headline post, contained inside a topic contained inside a forum
+	is modified, the modification needs to percolate all the way up to the forum
+	so that we know its \"contents\" listing is out of date.
+	Generic listeners handle everything except the grandparent level (the forum).
+	"""
+
+	try:
+		modified_object.__parent__.__parent__.updateLastModIfGreater( modified_object.lastModified )
+	except AttributeError:
+		pass
+
 
 @interface.implementer(for_interfaces.IGeneralPost)
 class GeneralPost(Post):
