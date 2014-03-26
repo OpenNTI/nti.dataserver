@@ -44,12 +44,15 @@ class IUserNotableData(IIterable):
 	def __nonzero__():
 		"The boolean value of this object is whether any notable objects exist"
 
-	def get_notable_intids(max_created_time=None):
+	def get_notable_intids(min_created_time=None,
+						   max_created_time=None):
 		"""
-		Return a :mod:`BTRees` integer set containing the notable intids for the user.
+		Return a :mod:`BTrees` integer set containing the notable intids for the user.
 
+		:keyword min_created_time: If set to a timestamp, then only intids of objects
+			created after that time (inclusive) will be returned.
 		:keyword max_created_time: If set to a timestamp, then only intids of objects
-			created before that time will be returned.
+			created before that time (inclusive) will be returned.
 		"""
 
 	def sort_notable_intids(notable_intids,

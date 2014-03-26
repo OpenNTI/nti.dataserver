@@ -144,11 +144,11 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		return safely_viewable_intids
 
-	def get_notable_intids(self, max_created_time=None):
+	def get_notable_intids(self, min_created_time=None, max_created_time=None):
 		ids = self._notable_intids
-		if max_created_time is not None:
+		if max_created_time is not None or min_created_time is not None:
 			catalog = self._catalog
-			intids_in_time_range = catalog['createdTime'].apply({'between': (None, max_created_time,)})
+			intids_in_time_range = catalog['createdTime'].apply({'between': (min_created_time, max_created_time,)})
 			ids = catalog.family.IF.intersection(ids, intids_in_time_range)
 		return ids
 
