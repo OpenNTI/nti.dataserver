@@ -206,6 +206,16 @@ class ntimediaref(Base.Crossref.ref):
 
 # audio
 
+class ntiincludeaudio(_OneText):
+	args = 'audio_url'
+
+	def invoke(self, tex):
+		result = super(ntiincludeaudio, self).invoke(tex)
+		_id = hashlib.md5(self.source.strip().encode('utf-8')).hexdigest()
+		setattr(self, "@id", _id)
+		setattr(self, "@hasgenid", True)
+		return result
+
 class ntiaudioname(Command):
 	unicode = ''
 
