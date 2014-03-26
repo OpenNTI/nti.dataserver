@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from zope import interface
 
 from hamcrest import assert_that
 from hamcrest import is_
@@ -29,6 +30,10 @@ from .. import views as bulk_email_views
 from ..process import AbstractBulkEmailProcessLoop
 from ..process import PreflightError
 from ..process import _ProcessMetaData
+
+from zope.security.interfaces import IPrincipal
+from nti.mailer.interfaces import IEmailAddressable
+
 from boto.ses.exceptions import SESDailyQuotaExceededError
 from boto.ses.exceptions import SESError
 
@@ -43,6 +48,15 @@ from fudge.inspector import arg
 class Process(AbstractBulkEmailProcessLoop):
 	template_name = "nti.appserver:templates/failed_username_recovery_email"
 
+@interface.implementer(IEmailAddressable,
+					   IPrincipal)
+class Recipient(object):
+
+	email = None
+
+	def __init__(self, email=None):
+		if email:
+			self.email = email
 
 class TestBulkEmailProcess(ApplicationLayerTest):
 
@@ -94,7 +108,8 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 			.returns( {'key': 'val'} ) )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': email} )
+
+		process.add_recipients( {'email': Recipient(email)} )
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
 
@@ -115,7 +130,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 			.returns( {'key': 'val'} ) )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': email} )
+		process.add_recipients( {'email': Recipient(email)} )
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
 
@@ -139,7 +154,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': email} )
+		process.add_recipients( {'email': Recipient(email)} )
 
 		process.process_loop()
 
@@ -159,7 +174,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': email} )
+		process.add_recipients( {'email': Recipient(email)} )
 
 		process.process_loop()
 
@@ -181,7 +196,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		# With some recipients
 		email = 'jason.madden@nextthought.com'
 		process = Process(None)
-		process.add_recipients( {'email': email} )
+		process.add_recipients( {'email': Recipient(email)} )
 		process.metadata.startTime = time.time()
 		process.metadata.save()
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )

@@ -11,9 +11,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 import time
-import anyjson as json
+import zlib
+try:
+	import cPickle as pickle
+except ImportError:
+	import pickle
 
 import boto.ses
 from boto.ses.exceptions import SESDailyQuotaExceededError
@@ -142,16 +145,18 @@ class AbstractBulkEmailProcessLoop(object):
 		"""
 		Save the given recipient data.
 
-		:param recipient_data: A dict containing JSON-encodable values. Must have one key,
-			``email`` containing a string of the email address. May optionally have
-			a key ``template_args`` which itself is a JSON-encodable dictionary.
+		:param recipient_data: A dict containing pickle-able values. Must have one key,
+			``email`` containing a the email address (ideally a picklable that can be
+			adapted to ``IEmailAddressable`` and ``IPrincipal``). May optionally have
+			a key ``template_args`` which itself is a pickle-able dictionary; this
+			argument will be passed to the method :meth:`compute_template_args_for_recipient`
 		"""
 
 		values = []
 		for recipient in recipient_data:
 			if 'email' not in recipient or not recipient['email']:
 				raise ValueError('missing email')
-			values.append( json.dumps( recipient ) )
+			values.append( zlib.compress( pickle.dumps( recipient, pickle.HIGHEST_PROTOCOL ) ) )
 
 		self.redis.sadd( self.names.source_name, *values )
 		self.redis.expire( self.names.source_name, _TTL )
@@ -159,6 +164,9 @@ class AbstractBulkEmailProcessLoop(object):
 	def compute_sender_for_recipient( self, recipient ):
 		# TBD
 		return 'no-reply@alerts.nextthought.com'
+
+	def compute_template_args_for_recipient(self, recipient ):
+		return recipient.get('template_args')
 
 	def process_one_recipient( self ):
 		"""
@@ -175,7 +183,7 @@ class AbstractBulkEmailProcessLoop(object):
 				# Done!
 				return None
 
-			recipient_data = json.loads(member)
+			recipient_data = pickle.loads(zlib.decompress(member))
 
 			sender = self.compute_sender_for_recipient( recipient_data )
 
@@ -184,7 +192,10 @@ class AbstractBulkEmailProcessLoop(object):
 				subject=self.subject,
 				request=self.request,
 				recipients=[recipient_data['email']],
-				template_args=recipient_data.get('template_args') )
+				# TODO: Probably if there were `template_args` and this method
+				# returns None, we should not send to this client: something
+				# changed behind our back. We should record a failure and keep going
+				template_args=self.compute_template_args_for_recipient(recipient_data))
 
 			pmail_msg.sender = sender
 			mail_msg = pmail_msg.to_message()
@@ -195,7 +206,7 @@ class AbstractBulkEmailProcessLoop(object):
 			# The one exception is if the address is blacklisted, that still counts as
 			# success and we need to take him off the source list
 			try:
-				result = self.sesconn.send_raw_email( msg_string, sender, recipient_data['email'] )
+				result = self.sesconn.send_raw_email( msg_string, sender, pmail_msg.recipients[0] )
 			except SESAddressBlacklistedError as e: #pragma: no cover
 				logger.warn("Blacklisted address: %s", e )
 				result = {'SendEmailResult': 'BlacklistedAddress'}
@@ -205,8 +216,9 @@ class AbstractBulkEmailProcessLoop(object):
 
 			# Record the result and remove the need to send again
 			self.redis.srem( self.names.source_name, member )
+			recipient_data.pop('template_args', None) # no need to repickle this
 			recipient_data['boto.ses.result'] = result
-			self.redis.sadd( self.names.dest_name, json.dumps( recipient_data ) )
+			self.redis.sadd( self.names.dest_name, pickle.dumps( recipient_data, pickle.HIGHEST_PROTOCOL ) )
 			self.redis.expire( self.names.dest_name, _TTL )
 
 			return result
