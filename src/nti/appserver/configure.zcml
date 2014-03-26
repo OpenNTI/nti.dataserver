@@ -394,4 +394,5 @@
 
 	<include package="nti.app.authentication" />
 	<include package="nti.app.notabledata" />
+	<include package="nti.app.bulkemail" />
 </configure>
