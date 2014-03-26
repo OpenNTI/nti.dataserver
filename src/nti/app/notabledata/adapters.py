@@ -21,6 +21,7 @@ from .interfaces import IUserPresentationPriorityCreators
 from nti.dataserver.interfaces import IUser
 
 from nti.utils.property import CachedProperty
+from nti.utils.property import annotation_alias
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 from zope.catalog.interfaces import ICatalog
@@ -184,3 +185,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	def iter_notable_intids(self, notable_intids):
 		return ResultSet(notable_intids, self._intids)
+
+	_KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
+	lastViewed = annotation_alias(_KEY, annotation_property='remoteUser', default=0,
+								  doc="LastViewed is stored as an annotation on the user")
