@@ -5,7 +5,7 @@ to support parsing, however this command does semi-complicated
 whitespace manipulation that will require careful work on the render templates 
 to do correctly.
 
-$Id:$
+$Id$
 """
 
 from __future__ import print_function, unicode_literals
