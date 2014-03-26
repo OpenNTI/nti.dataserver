@@ -391,9 +391,10 @@ class TransactionLoop(object):
 				self.__free(tx); del tx
 				logger.log( TRACE, "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
-			except Exception:
+			except Exception as e:
 				try:
 					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
+					logger.debug("Transaction aborted; %s", e)
 				except AttributeError:
 					# We've seen RelStorage do this:
 					# relstorage.cache:427 in after_poll: AttributeError: 'int' object has no attribute 'split' which looks like
