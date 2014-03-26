@@ -2,9 +2,9 @@
 """
 Define the Eurosym package
 
-$Id:  $
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,7 +20,6 @@ class eur(Command):
 		super(eur, self).invoke(tex)
 		node = Text(u'\u20AC\u202F')
 		self.attributes['self'].childNodes.insert(0, node)
-
 
 class euro(Command):
 	unicode = u'\u20AC'

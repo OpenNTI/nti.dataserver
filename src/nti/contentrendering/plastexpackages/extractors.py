@@ -3,9 +3,9 @@
 """
 Book extractors
 
-$Id: slidedeckextractor.py 21266 2013-07-23 21:52:35Z sean.jones $
+$Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -600,7 +600,6 @@ class _NTIVideoExtractor(object):
 		toc_el.setAttribute('type', 'application/vnd.nextthought.videoindex')
 
 		dom.childNodes[0].appendChild(toc_el)
-
 
 	def _process_references(self, dom, els, topic_map):
 		for el in els:
