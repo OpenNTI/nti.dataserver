@@ -118,13 +118,13 @@ class HighlightSearchHitsView(AbstractAuthenticatedView):
 
 	def readInput(self):
 		return read_body_as_external_object(self.request)
-	
+
 	def createResults(self):
 		externalValue = self.readInput()
 		result = find_factory_for(externalValue)
 		result = result() if result else None
 		if not search_interfaces.ISearchResults.providedBy(result):
-			raise hexc.HTTPBadRequest(detail=_("invalid type"))
+			raise hexc.HTTPBadRequest(detail="invalid type")
 		update_object_from_external_object(result, externalValue)
 		return result
 
@@ -135,4 +135,3 @@ class HighlightSearchHitsView(AbstractAuthenticatedView):
 			hit.Fragments = None
 		return result
 HighlightResults = HighlightSearchHitsView  # BWC
-

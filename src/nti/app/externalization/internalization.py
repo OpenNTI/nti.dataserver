@@ -97,7 +97,7 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# We're officially dropping support for plist values.
 		# primarily due to the lack of support for null values, and
 		# unsure about encoding issues
-		raise hexc.HTTPUnsupportedMediaType( _('XML no longer supported.'))
+		raise hexc.HTTPUnsupportedMediaType('XML no longer supported.')
 
 	try:
 		# We need all string values to be unicode objects. simplejson (the usual implementation

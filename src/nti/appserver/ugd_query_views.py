@@ -895,7 +895,7 @@ class _RecursiveUGDView(_UGDView):
 		"""
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
-			raise hexc.HTTPNotFound( _("No catalog"))
+			raise hexc.HTTPNotFound("No catalog")
 
 		result = LocatedExternalDict()
 		interface.alsoProvides(result,self.result_iface)

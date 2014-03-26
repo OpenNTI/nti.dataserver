@@ -372,9 +372,9 @@ class ForumTopTopicGetView(AbstractAuthenticatedView,
 			try:
 				decay = float(decay)
 				if decay <= 0 or decay > 1:
-					raise _hexc.HTTPBadRequest(detail=_('Invalid decay factor'))
+					raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 			except ValueError:
-				raise _hexc.HTTPBadRequest(detail=_('Invalid decay factor'))
+				raise _hexc.HTTPBadRequest(detail='Invalid decay factor')
 		return decay
 
 	def _batch(self, mapping, result_list, batch_size=None, batch_start=None):
