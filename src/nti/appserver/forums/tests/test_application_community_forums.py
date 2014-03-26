@@ -158,16 +158,27 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		assert_that( forum_res.json_body, has_entry( 'description', forum_data['description'] ) )
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
+	@time_monotonically_increases
 	def test_super_user_can_edit_forum_description(self):
 		# relying on @nextthought.com automatically being an admin
 		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
 		forum_data = self._create_post_data_for_POST()
 		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
 
+		board_res = adminapp.get( self.board_pretty_url )
+		board_contents = self.require_link_href_with_rel(board_res.json_body, 'contents')
+		board_contents_res = adminapp.get(board_contents)
+
 		adminapp.put_json( forum_res.location, {'description': 'The updated description'} )
 
 		forum_res = self.testapp.get( forum_res.location )
 		assert_that( forum_res.json_body, has_entry( 'description', "The updated description" ) )
+
+		# And when we get the board again, it shows up as changed
+		adminapp.get( board_contents,
+					  headers={b'If-None-Match': board_contents_res.etag,
+							   b'If-Modified-Since': board_contents_res.headers['Last-Modified']},
+					  status=200)
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	def test_super_user_can_edit_forum_description_using_field(self):
@@ -412,6 +423,25 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 
 		assert_that(forum_contents_res3.json_body, has_entry(u'TotalItemCount', 2))
 
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_contents_of_forum_last_modified_changes_when_new_topic_title_changed(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = fixture.testapp
+
+		topic_res, _ = self._POST_and_publish_topic_entry()
+		forum_res = self.testapp.get( self.forum_pretty_url )
+		forum_contents_href = self.require_link_href_with_rel( forum_res.json_body, 'contents' )
+
+		forum_contents_res = self.testapp.get( forum_contents_href )
+		assert_that( forum_contents_res.json_body, has_entry( 'TotalItemCount', 1 ) )
+
+		self.testapp.put_json( topic_res.json_body['headline']['href'], {'title': "A new and different title"} )
+
+		forum_contents_res2 = self.testapp.get( forum_contents_href,
+												headers={b'If-None-Match': forum_contents_res.etag,
+														 b'If-Modified-Since': forum_contents_res.headers['Last-Modified']},
+												status=200)
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

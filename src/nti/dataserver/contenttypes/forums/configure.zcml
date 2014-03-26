@@ -48,6 +48,7 @@
 	<subscriber handler=".topic._post_added_to_topic" />
 	<subscriber handler=".forum._post_added_to_topic" />
 	<subscriber handler=".forum._topic_added_to_forum" />
+	<subscriber handler=".post._update_forum_when_headline_modified" />
 
 	<!-- Externalization -->
 	<include package="nti.externalization" file="meta.zcml" />
