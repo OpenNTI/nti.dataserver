@@ -8,7 +8,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-# Import all items from aopsbook.py.  This file is our central file for all AoPS specific macros.
+# Import all items from aopsbook.py.
+# This file is our central file for all AoPS specific macros.
 from .aopsbook import *
 
 import zope.deferredimport
