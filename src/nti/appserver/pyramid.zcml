@@ -76,7 +76,7 @@
 	<pyramid:scan package='.store.views' />
 
 	<pyramid:scan package=".link_providers.views" />
-	<pyramid:scan package=".bulk_email_views" />
+	<include package="nti.app.bulkemail" file="pyramid.zcml" />
 	<pyramid:scan package=".user_views" />
 
 	<include package=".forums" file="pyramid.zcml" />
