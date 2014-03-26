@@ -204,40 +204,42 @@ class ntimediaref(Base.Crossref.ref):
 
 		return tok
 
-# audio
-
-class ntiincludeaudio(_OneText):
-	args = 'audio_url'
-
-	def invoke(self, tex):
-		result = super(ntiincludeaudio, self).invoke(tex)
-		_id = hashlib.md5(self.source.strip().encode('utf-8')).hexdigest()
-		setattr(self, "@id", _id)
-		setattr(self, "@hasgenid", True)
-		return result
-
-class ntiaudioname(Command):
-	unicode = ''
-
-class ntiaudio(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
-
+class ntimedia(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 	blockType = True
-	counter = 'ntiaudio'
 	args = '[ options:dict ]'
 
-	_ntiid_type = 'NTIAudio'
-	_ntiid_suffix = 'ntiaudio.'
 	_ntiid_title_attr_name = 'ref'
 	_ntiid_allow_missing_title = False
-	_ntiid_cache_map_name = '_ntiaudio_ntiid_map'
-
-	itemprop = "presentation-audio"
-	mime_type = mimeType = "application/vnd.nextthought.ntiaudio"
 
 	creator = None
 	num_sources = 0
 	title = 'No Title'
 	closed_caption = None
+
+	@readproperty
+	def description(self):
+		return None
+
+	@readproperty
+	def transcripts(self):
+		return None
+
+# audio
+
+class ntiaudioname(Command):
+	unicode = ''
+
+class ntiaudio(ntimedia):
+
+	counter = 'ntiaudio'
+
+	_ntiid_type = 'NTIAudio'
+	_ntiid_suffix = 'ntiaudio.'
+	_ntiid_allow_missing_title = True
+	_ntiid_cache_map_name = '_ntiaudio_ntiid_map'
+
+	itemprop = "presentation-audio"
+	mime_type = mimeType = "application/vnd.nextthought.ntiaudio"
 
 	# A Float subclass to get \caption handling
 	class caption(Base.Floats.Caption):
@@ -320,24 +322,17 @@ class ntiaudioref(ntimediaref):
 class ntivideoname(Command):
 	unicode = ''
 
-class ntivideo(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
-	args = '[ options:dict ]'
+class ntivideo(ntimedia):
+
 	counter = 'ntivideo'
-	blockType = True
-	_ntiid_cache_map_name = '_ntivideo_ntiid_map'
-	_ntiid_allow_missing_title = False
-	_ntiid_suffix = 'ntivideo.'
-	_ntiid_title_attr_name = 'ref'
 	_ntiid_type = 'NTIVideo'
+	_ntiid_suffix = 'ntivideo.'
+	_ntiid_cache_map_name = '_ntivideo_ntiid_map'
 
-	mimeType = "application/vnd.nextthought.ntivideo"
 	itemprop = "presentation-video"
+	mimeType = "application/vnd.nextthought.ntivideo"
 
-	creator = None
-	title = 'No Title'
 	subtitle = None
-	closed_caption = None
-	num_sources = 0
 
 	# A Float subclass to get \caption handling
 	class caption(Base.Floats.Caption):
