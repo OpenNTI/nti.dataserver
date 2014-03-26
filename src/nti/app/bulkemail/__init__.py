@@ -44,7 +44,8 @@ send email alerts.
 
 Second, for each email we send, we use a distinct ``From`` address, encoding
 some information about the target and purpose of the email. The exact format
-is TBD.
+is dependent upon the mailer in use, but is encoded in the typical VERP form
+as a label.
 
 Process
 =======
@@ -54,34 +55,37 @@ The basic outline of the process is as follows.
 #. In a transaction, gather the set of email addresses to send bulk email to:
 
 	* This may or may not include additional information needed in the email template;
-	  if it does, it means the remainder of the process is entirely independent of
-	  the database
+	  if it does, it may mean the remainder of the process is entirely independent of
+	  the database (depending on process implementation);
 	* Put this information in a specially named Redis set; also
 	  put some metadata related to the process in Redis.
 
 #. Next, potentially not in a transaction and probably in a background greenlet:
 
-	* Pop an item off the Redis source set
-	* Construct the email using the desired templates
+	* Pop an item off the Redis source set;
+	* Construct the email using the desired templates;
 	* Use Boto's support for SES to send the raw message; note that this is
 	  not done with either :mod:`pyramid_mailer` or :mod:`repoze.sendmail`
 	* Place the item from the source set, along with the tracking information
-	  from the SES result, in a Redis destination set.
-	* Throttle
+	  from the SES result, in a Redis destination set;
+	* Throttle.
 
-The use of the raw SES API is important as we must be careful to stay within
-the SES rate limits, which restricts us to sending no more than 5 emails
-a second (and 10,000 emails in a day). If we were queuing to :mod:`repoze.sendmail`,
-the queue processor might try to send too many messages too fast and there
-is no way to control that. (However, the flip side is that if this
-process is consuming the full rate limit, the background queue processor might
-fail, so we have to be conservative.)
+The use of the raw SES API is important as we must be careful to stay
+within the SES rate limits, which restricts us to sending no more than
+5 emails a second (and 10,000 emails in a given 24-hour period)
+initially (this grows over time; as of this writing on March 2014 our
+limits are 14 emails a second and 50,000 emails/24-hours). If we were
+queuing to :mod:`repoze.sendmail`, the queue processor might try to
+send too many messages too fast and there is no way to control that.
+(However, the flip side is that if this process is consuming the full
+rate limit, the background queue processor might fail, so we have to
+be conservative.)
 
 .. note::
 	We will limit the second step to being non-concurrent
 	through Redis locks. In order to properly use the template system
-	it will run within a configured application worker (using a
-	background greenlet)
+	and site configurations it will run within a configured
+	application worker (using a background greenlet)
 
 Transparency
 ============
