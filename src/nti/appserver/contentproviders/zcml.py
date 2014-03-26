@@ -29,18 +29,18 @@ class IPyramidRendererDirective(interface.Interface):
 	"""
 
 	template = schema.ValidTextLine(
-		title=_("The name of the template."),
+		title="The name of the template.",
 		required=True,
 		min_length=1 )
 
 	name = schema.ValidTextLine(
-		title=_("The name of the content provider."),
+		title="The name of the content provider.",
 		required=False,
 		min_length=1 )
 
 	for_ = zope.configuration.fields.Tokens(
-		title=_("Specifications to be adapted"),
-		description=_("This should be a list of interfaces or classes"),
+		title="Specifications to be adapted",
+		description="This should be a list of interfaces or classes",
 		required=False,
 		value_type=zope.configuration.fields.GlobalObject( missing_value=object() )
         )

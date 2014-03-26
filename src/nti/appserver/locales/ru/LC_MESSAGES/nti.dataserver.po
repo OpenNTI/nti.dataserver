@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-26 10:09-0500\n"
+"POT-Creation-Date: 2014-03-26 12:55-0500\n"
 "PO-Revision-Date: 2014-03-25 10:13-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -111,10 +111,6 @@ msgstr ""
 msgid "The request was canceled by the remote server."
 msgstr ""
 
-#: src/nti/appserver/preferences.py:61
-msgid "Prefer Flash-based video instead of native HTML video when possible"
-msgstr ""
-
 #: src/nti/appserver/rating_views.py:54
 msgid "rating not specified"
 msgstr ""
@@ -131,56 +127,12 @@ msgstr ""
 msgid "Not an image upload"
 msgstr ""
 
-#: src/nti/appserver/contentproviders/zcml.py:32
-msgid "The name of the template."
-msgstr ""
-
-#: src/nti/appserver/contentproviders/zcml.py:37
-msgid "The name of the content provider."
-msgstr ""
-
-#: src/nti/appserver/contentproviders/zcml.py:42
-msgid "Specifications to be adapted"
-msgstr ""
-
-#: src/nti/appserver/contentproviders/zcml.py:43
-msgid "This should be a list of interfaces or classes"
-msgstr ""
-
 #: src/nti/appserver/invitations/interfaces.py:150
 msgid "The invitation code is not valid."
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:154
 msgid "The invitation code has expired."
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:39
-msgid "The name of the link."
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:45
-msgid "Path to string constant giving the name."
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:51
-msgid "If given, the minimum required value users must have."
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:56
-msgid "A URI to redirect to on GET"
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:61
-msgid "A field on the user that this will link to, using the ++fields namespace"
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:66
-msgid "Path to string constant giving the name of a view."
-msgstr ""
-
-#: src/nti/appserver/link_providers/zcml.py:72
-msgid "The mime type expected to be returned by the link"
 msgstr ""
 
 #: src/nti/appserver/policies/site_policies.py:374
@@ -343,22 +295,6 @@ msgstr ""
 msgid ""
 "The message is too big. It can contain a maximum of ${parts} characters "
 "or shapes"
-msgstr ""
-
-#: src/nti/contentlibrary/zcml.py:41
-msgid "Path to a directory containing content as subdirectories."
-msgstr ""
-
-#: src/nti/contentlibrary/zcml.py:46
-msgid "The URL prefix for the content items"
-msgstr ""
-
-#: src/nti/contentlibrary/zcml.py:80
-msgid "The name of the S3 bucket that contains content"
-msgstr ""
-
-#: src/nti/contentlibrary/zcml.py:86
-msgid "The name of a CDN distribution placed on top of the S3 bucket."
 msgstr ""
 
 #: src/nti/dataserver/contenttypes/forums/forum.py:278

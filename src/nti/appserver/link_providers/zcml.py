@@ -36,40 +36,40 @@ class IUserLinkDirective(interface.Interface):
 	"""
 
 	name = schema.ValidTextLine(
-		title=_("The name of the link."),
+		title="The name of the link.",
 		description="This literal value will be used as the relationship type of the link. You must provide either this or ``named``",
 		required=False,
 		min_length=1 )
 
 	named = zope.configuration.fields.GlobalObject(
-		title=_("Path to string constant giving the name."),
+		title="Path to string constant giving the name.",
 		description="You must give this or ``name``.",
 		required=False,
 		value_type=name)
 
 	minGeneration = zope.configuration.fields.TextLine(
-		title=_("If given, the minimum required value users must have."),
+		title="If given, the minimum required value users must have.",
 		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD. Mutually exclusive with ``field``.""",
 		required=False )
 
 	url = schema.ValidTextLine( # Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
-		title=_("A URI to redirect to on GET"),
+		title="A URI to redirect to on GET",
 		description="NOTE: This is not enforced to be a complete, valid URL/URI. You are responsible for that. Mutually exclusive with ``field``",
 		required=False )
 
 	field = zope.configuration.fields.PythonIdentifier(
-		title=_("A field on the user that this will link to, using the ++fields namespace"),
+		title="A field on the user that this will link to, using the ++fields namespace",
 		description="Mutually exclusive with ``url`` and ``minGeneration``",
 		required=False )
 
 	view_named = zope.configuration.fields.GlobalObject(
-		title=_("Path to string constant giving the name of a view."),
+		title="Path to string constant giving the name of a view.",
 		description="If given, this will be used as the destination of the link, thus mutually exclusive with ``field``, ``minGeneration`` and ``url``",
 		required=False,
 		value_type=name)
 
 	mimeType = schema.ValidTextLine(
-		title=_("The mime type expected to be returned by the link"),
+		title="The mime type expected to be returned by the link",
 		constraint=mimeTypeConstraint,
 		required=False )
 
