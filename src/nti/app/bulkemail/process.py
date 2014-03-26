@@ -103,11 +103,6 @@ class AbstractBulkEmailProcessLoop(object):
 		self.redis = component.getUtility( nti_interfaces.IRedisClient )
 		self.names = _ProcessNames( self.template_name )
 		self.metadata = _ProcessMetaData( self.redis, self.names.metadata_name )
-		# To respect the SES limits, but leave headroom for other processes
-		# we send at most three per second in burst, steady state of one per second
-		# NOTE: We are not handling the daily quota other than by exceptions
-		self.throttle = PersistentTokenBucket( 3 )
-
 		self.lock = self.redis.lock( self.names.lock_name, self.lock_timeout )
 
 	@property
@@ -132,6 +127,23 @@ class AbstractBulkEmailProcessLoop(object):
 		Reset the process back to initial conditions.
 		"""
 		self.redis.delete( *self.names.names )
+
+	@Lazy
+	def throttle(self):
+		# To respect the SES limits, but leave headroom for other processes
+		# we send at limited rates in burst and fill slower than that.
+		# TODO: These heuristics can be better, especially for the higher
+		# max send rate.
+		# NOTE: We are not handling the daily quota other than by exceptions
+		conn = self.sesconn
+		# Derive a value for the throttle.
+		# For a send-rate of 14, this gives 6, for 5 it gives 2
+		val = conn.get_send_quota()['GetSendQuotaResponse']['GetSendQuotaResult']['MaxSendRate']
+		val = float(val)
+		burst_rate = int(val/2.3)
+		# For send-rate of 14 this gives 4, for 5 it gives 1
+		fill_rate = int(val/3)
+		return PersistentTokenBucket( burst_rate, fill_rate=fill_rate )
 
 	@Lazy
 	def sesconn(self):
@@ -172,9 +184,16 @@ class AbstractBulkEmailProcessLoop(object):
 		"""
 		Generally called outside of a transaction to send an email.
 
+		If you need a transaction and/or site configured, you will
+		need to subclass this process and begin your transaction
+		around either this method (for fine-grained scope) or around
+		:meth:`process_loop` (for bulk scope). Typically you will be better
+		off establishing the transaction around this method, and aborting
+		it when the transaction returns. In this way you ensure that the data
+		is self-consistent for a single email.
+
 		:return: ``None`` if there are no more recipients. Otherwise,
 			the (true-ish) value of sending the email.
-
 		"""
 
 		with self.lock:
@@ -226,6 +245,14 @@ class AbstractBulkEmailProcessLoop(object):
 	def process_loop( self ):
 		"""
 		Generally called outside of a transaction to send all the emails.
+
+		If you need a transaction and/or site configured, you will
+		need to subclass this process and begin your transaction
+		around either this method (for bulk scope) or around
+		:meth:`process_one_recipient` (for fine-grained scope). The
+		later is recommended, otherwise it is likely that, for a long
+		process, by the end of the run, the data is inconsistent with
+		the data at the beginning of the process.
 		"""
 		assert self.metadata.status != 'Completed'
 

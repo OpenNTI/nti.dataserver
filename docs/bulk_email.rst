@@ -2,5 +2,12 @@
  Bulk Emails
 =============
 
+Overview
+========
 
-.. automodule:: nti.appserver.bulk_email_views
+.. automodule:: nti.app.bulkemail
+
+Interfaces
+==========
+
+.. automodule:: nti.app.bulkemail.interfaces

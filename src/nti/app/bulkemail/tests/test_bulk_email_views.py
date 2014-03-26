@@ -45,6 +45,11 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 import fudge
 from fudge.inspector import arg
 
+SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
+																u'MaxSendRate': u'14.0',
+																u'SentLast24Hours': u'195.0'},
+										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
+
 class Process(AbstractBulkEmailProcessLoop):
 	template_name = "nti.appserver:templates/failed_username_recovery_email"
 
@@ -106,6 +111,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		(fake_sesconn.expects( 'send_raw_email' )
 		 	.with_args( arg.any(), 'no-reply@alerts.nextthought.com', email )
 			.returns( {'key': 'val'} ) )
+
 		process.sesconn = fake_sesconn
 
 
@@ -128,6 +134,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		(fake_sesconn.expects( 'send_raw_email' )
 		 	.with_args( arg.any(), 'no-reply@alerts.nextthought.com', email )
 			.returns( {'key': 'val'} ) )
+		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
 		process.add_recipients( {'email': Recipient(email)} )
@@ -152,6 +159,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn = fudge.Fake()
 		exc = SESDailyQuotaExceededError( "404", "Reason" )
 		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
+		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
 		process.add_recipients( {'email': Recipient(email)} )
@@ -172,6 +180,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn = fudge.Fake()
 		exc = SESError( "404", "Reason" )
 		fake_sesconn.expects( 'send_raw_email' ).raises( exc )
+		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
 		process.add_recipients( {'email': Recipient(email)} )
@@ -187,7 +196,9 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_application_get(self, fake_connect):
-		fake_connect.is_callable().returns_fake().expects( 'send_raw_email' ).returns( 'return' )
+		(fake_connect.is_callable().returns_fake()
+		 .expects( 'send_raw_email' ).returns( 'return' )
+		 .expects('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -224,7 +235,9 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_application_policy_change(self, fake_connect):
-		fake_connect.is_callable().returns_fake().expects( 'send_raw_email' ).returns( 'return' )
+		(fake_connect.is_callable().returns_fake()
+		 .expects( 'send_raw_email' ).returns( 'return' )
+		 .expects('get_send_quota').returns( SEND_QUOTA ))
 
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/policy_change_email' )
