@@ -32,6 +32,7 @@ from zope.intid.interfaces import IIntIds
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
+_BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
 
@@ -81,12 +82,17 @@ class UserNotableData(AbstractAuthenticatedView):
 	def _safely_viewable_notable_intids(self):
 		catalog = self._catalog
 		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
+
 		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
+
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 
 		intids_blog_comments = self.__find_blog_comment_intids()
 		toplevel_intids_blog_comments = toplevel_intids_extent.intersection(intids_blog_comments)
+
+		blogentry_intids = catalog['mimeType'].apply({'any_of': (_BLOG_ENTRY_MIMETYPE,)})
+		blogentry_intids_shared_to_me = catalog.family.IF.intersection(intids_shared_to_me, blogentry_intids)
 
 		# We use low-level optimization to get this next one; otherwise
 		# we'd need some more indexes to make it efficient
@@ -95,8 +101,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		safely_viewable_intids = catalog.family.IF.multiunion((toplevel_intids_shared_to_me,
 															   intids_replied_to_me,
 															   intids_of_my_circled_events,
-															   toplevel_intids_blog_comments))
-
+															   toplevel_intids_blog_comments,
+															   blogentry_intids_shared_to_me))
 		return safely_viewable_intids
 
 	@CachedProperty

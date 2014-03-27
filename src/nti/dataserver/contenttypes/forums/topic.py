@@ -238,7 +238,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	def __init__( self, *args, **kwargs ):
 		super(PersonalBlogEntry,self).__init__( *args, **kwargs )
-		interface.alsoProvides( self, IWritableShared )
+		interface.alsoProvides( self, IWritableShared ) # JAM: Why didn't I put this at the class level?
 
 	def __setstate__( self, state ):
 		# TODO: A migration

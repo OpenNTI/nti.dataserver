@@ -168,6 +168,25 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 								 testapp=True,
 								 default_authenticate=True)
 	@time_monotonically_increases
+	def test_notable_ugd_blog_shared_directly_to_me(self):
+		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog',
+									  {'Class': 'Post', 'title': 'my title', 'body': ['my body']},
+									  status=201 )
+		# Sharing is currently a two-step process
+		self.testapp.put_json(res.json_body['href'], {'sharedWith': ['jason']})
+
+		res = self.fetch_user_recursive_notable_ugd( username='jason',
+													 extra_environ=self._make_extra_environ(username='jason') )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
+		assert_that( res.json_body, has_entry( 'Items', has_length(1) ))
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('Class', 'PersonalBlogEntry')) ) )
+
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
 	def test_notable_ugd_tagged_to_me(self):
 		# Before it's shared with me, I can't see it, even
 		# though it's tagged to me
