@@ -80,6 +80,12 @@ class IUserNotableData(IIterable):
 		will have a length if the argument does.
 		"""
 
+	def is_object_notable(maybe_notable):
+		"""
+		Given an object, check to see if it should be considered part of the
+		notable set for this user, returning a truthy-value.
+		"""
+
 	# TODO: Arguably this should be a separate interface we adapt to or extend
 	lastViewed = Number(title="The timestamp the user last viewed this data",
 						description="This is not set implicitly, but should be set explicitly"
@@ -87,8 +93,6 @@ class IUserNotableData(IIterable):
 						required=True,
 						default=0)
 
-	# TODO: Add a method and an efficient implementation to check whether an object
-	# is part of this notable set.
 
 class IUserPresentationPriorityCreators(interface.Interface):
 	"""

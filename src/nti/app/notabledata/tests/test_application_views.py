@@ -30,12 +30,23 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.dataserver.tests import mock_dataserver
 
 from nti.testing.time import time_monotonically_increases
-
+from nti.testing.matchers import is_true
 
 from nti.externalization.internalization import update_from_external_object
 
+from zope import component
+from ..interfaces import IUserNotableData
+
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
+	def _check_notable_data(self, username=None, length=1):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user(username)
+
+			nd = component.getMultiAdapter((user,None), IUserNotableData)
+			assert_that( nd, has_length( length ))
+			for o in nd:
+				assert_that( nd.is_object_notable(o), is_true() )
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -111,6 +122,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		res = self.testapp.get(path)
 		assert_that( res.json_body, has_entry( 'lastViewed', 1234))
 
+		self._check_notable_data(length=2)
+
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
 								 default_authenticate=True)
@@ -164,6 +177,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID', top_ext_ntiid))))
 
+		self._check_notable_data()
+
+
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
 								 default_authenticate=True)
@@ -182,6 +198,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('Class', 'PersonalBlogEntry')) ) )
 
+		self._check_notable_data(username='jason')
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -232,6 +249,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID',ext_ntiid))))
 
+		self._check_notable_data()
+
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
 								 default_authenticate=True)
@@ -249,3 +268,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'ChangeType', 'Circled' ))))
+
+		self._check_notable_data()
+		stream_res = self.fetch_user_root_rstream()
+
+		assert_that( stream_res.json_body, has_entry( 'Items',
+													  contains(has_entry('RUGDByOthersThatIMightBeInterestedIn', is_true()))))

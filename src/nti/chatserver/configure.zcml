@@ -13,16 +13,16 @@
 	<adapter factory=".messageinfo.MessageInfoInternalObjectIO" />
 
 	<ext:registerMimeFactories module=".presenceinfo" />
-	
+
 	<utility name='PresenceInfo'
 			 component='.presenceinfo.PresenceInfoFactory' />
-			 
+
 	<adapter factory=".presenceinfo.PresenceInfoInternalObjectIO" />
 
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"
 			 provides=".interfaces.IMeetingPolicy" />
-			 
+
 	<subscriber handler="._meeting_post_policy.meeting_should_change_moderation_state" />
 
 
@@ -30,10 +30,10 @@
 	<subscriber provides="nti.socketio.interfaces.ISocketEventHandler"
 				for="nti.socketio.interfaces.ISocketSession"
 				factory="._handler.ChatHandlerFactory" />
-				
+
 	<!-- For the normal user -->
 	<adapter factory="._handler._ChatHandler" />
-	
+
 	<!-- For unsigned COPPA users -->
 	<adapter factory="._handler.ChatHandlerNotAvailable" />
 

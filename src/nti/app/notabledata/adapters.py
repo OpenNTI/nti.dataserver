@@ -195,3 +195,17 @@ class UserNotableData(AbstractAuthenticatedView):
 	_KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
 	lastViewed = annotation_alias(_KEY, annotation_property='remoteUser', default=0,
 								  doc="LastViewed is stored as an annotation on the user")
+
+
+	def is_object_notable(self, maybe_notable):
+		# Tests with a Janux database snapshot seem to indicate that the intid
+		# catalog queries are fast enough that this doesn't add much/any
+		# overhead. The other end of the spectrum is to brute-force the
+		# algorithm by hand.
+
+		iid = self._intids.queryId(maybe_notable)
+		if iid is None:
+			return False
+
+		notables = self._notable_intids
+		return iid in notables

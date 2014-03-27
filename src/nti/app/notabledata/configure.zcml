@@ -12,4 +12,7 @@
 
 	<adapter factory=".adapters.UserNotableData" />
 
+	<subscriber factory=".decorators._StreamChangeNotableDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				/>
 </configure>
