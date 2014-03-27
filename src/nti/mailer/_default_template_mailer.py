@@ -48,12 +48,13 @@ def _get_renderer_spec_and_package(base_template,
 	if ':' not in base_template and '/' not in base_template:
 		base_template = 'templates/' + base_template
 
-	# pyramid_mako does not properly accept a package argument
+	# pyramid_mako < 1.0 does not properly accept a package argument
 	# and a relative template path; such a specification is
 	# considered to be relative to mako's search directory,
 	# which is not what we want. We could fix this with a special
 	# TemplateLookup object, but instead it's a quick
-	# hack to alter the names here
+	# hack to alter the names here.
+	# This should be fixed with 1.0a2, we could probably drop
 	if extension == '.mak' and ':' not in base_template:
 		base_template = package.__name__ + ':' + base_template
 
@@ -141,7 +142,8 @@ def create_simple_html_text_email(base_template,
 	def make_args(extension):
 		# Mako gets bitchy if 'context' comes in as an argument, but
 		# that's what Chameleon wants. To simplify things, we handle that
-		# for our callers. They just want to use 'context'
+		# for our callers. They just want to use 'context'.
+		# XXX: This should be fixed with 1.0a2
 		the_context_name = 'nti_context' if extension == text_template_extension and text_template_extension != '.txt' else 'context'
 		result = {}
 		if request:
