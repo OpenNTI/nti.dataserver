@@ -27,7 +27,9 @@ class IUserNotableData(IIterable):
 
 	* Direct replies to :class:`.IThreadable` objects I created;
 
-	* Top-level objects directly shared to me;
+	* Top-level content objects (e.g., notes) directly shared to me;
+
+	* Blog-entries shared directly to me;
 
 	* Top-level objects created by certain people (people that are returned
 		from subscription adapters to :class:`.IUserPresentationPriorityCreators`);
