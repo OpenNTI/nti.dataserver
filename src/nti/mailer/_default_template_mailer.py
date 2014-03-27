@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import rfc822
-
 from zope import component
 from zope import interface
 
@@ -29,7 +27,6 @@ from .interfaces import IMailer
 from .interfaces import IMailDelivery
 from .interfaces import ITemplatedMailer
 from .interfaces import IEmailAddressable
-from zope.security.interfaces import IPrincipal
 
 from six import string_types
 
@@ -242,111 +239,15 @@ def _send_pyramid_mailer_mail( message, recipients=None, request=None ):
 
 # TODO: Break these dependencies
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
-from nti.appserver.interfaces import IApplicationSettings
 
-import itsdangerous
+from .interfaces import IVERP
+def _compute_from(*args, **kwargs):
+	verp = component.queryUtility(IVERP)
+	if verp is None:
+		from . import _verp
+		verp = _verp
 
-def _make_signer(default_key='$Id$'):
-	settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
-	# XXX Reusing the cookie secret, we should probably have our own
-	secret_key = settings.get('cookie_secret', default_key)
-
-	signer = itsdangerous.Signer(secret_key, salt='email recipient')
-	return signer
-
-def _compute_from( fromaddr, recipients, request ):
-	"""
-	Amazon SES now supports labels for `sending emails
-	<http://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html>`_`,
-	making it possible to do `VERP
-	<https://en.wikipedia.org/wiki/Variable_envelope_return_path>`_,
-	meaning we can directly identify the account we sent to (or even
-	type of email) in case of a bounce This requires using 'labels'
-	and modifying the sending address: foo+label@domain.com. Note that
-	SES makes no mention of the Sender header, instead putting the
-	labels directly in the From line (which is what, for example,
-	Facebook does) or in the Return-Path line (which is what trello
-	does). However, SES only deals with the Return-Path header if you
-	use its `API, not if you use SMTP
-	<http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notifications-via-email.html>`_
-
-	This function takes a given from address and manipulates it to
-	include VERP information that identifies the *accounts* of the
-	recipients. For this to work, the recipients must initially be
-	passed as things that can be adapted to `IEmailAddressable`
-	objects; for those objects that can be adapted, then if they can
-	be adapted to :class:`.IPrincipal`, we include the principal ID.
-
-	In addition, if the `fromaddr` does not include a realname,
-	adds a default.
-
-	A variation of this function will eventually be made public, as will a version
-	that decodes.
-
-	.. note:: We take the request as an argument because at some point
-		we may want to include some notion of the sending site,
-		although it's probably better to use separate SES/SNS queues
-		if possible.
-	"""
-
-	realname, addr = rfc822.parseaddr(fromaddr)
-	if not realname and not addr:
-		raise ValueError("Invalid fromaddr", fromaddr)
-	if '+' in addr:
-		raise ValueError("Addr should not already have a label", fromaddr)
-
-	if not realname:
-		realname = "NextThought" # XXX Site specific?
-
-
-	# We could special case the common case of recpients of length
-	# one if it is a string: that typically means we're sending to the current
-	# principal (though not necessarily so we'd have to check email match).
-	# However, instead, I just want to change everything to send something
-	# adaptable to IEmailAddressable instead.
-
-	adaptable_to_email_addressable = [x for x in recipients
-									  if IEmailAddressable(x,None) is not None]
-	principals = {IPrincipal(x, None) for x in adaptable_to_email_addressable}
-	principals.discard(None)
-
-	principal_ids = {x.id for x in principals}
-	if principal_ids:
-		principal_ids = ','.join(principal_ids)
-		# mildly encode them; this is just obfuscation.
-		# Do that after signing to be sure we wind up with
-		# something rfc822-safe
-		# First, get bytes to avoid any default-encoding
-		principal_ids = principal_ids.encode('utf-8')
-		# now sign
-		signer = _make_signer()
-		principal_ids = signer.sign(principal_ids)
-		# finally obfuscate in a url/email safe way
-		principal_ids = itsdangerous.base64_encode(principal_ids)
-
-		local, domain = addr.split('@')
-		addr = local + '+' + principal_ids + '@' + domain
-
-	return rfc822.dump_address_pair( (realname, addr) )
-
-def _principal_ids_from_addr(fromaddr, default_key=None):
-	if not fromaddr or '+' not in fromaddr:
-		return ()
-
-	_, addr = rfc822.parseaddr(fromaddr)
-	if '+' not in addr:
-		return ()
-
-	signed_and_encoded = addr.split('+', 1)[1].split('@')[0]
-	signed_and_decoded = itsdangerous.base64_decode(signed_and_encoded)
-
-	signer = _make_signer() if not default_key else _make_signer(default_key=default_key)
-	try:
-		pids = signer.unsign(signed_and_decoded)
-	except itsdangerous.BadSignature:
-		return ()
-	else:
-		return pids.split(',')
+	return verp.verp_from_recipients(*args, **kwargs)
 
 def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	"""
