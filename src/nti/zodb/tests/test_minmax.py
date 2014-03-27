@@ -105,8 +105,8 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 from ZODB import DB
 class WithProperty(PersistentPropertyHolder):
 
-	a = NumericPropertyDefaultingToZero( 'a', NumericMaximum, as_number=True )
-	b = NumericPropertyDefaultingToZero( 'b', MergingCounter )
+	a = NumericPropertyDefaultingToZero( str('a'), NumericMaximum, as_number=True )
+	b = NumericPropertyDefaultingToZero( str('b'), MergingCounter )
 
 def test_zero_property_increment():
 	db = DB(None)

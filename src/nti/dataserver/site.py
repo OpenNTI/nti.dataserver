@@ -334,6 +334,7 @@ class _RunJobInSite(TransactionLoop):
 	def __init__( self, *args, **kwargs ):
 		self.site_names = kwargs.pop( 'site_names' )
 		self.job_name = kwargs.pop( 'job_name' )
+		self.side_effect_free = kwargs.pop('side_effect_free')
 		super(_RunJobInSite,self).__init__( *args, **kwargs )
 
 	def describe_transaction( self, *args, **kwargs ):
@@ -379,7 +380,8 @@ def run_job_in_site(func,
 					retries=0,
 					sleep=None,
 					site_names=_marker,
-					job_name=None):
+					job_name=None,
+					side_effect_free=False):
 	"""
 	Runs the function given in `func` in a transaction and dataserver local
 	site manager. See :class:`.IDataserverTransactionRunner`
@@ -405,7 +407,8 @@ def run_job_in_site(func,
 						  retries=retries,
 						  sleep=sleep,
 						  site_names=site_names,
-						  job_name=job_name )()
+						  job_name=job_name,
+						  side_effect_free=side_effect_free)()
 
 interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
 run_job_in_site.__doc__ = interfaces.IDataserverTransactionRunner['__call__'].getDoc()
