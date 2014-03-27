@@ -365,15 +365,14 @@ def removeCommasFromSectionWithHints(subsection):
 					node.removeChild(child.nextSibling)
 
 def _number_to_lower_alpha_list(index):
-	if ( index  ):
-		return _number_to_lower_alpha_list( (index - 1) / 26 ) + chr( (index - 1) % 26 + 97 )
-	else:
-		return ''
+	if index:
+		return _number_to_lower_alpha_list( (index - 1) // 26 ) + chr( (index - 1) % 26 + 97 )
+	return ''
 
 
 
-#Exercises exist at the end of a section and are started with \exercises.  There is
-#no explicit stop.	Exercises end when a new section starts
+# Exercises exist at the end of a section and are started with \exercises.  There is
+# no explicit stop.	Exercises end when a new section starts
 class exnumber(Base.Command):
 	unicode = ''
 
