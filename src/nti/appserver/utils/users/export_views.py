@@ -61,8 +61,9 @@ def username_search(search_term):
 def all_objects_iids(users=(), mime_types=()):
 	intids = component.getUtility(zope.intid.IIntIds)
 	usernames = {getattr(user, 'username', user).lower() for user in users or ()}
-	for uid, obj in intids.items():
+	for uid in intids:
 		try:
+			obj = intids.getObject(uid)
 			if	IBroken.providedBy(obj) or nti_interfaces.IUser.providedBy(obj) or \
 				nti_interfaces.IDeletedObjectPlaceholder.providedBy(obj):
 				continue
