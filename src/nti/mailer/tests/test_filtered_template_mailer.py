@@ -36,11 +36,7 @@ class Profile(object):
 	realname = 'Suzë Schwartz'
 
 
-@interface.implementer(IBrowserRequest)
-class Request(object):
-	context = None
-	response = None
-	application_url = 'foo'
+from .test_default_template_mailer import Request
 
 class _BaseMixin(object):
 

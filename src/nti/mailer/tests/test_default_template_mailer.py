@@ -25,13 +25,27 @@ from hamcrest import contains
 from nti.app.testing.layers  import AppLayerTest
 from .._default_template_mailer import create_simple_html_text_email
 from .._default_template_mailer import _pyramid_message_to_message
-from .._default_template_mailer import _principal_ids_from_addr
 
 from ..interfaces import IEmailAddressable
+from ..interfaces import IVERP
+from ..interfaces import EmailAddresablePrincipal
 from zope.security.interfaces import IPrincipal
 
 from zope import interface
 from zope.publisher.interfaces.browser import IBrowserRequest
+
+
+@interface.implementer(IBrowserRequest)
+class Request(object):
+	context = None
+	response = None
+	application_url = 'foo'
+
+	def __init__(self):
+		self.annotations = {}
+
+	def get(self, key, default=None):
+		return default
 
 
 
@@ -42,14 +56,8 @@ class TestEmail(AppLayerTest):
 			username = 'the_user'
 
 		class Profile(object):
+			# Note the umlaut e
 			realname = 'Suzë Schwartz'
-
-
-		@interface.implementer(IBrowserRequest)
-		class Request(object):
-			context = None
-			response = None
-			application_url = 'foo'
 
 
 		user = User()
@@ -85,14 +93,6 @@ class TestEmail(AppLayerTest):
 		class Profile(object):
 			realname = 'Suzë Schwartz'
 
-
-		@interface.implementer(IBrowserRequest)
-		class Request(object):
-			context = None
-			response = None
-			application_url = 'foo'
-
-
 		user = User()
 		profile = Profile()
 		request = Request()
@@ -100,7 +100,7 @@ class TestEmail(AppLayerTest):
 
 		msg = create_simple_html_text_email('new_user_created',
 											subject='Hi there',
-											recipients=[user],
+											recipients=[EmailAddresablePrincipal(user)],
 											template_args={'user': user, 'profile': profile, 'context': user },
 											package='nti.appserver',
 											request=request)
@@ -121,16 +121,3 @@ class TestEmail(AppLayerTest):
 		# we can get to IPrincipal, so we have VERP
 		# The first part will be predictable, the rest won't
 		assert_that( msg.sender, contains_string('"NextThought" <no-reply+dGhlX3Vz') )
-
-	def test_pids_from_verp_email(self):
-		fromaddr = 'no-reply+a2FsZXkud2hpdGVAbmV4dHRob3VnaHQuY29tLjV4cXAyeTRoVURlMGVvOGtoXzM5SURZNlR4aw@nextthought.com'
-
-		pids = _principal_ids_from_addr(fromaddr, 'alpha.nextthought.com')
-		assert_that( pids, contains('kaley.white@nextthought.com'))
-
-		fromaddr = 'no-reply+TGV4aVpvbGwuLWJOUlNZVS1ZV3FEanFvUi10dGRkLV82R01z@nextthought.com'
-		pids = _principal_ids_from_addr(fromaddr, 'mathcounts.nextthought.com')
-		assert_that( pids, contains('LexiZoll'))
-
-		pids = _principal_ids_from_addr(fromaddr)
-		assert_that( pids, is_(()))
