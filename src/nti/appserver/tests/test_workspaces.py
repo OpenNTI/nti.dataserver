@@ -194,7 +194,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 					'Stream', 'RecursiveStream',
 					'UserGeneratedDataAndRecursiveStream',
 					'RelevantUserGeneratedData',
-					'Glossary',
+					# 'Glossary', not present, no request
 					'TopUserSummaryData', 'UniqueMinMaxSummary'):
 			self.require_link_href_with_rel( ext_obj, rel )
 

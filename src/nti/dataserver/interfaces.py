@@ -173,11 +173,11 @@ class INewUserPlacer(interface.Interface):
 
 class IDataserverTransactionRunner(interface.Interface):
 	"""
-	Something that runs code within a transaction, properly setting up the dataserver
-	and its environment.
+	Something that runs code within a transaction, properly setting up
+	the dataserver and its environment.
 	"""
 
-	def __call__(func, retries=0, sleep=None, site_names=()):
+	def __call__(func, retries=0, sleep=None, site_names=(), side_effect_free=False):
 		"""
 		Runs the function given in `func` in a transaction and dataserver local
 		site manager (defaulting to the current site manager).
@@ -189,24 +189,29 @@ class IDataserverTransactionRunner(interface.Interface):
 			function may be rerun if retries are requested, so it
 			should be prepared for that.
 
-		:param int retries: The number of times to retry the
+		:keyword int retries: The number of times to retry the
 			transaction and execution of `func` if
 			:class:`transaction.interfaces.TransientError` is raised
 			when committing. Defaults to zero (so the job runs once).
 			If you specify None, an implementation-specific
 			number of retries will be used.
 
-		:param float sleep: If not none, then the greenlet running
+		:keyword float sleep: If not none, then the greenlet running
 			this function will sleep for this long between retry
 			attempts.
 
-		:param site_names: DEPRECATED. Sequence of strings giving the
+		:keyword site_names: DEPRECATED. Sequence of strings giving the
 			virtual host names to use. See :mod:`nti.dataserver.site`
 			for more details. If you do not provide this argument,
 			then the currently installed site will be maintained when
 			the transaction is run. NOTE: The implementation of this
 			may maintain either the site names or the actual site
 			object.
+
+		:keyword bool side_effect_free: If true (not the default), then
+			the function is assummed to have no side effects that need
+			to be committed; the transaction runner is free to abort/rollback
+			or commit the transaction at its leisure.
 
 		:return: The value returned by the first successful invocation of `func`.
 		"""

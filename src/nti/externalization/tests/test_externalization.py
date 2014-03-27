@@ -241,6 +241,7 @@ from ..interfaces import IExternalObject, IExternalObjectDecorator, StandardExte
 
 import datetime
 from nti.testing.matchers import verifiably_provides
+from numbers import Number
 
 class TestToExternalObject(ExternalizationLayerTest):
 
@@ -277,5 +278,5 @@ class TestToExternalObject(ExternalizationLayerTest):
 		assert_that( X(), verifiably_provides( dub_interfaces.IDCTimes ) )
 
 		ex_dic = to_standard_external_dictionary( X() )
-		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( float ) ) )
-		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( float ) ) )
+		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( Number ) ) )
+		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( Number ) ) )
