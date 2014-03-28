@@ -73,6 +73,7 @@ def _set_default_resource_types(tabular=False):
 	_implement( amsmath.AlignatStar, displayMathTypes )
 	_implement( amsmath.gather, displayMathTypes )
 	_implement( amsmath.GatherStar, displayMathTypes )
+	_implement( amsmath.smallmatrix, displayMathTypes )
 
 	# Make the image class into a resource
 	# FIXME: This needs more as Resource evolves
