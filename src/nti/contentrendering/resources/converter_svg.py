@@ -94,8 +94,8 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 				# Note that self.images is an ordereddict, so they match up by index
 				image = _images[i]
 				image._cropped = True
-				image.width = math.ceil(width_in_pt) * 1.3
-				image.height = math.ceil(height_in_pt) * 1.3
+				image.width = math.ceil(width_in_pt) * 1.8
+				image.height = math.ceil(height_in_pt) * 1.8
 				# FIXME: The depth (height above baseline) is not correct
 				image.depth = -3
 

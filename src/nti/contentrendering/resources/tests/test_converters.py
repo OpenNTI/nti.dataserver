@@ -143,7 +143,7 @@ class TestSvgConverter(unittest.TestCase):
 				_, images = imager.executeConverter(f)
 
 			assert_that( images, has_length(24) )
-			assert_that( imager.images['key0'], has_property('width', close_to(462.0, 2.0)) )
+			assert_that( imager.images['key0'], has_property('width', close_to(640.0, 2.0)) )
 		finally:
 			converter_svg.ProcessPoolExecutor = orig_exec
 			os.chdir(cwd)
