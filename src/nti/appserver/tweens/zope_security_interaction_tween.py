@@ -20,10 +20,10 @@ Request Modifications
 No modifications are exposed on the request object. Instead, see
 :mod:`zope.security.management` or :class:`zope.security.interfaces.IInteractionManagement`.
 
-.. $Id$
+$Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
