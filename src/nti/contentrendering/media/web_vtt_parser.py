@@ -6,8 +6,10 @@ https://github.com/humphd/node-webvtt/blob/master/lib/parser.js
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
@@ -20,8 +22,9 @@ class Cue(object):
 	end_timestamp = None
 	start_timestamp = None
 
-	def __init__(self, id_=u"", text=u"", tree=None, start_time=0, end_time=0, size=0, pause_on_exit=False,
-				 direction=u"horizontal", snap_to_lines=True, line_position=u"auto", text_position=0, alignment=u"middle"):
+	def __init__(self, id_=u"", text=u"", tree=None, start_time=0, end_time=0, size=0,
+				 pause_on_exit=False, direction=u"horizontal", snap_to_lines=True,
+				 line_position=u"auto", text_position=0, alignment=u"middle"):
 
 		self.id = id_
 		self.size = size
@@ -40,7 +43,8 @@ class Cue(object):
 		return self.text
 
 	def __repr__(self):
-		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.start_timestamp, self.end_timestamp, self.text)
+		return "%s(%s,%s,%s)" % (self.__class__.__name__, self.start_timestamp,
+								 self.end_timestamp, self.text)
 
 # ----------------------------------
 
@@ -305,7 +309,9 @@ class _WebVTTCueTextParser(object):
 		result = current = _Result(children=[])
 
 		def attach(token, current):
-			current.children.append(_Result(type=u"object", name=token[1], classes=token[2], children=[], parent=current))
+			current.children.append(_Result(type=u"object", name=token[1],
+											classes=token[2],
+											children=[], parent=current))
 			current = current.children[-1]
 			return current
 
@@ -320,7 +326,8 @@ class _WebVTTCueTextParser(object):
 		while self.pos < len(self.line):
 			token = self.next_token()
 			if token[0] == "text":
-				current.children.append(_Result(type=u"text", value=token[1], parent=current))
+				current.children.append(_Result(type=u"text", value=token[1],
+												parent=current))
 			elif token[0] == "start tag":
 				name = token[1]
 				if name != "v" and token[3] != "":

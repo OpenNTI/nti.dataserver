@@ -4,7 +4,7 @@ Indexing content utilities.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -39,6 +39,7 @@ def sanitize_content(text, table=None, tokens=False):
 	raw = text
 	text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
 	__traceback_info__ = raw, text, type(text)
+
 	# translate and tokenize words
 	text = text.translate(table) if table else text
 	tokenized_words = split_content(text)

@@ -4,7 +4,7 @@ video transcript parsers.
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,7 +24,11 @@ class VideoTranscriptEntry(SchemaConfigured):
 		return "%s,%s,%s" % (self.id, self.start_timestamp, self.end_timestamp)
 
 	def __repr__(self):
-		return "%s(%s,%s,%s\n%s)" % (self.__class__.__name__, self.id, self.start_timestamp, self.end_timestamp, self.transcript)
+		return "%s(%s,%s,%s\n%s)" % (self.__class__.__name__,
+									 self.id,
+									 self.start_timestamp,
+									 self.end_timestamp,
+									 self.transcript)
 
 @interface.implementer(media_interfaces.IVideoTranscript)
 class VideoTranscript(object):
