@@ -47,7 +47,7 @@ def _set_default_resource_types(tabular=False):
 	Math = dottedname.resolve( 'plasTeX.Base.Math' )
 
 	inlineMathTypes = ('mathjax_inline', )
-	displayMathTypes = ('mathjax_display', )
+	displayMathTypes = ('png', 'svg', 'mathjax_display', )
 
 	#inlineMathTypes = ['mathjax_inline', 'png', 'svg']
 	#displayMathTypes = ['mathjax_display', 'png', 'svg']
