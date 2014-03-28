@@ -43,6 +43,7 @@ class UserNotableData(AbstractAuthenticatedView):
 	def __init__(self, context, request):
 		AbstractAuthenticatedView.__init__(self, request)
 		self.remoteUser = context
+		self._time_range = (None,None)
 
 	def __reduce__(self):
 		raise TypeError()
@@ -78,7 +79,16 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		return container_id_idx.apply({'any_of': container_ids})
 
-	@CachedProperty
+	@CachedProperty('_time_range')
+	def _intids_in_time_range(self):
+		min_created_time, max_created_time = self._time_range
+		if min_created_time is None and max_created_time is None:
+			return None
+
+		intids_in_time_range = self._catalog['createdTime'].apply({'between': (min_created_time, max_created_time,)})
+		return intids_in_time_range
+
+	@CachedProperty('_time_range')
 	def _safely_viewable_notable_intids(self):
 		catalog = self._catalog
 		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
@@ -103,9 +113,12 @@ class UserNotableData(AbstractAuthenticatedView):
 															   intids_of_my_circled_events,
 															   toplevel_intids_blog_comments,
 															   blogentry_intids_shared_to_me))
+		if self._intids_in_time_range is not None:
+			safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
+																	safely_viewable_intids)
 		return safely_viewable_intids
 
-	@CachedProperty
+	@CachedProperty('_time_range')
 	def _notable_intids(self):
 		# TODO: See about optimizing this query plan. ZCatalog has a
 		# CatalogPlanner object that we might could use.
@@ -134,6 +147,10 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		questionable_intids = catalog.family.IF.union( toplevel_intids_by_priority_creators,
 													   intids_tagged_to_me )
+		if self._intids_in_time_range is not None:
+			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
+																 questionable_intids)
+
 
 		uidutil = self._intids
 		security_check = self.make_sharing_security_check()
@@ -151,11 +168,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		return safely_viewable_intids
 
 	def get_notable_intids(self, min_created_time=None, max_created_time=None):
+		self._time_range = (min_created_time, max_created_time)
 		ids = self._notable_intids
-		if max_created_time is not None or min_created_time is not None:
-			catalog = self._catalog
-			intids_in_time_range = catalog['createdTime'].apply({'between': (min_created_time, max_created_time,)})
-			ids = catalog.family.IF.intersection(ids, intids_in_time_range)
 		return ids
 
 

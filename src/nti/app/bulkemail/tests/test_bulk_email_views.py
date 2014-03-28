@@ -27,9 +27,10 @@ from hamcrest import calling
 from hamcrest import raises
 
 from .. import views as bulk_email_views
-from ..process import AbstractBulkEmailProcessLoop
+from ..process import SiteTransactedBulkEmailProcessLoop
 from ..process import PreflightError
-from ..process import _ProcessMetaData
+from ..process import _RedisProcessMetaData as _ProcessMetaData
+from ..delegate import AbstractBulkEmailProcessDelegate
 
 from zope.security.interfaces import IPrincipal
 from nti.mailer.interfaces import IEmailAddressable
@@ -50,15 +51,21 @@ SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend'
 																u'SentLast24Hours': u'195.0'},
 										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
 
-class Process(AbstractBulkEmailProcessLoop):
+class Process(SiteTransactedBulkEmailProcessLoop,
+			  AbstractBulkEmailProcessDelegate):
 	template_name = "nti.appserver:templates/failed_username_recovery_email"
+	__name__ = 'failed_username_recovery_email'
+	def __init__(self, request):
+		super(Process,self).__init__(request)
+		self.delegate = self
 
 @interface.implementer(IEmailAddressable,
 					   IPrincipal)
 class Recipient(object):
 
-	email = None
-
+	email = 'foo@bar'
+	id = 'jason'
+	verp_from = '"NextThought" <no-reply+amFzb24uWmxfQUFvRTZRamNBTmJvX1FBOVhJZGQyakhZ@alerts.nextthought.com>'
 	def __init__(self, email=None):
 		if email:
 			self.email = email
@@ -76,7 +83,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_preflight(self):
-		process = Process(None)
+		process = Process(self.beginRequest())
 
 		# all clear
 		process.preflight_process()
@@ -91,31 +98,30 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_add_recipients(self):
-		process = Process(None)
+		process = Process(self.beginRequest())
 
 		# No email
-		assert_that( calling(process.add_recipients).with_args({}), raises(ValueError))
+		assert_that( calling(process.add_recipients).with_args([{}]), raises(ValueError))
 
 		process.preflight_process()
 
-		process.add_recipients( {'email': 'foo@bar'}, {'email': 'biz@baz'} )
+		process.add_recipients( [{'email': 'foo@bar'}, {'email': 'biz@baz'}] )
 		assert_that( process.redis.scard(process.names.source_name), is_( 2 ) )
 
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_one_recipient(self):
-		email = 'foo@bar'
-		process = Process(None)
+		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
 		(fake_sesconn.expects( 'send_raw_email' )
-		 	.with_args( arg.any(), 'no-reply@alerts.nextthought.com', email )
+		 	.with_args( arg.any(), Recipient.verp_from, Recipient.email )
 			.returns( {'key': 'val'} ) )
 
 		process.sesconn = fake_sesconn
 
 
-		process.add_recipients( {'email': Recipient(email)} )
+		process.add_recipients( [{'email': Recipient()}] )
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
 
@@ -127,17 +133,17 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop(self):
-		email = 'foo@bar'
-		process = Process(None)
+
+		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
 		(fake_sesconn.expects( 'send_raw_email' )
-		 	.with_args( arg.any(), 'no-reply@alerts.nextthought.com', email )
+		 	.with_args( arg.any(), Recipient.verp_from, Recipient.email )
 			.returns( {'key': 'val'} ) )
 		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': Recipient(email)} )
+		process.add_recipients( [{'email': Recipient()}] )
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
 
@@ -153,8 +159,8 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_quota_exceeded(self):
-		email = 'foo@bar'
-		process = Process(None)
+
+		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
 		exc = SESDailyQuotaExceededError( "404", "Reason" )
@@ -162,7 +168,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': Recipient(email)} )
+		process.add_recipients( [{'email': Recipient()}] )
 
 		process.process_loop()
 
@@ -174,8 +180,8 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	@fudge.test
 	def test_process_loop_seserror(self):
-		email = 'foo@bar'
-		process = Process(None)
+
+		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
 		exc = SESError( "404", "Reason" )
@@ -183,7 +189,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
 
-		process.add_recipients( {'email': Recipient(email)} )
+		process.add_recipients([ {'email': Recipient()}] )
 
 		process.process_loop()
 
@@ -206,14 +212,14 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 
 		# With some recipients
 		email = 'jason.madden@nextthought.com'
-		process = Process(None)
-		process.add_recipients( {'email': Recipient(email)} )
+		process = Process(self.beginRequest())
+		process.add_recipients( [{'email': Recipient(email)}] )
 		process.metadata.startTime = time.time()
 		process.metadata.save()
+
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/failed_username_recovery_email' )
-
-
 		assert_that( res.body, contains_string( 'Remaining' ) )
+
 		# Submit the form asking it to resume; follow the resulting GET redirect
 		res = res.form.submit( name='subFormTable.buttons.resume' ).follow()
 		assert_that( res.body, contains_string( 'Remaining' ) )
