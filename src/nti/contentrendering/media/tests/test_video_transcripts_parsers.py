@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-logger = __import__('logging').getLogger(__name__)
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import has_length
-from hamcrest import is_not
-from hamcrest import none
 from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_length
+from hamcrest import assert_that
 
 import os
 
@@ -22,8 +20,6 @@ from zope import component
 from .. import interfaces as media_interfaces
 
 from nti.contentrendering.tests import ContentrenderingLayerTest
-
-
 
 class TestVideoTranscriptParser(ContentrenderingLayerTest):
 

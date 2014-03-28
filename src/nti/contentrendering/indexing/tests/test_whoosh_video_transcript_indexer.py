@@ -26,7 +26,7 @@ from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 
 class TestWhooshVideoTranscriptIndexer(NonDevmodeContentrenderingLayerTest):
 
-	 # non devmode to load the tagger
+	# non devmode to load the tagger
 
 	def setUp(self):
 		super(TestWhooshVideoTranscriptIndexer, self).setUp()
