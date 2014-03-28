@@ -64,7 +64,7 @@ class IntIds(_ZCIntIds):
 		return _ZCIntIds.register(self, aq_base(ob))
 
 	def getId(self, ob):
-		ob = aq_base( ob )
+		ob = aq_base(ob)
 		try:
 			return _ZCIntIds.getId(self, ob)
 		except KeyError:
@@ -77,14 +77,14 @@ class IntIds(_ZCIntIds):
 			raise ObjectMissingError(ID, self)
 
 	def forceRegister(self, uid, ob):
-		unwrapped = unwrap(ob)
+		unwrapped = unwrap(aq_base(ob))
 		if uid in self.refs:
 			raise IntIdAlreadyInUseError(ob)
 		self.refs[uid] = unwrapped
 		return uid
 
 	def forceUnregister(self, uid, ob, notify=False):
-		unwrapped = unwrap(ob)
+		unwrapped = unwrap(aq_base(ob))
 		if not uid in self.refs or self.refs[uid] is not unwrapped:
 			raise KeyError(ob)
 		del self.refs[uid]
