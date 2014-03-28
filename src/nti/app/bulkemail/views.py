@@ -77,6 +77,7 @@ class _BulkEmailView(object):
 
 		if process is None:
 			raise hexc.HTTPNotFound()
+		process.__name__ = self._name
 		return process
 
 	def _preflight(self):
@@ -85,10 +86,10 @@ class _BulkEmailView(object):
 
 		self._name = self.request.subpath[0]
 		process = self._find_process()
-		template_name = getattr( process, 'template_name', None ) or self.request.subpath[0]
+		template_name = getattr( process.delegate, 'template_name', None ) or self.request.subpath[0]
 
 		if not component.getUtility(ITemplatedMailer).do_html_text_templates_exist(template_name):
-			raise hexc.HTTPNotFound()
+			raise hexc.HTTPNotFound("No such templates found") # XXX: Why are we doing this?
 
 		process.template_name = template_name
 		process.request = self.request
@@ -109,12 +110,11 @@ class _BulkEmailView(object):
 				 renderer='templates/bulk_email_admin.pt')
 	def post(self):
 		process = self._preflight()
-		# XXX: MUST spawn these greenlets in the correct site,
-		# not the global site.
+		request = self.request
 		if 'subFormTable.buttons.resume' in self.request.POST:
 			process.metadata.status = 'Resumed'
 			process.metadata.save()
-			greenlet = gevent.spawn( run=process.process_loop )
+			greenlet = request.nti_gevent_spawn( run=process.process_loop )
 			# ICK. Must save this somewhere so it doesn't get
 			# GC'd. Where?
 			_BulkEmailView._greenlets.append( greenlet )
@@ -124,7 +124,7 @@ class _BulkEmailView(object):
 		elif 'subFormTable.buttons.start' in self.request.POST:
 			# need to collect and then spawn the process
 			process.initialize()
-			greenlet = gevent.spawn( run=process.process_loop )
+			greenlet = request.nti_gevent_spawn( run=process.process_loop )
 			# ICK. Must save this somewhere so it doesn't get
 			# GC'd. Where?
 			_BulkEmailView._greenlets.append( greenlet )

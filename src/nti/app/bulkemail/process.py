@@ -29,6 +29,9 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from .interfaces import IBulkEmailProcessLoop
+from .interfaces import IBulkEmailProcessMetadata
+from .interfaces import IBulkEmailProcessDelegate
+from .interfaces import PreflightError
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import sleep
@@ -57,7 +60,8 @@ class _ProcessNames(object):
 
 		self.names = list(self.__dict__.values())
 
-class _ProcessMetaData(object):
+@interface.implementer(IBulkEmailProcessMetadata)
+class _RedisProcessMetaData(object):
 
 	startTime = 0
 	endTime = 0
@@ -80,13 +84,9 @@ class _ProcessMetaData(object):
 							'status': self.status} )
 		self._redis.expire( self.__name__, _TTL )
 
-class PreflightError(Exception):
-	pass
 
 @interface.implementer(IBulkEmailProcessLoop)
-class AbstractBulkEmailProcessLoop(object):
-
-	subject = "<No Subject>"
+class DefaultBulkEmailProcessLoop(object):
 
 	#: The amount of time for which we will hold the lock during
 	#: processing of one email to send.
@@ -96,14 +96,30 @@ class AbstractBulkEmailProcessLoop(object):
 
 	request = None
 
-	template_name = None
+	__name__ = None
+	__parent__ = None
 
 	def __init__( self, request ):
 		self.request = request
 		self.redis = component.getUtility( nti_interfaces.IRedisClient )
-		self.names = _ProcessNames( self.template_name )
-		self.metadata = _ProcessMetaData( self.redis, self.names.metadata_name )
-		self.lock = self.redis.lock( self.names.lock_name, self.lock_timeout )
+
+	@Lazy
+	def names(self):
+		return _ProcessNames(self.__name__)
+
+	@Lazy
+	def metadata(self):
+		return _RedisProcessMetaData(self.redis, self.names.metadata_name)
+
+	@Lazy
+	def lock(self):
+		return self.redis.lock( self.names.lock_name, self.lock_timeout )
+
+	@Lazy
+	def delegate(self):
+		return component.getMultiAdapter( (self, self.request),
+										  IBulkEmailProcessDelegate,
+										  name=self.__name__)
 
 	@property
 	def delivered_count(self):
@@ -121,6 +137,11 @@ class AbstractBulkEmailProcessLoop(object):
 		for name in self.names.names:
 			if self.redis.exists(name):
 				raise PreflightError(name)
+
+		try:
+			getattr(self, 'delegate')
+		except LookupError:
+			raise PreflightError("Failed to find delegate")
 
 	def reset_process(self):
 		"""
@@ -153,15 +174,25 @@ class AbstractBulkEmailProcessLoop(object):
 	def mailer(self):
 		return component.getUtility(ITemplatedMailer)
 
-	def add_recipients( self, *recipient_data ):
+	def initialize(self):
 		"""
-		Save the given recipient data.
+		Prep the process for starting. Preflight it, then collect all the
+		recipients needed.
+		"""
 
-		:param recipient_data: A dict containing pickle-able values. Must have one key,
-			``email`` containing a the email address (ideally a picklable that can be
-			adapted to ``IEmailAddressable`` and ``IPrincipal``). May optionally have
-			a key ``template_args`` which itself is a pickle-able dictionary; this
-			argument will be passed to the method :meth:`compute_template_args_for_recipient`
+		self.preflight_process()
+		logger.info( "Beginning process for %s", self.__name__ )
+
+		self.metadata.startTime = time.time()
+		self.metadata.status = 'Started'
+		self.metadata.save()
+
+		count = self.add_recipients( self.delegate.collect_recipients() )
+		logger.info( "Collected %d recipients", count )
+
+	def add_recipients( self, recipient_data ):
+		"""
+		Save the given recipient data, validating each one.
 		"""
 
 		values = []
@@ -170,15 +201,11 @@ class AbstractBulkEmailProcessLoop(object):
 				raise ValueError('missing email')
 			values.append( zlib.compress( pickle.dumps( recipient, pickle.HIGHEST_PROTOCOL ) ) )
 
-		self.redis.sadd( self.names.source_name, *values )
-		self.redis.expire( self.names.source_name, _TTL )
+		if values:
+			self.redis.sadd( self.names.source_name, *values )
+			self.redis.expire( self.names.source_name, _TTL )
 
-	def compute_sender_for_recipient( self, recipient ):
-		# TBD
-		return 'no-reply@alerts.nextthought.com'
-
-	def compute_template_args_for_recipient(self, recipient ):
-		return recipient.get('template_args')
+		return len(values)
 
 	def process_one_recipient( self ):
 		"""
@@ -196,6 +223,7 @@ class AbstractBulkEmailProcessLoop(object):
 			the (true-ish) value of sending the email.
 		"""
 
+		delegate = self.delegate
 		with self.lock:
 			member = self.redis.srandmember( self.names.source_name )
 			if member is None:
@@ -204,17 +232,17 @@ class AbstractBulkEmailProcessLoop(object):
 
 			recipient_data = pickle.loads(zlib.decompress(member))
 
-			sender = self.compute_sender_for_recipient( recipient_data )
+			sender = delegate.compute_sender_for_recipient( recipient_data )
 
 			pmail_msg = self.mailer.create_simple_html_text_email(
-				self.template_name,
-				subject=self.subject,
+				self.delegate.template_name,
+				subject=delegate.compute_subject_for_recipient(recipient_data),
 				request=self.request,
 				recipients=[recipient_data['email']],
 				# TODO: Probably if there were `template_args` and this method
 				# returns None, we should not send to this client: something
 				# changed behind our back. We should record a failure and keep going
-				template_args=self.compute_template_args_for_recipient(recipient_data))
+				template_args=delegate.compute_template_args_for_recipient(recipient_data))
 
 			pmail_msg.sender = sender
 			mail_msg = pmail_msg.to_message()
@@ -287,4 +315,29 @@ class AbstractBulkEmailProcessLoop(object):
 		self.metadata.endTime = time.time()
 		self.metadata.save()
 
-		logger.info( "Completed sending %s to %s recipients", self.template_name, num_sent )
+		logger.info( "Completed sending %s to %s recipients", self.__name__, num_sent )
+
+
+from nti.dataserver.interfaces import IDataserverTransactionRunner
+
+class SiteTransactedBulkEmailProcessLoop(DefaultBulkEmailProcessLoop):
+	"""
+	A process that establishes a database connection and a ZCA SiteManager
+	around the processing of each recipient.
+	"""
+
+	def __init__(self, request):
+		super(SiteTransactedBulkEmailProcessLoop,self).__init__(request)
+		self.possible_site_names = request.possible_site_names
+		self._super_process_one_recipient = super(SiteTransactedBulkEmailProcessLoop,self).process_one_recipient
+
+	@Lazy
+	def _runner(self):
+		return component.getUtility(IDataserverTransactionRunner)
+
+
+	def process_one_recipient(self):
+		return self._runner(self._super_process_one_recipient,
+							site_names=self.possible_site_names,
+							job_name=self.__name__,
+							side_effect_free=True)

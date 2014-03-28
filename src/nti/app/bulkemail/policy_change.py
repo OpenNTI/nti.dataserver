@@ -11,38 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import time
 
 from zope import component
+from zope import interface
 
+from .interfaces import IBulkEmailProcessDelegate
 from zope.catalog.interfaces import ICatalog
 
 from nti.dataserver.users import index as user_index
 
-from .process import AbstractBulkEmailProcessLoop
+from .delegate import AbstractBulkEmailProcessDelegate
 
-class _PolicyChangeProcess(AbstractBulkEmailProcessLoop):
+@interface.implementer(IBulkEmailProcessDelegate)
+class _PolicyChangeProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 	subject = 'Updates to NextThought User Agreement and Privacy Policy'
 
-	template_name = 'policy_change_email'
+	__name__ = template_name = 'policy_change_email'
 
-	def initialize(self):
-		"""
-		Prep the process for starting. Preflight it, then collect all the
-		recipients needed.
-		"""
-
-		self.preflight_process()
-		logger.info( "Beginning process for %s", self.template_name )
-
-		self.metadata.startTime = time.time()
-		self.metadata.status = 'Started'
-		self.metadata.save()
-
-		recips = self.collect_recipients()
-		logger.info( "Collected %d recipients", len(recips) )
-		self.add_recipients( *recips )
 
 	def collect_recipients(self):
 		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
@@ -57,17 +43,17 @@ class _PolicyChangeProcess(AbstractBulkEmailProcessLoop):
 		emails.update( contact_email_ix._fwd_index.keys() )
 		return [{'email': x} for x in emails]
 
-class _PolicyChangeProcessTesting(AbstractBulkEmailProcessLoop):
+class _PolicyChangeProcessTestingDelegate(_PolicyChangeProcessDelegate):
 	"""
 	Collects all the emails, but returns a fixed set of test emails.
 	"""
 
-	subject = 'TEST - ' + _PolicyChangeProcess.subject
+	subject = 'TEST - ' + _PolicyChangeProcessDelegate.subject
 
-	template_name = 'policy_change_email'
+	__name__ = template_name = 'policy_change_email'
 
 	def collect_recipients( self ):
-		recips = super(_PolicyChangeProcessTesting,self).collect_recipients()
+		recips = super(_PolicyChangeProcessTestingDelegate,self).collect_recipients()
 		logger.info( "Real recipient count: %d", len(recips) )
 		logger.debug( "%s", recips )
 		return [{'email': 'alpha-support@nextthought.com'},
