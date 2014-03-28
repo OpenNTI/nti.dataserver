@@ -25,10 +25,10 @@ After this tween runs, the request has been modified in the following ways.
 * It has a method called ``nti_gevent_spawn`` for replacing :func:`gevent.spawn`
   while maintaining the current request.
 
-.. $Id$
+$Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
