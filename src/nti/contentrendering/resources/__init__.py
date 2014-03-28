@@ -46,9 +46,6 @@ def _set_default_resource_types(tabular=False):
 
 	Math = dottedname.resolve( 'plasTeX.Base.Math' )
 
-	#The math package does not correctly implement the sqrt macro.	It takes two args
-	Math.sqrt.args = '[root]{arg}'
-
 	inlineMathTypes = ('mathjax_inline', )
 	displayMathTypes = ('mathjax_display', )
 
