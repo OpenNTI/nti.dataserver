@@ -3,7 +3,7 @@
 """
 Support for using NTIIDs in a zope schema.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from nti.utils import schema as _schema
+
 from .ntiids import validate_ntiid_string
 
 class ValidNTIID(_schema.ValidURI):
