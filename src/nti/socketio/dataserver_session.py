@@ -18,8 +18,8 @@ from zope.deprecation import deprecate
 
 from nti.dataserver.interfaces import IDataserver
 
-from .persistent_session import AbstractSession
 from .session_consumer import SessionConsumer
+from .persistent_session import AbstractSession
 
 class Session(AbstractSession):
 	"""

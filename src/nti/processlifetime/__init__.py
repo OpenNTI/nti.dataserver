@@ -3,20 +3,20 @@
 """
 Events in the life time of a server process (an extension of :mod:`zope.processlifetime`).
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-#logger = __import__('logging').getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
 # Export these things
 from zope.processlifetime import IDatabaseOpened, DatabaseOpened
-from zope.processlifetime import IDatabaseOpenedWithRoot, DatabaseOpenedWithRoot
 from zope.processlifetime import IProcessStarting, ProcessStarting
+from zope.processlifetime import IDatabaseOpenedWithRoot, DatabaseOpenedWithRoot
 
 # Assign to them to keep pylint from complaining
 IDatabaseOpenedWithRoot = IDatabaseOpenedWithRoot
@@ -41,7 +41,6 @@ class AfterDatabaseOpenedEvent(object):
 	def __init__(self, database):
 		self.database = database
 
-
 class IProcessWillFork(interface.Interface):
 	"""
 	An event that *may* be fired (on best effort basis) in a parent process
@@ -58,7 +57,6 @@ class IProcessDidFork(interface.Interface):
 	following a call to :func:`os.fork`. The timing (how soon after the fork)
 	of this event is not defined.
 	"""
-
 
 @interface.implementer(IProcessDidFork)
 class ProcessDidFork(object):

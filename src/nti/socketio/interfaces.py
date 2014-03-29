@@ -3,7 +3,7 @@
 """
 Interfaces supporting socket.io
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -15,12 +15,11 @@ from zope.interface.interfaces import IObjectEvent, ObjectEvent
 from zope.interface.common import mapping
 from zope.annotation import interfaces as an_interfaces
 
-#pylint: disable=E0213,E0211
+# pylint: disable=E0213,E0211
 
 _writer_base = interface.Interface
 _reader_base = interface.Interface
 _socket_base = None
-
 
 class ISocketIOMessage(mapping.IFullMapping):
 	"""
