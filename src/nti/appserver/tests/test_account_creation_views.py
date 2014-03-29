@@ -735,6 +735,8 @@ def main(email=None, uname=None, cname=None):
 	import nti.app.pyramid_zope.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
 	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
+	import pyramid_chameleon.text
+	component.provideUtility( pyramid_chameleon.text.renderer_factory, IRendererFactory, name=".txt")
 	import nti.appserver.policies.user_policies
 	nti.appserver.policies.user_policies.send_consent_request_on_new_coppa_account(FakeUser(), FakeEvent)
 
