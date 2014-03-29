@@ -13,6 +13,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import BTrees
+
 from zope import interface
 from zope import event as zope_event
 from zope.container.interfaces import IContained
@@ -37,6 +39,8 @@ class IntIds(_ZCIntIds):
 
 	__name__ = None
 	__parent__ = None
+
+	family = BTrees.family64
 
 	# Because this object stores IDs using attributes on the object,
 	# it is important to be sure that the ID is not acquired
@@ -93,6 +97,7 @@ class IntIds(_ZCIntIds):
 			zope_event.notify(RemovedEvent(ob, self, uid))
 	
 	def __repr__( self ):
-		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
+		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__,
+									   self.__class__.__name__,
 									   self.attribute,
 									   self.__parent__, self.__name__)
