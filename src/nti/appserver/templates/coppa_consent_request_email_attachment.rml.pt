@@ -92,7 +92,7 @@ Child’s username: <b>${context/username}</b><br/>
 Child’s first name: <b>${options/profile/realname}</b><br />
 Parent’s email address: <b>${options/email}</b><br />
 
-<font name="Helvetica-Bold" size="12">[ ]</font> Check here if you would like to receive notices from NextThought.
+<font name="ZapfDingbats" size="14">&#x2751;</font> Check here if you would like to receive notices from NextThought.
 </para>
 
 <nextFrame />
