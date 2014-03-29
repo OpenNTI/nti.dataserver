@@ -16,13 +16,21 @@ from . import MessageFactory as _
 from zope import interface
 from zope import component
 
+from pyramid.traversal import find_interface
+
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.users.interfaces import IFriendlyNamed
 from nti.app.notabledata.interfaces import IUserNotableData
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.dataserver.interfaces import INote
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.appserver.interfaces import IVideoIndexMap
 
-from itertools import groupby
-from collections import namedtuple
 import time
 
 from nti.utils.property import annotation_alias
@@ -30,13 +38,92 @@ from nti.utils.property import Lazy
 
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
-_ContentObjectTypeDetails = namedtuple('_ContentObjectTypeDetails',
-									   ('mime_type', 'count', 'most_recent'))
-
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
 _ONE_MONTH = _TWO_WEEKS * 2
 _TWO_MONTH = _ONE_MONTH * 2
+
+class _TemplateArgs(object):
+
+	def __init__(self, values, request):
+		self._primary = values[0]
+		self.request = request
+		self.remaining = len(values) - 1
+
+	def __getattr__(self, name):
+		return getattr(self._primary, name)
+
+	@Lazy
+	def __parent__(self):
+		return _TemplateArgs([self._primary.__parent__],
+							 self.request)
+
+	@Lazy
+	def course(self):
+		from nti.contenttypes.courses.interfaces import ICourseInstance
+		course = ICourseInstance(self._primary, None)
+		if course is None:
+			course = find_interface(self._primary, ICourseInstance)
+		if course is not None:
+			return _TemplateArgs([course],
+								 self.request)
+
+	@Lazy
+	def assignment_name(self):
+		from nti.app.assessment.interfaces import IUsersCourseAssignmentHistoryItem
+		item = find_interface(self._primary, IUsersCourseAssignmentHistoryItem)
+		asg_id = None
+		if item is not None:
+			asg_id = item.assignmentId
+		else:
+			# We could be a grade
+			asg_id = getattr(getattr(self._primary, 'object', None), 'AssignmentId', None)
+
+		if asg_id is not None:
+			from nti.assessment.interfaces import IQAssignment
+			asg = component.queryUtility(IQAssignment, name=asg_id)
+			return getattr(asg, 'title', None)
+
+
+	@property
+	def snippet(self):
+		if self._primary.body and isinstance(self._primary.body[0], basestring):
+			text = IPlainTextContentFragment(self._primary.body[0])
+			if len(text) > 30:
+				text = text[:30] + '...'
+			return text
+		return ''
+
+
+	@property
+	def display_name(self):
+		# TODO: Isn't there a zope interface for this? We would adapt
+		# self._primary to IDisplayName or something?
+		if self.__name__.startswith('tag:'):
+			# Try to find a content unit
+			lib = component.getUtility(IContentPackageLibrary)
+			path = lib.pathToNTIID(self.__name__)
+			if path:
+				return path[-1].__name__
+
+			# FIXME: Eww, ugly
+			videos = component.getUtility(IVideoIndexMap)
+
+			for key, value in videos.by_container.items():
+				if self.__name__ in value:
+					path = lib.pathToNTIID(key)
+					if path:
+						return path[-1].__name__
+		return self.__name__
+
+	@property
+	def creator(self):
+		names = IFriendlyNamed(self._primary.creator)
+		return names.alias or names.realname
+
+	@property
+	def href(self):
+		return self.request.resource_url(self._primary)
 
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
@@ -125,29 +212,64 @@ class DigestEmailCollector(object):
 		logger.debug( "User %s/%s had %d notable items since",
 					  self.remoteUser, addr.email, len(sorted_by_type_time), min_created_time)
 		return {'email': EmailAddresablePrincipal(self.remoteUser),
-				'template_args': sorted_by_type_time }
+				'template_args': sorted_by_type_time,
+				'since': min_created_time}
 
 
-	def recipient_to_template_args(self, recipient):
+	def recipient_to_template_args(self, recipient, request):
 		# Now iterate to get the actual content objects
 		# (Note that grade objects are going to have a `change` content type, which is
 		# unique)
 		sorted_by_type_time = recipient['template_args']
 
-		content_objects_by_type = dict()
+		notes = list()
+		comments = list()
+		topics = list()
+		circled = list()
+		grade = list()
+		feedback = list()
+		other = list()
+
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
 
-		for mime_type, objects in groupby( notable_data.iter_notable_intids(sorted_by_type_time),
-										   key=lambda x: x.mimeType):
-			content_objects_by_type[mime_type] = list(objects)
+		for o in notable_data.iter_notable_intids(sorted_by_type_time):
+			if INote.providedBy(o):
+				notes.append(o)
+			elif ICommentPost.providedBy(o):
+				comments.append(o)
+			elif ITopic.providedBy(o):
+				topics.append(o)
+			elif IStreamChangeEvent.providedBy(o):
+				if o.type == 'Circled':
+					circled.append(o)
+				else:
+					grade.append(o)
+			elif o.__class__.__name__ == 'UsersCourseAssignmentHistoryItemFeedback': # XXX FIXME: Coupling
+				feedback.append(o)
+			else:
+				other.append(o)
+		# Comments has multiple mime types, as does topics
+		comments.sort(reverse=True,key=lambda x: x.createdTime)
+		topics.sort(reverse=True,key=lambda x: x.createdTime)
 
-		details_by_type = dict()
-		for mime_type, objects in content_objects_by_type.items():
-			details_by_type[mime_type] = _ContentObjectTypeDetails(mime_type, len(objects), objects[0])
+		result = dict()
+		for k, values in (('discussion', topics),
+						  ('note', notes),
+						  ('comment', comments),
+						  ('feedback', feedback),
+						  ('circled', circled),
+						  ('grade', grade),
+						  ('other', other)):
+			if values:
+				template_args = _TemplateArgs(values, request)
+			else:
+				template_args = None
+			result[k] = template_args
 
-		return {'content_objects_by_type': content_objects_by_type,
-				'details_by_type': details_by_type}
+		result['unsubscribe_link'] = request.resource_url(self.remoteUser, 'unsubscribe')
+		return result
+
 
 
 from nti.dataserver.interfaces import IDataserver
@@ -166,11 +288,14 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	def _dataserver(self):
 		return component.getUtility(IDataserver)
 
+	def _accept_user(self, user):
+		return IUser.providedBy(user)
+
 	def collect_recipients(self):
 		users_folder = self._dataserver.users_folder
 		now = time.time()
 		for user in users_folder.values():
-			if IUser.providedBy(user):
+			if self._accept_user(user):
 				collector = DigestEmailCollector(user, self.request)
 				collector.collection_time = now
 				possible_recipient = collector()
@@ -180,15 +305,25 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 	def compute_template_args_for_recipient(self, recipient):
 		user = User.get_user( recipient['email'].id, self._dataserver )
-		# XXX If the user disappears, we're screwed
+		# XXX If the user disappears, we're screwed.
+		# We should also take care if some of the intids referenced disappear
 		collector = DigestEmailCollector(user, self.request)
 
-		return collector.recipient_to_template_args(recipient)
+		return collector.recipient_to_template_args(recipient, self.request)
 
 
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
 	subject = _("TEST - Here's what you've missed")
+
+	def _accept_user(self, user):
+		if super(DigestEmailProcessTestingDelegate,self)._accept_user(user):
+			email = getattr(IEmailAddressable(user, None), 'email', None)
+			if email:
+				if email.endswith('@nextthought.com'):
+					return True
+				if email == 'jamadden@ou.edu':
+					return True
 
 	def collect_recipients(self):
 		for possible_recipient in super(DigestEmailProcessTestingDelegate,self).collect_recipients():
@@ -197,8 +332,9 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 											 self.request)
 			collector.last_collected = collector.last_sent = 0
 
-			if possible_recipient['email'].email.endswith('@nextthought.com'):
-				logger.info( "User %s/%s had %d notable objects",
-							 possible_recipient['email'].id, possible_recipient['email'].email,
-							 len(possible_recipient['template_args']))
-				yield possible_recipient
+
+			logger.info( "User %s/%s had %d notable objects",
+						 possible_recipient['email'].id, possible_recipient['email'].email,
+						 len(possible_recipient['template_args']))
+			#possible_recipient['email'].email = 'jason@nextthought.com'
+			yield possible_recipient
