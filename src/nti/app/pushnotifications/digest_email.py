@@ -125,6 +125,10 @@ class _TemplateArgs(object):
 	def href(self):
 		return self.request.resource_url(self._primary)
 
+	@property
+	def creator_avatar_url(self):
+		return self.request.resource_url(self._primary.creator, '@@avatar')
+
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
 
@@ -179,7 +183,7 @@ class DigestEmailCollector(object):
 		# it when we collect recipients
 		last_email_sent = self.last_sent
 		last_viewed_data = notable_data.lastViewed
-		historical_cap = self.collection_time -  _TWO_WEEKS
+		historical_cap = self.collection_time - _TWO_WEEKS
 
 		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
 
@@ -274,13 +278,19 @@ class DigestEmailCollector(object):
 
 from nti.dataserver.interfaces import IDataserver
 from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
+from zope.publisher.interfaces.browser import IBrowserRequest
+from nti.dataserver.interfaces import IAuthenticationPolicy
+from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
 from nti.dataserver.users import User
+import datetime
+from nameparser import HumanName
+from zope.i18n import translate
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
-	subject = _("Here's what you've missed")
+	_subject = "${first_name}, here's what you've missed on ${site_name} since ${when}"
 
 	template_name = 'nti.app.pushnotifications:templates/digest_email'
 
@@ -291,17 +301,33 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	def _accept_user(self, user):
 		return IUser.providedBy(user)
 
+	def _collector_for_user(self, user):
+		collector = DigestEmailCollector(user, self.request)
+		return collector
+
 	def collect_recipients(self):
+		# We are in an outer request, but we need to get the
+		# notable data for different users. In some cases
+		# this depends on the authentication policy to get
+		# principal IDs, not the passed-in remote user
+		# (Which is weird, I know), so we must be sure
+		# to impersonate each user as we ask for notable data
+		auth_policy = component.getUtility( IAuthenticationPolicy )
+		imp_policy = IImpersonatedAuthenticationPolicy( auth_policy )
+
 		users_folder = self._dataserver.users_folder
 		now = time.time()
 		for user in users_folder.values():
 			if self._accept_user(user):
-				collector = DigestEmailCollector(user, self.request)
-				collector.collection_time = now
-				possible_recipient = collector()
-				if possible_recipient:
-					collector.last_sent = time.time()
-					yield possible_recipient
+				imp_user = imp_policy.impersonating_userid( user.username )
+				with imp_user():
+					collector = self._collector_for_user(user)
+					collector.collection_time = now
+					possible_recipient = collector()
+					if possible_recipient:
+						collector.last_sent = time.time()
+						possible_recipient['realname'] = IFriendlyNamed(user).realname
+						yield possible_recipient
 
 	def compute_template_args_for_recipient(self, recipient):
 		user = User.get_user( recipient['email'].id, self._dataserver )
@@ -312,18 +338,41 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		return collector.recipient_to_template_args(recipient, self.request)
 
 
+	def compute_subject_for_recipient(self, recipient):
+		# FIXME: This isn't right, we actually want the /user's/ locale,
+		# but we don't have that stored anywhere
+		locale = IBrowserRequest(self.request).locale
+		dates = locale.dates
+		formatter = dates.getFormatter('dateTime', length='short')
+		when = datetime.datetime.fromtimestamp(recipient['since'])
+
+		subject = _(self._subject,
+					mapping={'first_name': HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id,
+							 'site_name': self.request.host,
+							 'when': formatter.format(when)})
+		return translate(subject, context=self.request)
+
+
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
-	subject = _("TEST - Here's what you've missed")
+	_subject =  'TEST - ' + DigestEmailProcessDelegate._subject
 
 	def _accept_user(self, user):
 		if super(DigestEmailProcessTestingDelegate,self)._accept_user(user):
+			if user.username in ('ossmkitty', 'madd2844'):
+				return True
+
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			if email:
 				if email.endswith('@nextthought.com'):
 					return True
 				if email == 'jamadden@ou.edu':
 					return True
+
+	def _collector_for_user(self, user):
+		collector = DigestEmailProcessDelegate._collector_for_user(self, user)
+		collector.last_collected = collector.last_sent = 0
+		return collector
 
 	def collect_recipients(self):
 		for possible_recipient in super(DigestEmailProcessTestingDelegate,self).collect_recipients():
@@ -336,5 +385,5 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 			logger.info( "User %s/%s had %d notable objects",
 						 possible_recipient['email'].id, possible_recipient['email'].email,
 						 len(possible_recipient['template_args']))
-			#possible_recipient['email'].email = 'jason@nextthought.com'
+			possible_recipient['email'].email = 'jason@nextthought.com'
 			yield possible_recipient
