@@ -70,56 +70,104 @@
 										<div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/discussion"
-												 tal:define="discussion options/discussion">
-<!--
-Generally our avatar's aren't public...
+												 tal:define="notable options/discussion">
 												<span style="margin: 0 2px 0 0;">
-													<img src="" alt="Carlos Sanchez" title="Carlos Sanchez" width="18" height="18" style="display: inline;vertical-align:top;" />
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
 												</span>
--->
-												<strong tal:content="discussion/creator">David Sabatini</strong> started a discussion
-												<a href="" tal:attributes="href discussion/href" tal:content="discussion/title">4.3 Water, Weather, and Climate</a>
-												in <a href="" tal:content="discussion/__parent__/title">Open Discussions</a>.
-												<div tal:condition="discussion/remaining">
-													Plus there are <tal:block tal:content="discussion/remaining">6</tal:block> other discussions. <!--! TODO: Singular/plural -->
+
+												<strong tal:content="notable/creator">David Sabatini</strong> started a discussion
+												<a href="" tal:attributes="href notable/href" tal:content="notable/title">4.3 Water, Weather, and Climate</a>
+												in <a href="" tal:content="notable/__parent__/title">Open Discussions</a>.
+												<div tal:condition="notable/remaining">
+													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
+													${python:request.localizer.pluralize('discussion', 'discussions', notable.remaining)}.
 												</div>
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/note"
 												 tal:define="notable options/note">
+												<span style="margin: 0 2px 0 0;">
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
+												</span>
+
 												<strong tal:content="notable/creator">Greg Higgins</strong> shared a note
 												<a href="" tal:attributes="href notable/href" tal:content="notable/title">Test save</a>
 												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open Course Syllabus</a>
 
 												<div tal:condition="notable/remaining">
-													Plus there are <tal:block tal:content="notable/remaining">6</tal:block> other notes. <!--! TODO: Singular/plural -->
+													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
+													${python:request.localizer.pluralize('note', 'notes', notable.remaining)}.
 												</div>
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/comment"
 												 tal:define="notable options/comment">
+												<span style="margin: 0 2px 0 0;">
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
+												</span>
+
 												<strong tal:content="notable/creator">David Foster</strong> commented
 												<em tal:content="notable/snippet">&#8220;Hi Bart, Thanks for doing the research...&#8221;</em>
 												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/title">Open 9.4 Interpretation Essay</a>
 
 												<div tal:condition="notable/remaining">
-													Plus there are <tal:block tal:content="notable/remaining">6</tal:block> other comments. <!--! TODO: Singular/plural -->
+													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
+													${python:request.localizer.pluralize('comment', 'comments', notable.remaining)}.
 												</div>
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/feedback"
 												 tal:define="notable options/feedback">
+												<span style="margin: 0 2px 0 0;">
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
+												</span>
+
 												<strong tal:content="notable/creator">David Foster</strong> left feedback
 												<em tal:content="notable/snippet">&#8220;Ii Bart, Thanks for doing the research...&#8221;</em>
 												in <a href="" tal:attributes="href notable/course/href" tal:content="notable/assignment_name">Open 9.4 Interpretation Essay</a>
 
 												<div tal:condition="notable/remaining">
-													Plus there are <tal:block tal:content="notable/remaining">6</tal:block> other feedback. <!--! TODO: Singular/plural -->
+													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other feedback
+													${python:request.localizer.pluralize('item', 'items', notable.remaining)}.
 												</div>
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/circled"
 												 tal:define="notable options/circled">
+												<span style="margin: 0 2px 0 0;">
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
+												</span>
+
 												<tal:block tal:condition="notable/remaining">
 													<strong tal:content="notable/creator">David Foster</strong> and
 													<tal:block tal:content="notable/remaining">6</tal:block> others added you to a group.
@@ -131,11 +179,22 @@ Generally our avatar's aren't public...
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/grade"
 												 tal:define="notable options/grade">
+												<span style="margin: 0 2px 0 0;">
+													<img src=""
+														 alt="David Sabatini"
+														 title="David Sabatini"
+														 width="18" height="18"
+														 style="display: inline;vertical-align:top;"
+														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+														 />
+												</span>
+
 												<strong tal:content="notable/creator">David Foster</strong> assigned a grade
-												in <a href="" tal:attributes="href notable/course/href" tal:content="notable/assignment_name|notable/course/title">Open 9.4 Interpretation Essay</a>
+												in <a href="" tal:attributes="href notable/course/href" tal:content="notable/assignment_name|notable/course/title">Open 9.4 Interpretation Essay</a>.
 
 												<div tal:condition="notable/remaining">
-													Plus there are <tal:block tal:content="notable/remaining">6</tal:block> other grades. <!--! TODO: Singular/plural -->
+													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
+													${python:request.localizer.pluralize('grade', 'grades', notable.remaining)}.
 												</div>
 											</div>
 										</div>
