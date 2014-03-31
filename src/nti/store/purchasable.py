@@ -27,8 +27,8 @@ from nti.dataserver import authorization_acl as a_acl
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.externalization import make_repr
-from nti.externalization.datastructures import LocatedExternalList
-from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalList
 
 from nti.ntiids import interfaces as nid_interfaces
 
