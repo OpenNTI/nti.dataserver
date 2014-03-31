@@ -21,7 +21,7 @@ character).
 We also put a version marker at the end of the string so we can evolve
 this algorithm gracefully but still honor codes in the wild.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"

@@ -4,15 +4,15 @@
 Directives to be used in ZCML; helpers for registering factories
 for mime types.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.configuration.fields
 from zope import interface
+import zope.configuration.fields
 from zope.component.factory import Factory
 from zope.component import zcml as component_zcml
 

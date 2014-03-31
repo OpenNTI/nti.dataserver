@@ -3,9 +3,9 @@
 """
 Classes and functions for dealing with persistence in an external context.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,11 +15,9 @@ import collections
 from zope import interface
 
 import persistent
-import persistent.wref
-import persistent.list
-import persistent.mapping
+from persistent.list import PersistentList
 from persistent.wref import WeakRef as PWeakRef
-
+from persistent.mapping import PersistentMapping
 
 from nti.utils.proxy import removeAllProxies
 
@@ -92,9 +90,8 @@ def _weakRef_toExternalObject(self):
 		return None
 	return toExternalObject( val )
 
-persistent.wref.WeakRef.toExternalObject = _weakRef_toExternalObject
-interface.classImplements( persistent.wref.WeakRef, IExternalObject )
-
+PWeakRef.toExternalObject = _weakRef_toExternalObject
+interface.classImplements(PWeakRef, IExternalObject)
 
 def _weakRef_toExternalOID(self):
 	val = self()
@@ -102,11 +99,10 @@ def _weakRef_toExternalOID(self):
 		return None
 	return toExternalOID( val )
 
-persistent.wref.WeakRef.toExternalOID = _weakRef_toExternalOID
-
+PWeakRef.toExternalOID = _weakRef_toExternalOID
 
 class PersistentExternalizableDictionary(PersistentPropertyHolder,
-										 persistent.mapping.PersistentMapping,
+										 PersistentMapping,
 										 datastructures.ExternalizableDictionaryMixin):
 	"""
 	Dictionary mixin that provides :meth:`toExternalDictionary` to return a new dictionary
@@ -122,8 +118,7 @@ class PersistentExternalizableDictionary(PersistentPropertyHolder,
 			result[key] = toExternalObject( value )
 		return result
 
-class PersistentExternalizableList(PersistentPropertyHolder,
-								   persistent.list.PersistentList):
+class PersistentExternalizableList(PersistentPropertyHolder, PersistentList):
 	"""
 	List mixin that provides :meth:`toExternalList` to return a new list
 	with each element in the sequence having been externalized with

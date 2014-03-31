@@ -3,7 +3,7 @@
 """
 Functions for externalizing OIDs.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -24,9 +24,6 @@ from nti.ntiids import ntiids
 from nti.utils.proxy import removeAllProxies
 
 from . import integer_strings
-
-#disable: accessing protected members
-#pylint: disable=W0212
 
 def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=False):
 	"""
