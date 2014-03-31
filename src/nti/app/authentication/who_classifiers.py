@@ -69,18 +69,27 @@ def application_request_classifier( environ ):
 			# First, we sniff for something that looks like it's sent by
 			# a true web browser, like Chrome or Firefox.
 			# Then, if there is an Accept value given other than the default that's
-			# sent by user agents like, say, NetNewsWire, then it was probably
-			# set programatically.
+			# sent by user agents like, say, NetNewsWire (*/*), then it was probably
+			# set programatically. This is slightly complicated by the fact
+			# that the defaults vary a bit across browsers; we assume that if they ask
+			# for text/html and some other stuff (comma-separated) it's a default browser request.
+			# Current versions of Firefox, Chrome and Safari all send a string that looks like
+			# that (text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8)
 			# NOTE: For the moment we actually also look for things from the iPad
 			# (ntifoundation, nextthought) for BWC, but we soon expect it to set the X-Requested-With
 			# header.
-			if ('HTTP_REFERER' in environ
-				 and ('mozilla' in ua or 'ntifoundation' in ua or 'nextthought' in ua)
-				 and environ.get('HTTP_ACCEPT', '') != '*/*'):
-				result = CLASS_BROWSER_APP
-			elif 'ntifoundation' in ua or 'nextthought' in ua:
+			accept = environ.get('HTTP_ACCEPT', '')
+			if 'ntifoundation' in ua or 'nextthought' in ua:
 				# extra special casing for ipad
 				result = CLASS_BROWSER_APP
+			else:
+				if accept == '*/*' or  (',' in accept and 'text/html' in accept):
+					# Assume browser or browser-like
+					# If we're following a direct link, like from an email or bookmark,
+					# it won't have a referrer
+					result = CLASS_BROWSER
+				elif 'HTTP_REFERER' in environ and ('mozilla' in ua):
+					result = CLASS_BROWSER_APP
 	return result
 
 @interface.implementer(IRequestClassifier)
