@@ -38,6 +38,8 @@ from nti.utils.property import Lazy
 
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
 _ONE_MONTH = _TWO_WEEKS * 2
@@ -123,6 +125,17 @@ class _TemplateArgs(object):
 
 	@property
 	def href(self):
+		# Default to the most stable identifier we have
+		ntiid = getattr(self._primary, 'NTIID', None)
+		if not ntiid:
+			ntiid = to_external_ntiid_oid(self._primary)
+		if ntiid:
+			# The webapp does a weird dance, like so:
+			return self.request.route_url('objects.generic.traversal',
+										  traverse=(),
+										  _anchor="!object/ntiid/" + ntiid).replace('/dataserver2', '')
+
+		# TODO: These don't actually do what we want...
 		return self.request.resource_url(self._primary)
 
 	@property
@@ -150,6 +163,23 @@ class DigestEmailCollector(object):
 	def collection_time(self):
 		return time.time()
 
+
+	def min_created_time(self, notable_data):
+		last_time_collected = self.last_collected
+		self.last_collected = self.collection_time
+
+		# TODO: When should we update this? If we update it now, we risk not actually
+		# sending the email. If we update it when we actually send, that turns a read
+		# transaction into a write transaction. If we keep it in redis, we could reset
+		# it easily enough but we need the hooks to do that...for now, we update
+		# it when we collect recipients
+		last_email_sent = self.last_sent
+		last_viewed_data = notable_data.lastViewed or self.remoteUser.lastLoginTime
+		historical_cap = self.collection_time - _TWO_WEEKS
+
+		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
+		return min_created_time
+
 	def __call__(self):
 		"""
 		Returns a bulkemail \"recipient\" for the current user, if
@@ -174,19 +204,7 @@ class DigestEmailCollector(object):
 		# us be much more efficient in the (somewhat common) case that nothing
 		# changes for the same user.
 
-		last_time_collected = self.last_collected
-		self.last_collected = self.collection_time
-		# TODO: When should we update this? If we update it now, we risk not actually
-		# sending the email. If we update it when we actually send, that turns a read
-		# transaction into a write transaction. If we keep it in redis, we could reset
-		# it easily enough but we need the hooks to do that...for now, we update
-		# it when we collect recipients
-		last_email_sent = self.last_sent
-		last_viewed_data = notable_data.lastViewed or self.remoteUser.lastLoginTime
-		historical_cap = self.collection_time - _TWO_WEEKS
-
-		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
-
+		min_created_time = self.min_created_time(notable_data)
 		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time)
 		if not notable_intids_since_last_viewed:
 			# Hooray, nothing to do
@@ -301,8 +319,8 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	def _accept_user(self, user):
 		return IUser.providedBy(user)
 
-	def _collector_for_user(self, user):
-		collector = DigestEmailCollector(user, self.request)
+	def _collector_for_user(self, user, factory=DigestEmailCollector):
+		collector = factory(user, self.request)
 		return collector
 
 	def collect_recipients(self):
@@ -344,7 +362,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		locale = IBrowserRequest(self.request).locale
 		dates = locale.dates
 		formatter = dates.getFormatter('dateTime', length='short')
-		when = datetime.datetime.fromtimestamp(recipient['since'])
+		when = datetime.datetime.fromtimestamp(recipient['since'] or 0)
 
 		subject = _(self._subject,
 					mapping={'first_name': HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id,
@@ -369,8 +387,13 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 				if email == 'jamadden@ou.edu':
 					return True
 
-	def _collector_for_user(self, user):
-		collector = DigestEmailProcessDelegate._collector_for_user(self, user)
+	class _Collector(DigestEmailCollector):
+
+		def min_created_time(self, notable_data):
+			return None
+
+	def _collector_for_user(self, user, factory=_Collector):
+		collector = DigestEmailProcessDelegate._collector_for_user(self, user, factory=self._Collector)
 		collector.last_collected = collector.last_sent = 0
 		return collector
 

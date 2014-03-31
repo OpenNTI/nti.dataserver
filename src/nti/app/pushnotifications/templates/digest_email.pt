@@ -83,7 +83,7 @@
 
 												<strong tal:content="notable/creator">David Sabatini</strong> started a discussion
 												<a href="" tal:attributes="href notable/href" tal:content="notable/title">4.3 Water, Weather, and Climate</a>
-												in <a href="" tal:content="notable/__parent__/title">Open Discussions</a>.
+												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/title">Open Discussions</a>.
 												<div tal:condition="notable/remaining">
 													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
 													${python:request.localizer.pluralize('discussion', 'discussions', notable.remaining)}.
@@ -102,8 +102,9 @@
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">Greg Higgins</strong> shared a note
-												<a href="" tal:attributes="href notable/href" tal:content="notable/title">Test save</a>
+												<strong tal:content="notable/creator">Greg Higgins</strong>
+												<!--! Sometimes there is no title, so we can't make that the link -->
+												<a href="" tal:attributes="href notable/href">shared a note</a> <em tal:content="notable/title|notable/snippet">Test save</em>
 												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open Course Syllabus</a>
 
 												<div tal:condition="notable/remaining">
@@ -124,7 +125,8 @@
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">David Foster</strong> commented
+												<strong tal:content="notable/creator">David Foster</strong>
+												<a href="" tal:attributes="href notable/href">commented</a>
 												<em tal:content="notable/snippet">&#8220;Hi Bart, Thanks for doing the research...&#8221;</em>
 												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/title">Open 9.4 Interpretation Essay</a>
 
@@ -148,7 +150,7 @@
 
 												<strong tal:content="notable/creator">David Foster</strong> left feedback
 												<em tal:content="notable/snippet">&#8220;Ii Bart, Thanks for doing the research...&#8221;</em>
-												in <a href="" tal:attributes="href notable/course/href" tal:content="notable/assignment_name">Open 9.4 Interpretation Essay</a>
+												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name">Open 9.4 Interpretation Essay</a>
 
 												<div tal:condition="notable/remaining">
 													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other feedback
@@ -190,7 +192,7 @@
 												</span>
 
 												<strong tal:content="notable/creator">David Foster</strong> assigned a grade
-												in <a href="" tal:attributes="href notable/course/href" tal:content="notable/assignment_name|notable/course/title">Open 9.4 Interpretation Essay</a>.
+												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/title">Open 9.4 Interpretation Essay</a>.
 
 												<div tal:condition="notable/remaining">
 													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
