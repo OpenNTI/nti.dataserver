@@ -91,6 +91,34 @@ def file_view(request):
 
 	return _do_view(request, download.Display)
 
+from nti.dataserver.users.interfaces import IAvatarURL
+
+@view_config( route_name='objects.generic.traversal',
+			  context=zope.file.interfaces.IFile,
+			  request_method='GET',
+			  name="avatar_view")
+def avatar_file_view(request):
+	"""
+	Like :func:`file_view`, but does not require the
+	user to be authenticated. We take care to use this only
+	for the user's avatar URL.
+	"""
+	# Alternately, we could use a custom path traverser through the
+	# actual user object and in that way use a new object with a custom
+	# ACL that grants everyone access. This method is a bit more hacky
+	# (it depends on how the file is stored) but has slightly fewer
+	# moving pieces.
+	the_file = request.context
+	if not IAvatarURL.providedBy(the_file.__parent__):
+		raise hexc.HTTPForbidden()
+
+	with_url = IAvatarURL(the_file.__parent__)
+	url_property = type(with_url).avatarURL
+	if url_property.get_file(with_url) is not the_file:
+		raise hexc.HTTPForbidden()
+
+	return _do_view(request, download.Display)
+
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,
