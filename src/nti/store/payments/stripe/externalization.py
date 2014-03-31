@@ -3,7 +3,7 @@
 """
 Stripe externalization
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -17,8 +17,8 @@ from zope import component
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import IInternalObjectIO
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.externalization.datastructures import LocatedExternalDict
 
 from . import interfaces as stripe_interfaces
 from ...externalization import PricedItemExternal

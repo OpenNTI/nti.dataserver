@@ -20,7 +20,7 @@
 
 	<adapter for=""
 			 provides=".interfaces.ILocatedExternalMapping"
-			 factory=".datastructures.LocatedExternalDict" />
+			 factory=".interfaces.LocatedExternalDict" />
 
 	<adapter for=""
 			 provides=".interfaces.ILocatedExternalSequence"

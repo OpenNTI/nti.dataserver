@@ -3,7 +3,7 @@
 """
 Service document and user workspaces support.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -28,9 +28,9 @@ from zope.schema import vocabulary
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.externalization import toExternalObject, isSyntheticKey
-from nti.externalization.datastructures import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.singleton import SingletonDecorator
 import nti.externalization.interfaces as ext_interfaces
