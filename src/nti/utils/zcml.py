@@ -3,7 +3,7 @@
 """
 Directives to be used in ZCML: registering static keys.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -36,8 +36,10 @@ class IRegisterLDAP(interface.Interface):
 	password = schema.Password(title="Bind password", required=True)
 	baseDN = fields.TextLine(title="Base DN", required=False)
 	encoding = fields.TextLine(title="Password encoding", required=False)
+	backupURL = fields.TextLine(title="ldap backup url", required=False)
 	
-def registerLDAP(_context, id, url, username, password, baseDN=None, encoding=None):
+def registerLDAP(_context, id, url, username, password, baseDN=None, encoding=None,
+				 backupURL=None):
 	"""
 	Register an ldap
 	"""
@@ -46,5 +48,8 @@ def registerLDAP(_context, id, url, username, password, baseDN=None, encoding=No
 		password = urllib.unquote(password)
 	elif encoding.lower() == BASE_64:
 		password = base64.decodestring(password)
-	factory = functools.partial(ldap.LDAP, ID=id, URL=url, Username=username, Password=password, BaseDN=baseDN)
+
+	factory = functools.partial(ldap.LDAP, ID=id, URL=url, Username=username,
+								Password=password, BaseDN=baseDN, BackupURL=backupURL)
+
 	utility(_context, provides=util_interfaces.ILDAP, factory=factory, name=id)
