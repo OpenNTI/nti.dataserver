@@ -182,7 +182,7 @@ class DigestEmailCollector(object):
 		# it easily enough but we need the hooks to do that...for now, we update
 		# it when we collect recipients
 		last_email_sent = self.last_sent
-		last_viewed_data = notable_data.lastViewed
+		last_viewed_data = notable_data.lastViewed or self.remoteUser.lastLoginTime
 		historical_cap = self.collection_time - _TWO_WEEKS
 
 		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
