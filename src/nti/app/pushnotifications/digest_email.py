@@ -213,7 +213,7 @@ class DigestEmailCollector(object):
 															   field_name='mimeType',
 															   reify=True )
 
-		logger.debug( "User %s/%s had %d notable items since",
+		logger.debug("User %s/%s had %d notable items since %s",
 					  self.remoteUser, addr.email, len(sorted_by_type_time), min_created_time)
 		return {'email': EmailAddresablePrincipal(self.remoteUser),
 				'template_args': sorted_by_type_time,
