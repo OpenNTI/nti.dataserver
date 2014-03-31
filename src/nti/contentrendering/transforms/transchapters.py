@@ -1,20 +1,27 @@
-import logging
-logger = logging.getLogger( __name__ )
+#!/usr/bin/env python
+# -*- coding: utf-8 -*
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from . import interfaces
 interface.moduleProvides( interfaces.IDocumentTransformer )
 
-
-def transform( document ):
+def transform(document):
 	# Chapterauthor and chapterquote need to move down a level, inside
 	# their respective chapters.
-	for chapterquote in document.getElementsByTagName( 'chapterquote' ):
-		if len( chapterquote.parentNode.getElementsByTagName( 'chapterauthor' ) ):
-			chapterauthor = chapterquote.parentNode.getElementsByTagName( 'chapterauthor' )[0]
+	for chapterquote in document.getElementsByTagName('chapterquote'):
+		if len(chapterquote.parentNode.getElementsByTagName('chapterauthor')):
+			chapterauthor = chapterquote.parentNode.getElementsByTagName('chapterauthor')[0]
 			parent = chapterquote.parentNode
 		else:
-			chapterauthor = chapterquote.parentNode.parentNode.getElementsByTagName( 'chapterauthor' )[0]
+			chapterauthor = chapterquote.parentNode.parentNode.getElementsByTagName('chapterauthor')[0]
 			parent = chapterquote.parentNode.parentNode
 		# move it up out of containing par and raggedbottom, etc
 		while parent:
@@ -23,7 +30,7 @@ def transform( document ):
 			parent = parent.parentNode
 
 		if parent and parent.nextSibling:
-			logger.info( "Moving chaterquote/author (%s/%s) to %s", chapterquote, chapterauthor, parent )
+			logger.info("Moving chaterquote/author (%s/%s) to %s", chapterquote, chapterauthor, parent)
 			chapterauthor.parentNode.removeChild( chapterauthor )
 			chapterquote.parentNode.removeChild( chapterquote )
 			parent.nextSibling.insert( 0, chapterquote )

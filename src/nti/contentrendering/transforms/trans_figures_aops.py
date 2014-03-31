@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -12,17 +10,17 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from . import interfaces
 interface.moduleProvides( interfaces.IDocumentTransformer )
-
 
 def transform( document ):
 	# In aopsbook, rightpic, leftpic, and parpic elements often appear
 	# before their containing element( exer, revprob, chall, challhard
 	# ), and they need to moved into their respective containers.
 
-	nodeTypes = ( 'rightpic', 'leftpic', 'parpic' )
-	problemElements = ( 'chall', 'challhard', 'exer', 'exerhard', 'revprob', 'part', 'parthard' )
+	nodeTypes = ('rightpic', 'leftpic', 'parpic')
+	problemElements = ('chall', 'challhard', 'exer', 'exerhard', 'revprob', 'part', 'parthard')
 
 	for nodeType in nodeTypes:
 		for node in document.getElementsByTagName( nodeType ):

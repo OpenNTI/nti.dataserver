@@ -1,32 +1,33 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-
-from plasTeX import Base, Node
-from nti.contentrendering import domutils
-from plasTeX.Base.LaTeX import Math
-import plasTeX
-
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from . import interfaces
-from nti.contentrendering.resources import interfaces as res_interfaces
-interface.moduleProvides(interfaces.IDocumentTransformer)
 
+import plasTeX
+from plasTeX import Base, Node
+from plasTeX.Base.LaTeX import Math
+
+from nti.contentrendering import domutils
+from nti.contentrendering.resources import interfaces as res_interfaces
+
+from . import interfaces
+interface.moduleProvides(interfaces.IDocumentTransformer)
 
 class ntixymatrix(Base.Command):
 	@property
 	def source(self):
 		return self._source
 
-
 @interface.implementer(res_interfaces.IRepresentationPreferences)
 class ntixydisplaymath(Math.displaymath):
 	resourceTypes = ['png', 'svg']
-
 
 @interface.implementer(res_interfaces.IRepresentationPreferences)
 class ntixymath(Math.math):
@@ -49,18 +50,15 @@ def fixxy(document, xy):
 	parent = xy.parentNode
 
 	xynodes = []
-	source = xy.source.strip()
+	# source = xy.source.strip()
 
 	nextSibling = xy
 
-	while(nextSibling.nodeName != 'bgroup'):
-
+	while (nextSibling.nodeName != 'bgroup'):
 		xynodes.append(nextSibling)
-
 		nextSibling = nextSibling.nextSibling
 
 	xynodes.append(nextSibling)
-
 
 	source = ''.join([node.source.strip() for node in xynodes])
 
