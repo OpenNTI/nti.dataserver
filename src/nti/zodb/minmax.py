@@ -1,16 +1,21 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Conflict resolving value/counter implementations
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 
-from . import interfaces
 from zope import interface
 from zope.minmax._minmax import Maximum, Minimum, AbstractValue
+
+from . import interfaces
 
 # Give all these things a 'set' method, a point for subclasses
 # to potentially override

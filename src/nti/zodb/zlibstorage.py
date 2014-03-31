@@ -2,8 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Utilities for working with zc.zlibstorage.
+
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+import os
 
 try:
 	from repoze.zodbconn import resolvers
@@ -11,8 +18,8 @@ except ImportError: # pypy?
 	class resolvers(object):
 		ClientStorageURIResolver = object
 		RESOLVERS = {}
+
 from nti.utils import make_cache_dir
-import os
 
 class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 	"""
