@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from zope import interface
 from nti.dataserver import interfaces as nti_interfaces
@@ -42,7 +35,7 @@ def Note():
 	n.applicableRange = ContentRangeDescription()
 	return n
 
-from nti.dataserver.intid_wref import WeakRef
+from nti.intid.wref import WeakRef
 
 @interface.implementer(nti_interfaces.IThreadable)
 class ReferenceObject(WeakRef):
