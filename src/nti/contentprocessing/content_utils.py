@@ -3,7 +3,7 @@
 """
 Content processing utilities
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -116,18 +116,24 @@ class _ContentTokenizer(object):
 								 frg_interfaces.IPlainTextContentFragment, name='text')
 		return text
 
+
 @interface.implementer(cp_interfaces.IWordSimilarity)
-class _DefaultWordSimilarity(object):
+class _BaseWordSimilarity(object):
 
 	def compute(self, a, b):
-		result = difflib.SequenceMatcher(None, a, b).ratio()
-		return result
+		return 0
 
 	def rank(self, word, terms, reverse=True):
 		result = sorted(terms, key=lambda w: self.compute(word, w), reverse=reverse)
 		return result
 
-class _LevenshteinWordSimilarity(_DefaultWordSimilarity):
+class _SequenceMatcherWordSimilarity(_BaseWordSimilarity):
+
+	def compute(self, a, b):
+		result = difflib.SequenceMatcher(None, a, b).ratio()
+		return result
+
+class _LevenshteinWordSimilarity(_BaseWordSimilarity):
 
 	def compute(self, a, b):
 		result = relative(a, b)
