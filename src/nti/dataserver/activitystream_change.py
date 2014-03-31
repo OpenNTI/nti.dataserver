@@ -3,7 +3,7 @@
 """
 Functions and architecture for general activity streams.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -23,9 +23,9 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.oids import toExternalOID
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.wref import interfaces as wref_interfaces
 
