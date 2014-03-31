@@ -24,12 +24,12 @@ from zope.container import contained as zcontained
 
 from persistent import Persistent
 
-from nti.externalization.datastructures import LocatedExternalList
-
-from nti.ntiids import ntiids
-
 from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.externalization.interfaces import LocatedExternalList
+
+from nti.ntiids import ntiids
 
 from nti.zodb.containers import time_to_64bit_int
 
