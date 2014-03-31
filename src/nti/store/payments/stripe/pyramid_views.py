@@ -3,7 +3,7 @@
 """
 Stripe payment pyramid views.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -22,7 +22,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 
 from nti.externalization import integer_strings
-from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.ntiids import ntiids
 
