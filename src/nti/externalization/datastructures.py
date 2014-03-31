@@ -3,9 +3,9 @@
 """
 Datastructures to help externalization.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,19 +22,24 @@ import ZODB
 
 from nti.utils.schema import find_most_derived_interface
 
+from .interfaces import IInternalObjectIO
 from .interfaces import StandardInternalFields
 from .interfaces import StandardExternalFields
 from .internalization import validate_named_field_value
-from .externalization import to_standard_external_dictionary, toExternalObject
 from .externalization import to_minimal_standard_external_dictionary
+from .externalization import to_standard_external_dictionary, toExternalObject
 
-#  BWC export
-from .interfaces import IExternalObject
-from .interfaces import IInternalObjectIO
-from .interfaces import LocatedExternalDict
-from .interfaces import LocatedExternalList
-from .interfaces import ILocatedExternalMapping
-from .interfaces import ILocatedExternalSequence
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.externalization.interfaces",
+	"nti.externalization.interfaces",
+	"IExternalObject",
+	"LocatedExternalDict",
+	"LocatedExternalList",
+	"ILocatedExternalMapping",
+	"ILocatedExternalSequence")
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
@@ -134,7 +139,7 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 		return 	[k for k in self._ext_all_possible_keys()
 				 if (k not in self._excluded_out_ivars_  # specifically excluded
 					 and not k.startswith( '_' ))]			# private
-					 #and not callable(getattr(ext_self,k)))]	# avoid functions
+					# and not callable(getattr(ext_self,k)))]	# avoid functions
 
 	def _ext_primitive_keys(self):
 		"""

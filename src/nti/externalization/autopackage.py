@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,7 +29,8 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 
 	* interfaces.py
 	* externalization.py (where a subclass of this object lives)
-	* configure.zcml (where the subclass is registered as an adapter for each object; you may also then provide mime-factories as well)
+	* configure.zcml (where the subclass is registered as an adapter for each object;
+	* you may also then provide mime-factories as well)
 	* other modules, where types are defined for the external interfaces.
 
 	Once you derive from this class and implement the abstract methods, you

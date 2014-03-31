@@ -1,6 +1,8 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+			
 	<include package="zope.component" />
 	<include package="zope.annotation" />
 	<include package="zope.security" />
@@ -22,11 +24,11 @@
 
 	<adapter for=""
 			 provides=".interfaces.ILocatedExternalSequence"
-			 factory=".datastructures.LocatedExternalList" />
+			 factory=".interfaces.LocatedExternalList" />
 
 	<adapter for="dolmen.builtins.IList"
 			 provides=".interfaces.ILocatedExternalSequence"
-			 factory=".datastructures.LocatedExternalList" />
+			 factory=".interfaces.LocatedExternalList" />
 
 	<!-- Offer to adapt strings to dates -->
 	<!-- TODO: This is a bit ad-hoc. Surely there's a more formal set

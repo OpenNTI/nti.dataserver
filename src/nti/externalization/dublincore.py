@@ -8,10 +8,9 @@ of :mod:`zope.dublincore.interfaces`.
   defined meanings we don't control. We are currently doing this by simply prefixing
   them with 'DC'. This can probably be done better.
 
-
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
