@@ -11,26 +11,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
 
 from zope.catalog.interfaces import ICatalogIndex
 
 import collections
 
-import zope.catalog.field
-
-import zope.index.field
-import zope.index.topic
 import zope.index.topic.filter
 import zope.container.contained
 
-import zc.catalog.catalogindex
-import zc.catalog.index
 import zc.catalog.extentcatalog
 
 import BTrees
-
 
 @interface.implementer(ICatalogIndex)
 class TopicIndex(zope.index.topic.TopicIndex,

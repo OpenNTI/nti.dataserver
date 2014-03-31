@@ -17,11 +17,7 @@ from zope.catalog.field import IFieldIndex
 from zope.catalog.attribute import AttributeIndex
 from zope.catalog.interfaces import ICatalogIndex
 
-
-import zope.catalog.field
-
 import zope.index.field
-import zope.index.topic
 import zope.container.contained
 
 import zc.catalog.catalogindex

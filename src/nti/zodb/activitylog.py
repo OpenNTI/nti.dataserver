@@ -7,14 +7,13 @@ Logging of database connection activity. Activate this with ZCML::
 
 Originally based on code from the unreleased zc.zodbactivitylog.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
 
 class _AbstractActivityMonitor(object):
 	"""
@@ -48,7 +47,6 @@ class LogActivityMonitor(_AbstractActivityMonitor):
 	def _closedConnection(self, loads, stores, db_name ):
 		logger.debug( "closedConnection={'loads': %5d, 'stores': %5d, 'database': %s}",
 					  loads, stores, db_name )
-
 
 from perfmetrics import statsd_client
 

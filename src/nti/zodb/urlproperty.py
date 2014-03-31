@@ -3,10 +3,10 @@
 """
 Classes and utilities for working with URLs stored on persistent objects.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,7 +18,6 @@ import zope.schema.interfaces
 
 from zope.file import interfaces as file_interfaces
 from zope.file import file as zfile
-
 
 from nti.utils import dataurl
 
