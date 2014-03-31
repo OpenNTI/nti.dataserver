@@ -7,13 +7,15 @@ This module depends on the :mod:`dm.transaction.aborthook` module
 and directly provides the :func:`add_abort_hooks` function; you should
 call this if you need such functionality.
 
-$Id$
-
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import sys
+import time
 
 from zope import interface
 from ZODB.loglevels import TRACE
@@ -28,9 +30,6 @@ except ImportError: # pragma: no cover # pypy
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
-
-import sys
-import time
 
 @interface.implementer(transaction.interfaces.ISavepointDataManager,
 					   transaction.interfaces.IDataManagerSavepoint)
@@ -441,5 +440,5 @@ class TransactionLoop(object):
 # By default, it wants to create a different logger
 # for each and every thread or greenlet. We go through
 # lots of greenlets, so that's lots of loggers
-import transaction._transaction
-transaction._transaction._LOGGER = __import__('logging').getLogger('txn.GLOBAL')
+from transaction import _transaction
+_transaction._LOGGER = __import__('logging').getLogger('txn.GLOBAL')
