@@ -3,7 +3,7 @@
 """
 Store pyramid views.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -29,7 +29,7 @@ from zope.traversing.interfaces import IPathAdapter
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization.datastructures import LocatedExternalDict
+from nti.externalization.interfaces import LocatedExternalDict
 
 from . import utils
 from . import priceable

@@ -73,6 +73,7 @@ were a wash, as were using an OOTreeSet instead of an OOBTree. The
 biggest win is simply reducing all the transactions to one. There's
 probably a big win in unifying the indexes. Try an KeywordIndex.
 
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -107,8 +108,8 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.activitystream import enqueue_change
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.externalization.datastructures import LocatedExternalDict
 
 from nti.ntiids import ntiids
 

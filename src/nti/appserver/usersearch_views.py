@@ -3,7 +3,7 @@
 """
 View functions relating to searching for users.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -38,8 +38,8 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.datastructures import LocatedExternalDict
 
 
 def _is_valid_search( search_term, remote_user ):
