@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,8 +13,10 @@ from nti.dataserver.interfaces import IUser
 
 from pyramid.view import view_config
 
-from nti.dataserver import authorization as nauth
 from nti.appserver import httpexceptions as hexc
+
+from nti.dataserver import authorization as nauth
+
 from .link_provider import VIEW_NAME_NAMED_LINKS
 from . import unique_link_providers
 
