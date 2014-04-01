@@ -3,27 +3,27 @@
 """
 ZCML directives relating to link providers.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-from . import MessageFactory as _
 
 import functools
 
 from zope import interface
 
 import zope.configuration.fields
-from zope.configuration.exceptions import ConfigurationError
+
 from zope.component.zcml import subscriber
 from zope.mimetype.interfaces import mimeTypeConstraint
+from zope.configuration.exceptions import ConfigurationError
 
-from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 from nti.dataserver.interfaces import IUser
+from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+
 from pyramid.interfaces import IRequest
 
 from nti.utils import schema
