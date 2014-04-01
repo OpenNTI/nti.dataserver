@@ -1188,6 +1188,11 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		self.forbid_link_with_rel( headline_json, 'flag' )
 		self.forbid_link_with_rel( headline_json, 'favorite' )
 
+		# The entry can be fetched by NTIID
+		if 'NTIID' in res.json_body:
+			assert_that( self.fetch_by_ntiid(res.json_body['NTIID']).json_body,
+						 has_entry('NTIID', res.json_body['NTIID']))
+
 		return res
 
 	_do_test_user_can_POST_new_forum_entry = _do_simple_tests_for_POST_of_topic_entry

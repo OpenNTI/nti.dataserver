@@ -41,11 +41,12 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType, INa
 from nti.testing.matchers import verifiably_provides, validly_provides
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from ..interfaces import ITopic, IHeadlineTopic, IPersonalBlogEntry, IGeneralHeadlineTopic
-from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic
+from ..topic import Topic, HeadlineTopic, PersonalBlogEntry, GeneralHeadlineTopic, CommunityHeadlineTopic
 from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPost, GeneralHeadlinePost
 
 from zope import component
 from zope import interface
+
 
 
 from nti.dataserver.interfaces import IUser, IWritableShared
@@ -53,6 +54,7 @@ from nti.dataserver.interfaces import IUser, IWritableShared
 from ExtensionClass import Base
 
 from . import ForumLayerTest
+from nti.dataserver.tests import mock_dataserver
 
 class TestTopic(ForumLayerTest):
 
@@ -222,3 +224,47 @@ class TestTopic(ForumLayerTest):
 									'headline', has_entry( 'Class', 'PersonalBlogEntryPost' ),
 									'PostCount', 1,
 									'NewestDescendant', has_entry('Last Modified', 42) ) ) )
+
+from . import DataserverLayerTest
+from nti.dataserver.users import Community
+from ..forum import CommunityForum
+from nti.ntiids.ntiids import find_object_with_ntiid
+from ..interfaces import ICommunityBoard
+
+
+class TestTopicNTIIDResolver(DataserverLayerTest):
+
+	def _do_test(self, forum_name, topic_name):
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			comm = Community.create_community( self.ds, username="CHEM4970.ou.nextthought.com")
+
+			board = ICommunityBoard(comm)
+
+			forum = CommunityForum()
+			forum.title = 'test'
+
+			board[forum_name] = forum
+
+			topic = CommunityHeadlineTopic()
+			topic.title = 'a test'
+			topic.creator = 'me'
+
+			forum[topic_name] = topic
+
+			assert_that( topic.NTIID, is_('tag:nextthought.com,2011-10:CHEM4970.ou.nextthought.com-Topic:GeneralCommunity-' + forum_name + '.' + topic_name) )
+
+
+			assert_that( find_object_with_ntiid(topic.NTIID), is_(topic))
+
+	@mock_dataserver.WithMockDS
+	def test_forum_name_unique(self):
+		self._do_test( 'test.68574', 'test' )
+
+	@mock_dataserver.WithMockDS
+	def test_topic_name_unique(self):
+		self._do_test( 'test', 'test.6854' )
+
+	@mock_dataserver.WithMockDS
+	def test_both_name_unique(self):
+		self._do_test( 'test.6854', 'test.6854' )
