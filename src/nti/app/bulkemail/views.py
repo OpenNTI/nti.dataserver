@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -11,9 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from datetime import datetime
 import isodate
-import gevent
+from datetime import datetime
 
 from zope import component
 from .interfaces import IBulkEmailProcessLoop

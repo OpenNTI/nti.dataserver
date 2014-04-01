@@ -5,7 +5,7 @@ A layer on top of :mod:`nti.externalization`, supporting the
 standard patterns for reading and writing objects at the
 application layer.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
