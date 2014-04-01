@@ -20,7 +20,7 @@ Request Modifications
 No modifications are exposed on the request object. Instead, see
 :mod:`zope.security.management` or :class:`zope.security.interfaces.IInteractionManagement`.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -32,7 +32,6 @@ logger = __import__('logging').getLogger(__name__)
 # The IPublisherRequest is-a IParticipation. Rather than make
 # the pyramid request do that, lets keep things simple and separate.
 
-from zope import interface
 from zope import component
 
 from zope.security.interfaces import IParticipation
