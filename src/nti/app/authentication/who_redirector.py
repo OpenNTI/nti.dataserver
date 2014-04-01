@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -11,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IChallenger
 
 from repoze.who.plugins.redirector import RedirectorPlugin

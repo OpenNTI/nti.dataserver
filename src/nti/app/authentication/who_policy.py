@@ -46,7 +46,6 @@ class _GroupsCallback(object):
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
 			username = identity['repoze.who.userid']
 
-		result = None
 		result = effective_principals( username, registry=request.registry, authenticated=True, request=request )
 
 		identity[CACHE_KEY] = result
