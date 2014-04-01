@@ -3,10 +3,10 @@
 """
 Implementations of capability objects.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -23,5 +23,5 @@ class Capability(permission.Permission):
 	Basic implementation of a :class:`.ICapability`.
 	"""
 
-	def __init__( self, cap_id, title='', description='' ):
+	def __init__(self, cap_id, title='', description=''):
 		super(Capability, self).__init__( cap_id, title=title, description=description )
