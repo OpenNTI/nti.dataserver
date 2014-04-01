@@ -35,10 +35,13 @@ def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
 
 	# save site names  / deprecated
 	request = request if request is not None else get_current_request()
+	site_names = getattr(request, 'possible_site_names', ()) or ('',)
+
 	def _runner():
 		transactionRunner = \
 			component.getUtility(nti_interfaces.IDataserverTransactionRunner)
 		transactionRunner = functools.partial(transactionRunner,
+											  site_names=site_names,
 											  side_effect_free=side_effect_free)
 		transactionRunner(new_callable)
 
