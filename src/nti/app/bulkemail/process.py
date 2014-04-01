@@ -26,7 +26,6 @@ from boto.ses.exceptions import SESError
 
 from zope import interface
 from zope import component
-from zope.cachedescriptors.property import Lazy
 
 from .interfaces import IBulkEmailProcessLoop
 from .interfaces import IBulkEmailProcessMetadata
@@ -35,10 +34,13 @@ from .interfaces import PreflightError
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import sleep
+from nti.utils.property import Lazy
 
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
 from nti.mailer.interfaces import ITemplatedMailer
+
+from zope.publisher.interfaces.browser import IBrowserRequest
 
 #: The redis lifetime of the objects used during the sending
 #: process. Should be long enough for the process to complete,
@@ -100,7 +102,9 @@ class DefaultBulkEmailProcessLoop(object):
 	__parent__ = None
 
 	def __init__( self, request ):
-		self.request = request
+		# For purposes of templates and translation, proxy the
+		# pyramid request to a zope request
+		self.request = IBrowserRequest(request)
 		self.redis = component.getUtility( nti_interfaces.IRedisClient )
 
 	@Lazy

@@ -9,6 +9,8 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.security" />
 
+	<include package="zc.displayname" />
+
 	<adapter factory="nti.app.bulkemail.process.SiteTransactedBulkEmailProcessLoop"
 			 for='pyramid.interfaces.IRequest'
 			 name="digest_email" />

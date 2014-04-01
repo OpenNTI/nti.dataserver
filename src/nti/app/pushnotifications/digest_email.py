@@ -31,6 +31,8 @@ from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.appserver.interfaces import IVideoIndexMap
 
+from zc.displayname.interfaces import IDisplayNameGenerator
+
 import time
 
 from nti.utils.property import annotation_alias
@@ -99,8 +101,6 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
-		# TODO: Isn't there a zope interface for this? We would adapt
-		# self._primary to IDisplayName or something?
 		if self.__name__.startswith('tag:'):
 			# Try to find a content unit
 			lib = component.getUtility(IContentPackageLibrary)
@@ -116,7 +116,8 @@ class _TemplateArgs(object):
 					path = lib.pathToNTIID(key)
 					if path:
 						return path[-1].__name__
-		return self.__name__
+		return component.getMultiAdapter((self._primary, self.request),
+										 IDisplayNameGenerator)
 
 	@property
 	def creator(self):
