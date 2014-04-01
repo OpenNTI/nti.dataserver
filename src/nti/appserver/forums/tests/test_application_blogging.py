@@ -40,6 +40,7 @@ import webob.datetime_utils
 
 from zope import lifecycleevent
 from zope import interface
+from zope import component
 from zope.component import eventtesting
 from zope.intid.interfaces import IIntIdRemovedEvent
 
@@ -681,3 +682,20 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 
 		res = testapp.get( create_res.location )
 		assert_that( res.json_body, has_entry( 'sharedWith', is_empty() ) )
+
+
+	@WithSharedApplicationMockDS(users=True)
+	def test_blog_display_name(self):
+		from nti.dataserver.users.interfaces import IFriendlyNamed
+		from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
+		from zc.displayname.interfaces import IDisplayNameGenerator
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = users.User.get_user( self.extra_environ_default_user )
+			IFriendlyNamed(user).realname = 'Steve Johnson'
+
+			blog = IPersonalBlog(user)
+
+			disp_name = component.getMultiAdapter( (blog, self.beginRequest()),
+												   IDisplayNameGenerator )
+			disp_name = disp_name()
+			assert_that(disp_name, is_("Steve Johnson's Thoughts"))
