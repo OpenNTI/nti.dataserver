@@ -3,9 +3,9 @@
 """
 Policies for the censoring of modeled content objects.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -41,11 +41,9 @@ class IObjectNotTiedToContent(interface.Interface):
 	# TODO: Now that we have ModeledContent objects that are not in the
 	# library (e.g., forums, blogs), this may need rethought. (2013-03-05)
 
-
 @interface.provider(IObjectNotTiedToContent)
 class ObjectNotTiedToContent(object):
 	"Direct provider of IObjectNotTiedToContent"
-
 
 # No default adapter list, too many things.
 @interface.implementer( frg_interfaces.ICensoredContentPolicy )

@@ -13,10 +13,10 @@ When creating a site manager, you *MUST* use :const:`BASEADULT` or :const:`MATHC
 in its base chain. You do not (should not) create the site object
 in this module.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -34,7 +34,6 @@ BASECOPPA = BaseComponents(BASE, name='genericcoppabase', bases=(BASE,))
 # This one serves as a common base for all the other non-COPPA (non-mathcounts) site
 # It is not a site of its own
 BASEADULT = BaseComponents(BASE, name="genericadultbase", bases=(BASE,))
-
 
 # Things that have moved
 import zope.deferredimport
@@ -107,7 +106,6 @@ def _find_sites():
 		if x not in result:
 			result.append( x )
 	return result
-
 
 def _reinit():
 	"""
