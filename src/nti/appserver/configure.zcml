@@ -391,6 +391,7 @@
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
 
+	<adapter factory=".user_views.UserDisplayNameGenerator" />
 
 	<include package="nti.app.authentication" />
 	<include package="nti.app.notabledata" />

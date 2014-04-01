@@ -233,4 +233,6 @@
 				 *
 				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
 
+	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />
+
 </configure>
