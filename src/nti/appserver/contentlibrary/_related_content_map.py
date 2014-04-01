@@ -4,9 +4,9 @@
 Implementation of the related content index map and supporting
 functions to maintain it.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -51,7 +51,9 @@ def _populate_rc_map_from_text(rc_map, index_text, content_package):
 	if not index_text:
 		return
 
-	video_index_text = unicode(index_text, 'utf-8') if isinstance(index_text, six.binary_type) else index_text
+	video_index_text = unicode(index_text, 'utf-8') \
+	if isinstance(index_text, six.binary_type) else index_text
+
 	index = simplejson.loads(video_index_text)
 
 	# add items

@@ -3,9 +3,9 @@
 """
 Views related to cards in content.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -33,6 +33,8 @@ from .library_views import find_page_info_view_helper
 # Content cards are not true modeled content; this package
 # contains traversal helpers to fake it
 class _ContentCard(Contained):
+
+	__slots__ = ('path',)
 
 	def __init__(self, path):
 		self.path = path
