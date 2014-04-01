@@ -219,8 +219,8 @@ def _find_named_link_views(parent, provided=None):
 
 	request = get_current_request() or app_interfaces.MissingRequest()
 
-	# Order matters. traversing wins, so views first
-	names = set()
+
+
 	# Pyramid's request_iface property is a dynamically generated
 	# interface class that incorporates the name of the route.
 	# Some tests provide a request object without that,
@@ -250,16 +250,18 @@ def _find_named_link_views(parent, provided=None):
 			if app_interfaces.INamedLinkView.providedBy( v ) or app_interfaces.INamedLinkView.implementedBy( v ):
 				return True
 
-	names.update( [name for name, view
-				   in component.getSiteManager().adapters.lookupAll( (IViewClassifier,
-																	  request_iface,
-																	  provided),
-																	 IView)
-				   if name and _test( name, view )] )
-	names.update( [name for name, _ in component.getAdapters( (parent, request ),
-															  app_interfaces.INamedLinkPathAdapter )] )
+	adapters = component.getSiteManager().adapters
+	# Order matters. traversing wins, so views first (?)
+	names = [name for name, view
+				   in adapters.lookupAll( (IViewClassifier, request_iface, provided),
+										  IView)
+				   if name and _test( name, view )]
+	names.extend( (name for name, _ in component.getAdapters( (parent, request ),
+															  app_interfaces.INamedLinkPathAdapter )) )
 
-	return names
+	names.extend( (name for name, _ in adapters.lookupAll( (provided, interface.providedBy(request)),
+														   app_interfaces.INamedLinkPathAdapter)) )
+	return set(names)
 
 def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
 	"""
