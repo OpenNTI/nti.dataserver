@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -128,7 +126,6 @@ class _NotableRecursiveUGDView(_UGDView):
 		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
 		return result
 
-from zope.annotation.interfaces import IAnnotations
 from nti.dataserver.links import Link
 from numbers import Number
 from nti.externalization import interfaces as ext_interfaces
