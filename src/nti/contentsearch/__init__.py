@@ -2,7 +2,7 @@
 """
 Content search module.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,9 +16,18 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 from  . import monkey
 monkey.patch()
 
-# rexport for BWC
-from .common import get_indexable_types
-from .common import get_ugd_indexable_types
-from .common import videotimestamp_to_datetime
-from .constants import vtrans_prefix, nticard_prefix
+import zope.deferredimport
+zope.deferredimport.initialize()
 
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.contentsearch.common",
+    "nti.contentsearch.common",
+    "get_indexable_types",
+    "get_ugd_indexable_types",
+    "videotimestamp_to_datetime")
+
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.contentsearch.constants",
+    "nti.contentsearch.constants",
+    "vtrans_prefix",
+    "nticard_prefix")
