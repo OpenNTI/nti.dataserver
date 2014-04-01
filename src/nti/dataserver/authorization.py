@@ -377,4 +377,23 @@ class _DFLPrincipal(_UserPrincipal):
 	pass
 _DFLGroup = _DFLPrincipal
 
+
+from zope.security.interfaces import IParticipation
+
+@interface.implementer(IParticipation)
+class _Participation(object):
+
+	__slots__ = 'interaction', 'principal'
+
+	def __init__( self, principal ):
+		self.interaction = None
+		self.principal = principal
+
+
+@interface.implementer(IParticipation)
+@component.adapter(nti_interfaces.IUser)
+def _participation_for_user(remote_user):
+	return _Participation(_UserGroupAwarePrincipal(remote_user))
+
+
 # IACLProvider implementations live in authorization_acl

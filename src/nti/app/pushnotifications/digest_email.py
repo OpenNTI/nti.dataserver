@@ -142,13 +142,19 @@ class _TemplateArgs(object):
 	def creator_avatar_url(self):
 		return self.request.resource_url(self._primary.creator, '@@avatar')
 
+from zope.security.interfaces import IParticipation
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import restoreInteraction
+
+from zope.preference.interfaces import IPreferenceGroup
+
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
 
 	def __init__(self, context, request):
 		self.remoteUser = context
 		self.request = request
-
 
 	_SENTKEY = 'nti.app.pushnotifications.digest_email.DigestEmailCollector.last_sent'
 	last_sent = annotation_alias(_SENTKEY, annotation_property='remoteUser',
@@ -163,6 +169,18 @@ class DigestEmailCollector(object):
 	def collection_time(self):
 		return time.time()
 
+
+	@property
+	def is_subscribed(self):
+		prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
+		# To get the user's
+		# preference information, we must be in an interaction for that user.
+		endInteraction()
+		try:
+			newInteraction(IParticipation(self.remoteUser))
+			return prefs.email_a_summary_of_interesting_changes
+		finally:
+			restoreInteraction()
 
 	def min_created_time(self, notable_data):
 		last_time_collected = self.last_collected
@@ -189,6 +207,11 @@ class DigestEmailCollector(object):
 		addr = IEmailAddressable(self.remoteUser,None)
 		if not addr or not addr.email:
 			return
+
+		# If the user is unsubscribed, we can't send anything.
+		if not self.is_subscribed:
+			return
+
 
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
