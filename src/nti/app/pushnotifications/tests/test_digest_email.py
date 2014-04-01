@@ -42,6 +42,7 @@ from nti.testing.matchers import is_true
 from nti.app.bulkemail import views as bulk_email_views
 
 import fudge
+import gevent
 
 
 SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
@@ -65,17 +66,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
 		assert_that( res.body, contains_string( 'Remaining' ) )
 
-	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
-	@time_monotonically_increases
-	@fudge.patch('boto.ses.connect_to_region')
-	def test_with_notable_data(self, fake_connect):
-		def check_send(*args):
-			return 'return'
-
-		(fake_connect.is_callable().returns_fake()
-		 .expects( 'send_raw_email' ).calls(check_send)
-		 .expects('get_send_quota').returns( SEND_QUOTA ))
-
+	def _create_notable_data(self):
 		# Create a notable blog
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog',
 									  {'Class': 'Post', 'title': 'my title', 'body': ['my body']},
@@ -109,6 +100,20 @@ class TestApplicationDigest(ApplicationLayerTest):
 			user_interfaces.IUserProfile( jason ).email = 'jason.madden@nextthought.com'
 			modified( jason )
 
+
+	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@time_monotonically_increases
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_with_notable_data(self, fake_connect):
+		def check_send(*args):
+			return 'return'
+
+		(fake_connect.is_callable().returns_fake()
+		 .expects( 'send_raw_email' ).calls(check_send)
+		 .expects('get_send_quota').returns( SEND_QUOTA ))
+
+		self._create_notable_data()
+
 		# Kick the process
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -117,6 +122,34 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( res.body, contains_string( 'Remaining' ) )
 
 		# Let the spawned greenlet do its thing
-		bulk_email_views._BulkEmailView._greenlets[0].join()
+		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
+		assert_that( res.body, contains_string( 'End Time' ) )
+
+
+	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@time_monotonically_increases
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_with_notable_data_but_unsubscribed(self, fake_connect):
+		def check_send(*args):
+			raise AssertionError("This should not be called")
+
+		(fake_connect.is_callable().returns_fake()
+		 .provides( 'send_raw_email' ).calls(check_send)
+		 .expects('get_send_quota').returns( SEND_QUOTA ))
+
+		self._create_notable_data()
+
+		self._fetch_user_url('/unsubscribe',
+							 username='jason',
+							 extra_environ=self._make_extra_environ(username='jason'))
+		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
+		assert_that( res.body, contains_string( 'Start' ) )
+
+		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
+		assert_that( res.body, contains_string( 'Remaining' ) )
+
+		# Let the spawned greenlet do its thing
+		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )

@@ -131,3 +131,10 @@ class _BulkEmailView(object):
 		# Redisplay the page with a get request to avoid the "re-send this POST?" problem
 		get_path = self.request.path  + (('?' + self.request.query_string) if self.request.query_string else '')
 		return hexc.HTTPFound(location=get_path)
+
+	@classmethod
+	def _cleanup(cls):
+		del cls._greenlets[:]
+
+import zope.testing.cleanup
+zope.testing.cleanup.addCleanUp( _BulkEmailView._cleanup )

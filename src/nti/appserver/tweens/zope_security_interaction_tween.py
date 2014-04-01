@@ -35,22 +35,12 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from zope.security.interfaces import IPrincipal
 from zope.security.interfaces import IParticipation
 
 from zope.security.management import newInteraction, endInteraction
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import users
-
-@interface.implementer(IParticipation)
-class _Participation(object):
-
-	__slots__ = 'interaction', 'principal'
-
-	def __init__( self, principal ):
-		self.interaction = None
-		self.principal = principal
 
 class _interaction_tween(object):
 
@@ -65,13 +55,13 @@ class _interaction_tween(object):
 			dataserver = component.getUtility( IDataserver )
 			# We must have a user at this point...
 			user = users.User.get_user(uid, dataserver=dataserver)
-			# ...and all users must be IPrincipal-capable
-			principal = IPrincipal(user)
+			# ...and all users must be IParticipation-capable
+			participation = IParticipation(user)
 			# newInteraction takes a list of participations.
 			# it's important that the first one be the main IPrincipal,
 			# but if we use this for more than preferences we probably
 			# need to include roles (effective principals?)
-			newInteraction(_Participation(principal))
+			newInteraction(participation)
 
 		try:
 			return self.handler(request)
