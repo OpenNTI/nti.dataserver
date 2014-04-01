@@ -3,7 +3,7 @@
 """
 Whoosh based content searcher
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -24,6 +24,7 @@ from zope.proxy import ProxyBase
 from whoosh import index
 
 from . import constants
+from . import search_utils
 from . import whoosh_query
 from . import whoosh_index
 from . import search_results
@@ -148,8 +149,11 @@ class WhooshContentSearcher(object):
 		store = search_results.get_or_create_search_results(query, store)
 		for searcher in self._searchables.values():
 			if self.parallel_search:
-				greenlet = gevent.spawn(self._execute_search, searcher=searcher,
-										method="search", query=query, store=store)
+				greenlet = search_utils.gevent_spawn(func=self._execute_search,
+													 searcher=searcher,
+										  			 method="search",
+										  			 query=query,
+										  			 store=store)
 				greenlets.append(greenlet)
 			else:
 				rs = self._execute_search(searcher=searcher, method="search",
