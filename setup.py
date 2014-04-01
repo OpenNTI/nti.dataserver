@@ -315,6 +315,7 @@ setup(
 		'zc.blist >= 1.0b2',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.catalog',
 		'zc.dict >= 1.3b1',	 # BTree based dicts that are subclassable
+		'zc.displayname', # Simple pluggable display name support
 		'zc.intid >= 1.0.1',
 		'zc.lockfile >= 1.1.0',
 		'zc.queue >= 2.0.0a1',
