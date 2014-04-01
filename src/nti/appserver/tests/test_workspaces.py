@@ -178,7 +178,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 		assert_that( uew.pages_collection.container, has_length( greater_than_or_equal_to(  2 ) ) )
 		# These come in sorted
 		root = uew.pages_collection.container[0]
-		ext_obj = to_external_object( root )
+		ext_obj = to_external_object( root, request=self.beginRequest() )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
@@ -186,15 +186,15 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
 
 
-
 		[shared] = [c for c in uew.pages_collection.container if c.ntiid == PersistentContained.containerId]
-		ext_obj = to_external_object( shared )
+
+		ext_obj = to_external_object( shared, request=self.beginRequest() )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
 		for rel in ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					'Stream', 'RecursiveStream',
 					'UserGeneratedDataAndRecursiveStream',
 					'RelevantUserGeneratedData',
-					# 'Glossary', not present, no request
+					'Glossary',
 					'TopUserSummaryData', 'UniqueMinMaxSummary'):
 			self.require_link_href_with_rel( ext_obj, rel )
 
