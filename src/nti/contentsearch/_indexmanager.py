@@ -11,12 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import time
-import gevent
 
 from zope import component
 from zope import interface
-
-from pyramid.threadlocal import get_current_request
 
 from perfmetrics import metric
 
@@ -25,6 +22,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from . import indexagent
 from . import search_query
+from . import search_utils
 from . import search_results
 from . import interfaces as search_interfaces
 
@@ -63,14 +61,11 @@ class IndexManager(object):
 		results = search_results.empty_search_results(query)
 		start = time.time()
 		if self.parallel_search:
-			request = get_current_request()
-			if request is None:
-				greenlet = gevent.spawn(self.content_search, query=query, store=results)
-			else:
-				greenlet = request.nti_gevent_spawn(self.content_search, query=query,
-													store=results)
-			ugd_results = self.user_data_search(query=query, store=results)
-			cnt_results = greenlet.get()
+			greenlet = search_utils.gevent_spawn(func=self.user_data_search,
+												 query=query,
+									  			 store=results)
+			cnt_results = self.content_search(query=query, store=results)
+			ugd_results = greenlet.get()
 		else:
 			cnt_results = self.content_search(query=query, store=results)
 			ugd_results = self.user_data_search(query=query, store=results)
