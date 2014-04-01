@@ -38,12 +38,13 @@ from nti.dataserver.tests import mock_dataserver
 
 from nti.testing.time import time_monotonically_increases
 from nti.testing.matchers import is_true
+from nti.appserver.tests import ExLibraryApplicationTestLayer
 
 from nti.app.bulkemail import views as bulk_email_views
 
 import fudge
 import gevent
-
+import quopri
 
 SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
 																u'MaxSendRate': u'14.0',
@@ -52,6 +53,8 @@ SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend'
 
 
 class TestApplicationDigest(ApplicationLayerTest):
+
+	layer = ExLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
@@ -65,6 +68,9 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
 		assert_that( res.body, contains_string( 'Remaining' ) )
+
+	CONTAINER_ID = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.the_twentieth_century'
+	CONTAINER_NAME = 'The Twentieth Century'
 
 	def _create_notable_data(self):
 		# Create a notable blog
@@ -82,7 +88,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 			for i in range(5):
 				top_n = contenttypes.Note()
 				top_n.applicableRange = contentrange.ContentRangeDescription()
-				top_n.containerId = u'tag:nti:foo'
+				top_n.containerId = self.CONTAINER_ID
 				top_n.body = ("Top is notable", str(i))
 				top_n.createdTime = 100 + i
 				top_n.creator = user
@@ -105,7 +111,11 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data(self, fake_connect):
-		def check_send(*args):
+		msgs = []
+		def check_send(msg, fromaddr, to):
+			# Check the title and link to the note
+			msg = quopri.decodestring(msg)
+			msgs.append(msg)
 			return 'return'
 
 		(fake_connect.is_callable().returns_fake()
@@ -125,6 +135,10 @@ class TestApplicationDigest(ApplicationLayerTest):
 		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
+
+		msg = msgs[0]
+		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
+		assert_that( msg, contains_string( 'http://localhost/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
 
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)

@@ -38,6 +38,8 @@ import time
 from nti.utils.property import annotation_alias
 from nti.utils.property import Lazy
 
+from nti.ntiids.ntiids import get_parts as parse_ntiid
+
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -101,21 +103,6 @@ class _TemplateArgs(object):
 
 	@property
 	def display_name(self):
-		if self.__name__.startswith('tag:'):
-			# Try to find a content unit
-			lib = component.getUtility(IContentPackageLibrary)
-			path = lib.pathToNTIID(self.__name__)
-			if path:
-				return path[-1].__name__
-
-			# FIXME: Eww, ugly
-			videos = component.getUtility(IVideoIndexMap)
-
-			for key, value in videos.by_container.items():
-				if self.__name__ in value:
-					path = lib.pathToNTIID(key)
-					if path:
-						return path[-1].__name__
 		return component.getMultiAdapter((self._primary, self.request),
 										 IDisplayNameGenerator)
 
@@ -136,8 +123,57 @@ class _TemplateArgs(object):
 										  traverse=(),
 										  _anchor="!object/ntiid/" + ntiid).replace('/dataserver2', '')
 
-		# TODO: These don't actually do what we want...
+		# TODO: These don't actually do what we want in terms of interacting
+		# with the application...
 		return self.request.resource_url(self._primary)
+
+	def _path_to_note_container(self):
+		name = self.__name__
+		__traceback_info__ = name
+		assert name.startswith('tag:')
+
+		# Try to find a content unit
+		# FIXME: Eww, ugly. This implementation knows entirely
+		# too much. We would like to pull it out to a DisplayNameGenerator,
+		# but we have nothing to really register that adapter
+		# on
+		lib = component.getUtility(IContentPackageLibrary)
+		path = lib.pathToNTIID(name)
+		if path:
+			return path
+
+
+		videos = component.getUtility(IVideoIndexMap)
+
+		for key, value in videos.by_container.items():
+			if name in value:
+				path = lib.pathToNTIID(key)
+				if path:
+					return path
+
+	@property
+	def note_container_display_name(self):
+		path = self._path_to_note_container()
+		if path:
+			for i in reversed(path):
+				if i.__name__.strip():
+					return i.__name__
+
+	@property
+	def note_container_href(self):
+		"For note containers, we want to go to the content unit, not the note container"
+		path = self._path_to_note_container()
+		if path:
+			ntiid = path[-1].ntiid
+			parsed_ntiid = parse_ntiid(ntiid)
+			# The app has another, nice, format for content
+			# #!HTML/<provider>/<specific>
+			provider = parsed_ntiid.provider
+			specific = parsed_ntiid.specific
+			return self.request.route_url('objects.generic.traversal',
+										  traverse=(),
+										  _anchor="!HTML/" + provider + '/' + specific).replace('/dataserver2', '')
+
 
 	@property
 	def creator_avatar_url(self):
