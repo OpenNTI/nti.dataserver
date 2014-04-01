@@ -22,7 +22,6 @@ import nameparser
 
 from nti.appserver import MessageFactory as _
 
-import zope.annotation
 from zope import component
 from zope import interface
 from zope.event import notify
