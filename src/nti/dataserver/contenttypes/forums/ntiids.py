@@ -106,7 +106,10 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 		# may need to adjust the split.
 		# TODO: Is there still a case this could miss? If the IDs are just right?
 		names = specific.split('.')
-		if len(names) == 3:
+		if len(names) == 2:
+			# Unambiguous
+			forum_name, topic_name = names
+		elif len(names) == 3:
 			# Two dots, have to figure out which is parent/child and
 			# which is unique. This depends on our implementation
 			# of making names unique using numeric suffixes
@@ -118,7 +121,7 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 				topic_name = names[1] + '.' + names[2]
 		else:
 			assert len(names) == 4
-			# unambiguious case
+			# unambiguous case
 			forum_name = names[0] + '.' + names[1]
 			topic_name = names[2] + '.' + names[3]
 

@@ -268,3 +268,7 @@ class TestTopicNTIIDResolver(DataserverLayerTest):
 	@mock_dataserver.WithMockDS
 	def test_both_name_unique(self):
 		self._do_test( 'test.6854', 'test.6854' )
+
+	@mock_dataserver.WithMockDS
+	def test_neither_name_unique(self):
+		self._do_test( 'test', 'test' )
