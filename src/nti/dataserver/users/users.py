@@ -544,6 +544,12 @@ class User(Principal):
 
 		# Create the containers, along with the initial set of contents.
 		# Note that this doesn't reparent them, they stay parented by us
+		# FIXME: We should be using a unique value for containerType (instead of
+		# the generic CheckingLastModifiedBTreeContainer) so that we can
+		# register adapters for these containers in a clean way.
+		# FIXME: Why are we just using a dict instead of a btree implementation
+		# for containersType? A user can (does) have many, many different
+		# containers, so won't this pickle get too large?
 		self.containers = datastructures.ContainedStorage(create=self,
 														  containersType=dicts.CaseInsensitiveLastModifiedDict,
 														  containers={self.friendsLists.container_name: self.friendsLists,
