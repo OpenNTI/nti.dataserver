@@ -6,7 +6,7 @@ Support for reading and writing date and time related objects.
 See the :mod:`datetime` module, as well as the :mod:`zope.interface.common.idatetime`
 module for types of objects.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -14,17 +14,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-from zope import component
-
-import zope.interface.common.idatetime
-from . import interfaces
-
 import sys
-import isodate
 import pytz
 import time
+import isodate
+
+from zope import interface
+from zope import component
+import zope.interface.common.idatetime
+
 from nti.utils.schema import InvalidValue
+
+from . import interfaces
 
 def _parse_with(func, string):
 	try:
@@ -33,7 +34,6 @@ def _parse_with(func, string):
 		_, v, tb = sys.exc_info()
 		e = InvalidValue( *v.args, value=string )
 		raise e, None, tb
-
 
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDate)
@@ -106,7 +106,7 @@ def _as_utc_naive(dt, assume_local=True, local_tzname=None):
 
 @component.adapter(basestring)
 @interface.implementer(zope.interface.common.idatetime.IDateTime)
-def datetime_from_string( string, assume_local=False, local_tzname=None ):
+def datetime_from_string(string, assume_local=False, local_tzname=None):
 	"""
 	This adapter allows any field which comes in as a string is
 	IOS8601 format to be transformed into a datetime. The schema field
@@ -142,9 +142,11 @@ def datetime_from_string( string, assume_local=False, local_tzname=None ):
 @component.adapter(zope.interface.common.idatetime.IDate)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
 class _date_to_string(object):
-	"Produce an IOS8601 string from a date."
+	"""
+	Produce an IOS8601 string from a date.
+	"""
 
-	def __init__( self, date ):
+	def __init__(self, date):
 		self.date = date
 
 	def toExternalObject(self, **kwargs):
@@ -153,9 +155,11 @@ class _date_to_string(object):
 @component.adapter(zope.interface.common.idatetime.IDateTime)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
 class _datetime_to_string(object):
-	"Produce an IOS8601 string from a datetime"
+	"""
+	Produce an IOS8601 string from a datetime
+	"""
 
-	def __init__( self, date ):
+	def __init__(self, date):
 		self.date = date
 
 	def toExternalObject(self, **kwargs):
@@ -176,7 +180,8 @@ class _duration_to_string(object):
 	everything to days and smaller. Thus, the format produced by this
 	transformation will never have a field larger than days.
 	"""
-	def __init__( self, date ):
+
+	def __init__(self, date):
 		self.date = date
 
 	def toExternalObject(self, **kwargs):
