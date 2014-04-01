@@ -3,7 +3,7 @@
 """
 Search utils.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -11,14 +11,45 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
+import gevent
+import functools
+
+from zope import component
 
 from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
+
+from nti.dataserver import interfaces as nti_interfaces
 
 from . import common
 from . import constants
 from . import search_query
 from . import content_utils
 from . import interfaces as search_interfaces
+
+def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
+	assert func is not None
+
+	# prepare function call
+	new_callable = functools.partial(func, **kwargs)
+
+	# save site names  / deprecated
+	request = request if request is not None else get_current_request()
+	site_names = getattr(request, 'possible_site_names', ()) + ('',)
+
+	def _runner():
+		transactionRunner = \
+			component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		transactionRunner = functools.partial(transactionRunner,
+											  site_names=site_names,
+											  side_effect_free=side_effect_free)
+		transactionRunner(new_callable)
+
+	# user the avaible spawn function
+	greenlet = 	request.nti_gevent_spawn(run=_runner) if request is not None \
+				else gevent.spawn(_runner)
+
+	return greenlet
 
 _extractor_pe = re.compile('[?*]*(.*)')
 

@@ -3,7 +3,7 @@
 """
 Search index manager.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -15,6 +15,8 @@ import gevent
 
 from zope import component
 from zope import interface
+
+from pyramid.threadlocal import get_current_request
 
 from perfmetrics import metric
 
@@ -61,7 +63,12 @@ class IndexManager(object):
 		results = search_results.empty_search_results(query)
 		start = time.time()
 		if self.parallel_search:
-			greenlet = gevent.spawn(self.content_search, query=query, store=results)
+			request = get_current_request()
+			if request is None:
+				greenlet = gevent.spawn(self.content_search, query=query, store=results)
+			else:
+				greenlet = request.nti_gevent_spawn(self.content_search, query=query,
+													store=results)
 			ugd_results = self.user_data_search(query=query, store=results)
 			cnt_results = greenlet.get()
 		else:
