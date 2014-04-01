@@ -3,21 +3,18 @@
 """
 ZCML directives relating to content providers.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import interface
-from zope.contentprovider.interfaces import IContentProvider
-
-import zope.configuration.fields
+from zope.configuration import fields
 from zope.component.zcml import adapter
+from zope.contentprovider.interfaces import IContentProvider
 
 from nti.utils import schema
 
@@ -38,16 +35,13 @@ class IPyramidRendererDirective(interface.Interface):
 		required=False,
 		min_length=1 )
 
-	for_ = zope.configuration.fields.Tokens(
+	for_ = fields.Tokens(
 		title="Specifications to be adapted",
 		description="This should be a list of interfaces or classes",
 		required=False,
-		value_type=zope.configuration.fields.GlobalObject( missing_value=object() )
+		value_type=fields.GlobalObject(missing_value=object())
         )
 
-
 def registerPyramidRenderer( _context, template, name='', for_=None ):
-
 	factory = PyramidRendererContentProviderFactory( template )
-
 	adapter( _context, (factory,), provides=IContentProvider, for_=for_, name=name )
