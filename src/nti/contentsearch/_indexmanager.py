@@ -40,7 +40,7 @@ class IndexManager(object):
 			cls.indexmanager = super(IndexManager, cls).__new__(cls)
 		return cls.indexmanager
 
-	def __init__(self, parallel_search=True):
+	def __init__(self, parallel_search=False):
 		self.parallel_search = parallel_search
 
 	@classmethod
