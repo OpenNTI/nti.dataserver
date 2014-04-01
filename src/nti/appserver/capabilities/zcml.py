@@ -3,18 +3,19 @@
 """
 ZCML directives relating to capabilities.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from .interfaces import ICapability
-from .capability import Capability
-from zope.security.zcml import IPermissionDirective
 from zope.component.zcml import utility
+from zope.security.zcml import IPermissionDirective
+
+from .capability import Capability
+from .interfaces import ICapability
 
 class IRegisterCapabilityDirective(IPermissionDirective):
 	"""
@@ -23,5 +24,5 @@ class IRegisterCapabilityDirective(IPermissionDirective):
 
 def registerCapability(_context, id, title, description=''):
 	cap_id = id
-	capability = Capability( cap_id, title, description )
+	capability = Capability(cap_id, title, description)
 	utility(_context, provides=ICapability, component=capability, name=cap_id)

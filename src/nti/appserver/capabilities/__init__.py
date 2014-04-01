@@ -9,10 +9,10 @@ is applied to one particular object in an ACL and enforced individually by views
 but a capability protects an entire feature (which may make up several views and multiple different
 objects).
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
