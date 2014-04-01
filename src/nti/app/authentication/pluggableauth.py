@@ -38,7 +38,6 @@ class DataserverUsersAuthenticatorPlugin(object):
 		"""
 		login = None
 		password = None
-		user = None
 		if ILoginPassword.providedBy(credentials):
 			login = credentials.getLogin()
 			password = credentials.getPassword()

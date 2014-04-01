@@ -1,8 +1,6 @@
 #!/Sr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -20,7 +18,6 @@ from zope import component
 
 from .interfaces import ILogonWhitelist
 from nti.appserver.interfaces import IApplicationSettings
-from repoze.who.interfaces import IChallenger
 
 from .who_classifiers import application_request_classifier
 from .who_classifiers import forbidden_or_missing_challenge_decider
@@ -32,7 +29,6 @@ from .who_redirector import BrowserRedirectorPlugin
 
 from repoze.who.api import APIFactory
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
-from repoze.who.plugins.redirector import RedirectorPlugin
 
 from nti.dataserver.users import User
 
