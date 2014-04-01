@@ -3,9 +3,10 @@
 """
 Views relating to coppa administration.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -163,7 +164,8 @@ class ContactEmailColumn(column.Column):
 		return '%s-contactemail-%s' % (self.id, component.getUtility(IIntIds).getId(item))
 
 	def getItemValue(self, item):
-		return self._values.get( self.getItemKey(item ) ) or getattr( user_interfaces.IUserProfile(item), 'contact_email', None )
+		return 	self._values.get(self.getItemKey(item)) or \
+				getattr(user_interfaces.IUserProfile(item), 'contact_email', None)
 
 	def update(self):
 		for item in self.table.values:
@@ -194,10 +196,13 @@ def account_profile_view( request ):
 	context = request.context
 	profile_iface = user_interfaces.IUserProfileSchemaProvider( context ).getSchema()
 	profile = profile_iface( context )
-	profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
+	profile_schema = find_most_derived_interface(profile,
+												 profile_iface,
+												 possibilities=interface.providedBy(profile))
 
 	fields = zope.formlib.form.Fields( profile_schema, render_context=True )
-	fields = fields.omit( *[k for k,v in profile_schema.namesAndDescriptions(all=True) if v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) ] )
+	fields = fields.omit(*[k for k, v in profile_schema.namesAndDescriptions(all=True) \
+						 if v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) ])
 
 	widgets = zope.formlib.form.setUpWidgets( fields, 'form', context,
 											  IBrowserRequest( request ),
