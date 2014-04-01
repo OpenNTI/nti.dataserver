@@ -18,7 +18,7 @@ user for the application to notice at the next logon time:
   That just seems to complicate the clint which already 'knows' how to update
   the profile (but it could be handy from the command line).
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -47,8 +47,9 @@ import os
 
 import anyjson as json
 import argparse
+
 import boto
-import boto.sqs.message
+from boto.sqs.message import RawMessage
 
 from zope import component
 import zope.interface.exceptions
@@ -177,7 +178,7 @@ def process_sqs_messages():
 	def _proc():
 		sqs = boto.connect_sqs()
 		fb_q = sqs.get_queue( args.queue )
-		fb_q.message_class = boto.sqs.message.RawMessage # These aren't encoded
+		fb_q.message_class = RawMessage  # These aren't encoded
 		logger.info( "Processing bounce notices from %s", fb_q )
 		def gen():
 			msg = fb_q.read()
