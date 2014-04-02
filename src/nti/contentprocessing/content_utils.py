@@ -25,7 +25,6 @@ try:
 except ImportError:
 	from whoosh.support.levenshtein import relative
 
-
 from nltk.tokenize import RegexpTokenizer
 
 import repoze.lru
@@ -43,8 +42,8 @@ from  .import default_punk_char_pattern_plus
 from . import default_word_tokenizer_expression
 from  .import default_punk_char_expression_plus
 
-def get_content_translation_table(language='en'):
-	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=language)
+def get_content_translation_table(lang='en'):
+	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=lang)
 	return table or _default_content_translation_table()
 
 @interface.implementer(cp_interfaces.IWordTokenizerExpression)
@@ -72,16 +71,16 @@ def _default_punctuation_char_pattern_plus():
 	return default_punk_char_pattern_plus
 
 @repoze.lru.lru_cache(500)
-def tokenize_content(text, language='en'):
-	tokenizer = component.getUtility(cp_interfaces.IContentTokenizer, name=language)
+def tokenize_content(text, lang='en'):
+	tokenizer = component.getUtility(cp_interfaces.IContentTokenizer, name=lang)
 	result = tokenizer.tokenize(unicode(text)) if text else ()
 	return result
 
 split_content = tokenize_content
 
-def get_content(text=None, language="en"):
+def get_content(text=None, lang="en"):
 	text = unicode(text) if text else None
-	result = split_content(text, language) if text else ()
+	result = split_content(text, lang) if text else ()
 	result = ' '.join(result)
 	return unicode(result)
 
@@ -146,6 +145,7 @@ def rank_words(word, terms, reverse=True):
 
 @interface.implementer(cp_interfaces.IContentTranslationTable)
 def _default_content_translation_table():
+
 	name = resource_filename(__name__, "punctuation-en.txt")
 	with open(name, 'r') as src:
 		lines = src.readlines()

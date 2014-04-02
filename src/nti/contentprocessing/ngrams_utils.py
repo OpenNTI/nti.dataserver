@@ -3,7 +3,7 @@
 """
 NGRAM processing utilities
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -43,8 +43,8 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 @repoze.lru.lru_cache(100)
-def compute_ngrams(text, language="en"):
-	u = component.getUtility(cp_interfaces.INgramComputer, name=language)
+def compute_ngrams(text, lang="en"):
+	u = component.getUtility(cp_interfaces.INgramComputer, name=lang)
 	result = u.compute(text) if text else u''
 	return unicode(result)
 
