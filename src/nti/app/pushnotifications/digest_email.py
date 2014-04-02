@@ -350,6 +350,7 @@ class DigestEmailCollector(object):
 			result[k] = template_args
 
 		result['unsubscribe_link'] = request.resource_url(self.remoteUser, 'unsubscribe')
+		result['email_to'] = recipient['email'].email
 		return result
 
 
