@@ -16,9 +16,9 @@
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
 	
-	<!-- Index manager -->
-			 
+	<!-- Index manager 		 
 	<utility factory=".indexmanager.create_index_manager"  />
+	-->
 	
 	<!-- Content processing -->
 
@@ -195,9 +195,11 @@
 				for="*"
 				zcml:condition="have devmode" />
 
+	<!--
 	<subscriber handler=".subscribers._set_change_listener"
 				for="pyramid.events.ApplicationCreated" />
-
+	-->
+	
 	<!-- Content Resolvers -->
 
 	<subscriber factory=".content_utils._DefaultTagKeywordResolver"
