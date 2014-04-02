@@ -35,7 +35,6 @@ from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.whoosh_schemas import create_book_schema
 from nti.contentsearch.whoosh_storage import create_directory_index
 from nti.contentsearch.whoosh_searcher import WhooshContentSearcher
-from nti.contentsearch.indexmanager import create_index_manager_with_repoze
 
 from nti.contentsearch.constants import (ITEMS, HIT_COUNT)
 
@@ -89,24 +88,22 @@ class TestIndexManager(unittest.TestCase):
 
 	layer = IndexManagerTestLayer
 
-	def create_index_mananger(self):
-		result = create_index_manager_with_repoze(parallel_search=False)
-		component.provideUtility(result, search_interfaces.IIndexManager)
-		return result
+	def get_index_mananger(self):
+		return component.getUtility(search_interfaces.IIndexManager)
 	
 	def wait_delay(self):
 		pass
 
 	@WithMockDSTrans
 	def test_add_book(self):
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		assert_that(self.im.add_book(indexname='unknown', ntiid='unknown',
 									 indexdir='/tmp'),
 					is_(False))
 
 	@WithMockDSTrans
 	def test_search_book(self):
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		self.im.add_book(indexname='bleach', ntiid='bleach', indexdir=self.book_idx_dir)
 
 		q = QueryObject(indexid='bleach', term='omega')
@@ -144,7 +141,7 @@ class TestIndexManager(unittest.TestCase):
 		return notes
 
 	def _add_notes_and_index(self, strings=zanpakuto_commands):
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		notes, usr = self._add_notes_to_ds(strings)
 		self._add_notes_to_index(self.im, notes, usr)
 		return notes, usr
@@ -268,7 +265,7 @@ class TestIndexManager(unittest.TestCase):
 		note.addSharingTarget(c)
 		note = user_2.addContainedObject(note)
 
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		self.im.index_user_content(data=note, target=user_2)
 		self.im.index_user_content(data=note, target=c)
 		self.wait_delay()
@@ -297,7 +294,7 @@ class TestIndexManager(unittest.TestCase):
 
 		note = user.addContainedObject(note)
 
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		for c in comms:
 			self.im.index_user_content(data=note, target=c)
 		self.wait_delay()
@@ -330,7 +327,7 @@ class TestIndexManager(unittest.TestCase):
 		note.addSharingTarget(bleach)
 		note = ichigo.addContainedObject(note)
 
-		self.im = self.create_index_mananger()
+		self.im = self.get_index_mananger()
 		for c in (ichigo, bleach):
 			self.im.index_user_content(data=note, target=c)
 
