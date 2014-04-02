@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-NLTK based stemmers
+Whoosh based stemmers
 
 .. $Id$
 """
@@ -10,24 +10,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import nltk
-
 from zope import interface
+
+from whoosh import lang as whoosh_lang
 
 from . import interfaces as stemmer_interfaces
 
 @interface.implementer(stemmer_interfaces.IStemmer)
-class _PorterStemmer(object):
+class _WhooshStemmer(object):
 
-	__slots__ = ()
+    __slots__ = ()
 
-	def __init__(self):
-		pass
+    def __init__(self):
+        pass
 
-	def stem(self, token, lang='en'):
-		token = unicode(token)
-		# The underlying stemmer object is NOT thread safe,
-		# it must not be used concurrently
-		stemmer = nltk.PorterStemmer()
-		result = stemmer.stem(token)
-		return result if result else token
+    def stem(self, token, language='en'):
+        stemmer = whoosh_lang.stemmer_for_language(language)
+        token = unicode(token)
+        result = stemmer(token)
+        return result if result else token

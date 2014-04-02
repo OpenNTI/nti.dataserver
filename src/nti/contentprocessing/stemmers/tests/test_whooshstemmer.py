@@ -15,19 +15,19 @@ import unittest
 from zope import component
 
 from nti.contentprocessing.stemmers import interfaces
-from nti.contentprocessing.stemmers.zopyx import _ZopyYXStemmer
+from nti.contentprocessing.stemmers.whoosh import _WhooshStemmer
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
-class TestZopyYXStemmer(unittest.TestCase):
+class TestWhooshStemmer(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
 	def test_stemmer(self):
-		stemmer = _ZopyYXStemmer()
+		stemmer = _WhooshStemmer()
 		assert_that(stemmer.stem('viruses'), is_('virus'))
 
 	def test_utility(self):
-		stemmer = component.getUtility(interfaces.IStemmer, "zopyx")
+		stemmer = component.getUtility(interfaces.IStemmer, "whoosh")
 		assert_that(stemmer.stem('viruses'), is_('virus'))
 		assert_that(stemmer.stem('temptation'), is_('temptat'))

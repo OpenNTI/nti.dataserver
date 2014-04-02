@@ -3,7 +3,7 @@
 """
 Stemmer module
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -18,7 +18,7 @@ from zope import interface
 from . import interfaces as stemmer_interfaces
 
 @repoze.lru.lru_cache(1000)
-def stem_word(word, name='porter'):
+def stem_word(word, lang='en', name=''):
     stemmer = component.getUtility(stemmer_interfaces.IStemmer, name=name)
-    result = stemmer.stem(unicode(word)) if word else None
+    result = stemmer.stem(unicode(word), lang) if word else None
     return result

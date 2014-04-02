@@ -9,11 +9,12 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<utility factory=".nltk._PorterStemmer" provides=".interfaces.IStemmer"/>
 	<utility factory=".nltk._PorterStemmer" provides=".interfaces.IStemmer" name="porter" />
-
-	<utility factory=".zopyx.ZopyYXStemmer"
-			 name="zopyx"
+	
+	<utility factory=".whoosh._WhooshStemmer" provides=".interfaces.IStemmer"/>
+	<utility factory=".whoosh._WhooshStemmer" provides=".interfaces.IStemmer" name="whoosh" />
+	
+	<utility factory=".zopyx._ZopyYXStemmer" name="zopyx"
 			 zcml:condition="installed zopyx.txng3.ext" />
 
 </configure>
