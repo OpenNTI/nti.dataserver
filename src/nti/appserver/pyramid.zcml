@@ -6,17 +6,6 @@
 
 	<include package="zope.component" file="meta.zcml" />
 
-	<!-- The dictionary -->
-	<pyramid:route name="dictionary.word"
-				   pattern="/dictionary/{word}"
-				   request_method="GET" />
-
-	<pyramid:static name="/dictionary/static"
-					path="nti.dictserver:static/"
-					cache_max_age="864000" />
-
-	<include package="nti.dictserver" file="pyramid.zcml" />
-
 	<!-- Stacktraces -->
 	<configure zcml:condition="have devmode">
 		<pyramid:route name="stacktraces"
