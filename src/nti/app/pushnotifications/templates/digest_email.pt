@@ -196,7 +196,7 @@
 												</span>
 
 												<strong tal:content="notable/creator">David Foster</strong> assigned a grade
-												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name">Open 9.4 Interpretation Essay</a>.
+												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name|default">a course</a>.
 
 												<div tal:condition="notable/remaining">
 													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
@@ -208,10 +208,12 @@
 								</td>
 								</tr>
 								<tr width="100%">
-									<td valign="top" align="left" style="padding: 16px;font-size: 14px; line-height: 1.25em;">
+									<td valign="top" align="left" style="padding: 16px;font-size: 12px; line-height: 1.25em;">
 										<p style="color: #999; margin-bottom: 8px;">
+											This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
+											If you don't want to receive these emails in the future, please
 											<a tal:attributes="href options/unsubscribe_link"
-											   href="" style="color: #666;">Stop receiving these emails.</a>
+											   href="" style="color: #666;">unsubscribe</a>.
 										</p>
 									</td>
 

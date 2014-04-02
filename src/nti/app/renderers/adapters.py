@@ -16,6 +16,7 @@ from zope import component
 
 from nti.dataserver.interfaces import ITitledContent
 from nti.dataserver.interfaces import IUser
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from pyramid.interfaces import IRequest
@@ -23,6 +24,8 @@ from pyramid.interfaces import IRequest
 from zc.displayname.interfaces import IDisplayNameGenerator
 from zc.displayname.adapters import DefaultDisplayNameGenerator
 from zc.displayname.adapters import convertName
+
+from nti.ntiids.ntiids import is_valid_ntiid_string
 
 @interface.implementer(IDisplayNameGenerator)
 @component.adapter(IUser,IRequest)
@@ -50,8 +53,21 @@ class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
 	"""
 
 	def __call__(self, maxlength=None):
+
 		title = getattr(self.context, 'title', None)
 		if title:
 			return convertName(title, self.request, maxlength)
 
-		return DefaultDisplayNameGenerator.__call__(self, maxlength=maxlength)
+		# No title. Lets try to find a body snippet
+		bodylen = maxlength or 30
+		body = getattr(self.context, 'body', None)
+		if body and isinstance(body[0], basestring):
+			text = IPlainTextContentFragment(body[0])
+			if text:
+				return convertName(text, self.request, bodylen)
+
+
+		default = DefaultDisplayNameGenerator.__call__(self, maxlength=maxlength)
+		if is_valid_ntiid_string(default):
+			# Snap, got the ugly name. We never want to display that.
+			return ''
