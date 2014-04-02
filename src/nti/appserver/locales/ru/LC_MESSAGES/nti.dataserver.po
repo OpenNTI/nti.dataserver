@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-03-26 12:55-0500\n"
+"POT-Creation-Date: 2014-04-02 08:16-0500\n"
 "PO-Revision-Date: 2014-03-25 10:13-0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: ru <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgstr ""
 msgid "Thank you. You have been unsubscribed."
 msgstr ""
 
-#: src/nti/app/renderers/renderers.py:92
+#: src/nti/app/renderers/renderers.py:91
 msgid "Rendering to a browser not supported yet"
 msgstr ""
 
@@ -123,8 +123,12 @@ msgstr ""
 msgid "Cannot use an ID already in use"
 msgstr ""
 
-#: src/nti/appserver/zope_file_views.py:160
+#: src/nti/appserver/zope_file_views.py:188
 msgid "Not an image upload"
+msgstr ""
+
+#: src/nti/appserver/forums/adapters.py:40
+msgid "${username}'s Thoughts"
 msgstr ""
 
 #: src/nti/appserver/invitations/interfaces.py:150
@@ -135,48 +139,48 @@ msgstr ""
 msgid "The invitation code has expired."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:374
+#: src/nti/appserver/policies/site_policies.py:373
 msgid "Username contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:379
+#: src/nti/appserver/policies/site_policies.py:378
 msgid "Alias contains a censored sequence"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:531
+#: src/nti/appserver/policies/site_policies.py:530
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:217
 msgid "Please provide your first name."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:535
+#: src/nti/appserver/policies/site_policies.py:534
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:224
 msgid "Please provide your last name."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:553
+#: src/nti/appserver/policies/site_policies.py:552
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:189
 msgid "Birthdate must be in the past."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:556
+#: src/nti/appserver/policies/site_policies.py:555
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:195
 msgid "Birthdate must be at least four years ago."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:559
+#: src/nti/appserver/policies/site_policies.py:558
 #: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:201
 msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:601
+#: src/nti/appserver/policies/site_policies.py:600
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:616
+#: src/nti/appserver/policies/site_policies.py:615
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:730
+#: src/nti/appserver/policies/site_policies.py:729
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
@@ -442,3 +446,4 @@ msgstr ""
 #: src/nti/utils/schema.py:265
 msgid "${field} is too short."
 msgstr ""
+
