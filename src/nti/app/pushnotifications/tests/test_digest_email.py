@@ -32,7 +32,7 @@ from nti.contentrange import contentrange
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.externalization.internalization import update_from_external_object
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -90,6 +90,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 				top_n.applicableRange = contentrange.ContentRangeDescription()
 				top_n.containerId = self.CONTAINER_ID
 				top_n.body = ("Top is notable", str(i))
+				top_n.title = IPlainTextContentFragment( "NOTABLE NOTE" )
 				top_n.createdTime = 100 + i
 				top_n.creator = user
 				top_n.tags = contenttypes.Note.tags.fromObject([jason.NTIID])
@@ -139,6 +140,8 @@ class TestApplicationDigest(ApplicationLayerTest):
 		msg = msgs[0]
 		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
 		assert_that( msg, contains_string( 'http://localhost/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
+
+		assert_that( msg, contains_string('NOTABLE NOTE'))
 
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)

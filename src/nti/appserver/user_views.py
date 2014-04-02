@@ -14,9 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import time
 
-from zope import interface
-from zope import component
-
 from pyramid.view import view_config
 
 from nti.dataserver.users.users_external import _avatar_url
@@ -55,19 +52,3 @@ def avatar_view(context, request):
 	result.cache_control.max_age = 300
 	result.expires = time.time() + 300
 	return result
-
-from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.dataserver.interfaces import IUser
-from zc.displayname.interfaces import IDisplayNameGenerator
-from pyramid.interfaces import IRequest
-
-@interface.implementer(IDisplayNameGenerator)
-@component.adapter(IUser,IRequest)
-class UserDisplayNameGenerator(object):
-
-	def __init__(self, context, request):
-		self.context = context
-
-	def __call__(self, maxlength=None):
-		names = IFriendlyNamed(self.context)
-		return names.alias or names.realname or self.context.username

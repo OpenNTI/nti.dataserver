@@ -38,4 +38,10 @@
 	<utility zcml:condition="have testmode"
 			 component=".rest._throw_action" />
 
+
+	<!-- display names -->
+	<adapter factory=".adapters.UserDisplayNameGenerator" />
+	<adapter factory=".adapters.TitledContentDisplayNameGenerator" />
+
+
 </configure>

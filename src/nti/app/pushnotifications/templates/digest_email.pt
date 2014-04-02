@@ -104,9 +104,7 @@
 
 												<strong tal:content="notable/creator">Greg Higgins</strong>
 												<!--! Sometimes there is no title, so we can't make that the link -->
-												<!--! Also, a note is not DCDescriptiveProperties so until we have a specific display
-												name generator for it, use its title directly. -->
-												<a href="" tal:attributes="href notable/href">shared a note</a> <em tal:content="notable/title|notable/snippet">Test save</em>
+												<a href="" tal:attributes="href notable/href">shared a note</a> <em tal:content="notable/display_name|notable/snippet">Test save</em>
 												<span tal:condition="notable/__parent__/note_container_display_name">
 												in <a href=""
 													  tal:attributes="href notable/__parent__/note_container_href|default"
