@@ -2,7 +2,7 @@
 """
 TermExtract key word extractor.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -27,7 +27,7 @@ class _DefaultKeyWordFilter(object):
 		result = result and len(word) > 1
 		return result
 
-def extract_key_words(tokenized_words, max_words=10, filtername='indexer'):
+def extract_key_words(tokenized_words, max_words=10, lang='en', filtername='indexer'):
 	"""
 	extract key words for the specified list of tokens
 	
@@ -35,7 +35,7 @@ def extract_key_words(tokenized_words, max_words=10, filtername='indexer'):
 	:param max_words: Max number of words to return
 	"""
 	keywords = []
-	records = term_extract_key_words(tokenized_words, filtername)
+	records = term_extract_key_words(tokenized_words, lang=lang, filtername=filtername)
 	for r in records[:max_words]:
 		word = r.token
 		terms = getattr(r, 'terms', ())

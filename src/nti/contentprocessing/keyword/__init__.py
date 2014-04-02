@@ -2,7 +2,7 @@
 """
 Keyword extractor module
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -17,9 +17,9 @@ from . import interfaces as cpkw_interfaces
 
 ContentKeyWord = namedtuple('ContentKeyWord', 'token relevance')
 
-def term_extract_key_words(content, filtername=u''):
+def term_extract_key_words(content, lang='en', filtername=u''):
 	extractor = component.getUtility(cpkw_interfaces.ITermExtractKeyWordExtractor)
-	result = extractor(content, filtername)
+	result = extractor(content, lang=lang, filtername=filtername)
 	return result
 
 def extract_key_words(content):

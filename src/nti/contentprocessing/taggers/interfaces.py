@@ -2,7 +2,7 @@
 """
 POS tagger interfaces
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -14,21 +14,31 @@ class ITagger(interface.Interface):
 	Defines a POS tagger
 	"""
 	def tag(tokens):
-		"""tag the specified tokens"""
+		"""
+		tag the specified tokens
+		"""
 		
 class INLTKTaggedSents(interface.Interface):
 	
 	def __call__(corpus):
-		"""return tagged sents for the specified corpus"""
+		"""
+		return tagged sents for the specified corpus
+		"""
 
 class ITaggedCorpus(interface.Interface):
-	"""Define a POS tagged corpus."""
+	"""
+	Define a POS tagged corpus.
+	"""
 	
 	def tagged_words():
-		"""return a list of POS tagged words"""
+		"""
+		return a list of POS tagged words
+		"""
 		
 	def tagged_sents():
-		"""return a list of POS tagged sentences"""
+		"""
+		return a list of POS tagged sentences
+		"""
 
 class INLTKBackoffNgramTagger(ITagger):
 	pass

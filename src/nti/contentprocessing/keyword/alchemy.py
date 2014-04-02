@@ -3,7 +3,7 @@
 """
 Alchemy keyword extractor
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -26,7 +26,7 @@ class _AlchemyAPIKeyWorExtractor(object):
 	limit_kb = 150
 	url = u'http://access.alchemyapi.com/calls/text/TextGetRankedKeywords'
 
-	def __call__(self, content, keyname, **kwargs):
+	def __call__(self, content, keyname, *args, **kwargs):
 		result = ()
 		content = content or u''
 		size_kb = sys.getsizeof(content) / 1024.0

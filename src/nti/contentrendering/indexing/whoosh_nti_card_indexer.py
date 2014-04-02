@@ -2,7 +2,7 @@
 """
 Whoosh NTI card indexer.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -17,7 +17,7 @@ from zope import interface
 
 from nti.contentprocessing import get_content_translation_table
 
-from nti.contentsearch import nticard_prefix
+from nti.contentsearch.constants import nticard_prefix
 from nti.contentsearch import interfaces as search_interfaces
 
 from . import node_utils
@@ -64,8 +64,8 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 		text = text.translate(table) if table and text else text
 		return text
 
-	def index_card_entry(self, writer, containerId, info, language=u'en'):
-		table = get_content_translation_table(language)
+	def index_card_entry(self, writer, containerId, info, lang=u'en'):
+		table = get_content_translation_table(lang)
 		ntiid = info.get('ntiid')
 		title = info.get('title')
 		if not ntiid or not title:
@@ -111,25 +111,25 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 					result[ntiid] = (info, containerId)
 		return result
 
-	def _index_cards(self, cards, writer, language='en'):
+	def _index_cards(self, cards, writer, lang='en'):
 		count = 0
 		for _, data in cards.items():
 			info, containerId = data
-			if self.index_card_entry(writer, containerId, info, language):
+			if self.index_card_entry(writer, containerId, info, lang):
 				count += 1
 		return count
 
-	def process_book(self, idxspec, writer, language='en'):
+	def process_book(self, idxspec, writer, lang='en'):
 		cards = {}
 		toc = idxspec.book.toc
 		def _loop(topic):
-			m = self.process_topic(idxspec, topic, writer, language)
+			m = self.process_topic(idxspec, topic, writer, lang)
 			cards.update(m)
 			for t in topic.childTopics:
 				_loop(t)
 		_loop(toc.root_topic)
 
-		result = self._index_cards(cards, writer, language)
+		result = self._index_cards(cards, writer, lang)
 		return result
 
 _DefaultWhooshNTICardIndexer = _WhooshNTICardIndexer
