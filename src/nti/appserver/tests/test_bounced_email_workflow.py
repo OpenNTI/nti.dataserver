@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 import unittest
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import has_length
 from hamcrest import has_property
 
 from zope.lifecycleevent import modified
@@ -67,20 +68,40 @@ class _HasLinkMatcher(BaseMatcher):
 
 has_link = _HasLinkMatcher
 
+from nti.mailer.interfaces import IVERP
+import rfc822
+from zope import component
+
+class _TrivialVerp(object):
+
+	def principal_ids_from_verp(self, fromaddr, request=None):
+		if '+' not in fromaddr:
+			return ()
+
+		_, addr = rfc822.parseaddr(fromaddr)
+		return (addr.split('+', 1)[1].split('@')[0],)
+
 class TestBouncedEmailworkflow(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
+
+	def setUp(self):
+		self._old_verp = component.getUtility(IVERP)
+		component.provideUtility(_TrivialVerp(), IVERP)
+
+	def tearDown(self):
+		component.provideUtility(self._old_verp, IVERP)
 
 	def test_process_transient_messages(self):
 		messages = _read_msgs()
 		# no dataserver needed, because they're all transient
-		proc = bounced_email_workflow.process_ses_feedback( messages, mark_transient=False )
+		proc, _ = bounced_email_workflow.process_ses_feedback( messages, mark_transient=False )
 		assert_that( proc, is_( messages ) )
 
 
 	@WithMockDSTrans
 	def test_process_permanent_bounces(self):
 		messages = _read_msgs( make_perm=True )
-		proc = bounced_email_workflow.process_ses_feedback( messages )
+		proc, _ = bounced_email_workflow.process_ses_feedback( messages )
 		# But no users have these email addresses, so nothing actually happened
 		assert_that( proc, is_( messages ) )
 
@@ -101,8 +122,9 @@ class TestBouncedEmailworkflow(unittest.TestCase):
 		modified( u4 )
 
 		messages = _read_msgs( make_perm=True )
-		proc = bounced_email_workflow.process_ses_feedback( messages )
+		proc, matched = bounced_email_workflow.process_ses_feedback( messages )
 		assert_that( proc, is_( messages ) )
+		assert_that( matched, has_length(4) )
 
 		assert_that( u1, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
 		assert_that( u2, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
