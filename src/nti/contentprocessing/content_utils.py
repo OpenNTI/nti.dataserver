@@ -143,20 +143,26 @@ def rank_words(word, terms, reverse=True):
 	result = ws.rank(word, terms, reverse)
 	return result
 
+default_trans_table = None
+
 @interface.implementer(cp_interfaces.IContentTranslationTable)
 def _default_content_translation_table():
 
-	name = resource_filename(__name__, "punctuation-en.txt")
-	with open(name, 'r') as src:
-		lines = src.readlines()
+	global default_trans_table
+	
+	if default_trans_table is None:
+		name = resource_filename(__name__, "punctuation-en.txt")
+		with open(name, 'r') as src:
+			lines = src.readlines()
 
-	result = {}
-	for line in lines:
-		line = line.replace('\n', '')
-		splits = line.split('\t')
-		repl = splits[4] or None if len(splits) >= 5 else None
-		result[int(splits[0])] = repl
-	return result
+		default_trans_table = {}
+		for line in lines:
+			line = line.replace('\n', '')
+			splits = line.split('\t')
+			repl = splits[4] or None if len(splits) >= 5 else None
+			default_trans_table[int(splits[0])] = repl
+
+	return default_trans_table
 
 def clean_special_characters(source, replacement=u''):
 	"""
