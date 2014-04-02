@@ -2,7 +2,7 @@
 """
 Content search utilities.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,7 +16,7 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentsearch import common
 from nti.contentsearch import discriminators
-from nti.contentsearch import get_ugd_indexable_types
+from nti.contentsearch.common import get_ugd_indexable_types
 from nti.contentsearch import interfaces as search_interfaces
 
 from nti.dataserver import users
