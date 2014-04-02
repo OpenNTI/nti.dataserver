@@ -15,7 +15,11 @@
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
+	
+	<!-- Index manager -->
 			 
+	<utility factory=".indexmanager.create_index_manager"  />
+	
 	<!-- Content processing -->
 
 	<!-- make sure stop words are registered before evertything else -->
@@ -190,7 +194,10 @@
 				provides=".interfaces.ISearchHitPredicate"
 				for="*"
 				zcml:condition="have devmode" />
-				
+
+	<subscriber handler=".subscribers._set_change_listener"
+				for="pyramid.events.ApplicationCreated" />
+
 	<!-- Content Resolvers -->
 
 	<subscriber factory=".content_utils._DefaultTagKeywordResolver"
