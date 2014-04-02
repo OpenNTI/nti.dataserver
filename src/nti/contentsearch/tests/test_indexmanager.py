@@ -32,6 +32,7 @@ from nti.externalization.externalization import toExternalObject
 
 from nti.contentsearch.search_query import QueryObject
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.indexmanager import create_index_manager
 from nti.contentsearch.whoosh_schemas import create_book_schema
 from nti.contentsearch.whoosh_storage import create_directory_index
 from nti.contentsearch.whoosh_searcher import WhooshContentSearcher
@@ -89,7 +90,9 @@ class TestIndexManager(unittest.TestCase):
 	layer = IndexManagerTestLayer
 
 	def get_index_mananger(self):
-		return component.getUtility(search_interfaces.IIndexManager)
+		result = create_index_manager(parallel_search=False)
+		component.provideUtility(result, search_interfaces.IIndexManager)
+		return result
 	
 	def wait_delay(self):
 		pass

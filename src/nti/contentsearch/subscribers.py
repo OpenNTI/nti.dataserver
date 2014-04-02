@@ -33,4 +33,4 @@ def _set_change_listener(database_event):
 	indexmanager = component.queryUtility(search_interfaces.IIndexManager)
 	if dataserver is not None and indexmanager is not None:
 		dataserver.add_change_listener(indexmanager.onChange)
-		logger.debug("IndexManager onChange listener registered")
+
