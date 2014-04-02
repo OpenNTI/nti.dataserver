@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Alchemy keyword extractor
+Alchemy lang detector
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,44 +16,25 @@ from cStringIO import StringIO
 
 from zope import component
 from zope import interface
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from nti.utils.property import alias
-from nti.utils.schema import SchemaConfigured
+from nti.utils.schema import createDirectFieldProperties
 
+from . import Language
 from . import interfaces as ld_interfaces
 from .. import interfaces as cp_interfaces
 
 @interface.implementer(ld_interfaces.IAlchemyLanguage)
-class _AlchemyLanguage(SchemaConfigured):
-
-	ISO_639_1 = FP(ld_interfaces.IAlchemyLanguage['ISO_639_1'])
-	ISO_639_2 = FP(ld_interfaces.IAlchemyLanguage['ISO_639_2'])
-	ISO_639_3 = FP(ld_interfaces.IAlchemyLanguage['ISO_639_3'])
-	name = FP(ld_interfaces.IAlchemyLanguage['name'])
-
+class _AlchemyLanguage(Language):
+	createDirectFieldProperties(ld_interfaces.IAlchemyLanguage)
 	code = alias('ISO_639_1')
 
-	def __str__(self):
-		return self.code
-
 	def __repr__(self):
-		return "(%s,%s,%s,%s)" % (self.name, self.ISO_639_1,
-								  self.ISO_639_2, self.ISO_639_3)
-
-	def __eq__(self, other):
-		try:
-			return self is other or self.code == other.code
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.code)
-		return xhash
+		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.name,
+									self.ISO_639_1, self.ISO_639_2, self.ISO_639_3)
 
 @interface.implementer(ld_interfaces.ILanguageDetector)
-class _AlchemyTextLanguageDectector(object):
+class _AlchemyTextLanguageDetector(object):
 
 	limit_kb = 150
 	url = u'http://access.alchemyapi.com/calls/text/TextGetLanguage'
@@ -74,7 +55,7 @@ class _AlchemyTextLanguageDectector(object):
 				  u'outputMode':u'json'}
 		params.update(kwargs)
 		try:
-			r = requests.post(self.url, params=params, headers=headers)
+			r = requests.post(self.url, data=params, headers=headers)
 			data = r.json()
 			if r.status_code == 200 and data.get('status', 'ERROR') == 'OK':
 				result = _AlchemyLanguage(ISO_639_1=data.get('iso-639-1'),

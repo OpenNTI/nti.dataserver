@@ -50,6 +50,7 @@
 	<include package=".taggers" file="configure.zcml" />
 	<include package=".keyword" file="configure.zcml" />
 	<include package=".stemmers" file="configure.zcml" />
+	<include package=".langdetection" file="configure.zcml" />
 	<include package=".concepttagging" file="configure.zcml" />
 
 	<alchemy:registerAlchemyAPIKey
