@@ -3,7 +3,7 @@
 """
 ZOPYX based stemmers
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,15 +16,29 @@ from zopyx.txng3.ext import stemmer
 
 from . import interfaces as stemmer_interfaces
 
+lang_translation = {'en':'english', 'es':'spansih', 'ru':'russian',
+					'fr':'french', 'de':'german', 'da':'danish',
+					'nl':'dutch', 'it':'italian', 'no':'norwegian',
+					'pt':'portuguese', 'sv':'swedish', 'fi':'finnish',
+					'tr':'turkish', 'hu':'hungarian', 'ro':'romanian'}
+
 @interface.implementer(stemmer_interfaces.IStemmer)
-class ZopyYXStemmer(object):
+class _ZopyYXStemmer(object):
 
-    __slots__ = ('stemmer',)
+	__slots__ = ('stemmers')
 
-    def __init__(self, language='english'):
-        self.stemmer = stemmer.Stemmer(language)
+	def __init__(self):
+		self.stemmers = {}
 
-    def stem(self, token):
-        token = unicode(token)
-        result = self.stemmer.stem((token,))
-        return result[0] if result else token
+	def _stemmer(self, lang='en'):
+		lang = lang.lower() if lang else 'en'
+		result = self.stemmers.get(lang, None)
+		if result is None:
+			language = lang_translation[lang]
+			result = self.stemmers[lang] = stemmer.Stemmer(language)
+		return result
+
+	def stem(self, token, lang='en'):
+		token = unicode(token)
+		result = self._stemmer(lang).stem((token,))
+		return result[0] if result else token
