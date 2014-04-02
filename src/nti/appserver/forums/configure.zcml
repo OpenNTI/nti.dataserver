@@ -2,8 +2,7 @@
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:cap="http://nextthought.com/ntp/capabilities"
-			i18n_domain='nti.dataserver'
-			zcml:condition="have forums">
+			i18n_domain='nti.dataserver'>
 
 	<include package="zope.component" />
 	<include package="nti.appserver.capabilities" file="meta.zcml" />

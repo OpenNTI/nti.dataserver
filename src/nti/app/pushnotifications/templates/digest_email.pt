@@ -82,7 +82,7 @@
 												</span>
 
 												<strong tal:content="notable/creator">David Sabatini</strong> started a discussion
-												<a href="" tal:attributes="href notable/href" tal:content="notable/title">4.3 Water, Weather, and Climate</a>
+												<a href="" tal:attributes="href notable/href" tal:content="notable/display_name">4.3 Water, Weather, and Climate</a>
 												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open Discussions</a>.
 												<div tal:condition="notable/remaining">
 													Plus there ${python:request.localizer.pluralize('is', 'are', notable.remaining)} <tal:block tal:content="notable/remaining">6</tal:block> other
