@@ -2,7 +2,7 @@
 """
 Whoosh video transcript indexer.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -21,9 +21,11 @@ from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
 
-from nti.contentsearch import vtrans_prefix
-from nti.contentsearch import videotimestamp_to_datetime
+from nti.contentsearch.constants import vtrans_prefix
 from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.common import videotimestamp_to_datetime
+
+from nti.utils.property import alias
 
 from . import node_utils
 from . import termextract
@@ -39,6 +41,8 @@ _media_transcript_types = (u'application/vnd.nextthought.mediatranscript',)
 _video_source_types = (u'application/vnd.nextthought.videosource',)
 
 class _Video(object):
+
+	lang = alias('language')
 
 	def __init__(self, parser_name, video_ntiid, video_path, title=None, language='en'):
 		self.title = title
@@ -87,13 +91,13 @@ def _parse_video_source(video):
 		transcript = parser.parse(source)
 	return video, transcript
 
-def _prepare_entry(entry, language):
+def _prepare_entry(entry, lang):
 	content = entry.transcript
 	if content:
-		table = get_content_translation_table(language)
+		table = get_content_translation_table(lang)
 		entry.content = unicode(content_utils.sanitize_content(content, table=table))
-		tokenized_words = split_content(entry.content, language)
-		entry.keywords = termextract.extract_key_words(tokenized_words)
+		tokenized_words = split_content(entry.content, lang)
+		entry.keywords = termextract.extract_key_words(tokenized_words, lang=lang)
 		entry.processed = True
 	else:
 		entry.processed = False

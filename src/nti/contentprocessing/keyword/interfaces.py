@@ -3,7 +3,7 @@
 """
 Keyword extractor interfaces
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -45,12 +45,11 @@ class ITermExtractFilter(interface.Interface):
 
 class IKeyWordExtractor(interface.Interface):
 
-	def __call___(content, *args):
+	def __call___(content, *args, **kwargs):
 		"""
 		Return the keywords associated with the specified content
 		
 		:param content: Text to process
-		:param *args: Any extra argument used in the keyword extraction
 		"""
 
 class ITermExtractKeyWordExtractor(IKeyWordExtractor):

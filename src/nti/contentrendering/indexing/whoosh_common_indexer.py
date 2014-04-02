@@ -2,7 +2,7 @@
 """
 Basic whoosh indexer.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -37,13 +37,13 @@ class _BasicWhooshIndexer(object):
 		ix = index.create_in(indexdir, schema=self.get_schema(), indexname=indexname)
 		return ix
 
-	def process_topic(self, idxspec, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, lang='en'):
 		raise NotImplementedError()
 
-	def process_book(self, idxspec, writer, language='en'):
+	def process_book(self, idxspec, writer, lang='en'):
 		toc = idxspec.book.toc
 		def _loop(topic):
-			count = self.process_topic(idxspec, topic, writer, language)
+			count = self.process_topic(idxspec, topic, writer, lang)
 			for t in topic.childTopics:
 				count += _loop(t)
 			return count or 0

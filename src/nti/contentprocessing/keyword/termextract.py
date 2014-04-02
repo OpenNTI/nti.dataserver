@@ -3,12 +3,14 @@
 """
 TermExtract keyword extractor
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import six
 
 from collections import defaultdict
 
@@ -139,19 +141,19 @@ class TermExtractor(object):
 @interface.implementer(cpkw_interfaces.ITermExtractKeyWordExtractor)
 class _DefaultKeyWorExtractor():
 
-	def __call__(self, content, filtername=u''):
+	def __call__(self, content, lang='en', filtername=u'', *args, **kwargs):
 
-		if isinstance(content, (list, tuple)):
-			tokenized_words = content
+		if isinstance(content, six.string_types):
+			tokenized_words = split_content(content, lang)
 		else:
-			tokenized_words = split_content(content)
+			tokenized_words = content
 
 		tagged_terms = []
 		term_filter = term_extract_filter(filtername)
 		extractor = TermExtractor(term_filter)
-		tagged_items = taggers.tag_tokens(tokenized_words)
+		tagged_items = taggers.tag_tokens(tokenized_words, lang)
 		for token, tag in tagged_items:
-			root = stemmers.stem_word(token)
+			root = stemmers.stem_word(token, lang)
 			tagged_terms.append((token, tag, root))
 		result = extractor.extract(tagged_terms)
 		return result

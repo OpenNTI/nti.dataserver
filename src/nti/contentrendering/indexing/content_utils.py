@@ -2,7 +2,7 @@
 """
 Indexing content utilities.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -15,7 +15,7 @@ from nti.contentprocessing import split_content
 
 from nti.contentfragments import interfaces as frg_interfaces
 
-def sanitize_content(text, table=None, tokens=False):
+def sanitize_content(text, table=None, tokens=False, lang='en'):
 	"""
 	clean any html from the specified text and then tokenize it
 
@@ -42,6 +42,6 @@ def sanitize_content(text, table=None, tokens=False):
 
 	# translate and tokenize words
 	text = text.translate(table) if table else text
-	tokenized_words = split_content(text)
+	tokenized_words = split_content(text, lang)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
 	return result

@@ -2,7 +2,7 @@
 """
 Whoosh book indexers.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -104,11 +104,11 @@ class _WhooshBookIndexer(common_indexer._BasicWhooshIndexer):
 
 class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 
-	def process_topic(self, idxspec, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, lang='en'):
 		data = _DataNode(node)
 		logger.debug("Indexing Node %s", data)
 
-		table = get_content_translation_table(language)
+		table = get_content_translation_table(lang)
 		documents = []
 
 		def _collector(n, data):
@@ -116,7 +116,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 				content = node_utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = split_content(content)
+					tokenized_words = split_content(content, lang)
 					data.extend(tokenized_words)
 
 				for c in n.iterchildren():
@@ -134,7 +134,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 				content = node_utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = split_content(content)
+					tokenized_words = split_content(content, lang)
 					documents.append((None, tokenized_words))
 
 				for c in n.iterchildren():
@@ -149,7 +149,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 		all_words = []
 		for tokenized_words in documents:
 			all_words.extend(tokenized_words[1])
-		data.keywords = termextract.extract_key_words(all_words)
+		data.keywords = termextract.extract_key_words(all_words, lang=lang)
 
 		count = 0
 		for docid, tokenized_words in documents:
@@ -170,27 +170,27 @@ def _get_page_content(text):
 	c = m.groups()[0] if m else u''
 	return c or text
 
-def _process_datanode(node, language='en'):
+def _process_datanode(node, lang='en'):
 	content_file = node.location
-	__traceback_info__ = content_file, language, node
+	__traceback_info__ = content_file, lang, node
 	logger.debug("Processing File %s", node)
 
 	if os.path.exists(content_file):
 		with codecs.open(content_file, "r", encoding='UTF-8') as f:
 			raw_content = f.read()
 
-		table = get_content_translation_table(language)
+		table = get_content_translation_table(lang)
 		raw_content = _get_page_content(raw_content)
 		tokenized_words = content_utils.sanitize_content(raw_content, table=table,
-														 tokens=True)
+														 tokens=True, lang=lang)
 		if tokenized_words:
 			node.content = ' '.join(tokenized_words)
-			node.keywords = termextract.extract_key_words(tokenized_words)
+			node.keywords = termextract.extract_key_words(tokenized_words, lang=lang)
 	return node
 
 class _BookFileWhooshIndexer(_WhooshBookIndexer):
 
-	def _index_datanode(self, node, writer, language='en'):
+	def _index_datanode(self, node, writer, lang='en'):
 		result = 0
 		if node.is_processed():
 			result = 1
@@ -198,13 +198,13 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 							  node.related, node.keywords, node.last_modified)
 		return result
 
-	def process_topic(self, idxspec, node, writer, language='en'):
+	def process_topic(self, idxspec, node, writer, lang='en'):
 		data = _DataNode(node)
-		data = _process_datanode(data, language)
-		result = self._index_datanode(data, writer, language)
+		data = _process_datanode(data, lang)
+		result = self._index_datanode(data, writer, lang)
 		return result
 
-	def process_book(self, idxspec, writer, language='en'):
+	def process_book(self, idxspec, writer, lang='en'):
 		# collect nodes to index
 		nodes = []
 		files = set()
@@ -220,11 +220,11 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 		# process and index nodes
 		docs = 0
 		with ConcurrentExecutor() as executor:
-			langs = [language] * len(nodes)
+			langs = [lang] * len(nodes)
 			for node in executor.map(_process_datanode, nodes, langs):
 				if isinstance(node,Exception):
 					raise node
-				docs += self._index_datanode(node, writer, language)
+				docs += self._index_datanode(node, writer, lang)
 		return docs
 
 _DefaultWhooshBookIndexer = _BookFileWhooshIndexer

@@ -2,7 +2,7 @@
 """
 Book indexing interfaces
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -18,13 +18,13 @@ class IWhooshIndexSpec(interface.Interface):
 
 class IWhooshContentIndexer(cr_interfaces.IContentIndexer):
 
-	def process_book(ispec, writer, language):
+	def process_book(ispec, writer, lang):
 		"""
 		Index the contents from the specified book 
 		
 		:param ispec: The :class:`IWhooshIndexSpec`.
 		:param writer: Whoosh indexwriter
-		:param language: Book text language
+		:param lang: Book text language
 		"""
 
 	def index(book, indexdir=None, indexname=None):
@@ -38,14 +38,14 @@ class IWhooshContentIndexer(cr_interfaces.IContentIndexer):
 
 class IWhooshBookIndexer(IWhooshContentIndexer, cr_interfaces.IBookIndexer):
 
-	def process_topic(ispec, node, writer, language):
+	def process_topic(ispec, node, writer, lang):
 		"""
 		Index the specified book topic
 		
 		:param ispec: The :class:`IWhooshIndexSpec`.
 		:param node: The :class:`IEclipseMiniDomTopic`.
 		:param writer: Whoosh indexwriter
-		:param language: Node text language
+		:param lang: Node text language
 		"""
 
 class IWhooshVideoTranscriptIndexer(IWhooshContentIndexer,
