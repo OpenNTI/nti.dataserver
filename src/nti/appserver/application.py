@@ -434,13 +434,6 @@ def createApplication( http_port,
 		# Preserve the conf machine so that when we load other files later any
 		# exclude settings get processed
 
-	if create_ds or force_create_indexmanager:
-		# This may be excluded by a previous setting in site.zcml, and replaced with something else
-		# If we are going to do it, it is important to do it as part of the same configuration transaction
-		# as everything else, otherwise the proper listeners won't get called or won't
-		# do the right thing (see e.g., _indexmanager_event_listeners)
-		xml_conf_machine = xmlconfig.file( 'configure_indexmanager.zcml',  package=nti.appserver, context=xml_conf_machine, execute=False )
-
 	DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
 	dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
 	if dataserver_dir_exists:
@@ -684,16 +677,7 @@ def createApplication( http_port,
 	return app
 
 def _configure_async_changes( ds, indexmanager=None ):
-
-	import nti.contentsearch
-
-	logger.info( 'Adding synchronous change listeners.' )
-	ds.add_change_listener( nti.dataserver.users.onChange )
-	indexmanager = indexmanager or component.queryUtility( nti.contentsearch.interfaces.IIndexManager )
-	if indexmanager:
-		ds.add_change_listener( indexmanager.onChange )
-
-	logger.info( 'Finished adding listeners' )
+	ds.add_change_listener(nti.dataserver.users.onChange)
 
 @component.adapter(IDatabaseOpenedWithRoot)
 def _configure_zodb_tween( database_event, registry=None ):

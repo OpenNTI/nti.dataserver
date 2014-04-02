@@ -3,7 +3,7 @@
 """
 Index agent implementation
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,7 +16,6 @@ from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
 from . import common
-from . import get_indexable_types
 from . import interfaces as search_interfaces
 
 _event_types = { nti_interfaces.SC_CREATED: 'index_user_content',
@@ -32,7 +31,7 @@ def get_creator(obj):
 
 def _check_event(target, change_type, data_type, data):
 	result = change_type in _event_types and \
-			 common.normalize_type_name(data_type) in get_indexable_types()
+			 common.normalize_type_name(data_type) in common.get_indexable_types()
 	if result and _only_delete_by_owner and change_type == nti_interfaces.SC_DELETED:
 		username = target if isinstance(target, six.string_types) else target.username
 		creator = get_creator(data)
