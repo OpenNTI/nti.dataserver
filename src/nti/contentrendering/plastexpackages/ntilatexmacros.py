@@ -265,10 +265,10 @@ class ntiaudio(ntimedia):
 			if self.attributes['service']:
 				if self.attributes['service'] == 'html5':
 					self.service = 'html5'
-					self.src['mp3'] = self.attributes['id'] + '.mp3'
-					self.src['m4a'] = self.attributes['id'] + '.m4a'
+					# self.src['mp3'] = self.attributes['id'] + '.mp3'
+					# self.src['m4a'] = self.attributes['id'] + '.m4a'
 					self.src['wav'] = self.attributes['id'] + '.wav'
-					self.src['ogg'] = self.attributes['id'] + '.ogg'
+					# self.src['ogg'] = self.attributes['id'] + '.ogg'
 					self.thumbnail = self.attributes['id'] + '-thumb.jpg'
 				else:
 					logger.warning('Unknown audio type: %s', self.attributes['service'])
