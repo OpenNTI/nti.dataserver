@@ -3,22 +3,22 @@
 """
 Interface definitions for forums. Heavily influenced by Ploneboards.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # Disable pylint warnings about undefined variables, because it catches
 # all the __setitem__ and __parent__ in the interfaces.
-#pylint: disable=E0602
+# pylint: disable=E0602
 
 from zope import schema
 from zope import interface
 from zope.schema import Int
+from zope.dublincore.interfaces import IDCTimes
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.interfaces import IContentContainer, IContained
-from zope.dublincore.interfaces import IDCTimes
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -82,6 +82,8 @@ NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 class IPost(IContained,
 			IAcquirer,
 			IDCTimes,
+			nti_interfaces.ILikeable,
+			nti_interfaces.IRatable,
 			nti_interfaces.IModeledContent,
 			nti_interfaces.IReadableShared,
 			nti_interfaces.ITitledContent,
@@ -109,6 +111,8 @@ class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
 			 IDCTimes,
+			 nti_interfaces.ILikeable,
+			 nti_interfaces.IRatable,
 			 nti_interfaces.ILastModified,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.IUserTaggedContent,
@@ -203,7 +207,9 @@ class IHeadlineTopic(ITopic):
 	"""
 	headline = Object(IHeadlinePost, title="The main, first post of this topic.")
 
-class IPersonalBlog(IForum, nti_interfaces.ICreated, nti_interfaces.IShouldHaveTraversablePath):
+class IPersonalBlog(IForum,
+					nti_interfaces.ICreated,
+					nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A personal blog is a special type of forum, in that it contains only :class:`.IPersonalBlogEntry`
 	objects and is contained by an :class:`nti.dataserver.interfaces.IUser`.

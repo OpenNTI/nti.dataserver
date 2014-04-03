@@ -3,9 +3,9 @@
 """
 Definitions of boards.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -24,9 +24,9 @@ from nti.dataserver import sharing
 from nti.dataserver import containers
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.utils._compat import Base
 from nti.utils.schema import AdaptingFieldProperty
 
-from ._compat import Base
 from . import _CreatedNamedNTIIDMixin
 from . import interfaces as for_interfaces
 
