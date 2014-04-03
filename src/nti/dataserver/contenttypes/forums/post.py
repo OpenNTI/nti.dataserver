@@ -3,10 +3,10 @@
 """
 Definitions for forum posts.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,12 +22,12 @@ from persistent import Persistent
 from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
+from nti.utils._compat import Implicit
 from nti.utils.schema import AdaptingFieldProperty
 
 from ..note import BodyFieldProperty
 from ..threadable import ThreadableMixin
 
-from ._compat import Implicit
 from . import _containerIds_from_parent
 from . import interfaces as for_interfaces
 

@@ -3,17 +3,16 @@
 """
 NTIID resolvers.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from . import interfaces as frm_interfaces
 from nti.ntiids import interfaces as nid_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -23,6 +22,7 @@ from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
 from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 
+from . import interfaces as frm_interfaces
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
 class _BlogResolver(AbstractAdaptingUserBasedResolver):

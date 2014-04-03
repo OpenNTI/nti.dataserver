@@ -3,9 +3,9 @@
 """
 Definitions for topics.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -30,6 +30,8 @@ from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
 from nti.dataserver.interfaces import ICommunity
 
+from nti.utils._compat import Implicit
+
 from nti.utils.schema import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
 
@@ -40,7 +42,6 @@ from nti.dataserver.traversal import find_interface
 
 from nti.wref import interfaces as wref_interfaces
 
-from ._compat import Implicit
 from . import _CreatedNamedNTIIDMixin
 from . import _containerIds_from_parent
 from . import interfaces as for_interfaces
