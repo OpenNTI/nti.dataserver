@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import (assert_that, is_, has_entry,
 					  has_key,  is_not, has_item, has_property,
@@ -21,15 +16,13 @@ from hamcrest import instance_of
 from hamcrest import greater_than
 from hamcrest import all_of
 from hamcrest import contains
-import unittest
 
 from zope.annotation import interfaces as an_interfaces
 from zope import component
 
-import nti.testing.base
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import is_true
-from nti.dataserver import intid_wref
+from nti.intid import wref as intid_wref
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark
 from nti.dataserver.contenttypes import Canvas, CanvasShape, CanvasAffineTransform, CanvasCircleShape, CanvasPolygonShape, CanvasPathShape, CanvasUrlShape, CanvasTextShape
@@ -57,7 +50,6 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
-
 
 from zc import intid as zc_intid
 
