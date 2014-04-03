@@ -4,7 +4,10 @@
 			xmlns:cap="http://nextthought.com/ntp/capabilities"
 			i18n_domain='nti.dataserver'>
 
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	
 	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />

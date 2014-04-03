@@ -24,7 +24,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils.schema import Object, Number, Variant, ValidTextLine, ListOrTuple
 
-from ._compat import IAcquirer
+from nti.utils._compat import IAcquirer
 
 ### NTIID values
 
@@ -82,8 +82,6 @@ NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 class IPost(IContained,
 			IAcquirer,
 			IDCTimes,
-			nti_interfaces.ILikeable,
-			nti_interfaces.IRatable,
 			nti_interfaces.IModeledContent,
 			nti_interfaces.IReadableShared,
 			nti_interfaces.ITitledContent,
@@ -111,8 +109,6 @@ class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
 			 IDCTimes,
-			 nti_interfaces.ILikeable,
-			 nti_interfaces.IRatable,
 			 nti_interfaces.ILastModified,
 			 nti_interfaces.ITitledDescribedContent,
 			 nti_interfaces.IUserTaggedContent,
