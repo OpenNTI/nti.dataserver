@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-.. $Id: alchemy.py 36344 2014-04-02 20:23:54Z carlos.sanchez $
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -58,7 +58,7 @@ class QuickStringBuffer(object):
 		return self.value[index]
 
 	def append(self, s):
-		self.value.extends(s)
+		self.value.extend(s)
 		return self
 
 	def subSequence(self, start, end):
@@ -232,11 +232,12 @@ class LanguageProfilerBuilder(object):
 			if other.seq in another.ngrams:
 				result += abs((other.frequency - another.ngrams[other.seq].frequency)) / 2.0
 			else:
-				result += other.frequency;
+				result += other.frequency
 				
 		return result
 	
 	def load(self, source):
+		result = 0
 		source = open(str(source), "r") if not hasattr(source, "readlines") else source
 		self.ngrams.clear()
 		self.ngramcounts = array(str('i'), (0 for _ in xrange(self.maxLength + 1)))
@@ -249,5 +250,7 @@ class LanguageProfilerBuilder(object):
 					ngramcount = int(splits[1].strip())
 					en = NGramEntry(ngramsequence, ngramcount)
 					self.ngrams[en.seq] = en
-					self.ngramcounts[len] += ngramcount
+					self.ngramcounts[wlen] += ngramcount
+					result += 1
 		self.normalize()
+		return result
