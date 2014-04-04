@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 """
 Utility to take a case from Google Scholar and dump it to TeX
-$Revision$
+
+.. $Id$
 """
-from __future__ import unicode_literals, print_function
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import re
@@ -31,8 +35,9 @@ class _TreePlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
 class _ElementPlainTextContentFragment(_TreePlainTextContentFragment):
 	__slots__ = _TreePlainTextContentFragment.__slots__ + ('element',)
 	element = None
+
 	def __new__( cls, element ):
-		return super(_ElementPlainTextContentFragment,cls).__new__( cls, _text_of( element ) )
+		return super(_ElementPlainTextContentFragment, cls).__new__(cls, _text_of(element))
 
 	def __init__( self, element=None ):
 		# Note: __new__ does all the actual work, because these are immutable as strings

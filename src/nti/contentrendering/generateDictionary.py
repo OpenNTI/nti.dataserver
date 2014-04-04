@@ -1,17 +1,23 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
 import gzip
+import time
 import cPickle
 import xml.sax
 
 from xml.sax.handler import ContentHandler
 
 from pywikipedia.wiktionary import WiktionaryPage
-
 
 def main(args):
 	action = args.pop(0)
@@ -46,8 +52,6 @@ def createDictionary(wikidumpname, destname):
 	cPickle.dump(index, indexFile)
 
 	indexFile.close()
-
-import time
 
 def lookup(dicname, term):
 	start = time.time()

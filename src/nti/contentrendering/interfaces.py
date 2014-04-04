@@ -1,6 +1,10 @@
 #!/usr/bin/env python
-
-from __future__ import unicode_literals, print_function
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 # disable "super on old-style class for Components, it is new-style"
 # pylint: disable=E1002
