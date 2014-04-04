@@ -18,11 +18,11 @@ import unittest
 
 from ..tika import _TikaLanguageDetector
 
-# from nti.contentprocessing.tests import SharedConfiguringTestLayer
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
 class TestTikaLangDetector(unittest.TestCase):
 
-	# layer = SharedConfiguringTestLayer
+	layer = SharedConfiguringTestLayer
 
 	@property
 	def sample_en(self):
