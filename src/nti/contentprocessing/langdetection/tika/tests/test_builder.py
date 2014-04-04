@@ -14,6 +14,9 @@ from hamcrest import assert_that
 from hamcrest import has_property
 
 import os
+import gzip
+import shutil
+import tempfile
 import unittest
 
 from nti.contentprocessing.langdetection.tika import builder
@@ -59,3 +62,16 @@ class TestBuilder(unittest.TestCase):
 		assert_that(lp.load(source), is_(14))
 		assert_that(lp, has_property('sorted', has_length(14)))
 		assert_that(lp.getSimilarity(lp), is_(0))
+
+	def test_create_builder(self):
+		source = os.path.join(os.path.dirname(__file__), 'welsh_corpus.txt.gz')
+		source = gzip.GzipFile(source)
+		profile = builder.LanguageProfilerBuilder.create("test", source)
+		try:
+			outdir = tempfile.mkdtemp(dir="/tmp")
+			target = os.path.join(outdir, "out.ngp")
+			profile.save(target)
+			assert_that(profile.sorted, has_length(1000))
+		finally:
+			shutil.rmtree(outdir, True)
+			

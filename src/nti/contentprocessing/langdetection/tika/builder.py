@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import time
+import codecs
 import functools
 from array import array
 
@@ -30,14 +32,16 @@ class QuickStringBuffer(object):
 
 	def __str__(self):
 		return ''.join(self.value)
-	__repr__ = __str__
+
+	def __repr__(self):
+		return repr(self.__str__())
 
 	def __getitem__(self, idx):
 		return self.value[idx]
 
 	def __eq__(self, other):
 		try:
-			return self is other or str(self) == str(other)
+			return self is other or repr(self) == repr(other)
 		except AttributeError:
 			return NotImplemented
 
@@ -67,6 +71,10 @@ class QuickStringBuffer(object):
 	def subSequence(self, start, end):
 		return ''.join(self.value[start:end])
 
+	def write(self, fp):
+		for c in self.value:
+			fp.write(c)
+
 @functools.total_ordering
 class NGramEntry(object):
 
@@ -86,16 +94,20 @@ class NGramEntry(object):
 		self.count += 1
 		return self
 
+	def write(self, fp):
+		self.seq.write(fp)
+		return self
+
 	def __len__(self):
 		return len(self.seq) if self.seq is not None else 0
 	size = __len__
 
 	def __str__(self):
-		return str(self.seq)
+		return repr(self.seq)
 
 	def __repr__(self):
-		return "%s(%s, %s, %s" % (self.__class__.__name__, self.seq,
-								 self.count, self.frequency)
+		return "%s(%r, %s, %s)" % (self.__class__.__name__, self.seq,
+								   self.count, self.frequency)
 
 	def __eq__(self, other):
 		try:
@@ -108,13 +120,13 @@ class NGramEntry(object):
 
 	def __lt__(self, other):
 		try:
-			return (self.frequency, str(self)) < (other.frequency, str(other))
+			return (self.frequency, repr(self.seq)) < (other.frequency, repr(other.seq))
 		except AttributeError:
 			return NotImplemented
 
 	def __gt__(self, other):
 		try:
-			return (self.frequency, str(self)) > (other.frequency, str(other))
+			return (self.frequency, repr(self.seq)) > (other.frequency, repr(other.seq))
 		except AttributeError:
 			return NotImplemented
 
@@ -128,7 +140,7 @@ class LanguageProfilerBuilder(object):
 	MAX_SIZE = 1000
 	FILE_EXTENSION = "ngp"
 
-	SEPARATOR = '_'
+	SEPARATOR = u'_'
 	SEP_CHARSEQ = QuickStringBuffer(SEPARATOR)
 
 	_sorted = None
@@ -189,10 +201,9 @@ class LanguageProfilerBuilder(object):
 			self.sorted = None
 			self.ngramcounts = None
 			
-		text = text.lower()
 		self.word.clear().append(self.SEPARATOR)
-		for i in range(0, len(text)):
-			c = text[i]
+		for c in text:
+			c = c.lower()
 			if c.isalpha():
 				self.add(self.word.append(c))
 			else:
@@ -255,5 +266,46 @@ class LanguageProfilerBuilder(object):
 					self.ngrams[en.seq] = en
 					self.ngramcounts[wlen] += ngramcount
 					result += 1
+		source.close()
 		self.normalize()
 		return result
+	
+	def save(self, target):
+		fp = None
+		close = not hasattr(target, "write")
+		try:
+			fp = codecs.open(str(target), "wb", "utf-8") \
+				 if not hasattr(target, "write") else target
+
+			fp.write("# NgramProfile generated at %s" % time.time())
+
+			lst = list()
+			sublist = list()
+			for i in xrange(self.minLength, self.maxLength + 1):
+				for e in self.ngrams.values():
+					if len(e.seq) == i:
+						sublist.append(e)
+
+				sublist = sorted(sublist)
+				if len(sublist) > self.MAX_SIZE:
+					sublist = sublist[:self.MAX_SIZE]
+
+				lst.extend(sublist)
+				sublist = []
+			
+			for e in lst:
+				e.write(fp)
+				fp.write(" %s\n" % e.count)
+			fp.flush()
+		finally:
+			if close and fp:
+				fp.close()
+
+	@classmethod
+	def create(cls, name, source, encoding="utf-8"):
+		newProfile = LanguageProfilerBuilder(name)
+		fp = open(str(source), "r") if not hasattr(source, "read") else source
+		reader = codecs.getreader(encoding)(fp)
+		text = reader.read()
+		newProfile.analyze(text)
+		return newProfile
