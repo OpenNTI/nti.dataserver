@@ -25,17 +25,19 @@ class LanguageProfile(object):
 		self.length = length
 		self.buffer = ['', '', '_']
 		self.ngrams = collections.defaultdict(int)
+		if content:
+			self.write(content)
 
 	def write(self, cbuf):
-		text = cbuf.lower()
-		for c in text:
+		for c in cbuf:
+			c = c.lower()
 			if c.isalpha():
 				self.addLetter(c)
 			else:
 				self.addSeparator()
 
 	def addLetter(self, c):
-		arraycopy(self.buffer, 1, self.buffer, 0, len(buffer) - 1)
+		arraycopy(self.buffer, 1, self.buffer, 0, len(self.buffer) - 1)
 		self.buffer[-1] = c
 		self.n +=1
 		if self.n >= len(self.buffer):
@@ -56,7 +58,7 @@ class LanguageProfile(object):
 		self.count += count;
 
 	def getCount(self, ngram):
-		return self.ngrams.get(ngram)
+		return self.ngrams.get(ngram, 0.0)
 
 	def distance(self, that):
 		
@@ -65,7 +67,7 @@ class LanguageProfile(object):
 
 		sumOfSquares = 0.0;
 		thisCount = max(self.count, 1.0)
-		thatCount = max(self.count, 1.0)
+		thatCount = max(that.count, 1.0)
 
 		ngrams = set();
 		ngrams.update(self.ngrams.keys())
