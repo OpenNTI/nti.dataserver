@@ -305,7 +305,10 @@ class LanguageProfilerBuilder(object):
 	def create(cls, name, source, encoding="utf-8"):
 		newProfile = LanguageProfilerBuilder(name)
 		fp = open(str(source), "r") if not hasattr(source, "read") else source
-		reader = codecs.getreader(encoding)(fp)
-		text = reader.read()
+		try:
+			reader = codecs.getreader(encoding)(fp)
+			text = reader.read()
+		finally:
+			fp.close()
 		newProfile.analyze(text)
 		return newProfile
