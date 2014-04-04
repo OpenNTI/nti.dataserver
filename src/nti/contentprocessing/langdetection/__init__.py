@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import functools
 
 from zope import interface
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
@@ -17,6 +19,7 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as ld_interfaces
 
+@functools.total_ordering
 @interface.implementer(ld_interfaces.ILanguage)
 class Language(SchemaConfigured):
 	createDirectFieldProperties(ld_interfaces.ILanguage)
@@ -37,3 +40,15 @@ class Language(SchemaConfigured):
 		xhash = 47
 		xhash ^= hash(self.code)
 		return xhash
+
+	def __lt__(self, other):
+		try:
+			return self.code < other.code
+		except AttributeError:
+			return NotImplemented
+
+	def __gt__(self, other):
+		try:
+			return self.code > other.code
+		except AttributeError:
+			return NotImplemented

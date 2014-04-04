@@ -14,15 +14,17 @@ import sys
 import requests
 from cStringIO import StringIO
 
-from zope import component
 from zope import interface
 
 from nti.utils.property import alias
 from nti.utils.schema import createDirectFieldProperties
 
+from .. import utils
 from . import Language
 from . import interfaces as ld_interfaces
-from .. import interfaces as cp_interfaces
+
+ALCHEMYAPI_LIMIT_KB = 150
+ALCHEMYAPI_URL = u'http://access.alchemyapi.com/calls/text/TextGetLanguage'
 
 @interface.implementer(ld_interfaces.IAlchemyLanguage)
 class _AlchemyLanguage(Language):
@@ -36,34 +38,44 @@ class _AlchemyLanguage(Language):
 @interface.implementer(ld_interfaces.ILanguageDetector)
 class _AlchemyTextLanguageDetector(object):
 
-	limit_kb = 150
-	url = u'http://access.alchemyapi.com/calls/text/TextGetLanguage'
+	__slots__ = ()
 
-	def __call__(self, content, keyname, **kwargs):
+	def __call__(self, content, keyname=None, **kwargs):
 		result = None
 		content = content or u''
 		size_kb = sys.getsizeof(content) / 1024.0
 		if not content:
-			return result
-		elif size_kb > self.limit_kb:
+			result = None
+		elif size_kb > ALCHEMYAPI_LIMIT_KB:
 			s = StringIO(content)
-			content = s.read(self.limit_kb)
+			content = s.read(ALCHEMYAPI_LIMIT_KB)
 
-		apikey = component.getUtility(cp_interfaces.IAlchemyAPIKey, name=keyname)
-		headers = {u'content-type': u'application/x-www-form-urlencoded'}
-		params = {u'text':unicode(content), u'apikey':apikey.value,
-				  u'outputMode':u'json'}
-		params.update(kwargs)
 		try:
-			r = requests.post(self.url, data=params, headers=headers)
-			data = r.json()
-			if r.status_code == 200 and data.get('status', 'ERROR') == 'OK':
-				result = _AlchemyLanguage(ISO_639_1=data.get('iso-639-1'),
-										  ISO_639_2=data.get('iso-639-2', None),
-										  ISO_639_3=data.get('iso-639-3', None),
-										  name=data.get('language', None))
-		except Exception:
+			result = get_language(content, name=keyname, **kwargs) \
+					 if content else None
+		except:
 			result = None
 			logger.exception('Error while detecting language using Alchemy')
 
 		return result
+
+def get_language(content, name=None, **kwargs):
+	apikey = utils.getAlchemyAPIKey(name=name)
+	headers = {u'content-type': u'application/x-www-form-urlencoded'}
+	params = {u'text':unicode(content), u'apikey':apikey.value,
+			  u'outputMode':u'json'}
+	params.update(kwargs)
+
+	r = requests.post(ALCHEMYAPI_URL, data=params, headers=headers)
+	data = r.json()
+	if r.status_code == 200 and data.get('status', 'ERROR') == 'OK':
+		result = _AlchemyLanguage(ISO_639_1=data.get('iso-639-1'),
+								  ISO_639_2=data.get('iso-639-2', None),
+								  ISO_639_3=data.get('iso-639-3', None),
+								  name=data.get('language', None))
+	else:
+		result = None
+		logger.error('Invalid request status while detecting language; %s',
+				 	 data.get('status', ''))
+
+	return result

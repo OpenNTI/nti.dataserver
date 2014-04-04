@@ -3,12 +3,14 @@
 """
 Concept tagging objects
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import functools
 
 from zope import interface
 
@@ -42,12 +44,13 @@ class ConceptSource(object):
 	def __repr__(self):
 		return '%s(%s, %s)' % (self.__class__.__name__, self.source, self.uri)
 
+@functools.total_ordering
 @interface.implementer(ct_interfaces.IConcept)
 class Concept(object):
 
 	__slots__ = ('text', 'relevance', 'sources')
 
-	def __init__(self, text, relevance, sources=()):
+	def __init__(self, text=None, relevance=None, sources=()):
 		self.text = text
 		self.sources = sources
 		self.relevance = relevance
@@ -65,7 +68,26 @@ class Concept(object):
 														  self.text,
 														  self.relevance,
 														  self.sources)
+
+	def __eq__(self, other):
+		try:
+			return self is other or self.text == other.text
+		except AttributeError:
+			return NotImplemented
+
 	def __hash__(self):
 		xhash = 47
 		xhash ^= hash(self.text)
 		return xhash
+
+	def __lt__(self, other):
+		try:
+			return self.relevance < other.relevance
+		except AttributeError:
+			return NotImplemented
+
+	def __gt__(self, other):
+		try:
+			return self.relevance > other.relevance
+		except AttributeError:
+			return NotImplemented
