@@ -14,6 +14,7 @@ from hamcrest import assert_that
 from hamcrest import has_property
 
 import os
+import codecs
 import unittest
 
 from ..tika import _TikaLanguageDetector
@@ -33,7 +34,7 @@ class TestTikaLangDetector(unittest.TestCase):
 	@property
 	def sample_es(self):
 		name = os.path.join(os.path.dirname(__file__), 'sample_es.txt')
-		with open(name, "r") as f:
+		with codecs.open(name, "r", "utf-8") as f:
 			return f.read()
 
 	def test_lang_detector(self):
