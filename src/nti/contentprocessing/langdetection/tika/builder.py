@@ -277,7 +277,7 @@ class LanguageProfilerBuilder(object):
 			fp = codecs.open(str(target), "wb", "utf-8") \
 				 if not hasattr(target, "write") else target
 
-			fp.write("# NgramProfile generated at %s" % time.time())
+			fp.write("# NgramProfile generated at %s\n" % time.time())
 
 			lst = list()
 			sublist = list()
