@@ -56,6 +56,6 @@ class TestBuilder(unittest.TestCase):
 	def test_builder(self):
 		lp = builder.LanguageProfilerBuilder()
 		source = os.path.join(os.path.dirname(__file__), 'en.ngp')
-		assert_that(lp.load(source), is_(1000))
-		assert_that(lp, has_property('sorted', has_length(1000)))
+		assert_that(lp.load(source), is_(14))
+		assert_that(lp, has_property('sorted', has_length(14)))
 		assert_that(lp.getSimilarity(lp), is_(0))

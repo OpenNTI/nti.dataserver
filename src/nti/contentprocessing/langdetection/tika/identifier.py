@@ -15,6 +15,15 @@ import ConfigParser
 
 from .profile import LanguageProfile
 
+def initProfiles():
+	return LanguageIdentifier.initProfiles()
+
+def clearProfiles():
+	return LanguageIdentifier.clearProfiles()
+
+def addProfile(language, profile):
+	LanguageIdentifier.PROFILES[language] = profile
+
 class LanguageIdentifier(object):
 
 	PROFILES = {}
