@@ -16,15 +16,14 @@ from hamcrest import has_property
 import os
 import unittest
 
-from nti.contentprocessing.langdetection.tika import lpbuilder as builder
-from nti.contentprocessing.langdetection.tika.lpbuilder import QuickStringBuffer
+from nti.contentprocessing.langdetection.tika import builder
 
-class TestLPBuilder(unittest.TestCase):
+class TestBuilder(unittest.TestCase):
 
 	def test_quick_string_buffer(self):
 		qsb = builder.QuickStringBuffer("ichigo")
 		assert_that(qsb, is_('ichigo'))
-		assert_that(qsb, is_(equal_to(QuickStringBuffer("ichigo"))))
+		assert_that(qsb, is_(equal_to(builder.QuickStringBuffer("ichigo"))))
 		assert_that(qsb, has_length(6))
 		assert_that(str(qsb), is_('ichigo'))
 

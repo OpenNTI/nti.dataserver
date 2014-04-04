@@ -46,6 +46,9 @@ class QuickStringBuffer(object):
 		xhash ^= hash(tuple(self.value))
 		return xhash
 
+	def __iter__(self):
+		return iter(self.value)
+
 	def lower(self):
 		t = str(self).lower()
 		return QuickStringBuffer(t)
