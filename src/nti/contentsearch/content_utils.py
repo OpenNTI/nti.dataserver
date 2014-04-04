@@ -20,7 +20,7 @@ from dolmen.builtins import IDict
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import get_content_translation_table
 
@@ -72,12 +72,12 @@ def get_content(text=None, language='en'):
 	text = unicode(text) if text else None
 	if text:
 		table = get_content_translation_table(language)
-		result = split_content(text.translate(table), language)
+		result = tokenize_content(text.translate(table), language)
 	result = ' '.join(result)
 	return unicode(result)
 
 def is_covered_by_ngram_computer(term, language='en'):
-	tokens = split_content(term)
+	tokens = tokenize_content(term)
 	__traceback_info__ = term, tokens
 	ncomp = component.getUtility(cp_interfaces.INgramComputer, name=language)
 	min_word = min(map(len, tokens)) if tokens else 0

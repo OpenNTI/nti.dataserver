@@ -21,7 +21,7 @@ import repoze.lru
 from whoosh import analysis
 from whoosh import highlight
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import interfaces as cp_interfaces
 
 from . import search_fragments
@@ -47,7 +47,7 @@ def create_fragmenter(maxchars=300, surround=50):
 	return result
 
 def get_query_terms(query, lang='en'):
-	result = split_content(query.term.lower(), lang)
+	result = tokenize_content(query.term.lower(), lang)
 	return result
 
 class HighlightInfo(object):

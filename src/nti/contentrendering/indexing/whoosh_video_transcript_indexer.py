@@ -16,7 +16,7 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
@@ -96,7 +96,7 @@ def _prepare_entry(entry, lang):
 	if content:
 		table = get_content_translation_table(lang)
 		entry.content = unicode(content_utils.sanitize_content(content, table=table))
-		tokenized_words = split_content(entry.content, lang)
+		tokenized_words = tokenize_content(entry.content, lang)
 		entry.keywords = termextract.extract_key_words(tokenized_words, lang=lang)
 		entry.processed = True
 	else:

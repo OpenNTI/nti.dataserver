@@ -20,7 +20,7 @@ import lxml.etree as etree
 from zope import component
 from zope import interface
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
@@ -116,7 +116,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 				content = node_utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = split_content(content, lang)
+					tokenized_words = tokenize_content(content, lang)
 					data.extend(tokenized_words)
 
 				for c in n.iterchildren():
@@ -134,7 +134,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 				content = node_utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
-					tokenized_words = split_content(content, lang)
+					tokenized_words = tokenize_content(content, lang)
 					documents.append((None, tokenized_words))
 
 				for c in n.iterchildren():

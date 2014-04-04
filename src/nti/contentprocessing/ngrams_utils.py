@@ -32,7 +32,7 @@ def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
-	tokens = content_utils.split_content(text)
+	tokens = content_utils.tokenize_content(text)
 	result = set() if unique else []
 	for text in tokens:
 		ngrams = _ngram_cache(text, minsize, maxsize, unique, lower)
