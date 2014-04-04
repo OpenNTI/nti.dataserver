@@ -73,7 +73,7 @@ class LanguageIdentifier(object):
 
 	@classmethod
 	def getSupportedLanguages(cls):
-		return set(cls.PROFILES.keys)
+		return set(cls.PROFILES.keys())
 
 	@classmethod
 	def initProfiles(cls):

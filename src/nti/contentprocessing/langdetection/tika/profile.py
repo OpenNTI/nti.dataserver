@@ -11,17 +11,18 @@ logger = __import__('logging').getLogger(__name__)
 import math
 import collections
 
+DEFAULT_NGRAM_LENGTH = 3
+	
 def arraycopy(source, sourcepos, dest, destpos, numelem):
 	dest[destpos:destpos+numelem] = source[sourcepos:sourcepos+numelem]
 
 class LanguageProfile(object):
 
-	DEFAULT_NGRAM_LENGTH = 3
-
-	n = 1
-	count = 0
+	__slots__ = ('n', 'count', 'length', 'buffer', 'ngrams')
 
 	def __init__(self, content=None, length=DEFAULT_NGRAM_LENGTH):
+		self.n = 1
+		self.count = 0
 		self.length = length
 		self.buffer = ['', '', '_']
 		self.ngrams = collections.defaultdict(int)

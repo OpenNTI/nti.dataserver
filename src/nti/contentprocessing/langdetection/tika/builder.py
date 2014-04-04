@@ -250,23 +250,26 @@ class LanguageProfilerBuilder(object):
 				
 		return result
 	
-	def load(self, source):
+	def load(self, source, encoding="utf-8"):
 		result = 0
 		source = open(str(source), "r") if not hasattr(source, "readlines") else source
-		self.ngrams.clear()
-		self.ngramcounts = array(str('i'), (0 for _ in xrange(self.maxLength + 1)))
-		for line in source.readlines():
-			if line and line[0] != '#':
-				splits = line.split()
-				ngramsequence = splits[0].strip()
-				wlen = len(ngramsequence)
-				if wlen >= self.minLength and wlen <= self.maxLength:
-					ngramcount = int(splits[1].strip())
-					en = NGramEntry(ngramsequence, ngramcount)
-					self.ngrams[en.seq] = en
-					self.ngramcounts[wlen] += ngramcount
-					result += 1
-		source.close()
+		try:
+			self.ngrams.clear()
+			self.ngramcounts = array(str('i'), (0 for _ in xrange(self.maxLength + 1)))
+			reader = codecs.getreader(encoding)(source)
+			for line in reader.readlines():
+				if line and line[0] != '#':
+					splits = line.split()
+					ngramsequence = splits[0].strip()
+					wlen = len(ngramsequence)
+					if wlen >= self.minLength and wlen <= self.maxLength:
+						ngramcount = int(splits[1].strip())
+						en = NGramEntry(ngramsequence, ngramcount)
+						self.ngrams[en.seq] = en
+						self.ngramcounts[wlen] += ngramcount
+						result += 1
+		finally:
+			source.close()
 		self.normalize()
 		return result
 	
