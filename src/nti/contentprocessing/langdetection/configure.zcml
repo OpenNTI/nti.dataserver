@@ -10,6 +10,8 @@
 	<include package="zope.component" />
 
 	<utility factory=".openxerox._OpenXeroxLanguageDetector" />
+	
+	<utility factory=".tika._TikaLanguageDetector" name="xerox" />
 	<utility factory=".openxerox._OpenXeroxLanguageDetector" name="xerox" />
 	<utility factory=".alchemy._AlchemyTextLanguageDetector" name="alchemy" />
 	
