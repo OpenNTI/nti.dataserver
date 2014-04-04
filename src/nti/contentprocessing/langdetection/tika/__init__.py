@@ -17,18 +17,20 @@ from .profile import LanguageProfile
 from .identifier import initProfiles
 from .identifier import LanguageIdentifier
 
+_profiles_loaded = False
+def loadProfiles():
+    global _profiles_loaded
+    if not _profiles_loaded:
+        initProfiles()
+        _profiles_loaded = True
+
 @interface.implementer(ld_interfaces.ILanguageDetector)
 class _TikaLanguageDetector(object):
 
-    _profiles_loaded = False
-
-    def _load(self):
-        if not self._profiles_loaded:
-            initProfiles()
-            self._profiles_loaded = True
+    __slots__ = ()
 
     def __call__(self, content, **kwargs):
-        self._load()
+        loadProfiles()
         profile = LanguageProfile(content)
         iden = LanguageIdentifier(profile)
         result = Language(code=iden.language)
