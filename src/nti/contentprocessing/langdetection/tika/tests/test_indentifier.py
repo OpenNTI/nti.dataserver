@@ -18,7 +18,11 @@ import unittest
 from nti.contentprocessing.langdetection.tika import profile
 from nti.contentprocessing.langdetection.tika import identifier
 
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
+
 class TestIndentifier(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	languages = ("de", "en", "es")
 

@@ -21,7 +21,11 @@ import unittest
 
 from nti.contentprocessing.langdetection.tika import builder
 
+from nti.contentprocessing.tests import SharedConfiguringTestLayer
+
 class TestBuilder(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
 
 	def test_quick_string_buffer(self):
 		qsb = builder.QuickStringBuffer("ichigo")
