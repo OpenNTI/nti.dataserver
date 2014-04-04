@@ -26,23 +26,42 @@
 
 	<utility factory=".content_utils._default_content_translation_table" />
 	<utility factory=".content_utils._default_content_translation_table" name="en" />
-
+	<utility factory=".content_utils._default_content_translation_table" name="es" />
+	<utility factory=".content_utils._default_content_translation_table" name="ru" />
+	
 	<utility factory=".content_utils._ContentTokenizer" />
 	<utility factory=".content_utils._ContentTokenizer" name="en" />
-
+	<utility factory=".content_utils._ContentTokenizer" name="es" />
+	<utility factory=".content_utils._ContentTokenizer" name="ru" />
+	
 	<utility factory=".content_utils._LevenshteinWordSimilarity" />
 	<utility factory=".content_utils._LevenshteinWordSimilarity" name="en" />
+	<utility factory=".content_utils._LevenshteinWordSimilarity" name="es" />
+	<utility factory=".content_utils._LevenshteinWordSimilarity" name="ru" />
 
 	<utility factory=".content_utils._default_word_tokenizer_pattern" name="en" />
+	<utility factory=".content_utils._default_word_tokenizer_pattern" name="es" />
+	<utility factory=".content_utils._default_word_tokenizer_pattern" name="ru" />
 	<utility factory=".content_utils._default_word_tokenizer_expression" name="en" />
-
+	<utility factory=".content_utils._default_word_tokenizer_expression" name="es" />
+	<utility factory=".content_utils._default_word_tokenizer_expression" name="ru" />
+	
 	<utility factory=".content_utils._default_punctuation_char_pattern" />
 	<utility factory=".content_utils._default_punctuation_char_pattern" name="en" />
+	<utility factory=".content_utils._default_punctuation_char_pattern" name="es" />
+	<utility factory=".content_utils._default_punctuation_char_pattern" name="ru" />
 	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="en" />
+	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="es" />
+	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="ru" />
 
 	<utility factory=".content_utils._default_punctuation_char_expression" />
 	<utility factory=".content_utils._default_punctuation_char_expression" name="en" />
+	<utility factory=".content_utils._default_punctuation_char_expression" name="es" />
+	<utility factory=".content_utils._default_punctuation_char_expression" name="ru" />
+	
 	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="en" />
+	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="es" />
+	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="ru" />
 
 	<utility factory=".ngrams_utils._DefaultNgramComputer" />
 	<utility factory=".ngrams_utils._DefaultNgramComputer" name="en" />

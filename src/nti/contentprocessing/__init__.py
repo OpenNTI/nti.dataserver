@@ -59,5 +59,6 @@ del _makenon_alpha_re
 from .content_utils import normalize
 from .content_utils import rank_words
 from .ngrams_utils import compute_ngrams
-from .content_utils import split_content
+from .content_utils import tokenize_content
 from .content_utils import get_content_translation_table
+split_content = tokenize_content

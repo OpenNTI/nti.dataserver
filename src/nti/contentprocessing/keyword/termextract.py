@@ -19,7 +19,7 @@ from zope import component
 
 from .. import taggers
 from .. import stemmers
-from .. import split_content
+from .. import tokenize_content
 from . import interfaces as cpkw_interfaces
 
 @interface.implementer(cpkw_interfaces.ITermExtractFilter)
@@ -144,7 +144,7 @@ class _DefaultKeyWorExtractor():
 	def __call__(self, content, lang='en', filtername=u'', *args, **kwargs):
 
 		if isinstance(content, six.string_types):
-			tokenized_words = split_content(content, lang)
+			tokenized_words = tokenize_content(content, lang)
 		else:
 			tokenized_words = content
 

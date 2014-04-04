@@ -12,13 +12,13 @@ from zope.component.interfaces import IFactory
 
 from zopyx.txng3.core.interfaces import ISplitter
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 
 @interface.implementer(ISplitter)
 class Splitter(object):
 
 	def split(self, content):
-		return split_content(content)
+		return tokenize_content(content)
 
 @interface.implementer(IFactory)
 class SplitterFactory:

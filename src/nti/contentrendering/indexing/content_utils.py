@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.contentprocessing import split_content
+from nti.contentprocessing import tokenize_content
 
 from nti.contentfragments import interfaces as frg_interfaces
 
@@ -42,6 +42,6 @@ def sanitize_content(text, table=None, tokens=False, lang='en'):
 
 	# translate and tokenize words
 	text = text.translate(table) if table else text
-	tokenized_words = split_content(text, lang)
+	tokenized_words = tokenize_content(text, lang)
 	result = tokenized_words if tokens else ' '.join(tokenized_words)
 	return result

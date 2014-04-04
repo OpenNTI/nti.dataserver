@@ -17,7 +17,7 @@ from zope import component
 
 from nti.contentprocessing.content_utils import rank_words
 from nti.contentprocessing.content_utils import get_content
-from nti.contentprocessing.content_utils import split_content
+from nti.contentprocessing.content_utils import tokenize_content
 from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.content_utils import clean_special_characters
 from nti.contentprocessing.content_utils import get_content_translation_table
@@ -32,13 +32,13 @@ class TestContentUtils(unittest.TestCase):
 
 	def test_split_conent(self):
 		s = u'ax+by=0'
-		assert_that(split_content(s), is_(['ax', 'by', '0']))
+		assert_that(tokenize_content(s), is_(['ax', 'by', '0']))
 
 		s = u':)'
-		assert_that(split_content(s), is_([]))
+		assert_that(tokenize_content(s), is_([]))
 
 		s = u"''''''''"
-		assert_that(split_content(s), is_([]))
+		assert_that(tokenize_content(s), is_([]))
 
 	def test_get_content(self):
 		assert_that(get_content(None), is_(u''))

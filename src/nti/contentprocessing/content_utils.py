@@ -38,9 +38,9 @@ from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
 from . import default_punk_char_expression
 from . import default_word_tokenizer_pattern
-from  .import default_punk_char_pattern_plus
+from . import default_punk_char_pattern_plus
 from . import default_word_tokenizer_expression
-from  .import default_punk_char_expression_plus
+from . import default_punk_char_expression_plus
 
 def get_content_translation_table(lang='en'):
 	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=lang)
@@ -80,7 +80,7 @@ split_content = tokenize_content
 
 def get_content(text=None, lang="en"):
 	text = unicode(text) if text else None
-	result = split_content(text, lang) if text else ()
+	result = tokenize_content(text, lang) if text else ()
 	result = ' '.join(result)
 	return unicode(result)
 
@@ -97,22 +97,25 @@ def normalize(u, form='NFC'):
 @interface.implementer(cp_interfaces.IContentTokenizer)
 class _ContentTokenizer(object):
 
+	__slots__ = ()
+
 	tokenizer = RegexpTokenizer(_default_word_tokenizer_expression(),
 								flags=re.MULTILINE | re.DOTALL | re.UNICODE)
 
-	def tokenize(self, content):
+	@classmethod
+	def tokenize(cls, content):
 		if content and isinstance(content, six.string_types):
-			plain_text = self.to_plain_text(content)
-			words = self.tokenizer.tokenize(plain_text)
+			plain_text = cls.to_plain_text(content)
+			words = cls.tokenizer.tokenize(plain_text)
 		else:
 			words = ()
 		return words
 
 	@classmethod
 	def to_plain_text(cls, content):
-		text = \
-			component.getAdapter(content,
-								 frg_interfaces.IPlainTextContentFragment, name='text')
+		text = component.getAdapter(content,
+									frg_interfaces.IPlainTextContentFragment,
+									name='text')
 		return text
 
 
