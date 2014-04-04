@@ -14,8 +14,4 @@
 	<utility factory=".termextract._DefaultKeyWorExtractor" />
 	<utility factory=".termextract._DefaultKeyWorExtractor" name="en" />
 
-	<class class=".ContentKeyWord">
-		<implements interface=".interfaces.IContentKeyWord" />
-	</class>
-
 </configure>
