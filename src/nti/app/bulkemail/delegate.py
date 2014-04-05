@@ -41,7 +41,9 @@ class AbstractBulkEmailProcessDelegate(object):
 			request=self.request)
 
 	def compute_template_args_for_recipient(self, recipient ):
-		return recipient.get('template_args')
+		# By default, we return *something* non-None so that we
+		# still get sent
+		return recipient.get('template_args', {})
 
 	def compute_subject_for_recipient(self, recpient):
 		return self.subject

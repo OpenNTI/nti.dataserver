@@ -203,8 +203,9 @@ class UserNotableData(AbstractAuthenticatedView):
 		array_type = 'l' if isinstance(self._catalog.family.maxint, long) else 'i' # Py3 porting issue, long went away?
 		return array(str(array_type), _sorted)
 
-	def iter_notable_intids(self, notable_intids):
-		return ResultSet(notable_intids, self._intids)
+	def iter_notable_intids(self, notable_intids, ignore_missing=False):
+		factory = _SafeResultSet if ignore_missing else ResultSet
+		return factory(notable_intids, self._intids)
 
 	_KEY = 'nti.appserver.ugd_query_views._NotableUGDLastViewed'
 	lastViewed = annotation_alias(_KEY, annotation_property='remoteUser', default=0,
@@ -223,3 +224,11 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		notables = self._notable_intids
 		return iid in notables
+
+class _SafeResultSet(ResultSet):
+
+	def __iter__(self):
+		for uid in self.uids:
+			obj = self.uidutil.queryObject(uid)
+			if obj is not None:
+				yield obj

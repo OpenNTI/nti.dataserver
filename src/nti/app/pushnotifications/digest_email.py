@@ -315,7 +315,9 @@ class DigestEmailCollector(object):
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
 
-		for o in notable_data.iter_notable_intids(sorted_by_type_time):
+		total_found = 0
+		for o in notable_data.iter_notable_intids(sorted_by_type_time, ignore_missing=True):
+			total_found += 1
 			if INote.providedBy(o):
 				notes.append(o)
 			elif ICommentPost.providedBy(o):
@@ -330,7 +332,9 @@ class DigestEmailCollector(object):
 			elif o.__class__.__name__ == 'UsersCourseAssignmentHistoryItemFeedback': # XXX FIXME: Coupling
 				feedback.append(o)
 			else:
+				total_found -= 1
 				other.append(o)
+
 		# Comments has multiple mime types, as does topics
 		comments.sort(reverse=True,key=lambda x: x.createdTime)
 		topics.sort(reverse=True,key=lambda x: x.createdTime)
@@ -351,6 +355,7 @@ class DigestEmailCollector(object):
 
 		result['unsubscribe_link'] = request.resource_url(self.remoteUser, 'unsubscribe')
 		result['email_to'] = recipient['email'].email
+		result['total_found'] = total_found
 		return result
 
 
@@ -369,7 +374,9 @@ from zope.i18n import translate
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
-	_subject = "${first_name}, here's what you've missed on ${site_name} since ${when}"
+	_subject = "${first_name}, here's what you've missed on ${site_name}"
+	_subject_with_date = _subject + ' since ${when}'
+
 
 	template_name = 'nti.app.pushnotifications:templates/digest_email'
 
@@ -411,10 +418,12 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	def compute_template_args_for_recipient(self, recipient):
 		user = User.get_user( recipient['email'].id, self._dataserver )
 		# XXX If the user disappears, we're screwed.
-		# We should also take care if some of the intids referenced disappear
 		collector = DigestEmailCollector(user, self.request)
 
-		return collector.recipient_to_template_args(recipient, self.request)
+		result = collector.recipient_to_template_args(recipient, self.request)
+		if not result['total_found']:
+			return None
+		return result
 
 
 	def compute_subject_for_recipient(self, recipient):
@@ -423,9 +432,10 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		locale = IBrowserRequest(self.request).locale
 		dates = locale.dates
 		formatter = dates.getFormatter('dateTime', length='short')
-		when = datetime.datetime.fromtimestamp(recipient['since'] or 0)
+		since = recipient['since'] or 0
+		when = datetime.datetime.fromtimestamp(since)
 
-		subject = _(self._subject,
+		subject = _(self._subject_with_date if since else self._subject,
 					mapping={'first_name': HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id,
 							 'site_name': self.request.host,
 							 'when': formatter.format(when)})
@@ -435,6 +445,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
 	_subject =  'TEST - ' + DigestEmailProcessDelegate._subject
+	_subject_with_date = 'Test - ' + DigestEmailProcessDelegate._subject_with_date
 
 	def _accept_user(self, user):
 		if super(DigestEmailProcessTestingDelegate,self)._accept_user(user):
