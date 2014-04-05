@@ -15,6 +15,7 @@ from zope import component
 from zope import interface
 
 from .interfaces import ITemplatedMailer
+from .interfaces import IEmailAddressable
 
 from pyramid.threadlocal import get_current_request
 
@@ -54,6 +55,9 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 		# gets directed through this method, so we only need to filter
 		# here.
 		def _tx(addr):
+			# support IEmailAddressable. We lose
+			# VERP, but that's alright
+			addr = getattr(IEmailAddressable(addr, addr), 'email', addr)
 			if addr.endswith('@nextthought.com'):
 				return addr
 			# XXX This blows up if we get a malformed

@@ -23,11 +23,14 @@ from nti.app.testing.layers  import AppLayerTest
 from ..filtered_template_mailer import NextThoughtOnlyMailer
 from ..filtered_template_mailer import ImpersonatedMailer
 from ..interfaces import ITemplatedMailer
+from ..interfaces import IPrincipal
+from ..interfaces import IEmailAddressable
+from ..interfaces import EmailAddresablePrincipal
 
 from nti.testing.matchers import validly_provides
 
 from zope import interface
-from zope.publisher.interfaces.browser import IBrowserRequest
+
 
 class User(object):
 	username = 'the_user'
@@ -35,6 +38,10 @@ class User(object):
 class Profile(object):
 	realname = 'Suzë Schwartz'
 
+@interface.implementer(IPrincipal, IEmailAddressable)
+class Principal(object):
+	id = 'the_prin_id'
+	email = None
 
 from .test_default_template_mailer import Request
 
@@ -46,7 +53,7 @@ class _BaseMixin(object):
 		assert_that( self.mailer(),
 					 validly_provides(ITemplatedMailer))
 
-	def _check(self, recipient, to, extra_environ=None):
+	def _do_check(self, recipient, to, extra_environ=None):
 		user = User()
 		profile = Profile()
 		request = Request()
@@ -65,6 +72,14 @@ class _BaseMixin(object):
 		msg.sender = 'foo@bar'
 		base_msg = msg.to_message()
 		assert_that( base_msg, has_entry('To', to) )
+
+	def _check(self, recipient, to, extra_environ=None):
+		self._do_check(recipient, to, extra_environ=extra_environ)
+		if isinstance(recipient, basestring):
+			prin = Principal()
+			prin.email = recipient
+			self._do_check(EmailAddresablePrincipal(prin), to, extra_environ=extra_environ)
+
 
 class TestNextThoughtOnlyEmail(AppLayerTest,_BaseMixin):
 
