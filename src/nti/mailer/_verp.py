@@ -18,14 +18,14 @@ from .interfaces import IEmailAddressable
 from .interfaces import IVERP
 from zope.security.interfaces import IPrincipal
 
-# TODO: Break these dependencies
-from nti.appserver.interfaces import IApplicationSettings
-
-
 import rfc822
 import itsdangerous
 
 def _make_signer(default_key='$Id$'):
+
+	# TODO: Break these dependencies
+	from nti.appserver.interfaces import IApplicationSettings
+
 	settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
 	# XXX Reusing the cookie secret, we should probably have our own
 	secret_key = settings.get('cookie_secret', default_key)
@@ -43,7 +43,6 @@ def verp_from_recipients( fromaddr, recipients, request=None ):
 
 	if not realname:
 		realname = "NextThought" # XXX Site specific?
-
 
 	# We could special case the common case of recpients of length
 	# one if it is a string: that typically means we're sending to the current
