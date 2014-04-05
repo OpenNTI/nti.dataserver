@@ -438,6 +438,7 @@ setup(
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2',	# IDE helper for rope
+			'snakefood', # dependency graphs
 			'sphinx',	# Narrative docs
 			'sphinxcontrib-programoutput >= 0.8',
 			'sphinxtheme.readability >= 0.0.6',

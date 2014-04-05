@@ -5,3 +5,4 @@ Here is something that another friend told me about: themathpage_com/alg/algebra
 Sure, Chris.  Feel free to chat when I'm online or submit a Quick Question for the community.
 <html><body><p style="text-align: left;"><span style="font-family: 'Helvetica'; font-size: 12pt; color: blue;">Hello, Whitney.  Could you pls answer this question:  asf asdf asdf asdf asdf asdf ?</span></p></body></html>
 Hi, Ken.  Here is the answer.  Check this website www_xyz_com
+<html><body><p style="text-decoration: underline;">Is it underlined?</p></body></html>
