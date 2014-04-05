@@ -31,7 +31,7 @@ class QuickStringBuffer(object):
 		return len(self.value)
 
 	def __str__(self):
-		return u''.join(self.value)
+		return ''.join(self.value)
 
 	def __repr__(self):
 		return repr(self.__str__())
@@ -69,7 +69,7 @@ class QuickStringBuffer(object):
 		return self
 
 	def subSequence(self, start, end):
-		return u''.join(self.value[start:end])
+		return ''.join(self.value[start:end])
 
 	def write(self, fp):
 		for c in self.value:
