@@ -238,32 +238,36 @@ class DefaultBulkEmailProcessLoop(object):
 
 			sender = delegate.compute_sender_for_recipient( recipient_data )
 
-			pmail_msg = self.mailer.create_simple_html_text_email(
-				self.delegate.template_name,
-				subject=delegate.compute_subject_for_recipient(recipient_data),
-				request=self.request,
-				recipients=[recipient_data['email']],
-				# TODO: Probably if there were `template_args` and this method
-				# returns None, we should not send to this client: something
-				# changed behind our back. We should record a failure and keep going
-				template_args=delegate.compute_template_args_for_recipient(recipient_data))
+			# Probably if there were `template_args` and this method
+			# returns None, we should not send to this client: something
+			# changed behind our back. We should record a failure and keep going
+			template_args = delegate.compute_template_args_for_recipient(recipient_data)
 
-			pmail_msg.sender = sender
-			mail_msg = pmail_msg.to_message()
-			msg_string = mail_msg.as_string()
+			result = {'SendEmailResult': 'Not sent'}
+			if sender is not None and template_args is not None:
+				pmail_msg = self.mailer.create_simple_html_text_email(
+					self.delegate.template_name,
+					subject=delegate.compute_subject_for_recipient(recipient_data),
+					request=self.request,
+					recipients=[recipient_data['email']],
+					template_args=template_args)
 
-			# Now send the email. This might raise SESError or its subclasses. If it does,
-			# sending failed and we exit, having left the recipient still on the source list.
-			# The one exception is if the address is blacklisted, that still counts as
-			# success and we need to take him off the source list
-			try:
-				result = self.sesconn.send_raw_email( msg_string, sender, pmail_msg.recipients[0] )
-			except SESAddressBlacklistedError as e: #pragma: no cover
-				logger.warn("Blacklisted address: %s", e )
-				result = {'SendEmailResult': 'BlacklistedAddress'}
-			# Result will be something like:
-			# {u'SendEmailResponse': {u'ResponseMetadata': {u'RequestId': u'a38159e2-b033-11e2-9c3f-dba8231cfdfd'},
-			#  u'SendEmailResult':   {u'MessageId': u'0000013e51f5c299-5998b51c-ee6e-4b61-b7e8-443895b6dfb4-000000'}}}
+				pmail_msg.sender = sender
+				mail_msg = pmail_msg.to_message()
+				msg_string = mail_msg.as_string()
+
+				# Now send the email. This might raise SESError or its subclasses. If it does,
+				# sending failed and we exit, having left the recipient still on the source list.
+				# The one exception is if the address is blacklisted, that still counts as
+				# success and we need to take him off the source list
+				try:
+					result = self.sesconn.send_raw_email( msg_string, sender, pmail_msg.recipients[0] )
+				except SESAddressBlacklistedError as e: #pragma: no cover
+					logger.warn("Blacklisted address: %s", e )
+					result = {'SendEmailResult': 'BlacklistedAddress'}
+				# Result will be something like:
+				# {u'SendEmailResponse': {u'ResponseMetadata': {u'RequestId': u'a38159e2-b033-11e2-9c3f-dba8231cfdfd'},
+				#  u'SendEmailResult':   {u'MessageId': u'0000013e51f5c299-5998b51c-ee6e-4b61-b7e8-443895b6dfb4-000000'}}}
 
 			# Record the result and remove the need to send again
 			self.redis.srem( self.names.source_name, member )

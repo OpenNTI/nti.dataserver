@@ -73,11 +73,17 @@ class IUserNotableData(IIterable):
 		:return: An iterable or list-like sequence containing intids.
 		"""
 
-	def iter_notable_intids(notable_intids):
+	def iter_notable_intids(notable_intids, ignore_missing=False):
 		"""
 		Return an iterable over the objects represented by the intids
 		previously returned and possibly sorted by this object. The iterable
 		will have a length if the argument does.
+
+		:keyword bool ignore_missing: If set to true, then intids that are no
+			longer present will be ignored. Use this if the transaction
+			that processes the ids is different than the transaction that
+			collected them. Note that this may cause a discrepancy with the
+			length.
 		"""
 
 	def is_object_notable(maybe_notable):

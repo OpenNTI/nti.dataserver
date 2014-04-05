@@ -65,7 +65,7 @@ class Recipient(object):
 
 	email = 'foo@bar'
 	id = 'jason'
-	verp_from = '"NextThought" <no-reply+amFzb24uWmxfQUFvRTZRamNBTmJvX1FBOVhJZGQyakhZ@alerts.nextthought.com>'
+	verp_from = '"NextThought" <no-reply+amFzb24ua3ZaSkQ2Z19KYWtxYmlTbHhIU1dSa0lLY1dr@alerts.nextthought.com>'
 	def __init__(self, email=None):
 		if email:
 			self.email = email
@@ -146,6 +146,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		process.add_recipients( [{'email': Recipient()}] )
 
 		assert_that( process.redis.scard(process.names.source_name), is_( 1 ) )
+		assert_that( process.redis.scard(process.names.dest_name), is_( 0 ) )
 
 		process.process_loop()
 

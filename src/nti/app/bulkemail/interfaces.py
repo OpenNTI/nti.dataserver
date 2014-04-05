@@ -126,6 +126,9 @@ class IBulkEmailProcessDelegate(interface.Interface):
 		Given a recipient dictionary previously produced by
 		:meth:`collect_recipients`, return the arguments that will be
 		passed to the template for rendering.
+
+		If this returns ``None``, then no template will be processed
+		and *no email will be sent*.
 		"""
 
 	def compute_subject_for_recipient(recipient):
