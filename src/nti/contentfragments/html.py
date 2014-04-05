@@ -157,7 +157,8 @@ class _SanitizerFilter(sanitizer.Filter):
 							  'font-size',
 							  'font-family',
 							  'color',
-							  'text-align']
+							  'text-align',
+							  'text-decoration']
 
 	rejected_elements = ['script', 'style']  # Things we don't even try to preserve the text content of
 
