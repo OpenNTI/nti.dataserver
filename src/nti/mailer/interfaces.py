@@ -61,7 +61,7 @@ class EmailAddresablePrincipal(object):
 
 		for name in 'title', 'description':
 			prin_val = getattr(prin, name, None)
-			if prin_val:
+			if prin_val is not None:
 				setattr(self, str(name), prin_val)
 
 class ITemplatedMailer(interface.Interface):
