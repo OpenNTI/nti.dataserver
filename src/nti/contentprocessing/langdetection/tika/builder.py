@@ -31,7 +31,7 @@ class QuickStringBuffer(object):
 		return len(self.value)
 
 	def __str__(self):
-		return ''.join(self.value)
+		return u''.join(self.value)
 
 	def __repr__(self):
 		return repr(self.__str__())
@@ -54,7 +54,7 @@ class QuickStringBuffer(object):
 		return iter(self.value)
 
 	def lower(self):
-		t = str(self).lower()
+		t = [x.lower() for x in self.value]
 		return QuickStringBuffer(t)
 	
 	def clear(self):
@@ -69,7 +69,7 @@ class QuickStringBuffer(object):
 		return self
 
 	def subSequence(self, start, end):
-		return ''.join(self.value[start:end])
+		return u''.join(self.value[start:end])
 
 	def write(self, fp):
 		for c in self.value:
