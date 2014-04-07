@@ -3,10 +3,13 @@
 """
 Utility to initialize an environment
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
 
 import logging
 logger = __import__('logging').getLogger(__name__)

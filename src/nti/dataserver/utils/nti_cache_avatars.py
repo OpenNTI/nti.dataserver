@@ -1,16 +1,24 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals, absolute_import
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 from nti.monkey import gevent_patch_on_import # Must be very early
 gevent_patch_on_import.patch()
 
-
 logger = __import__('logging').getLogger(__name__)
 
-import os.path
-import urlparse
 import time
+import os.path
 import argparse
+import urlparse
+
+import requests
+
+import gevent.pool
 
 import transaction
 from zope import component
@@ -19,11 +27,8 @@ import webob.datetime_utils
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users.interfaces import IAvatarURL
+
 from . import run_with_dataserver
-
-
-import requests
-import gevent.pool
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Cache all gravatar urls locally" )
@@ -61,7 +66,7 @@ def _downloadAvatarIcons( targetDir ):
 		username = user.username if hasattr( user, 'username' ) else user
 		username = username.strip() # account for POSKeyErrors and almost ghosts
 		if not username or username in seen:
-			 return
+			return
 		seen.add( username )
 		url = IAvatarURL( user ).avatarURL
 		url = url.replace( 'www.gravatar', 'lb.gravatar' )
