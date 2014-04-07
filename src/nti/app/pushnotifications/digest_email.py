@@ -354,7 +354,7 @@ class DigestEmailCollector(object):
 			result[k] = template_args
 
 		result['unsubscribe_link'] = request.resource_url(self.remoteUser, 'unsubscribe')
-		result['email_to'] = recipient['email'].email
+		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
 		return result
 
@@ -460,25 +460,25 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 					return True
 
 	class _Collector(DigestEmailCollector):
-
+		no_created_cap = False
 		def min_created_time(self, notable_data):
-			return None
+			return None if self.no_created_cap else DigestEmailCollector.min_created_time(self, notable_data)
 
 	def _collector_for_user(self, user, factory=_Collector):
 		collector = DigestEmailProcessDelegate._collector_for_user(self, user, factory=self._Collector)
-		collector.last_collected = collector.last_sent = 0
+		collector.no_created_cap = self.request.get('no_created_cap')
+		if collector.no_created_cap:
+			collector.last_collected = collector.last_sent = 0
 		return collector
 
 	def collect_recipients(self):
 		for possible_recipient in super(DigestEmailProcessTestingDelegate,self).collect_recipients():
-			# Reset the sent and collected times
-			collector = DigestEmailCollector(User.get_user(possible_recipient['email'].id, self._dataserver),
-											 self.request)
-			collector.last_collected = collector.last_sent = 0
-
+			# Reset the sent and collected times if desired
+			self._collector_for_user(User.get_user(possible_recipient['email'].id, self._dataserver))
 
 			logger.info( "User %s/%s had %d notable objects",
 						 possible_recipient['email'].id, possible_recipient['email'].email,
 						 len(possible_recipient['template_args']))
-			possible_recipient['email'].email = 'jason@nextthought.com'
+			if self.request.get('override_to'):
+				possible_recipient['email'].email = self.request.get('override_to')
 			yield possible_recipient
