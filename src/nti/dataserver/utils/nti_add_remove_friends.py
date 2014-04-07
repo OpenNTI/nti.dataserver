@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-$Id$
+.. $Id$
 """
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
+logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
@@ -21,7 +23,6 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
-
 
 def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	thelist = None
@@ -92,8 +93,6 @@ def main():
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
 						 function=lambda: process_params(args) )
-
-
 
 if __name__ == '__main__':
 	main()

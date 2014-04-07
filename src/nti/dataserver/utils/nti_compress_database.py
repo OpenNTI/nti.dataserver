@@ -3,26 +3,23 @@
 """
 Applies ZlibStorage to an existing relstorage instance.
 
-$Id$
+.. $Id$
 """
-
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import nti.monkey.gevent_patch_on_import
 nti.monkey.gevent_patch_on_import.patch()
+
 import nti.monkey.relstorage_umysqldb_patch_on_import
 nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
-
 logger = __import__('logging').getLogger(__name__)
-
 
 import logging
 import argparse
 from cStringIO import StringIO
 
-import sys
 import ZConfig
 
 from relstorage.storage import RelStorage
@@ -45,7 +42,7 @@ def main():
 		format="%(asctime)s [%(name)s] %(levelname)s %(message)s")
 
 	schema = ZConfig.loadSchemaFile(StringIO(schema_xml))
-	config, handler = ZConfig.loadConfig(schema, args.config_file)
+	config, _ = ZConfig.loadConfig(schema, args.config_file)
 
 	destination = config.destination.open()
 
