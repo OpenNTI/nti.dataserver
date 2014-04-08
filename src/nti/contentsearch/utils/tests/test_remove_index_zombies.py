@@ -29,6 +29,7 @@ from nti.contentsearch.tests import zanpakuto_commands
 
 from . import SharedConfiguringTestLayer
 
+@unittest.SkipTest
 class TestReindexUserContent(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer

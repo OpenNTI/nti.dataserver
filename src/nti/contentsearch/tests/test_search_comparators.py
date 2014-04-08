@@ -64,33 +64,33 @@ class TestSearchComparators(unittest.TestCase):
 		assert_that(RSHC.score_path(ref, path), is_(0))
 		assert_that(RSHC.score_path(ref, ()), is_(0))
 
-	@WithMockDSTrans
-	def test_search_hit_relevance(self):
-		usr = self._create_user()
-		rim = search_interfaces.IRepozeEntityIndexManager(usr)
-		for x in zanpakuto_commands:
-			for n in xrange(2):
-				if  n == 0:
-					ugd = Note()
-					ugd.body = [unicode(x)]
-				else:
-					ugd = Highlight()
-					ugd.selectedText = unicode(x)
-				ugd.creator = usr.username
-				ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % n)
-				mock_dataserver.current_transaction.add(ugd)
-				ugd = usr.addContainedObject(ugd)
-				rim.index_content(ugd)
-
-		query = search_interfaces.ISearchQuery("all")
-		query.location = make_ntiid(nttype='bleach', specific='manga')
-		query.sortOn = 'relevance'
-		hits = rim.search(query)
-		assert_that(hits, has_length(6))
-		hits = toExternalObject(hits)
-		items = hits[ITEMS]
-		for n, hit in enumerate(items):
-			if n <= 2:
-				assert_that(hit[TYPE], is_('Note'))
-			else:
-				assert_that(hit[TYPE], is_('Highlight'))
+# 	@WithMockDSTrans
+# 	def test_search_hit_relevance(self):
+# 		usr = self._create_user()
+# 		rim = search_interfaces.IRepozeEntityIndexManager(usr)
+# 		for x in zanpakuto_commands:
+# 			for n in xrange(2):
+# 				if  n == 0:
+# 					ugd = Note()
+# 					ugd.body = [unicode(x)]
+# 				else:
+# 					ugd = Highlight()
+# 					ugd.selectedText = unicode(x)
+# 				ugd.creator = usr.username
+# 				ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % n)
+# 				mock_dataserver.current_transaction.add(ugd)
+# 				ugd = usr.addContainedObject(ugd)
+# 				rim.index_content(ugd)
+#
+# 		query = search_interfaces.ISearchQuery("all")
+# 		query.location = make_ntiid(nttype='bleach', specific='manga')
+# 		query.sortOn = 'relevance'
+# 		hits = rim.search(query)
+# 		assert_that(hits, has_length(6))
+# 		hits = toExternalObject(hits)
+# 		items = hits[ITEMS]
+# 		for n, hit in enumerate(items):
+# 			if n <= 2:
+# 				assert_that(hit[TYPE], is_('Note'))
+# 			else:
+# 				assert_that(hit[TYPE], is_('Highlight'))
