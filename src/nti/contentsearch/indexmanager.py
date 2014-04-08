@@ -20,7 +20,6 @@ from perfmetrics import metric
 from nti.dataserver.users import Entity
 from nti.dataserver import interfaces as nti_interfaces
 
-from . import indexagent
 from . import search_query
 from . import search_utils
 from . import search_results
@@ -210,8 +209,9 @@ class IndexManager(object):
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
-									  broadcast=broadcast)
+		pass
+# 		indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
+# 									  broadcast=broadcast)
 
 @interface.implementer(search_interfaces.IIndexManager)
 def create_index_manager(parallel_search=False):
