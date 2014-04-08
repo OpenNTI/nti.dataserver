@@ -38,6 +38,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentsearch.tests import zanpakuto_commands
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
+@unittest.SkipTest
 class TestRepozeUserAdapter(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer

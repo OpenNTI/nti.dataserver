@@ -85,6 +85,7 @@ class IndexManagerTestLayer(SharedConfiguringTestLayer):
 		cls.bim.close()
 		shutil.rmtree(cls.book_idx_dir, True)
 
+@unittest.SkipTest
 class TestIndexManager(unittest.TestCase):
 
 	layer = IndexManagerTestLayer

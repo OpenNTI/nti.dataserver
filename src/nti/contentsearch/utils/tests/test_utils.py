@@ -37,6 +37,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from . import zanpakuto_commands
 from . import SharedConfiguringTestLayer
 
+@unittest.SkipTest
 class TestUtils(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
