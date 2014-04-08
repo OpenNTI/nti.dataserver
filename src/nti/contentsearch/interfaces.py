@@ -18,6 +18,8 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils import schema as nti_schema
 
+# deprecated interfaes
+
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
 class IRepozeDataStore(interface.Interface):
 	"""
@@ -30,6 +32,10 @@ class IRepozeDataStore(interface.Interface):
          for i in provided.__iro__:
       AttributeError: type object 'IRepozeDataStore' has no attribute '__iro__'
 	"""
+
+deprecated('IRepozeEntityIndexManager', 'Use lastest index implementation')
+class IRepozeEntityIndexManager(interface.Interface):
+	pass
 
 # search query
 
@@ -197,11 +203,6 @@ class IEntityIndexController(ISearcher):
 class IEntityIndexManager(IEntityIndexController):
 
 	username = nti_schema.ValidTextLine(title="entity name", required=True)
-
-# entity adapters
-
-class IRepozeEntityIndexManager(IEntityIndexManager):
-	pass
 
 # index manager
 
