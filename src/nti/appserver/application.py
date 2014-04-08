@@ -63,7 +63,7 @@ IZLocation.__bases__ = (ILocation,)
 
 SOCKET_IO_PATH = 'socket.io'
 
-def _create_xml_conf_machine( settings ):
+def _create_xml_conf_machine( settings, features_file='' ):
 	xml_conf_machine = xmlconfig.ConfigurationMachine()
 	xmlconfig.registerCommonDirectives( xml_conf_machine )
 
@@ -83,6 +83,12 @@ def _create_xml_conf_machine( settings ):
 	for feature in zcml_features:
 		logger.info( "Enabling %s", feature )
 		xml_conf_machine.provideFeature( feature )
+
+	if os.path.isfile(features_file):
+		xml_conf_machine = xmlconfig.file( features_file,
+										   package=nti.appserver,
+										   context=xml_conf_machine,
+										   execute=True )
 
 	return xml_conf_machine
 
@@ -422,7 +428,20 @@ def createApplication( http_port,
 	# Let everything know about the settings
 	component.getGlobalSiteManager().registerUtility(settings, app_interfaces.IApplicationSettings)
 
-	xml_conf_machine = _create_xml_conf_machine( settings )
+	DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
+	dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
+	if dataserver_dir_exists:
+		DATASERVER_DIR = os.path.abspath( DATASERVER_DIR )
+	def dataserver_file( *args ):
+		return os.path.join( DATASERVER_DIR, *args )
+	def is_dataserver_file( *args ):
+		return dataserver_dir_exists and os.path.isfile( dataserver_file( *args ) )
+	def is_dataserver_dir( *args ):
+		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
+
+	xml_conf_machine = _create_xml_conf_machine( settings,
+												 features_file=dataserver_file('etc', 'package-includes', '000-features.zcml') )
+
 	if 'pre_site_zcml' in settings:
 		# One before we load the main config so it has a chance to exclude files
 		logger.debug( "Loading pre-site settings from %s", settings['pre_site_zcml'] )
@@ -440,17 +459,6 @@ def createApplication( http_port,
 		# as everything else, otherwise the proper listeners won't get called or won't
 		# do the right thing (see e.g., _indexmanager_event_listeners)
 		xml_conf_machine = xmlconfig.file('configure_indexmanager.zcml', package=nti.appserver, context=xml_conf_machine, execute=False)
-
-	DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
-	dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
-	if dataserver_dir_exists:
-		DATASERVER_DIR = os.path.abspath( DATASERVER_DIR )
-	def dataserver_file( *args ):
-		return os.path.join( DATASERVER_DIR, *args )
-	def is_dataserver_file( *args ):
-		return dataserver_dir_exists and os.path.isfile( dataserver_file( *args ) )
-	def is_dataserver_dir( *args ):
-		return dataserver_dir_exists and os.path.isdir( dataserver_file( *args ) )
 
 	def load_dataserver_slugs( include_dir_name, context ):
 		if is_dataserver_dir( 'etc', include_dir_name ):
@@ -693,7 +701,7 @@ def _configure_async_changes(ds, indexmanager=None):
 	indexmanager = indexmanager or component.queryUtility(nti.contentsearch.interfaces.IIndexManager)
 	if indexmanager:
 		ds.add_change_listener(indexmanager.onChange)
-		
+
 	logger.info('Finished adding listeners')
 
 @component.adapter(IDatabaseOpenedWithRoot)
