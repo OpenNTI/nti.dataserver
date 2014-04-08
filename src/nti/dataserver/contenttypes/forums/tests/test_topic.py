@@ -27,6 +27,8 @@ from hamcrest import starts_with
 from hamcrest import not_none
 from hamcrest import none
 from hamcrest import has_property
+from hamcrest import calling
+from hamcrest import raises
 from nose.tools import assert_raises
 import nti.testing.base
 
@@ -35,6 +37,7 @@ import fudge
 from nti.testing.matchers import is_empty, is_true
 
 from nti.externalization.tests import externalizes
+from nti.externalization.internalization import update_from_external_object
 
 from nti.testing.matchers import aq_inContextOf
 from zope.container.interfaces import InvalidItemType, InvalidContainerType, INameChooser
@@ -46,7 +49,7 @@ from ..post import Post, HeadlinePost, PersonalBlogComment, PersonalBlogEntryPos
 
 from zope import component
 from zope import interface
-
+from zope.schema.interfaces import ConstraintNotSatisfied
 
 
 from nti.dataserver.interfaces import IUser, IWritableShared
@@ -183,6 +186,9 @@ class TestTopic(ForumLayerTest):
 									  'NewestDescendant', none(),
 									  'sharedWith', is_empty() ),
 						is_not( has_key( 'flattenedSharingTargets' ) ) ) ) )
+
+		assert_that( calling(update_from_external_object).with_args(topic, {'title': 'No\nnewline'}),
+					 raises(ConstraintNotSatisfied, "(u'No\\\\nnewline', u'title')"))
 
 		# With a comment
 		topic['k'] = Post()
