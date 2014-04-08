@@ -5,18 +5,30 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import is_not
+does_not = is_not
+from hamcrest import calling
+from hamcrest import raises
 from nose.tools import assert_raises
 
 import cPickle as pickle
 
 from nti.contentfragments.interfaces import SanitizedHTMLContentFragment, HTMLContentFragment, PlainTextContentFragment
 from nti.contentfragments.interfaces import UnicodeContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+from nti.contentfragments.schema import PlainTextLine
+from zope.schema.interfaces import ConstraintNotSatisfied
 
 import mimetypes
 from zope import interface
 from nti.testing.matchers import verifiably_provides
+from nti.testing.matchers import validly_provides
 class ITest(interface.Interface):
 	pass
 
@@ -122,3 +134,10 @@ class TestMisc(unittest.TestCase):
 			assert_that( unicode(s1), is_( t ) )
 			assert_that( s1.lower(), is_(t))
 			assert_that( s1.upper(), is_(t))
+
+	def test_cannot_have_line_breaks_in_text_line(self):
+		ipt = PlainTextContentFragment('This\nis\nnot\nvalid')
+		assert_that( ipt, validly_provides(IPlainTextContentFragment) )
+
+		assert_that( calling(PlainTextLine().validate).with_args(ipt),
+					 raises(ConstraintNotSatisfied))

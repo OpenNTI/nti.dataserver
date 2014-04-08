@@ -64,6 +64,11 @@ class EmailAddresablePrincipal(object):
 			if prin_val is not None:
 				setattr(self, str(name), prin_val)
 
+	def __str__(self):
+		return str('Principal(%s/%s)' % (self.id, self.email))
+
+	__repr__ = __str__
+
 class ITemplatedMailer(interface.Interface):
 	"""
 	An object, typically registered as a utility,
