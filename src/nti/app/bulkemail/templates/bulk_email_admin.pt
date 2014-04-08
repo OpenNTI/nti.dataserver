@@ -97,6 +97,9 @@
 			<tr tal:condition="context/startTime">
 				<td>Process Running?</td><td tal:content="context/processRunning">250</td>
 			</tr>
+			<tr>
+				<td>Burst/Average Send Rate</td><td>${context/throttle/capacity|nothing}/${context/throttle/fill_rate|string:N/A}</td>
+			</tr>
 
 		</table>
 
