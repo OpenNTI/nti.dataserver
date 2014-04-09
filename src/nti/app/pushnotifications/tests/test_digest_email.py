@@ -142,6 +142,8 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
 
 		assert_that( msg, contains_string('NOTABLE NOTE'))
+		assert_that( msg, contains_string('shared a note'))
+		assert_that( msg, does_not(contains_string('replied to a note')))
 
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)

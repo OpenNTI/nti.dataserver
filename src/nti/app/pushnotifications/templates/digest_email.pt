@@ -104,7 +104,12 @@
 
 												<strong tal:content="notable/creator">Greg Higgins</strong>
 												<!--! Sometimes there is no title, so we can't make that the link -->
-												<a href="" tal:attributes="href notable/href">shared a note</a> <em tal:content="notable/display_name|notable/snippet">Test save</em>
+												<a href="" tal:attributes="href notable/href">
+													<span tal:condition="notable/top_level_note">shared a note</span>
+													<span tal:condition="not:notable/top_level_note">replied to a note</span>
+												</a>
+												<em tal:content="notable/display_name|notable/snippet">Test save</em>
+
 												<span tal:condition="notable/__parent__/note_container_display_name">
 												in <a href=""
 													  tal:attributes="href notable/__parent__/note_container_href|default"
