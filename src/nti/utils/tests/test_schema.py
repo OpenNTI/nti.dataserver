@@ -30,6 +30,7 @@ from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
 from nti.utils.schema import DataURI
 from nti.utils.schema import IVariant
 from nti.utils.schema import Number
+from nti.utils.schema import DictFromObject
 from nti.utils.schema import ListOrTuple
 from nti.utils.schema import ValidRegularExpression
 from nti.utils.schema import ValidTextLine as TextLine
@@ -183,6 +184,23 @@ def test_nested_variants():
 	assert_that( events, has_length( 1 ) )
 	assert_that( events, contains( has_property( 'object', {'k': 'v'} ) ) )
 
+@with_setup( setup=eventtesting.setUp, teardown=cleanup.cleanUp )
+def test_dict():
+
+	dict_field = DictFromObject( key_type=TextLine(), value_type=Number() )
+	dict_field.__name__ = 'dict'
+
+	class X(object):
+		pass
+	x = X()
+	dict_field.set( x, dict_field.fromObject({'k': '1'}) )
+
+	assert_that( x, has_property('dict', {'k': 1.0} ))
+
+	events = eventtesting.getEvents( IBeforeDictAssignedEvent )
+	assert_that( events, has_length( 1 ) )
+	assert_that( events, contains( has_property( 'object', {'k': 1.0} ) ) )
+
 
 def test_objectlen():
 	# If we have the inheritance messed up, we will have problems
@@ -218,6 +236,7 @@ def test_create_direct_field_properties():
 	# And nothing extra crept in, just the four standard things
 	# __dict__, __doct__, __module__, __weakref__, and b
 	assert_that( B.__dict__, has_length( 5 ) )
+
 
 @with_setup( setup=lambda: module_setup( ('nti.utils',) ), teardown=module_teardown )
 def test_country_vocabulary():
