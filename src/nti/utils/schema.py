@@ -658,18 +658,27 @@ class ListOrTuple(IndexedIterable):
 
 class _SequenceFromObjectMixin(object):
 	accept_types = None
+	_default_type = list
+
+	def _converter_for(self, field):
+		if hasattr( field, 'fromObject' ):
+			converter = field.fromObject
+		elif hasattr( field, 'fromUnicode' ): # here's hoping the values are strings
+			converter = field.fromUnicode
+		return converter
+
+	def _do_fromObject(self, context):
+		converter = self._converter_for(self.value_type)
+		result = [converter( x ) for x in context]
+		return result
+
 	def fromObject( self, context ):
 		check_type = self.accept_types or self._type
 		if check_type is not None and not isinstance( context, check_type ):
 			raise sch_interfaces.WrongType( context, self._type )
 
-		if hasattr( self.value_type, 'fromObject' ):
-			converter = self.value_type.fromObject
-		elif hasattr( self.value_type, 'fromUnicode' ): # here's hoping the values are strings
-			converter = self.value_type.fromUnicode
-
-		result = [converter( x ) for x in context]
-		if isinstance( self._type, type ) and self._type is not list: # single type is a factory
+		result = self._do_fromObject(context)
+		if isinstance( self._type, type ) and self._type is not self._default_type: # single type is a factory
 			result = self._type( result )
 		return result
 
@@ -705,6 +714,23 @@ class TupleFromObject(_ValueTypeAddingDocMixin, _SequenceFromObjectMixin, FieldV
 		if isinstance( value, list ):
 			value = tuple( value )
 		super(TupleFromObject,self).validate( value )
+
+@interface.implementer(IFromObject)
+class DictFromObject(_ValueTypeAddingDocMixin,
+					 _SequenceFromObjectMixin,
+					 FieldValidationMixin,
+					 schema.Dict):
+	"""
+	The `key_type` and `value_type` must be supporting :class:`IFromObject` or :class:`.IFromUnicode`.
+	"""
+
+	def set( self, context, value ):
+		_do_set( self, context, value, DictFromObject, BeforeDictAssignedEvent )
+
+	def _do_fromObject(self, context):
+		key_converter = self._converter_for(self.key_type)
+		value_converter = self._converter_for(self.value_type)
+		return {key_converter(k): value_converter(v) for k, v in context.iteritems()}
 
 class ValidSet(_ValueTypeAddingDocMixin,FieldValidationMixin,schema.Set):
 	def set( self, context, value ):
