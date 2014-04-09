@@ -30,6 +30,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.appserver.interfaces import IVideoIndexMap
+from nti.appserver.interfaces import IApplicationSettings
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
@@ -112,6 +113,13 @@ class _TemplateArgs(object):
 		return names.alias or names.realname
 
 	@property
+	def web_root(self):
+		settings = component.getUtility(IApplicationSettings)
+		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
+		# It MUST end with a trailing slash, but we don't want that
+		return web_root[:-1]
+
+	@property
 	def href(self):
 		# Default to the most stable identifier we have
 		ntiid = getattr(self._primary, 'NTIID', None)
@@ -121,7 +129,8 @@ class _TemplateArgs(object):
 			# The webapp does a weird dance, like so:
 			return self.request.route_url('objects.generic.traversal',
 										  traverse=(),
-										  _anchor="!object/ntiid/" + ntiid).replace('/dataserver2', '')
+										  _anchor="!object/ntiid/" + ntiid).replace('/dataserver2',
+																					self.web_root)
 
 		# TODO: These don't actually do what we want in terms of interacting
 		# with the application...
@@ -172,7 +181,8 @@ class _TemplateArgs(object):
 			specific = parsed_ntiid.specific
 			return self.request.route_url('objects.generic.traversal',
 										  traverse=(),
-										  _anchor="!HTML/" + provider + '/' + specific).replace('/dataserver2', '')
+										  _anchor="!HTML/" + provider + '/' + specific).replace('/dataserver2',
+																								self.web_root)
 
 
 	@property

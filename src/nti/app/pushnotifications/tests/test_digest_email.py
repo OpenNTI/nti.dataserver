@@ -139,7 +139,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		msg = msgs[0]
 		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
-		assert_that( msg, contains_string( 'http://localhost/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
+		assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
 
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 

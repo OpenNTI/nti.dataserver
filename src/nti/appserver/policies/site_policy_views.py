@@ -18,6 +18,7 @@ from zope import component
 from pyramid.interfaces import IView
 
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.interfaces import IApplicationSettings
 
 from . import site_policies
 
@@ -113,7 +114,15 @@ def _response_for_site_resource_with_marker( marker_interface, request, resource
 	"""
 
 	view = component.queryUtility( IView, name=resource )
+
 	if view:
+		# If the web root is not our usual default, and the path is under
+		# the web root, fix it up.
+		settings = component.getUtility(IApplicationSettings)
+		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
+		if web_root != '/NextThoughtWebApp/' and request.environ['PATH_INFO'].startswith(web_root):
+			request.environ['PATH_INFO'] = request.environ['PATH_INFO'].replace(web_root, '/NextThoughtWebApp/')
+
 		return view( request.context, request )
 
 	# Extra legacy support...these markers are DEPRECATED
@@ -168,10 +177,16 @@ _SITE_LANDING_COOKIE_NAME = b'nti.landing_site_name'
 			 request_method='GET')
 def landing_html_view(request):
 	"""
-	Redirects to a site specific landing page if one exists in the current site policy.
-	We do this by redirecting to last folder component of our path and setting a cookie
-	for the site name.  If this site policy doesn't have a landing page we redirect without
-	the cookie
+	Redirects to a site specific landing page if one exists in the
+	current site policy. We do this by redirecting to last folder
+	component of our path and setting a cookie for the site name. If
+	this site policy doesn't have a landing page we redirect without
+	the cookie.
+
+	.. note: This can now go away; we are removing the use of this site and this cookie
+		entirely, as it was redundant with the Host header. We can use that header
+		in Nginx rules to check for files on disk at specified locations, using
+		symlinks where necessary.
 	"""
 
 	marker, site_name = site_policies.queryUtilityInSite( ISiteLandingMarker, request=request, return_site_name=True )
