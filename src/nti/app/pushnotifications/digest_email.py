@@ -101,6 +101,11 @@ class _TemplateArgs(object):
 			return text
 		return ''
 
+	@property
+	def top_level_note(self):
+		if self._primary.isOrWasChildInThread():
+			return False
+		return True
 
 	@property
 	def display_name(self):
