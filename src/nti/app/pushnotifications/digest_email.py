@@ -368,7 +368,9 @@ class DigestEmailCollector(object):
 				template_args = None
 			result[k] = template_args
 
-		result['unsubscribe_link'] = request.resource_url(self.remoteUser, 'unsubscribe')
+		# If we really wanted to, we could stick a user authentication token
+		# on this view, but it's a lot safer not to.
+		result['unsubscribe_link'] = request.resource_url(self.remoteUser, '@@unsubscribe_digest_email')
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
 		return result
