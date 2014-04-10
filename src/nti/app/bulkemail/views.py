@@ -85,7 +85,10 @@ class _BulkEmailView(object):
 		process = self._find_process()
 		template_name = getattr( process.delegate, 'template_name', None ) or self.request.subpath[0]
 
-		if not component.getUtility(ITemplatedMailer).do_html_text_templates_exist(template_name):
+		if not component.getUtility(ITemplatedMailer).do_html_text_templates_exist(template_name,
+																				   text_template_extension=getattr(process.delegate,
+																												   'text_template_extension',
+																												   '.txt')):
 			raise hexc.HTTPNotFound("No such templates found") # XXX: Why are we doing this?
 
 		process.template_name = template_name

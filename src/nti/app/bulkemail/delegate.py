@@ -22,6 +22,7 @@ class AbstractBulkEmailProcessDelegate(object):
 	"""
 	Partial implementation of a process delegate.
 	"""
+	text_template_extension = ".txt"
 
 	fromaddr = 'no-reply@alerts.nextthought.com'
 	subject = '<No Subject>'
