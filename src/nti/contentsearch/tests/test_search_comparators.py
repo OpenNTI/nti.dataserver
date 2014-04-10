@@ -8,8 +8,8 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 
 import unittest
 
@@ -19,18 +19,16 @@ from nti.dataserver.contenttypes import Highlight
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.externalization.externalization import toExternalObject
-
-from .. import interfaces as search_interfaces
-from ..search_comparators import _RelevanceSearchHitComparator as RSHC
-
-from ..constants import (ITEMS, TYPE)
+from nti.contentsearch.search_hits import get_search_hit
+from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.search_results import _SearchResults as SearchResults
+from nti.contentsearch.search_comparators import _RelevanceSearchHitComparator as RSHC
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from . import zanpakuto_commands
-from . import SharedConfiguringTestLayer
+from nti.contentsearch.tests import zanpakuto_commands
+from nti.contentsearch.tests import SharedConfiguringTestLayer
 
 class TestSearchComparators(unittest.TestCase):
 
@@ -64,33 +62,38 @@ class TestSearchComparators(unittest.TestCase):
 		assert_that(RSHC.score_path(ref, path), is_(0))
 		assert_that(RSHC.score_path(ref, ()), is_(0))
 
-# 	@WithMockDSTrans
-# 	def test_search_hit_relevance(self):
-# 		usr = self._create_user()
-# 		rim = search_interfaces.IRepozeEntityIndexManager(usr)
-# 		for x in zanpakuto_commands:
-# 			for n in xrange(2):
-# 				if  n == 0:
-# 					ugd = Note()
-# 					ugd.body = [unicode(x)]
-# 				else:
-# 					ugd = Highlight()
-# 					ugd.selectedText = unicode(x)
-# 				ugd.creator = usr.username
-# 				ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % n)
-# 				mock_dataserver.current_transaction.add(ugd)
-# 				ugd = usr.addContainedObject(ugd)
-# 				rim.index_content(ugd)
-#
-# 		query = search_interfaces.ISearchQuery("all")
-# 		query.location = make_ntiid(nttype='bleach', specific='manga')
-# 		query.sortOn = 'relevance'
-# 		hits = rim.search(query)
-# 		assert_that(hits, has_length(6))
-# 		hits = toExternalObject(hits)
-# 		items = hits[ITEMS]
-# 		for n, hit in enumerate(items):
-# 			if n <= 2:
-# 				assert_that(hit[TYPE], is_('Note'))
-# 			else:
-# 				assert_that(hit[TYPE], is_('Highlight'))
+	@WithMockDSTrans
+	def test_search_hit_relevance(self):
+		query = search_interfaces.ISearchQuery("all")
+		query.location = make_ntiid(nttype='bleach', specific='manga')
+		query.sortOn = 'relevance'
+		result = SearchResults(query)
+
+		# create UGD objects
+		usr = self._create_user()
+		for y, x  in enumerate(zanpakuto_commands):
+			if  y % 2 == 0:
+				ugd = Note()
+				score = 2.0
+				ugd.body = [unicode(x)]
+			else:
+				score = 1.0
+				ugd = Highlight()
+				ugd.selectedText = unicode(x)
+			ugd.creator = usr.username
+			ugd.containerId = make_ntiid(nttype='bleach', specific='manga%s' % y)
+			mock_dataserver.current_transaction.add(ugd)
+			ugd = usr.addContainedObject(ugd)
+
+			hit = get_search_hit(ugd, score, query)
+			result.add(hit, score)
+
+		# sort
+		result.sort()
+		# check
+		for n, hit in enumerate(result.Hits):
+			if (n + 1) <= len(zanpakuto_commands) / 2:
+				assert_that(hit, has_property('Type', is_('Note')))
+			else:
+				assert_that(hit, has_property('Type', is_('Highlight')))
+
