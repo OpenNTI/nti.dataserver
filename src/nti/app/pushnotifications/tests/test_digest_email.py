@@ -159,7 +159,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		self._create_notable_data()
 
-		self._fetch_user_url('/unsubscribe',
+		self._fetch_user_url('/@@unsubscribe_digest_email',
 							 username='jason',
 							 extra_environ=self._make_extra_environ(username='jason'))
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
