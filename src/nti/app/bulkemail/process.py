@@ -250,7 +250,8 @@ class DefaultBulkEmailProcessLoop(object):
 					subject=delegate.compute_subject_for_recipient(recipient_data),
 					request=self.request,
 					recipients=[recipient_data['email']],
-					template_args=template_args)
+					template_args=template_args,
+					text_template_extension=delegate.text_template_extension)
 
 				pmail_msg.sender = sender
 				mail_msg = pmail_msg.to_message()

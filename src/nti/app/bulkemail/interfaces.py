@@ -101,6 +101,8 @@ class IBulkEmailProcessDelegate(interface.Interface):
 	"""
 
 	template_name = TextLine(title="A template asset spec")
+	text_template_extension = TextLine(title="The extension for text templates",
+									   default=".txt")
 
 	def collect_recipients():
 		"""

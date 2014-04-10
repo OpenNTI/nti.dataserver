@@ -392,7 +392,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	_subject = "${first_name}, here's what you've missed on ${site_name}"
 	_subject_with_date = _subject + ' since ${when}'
 
-
+	text_template_extension = ".mak"
 	template_name = 'nti.app.pushnotifications:templates/digest_email'
 
 	@Lazy
