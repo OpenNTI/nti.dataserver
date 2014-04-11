@@ -3,11 +3,10 @@
 """
 Interfaces for the dictionary/glossary component.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
 
 from zope import schema
 from zope import interface
@@ -32,7 +31,6 @@ class IDictionaryTermData(IReadMapping):
 	synonyms
 		Sequence of strings
 	"""
-
 
 class IDictionaryTermDataStorage(interface.Interface):
 	"""
@@ -61,8 +59,7 @@ class IJsonDictionaryTermDataStorage(interface.Interface):
 		"""
 
 	def close():
-		"""
-		"""
+		pass
 
 class IUncleanJsonDictionaryTermDataStorage(IJsonDictionaryTermDataStorage):
 	"""

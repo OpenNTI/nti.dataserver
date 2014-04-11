@@ -3,9 +3,9 @@
 """
 Various dictionary implementations.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -134,7 +134,9 @@ class TrivialExcelCSVDataStorage(object):
 			term = row['Term'].decode( 'utf-8' )
 			defn = row['Definition'].decode( 'utf-8' )
 
-			self._data[term.lower()] = DictionaryTermData( meanings=( {'content': defn, 'examples': (), 'type': 'noun' }, ) )
+			self._data[term.lower()] = DictionaryTermData(meanings=({'content': defn,
+																	  'examples': (),
+																	  'type': 'noun' },))
 
 	def lookup( self, key, exact=False ):
 		result = self._data.get( key )
