@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__( 'logging' ).getLogger( __name__ )
@@ -34,7 +34,7 @@ def lookup( info, dictionary=None ):
 	if dictionary is None: # pragma: no cover
 		logger.debug( "No dictionary, returning empty results" )
 
-	data = dictionary.lookup( info.word ) if dictionary is not None else None
+	data = dictionary.lookup(info.word) if dictionary is not None else None
 	if data is None:
 		data = {}
 

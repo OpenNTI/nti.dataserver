@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
 
-from hamcrest import assert_that
-from hamcrest import is_not
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
+from hamcrest import assert_that
 
-import anyjson as json
-from zope import component
 import os.path
+import anyjson as json
+
+from zope import component
+
+from nti.dictserver import lookup
+from nti.dictserver.term import DictionaryTerm as WordInfo
+from nti.dictserver.storage import TrivialExcelCSVDataStorage
+from nti.dictserver.storage import UncleanSQLiteJsonDictionaryTermStorage as Storage
+from nti.dictserver.storage import JsonDictionaryTermDataStorage as JsonDictionary
 
 import nti.testing.base
 from nose.tools import assert_raises
 import fudge
-
-from nti.dictserver.storage import UncleanSQLiteJsonDictionaryTermStorage as Storage
-from nti.dictserver.storage import JsonDictionaryTermDataStorage as JsonDictionary
-from nti.dictserver.storage import TrivialExcelCSVDataStorage
-from nti.dictserver import lookup
-from nti.dictserver.term import DictionaryTerm as WordInfo
-
 
 class TestDictionary(nti.testing.base.ConfiguringTestBase):
 
