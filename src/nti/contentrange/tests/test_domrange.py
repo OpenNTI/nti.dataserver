@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-$Id$
-"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
+
 import unittest
-import xml.dom
-import xml.dom.minidom
+
 from nti.contentrange import _domrange
 from nti.contentrange.tests import test_helpers
-import json
-import sys
-
-import hamcrest
-from hamcrest import assert_that, is_
-from hamcrest.core.base_matcher import BaseMatcher
 
 class DomTests(unittest.TestCase):
 

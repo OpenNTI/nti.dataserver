@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-$Id$
-"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
+
 import unittest
-import xml.dom
-import xml.dom.minidom
+
 from nti.contentrange import _domrange
 from nti.contentrange import _convertrange
 from nti.contentrange import contentrange
 from nti.contentrange.tests import test_helpers
-import json
-import sys
-
-import hamcrest
-from hamcrest import assert_that, is_, none
-from hamcrest.core.base_matcher import BaseMatcher
 
 class ConversionTests(unittest.TestCase):
 	START_TO_START = 0
@@ -87,8 +84,8 @@ class ConversionTests(unittest.TestCase):
 							'An italic word.',
 							'the second sentence.',
 							self.NO_CHECK]
-		cr,bk = test_helpers.round_trip_check(self.ranges,None,self.bk_solutions)
-		cpnull = contentrange.DomContentRangeDescription()
+		cr, _ = test_helpers.round_trip_check(self.ranges, None, self.bk_solutions)
+		_ = contentrange.DomContentRangeDescription()
 		cpbroken = cr[3]
 		cpbroken.start.elementId="wegrhstrytjh"
 		bkbroken = _convertrange.contentToDomRange(cpbroken,self.ranges[3].get_root())
@@ -160,7 +157,7 @@ class ConversionTests(unittest.TestCase):
 			</div>
 		</body>""")
 		r = _domrange.Range(doc.downpath([0,0,0]),0,doc.downpath([0,1,0]),18)
-		cr, bk = test_helpers.round_trip_check(r)
+		cr, _ = test_helpers.round_trip_check(r)
 		assert_that ( cr.ancestor.elementId, is_( "123" ) )
 
 		# Element pointer there and back test

@@ -6,11 +6,12 @@ Externalization support for the content range objects.
 Note that these are very frequently written, so we take some shortcuts
 and only write the minimal base and avoid interface-based decoration.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
@@ -40,7 +41,6 @@ class TextContextExternal(InterfaceObjectIO):
 class ContentRangeDescriptionExternal(InterfaceObjectIO):
 	_ext_iface_upper_bound = interfaces.IContentRangeDescription
 	__external_use_minimal_base__ = True
-
 
 @interface.implementer(IInternalObjectIO)
 @component.adapter(interfaces.ITimeContentPointer)

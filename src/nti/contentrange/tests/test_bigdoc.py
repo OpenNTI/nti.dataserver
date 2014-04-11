@@ -1,24 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-$Id$
-"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals, absolute_import
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-import unittest
-
-from nti.contentrange import _domrange
-
-from nti.contentrange.tests import test_helpers
+from hamcrest import assert_that
 
 import re
 import sys
+import unittest
 
 import pkg_resources
 
-from hamcrest import assert_that
+from nti.contentrange import _domrange
+from nti.contentrange.tests import test_helpers
 
 class BigDocTests(unittest.TestCase):
 
@@ -61,12 +59,12 @@ class BigDocTests(unittest.TestCase):
 			_domrange.Range(n5,o5,n6,o6),
 			_domrange.Range(n7,o7,n8,o8),
 			_domrange.Range(n9,o9,n10,o10)]
-		solutions = [['anchorable', None, 'Anchored', None],
+		_ = 		[['anchorable', None, 'Anchored', None],
 					['Anchored', None, 'selections/ranges', None],
 					['selections/ranges', None, 'specific ranges', None],
 					['effect. This', None, 'outside', None],
 					[],
 					['TextDomContentPointer', None, 'nil.', None]]
-		ct, br = test_helpers.round_trip_check(r)
+		ct, _ = test_helpers.round_trip_check(r)
 		# Main context in ct[4] will be blank, secondaries will be the distinguishing factor
 		assert_that(True in ["class" in c.contextText for c in ct[4].end.contexts], True )

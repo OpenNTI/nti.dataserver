@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that, has_length, is_, less_than_or_equal_to
+from hamcrest import is_
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import  less_than_or_equal_to
 from nose.tools import assert_raises
 
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
-from nti.testing.matchers import verifiably_provides
 
 from nti.contentrange import contentrange, interfaces
 from nti.contentrange.tests import ConfiguringTestBase
@@ -20,6 +22,7 @@ from nti.externalization.tests import externalizes
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
 
+from nti.testing.matchers import verifiably_provides
 
 class TestContentRange(ConfiguringTestBase):
 

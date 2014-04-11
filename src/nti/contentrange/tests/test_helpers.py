@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-$Id$
-"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
-import xml.dom
-import xml.dom.minidom
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-
-from hamcrest import assert_that, is_, none
+from hamcrest import is_
+from hamcrest import assert_that
 from hamcrest.core.base_matcher import BaseMatcher
+
+import xml.dom.minidom
 from nti.contentrange import _convertrange
 
 def range_comparison_check(r1,r2,how,desired):
@@ -32,7 +32,7 @@ def round_trip_check(range_or_ranges,newdoc=None,solution=None):
 	if hasattr(range_or_ranges,'__iter__'): # DEPRETACED
 		ranges = range_or_ranges
 		if hasattr(solution,'__iter__'):
-			return zip(*[round_trip_check(range,newdoc,sln) for range,sln in zip(ranges,solution)])
+			return zip(*[round_trip_check(r, newdoc, sln) for r, sln in zip(ranges, solution)])
 		return zip(*[round_trip_check(x,newdoc) for x in ranges])
 
 	a_range = range_or_ranges
@@ -116,5 +116,6 @@ class ContextChecker(BaseMatcher):
 		return True
 	def describe_to (self, description):
 		description.append_text('\n\n' + self.result + '\n')
+
 def context_check(st=None, so=None, ft=None, fo=None, anc_id=None, anc_tag=None):
 	return ContextChecker(st, so, ft, fo, anc_id, anc_tag)
