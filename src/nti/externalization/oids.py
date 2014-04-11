@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
+from six import string_types
 import collections
 
 from zope import component
@@ -93,7 +93,7 @@ def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=Fal
 	intutility = component.queryUtility( zc_intid.IIntIds )
 	if intutility is not None:
 		intid = intutility.queryId( self )
-		if not intid and add_to_intids:
+		if intid is None and add_to_intids:
 			intid = intutility.register( self )
 		if intid is not None:
 			if not jar:
@@ -101,7 +101,7 @@ def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=Fal
 			oid = oid + b':' + integer_strings.to_external_string( intid )
 
 	try:
-		setattr( self, '_v_to_external_oid', oid )
+		setattr( self, str('_v_to_external_oid'), oid )
 	except (AttributeError,TypeError):
 		pass
 
@@ -160,9 +160,12 @@ def fromExternalOID(ext_oid):
 from_external_oid = fromExternalOID
 
 DEFAULT_EXTERNAL_CREATOR = system_user.id
+MASKED_EXTERNAL_CREATOR = 'unknown'
 
-def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
-						  add_to_intids=False):
+def to_external_ntiid_oid(contained, default_oid=None,
+						  add_to_connection=False,
+						  add_to_intids=False,
+						  mask_creator=False):
 	"""
 	:return: An NTIID string utilizing the object's creator and persistent
 		id.
@@ -172,6 +175,8 @@ def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
 	:param add_to_connection: If the object is persistent but not yet added to a
 		connection, setting this to true will attempt to add it to the nearest
 		connection in its containment tree, thus letting it have an OID.
+	:keyword bool mask_creator: If true (not the default), then the actual
+		creator of the object will not be present in the NTIID string.
 	"""
 
 	__traceback_info__ = type(contained)
@@ -189,7 +194,8 @@ def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
 	# is/not around for longer/less long than otherwise. (Which could potentially differ
 	# from one worker to the next).
 	# On large renderings, benchmarks show this can be worth ~10%
-	ext_oid = getattr( contained, '_v_to_external_ntiid_oid', None)
+	cache_key = str('_v_to_external_ntiid_oid_%s' % mask_creator)
+	ext_oid = getattr( contained, cache_key, None)
 	if ext_oid:
 		return ext_oid
 
@@ -200,14 +206,18 @@ def to_external_ntiid_oid(contained, default_oid=None, add_to_connection=False,
 	if not oid:
 		return None
 
-	creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
+	if mask_creator:
+		creator = MASKED_EXTERNAL_CREATOR
+	else:
+		creator = getattr( contained, 'creator', DEFAULT_EXTERNAL_CREATOR )
+
 	ext_oid = ntiids.make_ntiid(provider=(creator
-										   if isinstance(creator, six.string_types)
+										   if isinstance(creator, string_types)
 										   else getattr(creator, 'username', DEFAULT_EXTERNAL_CREATOR)),
 								specific=oid,
 								nttype=ntiids.TYPE_OID)
 	try:
-		setattr(contained, '_v_to_external_ntiid_oid', ext_oid)
+		setattr(contained, cache_key, ext_oid)
 	except (AttributeError,TypeError): # TypeError is a BrokenModified
 		pass
 	return ext_oid

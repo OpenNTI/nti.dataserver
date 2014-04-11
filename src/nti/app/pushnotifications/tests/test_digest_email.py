@@ -18,9 +18,11 @@ from zope import interface
 
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import same_instance
 from hamcrest import is_not as does_not
 from hamcrest import has_key
 from hamcrest import contains_string
+from hamcrest import not_none
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -31,6 +33,7 @@ from nti.dataserver import contenttypes
 from nti.contentrange import contentrange
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
+
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -71,17 +74,23 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	CONTAINER_ID = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.the_twentieth_century'
 	CONTAINER_NAME = 'The Twentieth Century'
+	note_oids = ()
+	blog_oid = None
 
 	def _create_notable_data(self):
+		self.note_oids = list()
 		# Create a notable blog
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog',
 									  {'Class': 'Post', 'title': 'my title', 'body': ['my body']},
 									  status=201 )
 		# Sharing is currently a two-step process
 		self.testapp.put_json(res.json_body['href'], {'sharedWith': ['jason']})
-
+		self.blog_oid = res.json_body['OID']
+		self.blog_oid = self.blog_oid.replace('sjohnson@nextthought.com', 'unknown')
 
 		with mock_dataserver.mock_db_trans(self.ds):
+			assert_that(ntiids.find_object_with_ntiid(self.blog_oid),
+						is_( not_none() ) )
 			user = self._get_user()
 			jason = self._get_user('jason')
 			# And a couple notable notes
@@ -96,6 +105,10 @@ class TestApplicationDigest(ApplicationLayerTest):
 				top_n.tags = contenttypes.Note.tags.fromObject([jason.NTIID])
 				top_n.addSharingTarget(jason)
 				user.addContainedObject( top_n )
+
+				self.note_oids.append(to_external_ntiid_oid(top_n, mask_creator=True))
+				assert_that( ntiids.find_object_with_ntiid(self.note_oids[-1]),
+							 is_( same_instance(top_n)))
 
 			# A circled event
 			jason.accept_shared_data_from(user)
@@ -116,6 +129,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		def check_send(msg, fromaddr, to):
 			# Check the title and link to the note
 			msg = quopri.decodestring(msg)
+			msg = msg.decode('utf-8', errors='ignore')
 			msgs.append(msg)
 			return 'return'
 
@@ -144,6 +158,17 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
 		assert_that( msg, does_not(contains_string('replied to a note')))
+
+		note_oid = self.note_oids[0]
+		note_oid = note_oid[0:note_oid.index('OID')]
+		for oid in note_oid, self.blog_oid:
+			assert_that( oid.lower(),
+						 does_not( contains_string(self.extra_environ_default_user.lower()) ) )
+
+			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!object/ntiid/' + oid ) )
+
+
+
 
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)

@@ -126,10 +126,12 @@ class _TemplateArgs(object):
 
 	@property
 	def href(self):
-		# Default to the most stable identifier we have
-		ntiid = getattr(self._primary, 'NTIID', None)
-		if not ntiid:
-			ntiid = to_external_ntiid_oid(self._primary)
+		# Default to the most stable identifier we have. If
+		# we can get an actual OID, use that as it's very specific,
+		# otherwise see if the object has on opinion (which may expose
+		# more details than we'd like...)
+		ntiid = (to_external_ntiid_oid(self._primary, mask_creator=True)
+				 or getattr(self._primary, 'NTIID', None))
 		if ntiid:
 			# The webapp does a weird dance, like so:
 			return self.request.route_url('objects.generic.traversal',
