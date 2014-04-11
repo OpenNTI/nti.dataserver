@@ -48,10 +48,6 @@ from zope.schema import Decimal
 Decimal = Decimal
 from zope.schema import Dict
 Dict = Dict
-from zope.schema import Float
-Float = Float
-from zope.schema import Int
-Int = Int
 from zope.schema import List
 List = List
 from zope.schema import Text
@@ -477,6 +473,12 @@ class ObjectLen(FieldValidationMixin,schema.MinMaxLen,ObjectBase): # order matte
 	def _fixup_validation_error_no_args(self, e, value ):
 		e.args = (value, e.__doc__, self.__name__, self.schema, list(interface.providedBy( value ) ))
 
+
+class Int(FieldValidationMixin,schema.Int):
+	pass
+
+class Float(FieldValidationMixin,schema.Float):
+	pass
 
 class Number(FieldValidationMixin,schema.Float):
 	"""

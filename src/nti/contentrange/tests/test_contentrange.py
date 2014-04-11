@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import has_length
+from hamcrest import has_property
 from hamcrest import assert_that
 from hamcrest import  less_than_or_equal_to
 from nose.tools import assert_raises
@@ -16,8 +17,10 @@ from nose.tools import assert_raises
 from zope import interface
 from zope.schema import interfaces as sch_interfaces
 
-from nti.contentrange import contentrange, interfaces
-from nti.contentrange.tests import ConfiguringTestBase
+from .. import contentrange
+from .. import timeline
+from .. import interfaces
+from . import ConfiguringTestBase
 from nti.externalization.tests import externalizes
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
@@ -96,3 +99,12 @@ class TestContentRange(ConfiguringTestBase):
 
 		with assert_raises(sch_interfaces.TooShort):
 			update_from_external_object(tdc, {'contexts': []})
+
+
+		time_pointer = timeline.TimeContentPointer()
+		with assert_raises(sch_interfaces.WrongType) as ex:
+			update_from_external_object(time_pointer, {'seconds': 1.1, 'role': 'start'})
+
+
+		ex = ex.exception
+		assert_that( ex, has_property('field', interfaces.ITimeContentPointer['seconds']) )
