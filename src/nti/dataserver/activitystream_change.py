@@ -20,6 +20,7 @@ from ZODB.POSException import POSError
 from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.authorization_acl import ACL
 
 from nti.externalization.oids import toExternalOID
 from nti.externalization import interfaces as ext_interfaces
@@ -111,6 +112,18 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		""" Returns the object to which this reference refers,
 		or None if the object no longer exists. """
 		return self.objectReference()
+
+	#: If true (not the default) we will assume the ACL of our contained
+	#: object
+	__copy_object_acl__ = False
+
+	def __acl__(self):
+		if not self.__copy_object_acl__:
+			return () # No opinion
+		o = self.object
+		if o is None:
+			return () # Gone
+		return ACL(o, ())
 
 	def values(self):
 		"""
