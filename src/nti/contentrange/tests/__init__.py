@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
 
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-import nti.testing.base
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import nti.contentrange
+
+import nti.testing.base
 
 class ConfiguringTestBase(nti.testing.base.SharedConfiguringTestBase):
 	set_up_packages = (nti.contentrange,)

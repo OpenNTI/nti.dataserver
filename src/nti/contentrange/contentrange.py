@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
@@ -37,7 +39,6 @@ class ContentRangeDescription(SchemaConfigured):
 
 	__repr__ = make_repr()
 
-
 @interface.implementer(interfaces.IDomContentRangeDescription)
 class DomContentRangeDescription(ContentRangeDescription):
 
@@ -67,7 +68,6 @@ class ContentPointer(SchemaConfigured):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.contentpointer'
 
-
 @interface.implementer(interfaces.IDomContentPointer)
 class DomContentPointer(ContentPointer):
 
@@ -90,7 +90,6 @@ class DomContentPointer(ContentPointer):
 	def __hash__(self):
 		return hash((self.role,))
 
-
 @interface.implementer(interfaces.IElementDomContentPointer)
 class ElementDomContentPointer(DomContentPointer):
 
@@ -109,7 +108,6 @@ class ElementDomContentPointer(DomContentPointer):
 
 	def __hash__(self):
 		return hash((self.elemendId, self.elementTagName, self.role))
-
 
 @interface.implementer(interfaces.ITextContext)
 class TextContext(SchemaConfigured):
@@ -131,7 +129,6 @@ class TextContext(SchemaConfigured):
 
 	def __hash__(self):
 		return hash((self.contextText, self.contextOffset))
-
 
 @interface.implementer(interfaces.ITextDomContentPointer)
 class TextDomContentPointer(DomContentPointer):

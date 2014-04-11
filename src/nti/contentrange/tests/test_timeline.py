@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import assert_that
 
 from nti.contentrange import interfaces, timeline, contentrange
 from nti.externalization.externalization import toExternalObject
@@ -14,8 +17,6 @@ from nti.externalization.internalization import update_from_external_object
 from nti.contentrange.tests import ConfiguringTestBase
 
 from nti.testing.matchers import verifiably_provides
-
-from hamcrest import assert_that, is_
 
 class TestTimeLineRange(ConfiguringTestBase):
 
