@@ -51,7 +51,8 @@ def create_who_apifactory( secure_cookies=True,
 
 	:return: An implementation of :class:`IAPIFactory` that additionally has
 		an attribute ``default_identifier_name`` giving the name of the default
-		identifier that should be used for remembering.
+		identifier that should be used for remembering. This will be a cookie-based
+		authenticator.
 	"""
 
 	# Note that the cookie name and header names needs to be bytes,
