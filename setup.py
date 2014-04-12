@@ -47,7 +47,8 @@ entry_points = {
 	"paste.filter_app_factory": [
 		"cors = nti.wsgi.cors:cors_filter_factory", # BWC
 		"cors_options = nti.wsgi.cors:cors_option_filter_factory", # BWC
-		"ops_ping = nti.appserver.wsgi_ping:ping_handler_factory"
+		"ops_ping = nti.appserver.wsgi_ping:ping_handler_factory",
+		"ops_identify = nti.app.authentication.wsgi_identifier:identify_handler_factory"
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner",
