@@ -622,7 +622,10 @@ def createApplication( http_port,
 	# us. I don't know if I want 401s to automatically result in redirections to HTML pages.
 	# OTOH, it would fit in with the existing place that we 'autocreate' users
 	from pyramid.session import SignedCookieSessionFactory
-	my_session_factory = SignedCookieSessionFactory('ntidataservercookiesecretpass',
+	my_session_factory = SignedCookieSessionFactory(settings.get('session_cookie_secret',
+																 settings.get('cookie_secret',
+																			  '$Id$') ) + 'session',
+													secure=asbool(settings.get('secure_cookies', True)),
 													httponly=True)
 	pyramid_config.set_session_factory( my_session_factory )
 
