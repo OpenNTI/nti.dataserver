@@ -210,8 +210,6 @@ class IndexManager(object):
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
 		pass
-# 		indexagent.handle_index_event(cls.get_shared_indexmanager(), target, msg,
-# 									  broadcast=broadcast)
 
 @interface.implementer(search_interfaces.IIndexManager)
 def create_index_manager(parallel_search=False):

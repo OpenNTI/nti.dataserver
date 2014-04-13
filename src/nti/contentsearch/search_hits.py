@@ -3,7 +3,7 @@
 """
 Defines adapters for search hits
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -42,6 +42,7 @@ def get_search_hit(obj, score=1.0, query=None):
 	hit.Score = score
 	hit.Query = query
 	return hit
+create_search_hit = get_search_hit
 
 def get_hit_id(obj):
 	if obj is None:
