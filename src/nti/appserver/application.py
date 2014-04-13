@@ -90,6 +90,13 @@ def _create_xml_conf_machine( settings, features_file='' ):
 										   context=xml_conf_machine,
 										   execute=True )
 
+	# For testing, we need to be able to override some features
+	# that we may have picked up from a file, specifically
+	# to turn devmode back off to test production constraints
+	if settings.get('force_devmode_off') and xml_conf_machine.hasFeature('devmode'):
+		# Sadly, there is no public API to unprovide
+		xml_conf_machine._features.remove('devmode')
+
 	return xml_conf_machine
 
 def _logon_account_views(pyramid_config):
