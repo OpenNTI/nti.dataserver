@@ -3,7 +3,7 @@
 """
 Content types.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -23,8 +23,23 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as search_interfaces
 
+class _DocNumMixin(zcontained.Contained):
+
+	__repr__ = make_repr()
+
+	def __eq__(self, other):
+		try:
+			return self is other or self.docnum == other.docnum
+		except AttributeError:
+			return NotImplemented
+
+	def __hash__(self):
+		xhash = 47
+		xhash ^= hash(self.docnum)
+		return xhash
+
 @interface.implementer(search_interfaces.IWhooshBookContent)
-class BookContent(SchemaConfigured, zcontained.Contained):
+class BookContent(SchemaConfigured, _DocNumMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
 
@@ -32,24 +47,17 @@ class BookContent(SchemaConfigured, zcontained.Contained):
 	last_modified = alias('lastModified')
 	containerId = ContainerId = alias('ntiid')
 
-	__repr__ = make_repr()
-
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class VideoTranscriptContent(SchemaConfigured, zcontained.Contained):
+class VideoTranscriptContent(SchemaConfigured, _DocNumMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
 
 	last_modified = alias('lastModified')
 
-	__repr__ = make_repr()
-
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
-class NTICardContent(SchemaConfigured, zcontained.Contained):
+class NTICardContent(SchemaConfigured, _DocNumMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
 	
 	content = alias('description')
 	last_modified = alias('lastModified')
-
-	__repr__ = make_repr()
-
