@@ -617,8 +617,10 @@ class _ACLResolver(object):
 @interface.implementer(search_interfaces.IStopWords)
 class _DefaultStopWords(object):
 
-	def stopwords(self, language='en'):
+	__slots__ = ()
+
+	def stopwords(self, lang='en'):
 		return ()
 
 	def available_languages(self,):
-		return ('en',)
+		return ('en', 'es', 'ru')
