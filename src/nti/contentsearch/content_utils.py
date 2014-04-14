@@ -3,7 +3,7 @@
 """
 Search content utilities.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -613,14 +613,3 @@ class _ACLResolver(object):
 		if resolver is not None:
 			result.update(x.lower() for x in resolver.sharedWith)
 		return list(result) if result else None
-
-@interface.implementer(search_interfaces.IStopWords)
-class _DefaultStopWords(object):
-
-	__slots__ = ()
-
-	def stopwords(self, lang='en'):
-		return ()
-
-	def available_languages(self,):
-		return ('en', 'es', 'ru')
