@@ -3,7 +3,7 @@
 """
 Discriminators functions
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -20,8 +20,16 @@ from nti.externalization import oids
 from . import content_utils
 from . import interfaces as search_interfaces
 
-get_content = content_utils.get_content
-
+def get_content(text, lang='en'):
+	tokens = content_utils.tokenize_content(text, lang)
+	sw_util = component.queryUtility(search_interfaces.IStopWords)
+	stopwords = sw_util.stopwords(lang) if sw_util is not None else ()
+	if stopwords:
+		result = ' '.join(x for x in tokens if x.lower() not in stopwords)
+	else:
+		result = ' '.join(tokens)
+	return unicode(result)
+		
 def get_oid(obj):
 	result = oids.to_external_ntiid_oid(obj)
 	return result

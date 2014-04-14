@@ -2,7 +2,7 @@
 """
 Whoosh content schemas
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -42,11 +42,11 @@ def create_ngram_field(lang='en', at='start'):
 	return fields.TEXT(analyzer=analyzer, phrase=False)
 
 def create_content_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords, name=lang)
+	sw_util = component.queryUtility(search_interfaces.IStopWords)
+	stopwords = sw_util.stopwords(lang) if sw_util is not None else ()
 	expression = \
 		component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or \
 		default_word_tokenizer_pattern
-	stopwords = sw_util.stopwords() if sw_util else ()
 	analyzer = 	analysis.StandardAnalyzer(expression=expression, stoplist=stopwords)
 	return analyzer
 
