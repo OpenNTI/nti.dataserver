@@ -24,7 +24,7 @@
 
 	<!-- make sure stop words are registered before evertything else -->
 
-	<utility factory=".content_utils._DefaultStopWords" />
+	<utility factory=".stopwords._DefaultStopWords" />
 			 	 
 	<!-- Adapters -->
 	 
