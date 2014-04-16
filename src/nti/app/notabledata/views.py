@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import interface
 from zope import component
 
@@ -18,6 +20,7 @@ from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.externalization.interfaces import LocatedExternalDict
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPBadRequest
 
 from nti.appserver.ugd_query_views import _UGDView
@@ -84,6 +87,10 @@ class _NotableRecursiveUGDView(_UGDView):
 			except ValueError: # pragma no cover
 				raise HTTPBadRequest()
 
+		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
+													   IUserNotableData )
+
+
 		result = LocatedExternalDict()
 		result['Last Modified'] = result.lastModified = 0
 		result.__parent__ = self.request.context
@@ -91,8 +98,6 @@ class _NotableRecursiveUGDView(_UGDView):
 		result.mimeType = nti_mimetype_with_class( None )
 		interface.alsoProvides( result, IUGDExternalCollection )
 
-		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
-													   IUserNotableData )
 		safely_viewable_intids = user_notable_data.get_notable_intids()
 
 		result['TotalItemCount'] = len(safely_viewable_intids)
@@ -122,7 +127,9 @@ class _NotableRecursiveUGDView(_UGDView):
 								   number_items_needed=limit,
 								   batch_size=batch_size,
 								   batch_start=batch_start)
-
+		# Note that we insert lastViewed into the result set as a convenience,
+		# but we don't change the last-modified header based on this;
+		# eventually we want this to go away (?)
 		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
 		return result
 
@@ -131,12 +138,11 @@ from numbers import Number
 from nti.externalization import interfaces as ext_interfaces
 
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 request_method='PUT',
-			 context='nti.appserver.interfaces.IRootPageContainerResource',
-			 permission=ACT_READ,
-			 name='lastViewed')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context='nti.appserver.interfaces.IRootPageContainerResource',
+			   permission=ACT_READ,
+			   name='lastViewed')
 class _NotableUGDLastViewed(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
 	"""
@@ -164,14 +170,33 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 							method='PUT'))
 		return result
 
-	def _do_call(self):
+	@property
+	def _notable_data(self):
 		# Note that we don't use the user in the traversal path,
 		# we use the user that's actually making the call.
 		# This is why we can get away with just the READ permission.
 		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 													   IUserNotableData )
+		return user_notable_data
+
+	@view_config(request_method='PUT')
+	def __call__(self):
+		return super(_NotableUGDLastViewed,self).__call__()
+
+
+
+	def _do_call(self):
+		user_notable_data = self._notable_data
 
 		incoming_last_viewed = self.readInput()
 		if incoming_last_viewed > user_notable_data.lastViewed:
-			user_notable_data.lastViewed = incoming_last_viewed
+			# We normalize to our time, assuming they were going forward.
+			# This will make sure that all time comparisons are consistent.
+			user_notable_data.lastViewed = time.time()
 		return user_notable_data.lastViewed
+
+	@view_config(request_method='GET')
+	def _do_get(self):
+		last_viewed = self._notable_data.lastViewed
+		self.request.response.last_modified = last_viewed
+		return last_viewed

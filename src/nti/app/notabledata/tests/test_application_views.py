@@ -13,7 +13,7 @@ from hamcrest import is_
 from hamcrest import has_entry
 
 from hamcrest import has_length
-
+from hamcrest import greater_than
 from hamcrest import contains
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -120,7 +120,16 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		self.testapp.put_json( lv_href,
 							   1234 )
 		res = self.testapp.get(path)
-		assert_that( res.json_body, has_entry( 'lastViewed', 1234))
+		assert_that( res.json_body, has_entry( 'lastViewed', greater_than(0)))
+		lv = res.json_body['lastViewed']
+
+		res = self.testapp.get(lv_href)
+		assert_that( int(res.body), is_(lv) )
+		self.testapp.put_json( lv_href,
+							   1234 )
+		res = self.testapp.get(lv_href)
+		assert_that( int(res.body), is_(greater_than(lv) ) )
+
 
 		self._check_notable_data(length=2)
 
