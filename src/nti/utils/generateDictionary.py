@@ -24,7 +24,10 @@ from xml.sax.handler import ContentHandler
 # which means this is a class, not a sub-module. It's weird.
 from pywikipedia.wiktionary import WiktionaryPage
 
-name_langs_en = {
+marker_langs = {
+		'en': '==English==',
+		'ru': '= {{-ru-}} =',
+		# unmarked
 		'be': 'Belarusian',
 		'ca': 'Catalan',
 		'da': 'Danish',
@@ -32,7 +35,6 @@ name_langs_en = {
 		'eo': 'Esperanto',
 		'et': 'Estonian',
 		'el': 'Greek',
-		'en': 'English',
 		'es': 'Spanish',
 		'fi': 'Finnish',
 		'fr': 'French',
@@ -46,7 +48,6 @@ name_langs_en = {
 		'pl': 'Polish',
 		'pt': 'Portuguese',
 		'ro': 'Romanian',
-		'ru': 'Russian',
 		'sk': 'Slovakian',
 		'sl': 'Slovenian',
 		'sv': 'Swedish',
@@ -132,7 +133,7 @@ class WiktionaryDumpHandler(ContentHandler):
 
 		self.pageLabel = 'page'
 		self.insidePage = False
-		self.text_marker = '==%s==' % name_langs_en[self.lang].lower()
+		self.text_marker = marker_langs[self.lang].lower()
 		self.page = 0
 
 	def startElement(self, localname, attrs):
@@ -179,7 +180,7 @@ class WiktionaryDumpHandler(ContentHandler):
 
 def main(args=None):
 
-	_lang_map = {x:x for x in name_langs_en.keys()}
+	_lang_map = {x:x for x in marker_langs.keys()}
 	_action_map = {'generate': 0, 'lookup': 1 }
 
 	arg_parser = argparse.ArgumentParser(description="Dictionary generation")
