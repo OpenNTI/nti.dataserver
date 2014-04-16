@@ -23,6 +23,7 @@ from hamcrest import is_not as does_not
 from hamcrest import has_key
 from hamcrest import contains_string
 from hamcrest import not_none
+from hamcrest import none
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -125,6 +126,9 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data(self, fake_connect):
+		self._do_test_sends_one(fake_connect)
+
+	def _do_test_sends_one(self, fake_connect):
 		msgs = []
 		def check_send(msg, fromaddr, to):
 			# Check the title and link to the note
@@ -175,6 +179,44 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@time_monotonically_increases
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_but_unsubscribed(self, fake_connect):
+		self._fetch_user_url('/@@unsubscribe_digest_email',
+							 username='jason',
+							 extra_environ=self._make_extra_environ(username='jason'))
+
+		self._do_test_should_not_send_anything(fake_connect)
+
+	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@time_monotonically_increases
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_with_notable_data_but_not_in_required_community(self, fake_connect):
+		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
+		assert_that( getattr(DevmodeSitePolicyEventListener, 'COM_USERNAME', self), is_(none()))
+		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
+		try:
+			self._do_test_should_not_send_anything(fake_connect)
+		finally:
+			del DevmodeSitePolicyEventListener.COM_USERNAME
+
+
+
+	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
+	@time_monotonically_increases
+	@fudge.patch('boto.ses.connect_to_region')
+	def test_with_notable_data_in_required_community(self, fake_connect):
+		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
+		from nti.dataserver.users import User, Entity
+		assert_that( getattr(DevmodeSitePolicyEventListener, 'COM_USERNAME', self), is_(none()))
+		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
+		with mock_dataserver.mock_db_trans(self.ds):
+			everyone = Entity.get_entity('Everyone')
+			everyone._note_member(User.get_user('jason'))
+
+		try:
+			self._do_test_sends_one(fake_connect)
+		finally:
+			del DevmodeSitePolicyEventListener.COM_USERNAME
+
+	def _do_test_should_not_send_anything(self, fake_connect):
 		def check_send(*args):
 			raise AssertionError("This should not be called")
 
@@ -184,9 +226,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		self._create_notable_data()
 
-		self._fetch_user_url('/@@unsubscribe_digest_email',
-							 username='jason',
-							 extra_environ=self._make_extra_environ(username='jason'))
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
 
