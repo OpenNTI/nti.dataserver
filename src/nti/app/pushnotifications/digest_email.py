@@ -384,7 +384,9 @@ from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 from zope.publisher.interfaces.browser import IBrowserRequest
 from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
+from nti.appserver.policies.site_policies import find_site_policy
 
+from nti.dataserver.users import Entity
 from nti.dataserver.users import User
 import datetime
 from nameparser import HumanName
@@ -420,9 +422,23 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		auth_policy = component.getUtility( IAuthenticationPolicy )
 		imp_policy = IImpersonatedAuthenticationPolicy( auth_policy )
 
-		users_folder = self._dataserver.users_folder
+		# If we can find a community for the current site, we
+		# must filter users to only those within that community.
+		# See ICommunitySitePolicyUserEventListener
+		users_folder = self._dataserver.users_folder.values()
+
+		site_policy, _ = find_site_policy(self.request)
+		com_username = getattr(site_policy, 'COM_USERNAME', None)
+
+		comm = None
+		if com_username:
+			comm = Entity.get_entity(com_username)
+		if comm is not None:
+			# We can simply iterate it
+			users_folder = comm.iter_members()
+
 		now = time.time()
-		for user in users_folder.values():
+		for user in users_folder:
 			if self._accept_user(user):
 				imp_user = imp_policy.impersonating_userid( user.username )
 				with imp_user():

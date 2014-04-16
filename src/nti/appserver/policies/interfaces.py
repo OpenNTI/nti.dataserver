@@ -58,6 +58,16 @@ class ISitePolicyUserEventListener(interface.Interface):
 		Specifically intended to deal with providing coppa consent.
 		"""
 
+class ICommunitySitePolicyUserEventListener(ISitePolicyUserEventListener):
+	"""
+	A type of site policy that places all accounts created by that site
+	into a particular community. This community should only be used
+	by that site.
+	"""
+
+	COM_USERNAME = interface.Attribute('COM_USERNAME',
+									   "The globally resolvable name of a community, or None")
+
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(

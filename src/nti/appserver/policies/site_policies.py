@@ -70,6 +70,7 @@ zope.deferredimport.deprecatedFrom(
 	"IMathcountsCoppaUserWithAgreementUserProfile")
 
 from .interfaces import ISitePolicyUserEventListener
+from .interfaces import ICommunitySitePolicyUserEventListener
 
 def get_possible_site_names(request=None, include_default=False):
 	"""
@@ -414,7 +415,7 @@ class MissingLastName(sch_interfaces.RequiredMissing):
 
 class AtInUsernameImpliesMatchingEmail(InvalidValue): pass
 
-@interface.implementer(ISitePolicyUserEventListener)
+@interface.implementer(ICommunitySitePolicyUserEventListener)
 class AbstractSitePolicyEventListener(object):
 	"""
 	Basics of a site policy.
@@ -628,7 +629,6 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 		self._check_age_makes_sense(user)
 
 
-@interface.implementer(ISitePolicyUserEventListener)
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements the starting policy for the sites with kids.
@@ -749,7 +749,6 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 		return exception
 
 
-@interface.implementer(ISitePolicyUserEventListener)
 class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements a generic policy for adult sites.
@@ -843,7 +842,7 @@ class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 		return result
 
 
-@interface.implementer(ISitePolicyUserEventListener)
+@interface.implementer(ICommunitySitePolicyUserEventListener)
 class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
 	Implements the policy for an adult site, adding new users to a single community.

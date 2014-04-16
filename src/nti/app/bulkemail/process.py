@@ -86,6 +86,7 @@ class _RedisProcessMetaData(object):
 							'status': self.status} )
 		self._redis.expire( self.__name__, _TTL )
 
+from nti.appserver.policies.site_policies import find_site_policy
 
 @interface.implementer(IBulkEmailProcessLoop)
 class DefaultBulkEmailProcessLoop(object):
@@ -95,6 +96,12 @@ class DefaultBulkEmailProcessLoop(object):
 	#: This is a tradeoff between being able to recover from dead
 	#: instances and being sure that we can finish the processing
 	lock_timeout = 60 * 10 # ten minutes
+
+
+	#: If set to true, then we will include the current site name (if any)
+	#: in the process names in redis. This is useful if the process
+	#: needs to run for each site hosted in the same database.
+	include_site_names = False
 
 	request = None
 
@@ -109,7 +116,12 @@ class DefaultBulkEmailProcessLoop(object):
 
 	@Lazy
 	def names(self):
-		return _ProcessNames(self.__name__)
+		name = self.__name__
+		if self.include_site_names:
+			policy, policy_name = find_site_policy()
+			if policy is not None and policy_name:
+				name = name + '/' + policy_name
+		return _ProcessNames(name)
 
 	@Lazy
 	def metadata(self):
@@ -332,8 +344,12 @@ from nti.dataserver.interfaces import IDataserverTransactionRunner
 class SiteTransactedBulkEmailProcessLoop(DefaultBulkEmailProcessLoop):
 	"""
 	A process that establishes a database connection and a ZCA SiteManager
-	around the processing of each recipient.
+	around the processing of each recipient. Because this uses the request
+	and therefore implicitly the site, we include site names in our
+	redis lock.
 	"""
+
+	include_site_names = True
 
 	def __init__(self, request):
 		super(SiteTransactedBulkEmailProcessLoop,self).__init__(request)
