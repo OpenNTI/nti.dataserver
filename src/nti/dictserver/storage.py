@@ -70,11 +70,11 @@ class SQLiteJsonDictionaryTermDataStorage(object):
 class UncleanSQLiteJsonDictionaryTermStorage(SQLiteJsonDictionaryTermDataStorage):
 	pass
 
-def _wiki_clean(defn):
+def _wiki_clean(defn, lang='en'):
 	if not defn:
 		return defn
-	defn = re.sub( "\{\{.*?\}\}", "", defn ).replace( '[[', '').replace(']]', '').strip()
-	return defn.replace( 'http://en.wiktionary.org/wiki/', '' )
+	defn = re.sub("\{\{.*?\}\}", "", defn).replace('[[', '').replace(']]', '').strip()
+	return defn.replace('http://%s.wiktionary.org/wiki/' % lang, '')
 
 @interface.implementer(interfaces.IDictionaryTermDataStorage)
 @component.adapter(interfaces.IJsonDictionaryTermDataStorage)
@@ -90,7 +90,7 @@ class JsonDictionaryTermDataStorage(object):
 		if interfaces.IUncleanJsonDictionaryTermDataStorage.providedBy( context ):
 			self._need_to_clean = True
 
-	def lookup( self, word, exact=False ):
+	def lookup(self, word, exact=False, lang='en'):
 		json_string = self.context.lookup( word, exact=exact )
 		if not json_string:
 			return
@@ -105,7 +105,7 @@ class JsonDictionaryTermDataStorage(object):
 		if term and 'error' not in term:
 			result = DictionaryTermData( term )
 			if self._need_to_clean:
-				result['etymology'] = _wiki_clean( result.get( 'etymology' ) )
+				result['etymology'] = _wiki_clean(result.get('etymology'), lang)
 				for meaning_dict in result.get( 'meanings', () ):
 					meaning_dict['content'] = _wiki_clean( meaning_dict['content'] )
 			return result
@@ -135,8 +135,8 @@ class TrivialExcelCSVDataStorage(object):
 			defn = row['Definition'].decode( 'utf-8' )
 
 			self._data[term.lower()] = DictionaryTermData(meanings=({'content': defn,
-																	  'examples': (),
-																	  'type': 'noun' },))
+																	 'examples': (),
+																	 'type': 'noun' },))
 
 	def lookup( self, key, exact=False ):
 		result = self._data.get( key )
