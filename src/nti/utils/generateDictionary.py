@@ -126,60 +126,60 @@ class WiktionaryDumpHandler(ContentHandler):
 		self.index = index
 		self.dictionary = dictionary
 
-		self.name = u''
+		self.name = []
 		self.nameLabel = 'title'
 		self.insideName = False
 
-		self.markup = u''
+		self.markup = []
 		self.markupLabel = 'text'
 		self.insideMarkup = False
 
 		self.pageLabel = 'page'
 		self.insidePage = False
 		self.text_marker = marker_langs[self.lang].lower()
-		print(self.text_marker)
 
 	def startElement(self, localname, attrs):
 		if localname == self.pageLabel:
 			self.page += 1
 			self.insidePage = True
 		elif localname == self.nameLabel:
-			self.name = ''
+			self.name = []
 			self.insideName = True
 		elif localname == self.markupLabel:
-			self.markup = ''
+			self.markup = []
 			self.insideMarkup = True
 
 	def endElement(self, localname):
+		name = u''.join(self.name)
+		markup = u''.join(self.markup)
 		if localname == self.pageLabel:
 			self.insidePage = False
 		elif localname == self.nameLabel:
 			self.insideName = False
-			# In the event that its not a word (based on the title) set that we are out of the
-			# page so we don't collect wikimarkup
-			if self.name.find(':') > -1:
-				self.name = ''
+			# In the event that its not a word (based on the title) set that we are
+			# out of the page so we don't collect wikimarkup
+			if name.find(':') > -1:
+				self.name = []
 				self.insidePage = False
 		elif self.insidePage and localname == self.markupLabel:
 			self.insideMarkup = False
-			self.persistEntry(self.name, self.markup)
+			self.persistEntry(name, markup)
 
 	def persistEntry(self, title, text):
-		if text.lower().find(self.text_marker) < 0:
-			return
-		self.entry += 1
-		loc = self.dictionary.tell()
-		page = WiktionaryPage(self.lang, title)
-		page.parseWikiPage(text)
-		cPickle.dump(page, self.dictionary)
-		self.index[title] = loc
-		print('Found %s,entry=%d,page=%d' % (title, self.entry, self.page))
+		if text.lower().find(self.text_marker) >= 0:
+			self.entry += 1
+			location = self.dictionary.tell()
+			self.index[title] = location
+			page = WiktionaryPage(self.lang, title)
+			page.parseWikiPage(text)
+			cPickle.dump(page, self.dictionary)
+			print('Found %s,entry=%d,page=%d' % (title, self.entry, self.page))
 
 	def characters(self, data):
 		if self.insidePage and self.insideName:
-			self.name = self.name + data
+			self.name.append(data)
 		elif self.insidePage and self.insideMarkup:
-			self.markup = self.markup + data
+			self.markup.append(data)
 
 def main(args=None):
 
