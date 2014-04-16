@@ -67,9 +67,7 @@ class Wiktionary(object):
 		self.__loadDict()
 
 	def __loadDict(self):
-
 		indexPath = os.path.join(self.location, self.indexName)
-
 		if not os.path.exists(indexPath):
 			return
 
@@ -78,11 +76,10 @@ class Wiktionary(object):
 		indexFile.close()
 
 		dictPath = os.path.join(self.location, self.dictName)
-
 		if os.path.exists(dictPath):
 			self.dictFile = dictPath
 		else:
-			self.indexFile = {}
+			self.index = {}
 			self.dictFile = None
 
 	def generateDictionary(self, wiktionaryDump, lang='en'):
@@ -90,30 +87,33 @@ class Wiktionary(object):
 			os.makedirs(self.location)
 
 		dict_file = gzip.open(os.path.join(self.location, self.dictName), 'wb')
+		try:
+			parser = xml.sax.make_parser()
+			parser.setContentHandler(WiktionaryDumpHandler(self.index, dict_file, lang))
+			dump = open(wiktionaryDump)
+			parser.parse(dump)
+			dump.close()
+		finally:
+			dict_file.close()
 
-		parser = xml.sax.make_parser()
-		parser.setContentHandler(WiktionaryDumpHandler(self.index, dict_file, lang))
-		dump = open(wiktionaryDump)
-		parser.parse(dump)
-		dump.close()
-
-		dict_file.close()
 		indexFile = gzip.open(os.path.join(self.location, self.indexName), 'wb')
-		cPickle.dump(self.index, indexFile)
-		indexFile.close()
+		try:
+			cPickle.dump(self.index, indexFile)
+		finally:
+			indexFile.close()
 		self.__loadDict()
 
 	def lookupWord(self, term):
-		if term not in self.index:
-			return None
-
-		dictionary = gzip.open(self.dictFile, 'rb')
-		dictionary.seek(self.index[term])
-
-		res = cPickle.load(dictionary)
-		dictionary.close()
-
-		return res
+		result = None
+		location = self.index.get(term, None)
+		if location is not None:
+			dictionary = gzip.open(self.dictFile, 'rb')
+			try:
+				dictionary.seek(location)
+				result = cPickle.load(dictionary)
+			finally:
+				dictionary.close()
+		return result
 
 class WiktionaryDumpHandler(ContentHandler):
 
@@ -150,8 +150,8 @@ class WiktionaryDumpHandler(ContentHandler):
 			self.insideMarkup = True
 
 	def endElement(self, localname):
-		name = u''.join(self.name)
 		markup = u''.join(self.markup)
+		name = u''.join(self.name).strip()
 		if localname == self.pageLabel:
 			self.insidePage = False
 		elif localname == self.nameLabel:
@@ -168,12 +168,13 @@ class WiktionaryDumpHandler(ContentHandler):
 	def persistEntry(self, title, text):
 		if text.lower().find(self.text_marker) >= 0:
 			self.entry += 1
+			title = title.encode("utf-8")
 			location = self.dictionary.tell()
 			self.index[title] = location
 			page = WiktionaryPage(self.lang, title)
 			page.parseWikiPage(text)
 			cPickle.dump(page, self.dictionary)
-			print('Found %s,entry=%d,page=%d' % (title, self.entry, self.page))
+			print('Found %s,entry=%d,page=%d' % (title.decode("utf-8"), self.entry, self.page))
 
 	def characters(self, data):
 		if self.insidePage and self.insideName:
