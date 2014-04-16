@@ -85,14 +85,14 @@ class Wiktionary(object):
 			self.indexFile = {}
 			self.dictFile = None
 
-	def generateDictionary(self, wiktionaryDump):
+	def generateDictionary(self, wiktionaryDump, lang='en'):
 		if not os.path.isdir(self.location):
 			os.makedirs(self.location)
 
 		dict_file = gzip.open(os.path.join(self.location, self.dictName), 'wb')
 
 		parser = xml.sax.make_parser()
-		parser.setContentHandler(WiktionaryDumpHandler(self.index, dict_file))
+		parser.setContentHandler(WiktionaryDumpHandler(self.index, dict_file, lang))
 		dump = open(wiktionaryDump)
 		parser.parse(dump)
 		dump.close()
@@ -117,6 +117,9 @@ class Wiktionary(object):
 
 class WiktionaryDumpHandler(ContentHandler):
 
+	page = 0
+	entry = 0
+
 	def __init__(self, index, dictionary, lang='en'):
 		ContentHandler.__init__(self)  # Not a new-style class :(
 		self.lang = lang
@@ -134,19 +137,18 @@ class WiktionaryDumpHandler(ContentHandler):
 		self.pageLabel = 'page'
 		self.insidePage = False
 		self.text_marker = marker_langs[self.lang].lower()
-		self.page = 0
+		print(self.text_marker)
 
 	def startElement(self, localname, attrs):
 		if localname == self.pageLabel:
+			self.page += 1
 			self.insidePage = True
-			self.page = self.page + 1
-			print('Found page %d' % self.page)
 		elif localname == self.nameLabel:
-			self.insideName = True
 			self.name = ''
+			self.insideName = True
 		elif localname == self.markupLabel:
-			self.insideMarkup = True
 			self.markup = ''
+			self.insideMarkup = True
 
 	def endElement(self, localname):
 		if localname == self.pageLabel:
@@ -165,12 +167,13 @@ class WiktionaryDumpHandler(ContentHandler):
 	def persistEntry(self, title, text):
 		if text.lower().find(self.text_marker) < 0:
 			return
+		self.entry += 1
 		loc = self.dictionary.tell()
-		# cPickle.dump(text, self.dictionary)
 		page = WiktionaryPage(self.lang, title)
 		page.parseWikiPage(text)
 		cPickle.dump(page, self.dictionary)
 		self.index[title] = loc
+		print('Found %s,entry=%d,page=%d' % (title, self.entry, self.page))
 
 	def characters(self, data):
 		if self.insidePage and self.insideName:
@@ -207,7 +210,7 @@ def main(args=None):
 
 	if args.action == 'generate':
 		assert args.wiki, 'must provide a xml wiki dump file'
-		wiki.generateDictionary(args.wiki)
+		wiki.generateDictionary(args.wiki, args.lang)
 	elif args.action == 'lookup':
 		assert args.word, 'must provide a word'
 		response = wiki.lookupWord(args.word)
