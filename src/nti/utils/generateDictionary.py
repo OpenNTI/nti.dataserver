@@ -3,15 +3,18 @@
 """
 Dictionary generation
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import os
-import sys
 import gzip
 import cPickle
+import argparse
+
 import xml.sax
 from xml.sax.handler import ContentHandler
 
@@ -21,49 +24,34 @@ from xml.sax.handler import ContentHandler
 # which means this is a class, not a sub-module. It's weird.
 from pywikipedia.wiktionary import WiktionaryPage
 
-# def createDictionary(wikidumpname, destname):
-# 	#Keep an index of word to location in the file
-# 	index={}
-# 	dictionary=gzip.open(destname, 'wb')
-
-# 	parser=xml.sax.make_parser()
-# 	parser.setContentHandler(WiktionaryDumpHandler(index, dictionary))
-# 	dump=open(wikidumpname)
-# 	parser.parse(dump)
-# 	dump.close()
-# 	dictionary.close()
-# 	path, ext=os.path.splitext(destname)
-# 	indexLocation=path+'.index'
-# 	indexFile=gzip.open(indexLocation, 'wb')
-# 	cPickle.dump(index, indexFile)
-# 	indexFile.close()
-
-# import time
-
-# def lookup(dicname, term):
-# 	start = time.time()
-# 	indexFile=gzip.open(dicname+'.index','rb')
-# 	index=cPickle.load(indexFile)
-# 	indexFile.close()
-
-# 	end=time.time()
-# 	print('Took %s seconds to load the index' % (end-start))
-
-# 	start=time.time()
-# 	if term not in index:
-# 		return None
-
-# 	print('Checking at location %s'%index[term])
-
-# 	dictionary=gzip.open(dicname+'.bin', 'rb')
-# 	dictionary.seek(index[term])
-
-# 	res= cPickle.load(dictionary)
-# 	dictionary.close()
-# 	end=time.time()
-
-# 	print('Took %s seconds to lookup the entry' % (end-start))
-# 	return res
+name_langs_en = {
+		'be': 'Belarusian',
+		'ca': 'Catalan',
+		'da': 'Danish',
+		'de': 'German',
+		'eo': 'Esperanto',
+		'et': 'Estonian',
+		'el': 'Greek',
+		'en': 'English',
+		'es': 'Spanish',
+		'fi': 'Finnish',
+		'fr': 'French',
+		'gl': 'Galician',
+		'hu': 'Hungarian',
+		'is': 'Icelandic',
+		'it': 'Italian',
+		'lt': 'Lithuanian',
+		'nl': 'Dutch',
+		'no': 'Norwegian',
+		'pl': 'Polish',
+		'pt': 'Portuguese',
+		'ro': 'Romanian',
+		'ru': 'Russian',
+		'sk': 'Slovakian',
+		'sl': 'Slovenian',
+		'sv': 'Swedish',
+		'th': 'Thai',
+		'uk': 'Ukrainian' }
 
 class Wiktionary(object):
 
@@ -128,8 +116,9 @@ class Wiktionary(object):
 
 class WiktionaryDumpHandler(ContentHandler):
 
-	def __init__(self, index, dictionary):
+	def __init__(self, index, dictionary, lang='en'):
 		ContentHandler.__init__(self)  # Not a new-style class :(
+		self.lang = lang
 		self.index = index
 		self.dictionary = dictionary
 
@@ -143,7 +132,7 @@ class WiktionaryDumpHandler(ContentHandler):
 
 		self.pageLabel = 'page'
 		self.insidePage = False
-
+		self.text_marker = '==%s==' % name_langs_en[self.lang].lower()
 		self.page = 0
 
 	def startElement(self, localname, attrs):
@@ -173,11 +162,11 @@ class WiktionaryDumpHandler(ContentHandler):
 			self.persistEntry(self.name, self.markup)
 
 	def persistEntry(self, title, text):
-		if text.lower().find('==english==') < 0:
+		if text.lower().find(self.text_marker) < 0:
 			return
 		loc = self.dictionary.tell()
 		# cPickle.dump(text, self.dictionary)
-		page = WiktionaryPage('en', title)
+		page = WiktionaryPage(self.lang, title)
 		page.parseWikiPage(text)
 		cPickle.dump(page, self.dictionary)
 		self.index[title] = loc
@@ -188,20 +177,47 @@ class WiktionaryDumpHandler(ContentHandler):
 		elif self.insidePage and self.insideMarkup:
 			self.markup = self.markup + data
 
-def main(args):
-	action = args.pop(0)
-	location = args.pop(0)
-	wiki = Wiktionary(location)
+def main(args=None):
 
-	if action == 'generate':
-		wiki.generateDictionary(args.pop(0))
+	_lang_map = {x:x for x in name_langs_en.keys()}
+	_action_map = {'generate': 0, 'lookup': 1 }
 
-	if action == 'lookup':
-		res = wiki.lookupWord(args.pop(0))
-		if not res:
-			print ('Not found')
+	arg_parser = argparse.ArgumentParser(description="Dictionary generation")
+	arg_parser.add_argument('location', help="The path location")
+	arg_parser.add_argument('-a', '--action',
+							 dest='action',
+							 choices=_action_map,
+							 help="The action to perform",
+							 default='generate')
+	arg_parser.add_argument('-w', '--word',
+							 dest='word',
+							 help="The word to lookup")
+	arg_parser.add_argument('-x', '--xml',
+							 dest='wiki',
+							 help="The xml wiki file")
+	arg_parser.add_argument('-l', '--language',
+							 dest='lang',
+							 choices=_lang_map,
+							 help="The language",
+							 default='en')
+
+	args = arg_parser.parse_args(args=args)
+	wiki = Wiktionary(args.location)
+
+	if args.action == 'generate':
+		assert args.wiki, 'must provide a xml wiki dump file'
+		wiki.generateDictionary(args.wiki)
+	elif args.action == 'lookup':
+		assert args.word, 'must provide a word'
+		response = wiki.lookupWord(args.word)
+		if response:
+			meanings = response.entries[args.lang].getMeanings()
+			for et, entries in meanings.items():
+				print(et)
+				for entry in entries:
+					print("\t", entry.definition)
 		else:
-			print (res.entries['en'].getMeanings())
+			print ('Not found')
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
+	main()
