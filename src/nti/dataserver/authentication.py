@@ -27,6 +27,8 @@ def _dynamic_memberships_that_participate_in_security( user, as_principals=True 
 			(nti_interfaces.ICommunity.providedBy(community) and \
 			 not nti_interfaces.IUnscopedGlobalCommunity.providedBy(community)):
 			yield nti_interfaces.IPrincipal(community) if as_principals else community
+	# XXX: This is out of sync with the sharing target's xxx_intids_of_memberships_and_self
+	# which is used as an ACL optimization
 
 def _user_factory( username ):
 	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.

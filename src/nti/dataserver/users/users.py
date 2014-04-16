@@ -1043,6 +1043,15 @@ class User(Principal):
 
 		return result
 
+	def _xxx_extra_intids_of_memberships(self):
+		# We want things shared with the DFLs we own to be counted
+		# as visible to us
+		for x in self.friendsLists.values():
+			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x):
+				# Direct access is a perf optimization, this is called a lot
+				yield x._ds_intid
+
+
 
 # We have a few subclasses of User that store some specific
 # information and directly implement some interfaces.
