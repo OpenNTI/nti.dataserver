@@ -933,6 +933,21 @@ class TestUser(DataserverLayerTest):
 			assert_that( to_external_object(user),
 						 does_not( has_key( 'DynamicMemberships')) )
 
+	@WithMockDS(with_changes=True)
+	def test_owned_dfls_in_xxx_intids(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self.ds.add_change_listener( users.onChange )
+			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
+			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
+
+			friends_list = users.DynamicFriendsList( username='Friends' )
+			friends_list.creator = user1
+			user1.addContainedObject( friends_list )
+			friends_list.addFriend( user2 )
+
+			assert_that( list(user1.xxx_intids_of_memberships_and_self),
+						 has_item(friends_list._ds_intid) )
+
 from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
 
