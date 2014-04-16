@@ -1109,7 +1109,12 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		if batch_size is not None and batch_start is not None:
 			items_needed = batch_start + batch_size + 2
 
-		before = float(self.request.params.get( 'batchBefore', -1 ))
+		before = -1
+		if self.request.params.get('batchBefore'):
+			try:
+				before = float(self.request.params.get( 'batchBefore' ))
+			except ValueError: # pragma no cover
+				raise hexc.HTTPBadRequest()
 		predicate = self._make_complete_predicate()
 		for container in containers:
 			self.get_owned( user, container,
