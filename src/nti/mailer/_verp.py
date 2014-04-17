@@ -21,6 +21,9 @@ from zope.security.interfaces import IPrincipal
 import rfc822
 import itsdangerous
 
+from nti.appserver.policies.site_policies import find_site_policy
+
+
 def _make_signer(default_key='$Id$'):
 
 	# TODO: Break these dependencies
@@ -33,6 +36,21 @@ def _make_signer(default_key='$Id$'):
 	signer = itsdangerous.Signer(secret_key, salt='email recipient')
 	return signer
 
+def _find_default_realname():
+	"""
+	Called when the given fromaddr does not have a realname portion.
+	We would prefer to use whatever is in the site policy, if there
+	is one, otherwise we have a hardcoded default.
+	"""
+	realname = None
+	policy, policy_name = find_site_policy()
+	if policy is not None and policy_name and getattr(policy, 'DEFAULT_EMAIL_SENDER', None):
+		realname, _ = rfc822.parseaddr(policy.DEFAULT_EMAIL_SENDER)
+		if realname is not None:
+			realname = realname.strip()
+
+	return realname or "NextThought"
+
 def verp_from_recipients( fromaddr, recipients, request=None ):
 
 	realname, addr = rfc822.parseaddr(fromaddr)
@@ -42,7 +60,7 @@ def verp_from_recipients( fromaddr, recipients, request=None ):
 		raise ValueError("Addr should not already have a label", fromaddr)
 
 	if not realname:
-		realname = "NextThought" # XXX Site specific?
+		realname = _find_default_realname()
 
 	# We could special case the common case of recpients of length
 	# one if it is a string: that typically means we're sending to the current

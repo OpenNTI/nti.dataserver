@@ -19,7 +19,12 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
 
+import fudge
+
 from .._verp import principal_ids_from_verp
+from .._verp import verp_from_recipients
+from ..interfaces import EmailAddresablePrincipal
+
 
 class TestVerp(unittest.TestCase):
 
@@ -35,3 +40,20 @@ class TestVerp(unittest.TestCase):
 
 		pids = principal_ids_from_verp(fromaddr)
 		assert_that( pids, is_(()))
+
+
+	@fudge.patch('nti.mailer._verp.find_site_policy')
+	def test_verp_from_recipients_in_site_uses_default_sender_realname(self, mock_find):
+		class Policy(object):
+			DEFAULT_EMAIL_SENDER = 'Janux <janux@ou.edu>'
+
+		mock_find.is_callable().returns( (Policy, 'janux.ou.edu') )
+
+		prin = EmailAddresablePrincipal.__new__(EmailAddresablePrincipal)
+		prin.email = 'foo@bar.com'
+		prin.id = 'foo'
+
+		addr = verp_from_recipients( 'no-reply@nextthought.com',
+									 (prin,))
+
+		assert_that( addr, is_('"Janux" <no-reply+Zm9vLm4xei1fT0lvQ3JfUHE0T3N0cEJGZTg2c0pOMA@nextthought.com>'))

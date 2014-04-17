@@ -35,6 +35,7 @@ class IEmailAddressable(interface.Interface):
 
 	email = interface.Attribute("The email address to send to")
 
+
 @interface.implementer(IEmailAddressable,
 					   IPrincipal)
 class EmailAddresablePrincipal(object):
