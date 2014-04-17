@@ -9,7 +9,7 @@ of a request.
 TODO: This should be refactored into a package (at least). When doing so, be very careful
 to preserve the names of existing persistent classes as well as the annotation factory keys.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -97,8 +97,7 @@ def get_possible_site_names(request=None, include_default=False):
 	# The site tween modifies the request to have this property,
 	# and our test cases do so as well, even those that don't go through the tweens
 	# (There have been some unexplained cases of an AttributeError here, though?)
-	site_names = request.possible_site_names
-
+	site_names = getattr(request, 'possible_site_names', ())
 	if include_default:
 		site_names += ('',)
 	return site_names
