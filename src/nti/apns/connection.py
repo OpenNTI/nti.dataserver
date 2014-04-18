@@ -3,10 +3,10 @@
 """
 Connection and communication with the APNS.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -20,18 +20,20 @@ except ImportError: # pypy?
 	import socket
 	import ssl
 
-import time
-import anyjson as json
 import os
+import time
 import struct
+import anyjson as json
+
+from zope import schema
+from zope import interface
+from zope.event import notify
+
 from pkg_resources import resource_filename
 
-from zope import interface
-from zope import schema
-from zope.event import notify
 from . import interfaces as apns_interfaces
-_DEVICEID_FIELD = apns_interfaces.IDeviceFeedbackEvent['deviceId']
 
+_DEVICEID_FIELD = apns_interfaces.IDeviceFeedbackEvent['deviceId']
 
 SERVER_PROD = 'gateway.push.apple.com'
 SERVER_SAND = 'gateway.sandbox.push.apple.com'
