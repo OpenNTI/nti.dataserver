@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
-
+logger = __import__('logging').getLogger(__name__)
 
 import warnings
 import functools
+
 import zope.deprecation
 import zope.deferredimport.deferredmodule
 
 def deprecated(replacement=None): # annotation factory
+
 	def outer(oldfun):
 		im_class = getattr( oldfun, 'im_class', None )
 		if im_class:
@@ -26,6 +29,7 @@ def deprecated(replacement=None): # annotation factory
 		#return zope.deprecation.deprecated( oldfun, msg )
 		return zope.deprecation.deprecate( msg )(oldfun)
 	return outer
+
 zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
 
 # The 'moved' method doesn't pay attention to the 'show' flag, which
@@ -33,6 +37,7 @@ zope.deprecation.deprecation.__dict__['DeprecationWarning'] = FutureWarning
 # The easiest way os to patch the warnings module it uses. Fortunately, it only
 # uses one method
 class _warnings(object):
+
 	def warn(self, msg, typ, stacklevel=0 ):
 		if zope.deprecation.__show__():
 			warnings.warn( msg, typ, stacklevel + 1 )
@@ -60,9 +65,9 @@ class hiding_warnings(object):
 	"""
 	def __enter__(self):
 		zope.deprecation.__show__.off()
+
 	def __exit__( self, *args ):
 		zope.deprecation.__show__.on()
-
 
 def hides_warnings(f):
 	"""
