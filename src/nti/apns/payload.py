@@ -3,22 +3,20 @@
 """
 Payload support.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
-
-from . import interfaces as apns_interfaces
-
-from nti.utils.schema import SchemaConfigured
 from zope.schema.fieldproperty import createFieldProperties
 
+from nti.utils.schema import SchemaConfigured
+
+from . import interfaces as apns_interfaces
 
 @interface.implementer(apns_interfaces.INotificationPayload)
 class APNSPayload(SchemaConfigured):

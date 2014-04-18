@@ -3,20 +3,20 @@
 """
 "Interfaces for dealing with Apple Push Notification Service"
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
 from zope.schema.fieldproperty import createFieldProperties
 
 from zope.schema import Int
-from zope.schema import BytesLine
-from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import ValidBytes as Bytes
 from zope.schema import Dict
+
+from nti.utils.schema import ValidBytes as Bytes
+from nti.utils.schema import ValidTextLine as TextLine
 
 class IDeviceFeedback(interface.Interface):
 	"""
