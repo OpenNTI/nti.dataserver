@@ -170,7 +170,7 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 		return getattr(query, 'decayFactor', 0.94)
 
 	def factor(self, item):
-		return self._length
+		return item.Score or 1.0
 
 	def _score(self, item, use_hours=False):
 		last_modified = datetime.fromtimestamp(item.lastModified)
