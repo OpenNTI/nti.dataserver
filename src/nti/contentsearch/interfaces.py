@@ -86,6 +86,8 @@ class ISearchQuery(interface.Interface):
 	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
 						    required=False, min=0)
 
+	decayFactor = nti_schema.Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
+
 	IsEmpty = schema.Bool(title="Returns true if this is an empty search",
 						   required=True, readonly=True)
 

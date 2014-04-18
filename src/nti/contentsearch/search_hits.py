@@ -16,6 +16,7 @@ import collections
 
 from zope import component
 from zope import interface
+from zope.location.interfaces import IContained
 
 from nti.chatserver import interfaces as chat_interfaces
 
@@ -67,10 +68,13 @@ class _MetaSearchHit(type):
 		setattr(t, '__external_class_name__', HIT)
 		return t
 
-@interface.implementer(search_interfaces.ISearchHit)
+@interface.implementer(search_interfaces.ISearchHit, IContained)
 class BaseSearchHit(object):
 
 	__metaclass__ = _MetaSearchHit
+
+	__parent__ = None
+	__name__ = alias('OID')
 
 	Score = lastModified = 0
 
@@ -93,6 +97,7 @@ class BaseSearchHit(object):
 	def clone(self):
 		result = self.__class__()
 		result.__dict__.update(self.__dict__)
+		result.__parent__ = None
 		return result
 
 	__repr__ = make_repr()
