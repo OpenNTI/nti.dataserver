@@ -3,7 +3,7 @@
 """
 Search interfaces.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -746,6 +746,13 @@ class ISearchHitComparator(interface.Interface):
 
 	def compare(a, b):
 		pass
+
+class ISearchHitComparatorFactory(interface.Interface):
+
+	def __call__(result):
+		"""
+		return an instance of a ISearchHitComparator
+		"""
 
 class ISearchHitPredicate(interface.Interface):
 	"""
