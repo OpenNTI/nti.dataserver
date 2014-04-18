@@ -161,7 +161,6 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 
 	def __init__(self, results):
 		super(_DecayFactorSearchHitComparator, self).__init__(results)
-		self._length = len(self.results)
 		self.now = datetime.fromtimestamp(time.time())
 
 	@Lazy
