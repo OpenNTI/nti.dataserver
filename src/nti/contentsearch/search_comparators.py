@@ -21,11 +21,16 @@ import repoze.lru
 
 from nti.ntiids import ntiids
 
+from nti.utils.property import Lazy
+
 from . import common
 from . import content_utils
 from . import interfaces as search_interfaces
 
 class _CallableComparator(object):
+
+	def __init__(self, results=None):
+		self.results = results
 
 	def __call__(self, a, b):
 		return self.compare(a, b)
@@ -49,15 +54,20 @@ class _ScoreSearchHitComparator(_CallableComparator):
 
 	@classmethod
 	def get_type_name(cls, item):
-		if search_interfaces.ISearchHit.providedBy(item):
-			result = item.Type
-		else:
-			result = u''
+		result = item.Type if search_interfaces.ISearchHit.providedBy(item) else u''
 		return result or u''
 
 	@classmethod
 	def compare(cls, a, b):
 		return cls.compare_score(a, b)
+
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _ScoreSearchHitComparatorFactory(object):
+
+	singleton = _ScoreSearchHitComparator()
+
+	def __call__(self, results=None):
+		return self.singleton
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _LastModifiedSearchHitComparator(_CallableComparator):
@@ -82,6 +92,14 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	def compare(cls, a, b):
 		return cls.compare_lm(a, b)
 
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _LastModifiedSearchHitComparatorFactory(object):
+
+	singleton = _LastModifiedSearchHitComparator()
+
+	def __call__(self, results=None):
+		return self.singleton
+
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 							   _LastModifiedSearchHitComparator):
@@ -101,6 +119,14 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 		if result == 0:
 			result = cls.compare_score(a, b)
 		return result
+
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _TypeSearchHitComparatorFactory(object):
+
+	singleton = _TypeSearchHitComparator()
+
+	def __call__(self, results=None):
+		return self.singleton
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
@@ -122,6 +148,14 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _CreatorSearchHitComparatorFactory(object):
+
+	singleton = _CreatorSearchHitComparator()
+
+	def __call__(self, results=None):
+		return self.singleton
+
 @repoze.lru.lru_cache(maxsize=2000, timeout=60)
 def _path_intersection(x, y):
 	result = []
@@ -138,17 +172,41 @@ def get_ntiid_path(item):
 	result = content_utils.get_ntiid_path(item)
 	return result
 
-# @interface.implementer(search_interfaces.ISearchHitComparator)
-# class _DecayFactorSearchHitComparator(_CallableComparator):
-#
-# 	@classmethod
-# 	def _score(cls, item, items, decay=0.94, now=None, use_hours=False):
-# 		now = now or time.time()
-# 		last_modified = datetime.fromtimestamp(item.lastModified)
-# 		delta = now - last_modified
-# 		x = delta.days if not use_hours else delta.total_seconds() / 60.0 / 60.0
-# 		result = math.pow(decay, x) * items
-# 		return result
+@interface.implementer(search_interfaces.ISearchHitComparator)
+class _DecayFactorSearchHitComparator(_CallableComparator):
+
+	def __init__(self, results):
+		super(_DecayFactorSearchHitComparator, self).__init__(results)
+		self.now = time.time()
+
+	@Lazy
+	def decay(self):
+		query = self.results.Query
+		return getattr(query, 'decayFactor', 0.94)
+
+	def factor(self, item):
+		return len(self.results)
+
+	def _score(self, item, use_hours=False):
+		last_modified = datetime.fromtimestamp(item.lastModified)
+		delta = self.now - last_modified
+		x = delta.days if not use_hours else delta.total_seconds() / 60.0 / 60.0
+		result = math.pow(self.decay, x) * self.factor(item)
+		return result
+
+	def compare(self, a, b):
+		a_score = self._score(a)
+		b_score = self._score(b)
+		result = cmp(a_score, b_score)
+		return result
+
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _DecaySearchHitComparatorFactory(object):
+
+	__slots__ = ()
+
+	def __call__(self, results):
+		return _DecayFactorSearchHitComparator(results)
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
@@ -214,3 +272,11 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		# compare the types
 		result = cls.compare_score(a, b) if result == 0 else result
 		return result
+
+@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+class _RelevanceSearchHitComparatorFactory(object):
+
+	singleton = _RelevanceSearchHitComparator()
+
+	def __call__(self, results=None):
+		return self.singleton

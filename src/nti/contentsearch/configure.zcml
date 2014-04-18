@@ -7,6 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<include package="nti.contentprocessing" file="configure.zcml" />
 
@@ -182,11 +183,12 @@
 			 		 	 	 
 	<!-- Search hit comparators -->
 	
-	<utility factory=".search_comparators._TypeSearchHitComparator" name="type" />
-	<utility factory=".search_comparators._ScoreSearchHitComparator" name="score" />
-	<utility factory=".search_comparators._CreatorSearchHitComparator" name="creator" />
-	<utility factory=".search_comparators._RelevanceSearchHitComparator" name="relevance" />
-	<utility factory=".search_comparators._LastModifiedSearchHitComparator" name="lastModified" />
+	<utility factory=".search_comparators._TypeSearchHitComparatorFactory" name="type" />
+	<utility factory=".search_comparators._DecaySearchHitComparatorFactory" name="decay" />
+	<utility factory=".search_comparators._ScoreSearchHitComparatorFactory" name="score" />
+	<utility factory=".search_comparators._CreatorSearchHitComparatorFactory" name="creator" />
+	<utility factory=".search_comparators._RelevanceSearchHitComparatorFactory" name="relevance" />
+	<utility factory=".search_comparators._LastModifiedSearchHitComparatorFactory" name="lastModified" />
 	
 	<!-- Search hit subscribers -->
 	

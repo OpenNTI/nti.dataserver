@@ -3,7 +3,7 @@
 """
 Search results
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -281,8 +281,9 @@ class _SearchResults(_BaseSearchResults):
 
 	def sort(self, sortOn=None):
 		sortOn = sortOn or (self.query.sortOn if self.query else u'')
-		comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
-											name=sortOn)
+		factory = component.queryUtility(search_interfaces.ISearchHitComparatorFactory,
+										 name=sortOn)
+		comparator = factory(self) if factory is not None else None
 		if comparator is not None:
 			self.sorted = True
 			reverse = not self.query.is_descending_sort_order
