@@ -156,28 +156,13 @@ class _CreatorSearchHitComparatorFactory(object):
 	def __call__(self, results=None):
 		return self.singleton
 
-@repoze.lru.lru_cache(maxsize=2000, timeout=60)
-def _path_intersection(x, y):
-	result = []
-	stop = min(len(x), len(y))
-	for i in xrange(0, stop):
-		if x[i] == y[i]:
-			result.append(x[i])
-		else:
-			break
-	return tuple(result) if result else ()
-
-@repoze.lru.lru_cache(maxsize=2000, timeout=60)
-def get_ntiid_path(item):
-	result = content_utils.get_ntiid_path(item)
-	return result
-
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _DecayFactorSearchHitComparator(_CallableComparator):
 
 	def __init__(self, results):
 		super(_DecayFactorSearchHitComparator, self).__init__(results)
-		self.now = time.time()
+		self._length = len(self.results)
+		self.now = datetime.fromtimestamp(time.time())
 
 	@Lazy
 	def decay(self):
@@ -185,7 +170,7 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 		return getattr(query, 'decayFactor', 0.94)
 
 	def factor(self, item):
-		return len(self.results)
+		return self._length
 
 	def _score(self, item, use_hours=False):
 		last_modified = datetime.fromtimestamp(item.lastModified)
@@ -207,6 +192,22 @@ class _DecaySearchHitComparatorFactory(object):
 
 	def __call__(self, results):
 		return _DecayFactorSearchHitComparator(results)
+
+@repoze.lru.lru_cache(maxsize=2000, timeout=60)
+def _path_intersection(x, y):
+	result = []
+	stop = min(len(x), len(y))
+	for i in xrange(0, stop):
+		if x[i] == y[i]:
+			result.append(x[i])
+		else:
+			break
+	return tuple(result) if result else ()
+
+@repoze.lru.lru_cache(maxsize=2000, timeout=60)
+def get_ntiid_path(item):
+	result = content_utils.get_ntiid_path(item)
+	return result
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
