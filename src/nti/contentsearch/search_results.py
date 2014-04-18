@@ -254,10 +254,10 @@ class _SearchResults(_BaseSearchResults):
 
 	def _add_hit(self, hit):
 		if hit.OID not in self._seen and self.count < self._limit:
+			self.count += 1
+			self.sorted = False
 			self._hits.append(hit)
 			self._seen.add(hit.OID)
-			self.sorted = False
-			self.count += 1
 			return True
 		return False
 

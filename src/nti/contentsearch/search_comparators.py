@@ -3,7 +3,7 @@
 """
 Defines search/index hit comparators.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -11,6 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+import math
+import time
+from datetime import datetime
 
 from zope import interface
 
@@ -134,6 +137,18 @@ def _path_intersection(x, y):
 def get_ntiid_path(item):
 	result = content_utils.get_ntiid_path(item)
 	return result
+
+# @interface.implementer(search_interfaces.ISearchHitComparator)
+# class _DecayFactorSearchHitComparator(_CallableComparator):
+#
+# 	@classmethod
+# 	def _score(cls, item, items, decay=0.94, now=None, use_hours=False):
+# 		now = now or time.time()
+# 		last_modified = datetime.fromtimestamp(item.lastModified)
+# 		delta = now - last_modified
+# 		x = delta.days if not use_hours else delta.total_seconds() / 60.0 / 60.0
+# 		result = math.pow(decay, x) * items
+# 		return result
 
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
