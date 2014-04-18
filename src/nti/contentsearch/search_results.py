@@ -17,6 +17,7 @@ import collections
 
 from zope import interface
 from zope import component
+from zope.location.interfaces import ISublocations
 from zope.container import contained as zcontained
 from zope.mimetype import interfaces as zmime_interfaces
 
@@ -186,7 +187,8 @@ class _BaseSearchResults(zcontained.Contained):
 	def __iter__(self):
 		return iter(self.Hits)
 
-@interface.implementer(search_interfaces.ISearchResults,
+@interface.implementer(ISublocations,
+					   search_interfaces.ISearchResults,
 					   zmime_interfaces.IContentTypeAware)
 class _SearchResults(_BaseSearchResults):
 
@@ -288,6 +290,10 @@ class _SearchResults(_BaseSearchResults):
 			self.sorted = True
 			reverse = not self.query.is_descending_sort_order
 			self._hits.sort(comparator.compare, reverse=reverse)
+
+	def sublocations(self):
+		for hit in self._raw_hits():
+			yield hit
 
 	def __len__(self):
 		return self.count
