@@ -375,6 +375,8 @@ class DigestEmailCollector(object):
 		result['unsubscribe_link'] = request.resource_url(self.remoteUser, '@@unsubscribe_digest_email')
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
+		# We may want to exclude 'circled' and others from this count
+		result['total_remaining'] = sum( [ x.remaining for x in result.values() if isinstance( x, _TemplateArgs ) ] )
 		return result
 
 
