@@ -128,10 +128,20 @@ def addIntIdSubscriber(ob, event):
 	idmap = {}
 	for utility in utilities:
 		idmap[utility] = utility.register(ob)
+
 	# Notify the catalogs that this object was added.
 	notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
 
-@component.adapter(zope_intid_interfaces.IIntIdEvent)
-def intIdEventNotify(event):
+# We have duplicate subclassed event listeners in order to proceed
+# *after* our catalog index event listener.  Otherwise, our other event 
+# listeners may be operating on a stale catalog.
+
+@component.adapter(zope_intid_interfaces.IIntIdAddedEvent)
+def intIdEventAddedNotify(event):
 	"""Event subscriber to dispatch IntIdEvent to interested adapters."""
 	handle(event.object, event)
+	
+@component.adapter(zope_intid_interfaces.IIntIdRemovedEvent)
+def intIdEventRemovedNotify(event):
+	"""Event subscriber to dispatch IntIdEvent to interested adapters."""
+	handle(event.object, event)	
