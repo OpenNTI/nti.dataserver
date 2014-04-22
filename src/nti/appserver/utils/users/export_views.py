@@ -15,9 +15,11 @@ import urllib
 from io import BytesIO
 
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 import zope.intid
 from zope import component
+from zope.catalog.interfaces import ICatalog
 
 from ZODB.interfaces import IBroken
 from ZODB.POSException import POSKeyError
@@ -27,6 +29,7 @@ from nti.contentlibrary import interfaces as lib_interfaces
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -34,6 +37,8 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_json_representation_externalized
 
 from nti.ntiids import ntiids
+
+from nti.utils.maps import CaseInsensitiveDict
 
 _transcript_mime_type = u'application/vnd.nextthought.transcript'
 
@@ -120,6 +125,45 @@ def user_export_objects(request):
 			external = to_json_representation_externalized(obj)
 			gzstream.write(external)
 			gzstream.write(b"\n")
+
+	gzstream.flush()
+	gzstream.close()
+	stream.seek(0)
+	response.body_file = stream
+	return response
+
+@view_config(route_name='objects.generic.traversal',
+			 name='sharedwith_export_objects',
+			 request_method='GET',
+			 permission=nauth.ACT_MODERATE)
+def sharedWith_export_objects(request):
+	params = CaseInsensitiveDict(**request.params)
+	username = params.get('username') or request.authenticated_userid
+	user = users.User.get_user(username)
+	if not user:
+		raise hexc.HTTPNotFound(detail=_('User not found'))
+	mime_types = params.get('mime_types', params.get('mimeTypes', u''))
+	mime_types = _parse_mime_types(mime_types)
+
+	stream = BytesIO()
+	gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
+	response = request.response
+	response.content_encoding = b'gzip'
+	response.content_type = b'application/json; charset=UTF-8'
+	response.content_disposition = b'attachment; filename="objects.txt.gz"'
+
+	intids = component.getUtility(zope.intid.IIntIds)
+	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+	sharedWith_ids = catalog['sharedWith'].apply({'any_of': (username,)})
+
+	for uid in sharedWith_ids:
+		obj = intids.getObject(uid)
+		mime_type = getattr(obj, "mimeType", getattr(obj, 'mime_type', None))
+		if mime_types and mime_type not in mime_types:
+			continue
+		external = to_json_representation_externalized(obj)
+		gzstream.write(external)
+		gzstream.write(b"\n")
 
 	gzstream.flush()
 	gzstream.close()
