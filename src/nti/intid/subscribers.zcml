@@ -9,6 +9,7 @@
 
 	<subscriber handler=".subscribers.removeIntIdSubscriber" />
 	<subscriber handler=".subscribers.addIntIdSubscriber" />
-	<subscriber handler=".subscribers.intIdEventNotify" />
+	<subscriber handler=".subscribers.intIdEventAddedNotify" />
+	<subscriber handler=".subscribers.intIdEventRemovedNotify" />
 
 </configure>
