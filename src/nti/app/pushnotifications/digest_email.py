@@ -392,14 +392,12 @@ from nti.appserver.policies.site_policies import guess_site_display_name
 from nti.dataserver.users import Entity
 from nti.dataserver.users import User
 import datetime
-from nameparser import HumanName
 from zope.i18n import translate
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
-	_subject = "${first_name}, here's what you've missed on ${site_name}"
-	_subject_with_date = _subject + ' since ${when}'
+	_subject = "Your ${site_name} Updates"
 
 	text_template_extension = ".mak"
 	template_name = 'nti.app.pushnotifications:templates/digest_email'
@@ -461,10 +459,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		result = collector.recipient_to_template_args(recipient, self.request)
 		if not result['total_found']:
 			return None
-		return result
 
-
-	def compute_subject_for_recipient(self, recipient):
 		# FIXME: This isn't right, we actually want the /user's/ locale,
 		# but we don't have that stored anywhere
 		locale = IBrowserRequest(self.request).locale
@@ -473,17 +468,24 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		since = recipient['since'] or 0
 		when = datetime.datetime.fromtimestamp(since)
 
-		subject = _(self._subject_with_date if since else self._subject,
-					mapping={'first_name': HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id,
+		result['site_name'] = guess_site_display_name(self.request)
+		result['since_when'] = formatter.format(when)
+
+		return result
+
+
+	def compute_subject_for_recipient(self, recipient):
+
+		subject = _(self._subject,
+					mapping={
 							 'site_name': guess_site_display_name(self.request),
-							 'when': formatter.format(when)})
+							 })
 		return translate(subject, context=self.request)
 
 
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
 	_subject =  'TEST - ' + DigestEmailProcessDelegate._subject
-	_subject_with_date = 'Test - ' + DigestEmailProcessDelegate._subject_with_date
 
 	def _accept_user(self, user):
 		if super(DigestEmailProcessTestingDelegate,self)._accept_user(user):
