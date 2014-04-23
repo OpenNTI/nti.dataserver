@@ -20,25 +20,25 @@ name: ntiincludekalturavideo
 name: ntiaudioref
 <object class="ntiaudio" tal:condition="self/to_render"
 		tal:attributes="type self/idref/label/mimeType; itemprop self/idref/label/itemprop; data-ntiid self/idref/label/ntiid">
-	<param name="title" tal:condition="self/idref/label/title" tal:attributes="value self/idref/label/title">
-	<param name="close_captions" tal:condition="self/idref/label/closed_captions" tal:attributes="value self/idref/label/closed_captions">
+	<param name="title" tal:condition="self/idref/label/title" tal:attributes="value self/idref/label/title" />
+	<param name="close_captions" tal:condition="self/idref/label/closed_captions" tal:attributes="value self/idref/label/closed_captions" />
 	<span class="description" tal:content="self/idref/label/description" tal:condition="self/idref/label/description">
 		The description of the target.
 	</span>
-	<span tal:replace="self/idref/label/audio_sources"></span>
-	<span tal:replace="self/idref/label/transcripts"></span>
+	<span tal:replace="self/idref/label/audio_sources" />
+	<span tal:replace="self/idref/label/transcripts" />
 </object>
 
 name: ntiaudio
 <object class="ntiaudio"
 		tal:attributes="type self/mimeType; itemprop self/itemprop; data-ntiid self/ntiid">
-	<param name="title" tal:condition="self/title" tal:attributes="value self/title">
-	<param name="close_captions" tal:condition="self/closed_captions" tal:attributes="value self/closed_captions">
+	<param name="title" tal:condition="self/title" tal:attributes="value self/title" />
+	<param name="close_captions" tal:condition="self/closed_captions" tal:attributes="value self/closed_captions" />
 	<span class="description" tal:content="self/description" tal:condition="self/description">
 		The description of the target.
 	</span>
-	<span tal:replace="self/audio_sources"></span>
-	<span tal:replace="self/transcripts"></span>
+	<span tal:replace="self/audio_sources" />
+	<span tal:replace="self/transcripts" />
 </object>
 
 name: ntiaudiosource
