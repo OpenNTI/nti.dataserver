@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope.lifecycleevent import IObjectModifiedEvent
 
-import zope.intid.interfaces
+import nti.intid.interfaces
 
 from ZODB.loglevels import TRACE
 
@@ -73,6 +73,9 @@ def _enqueue_change_to_target( target, change, accum=None ):
 
 # TODO: These listeners should probably be registered on something
 # higher, like IModeledContent?
+# Note that we are registered on the versions that are guaranteed to fire
+# around Zope catalogs having been updated so that we (and listeners to what
+# we fire) can make use of them.
 
 def _stream_preflight( contained ):
 	if not nti_interfaces.IEntity.providedBy( getattr( contained, 'creator', None ) ):
@@ -82,7 +85,7 @@ def _stream_preflight( contained ):
 	except AttributeError:
 		return None
 
-@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdRemovedEvent)
+@component.adapter(nti_interfaces.IContained, nti.intid.interfaces.IIntIdRemovedEvent)
 def stream_willRemoveIntIdForContainedObject(contained, event):
 	# Make the containing owner broadcast the stream DELETED event /now/,
 	# while we can still get an ID, to keep catalogs and whatnot
@@ -101,7 +104,7 @@ def stream_willRemoveIntIdForContainedObject(contained, event):
 	for target in deletion_targets or ():
 		_enqueue_change_to_target(target, event, accum)
 
-@component.adapter(nti_interfaces.IContained, zope.intid.interfaces.IIntIdAddedEvent)
+@component.adapter(nti_interfaces.IContained, nti.intid.interfaces.IIntIdAddedEvent)
 def stream_didAddIntIdForContainedObject(contained, event):
 	creation_targets = _stream_preflight(contained)
 	if creation_targets is None:
