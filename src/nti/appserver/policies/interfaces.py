@@ -18,6 +18,10 @@ class ISitePolicyUserEventListener(interface.Interface):
 	DEFAULT_EMAIL_SENDER = interface.Attribute('DEFAULT_EMAIL_SENDER',
 											   'Optional site-specific email sender')
 
+	DISPLAY_NAME = interface.Attribute('DISPLAY_NAME',
+									   'Optional human-readable name for the site.'
+									   ' Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`')
+
 	def map_validation_exception(incoming_data, exception):
 		"""
 		Gives a site policy a chance to change an exception being returned

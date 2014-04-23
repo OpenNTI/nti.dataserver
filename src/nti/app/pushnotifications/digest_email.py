@@ -387,6 +387,7 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 from nti.dataserver.interfaces import IAuthenticationPolicy
 from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 from nti.appserver.policies.site_policies import find_site_policy
+from nti.appserver.policies.site_policies import guess_site_display_name
 
 from nti.dataserver.users import Entity
 from nti.dataserver.users import User
@@ -474,7 +475,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 		subject = _(self._subject_with_date if since else self._subject,
 					mapping={'first_name': HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id,
-							 'site_name': self.request.host,
+							 'site_name': guess_site_display_name(self.request),
 							 'when': formatter.format(when)})
 		return translate(subject, context=self.request)
 
