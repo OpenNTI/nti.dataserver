@@ -187,6 +187,7 @@ def moderation_admin_post( request ):
 			creator = item.creator.username if hasattr(item.creator, 'username') else item.creator
 			subrequest.environ['REMOTE_USER'] = creator
 			subrequest.environ['repoze.who.identity'] = {'repoze.who.userid': creator}
+			subrequest.possible_site_names = request.possible_site_names
 			try:
 				request.invoke_subrequest(subrequest)  # Don't use tweens, run in same site, same transaction
 			except (hexc.HTTPForbidden,hexc.HTTPMethodNotAllowed): # What else to catch?

@@ -325,6 +325,7 @@ class TestApplication(ApplicationLayerTest):
 			unit = ContentUnit()
 			unit.ntiid = u'\u2122'
 			request = Request.blank('/')
+			request.possible_site_names = ()
 			request.invoke_subrequest = Router(component.getGlobalSiteManager()).invoke_subrequest
 			request.environ['REMOTE_USER'] = 'foo'
 			request.environ['repoze.who.identity'] = {}

@@ -87,6 +87,7 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	subrequest.method = b'GET'
 	subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
 	subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+	subrequest.possible_site_names = request.possible_site_names
 	for k in request.environ:
 		if k.startswith('paste.') or k.startswith('HTTP_'):
 			if k not in subrequest.environ:

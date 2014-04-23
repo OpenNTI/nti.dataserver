@@ -69,7 +69,7 @@ class UnsubscribeFromEmailSummaryPush(AbstractAuthenticatedView):
 		subrequest.body = json # NOTE: this will be a pain point under py3, body vs text
 		# Make sure we look like a programatic request
 		subrequest.environ[b'HTTP_X_REQUESTED_WITH'] = b'xmlhttprequest'
-
+		subrequest.possible_site_names = request.possible_site_names
 		self.request.invoke_subrequest( subrequest )
 
 		request.environ['nti.request_had_transaction_side_effects'] = True # must commit the change
