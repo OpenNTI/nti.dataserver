@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import math
-import time
 from datetime import datetime
 
 from zope import interface
@@ -161,7 +160,7 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 
 	def __init__(self, results):
 		super(_DecayFactorSearchHitComparator, self).__init__(results)
-		self.now = datetime.fromtimestamp(time.time())
+		self.now = datetime.now()
 
 	@Lazy
 	def decay(self):
