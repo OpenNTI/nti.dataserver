@@ -357,6 +357,9 @@ def guess_site_display_name(request=None):
 	base_display_name = site_name or getattr(request, 'host', 'Unknown')
 	# take the domain portion
 	base_display_name = base_display_name.split('.', 1)[0]
+	# Strip any port that may be here (typically localhost:80, in test cases)
+	if ':' in base_display_name:
+		base_display_name = base_display_name[:base_display_name.index(':')]
 	# replace some things we use for spaces
 	base_display_name = base_display_name.replace('-', ' ')
 	# and title-case it

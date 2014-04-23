@@ -161,6 +161,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
+		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))
 		assert_that( msg, does_not(contains_string('replied to a note')))
 
 		note_oid = self.note_oids[0]

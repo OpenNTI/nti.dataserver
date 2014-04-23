@@ -66,7 +66,7 @@
 									<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; background:#fff; padding: 18px;">
 										<h1 style="font-size: 20px; margin: 0;"> Notifications </h1>
 										<hr style="clear:both;height:1px;border:0;border:none;width:100%;background:#DCDCDC;color:#DCDCDC;margin:18px 0;padding:0"/>
-										<!--! <h3 style="font-size: 18px; margin: 18px 0;">On Site</a></h3> -->
+										<h3 style="font-size: 18px; margin: 18px 0;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</h3>
 										<div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/discussion"
