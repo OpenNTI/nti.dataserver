@@ -323,12 +323,46 @@ def find_site_policy(request=None):  # deprecated
 	:return: A two-tuple of (policy, site_name). If no policy was found
 		then the first value is None and the second value is all applicable site_names found.
 	"""
+	request = request or get_current_request()
 	components = _find_site_components(request=request, include_default=True)
 	if components is not None:
 		utility = components.queryUtility(ISitePolicyUserEventListener)
 		if utility:
 			return utility, components.__name__ if components.__name__ != component.__name__ else ''
 	return None, get_possible_site_names(request=request, include_default=True)
+
+def guess_site_display_name(request=None):
+	"""
+	Attempt to return the best display name for the site of the current
+	or given request.
+
+	If the site policy provides the ``DISPLAY_NAME`` attribute as a non-empty
+	string, it will be returned. Otherwise, we will attempt to derive a friendly
+	display name by taking the first component of the site name and performing
+	some manipulations.
+
+	If there is no active site, the hostname of the request will be returned,
+	suitably prettied up.
+	"""
+	request = request or get_current_request()
+	policy, site_name = find_site_policy(request)
+
+	display_name = getattr(policy, 'DISPLAY_NAME', '')
+	if display_name and display_name.strip():
+		return display_name
+
+	if policy is None:
+		site_name = site_name[0] if site_name else 'Unknown'
+
+	base_display_name = site_name or getattr(request, 'host', 'Unknown')
+	# take the domain portion
+	base_display_name = base_display_name.split('.', 1)[0]
+	# replace some things we use for spaces
+	base_display_name = base_display_name.replace('-', ' ')
+	# and title-case it
+	display_name = base_display_name.title()
+
+	return display_name
 
 def _dispatch_to_policy(user, event, func_name):
 	"""

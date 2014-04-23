@@ -187,10 +187,11 @@
 												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name|default">a course</a>.
 
 											</div>
-											<div tal:condition="options/total_remaining">
-													Plus there ${python:request.localizer.pluralize('is', 'are', options['total_remaining'])} 
-													<tal:block tal:content="options['total_remaining']">6</tal:block> other
-													${python:request.localizer.pluralize('notification', 'notifications', options['total_remaining'])}
+											<div tal:condition="options/total_remaining"
+												tal:define="total_remaining options/total_remaining">
+													Plus there ${python:request.localizer.pluralize('is', 'are', total_remaining)}
+													<tal:block tal:content="total_remaining">6</tal:block> other
+													${python:request.localizer.pluralize('notification', 'notifications', total_remaining)}
 													for you.
 											</div>
 										</div>
