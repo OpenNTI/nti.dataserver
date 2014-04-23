@@ -2,10 +2,12 @@
 """
 Content rendering utils module
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from nti.contentrendering.RenderedBook import RenderedBook
 
@@ -30,17 +32,18 @@ class NoPhantomRenderedBook(RenderedBook):
 
 class NoConcurrentPhantomRenderedBook(RenderedBook):
 
-    # Replaces RenderedBook.runPhandomOnPages with a version that does not require phantomJS and does not
-    # call the sometimes problematic concurrency module. Useful for the creation of RenderedBook objects
-    # where we are only going to alter basic things such as the index or sharewith attribute.
+    # Replaces RenderedBook.runPhandomOnPages with a version that does not require
+    # phantomJS and does not  call the sometimes problematic concurrency module.
+    # Useful for the creation of RenderedBook objects where we are only going to alter
+    # basic things such as the index or sharewith attribute.
     def runPhantomOnPages(self, script, *args):
+        results = {}
         eclipseTOC = self.toc
         nodesForPages = eclipseTOC.getPageNodes()
-
-        results = {}
         for node in nodesForPages:
-            key = (node.getAttribute(b'ntiid'),node.getAttribute(b'href'),node.getAttribute(b'label'))
+            key = (node.getAttribute(b'ntiid'),
+                   node.getAttribute(b'href'),
+                   node.getAttribute(b'label'))
             result = {'ntiid': key[0]}
             results[key] = result
-
         return results

@@ -1,13 +1,19 @@
-from __future__ import print_function, unicode_literals
-
-"""HTML5 microdata parser for python 2.x/3.x
+#!/usr/bin/env python
+# -*- coding: utf-8 -
+"""
+HTML5 microdata parser for python 2.x/3.x
 
 - it requires lxml
 - microdata specification: http://dev.w3.org/html5/md/
 
 https://gist.github.com/577116
 
+.. $Id$
 """
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import sys
 import lxml.html as lhtml
@@ -25,6 +31,7 @@ def items(html, types=None, uri=""):
 	return Microdata(doc, uri).items(types)
 
 class Microdata(object):
+
 	def __init__(self, doc, uri=""):
 		self.base = uri
 		self.doc = doc

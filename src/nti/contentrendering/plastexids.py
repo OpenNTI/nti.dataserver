@@ -6,19 +6,21 @@ Functions related to ID and NTIID generation within a PlasTeX DOM.
 Some of these functions are destructive to existing objects and so
 to use them you must specifically request it.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger( __name__ )
 
-import functools
 import hashlib
+import functools
 
 from zope.deprecation import deprecate
-from nti.deprecated import hiding_warnings
-from nti.ntiids import ntiids
 
+from nti.deprecated import hiding_warnings
+
+from nti.ntiids import ntiids
 
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
@@ -27,10 +29,10 @@ def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 
 	provider = document.config.get( "NTI", "provider" )
 
-	ntiid = 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % (provider, nttype, document.userdata['jobname'], local_prefix, local)
+	ntiid = 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % \
+			(provider, nttype, document.userdata['jobname'], local_prefix, local)
 	ntiids.validate_ntiid_string( ntiid ) # Ensure valid, otherwise raise
 	return ntiid
-
 
 @deprecate("Prefer the section element ntiid attribute")
 def nextID(self, suffix=''):
@@ -41,8 +43,8 @@ def nextID(self, suffix=''):
 	setattr(self, 'NTIID', ntiid)
 	return _make_ntiid( self,  ntiid, suffix )
 
-import plasTeX
 # SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document
+import plasTeX
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
 
 def _ntiid_get_local_part_title(self):
@@ -233,7 +235,8 @@ class StableIDMixin(object):
 	Attempts to generate more stable IDs for elements. Can be used when elements
 	have source text or may have a label child.
 	"""
-StableIDMixin.id = property(_catching(_par_id_get, 'id'),plasTeX.Macro.id.fset) # TODO: Different counters for this than _par_used_ids?
+# TODO: Different counters for this than _par_used_ids?
+StableIDMixin.id = property(_catching(_par_id_get, 'id'), plasTeX.Macro.id.fset)
 
 def patch_all():
 	"""
@@ -241,12 +244,18 @@ def patch_all():
 	In particular, this causes paragraph elements to generate better IDs
 	and sections to generate more appropriate filenames.
 	"""
-	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id' ),plasTeX.Base.par.id.fset)
+
+	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.par.id.fset)
 	plasTeX.Base.Array.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.Array.id.fset)
-	plasTeX.Base.footnote.id = property(_catching(_par_id_get, 'id' ),plasTeX.Base.footnote.id.fset)
+	plasTeX.Base.footnote.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.footnote.id.fset)
+
+	# TODO: Different counters for this than _par_used_ids?
 	from nti.contentrendering.plastexpackages.graphicx import includegraphics
-	includegraphics.id =  property(_catching(_par_id_get, 'id'),includegraphics.id.fset) # TODO: Different counters for this than _par_used_ids?
+	includegraphics.id = property(_catching(_par_id_get, 'id'), includegraphics.id.fset)
+
 	SectionUtils.ntiid = property(_catching(_section_ntiid))
-	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename), _catching(_set_section_ntiid_filename))
+	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename),
+											 _catching(_set_section_ntiid_filename))
 	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
+
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch
