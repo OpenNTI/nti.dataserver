@@ -187,7 +187,8 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view()
 
 		# Removing the object has a ripple effect and fires a number of events
-		assert_that( eventtesting.getEvents(  ), has_length( 4 ) )  # ObjectRemoved, zope...IntIdRemoved, zc...IntIdRemoved, ContainerModified
+		# ObjectRemoved, zope...IntIdRemoved, zc...IntIdRemoved, nti...IntIdRemoved, ContainerModified
+		assert_that( eventtesting.getEvents(  ), has_length( 5 ) )
 		assert_that( eventtesting.getEvents( IObjectRemovedEvent ), has_length( 1 ) )
 		assert_that( user.getContainer( con_obj.containerId ), has_property( 'lastModified', greater_than( 0 ) ) )
 
@@ -207,8 +208,8 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		view.getRemoteUser = lambda: user
 		view() # First time fine
 		# Fires events the first time
-		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, ContainerModified
-		assert_that( eventtesting.getEvents(  ), has_length( 6 ) )
+		# ObjectCreated, ObjectAdded, zc...IntIdAdded, zope...IntIdAdded, nti...IntIdAdded, ContainerModified
+		assert_that( eventtesting.getEvents(  ), has_length( 7 ) )
 		assert_that( eventtesting.getEvents( IObjectAddedEvent ), has_length( 1 ) )
 
 		with self.assertRaises(hexc.HTTPConflict):

@@ -6,9 +6,9 @@ A set of subscribers for the object :mod:`~zope.lifecycle` events.
 There are two key differences from the subscribers that come with the
 :mod:`zope.intid` package.
 
-This does not register/unregister a :class:`zope.keyreference.IKeyReference`
-  with the intid utilities Instead, it registers the actual object, and the events
-  that are broadcast are broadcast holding the actual object.
+This does not register/unregister a :class:`zope.keyreference.IKeyReference` with the intid utilities.
+  Instead, it registers the actual object, and the events that are
+  broadcast are broadcast holding the actual object.
 
   ``IKeyReferenceces``, especially
   :class:`~zope.keyreference.persistent.KeyReferenceToPersistent`, are
@@ -48,13 +48,13 @@ We do, however, keep a few things in common:
 #. We do ensure that the object can be adapted to :class:`zope.keyreference.interface.IKeyReference`
 	In the common case of persistent objects, this will ensure that the
 	object is in the database and has a jar and oid, common needs.
-
-#. We do broadcast the events from :mod:`zope.intid.interfaces`, even though the
-    :mod:`zc.intid` package will broadcast its own events.
+#. We do broadcast the events from :mod:`zope.intid.interfaces`, even though the :mod:`zc.intid` package will broadcast its own events.
     There seems to be no reason not to and this might help us be
     compatible with third-party code more easily.
 
-.. $Id$
+
+
+$Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -63,22 +63,26 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from zope.event import notify
-from zope.component import handle
-from zope.keyreference.interfaces import IKeyReference
 from zope.component import getAllUtilitiesRegisteredFor
+from zope.component import handle
+from zope.event import notify
+from zope.keyreference.interfaces import IKeyReference
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
 from zope.location.interfaces import ILocation
 
-from zc import intid as zc_intid_interfaces
+
 import zope.intid.interfaces as zope_intid_interfaces
+from zc import intid as zc_intid_interfaces
+from . import interfaces as nti_intid_interfaces
 
 def _utilities_and_key(ob):
 	utilities = tuple(getAllUtilitiesRegisteredFor(zc_intid_interfaces.IIntIds))
+
 	return utilities, IKeyReference(ob,None) if utilities else None # Don't even bother trying to adapt if no utilities
+
 
 @component.adapter(ILocation, IObjectRemovedEvent)
 def removeIntIdSubscriber(ob, event):
@@ -87,10 +91,14 @@ def removeIntIdSubscriber(ob, event):
 	id utilities.
 
 	Just before this happens (for the first time), an
-	:class:`zope.intid.interfaces.IIntIdRemovedEvent` is fired. Notice
-	that this is fired before the id is actually removed from any utility,
-	giving other subscribers time to do their cleanup. Before each
-	utility removes its registration, it will fire :class:`zc.intid.interfaces.IIntIdRemovedEvent`.
+	:class:`nti.intid.interfaces.IIntIdRemovedEvent` is fired,
+	followed by an :class:`zope.intid.interfaces.IIntIdRemovedEvent`.
+	Notice that this is fired before the id is actually removed from
+	any utility, giving other subscribers time to do their cleanup.
+	Before each utility removes its registration, it will fire
+	:class:`zc.intid.interfaces.IIntIdRemovedEvent`. This gives a
+	guaranteed order such that :mod:`zope.catalog` and other Zope
+	event listeners will have fired.
 	"""
 	utilities, key = _utilities_and_key( ob )
 	if not utilities or key is None:
@@ -105,6 +113,7 @@ def removeIntIdSubscriber(ob, event):
 		try:
 			if not fired_event and utility.queryId( ob ) is not None:
 				fired_event = True
+				notify(nti_intid_interfaces.IntIdRemovedEvent(ob, event))
 				notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
 			utility.unregister(ob)
 		except KeyError:
@@ -116,7 +125,10 @@ def addIntIdSubscriber(ob, event):
 	Registers the object in all unique id utilities and fires
 	an event for the catalogs. Notice that each utility will
 	fire :class:`zc.intid.interfaces.IIntIdAddedEvent`; this subscriber
-	will then fire one single :class:`zope.intid.interfaces.IIntIdAddedEvent`.
+	will then fire one single :class:`zope.intid.interfaces.IIntIdAddedEvent`,
+	followed by one single :class:`nti.intid.interfaces.IIntIdAddedEvent`; this
+	gives a guaranteed order such that :mod:`zope.catalog` and other Zope
+	event listeners will have fired.
 	"""
 	utilities, key = _utilities_and_key( ob )
 	if not utilities or key is None:
@@ -128,21 +140,14 @@ def addIntIdSubscriber(ob, event):
 
 	# Notify the catalogs that this object was added.
 	notify(zope_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
+	notify(nti_intid_interfaces.IntIdAddedEvent(ob, event, idmap))
 
-# We have duplicate subclassed event listeners in order to proceed
-# *after* our catalog index event listener.  Otherwise, our other event 
-# listeners may be operating on a stale catalog.
-
-@component.adapter(zope_intid_interfaces.IIntIdAddedEvent)
-def intIdEventAddedNotify(event):
-	"""
-	Event subscriber to dispatch IIntIdAddedEvent to interested adapters.
-	"""
+@component.adapter(zope_intid_interfaces.IIntIdEvent)
+def intIdEventNotify(event):
+	"""Event subscriber to dispatch IntIdEvent to interested adapters."""
 	handle(event.object, event)
-	
-@component.adapter(zope_intid_interfaces.IIntIdRemovedEvent)
-def intIdEventRemovedNotify(event):
-	"""
-	Event subscriber to dispatch IIntIdRemovedEvent to interested adapters.
-	"""
-	handle(event.object, event)	
+
+@component.adapter(nti_intid_interfaces.IIntIdEvent)
+def nti_intIdEventNotify(event):
+	"""Event subscriber to dispatch IntIdEvent to interested adapters."""
+	handle(event.object, event)
