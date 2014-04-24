@@ -1,10 +1,17 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import sys
-from xml.dom import minidom, Node
 from collections import defaultdict
+
+from xml.dom import minidom, Node
 
 def main():
 	mathxml = minidom.parse(sys.stdin)

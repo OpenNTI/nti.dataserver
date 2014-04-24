@@ -1,20 +1,25 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Utility to take the XHTML export of the MATHCOUNTS InDesign files and dump it to TeX
-$Revision$
-"""
-from __future__ import unicode_literals, print_function
 
-import nti.contentrendering
-from nti.contentrendering import interfaces
-from nti.contentfragments import interfaces as frg_interfaces
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 import io
-import pyquery
-from lxml import etree
-import sys
 import re
+import sys
 import urllib
+import pyquery
+
+from lxml import etree
+
+import nti.contentrendering
+from nti.contentfragments import interfaces as frg_interfaces
 
 def _text_of( p ):
 	return etree.tostring( p, encoding=unicode, method='text' )
@@ -29,7 +34,6 @@ class _ElementPlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
 		super(_ElementPlainTextContentFragment,self).__init__( _text_of( element ) )
 		self.element = element
 
-
 class _Container(frg_interfaces.LatexContentFragment):
 
 	children = ()
@@ -38,7 +42,6 @@ class _Container(frg_interfaces.LatexContentFragment):
 		if self.children == ():
 			self.children = []
 		self.children.append( child )
-
 
 class _WrappedElement(_Container):
 	wrapper = None
@@ -203,7 +206,7 @@ def _extract_problems( doc, worksheets ):
 				worksheet.problems.extend([node])
 			else:
 				accum = '\\newline \\newline'
-                                for child in problem.getchildren():
+				for child in problem.getchildren():
 					accum = ' '.join([accum, _p_to_content(child)])
 				worksheet.problems[len(worksheet.problems)-1].question = ' '.join([worksheet.problems[len(worksheet.problems)-1].question, accum])
 		
@@ -270,8 +273,8 @@ def _output_master_file( worksheets ):
 	for worksheet in worksheets:
 		tex.extend(['\\include{' + re.sub(r'\s', '-', worksheet.title.lower()) + '}'])
 	tex.extend(['\\end{document}\n'])
-	with io.open('mathcounts2013.tex', 'w') as file:
-		file.write('\n'.join(tex))
+	with io.open('mathcounts2013.tex', 'w') as fp:
+		fp.write('\n'.join(tex))
 
 
 def _output_tex( worksheets ):
@@ -302,8 +305,8 @@ def _output_tex( worksheets ):
 		tex.extend(['\n\n\\begin{naquestionset}'])
 		tex.extend(qset)
 		tex.extend(['\\end{naquestionset}\n'])
-		with io.open(re.sub(r'\s', '-', worksheet.title.lower()) + '.tex', 'w') as file:
-			file.write('\n'.join(tex))
+		with io.open(re.sub(r'\s', '-', worksheet.title.lower()) + '.tex', 'w') as fp:
+			fp.write('\n'.join(tex))
 
 def main():
 	from zope.configuration import xmlconfig
