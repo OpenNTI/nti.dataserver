@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -34,7 +34,6 @@ if not os.getenv('DATASERVER_DIR_IS_BUILDOUT'):
 	# Buildout puts it first on the path
 	import warnings
 	try:
-
 		warnings.warn( "Using whatever phantomjs is on the PATH; supported version 1.9.7; version found at %s is %s"
 					   %(subprocess.check_output(['which', 'phantomjs']).strip(), subprocess.check_output( ['phantomjs', '-v'] ).strip() ),
 					   UserWarning, stacklevel=1)

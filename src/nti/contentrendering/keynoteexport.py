@@ -1,12 +1,20 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from __future__ import print_function, unicode_literals
+logger = __import__('logging').getLogger(__name__)
 
 import re
+
+from zope import interface
+
 from lxml import etree
 from lxml.cssselect import CSSSelector
 
-from zope import interface
 from nti.contentfragments import interfaces as cfg_interfaces
 
 _NAMESPACES = {
@@ -278,7 +286,6 @@ def extract_text( keynote, jobname, imagedir ):
 
 	presentation.remove_duplicated_masters()
 	return presentation
-
 
 if __name__ == '__main__':
 	from zope.configuration import xmlconfig

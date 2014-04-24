@@ -3,23 +3,23 @@
 """
 Functions related to creating thumbnails of content.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-from zope import component
 
 import os
 import tempfile
 import subprocess
 
+from zope import component
+
+from nti.contentrendering import interfaces
 from nti.contentrendering import ConcurrentExecutor
 from nti.contentrendering import javascript_path, run_phantom_on_page
-from nti.contentrendering import interfaces
 
 _rasterize_script = javascript_path( 'rasterize.js')
 thumbnailsLocationName = 'thumbnails'

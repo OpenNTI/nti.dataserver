@@ -1,14 +1,18 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-import base64
-import io
-import mimetypes
+logger = __import__('logging').getLogger(__name__)
+
 import os
+import io
 import sys
-
-import logging
-logger = logging.getLogger(__name__)
+import base64
+import mimetypes
 
 import simplejson as json
 
