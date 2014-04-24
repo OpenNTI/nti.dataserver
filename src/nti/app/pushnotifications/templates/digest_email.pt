@@ -5,7 +5,7 @@
 	  xmlns:tal="http://xml.zope.org/namespaces/tal">
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<title>NextThought Password Reset</title>
+		<title>Notifications</title>
 		<style metal:use-macro="macro:style">
 			#green-bar {
 			background-color: #89be3c;
@@ -35,6 +35,7 @@
 			}
 			h1, h2, h3, h4, h5, h6 {
 			font-weight: bold;
+			color: #999;
 			}
 		</style>
 	</head>
@@ -56,154 +57,167 @@
 					<td valign="top" align="left" style="background: #EEF0F1; font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;" >
 						<table style="border: none; padding: 0 18px; margin: 50px auto; width: 500px;">
 							<tbody>
-<!--!
-								<tr width="100%" height="60">
-									<td valign="top" align="left" style="border-top-left-radius: 4px; border-top-right-radius: 4px; background: #27709B url() bottom left repeat-x; padding: 10px 18px; text-align: center;">
-										<img height="40" width="125" src="" title="XXX" style="font-weight: bold; font-size: 18px; color: #fff; vertical-align: top;"> </td>
+								<tr width="100%">
+									<td valign="top" align="left" style="padding-left:18px; padding-bottom: 10px;">
+										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; font-weight:bold; margin: 0;color:#7f7f7f;">Hi ${options/first_name}!</div>
+										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</div>
+									</td>
 								</tr>
--->
 								<tr width="100%">
 									<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; background:#fff; padding: 18px;">
-										<h1 style="font-size: 20px; margin: 0;"> Notifications </h1>
-										<hr style="clear:both;height:1px;border:0;border:none;width:100%;background:#DCDCDC;color:#DCDCDC;margin:18px 0;padding:0"/>
-										<h3 style="font-size: 18px; margin: 18px 0;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</h3>
 										<div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/discussion"
 												 tal:define="notable options/discussion">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">David Sabatini</strong> started a discussion
-												<a href="" tal:attributes="href notable/href" tal:content="notable/display_name">4.3 Water, Weather, and Climate</a>
-												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open Discussions</a>.
+												<strong tal:content="notable/creator">David Sabatini</strong> started a discussion. <br />
+												<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/display_name">4.3 Water, Weather, and Climate</a>
+												in <a style="color: #3fb3f6;" href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open Discussions</a>.
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/note"
 												 tal:define="notable options/note">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
 
 												<strong tal:content="notable/creator">Greg Higgins</strong>
-												<!--! Sometimes there is no title, so we can't make that the link -->
-												<a href="" tal:attributes="href notable/href">
-													<span tal:condition="notable/top_level_note">shared a note</span>
-													<span tal:condition="not:notable/top_level_note">replied to a note</span>
-												</a>
-												<em tal:content="notable/display_name|notable/snippet">Test save</em>
+												<span tal:condition="notable/top_level_note">shared a note with you.</span>
+												<span tal:condition="not:notable/top_level_note">replied to your note.</span>
+												<br />
+												<!--! Notes that consist of just a whiteboard may not have a title or snippet -->
+												<a style="color: #3fb3f6;" href=""
+												   tal:attributes="href notable/href"
+												   tal:content="notable/display_name|notable/snippet|string:View Note">Test save</a>
 
 												<span tal:condition="notable/__parent__/note_container_display_name">
-												in <a href=""
-													  tal:attributes="href notable/__parent__/note_container_href|default"
-													  tal:content="notable/__parent__/note_container_display_name|default">a book</a>
+													in <a style="color: #3fb3f6;" href=""
+														  tal:attributes="href notable/__parent__/note_container_href|default"
+														  tal:content="notable/__parent__/note_container_display_name|default">a book</a>
 												</span>.
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/comment"
 												 tal:define="notable options/comment">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">David Foster</strong>
-												<a href="" tal:attributes="href notable/href">commented</a>
-												<em tal:content="notable/snippet">&#8220;Hi Bart, Thanks for doing the research...&#8221;</em>
-												in <a href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open 9.4 Interpretation Essay</a>
+												<strong tal:content="notable/creator">David Foster</strong> replied to your comment.<br />
+												<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/snippet">&#8220;Hi Bart, Thanks for doing the research...&#8221;</a>
+												in <a style="color: #3fb3f6;" href="" tal:attributes="href notable/__parent__/href" tal:content="notable/__parent__/display_name">Open 9.4 Interpretation Essay</a>.
 
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/feedback"
 												 tal:define="notable options/feedback">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">David Foster</strong> left feedback
-												<em tal:content="notable/snippet">&#8220;Ii Bart, Thanks for doing the research...&#8221;</em>
-												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name">Open 9.4 Interpretation Essay</a>
+												<strong tal:content="notable/creator">Mark Morvant</strong> left feedback on your assignment. <br />
+												<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/snippet">&#8220;Corrected&#8221;</a>
+												in <span tal:content="notable/assignment_name">Quiz: Overview of Brewing</span>.
 
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/circled"
 												 tal:define="notable options/circled">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
-
+												<span height="30px" style="display:block;align:top;text-align:top">
 												<tal:block tal:condition="notable/remaining">
 													<strong tal:content="notable/creator">David Foster</strong> and
-													<tal:block tal:content="notable/remaining">6</tal:block> others connected to you.
+													<tal:block tal:content="notable/remaining">6</tal:block> others added you as a contact.
 												</tal:block>
 												<tal:block tal:condition="not:notable/remaining">
-													<strong tal:content="notable/creator">David Foster</strong> connected to you.
+													<strong tal:content="notable/creator">David Foster</strong> added you as a contact.
 												</tal:block>
+												</span>
+												<!--!
+												TODO: Link to profile. This is hard because the app sometimes somehow obscures these links,
+												but not always.
+												Until we can guarantee two lines here, we use the wrapping span
+												to force layout if there is something following.
+												-->
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
 												 tal:condition="options/grade"
 												 tal:define="notable options/grade">
 												<span style="margin: 0 2px 0 0;">
-													<img src=""
+													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
 														 title="David Sabatini"
-														 width="18" height="18"
-														 style="display: inline;vertical-align:top;"
+														 width="45" height="45"
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
 														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
 														 />
 												</span>
 
-												<strong tal:content="notable/creator">David Foster</strong> assigned a grade
-												in <a href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name|default">a course</a>.
+												<strong tal:content="notable/creator">David Foster</strong> assigned a grade to your assignment. <br />
+												<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name|default">a course</a>.
 
 											</div>
+										</div>
+									</td>
+								</tr>
+								<tr width="100%">
+									<td valign="top" align="left">
+										<div>
 											<div tal:condition="options/total_remaining"
-												tal:define="total_remaining options/total_remaining">
-													Plus there ${python:request.localizer.pluralize('is', 'are', total_remaining)}
-													<tal:block tal:content="total_remaining">6</tal:block> other
-													${python:request.localizer.pluralize('notification', 'notifications', total_remaining)}
-													for you.
+												 tal:define="total_remaining options/total_remaining"
+												 style="background:#3fb3f6;height:30px;text-align:center;padding-top:15px;margin-top:20px;">
+												<a href="https://${request/host}"
+												   style="color:white;font-weight:bold;font-size:15px;">See All Activity (${total_remaining})</a>
 											</div>
 										</div>
 								</td>
 								</tr>
 								<tr width="100%">
-									<td valign="top" align="left" style="padding: 16px;font-size: 12px; line-height: 1.25em;">
-										<p style="color: #999; margin-bottom: 8px;">
+									<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
+										<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
 											This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
-											If you don't want to receive these emails in the future, please
-											<a tal:attributes="href options/unsubscribe_link"
-											   href="" style="color: #666;">unsubscribe</a>.
+
+											<br />
+											<br />
+											<strong>Too many updates?</strong><br />
+											You currently receive periodic email updates on ${options/site_name} activity.
+											You can <a tal:attributes="href options/unsubscribe_link" href="" style="color: #666;">unsubscribe</a>
+											from these updates.
 										</p>
 									</td>
 

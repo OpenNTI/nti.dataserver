@@ -1,4 +1,4 @@
-Notifications
+Hi ${first_name}!
 
 Here's what you may have missed on ${site_name} since ${since_when}.
 
