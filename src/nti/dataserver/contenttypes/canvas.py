@@ -46,7 +46,8 @@ class Canvas(ThreadableMixin, UserContentRoot):
 	# (pushing new shapes while drawing). Should we take the whole thing every
 	# time (and then look for equal object that we already have)? Accept POSTS
 	# of shapes into this object as a "container"? Right now, we have disabled
-	# persistence of individual shapes so it doesn't do us much good
+	# persistence of individual shapes so it doesn't do us much good. We do at least
+	# preserve the PersistentList, when possible.
 	__parent__ = None
 	__name__ = None
 
@@ -100,7 +101,8 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 	# (pushing new shapes while drawing). Should we take the whole thing every
 	# time (and then look for equal object that we already have)? Accept POSTS
 	# of shapes into this object as a "container"? Right now, we have disabled
-	# persistence of individual shapes so it doesn't do us much good
+	# persistence of individual shapes so it doesn't do us much good. We do at least
+	# preserve the PersistentList, when possible.
 
 	# We write shapes ourself for speed. The list is often long and only
 	# contains _CanvasShape "objects". Note that this means they cannot be decorated
@@ -110,7 +112,7 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 		canvas = self.context
 
 		# Special handling of shapeList to preserve the PersistentList.
-		# (Though this probably doesn't matter. See the note at the top of the class)
+		# (Though this may or may not matter. See the note at the top of the class)
 		shapeList = ext_parsed.pop('shapeList', self)
 		viewportRatio = ext_parsed.pop('viewportRatio', self)
 
@@ -120,23 +122,22 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 			canvas.viewportRatio = viewportRatio
 
 		if shapeList is not self:
-			# Copy the current files. If we find anything that refers
-			# to them as a URL below, swap in the file data and swap out
-			# the URL string
-			# This is tightly couple to the implementation of CanvasUrlShape
-			existing_files = [getattr(x, '_file') for x in canvas.shapeList if getattr(x, '_file', None)]
-			existing_files = {urlquote(to_external_ntiid_oid(x)): x for x in existing_files}
+			# Save existing files, if we can detect for sure that
+			# it's the same image
+			for shape in shapeList:
+				try:
+					adopt = shape._adopt_file_if_same
+				except AttributeError:
+					continue
+				else:
+					for existing_shape in canvas.shapeList:
+						if adopt(existing_shape):
+							break
+
 			del canvas.shapeList[:]
 			if shapeList:
 				for shape in shapeList:
 					canvas.append(shape)
-					if 'url' in shape.__dict__:
-						url = shape.__dict__['url']
-						for existing_file_url, existing_file in existing_files.items():
-							if existing_file_url in url:
-								shape.__dict__['url'] = None
-								shape.__dict__['_file'] = existing_file
-								existing_file.__parent__ = shape
 
 			# be polite and put it back
 			ext_parsed['shapeList'] = list(self.context.shapeList)
@@ -149,7 +150,7 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 
 @interface.implementer(IExternalObject)
 class CanvasAffineTransform(object):
-	"""
+	r"""
 	Represents the 6 values required in an 2-D affine transform:
 	\|a  b  0|
 	\|c  d  0|
@@ -163,7 +164,7 @@ class CanvasAffineTransform(object):
 
 	__external_can_create__ = True
 
-	__slots__ = ('a', 'b', 'c', 'd', 'tx', 'ty')
+	__slots__ = (b'a', b'b', b'c', b'd', b'tx', b'ty')
 
 	A = D = 1
 	B = C = TX = TY = 0
@@ -483,9 +484,37 @@ class _CanvasUrlShape(_CanvasShape):
 				result['url'] = link
 			else:
 				logger.warn("Unable to produce URL for file data in %s", self)
+				result['url'] = self.url
 		else:
 			result['url'] = self.url
 		return result
+
+	def _adopt_file_if_same(self, existing_shape):
+		"""
+		Is this object, which should not already be persistent, meant to
+		be pointing to the same data as an existing shape? If so, make
+		this object share the same data. Note that we assume parentage
+		of the file object.
+		"""
+		if not isinstance(existing_shape, _CanvasUrlShape):
+			return
+		if (self is existing_shape # same object
+			or self._file is not None # we already have a file
+			or not self.url): # We don't have a URL to compare to
+			return
+
+		existing_file = existing_shape._file
+		if existing_file is None: # Not a file
+			return
+
+		existing_link = to_external_ntiid_oid( existing_file )
+		if existing_link and urlquote(existing_link) in self.url:
+			# Yes, we have a match
+			self._file = existing_file
+			self._file.__parent__ = self.__parent__
+			self.__dict__['url'] = None
+			return True
+
 
 	def __repr__(self):
 		return '<%s>' % self.__class__.__name__
