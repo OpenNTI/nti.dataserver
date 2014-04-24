@@ -53,6 +53,33 @@ class TestApplicationUserExporViews(ApplicationLayerTest):
 		assert_that(stream.readlines(), has_length(1))
 
 	@WithSharedApplicationMockDS
+	def test_sharedwith_export_objects(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			steve = self._create_user(external_value={u'email':u"nti@nt.com",
+													 u'opt_in_email_communication':True})
+
+			user = self._create_user(username="troy@nextthought.com",
+									 external_value={u'email':u"troy@nt.com",
+													 u'opt_in_email_communication':True})
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = steve
+			note.addSharingTarget(user)
+			note.containerId = u'mycontainer'
+			note = steve.addContainedObject(note)
+
+		testapp = TestApp(self.app)
+		environ = self._make_extra_environ()
+		path = '/dataserver2/@@sharedwith_export_objects'
+		params = {"username":"troy@nextthought.com", "mimeTypes":'application/vnd.nextthought.note'}
+		res = testapp.get(path, params=params, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		assert_that(res.headers, has_entry('Content-Length', greater_than(500)))
+		stream = BytesIO(res.body)
+		stream.seek(0)
+		assert_that(stream.readlines(), has_length(1))
+
+	@WithSharedApplicationMockDS
 	def test_ghost_containers(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._create_user(external_value={u'email':u"nti@nt.com",
