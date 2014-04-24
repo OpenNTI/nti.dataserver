@@ -100,7 +100,7 @@ def all_objects_iids(users=(), mime_types=()):
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_export_objects(request):
-	values = request.params
+	values = CaseInsensitiveDict(**request.params)
 	term = values.get('term', values.get('search', None))
 	usernames = values.get('usernames', values.get('username', None))
 	if term:
@@ -178,7 +178,7 @@ def sharedWith_export_objects(request):
 			 permission=nauth.ACT_MODERATE)
 def object_resolver(request):
 	keys = set()
-	values = request.params
+	values = CaseInsensitiveDict(**request.params)
 	for name in ('id', 'key', 'oid', 'ntiid'):
 		oids = urllib.unquote(values.get(name, None) or u'')
 		keys.update(oids.split())
@@ -202,7 +202,7 @@ def object_resolver(request):
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def export_users(request):
-	values = request.params
+	values = CaseInsensitiveDict(**request.params)
 	term = values.get('term', values.get('search', None))
 	usernames = values.get('usernames', values.get('username', None))
 	if term:
@@ -255,7 +255,7 @@ def _check_users_containers(usernames=()):
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_ghost_containers(request):
-	values = request.params
+	values = CaseInsensitiveDict(**request.params)
 	term = values.get('term', values.get('search', None))
 	usernames = values.get('usernames', values.get('username', None))
 	if term:
