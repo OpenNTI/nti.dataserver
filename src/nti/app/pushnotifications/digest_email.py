@@ -393,6 +393,7 @@ from nti.dataserver.users import Entity
 from nti.dataserver.users import User
 import datetime
 from zope.i18n import translate
+from nameparser import HumanName
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
@@ -470,6 +471,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 		result['site_name'] = guess_site_display_name(self.request)
 		result['since_when'] = formatter.format(when)
+		result['first_name'] = HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id
 
 		return result
 
