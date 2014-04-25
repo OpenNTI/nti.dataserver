@@ -14,7 +14,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 
 # from nti.contentrendering.plastexpackages.graphicx import includegraphics
-from nti.contentrendering.plastexpackages.ntialibra import ntiheader, ntisequenceitem, ntisequence
+from nti.contentrendering.plastexpackages.ntialibra import ntisequenceitem, ntisequence
 
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
@@ -30,11 +30,13 @@ class TestNTIAlibra(unittest.TestCase):
 	def test_ntintisequence(self):
 		example = br"""
 			\begin{ntisequence}[creator=NTI]
-				\begin{ntiheader}
-					\includegraphics[width=106px,height=60px]{test}
-				\end{ntiheader}
-				\ntisequenceitem \includegraphics[width=106px,height=60px]{test2}
-				\ntisequenceitem \includegraphics[width=106px,height=60px]{test3}
+				\includegraphics[width=106px,height=60px]{test}
+				\begin{ntisequenceitem}
+					 foo
+				\end{ntisequenceitem}
+				\begin{ntisequenceitem}
+					\includegraphics[width=106px,height=60px]{test3}
+				\end{ntisequenceitem}
 			\end{ntisequence}
 		"""
 		dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
@@ -45,6 +47,5 @@ class TestNTIAlibra(unittest.TestCase):
 
 		# Check that the ntisequence object has the expected children
 		elem = dom.getElementsByTagName('ntisequence')[0]
-		assert_that(elem.childNodes[0], is_(ntiheader))
 		assert_that(elem.childNodes[2], is_(ntisequenceitem))
-		assert_that(elem.childNodes[3], is_(ntisequenceitem))
+		assert_that(elem.childNodes[4], is_(ntisequenceitem))

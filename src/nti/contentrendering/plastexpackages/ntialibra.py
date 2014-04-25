@@ -14,11 +14,8 @@ from plasTeX import Base
 
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 
-class ntiheader(LocalContentMixin, Base.Environment):
-	blockType = True
-
-class ntisequenceitem(LocalContentMixin, Base.List.item):
-	blockType = True
+class ntisequenceitem(LocalContentMixin, Base.Environment):
+	pass
 
 class ntisequence(LocalContentMixin, Base.List):
 
@@ -27,10 +24,6 @@ class ntisequence(LocalContentMixin, Base.List):
 	def digest(self, tokens):
 		tok = super(ntisequence, self).digest(tokens)
 		if self.macroMode != Base.Environment.MODE_END:
-
-			_ntiheader = self.getElementsByTagName('ntiheader')
-			assert len(_ntiheader) <= 1
-
 			_items = self.getElementsByTagName('ntisequenceitem')
 			assert len(_items) >= 1
 		return tok
