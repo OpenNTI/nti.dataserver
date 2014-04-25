@@ -9,8 +9,3 @@ name: ntisequenceitem
 <object type="application/vnd.nextthought.ntisequenceitem">
 <span tal:replace="self"></span>
 </object>
-
-name: ntiheader
-<object type="application/vnd.nextthought.ntiheader">
-<span tal:replace="self"></span>
-</object>
