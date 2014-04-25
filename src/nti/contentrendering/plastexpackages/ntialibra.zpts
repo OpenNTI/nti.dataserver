@@ -9,3 +9,9 @@ name: ntisequenceitem
 <object type="application/vnd.nextthought.ntisequenceitem">
 <span tal:replace="self"></span>
 </object>
+
+name: flatsidebar
+<div tal:condition="self" class="sidebar flat border-top" tal:attributes="id self/id">
+<div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
+<div tal:replace="self">Sidebar Body</div>
+</div>

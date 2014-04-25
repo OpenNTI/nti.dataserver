@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from plasTeX import Base
 
+from nti.contentrendering.plastexpackages.ntilatexmacros import sidebar
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 
 class ntisequenceitem(LocalContentMixin, Base.Environment):
@@ -30,3 +31,6 @@ class ntisequence(LocalContentMixin, Base.List):
 
 class ntisequenceref(Base.Crossref.ref):
 	args = '[options:dict] label:idref'
+
+class flatsidebar(sidebar):
+	pass
