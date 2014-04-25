@@ -1,16 +1,15 @@
 # -*- mode: html -*-
 
 name: ntisequence
-<object type="application/vnd.nextthought.ntisequence">
-	<span tal:replace="self" />
+<object type="application/vnd.nextthought.ntisequence" tal:content="self" >
 </object>
 
 name: ntisequenceitem
-<object type="application/vnd.nextthought.ntisequenceitem">
-	<span tal:replace="self" />
+<object type="application/vnd.nextthought.ntisequenceitem" >
+<span tal:replace="self"></span>
 </object>
 
 name: ntiheader
-<object type="application/vnd.nextthought.ntiheader">
-	<span tal:replace="self" />
+<object type="application/vnd.nextthought.ntiheader" >
+<span tal:replace="self"></span>
 </object>

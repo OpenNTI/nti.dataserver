@@ -15,12 +15,24 @@ from plasTeX import Base
 from ._util import LocalContentMixin
 
 class ntiheader(LocalContentMixin, Base.Environment):
-	pass
+
+	blockType = True
+
+	def digest(self, tokens):
+		tok = super(ntiheader, self).digest(tokens)
+		return tok
 
 class ntisequenceitem(LocalContentMixin, Base.List.item):
-	pass
+
+	blockType = True
+
+	def digest(self, tokens):
+		tok = super(ntisequenceitem, self).digest(tokens)
+		return tok
 
 class ntisequence(LocalContentMixin, Base.List):
+
+	blockType = True
 	args = '[options:dict]'
 
 	def digest(self, tokens):
