@@ -12,31 +12,20 @@ logger = __import__('logging').getLogger(__name__)
 
 from plasTeX import Base
 
-from ._util import LocalContentMixin
+from nti.contentrendering.plastexpackages._util import LocalContentMixin
 
 class ntiheader(LocalContentMixin, Base.Environment):
-
 	blockType = True
-
-	def digest(self, tokens):
-		tok = super(ntiheader, self).digest(tokens)
-		return tok
 
 class ntisequenceitem(LocalContentMixin, Base.List.item):
-
 	blockType = True
-
-	def digest(self, tokens):
-		tok = super(ntisequenceitem, self).digest(tokens)
-		return tok
 
 class ntisequence(LocalContentMixin, Base.List):
 
-	blockType = True
 	args = '[options:dict]'
 
 	def digest(self, tokens):
-		result = super(ntisequence, self).digest(tokens)
+		tok = super(ntisequence, self).digest(tokens)
 		if self.macroMode != Base.Environment.MODE_END:
 
 			_ntiheader = self.getElementsByTagName('ntiheader')
@@ -44,13 +33,7 @@ class ntisequence(LocalContentMixin, Base.List):
 
 			_items = self.getElementsByTagName('ntisequenceitem')
 			assert len(_items) >= 1
-
-		return result
+		return tok
 
 class ntisequenceref(Base.Crossref.ref):
-	
 	args = '[options:dict] label:idref'
-
-	def digest(self, tokens):
-		tok = super(ntisequenceref, self).digest(tokens)
-		return tok
