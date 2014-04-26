@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import print_function, unicode_literals, absolute_import
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
@@ -34,7 +34,7 @@ class TestApplicationFeedback(ApplicationLayerTest):
 
 	extra_environ_default_user = 'ossmkitty'
 
-	def _do_test_email(self, url, subject, message_key, extra_data=None):
+	def _do_test_email(self, url, subject, message_key, extra_data=None, extra_environ=None):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			coppa_user = users.User.get_user( self.extra_environ_default_user )
 			user_interfaces.IFriendlyNamed( coppa_user ).realname = u'Jason'
@@ -48,15 +48,23 @@ class TestApplicationFeedback(ApplicationLayerTest):
 		if extra_data:
 			data.update(extra_data)
 
-		res = testapp.post_json( url, data )
+		res = testapp.post_json( url, data, extra_environ=extra_environ )
 		assert_that( res, has_property( 'status_int', 204 ) )
 
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer, has_property( 'queue', has_length( 1 ) ) )
 		assert_that( mailer, has_property( 'queue', contains( has_property( 'subject', subject ) ) ) )
 
-		assert_that( decodestring(mailer.queue[0].as_string()), contains_string( "Hi there. I love it." ) )
+		assert_that( decodestring(mailer.queue[0].as_string()), contains_string( b"Hi there. I love it." ) )
 		return mailer.queue[0]
+
+	@WithSharedApplicationMockDS(testapp=True, users=True)
+	def test_post_feedback_sends_email_funky_char(self):
+		url = '/dataserver2/users/ossmkitty/@@send-feedback'
+		# The layers of JSON and decoding make it hard to get a bad byte in the
+		# body data, but we can directly but one in the environ
+		self._do_test_email(url, 'Feedback From ossmkitty on localhost', 'body',
+							extra_environ={'nti.testing.bad_data': b'Exotic char: \xe2'})
 
 
 	@WithSharedApplicationMockDS(testapp=True, users=True)
@@ -95,7 +103,8 @@ class TestApplicationFeedback(ApplicationLayerTest):
 								  {'file': 'thing.js', 'line': 82,
 								   'collectedLog': ['an', 'array', 'of', 'strings',
 													'that sometimes', 'can get to be',
-													'really long'],
+													'really long',
+													'and have exotic chars: \xe2'],
 								   'stacktrace': {'sometimes': 'comes in', 'as a': 'dict'}})
 
 		msg_string = decodestring(msg.as_string())

@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import textwrap
 from pprint import pprint
+from six import text_type
 from cStringIO import StringIO
 from cgi import escape as html_escape
 
@@ -43,11 +44,16 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	del request_info[body_key]
 
 	def _enc(v):
-		if isinstance(v,unicode):
+		if isinstance(v,text_type):
 			v = v.encode('utf-8', errors='ignore')
+		return v
+	def _dec(v):
+		if not isinstance(v,text_type):
+			v = v.decode('utf-8', errors='ignore')
 		return v
 
 	def _formatted(v, as_html=False, text_pfx=''):
+		"""Returns a text string (unicode under py2)"""
 		if not isinstance(v,basestring):
 			if isinstance(v,dict):
 				v = sorted([(_enc(kk),_enc(vv)) for kk, vv in v.items()])
@@ -60,18 +66,22 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 
 		if as_html:
 			v = html_escape(v)
+			v = _dec(v)
 			v = v.replace('\n', '<br />')
 		else:
+			v = _dec(v)
 			v = v.replace('\n', '\n' + text_pfx)
+
 		return v
 
 	def _format_table(tbl):
+		"""Returns a text string (unicode under py2)"""
 		if not tbl:
 			return ''
 		# Make everything line up nicely, even with multiple lines in a value
 		key_width = len(max(tbl, key=len))
 		val_line_pfx = ' ' * (key_width + 10)
-		lines = [(str(k).ljust( key_width + 10 ) + _formatted(v, text_pfx=val_line_pfx))
+		lines = [(text_type(k).ljust( key_width + 10 ) + _formatted(v, text_pfx=val_line_pfx))
 				 for k, v
 				 in sorted(tbl.items())]
 		return '\n\n    '.join( lines )
