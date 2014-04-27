@@ -556,14 +556,14 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 	def _do_test_create_user( self, extra_environ=None ):
 		app = TestApp( self.app )
 
-		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
-										'password': 'pass123word',
-										'realname': 'Jason Madden',
-										'email': 'foo@bar.com'	} )
+		data = {'Username': 'jason@test.nextthought.com',
+				'password': 'pass123word',
+				'realname': 'Jason Madden',
+				'email': 'foo@bar.com'	}
 
 		path = b'/dataserver2/account.create'
 
-		res = app.post( path, data, extra_environ=extra_environ )
+		res = app.post_json( path, data, extra_environ=extra_environ )
 
 		assert_that( res, has_property( 'status_int', 201 ) )
 		assert_that( res, has_property( 'location', contains_string( '/dataserver2/users/jason' ) ) )
@@ -625,12 +625,12 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 			_ = self._create_user( )
 
 		app = TestApp( self.app )
-		data = to_json_representation( {'Username': 'jason@test.nextthought.com',
-										'password': 'password' } )
+		data = {'Username': 'jason@test.nextthought.com',
+				'password': 'password' }
 
 		path = b'/dataserver2/account.create'
 
-		_ = app.post( path, data, extra_environ=self._make_extra_environ(), status=403 )
+		_ = app.post_json( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
 class TestApplicationPreflightUser(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
 
@@ -648,8 +648,7 @@ class TestApplicationPreflightUser(_AbstractApplicationCreateUserTest, Applicati
 		path = b'/dataserver2/account.preflight.create'
 
 		for data in (data_with_username_only, data_full):
-			data = to_json_representation( data )
-			res = app.post( path, data )
+			res = app.post_json( path, data )
 
 			assert_that( res, has_property( 'status_int', 200 ) )
 

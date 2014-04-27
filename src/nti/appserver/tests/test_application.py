@@ -685,11 +685,9 @@ class TestApplication(ApplicationLayerTest):
 			user = self._create_user()
 
 
-		json_data = json.serialize( data )
-
 		testapp = TestApp( self.app )
 
-		res = testapp.post( '/dataserver2/users/sjohnson@nextthought.com', json_data, extra_environ=self._make_extra_environ() )
+		res = testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com', data, extra_environ=self._make_extra_environ() )
 
 		def _check_canvas( res ):
 			canvas = res.json_body['body'][0]
@@ -704,8 +702,11 @@ class TestApplication(ApplicationLayerTest):
 			# The modified date is the same as the canvas containing it
 			assert_that( res, has_property( 'last_modified', not_none() ) )
 		#	assert_that( res, has_property( 'last_modified', canvas_res.last_modified ) )
+			return canvas
 
-		_check_canvas( res )
+		canvas = _check_canvas( res )
+		canvas_oid = canvas['OID']
+		file_url = canvas['shapeList'][0]['url']
 
 		# If we "edit" the data, then nothing breaks
 		edit_link = None
@@ -713,7 +714,9 @@ class TestApplication(ApplicationLayerTest):
 			if l['rel'] == 'edit':
 				edit_link = l['href']
 				break
-		res = testapp.put( edit_link.encode('ascii'), res.body, extra_environ=self._make_extra_environ() )
+		res = testapp.put( edit_link.encode('ascii'), res.body, content_type='application/json', extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body['body'][0]['OID'], is_(canvas_oid) )
+		assert_that(  res.json_body['body'][0]['shapeList'][0]['url'], is_(file_url) )
 		_check_canvas( res )
 
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -1554,8 +1557,6 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 
 		accept_type = 'application/json'
 		data = json.dumps( {"sharedWith": ["a@b"] } )
-		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 		res = testapp.put( str('/dataserver2/NTIIDs/' + ntiids.ROOT + '/++fields++sharingPreference'),
 						   data,
 						   headers={"Accept": accept_type},
