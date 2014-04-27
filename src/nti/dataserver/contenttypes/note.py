@@ -119,7 +119,8 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			update_from_external_object(existing_object, ext_val, context=context, notify=False)
 			existing_object.updateLastMod()
 			body[i] = existing_object
-
+			assert body[i].__parent__ is note
+			self._x = existing_object
 		return body
 
 	__external_resolvers__ = { 'body': _resolve_external_body }
@@ -134,7 +135,6 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Only updates to the body are accepted
 		parsed.pop( 'text', None )
-
 		super(NoteInternalObjectIO, self).updateFromExternalObject( parsed, *args, **kwargs )
 
 		note = self.context

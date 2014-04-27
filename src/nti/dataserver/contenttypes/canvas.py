@@ -29,7 +29,6 @@ from nti.contentfragments import interfaces as frg_interfaces
 
 from zope import interface
 from zope import component
-from zope.container.contained import contained
 import zope.schema.interfaces
 
 from .base import UserContentRoot, _make_getitem
@@ -63,7 +62,8 @@ class Canvas(ThreadableMixin, UserContentRoot):
 			__traceback_info__ = shape
 			raise zope.schema.interfaces.WrongContainedType()
 		self.shapeList.append(shape)
-		contained(shape, self, unicode(len(self.shapeList) - 1))
+		shape.__parent__ = self
+		shape.__name__ = unicode(len(self.shapeList) - 1)
 
 	__getitem__ = _make_getitem('shapeList')
 
@@ -127,6 +127,9 @@ class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInter
 			for shape in shapeList:
 				try:
 					adopt = shape._adopt_file_if_same
+					# We must have the correct parent already set or it
+					# gets a reference to the wrong one
+					shape.__parent__ = canvas
 				except AttributeError:
 					continue
 				else:
