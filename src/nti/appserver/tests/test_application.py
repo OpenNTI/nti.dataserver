@@ -1554,6 +1554,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 
 		accept_type = 'application/json'
 		data = json.dumps( {"sharedWith": ["a@b"] } )
+		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
 
 		res = testapp.put( str('/dataserver2/NTIIDs/' + ntiids.ROOT + '/++fields++sharingPreference'),
 						   data,

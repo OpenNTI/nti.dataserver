@@ -59,7 +59,7 @@
 
 	<!-- Zope Requests. This is also cacheable. -->
 	<!--
-		XXX: If the zope.publisher package gets configured, as id
+		XXX: If the zope.publisher package gets configured, as it
 		does during the API doc process,  we
 		conflict. Why don't we just load it?
 	-->
@@ -73,11 +73,12 @@
 			 zcml:condition="not-have in-apidoc" />
 
 
-	<!-- Entities -->
-	<adapter factory="._adapters.UserPreferredLanguages" />
 
 	<!-- Country names, language names, flag resources -->
 	<include package="plone.i18n" />
+
+	<!-- Misc -->
+	<include package="nti.app.i18n" />
 
 	<!-- __________________ -->
 
