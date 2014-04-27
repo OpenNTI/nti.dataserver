@@ -33,7 +33,8 @@ class StringsLocalizer(AbstractAuthenticatedView):
 
 		# Negotiate the language to use
 		negotiator = component.getUtility(INegotiator)
-		# TODO: Pulling user and/or cookie in
+		# This will use a cookie/request param, non-default user setting, and finally
+		# HTTP Accept-Language
 		target_language = negotiator.getLanguage(domain.getCatalogsInfo(), self.request)
 
 		if not target_language:
