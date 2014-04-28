@@ -3,7 +3,7 @@
 """
 Define NTI Latex Macros
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -33,11 +33,11 @@ from nti.ntiids import ntiids
 
 # Monkey patching time
 # SAJ: The following are set to render properly nested HTML.
+Base.hrule.blockType = True
+Base.parbox.blockType = True
 Base.figure.forcePars = False
 Base.minipage.blockType = True
-Base.parbox.blockType = True
 Base.centerline.blockType = True
-Base.hrule.blockType = True
 
 # BWC
 import zope.deferredimport
