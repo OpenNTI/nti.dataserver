@@ -15,3 +15,6 @@ name: flatsidebar
 <div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
 <div tal:replace="self">Sidebar Body</div>
 </div>
+
+name: rightpic
+<img tal:attributes="src self/image/url; id self/id; alt self/attributes/alttext; style float:right" />

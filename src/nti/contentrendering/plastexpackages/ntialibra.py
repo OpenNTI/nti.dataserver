@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from plasTeX import Base
+from plasTeX.Packages import graphicx
 
 from nti.contentrendering.plastexpackages.ntilatexmacros import sidebar
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
@@ -58,4 +59,7 @@ class ntisequenceref(Base.Crossref.ref):
 	args = '[options:dict] label:idref'
 
 class flatsidebar(sidebar):
+	pass
+
+class rightpic(graphicx.includegraphics):
 	pass
