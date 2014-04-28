@@ -328,6 +328,6 @@ class TestApplication(ApplicationLayerTest):
 			request.possible_site_names = ()
 			request.invoke_subrequest = Router(component.getGlobalSiteManager()).invoke_subrequest
 			request.environ['REMOTE_USER'] = 'foo'
-			request.environ['repoze.who.identity'] = {}
+			request.environ['repoze.who.identity'] = {'repoze.who.userid': 'foo'}
 			with assert_raises(HTTPNotFound):
 				find_page_info_view_helper( request, unit )
