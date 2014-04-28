@@ -241,8 +241,26 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 		return self._lazy_create_ootreeset_for_wref()
 
 	def _note_member(self, entity):
-		self._members.add(wref_interfaces.IWeakRef(entity))
-		self.updateLastMod()
+		members = self._members
+		wref = wref_interfaces.IWeakRef(entity)
+		# Adding an entity, even if it is already in the set, causes
+		# the set to invoke jar.readCurrent on itself, whereas
+		# checking for containment does not. (This can cause us to run
+		# into ReadConflictError on startup sometimes if we're
+		# manipulating memberships, as we might do for courses.)
+		# Because we don't want to manipulate our update time if
+		# membership does not actually change, we should check for
+		# containment first before adding, but we would still need to
+		# readCurrent on the set to make sure that the entity hasn't
+		# been deleted behind our back. However, community membership
+		# is relatively slowly changing, and almost never concurrently
+		# changing for *the same entity* such that the same person is
+		# adding and removing himself concurrently. Therefore, it is
+		# relatively safe to not readCurrent on members before doing
+		# the containment check.
+		if wref not in members:
+			members.add(wref)
+			self.updateLastMod()
 
 	def _del_member(self, entity):
 		_remove_entity_from_named_lazy_set_of_wrefs(self, '_members', entity)
