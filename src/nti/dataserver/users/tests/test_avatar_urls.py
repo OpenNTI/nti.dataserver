@@ -55,7 +55,7 @@ class TestAvatarURLs(DataserverLayerTest):
 		profile = interfaces.IAvatarURL( o )
 		profile.avatarURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 		_file = getattr( type(profile), 'avatarURL' ).get_file(profile)
-		_file._v_to_external_ntiid_oid = 'the_external_ntiid' # rather than setting up _p_jar
+		_file.to_external_ntiid_oid = lambda: 'the_external_ntiid' # rather than setting up _p_jar
 		assert_that( users_external._avatar_url( o ), is_( links.Link ) )
 
 		# host-less URLs are ignored
