@@ -64,3 +64,6 @@ class flatsidebar(sidebar):
 class rightpic(graphicx.includegraphics):
 	packageName = 'ntialibra'
 	blockType = True
+
+class putright(rightpic):
+	pass
