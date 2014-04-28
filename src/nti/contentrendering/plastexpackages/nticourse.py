@@ -136,10 +136,6 @@ class courseunit(Environment, plastexids.NTIIDMixin):
 
 		return res
 
-class courselessonname(Command):
-	pass
-
-
 from nti.externalization.datetime import datetime_from_string
 
 def _parse_local_date(self, val):
@@ -148,6 +144,13 @@ def _parse_local_date(self, val):
 	return datetime_from_string( val,
 								 assume_local=True,
 								 local_tzname=self.ownerDocument.userdata.get('document_timezone_name') )
+
+class coursepartname(Command):
+	pass
+
+class coursepart(part):
+	counter = 'course' + part.counter
+
 class courselessonref(ref):
 	args = 'label:idref {date:str}'
 
@@ -175,8 +178,8 @@ class courselessonref(ref):
 			self.date[-1] = self.date[-1] + timedelta(days=1) - timedelta(microseconds=1)
 		return res
 
-class coursepart(part):
-	counter = 'course' + part.counter
+class courselessonname(Command):
+	pass
 
 class courselesson(chapter):
 	args = '* [ toc ] title label:id {options:dict:str}' # TODO: Move towards dates at this level
@@ -230,6 +233,9 @@ def _make_invoke(cls):
 		return res
 	return invoke
 
+class courselessonsectionname(Command):
+	pass
+
 class courselessonsection(section):
 	"""
 	Example::
@@ -241,6 +247,9 @@ class courselessonsection(section):
 	args = '* [ toc ] title {options:dict:str}'
 
 	is_outline_stub_only = None
+
+class courselessonsubsectionname(Command):
+	pass
 
 class courselessonsubsection(subsection):
 	"""
@@ -254,6 +263,9 @@ class courselessonsubsection(subsection):
 	args = '* [ toc ] title {options:dict:str}'
 
 	is_outline_stub_only = None
+
+class courselessonsubsubsectionname(Command):
+	pass
 
 class courselessonsubsubsection(subsubsection):
 	"""

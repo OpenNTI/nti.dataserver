@@ -2,7 +2,7 @@
 
 name: course courseunit courselessonref coursecommunity
 
-name: courselesson courseinfo
+name: courselesson courseinfo courselessonsection
 <div tal:attributes="id self/id; data-ntiid self/ntiid">
 <div class="chapter title" tal:content="self/title">Morbi metus pede, imperdiet vitae</div>
 <p tal:replace="self"></p>
