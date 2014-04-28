@@ -359,13 +359,6 @@ class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 		self.the_view = account_preflight_view
 
 	@WithMockDSTrans
-	def test_preflight_opt_in_email_only(self):
-		# we see the browser make this exact request
-		self.request.body = b'%7B%22opt_in_email_communication%22%3Atrue%7D='
-		self.request.content_type = b'application/x-www-form-urlencoded; charset=UTF-8'
-		self.the_view( self.request )
-
-	@WithMockDSTrans
 	def test_preflight_username_only_with_email( self ):
 		# see site_policies.[py|zcml]
 		assert_that( self.request.host, is_( 'example.com:80' ) )

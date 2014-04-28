@@ -241,30 +241,6 @@ class _EnglishFirstAndLastNameDecorator(object):
 				external['NonI18NLastName'] = last
 
 
-### Localization
-
-
-@interface.implementer(IUserPreferredLanguages)
-@component.adapter(nti_interfaces.IUser)
-class _UserPreferredLanguages(object):
-	"""
-	The preferred languages to use when externalizing for a particular user.
-
-	.. todo:: Right now, this is hardcoded to english. We need to store this/derive from request.
-
-	"""
-	def __init__( self, context ):
-		pass
-
-	def getPreferredLanguages(self):
-		return ('en',)
-
-# because this is hardcoded, we can be static for now
-_user_preferred_languages = _UserPreferredLanguages(None)
-@interface.implementer(IUserPreferredLanguages)
-@component.adapter(nti_interfaces.IUser)
-def UserPreferredLanguages(user):
-	return _user_preferred_languages
 
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import index as user_index
