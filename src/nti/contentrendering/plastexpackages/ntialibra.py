@@ -16,17 +16,42 @@ from nti.contentrendering.plastexpackages.ntilatexmacros import sidebar
 from nti.contentrendering.plastexpackages._util import LocalContentMixin
 
 class ntisequenceitem(LocalContentMixin, Base.Environment):
-	pass
+	args = '[options:dict]'
+
+	def invoke(self, tex):
+		res = super(ntisequenceitem, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return res
+
+	def digest(self, tokens):
+		tok = super(ntisequenceitem, self).digest(tokens)
+		if self.macroMode != Base.Environment.MODE_END:
+			options = self.attributes.get('options', {}) or {}
+			__traceback_info__ = options, self.attributes
+			for k, v in options.items():
+				setattr(self, k, v)
+		return tok
 
 class ntisequence(LocalContentMixin, Base.List):
-
 	args = '[options:dict]'
+
+	def invoke(self, tex):
+		res = super(ntisequence, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return res
 
 	def digest(self, tokens):
 		tok = super(ntisequence, self).digest(tokens)
 		if self.macroMode != Base.Environment.MODE_END:
 			_items = self.getElementsByTagName('ntisequenceitem')
 			assert len(_items) >= 1
+
+			options = self.attributes.get('options', {}) or {}
+			__traceback_info__ = options, self.attributes
+			for k, v in options.items():
+				setattr(self, k, v)
 		return tok
 
 class ntisequenceref(Base.Crossref.ref):
