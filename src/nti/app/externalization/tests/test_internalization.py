@@ -15,6 +15,8 @@ from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import contains
 from hamcrest import has_entries
+from hamcrest import calling
+from hamcrest import raises
 from nose.tools import assert_raises
 
 from nti.app.testing.layers import AppLayerTest
@@ -32,15 +34,15 @@ class TestIO(AppLayerTest):
 
 	def test_read_urlencoded(self):
 		request = DummyRequest()
-		request.body = b'%7B%22opt_in_email_communication%22%3Atrue%7D='
 		request.content_type = b'application/x-www-form-urlencoded; charset=UTF-8'
 
-		assert_that( obj_io.read_body_as_external_object(request),
-					 is_( {'opt_in_email_communication': True }))
+		request.body = b'%7B%22opt_in_email_communication%22%3Atrue%7D='
+		assert_that(calling(obj_io.read_body_as_external_object).with_args(request),
+					 raises( hexc.HTTPBadRequest ) )
 
 		request.body = b'%7B%22opt_in_email_communication\xe2%22%3Atrue%7D='
-		assert_that( obj_io.read_body_as_external_object(request),
-					 is_( {'opt_in_email_communication\xe2': True }))
+		assert_that(calling(obj_io.read_body_as_external_object).with_args(request),
+					 raises( hexc.HTTPBadRequest ) )
 
 	def test_integration_note_body_validation_empty_error_message(self):
 		n = contenttypes.Note()

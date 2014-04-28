@@ -60,11 +60,6 @@ def class_name_from_content_type( request ):
 	content_type = content_type or ''
 	return nti_mimetype_class( content_type )
 
-# Native string types for these values to avoid encoding
-# problems
-_mt_encoded = str('application/x-www-form-urlencoded')
-_equal = str('=')
-
 def read_body_as_external_object( request, input_data=None, expected_type=collections.Mapping ):
 	"""
 	Returns the object specified by the external data. The request input stream is
@@ -82,15 +77,6 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		or content_type == 'application/xml'
 		or request.GET.get('format') == 'plist'): # pragma: no cover
 		ext_format = 'plist'
-
-	if content_type.startswith(_mt_encoded) and _equal in value:
-		# Hmm, uh-oh. How did this happen?
-		# We've seen this come in from the browser, but we're expecting JSON;
-		# the standard WebOb way to decode it doesn't work in these cases.
-		# Try it here
-		value = url_unquote(value)
-		if value.endswith(_equal):
-			value = value[:-1]
 
 	__traceback_info__ = ext_format, value
 	if ext_format != 'json': # pragma: no cover
@@ -139,8 +125,8 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# may also raise AttributeError if the inputClass is bad, but that
 		# could also come from other places. We call it all client error.
 		logger.exception( "Failed to parse/transform value %s", value )
-		_, _, tb = sys.exc_info()
-		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input"))
+		tb = sys.exc_info()[2]
+		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input") )
 		raise ex, None, tb
 
 

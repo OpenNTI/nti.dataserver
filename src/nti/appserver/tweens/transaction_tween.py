@@ -87,6 +87,32 @@ class _transaction_tween(TransactionLoop):
 
 			raise self.AbortException( HTTPBadRequest(str(e)), "IOError on reading body" )
 
+		# XXX: HACK
+
+		# WebTest, browsers, and many of our integration tests by
+		# default sets a content type of
+		# 'application/x-www-form-urlencoded' If you happen to access
+		# request.POST, though, (like locale negotiation does, or
+		# certain template operations do) the underlying WebOb will
+		# notice the content-type and attempt to decode the body based
+		# on that. This leads to a badly corrupted body (if it was
+		# JSON) and mysterious failures; this has been seen in the
+		# real world. An internal implementation change (accessing
+		# POST) suddenly meant that we couldn't read their body.
+		# Unfortunately, the mangling is not fully reversible, since
+		# it wasn't encoded in the first place.
+
+		# We attempt to fix that here. (This is the best place because
+		# we are now sure the body is seekable.)
+		if (number == (self.attempts - 1)
+			and request.method in ('POST', 'PUT')
+			and request.content_type == 'application/x-www-form-urlencoded'):
+			body = request.body
+			if body and body[0] in (b'{', b'['):
+				# encoded data will never start with these values, they would be
+				# escaped. so this must be meant to be JSON
+				request.content_type = b'application/json'
+
 	def should_abort_due_to_no_side_effects( self, request ):
 		return _is_side_effect_free( request ) and not request.environ.get('nti.request_had_transaction_side_effects')
 
