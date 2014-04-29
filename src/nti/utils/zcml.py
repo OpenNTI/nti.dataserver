@@ -20,6 +20,7 @@ from zope.configuration import fields
 from zope.component.zcml import utility
 
 from . import ldap
+from . import oauthkeys
 from . import interfaces as util_interfaces
 
 BASE_64 = u'base64'
@@ -53,3 +54,15 @@ def registerLDAP(_context, id, url, username, password, baseDN=None, encoding=No
 								Password=password, BaseDN=baseDN, BackupURL=backupURL)
 
 	utility(_context, provides=util_interfaces.ILDAP, factory=factory, name=id)
+
+
+class IRegisterOAuthKeys(interface.Interface):
+	"""
+	The arguments needed for registering oauth keys
+	"""
+	apiKey = fields.TextLine(title="API key", required=True)
+	secretKey = fields.TextLine(title="secrent key", required=True)
+
+def registerOAuthKeys(_context, apiKey, secretKey):
+	factory = functools.partial(oauthkeys.OAuthKeys, APIKey=apiKey, SecretKey=secretKey)
+	utility(_context, provides=util_interfaces.IOAuthKeys, factory=factory, name=apiKey)
