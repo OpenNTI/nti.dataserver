@@ -20,3 +20,6 @@ class ILDAP(interface.Interface):
 	BaseDN = nti_schema.ValidTextLine(title="Base DN", required=False)
 	BackupURL = nti_schema.ValidTextLine(title="Backup LDAP URL", required=False)
 
+class IOAuthKeys(interface.Interface):
+	APIKey = nti_schema.ValidTextLine(title="API Key", required=True)
+	SecretKey = nti_schema.ValidTextLine(title="Secret Key", required=True)
