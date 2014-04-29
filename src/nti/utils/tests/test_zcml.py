@@ -28,6 +28,7 @@ HEAD_ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			xmlns:ldap="http://nextthought.com/ntp/ldap"
+			xmlns:oauth="http://nextthought.com/ntp/oauth"
 			i18n_domain='nti.dataserver'>
 
 		<include package="zope.component" />
@@ -57,7 +58,7 @@ LDAP_ZCML_STRING = HEAD_ZCML_STRING + """
 """
 
 OAUTHKEYS_ZCML_STRING = HEAD_ZCML_STRING + """
-	<ldap:registerOAuthKeys
+	<oauth:registerOAuthKeys
 		apiKey="abcd1234"
 		secretKey="efgh5678" />
 </registerIn>
