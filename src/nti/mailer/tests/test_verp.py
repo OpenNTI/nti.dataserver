@@ -42,12 +42,14 @@ class TestVerp(unittest.TestCase):
 		assert_that( pids, is_(()))
 
 
-	@fudge.patch('nti.mailer._verp.find_site_policy')
-	def test_verp_from_recipients_in_site_uses_default_sender_realname(self, mock_find):
+	@fudge.patch('nti.mailer._verp.find_site_policy',
+				 'nti.mailer._verp._get_signer_secret')
+	def test_verp_from_recipients_in_site_uses_default_sender_realname(self, mock_find, mock_secret):
 		class Policy(object):
 			DEFAULT_EMAIL_SENDER = 'Janux <janux@ou.edu>'
 
 		mock_find.is_callable().returns( (Policy, 'janux.ou.edu') )
+		mock_secret.is_callable().returns( 'abc123' )
 
 		prin = EmailAddresablePrincipal.__new__(EmailAddresablePrincipal)
 		prin.email = 'foo@bar.com'
@@ -56,4 +58,4 @@ class TestVerp(unittest.TestCase):
 		addr = verp_from_recipients( 'no-reply@nextthought.com',
 									 (prin,))
 
-		assert_that( addr, is_('"Janux" <no-reply+Zm9vLm4xei1fT0lvQ3JfUHE0T3N0cEJGZTg2c0pOMA@nextthought.com>'))
+		assert_that( addr, is_('"Janux" <no-reply+Zm9vLkRBdnY1RTk2NDZha1lOLUtEMWJCc3k0QTN6MA@nextthought.com>') )
