@@ -23,16 +23,19 @@ import itsdangerous
 
 from nti.appserver.policies.site_policies import find_site_policy
 
-
-def _make_signer(default_key='$Id$'):
+def _get_signer_secret(default_secret="$Id$"):
 
 	# TODO: Break these dependencies
 	from nti.appserver.interfaces import IApplicationSettings
 
 	settings = component.getGlobalSiteManager().queryUtility(IApplicationSettings) or {}
 	# XXX Reusing the cookie secret, we should probably have our own
-	secret_key = settings.get('cookie_secret', default_key)
+	secret_key = settings.get('cookie_secret', default_secret)
 
+	return secret_key
+
+def _make_signer(default_key='$Id$'):
+	secret_key = _get_signer_secret(default_secret=default_key)
 	signer = itsdangerous.Signer(secret_key, salt='email recipient')
 	return signer
 
