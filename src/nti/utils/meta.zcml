@@ -5,10 +5,12 @@
 		<meta:directive	name="registerLDAP"
 						schema=".zcml.IRegisterLDAP"
 						handler=".zcml.registerLDAP" />
-						
+	</meta:directives>
+
+	<meta:directives namespace="http://nextthought.com/ntp/oauth">
 		<meta:directive	name="registerOAuthKeys"
 						schema=".zcml.IRegisterOAuthKeys"
 						handler=".zcml.registerOAuthKeys" />
 	</meta:directives>
-
+	
 </configure>
