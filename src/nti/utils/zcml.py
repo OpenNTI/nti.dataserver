@@ -60,9 +60,10 @@ class IRegisterOAuthKeys(interface.Interface):
 	"""
 	The arguments needed for registering oauth keys
 	"""
+	id = fields.TextLine(title="ouath identifier", required=False, default='')
 	apiKey = fields.TextLine(title="API key", required=True)
 	secretKey = fields.TextLine(title="secrent key", required=True)
 
-def registerOAuthKeys(_context, apiKey, secretKey):
+def registerOAuthKeys(_context, apiKey, secretKey, id=u''):
 	factory = functools.partial(oauthkeys.OAuthKeys, APIKey=apiKey, SecretKey=secretKey)
-	utility(_context, provides=util_interfaces.IOAuthKeys, factory=factory, name=apiKey)
+	utility(_context, provides=util_interfaces.IOAuthKeys, factory=factory, name=id)
