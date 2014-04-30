@@ -24,7 +24,7 @@ Impersonation is exposed at the url :const:`REL_LOGIN_IMPERSONATE`. See
 the function :func:`impersonate_user` for more details.
 
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Clean up the logging of openid, which writes to stderr by default. Patching
 # the module like this is actually the recommended approach
-import openid.oidutil
+import openid
 openid.oidutil.log = logging.getLogger('openid').info
 
 from zope import interface
@@ -76,6 +76,7 @@ import pyramid.request
 import pyramid.httpexceptions as hexc
 
 import logilab.common.cache
+
 import requests
 from requests.exceptions import RequestException
 
@@ -205,7 +206,7 @@ def _links_for_unauthenticated_users( request ):
 				links.append( Link( route, rel=rel, target_mime_type=mimetype.nti_mimetype_from_object( users.User ) ) )
 
 
-		for provider in component.subscribers( (remote_user,request), app_interfaces.IUnauthenticatedUserLinkProvider ):
+		for provider in component.subscribers((request,), app_interfaces.IUnauthenticatedUserLinkProvider):
 			links.extend( provider.get_links() )
 
 	return tuple(links)
