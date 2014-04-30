@@ -29,16 +29,6 @@ import gunicorn.http.wsgi
 import gunicorn.workers.ggevent as ggevent
 from gunicorn.app.pasterapp import PasterServerApplication
 
-try:
-	# gunicorn 0.17.2 finally finishes the process
-	# of enforcing proper byte bodies (not unicode)
-	# We should be fully compliant with this; make sure we're testing
-	# with it. It also contains important performance optimizations
-	if gunicorn.version_info < (0,17,2):
-		raise ImportError("Gunicorn too old")
-except AttributeError:
-	raise ImportError("Gunicorn too old")
-
 if gunicorn.version_info != (18,0):
 	raise ImportError("Unknown gunicorn version")
 # Gunicorn 18.0 and below have a bug formatting times:
@@ -165,12 +155,10 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 
 		return super(_PyWSGIWebSocketHandler,self).read_request(self.requestline)
 
-
 	def get_environ(self):
 		# Start with what gevent creates
 		environ = super(_PyWSGIWebSocketHandler,self).get_environ()
 		# and then merge in anything that gunicorn wants to do instead
-
 		request = _PhonyRequest()
 		request.typestr = self.command
 		request.uri = environ['RAW_URI']
@@ -342,8 +330,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 			gun_logger.propagate = False
 
 		self.server_class = _ServerFactory( self )
-		# Make 0.17 more like 0.16.1 (TODO: Needed anymore?)
-		self.socket = self.sockets[0]
 
 		if False: # pragma: no cover
 			def print_stacks():
