@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Clean up the logging of openid, which writes to stderr by default. Patching
 # the module like this is actually the recommended approach
-import openid
+import openid.oidutil
 openid.oidutil.log = logging.getLogger('openid').info
 
 from zope import interface
