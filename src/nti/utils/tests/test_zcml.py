@@ -90,7 +90,7 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
 		assert_that(component.queryUtility(IOAuthKeys, name="abcd1234"), is_(none()))
 
 		with site(_TrivialSite(BASECOPPA)):
-			keys = component.getUtility(IOAuthKeys, name="abcd1234")
+			keys = component.getUtility(IOAuthKeys)
 			assert_that(keys, verifiably_provides(IOAuthKeys))
 			assert_that(keys, has_property('APIKey', "abcd1234"))
 			assert_that(keys, has_property('SecretKey', "efgh5678"))
