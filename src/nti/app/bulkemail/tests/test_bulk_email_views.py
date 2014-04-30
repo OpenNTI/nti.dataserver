@@ -65,7 +65,7 @@ class Recipient(object):
 
 	email = 'foo@bar'
 	id = 'jason'
-	verp_from = '"NextThought" <no-reply+amFzb24ua3ZaSkQ2Z19KYWtxYmlTbHhIU1dSa0lLY1dr@alerts.nextthought.com>'
+	verp_from = '"NextThought" <no-reply+amFzb24uY29sS192RXFOWGRsQnFqMkN1WFZjVFZFRGR3@alerts.nextthought.com>'
 	def __init__(self, email=None):
 		if email:
 			self.email = email
@@ -109,8 +109,8 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		assert_that( process.redis.scard(process.names.source_name), is_( 2 ) )
 
 	@WithSharedApplicationMockDS
-	@fudge.test
-	def test_process_one_recipient(self):
+	@fudge.patch('nti.mailer._verp._get_signer_secret')
+	def test_process_one_recipient(self, fake_secret):
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
 		fake_sesconn = fudge.Fake()
@@ -119,7 +119,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 			.returns( {'key': 'val'} ) )
 
 		process.sesconn = fake_sesconn
-
+		fake_secret.is_callable().returns('abc123')
 
 		process.add_recipients( [{'email': Recipient()}] )
 
@@ -131,8 +131,8 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 		assert_that( process.redis.scard(process.names.dest_name), is_( 1 ) )
 
 	@WithSharedApplicationMockDS
-	@fudge.test
-	def test_process_loop(self):
+	@fudge.patch('nti.mailer._verp._get_signer_secret')
+	def test_process_loop(self, fake_secret):
 
 		process = Process(self.beginRequest())
 		process.subject = 'Subject'
@@ -142,6 +142,7 @@ class TestBulkEmailProcess(ApplicationLayerTest):
 			.returns( {'key': 'val'} ) )
 		fake_sesconn.expects('get_send_quota').returns( SEND_QUOTA )
 		process.sesconn = fake_sesconn
+		fake_secret.is_callable().returns('abc123')
 
 		process.add_recipients( [{'email': Recipient()}] )
 

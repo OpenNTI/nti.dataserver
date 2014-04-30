@@ -117,6 +117,8 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 
 
 			dfl_ntiid = fl1.NTIID
+			fl1_containerId = fl1.containerId
+			fl1_id = fl1.id
 
 		testapp = TestApp( self.app )
 
@@ -152,5 +154,5 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = users.User.get_user( owner.username )
-			dfl = owner.getContainedObject( fl1.containerId, fl1.id )
+			dfl = owner.getContainedObject( fl1_containerId, fl1_id )
 			assert_that( list(dfl), is_( [member_user, other_user] ) )

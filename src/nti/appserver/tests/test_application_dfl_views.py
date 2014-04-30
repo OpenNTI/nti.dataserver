@@ -48,6 +48,8 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 			assert_that( member_user.entities_followed, contains( fl1 ) )
 
 			dfl_ntiid = fl1.NTIID
+			fl1_containerId = fl1.containerId
+			fl1_id = fl1.id
 
 		testapp = TestApp( self.app )
 
@@ -76,10 +78,10 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = users.User.get_user( owner_username )
 			member_user = users.User.get_user( member_user_username )
-			dfl = owner.getContainedObject( fl1.containerId, fl1.id )
+			dfl = owner.getContainedObject( fl1_containerId, fl1_id )
 			assert_that( list(dfl), is_( [other_user] ) )
 
-			assert_that( member_user.entities_followed, does_not( contains( fl1 ) ) )
+			assert_that( member_user.entities_followed, does_not( contains( dfl ) ) )
 
 	@WithSharedApplicationMockDS
 	def test_locked_dfl(self):

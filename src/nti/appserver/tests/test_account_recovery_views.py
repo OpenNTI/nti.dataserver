@@ -384,6 +384,7 @@ class TestApplicationPasswordReset(ApplicationLayerTest):
 		app.post( path, data, status=200 )
 
 		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
 			user.password.checkPassword( 'my_new_pwd' )
 
 	@WithSharedApplicationMockDS
