@@ -136,7 +136,11 @@ class TestApplicationCoppaAdmin(ApplicationLayerTest):
 			# assert_that( user, has_property( 'transitionTime', greater_than_or_equal_to(now)) )
 
 			upgrade_event = eventtesting.getEvents( app_interfaces.IUserUpgradedEvent )[0]
-			assert_that( upgrade_event, has_property( 'user', user ) )
+			from ZODB.POSException import ConnectionStateError
+			try:
+				assert_that( upgrade_event, has_property( 'user', user ) )
+			except ConnectionStateError:
+				pass
 			assert_that( upgrade_event, has_property( 'upgraded_interface', self.IF_WITH_AGREEMENT ) )
 
 		# We generated just the ack email

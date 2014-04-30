@@ -986,9 +986,12 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( self.ds, owner_username='sjohnson@nextthought.com', passwords='temp001' )
+
 			other_user = self._create_user( 'non_member_user@baz' )
 			other_user_username = other_user.username
 			owner_user_username = owner_user.username
+			member_user_username = member_user.username
+			member_user2_username = member_user2.username
 
 			owner_note = _note_from( owner_user )
 			with owner_user.updates():
@@ -1023,9 +1026,9 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			reply_note = ntiids.find_object_with_ntiid( res.json_body['NTIID'] )
 			reply_note_ntiid = to_external_ntiid_oid( reply_note )
-			for u, cnt in ((owner_user,1), (member_user,2), (member_user2,2)):
+			for u, cnt in ((owner_user_username,1), (member_user_username,2), (member_user2_username,2)):
 				__traceback_info__ = u, reply_note
-				u = users.User.get_user( u.username )
+				u = users.User.get_user( u )
 				_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, reply_note, count=cnt )
 
 		# And it is visible as a reply to all of these people
