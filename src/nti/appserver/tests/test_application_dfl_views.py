@@ -37,7 +37,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 			member_user = self._create_user( 'member@foo' )
 			member_user_username = member_user.username
 			other_user = self._create_user( 'otheruser@foo' )
-
+			other_user_username = other_user.username
 
 			fl1 = users.DynamicFriendsList(username='Friends')
 			fl1.creator = owner # Creator must be set
@@ -78,6 +78,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = users.User.get_user( owner_username )
 			member_user = users.User.get_user( member_user_username )
+			other_user = users.User.get_user(other_user_username )
 			dfl = owner.getContainedObject( fl1_containerId, fl1_id )
 			assert_that( list(dfl), is_( [other_user] ) )
 

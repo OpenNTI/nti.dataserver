@@ -104,6 +104,7 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 	def test_link_in_dfl(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = self._create_user()
+			owner_username = owner.username
 			member_user = self._create_user( 'member@foo' )
 			member_user_username = member_user.username
 			other_user = self._create_user( 'otheruser@foo' )
@@ -153,6 +154,6 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 					  extra_environ=self._make_extra_environ(username=other_user_username) )
 
 		with mock_dataserver.mock_db_trans( self.ds ):
-			owner = users.User.get_user( owner.username )
+			owner = users.User.get_user( owner_username )
 			dfl = owner.getContainedObject( fl1_containerId, fl1_id )
 			assert_that( list(dfl), is_( [member_user, other_user] ) )
