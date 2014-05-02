@@ -20,6 +20,7 @@ from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
 from plasTeX.Renderers import render_children
 from plasTeX import Base, Command, Environment
+from plasTeX import TeXFragment
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
@@ -861,6 +862,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	icon = None
 	iconResource = None
 	target_ntiid = None
+	_description = None
 
 	class worktitle(Base.Command):
 		args = 'title'
@@ -907,13 +909,15 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 
 	@readproperty
 	def description(self):
-		sources = []
-		node_types = ['label', 'worktitle', 'workcreator', 'worksource', 'includegraphics']
-		for child in self.childNodes:
-			if child.nodeName not in node_types:
-				sources.append(child)
-		output = render_children( self.renderer, sources )
-		return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+		if self._description is None:
+			self._description = TeXFragment()
+			self._description.parentNode = self
+			self._description.ownerDocument = self.ownerDocument
+			node_types = ['label', 'worktitle', 'workcreator', 'worksource', 'includegraphics']
+			for child in self.childNodes:
+				if child.nodeName not in node_types:
+					self._description.appendChild(child)
+		return self._description
 
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
@@ -952,30 +956,24 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 
 	#: From IEmbeddedContainer
 	mimeType = "application/vnd.nextthought.relatedworkref"
-	targetMimeType = None
-	target_ntiid = None
+	_targetMimeType = None
+	_target_ntiid = None
 
 	def digest(self, tokens):
 		tok = super(relatedworkref, self).digest(tokens)
 
-		options = self.attributes.get( 'options', {} ) or {}
-		self.category = 'required'
-		if 'category' in options:
-			self.category = options['category']
-		self.visibility = u''
-		if 'visibility' in options.keys():
-			self.visibility = options['visibility']
+		self._options = self.attributes.get( 'options', {} ) or {}
 
-		self.uri = self.attributes['uri']
-		if hasattr(self.uri, 'source'):
-			self.uri = self.uri.source.replace(' ', '') \
-									  .replace('\\&', '&') \
-									  .replace('\\_', '_') \
-									  .replace('\\%', '%') \
-									  .replace(u'\u2013', u'--') \
-									  .replace(u'\u2014', u'---')
-		self._description = self.attributes['desc']
+		self._uri = self.attributes['uri']
+		if hasattr(self._uri, 'source'):
+			self._uri = self._uri.source.replace(' ', '') \
+										.replace('\\&', '&') \
+										.replace('\\_', '_') \
+										.replace('\\%', '%') \
+										.replace(u'\u2013', u'--') \
+										.replace(u'\u2014', u'---')
 		self.relatedwork = self.idref['label']
+		self._description = None
 
 		# Remove the empty NTIID key so auto NTIID generation works
 
@@ -987,34 +985,71 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		if 'NTIID' in self.attributes and self.attributes['NTIID'] is None:
 			del self.attributes['NTIID']
 
-		self.target_ntiid = None
+		self._target_ntiid = None
 
 		return tok
 
 	@readproperty
+	def category(self):
+		return self._options.get('category') or u'required'
+
+	@readproperty
 	def description(self):
-		if len(self._description.childNodes) == 0:
+		description = self.attributes.get('desc')
+		if len(description.childNodes) == 0:
 			return self.relatedwork.description
+		return description
+
+	@readproperty
+	def icon(self):
+		if self.relatedwork.iconResource is not None:
+			return self.relatedwork.iconResource.image.url
+		elif self.relatedwork.icon is not None:
+			return self.relatedwork.icon
 		else:
-			output = render_children( self.renderer, self._description )
-			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+			return ''
+
+	@readproperty
+	def target_ntiid(self):
+		if self._target_ntiid is None:
+			self.gen_target_ntiid()
+		return self._target_ntiid
+
+	@readproperty
+	def targetMimeType(self):
+		if self._targetMimeType is None:
+			self.gen_target_ntiid()
+		return self._targetMimeType
+
+	@readproperty
+	def uri(self):
+		if self._uri == '' or self._uri is None:
+			return self.relatedwork.uri
+		return self._uri
+
+	@readproperty
+	def visibility(self):
+		visibility = self._options.get('visibility')
+		if visibility == '' or visibility is None:
+			return self.relatedwork.visibility
+		return visibility
 
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string
 
 		uri = self.uri
 		if is_valid_ntiid_string( uri ):
-			self.target_ntiid = uri
-			self.targetMimeType = 'application/vnd.nextthought.content'
+			self._target_ntiid = uri
+			self._targetMimeType = 'application/vnd.nextthought.content'
 		else:
 			from nti.ntiids.ntiids import make_ntiid, TYPE_UUID
 			from hashlib import md5
 			# TODO: Hmm, what to use as the provider? Look for a hostname in the
 			# URL?
-			self.target_ntiid = make_ntiid( provider='NTI',
+			self._target_ntiid = make_ntiid( provider='NTI',
 											nttype=TYPE_UUID,
 											specific=md5(uri).hexdigest() )
-			self.targetMimeType = 'application/vnd.nextthought.externallink'
+			self._targetMimeType = 'application/vnd.nextthought.externallink'
 
 ###############################################################################
 # The following block of commands concern representing forum discussions.

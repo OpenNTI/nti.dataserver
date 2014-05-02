@@ -4,9 +4,11 @@
 from __future__ import print_function, unicode_literals, absolute_import
 
 import os
-from hamcrest import assert_that, contains_string
+from hamcrest import assert_that, contains_string, has_length, is_, has_property
+
 import unittest
 
+from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import RenderContext
 
@@ -228,3 +230,35 @@ class TestNTICard(unittest.TestCase):
 
 		# and the href
 		assert_that( index, contains_string( 'data-href="http://someserver.com/path/to/test_' ) )
+
+class TestRelatedWorkRef(unittest.TestCase):
+	base_example = br"""
+	\begin{relatedwork}
+	\label{relwk:Selection_Sort} 
+	\worktitle{Selection Sort}
+	\workcreator{Wikipedia}
+	\worksource{http://en.wikipedia.org/wiki/Selection_sort}
+	\includegraphics{test}
+	Explanation and visualizations of the selection sort algorithm.
+	\end{relatedwork}
+
+	\relatedworkref{relwk:Selection_Sort}{}{}
+	"""
+
+	def test_relatedworkref_basic(self):
+		dom = _buildDomFromString( _simpleLatexDocument( (self.base_example,) ) )
+
+		# Check that the DOM has the expected structure
+		assert_that( dom.getElementsByTagName('relatedwork'), has_length( 1 ) )
+		assert_that( dom.getElementsByTagName('relatedworkref'), has_length( 1 ) )
+
+		relatedworkref_el = dom.getElementsByTagName('relatedworkref')[0]
+
+		# Check that the relatedworkref object has the expected attributes
+		assert_that( relatedworkref_el.category, contains_string( 'required' ) )
+		assert_that( relatedworkref_el.description.source, contains_string( 'Explanation and visualizations of the selection sort algorithm.' ) )
+		assert_that( relatedworkref_el.target_ntiid, contains_string( 'UUID' ) )
+		assert_that( relatedworkref_el.targetMimeType, contains_string( 'application/vnd.nextthought.externallink' ) )
+		assert_that( relatedworkref_el.uri, contains_string( 'http://en.wikipedia.org/wiki/Selection_sort' ) )
+		assert_that( relatedworkref_el.visibility, contains_string( 'everyone' ) )
+		
