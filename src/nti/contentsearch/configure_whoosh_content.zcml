@@ -9,11 +9,17 @@
 	
 	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" />
 	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" name="ru" />
+	<utility factory=".whoosh_schemas._DefaultBookSchemaCreator" name="es" />
 	
 	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" />
 	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="ru" />
+	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="es" />
 	
 	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" />
 	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="ru" />
+	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="es" />
 	
 </configure>
