@@ -314,8 +314,6 @@
 			 provides=".interfaces.ISearchQuery"
 			 for="basestring" />
 
-	<include file="configure_zopyx.zcml" />
-	<include file="configure_repoze.zcml" />
 	<include file="configure_whoosh.zcml" />
 
 	<!-- Mime factories -->
