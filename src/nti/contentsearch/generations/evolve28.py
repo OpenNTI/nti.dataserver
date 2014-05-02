@@ -24,13 +24,16 @@ def remove_user_index_data(user):
 	name = "nti.contentsearch._repoze_adpater._RepozeEntityIndexManager"
 	mapping = annotations.get(name, None)
 	if mapping is not None:
-		for _, catalog in mapping.items():
-			for _, index in catalog.items():
-				count += 1
-				clear = getattr(index, "clear", None)
-				if clear is not None and callable(clear):
-					clear()  # remove all docs
-		mapping.clear()
+		try:
+			for _, catalog in mapping.items():
+				for _, index in catalog.items():
+					count += 1
+					clear = getattr(index, "clear", None)
+					if clear is not None and callable(clear):
+						clear()  # remove all docs
+			mapping.clear()
+		except AttributeError:
+			pass
 		del annotations[name]
 	return count
 
