@@ -245,7 +245,16 @@ name: relatedworkref
 	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
 </object>
 
-name: ntidiscussion ntidiscussionref
+name: ntidiscussion
+
+name: ntidiscussionref
+<object class="ntidiscussionref">
+	<param name="mimeType" value="MIME type" tal:attributes="value self/idref/label/targetMimeType" />
+	<param name="icon" value="icon" tal:attributes="value self/idref/label/iconResource/image/url" />
+	<param name="label" value="discussion title" tal:attributes="value self/idref/label/title" />
+	<param name="ntiid" value="NTIID of the discussion" tal:attributes="value self/idref/label/topic_ntiid" />
+	<param name="title" value="discussion subtitle" tal:attributes="value self/idref/label/subtitle" />
+</object>
 
 name: targetntiid
 
