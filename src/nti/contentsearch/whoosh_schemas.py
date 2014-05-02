@@ -83,6 +83,14 @@ def create_default_book_schema():
 @interface.implementer(search_interfaces.IWhooshBookSchemaCreator)
 class _DefaultBookSchemaCreator(object):
 
+	singleton = None
+	__slots__ = ()
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_DefaultBookSchemaCreator, cls).__new__(cls)
+		return cls.singleton
+
 	def create(self):
 		schema = create_default_book_schema()
 		return schema
@@ -131,6 +139,14 @@ def create_video_transcript_schema():
 @interface.implementer(search_interfaces.IWhooshVideoTranscriptSchemaCreator)
 class _DefaultVideoTranscriptSchemaCreator(object):
 
+	singleton = None
+	__slots__ = ()
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_DefaultVideoTranscriptSchemaCreator, cls).__new__(cls)
+		return cls.singleton
+
 	def create(self):
 		schema = create_video_transcript_schema()
 		return schema
@@ -161,6 +177,14 @@ def create_nti_card_schema():
 
 @interface.implementer(search_interfaces.IWhooshNTICardSchemaCreator)
 class _DefaultNTICardSchemaCreator(object):
+
+	singleton = None
+	__slots__ = ()
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_DefaultNTICardSchemaCreator, cls).__new__(cls)
+		return cls.singleton
 
 	def create(self):
 		schema = create_nti_card_schema()
