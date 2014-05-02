@@ -12,7 +12,7 @@ from hamcrest import assert_that
 
 import unittest
 
-from nti.contentsearch.stopwords import _FileBasedStopWords
+from nti.contentsearch.search_stopwords import _FileBasedStopWords
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
