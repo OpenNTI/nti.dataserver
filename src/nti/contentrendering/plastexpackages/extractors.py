@@ -186,49 +186,26 @@ class _RelatedWorkExtractor(object):
 					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
-				if el.relatedwork.iconResource is not None:
-					icon = el.relatedwork.iconResource.image.url
-				elif el.relatedwork.icon is not None:
-					icon = el.relatedwork.icon
-				else:
-					icon = ''
-
-				visibility = (el.visibility or el.relatedwork.visibility)
-
-				uri = el.uri
-
-				if uri == '':
-					el.uri = el.relatedwork.uri
-					el.gen_target_ntiid()
-					uri = el.uri
-
-				if uri == '':
-					logger.warn('We are still empty!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
-
-				if uri != '' and el.target_ntiid is None:
-					el.gen_target_ntiid()
+				if el.uri == '':
+					logger.warn('We have no valid URI!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
 
 				targetMimeType = el.targetMimeType
-
-				if targetMimeType is None:
-					el.relatedwork.gen_target_ntiid()
-					targetMimeType = el.relatedwork.targetMimeType
 
 				title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
 				creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
 				# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
 				# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-				description = unicode(el.description.replace('&amp;', '&'))
+				description = unicode(''.join(render_children( el.renderer, el.description )).replace('&amp;', '&'))
 
 				content = {
 					'label': title,
 					'creator': creator,
-					'href': uri,
+					'href': el.uri,
 					'type': targetMimeType,
-					'icon': icon,
+					'icon': el.icon,
 					'desc': description,
 					'section': el.category,
-					'visibility': visibility,
+					'visibility': el.visibility,
 					'target-ntiid': el.target_ntiid,
 					'ntiid': el.ntiid
 				}
@@ -258,7 +235,7 @@ class _RelatedWorkExtractor(object):
 			creator = unicode(''.join(render_children( el.renderer, el.creator )))
 			# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
 			# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-			description = unicode(el.description.replace('&amp;', '&'))
+			description = unicode(''.join(render_children( el.renderer, el.description )).replace('&amp;', '&'))
 
 			content = {
 				'label': title,

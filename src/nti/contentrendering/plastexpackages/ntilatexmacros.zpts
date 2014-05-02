@@ -219,6 +219,18 @@ name: relatedwork
 name: worktitle workcreator worksource
 
 name: relatedworkref
+<object class="ntirelatedworkref">
+	<param name="creator" value="creator" tal:attributes="value self/relatedwork/creator" />
+	<param name="desc" value="description" tal:attributes="value self/description" />
+	<param name="href" value="target URI" tal:attributes="value self/uri" />
+	<param name="type" value="target MIME type" tal:attributes="value self/targetMimeType" />
+	<param name="icon" value="icon" tal:attributes="value self/relatedwork/iconResource/image/url" />
+	<param name="label" value="related work title" tal:attributes="value self/relatedwork/title" />
+	<param name="ntiid" value="the reference's NTIID" tal:attributes="value self/ntiid" />
+	<param name="target-ntiid" value="the target's NTIID" tal:attributes="value self/target_ntiid" />
+	<param name="section" value="section" tal:attributes="value self/category" />
+	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
+</object>
 
 name: ntidiscussion ntidiscussionref
 
