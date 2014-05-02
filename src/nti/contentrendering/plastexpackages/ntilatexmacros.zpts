@@ -28,6 +28,12 @@ name: ntiaudioref
 	<span tal:replace="self/idref/label/audio_sources" />
 	<span tal:replace="self/idref/label/transcripts" />
 </object>
+<object class="ntiaudioref" tal:condition="not:self/to_render">
+	<param name="label" value="Audio Title" tal:attributes="value self/media/title" />
+	<param name="mimeType" value="Audio MIME Type" tal:attributes="value self/media/mimeType" />
+	<param name="ntiid" value="Audio NTIID" tal:attributes="value self/media/ntiid" />
+	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
+</object>
 
 name: ntiaudio
 <object class="ntiaudio"
@@ -65,6 +71,13 @@ name: ntivideoref
   </span>
   <span tal:replace="self/idref/label/video_sources"></span>
   <span tal:replace="self/idref/label/transcripts"></span>
+</object>
+<object class="ntivideoref" tal:condition="not:self/to_render">
+	<param name="label" value="Video Title" tal:attributes="value self/media/title" />
+	<param name="mimeType" value="Video MIME Type" tal:attributes="value self/media/mimeType" />
+	<param name="ntiid" value="Video NTIID" tal:attributes="value self/media/ntiid" />
+	<param name="poster" value="Video poster image URI" tal:attributes="value self/media/poster" />
+	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
 </object>
 
 name: ntivideo

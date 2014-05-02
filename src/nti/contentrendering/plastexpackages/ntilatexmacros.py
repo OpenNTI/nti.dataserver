@@ -193,17 +193,25 @@ class ntimediaref(Base.Crossref.ref):
 	def digest(self, tokens):
 		tok = super(ntimediaref, self).digest(tokens)
 
-		options = self.attributes.get('options', {}) or {}
-		self.visibility = u''
-		if 'visibility' in options.keys():
-			self.visibility = options['visibility']
+		self._options = self.attributes.get('options', {}) or {}
 
 		self.to_render = False
-		if 'to_render' in options.keys():
-			if options['to_render'] in [ u'true', u'True' ]:
+		if 'to_render' in self._options.keys():
+			if self._options['to_render'] in [ u'true', u'True' ]:
 				self.to_render = True
 
 		return tok
+
+	@readproperty
+	def media(self):
+		return self.idref['label']
+
+	@readproperty
+	def visibility(self):
+		visibility = self._options.get('visibility') or None
+		if visibility is None:
+			return self.media.visibility
+		return visibility
 
 class ntimedia(LocalContentMixin, Base.Float, plastexids.NTIIDMixin):
 	blockType = True
@@ -416,6 +424,11 @@ class ntivideo(ntimedia):
 				texts.append( unicode( child ) )
 
 		return _incoming_sources_as_plain_text( texts )
+
+	@readproperty
+	def poster(self):
+		sources = self.getElementsByTagName( 'ntivideosource' )
+		return sources[0].poster
 
 	@readproperty
 	def video_sources(self):
