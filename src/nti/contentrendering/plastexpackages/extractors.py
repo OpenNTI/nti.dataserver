@@ -591,21 +591,13 @@ class _NTIVideoExtractor(object):
 					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
-				poster = ''
-				source_els = el.idref['label'].getElementsByTagName('ntivideosource')
-				if source_els:
-					poster = source_els[0].poster
-
-				visibility = (el.visibility or el.idref['label'].visibility)
+				title = unicode(''.join(render_children( el.media.renderer, el.media.title )))
 
 				toc_el = dom.createElement('object')
-				if hasattr(el.idref['label'].title, 'textContent'):
-					toc_el.setAttribute('label', el.idref['label'].title.textContent)
-				else:
-					toc_el.setAttribute('label', el.idref['label'].title)
-				toc_el.setAttribute('poster', poster)
-				toc_el.setAttribute('ntiid', el.idref['label'].ntiid)
-				toc_el.setAttribute('mimeType', el.idref['label'].mimeType)
-				toc_el.setAttribute('visibility', visibility)
+				toc_el.setAttribute('label', title)
+				toc_el.setAttribute('poster', el.media.poster)
+				toc_el.setAttribute('ntiid', el.media.ntiid)
+				toc_el.setAttribute('mimeType', el.media.mimeType)
+				toc_el.setAttribute('visibility', el.visibility)
 				if lesson_el is not None:
 					lesson_el.appendChild(toc_el)
