@@ -22,19 +22,14 @@ from nti.utils import schema as nti_schema
 
 deprecated('IRepozeDataStore', 'Use lastest index implementation')
 class IRepozeDataStore(interface.Interface):
-	"""
-	This interface is implemented by persistent objects in databases
-	in the wild (notably, these objects were registered as persistent utilities,
-	so the persistent registry has a handle to this class).  Therefore, it MUST remain
-	here as an interface (or we have to clean out the databases); otherwise add errors result such as this one::
-
-	  zope.interface-4.0.5-py2.7-macosx-10.9-x86_64.egg/zope/interface/adapter.py", line 493, in add_extendor
-         for i in provided.__iro__:
-      AttributeError: type object 'IRepozeDataStore' has no attribute '__iro__'
-	"""
+	pass
 
 deprecated('IRepozeEntityIndexManager', 'Use lastest index implementation')
 class IRepozeEntityIndexManager(interface.Interface):
+	pass
+
+deprecated('IEntityIndexManager', 'Use lastest index implementation')
+class IEntityIndexManager(interface.Interface):
 	pass
 
 # search query
