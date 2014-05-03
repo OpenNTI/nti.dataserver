@@ -202,12 +202,6 @@ class IEntityIndexController(ISearcher):
 		unindex the object with the specified id
 		"""
 
-class IEntityIndexManager(IEntityIndexController):
-
-	username = nti_schema.ValidTextLine(title="entity name", required=True)
-
-# index manager
-
 class IIndexManager(interface.Interface):
 
 	def search(query):
@@ -363,41 +357,6 @@ class IWhooshIndexStorage(interface.Interface):
 	def commit_args():
 		"""
 		return a dictionary with the arguments to be passed to an index writer commit method
-		"""
-
-class IRedisStoreService(interface.Interface):
-
-	queue_name = nti_schema.ValidTextLine(title="Queue name", required=True)
-	sleep_wait_time = nti_schema.Number(title="Message interval", required=True)
-	expiration_time = nti_schema.Number(title="Message redis expiration time", required=True)
-
-	def add(docid, username):
-		"""
-		register an add index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def update(docid, username):
-		"""
-		register a update index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def delete(docid, username):
-		"""
-		register a delete index operation with redis
-
-		:param docid document id
-		:param username target user
-		"""
-
-	def process_messages(msgs):
-		"""
-		process the messages read from redis
 		"""
 
 # content
@@ -625,34 +584,6 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 
-# Catalog creators marker interfaces
-
-class IRepozeQueryParser(ISearchQueryParser):
-	pass
-
-class IRepozeCatalogCreator(interface.Interface):
-	pass
-
-class IRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class INoteRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class IHighlightRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class IRedactionRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class IMessageInfoRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class IPostRepozeCatalogFieldCreator(interface.Interface):
-	pass
-
-class IRepozeSearchQueryValidator(ISearchQueryValidator):
-	pass
 
 # highlights
 
