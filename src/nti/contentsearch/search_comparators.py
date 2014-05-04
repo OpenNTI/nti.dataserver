@@ -52,11 +52,6 @@ class _ScoreSearchHitComparator(_CallableComparator):
 		return result
 
 	@classmethod
-	def get_type_name(cls, item):
-		result = item.Type if search_interfaces.ISearchHit.providedBy(item) else u''
-		return result or u''
-
-	@classmethod
 	def compare(cls, a, b):
 		return cls.compare_score(a, b)
 
@@ -102,6 +97,11 @@ class _LastModifiedSearchHitComparatorFactory(object):
 @interface.implementer(search_interfaces.ISearchHitComparator)
 class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 							   _LastModifiedSearchHitComparator):
+
+	@classmethod
+	def get_type_name(cls, item):
+		result = item.Type if search_interfaces.ISearchHit.providedBy(item) else u''
+		return result or u''
 
 	@classmethod
 	def compare_type(cls, a, b):
