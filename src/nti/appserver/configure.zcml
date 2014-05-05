@@ -24,6 +24,10 @@
 	<include package="nti.mailer" />
 
 	<include package="nti.app.authentication" file="meta.zcml" />
+	<securityPolicy
+      component="zope.securitypolicy.zopepolicy.ZopeSecurityPolicy"
+      />
+
 
 	<subscriber handler=".subscribers.requestEventNotify" />
 
