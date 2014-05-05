@@ -23,13 +23,18 @@
 	interdependent...which is why they were a single package to start
 	with.
 	-->
+	<utility factory="._audioindex_map.AudioIndexMap"
+			 provides=".interfaces.IAudioIndexMap"/>
+			 
 	<utility factory="._videoindex_map.VideoIndexMap"
-			 provides="nti.appserver.interfaces.IVideoIndexMap"/>
+			 provides=".interfaces.IVideoIndexMap"/>
+
 	<utility factory="._related_content_map.RelatedContentIndexMap"
-			 provides="nti.appserver.interfaces.IRelatedContentIndexMap"/>
-
-
+			 provides=".interfaces.IRelatedContentIndexMap"/>
+			 
 	<!-- Events -->
+	<subscriber	handler="._audioindex_map.add_audio_items_from_new_content" />
+	<subscriber	handler="._audioindex_map.remove_audio_items_from_old_content" />
 	<subscriber	handler="._videoindex_map.add_video_items_from_new_content" />
 	<subscriber	handler="._videoindex_map.remove_video_items_from_old_content" />
 	<subscriber	handler="._related_content_map.add_related_content_items_from_new_content" />
@@ -76,8 +81,10 @@
 	<!-- Workspaces/collections -->
 	<subscriber factory=".workspaces._library_workspace"
 				provides="nti.appserver.interfaces.IWorkspace" />
+				
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
 			 name="detail" />
+			 
 	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
 	<adapter factory=".library_views._ContentPackageLibraryCacheController" />
@@ -91,24 +98,23 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_user"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
+			 
 	<!-- Also a simple named adapter -->
 	<adapter name="Library"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 factory=".workspaces._library_workspace_for_user"
-			 />
+			 factory=".workspaces._library_workspace_for_user" />
+			 
 	<adapter
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
-			 factory=".workspaces._library_for_user"
-			 />
+			 factory=".workspaces._library_for_user" />
+			 
 	<adapter
 			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
-			 factory=".workspaces._library_for_library"
-			 />
+			 factory=".workspaces._library_for_library" />
+			 
 	<adapter
 			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
-			 factory=".workspaces._library_workspace_for_library"
-			 />
-
+			 factory=".workspaces._library_workspace_for_library" />
 
 	<!--
 		 Cache ACLs for things from boto directly (previously, we were

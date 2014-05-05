@@ -18,7 +18,7 @@ from zope import interface
 from zope import component
 from zope.lifecycleevent import interfaces as lce_interfaces
 
-from nti.appserver import interfaces as app_interfaces
+from nti.appserver.contentlibrary import interfaces as app_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
