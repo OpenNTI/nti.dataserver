@@ -243,9 +243,6 @@ class _NTIVideoExtractor(_NTIMediaExtractor):
 	media_mimeType = u'application/vnd.nextthought.ntivideo'
 	index_mimeType = u'application/vnd.nextthought.videoindex'
 
-	def __init__(self, book=None):
-		pass
-
 	def _process_media(self, dom, video, topic_map):
 		entry, container = super(_NTIVideoExtractor, self)._process_media(dom, video, topic_map)
 		
@@ -274,6 +271,31 @@ class _NTIVideoExtractor(_NTIMediaExtractor):
 			elif source.service == 'kaltura':
 				val['type'].append('video/kaltura')
 				val['source'].append(source.src['other'])
+			entry['sources'].append(val)
+
+		return entry, container
+
+@interface.implementer(crd_interfaces.INTIAudioExtractor)
+class _NTIAudioExtractor(_NTIMediaExtractor):
+
+	ntimedia = u'ntiaudio'
+	ntimediaref = u'ntiaudioref'
+	index_file = u"audio_index.json"
+	media_mimeType = u'application/vnd.nextthought.ntiaudio'
+	index_mimeType = u'application/vnd.nextthought.audioindex'
+
+	def _process_media(self, dom, audio, topic_map):
+		entry, container = super(_NTIAudioExtractor, self)._process_media(dom, audio, topic_map)
+		entry['description'] = getattr(audio, 'description', None)
+		for source in audio.getElementsByTagName('ntiaudiosource'):
+			val = {'source':[], 'type':[]}
+			val['service'] = source.service
+			val['thumbnail'] = source.thumbnail
+			if source.service == 'html5':
+				val['type'].append('audio/mp3')
+				val['type'].append('audio/wav')
+				val['source'].append(source.src['mp3'])
+				val['source'].append(source.src['wav'])
 			entry['sources'].append(val)
 
 		return entry, container
