@@ -229,6 +229,11 @@ class INTIVideoExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and extracts NTIVideos.
 	"""
 
+class INTIAudioExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts NTIAudios.
+	"""
+
 class ICourseExtractor(IRenderedBookExtractor):
 	"""
 	Looks through the rendered book and extracts course information.

@@ -1,26 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-import unittest
-from hamcrest import assert_that
-from hamcrest import is_
 from hamcrest import has_entry
-from hamcrest import has_entries
 from hamcrest import has_length
+from hamcrest import has_entries
+from hamcrest import assert_that
 
+import os.path
+import unittest
 
 course_string = r"""
 %Course lessons defined
@@ -55,7 +50,6 @@ course_string = r"""
 
 \end{course}
 
-
 """
 
 works_string = r"""
@@ -67,30 +61,31 @@ Aristotle was a Greek philosopher and polymath, a student of Plato and teacher o
 from nti.contentrendering.tests import RenderContext
 from nti.contentrendering.tests import simpleLatexDocumentText
 
-import os.path
-
-from ..extractors import _CourseExtractor
-from ..extractors import _RelatedWorkExtractor
 from nti.contentrendering.RenderedBook import EclipseTOC
 from nti.contentrendering.resources import ResourceRenderer
 
-from . import ExtractorTestLayer
+from nti.contentrendering.plastexpackages.extractors import _CourseExtractor
+from nti.contentrendering.plastexpackages.extractors import _RelatedWorkExtractor
+
+from nti.contentrendering.plastexpackages.tests import ExtractorTestLayer
 
 class TestCourseExtractor(unittest.TestCase):
+
 	layer = ExtractorTestLayer
 
 	def test_course_and_related_extractor_works(self):
-		#Does very little verification. Mostly makes sure we don't crash
+		# Does very little verification. Mostly makes sure we don't crash
 
 		class Book(object):
-			document = None
 			toc = None
+			document = None
 			contentLocation = None
 
 		book = Book()
 
-		with RenderContext(simpleLatexDocumentText( preludes=("\\usepackage{nticourse}","\\usepackage{ntilatexmacros}"),
-													bodies=(course_string,works_string)),
+		with RenderContext(simpleLatexDocumentText(
+								preludes=("\\usepackage{nticourse}", "\\usepackage{ntilatexmacros}"),
+								bodies=(course_string, works_string)),
 						   packages_on_texinputs=True) as ctx:
 			book.document = ctx.dom
 			book.contentLocation = ctx.docdir
@@ -108,9 +103,10 @@ class TestCourseExtractor(unittest.TestCase):
 
 			__traceback_info__ = book.toc.dom.toprettyxml()
 
-			assert_that( book.toc.dom.getElementsByTagName('course'), has_length(1) )
-			assert_that( book.toc.dom.documentElement.attributes, has_entry('isCourse', 'true'))
-			assert_that( book.toc.dom.getElementsByTagNameNS("http://www.nextthought.com/toc", 'related'), has_length(1) )
+			assert_that(book.toc.dom.getElementsByTagName('course'), has_length(1))
+			assert_that(book.toc.dom.documentElement.attributes, has_entry('isCourse', 'true'))
+			assert_that(book.toc.dom.getElementsByTagNameNS("http://www.nextthought.com/toc", 'related'),
+						has_length(1))
 
 			course = book.toc.dom.getElementsByTagName('course')[0]
 			assert_that( course.getElementsByTagName('unit'), has_length(1) )
