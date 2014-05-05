@@ -531,22 +531,6 @@ class INewObjectTransformer(interface.Interface):
 			appropriately.
 		"""
 
-# ##
-# Video support
-# ##
-
-class IVideoIndexMap(mapping.IReadMapping):
-	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
-							   value_type=schema.List(title="The video ntiid"))
-
-# #
-# Related content support
-# ##
-
-class IRelatedContentIndexMap(IVideoIndexMap):
-	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
-							   value_type=schema.List(title="The video ntiid"))
-
 ###
 # Policies
 ###
@@ -624,3 +608,10 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.notabledata",
 	"nti.app.notabledata.interfaces",
 	"IUserPresentationPriorityCreators")
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.appserver.contentlibrary.interfaces",
+	"nti.appserver.contentlibrary.interfaces",
+	"IAudioIndexMap",
+	"IVideoIndexMap",
+	"IRelatedContentIndexMap")
