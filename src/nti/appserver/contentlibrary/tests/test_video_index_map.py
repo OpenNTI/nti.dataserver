@@ -7,26 +7,25 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import has_length
+from hamcrest import assert_that
 from hamcrest import has_property
-
 
 from zope import component
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-
-from nti.appserver import interfaces as app_interfaces
-from nti.appserver.contentlibrary import _videoindex_map as vim_module
+from nti.appserver.contentlibrary import interfaces as app_interfaces
+from nti.appserver.contentlibrary import _video_index_map as vim_module
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
 from . import CourseTestContentApplicationTestLayer
 
-
 class TestVideoIndexMap(ApplicationLayerTest):
+
 	layer = CourseTestContentApplicationTestLayer
 
 	def setUp(self):
