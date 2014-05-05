@@ -33,6 +33,16 @@
 		id="nti.actions.impersonate"
 		title="Impersonate another user" />
 
+	<!-- Defining roles and granting permissions to them globally -->
+	<include file="meta.zcml" package="zope.securitypolicy" />
+	<role
+		id="nti.roles.moderator"
+		title="Capable of performing moderation" />
+
+	<grant
+		role="nti.roles.moderator"
+		permission="nti.actions.moderate" />
+
 	<!-- ACL providers -->
 	<adapter factory=".authorization_acl._EntityACLProvider" />
 	<adapter factory=".authorization_acl._UserACLProvider" />
