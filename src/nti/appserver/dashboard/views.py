@@ -34,6 +34,8 @@ from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
 from nti.appserver.pyramid_authorization import is_readable
+from nti.appserver.contentlibrary.interfaces import IVideoIndexMap
+from nti.appserver.contentlibrary.interfaces import IRelatedContentIndexMap
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
@@ -203,7 +205,7 @@ class _TopUserSummaryView(AbstractAuthenticatedView):
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
 	def _scan_related_content(self, total_user_map, total_by_type):
-		rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
+		rc_map = component.queryUtility(IRelatedContentIndexMap)
 		if not rc_map:
 			return
 
@@ -221,7 +223,7 @@ class _TopUserSummaryView(AbstractAuthenticatedView):
 					self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
 	def _scan_videos(self, total_user_map, total_by_type):
-		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
+		video_map = component.queryUtility(IVideoIndexMap)
 		if not video_map:
 			return
 
