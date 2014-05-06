@@ -292,13 +292,34 @@ class courseinfo(section):
 	counter = 'courseinfo'
 	forcePars = False
 
-def ProcessOptions( options, document ):
-	document.context.newcounter('course')
-	document.context.newcounter('courseinfo')
-	document.context.newcounter('courseunit')
+class courseoverviewgroupname(Command):
+	pass
 
-	for counter_cls in (courseunit, coursepart, courselesson, courselessonsection,
-						courselessonsubsection, courselessonsubsubsection):
+class courseoverviewgroup(Environment):
+	"""
+	Data structure to organize a 'lessons' resources on the overview page. If the content author does not sepecify and overview groups, then the resources will be grouped by resource type.
+	"""
+	args = '[ options:dict ] <title>'
+	blockType = True
+	forcePars = False
+	counter = 'courseoverviewgroup'
+
+	mime_type = "application/vnd.nextthought.nticourseoverviewgroup"
+
+	class titlebackgroundcolor(Command):
+		"""
+		Sets the background color of the overview title bar. This should be specified in hex.
+		"""
+		args = 'color:string'
+
+		def digest(self, tokens):
+			super(courseoverviewgroup.titlebackgroundcolor, self).digest(tokens)
+
+			self.parentNode.title_background_color = self.attributes.get('color')
+
+def ProcessOptions( options, document ):
+	for counter_cls in (course, courseinfo, courseunit, coursepart, courselesson, courselessonsection,
+						courselessonsubsection, courselessonsubsubsection, courseoverviewgroup):
 		document.context.newcounter(counter_cls.counter)
 
 from zope import interface
