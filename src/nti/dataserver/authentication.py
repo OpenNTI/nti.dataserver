@@ -164,6 +164,23 @@ class _delegating_descriptor(object):
 			return self
 		return getattr( inst._locals.get(), self.name )
 
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import queryInteraction
+from zope.security.interfaces import IParticipation
+from zope.security.interfaces import IPrincipal
+from zope.security import management
+
+@interface.implementer(IParticipation)
+class _Participation(object):
+
+	__slots__ = b'interaction', b'principal' # XXX: Py3
+
+	def __init__( self, principal ):
+		self.interaction = None
+		self.principal = principal
+
+
 @interface.implementer(nti_interfaces.IImpersonatedAuthenticationPolicy)
 class DelegatingImpersonatedAuthenticationPolicy(object):
 	"""
@@ -180,10 +197,17 @@ class DelegatingImpersonatedAuthenticationPolicy(object):
 		@contextlib.contextmanager
 		def impersonating():
 			self._locals.push( _FixedUserAuthenticationPolicy( userid ) )
+			# Cannot use restoreInteraction() because we may be nested
+			interaction = queryInteraction()
+			endInteraction()
+			newInteraction(_Participation(IPrincipal(userid)))
 			try:
 				yield
 			finally:
 				self._locals.pop()
+				endInteraction()
+				if interaction is not None:
+					management.thread_local.interaction = interaction
 		return impersonating
 
 # All the attributes declared on the authentication policy interface

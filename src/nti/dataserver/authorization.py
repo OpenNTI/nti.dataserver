@@ -383,7 +383,7 @@ from zope.security.interfaces import IParticipation
 @interface.implementer(IParticipation)
 class _Participation(object):
 
-	__slots__ = 'interaction', 'principal'
+	__slots__ = b'interaction', b'principal' # XXX: Py3
 
 	def __init__( self, principal ):
 		self.interaction = None

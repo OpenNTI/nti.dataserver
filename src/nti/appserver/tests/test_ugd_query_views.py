@@ -83,7 +83,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 
 	HANDLE_GC = False
 
-	class SecurityPolicy(type(pyramid_authorization.ACLAuthorizationPolicy()), DummySecurityPolicy):
+	class SecurityPolicy(type(pyramid_authorization.ZopeACLAuthorizationPolicy()), DummySecurityPolicy):
 		pass
 
 	def setUp( self ):

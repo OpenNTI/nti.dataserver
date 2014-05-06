@@ -343,7 +343,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 
 		self.policy = Policy()
 		component.provideUtility( self.policy )
-		self.acl_policy = pyramid_authorization.ACLAuthorizationPolicy()
+		self.acl_policy = pyramid_authorization.ZopeACLAuthorizationPolicy()
 		component.provideUtility( self.acl_policy )
 
 		self.library_workspace = component.getMultiAdapter( (self.library, self.request), app_interfaces.IWorkspace )

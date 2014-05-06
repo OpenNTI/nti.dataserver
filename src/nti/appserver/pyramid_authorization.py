@@ -11,8 +11,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.security.interfaces import NoInteraction
+from zope.security.management import checkPermission
 
 import pyramid.authorization
+from pyramid.authorization import ACLAuthorizationPolicy as _PyramidACLAuthorizationPolicy
 import pyramid.security as psec
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import lineage as _pyramid_lineage
@@ -27,7 +30,7 @@ from nti.externalization.interfaces import StandardExternalFields
 
 # Hope nobody is monkey patching this after we're imported
 
-def ACLAuthorizationPolicy():
+def ACLAuthorizationPolicy(_factory=_PyramidACLAuthorizationPolicy):
 	"""
 	An :class:`pyramid.interfaces.IAuthorizationPolicy` that processes
 	ACLs in exactly the same way as :class:`pyramid.authorization.ACLAuthorizationPolicy`,
@@ -51,7 +54,40 @@ def ACLAuthorizationPolicy():
 		logger.debug( "patching pyramid.authorization to use ACL providers" )
 		pyramid.authorization.lineage = _lineage_that_ensures_acls
 
-	return pyramid.authorization.ACLAuthorizationPolicy()
+	return _factory()
+
+def ZopeACLAuthorizationPolicy():
+	"""
+	A policy that brings the Zope security scheme into play, along
+	with our explicit ACLs and ACL providers.
+
+	In the initial version, we will consult Zope security scheme only
+	when the ACL scheme results in a denial (this is because the Zope scheme
+	uses a different set of roles and groups right now). Expect that to change
+	as IAuthentication is implemented.
+	"""
+
+	class _ZopeACLAuthorizationPolicy(_PyramidACLAuthorizationPolicy):
+
+		def permits(self, context, principals, permission):
+			# Not super() for speed reasons
+			permits = _PyramidACLAuthorizationPolicy.permits(self, context, principals, permission)
+			# Note that we're ignoring the principals given and hence pyramid's authentication
+			# policy. We assume
+			# that if we have the correct interaction in place, which allows us to
+			# derive the relevant principals (only a concern during impersonation)
+			if not permits: # Or maybe if permits.ace == '<default deny>'?
+				# Turn IPermission objects into the strings that
+				# zope expects (unless we already have a string)
+				permission = getattr(permission, 'id', permission)
+				try:
+					permits = checkPermission(permission, context)
+				except NoInteraction:
+					pass
+
+			return permits
+
+	return ACLAuthorizationPolicy(_factory=_ZopeACLAuthorizationPolicy)
 
 _marker = object()
 # These functions, particularly the lineage function, is called
