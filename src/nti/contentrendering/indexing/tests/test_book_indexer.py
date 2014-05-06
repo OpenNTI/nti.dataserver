@@ -19,9 +19,10 @@ import tempfile
 from whoosh.query import Or
 from whoosh.query import Term
 
+from ..book_indexer import _BookFileWhooshIndexer
+from ..book_indexer import _IdentifiableNodeWhooshIndexer
+
 from ...RenderedBook import _EclipseTOCMiniDomTopic
-from ..whoosh_book_indexer import _BookFileWhooshIndexer
-from ..whoosh_book_indexer import _IdentifiableNodeWhooshIndexer
 from ...utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
 from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest

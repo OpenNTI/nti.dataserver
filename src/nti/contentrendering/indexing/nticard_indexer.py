@@ -20,10 +20,10 @@ from nti.contentprocessing import get_content_translation_table
 from nti.contentsearch.constants import nticard_prefix
 from nti.contentsearch import interfaces as search_interfaces
 
-from . import node_utils
+from . import _utils
 from . import content_utils
+from . import common_indexer
 from . import interfaces as cridxr_interfaces
-from . import whoosh_common_indexer as common_indexer
 
 @interface.implementer(cridxr_interfaces.IWhooshNTICardIndexer)
 class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
@@ -34,14 +34,14 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 		return creator.create()
 
 	def _get_attribute(self, node, attr):
-		result = node_utils.get_attribute(node, attr)
+		result = _utils.get_attribute(node, attr)
 		return result or u''
 
 	def _get_nticard_info(self, topic, node):
-		type_ = node_utils.get_attribute(node, 'type')
+		type_ = _utils.get_attribute(node, 'type')
 		if type_ == u'application/vnd.nextthought.nticard':
 			result = {}
-			content = node_utils.get_node_content(node)
+			content = _utils.get_node_content(node)
 			result['type'] = self._get_attribute(node, 'data-type')
 			result['href'] = self._get_attribute(node, 'data-href')
 			result['title'] = self._get_attribute(node, 'data-title')
@@ -49,11 +49,11 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 			result['creator'] = self._get_attribute(node, 'data-creator')
 			for obj in node.iterchildren():
 				if 	obj.tag == 'span' and \
-					node_utils.get_attribute(obj, 'class') == 'description':
-					content = node_utils.get_node_content(obj)
+					_utils.get_attribute(obj, 'class') == 'description':
+					content = _utils.get_node_content(obj)
 				elif obj.tag == 'param':
-					name = node_utils.get_attribute(obj, 'name')
-					value = node_utils.get_attribute(obj, 'value')
+					name = _utils.get_attribute(obj, 'name')
+					value = _utils.get_attribute(obj, 'value')
 					if name and not result.get(name, None) and value:
 						result[name] = value
 			result['content'] = unicode(content) if content else u''

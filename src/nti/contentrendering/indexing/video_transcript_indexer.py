@@ -27,12 +27,12 @@ from nti.contentsearch.common import videotimestamp_to_datetime
 
 from nti.utils.property import alias
 
-from . import node_utils
-from . import termextract
+from . import _utils
+from nti.contentrendering.indexing import _extract
 from . import content_utils
+from . import common_indexer
 from . import interfaces as cridxr_interfaces
 from ..media import interfaces as media_interfaces
-from . import whoosh_common_indexer as common_indexer
 
 _video_types = (u'application/vnd.nextthought.ntivideo')
 
@@ -97,7 +97,7 @@ def _prepare_entry(entry, lang):
 		table = get_content_translation_table(lang)
 		entry.content = unicode(content_utils.sanitize_content(content, table=table))
 		tokenized_words = tokenize_content(entry.content, lang)
-		entry.keywords = termextract.extract_key_words(tokenized_words, lang=lang)
+		entry.keywords = _extract.extract_key_words(tokenized_words, lang=lang)
 		entry.processed = True
 	else:
 		entry.processed = False
@@ -162,16 +162,16 @@ class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 
 	def _capture_param(self, p, params):
 		if p.tag == 'param':
-			name = node_utils.get_attribute(p, 'name')
-			value = node_utils.get_attribute(p, 'value')
+			name = _utils.get_attribute(p, 'name')
+			value = _utils.get_attribute(p, 'value')
 			if name and value:
 				params[name] = value
 
 	def _process_transcript(self, node):
 		params = {}
-		type_ = node_utils.get_attribute(node, 'type')
+		type_ = _utils.get_attribute(node, 'type')
 		if type_ in _media_transcript_types:
-			data_lang = node_utils.get_attribute(node, 'data-lang') or 'en'
+			data_lang = _utils.get_attribute(node, 'data-lang') or 'en'
 			for p in node.iterchildren():
 				self._capture_param(p, params)
 
@@ -182,21 +182,21 @@ class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 
 	def _process_videosource(self, node):
 		params = {}
-		type_ = node_utils.get_attribute(node, 'type')
+		type_ = _utils.get_attribute(node, 'type')
 		if type_ in _video_source_types:
 			for p in node.iterchildren():
 				self._capture_param(p, params)
 		return params if params else None
 
 	def _process_ntivideo(self, topic, node):
-		type_ = node_utils.get_attribute(node, 'type')
+		type_ = _utils.get_attribute(node, 'type')
 		if not type_ or type_ not in _video_types:
 			return ()
 
 		params = {}
 		transcripts = []
 		video_sources = []
-		video_ntiid = node_utils.get_attribute(node, 'data-ntiid')
+		video_ntiid = _utils.get_attribute(node, 'data-ntiid')
 		for p in node.iterchildren():
 			if p.tag == 'object':
 				# check for transcript
@@ -223,7 +223,7 @@ class _WhooshVideoTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 		result = ()
 		if not transcripts and video_sources:
 			# process legacy spec
-			language = node_utils.get_attribute(node, 'data-lang') or \
+			language = _utils.get_attribute(node, 'data-lang') or \
 					   params.get('data-lang', params.get('lang')) or 'en'
 
 			for vrdsrc in video_sources:

@@ -9,17 +9,17 @@
 	
 	<include package="nti.contentsearch" file="configure_whoosh_content.zcml" />
 	
-	<class class=".whoosh_common_indexer.WhooshIndexSpec">
+	<class class=".common_indexer.WhooshIndexSpec">
 		<implements interface=".interfaces.IWhooshIndexSpec" />
 	</class>
 	
-	<utility factory=".whoosh_book_indexer._DefaultWhooshBookIndexer" />
-	<utility factory=".whoosh_book_indexer._BookFileWhooshIndexer" name="whoosh.file" />
-	<utility factory=".whoosh_book_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
+	<utility factory=".book_indexer._DefaultWhooshBookIndexer" />
+	<utility factory=".book_indexer._BookFileWhooshIndexer" name="whoosh.file" />
+	<utility factory=".book_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
 	
-	<utility factory=".whoosh_nti_card_indexer._DefaultWhooshNTICardIndexer" />
-	<utility factory=".whoosh_video_transcript_indexer._DefaultWhooshVideoTranscriptIndexer" />
+	<utility factory=".nticard_indexer._DefaultWhooshNTICardIndexer" />
+	<utility factory=".video_transcript_indexer._DefaultWhooshVideoTranscriptIndexer" />
 	
-	<utility factory=".termextract._DefaultKeyWordFilter" name="indexer" />
+	<utility factory="._extract._DefaultKeyWordFilter" name="indexer" />
 	
 </configure>
