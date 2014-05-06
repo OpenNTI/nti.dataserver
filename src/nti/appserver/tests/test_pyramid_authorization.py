@@ -16,7 +16,7 @@ from nti.appserver.tests import ConfiguringTestBase
 from nti.testing.matchers import is_true
 from nti.testing.matchers import is_false
 
-from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy, is_readable, is_writable
+from nti.appserver.pyramid_authorization import ZopeACLAuthorizationPolicy, is_readable, is_writable
 
 from nti.dataserver import authorization_acl as auth_acl
 import pyramid.security
@@ -39,7 +39,7 @@ class TestPyramidAuthorization(ConfiguringTestBase): # Not shared, we muck with 
 
 		self.auth_policy = AuthPolicy()
 		self.request.registry.registerUtility( self.auth_policy )
-		self.request.registry.registerUtility( ACLAuthorizationPolicy() )
+		self.request.registry.registerUtility( ZopeACLAuthorizationPolicy() )
 
 	def test_policy(self):
 
