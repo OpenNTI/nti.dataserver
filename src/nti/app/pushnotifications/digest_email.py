@@ -29,8 +29,8 @@ from nti.dataserver.interfaces import INote
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.appserver.interfaces import IVideoIndexMap
 from nti.appserver.interfaces import IApplicationSettings
+from nti.appserver.contentlibrary.interfaces import IVideoIndexMap
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
@@ -158,9 +158,7 @@ class _TemplateArgs(object):
 		if path:
 			return path
 
-
 		videos = component.getUtility(IVideoIndexMap)
-
 		for key, value in videos.by_container.items():
 			if name in value:
 				path = lib.pathToNTIID(key)
