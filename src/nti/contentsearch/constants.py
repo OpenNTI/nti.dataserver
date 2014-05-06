@@ -108,6 +108,7 @@ created_time_fields = (ext_interfaces.StandardInternalFields.CREATED_TIME,
 					   ext_interfaces.StandardExternalFields.CREATED_TIME)
 
 book_prefix = u''
+atrans_prefix = u'atrans_'
 vtrans_prefix = u'vtrans_'
 nticard_prefix = u'nticard_'
 nti_mimetype_prefix = MIME_BASE + '.'
@@ -125,12 +126,14 @@ messageinfo = u'messageinfo'
 messageinfo_ = u'messageinfo'
 book_content_ = u'bookcontent'
 canvastextshape_ = 'canvastextshape'
+audiotranscript_ = u'videotranscript'
 videotranscript_ = u'videotranscript'
 invalid_type_ = u'++++invalidtype++++'
 
 POST_MIME_TYPE = u'application/vnd.nextthought.forums.post'
 NTI_CARD_MIME_TYPE = u'application/vnd.nextthought.nticard'
 BOOK_CONTENT_MIME_TYPE = u'application/vnd.nextthought.bookcontent'
+AUDIO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.audiotranscript'
 VIDEO_TRANSCRIPT_MIME_TYPE = u'application/vnd.nextthought.videotranscript'
 
 ascending_ = u'ascending'

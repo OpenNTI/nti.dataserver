@@ -93,6 +93,7 @@ INDEX_FACTORIES = \
 (
 	(constants.book_prefix, whoosh_index.Book, constants.content_),
 	(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
+	(constants.atrans_prefix, whoosh_index.AudioTranscript, constants.audiotranscript_),
 	(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
 )
 

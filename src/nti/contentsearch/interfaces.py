@@ -383,6 +383,18 @@ class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
+class IAudioTranscriptContent(IBaseContent):
+	containerId = nti_schema.ValidTextLine(title="NTIID of audio container", required=True)
+	videoId = nti_schema.ValidTextLine(title="Either the audio NTIID or Id", required=True)
+	content = nti_schema.ValidText(title="Text content", required=True)
+	title = nti_schema.ValidText(title="Audio title", required=False)
+	start_millisecs = schema.Float(title="Start timestamp", required=True)
+	end_millisecs = schema.Float(title="End timestamp", required=True)
+
+class IWhooshAudioTranscriptContent(IAudioTranscriptContent, IWhooshContent):
+	docnum = schema.Int(title="Document number", required=False)
+	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+
 class INTICardContent(IBaseContent):
 	href = nti_schema.ValidTextLine(title="card href", required=False)
 	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
@@ -413,6 +425,12 @@ class IVideoTranscriptSchemaCreator(IContentSchemaCreator):
 	pass
 
 class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
+	pass
+
+class IAudioTranscriptSchemaCreator(IContentSchemaCreator):
+	pass
+
+class IWhooshAudioTranscriptSchemaCreator(IAudioTranscriptSchemaCreator):
 	pass
 
 class INTICardSchemaCreator(IContentSchemaCreator):
@@ -556,6 +574,9 @@ class IBookContentResolver(_ContentMixinResolver):
 	pass
 
 class IVideoTranscriptContentResolver(_ContentMixinResolver):
+	pass
+
+class IAudioTranscriptContentResolver(_ContentMixinResolver):
 	pass
 
 class INTICardContentResolver(_ContentMixinResolver, ICreatorResolver):

@@ -54,6 +54,13 @@ class VideoTranscriptContent(SchemaConfigured, _DocNumMixin):
 
 	last_modified = alias('lastModified')
 
+@interface.implementer(search_interfaces.IWhooshAudioTranscriptContent)
+class AudioTranscriptContent(SchemaConfigured, _DocNumMixin):
+	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	createDirectFieldProperties(search_interfaces.IWhooshAudioTranscriptContent)
+
+	last_modified = alias('lastModified')
+
 @interface.implementer(search_interfaces.IWhooshNTICardContent)
 class NTICardContent(SchemaConfigured, _DocNumMixin):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
