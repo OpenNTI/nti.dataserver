@@ -8,3 +8,9 @@ name: courselesson courseinfo courselessonsection
 <p tal:replace="self"></p>
 </div>
 
+name: courseoverviewgroup
+<object class="nticourseoverviewgroup" tal:attributes="type self/mime_type; data-title self/title; data-title-background-color self/title_background_color">
+<span tal:replace="self"></span>
+</object>
+
+name: titlebackgroundcolor
