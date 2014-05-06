@@ -1072,7 +1072,11 @@ class ntidiscussionname(Base.Command):
 	pass
 
 class ntidiscussionref(Base.Crossref.ref):
-	pass
+
+	@readproperty
+	def discussion(self):
+		return self.idref['label']
+	
 
 class ntidiscussion(Base.Environment):
 	args = '[ options:dict ] '
