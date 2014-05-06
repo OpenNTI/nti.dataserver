@@ -82,19 +82,19 @@ class _DiscussionExtractor(object):
 						if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 							lesson_el = topic_map.get(parent_el.ntiid)
 
-					if discussionref_el.idref['label'].iconResource is not None:
-						icon = discussionref_el.idref['label'].iconResource.image.url
+					if discussionref_el.discussion.iconResource is not None:
+						icon = discussionref_el.discussion.iconResource.image.url
 					else:
 						icon = ''
 
-					title = unicode(''.join(render_children( discussionref_el.idref['label'].renderer, discussionref_el.idref['label'].title )))
-					subtitle = unicode(''.join(render_children( discussionref_el.idref['label'].renderer, discussionref_el.idref['label'].subtitle )))
+					title = unicode(''.join(render_children( discussionref_el.discussion.renderer, discussionref_el.discussion.title )))
+					subtitle = unicode(''.join(render_children( discussionref_el.discussion.renderer, discussionref_el.discussion.subtitle )))
 
 					toc_el = dom.createElement('object')
 					toc_el.setAttribute('label', title)
 					toc_el.setAttribute('title', subtitle)
-					toc_el.setAttribute('ntiid', discussionref_el.idref['label'].topic_ntiid)
-					toc_el.setAttribute('mimeType', discussionref_el.idref['label'].targetMimeType)
+					toc_el.setAttribute('ntiid', discussionref_el.discussion.topic_ntiid)
+					toc_el.setAttribute('mimeType', discussionref_el.discussion.targetMimeType)
 					toc_el.setAttribute('icon', icon)
 					if lesson_el:
 						lesson_el.appendChild(toc_el)
