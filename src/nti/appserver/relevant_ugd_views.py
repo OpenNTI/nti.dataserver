@@ -18,8 +18,8 @@ from pyramid import httpexceptions as _hexc
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
-from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
+from nti.appserver.contentlibrary import interfaces as app_interfaces
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
