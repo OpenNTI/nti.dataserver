@@ -20,8 +20,9 @@ import tempfile
 
 from whoosh.query import (Term)
 
+from ..nticard_indexer import _DefaultWhooshNTICardIndexer
+
 from ...RenderedBook import _EclipseTOCMiniDomTopic
-from ..whoosh_nti_card_indexer import _DefaultWhooshNTICardIndexer
 
 from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 

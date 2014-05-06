@@ -27,19 +27,19 @@ from nti.contentrendering import ConcurrentExecutor
 
 from nti.contentsearch import interfaces as search_interfaces
 
-from . import node_utils
-from . import termextract
+from . import _utils
+from . import _extract
 from . import content_utils
+from . import common_indexer
 from . import interfaces as cridxr_interfaces
-from . import whoosh_common_indexer as common_indexer
 
 # global helper functions
 
 def _get_last_modified(node):
 	last_modified = None
 	for n in node.dom(b'meta'):
-		if node_utils.get_attribute(n, 'http-equiv') == "last-modified":
-			last_modified = node_utils.get_attribute(n, 'content')
+		if _utils.get_attribute(n, 'http-equiv') == "last-modified":
+			last_modified = _utils.get_attribute(n, 'content')
 			break
 
 	if last_modified is not None:
@@ -64,7 +64,7 @@ class _DataNode(object):
 		self.title = unicode(node.title) or u''
 		self.ntiid = unicode(node.ntiid) or u''
 		self.last_modified = _get_last_modified(node)
-		self.related = node_utils.get_related(node.topic)
+		self.related = _utils.get_related(node.topic)
 
 	def is_processed(self):
 		return self.content or self.keywords
@@ -113,7 +113,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 
 		def _collector(n, data):
 			if not isinstance(n, etree._Comment):
-				content = node_utils.get_node_content(n)
+				content = _utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenize_content(content, lang)
@@ -123,15 +123,15 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 					_collector(c, data)
 
 		def _traveler(n):
-			n_id = node_utils.get_attribute(n, "id")
-			data_ntiid = node_utils.get_attribute(n, "data_ntiid")
+			n_id = _utils.get_attribute(n, "id")
+			data_ntiid = _utils.get_attribute(n, "data_ntiid")
 			if n_id or (data_ntiid and data_ntiid != "none"):
 				data = []
 				_collector(n, data)
 				_id = data_ntiid or n_id
 				documents.append((_id, data))
 			else:
-				content = node_utils.get_node_content(n)
+				content = _utils.get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenize_content(content, lang)
@@ -149,7 +149,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 		all_words = []
 		for tokenized_words in documents:
 			all_words.extend(tokenized_words[1])
-		data.keywords = termextract.extract_key_words(all_words, lang=lang)
+		data.keywords = _extract.extract_key_words(all_words, lang=lang)
 
 		count = 0
 		for docid, tokenized_words in documents:
@@ -185,7 +185,7 @@ def _process_datanode(node, lang='en'):
 														 tokens=True, lang=lang)
 		if tokenized_words:
 			node.content = ' '.join(tokenized_words)
-			node.keywords = termextract.extract_key_words(tokenized_words, lang=lang)
+			node.keywords = _extract.extract_key_words(tokenized_words, lang=lang)
 	return node
 
 class _BookFileWhooshIndexer(_WhooshBookIndexer):
