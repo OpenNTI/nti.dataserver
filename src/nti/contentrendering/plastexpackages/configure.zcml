@@ -13,41 +13,7 @@
 	<utility component=".nticourse" name="nticourse" />
 	<utility component=".ntilatexmacros" name="ntilatexmacros" />
 
-	<adapter factory=".extractors._CourseExtractor"
-			 for="nti.contentrendering.interfaces.IRenderedBook"
-			 provides="nti.contentrendering.interfaces.ICourseExtractor" />
-
-	<utility factory=".extractors._CourseExtractor"
-			 provides="nti.contentrendering.interfaces.ICourseExtractor"
-			 name="010.CourseExtractor" />
-
-	<adapter factory=".extractors._RelatedWorkExtractor"
-			 for="nti.contentrendering.interfaces.IRenderedBook"
-			 provides="nti.contentrendering.interfaces.IRelatedWorkExtractor" />
-
-	<utility factory=".extractors._RelatedWorkExtractor"
-			 provides="nti.contentrendering.interfaces.IRelatedWorkExtractor"
-			 name="050.RelatedWorkExtractor" />
-
-	<adapter factory=".extractors._DiscussionExtractor"
-			 for="nti.contentrendering.interfaces.IRenderedBook"
-			 provides="nti.contentrendering.interfaces.IDiscussionExtractor" />
-
-	<utility factory=".extractors._DiscussionExtractor"
-			 provides="nti.contentrendering.interfaces.IDiscussionExtractor"
-			 name="030.DiscussionExtractor" />
-
-	<adapter factory=".extractors._NTIVideoExtractor"
-			 for="nti.contentrendering.interfaces.IRenderedBook"
-			 provides="nti.contentrendering.interfaces.INTIVideoExtractor" />
-
-	<utility factory=".extractors._NTIVideoExtractor"
-			 provides="nti.contentrendering.interfaces.INTIVideoExtractor"
-			 name="020.NTIVideoExtractor" />
-
-	<utility factory=".extractors._NTIAudioExtractor"
-			 provides="nti.contentrendering.interfaces.INTIAudioExtractor"
-			 name="025.NTIAudioExtractor" />
+	<include package=".extractors" file="configure.zcml" />
 			 
 	<class class="nti.contentrendering.plastexpackages.ntilatexmacros.DeclareMediaResource">
 		<implements interface="nti.contentrendering.resources.interfaces.IRepresentableContentUnit" />
