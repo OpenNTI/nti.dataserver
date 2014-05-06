@@ -147,6 +147,34 @@ class VideoTranscript(_SearchableContent):
 					 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
 				yield (data, score)
 
+class AudioTranscript(_SearchableContent):
+
+	type = constants.audiotranscript_
+	prefix = constants.atrans_prefix
+
+	@Lazy
+	def schema(self):
+		return self._schema or schemas.create_video_transcript_schema()
+
+	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
+		for hit in search_hits:
+			docnum = hit.docnum
+			if docids is None or docnum not in docids:
+				if docids is not None:
+					docids.add(docnum)
+				score = hit.score or 1.0
+				data = content_types.AudioTranscriptContent(
+								score=score,
+								docnum=docnum,
+								title=hit[title_],
+								content=hit[content_],
+								videoId=hit[videoId_],
+					 			containerId=hit[containerId_],
+								lastModified=common.epoch_time(hit[last_modified_]),
+					 			end_millisecs=video_date_to_millis(hit[end_timestamp_]),
+					 			start_millisecs=video_date_to_millis(hit[start_timestamp_]))
+				yield (data, score)
+
 class NTICard(_SearchableContent):
 
 	type = constants.nticard_

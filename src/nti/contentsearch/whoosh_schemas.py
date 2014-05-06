@@ -151,6 +151,46 @@ class _DefaultVideoTranscriptSchemaCreator(object):
 		schema = create_video_transcript_schema()
 		return schema
 
+def create_audio_transcript_schema():
+	"""
+	Audio transcript schema
+
+	containerId: NTIID of the audio location
+	videoId: Audio NTIID or custom identifier
+	title: Audio title
+	content: transcript text
+	quick: transcript text ngrams
+	keywords: transcript keywords
+	start_timestamp: Start video timestamp
+	end_timestamp: End video timestamp
+	"""
+	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
+						videoId=fields.ID(stored=True, unique=False),
+						language=fields.ID(stored=True, unique=False),
+						title=create_content_field(stored=True),
+					 	content=create_content_field(stored=True),
+					 	quick=create_ngram_field(),
+					 	keywords=fields.KEYWORD(stored=True),
+					 	start_timestamp=VIDEO_TIMESTAMP(stored=True),
+					 	end_timestamp=VIDEO_TIMESTAMP(stored=True),
+					 	last_modified=fields.DATETIME(stored=True))
+	return sch
+
+@interface.implementer(search_interfaces.IWhooshAudioTranscriptSchemaCreator)
+class _DefaultAudioTranscriptSchemaCreator(object):
+
+	singleton = None
+	__slots__ = ()
+
+	def __new__(cls, *args, **kwargs):
+		if not cls.singleton:
+			cls.singleton = super(_DefaultAudioTranscriptSchemaCreator, cls).__new__(cls)
+		return cls.singleton
+
+	def create(self):
+		schema = create_audio_transcript_schema()
+		return schema
+
 def create_nti_card_schema():
 	"""
 	Card schema

@@ -17,6 +17,11 @@
 	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="ru" />
 	<utility factory=".whoosh_schemas._DefaultVideoTranscriptSchemaCreator" name="es" />
 	
+	<utility factory=".whoosh_schemas._DefaultAudioTranscriptSchemaCreator" />
+	<utility factory=".whoosh_schemas._DefaultAudioTranscriptSchemaCreator" name="en" />
+	<utility factory=".whoosh_schemas._DefaultAudioTranscriptSchemaCreator" name="ru" />
+	<utility factory=".whoosh_schemas._DefaultAudioTranscriptSchemaCreator" name="es" />
+	
 	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" />
 	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="en" />
 	<utility factory=".whoosh_schemas._DefaultNTICardSchemaCreator" name="ru" />
