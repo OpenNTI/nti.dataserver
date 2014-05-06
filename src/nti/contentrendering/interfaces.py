@@ -259,6 +259,14 @@ class ISlideDeckExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and extracts slide decks.
 	"""
 
+class IJSONTransformer(interface.Interface):
+	"""
+	Given a :class:`plasTeX.Node`, create a JSON serializable dictionary.
+	"""
+
+	def transform():
+		pass
+
 from zope.interface import registry
 from zope.component import getGlobalSiteManager
 
