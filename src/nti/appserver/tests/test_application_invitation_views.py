@@ -121,6 +121,12 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 			fl1_containerId = fl1.containerId
 			fl1_id = fl1.id
 
+			# Make sure not to access persistent objects after transaction
+			del owner
+			del member_user
+			del other_user
+			del fl1
+
 		testapp = TestApp( self.app )
 
 		# The owner is the only one that has the link
@@ -155,5 +161,7 @@ class TestApplicationInvitationDFLViews(ApplicationLayerTest):
 
 		with mock_dataserver.mock_db_trans( self.ds ):
 			owner = users.User.get_user( owner_username )
+			member_user = users.User.get_user(member_user_username)
+			other_user = users.User.get_user(other_user_username)
 			dfl = owner.getContainedObject( fl1_containerId, fl1_id )
 			assert_that( list(dfl), is_( [member_user, other_user] ) )
