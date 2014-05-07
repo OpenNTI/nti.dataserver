@@ -39,7 +39,7 @@ ${general(circled, 'added you to a group', 'their contacts')}
 %endif
 
 % if grade:
-${general(grade, 'assigned a grade', grade.assignment_name or 'a course')}
+You received a grade.
 % endif
 
 This message was sent to ${email_to}. If you don't want to receive
