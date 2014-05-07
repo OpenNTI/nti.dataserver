@@ -16,6 +16,8 @@ from array import array
 from zope import interface
 from zope import component
 
+from BTrees.OOBTree import Set
+
 from .interfaces import IUserNotableData
 from .interfaces import IUserPresentationPriorityCreators
 from nti.dataserver.interfaces import IUser
@@ -29,12 +31,17 @@ from zope.catalog.catalog import ResultSet
 
 from zope.intid.interfaces import IIntIds
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
 _BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
+
+_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
+_TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
 
 @interface.implementer(IUserNotableData)
 @component.adapter(IUser,interface.Interface)
@@ -79,6 +86,62 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		return container_id_idx.apply({'any_of': container_ids})
 
+	@CachedProperty
+	def _topics_created_by_me_intids(self):
+		catalog = self._catalog
+		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+
+		topics_created_by_me_intids = catalog.family.IF.intersection(topic_intids,
+																	 self._intids_created_by_me)
+		return topics_created_by_me_intids
+
+	def __topic_ntiids(self, excluded_topic_oids=()):
+		topic_ntiids = [x.NTIID for x in ResultSet(self._topics_created_by_me_intids, self._intids)
+						if to_external_ntiid_oid(x) not in excluded_topic_oids]
+
+		return topic_ntiids
+
+	@CachedProperty
+	def _all_comments_in_my_topics_intids(self):
+		# Note that we're not doing a join to the Mime index, as only comments
+		# should have this as a container id.
+		comments_in_my_topics_intids = self._catalog['containerId'].apply({'any_of': self.__topic_ntiids()})
+		return comments_in_my_topics_intids
+
+	@CachedProperty
+	def _only_included_comments_in_my_topics_intids(self):
+		excluded_topic_oids = self._not_notable_oids or ()
+		if not excluded_topic_oids:
+			return self._all_comments_in_my_topics_intids
+
+		return self._catalog['containerId'].apply({'any_of': self.__topic_ntiids(excluded_topic_oids)})
+
+	def __find_generalForum_comment_intids(self):
+		# Get the toplevel intids of comments created in a forum
+		# that I own (created). There is not a very good way to do this,
+		# sadly. Indexing NTIID is a poor choice because it's 1-to-1
+		# The best we can seem to do is find all the forums I created,
+		# manually get their NTIIDs,  get things that are in those containers
+		# that are toplevel.
+		# Once we do this, though, we mist still subtract things shared directly
+		# to me that are in _all_comments_in_my_topics_intids but not in this
+		# set, because of the way ACL sharing for community topics is implemented
+		# (the instructor is explicitly in the sharingTargets list)
+		return self._only_included_comments_in_my_topics_intids
+
+	@CachedProperty
+	def _topic_comment_intids_to_exclude(self):
+		all_comments = self._all_comments_in_my_topics_intids
+		included_comments = self._only_included_comments_in_my_topics_intids
+
+		# Everything that's in all_comments, but not in included_comments
+		comments_i_dont_want = self._catalog.family.IF.difference(all_comments, included_comments)
+		return comments_i_dont_want
+
+	@CachedProperty
+	def _intids_created_by_me(self):
+		return self._catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+
 	@CachedProperty('_time_range')
 	def _intids_in_time_range(self):
 		min_created_time, max_created_time = self._time_range
@@ -104,6 +167,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		blogentry_intids = catalog['mimeType'].apply({'any_of': (_BLOG_ENTRY_MIMETYPE,)})
 		blogentry_intids_shared_to_me = catalog.family.IF.intersection(intids_shared_to_me, blogentry_intids)
 
+		toplevel_intids_forum_comments = self.__find_generalForum_comment_intids()
+
 		# We use low-level optimization to get this next one; otherwise
 		# we'd need some more indexes to make it efficient
 		intids_of_my_circled_events = self.remoteUser._circled_events_intids_storage
@@ -112,10 +177,15 @@ class UserNotableData(AbstractAuthenticatedView):
 															   intids_replied_to_me,
 															   intids_of_my_circled_events,
 															   toplevel_intids_blog_comments,
-															   blogentry_intids_shared_to_me))
+															   blogentry_intids_shared_to_me,
+															   toplevel_intids_forum_comments))
 		if self._intids_in_time_range is not None:
 			safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																	safely_viewable_intids)
+
+		# Subtract any comments that crept in that I don't want
+		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
+															  self._topic_comment_intids_to_exclude)
 		return safely_viewable_intids
 
 	@CachedProperty('_time_range')
@@ -162,7 +232,7 @@ class UserNotableData(AbstractAuthenticatedView):
 				safely_viewable_intids.add(questionable_uid)
 
 		# Make sure none of the stuff we created got in
-		intids_created_by_me = catalog['creator'].apply({'any_of': (self.remoteUser.username,)})
+		intids_created_by_me = self._intids_created_by_me
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
 
 		return safely_viewable_intids
@@ -224,6 +294,20 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		notables = self._notable_intids
 		return iid in notables
+
+	_NKEY = 'nti.appserver.ugd_query_views._NotableUGD_ExcludedOIDs'
+	_not_notable_oids = annotation_alias(_NKEY, annotation_property='remoteUser',
+										 doc="A set of OIDs to exclude (stored on the user)"
+										 "We use OID instead of intid to guard against re-use.")
+
+	def object_is_not_notable(self, maybe_notable):
+		# Right now, we only support this and check it for
+		# forum objects
+		if getattr(maybe_notable, 'mimeType', '') == _TOPIC_MIMETYPE:
+			not_notable = self._not_notable_oids
+			if not_notable is None:
+				not_notable = self._not_notable_oids = Set()
+			not_notable.add( to_external_ntiid_oid(maybe_notable) )
 
 class _SafeResultSet(ResultSet):
 

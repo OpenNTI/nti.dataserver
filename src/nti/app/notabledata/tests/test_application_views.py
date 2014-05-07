@@ -36,6 +36,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from zope import component
 from ..interfaces import IUserNotableData
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
@@ -116,7 +117,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		# We can update the lastViewed time
 
 		lv_href = self.require_link_href_with_rel(res.json_body, 'lastViewed')
-		assert_that(unquote(lv_href), is_(path + '/lastViewed') )
+		assert_that(unquote(lv_href), is_(path + 'lastViewed') )
 		self.testapp.put_json( lv_href,
 							   1234 )
 		res = self.testapp.get(path)
@@ -208,6 +209,58 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains(has_entry('Class', 'PersonalBlogEntry')) ) )
 
 		self._check_notable_data(username='jason')
+
+
+	def _setup_community(users_map):
+		community = users.Community.create_community( username='TheCommunity' )
+		for user in users_map.values():
+			user.record_dynamic_membership(community)
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True,
+								 users_hook=_setup_community)
+	@time_monotonically_increases
+	def test_notable_toplevel_comments_in_forum_i_create(self):
+		forum_url = '/dataserver2/users/TheCommunity/DiscussionBoard/Forum'
+
+		post_data = { 'Class': 'Post',
+				 #'MimeType': self.forum_headline_content_type,
+				 'title': 'My New Blog',
+				 'description': "This is a description of the thing I'm creating",
+				 'body': ['My first thought. '] }
+
+		res = self.testapp.post_json( forum_url, post_data )
+		publish_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+		res = self.testapp.post( publish_url )
+
+
+		self.testapp.post_json(res.location, {'Class': 'Post', 'body': ['A comment']},
+							   extra_environ=self._make_extra_environ(username='jason'))
+
+		res = self.fetch_user_recursive_notable_ugd( )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
+		assert_that( res.json_body, has_entry( 'Items', has_length(1) ))
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains(has_entry('body', ['A comment'])) ) )
+
+		self._check_notable_data()
+
+		# Now we can turn it off too
+		with mock_dataserver.mock_db_trans(self.ds):
+			com = users.Community.get_community('TheCommunity', self.ds)
+			board = ICommunityBoard(com)
+			forum = board['Forum']
+			topic = list(forum.values())[0]
+
+			user = users.User.get_user('sjohnson@nextthought.com')
+			data = component.getMultiAdapter((user,None),
+											 IUserNotableData)
+			data.object_is_not_notable(topic)
+
+		res = self.fetch_user_recursive_notable_ugd( )
+		assert_that( res.json_body, has_entry( 'TotalItemCount', 0))
+
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
