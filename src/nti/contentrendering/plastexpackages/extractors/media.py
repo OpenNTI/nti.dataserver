@@ -219,7 +219,8 @@ class _NTIMediaExtractor(object):
 					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
-				title = unicode(''.join(render_children(el.media.renderer, el.media.title)))
+				media_title = getattr(el.media, 'title', u'')
+				title = unicode(''.join(render_children(el.media.renderer, media_title)))
 
 				toc_el = dom.createElement('object')
 				toc_el.setAttribute('label', title)
