@@ -10,6 +10,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
+import re
+import simplejson as json
+
 from zope import component
 from zope import interface
 
@@ -26,18 +30,21 @@ class _CourseExtractor(object):
 	def __init__(self, book=None):
 		pass
 
-	def transform(self, book):
+	def transform(self, book, outpath=None):
+		outpath = outpath or book.contentLocation
+		outpath = os.path.expanduser(outpath)
+
 		course_els = book.document.getElementsByTagName('course')
 		courseinfo = book.document.getElementsByTagName('courseinfo')
 		dom = book.toc.dom
 		if course_els:
-			dom.childNodes[0].appendChild(self._process_course(dom, course_els[0], courseinfo))
+			dom.childNodes[0].appendChild(self._process_course(dom, outpath, course_els[0], courseinfo))
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
 			dom.childNodes[0].setAttribute('isCourse', 'false')
 		book.toc.save()
 
-	def _process_course(self, dom, doc_el, courseinfo):
+	def _process_course(self, dom, outpath, doc_el, courseinfo):
 		toc_el = dom.createElement('course')
 		toc_el.setAttribute('label', ''.join(render_children( doc_el.renderer, doc_el.title)))
 		toc_el.setAttribute('courseName', ''.join(render_children( doc_el.renderer, doc_el.number)))
@@ -55,13 +62,13 @@ class _CourseExtractor(object):
 		info.setAttribute('src', u'course_info.json')
 		toc_el.appendChild(info)
 		for unit in units:
-			toc_el.appendChild(self._process_unit(dom, unit))
+			toc_el.appendChild(self._process_unit(dom, outpath, unit))
 
 		for node in self._process_communities(dom, doc_el):
 			toc_el.appendChild(node)
 		return toc_el
 
-	def _process_unit(self, dom, doc_el):
+	def _process_unit(self, dom, outpath, doc_el):
 		toc_el = dom.createElement('unit')
 		toc_el.setAttribute('label', unicode(doc_el.title))
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
@@ -76,10 +83,10 @@ class _CourseExtractor(object):
 			lesson_ref_dates = lesson_ref.date
 			lesson = lesson_ref.idref['label']
 
-			toc_el.appendChild(self._process_lesson(dom, course_node, lesson, lesson_ref_dates, level=1))
+			toc_el.appendChild(self._process_lesson(dom, outpath, course_node, lesson, lesson_ref_dates, level=1))
 		return toc_el
 
-	def _process_lesson(self, dom, course_node, lesson_node, lesson_dates=None, level=1):
+	def _process_lesson(self, dom, outpath, course_node, lesson_node, lesson_dates=None, level=1):
 		date_strings = None
 		if lesson_dates:
 			date_strings = []
@@ -96,11 +103,37 @@ class _CourseExtractor(object):
 		toc_el.setAttribute( 'isOutlineStubOnly', 'true' if lesson_node.is_outline_stub_only else 'false')
 
 		for sub_lesson in lesson_node.subsections:
-			if not sub_lesson.tagName.startswith('course'):
+			if not sub_lesson.tagName.startswith('courselesson'):
 				continue
 			dates = getattr(sub_lesson, 'date', None)
-			child = self._process_lesson( dom, course_node, sub_lesson, dates, level=level+1)
+			child = self._process_lesson( dom, outpath, course_node, sub_lesson, dates, level=level+1)
 			toc_el.appendChild( child )
+
+		# SAJ: Only produce and overview JSON for lessons with content driven overviews
+		overview_nodes = lesson_node.getElementsByTagName('courseoverviewgroup')
+		if len(overview_nodes) > 0:
+			ntiid = re.sub('[:,\.,/,\*,\?,\<,\>,\|]', '_', lesson_node.ntiid.replace('\\', '_'))
+			outfile = '%s.json' % ntiid
+
+			trx = crd_interfaces.IJSONTransformer(lesson_node, None)
+			if trx is not None:
+				overview = trx.transform()
+
+				# Write the normal version
+				with open(os.path.join(outpath, outfile), "wb") as fp:
+					json.dump(overview, fp, indent=4)
+
+				# Write the JSONP version
+				with open(os.path.join(outpath, outfile+'p'), "wb") as fp:
+					fp.write('jsonpReceiveContent(')
+					json.dump({'ntiid': overview['NTIID'],
+							   'Content-Type': 'application/json',
+							   'Content-Encoding': 'json',
+							   'content': overview,
+							   'version': '1'}, fp, indent=4)
+					fp.write(');')
+
+				toc_el.setAttribute( 'src', outfile)
 
 		return toc_el
 
