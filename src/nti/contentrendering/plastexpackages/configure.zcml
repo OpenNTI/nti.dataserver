@@ -25,6 +25,26 @@
 		<implements interface="nti.contentrendering.resources.interfaces.IRepresentationPreferences" />
 	</class>
 
+	<adapter factory=".adapters._CourseLessonJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courselesson"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._CourseLessonJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courselessonsection"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._CourseLessonJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courselessonsubsection"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._CourseLessonJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courselessonsubsubsection"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._CourseOverviewGroupJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courseoverviewgroup"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
 	<adapter factory=".adapters._RelatedWorkRefJSONTransformer"
 			 for="nti.contentrendering.plastexpackages.ntilatexmacros.relatedworkref"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />

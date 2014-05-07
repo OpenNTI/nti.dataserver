@@ -37,7 +37,6 @@ class _RelatedWorkRefJSONTransformer(object):
 		output['visibility'] = self.el.visibility
 		return output
 
-
 @interface.implementer(crd_interfaces.IJSONTransformer)
 class _DiscussionRefJSONTransformer(object):
 
@@ -69,7 +68,6 @@ class _NTIVideoRefJSONTransformer(object):
 		output['visibility'] = self.el.visibility
 		return output
 
-
 @interface.implementer(crd_interfaces.IJSONTransformer)
 class _NTIAudioRefJSONTransformer(object):
 
@@ -84,4 +82,40 @@ class _NTIAudioRefJSONTransformer(object):
 		output['visibility'] = self.el.visibility
 		return output
 
+@interface.implementer(crd_interfaces.IJSONTransformer)
+class _CourseLessonJSONTransformer(object):
+
+	def __init__(self, element):
+		self.el = element
+
+	def transform(self):
+		output = {}
+		output['NTIID'] = self.el.ntiid
+		output['MimeType'] = "application/vnd.nextthought.ntilessonoverview"
+		output['title'] = unicode(''.join(render_children( self.el.renderer, self.el.title )))
+		output['Items'] = items = []
+		group_els = self.el.getElementsByTagName('courseoverviewgroup')
+		for group_el in group_els:
+			trx = crd_interfaces.IJSONTransformer(group_el, None)
+			if trx is not None:
+				items.append(trx.transform())
+		return output
+
+@interface.implementer(crd_interfaces.IJSONTransformer)
+class _CourseOverviewGroupJSONTransformer(object):
+
+	def __init__(self, element):
+		self.el = element
+
+	def transform(self):
+		output = {}
+		output['MimeType'] =  self.el.mime_type
+		output['title'] = unicode(''.join(render_children( self.el.renderer, self.el.title )))
+		output['accentColor'] = unicode(''.join(render_children( self.el.renderer, self.el.title_background_color )))
+		output['Items'] = items = []
+		for child in self.el.childNodes:
+			trx = crd_interfaces.IJSONTransformer(child, None)
+			if trx is not None:
+				items.append(trx.transform())
+		return output
 
