@@ -179,16 +179,14 @@
 												 tal:condition="options/grade"
 												 tal:define="notable options/grade">
 												<span style="margin: 0 2px 0 0;">
-													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
-														 alt="David Sabatini"
-														 title="David Sabatini"
+													<img src="http://d2ixlfeu83tci.cloudfront.net/images/assignment_ontime_45x45.png"
+														 alt="Grade"
+														 title="Grade"
 														 width="45" height="45"
-														 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
-														 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
-														 />
+														 style="display: inline;vertical-align:top;float:left;margin-right:2px;" />
 												</span>
 
-												<strong tal:content="notable/creator">David Foster</strong> assigned a grade to your assignment. <br />
+												You received a grade. <br />
 												<a style="color: #3fb3f6;" href="" tal:attributes="href notable/href" tal:content="notable/assignment_name|notable/course/display_name|default">a course</a>.
 
 											</div>
