@@ -45,20 +45,20 @@
 			 for="nti.contentrendering.plastexpackages.nticourse.courseoverviewgroup"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
-	<adapter factory=".adapters._RelatedWorkRefJSONTransformer"
-			 for="nti.contentrendering.plastexpackages.ntilatexmacros.relatedworkref"
-			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
-
 	<adapter factory=".adapters._DiscussionRefJSONTransformer"
 			 for="nti.contentrendering.plastexpackages.ntilatexmacros.ntidiscussionref"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._NTIAudioRefJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.ntilatexmacros.ntiaudioref"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
 	<adapter factory=".adapters._NTIVideoRefJSONTransformer"
 			 for="nti.contentrendering.plastexpackages.ntilatexmacros.ntivideoref"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
-	<adapter factory=".adapters._NTIAudioRefJSONTransformer"
-			 for="nti.contentrendering.plastexpackages.ntilatexmacros.ntiaudioref"
+	<adapter factory=".adapters._RelatedWorkRefJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.ntilatexmacros.relatedworkref"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
 </configure>
