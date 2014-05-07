@@ -162,8 +162,7 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		# beneath NTIIDs instead of beneath Pages(NTIID)...which doesn't have
 		# these views registered.
 		path = request.path
-		if not path.endswith('/'):
-			path = path + '/'
+
 		links.append( Link( path,
 							rel='lastViewed',
 							elements=('lastViewed',),

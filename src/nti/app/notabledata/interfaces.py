@@ -36,6 +36,15 @@ class IUserNotableData(IIterable):
 
 	* Top-level comments in blog entries I create;
 
+	* Top-level comments in forum discussions (topics) I create;
+
+	Excluded objects include:
+
+	* Those objects (or descendents of those objects, in some cases) specifically
+	  marked non-notable;
+
+	* In the future, muted conversations may also be excluded;
+
 	Iterating across this object iterates the notable objects that are
 	safely viewable (pass permission checks) by the user.
 	"""
@@ -92,7 +101,15 @@ class IUserNotableData(IIterable):
 		notable set for this user, returning a truthy-value.
 		"""
 
-	# TODO: Arguably this should be a separate interface we adapt to or extend
+	def object_is_not_notable(maybe_notable):
+		""""
+		Given some object, attempt to record that whatever its notability
+		status is it should no longer be considered notable. For example,
+		to declare that comments in a created topic should not be notable,
+		pass the topic.
+		"""
+
+	# TODO: Arguably this should be a separate interface we adapt to or extend?
 	lastViewed = Number(title="The timestamp the user last viewed this data",
 						description="This is not set implicitly, but should be set explicitly"
 						" by user action. 0 if never set.",
