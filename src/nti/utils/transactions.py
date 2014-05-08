@@ -399,15 +399,33 @@ class TransactionLoop(object):
 				logger.log( TRACE, "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception as e:
+				orig_excinfo = sys.exc_info()
 				try:
 					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
 					logger.debug("Transaction aborted; %s", e)
-				except AttributeError:
+				except (AttributeError,ValueError):
 					# We've seen RelStorage do this:
 					# relstorage.cache:427 in after_poll: AttributeError: 'int' object has no attribute 'split' which looks like
 					# an issue with how it stores checkpoints in memcache.
 					# We have no idea what state it's in after that, so we should
-					# abort
+					# abort.
+
+					# We've seen repoze.sendmail do this:
+					# repoze.sendmail.delivery:119 in abort: ValueError "TPC in progress"
+					# This appears to happen due to some other component raising an exception
+					# after the call to commit has begun, and some exception slips through
+					# such that, instead of calling `tpc_abort`, the stack unwinds.
+					# The sendmail object appears to have been `tpc_begin`, but not
+					# `tpc_vote`.
+					# Again, no idea what state things are in, so abort with prejudice.
+					try: # pragma: no cover
+						from zope.exceptions.exceptionformatter import format_exception
+						fmt = format_exception(*orig_excinfo)
+						logger.warning("Failed to commit transaction. Original exception:\n%s", fmt)
+					except: #pylint:disable=I0011,W0702
+						pass
+					finally:
+						del orig_excinfo
 					self.__free(tx); del tx
 					exc_info = sys.exc_info()
 					raise StorageError, exc_info[1], exc_info[2]
