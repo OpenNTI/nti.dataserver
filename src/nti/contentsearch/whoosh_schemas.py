@@ -156,7 +156,7 @@ def create_audio_transcript_schema():
 	Audio transcript schema
 
 	containerId: NTIID of the audio location
-	videoId: Audio NTIID or custom identifier
+	audioId: Audio NTIID or custom identifier
 	title: Audio title
 	content: transcript text
 	quick: transcript text ngrams
@@ -165,7 +165,7 @@ def create_audio_transcript_schema():
 	end_timestamp: End video timestamp
 	"""
 	sch = fields.Schema(containerId=fields.ID(stored=True, unique=False),
-						videoId=fields.ID(stored=True, unique=False),
+						audioId=fields.ID(stored=True, unique=False),
 						language=fields.ID(stored=True, unique=False),
 						title=create_content_field(stored=True),
 					 	content=create_content_field(stored=True),

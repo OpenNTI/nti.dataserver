@@ -371,29 +371,28 @@ class IWhooshBookContent(IBookContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=True)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
-class IVideoTranscriptContent(IBaseContent):
+class IMediaTranscriptContent(IBaseContent):
 	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
-	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
 	content = nti_schema.ValidText(title="Text content", required=True)
 	title = nti_schema.ValidText(title="Video title", required=False)
 	start_millisecs = schema.Float(title="Start timestamp", required=True)
 	end_millisecs = schema.Float(title="End timestamp", required=True)
 
-class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshContent):
+class IWhooshMediaTranscriptContent(IMediaTranscriptContent, IWhooshContent):
 	docnum = schema.Int(title="Document number", required=False)
 	score = nti_schema.Number(title="Search score", required=False, default=1.0)
 
-class IAudioTranscriptContent(IBaseContent):
-	containerId = nti_schema.ValidTextLine(title="NTIID of audio container", required=True)
-	videoId = nti_schema.ValidTextLine(title="Either the audio NTIID or Id", required=True)
-	content = nti_schema.ValidText(title="Text content", required=True)
-	title = nti_schema.ValidText(title="Audio title", required=False)
-	start_millisecs = schema.Float(title="Start timestamp", required=True)
-	end_millisecs = schema.Float(title="End timestamp", required=True)
+class IVideoTranscriptContent(IMediaTranscriptContent):
+	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
 
-class IWhooshAudioTranscriptContent(IAudioTranscriptContent, IWhooshContent):
-	docnum = schema.Int(title="Document number", required=False)
-	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshMediaTranscriptContent):
+	pass
+
+class IAudioTranscriptContent(IMediaTranscriptContent):
+	audioId = nti_schema.ValidTextLine(title="Either the audio NTIID or Id", required=True)
+
+class IWhooshAudioTranscriptContent(IAudioTranscriptContent, IWhooshMediaTranscriptContent):
+	pass
 
 class INTICardContent(IBaseContent):
 	href = nti_schema.ValidTextLine(title="card href", required=False)
@@ -672,13 +671,24 @@ class IBookSearchHit(IContentSearchHit):
 class IWhooshBookSearchHit(IBookSearchHit):
 	pass
 
-class IVideoTranscriptSearchHit(IContentSearchHit):
+class IMediaTranscriptSearchHit(IContentSearchHit):
 	Title = nti_schema.ValidTextLine(title="Card title", required=False)
-	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
 	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=False)
 	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=False)
 
-class IWhooshVideoTranscriptSearchHit(IVideoTranscriptSearchHit):
+class IWhooshMediaTranscriptSearchHit(IMediaTranscriptSearchHit):
+	pass
+
+class IAudioTranscriptSearchHit(IMediaTranscriptSearchHit):
+	AudioID = nti_schema.ValidTextLine(title="Audio NTIID", required=True)
+
+class IWhooshAudioTranscriptSearchHit(IWhooshMediaTranscriptSearchHit, IAudioTranscriptSearchHit):
+	pass
+
+class IVideoTranscriptSearchHit(IMediaTranscriptSearchHit):
+	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
+
+class IWhooshVideoTranscriptSearchHit(IWhooshMediaTranscriptSearchHit, IVideoTranscriptSearchHit):
 	pass
 
 class INTICardSearchHit(IContentSearchHit):

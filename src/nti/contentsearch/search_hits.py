@@ -36,6 +36,7 @@ from . import interfaces as search_interfaces
 
 from .constants import (HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE,
 						VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE,
+						AUDIO_TRANSCRIPT, AUDIO_TRANSCRIPT_MIME_TYPE,
 						NTI_CARD_MIME_TYPE, FORUM)
 
 def get_search_hit(obj, score=1.0, query=None):
@@ -253,34 +254,71 @@ class WhooshBookSearchHit(BaseSearchHit):
 	def get_oid(cls, hit):
 		return unicode(hit.ntiid) if hit is not None else None
 
-@component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
-@interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
-class WhooshVideoTranscriptSearchHit(BaseSearchHit):
+class WhooshMediaTranscriptSearchHit(BaseSearchHit):
 
-	VideoID = EndMilliSecs = StartMilliSecs = Title = None
+	TRANSCRIPT_TYPE = None
+	TRANSCRIPT_MIME_TYPE = None
+	EndMilliSecs = StartMilliSecs = Title = None
 
 	content = alias('Snippet')
 
 	def __init__(self, hit=None):
-		super(WhooshVideoTranscriptSearchHit, self).__init__(hit, oid=self.get_oid(hit))
+		super(WhooshMediaTranscriptSearchHit, self).__init__(hit, oid=self.get_oid(hit))
 
 	def set_hit_info(self, hit, score):
-		super(WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
-		self.Type = VIDEO_TRANSCRIPT
+		super(WhooshMediaTranscriptSearchHit, self).set_hit_info(hit, score)
 		self.Title = hit.title
-		self.NTIID = hit.videoId
 		self.Snippet = hit.content
-		self.VideoID = hit.videoId
+		self.Type = self.TRANSCRIPT_TYPE
 		self.ContainerId = hit.containerId
 		self.lastModified = hit.lastModified
 		self.EndMilliSecs = hit.end_millisecs
 		self.StartMilliSecs = hit.start_millisecs
-		self.TargetMimeType = VIDEO_TRANSCRIPT_MIME_TYPE
+		self.TargetMimeType = self.TRANSCRIPT_MIME_TYPE
+
+@component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
+@interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
+class WhooshVideoTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
+
+	VideoID = None
+	TRANSCRIPT_TYPE = VIDEO_TRANSCRIPT
+	TRANSCRIPT_MIME_TYPE = VIDEO_TRANSCRIPT_MIME_TYPE
+
+	def __init__(self, hit=None):
+		super(WhooshVideoTranscriptSearchHit, self).__init__(hit)
+
+	def set_hit_info(self, hit, score):
+		super(WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
+		self.VideoID = self.NTIID = hit.videoId
 
 	@classmethod
 	def get_oid(cls, hit):
 		if hit is not None:
 			result = (unicode(hit.docnum), u'-', unicode(hit.videoId))
+			result = unicode(''.join(result))
+		else:
+			result = None
+		return result
+
+@component.adapter(search_interfaces.IWhooshAudioTranscriptContent)
+@interface.implementer(search_interfaces.IWhooshAudioTranscriptSearchHit)
+class WhooshAudioTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
+
+	AudioID = None
+	TRANSCRIPT_TYPE = AUDIO_TRANSCRIPT
+	TRANSCRIPT_MIME_TYPE = AUDIO_TRANSCRIPT_MIME_TYPE
+
+	def __init__(self, hit=None):
+		super(WhooshAudioTranscriptSearchHit, self).__init__(hit)
+
+	def set_hit_info(self, hit, score):
+		super(WhooshVideoTranscriptSearchHit, self).set_hit_info(hit, score)
+		self.AudioID = self.NTIID = hit.audioId
+
+	@classmethod
+	def get_oid(cls, hit):
+		if hit is not None:
+			result = (unicode(hit.docnum), u'-', unicode(hit.audioId))
 			result = unicode(''.join(result))
 		else:
 			result = None
