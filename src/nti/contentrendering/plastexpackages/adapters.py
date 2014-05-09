@@ -53,6 +53,17 @@ class _CourseOverviewGroupJSONTransformer(object):
 		return output
 
 @interface.implementer(crd_interfaces.IJSONTransformer)
+class _CourseOverviewSpacerJSONTransformer(object):
+
+	def __init__(self, element):
+		self.el = element
+
+	def transform(self):
+		output = {}
+		output['MimeType'] =  self.el.mime_type
+		return output
+
+@interface.implementer(crd_interfaces.IJSONTransformer)
 class _DiscussionRefJSONTransformer(object):
 
 	def __init__(self, element):

@@ -45,6 +45,10 @@
 			 for="nti.contentrendering.plastexpackages.nticourse.courseoverviewgroup"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
+	<adapter factory=".adapters._CourseOverviewSpacerJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.nticourse.courseoverviewspacer"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
 	<adapter factory=".adapters._DiscussionRefJSONTransformer"
 			 for="nti.contentrendering.plastexpackages.ntilatexmacros.ntidiscussionref"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
