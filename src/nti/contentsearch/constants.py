@@ -36,6 +36,7 @@ SUGGESTIONS		 = u'Suggestions'
 SEARCH_QUERY	 = u'SearchQuery'
 FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
+AUDIO_TRANSCRIPT = u'AudioTranscript'
 VIDEO_TRANSCRIPT = u'VideoTranscript'
 CREATOR 		 = unicode(ext_interfaces.StandardExternalFields.CREATOR)
 AUTO_TAGS		 = u'AutoTags'

@@ -69,6 +69,10 @@
 			 for=".interfaces.IWhooshBookContent"
 			 provides=".interfaces.IWhooshBookSearchHit" />
 
+	<adapter factory=".search_hits.WhooshAudioTranscriptSearchHit"
+			 for=".interfaces.IWhooshAudioTranscriptContent"
+			 provides=".interfaces.IWhooshAudioTranscriptSearchHit" />
+			 
 	<adapter factory=".search_hits.WhooshVideoTranscriptSearchHit"
 			 for=".interfaces.IWhooshVideoTranscriptContent"
 			 provides=".interfaces.IWhooshVideoTranscriptSearchHit" />
