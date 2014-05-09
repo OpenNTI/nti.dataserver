@@ -317,6 +317,9 @@ class courseoverviewgroup(Environment):
 
 			self.parentNode.title_background_color = self.attributes.get('color')
 
+class courseoverviewspacer(Command):
+	mime_type = "application/vnd.nextthought.nticourseoverviewspacer"
+
 def ProcessOptions( options, document ):
 	for counter_cls in (course, courseinfo, courseunit, coursepart, courselesson, courselessonsection,
 						courselessonsubsection, courselessonsubsubsection, courseoverviewgroup):
