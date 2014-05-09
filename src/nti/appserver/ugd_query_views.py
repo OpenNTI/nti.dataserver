@@ -3,12 +3,10 @@
 """
 Views for querying user generated data.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-from . import MessageFactory as _
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -999,12 +997,12 @@ class _RecursiveUGDView(_UGDView):
 			readable = True
 			current = obj.object
 			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
-				readable = is_readable(current)
-				if not readable:
-					return False
 				try:
-					current = getattr(current, '__parent__', None) # Avoid asking unless we need it
-				except KeyError: # broken object
+					readable = is_readable(current)
+					if not readable:
+						return False
+					current = getattr(current, '__parent__', None)  # Avoid asking unless we need it
+				except KeyError:  # broken object
 					logger.exception("Broken object, stopping ACL traversal %r", current)
 					return False
 		return True
