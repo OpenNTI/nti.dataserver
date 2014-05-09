@@ -964,7 +964,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 	_ntiid_cache_map_name = '_relatedworkref_ntiid_map'
 	_ntiid_allow_missing_title = False
 	_ntiid_suffix = 'relatedworkref.'
-	_ntiid_title_attr_name = 'ref' # Use our counter to generate IDs if no ID is given
+	_ntiid_title_attr_name = 'label'
 	_ntiid_type = 'RelatedWorkRef'
 
 	#: From IEmbeddedContainer
@@ -976,6 +976,7 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		tok = super(relatedworkref, self).digest(tokens)
 
 		self._options = self.attributes.get( 'options', {} ) or {}
+		self.label = self.attributes.get('label')
 
 		self._uri = self.attributes['uri']
 		if hasattr(self._uri, 'source'):
