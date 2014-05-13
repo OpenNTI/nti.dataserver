@@ -19,6 +19,7 @@ from zope import component
 from nti.contentrendering import interfaces as cr_interfaces
 
 _type_map = { 'book': cr_interfaces.IBookIndexer,
+			  'audio': cr_interfaces.IAudioTranscriptIndexer,
 			  'video': cr_interfaces.IVideoTranscriptIndexer,
 			  'nticard': cr_interfaces.INTICardIndexer }
 
@@ -38,6 +39,11 @@ class BookIndexer(object):
 class NTICardIndexer(object):
 	def transform(self, book, name=''):
 		transform(book, cr_interfaces.INTICardIndexer, name=name)
+
+@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+class AudioTrancriptIndexer(object):
+	def transform(self, book, name=''):
+		transform(book, cr_interfaces.IAudioTranscriptIndexer, name=name)
 
 @interface.implementer(cr_interfaces.IRenderedBookIndexer)
 class VideoTrancriptIndexer(object):
