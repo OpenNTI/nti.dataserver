@@ -283,18 +283,17 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, toc_media={}):
-		media = set()
+		result = set()
 		containerId = unicode(topic.ntiid) or u''
 
 		for n in topic.dom(b'object'):
 			nti_mids = self._process_ntimedia(topic, n)
 			if nti_mids:
-				media.update(nti_mids)
+				result.update(nti_mids)
 
-		for media in media:
+		for media in result:
 			media.containerId = toc_media.get(media.ntiid, containerId)
-		return media
-
+		return result
 
 	def _process_media_source(self, media):
 		result = []
