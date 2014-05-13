@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 video transcript parsers.
@@ -70,15 +71,15 @@ class _YoutubeVideoTranscriptParser(_BaseTranscriptParser):
 class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
-		source = self.fix_source(source)
+		entries = []
 		eid = trange = text = None
-		result = VideoTranscript()
+		source = self.fix_source(source)
 		while True:
 			line = source.readline()
 			if not line or not line.strip():
 				if range and text:
 					e = self.create_transcript_entry(text, trange, eid)
-					result.entries.append(e)
+					entries.append(e)
 				eid = trange = text = None
 				if not line:
 					break
@@ -91,22 +92,23 @@ class _SRTVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 				else:
 					text = [] if text is None else text
 					text.append(line)
+		result = VideoTranscript(entries=entries)
 		return result
 
 @interface.implementer(media_interfaces.ISBVVideoTranscriptParser)
 class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 
 	def parse(self, source):
-		source = self.fix_source(source)
+		entries = []
 		trange = text = None
-		result = VideoTranscript()
+		source = self.fix_source(source)
 		while True:
 			line = source.readline()
 			if not line or not line.strip():
 				if range and text:
-					eid = unicode(len(result) + 1)
+					eid = unicode(len(entries) + 1)
 					e = self.create_transcript_entry(text, trange, eid)
-					result.entries.append(e)
+					entries.append(e)
 				trange = text = None
 				if not line:
 					break
@@ -117,6 +119,7 @@ class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 				else:
 					text = [] if text is None else text
 					text.append(line)
+		result = VideoTranscript(entries=entries)
 		return result
 
 
@@ -124,16 +127,18 @@ class _SBVVideoTranscriptParser(_YoutubeVideoTranscriptParser):
 class _WebVttTranscriptParser(_BaseTranscriptParser):
 
 	def parse(self, source):
-		result = VideoTranscript()
+		entries = []
 		source = self.fix_source(source)
 		parser = web_vtt.WebVTTParser()
 		parsed = parser.parse(source)
 		cues = parsed.get('cues', [])
 		for eid, cue in enumerate(cues):
-			if cue.has_errors or not cue.end_timestamp or not cue.start_timestamp: continue
+			if cue.has_errors or not cue.end_timestamp or not cue.start_timestamp:
+				continue
 			e = VideoTranscriptEntry(id=unicode(eid + 1),
 									 transcript=unicode(cue.text),
 									 start_timestamp=cue.start_timestamp,
 									 end_timestamp=cue.end_timestamp)
-			result.entries.append(e)
+			entries.append(e)
+		result = VideoTranscript(entries=entries)
 		return result
