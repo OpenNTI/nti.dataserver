@@ -321,6 +321,7 @@ class DigestEmailCollector(object):
 
 		notes = list()
 		comments = list()
+		instructor_comments = list()
 		topics = list()
 		circled = list()
 		grade = list()
@@ -336,7 +337,11 @@ class DigestEmailCollector(object):
 			if INote.providedBy(o):
 				notes.append(o)
 			elif ICommentPost.providedBy(o):
-				comments.append(o)
+				# Either this is a reply to us or an instructor created a top-level comment.
+				if o.__parent__.creator and o.__parent__.creator.username == self.remoteUser.username:
+					comments.append(o)
+				else:
+					instructor_comments.append( o )
 			elif ITopic.providedBy(o):
 				topics.append(o)
 			elif IStreamChangeEvent.providedBy(o):
@@ -352,12 +357,14 @@ class DigestEmailCollector(object):
 
 		# Comments has multiple mime types, as does topics
 		comments.sort(reverse=True,key=lambda x: x.createdTime)
+		instructor_comments.sort(reverse=True,key=lambda x: x.createdTime)
 		topics.sort(reverse=True,key=lambda x: x.createdTime)
 
 		result = dict()
 		for k, values in (('discussion', topics),
 						  ('note', notes),
 						  ('comment', comments),
+						  ('instructor_comment', instructor_comments),
 						  ('feedback', feedback),
 						  ('circled', circled),
 						  ('grade', grade),
