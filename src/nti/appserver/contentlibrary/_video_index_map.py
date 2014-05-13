@@ -20,22 +20,15 @@ from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from . import CommonIndexMap
 from . import interfaces as app_interfaces
 
 @interface.implementer(app_interfaces.IVideoIndexMap)
-class VideoIndexMap(dict):
-
-	def __init__(self):
-		super(VideoIndexMap, self).__init__()
-		self.by_container = {}  # {ntiid => [video id]}
-
-	def clear(self):
-		super(VideoIndexMap, self).clear()
-		self.by_container.clear()
+class VideoIndexMap(CommonIndexMap):
+	pass
 
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectAddedEvent)
 def add_video_items_from_new_content(content_package, event):
-	#### from IPython.core.debugger import Tracer; Tracer()()  ####
 	video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
 	if video_map is None:  # pragma: no cover
 		return
