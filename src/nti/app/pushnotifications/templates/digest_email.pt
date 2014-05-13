@@ -130,8 +130,8 @@
 
 											</div>
 											<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
-												 tal:condition="options/instructor_comment"
-												 tal:define="notable options/instructor_comment">
+												 tal:condition="options/top_level_comment"
+												 tal:define="notable options/top_level_comment">
 												<span style="margin: 0 2px 0 0;">
 													<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
 														 alt="David Sabatini"
