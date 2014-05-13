@@ -7,8 +7,12 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
+	<utility factory=".audio_transcript_parsers._SRTTranscriptParser" name="srt" />
+	<utility factory=".audio_transcript_parsers._SBVTranscriptParser" name="sbv" />
+	<utility factory=".audio_transcript_parsers._WebVttTranscriptParser" name="vtt" />
+		
+	<utility factory=".video_transcript_parsers._SRTTranscriptParser" name="srt" />
+	<utility factory=".video_transcript_parsers._SBVTranscriptParser" name="sbv" />
 	<utility factory=".video_transcript_parsers._WebVttTranscriptParser" name="vtt" />
-	<utility factory=".video_transcript_parsers._SRTVideoTranscriptParser" name="srt" />
-	<utility factory=".video_transcript_parsers._SBVVideoTranscriptParser" name="sbv" />
-	
+		
 </configure>

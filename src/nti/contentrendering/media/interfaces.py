@@ -73,12 +73,3 @@ class IVideoTranscriptParser(IMediaTranscriptParser):
 	"""
 	Marker interface for video transcript parsers
 	"""
-
-class ISRTVideoTranscriptParser(IVideoTranscriptParser):
-	pass
-
-class ISBVVideoTranscriptParser(IVideoTranscriptParser):
-	pass
-
-class IWebVttTranscriptParser(IVideoTranscriptParser):
-	pass
