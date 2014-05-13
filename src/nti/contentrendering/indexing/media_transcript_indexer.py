@@ -323,7 +323,7 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 		if idxspec:
 			dom = idxspec.book.toc.dom
 			topic_map = self._get_topic_map(dom)
-			toc_media = self._find_toc_media(topic_map)
+			toc_media = self._find_media_in_toc(topic_map)
 		else:
 			toc_media = {}
 
