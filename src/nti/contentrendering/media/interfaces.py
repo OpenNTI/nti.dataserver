@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 .. $Id$
@@ -11,35 +12,67 @@ from zope.interface.common.sequence import IMinimalSequence
 
 from nti.utils import schema as nti_schema
 
-class IVideoTranscriptEntry(interface.Interface):
+class IMediaTranscriptEntry(interface.Interface):
 	"""
 	Marker interface for video transcript entry
 	"""
-	id = nti_schema.ValidTextLine(title='Transcript entry id', required=False)
 	transcript = nti_schema.ValidText(title='Transcript text')
-	start_timestamp = nti_schema.ValidTextLine(title='Start time stamp')
 	end_timestamp = nti_schema.ValidTextLine(title='End time stamp')
-	language = nti_schema.ValidTextLine(title='Transcript language', required=False, default='en')
+	start_timestamp = nti_schema.ValidTextLine(title='Start time stamp')
+	id = nti_schema.ValidTextLine(title='Transcript entry id', required=False)
+	language = nti_schema.ValidTextLine(title='Transcript language', required=False,
+										default='en')
 
-class IVideoTranscript(IMinimalSequence):
+class IAudioTranscriptEntry(IMediaTranscriptEntry):
+	pass
+
+class IVideoTranscriptEntry(IMediaTranscriptEntry):
+	pass
+
+class IMediaTranscript(IMinimalSequence):
+	"""
+	Marker interface for media transcript
+	"""
+	entries = nti_schema.ListOrTuple(schema.Object(IMediaTranscriptEntry, title='the entry'),
+						  			 title='Ordered transcript entries')
+
+class IAudioTranscript(IMediaTranscript):
+	"""
+	Marker interface for audio transcript
+	"""
+	entries = nti_schema.ListOrTuple(schema.Object(IAudioTranscriptEntry, title='the entry'),
+						  			 title='Ordered transcript entries')
+
+class IVideoTranscript(IMediaTranscript):
 	"""
 	Marker interface for video transcript
 	"""
 	entries = nti_schema.ListOrTuple(schema.Object(IVideoTranscriptEntry, title='the entry'),
-						  			 title='Order transcript entries')
+						  			 title='Ordered transcript entries')
 
-class IVideoTranscriptParser(interface.Interface):
+
+class IMediaTranscriptParser(interface.Interface):
 	"""
-	Marker interface for video transcript parsers
+	Marker interface for audio transcript parsers
 	"""
 
 	def parse(source):
 		"""
 		Parse the specified source
 		
-		:param source: Video transcript source
-		:return a IVideoTranscript object
+		:param source: Media transcript source
+		:return a IMediaTranscript object
 		"""
+
+class IAudioTranscriptParser(IMediaTranscriptParser):
+	"""
+	Marker interface for audio transcript parsers
+	"""
+
+class IVideoTranscriptParser(IMediaTranscriptParser):
+	"""
+	Marker interface for video transcript parsers
+	"""
 
 class ISRTVideoTranscriptParser(IVideoTranscriptParser):
 	pass

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Book indexing interfaces
@@ -48,7 +49,14 @@ class IWhooshBookIndexer(IWhooshContentIndexer, cr_interfaces.IBookIndexer):
 		:param lang: Node text language
 		"""
 
-class IWhooshVideoTranscriptIndexer(IWhooshContentIndexer,
+class IWhooshMediaTranscriptIndexer(IWhooshContentIndexer):
+	pass
+
+class IWhooshAudioTranscriptIndexer(IWhooshMediaTranscriptIndexer,
+									cr_interfaces.IAudioTranscriptIndexer):
+	pass
+
+class IWhooshVideoTranscriptIndexer(IWhooshMediaTranscriptIndexer,
 									cr_interfaces.IVideoTranscriptIndexer):
 	pass
 

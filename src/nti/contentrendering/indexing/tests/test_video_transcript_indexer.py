@@ -19,9 +19,9 @@ import tempfile
 
 from whoosh.query import Term
 
-from ..video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
+from nti.contentrendering.indexing.video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
 
-from ...RenderedBook import _EclipseTOCMiniDomTopic
+from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
 
 from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 
@@ -44,7 +44,7 @@ class TestWhooshVideoTranscriptIndexer(NonDevmodeContentrenderingLayerTest):
 		idx = indexer.create_index(self.idxdir, indexname)
 		writer = idx.writer(optimize=False, merge=False)
 		videos = indexer.process_topic(None, node, writer)
-		count = indexer._parse_and_index_videos(videos, writer)
+		count = indexer._parse_and_index_media(videos, writer)
 		writer.commit(optimize=False, merge=False)
 		return idx, count
 

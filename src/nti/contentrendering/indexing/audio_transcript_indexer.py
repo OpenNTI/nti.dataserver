@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Whoosh video transcript indexer.
+Whoosh audio transcript indexer.
 
 .. $Id$
 """
@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.contentsearch.constants import vtrans_prefix
+from nti.contentsearch.constants import atrans_prefix
 from nti.contentsearch import interfaces as search_interfaces
 from nti.contentsearch.common import videotimestamp_to_datetime
 
@@ -22,31 +22,24 @@ from ..media import interfaces as media_interfaces
 from .media_transcript_indexer import _Media
 from .media_transcript_indexer import _WhooshMediaTranscriptIndexer
 
-class _Video(_Media):
+class _Audio(_Media):
+	pass
 
-	@property
-	def video_path(self):
-		return self.path
+@interface.implementer(cridxr_interfaces.IWhooshAudioTranscriptIndexer)
+class _WhooshAudioTranscriptIndexer(_WhooshMediaTranscriptIndexer):
 
-	@property
-	def video_ntiid(self):
-		return self.ntiid
-
-@interface.implementer(cridxr_interfaces.IWhooshVideoTranscriptIndexer)
-class _WhooshVideoTranscriptIndexer(_WhooshMediaTranscriptIndexer):
-
-	media_cls = _Video
-	media_prefix = vtrans_prefix
-	media_mimeType = u'application/vnd.nextthought.ntivideo'
-	media_source_types = (u'application/vnd.nextthought.videosource',)
-	media_transcript_parser_interface = media_interfaces.IVideoTranscriptParser
-	media_transcript_schema_creator = search_interfaces.IWhooshVideoTranscriptSchemaCreator
+	media_cls = _Audio
+	media_prefix = atrans_prefix
+	media_mimeType = u'application/vnd.nextthought.ntiaudio'
+	media_source_types = (u'application/vnd.nextthought.audiosource',)
+	media_transcript_parser_interface = media_interfaces.IAudioTranscriptParser
+	media_transcript_schema_creator = search_interfaces.IWhooshAudioTranscriptSchemaCreator
 
 	def _add_document(self, writer, containerId, media_id, language, title, content,
 					  keywords, last_modified, start_ts, end_ts):
 
 		writer.add_document(containerId=containerId,
-							videoId=media_id,
+							audioId=media_id,
 							language=language,
 							title=title,
 							content=content,
@@ -56,4 +49,4 @@ class _WhooshVideoTranscriptIndexer(_WhooshMediaTranscriptIndexer):
 							end_timestamp=videotimestamp_to_datetime(end_ts),
 							start_timestamp=videotimestamp_to_datetime(start_ts))
 
-_DefaultWhooshVideoTranscriptIndexer = _WhooshVideoTranscriptIndexer
+_DefaultWhooshAudioTranscriptIndexer = _WhooshAudioTranscriptIndexer

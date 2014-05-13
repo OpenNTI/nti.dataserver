@@ -6,9 +6,6 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-# disable "super on old-style class for Components, it is new-style"
-# pylint: disable=E1002
-
 from zope import schema
 from zope import interface
 
@@ -160,6 +157,7 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 # Embedded subcontainers
 ####
 from zope.mimetype.interfaces import IContentTypeAware
+
 class IEmbeddedContainer(IContentTypeAware):
 	"""
 	Intended to be implemented (or adapted from) nodes in the plasTeX
@@ -207,7 +205,17 @@ class IBookIndexer(IContentIndexer):
 	Creates an index of the content inside a given book
 	"""
 
-class IVideoTranscriptIndexer(IContentIndexer):
+class IMediaTranscriptIndexer(IContentIndexer):
+	"""
+	Creates an index for the media transcripts associated with a given book
+	"""
+
+class IAudioTranscriptIndexer(IMediaTranscriptIndexer):
+	"""
+	Creates an index for the audio transcripts associated with a given book
+	"""
+
+class IVideoTranscriptIndexer(IMediaTranscriptIndexer):
 	"""
 	Creates an index for the video transcripts associated with a given book
 	"""
@@ -249,11 +257,6 @@ class IDiscussionExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and extracts discussions.
 	"""
 
-#class IHackExtractor(IRenderedBookExtractor):
-#	"""
-#	Looks through the rendered book and injects hacks.
-#	"""
-
 class ISlideDeckExtractor(IRenderedBookExtractor):
 	"""
 	Looks through the rendered book and extracts slide decks.
@@ -290,24 +293,40 @@ class JobComponents(registry.Components):
 	def queryUtility(self, provided, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents, self).queryUtility(provided, self._jobname, default=default)
+			result = super(JobComponents, self).queryUtility(provided,
+															 self._jobname,
+															 default=default)
 			if result is not default:
 				return result
 
-		return super(JobComponents, self).queryUtility(provided, name=name, default=default)
+		return super(JobComponents, self).queryUtility(provided,
+													   name=name,
+													   default=default)
 
 	def queryAdapter(self, obj, interface, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents, self).queryAdapter(obj, interface, name=self._jobname, default=default)
+			result = super(JobComponents, self).queryAdapter(obj,
+															 interface,
+															 name=self._jobname,
+															 default=default)
 			if result is not default:
 				return result
-		return super(JobComponents, self).queryAdapter(obj, interface, name=name, default=default)
+		return super(JobComponents, self).queryAdapter(obj,
+													   interface,
+													   name=name,
+													   default=default)
 
 	def queryMultiAdapter(self, objects, interface, name='', default=None):
 		result = default
 		if name == '':
-			result = super(JobComponents, self).queryMultiAdapter(objects, interface, name=self._jobname, default=default)
+			result = super(JobComponents, self).queryMultiAdapter(objects,
+																  interface,
+																  name=self._jobname,
+																  default=default)
 			if result is not default:
 				return result
-		return super(JobComponents, self).queryMultiAdapter(objects, interface, name=name, default=default)
+		return super(JobComponents, self).queryMultiAdapter(objects,
+															interface,
+															name=name,
+															default=default)

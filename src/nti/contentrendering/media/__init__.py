@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-video transcript parsers.
+media transcript parsers.
 
 .. $Id$
 """
@@ -16,9 +17,9 @@ from nti.utils.schema import createDirectFieldProperties
 
 from . import interfaces as media_interfaces
 
-@interface.implementer(media_interfaces.IVideoTranscriptEntry)
-class VideoTranscriptEntry(SchemaConfigured):
-	createDirectFieldProperties(media_interfaces.IVideoTranscriptEntry)
+@interface.implementer(media_interfaces.IMediaTranscriptEntry)
+class MediaTranscriptEntry(SchemaConfigured):
+	createDirectFieldProperties(media_interfaces.IMediaTranscriptEntry)
 
 	def __str__(self):
 		return "%s,%s,%s" % (self.id, self.start_timestamp, self.end_timestamp)
@@ -30,11 +31,17 @@ class VideoTranscriptEntry(SchemaConfigured):
 									 self.end_timestamp,
 									 self.transcript)
 
-@interface.implementer(media_interfaces.IVideoTranscript)
-class VideoTranscript(object):
+@interface.implementer(media_interfaces.IAudioTranscriptEntry)
+class AudioTranscriptEntry(MediaTranscriptEntry):
+	createDirectFieldProperties(media_interfaces.IAudioTranscriptEntry)
 
-	def __init__(self):
-		self.entries = []
+@interface.implementer(media_interfaces.IVideoTranscriptEntry)
+class VideoTranscriptEntry(MediaTranscriptEntry):
+	createDirectFieldProperties(media_interfaces.IVideoTranscriptEntry)
+
+@interface.implementer(media_interfaces.IMediaTranscript)
+class MediaTranscript(SchemaConfigured):
+	createDirectFieldProperties(media_interfaces.IMediaTranscript)
 
 	def __getitem__(self, index):
 		return self.entries[index]
@@ -50,3 +57,11 @@ class VideoTranscript(object):
 
 	def __iter__(self):
 		return iter(self.entries)
+
+@interface.implementer(media_interfaces.IAudioTranscript)
+class AudioTranscript(MediaTranscript):
+	createDirectFieldProperties(media_interfaces.IAudioTranscript)
+
+@interface.implementer(media_interfaces.IVideoTranscript)
+class VideoTranscript(MediaTranscript):
+	createDirectFieldProperties(media_interfaces.IVideoTranscript)
