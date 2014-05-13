@@ -18,6 +18,7 @@
 	<utility factory=".book_indexer._IdentifiableNodeWhooshIndexer" name="whoosh.idnode" />
 	
 	<utility factory=".nticard_indexer._DefaultWhooshNTICardIndexer" />
+	<utility factory=".audio_transcript_indexer._DefaultWhooshAudioTranscriptIndexer" />
 	<utility factory=".video_transcript_indexer._DefaultWhooshVideoTranscriptIndexer" />
 	
 	<utility factory="._extract._DefaultKeyWordFilter" name="indexer" />
