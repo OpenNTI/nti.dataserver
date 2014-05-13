@@ -20,18 +20,12 @@ from zope.lifecycleevent import interfaces as lce_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from . import CommonIndexMap
 from . import interfaces as app_interfaces
 
 @interface.implementer(app_interfaces.IRelatedContentIndexMap)
-class RelatedContentIndexMap(dict):
-
-	def __init__(self):
-		super(RelatedContentIndexMap, self).__init__()
-		self.by_container = {}  # {ntiid => [related content ntiid]}
-
-	def clear(self):
-		super(RelatedContentIndexMap, self).clear()
-		self.by_container.clear()
+class RelatedContentIndexMap(CommonIndexMap):
+	pass
 
 @component.adapter(lib_interfaces.IContentPackage, lce_interfaces.IObjectAddedEvent)
 def add_related_content_items_from_new_content(content_package, event):

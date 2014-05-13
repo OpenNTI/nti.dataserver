@@ -9,3 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
+from . import interfaces as app_interfaces
+
+@interface.implementer(app_interfaces.ICommonIndexMap)
+class CommonIndexMap(dict):
+
+    def __init__(self):
+        super(CommonIndexMap, self).__init__()
+        self.by_container = {}
+
+    def clear(self):
+        super(CommonIndexMap, self).clear()
+        self.by_container.clear()

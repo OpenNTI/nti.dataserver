@@ -9,14 +9,15 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope.interface.common import mapping
 
-class IVideoIndexMap(mapping.IReadMapping):
-	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the video"),
-							   value_type=schema.List(title="The video ntiid"))
-
-class IAudioIndexMap(mapping.IReadMapping):
-	by_container = schema.Dict(key_type=schema.TextLine(title="The container of the audio"),
-							   value_type=schema.List(title="The audio ntiid"))
-
-class IRelatedContentIndexMap(IVideoIndexMap):
+class ICommonIndexMap(mapping.IReadMapping):
 	by_container = schema.Dict(key_type=schema.TextLine(title="The container"),
 							   value_type=schema.List(title="The ntiid"))
+
+class IVideoIndexMap(ICommonIndexMap):
+	pass
+
+class IAudioIndexMap(ICommonIndexMap):
+	pass
+
+class IRelatedContentIndexMap(ICommonIndexMap):
+	pass
