@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import time
+
 from zope import interface
 from zope import component
 
@@ -29,15 +31,15 @@ from nti.dataserver.interfaces import INote
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.interfaces import IStreamChangeEvent
+
 from nti.appserver.interfaces import IApplicationSettings
+from nti.appserver.contentlibrary.interfaces import IAudioIndexMap
 from nti.appserver.contentlibrary.interfaces import IVideoIndexMap
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
-import time
-
-from nti.utils.property import annotation_alias
 from nti.utils.property import Lazy
+from nti.utils.property import annotation_alias
 
 from nti.ntiids.ntiids import get_parts as parse_ntiid
 
@@ -158,13 +160,18 @@ class _TemplateArgs(object):
 		if path:
 			return path
 
-		videos = component.getUtility(IVideoIndexMap)
-		for key, value in videos.by_container.items():
-			if name in value:
-				path = lib.pathToNTIID(key)
-				if path:
-					return path
+		def _find_in_map(mapiface):
+			index_map = component.getUtility(mapiface)
+			for key, value in index_map.by_container.items():
+				if name in value:
+					path = lib.pathToNTIID(key)
+					if path:
+						return path
+			return None
 
+		result = _find_in_map(IVideoIndexMap) or _find_in_map(IAudioIndexMap)
+		return result
+		
 	@property
 	def note_container_display_name(self):
 		path = self._path_to_note_container()
@@ -221,6 +228,8 @@ class DigestEmailCollector(object):
 	def collection_time(self):
 		return time.time()
 
+	def historical_cap(self, delta=_TWO_WEEKS):
+		return self.collection_time - delta
 
 	@property
 	def is_subscribed(self):
@@ -245,7 +254,7 @@ class DigestEmailCollector(object):
 		# it when we collect recipients
 		last_email_sent = self.last_sent
 		last_viewed_data = notable_data.lastViewed or self.remoteUser.lastLoginTime
-		historical_cap = self.collection_time - _TWO_WEEKS
+		historical_cap = self.historical_cap()
 
 		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
 		return min_created_time
