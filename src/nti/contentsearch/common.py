@@ -76,6 +76,7 @@ def video_date_to_millis(dt):
 	start = datetime(year=1, month=1, day=1)
 	diff = dt - start
 	return diff.total_seconds() * 1000.0
+media_date_to_millis = video_date_to_millis
 
 def videotimestamp_to_datetime(qstring):
 	# this method parses a timestamp of the form hh:mm::ss.uuu
@@ -96,6 +97,7 @@ def videotimestamp_to_datetime(qstring):
 	result = datetime(year=year, month=month, day=day, hour=hour,
 			 		  minute=minute, second=second, microsecond=microsecond)
 	return result
+mediatimestamp_to_datetime = videotimestamp_to_datetime
 
 def normalize_type_name(x):
 	x = x.lower() if x else u''
