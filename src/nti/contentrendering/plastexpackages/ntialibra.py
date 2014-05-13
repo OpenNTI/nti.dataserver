@@ -67,3 +67,12 @@ class rightpic(graphicx.includegraphics):
 
 class putright(rightpic):
 	pass
+
+class audiosidebar(Base.Environment):
+	args = 'audioref'
+	blockType = True
+
+class alibradirectionsblock(Base.Command):
+	args = 'directions example lang_code:str:source'
+	blockType = True
+

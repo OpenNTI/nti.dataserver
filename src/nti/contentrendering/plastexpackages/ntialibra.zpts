@@ -15,3 +15,18 @@ name: flatsidebar
 <div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
 <div tal:replace="self">Sidebar Body</div>
 </div>
+
+name: audiosidebar
+<div class="sidebar-audio">
+	<div class="sidebar-leader" tal:content="self/attributes/audioref">Audio file</div>
+	<div class="sidebar-body" tal:content="self">Sidebar body</div>
+</div>
+
+name: alibradirectionsblock
+<div class="alibradirectionsblock">
+	<div>
+		<span class="directions-main" tal:content="self/attributes/directions">Directions Text</span>
+		<span class="directions-example" tal:content="self/attributes/example">Directions Example</span>
+	</div>
+	<div class="language-code" tal:content='self/attributes/lang_code'>Language Code</div>
+</div>
