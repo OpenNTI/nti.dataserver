@@ -338,7 +338,7 @@ class DigestEmailCollector(object):
 				notes.append(o)
 			elif ICommentPost.providedBy(o):
 				# Either this is a reply to us or this is a top-level comment in a thought or discussion.
-				if o.__parent__ and ICommentPost.providedBy(o.__parent__):
+				if ICommentPost.providedBy(o.__parent__):
 					comments.append(o)
 				else:
 					top_level_comments.append( o )
