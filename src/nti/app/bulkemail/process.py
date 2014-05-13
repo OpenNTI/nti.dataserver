@@ -173,8 +173,6 @@ class DefaultBulkEmailProcessLoop(object):
 		# max send rate.
 		# NOTE: We are not handling the daily quota other than by exceptions
 		conn = self.sesconn
-		logger.info("\nACCESS KEY %s", conn.provider.get_access_key())
-		logger.info("\nSECRET KEY %s", conn.provider.get_secret_key())
 		# Derive a value for the throttle.
 		# For a send-rate of 14, this gives 6, for 5 it gives 2
 		val = conn.get_send_quota()['GetSendQuotaResponse']['GetSendQuotaResult']['MaxSendRate']
