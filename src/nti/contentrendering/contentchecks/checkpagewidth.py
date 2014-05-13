@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -23,8 +23,8 @@ def check(book):
 
 		if width > MAX_WIDTH:
 			badPages += 1
-			logger.warn( 'Width of %s (%s) is outside of bounds.  Maximum width should be %s but it was %s ',
-						 page.filename, pageid, MAX_WIDTH, width )
+			logger.warn('Width of %s (%s) is outside of bounds.  Maximum width should be %s but it was %s ',
+						page.filename, pageid, MAX_WIDTH, width)
 		if width < 0:
 			badPages += 1
 			logger.warn( 'No width for %s (%s)', page.filename, pageid )
