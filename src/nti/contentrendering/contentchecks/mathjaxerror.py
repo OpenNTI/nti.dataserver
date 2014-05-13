@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -25,11 +25,11 @@ def check(book):
 		return all_errors
 
 	def _check_merror( page ):
-		errors = page.dom( "span[class=merror]" )
+		errors = page.dom("span[class=merror]")
 		return _report_errors( errors, page )
 
 	def _check_mtext( page ):
-		mtexts = page.dom( "span[class=mtext]" )
+		mtexts = page.dom("span[class=mtext]")
 		errors = []
 		for mtext in mtexts:
 			if 'color:' in mtext.attrib['style'] and 'red' in mtext.attrib['style']:
@@ -38,19 +38,15 @@ def check(book):
 
 		return _report_errors( errors, page, text='text' )
 
-
 	def _check( page ):
 		all_errors = _check_merror( page )
 		all_errors += _check_mtext( page )
 		for child in page.childTopics:
 			all_errors += _check( child )
-
 		return all_errors
 
-
 	all_errors = _check( book.toc.root_topic )
-
 	if not all_errors:
-		logger.info( "No MathJax errors" )
+		logger.info("No MathJax errors")
 
 	return all_errors

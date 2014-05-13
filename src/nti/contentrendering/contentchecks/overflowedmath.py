@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,7 +16,7 @@ from .. import interfaces
 interface.moduleProvides(interfaces.IRenderedBookValidator)
 
 import nti.contentrendering
-javascript = nti.contentrendering.javascript_path( 'detectOverflowedMath.js' )
+javascript = nti.contentrendering.javascript_path('detectOverflowedMath.js')
 
 def check(book):
 	results = book.runPhantomOnPages(javascript)
@@ -28,7 +28,8 @@ def check(book):
 
 		if maths:
 			pagesWithBadMath += 1
-			logger.warn( 'Width of math elements %s is outside the bounds of %s.', maths, page.filename )
+			logger.warn('Width of math elements %s is outside the bounds of %s.',
+						maths, page.filename)
 
 	if pagesWithBadMath == 0:
 		logger.info( 'All math within page bounds' )
