@@ -77,5 +77,7 @@ class alibradirectionsblock(Base.Command):
 	blockType = True
 
 class alibraimage(graphicx.includegraphics):
+	packageName = 'ntialibra'
+	blockType = True
 	args = '* [ options:dict ] file:str:source description'
 
