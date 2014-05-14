@@ -76,3 +76,6 @@ class alibradirectionsblock(Base.Command):
 	args = 'directions example lang_code:str:source'
 	blockType = True
 
+class alibraimage(graphicx.includegraphics):
+	args = '* [ options:dict ] file:str:source description'
+
