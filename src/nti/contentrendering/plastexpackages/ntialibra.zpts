@@ -24,7 +24,7 @@ name: audiosidebar
 
 name: alibradirectionsblock
 <div class="alibradirectionsblock">
-	<div>
+	<div class="directions">
 		<span class="directions-main" tal:content="self/attributes/directions">Directions Text</span>
 		<span class="directions-example" tal:content="self/attributes/example">Directions Example</span>
 	</div>
