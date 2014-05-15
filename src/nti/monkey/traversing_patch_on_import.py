@@ -6,30 +6,33 @@ to be robust against unicode strings in attr names. Do this
 in-place to be sure that even if it's already imported (which is likely) the patches
 hold
 
-
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
+
 from zope import interface as _zinterface
+
 from zope.traversing import api as _zapi
 from zope.traversing import adapters as _zadapters
 from zope.traversing import interfaces as _zinterfaces
-import sys
 
 # Save the original implementation
 _marker = _zadapters._marker
+
 def _nti_traversePathElement( obj, name, further_path, default=_marker,
 							  traversable=None, request=None): pass
 _nti_traversePathElement.__code__ = _zadapters.traversePathElement.__code__
+
 # Carefully add the right globals. Too much screws things up
+_nti_traversePathElement.func_globals['nsParse'] = _zadapters.nsParse
 _nti_traversePathElement.func_globals['ITraversable'] = _zinterfaces.ITraversable
 _nti_traversePathElement.func_globals['LocationError'] = _zinterfaces.TraversalError
-_nti_traversePathElement.func_globals['nsParse'] = _zadapters.nsParse
 _nti_traversePathElement.func_globals['namespaceLookup'] = _zadapters.namespaceLookup
 
 def _patched_traversePathElement(obj, name, further_path, default=_marker,
@@ -91,8 +94,11 @@ def _patch_traversing():
 	if is_adapter_broken():
 		# Sadly, the best thing to do is replace this entirely
 		LocationError = _zadapters.LocationError
-		def fixed_traverse( self, name, furtherPath ):
+		def fixed_traverse(self, name, furtherPath):
 			subject = self._subject
+			if subject is None:
+				logger.warn("traverse subject is None")
+
 			__traceback_info__ = subject, name, furtherPath
 			try:
 				attr = getattr( subject, name, _marker )
@@ -110,7 +116,6 @@ def _patch_traversing():
 		_zadapters.DefaultTraversable.traverse = fixed_traverse
 	assert not is_adapter_broken()
 
-
 _patch_traversing()
 
 del _zinterface
@@ -118,7 +123,7 @@ del _zapi
 del _zadapters
 del _zinterfaces
 
-#del logger
+# del logger
 
 def patch():
 	pass
