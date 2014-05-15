@@ -272,6 +272,9 @@ class _NTIVideoExtractor(_NTIMediaExtractor):
 			elif source.service == 'kaltura':
 				val['type'].append('video/kaltura')
 				val['source'].append(source.src['other'])
+			elif source.service == 'vimeo':
+				val['type'].append('video/vimeo')
+				val['source'].append(source.src['other'])
 			entry['sources'].append(val)
 
 		return entry, container
