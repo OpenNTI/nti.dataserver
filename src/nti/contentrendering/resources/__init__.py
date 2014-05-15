@@ -3,27 +3,19 @@
 Defines objects for creating and querying on disk, in various forms, representations
 of portions of a document (such as images and math expressions).
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.deprecation import deprecated
+from zope import interface
 
+from zope.deprecation import deprecated
 import zope.dottedname.resolve as dottedname
 
-
-# try:
-# 	import Image as PILImage
-# 	import ImageChops as PILImageChops
-# except ImportError:
-# 	PILImage = PILImageChops = None
-
-from zope import interface
 from . import interfaces
-
 
 def _set_default_resource_types(tabular=False):
 
@@ -34,31 +26,28 @@ def _set_default_resource_types(tabular=False):
 		cls.resourceTypes = types
 
 	if tabular:
-		Arrays = dottedname.resolve('plasTeX.Base.Arrays')
 		tabularTypes = ('png', 'svg')
+		Arrays = dottedname.resolve('plasTeX.Base.Arrays')
 		_implement(Arrays.tabular, tabularTypes)
-		_implement(Arrays.TabularStar, tabularTypes)
 		_implement(Arrays.tabularx, tabularTypes)
+		_implement(Arrays.TabularStar, tabularTypes)
 
 	Boxes = dottedname.resolve( 'plasTeX.Base.Boxes' )
-
 	_implement( Boxes.raisebox, ( 'png','svg' ) )
 
 	Math = dottedname.resolve( 'plasTeX.Base.Math' )
-
 	inlineMathTypes = ('mathjax_inline', )
 	displayMathTypes = ('png', 'svg', 'mathjax_display', )
 
-	#inlineMathTypes = ['mathjax_inline', 'png', 'svg']
-	#displayMathTypes = ['mathjax_display', 'png', 'svg']
-	_implement( Math.math, inlineMathTypes )
-	_implement( Math.ensuremath, inlineMathTypes )
+	# inlineMathTypes = ['mathjax_inline', 'png', 'svg']
+	# displayMathTypes = ['mathjax_display', 'png', 'svg']
+	_implement(Math.math, inlineMathTypes)
+	_implement(Math.ensuremath, inlineMathTypes)
 
-	_implement( Math.displaymath, displayMathTypes )
-	_implement( Math.EqnarrayStar, displayMathTypes )
+	_implement(Math.displaymath, displayMathTypes)
+	_implement(Math.EqnarrayStar, displayMathTypes)
 	# TODO: What about eqnarry?
-	_implement( Math.equation, displayMathTypes )
-
+	_implement(Math.equation, displayMathTypes)
 
 	from nti.contentrendering.plastexpackages.graphicx import includegraphics
 	_implement( includegraphics, ('png',) )
@@ -67,13 +56,13 @@ def _set_default_resource_types(tabular=False):
 
 	# TODO: Many of these are probably unnecessary as they share
 	# common superclasses
-	_implement( amsmath.align, displayMathTypes )
-	_implement( amsmath.AlignStar, displayMathTypes )
-	_implement( amsmath.alignat, displayMathTypes )
-	_implement( amsmath.AlignatStar, displayMathTypes )
-	_implement( amsmath.gather, displayMathTypes )
-	_implement( amsmath.GatherStar, displayMathTypes )
-	_implement( amsmath.smallmatrix, displayMathTypes )
+	_implement(amsmath.gather, displayMathTypes)
+	_implement(amsmath.align, displayMathTypes)
+	_implement(amsmath.alignat, displayMathTypes)
+	_implement(amsmath.AlignStar, displayMathTypes)
+	_implement(amsmath.GatherStar, displayMathTypes)
+	_implement(amsmath.AlignatStar, displayMathTypes)
+	_implement(amsmath.smallmatrix, displayMathTypes)
 
 	# Make the image class into a resource
 	# FIXME: This needs more as Resource evolves
@@ -104,8 +93,8 @@ class Resource(object):
 	def __str__(self):
 		return '%s' % self.path
 
-from .contentunitrepresentations import ContentUnitRepresentations
 from .contentunitrepresentations import ResourceRepresentations
+from .contentunitrepresentations import ContentUnitRepresentations
 
 ResourceSet = ResourceRepresentations
 deprecated('ResourceSet', 'Prefer the name ResourceRepresentations')

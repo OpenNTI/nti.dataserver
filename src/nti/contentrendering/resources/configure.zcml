@@ -1,6 +1,11 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-		   i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
 	<adapter factory=".converter_png.GSPDFPNG2BatchConverter"
@@ -18,7 +23,6 @@
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="mathjax_display" />
 
-
 	<adapter factory=".converter_mathjax_inline.MathjaxInlineBatchConverter"
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
@@ -33,6 +37,5 @@
 			 for="plasTeX.DOM.Node"
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="jsonp" />
-
 
 </configure>

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -33,12 +33,11 @@ class _ExternalHasher(object):
 
 	def digest(self, toDigest):
 		toDigest = toDigest.encode('ascii', 'backslashreplace')
-		return sha1( toDigest ).hexdigest()
+		return sha1(toDigest).hexdigest()
 
 digester = _ExternalHasher()
 
 def copy(source, dest, debug=True):
-
 	if not os.path.exists(os.path.dirname(dest)):
 		os.makedirs(os.path.dirname(dest))
 	try:
