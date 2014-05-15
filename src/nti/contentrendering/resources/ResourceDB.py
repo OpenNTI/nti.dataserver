@@ -261,6 +261,7 @@ class ResourceDB(object):
 		# alternately, if we are at places that do not and cannot have Nodes, we should
 		# consider named utilities
 		if ('includegraphics' in source
+			or 'alibraimage' in source
 			or 'ntiincludeannotationgraphics' in source
 			or 'ntiincludenoannotationgraphics' in source
 			or 'ntislideimage' in source):
