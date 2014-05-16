@@ -57,3 +57,6 @@ class TestNTIIDS(unittest.TestCase):
 
 		with assert_raises(ntiids.ImpossibleToMakeSpecificPartSafe):
 			ntiids.make_specific_safe( '   ' ) # only invalid characters
+
+		with assert_raises(ntiids.ImpossibleToMakeSpecificPartSafe):
+			ntiids.make_specific_safe('Алибра школа')  # only invalid characters
