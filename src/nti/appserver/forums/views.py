@@ -190,7 +190,11 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		# For these, the name matters. We want it to be as pretty as we can get
 		# TODO: We probably need to register an IReservedNames that forbids
 		# _VIEW_CONTENTS and maybe some other stuff
-		name = INameChooser( forum ).chooseName( topic.title, topic )
+
+		# CS make the title safe.
+		func = lambda x: x if ord(x) <= 126 else str(ord(x)) + "."
+		safe_title = ''.join(func(x) for x in topic.title)
+		name = INameChooser(forum).chooseName(safe_title, topic)
 
 		lifecycleevent.created( topic )
 		forum[name] = topic # Now store the topic and fire lifecycleevent.added
