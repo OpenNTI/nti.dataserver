@@ -114,7 +114,7 @@
 
 												<strong tal:content="notable/creator">Greg Higgins</strong>
 												<span tal:condition="notable/top_level_note">shared a note.</span>
-												<span tal:condition="not:notable/top_level_note">replied to your note.</span>
+												<span tal:condition="not:notable/top_level_note">replied to your note in</span>
 												<br />
 												<!--! Notes that consist of just a whiteboard may not have a title or snippet -->
 												<a style="color: #3fb3f6;" href=""
