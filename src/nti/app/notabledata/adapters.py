@@ -153,6 +153,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	@CachedProperty('_time_range')
 	def _safely_viewable_notable_intids(self):
+
 		catalog = self._catalog
 		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
 
@@ -198,14 +199,23 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		safely_viewable_intids = self._safely_viewable_notable_intids
 
-
 		important_creator_usernames = set()
 		for provider in component.subscribers( (self.remoteUser, self.request),
 											   IUserPresentationPriorityCreators ):
 			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
 
 		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
+		
+		# Top-level comments by the instructors
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
+		
+		# TODO We will eventually want to notify students when instructors create new discussions,
+		# but we'll have to sort out the CSV generated discussions first.
+		
+# 		# Now any topics by our a-listers, but only non-excluded topics
+# 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+# 		topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
+# 																			intids_by_priority_creators)
 
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
@@ -214,9 +224,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		# doing so incrementally, as needed, on the theory that there
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
-
-		questionable_intids = catalog.family.IF.union( toplevel_intids_by_priority_creators,
-													   intids_tagged_to_me )
+		questionable_intids = catalog.family.IF.union(	toplevel_intids_by_priority_creators,
+													   	intids_tagged_to_me )
 		if self._intids_in_time_range is not None:
 			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																 questionable_intids)
@@ -234,7 +243,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		# Make sure none of the stuff we created got in
 		intids_created_by_me = self._intids_created_by_me
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
-
 		return safely_viewable_intids
 
 	def get_notable_intids(self, min_created_time=None, max_created_time=None):
@@ -287,7 +295,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		# catalog queries are fast enough that this doesn't add much/any
 		# overhead. The other end of the spectrum is to brute-force the
 		# algorithm by hand.
-
 		iid = self._intids.queryId(maybe_notable)
 		if iid is None:
 			return False
