@@ -30,6 +30,8 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.dataserver.interfaces import INote
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.appserver.interfaces import IApplicationSettings
@@ -332,6 +334,7 @@ class DigestEmailCollector(object):
 		comments = list()
 		top_level_comments = list()
 		topics = list()
+		blogs = list()
 		circled = list()
 		grade = list()
 		feedback = list()
@@ -351,6 +354,9 @@ class DigestEmailCollector(object):
 					comments.append(o)
 				else:
 					top_level_comments.append( o )
+			elif IPersonalBlogEntry.providedBy(o) or IPersonalBlogEntryPost.providedBy(o):
+				# These types are also ITopics
+				blogs.append(o)		
 			elif ITopic.providedBy(o):
 				topics.append(o)
 			elif IStreamChangeEvent.providedBy(o):
@@ -377,6 +383,7 @@ class DigestEmailCollector(object):
 						  ('feedback', feedback),
 						  ('circled', circled),
 						  ('grade', grade),
+						  ('blog', blogs),
 						  ('other', other)):
 			if values:
 				template_args = _TemplateArgs(values, request)
