@@ -228,7 +228,7 @@ class DigestEmailCollector(object):
 	def collection_time(self):
 		return time.time()
 
-	def historical_cap(self, delta=_TWO_WEEKS):
+	def historical_cap(self, delta=_ONE_WEEK):
 		return self.collection_time - delta
 
 	@property
