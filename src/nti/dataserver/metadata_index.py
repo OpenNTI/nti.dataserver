@@ -215,8 +215,9 @@ def isTopLevelContentObjectFilter(extent, docid, document):
 			# These things are modeled content, for some reason
 			return False
 		# HeadlinePosts (which are IMutedInStream) are threadable,
-		# but we don't consider them top-level, we consider the
-		# containing Topic to be top-level
+		# but we don't consider them top-level. (At this writing,
+		# we don't consider the containing Topic to be top-level
+		# either, because it isn't IModeledContent.)
 		if IHeadlinePost.providedBy(document):
 			return False
 

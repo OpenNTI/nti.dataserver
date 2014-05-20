@@ -12,7 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zopyx.txng3.ext import stemmer
+try:
+	from zopyx.txng3.ext import stemmer
+except ImportError:
+	stemmer = None
 
 from . import interfaces as stemmer_interfaces
 

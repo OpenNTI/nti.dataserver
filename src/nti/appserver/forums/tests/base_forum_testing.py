@@ -223,6 +223,22 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		self.forbid_link_with_rel( res2.json_body, 'flag' )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_user_can_POST_new_forum_entry_with_non_ascii_title( self ):
+		data = self._create_post_data_for_POST()
+		# Give the title something non-Ascii
+		data['title'] = 'Я ♥ борщ' # ""I love borshch"" in Russian Cyrillic
+		res = self._POST_topic_entry( data, status_only=201 )
+
+		assert_that( res.location, is_( 'http://localhost' + res.json_body['href'] + '/' ) )
+		self.testapp.get( res.location ) # ensure it can be fetched from here
+
+		topic_res = self.testapp.get( res.json_body['href'] ) # as well as its internal href
+		assert_that( topic_res.json_body, has_entry( 'title', data['title'] ) )
+		# The standard transliteration has been applied
+		assert_that( topic_res.json_body, has_entry( 'NTIID', ends_with('ia_borshch') ) )
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_forum_entry_header_only( self ):
 		data = self._create_post_data_for_POST()
 
