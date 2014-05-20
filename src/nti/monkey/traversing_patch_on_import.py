@@ -96,9 +96,6 @@ def _patch_traversing():
 		LocationError = _zadapters.LocationError
 		def fixed_traverse(self, name, furtherPath):
 			subject = self._subject
-			if subject is None:
-				logger.warn("traverse subject is None")
-
 			__traceback_info__ = subject, name, furtherPath
 			try:
 				attr = getattr( subject, name, _marker )
