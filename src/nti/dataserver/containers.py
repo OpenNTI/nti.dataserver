@@ -149,6 +149,7 @@ class IdGeneratorNameChooser(NameChooser):
 		self.checkName(name, obj )
 		return name
 
+from slugify import slugify_url
 
 @interface.implementer(INameChooser)
 class AbstractNTIIDSafeNameChooser(object):
@@ -161,17 +162,35 @@ class AbstractNTIIDSafeNameChooser(object):
 	chooser.
 	"""
 
-	leaf_iface = None #: class attribute
+	#: class attribute, subclasses must set.
+	leaf_iface = None
+
+	#: Set if the name should be passed through URL-safe
+	#: sluggification if it is not safely a NTIID specific
+	#: part already.
+	slugify = True
+
 	def __init__( self, context ):
 		self.context = context
 
-	def chooseName( self, name, obj ):
-		# NTIID flatten
+	def __make_specific_safe(self, name):
 		try:
-			name = ntiids.make_specific_safe( name )
+			return ntiids.make_specific_safe( name )
 		except ntiids.InvalidNTIIDError as e:
 			e.field = self.leaf_iface['title'] if 'title' in self.leaf_iface else self.leaf_iface['__name__']
 			raise
+
+	def _to_ntiid_safe(self, name):
+		try:
+			return self.__make_specific_safe(name)
+		except ntiids.InvalidNTIIDError:
+			if self.slugify:
+				return self.__make_specific_safe( slugify_url(name) )
+			raise
+
+	def chooseName( self, name, obj ):
+		# NTIID flatten
+		name = self._to_ntiid_safe(name)
 
 		# Now on to the next adapter (Note: this ignores class-based adapters)
 		# First, get the "required" interface list (from the adapter's standpoint),

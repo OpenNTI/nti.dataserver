@@ -193,6 +193,9 @@ setup(
 		'anyjson >= 0.3.3',
 		# 'appendonly >= 1.0.1', ZODB conflict-free structures featuring a Stack and more
 		# See also blist for a tree-structured list
+		# URL-safe "slugs" from arbitrary titles. Automatically
+		# deals with several non-ASCII scripts
+		'awesome-slugify',
 		'boto',  # amazon
 		'brownie >= 0.5.1',	 # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)

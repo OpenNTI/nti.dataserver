@@ -191,12 +191,7 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		# TODO: We probably need to register an IReservedNames that forbids
 		# _VIEW_CONTENTS and maybe some other stuff
 
-		# CS make the title ascii safe. This happens b/c we derived the
-		# part of the NTIIDs from the title.
-		# TODO: use a translation table. JAM may change this
-		func = lambda x: x if ord(x) <= 126 else str(ord(x))
-		safe_title = ''.join(func(x) for x in topic.title)
-		name = INameChooser(forum).chooseName(safe_title, topic)
+		name = INameChooser(forum).chooseName(topic.title, topic)
 
 		lifecycleevent.created( topic )
 		forum[name] = topic # Now store the topic and fire lifecycleevent.added
