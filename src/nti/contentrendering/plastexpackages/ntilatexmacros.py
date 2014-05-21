@@ -619,13 +619,41 @@ class nobreak(Base.Command):
 class vfrac(Base.Command):
 	args = 'nom denom'
 
+# Command to add descriptions to some NTI objects
+class ntidescription(Base.Command):
+	args = 'content:str:source'
+
+# Media collection
+class ntimediacollection(Base.Command):
+	pass
+
+class ntimediacollection(Base.Environment,plastexids.NTIIDMixin):
+	args = '[options] <title:str:source>'
+	blockType = True
+
+	def digest(self, tokens):
+		tok = super(ntimediacollection,self).digest(tokens)
+
+		self.options = self.attributes.get( 'options', {} ) or {}
+		self.title = self.attributes.get('title')
+
+		return tok
+
+	@readproperty
+	def description(self):
+		description = u''
+		descriptions = self.getElementsByTagName('ntidescription')
+		if descriptions:
+			description = descriptions[0].attributes.get('content')
+		return description
+
+
 # Videos
 class ntivideorollname(Base.Command):
 	pass
 
-class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
+class ntivideoroll(ntimediacollection):
 	counter = "ntivideoroll"
-	blockType = True
 	_ntiid_cache_map_name = '_ntivideoroll_ntiid_map'
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'ntivideoroll.'
@@ -636,9 +664,8 @@ class ntivideoroll(Base.Environment,plastexids.NTIIDMixin):
 class ntiimagecollectionname(Base.Command):
 	pass
 
-class ntiimagecollection(Base.Environment,plastexids.NTIIDMixin):
+class ntiimagecollection(ntimediacollection):
 	counter = "ntiimagecollection"
-	blockType = True
 	_ntiid_cache_map_name = '_ntiimagecollection_ntiid_map'
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'ntiimagecollection.'
