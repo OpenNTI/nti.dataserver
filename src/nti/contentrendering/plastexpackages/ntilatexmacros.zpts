@@ -120,6 +120,8 @@ name: mediatranscript
 name: ntivideoroll
 <object type="application/vnd.nextthought.videoroll" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
+<param name="title" value="title" tal:condition="self/title" tal:attributes="value self/title" />
+<param name="description" value="description" tal:condition="self/description" tal:attributes="value self/description" />
 <span tal:replace="self"></span>
 </object>
 
@@ -137,8 +139,12 @@ name: ntiincludelocalvideo
 name: ntiimagecollection
 <object type="application/vnd.nextthought.image-collection" tal:attributes="data-ntiid self/ntiid; data self/ntiid">
 <param name="ntiid" value="the-ntiid" tal:attributes="value self/ntiid" />
+<param name="title" value="title" tal:condition="self/title" tal:attributes="value self/title" />
+<param name="description" value="description" tal:condition="self/description" tal:attributes="value self/description" />
 <span tal:replace="self"></span>
 </object>
+
+name: ntidescription
 
 name: vfrac
 <span class="vfrac"><sup class="nom" tal:content="self/attributes/nom"></sup><span class="divider">&#47;</span><sub class="denom" tal:content="self/attributes/denom"></sub></span>
