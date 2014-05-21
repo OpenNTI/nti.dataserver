@@ -29,14 +29,16 @@ from ..interfaces import EmailAddresablePrincipal
 class TestVerp(unittest.TestCase):
 
 	def test_pids_from_verp_email(self):
-		fromaddr = 'no-reply+a2FsZXkud2hpdGVAbmV4dHRob3VnaHQuY29tLjV4cXAyeTRoVURlMGVvOGtoXzM5SURZNlR4aw@nextthought.com'
+		fromaddr = b'no-reply+kaley.white%40nextthought.com.WBf3Ow@nextthought.com'
 
 		pids = principal_ids_from_verp(fromaddr, default_key='alpha.nextthought.com')
+
 		assert_that( pids, contains('kaley.white@nextthought.com'))
 
-		fromaddr = 'no-reply+TGV4aVpvbGwuLWJOUlNZVS1ZV3FEanFvUi10dGRkLV82R01z@nextthought.com'
-		pids = principal_ids_from_verp(fromaddr, default_key='mathcounts.nextthought.com')
-		assert_that( pids, contains('LexiZoll'))
+		# outdated values
+		#fromaddr = b'no-reply+TGV4aVpvbGwuLWJOUlNZVS1ZV3FEanFvUi10dGRkLV82R01z@nextthought.com'
+		#pids = principal_ids_from_verp(fromaddr, default_key='mathcounts.nextthought.com')
+		#assert_that( pids, contains('LexiZoll'))
 
 		pids = principal_ids_from_verp(fromaddr)
 		assert_that( pids, is_(()))
@@ -56,6 +58,10 @@ class TestVerp(unittest.TestCase):
 		prin.id = 'foo'
 
 		addr = verp_from_recipients( 'no-reply@nextthought.com',
-									 (prin,))
+									 (prin,),
+									 default_key='alpha.nextthought.com')
 
-		assert_that( addr, is_('"Janux" <no-reply+Zm9vLkRBdnY1RTk2NDZha1lOLUtEMWJCc3k0QTN6MA@nextthought.com>') )
+		assert_that( addr, is_('"Janux" <no-reply+foo.pRjtUA@nextthought.com>') )
+
+		pids = principal_ids_from_verp(addr, default_key='alpha.nextthought.com')
+		assert_that( pids, contains(prin.id))

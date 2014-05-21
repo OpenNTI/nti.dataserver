@@ -34,9 +34,47 @@ def _get_signer_secret(default_secret="$Id$"):
 
 	return secret_key
 
-def _make_signer(default_key='$Id$'):
+import zlib
+import struct
+
+class _InsecureAdlerCRC32Digest(object):
+	"""
+	Just enough of a hashlib-like object to satisfy
+	itsdangerous, producing a 32-bit integer checksum
+	instead of a real 128 or 256 bit checksum.
+	This is specifically NOT cryptographically secure,
+	but for purposes of \"not looking stupid\" we've decided
+	that email account security doesn't matter.
+	"""
+
+	# These aren't documented and are reverse engineered
+
+	digest_size = 4 # size of the output
+	block_size = 64 # ???
+
+	def __init__(self, init=b''):
+		self.val = init
+
+	def copy(self):
+		return self.__class__(self.val)
+
+	def update(self, val):
+		self.val += val
+
+	def digest(self):
+		crc = zlib.adler32(self.val)
+		return struct.pack('i', crc)
+
+def _make_signer(default_key='$Id$',
+				 salt='email recipient',
+				 digest_method=_InsecureAdlerCRC32Digest):
+	"""
+	Note that the default separator, '.' may appear in principal ids.
+	"""
 	secret_key = _get_signer_secret(default_secret=default_key)
-	signer = itsdangerous.Signer(secret_key, salt='email recipient')
+	signer = itsdangerous.Signer(secret_key,
+								 salt=salt,
+								 digest_method=digest_method)
 	return signer
 
 def _find_default_realname():
@@ -54,7 +92,32 @@ def _find_default_realname():
 
 	return realname or "NextThought"
 
-def verp_from_recipients( fromaddr, recipients, request=None ):
+def __make_signer(default_key, **kwargs):
+	return _make_signer(**kwargs) if not default_key else _make_signer(default_key=default_key, **kwargs)
+
+import urllib
+
+def _sign(signer, principal_ids):
+	"""
+	Given a signer, and a byte-string of principal ids, return
+	a signed value, as lightly obfuscated as possible, to satisfy
+	concerns about \"looking stupid\".
+
+	Note that this value easily exposes the principal ID in readable fashion,
+	giving someone in possession of the email both principal ID and registered
+	email address. Watch out for phishing attacks.
+	"""
+
+	sig = signer.get_signature(principal_ids)
+	# The sig is always already base64 encoded, in the
+	# URL/RFC822 safe fashion.
+	principal_ids = urllib.quote(principal_ids)
+
+	return principal_ids + signer.sep + sig
+
+def verp_from_recipients( fromaddr, recipients,
+						  request=None,
+						  default_key=None):
 
 	realname, addr = rfc822.parseaddr(fromaddr)
 	if not realname and not addr:
@@ -85,17 +148,17 @@ def verp_from_recipients( fromaddr, recipients, request=None ):
 		# First, get bytes to avoid any default-encoding
 		principal_ids = principal_ids.encode('utf-8')
 		# now sign
-		signer = _make_signer()
-		principal_ids = signer.sign(principal_ids)
-		# finally obfuscate in a url/email safe way
-		principal_ids = itsdangerous.base64_encode(principal_ids)
+		signer = __make_signer(default_key)
+		principal_ids = _sign(signer, principal_ids)
 
 		local, domain = addr.split('@')
 		addr = local + '+' + principal_ids + '@' + domain
 
 	return rfc822.dump_address_pair( (realname, addr) )
 
-def principal_ids_from_verp(fromaddr, request=None, default_key=None):
+def principal_ids_from_verp(fromaddr,
+							request=None,
+							default_key=None):
 	if not fromaddr or '+' not in fromaddr:
 		return ()
 
@@ -103,12 +166,16 @@ def principal_ids_from_verp(fromaddr, request=None, default_key=None):
 	if '+' not in addr:
 		return ()
 
-	signed_and_encoded = addr.split('+', 1)[1].split('@')[0]
-	signed_and_decoded = itsdangerous.base64_decode(signed_and_encoded)
+	signer = __make_signer(default_key)
 
-	signer = _make_signer() if not default_key else _make_signer(default_key=default_key)
+	signed_and_encoded = addr.split(b'+', 1)[1].split(b'@')[0]
+	encoded_pids, sig = signed_and_encoded.rsplit(signer.sep, 1)
+	decoded_pids = urllib.unquote(encoded_pids)
+
+	signed = decoded_pids + signer.sep + sig
+
 	try:
-		pids = signer.unsign(signed_and_decoded)
+		pids = signer.unsign(signed)
 	except itsdangerous.BadSignature:
 		return ()
 	else:
