@@ -65,7 +65,7 @@ class Recipient(object):
 
 	email = 'foo@bar'
 	id = 'jason'
-	verp_from = '"NextThought" <no-reply+amFzb24uY29sS192RXFOWGRsQnFqMkN1WFZjVFZFRGR3@alerts.nextthought.com>'
+	verp_from = '"NextThought" <no-reply+jason.VRjdUA@alerts.nextthought.com>'
 	def __init__(self, email=None):
 		if email:
 			self.email = email
