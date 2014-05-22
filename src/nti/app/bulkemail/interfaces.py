@@ -120,7 +120,19 @@ class IBulkEmailProcessDelegate(interface.Interface):
 	def compute_sender_for_recipient(recipient):
 		"""
 		Given a recipient dictionary previously produced by
-		:meth:`collect_recipients`, return a ``From`` address.
+		:meth:`collect_recipients`, return an address to be used
+		as the sender, which should be the place to which bounce
+		or complaint notifications are delivered. In the case of
+		Amazon SES, this is a parameter to the ``SendRawEmail``
+		API. Typically it will include VERP information.
+		"""
+
+	def compute_fromaddr_for_recipient(recipient):
+		"""
+		Given a recipient dictionary previously produced by
+		:meth:`collect_recipients`, return an address to be used
+		as the (user-visible) ``From`` value. This may
+		or may not include VERP information.
 		"""
 
 	def compute_template_args_for_recipient(recipient):

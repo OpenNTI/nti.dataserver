@@ -19,7 +19,6 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 from hamcrest import not_none
 from hamcrest import is_
-from hamcrest import contains
 
 
 from nti.app.testing.layers  import AppLayerTest
@@ -27,7 +26,6 @@ from .._default_template_mailer import create_simple_html_text_email
 from .._default_template_mailer import _pyramid_message_to_message
 
 from ..interfaces import IEmailAddressable
-from ..interfaces import IVERP
 from ..interfaces import EmailAddresablePrincipal
 from zope.security.interfaces import IPrincipal
 
@@ -120,4 +118,4 @@ class TestEmail(AppLayerTest):
 
 		# we can get to IPrincipal, so we have VERP
 		# The first part will be predictable, the rest won't
-		assert_that( msg.sender, contains_string('"NextThought" <no-reply+dGhlX3Vz') )
+		assert_that( msg.sender, contains_string('"NextThought" <no-reply+') )

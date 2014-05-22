@@ -153,6 +153,20 @@ class IVERP(interface.Interface):
 	<http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notifications-via-email.html>`_
 	"""
 
+	def realname_from_recipients(fromaddr, recipients, request=None):
+		"""
+		This function takes a given From address and manipulates it to include
+		a default realname, usually based on the current site and possibly
+		the recipient list.
+
+		Despite being located in the VERP module, this function does not actually
+		do any signing.
+
+		:return: The ``fromaddr``, guaranteed to be in \"Realname <to@example.com>\"
+			format.
+		"""
+
+
 	def verp_from_recipients(fromaddr, recipients, request=None):
 		"""
 		This function takes a given from address and manipulates it to
@@ -170,7 +184,8 @@ class IVERP(interface.Interface):
 			although it's probably better to use separate SES/SNS queues
 			if possible.
 
-		:param fromaddr: The initial from address, without any labels.
+		:param fromaddr: The initial from address, without any labels,
+			possibly including a realname portion.
 
 		:return: The ``fromaddr``, manipulated to include a VERP
 			label, if possible, identifying the principals related to the
