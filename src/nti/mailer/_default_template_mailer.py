@@ -277,6 +277,16 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	fromaddr = _compute_from(fromaddr, recipients, request)
 
 	pyramid_mail_message.sender = fromaddr # required
+	# Sadly, as of 2014-05-22, Amazon SES (and some other SMTP relays, actually, if I understand
+	# correctly) don't support setting Sender or Return-Path. They get ignored.
+	# (At least for SES, this is because it need to set the Return-Path value
+	# to something it controls in order to handle stateful retry logic, and delivery
+	# to correct bounce queue, etc:
+	#      Return-Path: <000001462444a009-cfdcd8ed-008e-4bee-9ea7-30a47b615e64-000000@amazonses.com>
+	# )
+	# If this did work, we could leave the From address alone.
+	#pyramid_mail_message.extra_headers['Sender'] = fromaddr
+	#pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
 	message = pyramid_mail_message.to_message()
 	return message
 

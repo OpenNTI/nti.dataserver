@@ -695,6 +695,9 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
 
 
 def main(email=None, uname=None, cname=None):
+	"""
+	For manually testing email/SMTP/qp on the command line.
+	"""
 	import sys
 	_contact_email = email or sys.argv[1]
 	_username = uname or sys.argv[2]
@@ -702,11 +705,18 @@ def main(email=None, uname=None, cname=None):
 
 	from zope import interface
 	from zope.annotation.interfaces import IAttributeAnnotatable
-	@interface.implementer(user_interfaces.IUserProfile,IAttributeAnnotatable,app_interfaces.IContactEmailRecovery)
+	from zope.security.interfaces import IPrincipal
+	from nti.mailer.interfaces import IEmailAddressable
+	@interface.implementer(user_interfaces.IUserProfile,
+						   IPrincipal,
+						   IAttributeAnnotatable,
+						   app_interfaces.IContactEmailRecovery,
+						   IEmailAddressable)
 	class FakeUser(object):
-		username = _username
+		id = username = _username
 		contact_email = _contact_email
 		realname = child_name
+		email = _contact_email
 
 	class FakeEvent(object):
 		request = True
