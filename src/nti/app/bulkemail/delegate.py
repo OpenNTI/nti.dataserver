@@ -35,6 +35,12 @@ class AbstractBulkEmailProcessDelegate(object):
 	def _verp(self):
 		return component.getUtility(IVERP)
 
+	def compute_fromaddr_for_recipient( self, recipient ):
+		return self._verp.realname_from_recipients(
+			self.fromaddr,
+			(recipient['email'],),
+			request=self.request)
+
 	def compute_sender_for_recipient( self, recipient ):
 		return self._verp.verp_from_recipients(
 			self.fromaddr,

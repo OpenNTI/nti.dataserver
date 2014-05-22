@@ -132,6 +132,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		msgs = []
 		def check_send(msg, fromaddr, to):
 			# Check the title and link to the note
+			assert_that( fromaddr, contains_string( 'no-reply+' ))
 			msg = quopri.decodestring(msg)
 			msg = msg.decode('utf-8', errors='ignore')
 			msgs.append(msg)
@@ -159,6 +160,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
 		assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
 
+		assert_that( msg, contains_string('From: "NextThought" <no-reply@alerts.nextthought.com>') )
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
 		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))

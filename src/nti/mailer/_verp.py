@@ -115,18 +115,23 @@ def _sign(signer, principal_ids):
 
 	return principal_ids + signer.sep + sig
 
+def realname_from_recipients(fromaddr, recipients, request=None):
+	realname, addr = rfc822.parseaddr(fromaddr)
+	if not realname and not addr:
+		raise ValueError("Invalid fromaddr", fromaddr)
+	if not realname:
+		realname = _find_default_realname()
+
+	return rfc822.dump_address_pair( (realname, addr) )
+
+
 def verp_from_recipients( fromaddr, recipients,
 						  request=None,
 						  default_key=None):
 
-	realname, addr = rfc822.parseaddr(fromaddr)
-	if not realname and not addr:
-		raise ValueError("Invalid fromaddr", fromaddr)
+	realname, addr = rfc822.parseaddr(realname_from_recipients(fromaddr, recipients, request=request))
 	if '+' in addr:
 		raise ValueError("Addr should not already have a label", fromaddr)
-
-	if not realname:
-		realname = _find_default_realname()
 
 	# We could special case the common case of recpients of length
 	# one if it is a string: that typically means we're sending to the current

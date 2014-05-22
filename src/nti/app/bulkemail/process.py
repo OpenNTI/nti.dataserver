@@ -248,6 +248,7 @@ class DefaultBulkEmailProcessLoop(object):
 
 			recipient_data = pickle.loads(zlib.decompress(member))
 
+			fromaddr = delegate.compute_fromaddr_for_recipient( recipient_data )
 			sender = delegate.compute_sender_for_recipient( recipient_data )
 
 			# Probably if there were `template_args` and this method
@@ -265,7 +266,7 @@ class DefaultBulkEmailProcessLoop(object):
 					template_args=template_args,
 					text_template_extension=delegate.text_template_extension)
 
-				pmail_msg.sender = sender
+				pmail_msg.sender = fromaddr
 				mail_msg = pmail_msg.to_message()
 				msg_string = mail_msg.as_string()
 
