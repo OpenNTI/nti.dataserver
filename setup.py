@@ -12,6 +12,7 @@ entry_points = {
 		"nti_add_remove_friends = nti.dataserver.utils.nti_add_remove_friends:main",
 		"nti_join_dfl = nti.dataserver.utils.nti_join_dfl:main",
 		"nti_join_community = nti.dataserver.utils.nti_join_community:main",
+		"nti_update_community = nti.dataserver.utils.nti_update_community:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
