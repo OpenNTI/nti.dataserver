@@ -43,9 +43,9 @@ def update_community(username, name=None, alias=None, verbose=False):
 
 	ext_value = {}
 	if name:
-		ext_value['realname'] = unicode(name)
+		ext_value['realname'] = name
 	if alias:
-		ext_value['alias'] = unicode(alias)
+		ext_value['alias'] = alias
 
 	update_from_external_object(community, ext_value)
 	if verbose:
