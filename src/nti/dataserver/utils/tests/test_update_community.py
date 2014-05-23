@@ -45,5 +45,10 @@ class TestUpdateCommunity(ConfiguringTestBase):
 		assert_that(profile.realname, is_('foo'))
 		assert_that(profile.alias, is_('foo-alias'))
 
+		comm = nti_update.update_community('2_comm@nti.com', u'Аккредитация', u'преподавания')
+		assert_that(comm, is_not(none()))
+		profile = user_interfaces.IFriendlyNamed(comm)
+		assert_that(profile.realname, is_(u'Аккредитация'))
+		assert_that(profile.alias, is_(u'преподавания'))
 	
 		
