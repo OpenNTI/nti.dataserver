@@ -14,6 +14,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 
 import os
+import codecs
 
 from zope import component
 
@@ -68,11 +69,11 @@ class TestVideoTranscriptParser(ContentrenderingLayerTest):
 		assert_that(transcript, has_length(10))
 
 	def test_webvtt_parser_atlas(self):
-		path = os.path.join(os.path.dirname(__file__), 'transcripts/atlas_invalid.vtt')
+		path = os.path.join(os.path.dirname(__file__), 'transcripts/atlas.vtt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
-		with open(path, "r") as source:
+		with codecs.open(path, "r", "UTF-8") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(transcript, has_length(4))
 		for entry in transcript:
-			assert_that(entry.transcript, is_(u''))
+			assert_that(entry.transcript, is_not(u''))
