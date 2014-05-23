@@ -519,7 +519,9 @@ class WebVTTParser(object):
 				trx = re.sub('\r', '', x.lstrip()).decode('utf-8')
 				lines.append(trx)
 			except UnicodeDecodeError:
-				logger.error("Cannot UTF-8 decode %r; Entry ignored", x)
+				s = "Cannot UTF-8 decode %r; Entry ignored" % x
+				logger.error(s)
+				errors.append(s)
 
 		# SIGNATURE
 		if 	len(lines[linepos]) < 6 or lines[linepos].find("WEBVTT") != 0 or \
