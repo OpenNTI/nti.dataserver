@@ -75,9 +75,9 @@ def _create_user(factory, username, password, realname, communities=(), options=
 	if options.email:
 		ext_value['email'] = unicode(options.email)
 	if options.name:
-		ext_value['realname'] = unicode(options.name)
+		ext_value['realname'] = options.name
 	if options.alias:
-		ext_value['alias'] = unicode(options.alias)
+		ext_value['alias'] = options.alias
 	if options.birthdate:
 		ext_value['birthdate'] = unicode(options.birthdate)
 
