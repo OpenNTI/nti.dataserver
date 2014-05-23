@@ -516,6 +516,7 @@ class WebVTTParser(object):
 		lines = []
 		for x in re.split('\n', source.read()):
 			try:
+				# TODO: how to handle non-utf-8 chars
 				trx = re.sub('\r', '', x.lstrip()).decode('utf-8')
 				lines.append(trx)
 			except UnicodeDecodeError:

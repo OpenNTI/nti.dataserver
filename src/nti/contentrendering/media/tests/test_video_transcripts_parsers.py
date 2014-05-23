@@ -47,7 +47,7 @@ class TestVideoTranscriptParser(ContentrenderingLayerTest):
 			assert_that(e, is_not(none()))
 			assert_that(e.transcript, is_not(none()))
 
-	def test_webvtt_parser_1(self):
+	def test_webvtt_parser_sample_web(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/sample_web.vtt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
 		with open(path, "r") as source:
@@ -59,10 +59,20 @@ class TestVideoTranscriptParser(ContentrenderingLayerTest):
 			assert_that(e.transcript, is_not(none()))
 		assert_that(e.transcript, is_('Peter Griffin'))
 
-	def test_webvtt_parser_2(self):
+	def test_webvtt_parser_abcdef(self):
 		path = os.path.join(os.path.dirname(__file__), 'transcripts/abcdef.vtt')
 		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
 		with open(path, "r") as source:
 			transcript = parser.parse(source)
 		assert_that(transcript, is_not(none()))
 		assert_that(transcript, has_length(10))
+
+	def test_webvtt_parser_atlas(self):
+		path = os.path.join(os.path.dirname(__file__), 'transcripts/atlas_invalid.vtt')
+		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
+		with open(path, "r") as source:
+			transcript = parser.parse(source)
+		assert_that(transcript, is_not(none()))
+		assert_that(transcript, has_length(4))
+		for entry in transcript:
+			assert_that(entry.transcript, is_(u''))
