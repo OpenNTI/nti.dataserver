@@ -141,3 +141,46 @@ class _BulkEmailView(object):
 
 import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _BulkEmailView._cleanup )
+
+
+from .ses_notification_handler import process_sqs_queue
+
+@view_defaults( route_name='objects.generic.traversal',
+				name='bounced_email_admin',
+				permission=nauth.ACT_MODERATE,
+			  )
+class _BouncedEmailView(object):
+
+
+	def __init__( self, request ):
+		self.request = request
+		self._name = None
+
+	def _preflight(self):
+		if not self.request.subpath:
+			raise hexc.HTTPNotFound()
+
+		self._name = self.request.subpath[0]
+		return self._name
+
+	@view_config(request_method='GET',
+				 renderer='templates/bounced_email_admin.pt')
+	def get(self):
+		name = self._preflight()
+
+		# Use a dict to override the context argument that pyramid
+		# directly inserts
+		return {'context': name}
+
+	@view_config(request_method='POST',
+				 renderer='templates/bounced_email_admin.pt')
+	def post(self):
+		name = self._preflight()
+		if 'subFormTable.buttons.start' in self.request.POST:
+			# TODO : Error handling
+			# TODO: displaying the output
+			process_sqs_queue(name)
+
+		# Redisplay the page with a get request to avoid the "re-send this POST?" problem
+		get_path = self.request.path  + (('?' + self.request.query_string) if self.request.query_string else '')
+		return hexc.HTTPFound(location=get_path)

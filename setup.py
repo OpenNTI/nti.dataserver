@@ -27,6 +27,8 @@ entry_points = {
 		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
 		"nti_content_indexer = nti.contentrendering.content_indexer:main",
 		"nti_create_book_archive = nti.contentrendering.archive:main",
+		# NOTE: The command line tools are deprecated. Leave the setup.py entry points
+		# pointing to this package to get the deprecation notice
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"nti_pserve = nti.appserver.nti_pserve:main",
