@@ -67,6 +67,14 @@ def _create_user(factory, username, password, realname, communities=(), options=
 		print("Not overwriting existing entity", repr(user), file=sys.stderr)
 		sys.exit( 2 )
 
+	alias = options.alias
+	if alias and not isinstance(alias, unicode):
+		alias = unicode(alias.decode("UTF-8"))
+
+	realname = options.name
+	if realname and not isinstance(realname, unicode):
+		realname = unicode(realname.decode("UTF-8"))
+
 	args = {'username': username}
 	if password:
 		args['password'] = password
@@ -74,10 +82,10 @@ def _create_user(factory, username, password, realname, communities=(), options=
 	# TODO: We could almost pass the options argument itself. It's dict-like
 	if options.email:
 		ext_value['email'] = unicode(options.email)
-	if options.name:
-		ext_value['realname'] = options.name
-	if options.alias:
-		ext_value['alias'] = options.alias
+	if realname:
+		ext_value['realname'] = realname
+	if alias:
+		ext_value['alias'] = alias
 	if options.birthdate:
 		ext_value['birthdate'] = unicode(options.birthdate)
 
