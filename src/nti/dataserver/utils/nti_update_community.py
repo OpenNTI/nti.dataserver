@@ -28,6 +28,12 @@ from nti.externalization.internalization import update_from_external_object
 def update_community(username, name=None, alias=None, verbose=False):
 	__traceback_info__ = locals().items()
 
+	if alias and not isinstance(alias, unicode):
+		alias = unicode(alias.decode("UTF-8"))
+
+	if name and not isinstance(name, unicode):
+		name = unicode(name.decode("UTF-8"))
+
 	community = users.Community.get_community(username)
 	if community is None:
 		print("community does not exists", file=sys.stderr)
