@@ -512,7 +512,14 @@ class WebVTTParser(object):
 
 		already_collected = False
 		source = StringIO(source) if isinstance(source, six.string_types) else source
-		lines = [re.sub('\r', '', x.lstrip()).decode('utf-8') for x in re.split('\n', source.read())]
+		
+		lines = []
+		for x in re.split('\n', source.read()):
+			try:
+				trx = re.sub('\r', '', x.lstrip()).decode('utf-8')
+				lines.append(trx)
+			except UnicodeDecodeError:
+				logger.error("Cannot UTF-8 decode %r; Entry ignored", x)
 
 		# SIGNATURE
 		if 	len(lines[linepos]) < 6 or lines[linepos].find("WEBVTT") != 0 or \
