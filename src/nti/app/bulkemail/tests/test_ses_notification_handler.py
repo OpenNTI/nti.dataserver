@@ -18,11 +18,13 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_length
 from hamcrest import has_property
+from hamcrest import contains_string
 
 from zope.lifecycleevent import modified
 import anyjson as json
 import os
 
+import fudge
 from boto.sqs.message import RawMessage
 
 from nti.app.testing.layers import SharedConfiguringTestLayer
@@ -36,9 +38,9 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users.user_profile import make_password_recovery_email_hash
 
 
-from .test_application import TestApp
+from nti.app.testing.webtest import TestApp
 
-from nti.appserver import bounced_email_workflow
+from .. import ses_notification_handler as  bounced_email_workflow
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
 def _read_msgs(make_perm=False):
@@ -94,16 +96,27 @@ class TestBouncedEmailworkflow(unittest.TestCase):
 	def test_process_transient_messages(self):
 		messages = _read_msgs()
 		# no dataserver needed, because they're all transient
-		proc, _ = bounced_email_workflow.process_ses_feedback( messages, mark_transient=False )
-		assert_that( proc, is_( messages ) )
+		res = bounced_email_workflow.process_ses_feedback( messages, mark_transient=False )
+		assert_that( res.processed_messages, is_( messages ) )
 
+
+	@WithMockDSTrans
+	@fudge.patch('boto.connect_sqs')
+	def test_process_transient_messages_from_queue(self, fake_connect_sqs):
+		messages = _read_msgs()
+		(fake_connect_sqs.is_callable().returns_fake()
+		 .expects('get_queue').returns_fake()
+		 .expects('get_messages').returns(messages).next_call().returns(()))
+		# no dataserver needed, because they're all transient
+		res = bounced_email_workflow.process_sqs_queue('BulkSESFeedback')
+		assert_that( res.processed_messages, is_( messages ) )
 
 	@WithMockDSTrans
 	def test_process_permanent_bounces(self):
 		messages = _read_msgs( make_perm=True )
-		proc, _ = bounced_email_workflow.process_ses_feedback( messages )
+		res = bounced_email_workflow.process_ses_feedback( messages )
 		# But no users have these email addresses, so nothing actually happened
-		assert_that( proc, is_( messages ) )
+		assert_that( res.processed_messages, is_( messages ) )
 
 	@WithMockDSTrans
 	def test_process_permanent_bounces_find_users(self):
@@ -122,9 +135,10 @@ class TestBouncedEmailworkflow(unittest.TestCase):
 		modified( u4 )
 
 		messages = _read_msgs( make_perm=True )
-		proc, matched = bounced_email_workflow.process_ses_feedback( messages )
-		assert_that( proc, is_( messages ) )
-		assert_that( matched, has_length(4) )
+		res = bounced_email_workflow.process_ses_feedback( messages )
+
+		assert_that( res.processed_messages, is_( messages ) )
+		assert_that( res.matched_messages, has_length(4) )
 
 		assert_that( u1, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
 		assert_that( u2, has_link( bounced_email_workflow.REL_INVALID_EMAIL ) )
@@ -132,6 +146,13 @@ class TestBouncedEmailworkflow(unittest.TestCase):
 		assert_that( u4, has_link( bounced_email_workflow.REL_INVALID_CONTACT_EMAIL ) )
 
 class TestApplicationBouncedEmailWorkflow(ApplicationLayerTest):
+
+	def setUp(self):
+		self._old_verp = component.getUtility(IVERP)
+		component.provideUtility(_TrivialVerp(), IVERP)
+
+	def tearDown(self):
+		component.provideUtility(self._old_verp, IVERP)
 
 	@WithSharedApplicationMockDS
 	def test_delete_states(self):
@@ -152,3 +173,16 @@ class TestApplicationBouncedEmailWorkflow(ApplicationLayerTest):
 
 			res = testapp.delete( href, extra_environ=self._make_extra_environ(), status=404 )
 			assert_that( res, has_property( 'status_int', 404 ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@fudge.patch('boto.connect_sqs')
+	def test_process_transient_messages_from_queue(self, fake_connect_sqs):
+		messages = _read_msgs()
+		(fake_connect_sqs.is_callable().returns_fake()
+		 .expects('get_queue').returns_fake()
+		 .expects('get_messages').returns(messages).next_call().returns(()))
+
+
+		res = self.testapp.get('/dataserver2/@@bounced_email_admin/BuskSESFeedback')
+		assert_that( res.body, contains_string( 'Start' ) )
+		res = res.form.submit( name='subFormTable.buttons.start' ).follow()

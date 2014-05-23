@@ -58,7 +58,6 @@
 	<pyramid:scan package='._hacks' />
 	<pyramid:scan package='.account_creation_views' />
 	<pyramid:scan package='.zope_file_views' />
-	<pyramid:scan package='.bounced_email_workflow' />
 	<pyramid:scan package='.feedback_views' />
 	<pyramid:scan package='.invitation_views' />
 	<pyramid:scan package='.dfl_views' />
