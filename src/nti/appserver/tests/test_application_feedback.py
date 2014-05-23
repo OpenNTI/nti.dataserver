@@ -109,13 +109,13 @@ class TestApplicationFeedback(ApplicationLayerTest):
 
 		msg_string = decodestring(msg.as_string())
 		assert_that( msg_string,
-					 contains_string( "file                  thing.js" ) )
+					 contains_string( b"file                  thing.js" ) )
 		assert_that( msg_string,
-					 contains_string( "collectedLog          ['an',\n"))
+					 contains_string( b"collectedLog          ['an',\n"))
 		assert_that( msg_string,
-					 contains_string( "<td>[&lt;class 'greenlet.GreenletExit'&gt;,<br /> &lt;type"))
+					 contains_string( b"<td>[&lt;class 'greenlet.GreenletExit'&gt;,<br /> &lt;type"))
 		assert_that( msg_string,
-					 does_not( contains_string('HTTP_COOKIE')))
+					 does_not( contains_string(b'HTTP_COOKIE')))
 
 		assert_that( msg, has_entry( 'To', 'crash.reports@nextthought.com'))
 
@@ -142,5 +142,17 @@ class TestApplicationFeedback(ApplicationLayerTest):
 		msg = self._do_test_email(url, 'Crash Report From nobody@nowhere.com on localhost', 'message',
 								  {'file': 'thing.js', 'line': 82 })
 
+		# XXX: Sometimes we get UnicodeDecodeErrors here if we let the literal
+		# be unicode. It seems that either the mail library is incorrectly producing
+		# quoted printable text, or the quopri is incorrectly decoding such text;
+		# given a string like:
+		#    Content-Type: multipart/alternative;\n boundary="===============9118329845803160203==
+		# the decoded value becomes:
+		#    Content-Type: multipart/alternative;\n boundary="=======\x9118329845803160203=
+		# Note the incorrect (?) transformation of the boundary.
+		# Our solution here, and above, is to ensure the literal we compare with is
+		# a bytestring.
+		# XXX: Py3
+
 		assert_that( decodestring(msg.as_string()),
-					 contains_string("REMOTE_USER_DATA                   sjohnson@nextthought.com") )
+					 contains_string(b"REMOTE_USER_DATA                   sjohnson@nextthought.com") )
