@@ -514,11 +514,10 @@ class WebVTTParser(object):
 		source = StringIO(source) if isinstance(source, six.string_types) else source
 
 		lines = []
-		for x in re.split('\n', source.read()):
-			x = x.lstrip().replace('\r', '')
-			if not isinstance(x, unicode):
-				x = x.decode('UTF-8')
-			lines.append(x)
+		for line in source:
+			line = line.decode("utf-8") if isinstance(line, bytes) else line
+			line = line.lstrip().replace('\r', '').replace('\n', '')
+			lines.append(line)
 
 		# SIGNATURE
 		if 	len(lines[linepos]) < 6 or lines[linepos].find("WEBVTT") != 0 or \
