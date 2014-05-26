@@ -56,25 +56,33 @@ class TestClassifier(unittest.TestCase):
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
 		# But a default accept changes back to browser
-		environ['HTTP_ACCEPT'] = '*/*'
+		environ['HTTP_ACCEPT'] = b'*/*'
 		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
 
-		environ['HTTP_ACCEPT'] = 'text/plain'
+		environ['HTTP_ACCEPT'] = b'text/plain'
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
-		environ['HTTP_ACCEPT'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+		environ['HTTP_ACCEPT'] = b'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
+
+		# We've seen badly encoded (?) headers in the wild; we shouldn't blow up
+		# This one was clearly from a mobile phone in Brazil (dating from 2011;
+		# note how old the Androad version is)
+		environ['HTTP_USER_AGENT'] = (b'Mozilla/5.0 (Linux; U; Android 2.3.4; pt-BR; KG-P970h Build/GRJ22) '
+									  b'AppleWebKit/533.1 (KHTML, like Gecko) '
+									  b'Vers\xe3o/4.0 Mobile Safari/533.1')
 		assert_that( _nti_request_classifier( environ ), is_( 'browser' ) )
 
 		# Temporary hack for old iPad apps
-		environ['HTTP_USER_AGENT'] = "NTIFoundation DataLoader NextThought/1.0.2/34053 (x86_64; 7.0.3)"
+		environ['HTTP_USER_AGENT'] = b"NTIFoundation DataLoader NextThought/1.0.2/34053 (x86_64; 7.0.3)"
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
-		environ['HTTP_USER_AGENT'] = "NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
+		environ['HTTP_USER_AGENT'] = b"NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
 		del environ['HTTP_REFERER']
-		environ['HTTP_USER_AGENT'] = "NTIFoundation DataLoader NextThought/1.0.2/34053 (x86_64; 7.0.3)"
+		environ['HTTP_USER_AGENT'] = b"NTIFoundation DataLoader NextThought/1.0.2/34053 (x86_64; 7.0.3)"
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )
 
-		environ['HTTP_USER_AGENT'] = "NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
+		environ['HTTP_USER_AGENT'] = b"NextThought/1.0.2 CFNetwork/672.0.8 Darwin/13.0.0"
 		assert_that( _nti_request_classifier( environ ), is_( CLASS_BROWSER_APP ) )

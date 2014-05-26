@@ -46,7 +46,16 @@ def application_request_classifier( environ ):
 	result = default_request_classifier( environ )
 
 	if result == CLASS_BROWSER:
+		# Recall that WSGI values are specified as Python's native
+		# string type. On Py2, this is a byte string.
+		# The HTTP spec says that they should be encoded as ISO-8859-1.
+		# Rather than either attempt to decode them, or wrap
+		# all our constants in str() calls (to make them native)
+		# we instead are careful to use the byte prefix for max speed.
+		# We have seen some non-ascii characters in the User-Agent header
+		# before, so this matters.
 		ua = environ.get('HTTP_USER_AGENT', '').lower()
+
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
 		if environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
@@ -55,11 +64,11 @@ def application_request_classifier( environ ):
 		elif environ.get('paste.testing') is True:
 			# From unit tests, we want to behave like an application
 			result = environ.get('nti.paste.testing.classification', CLASS_BROWSER_APP )
-		elif environ.get('HTTP_X_NTI_CLASSIFICATION') and environ['REMOTE_ADDR'] == '127.0.0.1':
+		elif environ.get('HTTP_X_NTI_CLASSIFICATION') and environ['REMOTE_ADDR'] == b'127.0.0.1':
 			# Local overrides for testing
 			result = environ.get('HTTP_X_NTI_CLASSIFICATION')
 
-		elif 'python' in ua or 'httpie' in ua:
+		elif b'python' in ua or b'httpie' in ua:
 			# From integration tests ('python requests') or from a command-line
 			# tool, we also want to behave like an application (this might change
 			# as we need to do more HTML testing)
@@ -79,16 +88,16 @@ def application_request_classifier( environ ):
 			# (ntifoundation, nextthought) for BWC, but we soon expect it to set the X-Requested-With
 			# header.
 			accept = environ.get('HTTP_ACCEPT', '')
-			if 'ntifoundation' in ua or 'nextthought' in ua:
+			if b'ntifoundation' in ua or b'nextthought' in ua:
 				# extra special casing for ipad
 				result = CLASS_BROWSER_APP
 			else:
-				if accept == '*/*' or  (',' in accept and 'text/html' in accept):
+				if accept == '*/*' or  (b',' in accept and b'text/html' in accept):
 					# Assume browser or browser-like
 					# If we're following a direct link, like from an email or bookmark,
 					# it won't have a referrer
 					result = CLASS_BROWSER
-				elif 'HTTP_REFERER' in environ and ('mozilla' in ua):
+				elif 'HTTP_REFERER' in environ and (b'mozilla' in ua):
 					result = CLASS_BROWSER_APP
 	return result
 
