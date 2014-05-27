@@ -89,7 +89,10 @@ def create_who_apifactory( secure_cookies=True,
 
 	# For browsers (NOT application browsers), we want to do authentication via a
 	# redirect to the login app.
-	settings = component.getUtility(IApplicationSettings)
+	try:
+		settings = component.getUtility(IApplicationSettings)
+	except LookupError:
+		settings = {}
 	login_root = settings.get('login_app_root', '/login/')
 
 	# A plugin that will redirect to the login app, telling the login
