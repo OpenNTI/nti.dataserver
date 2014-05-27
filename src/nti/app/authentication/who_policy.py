@@ -3,6 +3,11 @@
 """
 Pyramid authentication policy based on :mod:`repoze.who` and :mod:`pyramid_who`.
 
+As-of Pyramid 1.5, the basic auth and auth_tkt support is available in
+Pyramid's core; however, stacking them to work together requires
+third-party code (pyramid_multiauth) that may be less flexible and may work
+less well in a Zope-ish environment.
+
 .. $Id$
 """
 
@@ -10,6 +15,8 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+import time
 
 from zope import interface
 
@@ -46,7 +53,10 @@ class _GroupsCallback(object):
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
 			username = identity['repoze.who.userid']
 
-		result = effective_principals( username, registry=request.registry, authenticated=True, request=request )
+		result = effective_principals( username,
+									   registry=request.registry,
+									   authenticated=True,
+									   request=request )
 
 		identity[CACHE_KEY] = result
 		return result
@@ -54,7 +64,9 @@ class _GroupsCallback(object):
 @interface.implementer(IAuthenticationPolicy)
 class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 
-	def __init__( self, identifier_id, cookie_timeout=ONE_WEEK, api_factory=None ): #pylint: disable=I0011,W0231
+	def __init__( self, identifier_id,  #pylint: disable=I0011,W0231
+				  cookie_timeout=ONE_WEEK,
+				  api_factory=None ):
 		"""
 		:param identifier_id: The name of the fallback identifier to use
 			if we are asked to remember something but haven't
@@ -66,33 +78,114 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		self._api_factory = api_factory
 		self._cookie_timeout = cookie_timeout
 
+	# Note that the auth tkt never gets reissued; unlike repoze.who's
+	# `login` function, nothing in pyramid ever calls `remember`
+	# automatically. The version of auth_tkt that comes with Pyramid
+	# (AuthTktCookieHelper) handles this by reissuing the cooking at
+	# `identify` time (actually, it schedules a response callback),
+	# and the policy that uses it calls this method from all of
+	# `authenticated_userid`, `unauthenticated_userid` and
+	# `effective_principals` (in fact, they all call through to
+	# `unauthenticated_userid` which in turn calls `identify`). We
+	# replicate this behaviour by doing the same thing, but that takes
+	# overriding each method, sadly.
+
+	def unauthenticated_userid(self, request):
+		res = super(AuthenticationPolicy,self).unauthenticated_userid(request)
+		if res:
+			self.__do_reissue(request)
+		return res
+
+	def authenticated_userid(self, request):
+		res = super(AuthenticationPolicy,self).authenticated_userid(request)
+		if res:
+			self.__do_reissue(request)
+		return res
+
+	def effective_principals(self, request):
+		res = super(AuthenticationPolicy,self).effective_principals(request)
+		if res and len(res) > 1:
+			self.__do_reissue(request)
+		return res
+
+	def __do_reissue(self, request):
+		if hasattr(request, '_authtkt_reissued'):
+			# already checked all this, bail
+			return
+
+		identity = self._get_identity(request)
+		if not identity or 'timestamp' not in identity:
+			# If we're not identified or (piggybacking on implementation
+			# details of the Auth_tkt plugin) we're not identified
+			# by an auth_tkt, bail
+			return
+
+		api = self._getAPI(request)
+		identifier = api.name_registry[self._identifier_id]
+		if identity.get('identifier') != identifier:
+			# if we're not the auth_tkt, bail
+			return
+
+		if identifier.reissue_time is None:
+			# not asked to reissue, bail
+			return
+
+		now = time.time()
+		if (now - identity['timestamp']) <= identifier.reissue_time:
+			# Still good
+			return
+
+		if 'max_age' not in identity:
+			identity['max_age'] = str(self._cookie_timeout)
+
+		headers = identifier.remember(request.environ, identity)
+		def reissue(request, response):
+			if hasattr(request, '_authtkt_reissue_revoked'):
+				return
+			for k, v in headers:
+				response.headerlist.append( (k, v) )
+		request.add_response_callback(reissue)
+		request._authtkt_reissued = True
+
+
+	def forget(self, request):
+		request._authtkt_reissue_revoked = True
+		return super(AuthenticationPolicy,self).forget(request)
+
 	def remember(self, request, principal, **kw):
+		res = self.__do_remember(request, principal, **kw)
+		# Match what pyramid's AuthTkt policy does
+		if hasattr(request, '_authtkt_reissued'):
+			request._authtkt_reissue_revoked = True
+
+		return res
+
+	def __do_remember(self, request, principal, **kw):
 		# The superclass hardcodes the dictionary that is used
 		# for the identity. This identity is passed to the plugins.
-		# This has at least three problems. The first is that the identifier
-		# that actually identified the principal is not used, instead it is
-		# hardcoded to self._identifier_id (this only matters if we're remembering
-		# the same user); note, however, that we need to be careful about reusing
-		# this if we were identified via an IIdentifier that doesn't actually
-		# remember.
-		# Second, the AuthTkt plugin will only set cookie expiration headers right
-		# if a max_age is included in the identity.
-		# Third, for the auth tkt to also be able to set REMOTE_USER_DATA
-		# and REMOTE_USER_TOKENS, those also need to come in as
-		# 'tokens' and 'userdata' (which is what it would have been set to initially
-		# by that plugin). Our code will generally set REMOTE_USER_DATA/REMOTE_USER_TOKENS
-		# directly, so we copy them to the identity specifically.
-		# The tokens is a tuple of (native) strings, while
-		# userdata is a single string
+		# This has at least three problems:
+		#
+		# The first is that the identifier that actually identified
+		# the principal is not used, instead it is hardcoded to
+		# self._identifier_id (this only matters if we're remembering
+		# the same user); note, however, that we need to be careful
+		# about reusing this if we were identified via an IIdentifier
+		# that doesn't actually remember.
+		#
+		# Second, the AuthTkt plugin will only set cookie expiration
+		# headers right if a max_age is included in the identity.
+		#
+		# Third, for the auth tkt to also be able to set
+		# REMOTE_USER_DATA and REMOTE_USER_TOKENS, those also need to
+		# come in as 'tokens' and 'userdata' (which is what it would
+		# have been set to initially by that plugin). Our code will
+		# generally set REMOTE_USER_DATA/REMOTE_USER_TOKENS directly,
+		# so we copy them to the identity specifically. The tokens is
+		# a tuple of (native) strings, while userdata is a single
+		# string.
+		#
 		# We fix both issues here
 
-		# Note that the auth tkt never gets reissued; unlike repoze.who's `login`
-		# function, nothing in pyramid ever calls `remember` automatically.
-		# The version of auth_tkt that comes with pyramid (AuthTktCookieHelper)
-		# handles this by reissuing the cooking at `identify` time; we can
-		# almost use that class as a drop-in replacement for the AuthTktCookiePlugin
-		# (all it would need is the addition of an 'authenticate' method, plus
-		# some tweaks to the code below for cookie age and tokens)
 		api = self._getAPI(request)
 		identity = (self._get_identity(request) or {}).copy()
 		fake_identity = {

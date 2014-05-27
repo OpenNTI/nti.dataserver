@@ -29,7 +29,7 @@ class DataserverGlobalUsersAuthenticatorPlugin(object):
 			plugin = component.getUtility(IAuthenticatorPlugin,
 										  name="Dataserver Global User Authenticator")
 			return plugin.authenticateCredentials(identity).id
-		except (KeyError,AttributeError): # pragma: no cover
+		except (KeyError,AttributeError,LookupError): # pragma: no cover
 			return None
 
 @interface.implementer(IAuthenticator,
