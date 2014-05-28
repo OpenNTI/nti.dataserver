@@ -26,6 +26,8 @@ from .interfaces import IThreadable
 from .interfaces import IFriendsList
 from .interfaces import IDevice
 from .interfaces import ILastModified
+from .interfaces import IUser
+from .interfaces import IDynamicSharingTargetFriendsList
 from .interfaces import IUserTaggedContent
 from .contenttypes.forums.interfaces import IHeadlinePost
 
@@ -57,6 +59,7 @@ from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import TYPE_UUID
 from nti.ntiids.ntiids import TYPE_INTID
 from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
+from nti.ntiids.ntiids import TYPE_MEETINGROOM
 from nti.ntiids.ntiids import is_ntiid_of_types
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -73,7 +76,7 @@ class ValidatingContainerId(object):
 	  are not yet used.
 	"""
 
-	__slots__ = ('containerId',)
+	__slots__ = (b'containerId',)
 
 	_IGNORED_TYPES = {TYPE_OID,TYPE_UUID,TYPE_INTID}
 
@@ -132,15 +135,18 @@ class TaggedTo(object):
 	We take anything that is :class:`.IUserTaggedContent`` and look inside the
 	'tags' sequence defined by it. If we find something that looks
 	like an NTIID for a named entity, we look up the entity, and if
-	it exists, we return its username. This lets us be queried
-	just like creator and replies.
+	it exists, we return its NTIID or username: If the entity is globally
+	named, then the username is returned, otherwise, if the entity is only
+	locally named, the NTIID is returned.
+
 	"""
 
-	__slots__ = ('context',)
+	__slots__ = (b'context',)
 
 	# Tags are normally lower cased, but depending on when we get called
 	# it's vaguely possible that we might see an upper-case value?
-	_ENTITY_TYPES = {TYPE_NAMED_ENTITY, TYPE_NAMED_ENTITY.lower()}
+	_ENTITY_TYPES = {TYPE_NAMED_ENTITY, TYPE_NAMED_ENTITY.lower(),
+					 TYPE_MEETINGROOM, TYPE_MEETINGROOM.lower()}
 
 	def __init__( self, context, default ):
 		self.context = IUserTaggedContent(context, None)
@@ -160,12 +166,22 @@ class TaggedTo(object):
 			if is_ntiid_of_types( raw_tag, self._ENTITY_TYPES ):
 				entity = find_object_with_ntiid( raw_tag )
 				if entity is not None:
-					username_tags.add( entity.username )
+					# We actually have to be a bit careful here; we only want
+					# to catch certain types of entity tags, those that are either
+					# to an individual or those that participate in security relationships;
+					# (e.g., it doesn't help to use a regular FriendsList since that is effectively
+					# flattened).
+					# Currently, this abstraction doesn't exactly exist so we
+					# are very specific about it. See also :mod:`sharing`
+					if IUser.providedBy(entity):
+						username_tags.add( entity.username )
+					elif IDynamicSharingTargetFriendsList.providedBy(entity):
+						username_tags.add( entity.NTIID )
 		return username_tags
 
 def TaggedToIndex(family=None):
 	"""
-	Indexes the usernames of people mentioned in tags.
+	Indexes the NTIIDs of entities mentioned in tags.
 	"""
 
 	return NormalizationWrapper(field_name='tagged_usernames',
@@ -183,7 +199,7 @@ class CreatorOfInReplyTo(object):
 	name an object is in reply-to.
 	"""
 
-	__slots__ = ('context',)
+	__slots__ = (b'context',)
 
 	def __init__( self, context, default ):
 		self.context = context
@@ -256,6 +272,15 @@ def LastModifiedIndex(family=None):
 								index=LastModifiedRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
+IX_MIMETYPE = 'mimeType'
+IX_CONTAINERID = 'containerId'
+IX_CREATOR = 'creator'
+IX_CREATEDTIME = 'createdTime'
+IX_LASTMODIFIED = 'lastModified'
+IX_SHAREDWITH = 'sharedWith'
+IX_REPLIES_TO_CREATOR = 'repliesToCreator'
+IX_TAGGEDTO = 'taggedTo'
+IX_TOPICS = 'topics'
 
 def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
@@ -272,15 +297,15 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 	intids.register( catalog )
 	lsm.registerUtility( catalog, provided=ICatalog, name=CATALOG_NAME )
 
-	for name, clazz in ( ('mimeType', MimeTypeIndex),
-						 ('containerId', ContainerIdIndex),
-						 ('creator', CreatorIndex),
-						 ('createdTime', CreatedTimeIndex),
-						 ('lastModified', LastModifiedIndex),
-						 ('sharedWith', SharedWithIndex),
-						 ('repliesToCreator', CreatorOfInReplyToIndex),
-						 ('taggedTo', TaggedToIndex),
-						 ('topics', TopicIndex)):
+	for name, clazz in ( (IX_MIMETYPE, MimeTypeIndex),
+						 (IX_CONTAINERID, ContainerIdIndex),
+						 (IX_CREATOR, CreatorIndex),
+						 (IX_CREATEDTIME, CreatedTimeIndex),
+						 (IX_LASTMODIFIED, LastModifiedIndex),
+						 (IX_SHAREDWITH, SharedWithIndex),
+						 (IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex),
+						 (IX_TAGGEDTO, TaggedToIndex),
+						 (IX_TOPICS, TopicIndex)):
 		index = clazz( family=intids.family )
 		assert ICatalogIndex.providedBy(index)
 		intids.register( index )
