@@ -156,7 +156,8 @@ def is_ntiid_of_types( ntiid, nttypes ):
 	Check if the given ``ntiid`` is valid and of one of the given types
 	(ignoring subtypes).
 
-	:param nttypes: A sequence of types to check.
+	:param nttypes: A sequence of types to check; they should not have
+		subtypes.
 
 	:return: A True value if the ntiid is valid and has a type
 		portion equivalent to the given nttype (i.e., ignoring

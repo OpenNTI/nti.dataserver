@@ -21,11 +21,16 @@ from BTrees.OOBTree import Set
 from .interfaces import IUserNotableData
 from .interfaces import IUserPresentationPriorityCreators
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.utils.property import CachedProperty
 from nti.utils.property import annotation_alias
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+from nti.dataserver.metadata_index import IX_TAGGEDTO
+
+from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
+
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.catalog import ResultSet
 
@@ -195,7 +200,16 @@ class UserNotableData(AbstractAuthenticatedView):
 		# CatalogPlanner object that we might could use.
 		catalog = self._catalog
 		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
-		intids_tagged_to_me = catalog['taggedTo'].apply({'any_of': (self.remoteUser.username,)})
+
+		# Things tagged to me or my security-aware dynamic memberships
+		# XXX: This is probably slow? How many unions does this wind up doing?
+		# it definitely slows down over time
+		tagged_to_usernames_or_intids = {self.remoteUser.username}
+		# Note the use of private API, a signal to cleanup soon
+		for membership in _dynamic_memberships_that_participate_in_security( self.remoteUser, as_principals=False ):
+			if IDynamicSharingTargetFriendsList.providedBy(membership):
+				tagged_to_usernames_or_intids.add( membership.NTIID )
+		intids_tagged_to_me = catalog[IX_TAGGEDTO].apply({'any_of': tagged_to_usernames_or_intids})
 
 		safely_viewable_intids = self._safely_viewable_notable_intids
 
@@ -205,13 +219,13 @@ class UserNotableData(AbstractAuthenticatedView):
 			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
 
 		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
-		
+
 		# Top-level comments by the instructors
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
-		
+
 		# TODO We will eventually want to notify students when instructors create new discussions,
 		# but we'll have to sort out the CSV generated discussions first.
-		
+
 # 		# Now any topics by our a-listers, but only non-excluded topics
 # 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
 # 		topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,

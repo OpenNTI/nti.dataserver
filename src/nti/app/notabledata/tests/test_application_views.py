@@ -262,23 +262,19 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 0))
 
 
-	@WithSharedApplicationMockDS(users=('jason'),
-								 testapp=True,
-								 default_authenticate=True)
-	@time_monotonically_increases
-	def test_notable_ugd_tagged_to_me(self):
+	def _do_test_notable_ugd_tagged_to_entity(self, tag_name=None):
 		# Before it's shared with me, I can't see it, even
 		# though it's tagged to me
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user()
-			jason = self._get_user('jason')
+			jason = self._get_entity('jason')
 
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
 			top_n.containerId = u'tag:nti:foo'
 			top_n.body = ("Top",)
 			top_n.createdTime = 100
-			top_n.tags = contenttypes.Note.tags.fromObject([user.NTIID])
+			top_n.tags = contenttypes.Note.tags.fromObject([tag_name or user.NTIID])
 			jason.addContainedObject( top_n )
 
 			ext_ntiid = to_external_ntiid_oid( top_n )
@@ -312,6 +308,34 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains(has_entry('NTIID',ext_ntiid))))
 
 		self._check_notable_data()
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_tagged_to_me(self):
+		self._do_test_notable_ugd_tagged_to_entity()
+
+
+	@WithSharedApplicationMockDS(users=('jason'),
+								 testapp=True,
+								 default_authenticate=True)
+	@time_monotonically_increases
+	def test_notable_ugd_tagged_to_dfl(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			dfl = users.DynamicFriendsList( username='Friends' )
+			dfl.creator = jason
+			jason.addContainedObject( dfl )
+			dfl.addFriend( user )
+			dfl_ntiid = dfl.NTIID
+
+			# Manually clear out the notable for the circled event
+			user._circled_events_intids_storage.clear()
+
+		self._do_test_notable_ugd_tagged_to_entity(dfl_ntiid)
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
