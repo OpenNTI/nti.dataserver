@@ -36,6 +36,7 @@ entry_points = {
 		"nti_zodbconvert = nti.monkey.nti_zodbconvert:main",
 		"nti_multi-zodb-gc = nti.monkey.nti_multi_zodb_gc:main",
 		"nti_multi-zodb-check-refs = nti.monkey.nti_multi_zodb_check_refs:main",
+		"nti_qp = nti.mailer.queue:run_console",
 		# XXX: NOTE: The following technique is NOT reliable and fails
 		# under buildout or any other scenario that results in this package
 		# not being the /last/ package installed.
