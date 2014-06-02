@@ -240,6 +240,10 @@ class TestApplication(ApplicationLayerTest):
 		res = testapp.get( '/NextThoughtWebApp/resources/strings/site.js',
 						   extra_environ={b'HTTP_ORIGIN': b'http://mathcounts.nextthought.com'} )
 		assert_that( res, has_property( 'content_type', 'application/javascript' ) )
+		assert_that( res, has_property( 'charset', none() ) )
+		# Cannot access 'text' property until charset is set;
+		# should be able to decode as utf-8
+		res.charset = 'utf-8'
 		assert_that( res, has_property( 'text', is_not( is_empty() ) ) )
 
 
