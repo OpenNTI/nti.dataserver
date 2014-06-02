@@ -502,11 +502,6 @@ class textsubscript(Base.Command):
 class modified(TextCommand):
 	pass
 
-# The sidebar environment is to be the base class for other side types such as those from AoPS.
-class sidebar(Environment):
-	args = 'title'
-	blockType = True
-
 # The following are LaTeX 2e escape commands
 
 class backslash(Base.Command):
@@ -1151,6 +1146,80 @@ class ntidiscussion(Base.Environment):
 		if icons:
 			self.iconResource = icons[0]
 		return tok
+
+###############################################################################
+# The following block contains commands for ntisequence type objects
+###############################################################################
+
+class ntisequenceitem(LocalContentMixin, Base.Environment):
+	args = '[options:dict]'
+
+	def invoke(self, tex):
+		res = super(ntisequenceitem, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return res
+
+	def digest(self, tokens):
+		tok = super(ntisequenceitem, self).digest(tokens)
+		if self.macroMode != Base.Environment.MODE_END:
+			options = self.attributes.get('options', {}) or {}
+			__traceback_info__ = options, self.attributes
+			for k, v in options.items():
+				setattr(self, k, v)
+		return tok
+
+class ntisequence(LocalContentMixin, Base.List):
+	args = '[options:dict]'
+
+	def invoke(self, tex):
+		res = super(ntisequence, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		return res
+
+	def digest(self, tokens):
+		tok = super(ntisequence, self).digest(tokens)
+		if self.macroMode != Base.Environment.MODE_END:
+			_items = self.getElementsByTagName('ntisequenceitem')
+			assert len(_items) >= 1
+
+			options = self.attributes.get('options', {}) or {}
+			__traceback_info__ = options, self.attributes
+			for k, v in options.items():
+				setattr(self, k, v)
+		return tok
+
+class ntisequenceref(Base.Crossref.ref):
+	args = '[options:dict] label:idref'
+
+###############################################################################
+# The following block contains commands for multilangual ntidirections block 
+# type objects
+###############################################################################
+
+class ntidirectionsblock(Base.Command):
+	args = 'directions example lang_code:str:source'
+	blockType = True
+
+###############################################################################
+# The following block contains commands for various sidebar objects
+###############################################################################
+
+# The sidebar environment is to be the base class for other side types such as those from AoPS.
+class sidebar(Environment):
+	args = 'title'
+	blockType = True
+
+class flatsidebar(sidebar):
+	pass
+
+class audiosidebar(sidebar):
+	args = 'audioref'
+
+###############################################################################
+# The following block configures various counters
+###############################################################################
 
 def ProcessOptions( options, document ):
 	document.context.newcounter('ntiaudio')

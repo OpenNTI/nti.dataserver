@@ -139,3 +139,78 @@ div.align-center ul.nav {
 #NTIContent #glossary {
 	display: none;
 }
+
+#NTIContent .language-code::before {
+	content: "";
+	position: absolute;
+	width: 2.25em;
+	height: 2.25em;
+	top: -1.1em;
+	left: -0.45em;
+	background: #d9d9d9;
+	border-radius: 100%;
+	z-index: -1;
+}
+
+#NTIContent .language-code:hover::before {
+	background: #3fb3f6;
+}
+
+#NTIContent .language-code {
+	cursor: pointer;
+	color: #fff;
+	font-size: .8em;
+	line-height: 0;
+	font-weight: 700;
+	float: right;
+	position: relative;
+	z-index: 1;
+	display: block;
+	vertical-align: top;
+	margin-top: 12px;
+}
+
+#NTIContent .directions-main {
+	font-size: 2em;
+	display: block;
+	margin-top: -10px;
+}
+
+#NTIContent .directions-example {
+	font-style: italic;
+}
+
+#NTIContent .ntidirectionsblock {
+	width: 640px;
+}
+
+#NTIContent .sidebar-leader {
+	position: relative;
+	display: inline-block;
+	top: -5px;
+	vertical-align: top;
+}
+
+#NTIContent .sidebar-body {
+	display: inline-block;
+}
+
+#NTIContent .ntidirectionsblock .directions {
+	display: inline-block;
+	width: 90%;
+}
+
+#NTIContent .ntidirectionsblock {
+	display: inline-block;
+	width: 100%;
+}
+
+#NTIContent .sidebar-body object[type$=ntisequence] {
+	display: inline;
+	padding: 12px 0px;
+}
+
+#NTIContent .sidebar-body object[type$=ntisequenceitem] {
+	width: 625px;
+	padding-right: 12px;
+}

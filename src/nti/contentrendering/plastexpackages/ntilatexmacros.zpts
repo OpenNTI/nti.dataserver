@@ -170,6 +170,18 @@ name: sidebar
 <div tal:replace="self">Sidebar Body</div>
 </div>
 
+name: flatsidebar
+<div tal:condition="self" class="sidebar flat border-top" tal:attributes="id self/id">
+<div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
+<div tal:replace="self">Sidebar Body</div>
+</div>
+
+name: audiosidebar
+<div class="sidebar-audio">
+	<div class="sidebar-leader" tal:content="self/attributes/audioref">Audio file</div>
+	<div class="sidebar-body" tal:content="self">Sidebar body</div>
+</div>
+
 name: ntiincludeannotationgraphics
 <span tal:condition="not:self/image/resizeable" itemprop="nti-data-markupenabled">
 <img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/attributes/alttext; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url; data-caption self/title | nothing" />
@@ -263,4 +275,23 @@ name: ntidiscussionref
 </object>
 
 name: targetntiid
+
+name: ntisequence
+<object type="application/vnd.nextthought.ntisequence">
+<span tal:replace="self"></span>
+</object>
+
+name: ntisequenceitem
+<object type="application/vnd.nextthought.ntisequenceitem">
+<span tal:replace="self"></span>
+</object>
+
+name: ntidirectionsblock
+<div class="ntidirectionsblock">
+	<div>
+		<span class="directions-main" tal:content="self/attributes/directions">Directions Text</span>
+		<span class="directions-example" tal:content="self/attributes/example">Directions Example</span>
+	</div>
+	<div class="language-code" tal:content='self/attributes/lang_code'>Language Code</div>
+</div>
 
