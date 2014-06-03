@@ -61,7 +61,6 @@
 	<pyramid:scan package='.feedback_views' />
 	<pyramid:scan package='.invitation_views' />
 	<pyramid:scan package='.dfl_views' />
-	<pyramid:scan package='.store.views' />
 
 	<pyramid:scan package=".link_providers.views" />
 	<include package="nti.app.bulkemail" file="pyramid.zcml" />
@@ -76,7 +75,6 @@
 	<include package=".utils.users" file="pyramid.zcml" />
 
 	<!-- Admin views -->
-	<pyramid:scan package='.utils.store_admin_views' />
 	<pyramid:scan package='.utils.forums.forum_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
