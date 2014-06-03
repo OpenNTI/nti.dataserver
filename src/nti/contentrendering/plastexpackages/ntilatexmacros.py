@@ -898,6 +898,7 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 	iconResource = None
 	target_ntiid = None
 	_description = None
+	_uri = u''
 
 	class worktitle(Base.Command):
 		args = 'title'
@@ -920,10 +921,11 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 
 		def digest(self, tokens):
 			tok = super(relatedwork.worksource,self).digest(tokens)
-			self.parentNode.uri = self.attributes['uri']
-			if hasattr(self.parentNode.uri, 'source'):
-				self.parentNode.uri = self.parentNode.uri.source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
+			self.attributes['uri'] =  self.attributes['uri'].source.replace( ' ', '' ).replace( '\\&', '&' ).replace( '\\_', '_' ).replace( '\\%', '%' ).replace(u'\u2013', u'--').replace(u'\u2014', u'---')
 			return tok
+
+	class worksourceref(Base.Crossref.ref):
+		args = 'target:idref'
 
 	def digest(self, tokens):
 		tok = super(relatedwork,self).digest(tokens)
@@ -948,11 +950,24 @@ class relatedwork(LocalContentMixin, Base.Environment, plastexids.NTIIDMixin):
 			self._description = TeXFragment()
 			self._description.parentNode = self
 			self._description.ownerDocument = self.ownerDocument
-			node_types = ['label', 'worktitle', 'workcreator', 'worksource', 'includegraphics']
+			node_types = ['label', 'worktitle', 'workcreator', 'worksource', 'worksourceref', 'includegraphics']
 			for child in self.childNodes:
 				if child.nodeName not in node_types:
 					self._description.appendChild(child)
 		return self._description
+
+	@readproperty
+	def uri(self):
+		if not self._uri:
+			worksources = self.getElementsByTagName('worksource')
+			if worksources:
+				self._uri = worksources[0].attributes.get('uri')
+			else:
+				worksources = self.getElementsByTagName('worksourceref')
+				if worksources:
+					if hasattr(worksources[0].idref['target'], 'ntiid'):
+						self._uri = worksources[0].idref['target'].ntiid
+		return self._uri
 
 	def gen_target_ntiid(self):
 		from nti.ntiids.ntiids import is_valid_ntiid_string

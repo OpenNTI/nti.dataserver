@@ -247,7 +247,7 @@ name: DeclareMediaResource
 
 name: relatedwork
 
-name: worktitle workcreator worksource
+name: worktitle workcreator worksource worksourceref
 
 name: relatedworkref
 <object class="ntirelatedworkref">
