@@ -14,7 +14,7 @@ from hamcrest import has_length
 from hamcrest import assert_that
 
 # from nti.contentrendering.plastexpackages.graphicx import includegraphics
-from nti.contentrendering.plastexpackages.ntialibra import ntisequenceitem, ntisequence
+from nti.contentrendering.plastexpackages.ntilatexmacros import ntisequenceitem, ntisequence
 
 from nti.contentrendering.tests import simpleLatexDocumentText
 from nti.contentrendering.tests import buildDomFromString as _buildDomFromString
