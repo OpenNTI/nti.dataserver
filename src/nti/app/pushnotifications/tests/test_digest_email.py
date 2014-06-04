@@ -82,7 +82,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		self.note_oids = list()
 		# Create a notable blog
 		res = self.testapp.post_json( '/dataserver2/users/sjohnson@nextthought.com/Blog',
-									  {'Class': 'Post', 'title': 'my title', 'body': ['my body']},
+									  {'Class': 'Post', 'title': 'NOTABLE BLOG TITLE', 'body': ['my body']},
 									  status=201 )
 		# Sharing is currently a two-step process
 		self.testapp.put_json(res.json_body['href'], {'sharedWith': ['jason']})
@@ -119,7 +119,10 @@ class TestApplicationDigest(ApplicationLayerTest):
 			from zope.lifecycleevent import modified
 
 			user_interfaces.IUserProfile( jason ).email = 'jason.madden@nextthought.com'
+			user_interfaces.IUserProfile( jason ).realname = 'Jason Madden'
+			user_interfaces.IUserProfile( user ).realname = 'Steve Johnson'
 			modified( jason )
+			modified( user )
 
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
@@ -164,7 +167,13 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
 		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))
+
+		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
+		assert_that( msg, contains_string('<strong>Steve Johnson</strong> added'))
+
 		assert_that( msg, does_not(contains_string('replied to a note')))
+		assert_that( msg, does_not(contains_string('NO CONTENT')))
+
 
 		note_oid = self.note_oids[0]
 		note_oid = note_oid[0:note_oid.index('OID')]

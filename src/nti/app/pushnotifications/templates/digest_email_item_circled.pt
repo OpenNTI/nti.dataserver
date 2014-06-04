@@ -1,0 +1,21 @@
+<!--! -*- mode: nxml -*- -->
+<div metal:use-macro="macro:row">
+	<span metal:fill-slot="content">
+		<span height="30px" style="display:block;align:top;text-align:top">
+			<tal:block tal:condition="notable/remaining">
+				<strong tal:content="notable/creator|default">Someone</strong> and
+				<tal:block tal:content="notable/remaining">6</tal:block>
+				${python:request.localizer.pluralize('other', 'others', notable.remaining)} added you as a contact.
+			</tal:block>
+			<tal:block tal:condition="not:notable/remaining">
+				<strong tal:content="notable/creator|default">Someone</strong> added you as a contact.
+			</tal:block>
+		</span>
+		<!--!
+			TODO: Link to profile. This is hard because the app sometimes somehow obscures these links,
+			but not always.
+			Until we can guarantee two lines here, we use the wrapping span
+			to force layout if there is something following.
+		-->
+	</span>
+</div>

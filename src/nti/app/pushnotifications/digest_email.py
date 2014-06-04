@@ -173,7 +173,7 @@ class _TemplateArgs(object):
 
 		result = _find_in_map(IVideoIndexMap) or _find_in_map(IAudioIndexMap)
 		return result
-		
+
 	@property
 	def note_container_display_name(self):
 		path = self._path_to_note_container()
@@ -202,6 +202,19 @@ class _TemplateArgs(object):
 	@property
 	def creator_avatar_url(self):
 		return self.request.resource_url(self._primary.creator, '@@avatar')
+
+class DigestEmailTemplateArgs(dict):
+
+	def __init__(self):
+		dict.__init__(self)
+		# Yes, this creates a cycle. But
+		# if someone does dict.update(self),
+		# even if we override __getitem__/get,
+		# __contains__, and items(), we have no guarantee
+		# that the copied dict will actually return
+		# our fake key
+		self['context'] = self
+
 
 from zope.security.interfaces import IParticipation
 from zope.security.management import endInteraction
@@ -356,7 +369,7 @@ class DigestEmailCollector(object):
 					top_level_comments.append( o )
 			elif IPersonalBlogEntry.providedBy(o) or IPersonalBlogEntryPost.providedBy(o):
 				# These types are also ITopics
-				blogs.append(o)		
+				blogs.append(o)
 			elif ITopic.providedBy(o):
 				topics.append(o)
 			elif IStreamChangeEvent.providedBy(o):
@@ -375,7 +388,7 @@ class DigestEmailCollector(object):
 		top_level_comments.sort(reverse=True,key=lambda x: x.createdTime)
 		topics.sort(reverse=True,key=lambda x: x.createdTime)
 
-		result = dict()
+		result = DigestEmailTemplateArgs()
 		for k, values in (('discussion', topics),
 						  ('note', notes),
 						  ('comment', comments),
@@ -494,6 +507,8 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		result['since_when'] = formatter.format(when)
 		result['first_name'] = HumanName(recipient['realname']).first if recipient['realname'] else recipient['email'].id
 
+		# Hmm, maybe?
+		result['view'] = self
 		return result
 
 
@@ -545,3 +560,32 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 			if self.request.get('override_to'):
 				possible_recipient['email'].email = self.request.get('override_to')
 			yield possible_recipient
+
+class DigestEmailNotableViewletBase(object):
+	"""
+	Base class for viewlets based on a notable object
+	(an instance of this modules :class:`_TemplateArgs`).
+
+	It is conditionally available if the template argument
+	corresponding to its name is populated in the context dictionary
+	(so the name attribute of the viewlet registration must match
+	how we create the context dictionary).
+
+	You can define a weight attribute in the viewlet registration as
+	well to influence the order of viewlets. By default they are
+	unordered.
+	"""
+
+	context = None
+	__name__ = None
+
+	@property
+	def notable(self):
+		return self.context.get(self.__name__)
+
+	@property
+	def available(self):
+		args = self.context.get(self.__name__)
+		if args:
+			return True
+		return False
