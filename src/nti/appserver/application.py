@@ -561,7 +561,11 @@ def createApplication( http_port,
 	# Configure Mako for plain text templates (Only! Use ZPT for XML/HTML)
 	pyramid_config.registry.settings['mako.directories'] = 'nti.appserver:templates'
 	pyramid_config.registry.settings['mako.module_directory'] = template_cache_dir
-	pyramid_config.registry.settings['mako.strict_undefined'] = True
+	# strict_undefined can be nice sometimes, but it makes writing certain
+	# dynamic parts of templates extra hard since you can't even reference
+	# a variable that isn't set, even to check to see if it's in the context or
+	# locals
+	#pyramid_config.registry.settings['mako.strict_undefined'] = True
 	# Disable all default filtering. Pyramid by default wants to apply HTML escaping,
 	# which we clearly do not want as these are plain text templates (only!)
 	# (NOTE: If you change this, you must manually remove any cached compiled templates)
