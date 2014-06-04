@@ -37,7 +37,7 @@ class SingletonDecorator(type):
 	"""
 
 	def __new__(cls, name, bases, cls_dict):
-		cls_dict['__slots__'] = () # no ivars
+		cls_dict[str('__slots__')] = () # no ivars
 
 		cls = type.__new__(cls, name, bases, cls_dict)
 

@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import time
+import collections
 
 from zope import interface
 from zope import component
@@ -343,15 +344,7 @@ class DigestEmailCollector(object):
 		# unique)
 		sorted_by_type_time = recipient['template_args']
 
-		notes = list()
-		comments = list()
-		top_level_comments = list()
-		topics = list()
-		blogs = list()
-		circled = list()
-		grade = list()
-		feedback = list()
-		other = list()
+		values = collections.defaultdict(list)
 
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
@@ -359,50 +352,26 @@ class DigestEmailCollector(object):
 		total_found = 0
 		for o in notable_data.iter_notable_intids(sorted_by_type_time, ignore_missing=True):
 			total_found += 1
-			if INote.providedBy(o):
-				notes.append(o)
-			elif ICommentPost.providedBy(o):
-				# Either this is a reply to us or this is a top-level comment in a thought or discussion.
-				if ICommentPost.providedBy(o.__parent__):
-					comments.append(o)
-				else:
-					top_level_comments.append( o )
-			elif IPersonalBlogEntry.providedBy(o) or IPersonalBlogEntryPost.providedBy(o):
-				# These types are also ITopics
-				blogs.append(o)
-			elif ITopic.providedBy(o):
-				topics.append(o)
-			elif IStreamChangeEvent.providedBy(o):
-				if o.type == 'Circled':
-					circled.append(o)
-				else:
-					grade.append(o)
-			elif o.__class__.__name__ == 'UsersCourseAssignmentHistoryItemFeedback': # XXX FIXME: Coupling
-				feedback.append(o)
+			classifier = component.queryAdapter(o, INotableDataEmailClassifier)
+			try:
+				classification = classifier.classify(o)
+			except AttributeError:
+				classification = None
+
+			if classification:
+				values[classification].append(o)
 			else:
 				total_found -= 1
-				other.append(o)
+				values['other'].append(o)
 
-		# Comments has multiple mime types, as does topics
-		comments.sort(reverse=True,key=lambda x: x.createdTime)
-		top_level_comments.sort(reverse=True,key=lambda x: x.createdTime)
-		topics.sort(reverse=True,key=lambda x: x.createdTime)
-
+		# These were initially sorted by time within their own mime types,
+		# but some things may have multiple mime types under the same classification,
+		# so we need to resort
 		result = DigestEmailTemplateArgs()
-		for k, values in (('discussion', topics),
-						  ('note', notes),
-						  ('comment', comments),
-						  ('top_level_comment', top_level_comments),
-						  ('feedback', feedback),
-						  ('circled', circled),
-						  ('grade', grade),
-						  ('blog', blogs),
-						  ('other', other)):
-			if values:
-				template_args = _TemplateArgs(values, request)
-			else:
-				template_args = None
-			result[k] = template_args
+		for name, objs in values.items():
+			if objs:
+				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
+				result[name] = _TemplateArgs(objs, request)
 
 		# If we really wanted to, we could stick a user authentication token
 		# on this view, but it's a lot safer not to.
@@ -413,6 +382,58 @@ class DigestEmailCollector(object):
 		result['total_remaining'] = sum( [ x.remaining for x in result.values() if isinstance( x, _TemplateArgs ) ] )
 		return result
 
+from nti.externalization.singleton import SingletonDecorator
+from .interfaces import INotableDataEmailClassifier
+
+@interface.implementer(INotableDataEmailClassifier)
+class _AbstractClassifier(object):
+	__metaclass__ = SingletonDecorator
+
+	classification = None
+
+	def classify(self, obj):
+		return self.classification
+
+@component.adapter(INote)
+class _NoteClassifier(_AbstractClassifier):
+	classification = 'note'
+
+@component.adapter(ICommentPost)
+class _CommentClassifier(_AbstractClassifier):
+
+	def classify(self, obj):
+		# Either this is a reply to us or this is a top-level comment in a thought or discussion.
+		if ICommentPost.providedBy(obj.__parent__):
+			return 'comment'
+
+		return 'top_level_comment'
+
+@component.adapter(IPersonalBlogEntry)
+class _BlogEntryClassifier(_AbstractClassifier):
+	classification = 'blog'
+
+@component.adapter(IPersonalBlogEntryPost)
+class _BlogEntryPostClassifier(_AbstractClassifier):
+	classification = 'blog'
+
+@component.adapter(ITopic)
+class _TopicClassifier(_AbstractClassifier):
+	classification = 'discussion'
+
+@component.adapter(IStreamChangeEvent)
+class _StreamChangeEventDispatcher(_AbstractClassifier):
+
+	def classify(self, obj):
+		# What we should do is look for a named adapter based on the
+		# type of the contained object and the change type name
+		# but right now we don't, hardcoding knowledge of the
+		# supported types
+		if obj.type == 'Circled':
+			return 'circled'
+		return 'grade'
+
+class _FeedbackClassifier(_AbstractClassifier):
+	classification = 'feedback'
 
 
 from nti.dataserver.interfaces import IDataserver
