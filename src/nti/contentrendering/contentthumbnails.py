@@ -74,6 +74,7 @@ def _create_thumbnail_of_pdf(pdf_path, page=1, height=792, width=612):
 	# Note that gs can also take "-" as
 	# the source path to read from stdin, if we already have it
 	# in memory
+	__traceback_info__ = cmd
 	try:
 		subprocess.check_output( cmd, stderr=subprocess.STDOUT )
 	finally:

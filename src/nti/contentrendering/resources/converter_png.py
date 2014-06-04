@@ -49,14 +49,15 @@ def _size(key, png):
 		# Exactly what we expected, yay
 		width_in_pt, height_in_pt = output_parts
 		return (key, width_in_pt, height_in_pt)
-	elif len(output_parts) >= 3:
+
+	if len(output_parts) >= 3:
 		# Hmm, probably an animated gif?
 		# We get WIDTH x...x HEIGHT
 		# with an intervening value for each frame
 		logger.debug("Animated gif at %s %s?", key, png)
 		return (key, output_parts[0], output_parts[-1])
-	else:
-		raise ValueError("Unsupported identify output %s" % output_parts)
+
+	raise ValueError("Unsupported identify output %s" % output_parts)
 
 def _scale(input, output, scale, defaultScale):
 	"""Scales the input file to the desired size and then sanitizes the result with pngcrush."""
