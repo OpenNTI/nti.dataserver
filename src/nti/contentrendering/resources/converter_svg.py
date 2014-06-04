@@ -37,6 +37,7 @@ def _do_convert(page, input_filename='images.pdf'):
 	filename = 'img%d.svg' % page
 	# TODO: in other converters we've observed hangs if exceptions are raised
 	# in the process pool. Happen here?
+	__traceback_info__ = ('pdf2svg', filename)
 	subprocess.check_call( ('pdf2svg', input_filename, filename, str(page) ) )
 
 	with open(filename, 'rb') as f:
@@ -76,9 +77,11 @@ class PDF2SVG(plasTeX.Imagers.VectorImager):
 		# Crop all the pages of the PDF to the exact size
 		# os.system( "pdfcrop --hires --margin 0 images.pdf images.pdf" )
 		with open('/dev/null', 'w') as dev_null:
+			cmd = ('pdfcrop', '--hires', '--margin', '0', 'images.pdf', 'images.pdf')
+			__traceback_info__ = cmd
 			subprocess.check_call(
-					 ('pdfcrop', '--hires', '--margin', '0', 'images.pdf', 'images.pdf'),
-					  stdout=dev_null, stderr=dev_null)
+				cmd,
+				stdout=dev_null, stderr=dev_null)
 		_images = list(self.images.values())
 
 		# Find out how many pages to expect and record file sizes
