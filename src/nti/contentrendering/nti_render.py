@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 import os
 import sys
 import time
+import glob
 import string
 import logging
 import argparse
@@ -106,25 +107,38 @@ def main():
 	doindexing = not args.noindexing
 	outFormat = args.outputformat
 
+	out_format_to_render_name = {'xhtml': 'XHTML',
+								 'text': 'Text'}
+
 	logger.info("Start main")
 	start_t = time.time()
 	source_dir = os.path.dirname(os.path.abspath(os.path.expanduser(sourceFile)))
 
-	zope_pre_conf_name = os.path.join(source_dir, 'pre_configure.zcml')
+	# Set up imports for style files. The preferred, if verbose, way is to
+	# use a fully qualified Python name. But for legacy and convenience
+	# reasons, we support non-qualified imports (if the module does)
+	# by adding that directory directly to the path
+	packages_path = os.path.join(os.path.dirname(__file__) ,
+								 str('plastexpackages'))
+	sys.path.append(packages_path)
+
+	# Also allow the source directory to cntain a 'plastexpackages'
+	# directory. If it exists, it should be a directory containing
+	# packages that are referenced by fully-qualified name
+	# or possibly raw modules that are referenced by a short name;
+	# note that in the module case, they won't be able to import each other.
+	# Also note that the content-local `configure.zcml` file can (SHOULD) be used
+	# to register IPythonPackage adapters/utilities
+	local_packages_path = os.path.join( source_dir,
+										str('plastexpackages'))
+	sys.path.append(local_packages_path)
+
+	zope_pre_conf_name = os.path.join(source_dir, str('pre_configure.zcml'))
 	xml_conf_context = None
 	if os.path.exists(zope_pre_conf_name):
 		xml_conf_context = xmlconfig.file(os.path.abspath(zope_pre_conf_name), package=nti.contentrendering)
 
 	xml_conf_context = xmlconfig.file('configure.zcml', package=nti.contentrendering, context=xml_conf_context)
-
-	# Set up imports for style files. The preferred, if verbose, way is to
-	# use a fully qualified python name. But for legacy and convenience
-	# reasons, we support non-qualified imports (if the module does)
-	# by adding that directory directly to the path
-	# Note that the cwd is on the path by default and files there
-	# (per-job) should take precedence
-	packages_path = os.path.join(os.path.dirname(__file__) , 'plastexpackages')
-	sys.path.append(packages_path)
 
 
 	# Create document instance that output will be put into
@@ -140,6 +154,10 @@ def main():
 	document.config['files']['split-level'] = 1
 	document.config['document']['toc-depth'] = sys.maxint  # Arbitrary number greater than the actual depth possible
 	document.config['document']['toc-non-files'] = True
+
+	if outFormat in out_format_to_render_name:
+		document.config['general']['renderer'] = out_format_to_render_name[outFormat]
+
 	# By outputting in ASCII, we are still valid UTF-8, but we use
 	# XML entities for high characters. This is more likely to survive
 	# through various processing steps that may not be UTF-8 aware
@@ -170,7 +188,7 @@ def main():
 	# TODO: Consider installing hooks and using 'with site()' for this?
 	components = interfaces.JobComponents(jobname)
 
-	document.userdata['working-dir'] = os.getcwd()
+	cwd = document.userdata['working-dir'] = os.getcwd()
 	document.userdata['generated_time'] = isodate.datetime_isoformat(datetime.datetime.utcnow())
 	# This variable contains either a time.tzname tuple or a pytz timezone
 	# name
@@ -190,13 +208,12 @@ def main():
 	document.userdata['renderVersion'] = 2
 
 	# Load aux files for cross-document references
-	# pauxname = '%s.paux' % jobname
-
-	# for dirname in [cwd] + config['general']['paux-dirs']:
-	# 	for fname in glob.glob(os.path.join(dirname, '*.paux')):
-	# 		if os.path.basename(fname) == pauxname:
-	# 			continue
-	# 		document.context.restore(fname, rname)
+	pauxname = '%s.paux' % jobname
+	for dirname in [cwd] + document.config['general']['paux-dirs']:
+	 	for fname in glob.glob(os.path.join(dirname, '*.paux')):
+	 		if os.path.basename(fname) == pauxname:
+	 			continue
+	 		document.context.restore(fname, document.config['general']['renderer'])
 
 
 	# Set up TEXINPUTS to include the current directory for the renderer,
@@ -239,7 +256,7 @@ def main():
 
 	if outFormat == 'xhtml':
 		logger.info("Begin render")
-		render(document, 'XHTML', db)
+		render(document, document.config['general']['renderer'], db)
 		logger.info("Begin post render")
 		postRender(document, jobname=jobname, context=components, dochecking=dochecking, doindexing=doindexing)
 
@@ -249,7 +266,7 @@ def main():
 
 	elif outFormat == 'text':
 		logger.info("Begin render")
-		render(document, 'Text', db)
+		render(document, document.config['general']['renderer'], db)
 
 
 	logger.info("Write metadata.")
