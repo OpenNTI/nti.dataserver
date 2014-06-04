@@ -1,0 +1,36 @@
+<!-- -*- mode: nxml -*- -->
+<html
+	xmlns:tal="http://xml.zope.org/namespaces/tal"
+	xmlns:metal="http://xml.zope.org/namespaces/metal">
+
+	<span style="margin: 0 2px 0 0;" metal:define-macro="creator_icon">
+		<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
+			 alt="David Sabatini"
+			 title="David Sabatini"
+			 width="45" height="45"
+			 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
+			 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+			 />
+	</span>
+
+	<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
+		 metal:define-macro="row"
+		 tal:define="notable view/notable">
+
+		<span style="margin: 0 2px 0 0;"
+			  metal:use-macro="macro:creator_icon">
+			<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
+				 alt="David Sabatini"
+				 title="David Sabatini"
+				 width="45" height="45"
+				 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
+				 tal:attributes="alt notable/creator; title notable/creator; src notable/creator_avatar_url"
+				 />
+		</span>
+
+		<span metal:define-slot="content">NO CONTENT</span>
+
+	</div>
+
+
+</html>
