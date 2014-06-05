@@ -442,7 +442,8 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent,
 	define new sub-interfaces, give them the tagged value
 	``SC_CHANGE_TYPE`` corresponding to their human readable name, and
 	place them in the ``SC_CHANGE_TYPE_MAP``. (In the future, we may
-	use the ZCA to handle this.)
+	use the ZCA to handle this.) Please use the :func:`make_stream_change_event_interface`
+	to create these objects.
 	"""
 
 	type = DecodingValidTextLine(title="The human-readable name of this kind of change",
@@ -459,22 +460,36 @@ IStreamChangeSharedEvent = None
 IStreamChangeCircledEvent = None
 
 import sys
+def make_stream_change_event_interface(event_name,
+									   bases=(),
+									   __module__=None):
+	bases = (IStreamChangeEvent,) + bases
+	if __module__ is None:
+		frame = sys._getframe(1)
+		__module__ = frame.f_globals['__name__']
+
+	tname = str('IStreamChange' + event_name + 'Event')
+	# Due to use of metaclasses, cannot use type()
+	iface = interface.interface.InterfaceClass(tname,
+											   bases=bases,
+											   __module__=__module__)
+	iface.setTaggedValue('SC_CHANGE_TYPE', event_name)
+
+	SC_CHANGE_TYPE_MAP[event_name] = iface
+	SC_CHANGE_TYPES.add(event_name)
+	return iface, tname
+
 def _make_stream_subclasses():
-	# TODO: We could/should register these as named Interfaces
 	frame = sys._getframe(1)
-	for name in SC_CHANGE_TYPES:
-		bases = (IStreamChangeEvent,)
-		tname = str('IStreamChange' + name + 'Event')
-		# Due to use of metaclasses, cannot use type()
-		iface = interface.interface.InterfaceClass(tname,
-												   bases=bases,
-												   __module__=frame.f_globals['__name__'])
-		iface.setTaggedValue('SC_CHANGE_TYPE', name)
+	mod = frame.f_globals['__name__']
+	for name in list(SC_CHANGE_TYPES):
+
+		iface, tname = make_stream_change_event_interface(name, __module__=mod)
 		frame.f_globals[tname] = iface
-		SC_CHANGE_TYPE_MAP[name] = iface
+
 _make_stream_subclasses()
 del _make_stream_subclasses
-del sys
+
 
 class INeverStoredInSharedStream(interface.Interface):
 	"""
