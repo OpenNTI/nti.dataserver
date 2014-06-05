@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
@@ -45,10 +45,11 @@ from zope.catalog.interfaces import ICatalog
 
 class TestEvolve45(mock_dataserver.DataserverLayerTest):
 
-
+	@unittest.SkipTest
 	@hides_warnings
 	@WithMockDS
 	def test_evolve45(self):
+
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )
 

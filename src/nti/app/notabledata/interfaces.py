@@ -38,15 +38,21 @@ class IUserNotableData(IIterable):
 
 	* Top-level comments in forum discussions (topics) I create;
 
+	* Circled events;
+
 	Excluded objects include:
 
-	* Those objects (or descendents of those objects, in some cases) specifically
-	  marked non-notable;
+	* Those objects (or descendents of those objects, in some cases)
+	  specifically marked non-notable;
 
 	* In the future, muted conversations may also be excluded;
 
 	Iterating across this object iterates the notable objects that are
 	safely viewable (pass permission checks) by the user.
+
+	In addition to the above noted objects, if the user is adaptable to
+	:class:`IUserNotableDataStorage`, then objects found in that interface
+	will be added to the set of notable data when this object is iterated.
 	"""
 
 	def __len__():
@@ -129,4 +135,40 @@ class IUserPresentationPriorityCreators(interface.Interface):
 		"""
 		Iterates across the usernames of creators that have priority.
 		There is no particular ordering among these creators.
+		"""
+
+class IUserNotableDataStorage(interface.Interface):
+	"""
+	An implementation helper for objects which otherwise do not
+	have defined storage or which somehow modify the rules for notable
+	data. Objects and intids stored by this interface are defined to be notable,
+	but they may be subject to permission checks or exclusion.
+
+	As an implementation helper, this object knows how to work across two
+	dimensions:
+
+	* safe vs not safe: is the object or intid defined to be viewable by the
+		user who we adapted from?
+	* owned vs unowned: Is the object owned (will or does) already have a
+		__parent__ and intid assigned my someone else, or should we
+		take care of broadcasting the created and added events, by
+		storing the object in an internal container?
+
+	Again as a provisional implementation helper, the query API is private.
+	"""
+
+	# Note no provision for removing yet, can add that when
+	# needed
+
+	def store_intid(intid, safe=False):
+		"""
+		Mark the (object referenced by the) given intid to be notable
+		data. These objects should generally not go away.
+		"""
+
+	def store_object(obj, safe=False, take_ownership=False):
+		"""
+		Mark the object itself as notable, possibly taking ownership
+		and broadcasting created and added events. If, after that's done if needed,
+		the object does not have an intid, an exception is raised.
 		"""
