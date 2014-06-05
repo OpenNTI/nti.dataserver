@@ -14,6 +14,7 @@ from operator import setitem
 
 from zope import interface
 from zope import component
+from zope.interface.declarations import ObjectSpecificationDescriptor
 
 from ZODB.POSException import POSError
 
@@ -36,6 +37,15 @@ def _weak_ref_to( obj ):
 	except TypeError:
 		return obj # For the sake of old tests, we allow things that cannot be weakly ref'd.
 
+class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
+	def __get__(self, inst, cls):
+		result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
+
+		if inst is not None and inst.type in nti_interfaces.SC_CHANGE_TYPE_MAP:
+			result = result + nti_interfaces.SC_CHANGE_TYPE_MAP[inst.type]
+		return result
+
+
 @interface.implementer(nti_interfaces.IStreamChangeEvent,
 					   nti_interfaces.IZContained)
 class Change(datastructures.PersistentCreatedModDateTrackingObject):
@@ -44,15 +54,22 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	Contained object if the underlying object was Contained.
 	It externalizes to include the ChangeType, Creator, and Item.
 
-	Because changes are meant to be part of an ongoing stream of activity, which may be cached
-	in many different places that are not necessarily planned for or easy to find,
-	these objects only keep a weak reference to the modified object. For that same
+	Because changes are meant to be part of an ongoing stream of
+	activity, which may be cached in many different places that are
+	not necessarily planned for or easy to find, these objects only
+	keep a weak reference to the modified object. For that same
 	reason, they only keep a weak reference to their `creator`
+	(which must be set after construction).
+
+	If there is a knows sub-interface for the particular kind of
+	change type this object represents, it will provide that interface.
+	We do this dynamically to avoid issues if certain change types come
+	and go across different sites or configurations.
 	"""
 
 	mimeType = mimetype.nti_mimetype_with_class( b'Change' )
 	mime_type = mimeType
-	parameters = None
+	parameters = {} # immutable
 
 	CREATED  = nti_interfaces.SC_CREATED
 	MODIFIED = nti_interfaces.SC_MODIFIED
@@ -60,7 +77,22 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	SHARED   = nti_interfaces.SC_SHARED
 	CIRCLED  = nti_interfaces.SC_CIRCLED
 
+	#: If set to `True` (not the default) then when this object
+	#: is externalized, the externalizer named "summary" will
+	#: be used for the enclosed object.
 	useSummaryExternalObject = False
+
+	#: If set to a callable object, then before doing any externalization,
+	#: we will call this object with the non-None object we hold,
+	#: and externalize the results.
+	#: This can be used to do some transformation of the contained object
+	#: when it is convenient to hold one thing but externalize another
+	#: (e.g., when the external object cannot be persisted.) Note
+	#: that if you assign to this property it must be a valid persistent
+	#: object, such as a module global.
+	externalObjectTransformationHook = None
+	# JAM: I'm not quite happy with the above. it's convenient, but is it
+	# the best abstraction?
 
 	object_is_shareable = property( lambda self: self.__dict__.get('_v_object_is_shareable', None),
 									lambda self, val: setitem( self.__dict__, '_v_object_is_shareable', val ) )
@@ -77,6 +109,9 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	id = None
 	containerId = None
 	type = None
+
+	__providedBy__ = _DynamicChangeTypeProvidedBy()
+
 	def __init__( self, changeType, obj ):
 		super(Change,self).__init__()
 		self.type = changeType
@@ -161,6 +196,8 @@ class _ChangeExternalObject(object):
 		kwargs.pop('name', None)
 		change = self.change
 		wrapping = change.object
+		if wrapping is not None and callable(change.externalObjectTransformationHook):
+			wrapping = change.externalObjectTransformationHook(wrapping)
 
 		result = LocatedExternalDict()
 		result.__parent__ = getattr( wrapping, '__parent__', getattr( change, '__parent__', None ) )

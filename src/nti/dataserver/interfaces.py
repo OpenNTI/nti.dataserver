@@ -428,15 +428,53 @@ SC_DELETED = "Deleted"
 SC_SHARED = "Shared"
 SC_CIRCLED = "Circled"
 
+SC_CHANGE_TYPES = set( (SC_CREATED, SC_MODIFIED, SC_DELETED, SC_SHARED, SC_CIRCLED) )
+SC_CHANGE_TYPE_MAP = dict()
+
 class IStreamChangeEvent(interface.interfaces.IObjectEvent,
 						 ILastModified,
 						 IContentTypeAware):
 	"""
-	A change that goes in the activity stream for a user.
-	If the object was :class:`IContained`, then this object will be as well.
+	A change that goes in the activity stream for a user. If the
+	object was :class:`IContained`, then this object will be as well.
+
+	See the description for the ``type`` field. In particular, if you
+	define new sub-interfaces, give them the tagged value
+	``SC_CHANGE_TYPE`` corresponding to their human readable name, and
+	place them in the ``SC_CHANGE_TYPE_MAP``. (In the future, we may
+	use the ZCA to handle this.)
 	"""
 
-	type = interface.Attribute("One of the constants declared by this class.")
+	type = DecodingValidTextLine(title="The human-readable name of this kind of change",
+								 description="There are some standard values declared in "
+								 ":const:`SC_CHANGE_TYPES`, and each of these have a corresponding "
+								 "sub-interface of this interface. However, do not assume that "
+								 "these are the only change types; new ones may be added at any time")
+
+# statically define some names to keep pylint from complaining
+IStreamChangeCreatedEvent = None
+IStreamChangeModifiedEvent = None
+IStreamChangeDeletedEvent = None
+IStreamChangeSharedEvent = None
+IStreamChangeCircledEvent = None
+
+import sys
+def _make_stream_subclasses():
+	# TODO: We could/should register these as named Interfaces
+	frame = sys._getframe(1)
+	for name in SC_CHANGE_TYPES:
+		bases = (IStreamChangeEvent,)
+		tname = str('IStreamChange' + name + 'Event')
+		# Due to use of metaclasses, cannot use type()
+		iface = interface.interface.InterfaceClass(tname,
+												   bases=bases,
+												   __module__=frame.f_globals['__name__'])
+		iface.setTaggedValue('SC_CHANGE_TYPE', name)
+		frame.f_globals[tname] = iface
+		SC_CHANGE_TYPE_MAP[name] = iface
+_make_stream_subclasses()
+del _make_stream_subclasses
+del sys
 
 class INeverStoredInSharedStream(interface.Interface):
 	"""
