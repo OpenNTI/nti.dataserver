@@ -317,16 +317,22 @@ class INamedContainer(IContainer):
 		The human-readable nome of this container.
 		""")
 
-class ILastModified(interface.Interface):
+class ICreatedTime(interface.Interface):
+	"""
+	Something that (immutably) tracks its created time.
+	"""
+	createdTime = Number(title=u"The timestamp at which this object was created.",
+						 description="Typically set automatically by the object.",
+						 default=0.0)
+
+
+class ILastModified(ICreatedTime):
 	"""
 	Something that tracks a modification timestamp.
 	"""
 	# TODO: Combine/replace this with :class:`zope.dublincore.interfaces.IDCTimes`
 	lastModified = Number(title=u"The timestamp at which this object or its contents was last modified.",
 						  default=0.0)
-	createdTime = Number(title=u"The timestamp at which this object was created.",
-						 description="Typically set automatically by the object.",
-						 default=0.0)
 
 from datetime import datetime as _datetime
 from calendar import timegm as _calendar_timegm
