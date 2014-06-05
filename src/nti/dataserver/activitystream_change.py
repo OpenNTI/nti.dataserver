@@ -88,7 +88,7 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		for k in ('id', 'containerId', '__name__', '__parent__'):
 			v = getattr( obj, k, None )
 			if v is not None:
-				setattr( self, k, v )
+				setattr( self, str(k), v ) # ensure native string in dict
 
 		if self.id and self.containerId:
 			interface.alsoProvides( self, nti_interfaces.IContained )
@@ -97,14 +97,14 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		self.updateLastMod()
 
 	def _get_creator( self ):
-		creator = self.__dict__['creator']
+		creator = self.__dict__.get('creator')
 		if creator and callable(creator):
 			creator = creator() # unwrap weak refs. Older or test objects may not have weak refs
 		return creator
 	def _set_creator( self, new_creator ):
 		if new_creator:
 			new_creator = _weak_ref_to( new_creator )
-		self.__dict__['creator'] = new_creator
+		self.__dict__[str('creator')] = new_creator # ensure native string in dict
 	creator = property(_get_creator,_set_creator)
 
 	@property
@@ -114,7 +114,7 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		return self.objectReference()
 
 	#: If true (not the default) we will assume the ACL of our contained
-	#: object
+	#: object at access time.
 	__copy_object_acl__ = False
 
 	def __acl__(self):
