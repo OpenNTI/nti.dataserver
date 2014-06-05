@@ -394,6 +394,8 @@ class _AbstractClassifier(object):
 	def classify(self, obj):
 		return self.classification
 
+AbstractClassifier = _AbstractClassifier
+
 @component.adapter(INote)
 class _NoteClassifier(_AbstractClassifier):
 	classification = 'note'

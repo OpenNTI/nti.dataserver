@@ -132,32 +132,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		self._do_test_sends_one(fake_connect)
 
 	def _do_test_sends_one(self, fake_connect):
-		msgs = []
-		def check_send(msg, fromaddr, to):
-			# Check the title and link to the note
-			assert_that( fromaddr, contains_string( 'no-reply+' ))
-			msg = quopri.decodestring(msg)
-			msg = msg.decode('utf-8', errors='ignore')
-			msgs.append(msg)
-			return 'return'
-
-		(fake_connect.is_callable().returns_fake()
-		 .expects( 'send_raw_email' ).calls(check_send)
-		 .expects('get_send_quota').returns( SEND_QUOTA ))
-
-		self._create_notable_data()
-
-		# Kick the process
-		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
-		assert_that( res.body, contains_string( 'Start' ) )
-
-		res = res.form.submit( name='subFormTable.buttons.start' ).follow()
-		assert_that( res.body, contains_string( 'Remaining' ) )
-
-		# Let the spawned greenlet do its thing
-		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
-		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
-		assert_that( res.body, contains_string( 'End Time' ) )
+		msgs = send_notable_email_connected(self.testapp, self._create_notable_data, fake_connect)
 
 		msg = msgs[0]
 		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
@@ -248,3 +223,41 @@ class TestApplicationDigest(ApplicationLayerTest):
 		gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
+
+
+
+def send_notable_email(testapp, before_send=None):
+	with fudge.patch('boto.ses.connect_to_region') as fake_connect:
+		return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
+
+
+def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
+	msgs = []
+	def check_send(msg, fromaddr, to):
+		# Check the title and link to the note
+		assert_that( fromaddr, contains_string( 'no-reply+' ))
+		msg = quopri.decodestring(msg)
+		msg = msg.decode('utf-8', errors='ignore')
+		msgs.append(msg)
+		return 'return'
+
+	(fake_connect.is_callable().returns_fake()
+	 .expects( 'send_raw_email' ).calls(check_send)
+	 .expects('get_send_quota').returns( SEND_QUOTA ))
+
+	if before_send:
+		before_send()
+
+	# Kick the process
+	res = testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
+	assert_that( res.body, contains_string( 'Start' ) )
+
+	res = res.form.submit( name='subFormTable.buttons.start' ).follow()
+	assert_that( res.body, contains_string( 'Remaining' ) )
+
+	# Let the spawned greenlet do its thing
+	gevent.joinall(bulk_email_views._BulkEmailView._greenlets)
+	res = testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
+	assert_that( res.body, contains_string( 'End Time' ) )
+
+	return msgs
