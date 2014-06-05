@@ -219,5 +219,5 @@ class _ChangeExternalObject(object):
 		#	del result['OID']
 		result['Item'] = None
 		if wrapping is not None:
-			result['Item'] = toExternalObject( change.object, name=('summary' if change.useSummaryExternalObject else ''), **kwargs )
+			result['Item'] = toExternalObject( wrapping, name=('summary' if change.useSummaryExternalObject else ''), **kwargs )
 		return result
