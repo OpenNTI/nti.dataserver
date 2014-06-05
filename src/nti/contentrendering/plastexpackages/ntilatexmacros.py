@@ -136,10 +136,11 @@ class mediatranscript(Base.Command):
 		return res
 
 class ntiincludevideo(_OneText):
-	args = 'video_url'
+	args = '[options:dict] video_url'
 
 	def invoke( self, tex ):
 		result = super(ntiincludevideo, self).invoke( tex )
+		options = self.attributes.get('options', None) or {}
 
 		# Set the id of the element
 		source = self.source
@@ -149,8 +150,8 @@ class ntiincludevideo(_OneText):
 
 		# change youtube view links to embed
 		self.attributes['video_url'] = self.attributes['video_url'].textContent.replace( "/watch?v=", '/embed/' )
-		self.attributes['width'] = 640
-		self.attributes['height'] = 360
+		self.width = options.get('width') or u'640px'
+		self.height = options.get('height') or unicode((int(self.width.replace('px',''))/640) * 360)+'px'
 		_t = self.attributes['video_url'].split('/')
 		if 'youtube' in _t[2]:
 			# TODO: See https://github.com/coleifer/micawber
