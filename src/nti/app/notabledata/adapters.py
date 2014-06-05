@@ -20,6 +20,8 @@ from BTrees.OOBTree import Set
 
 from .interfaces import IUserNotableData
 from .interfaces import IUserPresentationPriorityCreators
+from .interfaces import IUserNotableDataStorage
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
@@ -68,6 +70,10 @@ class UserNotableData(AbstractAuthenticatedView):
 	@CachedProperty
 	def _catalog(self):
 		return component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+
+	@CachedProperty
+	def _notable_storage(self):
+		return IUserNotableDataStorage(self.remoteUser)
 
 	def __find_blog_comment_intids(self):
 		# We know that blog comments have a container ID that is the
@@ -175,16 +181,23 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		toplevel_intids_forum_comments = self.__find_generalForum_comment_intids()
 
-		# We use low-level optimization to get this next one; otherwise
-		# we'd need some more indexes to make it efficient
-		intids_of_my_circled_events = self.remoteUser._circled_events_intids_storage
+		safely_viewable_intids = [toplevel_intids_shared_to_me,
+								  intids_replied_to_me,
+								  toplevel_intids_blog_comments,
+								  blogentry_intids_shared_to_me,
+								  toplevel_intids_forum_comments]
 
-		safely_viewable_intids = catalog.family.IF.multiunion((toplevel_intids_shared_to_me,
-															   intids_replied_to_me,
-															   intids_of_my_circled_events,
-															   toplevel_intids_blog_comments,
-															   blogentry_intids_shared_to_me,
-															   toplevel_intids_forum_comments))
+		safely_viewable_intids.append(self._notable_storage._safe_intid_set)
+
+		# We use low-level optimization to get this next one; otherwise
+		# we'd need some more indexes to make it efficient.
+		# XXX: Note: this is deprecated and no longer used. We should
+		# do a migration.
+		intids_of_my_circled_events = getattr(self.remoteUser, '_circled_events_intids_storage', None)
+		if intids_of_my_circled_events is not None:
+			safely_viewable_intids.append(intids_of_my_circled_events)
+
+		safely_viewable_intids = catalog.family.IF.multiunion(safely_viewable_intids)
 		if self._intids_in_time_range is not None:
 			safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																	safely_viewable_intids)
@@ -226,10 +239,12 @@ class UserNotableData(AbstractAuthenticatedView):
 		# TODO We will eventually want to notify students when instructors create new discussions,
 		# but we'll have to sort out the CSV generated discussions first.
 
-# 		# Now any topics by our a-listers, but only non-excluded topics
-# 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
-# 		topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
-# 																			intids_by_priority_creators)
+ 		# Now any topics by our a-listers, but only non-excluded topics
+ 		#topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+ 		#topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
+ 		#																	intids_by_priority_creators)
+
+		intids_from_storage = self._notable_storage._unsafe_intid_set
 
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
@@ -238,8 +253,9 @@ class UserNotableData(AbstractAuthenticatedView):
 		# doing so incrementally, as needed, on the theory that there
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
-		questionable_intids = catalog.family.IF.union(	toplevel_intids_by_priority_creators,
-													   	intids_tagged_to_me )
+		questionable_intids = catalog.family.IF.multiunion(	(toplevel_intids_by_priority_creators,
+															 intids_tagged_to_me,
+															 intids_from_storage) )
 		if self._intids_in_time_range is not None:
 			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																 questionable_intids)
@@ -337,3 +353,68 @@ class _SafeResultSet(ResultSet):
 			obj = self.uidutil.queryObject(uid)
 			if obj is not None:
 				yield obj
+
+from zope.annotation.factory import factory as an_factory
+from persistent import Persistent
+from nti.utils.property import Lazy
+from zope import lifecycleevent
+from persistent.list import PersistentList
+from zope.container.contained import Contained
+
+@interface.implementer(IUserNotableDataStorage)
+@component.adapter(IUser)
+class UserNotableDataStorage(Persistent,Contained):
+
+	def __init__(self):
+		pass
+
+	@property
+	def context(self):
+		return self.__parent__
+
+	@Lazy
+	def _safe_intid_set(self):
+		self._p_changed = True
+		return self.context.family.IF.TreeSet()
+
+	@Lazy
+	def _unsafe_intid_set(self):
+		self._p_changed = True
+		return self.context.family.IF.TreeSet()
+
+	@Lazy
+	def _owned_objects(self):
+		self._p_changed = True
+		# We don't ever expect this to be very big
+		return PersistentList()
+
+	# Migration compatibility
+	def values(self):
+		if '_owned_objects' in self.__dict__:
+			return self._owned_objects
+		return ()
+
+	def store_intid(self, intid, safe=False):
+		s = self._safe_intid_set if safe else self._unsafe_intid_set
+
+		added = s.add(intid)
+		if added:
+			return intid
+
+	def store_object(self, obj, safe=False, take_ownership=False):
+		# Note we directly access the intid attribute
+		if take_ownership:
+			if getattr(obj, '_ds_intid', None) is not None:
+				# Programming error...somebody lost track of ownership
+				raise ValueError("Object already registered")
+			lifecycleevent.created(obj)
+			self._owned_objects.append(obj)
+			if getattr(obj, '__parent__', None) is None:
+				obj.__parent__ = self
+			lifecycleevent.added(obj, self, str(len(self._owned_objects)))
+
+		if getattr(obj, '_ds_intid', None) is None:
+			raise ValueError("Object does not have intid")
+		return self.store_intid(getattr(obj, '_ds_intid'), safe=safe)
+
+UserNotableDataStorageFactory = an_factory(UserNotableDataStorage)

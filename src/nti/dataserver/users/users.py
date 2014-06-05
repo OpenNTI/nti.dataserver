@@ -739,13 +739,6 @@ class User(Principal):
 		result.__parent__ = self
 		return result
 
-	@Lazy
-	def _circled_events_intids_storage(self):
-		"As an optimization, we store the intids for our circled events"
-		self._p_changed = True
-		result = self.family.IF.Set()
-		return result
-
 	def accept_shared_data_from( self, source ):
 		""" Accepts if not ignored; auto-follows as well.
 		:return: A truth value. If this was the initial add, it will be the Change.
@@ -779,11 +772,11 @@ class User(Principal):
 
 			# Now store this object and broadcast events for it so it gets
 			# indexed.
+			# TODO: Let the listner in notabledata take ownership of this;
+			# but that requires broadcasting some event first to get it there.
 			self._circled_events_storage.append( change )
 			lifecycleevent.created( change )
 			lifecycleevent.added( change )
-			# Note we're directly accessing it
-			self._circled_events_intids_storage.add( change._ds_intid )
 
 			return change # which is both True and useful
 

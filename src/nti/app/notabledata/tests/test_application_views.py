@@ -11,6 +11,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 
 from hamcrest import has_entry
+from hamcrest import has_item
 
 from hamcrest import has_length
 from hamcrest import greater_than
@@ -262,7 +263,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'TotalItemCount', 0))
 
 
-	def _do_test_notable_ugd_tagged_to_entity(self, tag_name=None):
+	def _do_test_notable_ugd_tagged_to_entity(self, tag_name=None, initial_count=0):
 		# Before it's shared with me, I can't see it, even
 		# though it's tagged to me
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -282,8 +283,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )
 		res = self.testapp.get(path)
-		assert_that( res.json_body, has_entry( 'TotalItemCount', 0))
-		assert_that( res.json_body, has_entry( 'Items', has_length(0) ))
+		assert_that( res.json_body, has_entry( 'TotalItemCount', initial_count))
+		assert_that( res.json_body, has_entry( 'Items', has_length(initial_count) ))
 
 
 		# Now I share it indirectly with me. The sharing is indirect
@@ -301,13 +302,13 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 			update_from_external_object( top_n, {'sharedWith': ['MathCounts']}, context=self.ds)
 
 		res = self.testapp.get(path)
-		assert_that( res.json_body, has_entry( 'TotalItemCount', 1))
-		assert_that( res.json_body, has_entry( 'Items', has_length(1) ))
+		assert_that( res.json_body, has_entry( 'TotalItemCount', initial_count + 1))
+		assert_that( res.json_body, has_entry( 'Items', has_length(initial_count + 1) ))
 
 		assert_that( res.json_body, has_entry( 'Items',
-											   contains(has_entry('NTIID',ext_ntiid))))
+											   has_item(has_entry('NTIID',ext_ntiid))))
 
-		self._check_notable_data()
+		self._check_notable_data(length=initial_count+1)
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -333,9 +334,9 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 			dfl_ntiid = dfl.NTIID
 
 			# Manually clear out the notable for the circled event
-			user._circled_events_intids_storage.clear()
+			#user._circled_events_intids_storage.clear()
 
-		self._do_test_notable_ugd_tagged_to_entity(dfl_ntiid)
+		self._do_test_notable_ugd_tagged_to_entity(dfl_ntiid, initial_count=1)
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
