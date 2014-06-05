@@ -22,10 +22,21 @@ import unittest
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.users import User
 from nti.externalization.externalization import toExternalObject
+from nti.dataserver.interfaces import IStreamChangeCircledEvent
+from nti.testing.matchers import validly_provides
 
 class TestChange(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
+
+	@WithMockDSTrans
+	def test_dynamic_provides(self):
+		user = User.create_user( self.ds, username='jason.madden@nextthought.com' )
+
+		change = Change( Change.CIRCLED, user )
+
+		assert_that( change, validly_provides(IStreamChangeCircledEvent))
+
 
 	@WithMockDSTrans
 	def test_to_external(self):
