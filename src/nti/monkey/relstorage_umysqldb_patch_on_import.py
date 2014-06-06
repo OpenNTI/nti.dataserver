@@ -4,6 +4,9 @@
 Monkey-patch for RelStorage to use pure-python drivers that are
 non-blocking.
 
+Also, while we're monkeying with database drivers, adjusts the set of
+retriable exceptions that zope.sqlalchemy knows about.
+
 $Id$
 """
 
@@ -183,6 +186,18 @@ def _patch():
 										 # which should probably be taken as disconnect
 										 DatabaseError,
 										 )
+
+	# We've seen OperationalError "database has gone away", which is a
+	# subclass of DatabaseError. RelStorage is told to ignore DatabaseError,
+	# so we do too.
+	# As a reminder, the TransactionLoop calls transaction.manager._retryable,
+	# which calls each joined resource's `should_retry` method. The
+	# sqlalchemey datamanager uses this list to make that distinction
+	# (if it changes, this patch will break)
+	import zope.sqlalchemy.datamanager as sdm
+	# tuples of class and test action or none
+	sdm._retryable_errors.append((DatabaseError, None))
+
 
 	from . import relstorage_timestamp_repr_patch_on_import
 	relstorage_timestamp_repr_patch_on_import.patch()
