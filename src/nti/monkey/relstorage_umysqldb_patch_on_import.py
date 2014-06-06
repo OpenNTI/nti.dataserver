@@ -187,9 +187,10 @@ def _patch():
 										 DatabaseError,
 										 )
 
-	# We've seen OperationalError "database has gone away", which is a
+	# We've seen OperationalError "database has gone away (32, broken pipe)", which is a
 	# subclass of DatabaseError. RelStorage is told to ignore DatabaseError,
 	# so we do too.
+
 	# As a reminder, the TransactionLoop calls transaction.manager._retryable,
 	# which calls each joined resource's `should_retry` method. The
 	# sqlalchemey datamanager uses this list to make that distinction
