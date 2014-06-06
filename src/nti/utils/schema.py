@@ -912,7 +912,7 @@ def EqHash(*names):
 		seed = hash(names)
 		def __hash__(self):
 			h = seed
-			h ^= getter(self)
+			h ^= hash(getter(self))
 			return h
 
 		return __eq__, __hash__
