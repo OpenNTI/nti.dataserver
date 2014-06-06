@@ -52,6 +52,17 @@ def externalizes( matcher=None ):
 	"""
 	return Externalizes( matcher=matcher )
 
+from hamcrest import calling
+from hamcrest import raises
+from hamcrest import assert_that
+import pickle
+
+def assert_does_not_pickle(o):
+	"""
+	Checks that the item cannot be pickled.
+	"""
+	assert_that( calling(pickle.dumps).with_args(o),
+				 raises(TypeError))
 
 import nti.testing.base
 class ConfiguringTestBase(nti.testing.base.ConfiguringTestBase):
