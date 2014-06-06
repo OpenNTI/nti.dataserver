@@ -886,6 +886,45 @@ def createDirectFieldProperties(__schema, omit=(), adapting=False):
 				v = AdaptingFieldProperty( __schema[k] )
 			__frame.f_locals[k] = v
 
+import operator
+
+def EqHash(*names):
+	"""
+	A class decorator factory for the common pattern of writing
+	``__eq__`` and ``__hash__`` methods that check the same
+	list of attributes on a given object.
+
+	Right now, you must pass as individual arguments the property
+	names to check; in the future, you may be able to pass a schema
+	interface that defines the property names.
+	"""
+	def _eq_hash(*names):
+		# getter returns a tuple, which can be equality
+		# checked and hashed
+		getter = operator.attrgetter(*names)
+
+		def __eq__(self, other):
+			try:
+				return self is other or (getter(self) == getter(other))
+			except AttributeError:
+				return NotImplemented
+
+		seed = hash(names)
+		def __hash__(self):
+			h = seed
+			h ^= getter(self)
+			return h
+
+		return __eq__, __hash__
+
+	def x(cls):
+		__eq__, __hash__ = _eq_hash(*names)
+		cls.__eq__ = __eq__
+		cls.__hash__ = __hash__
+		return cls
+	return x
+
+
 from zope.schema.vocabulary import SimpleTerm as _SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary as _SimpleVocabulary
 from plone.i18n.locales.interfaces import ICountryAvailability as _ICountryAvailability

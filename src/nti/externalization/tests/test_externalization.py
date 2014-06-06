@@ -280,3 +280,16 @@ class TestToExternalObject(ExternalizationLayerTest):
 		ex_dic = to_standard_external_dictionary( X() )
 		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( Number ) ) )
 		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( Number ) ) )
+
+from ..externalization import NoPickle
+
+from . import assert_does_not_pickle
+
+@NoPickle
+class Foo(object):
+	pass
+
+class TestNoPickle(unittest.TestCase):
+
+	def test_decorator(self):
+		assert_does_not_pickle(Foo())

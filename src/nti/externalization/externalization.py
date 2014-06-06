@@ -522,3 +522,39 @@ def make_repr(default=None):
 		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
 			return '%s(%s)' % (self.__class__.__name__, e)
 	return __repr__
+
+def WithRepr(default=object()):
+	"""
+	A class decorator factory to give a __repr__ to
+	the object. Useful for persistent objects.
+
+	:keyword default: A callable to be used for the default value.
+	"""
+
+	# If we get one argument that is a type, we were
+	# called bare (@WithRepr), so decorate the type
+	if isinstance(default, type):
+		default.__repr__ = make_repr()
+		return default
+
+	# If we got None or anything else, we were called as a factory,
+	# so return a decorator
+	def d(cls):
+		cls.__repr__ = make_repr()
+		return cls
+	return d
+
+def NoPickle(cls):
+	"""
+	A class decorator that prevents an object
+	from being pickled. Useful for ensuring certain
+	objects do not get pickled and thus avoiding
+	ZODB backward compatibility concerns.
+	"""
+
+	def __reduce__(self):
+		raise TypeError("Cannot pickle")
+
+	cls.__reduce__ = __reduce__
+
+	return cls
