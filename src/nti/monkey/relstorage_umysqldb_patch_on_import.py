@@ -200,6 +200,14 @@ def _patch():
 	sdm._retryable_errors.append((DatabaseError, None))
 
 
+	# Do the same thing for the transaction loop, at the sqlalchemy
+	# level. This uses sdm.SessionDataManager.should_retry
+	import nti.utils.transactions
+	import functools
+	sql_should_retry = functools.partial( sdm.SessionDataManager.should_retry.im_func, None)
+	from sqlalchemy.exc import SQLAlchemyError
+	nti.utils.transactions.TransactionLoop._retryable_errors += ((SQLAlchemyError, sql_should_retry),)
+
 	from . import relstorage_timestamp_repr_patch_on_import
 	relstorage_timestamp_repr_patch_on_import.patch()
 	from . import relstorage_zlibstorage_patch_on_import

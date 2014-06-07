@@ -354,6 +354,36 @@ class TransactionLoop(object):
 		for k in list(tx.__dict__):
 			tx.__dict__[k] = _GONE
 
+	_retryable_errors = ()
+
+	def _retryable(self, exc_info):
+		"""
+		Should the given exception info be considered one
+		we should retry?
+
+		By default, we consult the transaction manager, along with the
+		list of (type, predicate) values we have in this object's
+		`_retryable_errors` tuple.
+		"""
+		t, v = exc_info[:-1]
+		retryable = False
+		try:
+			retryable = transaction.manager._retryable( t, v )
+			if retryable:
+				return retryable
+		except Exception:
+			pass
+		else:
+			# retryable was false
+			for error_type, test in self._retryable_errors:
+				if isinstance(v, error_type):
+					if test is None:
+						retryable = True
+					else:
+						retryable = test(v)
+					break
+			return retryable
+
 
 	def __call__( self, *args, **kwargs ):
 		# NOTE: We don't handle repoze.tm being in the pipeline
@@ -399,7 +429,15 @@ class TransactionLoop(object):
 				logger.log( TRACE, "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
 			except Exception as e:
-				orig_excinfo = sys.exc_info()
+				exc_info = orig_excinfo = sys.exc_info()
+				# The code in the transaction package checks the retryable state
+				# BEFORE aborting the current transaction. This matters because
+				# aborting the transaction changes the transaction that the manager
+				# has to a new one, and thus changes the set of registered resources
+				# that participate in _retryable, depending on what synchronizers
+				# are registered.
+				retryable = self._retryable(orig_excinfo)
+
 				try:
 					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
 					logger.debug("Transaction aborted; %s", e)
@@ -423,11 +461,10 @@ class TransactionLoop(object):
 						fmt = format_exception(*orig_excinfo)
 						logger.warning("Failed to commit transaction. Original exception:\n%s", fmt)
 					except: #pylint:disable=I0011,W0702
-						pass
+						exc_info = sys.exc_info()
 					finally:
 						del orig_excinfo
 					self.__free(tx); del tx
-					exc_info = sys.exc_info()
 					raise StorageError, exc_info[1], exc_info[2]
 
 				self.__free(tx); del tx
@@ -435,9 +472,10 @@ class TransactionLoop(object):
 				if number <= 0:
 					raise
 
-				retryable = transaction.manager._retryable( *sys.exc_info()[:-1] )
 				if not retryable:
 					raise
+				del exc_info
+				del orig_excinfo
 				if self.sleep:
 					_sleep( self.sleep )
 				#logger.log( TRACE, "Retrying transaction on exception %d", number, exc_info=True )
