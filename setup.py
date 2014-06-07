@@ -408,6 +408,7 @@ setup(
 		# STX is a plain text markup in which document structure is signalled primarily by identation.
 		# Pulled in by ...?
 		'zope.structuredtext >= 4.0.0',
+		'zope.sqlalchemy', # needed by nti.badges, we have monkey patches
 		'zope.tal',
 		'zope.tales >= 4.0.2',
 		'zope.traversing >= 4.0.0a3',
