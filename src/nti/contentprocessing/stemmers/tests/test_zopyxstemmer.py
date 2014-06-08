@@ -15,10 +15,12 @@ import unittest
 from zope import component
 
 from nti.contentprocessing.stemmers import interfaces
+from nti.contentprocessing.stemmers.zopyx import stemmer
 from nti.contentprocessing.stemmers.zopyx import _ZopyYXStemmer
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
+@unittest.skipIf(stemmer is None, "zopyx not installed")
 class TestZopyYXStemmer(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
