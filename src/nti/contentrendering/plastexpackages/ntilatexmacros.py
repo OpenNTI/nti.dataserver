@@ -136,7 +136,7 @@ class mediatranscript(Base.Command):
 		return res
 
 class ntiincludevideo(_OneText):
-	args = '[options:dict] video_url'
+	args = '[options:dict] video_url:url'
 
 	def invoke( self, tex ):
 		result = super(ntiincludevideo, self).invoke( tex )
@@ -149,7 +149,15 @@ class ntiincludevideo(_OneText):
 		setattr( self, "@hasgenid", True )
 
 		# change youtube view links to embed
-		self.attributes['video_url'] = self.attributes['video_url'].textContent.replace( "/watch?v=", '/embed/' )
+		if hasattr(self.attributes['video_url'], source):
+			self.attributes['video_url'] = self.attributes['video_url'].source.replace(' ', '') \
+										.replace('\\&', '&') \
+										.replace('\\_', '_') \
+										.replace('\\%', '%') \
+										.replace(u'\u2013', u'--') \
+										.replace(u'\u2014', u'---')
+
+		self.attributes['video_url'] = self.attributes['video_url'].source.replace( "/watch?v=", '/embed/' )
 		self.width = options.get('width') or u'640px'
 		self.height = options.get('height') or unicode((int(self.width.replace('px',''))/640) * 360)+'px'
 		_t = self.attributes['video_url'].split('/')
