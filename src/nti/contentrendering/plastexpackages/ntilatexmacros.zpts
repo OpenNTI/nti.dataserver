@@ -182,6 +182,15 @@ name: audiosidebar
 	<div class="sidebar-body" tal:content="self">Sidebar body</div>
 </div>
 
+name: ntigraphicsidebar
+<div class="sidebar-graphic">
+	<div tal:attributes="class python: ' '.join(['sidebar-leader',self.attributes.get('graphic_class')])"> </div>
+	<div class="sidebar-body">
+		<div class="sidebar-body-title" tal:content="self/title">Sidebar Title</div>
+		<div class="sidebar-body-content" tal:content="self">Sidebar body</div>
+	</div>
+</div>
+
 name: ntiincludeannotationgraphics
 <span tal:condition="not:self/image/resizeable" itemprop="nti-data-markupenabled">
 <img tal:condition="not:self/style" crossorigin="anonymous" tal:attributes="src self/image/url; id self/id; alt self/attributes/alttext; style string:width:${self/image/width/px};; height:${self/image/height/px}; data-nti-image-size self/image/current_size; data-nti-image-full self/image/full_size/url; data-nti-image-half self/image/half_size/url; data-nti-image-quarter self/image/quarter_size/url; data-caption self/title | nothing" />
