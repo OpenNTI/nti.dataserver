@@ -78,8 +78,7 @@ TESTS_REQUIRE = [
 	'fudge',
 	'ipdb >= 0.8',	# easier access to the ipython debugger from nose, --ipdb; however, messy with nose-progressive> consider pdbpp?
 	'nose >= 1.3.0',
-	'nose2',
-	'nose2-cov',
+	'nose2[coverage_plugin]',
 	'nose-timer',
 	'nose-progressive >= 1.5',
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
