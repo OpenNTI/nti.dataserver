@@ -1241,6 +1241,9 @@ class flatsidebar(sidebar):
 class audiosidebar(sidebar):
 	args = 'audioref'
 
+class ntigraphicsidebar(sidebar):
+	args = 'title graphic_class:str:source'
+
 ###############################################################################
 # The following block configures various counters
 ###############################################################################
