@@ -20,8 +20,6 @@ import time
 from zope import interface
 from ZODB.loglevels import TRACE
 
-from zope.event import notify
-
 import transaction
 try:
 	from gevent.queue import Full as QFull
@@ -32,8 +30,6 @@ except ImportError: # pragma: no cover # pypy
 
 from dm.transaction.aborthook import add_abort_hooks
 add_abort_hooks = add_abort_hooks # pylint
-
-from .interfaces import AfterTransactionEnd
 
 @interface.implementer(transaction.interfaces.ISavepointDataManager,
 					   transaction.interfaces.IDataManagerSavepoint)
@@ -390,15 +386,6 @@ class TransactionLoop(object):
 
 
 	def __call__( self, *args, **kwargs ):
-		try:
-			result = self.__call_impl__(*args, **kwargs)
-			notify(AfterTransactionEnd(True))
-			return result
-		except:
-			notify(AfterTransactionEnd(False))
-			raise
-			
-	def __call_impl__( self, *args, **kwargs ):
 		# NOTE: We don't handle repoze.tm being in the pipeline
 
 		number = self.attempts
