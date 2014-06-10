@@ -23,12 +23,3 @@ class ILDAP(interface.Interface):
 class IOAuthKeys(interface.Interface):
 	APIKey = nti_schema.ValidTextLine(title="API Key", required=True)
 	SecretKey = nti_schema.ValidTextLine(title="Secret Key", required=True)
-
-class IAfterTransactionEnd(interface.Interface):
-	success = nti_schema.Bool(title="Transaction success")
-
-@interface.implementer(IAfterTransactionEnd)
-class AfterTransactionEnd(object):
-
-	def __init__(self, success=True):
-		self.success = success
