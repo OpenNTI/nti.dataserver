@@ -98,6 +98,10 @@ class UserNotableData(AbstractAuthenticatedView):
 		return container_id_idx.apply({'any_of': container_ids})
 
 	@CachedProperty
+	def _all_blog_comment_intids(self):
+		return self._catalog['mimeType'].apply( {'any_of': (_BLOG_COMMENT_MIMETYPE,)} )
+
+	@CachedProperty
 	def _topics_created_by_me_intids(self):
 		catalog = self._catalog
 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
@@ -233,11 +237,16 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
 
-		# Top-level comments by the instructors
+		# Top-level things by the instructors...
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
+		# ...taking out blog comments because that might be confusing
+		# (2014-06-10)
+		toplevel_intids_by_priority_creators = catalog.family.IF.difference(toplevel_intids_by_priority_creators,
+																			self._all_blog_comment_intids)
 
-		# TODO We will eventually want to notify students when instructors create new discussions,
-		# but we'll have to sort out the CSV generated discussions first.
+		# TODO We will eventually want to notify students when
+		# instructors create new discussions, but we'll have to sort
+		# out the CSV generated discussions first.
 
  		# Now any topics by our a-listers, but only non-excluded topics
  		#topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
