@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 from os.path import join as path_join
-import datetime
 
 from zope import interface
 from zope.location.interfaces import IContained as IZContained
@@ -219,9 +218,9 @@ class FilesystemContentUnit(ContentUnit):
 			if bucket:
 				bucket.__parent__ = self
 			file_key = FilesystemKey(bucket=bucket, name=key_name)
-			self.__dict__['key'] = file_key
+			self.__dict__[str('key')] = file_key
 		else:
-			self.__dict__['key'] = nk
+			self.__dict__[str('key')] = nk
 	key = property(_get_key, _set_key)
 
 
@@ -246,7 +245,8 @@ class FilesystemContentUnit(ContentUnit):
 	@repoze.lru.lru_cache(None, cache=_content_cache)
 	def read_contents(self):
 		try:
-			return open(self.filename, 'r').read()
+			with open(self.filename, 'r') as f:
+				return f.read()
 		except IOError:
 			return None
 
