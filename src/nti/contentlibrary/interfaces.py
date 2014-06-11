@@ -7,18 +7,25 @@ from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope import schema
 from zope.location.interfaces import IContained as IZContained
 from zope.dublincore import interfaces as dub_interfaces
 from zope.annotation.interfaces import IAnnotatable
 
-from nti.utils.schema import Number, ValidTextLine as TextLine
+from nti.dublincore.interfaces import ILastModified
+from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
+
+from nti.utils.schema import Number
+from nti.utils.schema import ValidTextLine as TextLine
 from nti.utils.schema import IndexedIterable
+from nti.utils.schema import Iterable
 from nti.utils.schema import Object
+from nti.utils.schema import Int
+from nti.utils.schema import Bool
+
 
 # pylint: disable=E0213,E0211
 
-class IContentPackageLibrary(interface.Interface):
+class IContentPackageLibrary(ILastModified):
 	"""
 	A library or catalog of all available packages of content.
 
@@ -76,10 +83,32 @@ class IContentPackageLibrary(interface.Interface):
 	def __len__():
 		"The number of content packages in this library"
 
-	contentPackages = schema.Iterable(title=u'Sequence of all known :class:`IContentPackage`')
+	contentPackages = Iterable(title=u'Sequence of all known :class:`IContentPackage`')
 
-	lastModified = Number(title="Best estimate of the last time this library and its contents was modified",
-						  readonly=True)
+class IDisplayablePlatformPresentationResources(interface.Interface):
+	"""
+	A (pointer to s) set of resources for presentation on a specific platform.
+	"""
+
+	PlatformName = TextLine(title="The name of the platform this package is meant for.")
+	InheritPlatformName = TextLine(title="A platform to inherit from",
+								   description="If present, this object should merge missing resources "
+								   "from this named platform.")
+	# XXX: Fill in missing
+
+class IDisplayableContent(IZContained,
+						  IDCOptionalDescriptiveProperties,
+						  dub_interfaces.IDCExtended):
+	"""
+	Something that is meant to be displayed as a top-level object to an end user.
+
+	Note that we inherit ``description`` and ``title`` from the Dublin
+	interfaces.
+	"""
+
+	PlatformPresentationResources = Iterable(title="Sequence of the presentations for this content.",
+											 default=(),
+											 required=False)
 
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
@@ -94,7 +123,10 @@ class IDelimitedHierarchyBucket(IZContained):
 
 class IDelimitedHierarchyKey(IZContained):
 
-	bucket = Object(IDelimitedHierarchyBucket, title="The bucket to which this key is relative.")
+	bucket = Object(IDelimitedHierarchyBucket,
+					title="The bucket to which this key is relative.",
+					default=None,
+					required=False)
 	name = TextLine(title="The relative name of this key. Also in `key` and `__name__`.")
 
 class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
@@ -154,7 +186,7 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 
 
 class IContentUnit(IZContained,
-				   dub_interfaces.IDCDescriptiveProperties,
+				   IDCOptionalDescriptiveProperties,
 				   IAnnotatable):
 	"""
 	One identified unit of content.
@@ -163,13 +195,17 @@ class IContentUnit(IZContained,
 	will ultimately be the :class:`IContentPackage`; the containing unit of the package
 	will be the :class:`IContentPackageLibrary`.
 	"""
-	ordinal = schema.Int(title="The number (starting at 1) representing which nth child of the parent I am.")
+	ordinal = Int(title="The number (starting at 1) representing which nth child of the parent I am.",
+				  default=1, min=1)
 	href = TextLine(title="DEPRECATED URI for the representation of this item.",
-					description="If this unit is within a package, then this is potentially a relative path")
+					description="If this unit is within a package, then this is potentially a relative path",
+					default='')
 	key = Object(IDelimitedHierarchyKey,
-				 title="URI for the representation of this item")
-	ntiid = TextLine(title="The NTIID for this item")
-	title = TextLine(title="The human-readable section name of this item; alias for `__name__`")  # also defined by IDCDescriptiveProperties
+				 title="URI for the representation of this item",
+				 default=None)
+	ntiid = TextLine(title="The NTIID for this item",
+					 default=None,
+					 required=False)
 	icon = Object(IDelimitedHierarchyKey,
 				  title="URI for an image for this item, typically specially designed",
 				  required=False,
@@ -178,13 +214,18 @@ class IContentUnit(IZContained,
 					   title="URI for a thumbnail for this item, typically auto-generated",
 					   required=False,
 					   default=None)
-	children = schema.Iterable(title="Any :class:`IContentUnit` objects this item has.")
+	children = Iterable(title="Any :class:`IContentUnit` objects this item has.",
+						default=())
 
 	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
 											  value_type=TextLine(title="The embedded NTIID"),
-											  unique=True)
+											  unique=True,
+											  default=())
 
-class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
+
+class IContentPackage(IContentUnit,
+					  IDisplayableContent,
+					  ILastModified):
 	"""
 	An identified collection of content treated as a unit.
 	The package starts with a root unit (this object).
@@ -202,9 +243,12 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	"""
 
 	root = Object(IDelimitedHierarchyKey,
-				  title="Path portion of a uri for this object.")
+				  title="Path portion of a uri for this object.",
+				  default=None)
 	index = Object(IDelimitedHierarchyKey,
-				   title="Path portion to an XML file representing this content package")
+				   title="Path portion to an XML file representing this content package",
+				   default=None,
+				   required=False)
 	index_jsonp = Object(IDelimitedHierarchyKey,
 						 title="Optional location of a JSONP version of the index.",
 						 required=False,
@@ -213,7 +257,8 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 	index_last_modified = Number(title="Time since the epoch the index for this package was last modified.",
 								 description="This is currently the best indication of when this package as a whole may have changed.",
 								 readonly=True)
-	installable = schema.Bool(title="Whether or not this content package can be installed locally (offline)")
+	installable = Bool(title="Whether or not this content package can be installed locally (offline)",
+					   default=False)
 	archive = TextLine(title="DEPRECATED. If this content is installable, this is the relative path to a ZIP archive of the content",
 					   default=None,
 					   required=False)
@@ -221,10 +266,21 @@ class IContentPackage(IContentUnit, dub_interfaces.IDCExtended):
 						  title="A child object representing the ZIP archive.",
 						  default=None,
 						  required=False)
-	renderVersion = schema.Int(title="Version of the rendering process that produced this package.",
-							   default=1, min=1)
+	renderVersion = Int(title="Version of the rendering process that produced this package.",
+							   default=1,
+						min=1)
 
-class ILegacyCourseConflatedContentPackage(IContentPackage):
+class IPotentialLegacyCourseConflatedContentPackage(IContentPackage):
+	"""
+	A legacy property that should be available on all content packages.
+	"""
+
+	isCourse = Bool(title="If this package is for a course",
+						   default=False,
+						   required=True)
+
+
+class ILegacyCourseConflatedContentPackage(IPotentialLegacyCourseConflatedContentPackage):
 	"""
 	Legacy properties from when we treated courses as simply a set
 	of attributes on content.
@@ -234,7 +290,7 @@ class ILegacyCourseConflatedContentPackage(IContentPackage):
 
 	# Course support
 	# ALL OF THIS IS DEPRECATED
-	isCourse = schema.Bool(title="If this package is for a course",
+	isCourse = Bool(title="If this package is for a course",
 						   default=False,
 						   required=True)
 	courseName = TextLine(title="Course name",

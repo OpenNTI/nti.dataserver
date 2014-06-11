@@ -48,6 +48,7 @@ def _package_factory(directory):
 		return None
 
 	directory = os.path.abspath(directory)
+	directory = directory.decode('utf-8') if isinstance(directory, bytes) else directory
 	# toc_path = _TOCPath( directory )
 	bucket = FilesystemBucket(directory)
 	key = FilesystemKey(bucket=bucket, name=eclipse.TOC_FILENAME)
@@ -209,6 +210,34 @@ class FilesystemKey(object):
 from .contentunit import _exist_cache
 from .contentunit import _content_cache
 
+from nti.dublincore.time_mixins import TimeProperty
+class _FilesystemTime(object):
+	"""
+	A descriptor that caches a filesystem time, allowing
+	for errors in case its accessed too early.
+	"""
+	def __init__( self, name, st ):
+		self._st = st
+		self._name = str(name)
+
+	def __get__(self, inst, klass):
+		if inst is None:
+			return self
+
+		if self._name in inst.__dict__:
+			return inst.__dict__[self._name]
+
+		try:
+			val = os.stat(inst.filename)[self._st]
+		except (OSError,TypeError):
+			return 0
+		else:
+			inst.__dict__[self._name] = val
+			return val
+
+	def __set__(self, inst, val):
+		pass
+
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(ContentUnit):
 	"""
@@ -244,25 +273,13 @@ class FilesystemContentUnit(ContentUnit):
 		if filename:
 			return os.path.dirname(filename)
 
-	@Lazy
-	def lastModified(self):
-		try:
-			return os.stat(self.filename)[os.path.stat.ST_MTIME]
-		except OSError:
-			logger.debug("Failed to get last modified for %s", self.filename, exc_info=True)
-			return 0
 
-	@Lazy
-	def modified(self):
-		return datetime.datetime.utcfromtimestamp(self.lastModified)
+	lastModified = _FilesystemTime('lastModified', os.path.stat.ST_MTIME)
+	modified = TimeProperty('lastModified', writable=False, cached=True)
 
-	@Lazy
-	def created(self):
-		try:
-			return datetime.datetime.utcfromtimestamp(os.stat(self.filename)[os.path.stat.ST_CTIME])
-		except OSError:
-			logger.debug("Failed to get created for %s", self.filename, exc_info=True)
-			return datetime.datetime.utcfromtimestamp(0)
+
+	createdTime = _FilesystemTime('createdTime', os.path.stat.ST_CTIME)
+	created = TimeProperty('createdTime', writable=False, cached=True)
 
 	@repoze.lru.lru_cache(None, cache=_content_cache)
 	def read_contents(self):

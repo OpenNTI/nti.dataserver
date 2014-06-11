@@ -78,12 +78,18 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 		child.ordinal = ordinal
 		child._v_toc_node = child # for testing and secret stuff
 		children.append( child )
-	tocItem.children = children
+	if children:
+		tocItem.children = children
 
-	embeddedContainerNTIIDs = []
+	embeddedContainerNTIIDs = list()
 	for child in node.iterchildren(tag='object'):
-		embeddedContainerNTIIDs.append( child.get('ntiid') )
-	tocItem.embeddedContainerNTIIDs = embeddedContainerNTIIDs
+		val = _node_get(child, 'ntiid')
+		if val and val not in embeddedContainerNTIIDs: # required to be unique
+			embeddedContainerNTIIDs.append( val )
+
+	if embeddedContainerNTIIDs:
+		__traceback_info__ = embeddedContainerNTIIDs
+		tocItem.embeddedContainerNTIIDs = tuple(embeddedContainerNTIIDs)
 	return tocItem
 
 # Cache for content packages
@@ -147,8 +153,8 @@ def EclipseContentPackage( toc_entry,
 		if not courses or len(courses) != 1:
 			raise ValueError("Invalid course: 'isCourse' is true, but wrong 'course' node")
 		course = courses[0]
-		courseName = course.get('courseName')
-		courseTitle = course.get('label')
+		courseName = _node_get(course, 'courseName')
+		courseTitle = _node_get(course, 'label')
 
 		content_package.courseName = courseName
 		content_package.courseTitle = courseTitle
@@ -160,7 +166,7 @@ def EclipseContentPackage( toc_entry,
 		# Take whatever we can get.
 		info = course.xpath('info')
 		if info: # sigh
-			content_package.courseInfoSrc = info[0].get('src')
+			content_package.courseInfoSrc = _node_get(info[0], 'src')
 		elif content_package.does_sibling_entry_exist( 'course_info.json' ):
 			content_package.courseInfoSrc = 'course_info.json'
 

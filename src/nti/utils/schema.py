@@ -64,6 +64,8 @@ from zope.schema import FrozenSet
 FrozenSet = FrozenSet
 from zope.schema import Set
 Set = Set
+from zope.schema import Iterable
+Iterable = Iterable
 
 try:
 	from Acquisition.interfaces import IAcquirer
