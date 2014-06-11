@@ -25,7 +25,7 @@ from zope.configuration.exceptions import ConfigurationError
 from zope.component.zcml import utility
 
 from .interfaces import IContentPackageLibrary
-from .filesystem import EnumerateImmediatelyFilesystemLibrary
+from .filesystem import EnumerateOnceFilesystemLibrary
 from .boto_s3 import BotoS3BucketContentLibrary
 from .boto_s3 import NameEqualityBucket
 from .externalization import map_all_buckets_to
@@ -68,7 +68,7 @@ def registerFilesystemLibrary( _context, directory=None, prefix="" ):
 	if prefix and not prefix.endswith( '/' ):
 		prefix = prefix + '/'
 
-	factory = functools.partial( EnumerateImmediatelyFilesystemLibrary, root=directory, prefix=prefix )
+	factory = functools.partial( EnumerateOnceFilesystemLibrary, root=directory, prefix=prefix )
 	utility( _context, factory=factory, provides=IContentPackageLibrary )
 
 class IS3Library(interface.Interface):
@@ -96,7 +96,7 @@ def registerS3Library( _context, bucket, cdn_name=None ):
 		conn.bucket_class = NameEqualityBucket
 		boto_bucket = conn.get_bucket( bucket )
 		library = BotoS3BucketContentLibrary( boto_bucket )
-		getSiteManager().registerUtility( library, info=info )
+		getSiteManager().registerUtility( library, provided=IContentPackageLibrary, info=info )
 
 
 	# Use the same discriminator as normally registering a utility

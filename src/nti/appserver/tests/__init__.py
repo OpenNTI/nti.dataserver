@@ -45,6 +45,7 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 		cls.__old_library = component.getUtility(IContentPackageLibrary)
 		component.provideUtility(cls._setup_library(), IContentPackageLibrary)
 		getattr(component.getUtility(IContentPackageLibrary), 'contentPackages')
+
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
