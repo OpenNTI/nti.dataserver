@@ -249,11 +249,12 @@ class TestUserService(ApplicationLayerTest):
 		service = UserService( user )
 
 		ext_object = toExternalObject( service )
+		__traceback_info__ = ext_object
 		# The user should have some capabilities
 		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.chat' ) ) )
 		assert_that( ext_object, has_entry( 'CapabilityList', has_item( u'nti.platform.p2p.sharing' ) ) )
 		# The global workspace should have a Link
-		assert_that( ext_object['Items'][1], has_entry( 'Title', 'Global' ) )
+		assert_that( ext_object['Items'], has_item(has_entry( 'Title', 'Global' )) )
 		# Can't check links here, that comes from application configuration.
 		# See test_usersearch.
 		# And the User resource should have a Pages collection that also has
