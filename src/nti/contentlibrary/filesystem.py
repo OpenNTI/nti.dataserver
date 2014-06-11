@@ -104,6 +104,16 @@ class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
 DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
 StaticFilesystemLibrary = library.EmptyLibrary
 
+def CachedNotifyingStaticFilesystemLibrary(paths=()):
+	if not paths:
+		return library.EmptyLibrary()
+
+	roots = {os.path.dirname(p) for p in paths}
+	if len(roots) == 1:
+		return EnumerateOnceFilesystemLibrary(list(roots)[0])
+	raise TypeError("Unsupported use of multiple paths")
+	# Though we could support it without too much trouble
+
 @interface.implementer(IFilesystemBucket, IZContained)
 class FilesystemBucket(object):
 	__slots__ = (b'name', b'__parent__')
