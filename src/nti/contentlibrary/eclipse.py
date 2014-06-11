@@ -55,7 +55,9 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem = factory()
 	tocItem._v_toc_node = node # for testing and secret stuff
 	for i in _toc_item_attrs:
-		setattr( tocItem, i, _node_get( node, i ) )
+		val = _node_get(node, i, i)
+		if val and val is not i:
+			setattr( tocItem, str(i), val )
 
 	if node.get( 'sharedWith', '' ):
 		tocItem.sharedWith = _node_get( node, 'sharedWith' ).split( ' ' )
@@ -69,7 +71,7 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 			# it needs to deal with multi-level keys, either
 			# by creating a hierarchy of keys (filesystem)
 			# or by simply string appending (boto)
-			setattr( tocItem, i, toc_entry.make_sibling_key( val ) )
+			setattr( tocItem, str(i), toc_entry.make_sibling_key( val ) )
 
 	children = []
 	for ordinal, child in enumerate(node.iterchildren(tag='topic'), 1):
