@@ -222,6 +222,8 @@ class IContentUnit(IZContained,
 											  unique=True,
 											  default=())
 
+	# TODO: Deprecate
+	title = TextLine(title="The human-readable section name of this item; alias for `__name__`", required=False)
 
 class IContentPackage(IContentUnit,
 					  IDisplayableContent,
