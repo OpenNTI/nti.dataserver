@@ -38,8 +38,9 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href = 'index.html',
-			root = 'prealgebra',
-			icon = 'icons/The%20Icon.png' )
+			#root = 'prealgebra',
+			#icon = 'icons/The%20Icon.png'
+		)
 
 		assert_that( unit, verifiably_provides( interfaces.IFilesystemContentPackage ) )
 
@@ -52,6 +53,7 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 															 'TestFilesystem' ) )
 		assert_that( package.key,
 					 validly_provides( interfaces.IDelimitedHierarchyKey ) )
+
 		assert_that( package,
 					 validly_provides( interfaces.IFilesystemContentPackage ) )
 		assert_that( package.creators, is_( ('Jason',) ) )
@@ -106,8 +108,9 @@ class TestAppFilesystem(ContentlibraryLayerTest):
 		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href = 'index.html',
-			root = 'prealgebra',
-			icon = 'icons/The%20Icon.png' )
+			#root = 'prealgebra',
+			#icon = 'icons/The%20Icon.png'
+		)
 
 		assert_that( IPrefs( unit, None ), is_( none() ) )
 

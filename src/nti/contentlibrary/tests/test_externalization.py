@@ -42,7 +42,8 @@ class TestExternalization(ContentlibraryLayerTest):
 		unit = filesystem.FilesystemContentPackage(
 			filename='prealgebra/index.html',
 			href='index.html',
-			root='prealgebra')
+			#root='prealgebra'
+		)
 
 		unit.icon = unit.make_sibling_key('icons/The%20Icon.png' )
 		assert_that( unit.icon, validly_provides( interfaces.IDelimitedHierarchyKey ) )
@@ -55,8 +56,9 @@ class TestExternalization(ContentlibraryLayerTest):
 		unit = factory(
 			key=key,
 			href='index.html',
-			root='prealgebra',
+			#root='prealgebra',
 			title='Prealgebra',
+			description='',
 			installable=archive_unit is not None,
 			archive_unit=archive_unit,
 			index=index,
@@ -112,7 +114,10 @@ class TestExternalization(ContentlibraryLayerTest):
 		self._do_test_escape_if_needed( factory,
 										index=None,
 										key='/DNE/Library/WebServer/Documents/prealgebra/index.html',
-										archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ),
+										archive_unit=filesystem.FilesystemContentUnit(
+											filename='archive.zip',
+											href='archive.zip',
+											title='archive' ),
 										installable=True	)
 
 

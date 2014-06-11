@@ -60,6 +60,8 @@ class AbstractLibrary(object):
 
 		return titles
 
+	createdTime = 0
+
 	@property
 	def lastModified(self):
 		"""

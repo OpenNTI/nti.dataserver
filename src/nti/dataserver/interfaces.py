@@ -317,42 +317,10 @@ class INamedContainer(IContainer):
 		The human-readable nome of this container.
 		""")
 
-class ICreatedTime(interface.Interface):
-	"""
-	Something that (immutably) tracks its created time.
-	"""
-	createdTime = Number(title=u"The timestamp at which this object was created.",
-						 description="Typically set automatically by the object.",
-						 default=0.0)
-
-
-class ILastModified(ICreatedTime):
-	"""
-	Something that tracks a modification timestamp.
-	"""
-	# TODO: Combine/replace this with :class:`zope.dublincore.interfaces.IDCTimes`
-	lastModified = Number(title=u"The timestamp at which this object or its contents was last modified.",
-						  default=0.0)
-
-from datetime import datetime as _datetime
-from calendar import timegm as _calendar_timegm
-from zope.dublincore.interfaces import IDCTimes
-
-@interface.implementer(IDCTimes)
-class DCTimesLastModifiedMixin(object):
-	"""
-	A mixin that implements dublincore times using the timestamp
-	information from ILastModified. Requires no storage,
-	can be added to persistent objects at any time.
-
-	These datetimes are always naive datetime objects, normalized
-	to UTC.
-	"""
-
-	created = property( lambda self: _datetime.utcfromtimestamp( self.createdTime ),
-						lambda self, dt: setattr( self, 'createdTime', _calendar_timegm( dt.utctimetuple() ) ) )
-	modified = property( lambda self: _datetime.utcfromtimestamp( self.lastModified ),
-						lambda self, dt: self.updateLastModIfGreater( _calendar_timegm( dt.utctimetuple() ) ) )
+# BWC exports
+from nti.dublincore.interfaces import ICreatedTime
+from nti.dublincore.interfaces import ILastModified
+from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 
 class ILastViewed(ILastModified):
