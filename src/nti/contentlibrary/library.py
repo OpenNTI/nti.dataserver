@@ -51,7 +51,10 @@ class AbstractLibrary(object):
 
 	def _package_factory(self, possible_content_package):
 		"""A callable object that is passed each item from :attr:`possible_content_packages`
-		and returns either a package factory, or `None`."""
+		and returns either a package factory, or `None`.
+
+		This should not file the ``created`` event.
+		"""
 		return None
 
 	def _possible_content_packages(self):
@@ -76,6 +79,10 @@ class AbstractLibrary(object):
 		return titles
 
 	def syncContentPackages(self):
+		"""
+		Fires created, added, modified, or removed events for each
+		content package, as appropriate.
+		"""
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
@@ -122,14 +129,12 @@ class AbstractLibrary(object):
 		# XXX: Note that we are not doing it in parallel, because if we need
 		# ZODB site access, we can have issues. Also not we're not
 		# randomizing because we expect to be preloaded.
-		# XXX: Note we're not firing created, just added; the
-		# factory is responsible for created...this is wrong because we
-		# may not actually semantically create the same thing again
 		for old in removed:
 			lifecycleevent.removed(old)
 		for up in changed:
 			lifecycleevent.modified(up)
 		for new in added:
+			lifecycleevent.created(new)
 			lifecycleevent.added(new)
 
 		if removed or added or changed or never_synced:

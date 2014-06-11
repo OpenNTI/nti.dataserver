@@ -15,8 +15,6 @@ from os.path import join as path_join
 import datetime
 
 from zope import interface
-from zope import lifecycleevent
-from zope.cachedescriptors.property import Lazy, readproperty
 from zope.location.interfaces import IContained as IZContained
 
 import repoze.lru
@@ -59,8 +57,6 @@ def _package_factory(directory):
 	assert package.key.bucket == bucket
 	bucket.__parent__ = package
 
-	lifecycleevent.created( package )
-
 	return package
 
 @interface.implementer(IFilesystemContentPackageLibrary)
@@ -87,9 +83,11 @@ class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
 		return _package_factory(path)
 
 	def _possible_content_packages(self):
-		return [os.path.join(self._root, p)
-				for p in os.listdir(self._root)
-				if os.path.isdir(os.path.join(self._root, p))]
+		for p in os.listdir(self._root):
+			p = os.path.join(self._root, p)
+			p = os.path.abspath(p)
+			if os.path.isdir(p) and _hasTOC(p):
+				yield p
 
 	def _syncContentPackages(self):
 		self._root_mtime = os.stat(self._root)[os.path.stat.ST_MTIME]
