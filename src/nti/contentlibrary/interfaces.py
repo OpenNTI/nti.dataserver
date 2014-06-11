@@ -25,7 +25,8 @@ from nti.utils.schema import Bool
 
 # pylint: disable=E0213,E0211
 
-class IContentPackageLibrary(ILastModified):
+class IContentPackageLibrary(ILastModified,
+							 IZContained):
 	"""
 	A library or catalog of all available packages of content.
 
@@ -84,6 +85,18 @@ class IContentPackageLibrary(ILastModified):
 		"The number of content packages in this library"
 
 	contentPackages = Iterable(title=u'Sequence of all known :class:`IContentPackage`')
+
+class ISyncableContentPackageLibrary(IContentPackageLibrary):
+	"""
+	A library that relies on external information and must be
+	synchronized in order to have an accurate ``contentPackages``
+	value.
+	"""
+
+	def syncContentPackages():
+		"""
+		Do whatever is necessary to sync content packages.
+		"""
 
 class IDisplayablePlatformPresentationResources(interface.Interface):
 	"""

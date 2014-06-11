@@ -64,66 +64,7 @@ def _package_factory(directory):
 	return package
 
 @interface.implementer(IFilesystemContentPackageLibrary)
-class StaticFilesystemLibrary(library.AbstractStaticLibrary):
-
-	package_factory = staticmethod(_package_factory)
-
-	def __init__(self, paths=()):
-		"""
-		Creates a library that will examine the given paths.
-
-		:param paths: A sequence of strings pointing to directories to introspect for
-			:class:`interfaces.IContentPackage` objects.
-		EOD
-		"""
-		super(StaticFilesystemLibrary, self).__init__(paths=paths)
-
-class CachedNotifyingStaticFilesystemLibrary(library.AbstractCachedNotifyingStaticLibrary):
-	"""
-	A library that will examine the given paths just once,
-	notifying of anything that is added when enumeration happens.
-	"""
-
-	package_factory = staticmethod(_package_factory)
-
-
-# TODO: The DynamicFilesystemLibrary should be made to work
-# with the `watchdog` library for noticing changes.
-# watchdog uses inotify on linux and fsevents/kqueue on OS X,
-# our two supported platforms. I (JAM) think the only trick might be
-# getting it to work with gevent?
-
-@interface.implementer(IFilesystemContentPackageLibrary)
-class DynamicFilesystemLibrary(library.AbstractLibrary):
-	"""
-	Implements a library by looking at the contents of a root
-	directory, every time needed.
-	"""
-
-	package_factory = staticmethod(_package_factory)
-
-	def __init__(self, root='', **kwargs):
-		if 'paths' in kwargs:
-			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
-		super(DynamicFilesystemLibrary, self).__init__(**kwargs)
-		self._root = root or kwargs.pop('root')
-
-	def _query_possible_content_packages(self):
-		return [os.path.join(self._root, p)
-				for p in os.listdir(self._root)
-				if os.path.isdir(os.path.join(self._root, p))]
-	possible_content_packages = property(_query_possible_content_packages)
-
-	@readproperty
-	def _root_mtime(self):
-		return os.stat(self._root)[os.path.stat.ST_MTIME]
-
-	@property
-	def lastModified(self):
-		return max(self._root_mtime, super(DynamicFilesystemLibrary, self).lastModified)
-
-class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary,
-									 library.AbstractCachedNotifyingStaticLibrary):
+class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
 	"""
 	A library that will examine the root to find possible content packages
 	only the very first time that it is requested to. Changes after that
@@ -134,25 +75,38 @@ class EnumerateOnceFilesystemLibrary(DynamicFilesystemLibrary,
 	:class:`.IObjectAddedEvent` for content packages.
 	"""
 
-	contentPackages = Lazy(library.AbstractCachedNotifyingStaticLibrary.contentPackages.data[0])
+	_root_mtime = 0
 
-	@CachedProperty
-	def possible_content_packages(self):
-		return tuple(self._query_possible_content_packages())
+	def __init__(self, root='', **kwargs):
+		if 'paths' in kwargs:
+			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
+		super(EnumerateOnceFilesystemLibrary, self).__init__(**kwargs)
+		self._root = root or kwargs.pop('root')
 
-	_root_mtime = Lazy(DynamicFilesystemLibrary._root_mtime.func)
+	def _package_factory(self, path):
+		return _package_factory(path)
+
+	def _possible_content_packages(self):
+		return [os.path.join(self._root, p)
+				for p in os.listdir(self._root)
+				if os.path.isdir(os.path.join(self._root, p))]
+
+	def _syncContentPackages(self):
+		self._root_mtime = os.stat(self._root)[os.path.stat.ST_MTIME]
+		return super(EnumerateOnceFilesystemLibrary,self)._syncContentPackages()
+
+	@property
+	def lastModified(self):
+		return max(self._root_mtime, super(EnumerateOnceFilesystemLibrary, self).lastModified)
 
 
-class EnumerateImmediatelyFilesystemLibrary(EnumerateOnceFilesystemLibrary):
-	"""
-	A library that immediately enumerates its contents on creation.
-	This ensures that the :class:`IObjectAddedEvent` and :class:`IObjectCreatedEvent`
-	are sent at deterministic times.
-	"""
+# A measure of BWC
+DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
+StaticFilesystemLibrary = library.EmptyLibrary
 
 @interface.implementer(IFilesystemBucket, IZContained)
 class FilesystemBucket(object):
-	__slots__ = ('name', '__parent__')
+	__slots__ = (b'name', b'__parent__')
 
 	__name__ = alias('name')
 	key = alias('name')

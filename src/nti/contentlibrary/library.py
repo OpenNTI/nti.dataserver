@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/Sr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Classes useful for working with libraries.
@@ -8,34 +8,39 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
-#pylint: disable=E1102
 import numbers
 
 from zope import interface
 from zope import lifecycleevent
-from zope.cachedescriptors.property import Lazy
 
 from . import interfaces
 
 from nti.utils.property import alias
 
-@interface.implementer(interfaces.IContentPackageLibrary)
+from abc import ABCMeta
+import warnings
+
+@interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractLibrary(object):
 	"""
 	Base class for a Library.
+
+	To make this library concrete, you must implement the
+	abstract methods. This implementation only depends upon those,
+	and the resulting value for ``contentPackages``.
 	"""
 
-	#: A callable object that is passed each item from :attr:`possible_content_packages`
-	#: and returns either a package factory, or `None`.
-	package_factory = None
-
-	#: A sequence of objects to introspect for :class:`.IContentPackage` objects;
-	#: typically strings. These are passed to :attr:`package_factory`
-	possible_content_packages = ()
+	__metaclass__ = ABCMeta
 
 	#: Placeholder for prefixes that should be applied when generating
 	#: URLs for items in this library.
 	url_prefix = ''
+
+	#: A place where we will cache the list of known
+	#: content packages. A value of `None` means we have never
+	#: been synced. The behaviour of iterating content packages
+	#: to implicitly sync is deprecated.
+	_contentPackages = None
 
 	__name__ = 'Library'
 	__parent__ = None
@@ -44,22 +49,115 @@ class AbstractLibrary(object):
 		if prefix:
 			self.url_prefix = prefix
 
-	@property
-	def contentPackages(self):
+	def _package_factory(self, possible_content_package):
+		"""A callable object that is passed each item from :attr:`possible_content_packages`
+		and returns either a package factory, or `None`."""
+		return None
+
+	def _possible_content_packages(self):
+		"""
+		A sequence of objects to introspect for :class:`.IContentPackage` objects;
+		typically strings. These are passed to :attr:`package_factory`
+		"""
+		return ()
+
+	def _syncContentPackages(self):
 		"""
 		Returns a sequence of IContentPackage items, as created by
-		invoking the ``self.package_factory`` on each item returned
-		from iterating across ``self.possible_content_packages``.
+		invoking the ``self._package_factory`` on each item returned
+		from iterating across ``self._possible_content_packages``.
 		"""
 		titles = []
-		for path in self.possible_content_packages:
-			title = self.package_factory( path )
+		for path in self._possible_content_packages():
+			title = self._package_factory( path )
 			if title:
 				title.__parent__ = self
 				titles.append( title )
-
 		return titles
 
+	def syncContentPackages(self):
+		never_synced = self._contentPackages is None
+		old_content_packages = list(self._contentPackages or ())
+
+		new_content_packages = list(self._syncContentPackages())
+		# Before we fire any events, compute all the work so that
+		# we can present a consistent view to any listeners that
+		# will be watching
+
+		removed = []
+		added = []
+		changed = []
+		unmodified = []
+
+		for new in new_content_packages:
+			if new not in old_content_packages:
+				added.append(new)
+		for old in old_content_packages:
+			new = None
+			for x in new_content_packages:
+				if x == old:
+					new = x
+					break
+			if new is None:
+				removed.append(old)
+			elif old.lastModified < new.lastModified:
+				changed.append(new)
+			else:
+				unmodified.append(old)
+
+		# now set up our view of the world
+		_contentPackages = []
+		_contentPackages.extend(added)
+		_contentPackages.extend(unmodified)
+
+		self._contentPackages = tuple(_contentPackages)
+
+		# Now fire the events letting listeners (e.g., index and question adders)
+		# know that we have content. Randomize the order of this across worker
+		# processes so that we don't collide too badly on downloading indexes if need be
+		# (only matters if we are not preloading).
+		# Do this in greenlets/parallel. This can radically speed up
+		# S3 loading when we need the network.
+		# XXX: Does order matter?
+		# XXX: Note that we are not doing it in parallel, because if we need
+		# ZODB site access, we can have issues. Also not we're not
+		# randomizing because we expect to be preloaded.
+		# XXX: Note we're not firing created, just added; the
+		# factory is responsible for created...this is wrong because we
+		# may not actually semantically create the same thing again
+		for old in removed:
+			lifecycleevent.removed(old)
+		for up in changed:
+			lifecycleevent.modified(up)
+		for new in added:
+			lifecycleevent.added(new)
+
+		if removed or added or changed or never_synced:
+			lifecycleevent.modified(self)
+
+	@property
+	def contentPackages(self):
+		if self._contentPackages is None:
+			warnings.warn("Please sync the library first.")
+			self.syncContentPackages()
+		return self._contentPackages
+
+	def __delattr__(self, name):
+		"""
+		As a nuclear option, you can delete the property `contentPackages`
+		to enforce a complete removal of the entire value, and the next
+		sync will be from scratch.
+		"""
+		if name == 'contentPackages' and '_contentPackages' in self.__dict__:
+			# When we are uncached to force re-enumeration,
+			# we need to send the corresponding object removed events
+			# so that people that care can clean up
+			for title in self._contentPackages:
+				lifecycleevent.removed(title)
+			name = '_contentPackages'
+		super(AbstractLibrary,self).__delattr__(name)
+
+	titles = alias('contentPackages' )
 	createdTime = 0
 
 	@property
@@ -152,112 +250,16 @@ class AbstractLibrary(object):
 			rec(package)
 		return result
 
-class AbstractStaticLibrary(AbstractLibrary):
-
-	possible_content_packages = ()
-
-	def __init__(self, *args, **kwargs):
-		"""
-		Creates a library that will examine the given paths.
-
-		:param paths: A sequence of strings pointing to directories to introspect for
-			:class:`interfaces.IContentPackage` objects.
-
-		"""
-		paths = kwargs.pop("paths", ())
-		super(AbstractStaticLibrary,self).__init__(*args, **kwargs)
-		if paths: # avoid overwriting a subclass's class-level property or CachedProperty
-			self.possible_content_packages = paths
-
-
-class AbstractCachedStaticLibrary(AbstractStaticLibrary):
+class EmptyLibrary(AbstractLibrary):
 	"""
-	A static library that will lazily cache the results
-	of enumerating the content packages.
+	A library that is perpetually empty.
 	"""
 
-	contentPackages = Lazy(AbstractLibrary.contentPackages.fget)
-	titles = alias('contentPackages' )
+	def __init__(self, prefix=''):
+		super(EmptyLibrary,self).__init__(prefix=prefix)
 
-class AbstractCachedNotifyingStaticLibrary(AbstractCachedStaticLibrary):
-	"""
-	A static library that will broadcast :class:`zope.lifecycleevent.IObjectAddedEvent`
-	when content packages are added to the library (i.e., the
-	first time the library's content packages are enumerated).
-
-	In theory any library could broadcast adds and removes,
-	but a non-cached library would essentially have to act as a cached
-	library for that to work.
-
-	This library currently does not implement the ``__delitem__`` method,
-	so there is no way to trigger an :class:`.IObjectRemovedEvent`
-	"""
-
-	@Lazy
-	def contentPackages(self):
-		result = AbstractLibrary.contentPackages.fget(self)
-		# Now fire the events letting listeners (e.g., index and question adders)
-		# know that we have content. Randomize the order of this across worker
-		# processes so that we don't collide too badly on downloading indexes if need be
-		# (only matters if we are not preloading).
-		# Do this in greenlets/parallel. This can radically speed up
-		# S3 loading when we need the network.
-
-		# TODO: If we are registering a library in a local site, via
-		# z3c.baseregistry, does the IRegistrationEvent still occur
-		# in the context of that site? I *think* so, need to prove it.
-		# We need to be careful to keep the correct site, then, as we fire off
-		# events in parallel
-		titles = list(result)
-
-		# NOTE that we immediately save the result of this
-		# so that if an event handler wants to also enumerate content
-		# packages we don't wind up notifying twice
-		self.__dict__['contentPackages'] = result
-
-		try:
-			import gevent
-		except ImportError: # pragma: no cover
-			for title in titles:
-				lifecycleevent.added( title )
-		else:
-			import random
-			from zope.component.hooks import getSite, site
-			random.seed()
-			random.shuffle(titles)
-
-
-			if False:
-				# Enumerating in parallel greenlets
-				# speeds up IO, but has issues reuising the
-				# same connection to ZODB if it is ZEO
-				title_greenlets = []
-				current_site = getSite()
-
-				def _notify_in_site( title ):
-					# Need a level of functional redirection here
-					# to workaround python's awkward closure rules
-					with site(current_site):
-						lifecycleevent.added( title )
-
-				for title in titles:
-					title_greenlets.append( gevent.spawn( _notify_in_site, title ) )
-
-				gevent.joinall( title_greenlets, raise_error=True )
-			else:
-				for title in titles:
-					lifecycleevent.added( title )
-
-		return result
-
-	def __delattr__(self, name):
-		if name == 'contentPackages' and 'contentPackages' in self.__dict__:
-			# When we are uncached to force re-enumeration,
-			# we need to send the corresponding object removed events
-			# so that people that care can clean up
-			for title in self.contentPackages:
-				lifecycleevent.removed(title)
-		super(AbstractCachedNotifyingStaticLibrary,self).__delattr__(name)
+	def _syncContentPackages(self):
+		return ()
 
 def pathToPropertyValue( unit, prop, value ):
 	"""

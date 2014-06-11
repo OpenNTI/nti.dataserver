@@ -334,6 +334,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			<topic label="C1" href="faa-index.html"/>
 			</toc>""")
 		self.library = DynamicLibrary( self.temp_dir )
+		self.library.syncContentPackages()
 
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
@@ -388,11 +389,12 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 
 		# clear caches
 		import nti.contentlibrary.contentunit
+
 		nti.contentlibrary.contentunit._clear_caches()
 		self.library_collection._library._v_contentPackages = None
-
-		self.beginRequest()
-
+		nti.appserver.pyramid_authorization._clear_caches()
+		# recall permissions are cached on the request
+		self.library_collection._library.request = self.beginRequest()
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
@@ -410,7 +412,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		import nti.contentlibrary.contentunit
 		nti.contentlibrary.contentunit._clear_caches()
 		self.beginRequest()
-
+		nti.appserver.pyramid_authorization._clear_caches()
 		# it is still visible
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )

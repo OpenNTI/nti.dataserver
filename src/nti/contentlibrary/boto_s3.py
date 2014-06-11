@@ -227,7 +227,7 @@ def _package_factory( key ):
 		temp_entry = BotoS3ContentUnit( key=toc_key )
 		return eclipse.EclipseContentPackage( temp_entry, BotoS3ContentPackage, BotoS3ContentUnit )
 
-class BotoS3BucketContentLibrary(library.AbstractCachedNotifyingStaticLibrary):
+class BotoS3BucketContentLibrary(library.AbstractLibrary):
 	"""
 	Enumerates the first level of a '/' delimited bucket and treats each
 	entry as a possible content package. Content packages are cached.
@@ -240,10 +240,15 @@ class BotoS3BucketContentLibrary(library.AbstractCachedNotifyingStaticLibrary):
 		those do not correspond to files in the filesystem or objects in the bucket.
 	"""
 
-	package_factory = staticmethod(_package_factory)
-
 	def __init__( self, bucket ):
 		"""
 		:param bucket: The bucket to enumerate.
 		"""
-		super(BotoS3BucketContentLibrary,self).__init__( list( bucket.list( delimiter='/' ) ) )
+		super(BotoS3BucketContentLibrary,self).__init__()
+		self._bucket = bucket
+
+	def _package_factory(self, key):
+		return _package_factory(key)
+
+	def _possible_content_packages(self):
+		return list(self._bucket.list(delimiter='/'))

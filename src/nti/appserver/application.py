@@ -220,7 +220,7 @@ def _library_settings(pyramid_config, server, library):
 			conn = server.db.open()
 			ds_site = conn.root()['nti.dataserver']
 			with site(ds_site):
-				getattr( library, 'contentPackages' )
+				library.syncContentPackages()
 		conn.close()
 
 	return library
