@@ -46,7 +46,7 @@ def _find_allowed_fields(user):
 			continue
 		result[k] = v
 		
-	return result
+	return profile, result
 
 def _change_attributes(args):
 
@@ -76,7 +76,7 @@ def _change_attributes(args):
 			interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
 		
 	external = {}
-	fields = _find_allowed_fields(user)
+	_, fields = _find_allowed_fields(user)
 	if args.verbose:
 		pprint.pprint("Allowed Fields")
 		pprint.pprint(list(fields.keys()))
@@ -84,8 +84,9 @@ def _change_attributes(args):
 	for name, sch_def in fields.items():
 		value = getattr(args, name, None)
 		if value is not None:
-			value = None if not value else unicode(value)
-			external[name] = sch_def.fromUnicode(value) if value else None
+			if value and isinstance(value, bytes):
+				value = unicode(value.decode("UTF-8"))
+			external[name] = sch_def.fromUnicode(unicode(value)) if value else None
 
 	if args.verbose:
 		pprint.pprint("External change")
@@ -102,11 +103,15 @@ def _change_attributes(args):
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
+
 	arg_parser.add_argument('username', help="The username to edit")
+
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
+
 	arg_parser.add_argument('-f', '--force', help="Force update of immutable fields",
 							action='store_true', dest='force')
+
 	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('--site',
 							dest='site',
@@ -130,7 +135,7 @@ def _create_args_parser():
 			help_ = sch.getDoc() or sch.title
 			help_ = help_.replace('\n', '.')
 			opt = '--%s' % name
-			arg_parser.add_argument( opt, help=help_, dest=name, required=False)
+			arg_parser.add_argument(opt, help=help_, dest=name, required=False)
 			
 	return arg_parser
 			
@@ -139,9 +144,8 @@ def main():
 	args = arg_parser.parse_args()
 	conf_packages = () if not args.site else ('nti.appserver',)
 	
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv( 'DATASERVER_DIR' )
+	env_dir = args.env_dir or os.getenv('DATASERVER_DIR')
+	env_dir = os.path.expanduser(env_dir) if env_dir else None
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError("Invalid dataserver environment root directory", env_dir)
 	
