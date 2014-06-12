@@ -8,12 +8,16 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 
 from zope import interface
 
+from nti.dataserver.users import User
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -99,3 +103,26 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		assert_that(res.status_int, is_(200))
 		app_iter = res.app_iter[0].split('\n')[:-1]
 		assert_that(app_iter, has_length(3))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_update_profile(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = self._create_user(username='ichigo@nt.com',
+							  external_value={u'email':u"ichigo@nt.com", u'alias':'foo'})
+
+			assert_that(user_interfaces.IFriendlyNamed(u), has_property('alias', 'foo'))
+
+		post_data = {'username':'ichigo@nt.com', 'alias':'Ichigo'}
+		path = '/dataserver2/@@user_profile_update'
+		res = self.testapp.post_json(path, post_data)
+		assert_that(res.status_int, is_(200))
+
+		assert_that(res.json_body, has_entry('Allowed Fields', has_length(12)))
+		assert_that(res.json_body, has_entry('External', has_entry('alias', 'Ichigo')))
+		assert_that(res.json_body, has_entry('Profile', u'CompleteUserProfile'))
+		assert_that(res.json_body, has_entry('Summary', has_entry('alias', 'Ichigo')))
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = User.get_user('ichigo@nt.com')
+			assert_that(user_interfaces.IFriendlyNamed(u), has_property('alias', 'Ichigo'))
+
