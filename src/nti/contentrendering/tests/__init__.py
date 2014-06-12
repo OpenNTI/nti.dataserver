@@ -94,7 +94,8 @@ class NonDevmodeContentrenderingLayerTest(unittest.TestCase):
 	layer = NonDevmodeSharedConfiguringTestLayer
 
 
-def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_encoding=None, chdir=False, working_dir=None):
+def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_encoding=None, chdir=False, working_dir=None,
+					   config_hook=lambda doc: None):
 	document = plasTeX.TeXDocument()
 	if input_encoding:
 		strIO = io.StringIO( docString.decode( input_encoding ) )
@@ -132,7 +133,10 @@ def buildDomFromString(docString, mkdtemp=False, output_encoding=None, input_enc
 	document.userdata['extra_scripts'] = document.config['NTI']['extra-scripts'].split()
 	document.userdata['extra_styles'] = document.config['NTI']['extra-styles'].split()
 
+
 	tex = TeX(document, strIO)
+	config_hook(document)
+
 	tex.parse()
 	return document
 
@@ -144,7 +148,8 @@ def simpleLatexDocumentText(preludes=(), bodies=()):
 
 class RenderContext(object):
 
-	def __init__( self, latex_tex, dom=None, output_encoding=None, input_encoding=None, files=(), packages_on_texinputs=False ):
+	def __init__( self, latex_tex, dom=None, output_encoding=None, input_encoding=None, files=(), packages_on_texinputs=False,
+				  config_hook=None):
 		self.latex_tex = latex_tex
 		self.dom = dom
 		self._cwd = None
@@ -154,10 +159,26 @@ class RenderContext(object):
 		self.files = files
 		self._texinputs = None
 		self._packages_on_texinputs = packages_on_texinputs
+		self._config_hook = config_hook
 
 	@property
 	def docdir(self):
 		return self.dom.config['files']['directory']
+
+	def render(self, images=False):
+		res_db = None
+		if images:
+			from nti.contentrendering import nti_render
+			res_db = nti_render.generateImages( dom )
+
+		from nti.contentrendering.resources import ResourceRenderer
+		render = ResourceRenderer.createResourceRenderer('XHTML', res_db)
+		render.importDirectory( os.path.join( os.path.dirname(__file__), '..' ) )
+		render.render( self.dom )
+
+	def read_rendered_file(self, filename):
+		with io.open(os.path.join(self.docdir, filename), 'rU', encoding=self.output_encoding or 'utf-8' ) as f:
+			return f.read()
 
 	def __enter__(self):
 		self._cwd = os.getcwd()
@@ -191,20 +212,30 @@ class RenderContext(object):
 				fname = os.path.basename(f)
 				shutil.copyfile( f, os.path.join( to, fname ) )
 
+		import nti.contentrendering.plastexids
+		nti.contentrendering.plastexids.patch_all()
+		nti_render.setupChameleonCache(config=True)
+
 		if self.dom is None:
 			work_dir = tempfile.mkdtemp()
 			_file_copy(work_dir)
 			copied = True
-			self.dom = buildDomFromString( self.latex_tex, mkdtemp=False, output_encoding=self.output_encoding, input_encoding=self.input_encoding, chdir=True, working_dir=work_dir )
+			dom_env = {}
+			if self._config_hook:
+				dom_env['config_hook'] = self._config_hook
+			self.dom = buildDomFromString( self.latex_tex,
+										   mkdtemp=False,
+										   output_encoding=self.output_encoding,
+										   input_encoding=self.input_encoding,
+										   chdir=True,
+										   working_dir=work_dir,
+										   **dom_env)
 
 		if not copied:
 			_file_copy( self.docdir )
 
 		os.chdir( self.docdir )
 
-		import nti.contentrendering.plastexids
-		nti.contentrendering.plastexids.patch_all()
-		nti_render.setupChameleonCache(config=True)
 		return self
 
 	def __exit__( self, exc_type, exc_value, traceback ):

@@ -1123,7 +1123,7 @@ class ntidiscussionref(Base.Crossref.ref):
 	@readproperty
 	def discussion(self):
 		return self.idref['label']
-	
+
 
 class ntidiscussion(Base.Environment):
 	args = '[ options:dict ] '
@@ -1171,10 +1171,6 @@ class ntidiscussion(Base.Environment):
 			self.iconResource = icons[0]
 		return tok
 
-###############################################################################
-# The following block contains commands for ntisequence type objects
-###############################################################################
-
 class ntisequenceitem(LocalContentMixin, Base.Environment):
 	args = '[options:dict]'
 
@@ -1217,18 +1213,10 @@ class ntisequence(LocalContentMixin, Base.List):
 class ntisequenceref(Base.Crossref.ref):
 	args = '[options:dict] label:idref'
 
-###############################################################################
-# The following block contains commands for multilangual ntidirections block 
-# type objects
-###############################################################################
 
 class ntidirectionsblock(Base.Command):
 	args = 'directions example lang_code:str:source'
 	blockType = True
-
-###############################################################################
-# The following block contains commands for various sidebar objects
-###############################################################################
 
 # The sidebar environment is to be the base class for other side types such as those from AoPS.
 class sidebar(Environment):
@@ -1244,9 +1232,13 @@ class audiosidebar(sidebar):
 class ntigraphicsidebar(sidebar):
 	args = 'title graphic_class:str:source'
 
-###############################################################################
-# The following block configures various counters
-###############################################################################
+class ntiidref(Base.Crossref.ref):
+	"""
+	Used for producing a cross-document link, like a normal
+	ref, but output as an NTIID.
+	"""
+	macroName = 'ntiidref'
+
 
 def ProcessOptions( options, document ):
 	document.context.newcounter('ntiaudio')

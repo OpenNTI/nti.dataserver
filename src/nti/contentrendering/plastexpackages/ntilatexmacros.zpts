@@ -304,3 +304,5 @@ name: ntidirectionsblock
 	<div class="language-code" tal:content='self/attributes/lang_code'>Language Code</div>
 </div>
 
+name: ntiidref
+<a tal:attributes="href self/idref/label/ntiid" tal:content="self/idref/label/title">#.#.#</a>
