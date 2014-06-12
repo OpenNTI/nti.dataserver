@@ -43,7 +43,8 @@ def nextID(self, suffix=''):
 	setattr(self, 'NTIID', ntiid)
 	return _make_ntiid( self,  ntiid, suffix )
 
-# SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document
+# SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document.
+# Unfortunately, it is hard to mixin a base class to that object
 import plasTeX
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
 
@@ -181,10 +182,10 @@ class NTIIDMixin(object):
 	`_ntiid_allow_missing_title` property to True.
 
 	"""
-NTIIDMixin.ntiid = property(_section_ntiid)
-NTIIDMixin.filenameoverride = property(_section_ntiid_filename,_set_section_ntiid_filename)
-NTIIDMixin._ntiid_get_local_part = property(_ntiid_get_local_part_title)
 
+	ntiid = property(_section_ntiid)
+	filenameoverride = property(_section_ntiid_filename,_set_section_ntiid_filename)
+	_ntiid_get_local_part = property(_ntiid_get_local_part_title)
 
 # Attempt to generate stable IDs for paragraphs. Our current approach
 # is to use a hash of the source. This is very, very fragile to changes
@@ -235,8 +236,8 @@ class StableIDMixin(object):
 	Attempts to generate more stable IDs for elements. Can be used when elements
 	have source text or may have a label child.
 	"""
-# TODO: Different counters for this than _par_used_ids?
-StableIDMixin.id = property(_catching(_par_id_get, 'id'), plasTeX.Macro.id.fset)
+	# TODO: Different counters for this than _par_used_ids?
+	id = property(_catching(_par_id_get, 'id'), plasTeX.Macro.id.fset)
 
 def patch_all():
 	"""
@@ -257,5 +258,9 @@ def patch_all():
 	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename),
 											 _catching(_set_section_ntiid_filename))
 	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
+
+	# Ensure we persist these things, if we have them, for
+	# better cross-document referencing
+	plasTeX.Macro.refAttributes += ('ntiid', 'filenameoverride')
 
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch
