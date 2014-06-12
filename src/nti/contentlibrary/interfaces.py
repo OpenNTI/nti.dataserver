@@ -10,6 +10,8 @@ from zope import interface
 from zope.location.interfaces import IContained as IZContained
 from zope.dublincore import interfaces as dub_interfaces
 from zope.annotation.interfaces import IAnnotatable
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
@@ -96,7 +98,25 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	def syncContentPackages():
 		"""
 		Do whatever is necessary to sync content packages.
+
+		If this is done, and the sync results in a change, this
+		should fire an :class:`IContentPackageLibrarySynchedEvent`.
+		By the time this event is fired, any added/removed/modified
+		events for individual content packages will have been fired.
 		"""
+
+class IContentPackageLibrarySynchedEvent(IObjectModifiedEvent):
+	"""
+	An event fired when a content package library has completed
+	a synchronization that resulted in changes. This is fired
+	after events for individual content package changes.
+	"""
+
+@interface.implementer(IContentPackageLibrarySynchedEvent)
+class ContentPackageLibrarySynchedEvent(ObjectModifiedEvent):
+	"""
+	Content package synced event.
+	"""
 
 class IDisplayablePlatformPresentationResources(interface.Interface):
 	"""
@@ -107,7 +127,7 @@ class IDisplayablePlatformPresentationResources(interface.Interface):
 	InheritPlatformName = TextLine(title="A platform to inherit from",
 								   description="If present, this object should merge missing resources "
 								   "from this named platform.")
-	# XXX: Fill in missing
+	# XXX: Fill in missing to match disk layout
 
 class IDisplayableContent(IZContained,
 						  IDCOptionalDescriptiveProperties,

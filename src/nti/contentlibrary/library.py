@@ -12,6 +12,7 @@ import numbers
 
 from zope import interface
 from zope import lifecycleevent
+from zope.event import notify
 
 from . import interfaces
 
@@ -138,7 +139,11 @@ class AbstractLibrary(object):
 			lifecycleevent.added(new)
 
 		if removed or added or changed or never_synced:
-			lifecycleevent.modified(self)
+			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
+												   'contentPackages')
+			event = interfaces.ContentPackageLibrarySynchedEvent(self, attributes)
+
+			notify(event)
 
 	@property
 	def contentPackages(self):
