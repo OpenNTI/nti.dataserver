@@ -229,7 +229,15 @@ def user_profile_update(request):
 				value = unicode(value.decode("UTF-8"))
 			external[name] = sch_def.fromUnicode(unicode(value)) if value else None
 
+	restore_iface = False
+	if user_interfaces.IImmutableFriendlyNamed.providedBy(user):
+		restore_iface = True
+		interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
+
 	update_from_external_object(user, external)
+
+	if restore_iface:
+		interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
 
 	result = LocatedExternalDict()
 	result['External'] = external
