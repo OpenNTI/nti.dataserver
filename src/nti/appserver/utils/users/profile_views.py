@@ -8,23 +8,33 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import simplejson as json
 from datetime import datetime
 from cStringIO import StringIO
 
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 import zope.intid
 from zope import component
+from zope import interface
 from zope.catalog.interfaces import ICatalog
 
 from nti.appserver.utils import is_true
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver.users import index as user_index
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.users import User
+from nti.dataserver.users import index as user_index
 from nti.dataserver.users import interfaces as user_interfaces
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
+
 from nti.utils.maps import CaseInsensitiveDict
+from nti.utils.schema import find_most_derived_interface
 
 # user_info_extract
 
@@ -169,3 +179,61 @@ def user_profile_info(request):
 	response.content_disposition = b'attachment; filename="profile.csv"'
 	response.body_file = _write_generator(_generator)
 	return response
+
+def readInput(request):
+	body = request.body
+	result = CaseInsensitiveDict()
+	if body:
+		try:
+			values = json.loads(unicode(body, request.charset))
+		except UnicodeError:
+			values = json.loads(unicode(body, 'iso-8859-1'))
+		result.update(**values)
+	return result
+
+def allowed_fields(user):
+	result = {}
+	profile_iface = user_interfaces.IUserProfileSchemaProvider(user).getSchema()
+	profile = profile_iface(user)
+	profile_schema = \
+		find_most_derived_interface(profile,
+									profile_iface,
+									possibilities=interface.providedBy(profile))
+
+	for k, v in profile_schema.namesAndDescriptions(all=True):
+		if 	interface.interfaces.IMethod.providedBy(v) or \
+			v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) :
+			continue
+		result[k] = v
+
+	return profile, result
+
+@view_config(route_name='objects.generic.traversal',
+			 name='user_profile_update',
+			 request_method='POST',
+			 renderer='rest',
+			 permission=nauth.ACT_MODERATE)
+def user_profile_update(request):
+	values = readInput(request)
+	username = values.get('username') or values.get('user') or request.authenticated_userid
+	user = User.get_user(username)
+	if user is None or not nti_interfaces.IUser.providedBy(user):
+		raise hexc.HTTPNotFound('User not found')
+
+	external = {}
+	profile, fields = allowed_fields(user)
+	for name, sch_def in fields.items():
+		value = values.get(name, None)
+		if value is not None:
+			if value and isinstance(value, bytes):
+				value = unicode(value.decode("UTF-8"))
+			external[name] = sch_def.fromUnicode(unicode(value)) if value else None
+
+	update_from_external_object(user, external)
+
+	result = LocatedExternalDict()
+	result['External'] = external
+	result['Profile'] = profile.__class__.__name__
+	result['Allowed Fields'] = list(fields.keys())
+	result['Summary'] = to_external_object(user, name="summary")
+	return result
