@@ -22,6 +22,9 @@ from zope import component
 from zope import interface
 from zope.schema import getFields
 
+from zope.configuration import xmlconfig, config
+from zope.dottedname import resolve as dottedname
+
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users import interfaces as user_interfaces
@@ -76,7 +79,11 @@ def _change_attributes(args):
 			interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
 		
 	external = {}
-	_, fields = _find_allowed_fields(user)
+	profile, fields = _find_allowed_fields(user)
+	if args.verbose:
+		pprint.pprint("Profile class")
+		pprint.pprint(profile.__class__.__name__)
+
 	if args.verbose:
 		pprint.pprint("Allowed Fields")
 		pprint.pprint(list(fields.keys()))
@@ -138,7 +145,25 @@ def _create_args_parser():
 			arg_parser.add_argument(opt, help=help_, dest=name, required=False)
 			
 	return arg_parser
-			
+
+def _create_context(env_dir):
+	env_dir = os.path.expanduser(env_dir)
+
+	# find the ds etc directory
+	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
+	etc = os.path.expanduser(etc)
+
+	context = config.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives(context)
+
+	slugs = os.path.join(etc, 'package-includes')
+	if os.path.exists(slugs) and os.path.isdir(slugs):
+		package = dottedname.resolve('nti.dataserver')
+		context = xmlconfig.file('configure.zcml', package=package, context=context)
+		xmlconfig.include(context, files=os.path.join(slugs, '*.zcml'),
+						  package='nti.appserver')
+	return context
+
 def main():
 	arg_parser = _create_args_parser()
 	args = arg_parser.parse_args()
@@ -149,10 +174,11 @@ def main():
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError("Invalid dataserver environment root directory", env_dir)
 	
+	context = _create_context(env_dir)
 	run_with_dataserver( environment_dir=env_dir, 
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
-						 minimal_ds=True,
+						 context=context,
 						 function=lambda: _change_attributes(args) )
 
 if __name__ == '__main__':
