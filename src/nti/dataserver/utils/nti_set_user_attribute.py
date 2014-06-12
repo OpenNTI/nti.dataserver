@@ -13,6 +13,7 @@ relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import sys
 import pprint
 import argparse
@@ -23,17 +24,22 @@ from zope.schema import getFields
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
-from nti.utils.schema import find_most_derived_interface
 from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
+from nti.utils.schema import find_most_derived_interface
+
 def _find_allowed_fields(user):
+	result = {}
 	profile_iface = user_interfaces.IUserProfileSchemaProvider(user).getSchema()
 	profile = profile_iface(user)
-	profile_schema = find_most_derived_interface(profile, profile_iface, possibilities=interface.providedBy(profile))
+	profile_schema = \
+		find_most_derived_interface(profile,
+									profile_iface,
+									possibilities=interface.providedBy(profile))
 
-	result = {}
 	for k, v in profile_schema.namesAndDescriptions(all=True):
 		if 	interface.interfaces.IMethod.providedBy( v ) or \
 			v.queryTaggedValue( user_interfaces.TAG_HIDDEN_IN_UI ) :
@@ -53,8 +59,10 @@ def _change_attributes(args):
 						request=request,
 						hook_zca=False)
 		config.setup_registry()
-		request.headers['origin'] = 'http://' + args.site if not args.site.startswith('http') else args.site
-		request.possible_site_names = (args.site if not args.site.startswith('http') else args.site[7:],)
+		request.headers['origin'] = 'http://' + args.site \
+									if not args.site.startswith('http') else args.site
+		request.possible_site_names = \
+				(args.site if not args.site.startswith('http') else args.site[7:],)
 
 	user = users.User.get_user( args.username )
 	if not user:
@@ -72,6 +80,7 @@ def _change_attributes(args):
 	if args.verbose:
 		pprint.pprint("Allowed Fields")
 		pprint.pprint(list(fields.keys()))
+
 	for name, sch_def in fields.items():
 		value = getattr(args, name, None)
 		if value is not None:
@@ -81,6 +90,7 @@ def _change_attributes(args):
 	if args.verbose:
 		pprint.pprint("External change")
 		pprint.pprint(external)
+
 	update_from_external_object(user, external)
 
 	if restore_iface:
@@ -93,12 +103,15 @@ def _change_attributes(args):
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser( description="Set user attributes." )
 	arg_parser.add_argument('username', help="The username to edit")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('-f', '--force', help="Force update of immutable fields", action='store_true', dest='force')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
+							dest='verbose')
+	arg_parser.add_argument('-f', '--force', help="Force update of immutable fields",
+							action='store_true', dest='force')
 	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('--site',
 							dest='site',
-							help="Change the the user attributes as if done by a request in this application SITE")
+							help="Change attributes as if done by a request in this SITE")
+
 	attributes = {}
 	def get_schema_fields(iface, attributes):
 		names = iface.names()
@@ -126,17 +139,16 @@ def main():
 	args = arg_parser.parse_args()
 	conf_packages = () if not args.site else ('nti.appserver',)
 	
-	import os
-	
 	env_dir = args.env_dir
 	if not env_dir:
 		env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+		raise ValueError("Invalid dataserver environment root directory", env_dir)
 	
 	run_with_dataserver( environment_dir=env_dir, 
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
+						 minimal_ds=True,
 						 function=lambda: _change_attributes(args) )
 
 if __name__ == '__main__':
