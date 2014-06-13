@@ -3,7 +3,7 @@
 """
 Containers specialized to work with intids.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -34,7 +34,7 @@ from UserDict import DictMixin
 import time
 
 # Make pylint not complain about "badly implemented container", "Abstract class not referenced"
-#pylint: disable=R0924,R0921
+# pylint: disable=R0924,R0921
 
 @interface.implementer(loc_interfaces.ILocation)
 class _AbstractIntidResolvingFacade(object):
