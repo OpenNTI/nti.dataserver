@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import schema
+from zope import component
 from zope import interface
 from zope.interface.common import mapping
 from zope.location.interfaces import ILocation
@@ -156,6 +157,24 @@ class IContentUnitPreferences(ILocation,nti_interfaces.ILastModified):
 	# impossible to validate this schema.
 	sharedWith = schema.List( value_type=Object(IUnicode),
 							  title="List of usernames to share with" )
+
+
+class IPrincipalUGDFilter(interface.Interface):
+	"""
+	define subscriber object filter
+	"""
+
+	def __call__(user, obj):
+		"""
+		allow the specified badge
+		"""
+
+def get_principal_ugd_filter(user):
+	filters = component.subscribers((user,), IPrincipalUGDFilter)
+	filters = list(filters)
+	def uber_filter(obj):
+		return all((f(user, obj) for f in filters))
+	return uber_filter
 
 ###
 # Presentation
