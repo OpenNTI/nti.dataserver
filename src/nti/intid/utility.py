@@ -6,7 +6,7 @@ managing intids. The primary reason to do this
 is to provide better exceptions, and future proofing
 of behaviour.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -32,7 +32,7 @@ from .interfaces import IntIdAlreadyInUseError
 unwrap = removeSecurityProxy
 
 # Make pylint not complain about "badly implemented container"
-#pylint: disable=R0924
+# pylint: disable=R0924
 
 @interface.implementer(IContained)
 class IntIds(_ZCIntIds):

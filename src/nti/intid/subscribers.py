@@ -52,9 +52,7 @@ We do, however, keep a few things in common:
     There seems to be no reason not to and this might help us be
     compatible with third-party code more easily.
 
-
-
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
