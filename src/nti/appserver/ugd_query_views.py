@@ -20,6 +20,9 @@ from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
 
+from zope.catalog.catalog import ResultSet
+from zope.catalog.interfaces import ICatalog
+
 from pyramid.view import view_config
 
 from nti.app.renderers.interfaces import IUGDExternalCollection
@@ -31,7 +34,8 @@ from nti.app.authentication import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.interfaces import INamedLinkView
-
+from nti.appserver.interfaces import IPrincipalUGDFilter
+from nti.appserver.interfaces import get_principal_ugd_filter
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -54,9 +58,6 @@ from nti.externalization.externalization import to_standard_external_last_modifi
 from nti.ntiids import ntiids
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
-from zope.catalog.interfaces import ICatalog
-from zope.catalog.catalog import ResultSet
-
 
 class Operator(object):
 	union = 0
@@ -68,6 +69,16 @@ class Operator(object):
 		if unicode(x).lower() not in (u"1", u"intersection"):
 			return Operator.union
 		return Operator.intersection
+
+@component.adapter(nti_interfaces.IUser)
+@interface.implementer(IPrincipalUGDFilter)
+class _DefaultPrincipalUGDFilter(object):
+
+	def __init__(self, *args):
+		pass
+
+	def __call__(self, user, obj):
+		return True
 
 def _TRUE(x):
 	return True
@@ -562,6 +573,10 @@ class _UGDView(AbstractAuthenticatedView,
 			# accept takes priority over exclude
 			predicate = self._make_exclude_predicate()
 
+		if self.user:
+			the_filter = get_principal_ugd_filter(self.user)
+			predicate = _combine_predicate(the_filter, predicate, operator=operator)
+			
 		filter_names = self._get_filter_names()
 
 		for filter_name in filter_names:
