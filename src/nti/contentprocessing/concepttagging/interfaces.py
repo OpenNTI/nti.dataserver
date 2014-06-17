@@ -8,26 +8,28 @@ Concept tagging interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import schema
 from zope import interface
 
-from nti.utils import schema as nti_schema
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
 
 class IConceptSource(interface.Interface):
 	"""
 	represent a concept source entry (e.g. linked data) 
 	"""
-	source = nti_schema.ValidTextLine(title="source name", required=True)
-	uri = nti_schema.ValidTextLine(title="source uri", required=True)
+	source = ValidTextLine(title="source name", required=True)
+	uri = ValidTextLine(title="source uri", required=True)
 
 class IConcept(interface.Interface):
 	"""
 	represent a concept
 	"""
-	text = nti_schema.ValidTextLine(title="concept text", required=True)
-	relevance = nti_schema.Number(title="concept relevance", required=False)
-	sources = nti_schema.ListOrTuple(title="Concept sources", min_length=0,
-						 			 value_type=schema.Object(IConceptSource, title="The source"))
+	text = ValidTextLine(title="concept text", required=True)
+	relevance = Number(title="concept relevance", required=False)
+	sources = ListOrTuple(title="Concept sources", min_length=0,
+						 			 value_type=Object(IConceptSource, title="The source"))
 
 class IConceptTagger(interface.Interface):
 

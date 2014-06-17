@@ -8,26 +8,28 @@ Keyword extractor interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import schema
 from zope import interface
 
-from nti.utils import schema as nti_schema
+from nti.schema.field import Int
+from nti.schema.field import Number
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
 
 class IContentKeyWord(interface.Interface):
 	"""
 	represent a key word found in a content
 	"""
-	token = nti_schema.ValidTextLine(title="word token", required=True)
-	relevance = nti_schema.Number(title="word relevance", required=False)
+	token = ValidTextLine(title="word token", required=True)
+	relevance = Number(title="word relevance", required=False)
 
 class ITermExtractKeyWord(IContentKeyWord):
 	"""
 	represent a key word found in a content
 	"""
-	frequency = schema.Int(title="word frequency", required=False)
-	strength = schema.Int(title="word strength", required=False)
-	terms = nti_schema.ListOrTuple(value_type=nti_schema.ValidTextLine(title="Term"),
-								   title="terms associated with token", required=False)
+	frequency = Int(title="word frequency", required=False)
+	strength = Int(title="word strength", required=False)
+	terms = ListOrTuple(value_type=ValidTextLine(title="Term"),
+						title="terms associated with token", required=False)
 
 class ITermExtractFilter(interface.Interface):
 	"""

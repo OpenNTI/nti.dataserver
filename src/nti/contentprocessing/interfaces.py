@@ -8,11 +8,12 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import schema
 from zope import interface
 
+from nti.schema.field import Int
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import TextLine
 from nti.schema.field import ListOrTuple
 
 class IContentTranslationTable(interface.Interface):
@@ -28,8 +29,8 @@ class IContentTokenizer(interface.Interface):
 		"""
 
 class INgramComputer(interface.Interface):
-	minsize = schema.Int(title="Min ngram size.", required=True)
-	maxsize = schema.Int(title="Max ngram size", required=False)
+	minsize = Int(title="Min ngram size.", required=True)
+	maxsize = Int(title="Max ngram size", required=False)
 
 	def compute(text):
 		"""
@@ -123,29 +124,29 @@ class IContentMetadata(interface.Interface):
 						  title="Any images associated with this content, typically thumbnails",
 						  default=())
 
-	mimeType = schema.TextLine(
+	mimeType = TextLine(
 		title="The Mime Type of the content",
 		constraint=mimeTypeConstraint,
 		required=False )
 
-	contentLocation = schema.TextLine( title="The canonical URL of the content",
-									   description=("After metadata extraction, we may have obtained"
-													" a canonical URL for the content, different from"
-													" the source location. For permanent storage and use"
-													" this is the value to use, not the source location."),
-										required=False )
+	contentLocation = TextLine(title="The canonical URL of the content",
+							   description=("After metadata extraction, we may have obtained"
+											" a canonical URL for the content, different from"
+											" the source location. For permanent storage and use"
+											" this is the value to use, not the source location."),
+								required=False)
 
-	sourceLocation = schema.TextLine( title="The location of the source content",
-									  description=("The unprocessed, original location of the content"
-									  				" used to find the metadata. May be a local file"
-													" path or a URL."),
+	sourceLocation = TextLine(title="The location of the source content",
+							  description=("The unprocessed, original location of the content"
+											" used to find the metadata. May be a local file"
+											" path or a URL."),
 									  required=False )
-	sourcePath = schema.TextLine( title="A local file path to the content",
-								  description=("If the content was a local file, or"
-											   " had to be downloaded to a temporary file"
-											   " that was preserved following metadata processing,"
-											   " this will be the path to that file."),
-								  required=False)
+	sourcePath = TextLine(title="A local file path to the content",
+						  description=("If the content was a local file, or"
+									   " had to be downloaded to a temporary file"
+									   " that was preserved following metadata processing,"
+									   " this will be the path to that file."),
+						  required=False)
 
 class IContentMetadataExtractorArgs(interface.Interface):
 	"""
