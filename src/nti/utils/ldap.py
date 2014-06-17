@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.annotation import interfaces as an_interfaces
 
-from nti.utils.schema import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as util_interfaces

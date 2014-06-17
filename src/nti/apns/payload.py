@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.schema.fieldproperty import createFieldProperties
 
-from nti.utils.schema import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 
 from . import interfaces as apns_interfaces
 

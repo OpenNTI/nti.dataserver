@@ -33,7 +33,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.utils._compat import Implicit
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
-from nti.utils.schema import AcquisitionFieldProperty
+from nti.schema.fieldproperty import AcquisitionFieldProperty
 
 from nti.utils.property import Lazy
 from nti.utils.property import CachedProperty

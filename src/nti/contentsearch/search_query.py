@@ -19,7 +19,7 @@ from zope import interface
 
 from nti.externalization.externalization import make_repr
 
-from nti.schema.field import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import constants
