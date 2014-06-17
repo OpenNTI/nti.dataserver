@@ -6,17 +6,12 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<!-- browser:resourceDirectory directive, used by plone.i18n -->
 	<include package="zope.browserresource" file="meta.zcml" />
-	
+
 	<include package="plone.i18n" />
 	<include package="zope.vocabularyregistry" />
-	
-	<subscriber handler=".schema.before_object_assigned_event_dispatcher" />
-
-	<utility component=".schema.CountryVocabularyFactory"
-			 provides="zope.schema.interfaces.IVocabularyFactory"
-			 name="Countries" />
+	<include package="nti.schema" />
 
 </configure>
