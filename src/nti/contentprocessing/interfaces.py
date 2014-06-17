@@ -95,7 +95,7 @@ class IImageMetadata(interface.Interface):
 	Holds information about a particular image.
 	"""
 
-	url = schema.TextLine( title="The URL to resolve the image" )
+	url = TextLine(title="The URL to resolve the image")
 
 	width = Number( title="The width in pixels of the image",
 					required=False )

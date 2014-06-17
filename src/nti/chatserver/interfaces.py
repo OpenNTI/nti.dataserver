@@ -3,31 +3,34 @@
 """
 Interfaces having to do with chat.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 import six
 
-from zope import schema
 from zope import interface
 from zope import component
 from zope.interface import Interface
 from zope.security.permission import Permission
 from zope.interface import interfaces as z_interfaces
 
+from nti.contentfragments.schema import PlainTextLine
+
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.socketio import interfaces as sio_interfaces
 
+from nti.schema.field import Set
+from nti.schema.field import Bool
+from nti.schema.field import Dict
+from nti.schema.field import Float
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import UniqueIterable
-from nti.utils.schema import DecodingValidTextLine
+from nti.schema.field import DecodingValidTextLine
 from nti.schema.field import ValidChoice as Choice
-
-from nti.contentfragments.schema import PlainTextLine
-
 TextLine = DecodingValidTextLine # alias
 
 class IChatserver(Interface):
@@ -71,25 +74,23 @@ class IMeeting(nti_interfaces.IModeledContent, nti_interfaces.IZContained):
 
 	RoomId = DecodingValidTextLine( title="Meeting identifier", description="Meeting identifier" )
 
-	CreatedTime = schema.Float( title="Meeting creation time",
-							 	description="Meeting creation time" )
+	CreatedTime = Float(title="Meeting creation time", description="Meeting creation time")
 
-	Moderated = schema.Bool( title="Whether the meeting is being moderated or not.",
-							 description="Toggling this changes the policy in use." )
+	Moderated = Bool(title="Whether the meeting is being moderated or not.",
+					 description="Toggling this changes the policy in use.")
 
-	Active = schema.Bool( title="Whether the meeting is currently active" )
+	Active = Bool(title="Whether the meeting is currently active")
 
-	occupant_names = schema.Set( title="A set of the string names of members currently in the meeting; immutable." )
+	occupant_names = Set(title="A set of the string names of members currently in the meeting; immutable.")
 
-	historical_occupant_names = schema.Set( title="A set of the string names of anyone who has ever been a member of this meeting; immutable." )
+	historical_occupant_names = Set(title="A set of the string names of anyone who has ever been a member of this meeting; immutable.")
 
 class IMeetingShouldChangeModerationStateEvent(interface.interfaces.IObjectEvent):
 	"""
 	Emitted when the :class:`IMeeting` will be changing moderation state.
 	"""
 
-	moderated = schema.Bool( title="Whether the meeting should become moderated" )
-
+	moderated = Bool(title="Whether the meeting should become moderated")
 
 @interface.implementer(IMeetingShouldChangeModerationStateEvent)
 class MeetingShouldChangeModerationStateEvent(interface.interfaces.ObjectEvent):
@@ -147,9 +148,9 @@ class IMessageInfo(nti_interfaces.IShareableModeledContent, nti_interfaces.IZCon
 
 	Creator = DecodingValidTextLine( title="Message creator", description="User that send this message" )
 
-	body = Variant( (schema.Dict( key_type=TextLine() ), #, value_type=schema.TextLine() ),
-					 nti_interfaces.CompoundModeledContentBody()),
-					 description="The body is either a dictionary of string keys and values, or a Note body")
+	body = Variant((Dict(key_type=TextLine()),  # , value_type=schema.TextLine() ),
+					nti_interfaces.CompoundModeledContentBody()),
+					description="The body is either a dictionary of string keys and values, or a Note body")
 
 	recipients = UniqueIterable(
 		title="The names of all the recipients of the message.",
@@ -172,11 +173,11 @@ class IMessageInfoPostedToRoomEvent(IMessageInfoEvent):
 	A message has been delivered to a room.
 	"""
 
-	recipients = schema.Set(
+	recipients = Set(
 		title="The names of all the recipients of the message.",
 		description="""The actual recipients of the message, whether or not they are
 			named in the message itself. Includes people who just get the transcript.""",
-		value_type=schema.TextLine() )
+		value_type=TextLine())
 
 	room = Object(IMeeting,
 		title="The room that the message was posted to" )
