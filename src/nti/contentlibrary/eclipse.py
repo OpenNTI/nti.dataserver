@@ -48,7 +48,7 @@ def _node_get( node, name, default=None ):
 	# https://mailman-mail5.webfaction.com/pipermail/lxml/2011-December/006239.html
 	val = node.get( name, default )
 	if isinstance(val, bytes):
-		val = unicode(val, 'utf-8')
+		val = val.decode('utf-8')
 	return val
 
 def _tocItem( node, toc_entry, factory=None, child_factory=None ):
