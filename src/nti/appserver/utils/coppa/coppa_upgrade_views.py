@@ -17,7 +17,6 @@ import dateutil.parser
 
 from pyramid.view import view_config
 
-from zope import schema
 from zope import component
 from zope import interface
 
@@ -37,8 +36,12 @@ from nti.appserver.link_providers import flag_link_provider
 from nti.app.externalization.error import raise_json_error as _raise_error
 from nti.app.externalization.internalization import read_body_as_external_object
 
-from nti.utils import schema as nti_schema
 from nti.utils.maps import CaseInsensitiveDict
+
+from nti.schema.field import Bool
+from nti.schema.field import Date
+from nti.schema.field import TextLine
+from nti.schema.field import ValidTextLine
 from nti.schema.jsonschema import JsonSchemafier
 
 _is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago
@@ -61,35 +64,35 @@ _post_admin_view_defaults = _post_view_defaults.copy()
 _post_admin_view_defaults['permission'] = nauth.ACT_COPPA_ADMIN
 
 class _ICommon(interface.Interface):
-	birthdate = schema.Date(
+	birthdate = Date(
 					title='birthdate',
 					description='Your date of birth.',
 					required=True)
 
 class IOver13Schema(_ICommon):
-	realname = schema.TextLine(
+	realname = TextLine(
 					title='Full Name aka realname',
 					description="Enter full name, e.g. John Smith.",
 					required=False,
 					constraint=user_interfaces.checkRealname)
-	email = nti_schema.ValidTextLine(
+	email = ValidTextLine(
 					title='Email',
 					description=u'An email address that can be used for communication',
 					required=True,
 					constraint=user_interfaces.checkEmailAddress)
 
-	affiliation = nti_schema.ValidTextLine(
+	affiliation = ValidTextLine(
 					title='Affiliation',
 					description="Your affiliation, such as school name",
 					required=False)
 
-	opt_in_email_communication = schema.Bool(
+	opt_in_email_communication = Bool(
 					title="Can we contact you by email?",
 					required=False,
 					default=False)
 
 class IUnder13Schema(_ICommon):
-	contact_email = nti_schema.ValidTextLine(
+	contact_email = ValidTextLine(
 						title='Contact email',
 						description=u"An email address to use to contact someone responsible for this accounts' user",
 						required=True,
