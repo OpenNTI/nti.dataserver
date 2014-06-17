@@ -10,17 +10,19 @@ from zope import schema
 from zope import interface
 from zope.interface.common.sequence import IMinimalSequence
 
-from nti.utils import schema as nti_schema
+from nti.schema.field import ValidText
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
 
 class IMediaTranscriptEntry(interface.Interface):
 	"""
 	Marker interface for video transcript entry
 	"""
-	transcript = nti_schema.ValidText(title='Transcript text')
-	end_timestamp = nti_schema.ValidTextLine(title='End time stamp')
-	start_timestamp = nti_schema.ValidTextLine(title='Start time stamp')
-	id = nti_schema.ValidTextLine(title='Transcript entry id', required=False)
-	language = nti_schema.ValidTextLine(title='Transcript language', required=False,
+	transcript = ValidText(title='Transcript text')
+	end_timestamp = ValidTextLine(title='End time stamp')
+	start_timestamp = ValidTextLine(title='Start time stamp')
+	id = ValidTextLine(title='Transcript entry id', required=False)
+	language = ValidTextLine(title='Transcript language', required=False,
 										default='en')
 
 class IAudioTranscriptEntry(IMediaTranscriptEntry):
@@ -33,21 +35,21 @@ class IMediaTranscript(IMinimalSequence):
 	"""
 	Marker interface for media transcript
 	"""
-	entries = nti_schema.ListOrTuple(schema.Object(IMediaTranscriptEntry, title='the entry'),
+	entries = ListOrTuple(schema.Object(IMediaTranscriptEntry, title='the entry'),
 						  			 title='Ordered transcript entries')
 
 class IAudioTranscript(IMediaTranscript):
 	"""
 	Marker interface for audio transcript
 	"""
-	entries = nti_schema.ListOrTuple(schema.Object(IAudioTranscriptEntry, title='the entry'),
+	entries = ListOrTuple(schema.Object(IAudioTranscriptEntry, title='the entry'),
 						  			 title='Ordered transcript entries')
 
 class IVideoTranscript(IMediaTranscript):
 	"""
 	Marker interface for video transcript
 	"""
-	entries = nti_schema.ListOrTuple(schema.Object(IVideoTranscriptEntry, title='the entry'),
+	entries = ListOrTuple(schema.Object(IVideoTranscriptEntry, title='the entry'),
 						  			 title='Ordered transcript entries')
 
 
