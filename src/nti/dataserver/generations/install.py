@@ -132,6 +132,8 @@ def install_main( context ):
 
 	install_password_utility( dataserver_folder )
 
+	install_sites_folder( dataserver_folder )
+
 	return dataserver_folder
 
 def install_intids( dataserver_folder ):
@@ -177,6 +179,23 @@ def install_root_folders( parent_folder,
 	for key in (set( folder_names ) | set( extra_folder_names )) - set( exclude_folder_names ):
 		parent_folder[key] = folder_type()
 		parent_folder[key].__name__ = key
+
+from nti.dataserver.site import HostSitesFolder
+from zope.traversing.interfaces import IEtcNamespace
+
+def install_sites_folder(dataserver_folder):
+	"""
+	Given the IDataserverFolder, create the folder in which
+	we will store persistent sites. This is also registered as an
+	IEtcNamespace utility called \"hostsites\".
+	"""
+
+	sites = HostSitesFolder()
+	dataserver_folder['++etc++hostsites'] = sites
+
+	lsm = dataserver_folder.getSiteManager()
+	lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
+
 
 from nti.dataserver.interfaces import IShardLayout
 def install_shard( root_conn, new_shard_name ):

@@ -18,6 +18,10 @@ import unittest
 from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import has_property
+from hamcrest import has_key
+from hamcrest import is_not as does_not
+from hamcrest import not_none
+from hamcrest import is_
 from nti.testing.matchers import validly_provides
 from zope.component.hooks import getSite, setSite
 from .mock_dataserver import SharedConfiguringTestLayer
@@ -88,3 +92,76 @@ class TestSiteSubscriber(unittest.TestCase):
 						 # in the ro of the new site
 						 host_comps,
 						 BASE ) )
+
+SITE_NAME = 'test_site.nextthought.com'
+SITE_ZCML_STRING = """
+		<configure xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:lib="http://nextthought.com/ntp/contentlibrary"
+			i18n_domain='nti.dataserver'>
+
+		<include package="zope.component" />
+		<include package="zope.annotation" />
+		<include package="z3c.baseregistry" file="meta.zcml" />
+
+
+		<utility
+			component="nti.appserver.policies.sites.BASECOPPA"
+			provides="zope.component.interfaces.IComponents"
+			name="test_site.nextthought.com" />
+		</configure>"""
+
+from zope.configuration import xmlconfig, config
+
+from .mock_dataserver import DataserverLayerTest
+from .mock_dataserver import mock_db_trans
+
+from .mock_dataserver import WithMockDS
+
+from nti.testing.matchers import verifiably_provides
+from zope.component.interfaces import ISite
+
+
+from ..site import synchronize_host_policies
+from ..site import _find_site_components
+
+class TestSiteSync(DataserverLayerTest):
+
+
+	def setUp(self):
+		super(TestSiteSync,self).setUp()
+		# We must do this outside of the context of a
+		# WithMockDS decorator, because that decorator interjects
+		# a local site manager, but for the hierarchy to be correct
+		# we need this to be in the GSM
+		context = config.ConfigurationMachine()
+
+		xmlconfig.registerCommonDirectives( context )
+
+		xmlconfig.string( SITE_ZCML_STRING, context )
+
+	@WithMockDS
+	def test_site_sync(self):
+
+		assert_that( _find_site_components( (SITE_NAME,)),
+					 is_( not_none() ))
+
+		with mock_db_trans(self.ds) as conn:
+
+			assert_that( _find_site_components( (SITE_NAME,)),
+					 is_( not_none() ))
+
+			ds = conn.root()['nti.dataserver']
+			assert ds is not None
+			sites = ds['++etc++hostsites']
+			assert_that( sites, does_not(has_key(SITE_NAME)))
+
+			synchronize_host_policies()
+
+		with mock_db_trans(self.ds) as conn:
+			ds = conn.root()['nti.dataserver']
+
+			assert ds is not None
+			sites = ds['++etc++hostsites']
+			assert_that( sites, has_key(SITE_NAME))
+			assert_that( sites[SITE_NAME], verifiably_provides(ISite) )

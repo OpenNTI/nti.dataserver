@@ -4,13 +4,14 @@
 Integration between the ZCA ``site`` system, configured site
 policies, and the Dataserver.
 
-In the Zope world, sites are instances of IComponents. Typically they
-are arranged in a tree, with the global site at the root of the tree.
-A site is held in a *site manager*. Sites inherit configuration from their
-parents (bases, which may or may not be their ``__parent__``). Often, they are
-persistent and part of the traversal tree. One site is the current site and
-the ZCA functions (e.g., :meth:`.IComponentArchitecture.queryUtility`) apply to
-that site.
+In the Zope world, sites are objects that can express configuration by
+holding onto an instance of IComponents known as its *site manager*.
+Typically they are arranged in a tree, with the global site at the
+root of the tree. Site managers inherit configuration from their
+parents (bases, which may or may not be their ``__parent__``). Often,
+they are persistent and part of the traversal tree. One site is the
+current site and the ZCA functions (e.g.,
+:meth:`.IComponentArchitecture.queryUtility`) apply to that site.
 
 Our application has one persistent site, the dataserver site,
 containing persistent utilities (such as the dataserver); see
@@ -412,6 +413,58 @@ def run_job_in_site(func,
 
 interface.directlyProvides( run_job_in_site, interfaces.IDataserverTransactionRunner )
 run_job_in_site.__doc__ = interfaces.IDataserverTransactionRunner['__call__'].getDoc()
+
+from zope.site.folder import Folder
+from .interfaces import IHostSitesFolder
+from .interfaces import IHostPolicyFolder
+from .interfaces import IHostPolicySiteManager
+from .interfaces import IDataserverFolder
+
+from zope.component.interfaces import IComponents
+from zope.traversing.interfaces import IEtcNamespace
+
+@interface.implementer(IHostSitesFolder)
+class HostSitesFolder(Folder):
+	"""
+	Simple container implementation for named host sites.
+	"""
+
+@interface.implementer(IHostPolicyFolder)
+class HostPolicyFolder(Folder):
+	"""
+	Simple container implementation for the named host site.
+	"""
+
+@interface.implementer(IHostPolicySiteManager)
+class HostPolicySiteManager(_ZLocalSiteManager):
+	pass
+
+def synchronize_host_policies():
+	"""
+	Called within a transaction with a site being the current dataserver
+	site, find any :mod:`z3c.baseregistry` components that
+	should be sites, and register them in the database.
+	"""
+
+	# TODO: We will ultimately need to deal with removing and renaming
+	# of these
+
+	sites = component.getUtility(IEtcNamespace, name='hostsites')
+	ds_folder = sites.__parent__
+	assert IDataserverFolder.providedBy(ds_folder)
+
+	ds_site_manager = ds_folder.getSiteManager()
+
+	for name, comps in component.getGlobalSiteManager().getUtilitiesFor(IComponents):
+		if name and (name.endswith('.com') or name.endswith('.edu')):
+			if name not in sites:
+				site = HostPolicyFolder()
+				sites[name] = site
+
+				site_policy = HostPolicySiteManager(site)
+				site_policy.__bases__ = (comps, ds_site_manager)
+
+				site.setSiteManager(site_policy)
 
 ## Legacy notes:
 # Opening the connection registered it with the transaction manager as an ISynchronizer.
