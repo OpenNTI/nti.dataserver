@@ -200,11 +200,8 @@ def _renderer_settings(pyramid_config):
 	# so we can't use ".rml.pt" or some-such
 	pyramid_config.add_renderer(name='.rml', factory="nti.app.renderers.pdf.PDFRendererFactory")
 
-def _library_settings(pyramid_config, server, library):
-	if library is not None:
-		component.getSiteManager().registerUtility(library, provided=lib_interfaces.IContentPackageLibrary)
-	else:
-		library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+def _library_settings(pyramid_config, server):
+	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 
 	if library is not None:
 		# Ensure the library is enumerated at this time during startup
@@ -417,7 +414,7 @@ def _create_server(create_ds, process_args=False):
 	return server
 
 def createApplication( http_port,
-					   library=None,
+				#	   library=None,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
@@ -427,6 +424,7 @@ def createApplication( http_port,
 	:return: A WSGI callable.
 	"""
 	begin_time = time.time()
+	library = None
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 
@@ -506,7 +504,8 @@ def createApplication( http_port,
 	elif '__file__' in settings and os.path.isfile( os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' ) ):
 		library_zcml = os.path.join( os.path.dirname( settings['__file__'] ), 'library.zcml' )
 
-	if library_zcml and library is None: # If tests pass in a library, use that instead
+	if library_zcml and component.queryUtility(lib_interfaces.IContentPackageLibrary) is None:
+		# If tests have already registered a library, use that instead
 		library_zcml = os.path.normpath( os.path.expanduser( library_zcml ) )
 		logger.debug( "Loading library settings from %s", library_zcml )
 		xml_conf_machine = xmlconfig.file( library_zcml,  package=nti.appserver, context=xml_conf_machine, execute=False )
@@ -654,7 +653,7 @@ def createApplication( http_port,
 	_dictionary_views(pyramid_config, settings)
 
 	_renderer_settings(pyramid_config)
-	_library_settings(pyramid_config, server, library)
+	_library_settings(pyramid_config, server)
 
 	_service_odata_views(pyramid_config)
 
