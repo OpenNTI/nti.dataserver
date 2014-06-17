@@ -26,7 +26,7 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import to_standard_external_dictionary, decorate_external_mapping
 
-from nti.utils.schema import find_most_derived_interface
+from nti.schema.interfaces import find_most_derived_interface
 
 from nti.zodb import urlproperty
 

@@ -34,7 +34,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 from nti.utils.maps import CaseInsensitiveDict
-from nti.utils.schema import find_most_derived_interface
+from nti.schema.interfaces import find_most_derived_interface
 
 # user_info_extract
 

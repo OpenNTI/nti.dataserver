@@ -39,7 +39,7 @@ from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.utils import schema as nti_schema
 from nti.utils.maps import CaseInsensitiveDict
-from nti.utils.jsonschema import JsonSchemafier
+from nti.schema.jsonschema import JsonSchemafier
 
 _is_x_or_more_years_ago = site_policies._is_x_or_more_years_ago
 PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME

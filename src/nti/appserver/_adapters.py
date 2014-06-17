@@ -27,7 +27,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.utils.schema import find_most_derived_interface
+from nti.schema.interfaces import find_most_derived_interface
 from nti.utils.property import alias
 
 @interface.implementer(ext_interfaces.IExternalObject)
