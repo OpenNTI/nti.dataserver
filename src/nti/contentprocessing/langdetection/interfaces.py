@@ -10,26 +10,23 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from nti.utils import schema as nti_schema
+from nti.schema.field import ValidTextLine
 
 class ILanguage(interface.Interface):
 	"""
 	represent a language
 	"""
-	code = nti_schema.ValidTextLine(title="language iso-639-1 code", required=True)
-	name = nti_schema.ValidTextLine(title="language name", required=False)
+	code = ValidTextLine(title="language iso-639-1 code", required=True)
+	name = ValidTextLine(title="language name", required=False)
 
 class IAlchemyLanguage(ILanguage):
 	"""
 	represent a language
 	"""
-	ISO_639_1 = nti_schema.ValidTextLine(title="language iso-639-1 code",
-										 required=True)  # alias for code
-	ISO_639_2 = nti_schema.ValidTextLine(title="language iso-639-2 code",
-										 required=False)
-	ISO_639_3 = nti_schema.ValidTextLine(title="language iso-639-3 code",
-										 required=False)
-	name = nti_schema.ValidTextLine(title="language name", required=False)
+	ISO_639_1 = ValidTextLine(title="language iso-639-1 code", required=True)  # alias for code
+	ISO_639_2 = ValidTextLine(title="language iso-639-2 code", required=False)
+	ISO_639_3 = ValidTextLine(title="language iso-639-3 code", required=False)
+	name = ValidTextLine(title="language name", required=False)
 
 class ILanguageDetector(interface.Interface):
 
