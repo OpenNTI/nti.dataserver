@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 import numbers
 
+from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.event import notify
@@ -24,7 +25,8 @@ import warnings
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractLibrary(object):
 	"""
-	Base class for a Library.
+	Base class for a Library that cooperates with other
+	libraries in the component hierarchy.
 
 	To make this library concrete, you must implement the
 	abstract methods. This implementation only depends upon those,
@@ -118,7 +120,13 @@ class AbstractLibrary(object):
 		_contentPackages.extend(added)
 		_contentPackages.extend(unmodified)
 
-		self._contentPackages = tuple(_contentPackages)
+		_contentPackages = tuple(_contentPackages)
+		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
+
+		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
+
+		self._contentPackages = _contentPackages
+		self._content_packages_by_ntiid = _content_packages_by_ntiid
 
 		# Now fire the events letting listeners (e.g., index and question adders)
 		# know that we have content. Randomize the order of this across worker
@@ -145,12 +153,34 @@ class AbstractLibrary(object):
 
 			notify(event)
 
+	#: A map from top-level content-package NTIID to the content package.
+	#: This is cached based on the value of the _contentPackages variable,
+	#: and uses that variable, which must not be modified outside the
+	#: confines of this class.
+	_content_packages_by_ntiid = ()
+
 	@property
 	def contentPackages(self):
 		if self._contentPackages is None:
 			warnings.warn("Please sync the library first.")
 			self.syncContentPackages()
-		return self._contentPackages
+
+		# We would like to use a generator here, to avoid
+		# copying in case of a parent, but our interface
+		# requires that this be indexable, for some reason.
+		# Note that our values always take precedence over anything
+		# we get from the parent
+		parent = component.queryNextUtility(self, interfaces.IContentPackageLibrary)
+		if parent is None:
+			# We can directly return our tuple, yay
+			return self._contentPackages
+
+		contentPackages = list(self._contentPackages)
+		for i in parent.contentPackages:
+			if i.ntiid not in self._content_packages_by_ntiid:
+					contentPackages.append(i)
+		return contentPackages
+
 
 	def __delattr__(self, name):
 		"""
@@ -161,10 +191,15 @@ class AbstractLibrary(object):
 		if name == 'contentPackages' and '_contentPackages' in self.__dict__:
 			# When we are uncached to force re-enumeration,
 			# we need to send the corresponding object removed events
-			# so that people that care can clean up
+			# so that people that care can clean up.
+			# TODO: What's the right order for this, before or after
+			# we do the delete?
 			for title in self._contentPackages:
 				lifecycleevent.removed(title)
 			name = '_contentPackages'
+			# Must also take care to clear its dependents
+			if '_content_packages_by_ntiid' in self.__dict__:
+				del self._content_packages_by_ntiid
 		super(AbstractLibrary,self).__delattr__(name)
 
 	titles = alias('contentPackages' )
@@ -184,15 +219,25 @@ class AbstractLibrary(object):
 
 	def __getitem__( self, key ):
 		"""
-		:return: The LibraryEntry having a name or ntiid that matches `key`.
+		:return: The LibraryEntry having an ntiid that matches `key`.
 		"""
 		if isinstance(key,numbers.Integral):
-			return self.contentPackages[key]
+			# This should only be done by tests
+			warnings.warn("integers not supported", stacklevel=2)
+			return list(self.contentPackages)[key]
 
-		for title in self.contentPackages:
-			if key in (title.title, title.ntiid):
-				return title
-		raise KeyError( key )
+		# In the past this worked even if the library
+		# had not been synced because it used self.contentPackages
+		# to do the implicit sync
+		if key in self._content_packages_by_ntiid:
+			return self._content_packages_by_ntiid[key]
+
+		# We no longer check titles
+		parent = component.queryNextUtility(self,interfaces.IContentPackageLibrary)
+		if parent is None:
+			raise KeyError( key )
+
+		return parent.__getitem__(key)
 
 	def get( self, key, default=None ):
 		try:
@@ -206,9 +251,15 @@ class AbstractLibrary(object):
 	def __setitem__( self, key ):
 		raise TypeError("setting not supported" )
 	def __len__( self ):
-		return len(self.contentPackages)
+		# XXX: This doesn't make much sense
+		return len(self._content_packages_by_ntiid)
 	def __contains__( self, key ):
 		return self.get( key ) is not None
+
+	def __bool__(self):
+		# We are always true, regardless of content
+		return True
+	__nonzero__ = __bool__
 
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
