@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Interfaces for working with content fragments.
-$Id$
+
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -15,6 +17,7 @@ import zope.contenttype
 from zope import interface
 from zope import component
 from zope.interface.common import sequence
+
 try:
 	from zope.mimetype import types as mime_types
 except ImportError: # pragma: no cover
@@ -70,9 +73,7 @@ class UnicodeContentFragment(unicode):
 	# We do need to allow the things used by zope.interface/zope.component
 	_ZCA_KEYS = ('__provides__',)
 
-
 	__slots__ = _ZCA_KEYS  # actually meaningless, but we simulate this with __getattr__ and __setattr__
-
 
 	def __getattr__(self, name):
 		raise AttributeError(name)
@@ -212,7 +213,6 @@ class HTMLContentFragment(_AddMixin, UnicodeContentFragment):
 
 HTMLContentFragment._add_rules = ((IHTMLContentFragment, HTMLContentFragment),)
 
-
 class ISanitizedHTMLContentFragment(IHTMLContentFragment):
 	"""
 	HTML content, typically of unknown or untrusted provenance,
@@ -227,7 +227,8 @@ class SanitizedHTMLContentFragment(HTMLContentFragment):
 	pass
 
 # TODO: What about the rules for the other types?
-SanitizedHTMLContentFragment._add_rules = ((ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),) + HTMLContentFragment._add_rules
+SanitizedHTMLContentFragment._add_rules = \
+	((ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),) + HTMLContentFragment._add_rules
 
 class IPlainTextContentFragment(IUnicodeContentFragment, mime_types.IContentTypeTextPlain):
 	"""
@@ -298,7 +299,8 @@ class ICensoredHTMLContentFragment(IHTMLContentFragment, ICensoredUnicodeContent
 class CensoredHTMLContentFragment(HTMLContentFragment):
 	pass
 
-CensoredHTMLContentFragment._add_rules = ((ICensoredHTMLContentFragment, CensoredHTMLContentFragment),) + CensoredUnicodeContentFragment._add_rules
+CensoredHTMLContentFragment._add_rules = \
+	((ICensoredHTMLContentFragment, CensoredHTMLContentFragment),) + CensoredUnicodeContentFragment._add_rules
 CensoredHTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment(n)
 
 class ICensoredSanitizedHTMLContentFragment(ISanitizedHTMLContentFragment, ICensoredHTMLContentFragment):
@@ -310,13 +312,14 @@ class CensoredSanitizedHTMLContentFragment(CensoredHTMLContentFragment):
 
 # The rules here place sanitization ahead of censoring, because sanitization
 # can cause security problems for end users; censoring is just offensive
-CensoredSanitizedHTMLContentFragment._add_rules = (((ICensoredSanitizedHTMLContentFragment, CensoredSanitizedHTMLContentFragment),
-													 (ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),)
-													 + CensoredHTMLContentFragment._add_rules
-													 + HTMLContentFragment._add_rules)
+CensoredSanitizedHTMLContentFragment._add_rules = \
+	(((ICensoredSanitizedHTMLContentFragment, CensoredSanitizedHTMLContentFragment),
+	 (ISanitizedHTMLContentFragment, SanitizedHTMLContentFragment),)
+	 + CensoredHTMLContentFragment._add_rules
+	 + HTMLContentFragment._add_rules)
 
-UnicodeContentFragment.censored = lambda s, n: CensoredUnicodeContentFragment(n)
 HTMLContentFragment.censored = lambda s, n: CensoredHTMLContentFragment(n)
+UnicodeContentFragment.censored = lambda s, n: CensoredUnicodeContentFragment(n)
 SanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment(n)
 CensoredSanitizedHTMLContentFragment.censored = lambda s, n: CensoredSanitizedHTMLContentFragment(n)
 
