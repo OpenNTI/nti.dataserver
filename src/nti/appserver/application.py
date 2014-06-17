@@ -217,6 +217,9 @@ def _library_settings(pyramid_config, server):
 			conn = server.db.open()
 			ds_site = conn.root()['nti.dataserver']
 			with site(ds_site):
+				# XXX: JAM: Note: this sync call will move around!
+				from nti.dataserver.site import synchronize_host_policies
+				synchronize_host_policies()
 				library.syncContentPackages()
 		conn.close()
 

@@ -206,32 +206,43 @@ def get_site_for_site_names( site_names, site=None ):
 	# Can we find a named site to use?
 	site_components = _find_site_components( site_names ) if site_names else None # micro-opt to not call if no names
 	if site_components:
-		# Yes we can. The site components are only a partial configuration
-		# and are not persistent, so we need to use two bases
-		# to make it work (order matters) (for example, the main site is
-		# almost always the 'nti.dataserver' site, where the persistent intid
-		# utilities live; the named sites do not have those and cannot have
-		# the persistent nti.dataserver as their real base, so the two must
-		# be mixed). They are also not traversable.
+		# Yes we can.
+		site_name = site_components.__name__
+		# Do we have a persistent site installed in the database? If yes,
+		# we want to use that.
+		try:
+			pers_site = site['++etc++hostsites'][site_name]
+			assert site.getSiteManager() in pers_site.getSiteManager().__bases__
+			site = pers_site
+		except (KeyError,TypeError): # (And maybe type error?)
+			# No, nothing persistent, dummy one up. The site components are only a
+			# partial configuration and are not persistent, so we need
+			# to use two bases to make it work (order matters) (for
+			# example, the main site is almost always the
+			# 'nti.dataserver' site, where the persistent intid
+			# utilities live; the named sites do not have those and
+			# cannot have the persistent nti.dataserver as their real
+			# base, so the two must be mixed). They are also not
+			# traversable.
 
-		# Host comps used to be simple, but now they may be hierarchacl
-		#assert site_components.__bases__ == (component.getGlobalSiteManager(),)
-		#gsm = site_components.__bases__[0]
-		#assert site_components.adapters.__bases__ == (gsm.adapters,)
+			# Host comps used to be simple, but now they may be hierarchacl
+			#assert site_components.__bases__ == (component.getGlobalSiteManager(),)
+			#gsm = site_components.__bases__[0]
+			#assert site_components.adapters.__bases__ == (gsm.adapters,)
 
-		# But the current site, when given, must always be the main
-		# dataserver site
-		assert isinstance( site, Persistent )
-		assert isinstance( site.getSiteManager(), Persistent )
+			# But the current site, when given, must always be the main
+			# dataserver site
+			assert isinstance( site, Persistent )
+			assert isinstance( site.getSiteManager(), Persistent )
 
-		main_site = site
-		site_manager = _HostSiteManager( main_site.__parent__,
-										 main_site.__name__,
-										 site_components,
-										 main_site.getSiteManager() )
-		site = _TrivialSite( site_manager )
-		site.__parent__ = main_site
-		site.__name__ = site_components.__name__
+			main_site = site
+			site_manager = _HostSiteManager( main_site.__parent__,
+											 main_site.__name__,
+											 site_components,
+											 main_site.getSiteManager() )
+			site = _TrivialSite( site_manager )
+			site.__parent__ = main_site
+			site.__name__ = site_name
 
 	return site
 
