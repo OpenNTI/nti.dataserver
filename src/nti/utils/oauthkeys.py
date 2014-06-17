@@ -10,7 +10,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.utils.schema import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as util_interfaces

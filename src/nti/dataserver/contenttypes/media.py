@@ -16,7 +16,7 @@ from zope.container import contained as zcontained
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils.schema import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .base import UserContentRoot

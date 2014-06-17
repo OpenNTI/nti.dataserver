@@ -21,7 +21,7 @@ from nti.externalization.externalization import make_repr
 
 from nti.mimetype.mimetype import MIME_BASE
 
-from nti.schema.field import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as search_interfaces
@@ -31,6 +31,7 @@ from .constants import (POST_MIME_TYPE, NTI_CARD_MIME_TYPE, BOOK_CONTENT_MIME_TY
 
 from .constants import (nticard_, content_, videotranscript_, transcript_, note_,
 						highlight_, redaction_, messageinfo_, post_, forum_)
+
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 class SearchTypeMetaData(SchemaConfigured):

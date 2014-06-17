@@ -15,7 +15,7 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import interfaces as nti_interfacess
 
-from nti.utils.schema import SchemaConfigured
+from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as frm_interfaces
