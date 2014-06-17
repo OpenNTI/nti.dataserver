@@ -32,7 +32,7 @@ from nti.dataserver.interfaces import ICommunity
 
 from nti.utils._compat import Implicit
 
-from nti.utils.schema import AdaptingFieldProperty
+from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.utils.schema import AcquisitionFieldProperty
 
 from nti.utils.property import Lazy

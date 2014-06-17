@@ -14,7 +14,7 @@ from zope import interface
 from zope.annotation import interfaces as an_interfaces
 
 from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as util_interfaces
 

@@ -15,8 +15,8 @@ from zope.schema.fieldproperty import createFieldProperties
 from zope.schema import Int
 from zope.schema import Dict
 
-from nti.utils.schema import ValidBytes as Bytes
-from nti.utils.schema import ValidTextLine as TextLine
+from nti.schema.field import ValidBytes as Bytes
+from nti.schema.field import ValidTextLine as TextLine
 
 class IDeviceFeedback(interface.Interface):
 	"""

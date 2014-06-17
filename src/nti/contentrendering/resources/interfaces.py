@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import schema
 from zope import interface
 
-from nti.utils.schema import IndexedIterable as TypedIterable
+from nti.schema.field import IndexedIterable as TypedIterable
 
 class IRepresentableContentUnit(interface.Interface):
 	"""

@@ -23,7 +23,7 @@ from nti.dataserver import datastructures
 from nti.dataserver import sharing
 
 from nti.utils._compat import Implicit
-from nti.utils.schema import AdaptingFieldProperty
+from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from ..note import BodyFieldProperty
 from ..threadable import ThreadableMixin

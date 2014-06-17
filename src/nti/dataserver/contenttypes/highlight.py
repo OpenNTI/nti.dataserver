@@ -18,7 +18,7 @@ from .base import UserContentRoot
 UserContentRoot = UserContentRoot # BWC top-level import
 
 from .selectedrange import SelectedRange # BWC top-level import
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @interface.implementer(nti_interfaces.IHighlight)
 class Highlight(SelectedRange): #, _HighlightBWC):

@@ -20,9 +20,9 @@ from .interfaces import ILegacyCourseConflatedContentPackage
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.utils.property import alias
-from nti.utils.schema import createFieldProperties
-from nti.utils.schema import createDirectFieldProperties
-from nti.utils.schema import PermissiveSchemaConfigured
+from nti.schema.fieldproperty import createFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.schema.schema import PermissiveSchemaConfigured
 
 from zope.container.contained import Contained
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin

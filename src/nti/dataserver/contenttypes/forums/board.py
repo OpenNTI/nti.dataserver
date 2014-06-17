@@ -25,7 +25,7 @@ from nti.dataserver import containers
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import Base
-from nti.utils.schema import AdaptingFieldProperty
+from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from . import _CreatedNamedNTIIDMixin
 from . import interfaces as for_interfaces

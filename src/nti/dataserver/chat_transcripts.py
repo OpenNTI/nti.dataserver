@@ -113,7 +113,7 @@ from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.ntiids import ntiids
 
-from nti.utils.schema import Object
+from nti.schema.field import Object
 from nti.utils.property import read_alias
 
 from nti.wref import interfaces as wref_interfaces

@@ -23,7 +23,7 @@ from zope import interface
 from zope import component
 import zope.interface.common.idatetime
 
-from nti.utils.schema import InvalidValue
+from nti.schema.interfaces import InvalidValue
 
 from . import interfaces
 

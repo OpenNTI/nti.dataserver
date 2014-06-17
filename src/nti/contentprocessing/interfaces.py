@@ -11,9 +11,9 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import interface
 
-from nti.utils.schema import Number
-from nti.utils.schema import Object
-from nti.utils.schema import ListOrTuple
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import ListOrTuple
 
 class IContentTranslationTable(interface.Interface):
 	"""

@@ -16,12 +16,12 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
-from nti.utils.schema import Number
-from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import IndexedIterable
-from nti.utils.schema import Iterable
-from nti.utils.schema import Object
-from nti.utils.schema import Int
+from nti.schema.field import Number
+from nti.schema.field import ValidTextLine as TextLine
+from nti.schema.field import IndexedIterable
+from nti.schema.field import Iterable
+from nti.schema.field import Object
+from nti.schema.field import Int
 from nti.utils.schema import Bool
 
 

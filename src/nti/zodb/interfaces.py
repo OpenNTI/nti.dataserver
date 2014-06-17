@@ -13,7 +13,7 @@ from zope import schema
 from zope import interface
 from zope.minmax import interfaces as minmax_interfaces
 
-from nti.utils.schema import Number
+from nti.schema.field import Number
 
 class ITokenBucket(interface.Interface):
 	"""

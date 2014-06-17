@@ -17,7 +17,7 @@ from cStringIO import StringIO
 from zope import interface
 
 from nti.utils.property import alias
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .. import utils
 from . import Language

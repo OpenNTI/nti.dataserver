@@ -13,9 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.utils.schema import Object
-from nti.utils.schema import Number
-from nti.utils.schema import ValidTextLine as TextLine
+from nti.schema.field import Object
+from nti.schema.field import Number
+from nti.schema.field import ValidTextLine as TextLine
 
 class PreflightError(Exception):
 	"Raised when an email process cannot be created."

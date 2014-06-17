@@ -29,7 +29,7 @@ from ..datetime import _datetime_to_string
 from ..datetime import datetime_from_string
 
 
-from nti.utils.schema import InvalidValue
+from nti.schema.interfaces import InvalidValue
 from datetime import date
 from datetime import timedelta
 from zope.interface.common.idatetime import IDate

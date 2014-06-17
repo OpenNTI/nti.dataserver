@@ -24,8 +24,8 @@ import nti.dataserver.interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
-from nti.utils.schema import Object
-from nti.utils.schema import IndexedIterable as TypedIterable
+from nti.schema.field import Object
+from nti.schema.field import IndexedIterable as TypedIterable
 
 IContactEmailRecovery = IContactEmailRecovery  # BBB
 

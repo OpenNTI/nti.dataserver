@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from dolmen.builtins.interfaces import IIterable
-from nti.utils.schema import Number
+from nti.schema.field import Number
 
 # pylint:disable=I0011,E0213,E0211
 

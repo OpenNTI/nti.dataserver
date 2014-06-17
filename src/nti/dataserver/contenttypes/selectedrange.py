@@ -17,7 +17,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from .base import UserContentRoot
 from .base import UserContentRootInternalObjectIO
 
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @interface.implementer(nti_interfaces.ISelectedRange)
 class SelectedRange(UserContentRoot):

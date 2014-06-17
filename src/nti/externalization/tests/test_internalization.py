@@ -20,7 +20,7 @@ from hamcrest import raises
 
 from . import ExternalizationLayerTest
 from zope.interface.common.idatetime import IDate
-from nti.utils.schema import InvalidValue
+from nti.schema.interfaces import InvalidValue
 
 class TestDate(ExternalizationLayerTest):
 

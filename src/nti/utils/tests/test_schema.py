@@ -28,16 +28,16 @@ from nti.testing.base import module_setup, module_teardown
 
 from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
 from nti.utils.schema import DataURI
-from nti.utils.schema import IVariant
-from nti.utils.schema import Number
-from nti.utils.schema import DictFromObject
-from nti.utils.schema import ListOrTuple
-from nti.utils.schema import ValidRegularExpression
-from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import IBeforeSequenceAssignedEvent
-from nti.utils.schema import IBeforeDictAssignedEvent
-from nti.utils.schema import createFieldProperties
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.interfaces import IVariant
+from nti.schema.field import Number
+from nti.schema.field import DictFromObject
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidRegularExpression
+from nti.schema.field import ValidTextLine as TextLine
+from nti.schema.interfaces import IBeforeSequenceAssignedEvent
+from nti.schema.interfaces import IBeforeDictAssignedEvent
+from nti.schema.fieldproperty import createFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from dolmen.builtins import IUnicode
 from zope import interface

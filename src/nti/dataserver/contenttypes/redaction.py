@@ -18,7 +18,7 @@ from zope import component
 from .selectedrange import SelectedRange
 from .selectedrange import SelectedRangeInternalObjectIO
 
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @interface.implementer(nti_interfaces.IRedaction)
 class Redaction(SelectedRange):

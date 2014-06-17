@@ -32,8 +32,8 @@ from zope.mimetype import interfaces as mime_interfaces
 from zope.cachedescriptors.property import Lazy
 from nti.utils.property import alias
 
-from nti.utils.schema import createDirectFieldProperties
-from nti.utils.schema import PermissiveSchemaConfigured
+from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.schema.schema import PermissiveSchemaConfigured
 
 from . import interfaces
 
