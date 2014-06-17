@@ -142,7 +142,7 @@
 		 unicode.
 	-->
 	<subscriber handler=".censor.censor_before_text_assigned"
-				for="dolmen.builtins.IUnicode * nti.utils.schema.IBeforeTextAssignedEvent" />
+				for="dolmen.builtins.IUnicode * nti.schema.interfaces.IBeforeTextAssignedEvent" />
 
 
 	<utility factory=".urlmatcher.GrubberHyperlinkFormatter" />

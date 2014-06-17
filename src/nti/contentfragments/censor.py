@@ -13,13 +13,18 @@ applying, we would need to do a better job pipelining to avoid copies
 
 $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import re
 import array
+
+from zope import interface
+from zope import component
+from zope.event import notify
+
 from pkg_resources import resource_filename
 
 import html5lib
@@ -29,10 +34,6 @@ except ImportError: # pypy?
 	from xml import etree
 
 from html5lib import treebuilders
-
-from zope import interface
-from zope import component
-from zope.event import notify
 
 from . import interfaces
 
@@ -62,7 +63,8 @@ class SimpleReplacementCensoredContentStrategy(object):
 	def censor_ranges(self, content_fragment, censored_ranges):
 		# Since we will be replacing each range with its equal length
 		# of content and not shortening, then sorting the ranges doesn't matter
-		content_fragment = content_fragment.decode('utf-8') if isinstance(content_fragment, bytes) else content_fragment
+		content_fragment = 	content_fragment.decode('utf-8') \
+							if isinstance(content_fragment, bytes) else content_fragment
 		buf = array.array(b'u', content_fragment)
 
 		for start, end in censored_ranges:
@@ -237,7 +239,7 @@ class DefaultCensoredContentPolicy(object):
 		return result
 
 
-from nti.utils.schema import BeforeTextAssignedEvent
+from nti.schema.interfaces import BeforeTextAssignedEvent
 
 def censor_before_text_assigned(fragment, target, event):
 	"""
