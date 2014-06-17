@@ -131,6 +131,27 @@ class SiteNotInstalledError(AssertionError):
 class IDataserverFolder(zope.site.interfaces.IFolder):
 	pass
 
+class IHostPolicyFolder(zope.site.interfaces.IFolder):
+	"""
+	A folder that should always have a site manager, and thus is a
+	site, representing a policy for the host name. Persistent
+	configuration related to that host should reside in this folder.
+	"""
+
+class IHostPolicySiteManager(zope.site.interfaces.ILocalSiteManager):
+	"""
+	A persistent local site manager that is tied to a site name. It should always
+	have two bases, a non-persistent global IComponents configured through
+	:mod:`z3c.baseregistry` and the persistent main dataserver site manager,
+	in that order. This should be the site manager for an :class:`IHostPolicyFolder`
+	"""
+
+class IHostSitesFolder(zope.site.interfaces.IFolder):
+	"""
+	A container for the sites, each of which should be an
+	:class:`IHostPolicyFolder`
+	"""
+
 class IShardInfo(zope.component.interfaces.IPossibleSite, zope.container.interfaces.IContained):
 	"""
 	Information about a database shared.
