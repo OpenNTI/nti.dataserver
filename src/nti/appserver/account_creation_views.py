@@ -53,7 +53,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 from nti.intid.utility import IntIdMissingError
 
 import nti.utils.schema
-from nti.utils.schema import find_most_derived_interface
+from nti.schema.interfaces import find_most_derived_interface
 
 #: The link relationship type for a link used to create an account.
 #: Also serves as a view for that same purpose
@@ -462,7 +462,7 @@ def _get_avatar_choices_for_username( username, request ):
 		avatar_choices = avatar_choices_factory.get_choices()
 	return avatar_choices
 
-from nti.utils.jsonschema import JsonSchemafier
+from nti.schema.jsonschema import JsonSchemafier
 
 class _AccountProfileSchemafier(JsonSchemafier):
 

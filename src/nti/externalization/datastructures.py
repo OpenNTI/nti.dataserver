@@ -20,7 +20,7 @@ from zope.schema import interfaces as sch_interfaces
 
 import ZODB
 
-from nti.utils.schema import find_most_derived_interface
+from nti.schema.interfaces import find_most_derived_interface
 
 from .interfaces import IInternalObjectIO
 from .interfaces import StandardInternalFields

@@ -38,7 +38,7 @@ from nti.mailer.interfaces import IEmailAddressable
 import nti.utils.schema
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
-from nti.utils.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
+from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
 class _InvalidData(nti.utils.schema.InvalidValue):
 	"""Invalid Value"""
@@ -347,7 +347,7 @@ class IUserProfile(IFriendlyNamed, IAvatarURL):
 	Base class that user profiles should extend.
 	"""
 
-from nti.utils.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
+from nti.schema.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
 
 class IRestrictedUserProfile(IUserProfile):
 	"""

@@ -255,7 +255,7 @@ def test_country_vocabulary():
 	assert_that( ext, has_entry( 'flag', u'/++resource++country-flags/us.gif' ) )
 	assert_that( ext, has_entry( 'title', 'United States'  ) )
 
-	from nti.utils.jsonschema import JsonSchemafier
+	from nti.schema.jsonschema import JsonSchemafier
 
 	schema = JsonSchemafier( IA ).make_schema()
 	assert_that( schema, has_entry( 'choice', has_entry( 'choices', has_item( ext ) ) ) )
