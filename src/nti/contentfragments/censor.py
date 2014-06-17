@@ -275,7 +275,7 @@ def censor_before_text_assigned(fragment, target, event):
 def censor_before_assign_components_of_sequence(sequence, target, event):
 	"""
 	Register this adapter for (usually any) sequence, some specific interface target, and
-	the :class:`nti.utils.schema.IBeforeSequenceAssignedEvent` and it will
+	the :class:`nti.schema.interfaces.IBeforeSequenceAssignedEvent` and it will
 	iterate across the fields and attempt to censor each of them.
 
 	This package DOES NOT register this event.
