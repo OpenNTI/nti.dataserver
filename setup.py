@@ -128,6 +128,7 @@ setup(
 	install_requires=[
 		'nti.plasTeX',
 		'nti.geventwebsocket',
+		'nti.schema',
 		'pywikipedia',
 		# Zope Acquisition; used by contentratings implicitly
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
