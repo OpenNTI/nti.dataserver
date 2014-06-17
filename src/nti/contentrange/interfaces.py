@@ -16,10 +16,10 @@ from zope.schema.vocabulary import SimpleTerm
 from zope import interface
 
 from nti.utils.schema import Choice
-from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import Int
-from nti.utils.schema import ValidText as Text
-from nti.utils.schema import Object
+from nti.schema.field import ValidTextLine as TextLine
+from nti.schema.field import Int
+from nti.schema.field import ValidText as Text
+from nti.schema.field import Object
 from nti.utils.schema import List
 
 class IContentRangeDescription(interface.Interface):

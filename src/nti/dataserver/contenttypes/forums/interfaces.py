@@ -22,7 +22,7 @@ from zope.container.interfaces import IContentContainer, IContained
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils.schema import Object, Number, Variant, ValidTextLine, ListOrTuple
+from nti.schema.field import Object, Number, Variant, ValidTextLine, ListOrTuple
 
 from nti.utils._compat import IAcquirer
 

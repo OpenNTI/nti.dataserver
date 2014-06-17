@@ -19,7 +19,7 @@ from nti.mimetype import mimetype
 
 from nti.utils.property import alias
 from nti.utils.schema import SchemaConfigured
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as search_interfaces
 

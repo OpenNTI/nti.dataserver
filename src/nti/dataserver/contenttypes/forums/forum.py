@@ -32,7 +32,7 @@ from nti.dataserver import containers as nti_containers
 
 from nti.utils import transactions
 from nti.utils._compat import Implicit
-from nti.utils.schema import AdaptingFieldProperty
+from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from . import _containerIds_from_parent
 from . import interfaces as frm_interfaces

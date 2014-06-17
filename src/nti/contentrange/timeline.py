@@ -16,7 +16,7 @@ from nti.externalization.externalization import make_repr
 
 from . import contentrange
 
-from nti.utils.schema import createDirectFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 @interface.implementer(interfaces.ITimeContentPointer)
 class TimeContentPointer(contentrange.ContentPointer):

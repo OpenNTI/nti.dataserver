@@ -14,7 +14,7 @@ from . import interfaces
 
 from nti.externalization.externalization import make_repr
 
-from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
+from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
 # FIXME: Note that we are using the legacy class-based
 # functionality to create new internal objects from externals

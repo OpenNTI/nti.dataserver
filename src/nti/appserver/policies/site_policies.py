@@ -53,7 +53,7 @@ from nti.externalization import interfaces as ext_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.utils.schema import InvalidValue
+from nti.schema.interfaces import InvalidValue
 from nti.utils.schema import find_most_derived_interface
 
 import zope.deferredimport

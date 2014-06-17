@@ -36,8 +36,8 @@ from plone.i18n.locales import interfaces as locale_interfaces
 from nti.mailer.interfaces import IEmailAddressable
 
 import nti.utils.schema
-from nti.utils.schema import ValidText
-from nti.utils.schema import ValidTextLine
+from nti.schema.field import ValidText
+from nti.schema.field import ValidTextLine
 from nti.utils.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
 class _InvalidData(nti.utils.schema.InvalidValue):

@@ -20,11 +20,11 @@ from zope.interface import interfaces as z_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.socketio import interfaces as sio_interfaces
 
-from nti.utils.schema import Object
-from nti.utils.schema import Variant
-from nti.utils.schema import UniqueIterable
+from nti.schema.field import Object
+from nti.schema.field import Variant
+from nti.schema.field import UniqueIterable
 from nti.utils.schema import DecodingValidTextLine
-from nti.utils.schema import ValidChoice as Choice
+from nti.schema.field import ValidChoice as Choice
 
 from nti.contentfragments.schema import PlainTextLine
 

@@ -361,7 +361,7 @@ def update_object_modified_time( modified_object, event ):
 		# this is optional API
 		pass
 
-from nti.utils.schema import IBeforeSequenceAssignedEvent
+from nti.schema.interfaces import IBeforeSequenceAssignedEvent
 @component.adapter( None, interfaces.IModeledContent, IBeforeSequenceAssignedEvent )
 def contain_nested_objects( sequence, parent, event ):
 	"""

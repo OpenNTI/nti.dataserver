@@ -43,17 +43,17 @@ from nti.contentfragments.schema import SanitizedHTMLContentFragment
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
-from nti.utils.schema import Number
-from nti.utils.schema import Object
-from nti.utils.schema import Variant
-from nti.utils.schema import ValidText
-from nti.utils.schema import ListOrTuple
-from nti.utils.schema import ValidTextLine
-from nti.utils.schema import UniqueIterable
-from nti.utils.schema import TupleFromObject
-from nti.utils.schema import ValidSet as Set
-from nti.utils.schema import ListOrTupleFromObject
-from nti.utils.schema import ValidChoice as Choice
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import Variant
+from nti.schema.field import ValidText
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
+from nti.schema.field import UniqueIterable
+from nti.schema.field import TupleFromObject
+from nti.schema.field import ValidSet as Set
+from nti.schema.field import ListOrTupleFromObject
+from nti.schema.field import ValidChoice as Choice
 from nti.utils.schema import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):

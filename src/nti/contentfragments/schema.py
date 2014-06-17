@@ -9,7 +9,7 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import
 
 # For good validation and events
-from nti.utils.schema import Object, ValidText as Text, ValidTextLine as TextLine
+from nti.schema.field import Object, ValidText as Text, ValidTextLine as TextLine
 
 from . import interfaces
 

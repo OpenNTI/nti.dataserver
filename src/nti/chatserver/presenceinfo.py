@@ -23,8 +23,8 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.property import alias
-from nti.utils.schema import createDirectFieldProperties
-from nti.utils.schema import PermissiveSchemaConfigured as SchemaConfigured
+from nti.schema.fieldproperty import createDirectFieldProperties
+from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
 from . import interfaces as chat_interfaces
 

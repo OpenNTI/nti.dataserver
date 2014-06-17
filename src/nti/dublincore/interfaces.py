@@ -13,9 +13,9 @@ from zope import interface
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
-from nti.utils.schema import Number
-from nti.utils.schema import ValidTextLine as TextLine
-from nti.utils.schema import ValidText as Text
+from nti.schema.field import Number
+from nti.schema.field import ValidTextLine as TextLine
+from nti.schema.field import ValidText as Text
 
 
 class ICreatedTime(interface.Interface):
