@@ -8,7 +8,6 @@ Search interfaces.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import schema
 from zope import component
 from zope import interface
 from zope.deprecation import deprecated
@@ -16,7 +15,18 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils import schema as nti_schema
+from nti.schema.field import Int
+from nti.schema.field import Bool
+from nti.schema.field import Dict
+from nti.schema.field import Text
+from nti.schema.field import Float
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import Iterable
+from nti.schema.field import ValidText
+from nti.schema.field import ListOrTuple
+from nti.schema.field import ValidTextLine
+from nti.schema.field import IndexedIterable
 
 # deprecated interfaes
 
@@ -35,68 +45,76 @@ class IEntityIndexManager(interface.Interface):
 # search query
 
 class IDateTimeRange(interface.Interface):
-	startTime = nti_schema.Number(title="Start date/time", required=False)
-	endTime = nti_schema.Number(title="End date/time", required=False)
+	endTime = Number(title="End date/time", required=False)
+	startTime = Number(title="Start date/time", required=False)
 
 class ISearchQuery(interface.Interface):
 
-	term = nti_schema.ValidTextLine(title="Query search term", required=True)
-	username = nti_schema.ValidTextLine(title="User doing the search", required=False)
-	language = nti_schema.ValidTextLine(title="Query search term language", required=False,
-										default='en')
+	term = ValidTextLine(title="Query search term", required=True)
 
-	limit = schema.Int(title="search results limit", required=False, default=None)
+	username = ValidTextLine(title="User doing the search", required=False)
 
-	indexid = nti_schema.ValidTextLine(title="Book content NTIID", required=False)
+	language = ValidTextLine(title="Query search term language", required=False,
+							 default='en')
 
-	searchOn = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="Content types to search on"),
-									  required=False)
+	limit = Int(title="search results limit", required=False, default=None)
 
-	creator = nti_schema.ValidTextLine(title="creator", required=False)
-	creationTime = nti_schema.Object(IDateTimeRange, title="created date-time range", required=False)
-	modificationTime = nti_schema.Object(IDateTimeRange, title="last modified time-date range", required=False)
+	indexid = ValidTextLine(title="Book content NTIID", required=False)
 
-	sortOn = nti_schema.ValidTextLine(title="Field or function to sort by", required=False)
+	searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
+						   required=False)
 
-	location = nti_schema.ValidTextLine(title="The reference NTIID where the search was invoked",
+	creator = ValidTextLine(title="creator", required=False)
+
+	creationTime = Object(IDateTimeRange, title="created date-time range",
+						  required=False)
+
+	modificationTime = Object(IDateTimeRange, title="last modified time-date range",
+							  required=False)
+
+	sortOn = ValidTextLine(title="Field or function to sort by", required=False)
+
+	location = ValidTextLine(title="The reference NTIID where the search was invoked",
 										required=False)
-	sortOrder = nti_schema.ValidTextLine(title="descending or ascending  to sort order",
+	sortOrder = ValidTextLine(title="descending or ascending  to sort order",
 										 default='descending', required=False)
 
-	surround = schema.Int(title="Hightlight surround chars", required=False,
-						  default=50, min=1)
+	surround = Int(title="Hightlight surround chars", required=False, default=50, min=1)
 
-	maxchars = schema.Int(title="Hightlight max chars", required=False,
-						  default=300, min=1)
+	maxchars = Int(title="Hightlight max chars", required=False, default=300, min=1)
 
-	prefix = schema.Int(title="Suggestion prefix", required=False, min=1)
-	threshold = nti_schema.Number(title="Suggestion threshold", required=False,
-								  default=0.4999, min=0.0)
-	maxdist = schema.Int(title="Maximun edit distance from the given word to look at",
-						 required=False, default=15, min=2)
+	prefix = Int(title="Suggestion prefix", required=False, min=1)
 
-	applyHighlights = schema.Bool(title="Apply search hit hilights", required=False, default=True)
+	threshold = Number(title="Suggestion threshold", required=False,
+					   default=0.4999, min=0.0)
 
-	batchSize = schema.Int(title="page size", required=False)
-	batchStart = schema.Int(title="The index of the first object to return, starting with zero",
-						    required=False, min=0)
+	maxdist = Int(title="Maximun edit distance from the given word to look at",
+				  required=False, default=15, min=2)
 
-	decayFactor = nti_schema.Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
+	applyHighlights = Bool(title="Apply search hit hilights", required=False,
+						   default=True)
 
-	IsEmpty = schema.Bool(title="Returns true if this is an empty search",
-						   required=True, readonly=True)
+	batchSize = Int(title="page size", required=False)
 
-	IsPrefixSearch = schema.Bool(title="Returns true if the search is for prefix search",
-								 required=True, readonly=True)
+	batchStart = Int(title="The index of the first object to return, starting with zero",
+					 required=False, min=0)
 
-	IsPhraseSearch = schema.Bool(title="Returns true if the search is for phrase search",
-								 required=True, readonly=True)
+	decayFactor = Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
 
-	IsDescendingSortOrder = schema.Bool(title="Returns true if the sortOrder is descending",
-								 		required=True, readonly=True)
+	IsEmpty = Bool(title="Returns true if this is an empty search",
+				   required=True, readonly=True)
 
-	IsBatching = schema.Bool(title="Returns true if this is a batch search",
-							 required=True, readonly=True)
+	IsPrefixSearch = Bool(title="Returns true if the search is for prefix search",
+						  required=True, readonly=True)
+
+	IsPhraseSearch = Bool(title="Returns true if the search is for phrase search",
+					      required=True, readonly=True)
+
+	IsDescendingSortOrder = Bool(title="Returns true if the sortOrder is descending",
+							 	 required=True, readonly=True)
+
+	IsBatching = Bool(title="Returns true if this is a batch search",
+				 	  required=True, readonly=True)
 
 
 class ISearchQueryValidator(interface.Interface):
@@ -363,49 +381,49 @@ class IWhooshContent(zmime_interfaces.IContentTypeAware):
 	pass
 
 class IBookContent(IBaseContent):
-	ntiid = nti_schema.ValidTextLine(title="NTIID", required=True)
-	title = nti_schema.ValidText(title="Content title", required=True)
-	content = nti_schema.ValidText(title="Text content", required=True)
+	ntiid = ValidTextLine(title="NTIID", required=True)
+	title = ValidText(title="Content title", required=True)
+	content = ValidText(title="Text content", required=True)
 
 class IWhooshBookContent(IBookContent, IWhooshContent):
-	docnum = schema.Int(title="Document number", required=True)
-	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+	docnum = Int(title="Document number", required=True)
+	score = Number(title="Search score", required=False, default=1.0)
 
 class IMediaTranscriptContent(IBaseContent):
-	containerId = nti_schema.ValidTextLine(title="NTIID of video container", required=True)
-	content = nti_schema.ValidText(title="Text content", required=True)
-	title = nti_schema.ValidText(title="Video title", required=False)
-	start_millisecs = schema.Float(title="Start timestamp", required=True)
-	end_millisecs = schema.Float(title="End timestamp", required=True)
+	containerId = ValidTextLine(title="NTIID of video container", required=True)
+	content = ValidText(title="Text content", required=True)
+	title = ValidText(title="Video title", required=False)
+	start_millisecs = Float(title="Start timestamp", required=True)
+	end_millisecs = Float(title="End timestamp", required=True)
 
 class IWhooshMediaTranscriptContent(IMediaTranscriptContent, IWhooshContent):
-	docnum = schema.Int(title="Document number", required=False)
-	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+	docnum = Int(title="Document number", required=False)
+	score = Number(title="Search score", required=False, default=1.0)
 
 class IVideoTranscriptContent(IMediaTranscriptContent):
-	videoId = nti_schema.ValidTextLine(title="Either the video NTIID or Id", required=True)
+	videoId = ValidTextLine(title="Either the video NTIID or Id", required=True)
 
 class IWhooshVideoTranscriptContent(IVideoTranscriptContent, IWhooshMediaTranscriptContent):
 	pass
 
 class IAudioTranscriptContent(IMediaTranscriptContent):
-	audioId = nti_schema.ValidTextLine(title="Either the audio NTIID or Id", required=True)
+	audioId = ValidTextLine(title="Either the audio NTIID or Id", required=True)
 
 class IWhooshAudioTranscriptContent(IAudioTranscriptContent, IWhooshMediaTranscriptContent):
 	pass
 
 class INTICardContent(IBaseContent):
-	href = nti_schema.ValidTextLine(title="card href", required=False)
-	ntiid = nti_schema.ValidTextLine(title="card NTIID", required=True)
-	title = nti_schema.ValidTextLine(title="Card title", required=True)
-	creator = nti_schema.ValidTextLine(title="Card creator", required=True)
-	description = nti_schema.ValidTextLine(title="Card description", required=True)
-	target_ntiid = nti_schema.ValidTextLine(title="card target ntiid", required=False)
-	containerId = nti_schema.ValidTextLine(title="card container ntiid", required=False)
+	href = ValidTextLine(title="card href", required=False)
+	ntiid = ValidTextLine(title="card NTIID", required=True)
+	title = ValidTextLine(title="Card title", required=True)
+	creator = ValidTextLine(title="Card creator", required=True)
+	description = ValidTextLine(title="Card description", required=True)
+	target_ntiid = ValidTextLine(title="card target ntiid", required=False)
+	containerId = ValidTextLine(title="card container ntiid", required=False)
 
 class IWhooshNTICardContent(INTICardContent, IWhooshContent):
-	docnum = schema.Int(title="Document number", required=False)
-	score = nti_schema.Number(title="Search score", required=False, default=1.0)
+	docnum = Int(title="Document number", required=False)
+	score = Number(title="Search score", required=False, default=1.0)
 
 class IContentSchemaCreator(interface.Interface):
 
@@ -446,64 +464,60 @@ class IWhooshQueryParser(ISearchQueryParser):
 # user generated content resolvers
 
 class ISearchTypeMetaData(interface.Interface):
-	Name = nti_schema.ValidTextLine(title="Search type name", readonly=True)
-	MimeType = nti_schema.ValidTextLine(title="Search object mimeType", readonly=True)
-	IsUGD = nti_schema.Bool(title="Is user generated data", default=True, readonly=True)
-	Order = nti_schema.Int(title="Search order", default=99, readonly=True, required=False)
-	Interface = nti_schema.Object(interface.Interface, title="Object Interface", readonly=True)
+	Name = ValidTextLine(title="Search type name", readonly=True)
+	MimeType = ValidTextLine(title="Search object mimeType", readonly=True)
+	IsUGD = Bool(title="Is user generated data", default=True, readonly=True)
+	Order = Int(title="Search order", default=99, readonly=True, required=False)
+	Interface = Object(interface.Interface, title="Object Interface", readonly=True)
 
 class IACLResolver(interface.Interface):
 
-	acl = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="entity username"),
-								 title='username', default=())
+	acl = ListOrTuple(ValidTextLine(title="entity username"),
+					  title='username', default=())
 
 class ITypeResolver(interface.Interface):
 
-	type = nti_schema.ValidTextLine(title="content type", default=None)
+	type = ValidTextLine(title="content type", default=None)
 
 class IContentResolver(interface.Interface):
 
-	content = nti_schema.ValidTextLine(title="content to index", default=None)
+	content = ValidTextLine(title="content to index", default=None)
 
 class INTIIDResolver(interface.Interface):
 
-	ntiid = nti_schema.ValidTextLine(title="NTIID identifier", default=None)
+	ntiid = ValidTextLine(title="NTIID identifier", default=None)
 
 class IContainerIDResolver(interface.Interface):
 
-	containerId = nti_schema.ValidTextLine(title="container identifier", default=None)
+	containerId = ValidTextLine(title="container identifier", default=None)
 
 class ILastModifiedResolver(interface.Interface):
 
-	lastModified = nti_schema.Float(title="last modified date", default=0.0)
+	lastModified = Float(title="last modified date", default=0.0)
 
 class ICreatedTimeResolver(interface.Interface):
 
-	createdTime = nti_schema.Float(title="created date", default=0.0)
+	createdTime = Float(title="created date", default=0.0)
 
 class ICreatorResolver(interface.Interface):
 
-	creator = nti_schema.ValidTextLine(title="creator user", default=None)
+	creator = ValidTextLine(title="creator user", default=None)
 
 class ITitleResolver(interface.Interface):
 
-	title = nti_schema.ValidTextLine(title="object title", default=None)
+	title = ValidTextLine(title="object title", default=None)
 
 class ITagsResolver(interface.Interface):
 
-	tags = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="tag"), title='tags',
-								  default=())
+	tags = ListOrTuple(ValidTextLine(title="tag"), title='tags', default=())
 
 class IKeywordsResolver(interface.Interface):
 
-	keywords = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="keyword"),
-									  title='keywords', default=())
+	keywords = ListOrTuple(ValidTextLine(title="keyword"), title='keywords', default=())
 
 class IShareableContentResolver(interface.Interface):
 
-	sharedWith = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
-									  	title='sharedWith', default=())
-
+	sharedWith = ListOrTuple(ValidTextLine(title="username"), title='sharedWith', default=())
 
 class ContentMixinResolver(ITypeResolver,
 						   IContentResolver,
@@ -522,32 +536,32 @@ class IThreadableContentResolver(IUserContentResolver,
 								 IKeywordsResolver,
 								 IShareableContentResolver):
 
-	inReplyTo = nti_schema.ValidTextLine(title="inReplyTo ntiid", default=None)
+	inReplyTo = ValidTextLine(title="inReplyTo ntiid", default=None)
 
 class IHighlightContentResolver(IThreadableContentResolver):
 	pass
 
 class IRedactionContentResolver(IHighlightContentResolver):
 
-	replacementContent = nti_schema.ValidTextLine(title="replacement content",
+	replacementContent = ValidTextLine(title="replacement content",
 												  default=None)
 
-	redactionExplanation = nti_schema.ValidTextLine(title="replacement explanation",
+	redactionExplanation = ValidTextLine(title="replacement explanation",
 													default=None)
 
 class INoteContentResolver(IHighlightContentResolver, ITitleResolver):
 
-	references = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="ntiid"),
-									  	title='nttids references', default=())
+	references = ListOrTuple(ValidTextLine(title="ntiid"), title='nttids references',
+							 default=())
 
 class IMessageInfoContentResolver(IThreadableContentResolver):
 
-	id = nti_schema.ValidTextLine(title="message id", default=None)
+	id = ValidTextLine(title="message id", default=None)
 
-	channel = nti_schema.ValidTextLine(title="message channel", default=None)
+	channel = ValidTextLine(title="message channel", default=None)
 
-	recipients = nti_schema.ListOrTuple(nti_schema.ValidTextLine(title="username"),
-									  	title='message recipients', default=())
+	recipients = ListOrTuple(ValidTextLine(title="username"), title='message recipients',
+							 default=())
 
 class IBlogContentResolver(_ContentMixinResolver,
 							ICreatorResolver,
@@ -555,7 +569,7 @@ class IBlogContentResolver(_ContentMixinResolver,
 						  	ITitleResolver,
 						  	ITagsResolver):
 
-	id = nti_schema.ValidTextLine(title="post id", default=None)
+	id = ValidTextLine(title="post id", default=None)
 
 class IPostContentResolver(IBlogContentResolver):
 	pass
@@ -580,7 +594,7 @@ class IAudioTranscriptContentResolver(_ContentMixinResolver):
 
 class INTICardContentResolver(_ContentMixinResolver, ICreatorResolver):
 
-	title = nti_schema.ValidTextLine(title="card title", default=None)
+	title = ValidTextLine(title="card title", default=None)
 
 class IModeledContentResolver(IPostContentResolver,
 							  IMessageInfoContentResolver,
@@ -599,17 +613,16 @@ class IStopWords(interface.Interface):
 	def available_languages():
 		"available languages"
 
-
 # highlights
 
 class ISearchFragment(interface.Interface):
 
-	text = schema.Text(title="fragment text", required=True, default=u'')
+	text = Text(title="fragment text", required=True, default=u'')
 
-	matches = nti_schema.ListOrTuple(
-					nti_schema.ListOrTuple(value_type=schema.Int(title='index', min=0),
-										   min_length=2,
-										   max_length=2),
+	matches = ListOrTuple(
+					ListOrTuple(value_type=Int(title='index', min=0),
+								min_length=2,
+								max_length=2),
 					title="Iterable with pair tuples where a match occurs",
 					min_length=0,
 					required=True,
@@ -620,22 +633,22 @@ class IBaseHit(interface.Interface):
 	"""
 	represent a base search hit
 	"""
-	Query = schema.Object(ISearchQuery, title="Search query", required=False)
-	Score = nti_schema.Number(title="hit relevance score", required=False, default=1.0, min=0.0)
+	Query = Object(ISearchQuery, title="Search query", required=False)
+	Score = Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
 class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
 	"""
 	represent an externalized search hit
 	"""
-	OID = nti_schema.ValidTextLine(title="hit unique id", required=True)
-	NTIID = nti_schema.ValidTextLine(title="hit object ntiid", required=False)
-	Snippet = nti_schema.ValidTextLine(title="text found", required=False, default=u'')
-	Type = nti_schema.ValidTextLine(title="Search hit object type", required=True)
-	Creator = nti_schema.ValidTextLine(title="Search hit target creator", required=False)
-	ContainerId = nti_schema.ValidTextLine(title="Search hit container id", required=False)
-	TargetMimeType = nti_schema.ValidTextLine(title="Search hit target mimetype", required=True)
-	Fragments = nti_schema.ListOrTuple(value_type=schema.Object(ISearchFragment, title="the fragment"),
-									   title="search fragments", required=False)
+	OID = ValidTextLine(title="hit unique id", required=True)
+	NTIID = ValidTextLine(title="hit object ntiid", required=False)
+	Snippet = ValidTextLine(title="text found", required=False, default=u'')
+	Type = ValidTextLine(title="Search hit object type", required=True)
+	Creator = ValidTextLine(title="Search hit target creator", required=False)
+	ContainerId = ValidTextLine(title="Search hit container id", required=False)
+	TargetMimeType = ValidTextLine(title="Search hit target mimetype", required=True)
+	Fragments = ListOrTuple(value_type=Object(ISearchFragment, title="the fragment"),
+							title="search fragments", required=False)
 
 class IUserDataSearchHit(ISearchHit):
 	"""
@@ -666,35 +679,35 @@ class IContentSearchHit(ISearchHit):
 	"""
 
 class IBookSearchHit(IContentSearchHit):
-	Title = nti_schema.ValidTextLine(title="Book title", required=False)
+	Title = ValidTextLine(title="Book title", required=False)
 
 class IWhooshBookSearchHit(IBookSearchHit):
 	pass
 
 class IMediaTranscriptSearchHit(IContentSearchHit):
-	Title = nti_schema.ValidTextLine(title="Card title", required=False)
-	EndMilliSecs = nti_schema.Number(title="Video end video timestamp", required=False)
-	StartMilliSecs = nti_schema.Number(title="video start video timestamp", required=False)
+	Title = ValidTextLine(title="Card title", required=False)
+	EndMilliSecs = Number(title="Video end video timestamp", required=False)
+	StartMilliSecs = Number(title="video start video timestamp", required=False)
 
 class IWhooshMediaTranscriptSearchHit(IMediaTranscriptSearchHit):
 	pass
 
 class IAudioTranscriptSearchHit(IMediaTranscriptSearchHit):
-	AudioID = nti_schema.ValidTextLine(title="Audio NTIID", required=True)
+	AudioID = ValidTextLine(title="Audio NTIID", required=True)
 
 class IWhooshAudioTranscriptSearchHit(IWhooshMediaTranscriptSearchHit, IAudioTranscriptSearchHit):
 	pass
 
 class IVideoTranscriptSearchHit(IMediaTranscriptSearchHit):
-	VideoID = nti_schema.ValidTextLine(title="Video NTIID", required=True)
+	VideoID = ValidTextLine(title="Video NTIID", required=True)
 
 class IWhooshVideoTranscriptSearchHit(IWhooshMediaTranscriptSearchHit, IVideoTranscriptSearchHit):
 	pass
 
 class INTICardSearchHit(IContentSearchHit):
-	Href = nti_schema.ValidTextLine(title="Card HREF", required=True)
-	Title = nti_schema.ValidTextLine(title="Card title", required=False)
-	TargetNTIID = nti_schema.ValidTextLine(title="Card target NTIID", required=True)
+	Href = ValidTextLine(title="Card HREF", required=True)
+	Title = ValidTextLine(title="Card title", required=False)
+	TargetNTIID = ValidTextLine(title="Card target NTIID", required=True)
 
 class IWhooshNTICardSearchHit(INTICardSearchHit):
 	pass
@@ -724,19 +737,19 @@ class ISearchHitPredicate(interface.Interface):
 class ISearchHitMetaData(nti_interfaces.ILastModified):
 	"""Class to track search hit meta data"""
 
-	TypeCount = schema.Dict(nti_schema.ValidTextLine(title='type'),
-							nti_schema.Int(title='count'),
-							title="Search hit type count", required=True)
+	TypeCount = Dict(ValidTextLine(title='type'),
+					 Int(title='count'),
+					 title="Search hit type count", required=True)
 
-	SearchTime = nti_schema.Number(title='Search time', required=True, default=0)
+	SearchTime = Number(title='Search time', required=True, default=0)
 
-	ContainerCount = schema.Dict(
-						nti_schema.ValidTextLine(title='container'),
-						nti_schema.Int(title='count'),
+	ContainerCount = Dict(
+						ValidTextLine(title='container'),
+						Int(title='count'),
 						title="Cointainer hit type count", required=True)
 
-	TotalHitCount = schema.Int(title='Total hit count', required=True,
-							   readonly=True, default=0)
+	TotalHitCount = Int(title='Total hit count', required=True,
+						readonly=True, default=0)
 
 	def track(hit):
 		"""
@@ -747,26 +760,26 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 		pass
 
 class IBaseSearchResults(nti_interfaces.ILastModified):
-	Query = schema.Object(ISearchQuery, title="Search query", required=True)
+	Query = Object(ISearchQuery, title="Search query", required=True)
 
 class ISearchResults(IBaseSearchResults):
 
-	Hits = nti_schema.IndexedIterable(
-				value_type=nti_schema.Object(ISearchHit, description="A ISearchHit`"),
+	Hits = IndexedIterable(
+				value_type=Object(ISearchHit, description="A ISearchHit`"),
 				title="search hit objects",
 				required=True)
 
-	ContentHits = schema.Iterable(
+	ContentHits = Iterable(
 						title="content search hit objects",
 						required=False,
 						readonly=True)
 
-	UserDataHits = schema.Iterable(
+	UserDataHits = Iterable(
 						title="user generated data search hit objects",
 						required=False,
 						readonly=True)
 
-	HitMetaData = schema.Object(ISearchHitMetaData, title="Search hit metadata", required=False)
+	HitMetaData = Object(ISearchHitMetaData, title="Search hit metadata", required=False)
 
 	def add(hit, score=1.0):
 		"""add a search hit(s) to this result"""
@@ -782,10 +795,10 @@ class ISearchResults(IBaseSearchResults):
 
 class ISuggestResults(IBaseSearchResults):
 
-	Suggestions = nti_schema.IndexedIterable(
+	Suggestions = IndexedIterable(
 						title="suggested words",
 						required=True,
-						value_type=nti_schema.ValidTextLine(title="suggested word"))
+						value_type=ValidTextLine(title="suggested word"))
 
 	def add(word):
 		"""add a word suggestion to this result"""
@@ -797,10 +810,10 @@ class ISuggestResults(IBaseSearchResults):
 
 class ISuggestAndSearchResults(ISearchResults, ISuggestResults):
 
-	Suggestions = nti_schema.IndexedIterable(
+	Suggestions = IndexedIterable(
 						title="suggested words",
 						required=False,
-						value_type=nti_schema.ValidTextLine(title="suggested word"))
+						value_type=ValidTextLine(title="suggested word"))
 
 class ISearchResultsCreator(interface.Interface):
 
@@ -824,11 +837,11 @@ class IWhooshAnalyzer(interface.Interface):
 # index events
 
 class ISearchCompletedEvent(interface.Interface):
-	elpased = schema.Float(title="The search elapsed time")
-	query = schema.Object(ISearchQuery, title="The search query")
-	user = schema.Object(nti_interfaces.IEntity, title="The search entity")
-	metadata = schema.Object(ISearchHitMetaData, title="The result meta-data")
-	results = schema.Object(IBaseSearchResults, title="The results")
+	elpased = Float(title="The search elapsed time")
+	query = Object(ISearchQuery, title="The search query")
+	user = Object(nti_interfaces.IEntity, title="The search entity")
+	metadata = Object(ISearchHitMetaData, title="The result meta-data")
+	results = Object(IBaseSearchResults, title="The results")
 
 @interface.implementer(ISearchCompletedEvent)
 class SearchCompletedEvent(component.interfaces.ObjectEvent):
