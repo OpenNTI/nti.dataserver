@@ -10,16 +10,16 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from . import schema as nti_schema
+from nti.schema.field import ValidTextLine
 
 class ILDAP(interface.Interface):
-	ID = nti_schema.ValidTextLine(title="LDAP identifier", required=True)
-	URL = nti_schema.ValidTextLine(title="LDAP URL", required=True)
-	Username = nti_schema.ValidTextLine(title="Bind username", required=True)
-	Password = nti_schema.ValidTextLine(title="Bind password flag", required=True)
-	BaseDN = nti_schema.ValidTextLine(title="Base DN", required=False)
-	BackupURL = nti_schema.ValidTextLine(title="Backup LDAP URL", required=False)
+	ID = ValidTextLine(title="LDAP identifier", required=True)
+	URL = ValidTextLine(title="LDAP URL", required=True)
+	Username = ValidTextLine(title="Bind username", required=True)
+	Password = ValidTextLine(title="Bind password flag", required=True)
+	BaseDN = ValidTextLine(title="Base DN", required=False)
+	BackupURL = ValidTextLine(title="Backup LDAP URL", required=False)
 
 class IOAuthKeys(interface.Interface):
-	APIKey = nti_schema.ValidTextLine(title="API Key", required=True)
-	SecretKey = nti_schema.ValidTextLine(title="Secret Key", required=True)
+	APIKey = ValidTextLine(title="API Key", required=True)
+	SecretKey = ValidTextLine(title="Secret Key", required=True)
