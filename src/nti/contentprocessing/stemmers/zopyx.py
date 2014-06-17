@@ -36,12 +36,15 @@ class _ZopyYXStemmer(object):
 	def _stemmer(self, lang='en'):
 		lang = lang.lower() if lang else 'en'
 		result = self.stemmers.get(lang, None)
-		if result is None:
+		if result is None and stemmer is not None:
 			language = lang_translation[lang]
 			result = self.stemmers[lang] = stemmer.Stemmer(language)
 		return result
 
 	def stem(self, token, lang='en'):
-		token = unicode(token)
-		result = self._stemmer(lang).stem((token,))
-		return result[0] if result else token
+		if stemmer is not None:
+			token = unicode(token)
+			result = self._stemmer(lang).stem((token,))
+			return result[0] if result else token
+		else:
+			return token
