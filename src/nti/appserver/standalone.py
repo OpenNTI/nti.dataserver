@@ -40,7 +40,6 @@ _ZCML_LIBRARY_TEMPLATE = """
 """
 
 def configure_app( global_config,
-				   deploy_root=_marker,
 				   nti_create_ds=True,
 				   sync_changes=True,
 				   **settings ):
@@ -49,32 +48,13 @@ def configure_app( global_config,
 	if '__file__' in global_config and '__file__' not in settings:
 		settings['__file__'] = global_config['__file__']
 
-	if deploy_root is not _marker:
-		# Temporary code. Remove after May 2013
-		logger.warn( "deploy_root and s3_cdn_cname are deprecated. Please move to a ZCML file. " )
-
-		zcml_path = settings.get( 'library_zcml' ) or os.path.join( os.getenv( 'DATASERVER_DIR' ), 'etc', 'library.zcml' )
-		if not os.path.exists( zcml_path ):
-			logger.warn( "Copying existing deploy root to zcml file %s", zcml_path )
-
-			# Quick hack to switch on or off the library: if the root is a path
-			# then we use a filesystem view. If it's not, then we assume it must be a bucket.
-			# TODO: This needs to change because it breaks the glossary/dictionary, which
-			# is assumed to be in the deploy_root?
-			if '/' in deploy_root:
-				lib_str = '<lib:filesystemLibrary directory="%s" />' % deploy_root
-			elif 's3_cdn_cname' in settings and settings['s3_cdn_cname']:
-				lib_str = '<lib:s3Library bucket="%s" cdn_name="%s" />' % (deploy_root, settings['s3_cdn_cname'])
-			else:
-				lib_str = '<lib:s3Library bucket="%s" />' % deploy_root
-
-			with codecs.open(zcml_path, 'w', encoding='utf-8') as f:
-				f.write( _ZCML_LIBRARY_TEMPLATE % lib_str )
+	if 'deploy_root' in settings:
+		# Old code, shouldn't be around anymore
+		raise TypeError( "deploy_root and s3_cdn_cname are deprecated. Please move to a ZCML file. " )
 
 	try:
 		__traceback_info__ = global_config, settings
 		application = createApplication( int(settings.get('http_port','8081')),
-										 library=None,
 										 process_args=True,
 										 create_ds=nti_create_ds,
 										 sync_changes=asbool(sync_changes),

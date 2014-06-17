@@ -56,7 +56,7 @@ class AbstractLibrary(object):
 		"""A callable object that is passed each item from :attr:`possible_content_packages`
 		and returns either a package factory, or `None`.
 
-		This should not file the ``created`` event.
+		This should not fire the ``created`` event.
 		"""
 		return None
 
@@ -140,9 +140,11 @@ class AbstractLibrary(object):
 		# randomizing because we expect to be preloaded.
 		for old in removed:
 			lifecycleevent.removed(old)
+			old.__parent__ = None
 		for up in changed:
 			lifecycleevent.modified(up)
 		for new in added:
+			assert new.__parent__ is self
 			lifecycleevent.created(new)
 			lifecycleevent.added(new)
 
@@ -178,7 +180,7 @@ class AbstractLibrary(object):
 		contentPackages = list(self._contentPackages)
 		for i in parent.contentPackages:
 			if i.ntiid not in self._content_packages_by_ntiid:
-					contentPackages.append(i)
+				contentPackages.append(i)
 		return contentPackages
 
 
