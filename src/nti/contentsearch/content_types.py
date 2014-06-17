@@ -18,7 +18,7 @@ from nti.externalization.externalization import make_repr
 from nti.mimetype import mimetype
 
 from nti.utils.property import alias
-from nti.utils.schema import SchemaConfigured
+from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from . import interfaces as search_interfaces
