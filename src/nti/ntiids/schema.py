@@ -11,11 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.utils import schema as _schema
+from nti.schema.field import ValidURI
 
 from .ntiids import validate_ntiid_string
 
-class ValidNTIID(_schema.ValidURI):
+class ValidNTIID(ValidURI):
 	"""
 	A schema field that checks that the value is a correctly
 	formed NTIID. (This does not perform any validation that the

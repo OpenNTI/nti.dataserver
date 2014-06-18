@@ -3,7 +3,7 @@
 """
 Views and other functions related to forums and blogs.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -20,8 +20,9 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.event import notify
-from ZODB.interfaces import IConnection
 from zope.container.interfaces import INameChooser
+
+from ZODB.interfaces import IConnection
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes

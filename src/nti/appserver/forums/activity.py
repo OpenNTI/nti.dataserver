@@ -3,7 +3,7 @@
 """
 Things related to recording and managing the activity of forums.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -12,15 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-
-from nti.appserver import interfaces as app_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 
-from nti.dataserver import activitystream_change
-
 from nti.appserver.traversal import find_interface
+from nti.appserver import interfaces as app_interfaces
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver import activitystream_change
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from nti.externalization.interfaces import LocatedExternalList
 

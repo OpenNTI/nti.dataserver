@@ -16,12 +16,13 @@ from . import MessageFactory as _
 from zope import interface
 from zope import component
 
-from zc.displayname.interfaces import IDisplayNameGenerator
 from pyramid.interfaces import IRequest
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
-from zc.displayname.adapters import convertName
 from zope.publisher.browser import BrowserView
+from zc.displayname.adapters import convertName
+from zc.displayname.interfaces import IDisplayNameGenerator
+
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 @interface.implementer_only(IDisplayNameGenerator)
 @component.adapter(IPersonalBlog,IRequest)

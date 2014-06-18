@@ -38,6 +38,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.utils.property import annotation_alias
+
 from nti.schema.interfaces import IBeforeTextAssignedEvent
 
 from . import interfaces
