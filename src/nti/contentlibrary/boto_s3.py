@@ -227,7 +227,23 @@ def _package_factory( key ):
 		temp_entry = BotoS3ContentUnit( key=toc_key )
 		return eclipse.EclipseContentPackage( temp_entry, BotoS3ContentPackage, BotoS3ContentUnit )
 
-class BotoS3BucketContentLibrary(library.AbstractLibrary):
+class _BotoS3BucketContentLibraryEnumeration(library.AbstractContentPackageEnumeration):
+
+	def __init__( self, bucket ):
+		"""
+		:param bucket: The bucket to enumerate.
+		"""
+		self._bucket = bucket
+
+	def _package_factory(self, key):
+		return _package_factory(key)
+
+	def _possible_content_packages(self):
+		return list(self._bucket.list(delimiter='/'))
+
+
+
+class BotoS3BucketContentLibrary(library.ContentPackageLibrary):
 	"""
 	Enumerates the first level of a '/' delimited bucket and treats each
 	entry as a possible content package. Content packages are cached.
@@ -240,15 +256,5 @@ class BotoS3BucketContentLibrary(library.AbstractLibrary):
 		those do not correspond to files in the filesystem or objects in the bucket.
 	"""
 
-	def __init__( self, bucket ):
-		"""
-		:param bucket: The bucket to enumerate.
-		"""
-		super(BotoS3BucketContentLibrary,self).__init__()
-		self._bucket = bucket
-
-	def _package_factory(self, key):
-		return _package_factory(key)
-
-	def _possible_content_packages(self):
-		return list(self._bucket.list(delimiter='/'))
+	def __init__(self, bucket):
+		library.ContentPackageLibrary.__init__(self, _BotoS3BucketContentLibraryEnumeration(bucket))
