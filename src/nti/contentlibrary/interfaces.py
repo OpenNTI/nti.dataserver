@@ -27,6 +27,35 @@ from nti.schema.field import Bool
 
 # pylint: disable=E0213,E0211
 
+class IContentPackageEnumeration(interface.Interface):
+	"""
+	Something that can enumerate content packages,
+	but does not need to provide any interpretation of
+	those packages; that's left to the library.
+
+	This is an abstraction layer to separate possible content packages
+	from those actually contained in a library.
+
+	For persistence, these enumerations will often reduce
+	to a function that uses a global utility to find themselves;
+	in this way they can be semi-independent of the data in the database
+	and configuration changes.
+
+	For enumerations that have a way of recording when their
+	contents change, they may optionally implement the
+	:class:`ILastModified` interface.
+	"""
+
+	def enumerateContentPackages():
+		"""
+		Return an iterable of content packages. These packages
+		are not considered to have been created or stored within
+		a library yet, so they should have no ``__parent__``
+		and no created or added events should be fired for them.
+
+		The contents of this enumeration may change over time.
+		"""
+
 class IContentPackageLibrary(ILastModified,
 							 IZContained):
 	"""

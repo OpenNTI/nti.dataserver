@@ -23,36 +23,15 @@ from nti.utils.property import alias
 
 from . import interfaces
 
-@interface.implementer(interfaces.ISyncableContentPackageLibrary)
-class AbstractLibrary(object):
+@interface.implementer(interfaces.IContentPackageEnumeration)
+class AbstractContentPackageEnumeration(object):
 	"""
-	Base class for a Library that cooperates with other
-	libraries in the component hierarchy.
+	Base class providing some semantic helpers for enumeration.
 
-	To make this library concrete, you must implement the
-	abstract methods. This implementation only depends upon those,
-	and the resulting value for ``contentPackages``.
+	To make this class concrete, see :meth:`_package_factory`
+	and :meth:`_possible_content_packages`.
+
 	"""
-
-	__metaclass__ = ABCMeta
-
-	#: Placeholder for prefixes that should be applied when generating
-	#: URLs for items in this library.
-	url_prefix = ''
-
-	#: A place where we will cache the list of known
-	#: content packages. A value of `None` means we have never
-	#: been synced. The behaviour of iterating content packages
-	#: to implicitly sync is deprecated.
-	_contentPackages = None
-
-	__name__ = 'Library'
-	__parent__ = None
-
-	def __init__(self, prefix='', **kwargs):
-		if prefix:
-			self.url_prefix = prefix
-
 	def _package_factory(self, possible_content_package):
 		"""A callable object that is passed each item from :attr:`possible_content_packages`
 		and returns either a package factory, or `None`.
@@ -68,7 +47,7 @@ class AbstractLibrary(object):
 		"""
 		return ()
 
-	def _syncContentPackages(self):
+	def enumerateContentPackages(self):
 		"""
 		Returns a sequence of IContentPackage items, as created by
 		invoking the ``self._package_factory`` on each item returned
@@ -78,9 +57,47 @@ class AbstractLibrary(object):
 		for path in self._possible_content_packages():
 			title = self._package_factory( path )
 			if title:
-				title.__parent__ = self
 				titles.append( title )
 		return titles
+
+
+
+@interface.implementer(interfaces.ISyncableContentPackageLibrary)
+class ContentPackageLibrary(object):
+	"""
+	A library that uses an enumeration and cooperates with parent
+	libraries in the component hierarchy to build a complete
+	library.
+	"""
+
+	#: Placeholder for prefixes that should be applied when generating
+	#: URLs for items in this library.
+	url_prefix = ''
+
+	#: A place where we will cache the list of known
+	#: content packages. A value of `None` means we have never
+	#: been synced. The behaviour of iterating content packages
+	#: to implicitly sync is deprecated.
+	_contentPackages = None
+
+	#: The enumeration we will use when asked to sync
+	#: content packages.
+	_enumeration = None
+
+	#: When we sync, we capture the `lastModified` timestamp
+	#: of the enumeration, if it provides it.
+	_enumeration_last_modified = 0
+
+	__name__ = 'Library'
+	__parent__ = None
+
+	def __init__(self, enumeration, prefix='', **kwargs):
+		self._enumeration = enumeration
+		assert enumeration is not None
+		if prefix:
+			self.url_prefix = prefix
+
+
 
 	def syncContentPackages(self):
 		"""
@@ -90,7 +107,9 @@ class AbstractLibrary(object):
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
-		new_content_packages = list(self._syncContentPackages())
+		new_content_packages = list(self._enumeration.enumerateContentPackages())
+		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
+
 		# Before we fire any events, compute all the work so that
 		# we can present a consistent view to any listeners that
 		# will be watching
@@ -128,6 +147,7 @@ class AbstractLibrary(object):
 
 		self._contentPackages = _contentPackages
 		self._content_packages_by_ntiid = _content_packages_by_ntiid
+		self._enumeration_last_modified = enumeration_last_modified
 
 		# Now fire the events letting listeners (e.g., index and question adders)
 		# know that we have content. Randomize the order of this across worker
@@ -145,7 +165,7 @@ class AbstractLibrary(object):
 		for up in changed:
 			lifecycleevent.modified(up)
 		for new in added:
-			assert new.__parent__ is self
+			new.__parent__ = self
 			lifecycleevent.created(new)
 			lifecycleevent.added(new)
 
@@ -203,22 +223,29 @@ class AbstractLibrary(object):
 			# Must also take care to clear its dependents
 			if '_content_packages_by_ntiid' in self.__dict__:
 				del self._content_packages_by_ntiid
-		super(AbstractLibrary,self).__delattr__(name)
+		super(ContentPackageLibrary,self).__delattr__(name)
 
-	titles = alias('contentPackages' )
-	createdTime = 0
+	titles = alias('contentPackages')
+
+	@property
+	def createdTime(self):
+		return getattr(self._enumeration, 'createdTime', 0)
 
 	@property
 	def lastModified(self):
 		"""
 		This object is deemed to be last modified at least
-		as recently as any of its content packages.
+		as recently as any of its content packages and its enumeration.
 		Note: This fails if removal is supported by the subclass (last modified could go
 		backwards). If you support removal, you should override this
 		method.
 		"""
-		mods = [x.index_last_modified for x in self.contentPackages if x.index_last_modified is not None]
-		return max(mods) if mods else -1
+		lastModified = -1
+		for x in self.contentPackages: # does an implicit sync, setting _enumeration_last_modified
+			lastModified = max(lastModified, x.index_last_modified or -1)
+
+		lastModified = max(self._enumeration_last_modified, lastModified)
+		return lastModified
 
 	def __getitem__( self, key ):
 		"""
@@ -314,16 +341,16 @@ class AbstractLibrary(object):
 			rec(package)
 		return result
 
-class EmptyLibrary(AbstractLibrary):
+class _EmptyEnumeration(AbstractContentPackageEnumeration):
+
+	def enumerateContentPackages(self):
+		return ()
+
+def EmptyLibrary(prefix=''):
 	"""
 	A library that is perpetually empty.
 	"""
-
-	def __init__(self, prefix=''):
-		super(EmptyLibrary,self).__init__(prefix=prefix)
-
-	def _syncContentPackages(self):
-		return ()
+	return ContentPackageLibrary(_EmptyEnumeration(), prefix=prefix)
 
 def pathToPropertyValue( unit, prop, value ):
 	"""

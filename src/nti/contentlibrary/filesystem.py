@@ -59,25 +59,27 @@ def _package_factory(directory):
 
 	return package
 
-@interface.implementer(IFilesystemContentPackageLibrary)
-class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
+from nti.dublincore.interfaces import ILastModified
+
+@interface.implementer(ILastModified)
+class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	"""
 	A library that will examine the root to find possible content packages
-	only the very first time that it is requested to. Changes after that
-	point will be ignored. The content packages and parsed
-	data will be cached in memory until this library is deleted.
-
-	This library will broadcast :class:`.IObjectCreatedEvent` and
-	:class:`.IObjectAddedEvent` for content packages.
 	"""
 
-	_root_mtime = 0
+	def __init__(self, root):
+		self._root = root
 
-	def __init__(self, root='', **kwargs):
-		if 'paths' in kwargs:
-			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
-		super(EnumerateOnceFilesystemLibrary, self).__init__(**kwargs)
-		self._root = root or kwargs.pop('root')
+	def _time(self, key):
+		return os.stat(self._root)[key]
+
+	@property
+	def createdTime(self):
+		return self._time(os.path.stat.ST_CTIME)
+
+	@property
+	def lastModified(self):
+		return self._time(os.path.stat.ST_MTIME)
 
 	def _package_factory(self, path):
 		return _package_factory(path)
@@ -89,13 +91,28 @@ class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
 			if os.path.isdir(p) and _hasTOC(p):
 				yield p
 
-	def _syncContentPackages(self):
-		self._root_mtime = os.stat(self._root)[os.path.stat.ST_MTIME]
-		return super(EnumerateOnceFilesystemLibrary,self)._syncContentPackages()
 
-	@property
-	def lastModified(self):
-		return max(self._root_mtime, super(EnumerateOnceFilesystemLibrary, self).lastModified)
+
+@interface.implementer(IFilesystemContentPackageLibrary)
+class EnumerateOnceFilesystemLibrary(library.ContentPackageLibrary):
+	"""
+	A library that will examine the root to find possible content packages
+	only the very first time that it is requested to. Changes after that
+	point will be ignored. The content packages and parsed
+	data will be cached in memory until this library is deleted.
+
+	This library will broadcast :class:`.IObjectCreatedEvent` and
+	:class:`.IObjectAddedEvent` for content packages.
+	"""
+
+	def __init__(self, root='', **kwargs):
+		if 'paths' in kwargs:
+			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
+
+		root = root or kwargs.pop('root')
+		enumeration = _FilesystemLibraryEnumeration(root)
+		library.ContentPackageLibrary.__init__(self, enumeration, **kwargs)
+
 
 # A measure of BWC
 DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
