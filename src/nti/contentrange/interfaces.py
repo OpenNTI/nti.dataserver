@@ -10,17 +10,17 @@ For a more complete explanation, see content-anchoring.rst.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.vocabulary import SimpleTerm
-
 from zope import interface
 
-from nti.utils.schema import Choice
-from nti.schema.field import ValidTextLine as TextLine
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
+
 from nti.schema.field import Int
-from nti.schema.field import ValidText as Text
+from nti.schema.field import List
+from nti.schema.field import Choice
 from nti.schema.field import Object
-from nti.utils.schema import List
+from nti.schema.field import ValidText as Text
+from nti.schema.field import ValidTextLine as TextLine
 
 class IContentRangeDescription(interface.Interface):
 	"""
@@ -99,8 +99,8 @@ class ITimeRangeDescription(IContentRangeDescription):
 
 class ITranscriptContentPointer(ITimeContentPointer):
 	pointer = Object(IDomContentPointer,
-							  title="Tthe pointer in this cue that defines the edge (start or end based on the value of role) for this edge of the range",
-							  required=True)
+					 title="Tthe pointer in this cue that defines the edge (start or end based on the value of role) for this edge of the range",
+					 required=True)
 	cueid = TextLine(title="Cue id", required=False)
 
 class ITranscriptRangeDescription(ITimeRangeDescription):
