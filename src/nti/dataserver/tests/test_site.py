@@ -94,24 +94,10 @@ class TestSiteSubscriber(unittest.TestCase):
 						 BASE ) )
 
 SITE_NAME = 'test_site.nextthought.com'
-SITE_ZCML_STRING = """
-		<configure xmlns="http://namespaces.zope.org/zope"
-			xmlns:zcml="http://namespaces.zope.org/zcml"
-			xmlns:lib="http://nextthought.com/ntp/contentlibrary"
-			i18n_domain='nti.dataserver'>
 
-		<include package="zope.component" />
-		<include package="zope.annotation" />
-		<include package="z3c.baseregistry" file="meta.zcml" />
+TESTCOMP = BaseComponents(BASE, name=SITE_NAME, bases=(BASE,))
 
-
-		<utility
-			component="nti.appserver.policies.sites.BASECOPPA"
-			provides="zope.component.interfaces.IComponents"
-			name="test_site.nextthought.com" />
-		</configure>"""
-
-from zope.configuration import xmlconfig, config
+from zope.component.interfaces import IComponents
 
 from .mock_dataserver import DataserverLayerTest
 from .mock_dataserver import mock_db_trans
@@ -130,15 +116,11 @@ class TestSiteSync(DataserverLayerTest):
 
 	def setUp(self):
 		super(TestSiteSync,self).setUp()
-		# We must do this outside of the context of a
-		# WithMockDS decorator, because that decorator interjects
-		# a local site manager, but for the hierarchy to be correct
-		# we need this to be in the GSM
-		context = config.ConfigurationMachine()
+		BASE.registerUtility(TESTCOMP, name=SITE_NAME, provided=IComponents)
 
-		xmlconfig.registerCommonDirectives( context )
-
-		xmlconfig.string( SITE_ZCML_STRING, context )
+	def tearDown(self):
+		BASE.unregisterUtility(TESTCOMP, name=SITE_NAME, provided=IComponents)
+		super(TestSiteSync,self).tearDown()
 
 	@WithMockDS
 	def test_site_sync(self):
