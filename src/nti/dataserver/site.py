@@ -450,6 +450,8 @@ class HostPolicyFolder(Folder):
 class HostPolicySiteManager(_ZLocalSiteManager):
 	pass
 
+
+from zope.interface import ro
 def synchronize_host_policies():
 	"""
 	Called within a transaction with a site being the current dataserver
@@ -460,23 +462,77 @@ def synchronize_host_policies():
 	# TODO: We will ultimately need to deal with removing and renaming
 	# of these
 
+	# Resolution order: The actual ISite __parent__ order is not
+	# important, so we can keep them flat to mirror the GSM IComponents
+	# registrations. What matters is the __bases__ of the site managers.
+	# Now, if the global IComponents are themselves flat, then it doesn't matter;
+	# however, if you have a hierarchy (and we do) then it matters critically, because
+	# we need to pick up persistent utilities from these objects, as well as
+	# the global components, in the right order. For example, if we have this
+	# global hierarchy:
+	#  GSM
+	#  \
+	#	S1
+	#    \
+	#	  S2
+	# and in the database we have the nti.dataserver and root persistent site managers,
+	# then when we create the persistent sites for S1 and S2 (PS1 and PS2) we want the resolution order
+	# to be:
+	#   PS2 -> S2 -> PS1 -> S1 -> DS -> Root -> GSM
+	# That is, we need to get the persistent components mixed in between the
+	# global components.
+	# Fortunately this is very easy to achieve. The code in zope.interface.ro handles this.
+	# We just need to ensure:
+	#   PS1.__bases__ = (S1, DS)
+	#   PS2.__bases__ = (S2, PS1)
+
 	sites = component.getUtility(IEtcNamespace, name='hostsites')
 	ds_folder = sites.__parent__
 	assert IDataserverFolder.providedBy(ds_folder)
 
 	ds_site_manager = ds_folder.getSiteManager()
 
-	for name, comps in component.getGlobalSiteManager().getUtilitiesFor(IComponents):
-		if name and (name.endswith('.com') or name.endswith('.edu')):
-			if name not in sites:
+	# Ok, find everything that is globally registered
+	all_global_named_utilities = list(component.getGlobalSiteManager().getUtilitiesFor(IComponents))
+	for name, comp in all_global_named_utilities:
+		# The sites must be registered the same as their internal name
+		assert name == comp.__name__
+	all_global_utilities = [x[1] for x in all_global_named_utilities]
+
+	# Now, get the resolution order of each site; this is an easy way
+	# to do a kind of topological sort.
+	site_ros = [ro.ro(x) for x in all_global_utilities]
+
+	# Next, start creating persistent sites in the database, walking from the top
+	# of the resolution order (the end of the list)
+	# towards the root; the first one we put in the DB gets the DS as its
+	# base, otherwise it gets the previous one we put in.
+
+	for site_ro in site_ros:
+		site_ro = reversed(site_ro)
+
+		secondary_comps = ds_site_manager
+		for comps in site_ro:
+			name = comps.__name__
+			if name.startswith('base'):
+				# The GSM or the base global objects
+				continue
+			if name in sites:
+				# Ok, we've already put one in for this level.
+				# We need to make it our next choice going forward
+				secondary_comps = sites[name].getSiteManager()
+			else:
+				# Great, create the site
+
 				site = HostPolicyFolder()
 				# should fire object created event
 				sites[name] = site
 
 				site_policy = HostPolicySiteManager(site)
-				site_policy.__bases__ = (comps, ds_site_manager)
+				site_policy.__bases__ = (comps, secondary_comps)
 				# should fire INewLocalSite
 				site.setSiteManager(site_policy)
+				secondary_comps = site_policy
 
 from zope.site.interfaces import INewLocalSite
 @component.adapter(INewLocalSite)
