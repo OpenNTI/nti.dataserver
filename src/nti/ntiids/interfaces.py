@@ -13,8 +13,8 @@ from zope.interface.common import sequence
 
 from dolmen.builtins import ITuple
 
-from nti.utils import schema
-
+from nti.schema.field import TextLine
+	
 class INTIID(ITuple,sequence.IMinimalSequence):
 	"""
 	Represents the parts of an NTIID that has been parsed.
@@ -23,10 +23,10 @@ class INTIID(ITuple,sequence.IMinimalSequence):
 	(provider, type, specific, date)
 
 	"""
-	provider = schema.TextLine( title="The username of the creating/providing entity." )
-	nttype = schema.TextLine( title="The type of the NTIID." )
-	specific = schema.TextLine( title="The type-specific portion of the NTIID." )
-	date = schema.TextLine( title="The date portion of the NTIID." )
+	provider = TextLine(title="The username of the creating/providing entity.")
+	nttype = TextLine(title="The type of the NTIID.")
+	specific = TextLine(title="The type-specific portion of the NTIID.")
+	date = TextLine(title="The date portion of the NTIID.")
 
 class INTIIDResolver(interface.Interface):
 	"""
