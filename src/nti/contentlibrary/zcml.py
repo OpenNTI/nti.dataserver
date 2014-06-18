@@ -6,31 +6,32 @@ ZCML directives relating to link providers.
 $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
-import functools
 import os.path
+import functools
+
 import boto
 
 from zope import interface
+from zope.component.zcml import utility
 from zope.component import getSiteManager
+from zope.configuration.exceptions import ConfigurationError
 
 import zope.configuration.fields
-from zope.configuration.exceptions import ConfigurationError
-from zope.component.zcml import utility
+
+from .boto_s3 import NameEqualityBucket
+from .boto_s3 import BotoS3BucketContentLibrary
 
 from .interfaces import IContentPackageLibrary
 from .filesystem import EnumerateOnceFilesystemLibrary
-from .boto_s3 import BotoS3BucketContentLibrary
-from .boto_s3 import NameEqualityBucket
+
 from .externalization import map_all_buckets_to
 
-from nti.utils import schema
+from nti.schema.field import ValidTextLine
 
 class IFilesystemLibrary(interface.Interface):
 	"""
@@ -42,7 +43,7 @@ class IFilesystemLibrary(interface.Interface):
 		required=True
 		)
 
-	prefix = schema.ValidTextLine(
+	prefix = ValidTextLine(
 		title="The URL prefix for the content items",
 		description="""If you do not give this, then the content items are assumed to be directly
 			accessible from the root of the URL space. This is most commonly needed
@@ -76,13 +77,13 @@ class IS3Library(interface.Interface):
 	Register a library pulled from an S3 bucket.
 	"""
 
-	bucket = schema.ValidTextLine(
+	bucket = ValidTextLine(
 		title="The name of the S3 bucket that contains content",
 		description="For example, dev-content.nextthought.com",
 		required=True
 		)
 
-	cdn_name = schema.ValidTextLine(
+	cdn_name = ValidTextLine(
 		title="The name of a CDN distribution placed on top of the S3 bucket.",
 		description="For example, d2wnvtui8zrua9.cloudfront.net",
 		required=False

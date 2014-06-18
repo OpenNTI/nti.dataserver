@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.location.interfaces import IContained as IZContained
-from zope.dublincore import interfaces as dub_interfaces
 from zope.annotation.interfaces import IAnnotatable
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.dublincore import interfaces as dub_interfaces
+from zope.location.interfaces import IContained as IZContained
+
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
@@ -22,8 +23,7 @@ from nti.schema.field import IndexedIterable
 from nti.schema.field import Iterable
 from nti.schema.field import Object
 from nti.schema.field import Int
-from nti.utils.schema import Bool
-
+from nti.schema.field import Bool
 
 # pylint: disable=E0213,E0211
 
@@ -217,7 +217,6 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 		if it does, a false value if it doesn't.
 		"""
 
-
 class IContentUnit(IZContained,
 				   IDCOptionalDescriptiveProperties,
 				   IAnnotatable):
@@ -310,7 +309,6 @@ class IPotentialLegacyCourseConflatedContentPackage(IContentPackage):
 	isCourse = Bool(title="If this package is for a course",
 						   default=False,
 						   required=True)
-
 
 class ILegacyCourseConflatedContentPackage(IPotentialLegacyCourseConflatedContentPackage):
 	"""

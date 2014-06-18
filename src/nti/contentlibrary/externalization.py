@@ -3,10 +3,12 @@
 """
 Support for externalizing portions of the library.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 from urlparse import urljoin
 import anyjson as json
@@ -18,9 +20,10 @@ import urllib
 from zope import interface
 from zope import component
 
-from nti.externalization.externalization import toExternalObject, to_standard_external_dictionary
 from nti.externalization.interfaces import IExternalObject, StandardExternalFields
-from nti.contentlibrary import interfaces
+from nti.externalization.externalization import toExternalObject, to_standard_external_dictionary
+
+from . import interfaces
 
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IContentPackageLibrary)
@@ -164,7 +167,6 @@ class _FilesystemContentUnitHrefMapper(object):
 	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
-
 @interface.implementer(interfaces.IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
@@ -190,7 +192,6 @@ class _FilesystemKeyHrefMapper(object):
 			href = '/' + href
 		self.href = href
 
-
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
 @component.adapter(interfaces.IS3ContentUnit)
 class _S3ContentUnitHrefMapper(object):
@@ -198,7 +199,6 @@ class _S3ContentUnitHrefMapper(object):
 
 	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
-
 
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
 @component.adapter(interfaces.IS3Key)

@@ -3,28 +3,29 @@
 """
 Generic implementations of IContentUnit functions
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.container.contained import Contained
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from .interfaces import IContentUnit
 from .interfaces import IContentPackage
 from .interfaces import IPotentialLegacyCourseConflatedContentPackage
 from .interfaces import IDisplayableContent
 from .interfaces import ILegacyCourseConflatedContentPackage
-from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.utils.property import alias
+
+from nti.schema.schema import PermissiveSchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
-from nti.schema.schema import PermissiveSchemaConfigured
 
-from zope.container.contained import Contained
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 @interface.implementer(IContentUnit, IAttributeAnnotatable)
