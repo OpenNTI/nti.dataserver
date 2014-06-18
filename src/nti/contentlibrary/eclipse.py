@@ -3,9 +3,9 @@
 """
 Objects for working with Eclipse index representations of content packages.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # This module is badly named now
@@ -36,7 +36,6 @@ DCMETA_FILENAME = 'dc_metadata.xml'
 MAIN_CSV_CONTENT_GLOSSARY_FILENAME = 'nti_content_glossary.csv'
 #: Assessment items for this entire content
 ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
-
 
 _toc_item_attrs = ('NTIRelativeScrollHeight','label', 'ntiid', 'href')
 # Note that we preserve href as a string, and manually

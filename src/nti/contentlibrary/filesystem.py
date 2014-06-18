@@ -3,9 +3,9 @@
 """
 Objects for creating IContentLibrary objects based on the filesystem.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -17,6 +17,7 @@ from zope import interface
 from zope.location.interfaces import IContained as IZContained
 
 import repoze.lru
+
 from nti.utils.property import alias, CachedProperty
 
 from . import eclipse
@@ -95,7 +96,6 @@ class EnumerateOnceFilesystemLibrary(library.AbstractLibrary):
 	@property
 	def lastModified(self):
 		return max(self._root_mtime, super(EnumerateOnceFilesystemLibrary, self).lastModified)
-
 
 # A measure of BWC
 DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary

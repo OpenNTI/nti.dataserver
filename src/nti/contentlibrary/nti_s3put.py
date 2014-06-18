@@ -24,12 +24,10 @@
 # IN THE SOFTWARE.
 #
 """
-
-
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -100,7 +98,6 @@ SYNOPSIS
 
 import getopt, sys, os
 import boto
-from boto.exception import S3ResponseError
 
 import mimetypes
 from zope.configuration import xmlconfig
@@ -207,21 +204,21 @@ def main():
 				for ignore in ignore_dirs:
 					if ignore in dirs:
 						dirs.remove(ignore)
-				for file in files:
-					if file in IGNORED_DOTFILES:
+				for filename in files:
+					if filename in IGNORED_DOTFILES:
 						continue
 
-					fullpath = os.path.join(root, file)
+					fullpath = os.path.join(root, filename)
 					key_name = get_key_name(fullpath, prefix)
 					copy_file = True
 					if no_overwrite:
 						if key_name in keys:
 							copy_file = False
 							if not quiet:
-								print( 'Skipping %s as it exists in s3' % file )
+								print('Skipping %s as it exists in s3' % filename)
 					if copy_file:
 						if not quiet and no_op:
-							print( 'Copying %s to %s/%s' % (file, bucket_name, key_name) )
+							print('Copying %s to %s/%s' % (filename, bucket_name, key_name))
 						if not no_op:
 							k = b.new_key(key_name)
 							file_headers = _upload_file( k, fullpath,
@@ -230,7 +227,7 @@ def main():
 														 headers=headers  )
 							if not quiet:
 								print( 'Copied %s to %s/%s as type %s encoding %s'
-									   % (file, bucket_name, key_name,
+									   % (filename, bucket_name, key_name,
 										  file_headers.get('Content-Type', 'application/octet-stream'),
 										  file_headers.get('Content-Encoding', 'identity') ) )
 					total += 1

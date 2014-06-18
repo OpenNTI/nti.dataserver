@@ -3,24 +3,25 @@
 """
 Classes useful for working with libraries.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import numbers
+import warnings
+from abc import ABCMeta
 
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.event import notify
 
-from . import interfaces
-
 from nti.utils.property import alias
 
-from abc import ABCMeta
-import warnings
+from . import interfaces
 
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractLibrary(object):
