@@ -28,8 +28,11 @@ class StringsLocalizer(AbstractAuthenticatedView):
 	_DOMAIN = 'NextThoughtWebApp'
 
 	def __call__(self):
-
-		domain = component.getUtility(ITranslationDomain, name=self._DOMAIN)
+		try:
+			domain = component.getUtility(ITranslationDomain, name=self._DOMAIN)
+		except LookupError:
+			logger.exception("WebApp strings not registered---misconfigured?")
+			raise HTTPNotFound('No translation domain')
 
 		# Negotiate the language to use
 		negotiator = component.getUtility(INegotiator)
