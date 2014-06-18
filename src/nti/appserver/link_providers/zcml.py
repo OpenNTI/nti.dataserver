@@ -26,7 +26,7 @@ from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
 from pyramid.interfaces import IRequest
 
-from nti.utils import schema
+from nti.schema.field import ValidTextLine
 
 from .link_provider import LinkProvider, GenerationalLinkProvider
 
@@ -35,7 +35,7 @@ class IUserLinkDirective(interface.Interface):
 	Register a named link provider.
 	"""
 
-	name = schema.ValidTextLine(
+	name = ValidTextLine(
 		title="The name of the link.",
 		description="This literal value will be used as the relationship type of the link. You must provide either this or ``named``",
 		required=False,
@@ -52,7 +52,7 @@ class IUserLinkDirective(interface.Interface):
 		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD. Mutually exclusive with ``field``.""",
 		required=False )
 
-	url = schema.ValidTextLine( # Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
+	url = ValidTextLine(# Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
 		title="A URI to redirect to on GET",
 		description="NOTE: This is not enforced to be a complete, valid URL/URI. You are responsible for that. Mutually exclusive with ``field``",
 		required=False )
@@ -68,7 +68,7 @@ class IUserLinkDirective(interface.Interface):
 		required=False,
 		value_type=name)
 
-	mimeType = schema.ValidTextLine(
+	mimeType = ValidTextLine(
 		title="The mime type expected to be returned by the link",
 		constraint=mimeTypeConstraint,
 		required=False )
@@ -78,7 +78,16 @@ class IUserLinkDirective(interface.Interface):
 		required=False,
 		default=IUser )
 
-def registerUserLink( _context, name=None, named=None, minGeneration=None, url=None, field=None, view_named=None, mimeType=None, for_=IUser ):
+def registerUserLink(_context,
+					 name=None,
+					 named=None,
+					 minGeneration=None,
+					 url=None,
+					 field=None,
+					 view_named=None,
+					 mimeType=None,
+					 for_=IUser):
+
 	if name and named:
 		raise ConfigurationError( "Pick either name or named, not both" )
 	if named:
