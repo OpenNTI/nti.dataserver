@@ -212,7 +212,6 @@ def get_site_for_site_names( site_names, site=None ):
 		# we want to use that.
 		try:
 			pers_site = site['++etc++hostsites'][site_name]
-			assert site.getSiteManager() in pers_site.getSiteManager().__bases__
 			site = pers_site
 		except (KeyError,TypeError): # (And maybe type error?)
 			# No, nothing persistent, dummy one up. The site components are only a

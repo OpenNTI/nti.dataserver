@@ -23,6 +23,8 @@ from hamcrest import has_length
 from hamcrest import is_not as does_not
 from hamcrest import not_none
 from hamcrest import is_
+from hamcrest import same_instance
+
 from nti.testing.matchers import validly_provides
 from zope.component.hooks import getSite, setSite
 from .mock_dataserver import SharedConfiguringTestLayer
@@ -124,8 +126,7 @@ DEMOALPHA = BaseComponents(DEMO,
 
 _SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
 
-from zope import component
-from zope.interface import ro
+
 from zope.component.interfaces import IComponents
 
 from .mock_dataserver import DataserverLayerTest
@@ -138,6 +139,7 @@ from zope.component.interfaces import ISite
 from zope.site.interfaces import INewLocalSite
 from ..interfaces import IHostPolicySiteManager
 
+from ..site import get_site_for_site_names
 from ..site import synchronize_host_policies
 from ..site import _find_site_components
 
@@ -270,6 +272,10 @@ class TestSiteSync(DataserverLayerTest):
 							  u'Pdataserver2',
 							  u'PNone',
 							  'base']))
+
+			# And that it's what we get back if we ask for it
+			assert_that( get_site_for_site_names( (DEMOALPHA.__name__,)),
+						 is_( same_instance( sites[DEMOALPHA.__name__]) ) )
 
 		# No new sites created
 		assert_that( self._events, has_length(len(_SITES)) )
