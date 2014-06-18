@@ -219,7 +219,11 @@ def _library_settings(pyramid_config, server):
 			with site(ds_site):
 				# XXX: JAM: Note: this sync call will move around!
 				from nti.dataserver.site import synchronize_host_policies
-				synchronize_host_policies()
+				try:
+					synchronize_host_policies()
+				except LookupError:
+					# We may not have evolved yet
+					pass
 				library.syncContentPackages()
 		conn.close()
 
