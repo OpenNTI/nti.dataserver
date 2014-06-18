@@ -28,9 +28,12 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
+from persistent import Persistent
+
 @interface.implementer(IContentUnit, IAttributeAnnotatable)
 class ContentUnit(PermissiveSchemaConfigured,
 				  Contained,
+				  Persistent,
 				  DCTimesLastModifiedMixin):
 	"""
 	Simple implementation of :class:`IContentUnit`.

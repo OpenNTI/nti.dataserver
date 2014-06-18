@@ -31,6 +31,8 @@ class AbstractContentPackageEnumeration(object):
 	To make this class concrete, see :meth:`_package_factory`
 	and :meth:`_possible_content_packages`.
 
+	When instances of this enumeration are pickled,
+	they
 	"""
 	def _package_factory(self, possible_content_package):
 		"""A callable object that is passed each item from :attr:`possible_content_packages`
@@ -68,6 +70,11 @@ class ContentPackageLibrary(object):
 	A library that uses an enumeration and cooperates with parent
 	libraries in the component hierarchy to build a complete
 	library.
+
+	We become the parent of the enumeration, so it is critical that
+	enumerations are not shared between libraries; an enumeration
+	defines a library, so those libraries would be semantically
+	equivalent.
 	"""
 
 	#: Placeholder for prefixes that should be applied when generating
@@ -93,11 +100,10 @@ class ContentPackageLibrary(object):
 
 	def __init__(self, enumeration, prefix='', **kwargs):
 		self._enumeration = enumeration
+		enumeration.__parent__ = self
 		assert enumeration is not None
 		if prefix:
 			self.url_prefix = prefix
-
-
 
 	def syncContentPackages(self):
 		"""

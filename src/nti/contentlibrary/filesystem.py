@@ -130,7 +130,6 @@ def CachedNotifyingStaticFilesystemLibrary(paths=()):
 
 @interface.implementer(IFilesystemBucket, IZContained)
 class FilesystemBucket(object):
-	__slots__ = (b'name', b'__parent__')
 
 	__name__ = alias('name')
 	key = alias('name')
@@ -153,7 +152,6 @@ class FilesystemBucket(object):
 
 @interface.implementer(IFilesystemKey, IZContained)
 class FilesystemKey(object):
-	# __slots__ = ('name', 'bucket') # Doesn't play well with CachedProperty
 
 	bucket = None
 	name = None

@@ -213,8 +213,12 @@ def get_site_for_site_names( site_names, site=None ):
 		try:
 			pers_site = site['++etc++hostsites'][site_name]
 			site = pers_site
-		except (KeyError,TypeError): # (And maybe type error?)
-			# No, nothing persistent, dummy one up. The site components are only a
+		except (KeyError,TypeError):
+			# No, nothing persistent, dummy one up.
+			# Note that this code path is deprecated now and not
+			# expected to be hit.
+
+			# The site components are only a
 			# partial configuration and are not persistent, so we need
 			# to use two bases to make it work (order matters) (for
 			# example, the main site is almost always the
