@@ -20,6 +20,8 @@ from hamcrest import is_
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import calling
+from hamcrest import raises
 from zope.event import notify
 
 
@@ -33,6 +35,8 @@ def adjust(request):
 
 from ..views import StringsLocalizer
 
+from pyramid.httpexceptions import HTTPNotFound
+
 
 class TestApplicationViews(ApplicationLayerTest):
 
@@ -44,6 +48,11 @@ class TestApplicationViews(ApplicationLayerTest):
 		self.request.environ[b'HTTP_ACCEPT_LANGUAGE'] = b'ru'
 		self.view = StringsLocalizer(self.request)
 		self.view._DOMAIN = 'nti.dataserver'
+
+	def test_no_domain_found(self):
+		self.view._DOMAIN = 'this domain should never exist'
+		assert_that( calling(self.view),
+					 raises(HTTPNotFound))
 
 	@fudge.patch('nti.app.i18n.subscribers.get_remote_user',
 				 'nti.app.i18n.adapters.get_remote_user')
