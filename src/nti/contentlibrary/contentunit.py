@@ -33,7 +33,6 @@ from persistent import Persistent
 @interface.implementer(IContentUnit, IAttributeAnnotatable)
 class ContentUnit(PermissiveSchemaConfigured,
 				  Contained,
-				  Persistent,
 				  DCTimesLastModifiedMixin):
 	"""
 	Simple implementation of :class:`IContentUnit`.
