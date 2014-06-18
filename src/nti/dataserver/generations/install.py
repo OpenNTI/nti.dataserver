@@ -190,11 +190,10 @@ def install_sites_folder(dataserver_folder):
 	IEtcNamespace utility called \"hostsites\".
 	"""
 
-	if '++etc++hostsites' not in dataserver_folder:
-		sites = HostSitesFolder()
-		dataserver_folder['++etc++hostsites'] = sites
-		lsm = dataserver_folder.getSiteManager()
-		lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
+	sites = HostSitesFolder()
+	dataserver_folder['++etc++hostsites'] = sites
+	lsm = dataserver_folder.getSiteManager()
+	lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
 
 from nti.dataserver.interfaces import IShardLayout
 
