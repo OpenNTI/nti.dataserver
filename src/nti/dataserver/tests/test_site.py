@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import contains
 from hamcrest import has_property
 from hamcrest import has_key
+from hamcrest import has_length
 from hamcrest import is_not as does_not
 from hamcrest import not_none
 from hamcrest import is_
@@ -106,21 +107,30 @@ from .mock_dataserver import WithMockDS
 
 from nti.testing.matchers import verifiably_provides
 from zope.component.interfaces import ISite
-
+from zope.site.interfaces import INewLocalSite
+from ..interfaces import IHostPolicySiteManager
 
 from ..site import synchronize_host_policies
 from ..site import _find_site_components
 
 class TestSiteSync(DataserverLayerTest):
 
+	_events = ()
 
 	def setUp(self):
 		super(TestSiteSync,self).setUp()
 		BASE.registerUtility(TESTCOMP, name=SITE_NAME, provided=IComponents)
+		BASE.registerHandler(self._on_host_site, required=(IHostPolicySiteManager, INewLocalSite))
+		self._events = []
 
 	def tearDown(self):
 		BASE.unregisterUtility(TESTCOMP, name=SITE_NAME, provided=IComponents)
+		BASE.unregisterHandler(self._on_host_site, required=(IHostPolicySiteManager, INewLocalSite))
 		super(TestSiteSync,self).tearDown()
+
+	def _on_host_site(self, *args):
+		self._events.append( args )
+
 
 	@WithMockDS
 	def test_site_sync(self):
@@ -140,6 +150,9 @@ class TestSiteSync(DataserverLayerTest):
 
 			synchronize_host_policies()
 
+			assert_that( self._events, has_length(1) )
+			assert_that( self._events[0][0].__parent__, has_property('__name__', SITE_NAME))
+
 		with mock_db_trans(self.ds) as conn:
 			ds = conn.root()['nti.dataserver']
 
@@ -147,3 +160,5 @@ class TestSiteSync(DataserverLayerTest):
 			sites = ds['++etc++hostsites']
 			assert_that( sites, has_key(SITE_NAME))
 			assert_that( sites[SITE_NAME], verifiably_provides(ISite) )
+
+		assert_that( self._events, has_length(1) )

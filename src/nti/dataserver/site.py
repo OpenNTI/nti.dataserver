@@ -470,12 +470,28 @@ def synchronize_host_policies():
 		if name and (name.endswith('.com') or name.endswith('.edu')):
 			if name not in sites:
 				site = HostPolicyFolder()
+				# should fire object created event
 				sites[name] = site
 
 				site_policy = HostPolicySiteManager(site)
 				site_policy.__bases__ = (comps, ds_site_manager)
-
+				# should fire INewLocalSite
 				site.setSiteManager(site_policy)
+
+from zope.site.interfaces import INewLocalSite
+@component.adapter(INewLocalSite)
+def new_local_site_dispatcher(event):
+	"""
+	Dispatches just like an object event,
+	that way we can do things based on the type of the
+	site manager.
+
+	Note that if the containing ISite is (re)moved, an
+	ObjectEvent will be fired for (sitemanager, site-event);
+	that is, you subscribe to the site manager and the object moved
+	event, but the event will have the ISite as the object property.
+	"""
+	component.handle(event.manager, event)
 
 ## Legacy notes:
 # Opening the connection registered it with the transaction manager as an ISynchronizer.
