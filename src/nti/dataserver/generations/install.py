@@ -190,14 +190,14 @@ def install_sites_folder(dataserver_folder):
 	IEtcNamespace utility called \"hostsites\".
 	"""
 
-	sites = HostSitesFolder()
-	dataserver_folder['++etc++hostsites'] = sites
-
-	lsm = dataserver_folder.getSiteManager()
-	lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
-
+	if '++etc++hostsites' not in dataserver_folder:
+		sites = HostSitesFolder()
+		dataserver_folder['++etc++hostsites'] = sites
+		lsm = dataserver_folder.getSiteManager()
+		lsm.registerUtility(sites, provided=IEtcNamespace, name='hostsites')
 
 from nti.dataserver.interfaces import IShardLayout
+
 def install_shard( root_conn, new_shard_name ):
 	"""
 	Given a root connection that is already modified to include a shard database
