@@ -26,6 +26,7 @@ from hamcrest import is_
 from hamcrest import same_instance
 
 from nti.testing.matchers import validly_provides
+from zope import component
 from zope.component.hooks import getSite, setSite
 from .mock_dataserver import SharedConfiguringTestLayer
 
@@ -142,6 +143,7 @@ from ..interfaces import IHostPolicySiteManager
 from ..site import get_site_for_site_names
 from ..site import synchronize_host_policies
 from ..site import _find_site_components
+from ..site import run_job_in_all_host_sites
 
 class ITestSiteSync(interface.Interface):
 	pass
@@ -272,6 +274,21 @@ class TestSiteSync(DataserverLayerTest):
 							  u'Pdataserver2',
 							  u'PNone',
 							  'base']))
+
+			# including if we ask to travers from top to bottom
+			names = list()
+			def func():
+				names.append(_name(component.getSiteManager()))
+
+			run_job_in_all_host_sites(func)
+			# Note that PDemo and Peval-alpha are arbitrary, they both
+			# descend from eval; however, we maintain alphabetical order,
+			# which is nice
+			assert_that( names, is_([u'Peval.nextthoughttest.com',
+									 u'Pdemo.nextthoughttest.com',
+									 u'Peval-alpha.nextthoughttest.com',
+									 u'Pdemo-alpha.nextthoughttest.com']))
+
 
 			# And that it's what we get back if we ask for it
 			assert_that( get_site_for_site_names( (DEMOALPHA.__name__,)),
