@@ -17,6 +17,8 @@ from zope import interface
 
 from pyramid.traversal import find_interface
 
+from nti.app.authentication import get_remote_user
+
 from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentfragments import censor
@@ -28,8 +30,6 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.socketio import interfaces as sio_interfaces
-
-from nti.app.authentication import get_remote_user
 
 from . import site_policies
 

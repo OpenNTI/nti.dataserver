@@ -3,7 +3,7 @@
 """
 Related to traversing into forum objects.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,8 +16,8 @@ from zope.container.traversal import ContainerTraversable
 
 from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 _FORUM_NAME = CommunityForum.__default_name__
 

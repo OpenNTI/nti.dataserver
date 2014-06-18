@@ -6,7 +6,7 @@ creating and working with invitations is :class:`IInvitation`.
 The key class for registering, querying and responding to invitations is :class:`IInvitations`.
 An implementation of this class should be registered as a persistent utility in the site.
 
-$Id$
+.. $Id$
 """
 
 # Regarding existing work: There's a Plone product, but it's very specific to plone and works
@@ -16,7 +16,7 @@ $Id$
 # but doesn't seem to be available anymore. Some inspiration from it, though.
 # See http://pydoc.net/z3ext.principal.invite/0.4.0/z3ext.principal.invite.interfaces
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)

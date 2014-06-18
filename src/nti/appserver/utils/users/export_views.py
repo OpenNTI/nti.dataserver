@@ -18,6 +18,7 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 import zope.intid
+
 from zope import component
 from zope.catalog.interfaces import ICatalog
 

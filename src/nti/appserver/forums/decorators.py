@@ -3,7 +3,7 @@
 """
 External decorators to provide access to the things exposed through this package.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,6 +16,7 @@ from zope.container.interfaces import ILocation
 
 from pyramid.threadlocal import get_current_request
 
+from nti.app.authentication import get_remote_user
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
@@ -29,7 +30,6 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.utils._compat import aq_base
 
 from .._util import link_belongs_to_user
-from nti.app.authentication import get_remote_user
 from ..pyramid_authorization import is_readable, can_create
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)

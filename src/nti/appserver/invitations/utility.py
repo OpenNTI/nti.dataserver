@@ -3,25 +3,25 @@
 """
 Implementation of the :class:`nti.appserver.interfaces.IInvitations` utility.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import persistent
 
+import zc.intid as zc_intid
+
 from zope import interface
 from zope import component
-
-import zc.intid as zc_intid
 from zope.container import contained
-
 from zope.location import interfaces as loc_interfaces
 from zope.annotation import interfaces as an_interfaces
 
 from nti.dataserver import containers
+
 from nti.externalization import integer_strings
 
 from . import interfaces as invite_interfaces

@@ -16,6 +16,7 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 import zope.intid
+
 from zope import component
 from zope import interface
 from zope.catalog.interfaces import ICatalog
@@ -34,6 +35,7 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 from nti.utils.maps import CaseInsensitiveDict
+
 from nti.schema.interfaces import find_most_derived_interface
 
 # user_info_extract
