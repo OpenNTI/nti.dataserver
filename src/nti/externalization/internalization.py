@@ -395,7 +395,7 @@ def validate_field_value( self, field_name, field, value ):
 			raise
 
 		# IObject provides `schema`, which is an interface, so we can adapt
-		# using it. Some other things do not, for example nti.utils.schema.Variant
+		# using it. Some other things do not, for example nti.schema.field.Variant
 		# They might provide a `fromObject` function to do the conversion
 		# The field may be able to handle the whole thing by itself or we may need
 		# to do the individual objects

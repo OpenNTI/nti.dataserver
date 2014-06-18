@@ -54,7 +54,7 @@ from nti.schema.field import TupleFromObject
 from nti.schema.field import ValidSet as Set
 from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
-from nti.utils.schema import DecodingValidTextLine
+from nti.schema.field import DecodingValidTextLine
 
 class ACLLocationProxy(LocationProxy):
 	"""

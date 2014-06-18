@@ -26,9 +26,13 @@ does_not = is_not
 from nti.testing.matchers import verifiably_provides, validated_by, not_validated_by
 from nti.testing.base import module_setup, module_teardown
 
-from nti.utils.schema import HTTPURL, Variant, ObjectLen, Object
 from nti.utils.schema import DataURI
+
 from nti.schema.interfaces import IVariant
+from nti.schema.field import HTTPURL
+from nti.schema.field import Variant
+from nti.schema.field import ObjectLen
+from nti.schema.field import Object
 from nti.schema.field import Number
 from nti.schema.field import DictFromObject
 from nti.schema.field import ListOrTuple

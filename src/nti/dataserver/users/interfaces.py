@@ -21,9 +21,9 @@ import string
 import codecs
 import pkg_resources
 
-from zope import schema
 from zope import interface
 from zope import component
+from zope.schema import URI
 from zope.i18n import translate
 from zope.interface import Interface
 from z3c.schema.email import isValidMailAddress
@@ -35,12 +35,16 @@ from plone.i18n.locales import interfaces as locale_interfaces
 
 from nti.mailer.interfaces import IEmailAddressable
 
-import nti.utils.schema
+from nti.schema.field import Bool
+from nti.schema.field import Date
+from nti.schema.field import HTTPURL
+from nti.schema.field import TextLine
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
+from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
-class _InvalidData(nti.utils.schema.InvalidValue):
+class _InvalidData(InvalidValue):
 	"""Invalid Value"""
 
 	i18n_message = None
@@ -128,7 +132,6 @@ class InsecurePasswordIsForbidden(pwd_interfaces.InvalidPassword):
 		if value:
 			self.value = value
 
-
 def _load_resource(n, f):
 	stream = pkg_resources.resource_stream( n, f )
 	reader = codecs.getreader('utf-8')(stream)
@@ -142,14 +145,12 @@ def _load_resource(n, f):
 		domains.add( line )
 	return domains
 
-
 # 2012-12-07: This list of passwords, identified by industry researchers,
 # as extremely common and in all the rainbow tables, etc, is forbidden
 # see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
 _VERBOTEN_PASSWORDS = _load_resource( __name__, 'verboten-passwords.txt' )
 
 del _load_resource
-
 
 def _checkEmailAddress(address):
 	""" Check email address.
@@ -192,7 +193,6 @@ def checkRealname(value):
 			raise RealnameInvalid( value )
 		# Component parts? TODO: What about 'Jon Smith 3' as 'Jon Smith III'?
 		#for x in value.split():
-
 	return True
 
 class IWillUpdateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
@@ -229,11 +229,9 @@ class IWillCreateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
 
 	This is a good time to perform final validation of the entity.
 	"""
-
 	ext_value = interface.Attribute("If the entity was created with external data, this will be it.")
 	meta_data = interface.Attribute("A dictionary with creation meta data")
 	preflight_only = interface.Attribute("A boolean, set to true if this is a preflight-only event.")
-
 
 @interface.implementer(IWillCreateNewEntityEvent)
 class WillCreateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
@@ -262,7 +260,7 @@ class IAvatarURLProvider(Interface):
 	from the profile hierarchy to allow delegation of adapters.
 	"""
 
-	avatarURL = schema.URI( # may be data:
+	avatarURL = URI(# may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
@@ -272,7 +270,7 @@ class IAvatarURL(Interface):
 	Something that features a display URL.
 	"""
 
-	avatarURL = schema.URI( # may be data:
+	avatarURL = URI(# may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
@@ -293,13 +291,13 @@ class IAvatarChoices(Interface):
 
 class IFriendlyNamed(Interface):
 
-	alias = schema.TextLine(
+	alias = TextLine(
 		title='Display alias',
 		description="Enter preferred display name alias, e.g., johnnyboy."
 			"Your site may impose limitations on this value.",
 		required=False)
 
-	realname = schema.TextLine(
+	realname = TextLine(
 		title='Full Name aka realname',
 		description="Enter full name, e.g. John Smith.",
 		required=False,
@@ -318,14 +316,14 @@ class IImmutableFriendlyNamed(Interface):
 	of the friendly name values.
 	"""
 
-	alias = schema.TextLine(
+	alias = TextLine(
 		title='Display alias',
 		description="Enter preferred display name alias, e.g., johnnyboy."
 			"Your site may impose limitations on this value.",
 		required=False,
 		readonly=True)
 
-	realname = schema.TextLine(
+	realname = TextLine(
 		title='Full Name aka realname',
 		description="Enter full name, e.g. John Smith.",
 		required=False,
@@ -338,7 +336,6 @@ class IRequireProfileUpdate(Interface):
 	update. This will trigger profile validation (which usually doesn't happen)
 	and allow bypassing certain parts of :class:`IImmutableFriendlyNamed.`
 	"""
-
 
 IFriendlyNamed['realname'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
 
@@ -354,7 +351,7 @@ class IRestrictedUserProfile(IUserProfile):
 	A profile for a restricted user.
 	"""
 
-	birthdate = schema.Date(
+	birthdate = Date(
 		title='birthdate',
 		description='Your date of birth. '
 			'If one is not provided, you will be assumed to be underage.',
@@ -401,7 +398,6 @@ class IContactEmailRecovery(interface.Interface):
 	contact_email_recovery_hash = interface.Attribute( "A string giving the hash of the contact email.")
 	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
 
-
 class ICompleteUserProfile(IRestrictedUserProfile,
 						   IEmailAddressable):
 	"""
@@ -415,12 +411,12 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		constraint=checkEmailAddress)
 	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
 
-	opt_in_email_communication = schema.Bool(
+	opt_in_email_communication = Bool(
 		title="Can we contact you by email?",
 		required=False,
 		default=False )
 
-	home_page = nti.utils.schema.HTTPURL(
+	home_page = HTTPURL(
 		title='Home page',
 		description="The URL for your external home page, "
 					  "if you have one.",
