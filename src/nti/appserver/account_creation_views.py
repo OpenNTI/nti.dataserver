@@ -52,7 +52,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.intid.utility import IntIdMissingError
 
-import nti.utils.schema
+from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
 
 #: The link relationship type for a link used to create an account.
@@ -157,7 +157,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 	except invite_interfaces.InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error( request, e )
-	except nti.utils.schema.InvalidValue as e:
+	except InvalidValue as e:
 		if e.value is _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
 			# they haven't provided a username value, so make it look like that
