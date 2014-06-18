@@ -10,13 +10,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from . import interfaces
-
 from nti.externalization.externalization import make_repr
 
-from . import contentrange
-
 from nti.schema.fieldproperty import createDirectFieldProperties
+
+from . import interfaces
+from . import contentrange
 
 @interface.implementer(interfaces.ITimeContentPointer)
 class TimeContentPointer(contentrange.ContentPointer):
