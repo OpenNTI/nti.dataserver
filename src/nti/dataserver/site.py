@@ -46,7 +46,7 @@ from zope import component
 
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
-from zope.component.hooks import site as using_site
+from zope.component.hooks import site as current_site
 from zope.component import interfaces as comp_interfaces
 from zope.component.persistentregistry import PersistentComponents as _ZPersistentComponents
 
@@ -88,7 +88,7 @@ def _site_cm(conn, site_names=()):
 	# Put into a policy if need be
 	sitemanc = get_site_for_site_names( site_names, site=sitemanc )
 
-	with using_site( sitemanc ):
+	with current_site( sitemanc ):
 		if component.getSiteManager() != sitemanc.getSiteManager(): # pragma: no cover
 			raise SiteNotInstalledError( "Hooks not installed?" )
 		if component.getUtility( interfaces.IDataserver ) is None: # pragma: no cover
@@ -551,6 +551,69 @@ def new_local_site_dispatcher(event):
 	event, but the event will have the ISite as the object property.
 	"""
 	component.handle(event.manager, event)
+
+def run_job_in_all_host_sites(func):
+	"""
+	While already operating inside of a transaction and the dataserver
+	environment, execute the callable given by ``func`` once for each
+	persistent, registered host (see ;func:`synchronize_host_policies`).
+	The callable is run with that site current.
+
+	The order in which sites are accessed is top-down breadth-first,
+	that is, the shallowest to the deepest nested sites. This allows
+	you to assume that your parent sites have already been updated.
+
+	This is typically used to make configuration changes/adjustments
+	to utilities local within each site, while the appropriate event
+	listeners for the site also fire.
+
+	You are responsible for transaction management.
+
+	:raises: Whatever the callable raises.
+	"""
+
+	# TODO: Might it be useful to specify the order in which
+	# site operations run? Perhaps top-down? As it stands,
+	# they will be executed in alphabetical order, because that's the
+	# iteration order of the folder.
+
+	sites = component.getUtility(IEtcNamespace, name='hostsites')
+	sites = list(sites.values())
+
+	# The eastiest way to go top-down is to again use the resolution order;
+	# we just have to watch out for duplicates and non-persistent components
+	site_to_ro = {site: ro.ro(site.getSiteManager()) for site in sites}
+
+	# This should be a plain, directed acyclic tree (single root) that is now
+	# linearized.
+	# Transform from the site manager back into the site object itself
+	site_to_site_ro = {}
+	for site, managers in site_to_ro.items():
+		site_to_site_ro[site] = [getattr(x, '__parent__', None) for x in managers]
+
+	# Ok, now, go through the dictionary, walking from the top to the bottom,
+	# one at a time, thus producing the correct order
+	# (Because our datastructure looks like this:
+	#   site1: [site1, ds, base, GSM]
+	#   site2: [site2, site1, base, GSM]
+	#   site3: [site3, ds, base, GSM])
+	ordered = list()
+
+	while site_to_site_ro:
+		for site, managers in dict(site_to_site_ro).items():
+			if not managers:
+				site_to_site_ro.pop(site)
+				continue
+
+			base_site = managers.pop()
+			if base_site in sites and base_site not in ordered:
+				# Ie., it's a real one we haven't seen before
+				ordered.append( base_site )
+
+	for site in ordered:
+		with current_site(site):
+			func()
+
 
 ## Legacy notes:
 # Opening the connection registered it with the transaction manager as an ISynchronizer.
