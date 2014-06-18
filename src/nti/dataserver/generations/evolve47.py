@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 31
+generation = 47
 
 
 from zope.component.hooks import site, setHooks
@@ -28,4 +28,11 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
 		logger.info( "Installing sites folder" )
-		install_sites_folder( ds_folder )
+		try:
+			install_sites_folder( ds_folder )
+		except KeyError:
+			# Because we ran with generation officially at 46
+			# for awhile before going to 47, some brand new
+			# databases might actually have one of these
+			# in them. No biggie.
+			pass
