@@ -95,11 +95,12 @@ class TestPlastexIds(unittest.TestCase):
 from . import ContentrenderingLayerTest
 from . import RenderContext
 import os
+import io
 
 class TestPlastexIdsRender(ContentrenderingLayerTest):
 
 	def test_cross_doc_ref_links(self):
-		dom_str = r'''
+		source_str = r'''
 		\chapter{A}
 		\label{A}
 		Some text
@@ -107,35 +108,56 @@ class TestPlastexIdsRender(ContentrenderingLayerTest):
 		\chapter{B}
 		\label{B}
 		Some other text \ref{A}.
+
+		\section{SectionB}
+		\label{SectionB}
+		Some text in subsection.
 		'''
 
-		inner_dom_str = r'''
+		ref_str = r'''
 		\chapter{One}
 		\label{One}
 		Back ref to \ntiidref{A}.
+
+		\section{Two}
+		Section refs \ntiidref{SectionB}.
 		'''
 
+		source_a_ntiid = "tag:nextthought.com,2011-10:testing-HTML-temp.A"
+		source_b_ntiid = "tag:nextthought.com,2011-10:testing-HTML-temp.SectionB"
+
+
 		with RenderContext(simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}',),
-													bodies=(dom_str,) )) as outer_context:
-			outer_context.render()
+													bodies=(source_str,) )) as source_context:
+
+			source_context.render()
 
 			# Our ref should have rendered as a file
-			chapter_b = outer_context.read_rendered_file('tag_nextthought_com_2011-10_testing-HTML-temp_B.html')
+			chapter_b = source_context.read_rendered_file('tag_nextthought_com_2011-10_testing-HTML-temp_B.html')
 			assert_that( chapter_b,
 						 contains_string('href="tag_nextthought_com_2011-10_testing-HTML-temp_A.html"'))
 
-			def load_links(document):
-				document.context.restore(os.path.join(outer_context.docdir, 'temp.paux'),
-										 rtype='XHTML')
+			# Capture the value of the paux file for use later, so
+			# we can let this render be completely cleaned up
+			with open(os.path.join(source_context.docdir, 'temp.paux'), 'rb') as f:
+				paux_value = f.read()
+
+		def load_links(document):
+			paux_io = io.BytesIO(paux_value)
+			document.context.restore(paux_io,
+									 rtype='XHTML')
 
 
-			with RenderContext(simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}',),
-														bodies=(inner_dom_str,)),
-							   packages_on_texinputs=True,
-							   config_hook=load_links) as inner_context:
-				inner_context.render()
+		with RenderContext(simpleLatexDocumentText( preludes=(br'\usepackage{nti.contentrendering.plastexpackages.ntilatexmacros}',),
+													bodies=(ref_str,)),
+						   packages_on_texinputs=True,
+						   config_hook=load_links) as ref_context:
+			ref_context.render()
 
-				chapter_one = inner_context.read_rendered_file('tag_nextthought_com_2011-10_testing-HTML-temp_One.html')
+			chapter_one = ref_context.read_rendered_file('tag_nextthought_com_2011-10_testing-HTML-temp_One.html')
+			section_two = ref_context.read_rendered_file('tag_nextthought_com_2011-10_testing-HTML-temp_Two.html')
 
-				assert_that( chapter_one,
-							 contains_string('href="tag:nextthought.com,2011-10:testing-HTML-temp.A"'))
+			assert_that( chapter_one,
+						 contains_string('href="%s"' % source_a_ntiid))
+			assert_that( section_two,
+						 contains_string('href="%s"' % source_b_ntiid))
