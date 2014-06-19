@@ -41,20 +41,29 @@ def _hasTOC(path):
 def _isTOC(path):
 	return os.path.basename(path) == eclipse.TOC_FILENAME
 
-def _package_factory(directory):
+def _package_factory(directory, _package_factory=None, _unit_factory=None):
 	if not _hasTOC(directory):
 		return None
 
+	_package_factory = _package_factory or FilesystemContentPackage
+	_unit_factory = _unit_factory or FilesystemContentUnit
+
 	directory = os.path.abspath(directory)
-	directory = directory.decode('utf-8') if isinstance(directory, bytes) else directory
-	# toc_path = _TOCPath( directory )
+	if isinstance(directory, bytes):
+		directory = directory.decode('utf-8')
+
 	bucket = FilesystemBucket(directory)
 	key = FilesystemKey(bucket=bucket, name=eclipse.TOC_FILENAME)
 	temp_entry = FilesystemContentUnit(key=key)
 	assert key.absolute_path == _TOCPath(directory) == temp_entry.filename
-	package = eclipse.EclipseContentPackage(temp_entry, FilesystemContentPackage, FilesystemContentUnit)
+
+	package = eclipse.EclipseContentPackage(temp_entry, _package_factory, _unit_factory)
+
 	__traceback_info__ = directory, bucket, key, temp_entry, package
 	assert package.key.bucket == bucket
+	assert package is not temp_entry
+
+	# FIXME: this is veird, it's not really contained
 	bucket.__parent__ = package
 
 	return package
@@ -67,8 +76,10 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	A library that will examine the root to find possible content packages
 	"""
 
-	def __init__(self, root):
+	def __init__(self, root, package_factory=None, unit_factory=None):
 		self._root = root
+		self.__package_factory = package_factory or FilesystemContentPackage
+		self._unit_factory = unit_factory or FilesystemContentUnit
 
 	def _time(self, key):
 		return os.stat(self._root)[key]
@@ -82,7 +93,7 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 		return self._time(os.path.stat.ST_MTIME)
 
 	def _package_factory(self, path):
-		return _package_factory(path)
+		return _package_factory(path, self.__package_factory, self._unit_factory)
 
 	def _possible_content_packages(self):
 		for p in os.listdir(self._root):
@@ -110,8 +121,12 @@ class EnumerateOnceFilesystemLibrary(library.ContentPackageLibrary):
 			raise TypeError("DynamicFilesystemLibrary does not accept paths, just root")
 
 		root = root or kwargs.pop('root')
-		enumeration = _FilesystemLibraryEnumeration(root)
+		enumeration = self._create_enumeration(root)
 		library.ContentPackageLibrary.__init__(self, enumeration, **kwargs)
+
+	@classmethod
+	def _create_enumeration(cls, root):
+		return _FilesystemLibraryEnumeration(root)
 
 
 # A measure of BWC
@@ -169,7 +184,9 @@ class FilesystemKey(object):
 
 	@CachedProperty('bucket', 'name')
 	def absolute_path(self):
-		return os.path.join(self.bucket.name, self.name) if self.bucket and self.bucket.name and self.name is not None else self.name
+		if self.bucket and self.bucket.name and self.name is not None:
+			return os.path.join(self.bucket.name, self.name)
+		return self.name
 
 	def __eq__(self, other):
 		try:
@@ -316,3 +333,36 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 	"""
 
 	TRANSIENT_EXCEPTIONS = (IOError,)
+
+
+from persistent import Persistent
+
+class PersistentFilesystemContentUnit(Persistent,
+									  FilesystemContentUnit):
+	"""
+	A persistent version of a content unit.
+	"""
+
+class PersistentFilesystemContentPackage(Persistent,
+										 FilesystemContentPackage):
+	"""
+	A persistent content package.
+	"""
+
+class _PersistentFilesystemLibraryEnumeration(Persistent,
+											  _FilesystemLibraryEnumeration):
+
+	def __init__(self, root):
+		Persistent.__init__(self)
+		_FilesystemLibraryEnumeration.__init__(self,
+											   root,
+											   PersistentFilesystemContentPackage,
+											   PersistentFilesystemContentUnit)
+
+
+class PersistentFilesystemLibrary(Persistent,
+								  EnumerateOnceFilesystemLibrary):
+
+	@classmethod
+	def _create_enumeration(cls, root):
+		return _PersistentFilesystemLibraryEnumeration(root)

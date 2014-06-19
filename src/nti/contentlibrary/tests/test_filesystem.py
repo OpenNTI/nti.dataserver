@@ -5,6 +5,10 @@ $Id$
 """
 from __future__ import print_function, unicode_literals
 
+#disable: accessing protected members, too many methods
+#pylint: disable=W0212,R0904
+
+
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not as does_not
@@ -21,7 +25,6 @@ from nti.testing.matchers import validly_provides
 
 from nti.contentlibrary import interfaces, filesystem
 
-import nti.externalization
 import nti.externalization.externalization
 from nti.externalization.externalization import to_external_object
 
@@ -52,7 +55,9 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 	def test_from_filesystem(self):
 
 		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ),
-															 'TestFilesystem' ) )
+															 'TestFilesystem' ),
+											   filesystem.PersistentFilesystemContentPackage,
+											   filesystem.PersistentFilesystemContentUnit)
 		assert_that( package.key,
 					 validly_provides( interfaces.IDelimitedHierarchyKey ) )
 
@@ -64,8 +69,8 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 								   contains('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1') ) )
 
 		# package pickles ok
-#		assert_that( pickle.loads(pickle.dumps(package)),
-#					 is_(package))
+		assert_that( pickle.loads(pickle.dumps(package)),
+					 is_(package))
 
 		ext_package = to_external_object( package )
 		assert_that( ext_package, has_entry( 'DCCreator', ('Jason',) ) )
