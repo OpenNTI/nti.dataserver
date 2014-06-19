@@ -12,12 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import numbers
 import warnings
-from abc import ABCMeta
+
 
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.event import notify
+from zope.annotation.interfaces import IAttributeAnnotatable
+
 
 from nti.utils.property import alias
 
@@ -64,7 +66,8 @@ class AbstractContentPackageEnumeration(object):
 
 
 
-@interface.implementer(interfaces.ISyncableContentPackageLibrary)
+@interface.implementer(interfaces.ISyncableContentPackageLibrary,
+					   IAttributeAnnotatable)
 class ContentPackageLibrary(object):
 	"""
 	A library that uses an enumeration and cooperates with parent
@@ -191,7 +194,7 @@ class ContentPackageLibrary(object):
 	@property
 	def contentPackages(self):
 		if self._contentPackages is None:
-			warnings.warn("Please sync the library first.")
+			warnings.warn("Please sync the library first.", stacklevel=2)
 			self.syncContentPackages()
 
 		# We would like to use a generator here, to avoid
@@ -258,8 +261,10 @@ class ContentPackageLibrary(object):
 		:return: The LibraryEntry having an ntiid that matches `key`.
 		"""
 		if isinstance(key,numbers.Integral):
+			if key != 0:
+				raise TypeError("Integers other than 0---first---not supported")
 			# This should only be done by tests
-			warnings.warn("integers not supported", stacklevel=2)
+
 			return list(self.contentPackages)[key]
 
 		# In the past this worked even if the library

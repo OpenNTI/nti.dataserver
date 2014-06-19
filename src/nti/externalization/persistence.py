@@ -231,3 +231,19 @@ class PersistentExternalizableWeakList(PersistentExternalizableList):
 
 	def index( self, item, *args ):
 		return super(PersistentExternalizableWeakList,self).index( self.__wrap( PWeakRef( item ) ), *args )
+
+def NoPickle(cls):
+	"""
+	A class decorator that prevents an object
+	from being pickled. Useful for ensuring certain
+	objects do not get pickled and thus avoiding
+	ZODB backward compatibility concerns.
+	"""
+
+	def __reduce__(self):
+		raise TypeError("Cannot pickle")
+
+	cls.__reduce__ = __reduce__
+	cls.__reduce_ex__ = __reduce__
+
+	return cls

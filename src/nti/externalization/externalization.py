@@ -544,17 +544,10 @@ def WithRepr(default=object()):
 		return cls
 	return d
 
-def NoPickle(cls):
-	"""
-	A class decorator that prevents an object
-	from being pickled. Useful for ensuring certain
-	objects do not get pickled and thus avoiding
-	ZODB backward compatibility concerns.
-	"""
-
-	def __reduce__(self):
-		raise TypeError("Cannot pickle")
-
-	cls.__reduce__ = __reduce__
-
-	return cls
+# Things that have moved
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Import from .persistence",
+	"nti.externalization.persistence",
+	"NoPickle" )

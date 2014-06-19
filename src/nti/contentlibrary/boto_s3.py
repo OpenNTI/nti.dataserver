@@ -35,6 +35,11 @@ import time
 import numbers
 import webob.datetime_utils
 
+# We mark all of the classes declared here as
+# non-pickalable, because we don't have their persistence
+# worked out yet.
+from nti.externalization.persistence import NoPickle
+
 # Make the boto classes fit better with Zope, including making them
 # ILocation like and giving them interfaces
 import boto.s3.bucket
@@ -138,6 +143,7 @@ def _read_key( key ):
 			stream.close()
 	return data
 
+@NoPickle
 @interface.implementer(IS3ContentUnit)
 class BotoS3ContentUnit(ContentUnit):
 	"""
@@ -215,6 +221,7 @@ class BotoS3ContentUnit(ContentUnit):
 			exc_info = sys.exc_info()
 			raise boto.exception.AWSConnectionError("No connection"), None, exc_info[2]
 
+@NoPickle
 @interface.implementer(IS3ContentPackage)
 class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
 
@@ -227,6 +234,7 @@ def _package_factory( key ):
 		temp_entry = BotoS3ContentUnit( key=toc_key )
 		return eclipse.EclipseContentPackage( temp_entry, BotoS3ContentPackage, BotoS3ContentUnit )
 
+@NoPickle
 class _BotoS3BucketContentLibraryEnumeration(library.AbstractContentPackageEnumeration):
 
 	def __init__( self, bucket ):
@@ -242,7 +250,7 @@ class _BotoS3BucketContentLibraryEnumeration(library.AbstractContentPackageEnume
 		return list(self._bucket.list(delimiter='/'))
 
 
-
+@NoPickle
 class BotoS3BucketContentLibrary(library.ContentPackageLibrary):
 	"""
 	Enumerates the first level of a '/' delimited bucket and treats each
