@@ -25,7 +25,7 @@ from nti.contentfragments import interfaces as frg_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.externalization import WithRepr
 
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
@@ -70,6 +70,7 @@ class _MetaSearchHit(type):
 		return t
 
 @interface.implementer(search_interfaces.ISearchHit, IContained)
+@WithRepr
 class BaseSearchHit(object):
 
 	__metaclass__ = _MetaSearchHit
@@ -100,8 +101,6 @@ class BaseSearchHit(object):
 		result.__dict__.update(self.__dict__)
 		result.__parent__ = None
 		return result
-
-	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
