@@ -305,4 +305,4 @@ name: ntidirectionsblock
 </div>
 
 name: ntiidref
-<a tal:attributes="href self/idref/label/ntiid" tal:content="self/idref/label/title">#.#.#</a>
+<a tal:attributes="href self/idref/label/embedded_doc_cross_ref_url|self/idref/label/ntiid" tal:content="self/idref/label/title">#.#.#</a>
