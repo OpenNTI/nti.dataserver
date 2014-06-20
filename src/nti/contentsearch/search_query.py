@@ -17,8 +17,9 @@ import hashlib
 from zope import component
 from zope import interface
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.externalization import WithRepr
 
+from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -42,27 +43,12 @@ def _default_query_adapter(query, *args, **kwargs):
 	return query
 
 @interface.implementer(search_interfaces.IDateTimeRange)
+@WithRepr
+@EqHash('startTime', 'endTime')
 class DateTimeRange(SchemaConfigured):
-	
 	__external_can_create__ = True
 	mime_type = mimeType = 'application/vnd.nextthought.search.datetimerange'
-
 	createDirectFieldProperties(search_interfaces.IDateTimeRange)
-
-	__repr__ = make_repr()
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.startTime == other.startTime and
-									 self.endTime == other.endTime)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.endTime)
-		xhash ^= hash(self.startTime)
-		return xhash
 
 	def digest(self):
 		md5 = hashlib.md5()
@@ -72,6 +58,7 @@ class DateTimeRange(SchemaConfigured):
 		return result
 
 @interface.implementer(search_interfaces.ISearchQuery)
+@WithRepr
 class QueryObject(SchemaConfigured):
 
 	__external_can_create__ = True
@@ -83,8 +70,6 @@ class QueryObject(SchemaConfigured):
 
 	def __str__(self):
 		return self.term
-
-	__repr__ = make_repr()
 
 	def __getitem__(self, key):
 		return getattr(self, key)

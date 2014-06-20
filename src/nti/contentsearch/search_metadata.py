@@ -17,10 +17,11 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.externalization import WithRepr
 
 from nti.mimetype.mimetype import MIME_BASE
 
+from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -34,6 +35,8 @@ from .constants import (nticard_, content_, videotranscript_, transcript_, note_
 
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
+@WithRepr
+@EqHash('Name', 'MimeType')
 class SearchTypeMetaData(SchemaConfigured):
 	createDirectFieldProperties(search_interfaces.ISearchTypeMetaData)
 	
@@ -43,21 +46,6 @@ class SearchTypeMetaData(SchemaConfigured):
 
 	def __str__(self):
 		return "%s,%s" % (self.Name, self.MimeType)
-
-	__repr__ = make_repr()
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.Name == other.Name
-									 and self.MimeType == other.MimeType)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.Name)
-		xhash ^= hash(self.MimeType)
-		return xhash
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _note_metadata():
