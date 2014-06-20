@@ -193,10 +193,22 @@ class NTIIDMixin(object):
 # something like a Soundex encoding
 def _par_id_get(self):
 	_id = getattr( self, "@id", self )
-	if _id is not self: return _id
+	if _id is not self:
+		return _id
 
 	if self.isElementContentWhitespace or not self.source.strip():
 		return None
+
+	# If this object specifies a counter name, piggyback
+	# off of that to get distinct numbers and namespaces
+	counter_name = getattr( self, 'counter', 'par') or 'par'
+	# for bwc, if we have the 'par' counter, only use a 'p' prefix
+	if counter_name == 'par':
+		counter_pfx = 'p'
+	else:
+		counter_pfx = counter_name
+	counter_name = '_' + counter_name + 'counter'
+	used_ids = '_' + counter_name + '_used_ids'
 
 	document = self.ownerDocument
 	source = self.source
@@ -216,15 +228,15 @@ def _par_id_get(self):
 	if source and source.strip():
 		_id = hashlib.md5(source.strip().encode('utf-8')).hexdigest()
 	else:
-		counter = document.userdata.setdefault( '_par_counter', 1 )
-		_id = 'p%10d' % counter
-		document.userdata['_par_counter'] = counter + 1
+		counter = document.userdata.setdefault( counter_name, 1 )
+		_id = '%s%10d' % (counter_pfx,counter)
+		document.userdata[counter_name] = counter + 1
 
-	used_pars = document.userdata.setdefault( '_par_used_ids', set() )
+	used_pars = document.userdata.setdefault( used_ids, set() )
 	while _id in used_pars:
-		counter = document.userdata.setdefault( '_par_counter', 1 )
+		counter = document.userdata.setdefault( counter_name, 1 )
 		_id = _id + '.' + str(counter)
-		document.userdata['_par_counter'] = counter + 1
+		document.userdata[counter_name] = counter + 1
 	used_pars.add( _id )
 
 	setattr( self, "@id", _id )
@@ -238,6 +250,31 @@ class StableIDMixin(object):
 	"""
 	# TODO: Different counters for this than _par_used_ids?
 	id = property(_catching(_par_id_get, 'id'), plasTeX.Macro.id.fset)
+
+def _embedded_node_cross_ref_url(self):
+	# For things that are embedded within a document,
+	# we need to produce a URL that points to
+	# the id of that object within the document
+	# (ideally we would point to the NTIID of that
+	# node within the document, but that would require
+	# changing the ID function or templates for all
+	# the embedded things)
+	# This is similar to the URL property of the renderer mixin
+	if self.filename:
+		return self.ntiid
+
+	node = self.parentNode
+	while node is not None and node.filename is None:
+		node = node.parentNode
+	ntiid = ''
+	if node is not None:
+		ntiid = node.ntiid
+
+	if ntiid:
+		return '%s#%s' % (ntiid, self.id)
+
+
+
 
 def patch_all():
 	"""
@@ -258,9 +295,31 @@ def patch_all():
 	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename),
 											 _catching(_set_section_ntiid_filename))
 	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
+	SectionUtils.embedded_doc_cross_ref_url = property(_embedded_node_cross_ref_url)
+
+
+	# Math mode and floats. Only do this for environments that are auto-numbered,
+	# since those are the ones typically referenced. These
+	# MUST be labeled (or in the case of figures and tables, be given a caption
+	# that is labeled)
+	from plasTeX.Base.LaTeX.Math import equation
+	# argh, stupid shadowing imports
+	from plasTeX.Base.LaTeX import Floats
+	for i, name in ((equation, 'equation'),
+					(Floats.figure.caption, 'figure'),
+					(Floats.table.caption, 'table')):
+		i.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.par.id.fset)
+		i._ntiid_cache_map_name = '_%s_ntiids_map' % name
+		i._ntiid_suffix = name + '.'
+		i._ntiid_type = 'HTML' + name
+		# Note that the ntiid here is not useful for cross-document referencing,
+		# because it doesn't make it into the TOC; instead we need to produce
+		# a (parent-page-ntiid)#fragment ntiid
+		i.ntiid = property(_catching(_section_ntiid))
+		i.embedded_doc_cross_ref_url = property(_embedded_node_cross_ref_url)
 
 	# Ensure we persist these things, if we have them, for
 	# better cross-document referencing
-	plasTeX.Macro.refAttributes += ('ntiid', 'filenameoverride')
+	plasTeX.Macro.refAttributes += ('ntiid', 'filenameoverride', 'embedded_doc_cross_ref_url')
 
-	plasTeX.TeXDocument.nextNTIID = nextID # Non-desctructive patch
+	plasTeX.TeXDocument.nextNTIID = nextID # Non-destructive patch
