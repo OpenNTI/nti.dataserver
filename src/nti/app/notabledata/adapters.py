@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -248,10 +246,10 @@ class UserNotableData(AbstractAuthenticatedView):
 		# instructors create new discussions, but we'll have to sort
 		# out the CSV generated discussions first.
 
- 		# Now any topics by our a-listers, but only non-excluded topics
- 		#topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
- 		#topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
- 		#																	intids_by_priority_creators)
+		# Now any topics by our a-listers, but only non-excluded topics
+		# topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+		# topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
+		# 																	intids_by_priority_creators)
 
 		intids_from_storage = self._notable_storage._unsafe_intid_set
 
