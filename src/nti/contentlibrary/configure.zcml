@@ -3,16 +3,39 @@
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			i18n_domain="zope">
-		    
+
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
 	<include package="zope.location" />
-	
-	<include package="nti.externalization" />
+	<!-- for IComponentLookup(context) and queryNextUtility to work -->
+	<include package="zope.site" />
+
+	<!-- weak refs -->
+	<adapter factory=".wref.ContentUnitWeakRef" />
+
+	<!-- site libraries, when we're using the filesystem -->
+	<adapter factory=".filesystem.GlobalFilesystemSiteLibraryFactory" />
+
+	<!-- annotations -->
+	<!-- single argument -->
+	<adapter factory=".annotation.annotations" />
+	<!-- context argument -->
+	<adapter factory=".annotation.annotations"
+			 for=".interfaces.IContentUnit *" />
+
+	<utility factory=".annotation.GlobalContentUnitAnnotationUtility"
+			 provides=".interfaces.IContentUnitAnnotationUtility" />
+
+	<!-- Event listeners -->
+	<subscriber handler=".subscribers.install_site_content_library"
+				for="nti.dataserver.interfaces.IHostPolicySiteManager
+					 zope.site.interfaces.INewLocalSite" />
 
 	<!-- Externalization -->
+
+	<include package="nti.externalization" />
 
 	<adapter factory=".externalization._ContentPackageLibraryExternal" />
 	<adapter factory=".externalization._ContentPackageExternal" />

@@ -251,7 +251,7 @@ class _BotoS3BucketContentLibraryEnumeration(library.AbstractContentPackageEnume
 
 
 @NoPickle
-class BotoS3BucketContentLibrary(library.ContentPackageLibrary):
+class BotoS3BucketContentLibrary(library.GlobalContentPackageLibrary):
 	"""
 	Enumerates the first level of a '/' delimited bucket and treats each
 	entry as a possible content package. Content packages are cached.
@@ -265,4 +265,4 @@ class BotoS3BucketContentLibrary(library.ContentPackageLibrary):
 	"""
 
 	def __init__(self, bucket):
-		library.ContentPackageLibrary.__init__(self, _BotoS3BucketContentLibraryEnumeration(bucket))
+		library.GlobalContentPackageLibrary.__init__(self, _BotoS3BucketContentLibraryEnumeration(bucket))

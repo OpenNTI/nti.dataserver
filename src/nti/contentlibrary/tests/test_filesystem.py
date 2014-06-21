@@ -19,6 +19,7 @@ from hamcrest import greater_than
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import empty as is_empty
 
 from nti.testing.matchers import verifiably_provides
 from nti.testing.matchers import validly_provides
@@ -35,7 +36,7 @@ from . import ContentlibraryLayerTest
 
 from six.moves import cPickle as pickle
 
-class TestFilesystemContentUnit(ContentlibraryLayerTest):
+class TestFilesystem(ContentlibraryLayerTest):
 
 
 	def test_filesystem_content_interfaces(self):
@@ -48,7 +49,6 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 		)
 
 		assert_that( unit, verifiably_provides( interfaces.IFilesystemContentPackage ) )
-
 
 
 
@@ -102,6 +102,25 @@ class TestFilesystemContentUnit(ContentlibraryLayerTest):
 		pack_ext = to_external_object( library[0] )
 		assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
 		assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )
+
+	def test_site_library(self):
+		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
+		global_library.syncContentPackages()
+
+		site_factory = interfaces.ISiteLibraryFactory(global_library)
+
+		site_lib = site_factory.library_for_site_named( 'foobar' )
+
+		assert_that( site_lib,
+					 validly_provides( interfaces.IPersistentContentPackageLibary ))
+
+		# should do nothing
+		site_lib.syncContentPackages()
+
+		# since they are not yet arranged in a site hierarchy, this one
+		# doesn't have access to its parent contents yet.
+		assert_that( site_lib, has_property( 'contentPackages', is_empty() ))
+
 
 from nti.app.testing.layers import AppTestLayer
 
