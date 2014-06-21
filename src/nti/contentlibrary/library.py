@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 import numbers
 import warnings
 
+from persistent import Persistent
 
 from zope import component
 from zope import interface
@@ -20,7 +21,7 @@ from zope import lifecycleevent
 from zope.event import notify
 from zope.annotation.interfaces import IAttributeAnnotatable
 
-
+from nti.externalization.persistence import NoPickle
 from nti.utils.property import alias
 
 from . import interfaces
@@ -66,9 +67,8 @@ class AbstractContentPackageEnumeration(object):
 
 
 
-@interface.implementer(interfaces.ISyncableContentPackageLibrary,
-					   IAttributeAnnotatable)
-class ContentPackageLibrary(object):
+@interface.implementer(interfaces.ISyncableContentPackageLibrary)
+class AbstractContentPackageLibrary(object):
 	"""
 	A library that uses an enumeration and cooperates with parent
 	libraries in the component hierarchy to build a complete
@@ -232,7 +232,7 @@ class ContentPackageLibrary(object):
 			# Must also take care to clear its dependents
 			if '_content_packages_by_ntiid' in self.__dict__:
 				del self._content_packages_by_ntiid
-		super(ContentPackageLibrary,self).__delattr__(name)
+		super(AbstractContentPackageLibrary,self).__delattr__(name)
 
 	titles = alias('contentPackages')
 
@@ -306,7 +306,7 @@ class ContentPackageLibrary(object):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""
 		for title in self.contentPackages:
-			result = pathToPropertyValue( title, 'ntiid', ntiid )
+			result = _pathToPropertyValue( title, 'ntiid', ntiid )
 			if result:
 				return result
 		return None
@@ -352,6 +352,35 @@ class ContentPackageLibrary(object):
 			rec(package)
 		return result
 
+
+def _pathToPropertyValue( unit, prop, value ):
+	"""
+	A convenience function for returning, in order from the root down,
+	the sequence of children required to reach one with a property equal to
+	the given value.
+	"""
+	if getattr( unit, prop, None ) == value:
+		return [unit]
+	for child in unit.children:
+		childPath = _pathToPropertyValue( child, prop, value )
+		if childPath:
+			# We very inefficiently append to the front
+			# each time, rather than trying to find when recursion ends
+			# and reverse
+			childPath.insert( 0, unit )
+			return childPath
+	return None
+
+
+@interface.implementer(IAttributeAnnotatable)
+@NoPickle
+class GlobalContentPackageLibrary(AbstractContentPackageLibrary):
+	"""
+	A content package library meant only to be installed in the global
+	(non-persistent) registry. This type of library must be synchronized
+	on every startup.
+	"""
+
 class _EmptyEnumeration(AbstractContentPackageEnumeration):
 
 	def enumerateContentPackages(self):
@@ -361,22 +390,13 @@ def EmptyLibrary(prefix=''):
 	"""
 	A library that is perpetually empty.
 	"""
-	return ContentPackageLibrary(_EmptyEnumeration(), prefix=prefix)
+	return GlobalContentPackageLibrary(_EmptyEnumeration(), prefix=prefix)
 
-def pathToPropertyValue( unit, prop, value ):
+
+class PersistentContentPackageLibrary(Persistent,
+									  AbstractContentPackageLibrary):
 	"""
-	A convenience function for returning, in order from the root down,
-	the sequence of children required to reach one with a property equal to
-	the given value.
+	A library that is meant to be persisted. It
+	generally does not need to be synchronized on
+	every startup, only when content on disk has changed.
 	"""
-	if getattr( unit, prop, None ) == value:
-		return [unit]
-	for child in unit.children:
-		childPath = pathToPropertyValue( child, prop, value )
-		if childPath:
-			# We very inefficiently append to the front
-			# each time, rather than trying to find when recursion ends
-			# and reverse
-			childPath.insert( 0, unit )
-			return childPath
-	return None

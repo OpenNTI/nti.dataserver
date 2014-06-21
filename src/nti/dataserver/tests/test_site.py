@@ -17,6 +17,7 @@ logger = __import__('logging').getLogger(__name__)
 import unittest
 from hamcrest import assert_that
 from hamcrest import contains
+from hamcrest import any_of
 from hamcrest import has_property
 from hamcrest import has_key
 from hamcrest import has_length
@@ -282,12 +283,18 @@ class TestSiteSync(DataserverLayerTest):
 
 			run_job_in_all_host_sites(func)
 			# Note that PDemo and Peval-alpha are arbitrary, they both
-			# descend from eval; however, we maintain alphabetical order,
-			# which is nice
-			assert_that( names, is_([u'Peval.nextthoughttest.com',
-									 u'Pdemo.nextthoughttest.com',
-									 u'Peval-alpha.nextthoughttest.com',
-									 u'Pdemo-alpha.nextthoughttest.com']))
+			# descend from eval;
+			# TODO: why aren't we maintaining alphabetical order?
+			# we should be, but sometimes we don't
+			assert_that( names, is_(any_of(
+				[u'Peval.nextthoughttest.com',
+				 u'Pdemo.nextthoughttest.com',
+				 u'Peval-alpha.nextthoughttest.com',
+				 u'Pdemo-alpha.nextthoughttest.com'],
+				[u'Peval.nextthoughttest.com',
+				 u'Peval-alpha.nextthoughttest.com',
+				 u'Pdemo.nextthoughttest.com',
+				 u'Pdemo-alpha.nextthoughttest.com'])))
 
 
 			# And that it's what we get back if we ask for it

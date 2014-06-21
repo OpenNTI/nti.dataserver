@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope.container.contained import Contained
-from zope.annotation.interfaces import IAttributeAnnotatable
 
 from .interfaces import IContentUnit
 from .interfaces import IContentPackage
@@ -28,9 +27,7 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
-from persistent import Persistent
-
-@interface.implementer(IContentUnit, IAttributeAnnotatable)
+@interface.implementer(IContentUnit)
 class ContentUnit(PermissiveSchemaConfigured,
 				  Contained,
 				  DCTimesLastModifiedMixin):

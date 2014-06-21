@@ -14,6 +14,7 @@ import os
 from os.path import join as path_join
 
 from zope import interface
+from zope import component
 from zope.location.interfaces import IContained as IZContained
 
 import repoze.lru
@@ -30,6 +31,10 @@ from .interfaces import IFilesystemContentPackage
 from .interfaces import IFilesystemContentPackageLibrary
 from .interfaces import IFilesystemKey
 from .interfaces import IFilesystemBucket
+from .interfaces import IGlobalFilesystemContentPackageLibrary
+from .interfaces import IPersistentFilesystemContentUnit
+from .interfaces import IPersistentFilesystemContentPackage
+from .interfaces import IPersistentFilesystemContentPackageLibrary
 
 def _TOCPath(path):
 	return os.path.abspath(path_join(path, eclipse.TOC_FILENAME))
@@ -73,7 +78,11 @@ from nti.dublincore.interfaces import ILastModified
 @interface.implementer(ILastModified)
 class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	"""
-	A library that will examine the root to find possible content packages
+	A library enumeration that will examine the root to find possible content packages.
+
+	If the library directory does not exist, there will be no content packages,
+	and the modification times will be negative, but nothing will throw errors.
+	This makes it safe to use speculatively.
 	"""
 
 	def __init__(self, root, package_factory=None, unit_factory=None):
@@ -81,8 +90,16 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 		self.__package_factory = package_factory or FilesystemContentPackage
 		self._unit_factory = unit_factory or FilesystemContentUnit
 
+	@property
+	def root(self):
+		"""The root directory path we will examine."""
+		return self._root
+
 	def _time(self, key):
-		return os.stat(self._root)[key]
+		try:
+			return os.stat(self._root)[key]
+		except OSError:
+			return -1
 
 	@property
 	def createdTime(self):
@@ -96,6 +113,9 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 		return _package_factory(path, self.__package_factory, self._unit_factory)
 
 	def _possible_content_packages(self):
+		if not os.path.isdir(self._root):
+			return
+
 		for p in os.listdir(self._root):
 			p = os.path.join(self._root, p)
 			p = os.path.abspath(p)
@@ -105,7 +125,7 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 
 
 @interface.implementer(IFilesystemContentPackageLibrary)
-class EnumerateOnceFilesystemLibrary(library.ContentPackageLibrary):
+class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 	"""
 	A library that will examine the root to find possible content packages
 	only the very first time that it is requested to. Changes after that
@@ -122,14 +142,19 @@ class EnumerateOnceFilesystemLibrary(library.ContentPackageLibrary):
 
 		root = root or kwargs.pop('root')
 		enumeration = self._create_enumeration(root)
-		library.ContentPackageLibrary.__init__(self, enumeration, **kwargs)
+		library.AbstractContentPackageLibrary.__init__(self, enumeration, **kwargs)
 
 	@classmethod
 	def _create_enumeration(cls, root):
 		return _FilesystemLibraryEnumeration(root)
 
+@interface.implementer(IGlobalFilesystemContentPackageLibrary)
+class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
+											AbstractFilesystemLibrary):
+	pass
 
 # A measure of BWC
+EnumerateOnceFilesystemLibrary = GlobalFilesystemContentPackageLibrary
 DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
 StaticFilesystemLibrary = library.EmptyLibrary
 
@@ -337,12 +362,14 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 
 from persistent import Persistent
 
+@interface.implementer(IPersistentFilesystemContentUnit)
 class PersistentFilesystemContentUnit(Persistent,
 									  FilesystemContentUnit):
 	"""
 	A persistent version of a content unit.
 	"""
 
+@interface.implementer(IPersistentFilesystemContentPackage)
 class PersistentFilesystemContentPackage(Persistent,
 										 FilesystemContentPackage):
 	"""
@@ -360,9 +387,31 @@ class _PersistentFilesystemLibraryEnumeration(Persistent,
 											   PersistentFilesystemContentUnit)
 
 
-class PersistentFilesystemLibrary(Persistent,
-								  EnumerateOnceFilesystemLibrary):
+@interface.implementer(IPersistentFilesystemContentPackageLibrary)
+class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
+								  library.PersistentContentPackageLibrary):
 
 	@classmethod
 	def _create_enumeration(cls, root):
 		return _PersistentFilesystemLibraryEnumeration(root)
+
+from .interfaces import ISiteLibraryFactory
+from nti.externalization.persistence import NoPickle
+
+@component.adapter(IGlobalFilesystemContentPackageLibrary)
+@interface.implementer(ISiteLibraryFactory)
+@NoPickle
+class GlobalFilesystemSiteLibraryFactory(object):
+
+	def __init__(self, context):
+		self.context = context
+
+	def library_for_site_named(self, name):
+		enumeration = self.context._enumeration
+		root = enumeration.root
+
+		site_dir = os.path.join( root, 'sites', name )
+
+		# whether or not it exists we return it so that
+		# it can be registered for the future.
+		return PersistentFilesystemLibrary(site_dir)

@@ -17,6 +17,8 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
+from persistent.interfaces import IPersistent
+
 from nti.schema.field import Number
 from nti.schema.field import ValidTextLine as TextLine
 from nti.schema.field import IndexedIterable
@@ -145,6 +147,29 @@ class IContentPackageLibrarySynchedEvent(IObjectModifiedEvent):
 class ContentPackageLibrarySynchedEvent(ObjectModifiedEvent):
 	"""
 	Content package synced event.
+	"""
+
+class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
+	"""
+	A non-persistent content library that needs to be synchronized
+	on every startup.
+	"""
+
+class IPersistentContentPackageLibary(IPersistent,
+									  ISyncableContentPackageLibrary):
+	"""
+	A content library whose contents are expected to persist
+	and which needs synchronization only when external
+	contents have changed.
+
+	.. warning:: Even though the packages and units that are
+		contained within this library may be persistent, because
+		libraries may be arranged in a hierarchy of persistent
+		and non-persistent libraries, you should never attempt to
+		store a persistent reference to a library entry. Instead,
+		store its NTIID and always use the current library to
+		retrieve the item. Implementations of :class:`.IWeakRef`
+		are provided for this purpose.
 	"""
 
 class IDisplayablePlatformPresentationResources(interface.Interface):
@@ -330,6 +355,23 @@ class IContentPackage(IContentUnit,
 							   default=1,
 						min=1)
 
+class IPersistentContentUnit(IPersistent, IContentUnit):
+	"""
+	A persistent content unit.
+
+
+	.. warning:: See the warning on the persistent content package
+		library about references to these items. In short, always
+		store them by NTIID and use the current library to look them
+		up; implementations of :class:`.IWeakRef` are provided
+		for this purpose.
+	"""
+
+class IPersistentContentPackage(IPersistentContentUnit, IContentPackage):
+	"""
+	A persistent content package.
+	"""
+
 class IPotentialLegacyCourseConflatedContentPackage(IContentPackage):
 	"""
 	A legacy property that should be available on all content packages.
@@ -458,10 +500,24 @@ class IFilesystemContentPackage(IDelimitedHierarchyContentPackage, IFilesystemEn
 	`filename` attribute.
 	"""
 
+class IPersistentFilesystemContentUnit(IPersistentContentUnit, IFilesystemContentUnit):
+	pass
+
+class IPersistentFilesystemContentPackage(IPersistentContentPackage, IFilesystemContentPackage):
+	pass
+
 class IFilesystemContentPackageLibrary(IContentPackageLibrary):
 	"""
 	A content package library based on reading the contents of the filesystem.
 	"""
+
+class IPersistentFilesystemContentPackageLibrary(IPersistentContentPackageLibary,
+												 IFilesystemContentPackageLibrary):
+	pass
+
+class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
+											 IFilesystemContentPackageLibrary):
+	pass
 
 class IContentUnitHrefMapper(interface.Interface):
 	"""
@@ -479,3 +535,29 @@ class IAbsoluteContentUnitHrefMapper(IContentUnitHrefMapper):
 	A type of href mapper that produces absolute hrefs, not relative
 	to anything, even the host.
 	"""
+
+class IContentUnitAnnotationUtility(IZContained):
+	"""
+	Stores annotations for content units.
+	"""
+
+	def getAnnotations(content_unit):
+		"""
+		Returns an :class:`.IAnnotations` for the content unit.
+		"""
+
+	def getAnnotationsById(ntiid):
+		"""
+		Returns :class:`.IAnnotations` for the NTIID of the content unit.
+		"""
+
+	def hasAnnotations(content_unit):
+		"""
+		Returns a truthful value indicating whether the given content
+		unit has annotations.
+		"""
+
+class ISiteLibraryFactory(interface.Interface):
+
+	def library_for_site_named(name):
+		pass
