@@ -118,5 +118,9 @@ class TimestampToNormalized64BitIntNormalizer(Persistent,
 		return TimestampTo64BitIntNormalizer()
 
 	def value(self, value):
+		# handle cases where value is less 0. This avoid an index
+		# ValueError: long integer out of range.
+		if value is not None and value < 0:
+			return None
 		return self._int_normalizer.value(
-			self._timestamp_normalizer.value(value))
+					self._timestamp_normalizer.value(value))
