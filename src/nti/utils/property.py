@@ -103,6 +103,8 @@ def annotation_alias(annotation_name, annotation_property=None, default=None, de
 	return property( fget, fset, fdel,
 					 doc=doc )
 
+from zope.cachedescriptors.property import readproperty
+readproperty = readproperty # export
 from zope.cachedescriptors.property import CachedProperty as _CachedProperty
 from zope.cachedescriptors.property import Lazy as _Lazy
 from functools import update_wrapper

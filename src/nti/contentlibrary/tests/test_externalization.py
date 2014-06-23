@@ -36,11 +36,18 @@ import fudge
 
 from . import ContentlibraryLayerTest
 
+from zope.site.folder import rootFolder
+from zope.site.folder import Folder
+
 class TestExternalization(ContentlibraryLayerTest):
 
 	def test_doesnt_dual_escape(self):
+		bucket = filesystem.FilesystemBucket(name="prealgebra", bucket=rootFolder())
+		bucket.__parent__.absolute_path = '/'
+		key = filesystem.FilesystemKey(bucket=bucket, name='index.html')
 		unit = filesystem.FilesystemContentPackage(
-			filename='prealgebra/index.html',
+			key=key,
+			#filename='prealgebra/index.html',
 			href='index.html',
 			#root='prealgebra'
 		)
@@ -53,22 +60,37 @@ class TestExternalization(ContentlibraryLayerTest):
 
 
 	def _do_test_escape_if_needed( self, factory, key, index='eclipse-toc.xml', archive_unit=None, prefix='', installable=True):
+		if isinstance(key, basestring):
+
+			parts = key.split('/')
+
+			parent = rootFolder()
+			parent.absolute_path = '/'
+			if parts and parts[0] == '':
+				parts = parts[1:]
+
+			for k in parts[:-1]:
+				parent = filesystem.FilesystemBucket(bucket=parent, name=k)
+
+			key = filesystem.FilesystemKey(bucket=parent, name=parts[-1])
+
 		unit = factory(
 			key=key,
 			href='index.html',
 			#root='prealgebra',
 			title='Prealgebra',
 			description='',
-			installable=archive_unit is not None,
-			archive_unit=archive_unit,
+			installable=installable,
 			index=index,
 			isCourse=True )
 		unit.icon = unit.make_sibling_key( 'icons/The Icon.png' )
 
+		# This is a legacy code path for boto, which is not yet updated
 		if archive_unit:
+			unit.archive_unit = archive_unit
 			unit.archive_unit.__parent__ = unit
 			if not archive_unit.key.__parent__:
-				unit.archive_unit.key.__parent__ = filesystem.FilesystemBucket( name='prealgebra', parent=unit )
+				unit.archive_unit.key.__parent__ = filesystem.FilesystemBucket( name='prealgebra', bucket=unit )
 
 		interface.alsoProvides( unit, interfaces.ILegacyCourseConflatedContentPackage )
 		result = IExternalObject( unit ).toExternalObject()
@@ -98,26 +120,40 @@ class TestExternalization(ContentlibraryLayerTest):
 		def factory(**kwargs):
 			r = filesystem.FilesystemContentPackage(**kwargs)
 			r.index = r.make_sibling_key( 'eclipse-toc.xml' )
+			if 'archive_unit' not in kwargs or not kwargs['archive_unit']:
+				r.archive_unit = filesystem.FilesystemContentUnit(key=r.make_sibling_key('archive.zip'),
+																  href='archive.zip')
+
 			return r
 		self._do_test_escape_if_needed(
 			factory,
 			key='prealgebra/index.html',
-			index=None,
-			archive_unit=filesystem.FilesystemContentUnit( filename='archive.zip', href='archive.zip' ) )
+			index=None)
+
 
 	def test_escape_if_needed_filesystem_full_path(self):
 		def factory(**kwargs):
 			r = filesystem.FilesystemContentPackage(**kwargs)
+			r.archive_unit = filesystem.FilesystemContentUnit(key=r.make_sibling_key('archive.zip'),
+															  href='archive.zip')
 			r.index = r.make_sibling_key( 'eclipse-toc.xml' )
 			return r
 
+		root = rootFolder()
+		root.absolute_path = '/'
+		child = root['DNE'] = Folder()
+		child = child['Library'] = Folder()
+		child = child['WebServer'] = Folder()
+		child = child['Documents'] = Folder()
+		child.url_prefix = ''
+		child.absolute_path = '/DNE/Library/WebServer/Documents'
+
+		bucket = filesystem.FilesystemBucket(name="prealgebra", bucket=child)
+		key = filesystem.FilesystemKey(bucket=bucket, name='index.html')
+
 		self._do_test_escape_if_needed( factory,
 										index=None,
-										key='/DNE/Library/WebServer/Documents/prealgebra/index.html',
-										archive_unit=filesystem.FilesystemContentUnit(
-											filename='archive.zip',
-											href='archive.zip',
-											title='archive' ),
+										key=key,
 										installable=True	)
 
 

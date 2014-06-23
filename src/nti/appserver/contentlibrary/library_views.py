@@ -153,6 +153,7 @@ class _ContentUnitPreferences(persistent.Persistent):
 def _ContainerContentUnitPreferencesFactory(container):
 	# TODO: If we move any of this, we'll need to remember to pass in the key=
 	# argument otherwise we won't have access to the data that already exists
+	# key='nti.appserver.contentlibrary.library_views._ContentUnitPreferences'
 	return an_factory(_ContentUnitPreferences)(container)
 
 ###

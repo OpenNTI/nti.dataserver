@@ -34,7 +34,7 @@ from .library_views import find_page_info_view_helper
 # contains traversal helpers to fake it
 class _ContentCard(Contained):
 
-	__slots__ = ('path',)
+	__slots__ = (b'path',)
 
 	def __init__(self, path):
 		self.path = path
