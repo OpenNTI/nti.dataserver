@@ -41,7 +41,9 @@ class _AbstractDelimitedHierarchyObject(object):
 			self.name = name
 
 	def __repr__(self):
-		return "<%s '%s'/'%s'>" % (type(self).__name__, self.bucket, self.name.encode('unicode_escape'))
+		return "<%s '%s'/'%s'>" % (type(self).__name__,
+								   self.bucket,
+								   self.name.encode('unicode_escape') if self.name else '')
 
 
 @interface.implementer(IDelimitedHierarchyBucket)

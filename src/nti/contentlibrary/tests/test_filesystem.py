@@ -19,6 +19,7 @@ from hamcrest import greater_than
 from hamcrest import has_length
 from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import same_instance
 from hamcrest import empty as is_empty
 
 from nti.testing.matchers import verifiably_provides
@@ -116,6 +117,13 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( site_lib,
 					 validly_provides( interfaces.IPersistentContentPackageLibary ))
 
+		site_path = os.path.join( global_library._enumeration.root.absolute_path,
+								  'sites',
+								  'foobar',)
+
+		assert_that( site_lib._enumeration,
+					 has_property('absolute_path', site_path ) )
+
 		# should do nothing
 		site_lib.syncContentPackages()
 
@@ -123,6 +131,71 @@ class TestFilesystem(ContentlibraryLayerTest):
 		# doesn't have access to its parent contents yet.
 		assert_that( site_lib, has_property( 'contentPackages', is_empty() ))
 
+from zope import component
+
+class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):
+
+	def setUp(self):
+		global_library = self.global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
+		global_library.syncContentPackages()
+
+		component.getGlobalSiteManager().registerUtility( global_library,
+														  provided=interfaces.IContentPackageLibrary )
+
+	def tearDown(self):
+		component.getGlobalSiteManager().unregisterUtility( self.global_library,
+															provided=interfaces.IContentPackageLibrary )
+
+	def testGlobalPickle(self):
+
+		new_lib = pickle.loads(pickle.dumps(self.global_library))
+
+		assert_that( new_lib, is_(same_instance(self.global_library)) )
+
+		enum = self.global_library._enumeration
+		new_enum = pickle.loads(pickle.dumps(enum))
+
+		assert_that( new_enum, is_( same_instance(enum)))
+
+	def testPickleOfSiteLibWhenGlobalPathChanges(self):
+		global_library = self.global_library
+		site_factory = interfaces.ISiteLibraryFactory(global_library)
+
+		site_lib = site_factory.library_for_site_named( 'localsite' )
+
+		assert_that( site_lib,
+					 validly_provides( interfaces.IPersistentContentPackageLibary ))
+
+		site_path = os.path.join( global_library._enumeration.root.absolute_path,
+								  'sites',
+								  'localsite',)
+
+		assert_that( site_lib._enumeration,
+					 has_property('absolute_path', site_path ) )
+
+		site_lib.syncContentPackages()
+
+		content_package = site_lib[0]
+		assert_that( content_package, has_property('absolute_path',
+												   os.path.join(site_path, 'TestFilesystem', 'index.html')) )
+
+
+		sites = pickle.dumps(site_lib)
+
+
+		# Now if we change the global library path, this
+		# should all change too
+		global_library._enumeration.root.absolute_path = '/DNE/Hah'
+
+		new_site_lib = pickle.loads(sites)
+		new_enum = new_site_lib._enumeration
+
+		getattr(new_enum, 'absolute_path')
+
+		assert_that( new_enum, has_property('absolute_path', '/DNE/Hah/sites/localsite'))
+
+		new_content_package = new_site_lib[0]
+		assert_that( new_content_package, has_property('absolute_path', '/DNE/Hah/sites/localsite/TestFilesystem/index.html'))
 
 from nti.app.testing.layers import AppTestLayer
 
