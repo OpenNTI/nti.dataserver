@@ -71,6 +71,15 @@ class TestFilesystem(ContentlibraryLayerTest):
 					 has_property( 'embeddedContainerNTIIDs',
 								   contains('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1') ) )
 
+		# The package's lastModified time is greater than the lastModified
+		# of its index.html, because it's based on eclipse-toc.xml and the directory.
+		# NOTE: when you change these files on disk, be sure to keep this invariant;
+		# use `touch` if you have to
+		assert_that( package,
+					 has_property('lastModified',
+								  greater_than( package.key.lastModified )
+						 ))
+
 		# package pickles ok
 		assert_that( pickle.loads(pickle.dumps(package)),
 					 is_(package))

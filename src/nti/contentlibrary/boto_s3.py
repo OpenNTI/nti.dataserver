@@ -227,6 +227,9 @@ class BotoS3ContentPackage(ContentPackage,BotoS3ContentUnit):
 
 	TRANSIENT_EXCEPTIONS = (boto.exception.AWSConnectionError,)
 
+	# XXX: Note that this needs the same lastModified fixes as
+	# the filesystem version
+
 def _package_factory( key ):
 	toc_key = key.bucket.get_key( (key.name + '/' + eclipse.TOC_FILENAME).replace( '//', '/') )
 
