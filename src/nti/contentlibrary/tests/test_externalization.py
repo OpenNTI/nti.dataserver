@@ -108,7 +108,7 @@ class TestExternalization(ContentlibraryLayerTest):
 		assert_that( result,
 					 has_entries( 'DCCreator', (),
 								  'DCTitle', 'Prealgebra',
-								  'Last Modified', greater_than_or_equal_to( 0 ),
+								  'Last Modified', greater_than_or_equal_to( -1 ),
 								  'index', prefix + '/prealgebra/eclipse-toc.xml',
 								  'root', prefix + '/prealgebra/',
 								  'archive', prefix + '/prealgebra/archive.zip',

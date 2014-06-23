@@ -386,10 +386,10 @@ class IContentPackage(IContentUnit,
 						 title="Optional location of a JSONP version of the index.",
 						 required=False,
 						 default=None)
-
 	index_last_modified = Number(title="Time since the epoch the index for this package was last modified.",
 								 description="This is currently the best indication of when this package as a whole may have changed.",
-								 readonly=True)
+								 readonly=True,
+								 default=-1 )
 	installable = Bool(title="Whether or not this content package can be installed locally (offline)",
 					   default=False)
 	archive = TextLine(title="DEPRECATED. If this content is installable, this is the relative path to a ZIP archive of the content",
@@ -565,6 +565,12 @@ class IPersistentFilesystemContentPackageLibrary(IPersistentContentPackageLibary
 
 class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 											 IFilesystemContentPackageLibrary):
+	pass
+
+###
+# Content bundles
+###
+class IContentPackageBundle(IDisplayableContent):
 	pass
 
 class IContentUnitHrefMapper(interface.Interface):

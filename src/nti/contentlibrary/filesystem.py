@@ -77,8 +77,51 @@ def _package_factory(bucket, _package_factory=None, _unit_factory=None):
 
 	return package
 
+class _FilesystemTime(object):
+	"""
+	A descriptor that caches a filesystem time, allowing
+	for errors in case its accessed too early.
+	"""
+
+	default_time = -1
+
+	def __init__( self, name, st,
+				  attr_name=str('filename'),
+				  default_time=None ):
+		self._st = st
+		self._name = str(name)
+		self._attr_name = attr_name
+		if default_time is not None:
+			self.default_time = default_time
+
+	def __get__(self, inst, klass):
+		if inst is None:
+			return self
+
+		if self._name in inst.__dict__:
+			return inst.__dict__[self._name]
+
+		try:
+			val = os.stat(getattr(inst, self._attr_name))[self._st]
+		except (OSError,TypeError):
+			return self.default_time
+		else:
+			inst.__dict__[self._name] = val
+			if hasattr(inst, '_p_changed'):
+				inst._p_changed = True
+			return val
+
+	def __set__(self, inst, val):
+		# Should we allow set?
+		pass
+
+
 from .bucket import AbstractBucket
 from .bucket import AbstractKey
+
+from zope.dublincore.interfaces import IDCTimes
+from nti.dublincore.interfaces import ILastModified
+from nti.dublincore.time_mixins import TimeProperty
 
 class _AbsolutePathMixin(object):
 
@@ -90,14 +133,30 @@ class _AbsolutePathMixin(object):
 								self.__name__)
 		raise ValueError("Not yet", self.__parent__, pabspath, self.__name__)
 
+@interface.implementer(IDCTimes)
+class _FilesystemTimesMixin(object):
 
-@interface.implementer(IFilesystemKey)
-class FilesystemKey(AbstractKey, _AbsolutePathMixin):
+	lastModified = _FilesystemTime('lastModified', os.path.stat.ST_MTIME, 'absolute_path')
+	createdTime = _FilesystemTime('createdTime', os.path.stat.ST_CTIME, 'absolute_path')
+
+
+	modified = TimeProperty('lastModified', writable=False, cached=True)
+	created = TimeProperty('createdTime', writable=False, cached=True)
+
+
+@interface.implementer(IFilesystemKey,
+					   ILastModified)
+class FilesystemKey(AbstractKey,
+					_AbsolutePathMixin,
+					_FilesystemTimesMixin):
+
 	pass
 
 
 @interface.implementer(IFilesystemBucket)
-class FilesystemBucket(AbstractBucket, _AbsolutePathMixin):
+class FilesystemBucket(AbstractBucket,
+					   _AbsolutePathMixin,
+					   _FilesystemTimesMixin):
 
 	_key_type = FilesystemKey
 
@@ -122,7 +181,8 @@ class FilesystemBucket(AbstractBucket, _AbsolutePathMixin):
 from nti.dublincore.interfaces import ILastModified
 
 @interface.implementer(ILastModified)
-class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentPackageEnumeration):
+class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentPackageEnumeration,
+									_FilesystemTimesMixin):
 	"""
 	A library enumeration that will examine the root to find possible content packages.
 
@@ -177,20 +237,6 @@ class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentP
 		# a full path as name
 		return self.absolute_path
 
-	def _time(self, key):
-		try:
-			return os.stat(self.absolute_path)[key]
-		except OSError:
-			return -1
-
-	@property
-	def createdTime(self):
-		return self._time(os.path.stat.ST_CTIME)
-
-	@property
-	def lastModified(self):
-		return self._time(os.path.stat.ST_MTIME)
-
 	def _package_factory(self, bucket):
 		return _package_factory(bucket, self.__package_factory, self._unit_factory)
 
@@ -223,36 +269,12 @@ class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 from .contentunit import _exist_cache
 from .contentunit import _content_cache
 
-from nti.dublincore.time_mixins import TimeProperty
-class _FilesystemTime(object):
-	"""
-	A descriptor that caches a filesystem time, allowing
-	for errors in case its accessed too early.
-	"""
-	def __init__( self, name, st ):
-		self._st = st
-		self._name = str(name)
 
-	def __get__(self, inst, klass):
-		if inst is None:
-			return self
-
-		if self._name in inst.__dict__:
-			return inst.__dict__[self._name]
-
-		try:
-			val = os.stat(inst.filename)[self._st]
-		except (OSError,TypeError):
-			return 0
-		else:
-			inst.__dict__[self._name] = val
-			return val
-
-	def __set__(self, inst, val):
-		pass
 
 @interface.implementer(IFilesystemContentUnit)
-class FilesystemContentUnit(ContentUnit):
+class FilesystemContentUnit(_FilesystemTimesMixin,
+							ContentUnit):
+
 	"""
 	Adds the `filename` property, an alias of the `key` property
 	"""
@@ -276,14 +298,6 @@ class FilesystemContentUnit(ContentUnit):
 		filename = self.filename
 		if filename:
 			return os.path.dirname(filename)
-
-
-	lastModified = _FilesystemTime('lastModified', os.path.stat.ST_MTIME)
-	modified = TimeProperty('lastModified', writable=False, cached=True)
-
-
-	createdTime = _FilesystemTime('createdTime', os.path.stat.ST_CTIME)
-	created = TimeProperty('createdTime', writable=False, cached=True)
 
 	@repoze.lru.lru_cache(None, cache=_content_cache)
 	def read_contents(self):
@@ -355,6 +369,23 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 	"""
 
 	TRANSIENT_EXCEPTIONS = (IOError,)
+
+
+	_directory_last_modified = _FilesystemTime('_directory_last_modified',
+											   os.path.stat.ST_MTIME,
+											   'dirname')
+	@property
+	def lastModified(self):
+		"""
+		The modification date of a content package is defined to be
+		the most recent of its index file modification time
+		and its directory modification time. The ``index.html``
+		file found in the ``filename`` is not consulted, because
+		this object represents the entire package as a whole.
+		"""
+		return max( self.index_last_modified, self._directory_last_modified )
+
+
 
 
 from persistent import Persistent

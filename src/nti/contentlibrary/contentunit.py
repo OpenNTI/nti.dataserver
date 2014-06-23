@@ -40,13 +40,14 @@ class ContentUnit(PermissiveSchemaConfigured,
 
 	__external_class_name__ = 'ContentUnit'
 
-	createFieldProperties(IContentUnit)
 
 	__name__ = alias('title')
 	label = alias('title')
 
-	createdTime = 0
-	lastModified = 0
+	createdTime = -1
+	lastModified = -1
+
+	createFieldProperties(IContentUnit)
 
 	def __repr__(self):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
@@ -60,6 +61,8 @@ class ContentPackage(ContentUnit):
 	"""
 
 	__external_class_name__ = 'ContentPackage'
+
+	index_last_modified = -1
 
 	createFieldProperties(IDisplayableContent)
 	createDirectFieldProperties(IContentPackage)
