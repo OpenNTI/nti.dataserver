@@ -12,14 +12,14 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 from os.path import join as path_join
+import urllib
 
 from zope import interface
 from zope import component
-from zope.location.interfaces import IContained as IZContained
 
 import repoze.lru
 
-from nti.utils.property import alias, CachedProperty
+from nti.utils.property import readproperty
 
 from . import eclipse
 from . import library
@@ -46,19 +46,22 @@ def _hasTOC(path):
 def _isTOC(path):
 	return os.path.basename(path) == eclipse.TOC_FILENAME
 
-def _package_factory(directory, _package_factory=None, _unit_factory=None):
+def _package_factory(bucket, _package_factory=None, _unit_factory=None):
+	"""
+	Given a FilesystemBucket, return a package if it is sutable.
+	"""
+
+	directory = bucket.absolute_path
+
 	if not _hasTOC(directory):
 		return None
 
 	_package_factory = _package_factory or FilesystemContentPackage
 	_unit_factory = _unit_factory or FilesystemContentUnit
 
-	directory = os.path.abspath(directory)
-	if isinstance(directory, bytes):
-		directory = directory.decode('utf-8')
-
-	bucket = FilesystemBucket(directory)
 	key = FilesystemKey(bucket=bucket, name=eclipse.TOC_FILENAME)
+
+
 	temp_entry = FilesystemContentUnit(key=key)
 	assert key.absolute_path == _TOCPath(directory) == temp_entry.filename
 
@@ -68,10 +71,49 @@ def _package_factory(directory, _package_factory=None, _unit_factory=None):
 	assert package.key.bucket == bucket
 	assert package is not temp_entry
 
-	# FIXME: this is veird, it's not really contained
-	bucket.__parent__ = package
-
 	return package
+
+from .bucket import AbstractBucket
+from .bucket import AbstractKey
+
+class _AbsolutePathMixin(object):
+
+	@readproperty
+	def absolute_path(self):
+		pabspath = getattr(self.__parent__, 'absolute_path', None)
+		if pabspath and self.__name__:
+			return os.path.join(pabspath,
+								self.__name__)
+		raise ValueError("Not yet", self.__parent__, pabspath, self.__name__)
+
+
+@interface.implementer(IFilesystemKey)
+class FilesystemKey(AbstractKey, _AbsolutePathMixin):
+	pass
+
+
+@interface.implementer(IFilesystemBucket)
+class FilesystemBucket(AbstractBucket, _AbsolutePathMixin):
+
+	_key_type = FilesystemKey
+
+	def enumerateChildren(self):
+		absolute_path = self.absolute_path
+		if not os.path.isdir(absolute_path):
+			return
+
+		for k in os.listdir(absolute_path):
+			if k.startswith('.'):
+				continue
+
+			absk = os.path.join(absolute_path, k)
+			if isinstance(absk, bytes):
+				k = k.decode('utf-8')
+				absk = absk.decode('utf-8')
+			if os.path.isdir(absk):
+				yield type(self)(self, k)
+			else:
+				yield self._key_type(self, k)
 
 from nti.dublincore.interfaces import ILastModified
 
@@ -85,6 +127,8 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	This makes it safe to use speculatively.
 	"""
 
+	_bucket_factory = FilesystemBucket
+
 	def __init__(self, root, package_factory=None, unit_factory=None):
 		self._root = root
 		self.__package_factory = package_factory or FilesystemContentPackage
@@ -93,7 +137,19 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	@property
 	def root(self):
 		"""The root directory path we will examine."""
-		return self._root
+		return os.path.abspath(self._root)
+
+	@property
+	def absolute_path(self):
+		# Cooperate with the buckets and keys to get
+		# an absolute path on disk.
+		return self.root
+
+	@property
+	def name(self):
+		# For BWC with the old Bucket/Key system that used
+		# a full path as name
+		return self.absolute_path
 
 	def _time(self, key):
 		try:
@@ -109,19 +165,19 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	def lastModified(self):
 		return self._time(os.path.stat.ST_MTIME)
 
-	def _package_factory(self, path):
-		return _package_factory(path, self.__package_factory, self._unit_factory)
+	def _package_factory(self, bucket):
+		return _package_factory(bucket, self.__package_factory, self._unit_factory)
 
 	def _possible_content_packages(self):
 		if not os.path.isdir(self._root):
 			return
 
 		for p in os.listdir(self._root):
-			p = os.path.join(self._root, p)
-			p = os.path.abspath(p)
-			if os.path.isdir(p) and _hasTOC(p):
-				yield p
-
+			absp = os.path.join(self._root, p)
+			absp = os.path.abspath(absp)
+			if os.path.isdir(absp) and _hasTOC(absp):
+				p = p.decode('utf-8') if isinstance(p, bytes) else p
+				yield self._bucket_factory(bucket=self, name=p)
 
 
 @interface.implementer(IFilesystemContentPackageLibrary)
@@ -168,63 +224,6 @@ def CachedNotifyingStaticFilesystemLibrary(paths=()):
 	raise TypeError("Unsupported use of multiple paths")
 	# Though we could support it without too much trouble
 
-@interface.implementer(IFilesystemBucket, IZContained)
-class FilesystemBucket(object):
-
-	__name__ = alias('name')
-	key = alias('name')
-
-	def __init__(self, name=None, parent=None):
-		self.name = name
-		self.__parent__ = parent
-
-	def __eq__(self, other):
-		try:
-			return self.name == other.name
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return hash(self.name)
-
-	def __repr__( self ):
-		return "%s('%s')" % (self.__class__.__name__, self.name.encode('unicode_escape'))
-
-@interface.implementer(IFilesystemKey, IZContained)
-class FilesystemKey(object):
-
-	bucket = None
-	name = None
-
-	__name__ = alias('name')
-	key = alias('name')
-	__parent__ = alias('bucket')
-
-
-	def __init__(self, bucket=None, name=None):
-		if bucket is not None:
-			self.bucket = bucket
-		if name is not None:
-			self.name = name
-
-	@CachedProperty('bucket', 'name')
-	def absolute_path(self):
-		if self.bucket and self.bucket.name and self.name is not None:
-			return os.path.join(self.bucket.name, self.name)
-		return self.name
-
-	def __eq__(self, other):
-		try:
-			return self.bucket == other.bucket and self.name == other.name
-		except AttributeError:
-			return NotImplemented
-
-	def __repr__(self):
-		return "<FilesystemKey '%s'>" % self.absolute_path
-
-	def __hash__(self):
-		return hash(self.absolute_path)
-
 from .contentunit import _exist_cache
 from .contentunit import _content_cache
 
@@ -266,24 +265,14 @@ class FilesystemContentUnit(ContentUnit):
 		return self.__dict__.get('key', None)
 	def _set_key(self, nk):
 		if isinstance(nk, basestring):
-			# OK, the key is a simple string, meaning a path within
-			# a directory.
-			# TODO: Assuming one level of hierarchy
-			bucket_name = os.path.dirname(nk)
-			key_name = os.path.basename(nk)
-			bucket = FilesystemBucket(bucket_name) if bucket_name else None
-			if bucket:
-				bucket.__parent__ = self
-			file_key = FilesystemKey(bucket=bucket, name=key_name)
-			self.__dict__[str('key')] = file_key
-		else:
-			self.__dict__[str('key')] = nk
+			raise TypeError("Should provide a real key")
+		self.__dict__[str('key')] = nk
 	key = property(_get_key, _set_key)
 
 
 	def _get_filename(self):
 		return self.key.absolute_path if self.key else None
-	filename = property(_get_filename, _set_key)
+	filename = property(_get_filename, lambda x, y: None)
 
 	@property
 	def dirname(self):
@@ -308,16 +297,27 @@ class FilesystemContentUnit(ContentUnit):
 			return None
 
 	def get_parent_key(self):
-		return FilesystemKey(bucket=self.key.bucket, name='')
+		return self.key.bucket
 
 	def make_sibling_key(self, sibling_name):
 		__traceback_info__ = self.filename, sibling_name
-		key = FilesystemKey(bucket=self.key.bucket, name=sibling_name)
-		# TODO: If we get a multi-level sibling_name (relative/path/i.png),
-		# should we unpack that into a bucket hierarchy? The joining
-		# functions seem to work fine either way
-		# TODO: If we get a URL-encoded key, should we decode it?
-		assert key.absolute_path == os.path.join(os.path.dirname(self.filename), sibling_name)
+		assert bool(sibling_name)
+		assert not sibling_name.startswith('/')
+
+		# If we get a multi-segment path, we need to deconstruct it
+		# into bucket parts to be sure that it externalizes
+		# correctly.
+		# Just in case they send url-encoded things, decode them
+		parts = [urllib.unquote(x) for x in sibling_name.split('/')]
+		parts = [x.decode('utf-8') if isinstance(x, bytes) else x for x in parts]
+		parent = self.key.bucket
+		for part in parts[:-1]:
+			parent = type(self.key.bucket)(bucket=parent, name=part)
+
+		key = type(self.key)(bucket=parent, name=parts[-1])
+
+		assert key.absolute_path == os.path.join(os.path.dirname(self.filename), *parts)
+
 		return key
 
 	@repoze.lru.lru_cache(None, cache=_content_cache)  # first arg is ignored. This caches with the key (self, sibling_name)

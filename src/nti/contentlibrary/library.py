@@ -37,6 +37,10 @@ class AbstractContentPackageEnumeration(object):
 	When instances of this enumeration are pickled,
 	they
 	"""
+
+	__name__ = None
+	__parent__ = None
+
 	def _package_factory(self, possible_content_package):
 		"""A callable object that is passed each item from :attr:`possible_content_packages`
 		and returns either a package factory, or `None`.

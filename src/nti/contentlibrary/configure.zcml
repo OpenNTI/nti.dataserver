@@ -42,6 +42,7 @@
 	<adapter factory=".externalization._LegacyCourseConflatedContentPackageExternal" />
 
 	<adapter factory=".externalization._FilesystemKeyHrefMapper" />
+	<adapter factory=".externalization._FilesystemBucketHrefMapper" />
 	<adapter factory=".externalization._FilesystemContentUnitHrefMapper" />
 
 	<adapter factory=".externalization._S3ContentUnitHrefMapper" />

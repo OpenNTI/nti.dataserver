@@ -157,8 +157,6 @@ class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 		result['courseTitle'] = self.package.courseTitle
 		return result
 
-from pyramid import traversal
-
 @interface.implementer(interfaces.IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemContentUnit)
 class _FilesystemContentUnitHrefMapper(object):
@@ -167,30 +165,55 @@ class _FilesystemContentUnitHrefMapper(object):
 	def __init__(self, unit):
 		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
 
+from zope.traversing.api import joinPath
+from zope.location.location import LocationIterator
+from zope.location.interfaces import IRoot
+
 @interface.implementer(interfaces.IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
 	href = None
 
 	def __init__(self, key):
-		root_package = traversal.find_interface( key, interfaces.IContentPackage )
-		# FIXME: We are doing this by hand because _root_url_of_unit winds
-		# up calling us, which is weird.
-		#root_url = _root_url_of_unit( root_package )
-		root_url = '/' + os.path.basename( root_package.dirname ) + '/'
-		__traceback_info__ = key, root_package, root_url
-		href = _path_join( root_url, key.name )
+		parent_path = interfaces.IContentUnitHrefMapper(key.bucket).href
+		self.href = _path_join( parent_path, key.name )
 
-		library = traversal.find_interface( key, interfaces.IContentPackageLibrary )
-		prefix = getattr( library, 'url_prefix', '' )
-		__traceback_info__ += (href, prefix)
-		# We require that prefix be a valid segment, ending in a '/', or empty
-		href = prefix + href
 
-		href = href.replace( '//', '/' )
-		if not href.startswith( '/' ):
-			href = '/' + href
-		self.href = href
+
+@interface.implementer(interfaces.IContentUnitHrefMapper)
+@component.adapter(interfaces.IFilesystemBucket)
+class _FilesystemBucketHrefMapper(object):
+
+	href = None
+
+	def __init__(self, bucket):
+		parents = []
+		for p in LocationIterator(bucket):
+			if hasattr(p, 'url_prefix'):
+				if p.url_prefix:
+					# can't have empty segments in the path;
+					# also, the leading '/' if any, is assumed
+					name = p.url_prefix
+					if name.startswith('/'):
+						name = name[1:]
+					if name.endswith('/'):
+						name = name[:-1]
+					parents.append(name)
+				break
+			if IRoot.providedBy(p):
+				break
+
+			if p.__name__:
+				parents.append(p.__name__)
+
+
+		self.href = joinPath('/', *reversed(parents))
+
+		# since it's a bucket, we should end with a '/'
+		# so urljoin works as expected
+		if not self.href.endswith('/'):
+			self.href += '/'
+
 
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
 @component.adapter(interfaces.IS3ContentUnit)

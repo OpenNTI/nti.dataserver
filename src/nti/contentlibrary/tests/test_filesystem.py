@@ -42,7 +42,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 	def test_filesystem_content_interfaces(self):
 
 		unit = filesystem.FilesystemContentPackage(
-			filename='prealgebra/index.html',
+			#filename='prealgebra/index.html',
 			href = 'index.html',
 			#root = 'prealgebra',
 			#icon = 'icons/The%20Icon.png'
@@ -53,9 +53,11 @@ class TestFilesystem(ContentlibraryLayerTest):
 
 
 	def test_from_filesystem(self):
-
-		package = filesystem._package_factory( os.path.join( os.path.dirname( __file__ ),
-															 'TestFilesystem' ),
+		absolute_path = os.path.join( os.path.dirname( __file__ ),
+									  'TestFilesystem' )
+		bucket = filesystem.FilesystemBucket(name='TestFilesystem')
+		bucket.absolute_path = absolute_path
+		package = filesystem._package_factory( bucket,
 											   filesystem.PersistentFilesystemContentPackage,
 											   filesystem.PersistentFilesystemContentUnit)
 		assert_that( package.key,
@@ -133,7 +135,7 @@ class TestAppFilesystem(ContentlibraryLayerTest):
 		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
 
 		unit = filesystem.FilesystemContentPackage(
-			filename='prealgebra/index.html',
+			#filename='prealgebra/index.html',
 			href = 'index.html',
 			#root = 'prealgebra',
 			#icon = 'icons/The%20Icon.png'

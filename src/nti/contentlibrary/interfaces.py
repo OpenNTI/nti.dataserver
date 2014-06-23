@@ -29,6 +29,54 @@ from nti.schema.field import Bool
 
 # pylint: disable=E0213,E0211
 
+### Hierarchy abstraction
+
+# TODO: I'm not happy with the way paths are handled. How can the 'relative'
+# stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
+# attribute. That's mostly confined to externalization.py now.
+
+# The IDelimitedHierarchy objects are part of an attempt to deal with this.
+# All of the string properties that contain relative paths are
+# considered deprecated
+
+class IDelimitedHierarchyItem(IZContained):
+	"""
+	The __parent__ of the bucket should be the containing bucket;
+	it *should* be aliased to the ``bucket`` property.
+	"""
+	name = TextLine(title="The name of this bucket;"
+					" __name__ is an alias.")
+
+
+class IDelimitedHierarchyBucket(IDelimitedHierarchyItem):
+	"""
+	An item representing a container, like a folder.
+	"""
+
+class IEnumerableDelimitedHierarchyBucket(IDelimitedHierarchyBucket):
+	"""
+	A bucket that can be enumerated to produce its
+	children keys and buckets.
+	"""
+
+	def enumerateChildren():
+		"""
+		Return an iterable of child buckets and keys.
+		"""
+
+class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
+	"""
+	An item representing a leaf node.
+	"""
+
+	bucket = Object(IDelimitedHierarchyItem,
+					title="The bucket to which this key is relative;"
+					" __parent__ is an alias.",
+					default=None,
+					required=False)
+
+
+
 class IContentPackageEnumeration(interface.Interface):
 	"""
 	Something that can enumerate content packages,
@@ -197,24 +245,6 @@ class IDisplayableContent(IZContained,
 											 default=(),
 											 required=False)
 
-# TODO: I'm not happy with the way paths are handled. How can the 'relative'
-# stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
-# attribute. That's mostly confined to externalization.py now.
-
-# The IDelimitedHierarchy objects are part of an attempt to deal with this.
-# All of the string properties that contain relative paths are
-# considered deprecated
-
-class IDelimitedHierarchyBucket(IZContained):
-	name = TextLine(title="The name of this bucket")
-
-class IDelimitedHierarchyKey(IZContained):
-
-	bucket = Object(IDelimitedHierarchyBucket,
-					title="The bucket to which this key is relative.",
-					default=None,
-					required=False)
-	name = TextLine(title="The relative name of this key. Also in `key` and `__name__`.")
 
 class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 	"""
@@ -232,7 +262,9 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 	the ``__parent__`` attribute.
 	"""
 
-	key = Object(IDelimitedHierarchyKey, title="The key designating this entry in the hierarchy.")
+	key = Object(IDelimitedHierarchyKey,
+				 title="The key designating this entry in the hierarchy.",
+				 default=None)
 
 	def get_parent_key():
 		"""
@@ -327,7 +359,7 @@ class IContentPackage(IContentUnit,
 	becomes an alias for :meth:`IDelimitedHierarchyEntry.get_parent_key`.
 	"""
 
-	root = Object(IDelimitedHierarchyKey,
+	root = Object(IDelimitedHierarchyItem,
 				  title="Path portion of a uri for this object.",
 				  default=None)
 	index = Object(IDelimitedHierarchyKey,
@@ -448,12 +480,12 @@ class IS3ContentPackage(IDelimitedHierarchyContentPackage, IS3ContentUnit):
 	pass
 
 
-class IFilesystemBucket(IDelimitedHierarchyBucket):
+class IFilesystemBucket(IEnumerableDelimitedHierarchyBucket):
 	"""
 	An absolute string of a filesystem directory.
 	"""
 
-	name = TextLine(title="The complete path of this key (same as self); unique within the filesystem; `__name__` and `key` are aliases")
+	absolute_path = TextLine(title="The absolute path on disk of the directory")
 
 
 class IFilesystemKey(IDelimitedHierarchyKey):
