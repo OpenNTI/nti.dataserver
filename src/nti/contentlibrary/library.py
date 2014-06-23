@@ -31,11 +31,9 @@ class AbstractContentPackageEnumeration(object):
 	"""
 	Base class providing some semantic helpers for enumeration.
 
-	To make this class concrete, see :meth:`_package_factory`
-	and :meth:`_possible_content_packages`.
+	In any case, to make this class concrete, see
+	:meth:`_package_factory` and :meth:`_possible_content_packages`.
 
-	When instances of this enumeration are pickled,
-	they
 	"""
 
 	__name__ = None
@@ -69,6 +67,26 @@ class AbstractContentPackageEnumeration(object):
 				titles.append( title )
 		return titles
 
+@interface.implementer(interfaces.IDelimitedHierarchyContentPackageEnumeration)
+class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPackageEnumeration):
+	"""
+	An object that works with a root bucket to enumerate content paths.
+	We override :meth:`_possible_content_packages`, you still
+	need to override :meth:`_package_factory` at a minimum.
+	"""
+
+	root = None
+
+	def _possible_content_packages(self):
+		"""
+		Returns the children of the root.
+		"""
+
+		root = self.root
+		if root is None:
+			return ()
+
+		return root.enumerateChildren()
 
 
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)

@@ -49,7 +49,7 @@ def add_filesystem_index( title, event ):
 	if indexmanager is None: # pragma: no cover
 		return
 
-	indexname = os.path.basename( title.get_parent_key().bucket.name ) # TODO: So many assumptions here
+	indexname = os.path.basename( title.get_parent_key().absolute_path ) # TODO: So many assumptions here
 	indexdir_key = title.make_sibling_key( 'indexdir' )
 	_add_book( indexmanager, indexname, indexdir_key.absolute_path, title.ntiid )
 

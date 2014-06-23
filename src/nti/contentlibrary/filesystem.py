@@ -26,11 +26,15 @@ from . import library
 
 from .contentunit import ContentUnit
 from .contentunit import ContentPackage
+
+from .interfaces import IContentPackageLibrary
+from .interfaces import IEnumerableDelimitedHierarchyBucket
 from .interfaces import IFilesystemContentUnit
 from .interfaces import IFilesystemContentPackage
 from .interfaces import IFilesystemContentPackageLibrary
 from .interfaces import IFilesystemKey
 from .interfaces import IFilesystemBucket
+from .interfaces import IGlobalContentPackageLibrary
 from .interfaces import IGlobalFilesystemContentPackageLibrary
 from .interfaces import IPersistentFilesystemContentUnit
 from .interfaces import IPersistentFilesystemContentPackage
@@ -118,7 +122,7 @@ class FilesystemBucket(AbstractBucket, _AbsolutePathMixin):
 from nti.dublincore.interfaces import ILastModified
 
 @interface.implementer(ILastModified)
-class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
+class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentPackageEnumeration):
 	"""
 	A library enumeration that will examine the root to find possible content packages.
 
@@ -127,23 +131,45 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 	This makes it safe to use speculatively.
 	"""
 
-	_bucket_factory = FilesystemBucket
+	#: Used during persistence and when making absolute paths,
+	#: this is the parent enumeration that birthed us.
+	parent_enumeration = None
 
-	def __init__(self, root, package_factory=None, unit_factory=None):
-		self._root = root
+	def __init__(self, root_path, package_factory=None, unit_factory=None):
+		if not IEnumerableDelimitedHierarchyBucket.providedBy(root_path):
+			root_path = os.path.abspath(root_path)
+			if root_path.endswith('/'):
+				root_path = root_path[:-1]
+			self._root = FilesystemBucket(bucket=self, name=os.path.basename(root_path))
+			self._root.absolute_path = root_path
+			# Keep this unnamed so it doesn't get in the traversal path
+			self._root.__name__ = None
+		else:
+			self._root = root_path
+
 		self.__package_factory = package_factory or FilesystemContentPackage
 		self._unit_factory = unit_factory or FilesystemContentUnit
 
+	_bucket_factory = FilesystemBucket
+	_enumeration_factory = None
+
+	def childEnumeration(self, name):
+		bucket = self._bucket_factory(bucket=self, name=name)
+		enumeration_factory = self._enumeration_factory or type(self)
+		result = enumeration_factory(bucket)
+		result.parent_enumeration = self
+		return result
+
 	@property
 	def root(self):
-		"""The root directory path we will examine."""
-		return os.path.abspath(self._root)
+		"""The root bucket we will examine."""
+		return self._root
 
 	@property
 	def absolute_path(self):
 		# Cooperate with the buckets and keys to get
 		# an absolute path on disk.
-		return self.root
+		return self.root.absolute_path
 
 	@property
 	def name(self):
@@ -153,7 +179,7 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 
 	def _time(self, key):
 		try:
-			return os.stat(self._root)[key]
+			return os.stat(self.absolute_path)[key]
 		except OSError:
 			return -1
 
@@ -167,17 +193,6 @@ class _FilesystemLibraryEnumeration(library.AbstractContentPackageEnumeration):
 
 	def _package_factory(self, bucket):
 		return _package_factory(bucket, self.__package_factory, self._unit_factory)
-
-	def _possible_content_packages(self):
-		if not os.path.isdir(self._root):
-			return
-
-		for p in os.listdir(self._root):
-			absp = os.path.join(self._root, p)
-			absp = os.path.abspath(absp)
-			if os.path.isdir(absp) and _hasTOC(absp):
-				p = p.decode('utf-8') if isinstance(p, bytes) else p
-				yield self._bucket_factory(bucket=self, name=p)
 
 
 @interface.implementer(IFilesystemContentPackageLibrary)
@@ -204,25 +219,6 @@ class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 	def _create_enumeration(cls, root):
 		return _FilesystemLibraryEnumeration(root)
 
-@interface.implementer(IGlobalFilesystemContentPackageLibrary)
-class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
-											AbstractFilesystemLibrary):
-	pass
-
-# A measure of BWC
-EnumerateOnceFilesystemLibrary = GlobalFilesystemContentPackageLibrary
-DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
-StaticFilesystemLibrary = library.EmptyLibrary
-
-def CachedNotifyingStaticFilesystemLibrary(paths=()):
-	if not paths:
-		return library.EmptyLibrary()
-
-	roots = {os.path.dirname(p) for p in paths}
-	if len(roots) == 1:
-		return EnumerateOnceFilesystemLibrary(list(roots)[0])
-	raise TypeError("Unsupported use of multiple paths")
-	# Though we could support it without too much trouble
 
 from .contentunit import _exist_cache
 from .contentunit import _content_cache
@@ -273,6 +269,7 @@ class FilesystemContentUnit(ContentUnit):
 	def _get_filename(self):
 		return self.key.absolute_path if self.key else None
 	filename = property(_get_filename, lambda x, y: None)
+	absolute_path = property(_get_filename)
 
 	@property
 	def dirname(self):
@@ -386,6 +383,81 @@ class _PersistentFilesystemLibraryEnumeration(Persistent,
 											   PersistentFilesystemContentPackage,
 											   PersistentFilesystemContentUnit)
 
+def _GlobalFilesystemLibraryEnumerationUnpickle(parent):
+	return getattr(parent, '_enumeration')
+
+
+class _GlobalFilesystemLibraryEnumeration(_FilesystemLibraryEnumeration):
+	"""
+	When a global filesystem library enumeration is asked for
+	child enumerations, it produces ones that are relative
+	to itself, and looked up globally at runtime.
+	"""
+
+	_enumeration_factory = _PersistentFilesystemLibraryEnumeration
+
+	def __reduce__(self, *args):
+		return _GlobalFilesystemLibraryEnumerationUnpickle, (self.__parent__,)
+	__reduce_ex__ = __reduce__
+
+def _GlobalFilesystemUnpickle(library_name):
+
+	name = ''
+	if library_name != library.AbstractContentPackageLibrary.__dict__['__name__']:
+		name = library_name
+
+	gsm = component.getGlobalSiteManager()
+	lib = gsm.queryUtility(IGlobalFilesystemContentPackageLibrary,
+						   name=name)
+	if lib is None:
+		# Hmm, maybe they changed to a different implementation?
+		lib = gsm.queryUtility(IGlobalContentPackageLibrary, name=name)
+
+	if lib is None:
+		# Hmm, maybe it's not actually registered as global?
+		# NOTE: This last one throws!
+		lib = gsm.getUtility(IContentPackageLibrary, name=name)
+
+	return lib
+
+
+
+@interface.implementer(IGlobalFilesystemContentPackageLibrary)
+class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
+											AbstractFilesystemLibrary):
+	"""
+	When this library is pickled, none of its contents are; instead,
+	it is pickled as a lookup to the main global library (if the name
+	is not the default name of 'Library', that global library will
+	be found instead).
+	"""
+
+	@classmethod
+	def _create_enumeration(cls, root):
+		return _GlobalFilesystemLibraryEnumeration(root)
+
+
+	def __reduce__(self, *args):
+		return _GlobalFilesystemUnpickle, (self.__name__,)
+	__reduce_ex__ = __reduce__
+
+
+# A measure of BWC
+EnumerateOnceFilesystemLibrary = GlobalFilesystemContentPackageLibrary
+DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
+StaticFilesystemLibrary = library.EmptyLibrary
+
+def CachedNotifyingStaticFilesystemLibrary(paths=()):
+	if not paths:
+		return library.EmptyLibrary()
+
+	roots = {os.path.dirname(p) for p in paths}
+	if len(roots) == 1:
+		return EnumerateOnceFilesystemLibrary(list(roots)[0])
+	raise TypeError("Unsupported use of multiple paths")
+	# Though we could support it without too much trouble
+
+
 
 @interface.implementer(IPersistentFilesystemContentPackageLibrary)
 class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
@@ -393,7 +465,8 @@ class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
 
 	@classmethod
 	def _create_enumeration(cls, root):
-		return _PersistentFilesystemLibraryEnumeration(root)
+		assert isinstance(root, _PersistentFilesystemLibraryEnumeration)
+		return root
 
 from .interfaces import ISiteLibraryFactory
 from nti.externalization.persistence import NoPickle
@@ -410,8 +483,8 @@ class GlobalFilesystemSiteLibraryFactory(object):
 		enumeration = self.context._enumeration
 		root = enumeration.root
 
-		site_dir = os.path.join( root, 'sites', name )
+		site_enumeration = enumeration.childEnumeration('sites').childEnumeration(name)
 
 		# whether or not it exists we return it so that
 		# it can be registered for the future.
-		return PersistentFilesystemLibrary(site_dir)
+		return PersistentFilesystemLibrary(site_enumeration)

@@ -69,7 +69,7 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 	An item representing a leaf node.
 	"""
 
-	bucket = Object(IDelimitedHierarchyItem,
+	bucket = Object(IDelimitedHierarchyBucket,
 					title="The bucket to which this key is relative;"
 					" __parent__ is an alias.",
 					default=None,
@@ -104,6 +104,22 @@ class IContentPackageEnumeration(interface.Interface):
 		and no created or added events should be fired for them.
 
 		The contents of this enumeration may change over time.
+		"""
+
+class IDelimitedHierarchyContentPackageEnumeration(IContentPackageEnumeration):
+	"""
+	An enumeration that works by inspecting a particular bucket.
+	"""
+
+	root = Object(IEnumerableDelimitedHierarchyBucket,
+					title="The bucket that will be introspected for content",
+					default=None,
+					required=True)
+
+	def childEnumeration(name):
+		"""
+		Return a new object that would enumerate objects found within
+		the given named bucket.
 		"""
 
 class IContentPackageLibrary(ILastModified,
