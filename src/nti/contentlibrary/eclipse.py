@@ -84,9 +84,11 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 
 	embeddedContainerNTIIDs = list()
 	for child in node.iterchildren(tag='object'):
-		val = _node_get(child, 'ntiid')
-		if val and val not in embeddedContainerNTIIDs: # required to be unique
-			embeddedContainerNTIIDs.append( val )
+		ntiid = _node_get(child, 'ntiid')
+		ntiid = ntiid.split() if ntiid else ()
+		for val in ntiid:
+			if val not in embeddedContainerNTIIDs:
+				embeddedContainerNTIIDs.append(val)
 
 	if embeddedContainerNTIIDs:
 		__traceback_info__ = embeddedContainerNTIIDs
