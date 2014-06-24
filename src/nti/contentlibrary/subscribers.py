@@ -33,7 +33,7 @@ def install_site_content_library(local_site_manager, event):
 
 	If you need to perform work, such as registering your own
 	utility in the local site, listen for the component
-	registration event, :class:`zope.interface.interfaces.IRegistrationEvent`,
+	registration event, :class:`zope.interface.interfaces.IRegistered`,
 	which is an ObjectEvent, whose object will be an
 	:class:`nti.contentlibrary.interfaces.IPersistentContentPackageLibary`
 	"""
@@ -78,3 +78,34 @@ def install_site_content_library(local_site_manager, event):
 		# listeners are found
 		library.syncContentPackages()
 		return library
+
+from zope.interface.interfaces import IRegistered
+from zope.interface.interfaces import IUnregistered
+
+from .interfaces import IContentPackageBundleLibrary
+from .bundle import ContentPackageBundleLibrary
+
+_BUNDLE_LIBRARY_NAME = 'ContentPackageBundles'
+
+@component.adapter(IPersistentContentPackageLibary, IRegistered)
+def install_bundle_library(library, event):
+	registration = event.object
+	local_site_manager = registration.registry
+
+	# See above for why these need to be in the site manager
+	bundle_library = local_site_manager[_BUNDLE_LIBRARY_NAME] = ContentPackageBundleLibrary()
+
+	local_site_manager.registerUtility( bundle_library,
+										provided=IContentPackageBundleLibrary )
+
+
+@component.adapter(IPersistentContentPackageLibary, IUnregistered)
+def uninstall_bundle_library(library, event):
+	registration = event.object
+	local_site_manager = registration.registry
+
+	bundle_library = local_site_manager[_BUNDLE_LIBRARY_NAME]
+
+	local_site_manager.unregisterUtility( bundle_library,
+										  provided=IContentPackageBundleLibrary )
+	del local_site_manager[_BUNDLE_LIBRARY_NAME]

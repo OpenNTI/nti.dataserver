@@ -9,7 +9,10 @@ __docformat__ = "restructuredtext en"
 from zope import interface
 from zope.annotation.interfaces import IAnnotatable
 from zope.dublincore import interfaces as dub_interfaces
+
 from zope.location.interfaces import IContained as IZContained
+from zope.container.interfaces import IContentContainer
+from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -19,15 +22,22 @@ from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from persistent.interfaces import IPersistent
 
-from nti.schema.field import Number
-from nti.schema.field import ValidTextLine as TextLine
-from nti.schema.field import IndexedIterable
-from nti.schema.field import Iterable
-from nti.schema.field import Object
-from nti.schema.field import Int
 from nti.schema.field import Bool
+from nti.schema.field import IndexedIterable
+from nti.schema.field import Int
+from nti.schema.field import Iterable
+from nti.schema.field import Number
+from nti.schema.field import Object
+from nti.schema.field import UniqueIterable
+from nti.schema.field import ValidTextLine as TextLine
 
-# pylint: disable=E0213,E0211
+from nti.ntiids.schema import ValidNTIID
+
+# pylint: disable=I0011,E0213,E0211
+
+# Disable pylint warnings about undefined variables, because it catches
+# all the __setitem__ and __parent__ in the interfaces.
+# pylint: disable=E0602
 
 ### Hierarchy abstraction
 
@@ -337,7 +347,7 @@ class IContentUnit(IZContained,
 	key = Object(IDelimitedHierarchyKey,
 				 title="URI for the representation of this item",
 				 default=None)
-	ntiid = TextLine(title="The NTIID for this item",
+	ntiid = ValidNTIID(title="The NTIID for this item",
 					 default=None,
 					 required=False)
 	icon = Object(IDelimitedHierarchyKey,
@@ -352,7 +362,7 @@ class IContentUnit(IZContained,
 						default=())
 
 	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
-											  value_type=TextLine(title="The embedded NTIID"),
+											  value_type=ValidNTIID(title="The embedded NTIID"),
 											  unique=True,
 											  default=())
 
@@ -570,8 +580,35 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 ###
 # Content bundles
 ###
-class IContentPackageBundle(IDisplayableContent):
-	pass
+class IContentPackageBundle(IDisplayableContent, IAnnotatable):
+	"""
+	A (typically persistent) object representing a collection
+	of one or more content packages, presented as a viewable unit
+	in the user interface. These bundles may have additional
+	resources associated with them and may imply certain types
+	of security precautions or other.
+
+	When arranged into a hierarchy, the parent for this item
+	should be a class:`IContentPackageBundleLibrary`, and its
+	``__name__`` should be a synonym for its NTIID.
+	"""
+	containers(str('.IContentPackageBundleLibrary'))
+	__parent__.required = False
+
+	ntiid = ValidNTIID(title="The NTIID for this item",
+					 default=None,
+					 required=False)
+
+	ContentPackages = UniqueIterable(value_type=Object(IContentPackage, title="A content package"),
+									 title="The referenced content packages",
+									 default=())
+
+class IContentPackageBundleLibrary(IContentContainer):
+	"""
+	A \"library\" that contains bundles.
+	"""
+	contains(IContentPackageBundle)
+	__setitem__.__doc__ = None
 
 class IContentUnitHrefMapper(interface.Interface):
 	"""

@@ -62,7 +62,7 @@ class TestBotoS3(ContentlibraryLayerTest):
 		unit = BotoS3ContentUnit( key=key )
 
 		unit.title = 'foo'
-		unit.ntiid = 'baz'
+		unit.ntiid = 'tag:nextthought.com,2011-10:foo-bar-baz'
 		unit.icon = Key(name='icons/chapters/c1.png')
 		unit.icon.bucket = key.bucket
 		unit.description = 'comment'
