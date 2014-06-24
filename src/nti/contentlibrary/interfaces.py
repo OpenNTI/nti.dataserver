@@ -28,6 +28,7 @@ from nti.schema.field import Int
 from nti.schema.field import Iterable
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import Variant
 from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidTextLine as TextLine
 
@@ -374,7 +375,9 @@ class IContentUnit(IZContained,
 						default=())
 
 	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
-											  value_type=TextLine(title="The embedded NTIID"),
+											  value_type=Variant((ValidNTIID(title="The valid NTIID"),
+																  TextLine(title="The possibly valid NTIID")),
+																  title="The embedded NTIID"),
 											  unique=True,
 											  default=())
 
