@@ -71,4 +71,6 @@ class AbstractBucket(_AbstractDelimitedHierarchyObject):
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
-	pass
+
+	def readContents(self):
+		raise NotImplementedError()

@@ -144,6 +144,7 @@ class _FilesystemTimesMixin(object):
 	modified = TimeProperty('lastModified', writable=False, cached=True)
 	created = TimeProperty('createdTime', writable=False, cached=True)
 
+from .contentunit import _content_cache
 
 @interface.implementer(IFilesystemKey,
 					   ILastModified)
@@ -151,7 +152,15 @@ class FilesystemKey(AbstractKey,
 					_AbsolutePathMixin,
 					_FilesystemTimesMixin):
 
-	pass
+	@repoze.lru.lru_cache(None, cache=_content_cache)
+	def readContents(self):
+		try:
+			with open(self.absolute_path, 'rb') as f:
+				return f.read()
+		except IOError:
+			return None
+
+
 
 
 @interface.implementer(IFilesystemBucket)
@@ -268,9 +277,6 @@ class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 
 
 from .contentunit import _exist_cache
-from .contentunit import _content_cache
-
-
 
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(_FilesystemTimesMixin,
@@ -298,13 +304,8 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 		if filename:
 			return os.path.dirname(filename)
 
-	@repoze.lru.lru_cache(None, cache=_content_cache)
 	def read_contents(self):
-		try:
-			with open(self.filename, 'r') as f:
-				return f.read()
-		except IOError:
-			return None
+		return self.key.readContents()
 
 	def get_parent_key(self):
 		return self.key.bucket

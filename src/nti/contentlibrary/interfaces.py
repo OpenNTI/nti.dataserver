@@ -28,7 +28,6 @@ from nti.schema.field import Int
 from nti.schema.field import Iterable
 from nti.schema.field import Number
 from nti.schema.field import Object
-from nti.schema.field import Variant
 from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidTextLine as TextLine
 
@@ -94,6 +93,10 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 					default=None,
 					required=False)
 
+	def readContents():
+		"""
+		Return, as a byte-string, the contents of this leaf node.
+		"""
 
 
 class IContentPackageEnumeration(interface.Interface):
@@ -375,9 +378,7 @@ class IContentUnit(IZContained,
 						default=())
 
 	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
-											  value_type=Variant((ValidNTIID(title="The valid NTIID"),
-																  TextLine(title="The possibly valid NTIID")),
-																  title="The embedded NTIID"),
+											  value_type=ValidNTIID(title="The embedded NTIID"),
 											  unique=True,
 											  default=())
 
@@ -624,6 +625,37 @@ class IContentPackageBundleLibrary(IContentContainer):
 	"""
 	contains(IContentPackageBundle)
 	__setitem__.__doc__ = None
+
+class ISyncableContentPackageBundleLibrary(interface.Interface):
+	"""
+	An abstraction for synchronizing a content bundle library with
+	the contents of a :class:`IEnumerableDelimitedHierarchyBucket`.
+
+	Note that the bundle entries should remain persistent and be modified in place,
+	if necessary.
+	"""
+
+	def syncFromBucket(bundle_bucket):
+		"""
+		Synchronize the state of the library.
+
+		:param bundle_bucket: The :class:`IEnumerableDelimitedHierarchyBucket`
+			to read from.
+		"""
+
+
+class IContentPackageBundleLibrarySynchedEvent(IObjectModifiedEvent):
+	"""
+	An event fired when a content package bundle library has completed
+	a synchronization that resulted in changes. This is fired
+	after events for individual content package changes.
+	"""
+
+@interface.implementer(IContentPackageBundleLibrarySynchedEvent)
+class ContentPackageBundleLibrarySynchedEvent(ObjectModifiedEvent):
+	"""
+	Content package bundle synced event.
+	"""
 
 class IContentUnitHrefMapper(interface.Interface):
 	"""

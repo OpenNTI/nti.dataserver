@@ -21,6 +21,7 @@ from hamcrest import none
 from hamcrest import is_not
 from hamcrest import same_instance
 from hamcrest import has_length
+from hamcrest import has_property
 
 from nti.testing import base
 from nti.testing.matchers import validly_provides
@@ -38,6 +39,13 @@ from .. import interfaces
 
 from . import ContentlibraryLayerTest
 
+from zope.site.interfaces import NewLocalSite
+from zope.site.folder import Folder
+from zope.site.site import LocalSiteManager
+
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+
+from zope.component import eventtesting
 
 class TestSubscribers(ContentlibraryLayerTest):
 
@@ -54,9 +62,6 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 
 	def test_install_site_library(self):
-		from zope.site.interfaces import NewLocalSite
-		from zope.site.folder import Folder
-		from zope.site.site import LocalSiteManager
 
 		site = Folder()
 		site.__name__ = 'Site'
@@ -91,3 +96,29 @@ class TestSubscribers(ContentlibraryLayerTest):
 		sm.unregisterUtility( site_lib, provided=interfaces.IPersistentContentPackageLibrary )
 		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
 					 is_(none()) )
+
+	def test_install_site_library_sync_bundle(self):
+		# Use a real site we have that includes a bundle directory
+		global_library = self.global_library
+		site_factory = interfaces.ISiteLibraryFactory(global_library)
+
+		site = Folder()
+		site.__name__ = 'localsite'
+		sm = LocalSiteManager(site)
+		site.setSiteManager(sm)
+
+		site_lib = site_factory.library_for_site_named( 'localsite' )
+		eventtesting.clearEvents()
+
+		site_lib = subscribers.install_site_content_library( sm, NewLocalSite(sm))
+
+		evts = eventtesting.getEvents(
+			IObjectAddedEvent,
+			filter=lambda e: interfaces.IContentPackageBundle.providedBy(getattr(e, 'object', None) ))
+
+		assert_that( evts, has_length(1))
+		assert_that( evts[0], has_property('object',
+										   has_property('ContentPackages', has_length(1))) )
+
+		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibrarySynchedEvent)
+		assert_that( evts, has_length(1))
