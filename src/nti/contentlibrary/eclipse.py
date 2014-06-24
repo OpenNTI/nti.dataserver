@@ -19,6 +19,8 @@ from zope.dublincore import xmlmetadata
 
 from . import interfaces as lib_interfaces
 
+from nti.ntiids.ntiids import is_valid_ntiid_string
+
 ###
 ## Constants for file names we know and care about
 ##
@@ -85,10 +87,16 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	embeddedContainerNTIIDs = list()
 	for child in node.iterchildren(tag='object'):
 		ntiid = _node_get(child, 'ntiid')
-		ntiid = ntiid.split() if ntiid else ()
-		for val in ntiid:
-			if val not in embeddedContainerNTIIDs:
-				embeddedContainerNTIIDs.append(val)
+		if not ntiid:
+			continue
+
+		if not is_valid_ntiid_string(ntiid):
+			logger.warn("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
+						ntiid, tocItem)
+			continue
+
+		if ntiid not in embeddedContainerNTIIDs:
+			embeddedContainerNTIIDs.append(ntiid)
 
 	if embeddedContainerNTIIDs:
 		__traceback_info__ = embeddedContainerNTIIDs
