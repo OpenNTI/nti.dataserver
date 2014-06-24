@@ -180,8 +180,9 @@ class _TemplateArgs(object):
 		path = self._path_to_note_container()
 		if path:
 			for i in reversed(path):
-				if i.__name__.strip():
-					return i.__name__
+				title = getattr(i, 'title', '')
+				if title and title.strip():
+					return title
 
 	@property
 	def note_container_href(self):
