@@ -330,7 +330,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			f.write( """<?xml version="1.0"?>
 			<toc NTIRelativeScrollHeight="58" href="index.html"
 			icon="icons/Faa%20Aviation%20Maintenance%20Technician%20Knowledge%20Test%20Guide-Icon.png"
-			label="FAA Aviation Maintenance Technician Knowledge Test" ntiid="faa-mathcounts-1" thumbnail="./thumbnails/index.png">
+			label="FAA Aviation Maintenance Technician Knowledge Test" ntiid="tag:nextthought.com,2011-10:foo-bar-baz" thumbnail="./thumbnails/index.png">
 			<topic label="C1" href="faa-index.html"/>
 			</toc>""")
 		self.library = DynamicLibrary( self.temp_dir )

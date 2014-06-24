@@ -17,12 +17,13 @@ logger = __import__('logging').getLogger(__name__)
 import unittest
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import same_instance
 from hamcrest import has_length
 
 from nti.testing import base
-from nti.testing import matchers
+from nti.testing.matchers import validly_provides
 
 import os
 
@@ -69,9 +70,18 @@ class TestSubscribers(ContentlibraryLayerTest):
 					 is_not( component.getUtility(interfaces.IContentUnitAnnotationUtility)) )
 
 		assert_that( sm.getUtility(interfaces.IContentPackageLibrary),
-					 is_( same_instance(site_lib)))
+					 is_( same_instance(site_lib) ))
 
 		# Because the site is based beneath the global site, the local library
 		# has access to the parent site content
 		embed_paths = site_lib.pathsToEmbeddedNTIID('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1')
 		assert_that( embed_paths, has_length( 1 ) )
+
+		# This also had the side effect of registering the bundle library
+		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
+					 validly_provides(interfaces.IContentPackageBundleLibrary))
+
+		# If we unregister the site library, the bundle library goes away too
+		sm.unregisterUtility( site_lib, provided=interfaces.IPersistentContentPackageLibary )
+		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
+					 is_(none()) )
