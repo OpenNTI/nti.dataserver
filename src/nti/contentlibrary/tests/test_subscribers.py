@@ -81,7 +81,13 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
 					 validly_provides(interfaces.IContentPackageBundleLibrary))
 
+		# The library's context site is the one we installed
+		bundle_library = sm.getUtility(interfaces.IContentPackageBundleLibrary)
+		assert_that( component.getSiteManager(bundle_library),
+					 is_( same_instance(sm) ))
+
+
 		# If we unregister the site library, the bundle library goes away too
-		sm.unregisterUtility( site_lib, provided=interfaces.IPersistentContentPackageLibary )
+		sm.unregisterUtility( site_lib, provided=interfaces.IPersistentContentPackageLibrary )
 		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
 					 is_(none()) )

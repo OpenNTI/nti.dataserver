@@ -46,16 +46,29 @@ class _AbstractDelimitedHierarchyObject(object):
 								   self.name.encode('unicode_escape') if self.name else '')
 
 
+	### Methods from IEnumerableDelimitedHierarchyBucket
+
+	def enumerateChildren(self):
+		"""
+		To simplify programming, we provide an :meth:`enumerateChlidren`
+		method that returns an empty list.
+		"""
+		return ()
+
+
+	def getChildNamed(self, name):
+		"""
+		A convenience implementation that iterates across
+		the children to find a match.
+		"""
+		for k in self.enumerateChildren():
+			if k.__name__ == name:
+				return k
+
 @interface.implementer(IDelimitedHierarchyBucket)
 class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
-	"""
-	To simplify programming, we provide an :meth:`enumerateChlidren`
-	method that returns an empty list.
-	"""
-
-	def enumerateChildren(self):
-		return ()
+	pass

@@ -18,6 +18,8 @@
 	<!-- site libraries, when we're using the filesystem -->
 	<adapter factory=".filesystem.GlobalFilesystemSiteLibraryFactory" />
 
+	<adapter factory=".adapters.enumeration_from_library" />
+
 	<!-- annotations -->
 	<!-- single argument -->
 	<adapter factory=".annotation.annotations" />

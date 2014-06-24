@@ -28,6 +28,7 @@ from .contentunit import ContentUnit
 from .contentunit import ContentPackage
 
 from .interfaces import IContentPackageLibrary
+from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 from .interfaces import IEnumerableDelimitedHierarchyBucket
 from .interfaces import IFilesystemContentUnit
 from .interfaces import IFilesystemContentPackage
@@ -509,7 +510,7 @@ class GlobalFilesystemSiteLibraryFactory(object):
 		self.context = context
 
 	def library_for_site_named(self, name):
-		enumeration = self.context._enumeration
+		enumeration = IDelimitedHierarchyContentPackageEnumeration(self.context)
 		root = enumeration.root
 
 		site_enumeration = enumeration.childEnumeration('sites').childEnumeration(name)
