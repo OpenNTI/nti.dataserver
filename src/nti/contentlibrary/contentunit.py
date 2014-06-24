@@ -40,14 +40,20 @@ class ContentUnit(PermissiveSchemaConfigured,
 
 	__external_class_name__ = 'ContentUnit'
 
-
-	__name__ = alias('title')
-	label = alias('title')
-
 	createdTime = -1
 	lastModified = -1
 
 	createFieldProperties(IContentUnit)
+
+	# These things need to override the field properties
+	# XXX: JAM: This isn't really correct. The __name__ needs to be unique
+	# within the container, but that isn't guaranteed for the title (?)
+	# Unit-test failures can often be found if __name__ is allowed
+	# to be a field property; those should be changed to title...
+	# __name__ is commented out because the one test failure we saw has
+	# been fixed
+	#__name__ = alias('title')
+	label = alias('title')
 
 	def __repr__(self):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
