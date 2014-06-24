@@ -14,8 +14,8 @@ from zope.location.interfaces import IContained as IZContained
 from zope.container.interfaces import IContentContainer
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
-from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
 
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
@@ -72,6 +72,14 @@ class IEnumerableDelimitedHierarchyBucket(IDelimitedHierarchyBucket):
 	def enumerateChildren():
 		"""
 		Return an iterable of child buckets and keys.
+		"""
+
+	def getChildNamed(name):
+		"""
+		If there is a child bucket or key with the given
+		name, return it. If there is no such bucket,
+		return None. In general, expect case-sensitive
+		matching.
 		"""
 
 class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
@@ -216,6 +224,10 @@ class IContentPackageLibrarySynchedEvent(IObjectModifiedEvent):
 	a synchronization that resulted in changes. This is fired
 	after events for individual content package changes.
 	"""
+	# JAM: Should this be a plain ObjectEvent, not
+	# ObjectModifiedEvent (that way none of the indexing logic or
+	# similar gets invoked)? But the `attributes` property
+	# of ModifiedEvent might be useful
 
 @interface.implementer(IContentPackageLibrarySynchedEvent)
 class ContentPackageLibrarySynchedEvent(ObjectModifiedEvent):
@@ -229,7 +241,7 @@ class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
 	on every startup.
 	"""
 
-class IPersistentContentPackageLibary(IPersistent,
+class IPersistentContentPackageLibrary(IPersistent,
 									  ISyncableContentPackageLibrary):
 	"""
 	A content library whose contents are expected to persist
@@ -569,7 +581,7 @@ class IFilesystemContentPackageLibrary(IContentPackageLibrary):
 	A content package library based on reading the contents of the filesystem.
 	"""
 
-class IPersistentFilesystemContentPackageLibrary(IPersistentContentPackageLibary,
+class IPersistentFilesystemContentPackageLibrary(IPersistentContentPackageLibrary,
 												 IFilesystemContentPackageLibrary):
 	pass
 

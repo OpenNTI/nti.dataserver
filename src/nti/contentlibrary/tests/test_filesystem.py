@@ -124,7 +124,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 		site_lib = site_factory.library_for_site_named( 'foobar' )
 
 		assert_that( site_lib,
-					 validly_provides( interfaces.IPersistentContentPackageLibary ))
+					 validly_provides( interfaces.IPersistentContentPackageLibrary ))
 
 		site_path = os.path.join( global_library._enumeration.root.absolute_path,
 								  'sites',
@@ -173,7 +173,7 @@ class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):
 		site_lib = site_factory.library_for_site_named( 'localsite' )
 
 		assert_that( site_lib,
-					 validly_provides( interfaces.IPersistentContentPackageLibary ))
+					 validly_provides( interfaces.IPersistentContentPackageLibrary ))
 
 		site_path = os.path.join( global_library._enumeration.root.absolute_path,
 								  'sites',
