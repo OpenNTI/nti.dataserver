@@ -249,10 +249,18 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 		super(TestLibraryEntryAclProvider,cls).setUpClass()
 		cls.temp_dir = tempfile.mkdtemp()
 		cls.library_entry = FilesystemContentPackage()
-		cls.library_entry.filename = os.path.join( cls.temp_dir, 'index.html' )
+		class Key(object):
+			absolute_path = None
+			bucket = None
+			def __init__(self, bucket=None, name=None):
+				self.absolute_path = name
+		cls.library_entry.key = Key(name=os.path.join( cls.temp_dir, 'index.html' ))
 		cls.library_entry.children = []
+		cls.library_entry.make_sibling_key = lambda k: Key(name=os.path.join(cls.temp_dir, k))
+
 		child = FilesystemContentUnit()
-		child.filename = os.path.join( cls.temp_dir, 'child.html' )
+		child.key = Key(name=os.path.join( cls.temp_dir, 'child.html' ))
+		child.make_sibling_key = lambda k: Key(name=os.path.join(cls.temp_dir, k))
 		child.__parent__ = cls.library_entry
 		child.ordinal = 1
 		cls.library_entry.children.append( child )
@@ -299,6 +307,7 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 			f.flush()
 
 		for context in self.library_entry, self.library_entry.children[0]:
+			__traceback_info__ = context
 			acl_prov = nti_interfaces.IACLProvider( context )
 			assert_that( acl_prov, permits( "User", auth.ACT_CREATE ) )
 			assert_that( acl_prov, denies( "OtherUser", auth.ACT_CREATE ) )
@@ -316,8 +325,7 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 		# Now I can write another user in for access to just the child entry
 		with open( self.acl_path + '.1', 'w' ) as f:
 			f.write( 'Allow:OtherUser:All\n' )
-		import nti.contentlibrary.contentunit
-		nti.contentlibrary.contentunit._clear_caches()
+		_clear_caches()
 
 		# Nothing changed an the top level
 		context = self.library_entry

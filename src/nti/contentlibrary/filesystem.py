@@ -288,10 +288,8 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 	key = property(_get_key, _set_key)
 
 
-	def _get_filename(self):
-		return self.key.absolute_path if self.key else None
-	filename = property(_get_filename, lambda x, y: None)
-	absolute_path = property(_get_filename)
+	filename = property(lambda self: self.key.absolute_path if self.key else None)
+	absolute_path = filename
 
 	@property
 	def dirname(self):
