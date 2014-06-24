@@ -73,16 +73,16 @@ class TestTimes(unittest.TestCase):
 
 		for i in xrange(1, 10000, 5):
 
-			ti = struct.pack('!q', i)
-			qti = struct.pack('!Q', i)
+			ti = struct.pack(b'!q', i)
+			qti = struct.pack(b'!Q', i)
 
 			assert_that( ti, is_(qti))
 
-			uti = struct.unpack('!q', ti)[0]
-			uqti = struct.unpack('!Q', qti)[0]
+			uti = struct.unpack(b'!q', ti)[0]
+			uqti = struct.unpack(b'!Q', qti)[0]
 
 			assert_that( uti, is_(i))
 			assert_that( uti, is_(uqti) )
 
-			assert_that( struct.unpack('!q', qti)[0],
+			assert_that( struct.unpack(b'!q', qti)[0],
 						 is_(i))
