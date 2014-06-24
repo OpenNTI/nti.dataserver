@@ -374,7 +374,7 @@ class IContentUnit(IZContained,
 						default=())
 
 	embeddedContainerNTIIDs = IndexedIterable(title="An iterable of NTIIDs of sub-containers embedded via reference in this content",
-											  value_type=ValidNTIID(title="The embedded NTIID"),
+											  value_type=TextLine(title="The embedded NTIID"),
 											  unique=True,
 											  default=())
 
