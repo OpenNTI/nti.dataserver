@@ -182,6 +182,8 @@ class TestSiteSync(DataserverLayerTest):
 		super(TestSiteSync,self).tearDown()
 
 	def _on_host_site(self, *args):
+		# XXX: When we run with zope-testrunner, this is still a tuple;
+		# is it not running the setUp/tearDown methods correctly?
 		self._events.append( args )
 
 

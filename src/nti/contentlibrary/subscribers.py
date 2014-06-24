@@ -87,6 +87,7 @@ from zope.interface.interfaces import IUnregistered
 from .interfaces import IContentPackageBundleLibrary
 from .interfaces import IContentPackageLibrarySynchedEvent
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
+from .interfaces import ISyncableContentPackageBundleLibrary
 
 from .bundle import ContentPackageBundleLibrary
 
@@ -130,7 +131,9 @@ def sync_bundles_when_library_synched(library, event):
 
 	# Find the local site manager
 	site_manager = component.getSiteManager(library)
-	assert library.__parent__ is site_manager, "Make sure we got the immediate parent"
+	if library.__parent__ is not site_manager:
+		logger.warn("Expected to find persistent library in its own site; refusing to sync")
+		return
 
 	bundle_library = site_manager.getUtility(IContentPackageBundleLibrary)
 	assert bundle_library.__parent__ is site_manager, "Make sure we got the immediate parent"
@@ -144,5 +147,4 @@ def sync_bundles_when_library_synched(library, event):
 		logger.info("Nothing to enumerate for %s/%s", bundle_bucket, library)
 		return
 
-	raise AssertionError("Here there be dragons")
-	bundle_library.syncFromBucket(bundle_bucket)
+	ISyncableContentPackageBundleLibrary(bundle_library).syncFromBucket(bundle_bucket)

@@ -19,6 +19,7 @@
 	<adapter factory=".filesystem.GlobalFilesystemSiteLibraryFactory" />
 
 	<adapter factory=".adapters.enumeration_from_library" />
+	<adapter factory=".bundle._ContentPackageBundleLibrarySynchronizer" />
 
 	<!-- annotations -->
 	<!-- single argument -->
@@ -34,9 +35,10 @@
 	<subscriber handler=".subscribers.install_site_content_library"
 				for="nti.dataserver.interfaces.IHostPolicySiteManager
 					 zope.site.interfaces.INewLocalSite" />
+
 	<subscriber handler=".subscribers.install_bundle_library" />
 	<subscriber handler=".subscribers.uninstall_bundle_library" />
-
+	<subscriber handler=".subscribers.sync_bundles_when_library_synched" />
 
 	<!-- Externalization -->
 
