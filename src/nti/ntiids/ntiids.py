@@ -190,9 +190,9 @@ def escape_provider( provider ):
 # NOTE: While string.translate is tempting,
 # it cannot be used because we allow the local parts to be Unicode and string.translate
 # works on bytes.
-# The below is a basic first part, suitable for many uses, but not a complete solution
-
-_sp_allowed = string.ascii_letters + string.digits
+# The below is a basic first pass, suitable for many uses, but not a complete solution
+# JAM: prior to 20140624, periods were not allowed; is that any kind of compat issue? Don't think so...
+_sp_allowed = string.ascii_letters + string.digits + str('.')
 _sp_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_allowed] )
 _sp_repl_byte = b'_'
 _sp_transtable = string.maketrans( _sp_removed, _sp_repl_byte * len(_sp_removed) )

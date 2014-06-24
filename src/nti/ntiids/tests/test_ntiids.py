@@ -49,7 +49,7 @@ class TestNTIIDS(unittest.TestCase):
 					 is_( 'tag:nextthought.com,2012-01-05:Test' ) )
 
 	def test_make_safe( self ):
-		assert_that( ntiids.make_specific_safe( 'Foo%Bar +baz.' ),
+		assert_that( ntiids.make_specific_safe( 'Foo%Bar +baz:' ),
 					 is_( 'Foo_Bar__baz_' ) )
 
 		with assert_raises(ntiids.ImpossibleToMakeSpecificPartSafe):
