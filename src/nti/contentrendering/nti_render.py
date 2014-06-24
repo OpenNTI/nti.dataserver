@@ -33,6 +33,8 @@ from zope.configuration import xmlconfig
 
 import zope.dublincore.xmlmetadata
 
+from nti.ntiids.ntiids import escape_provider
+
 import nti.contentrendering
 from nti.contentrendering import archive
 from nti.contentrendering import interfaces
@@ -166,7 +168,9 @@ def main():
 	document.config['general']['theme-base'] = 'NTIDefault'
 	# Read a config if present
 	document.config.add_section('NTI')
-	document.config.set('NTI', 'provider', os.environ.get('NTI_PROVIDER', 'AOPS'))
+	document.config.set('NTI',
+						'provider',
+						escape_provider(os.environ.get('NTI_PROVIDER', 'AOPS')))
 	document.config.set('NTI', 'extra-scripts', '')
 	document.config.set('NTI', 'extra-styles', '')
 	document.config.set('NTI', 'timezone-name', 'US/Central')

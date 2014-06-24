@@ -24,13 +24,12 @@ from nti.ntiids import ntiids
 
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
-	for char in ntiids._illegal_chars_ + ' -': # XXX Private
-		local = local.replace( char, '_' ) # Note that we're NOT using string.translate: it's not unicode safe
+	local = ntiids.make_specific_safe(local)
 
 	provider = document.config.get( "NTI", "provider" )
 
-	ntiid = 'tag:nextthought.com,2011-10:%s-%s-%s.%s%s' % \
-			(provider, nttype, document.userdata['jobname'], local_prefix, local)
+	specific = '%s.%s%s' % (document.userdata['jobname'], local_prefix, local)
+	ntiid = ntiids.make_ntiid(provider=provider, nttype=nttype, specific=specific)
 	ntiids.validate_ntiid_string( ntiid ) # Ensure valid, otherwise raise
 	return ntiid
 
@@ -63,7 +62,7 @@ def _ntiid_get_local_part_title(self):
 	"""
 	title = None
 	attr = getattr( self, '_ntiid_title_attr_name', 'title' )
-	if (hasattr(self, attr) or not getattr( self, '_ntiid_allow_missing_title', False)):
+	if hasattr(self, attr) or not getattr( self, '_ntiid_allow_missing_title', False):
 		title = getattr(self, attr)
 		if title \
 		  and getattr(title, 'textContent', title):
