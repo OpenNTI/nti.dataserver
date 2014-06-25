@@ -11,8 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-import simplejson
+import anyjson as json
 
 from zope import interface
 from zope import component
@@ -37,17 +36,17 @@ def add_audio_items_from_new_content(content_package, event):
 	try:
 		audio_index_text = content_package.read_contents_of_sibling_entry('audio_index.json')
 		_populate_audio_map_from_text(audio_map, audio_index_text, content_package)
-	except:
+	except StandardError:
 		logger.exception("Failed to load audio items, invalid audio_index for %s", content_package)
 
 def _populate_audio_map_from_text(audio_map, audio_index_text, content_package):
 	if not audio_index_text:
 		return
 
-	audio_index_text = unicode(audio_index_text, 'utf-8') \
-	if isinstance(audio_index_text, six.binary_type) else audio_index_text
+	if isinstance(audio_index_text, bytes):
+		audio_index_text = unicode(audio_index_text, 'utf-8')
 
-	index = simplejson.loads(audio_index_text)
+	index = json.loads(audio_index_text)
 
 	# add containers:
 	containers = index.get('Containers', {})

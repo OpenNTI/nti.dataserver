@@ -18,8 +18,8 @@ from zope import component
 from nti.contentlibrary import interfaces as lib_interfaces
 
 
-from nti.appserver import interfaces as app_interfaces
-from nti.appserver.contentlibrary import _related_content_map as rcm_module
+from .. import interfaces as app_interfaces
+from .. import _related_content_map as rcm_module
 
 
 from nti.app.testing.application_webtest import ApplicationLayerTest

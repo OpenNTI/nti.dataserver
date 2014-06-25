@@ -629,8 +629,8 @@ zope.deferredimport.deprecatedFrom(
 	"IUserPresentationPriorityCreators")
 
 zope.deferredimport.deprecatedFrom(
-	"Moved to nti.appserver.contentlibrary.interfaces",
-	"nti.appserver.contentlibrary.interfaces",
+	"Moved to nti.app.contentlibrary.interfaces",
+	"nti.app.contentlibrary.interfaces",
 	"IAudioIndexMap",
 	"IVideoIndexMap",
 	"IRelatedContentIndexMap")

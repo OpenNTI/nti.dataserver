@@ -68,7 +68,7 @@
 
 	<include package=".forums" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
-	<include package=".contentlibrary" file="pyramid.zcml" />
+	<include package="nti.app.contentlibrary" file="pyramid.zcml" />
 
 
 	<!-- Util views -->

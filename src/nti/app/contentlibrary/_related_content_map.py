@@ -11,8 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-import simplejson
+import anyjson as json
 
 from zope import interface
 from zope import component
@@ -31,24 +30,25 @@ class RelatedContentIndexMap(CommonIndexMap):
 def add_related_content_items_from_new_content(content_package, event):
 	rc_map = component.queryUtility(app_interfaces.IRelatedContentIndexMap)
 	if rc_map is None:  # pragma: no cover
-		rc_map
+		raise ValueError('No map!')
 
 	logger.info("Adding related items from new content %s %s", content_package, event)
 
 	try:
 		index_text = content_package.read_contents_of_sibling_entry('related_content_index.json')
 		_populate_rc_map_from_text(rc_map, index_text, content_package)
-	except:
+	except StandardError:
 		logger.exception("Failed to load related content items, invalid cache index for %s", content_package)
 
-def _populate_rc_map_from_text(rc_map, index_text, content_package):
-	if not index_text:
+def _populate_rc_map_from_text(rc_map, video_index_text, content_package):
+	if not video_index_text:
 		return
 
-	video_index_text = unicode(index_text, 'utf-8') \
-	if isinstance(index_text, six.binary_type) else index_text
+	if isinstance(video_index_text, bytes):
+		video_index_text = unicode(video_index_text, 'utf-8')
 
-	index = simplejson.loads(video_index_text)
+
+	index = json.loads(video_index_text)
 
 	# add items
 	items = index.get('Items') if 'Items' in index else index
