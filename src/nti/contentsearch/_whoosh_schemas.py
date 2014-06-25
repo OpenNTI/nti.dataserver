@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -
+# -*- coding: utf-8 -*-
 """
 .. $Id: _whoosh_schemas.py 26609 2013-11-04 22:32:31Z carlos.sanchez $
 """
