@@ -26,6 +26,9 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
+from nti.app.contentlibrary.interfaces import IVideoIndexMap
+from nti.app.contentlibrary.interfaces import IRelatedContentIndexMap
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
@@ -34,8 +37,6 @@ from nti.appserver.traversal import find_interface
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver import ugd_query_views as query_views
 from nti.appserver.pyramid_authorization import is_readable
-from nti.appserver.contentlibrary.interfaces import IVideoIndexMap
-from nti.appserver.contentlibrary.interfaces import IRelatedContentIndexMap
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
