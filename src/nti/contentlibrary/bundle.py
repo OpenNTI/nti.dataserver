@@ -20,11 +20,11 @@ from nti.utils.property import alias
 
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import EqHash
 
 import anyjson as json
 
-from persistent import Persistent
 
 # Because we only expect to store persistent versions
 # of these things, and we expect to update them directly
@@ -33,29 +33,46 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from .interfaces import IContentPackageBundle
 from .interfaces import IContentPackageBundleLibrary
+from .interfaces import IDisplayableContent
 
 from nti.wref.interfaces import IWeakRef
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
 
 @interface.implementer(IContentPackageBundle,
 					   IAttributeAnnotatable)
-class ContentPackageBundle(SchemaConfigured):
+class ContentPackageBundle(CreatedAndModifiedTimeMixin,
+						   SchemaConfigured):
+
 	"""
 	Basic implementation of a content package bundle.
 	"""
 	__external_class_name__ = 'ContentPackageBundle'
 	__external_can_create__ = False
 
-	createFieldProperties(IContentPackageBundle)
+	# Be careful not to overwrite what we inherit
+	createFieldProperties(IDisplayableContent)
+	createDirectFieldProperties(IContentPackageBundle)
 
 	# the above defined the ntiid property and the name
 	# property, but the ntiid property has the constraint on it
 	# that we need.
 	__name__ = alias('ntiid')
 
-class PersistentContentPackageBundle(ContentPackageBundle,
-									 Persistent):
+	# IDCExtendedProperties.
+	# Note that we're overriding these to provide
+	# default values, thus losing the FieldProperty
+	# implementation
+	creators = ()
+	subjects = ()
+	contributors = ()
+	publisher = ''
+
+class PersistentContentPackageBundle(PersistentCreatedAndModifiedTimeObject,
+									 ContentPackageBundle):
 	"""
 	A persistent implementation of content package bundles.
 
@@ -212,16 +229,27 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			# have to go
 			del_ntiids = {x for x in self.context if x not in all_ntiids}
 
+			def _update_bundle(bundle, meta):
+				bundle_iface = interface.providedBy(bundle)
+				# Be careful to only update fields that have changed
+				for k in meta.__dict__:
+					if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
+						setattr(bundle, str(k), getattr(meta, k))
+
+				if bundle.root != meta.key.__parent__:
+					bundle.root = meta.key.__parent__
+				# by definition this has changed or we wouldn't be here
+				bundle.lastModified = meta.lastModified
+
+				assert meta.ntiid == bundle.ntiid
+
+
 			# Start with the adds
 			for meta in things_to_add:
 				need_event = True
 				bundle = PersistentContentPackageBundle()
-				bundle_iface = interface.providedBy(bundle)
-				for k in meta.__dict__:
-					if bundle_iface.get(k):
-						setattr(bundle, k, getattr(meta, k))
-
-				assert meta.ntiid == bundle.ntiid
+				bundle.createdTime = meta.createdTime
+				_update_bundle( bundle, meta )
 
 				lifecycleevent.created(bundle)
 				self.context[meta.ntiid] = bundle # added
@@ -233,12 +261,14 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 
 			# Now any updates
 			if things_to_update:
-				raise NotImplementedError("Not yet!")
-
-
-
-
-
+				need_event = True
+				for meta in things_to_update:
+					bundle = self.context[meta.ntiid]
+					_update_bundle(bundle, meta)
+					# TODO: make update_bundle return the changed attributes?
+					lifecycleevent.modified(bundle)
 
 		if need_event:
-			notify(ContentPackageBundleLibrarySynchedEvent(self.context))
+			event = ContentPackageBundleLibrarySynchedEvent(self.context)
+			event.bucket = bucket
+			notify(event)
