@@ -1219,9 +1219,18 @@ class ntidirectionsblock(Base.Command):
 	blockType = True
 
 # The sidebar environment is to be the base class for other side types such as those from AoPS.
-class sidebar(Environment):
+class sidebar(Environment, plastexids.NTIIDMixin):
 	args = 'title'
 	blockType = True
+
+	counter = 'sidebar'
+	_ntiid_cache_map_name = '_sidebar_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'sidebar.'
+	_ntiid_title_attr_name = 'title'
+	_ntiid_type = 'Sidebar'
+	embedded_doc_cross_ref_url = property(plastexids._embedded_node_cross_ref_url)
+
 
 class flatsidebar(sidebar):
 	pass
@@ -1250,6 +1259,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter('relatedwork')
 	document.context.newcounter('relatedworkref', initial=-1)
 	document.context.newcounter('ntidiscussion')
+	document.context.newcounter('sidebar')
 
 from plasTeX.interfaces import IOptionAwarePythonPackage
 interface.moduleProvides(IOptionAwarePythonPackage)

@@ -165,25 +165,25 @@ name: ntiimagehref
 <a class="thumb" tal:attributes="href self/attributes/url"><img tal:attributes="src self/attributes/img"></a>
 
 name: sidebar
-<div tal:condition="self" tal:attributes="class python: type(self).__name__; id self/id">
+<div tal:condition="self" tal:attributes="class python: type(self).__name__; ntiid self/ntiid; data-ntiid self/ntiid">
 <div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
 <div tal:replace="self">Sidebar Body</div>
 </div>
 
 name: flatsidebar
-<div tal:condition="self" class="sidebar flat border-top" tal:attributes="id self/id">
+<div tal:condition="self" class="sidebar flat border-top" tal:attributes="ntiid self/ntiid; data-ntiid self/ntiid">
 <div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
 <div tal:replace="self">Sidebar Body</div>
 </div>
 
 name: audiosidebar
-<div class="sidebar-audio">
+<div class="sidebar-audio" tal:attributes="ntiid self/ntiid; data-ntiid self/ntiid">
 	<div class="sidebar-leader" tal:content="self/attributes/audioref">Audio file</div>
 	<div class="sidebar-body" tal:content="self">Sidebar body</div>
 </div>
 
 name: ntigraphicsidebar
-<div class="sidebar-graphic">
+<div class="sidebar-graphic" tal:attributes="ntiid self/ntiid; data-ntiid self/ntiid">
 	<div tal:attributes="class python: ' '.join(['sidebar-leader',self.attributes.get('graphic_class')])"> </div>
 	<div class="sidebar-body">
 		<div class="sidebar-body-title" tal:content="self/title">Sidebar Title</div>
