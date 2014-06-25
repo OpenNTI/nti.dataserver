@@ -282,6 +282,23 @@ class TestSidebars(unittest.TestCase):
 		assert_that( sidebar_el.attributes.get('title').source, contains_string( 'Title' ) )
 		assert_that( sidebar_el.childNodes[2].source, contains_string( 'Body Text' ) )
 
+	def test_sidebar_basic_ntiid(self):
+		example = br"""
+		\begin{sidebar}{Title}
+		\label{sidebar:Basic_Sidebar}
+		Body Text
+		\end{sidebar}
+		"""
+		dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+
+		# Check that the DOM has the expected structure
+		assert_that( dom.getElementsByTagName('sidebar'), has_length( 1 ) )
+
+		sidebar_el = dom.getElementsByTagName('sidebar')[0]
+
+		# Check that the relatedworkref object has the expected attributes
+		assert_that( sidebar_el.ntiid, contains_string( 'tag:nextthought.com,2011-10:testing-Sidebar-temp.sidebar.sidebar_Basic_Sidebar' ) )
+
 	def test_sidebar_flat(self):
 		example = br"""
 		\begin{flatsidebar}{Title}
