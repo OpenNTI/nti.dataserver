@@ -1228,7 +1228,7 @@ class sidebar(Environment, plastexids.NTIIDMixin):
 	_ntiid_allow_missing_title = True
 	_ntiid_suffix = 'sidebar.'
 	_ntiid_title_attr_name = 'title'
-	_ntiid_type = 'Sidebar'
+	_ntiid_type = 'HTML:NTISidebar'
 	embedded_doc_cross_ref_url = property(plastexids._embedded_node_cross_ref_url)
 
 
