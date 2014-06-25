@@ -16,12 +16,12 @@
 	<include package="zope.componentvocabulary" />
 	<include package="zope.browserpage" file="meta.zcml" /> <!-- tales:expressiontype -->
 	<include package="zope.browserresource" file="meta.zcml" /> <!-- browser:resource[Directory] -->
-	
+
 	<include package="z3c.macro" file="meta.zcml" /> <!-- z3c:macro -->
 
 	<include package="z3c.ptcompat" zcml:condition="not-have in-apidoc" /> <!-- regular pagetemplate usage uses chamelean engine -->
 	<include package="z3c.macro" />
-	
+
 	<include package="nti.dataserver" />
 	<include package="nti.mailer" />
 
@@ -375,7 +375,7 @@
 
 	<include package=".forums" />
 	<include package=".dashboard" />
-	<include package=".contentlibrary" />
+	<include package="nti.app.contentlibrary" />
 
 	<include package=".utils.users" />
 
@@ -397,7 +397,7 @@
 	<include package="nti.app.pushnotifications" />
 
 	<!-- Filters -->
-	
+
 	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
 				provides=".interfaces.IPrincipalUGDFilter"/>
 </configure>
