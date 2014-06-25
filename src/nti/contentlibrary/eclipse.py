@@ -89,14 +89,14 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 		ntiid = _node_get(child, 'ntiid')
 		if not ntiid:
 			continue
-
-		if not is_valid_ntiid_string(ntiid):
-			logger.warn("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
-						ntiid, tocItem)
-			continue
-
-		if ntiid not in embeddedContainerNTIIDs:
-			embeddedContainerNTIIDs.append(ntiid)
+		
+		ntiid_splits = ntiid.split()
+		for ntiid in ntiid_splits:
+			if not is_valid_ntiid_string(ntiid):
+				logger.warn("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
+							ntiid, tocItem)
+			elif ntiid not in embeddedContainerNTIIDs:
+				embeddedContainerNTIIDs.append(ntiid)
 
 	if embeddedContainerNTIIDs:
 		__traceback_info__ = embeddedContainerNTIIDs
