@@ -13,15 +13,17 @@ logger = __import__('logging').getLogger(__name__)
 from urlparse import urljoin
 import anyjson as json
 import collections
-import os
 import six
 import urllib
 
 from zope import interface
 from zope import component
 
-from nti.externalization.interfaces import IExternalObject, StandardExternalFields
-from nti.externalization.externalization import toExternalObject, to_standard_external_dictionary
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_standard_external_dictionary
+from nti.externalization.datastructures import InterfaceObjectIO
 
 from . import interfaces
 
@@ -50,9 +52,12 @@ def _path_join( root_url, path='' ):
 	path = _path_maybe_quote(path)
 	return urljoin( root_url, path )
 
-def _root_url_of_unit( unit ):
-	href = interfaces.IContentUnitHrefMapper( unit.get_parent_key() ).href
+def _root_url_of_key(key):
+	href = interfaces.IContentUnitHrefMapper( key ).href
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
+
+def _root_url_of_unit( unit ):
+	return _root_url_of_key( unit.get_parent_key() )
 
 #: This file, if present, will be read to gain a dictionary
 #: of presentation properties to be attached to the external
@@ -158,6 +163,26 @@ class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 		result['courseName'] = self.package.courseName
 		result['courseTitle'] = self.package.courseTitle
 		return result
+
+@component.adapter(interfaces.IContentPackageBundle)
+class _ContentBundleIO(InterfaceObjectIO):
+
+	_ext_iface_upper_bound = interfaces.IContentPackageBundle
+
+	def toExternalObject(self, *args, **kwargs):
+		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
+
+		root_url = _root_url_of_key( self._ext_self.root )
+		result._root_url = root_url
+		result['root'] = root_url
+
+		return result
+
+
+	def updateFromExternalObject(self, *args, **kwargs):
+		raise NotImplementedError()
+
+### key/path-to-URL-mapping
 
 @interface.implementer(interfaces.IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemContentUnit)

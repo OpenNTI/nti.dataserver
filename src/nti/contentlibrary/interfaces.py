@@ -596,7 +596,10 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 ###
 # Content bundles
 ###
-class IContentPackageBundle(IDisplayableContent, IAnnotatable):
+class IContentPackageBundle(IDisplayableContent,
+							ILastModified,
+							dub_interfaces.IDCTimes,
+							IAnnotatable):
 	"""
 	A (typically persistent) object representing a collection
 	of one or more content packages, presented as a viewable unit
@@ -610,6 +613,13 @@ class IContentPackageBundle(IDisplayableContent, IAnnotatable):
 	"""
 	containers(str('.IContentPackageBundleLibrary'))
 	__parent__.required = False
+
+
+	root = Object(IDelimitedHierarchyItem,
+				  title="The key giving the root of this content package",
+				  description="Will be externalized through the href mapper",
+				  required=True)
+	root.setTaggedValue( '_ext_excluded_out', True)
 
 	ntiid = ValidNTIID(title="The NTIID for this item",
 					 default=None,

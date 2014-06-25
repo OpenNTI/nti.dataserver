@@ -22,9 +22,15 @@ from hamcrest import is_not
 from hamcrest import same_instance
 from hamcrest import has_length
 from hamcrest import has_property
+from hamcrest import has_entries
+from hamcrest import greater_than
+from hamcrest import empty as is_empty
+
 
 from nti.testing import base
 from nti.testing.matchers import validly_provides
+
+from nti.externalization.tests import externalizes
 
 import os
 
@@ -44,8 +50,12 @@ from zope.site.folder import Folder
 from zope.site.site import LocalSiteManager
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.schema.interfaces import IFieldUpdatedEvent
 
 from zope.component import eventtesting
+
+from nti.zodb.minmax import NumericMaximum
 
 class TestSubscribers(ContentlibraryLayerTest):
 
@@ -112,13 +122,52 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		site_lib = subscribers.install_site_content_library( sm, NewLocalSite(sm))
 
+		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibrarySynchedEvent)
+		assert_that( evts, has_length(1) )
+
+		bundle_lib = evts[0].object
+		bundle_bucket = evts[0].bucket
+
 		evts = eventtesting.getEvents(
 			IObjectAddedEvent,
 			filter=lambda e: interfaces.IContentPackageBundle.providedBy(getattr(e, 'object', None) ))
 
-		assert_that( evts, has_length(1))
+		assert_that( evts, has_length(1) )
 		assert_that( evts[0], has_property('object',
 										   has_property('ContentPackages', has_length(1))) )
 
-		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibrarySynchedEvent)
+
+		### XXX: This doesn't exactly belong here, it's just convenient
+
+		# test externalization
+
+		bundle = evts[0].object
+		assert_that( bundle, validly_provides(interfaces.IContentPackageBundle) )
+
+		# check that we have the right kind of property, didn't overwrite through createFieldProperties
+		assert_that( bundle, has_property( '_lastModified', is_(NumericMaximum) ))
+
+		assert_that( bundle, externalizes( has_entries('Class', 'ContentPackageBundle',
+													   'ContentPackages', has_length(1),
+													   'title', 'A Title',
+													   'root', '/localsite/ContentPackageBundles/ABundle/',
+													   'NTIID', bundle.ntiid,
+													   'Last Modified', greater_than(0),
+												   )))
+
+		# test update existing object
+
+		bundle.lastModified = 0
+		eventtesting.clearEvents()
+		interfaces.ISyncableContentPackageBundleLibrary(bundle_lib).syncFromBucket(bundle_bucket)
+
+		evts = eventtesting.getEvents(IObjectModifiedEvent)
+
 		assert_that( evts, has_length(1))
+		assert_that( evts[0], has_property( 'object', is_(bundle) ))
+
+		# there are some field events, but none of them are for this object
+		evts = eventtesting.getEvents(
+			IFieldUpdatedEvent,
+			filter=lambda e: not interfaces.IContentPackageBundle.providedBy(e.inst))
+		assert_that( evts, is_empty() )

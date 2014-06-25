@@ -48,6 +48,8 @@
 	<adapter factory=".externalization._ContentPackageExternal" />
 	<adapter factory=".externalization._LegacyCourseConflatedContentPackageExternal" />
 
+	<adapter factory=".externalization._ContentBundleIO" />
+
 	<adapter factory=".externalization._FilesystemKeyHrefMapper" />
 	<adapter factory=".externalization._FilesystemBucketHrefMapper" />
 	<adapter factory=".externalization._FilesystemContentUnitHrefMapper" />
