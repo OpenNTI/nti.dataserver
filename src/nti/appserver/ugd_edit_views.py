@@ -157,6 +157,13 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		return result
 
 	def _do_delete_object( self, theObject ):
+		"""
+		Delete the object, firing an :class:`.IObjectRemovedEvent`.
+
+		:return: Typically the object, if it was successfully deleted. If you
+			return `None` (note, not a false value), then a :class:`.HTTPNotFound`
+			error will be raised.
+		"""
 		return theObject.creator.deleteContainedObject( theObject.containerId, theObject.id )
 
 class UGDPutView(AbstractAuthenticatedView,
