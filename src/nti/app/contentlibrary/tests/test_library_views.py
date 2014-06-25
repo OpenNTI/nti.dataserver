@@ -299,10 +299,13 @@ class TestContainerPrefs(NewRequestLayerTest):
 											has_entry( 'sharedWith', ['2@3'] ) ) )
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+from . import ContentLibraryApplicationTestLayer
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.dataserver.tests import mock_dataserver
 from urllib import quote
+
 class TestApplication(ApplicationLayerTest):
+
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_library_main(self):
@@ -331,3 +334,22 @@ class TestApplication(ApplicationLayerTest):
 			request.environ['repoze.who.identity'] = {'repoze.who.userid': 'foo'}
 			with assert_raises(HTTPNotFound):
 				find_page_info_view_helper( request, unit )
+
+class TestApplicationBundles(ApplicationLayerTest):
+
+	layer = ContentLibraryApplicationTestLayer
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_bundle_library_main(self):
+		href = '/dataserver2/users/sjohnson@nextthought.com/ContentBundles/VisibleContentBundles'
+
+		service_res = self.testapp.get( '/dataserver2')
+		library_ws, = [x for x in service_res.json_body['Items'] if x['Title'] == 'ContentBundles']
+		assert_that( library_ws, has_entry( 'Items', has_length(1)))
+		main_col = library_ws['Items'][0]
+		assert_that( main_col, has_entry( 'href', quote(href) ))
+
+		res = self.testapp.get( href )
+		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
+		assert_that( res.json_body, has_entries( 'href', href,
+												 'titles', has_length(1) ) )

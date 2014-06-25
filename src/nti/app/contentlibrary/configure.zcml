@@ -15,6 +15,9 @@
 	same site (which by default would hide the parent) or
 	have them cooperate (in the same way that, e.g.,
 	zope.pluggableauth..principalfolder does.
+
+	JAM: As of 20140615, we now have sub-libraries that are
+	persistent, so we need to refactor these ASAP to support delegation.
 	-->
 	<!--
 	NOTE: Obviously the packaging is off here. Someone
@@ -25,13 +28,13 @@
 	-->
 	<utility factory="._audio_index_map.AudioIndexMap"
 			 provides=".interfaces.IAudioIndexMap"/>
-			 
+
 	<utility factory="._video_index_map.VideoIndexMap"
 			 provides=".interfaces.IVideoIndexMap"/>
 
 	<utility factory="._related_content_map.RelatedContentIndexMap"
 			 provides=".interfaces.IRelatedContentIndexMap"/>
-			 
+
 	<!-- Events -->
 	<subscriber	handler="._audio_index_map.add_audio_items_from_new_content" />
 	<subscriber	handler="._audio_index_map.remove_audio_items_from_old_content" />
@@ -81,12 +84,17 @@
 	<!-- Workspaces/collections -->
 	<subscriber factory=".workspaces._library_workspace"
 				provides="nti.appserver.interfaces.IWorkspace" />
-				
+	<subscriber factory=".workspaces._bundle_workspace"
+				provides="nti.appserver.interfaces.IWorkspace" />
+
+
+	<adapter factory=".workspaces.LibraryCollection" />
+	<adapter factory=".workspaces._BundleLibraryCollection" />
+
+	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
 			 name="detail" />
-			 
-	<adapter factory=".workspaces.LibraryCollection" />
-	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
+
 	<adapter factory=".library_views._ContentPackageLibraryCacheController" />
 
 	<!--
@@ -98,20 +106,27 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_user"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
-			 
+
+	<!-- Likewise for the bundle library -->
+	<adapter name="ContentBundles"
+			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 factory=".workspaces._bundle_workspace_for_user"
+			 provides="zope.traversing.interfaces.IPathAdapter" />
+
+
 	<!-- Also a simple named adapter -->
 	<adapter name="Library"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_user" />
-			 
+
 	<adapter
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_for_user" />
-			 
+
 	<adapter
 			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_for_library" />
-			 
+
 	<adapter
 			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_library" />

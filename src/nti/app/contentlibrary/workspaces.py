@@ -26,6 +26,9 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.externalization.externalization import to_external_object
 
+from nti.utils.property import CachedProperty
+from nti.utils.property import alias
+
 from zope.proxy.decorator import ProxyBase
 
 class _PermissionedContentPackageLibrary(ProxyBase):
@@ -62,6 +65,20 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 
 		return self._v_contentPackages
 
+####
+# A chain for getting the library that a user can view
+# during workspace access.
+# The chain is a bit convoluted, but very flexible. (note that the
+# bundle library does not yet use a chain like this.)
+#
+# At the top, the workspace for the (user,request) is queried.
+# That proceeds to get a ContentpackageLibrary for the (user,request)
+#   (instead of the global library).
+# That library turns out to wrap the global library and apply permissioning
+#   through the proxy defined above.
+# Ultimately, it is that proxy that goes in the workspace.
+####
+
 
 @interface.implementer(content_interfaces.IContentPackageLibrary)
 def _library_for_library(library, request):
@@ -97,12 +114,11 @@ def _library_workspace_for_user( user, request ):
 def _library_workspace( user_service ):
 	request = get_current_request()
 	user = user_service.user
-	ws = component.queryMultiAdapter( (user, request),
-									  app_interfaces.IWorkspace,
-									  name='Library' )
-	if ws:
-		ws.__parent__ = user
-		return ws
+	ws = component.getMultiAdapter( (user, request),
+									app_interfaces.IWorkspace,
+									name='Library' )
+	ws.__parent__ = user
+	return ws
 
 
 @interface.implementer(app_interfaces.IWorkspace,
@@ -110,15 +126,13 @@ def _library_workspace( user_service ):
 class LibraryWorkspace(object):
 
 	__parent__ = None
+	__name__ = 'Library'
+	name = alias('__name__')
 
 	def __init__( self, lib ):
 		self._library = lib
 
-	@property
-	def name(self):	return "Library"
-	__name__ = name
-
-	@property
+	@CachedProperty
 	def collections( self ):
 		# Right now, we're assuming one collection for the whole library
 		adapt = component.getAdapter( self._library, app_interfaces.ICollection )
@@ -130,9 +144,11 @@ class LibraryWorkspace(object):
 		# Yes, we traverse to our actual library,
 		# not the collection wrapper. It will get
 		# converted back to the collection for externalization.
-		if key == 'Main':
-			return self._library
+		for i in self.collections:
+			if key == i.__name__:
+				return i.library
 		raise KeyError(key)
+
 	def __len__(self):
 		return 1
 
@@ -141,16 +157,19 @@ class LibraryWorkspace(object):
 class LibraryCollection(object):
 
 	__parent__ = None
+	__name__ = 'Main'
+	name = alias('__name__')
 
 	def __init__( self, lib ):
-		self._library = lib
+		self.context = lib
 
 	@property
-	def library(self): return self._library
+	def library(self):
+		return self.context
 
 	@property
-	def name(self): return "Main"
-	__name__ = name
+	def library_items(self):
+		return self.context.contentPackages
 
 	@property
 	def accepts(self):
@@ -169,16 +188,60 @@ class LibraryCollectionDetailExternalizer(object):
 	# TODO: This doesn't do a good job of externalizing it,
 	# though. We're skipping all the actual Collection parts
 
-	__slots__ = (b'_collection',)
-
 	def __init__(self, collection ):
 		self._collection = collection
 
 	def toExternalObject(self, **kwargs):
-		library = self._collection.library
+		library_items = self._collection.library_items
 		result = LocatedExternalDict( {
 			'title': "Library",
-			'titles' : [to_external_object(x, **kwargs) for x in library.contentPackages] } )
+			'titles' : [to_external_object(x, **kwargs) for x in library_items] } )
 		result.__name__ = self._collection.__name__
 		result.__parent__ = self._collection.__parent__
 		return result
+
+
+@interface.implementer(app_interfaces.IWorkspace)
+@component.adapter(app_interfaces.IUserService)
+def _bundle_workspace( user_service, request=None ): # take request so we can fit the common multi-adapt pattern
+	#request = get_current_request()
+	user = getattr(user_service, 'user', user_service) # also for multi-adapt
+	# Note that, instead of doing the complicated thing that
+	# the library above does, for simplicity to start with we're doing
+	# the simple thing and directly instantiating the object.
+
+	# Right now, we're assuming that any given bundle
+	# is visible to the user.
+
+	# In the (near) future, we expect to have multiple
+	# collections in the library. The idea is similar to the
+	# class workspace, with Available and Enrolled courses:
+	# * visible (purchased?) bundles, aka Enrolled
+	# * available bundles
+	# But naming is hard. "available" is ambiguous (it could mean
+	# the ones you already have access to)..."active" could be used in the
+	# future as a contrast to "archived"
+	# For now we go with visible
+
+	bundle_library = component.queryUtility(content_interfaces.IContentPackageBundleLibrary)
+	if bundle_library is not None:
+		ws =_BundleLibraryWorkspace(bundle_library)
+		ws.__parent__ = user
+		return ws
+
+_bundle_workspace_for_user = _bundle_workspace
+
+@interface.implementer(app_interfaces.ILibraryCollection)
+@component.adapter(content_interfaces.IContentPackageBundleLibrary)
+class _BundleLibraryCollection(LibraryCollection):
+
+	__name__ = 'VisibleContentBundles'
+
+
+	@property
+	def library_items(self):
+		return self.library.values()
+
+class _BundleLibraryWorkspace(LibraryWorkspace):
+
+	__name__ = 'ContentBundles'
