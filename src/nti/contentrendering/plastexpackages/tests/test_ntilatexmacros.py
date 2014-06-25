@@ -297,7 +297,7 @@ class TestSidebars(unittest.TestCase):
 		sidebar_el = dom.getElementsByTagName('sidebar')[0]
 
 		# Check that the relatedworkref object has the expected attributes
-		assert_that( sidebar_el.ntiid, contains_string( 'tag:nextthought.com,2011-10:testing-Sidebar-temp.sidebar.sidebar_Basic_Sidebar' ) )
+		assert_that( sidebar_el.ntiid, contains_string( 'tag:nextthought.com,2011-10:testing-HTML:NTISidebar-temp.sidebar.sidebar_Basic_Sidebar' ) )
 
 	def test_sidebar_flat(self):
 		example = br"""
