@@ -25,6 +25,9 @@ from nti.dataserver import interfaces as nti_interfaces
 class _ServiceGetView(AbstractAuthenticatedView):
 
 	def __call__( self ):
+		# JAM: We should make this a multi-adapter on the request
+		# so that the request can be threaded down through workspaces,
+		# collections, etc.
 		service = app_interfaces.IService(self.remoteUser)
 		#service.__parent__ = self.request.context
 		return service

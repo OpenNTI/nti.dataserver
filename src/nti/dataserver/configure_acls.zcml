@@ -55,6 +55,7 @@
 	<adapter factory=".authorization_acl._DelimitedHierarchyContentPackageACLProvider" />
 	<adapter factory=".authorization_acl._DataserverFolderACLProvider" />
 	<adapter factory=".authorization_acl._ContentPackageLibraryACLProvider" />
+	<adapter factory=".authorization_acl._ContentPackageBundleLibraryACLProvider" />
 
 	<adapter factory=".authorization_acl._TestingLibraryTOCEntryACLProvider"
 			 zcml:condition="have testmode" />

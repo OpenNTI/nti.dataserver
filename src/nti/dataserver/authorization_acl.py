@@ -819,9 +819,25 @@ class _DataserverFolderACLProvider(object):
 		_add_admin_moderation( acl, _DataserverFolderACLProvider )
 		return acl
 
+### Content/bundle library.
+# TODO: These should move up to nti.app.contentlibrary.
+
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(content_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryACLProvider(object):
+
+	def __init__( self, context ):
+		pass
+
+	@_LazyOnClass
+	def __acl__( self ):
+		# Got to be here after the components are registered, not at the class
+		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
+
+
+@interface.implementer( nti_interfaces.IACLProvider )
+@component.adapter(content_interfaces.IContentPackageBundleLibrary)
+class _ContentPackageBundleLibraryACLProvider(object):
 
 	def __init__( self, context ):
 		pass
