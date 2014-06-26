@@ -138,4 +138,13 @@
 	<class class="nti.contentlibrary.boto_s3.BotoS3ContentUnit">
 		<implements interface="nti.dataserver.interfaces.IACLProviderCacheable" />
 	</class>
+
+	<!-- Forum support -->
+	<adapter factory=".forum.ContentBoardAdapter"
+			 for="nti.contentlibrary.interfaces.IContentPackageBundle" />
+
+	<subscriber factory=".forum.ContentBoardLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.contentlibrary.interfaces.IContentPackageBundle" />
+
 </configure>

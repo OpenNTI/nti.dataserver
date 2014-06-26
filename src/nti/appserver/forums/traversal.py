@@ -26,8 +26,8 @@ class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
 	"Disallow updates to the sharedWith field of blog posts/comments"
 	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
 
-@component.adapter(frm_interfaces.ICommunityBoard)
-class _CommunityBoardTraversable(ContainerTraversable):
+@component.adapter(frm_interfaces.IDefaultForumBoard)
+class _DefaultForumBoardTraversable(ContainerTraversable):
 	"""
 	Allows traversing to the default forum, creating it on demand.
 	"""
@@ -35,8 +35,8 @@ class _CommunityBoardTraversable(ContainerTraversable):
 	def traverse(self, name, furtherPath):
 		if name not in self._container and name == _FORUM_NAME:
 			try:
-				return frm_interfaces.ICommunityForum( self._container.creator ) # Ask the ICommunity
-			except TypeError: # pragma: no cover
+				return self._container.createDefaultForum()
+			except (TypeError,AttributeError): # pragma: no cover
 				raise TraversalError( self._container, name ) # No adapter
 
-		return super(_CommunityBoardTraversable,self).traverse(name, furtherPath)
+		return ContainerTraversable.traverse(self, name, furtherPath)

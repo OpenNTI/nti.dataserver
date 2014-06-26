@@ -353,3 +353,8 @@ class TestApplicationBundles(ApplicationLayerTest):
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		assert_that( res.json_body, has_entries( 'href', href,
 												 'titles', has_length(1) ) )
+
+		package = res.json_body['titles'][0]
+
+		assert_that( self.require_link_href_with_rel(package, 'DiscussionBoard'),
+					 is_('/tag%3Anextthought.com%2C2011-10%3ANTI-Bundle-ABundle/DiscussionBoard'))

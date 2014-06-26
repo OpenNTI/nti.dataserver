@@ -13,6 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from zope import component
+from zope import interface
+from zope.location.interfaces import IRoot
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.app.testing.application_webtest import ApplicationTestLayer
@@ -48,6 +50,10 @@ class _SharedSetup(object):
 
 		bucket = global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
 		ISyncableContentPackageBundleLibrary(global_bundle_library).syncFromBucket(bucket)
+
+		# For traversal purposes (for now) we pretend that the library
+		# is a root
+		interface.alsoProvides(global_bundle_library, IRoot)
 
 	@staticmethod
 	def tearDown(cls):
