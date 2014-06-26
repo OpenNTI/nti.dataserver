@@ -57,6 +57,10 @@ class CommunityBoard(GeneralBoard,_CreatedNamedNTIIDMixin):
 	__external_can_create__ = False
 	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_BOARD
 
+	def createDefaultForum(self):
+		return for_interfaces.ICommunityForum( self.creator ) # Ask the ICommunity
+
+
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()
 	board.__parent__ = creator
@@ -84,6 +88,12 @@ def _adapt_fixed_board(owner, board_cls, board_iface, name=None):
 		board = _prepare_annotation_board(board_cls, board_iface, owner, name)
 	return board
 
+def AnnotatableBoardAdapter(context, board_impl_class, board_iface):
+	"""
+	When a board is stored using annotations, this simplifies the process.
+	"""
+	return _adapt_fixed_board(context, board_impl_class, board_iface)
+
 @interface.implementer(for_interfaces.ICommunityBoard)
 @component.adapter(nti_interfaces.ICommunity)
 def GeneralBoardCommunityAdapter(community):
@@ -94,8 +104,7 @@ def GeneralBoardCommunityAdapter(community):
 	purpose forum that always exists)
 	"""
 	# TODO: Note the similarity to personalBlogAdapter
-	board = _adapt_fixed_board(community, CommunityBoard, for_interfaces.ICommunityBoard)
-	return board
+	return AnnotatableBoardAdapter(community, CommunityBoard, for_interfaces.ICommunityBoard)
 
 @component.adapter(for_interfaces.IBoard)
 @interface.implementer(INameChooser)

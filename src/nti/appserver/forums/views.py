@@ -722,8 +722,7 @@ class _AbstractPublishingView(object):
 		request.response.location = request.resource_path( topic )
 		return uncached_in_response( topic )
 
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
-@view_config(context=frm_interfaces.IPersonalBlogEntry)
+@view_config(context=frm_interfaces.IPublishableTopic)
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
@@ -735,8 +734,7 @@ class _PublishView(_AbstractPublishingView):
 	def _test_provides( self, topic ):
 		return not nti_interfaces.IDefaultPublished.providedBy( topic )
 
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
-@view_config(context=frm_interfaces.IPersonalBlogEntry)
+@view_config(context=frm_interfaces.IPublishableTopic)
 @view_defaults( route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,

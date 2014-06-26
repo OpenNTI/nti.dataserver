@@ -13,6 +13,10 @@ __docformat__ = "restructuredtext en"
 # all the __setitem__ and __parent__ in the interfaces.
 # pylint: disable=E0602
 
+# disable: too many ancestors
+# pylint: disable=I0011,R0901
+
+
 from zope import schema
 from zope import interface
 from zope.schema import Int
@@ -196,6 +200,12 @@ class IHeadlinePost(IPost,
 	__parent__.required = False
 
 
+class IPublishableTopic(ITopic,
+						nti_interfaces.IPublishable):
+	"""
+	Mixin/marker interface for topics that are publishable.
+	"""
+
 class IHeadlineTopic(ITopic):
 	"""
 	A special kind of topic that starts off with a distinguished post to discuss. Blogs will
@@ -235,9 +245,9 @@ class IPersonalBlogComment(ICommentPost,
 
 
 class IPersonalBlogEntry(IHeadlineTopic,
+						 IPublishableTopic,
 						 nti_interfaces.ICreated,
 						 nti_interfaces.IReadableShared,
-						 nti_interfaces.IPublishable,
 						 nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A special kind of headline topic that is only contained by blogs.
@@ -322,7 +332,22 @@ class IGeneralForum(IForum, nti_interfaces.ICreated):
 	containers(IGeneralBoard)
 	__parent__.required = False
 
-class ICommunityBoard(IGeneralBoard, nti_interfaces.IShouldHaveTraversablePath):
+class IDefaultForumBoard(IGeneralBoard):
+	"""
+	Mixin designating that this board should auto-create
+	a default forum if needed.
+	"""
+
+	def createDefaultForum():
+		"""
+		Create and return the default forum,
+		raising a TypeError if not possible.
+		"""
+		# NOTE: This is not a good abstraction and is tied up
+		# with the way that the appserver wants to handle traversal
+
+class ICommunityBoard(IDefaultForumBoard,
+					  nti_interfaces.IShouldHaveTraversablePath):
 	"""
 	A board belonging to a particular community.
 	"""
@@ -356,7 +381,7 @@ class ICommunityHeadlinePost(IGeneralHeadlinePost):
 	__parent__.required = False
 
 class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
-							  nti_interfaces.IPublishable):
+							  IPublishableTopic):
 	containers(ICommunityForum)
 	__parent__.required = False
 	headline = Object(ICommunityHeadlinePost, title="The main, first post of this topic.")

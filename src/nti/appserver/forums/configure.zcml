@@ -7,7 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<include package="nti.appserver.capabilities" file="meta.zcml" />
 
 	<adapter factory="nti.appserver.user_activity_views.DefaultUserActivityStorageFactory" />
@@ -160,7 +160,7 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
-	<adapter factory=".traversal._CommunityBoardTraversable" />
+	<adapter factory=".traversal._DefaultForumBoardTraversable" />
 
 	<!-- Make certain classes Likeable/Flaggable/Favoritable. -->
 	<!--
@@ -214,12 +214,7 @@
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
-					 pyramid.interfaces.IRequest"/>
-
-	<subscriber factory=".decorators.PublishLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+				for="nti.dataserver.contenttypes.forums.interfaces.IPublishableTopic
 					 pyramid.interfaces.IRequest"/>
 
 	<!-- Feeds -->
