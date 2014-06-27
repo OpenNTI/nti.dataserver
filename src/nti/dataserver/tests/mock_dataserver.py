@@ -129,12 +129,11 @@ def _mock_ds_wrapper_for( func,
 		_base_storage = base_storage
 		if callable(_base_storage):
 			_base_storage = _base_storage( *args )
+		setHooks()
 		ds = factory(base_storage=_base_storage)
 		current_mock_ds = ds
 		sitemanc = SiteManagerContainer()
 		sitemanc.setSiteManager( LocalSiteManager(None) )
-		setHooks()
-
 
 		with site(sitemanc):
 			assert component.getSiteManager() == sitemanc.getSiteManager()
@@ -273,10 +272,10 @@ def WithMockDSTrans( func ):
 	def with_mock_ds_trans( *args, **kwargs ):
 		global current_transaction
 		global current_mock_ds
+		setHooks() # must have hooks before we try to open the DS
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
-		setHooks()
 		try:
 			with mock_db_trans( ds ):
 				func( *args, **kwargs )

@@ -11,7 +11,7 @@ from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import has_length
 from nti.testing.matchers import verifiably_provides
-import unittest
+
 from zope.component.hooks import site
 from zope.event import notify
 
@@ -54,6 +54,9 @@ class TestInstall(mock_dataserver.DataserverLayerTest):
 
 		del ds.root['NewKey']
 		assert_that( intids.queryId( contained_obj ), is_( none() ) )
+
+		everyone = ds.users_folder['Everyone']
+		assert_that( intids.getObject(intids.getId(everyone)), is_(everyone))
 
 	@mock_dataserver.WithMockDS
 	def test_installed_catalog(self):
