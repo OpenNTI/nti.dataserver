@@ -37,7 +37,7 @@
 		description='Can the user participate in community forums?' />
 
 	<!-- Entry in service doc -->
-	<subscriber factory=".views._UserBlogCollectionFactory"
+	<subscriber factory=".workspaces._UserBlogCollectionFactory"
 				provides="nti.appserver.interfaces.ICollection"
 				for="nti.appserver.interfaces.IUserWorkspace" />
 
@@ -45,8 +45,8 @@
 	<subscriber handler=".views.match_title_of_post_to_blog" />
 
 	<!-- Change broadcasting -->
-	<subscriber handler=".activity.notify_online_author_of_blog_comment" />
-	<subscriber handler=".activity.notify_online_author_of_topic_comment" />
+	<subscriber handler=".subscribers.notify_online_author_of_blog_comment" />
+	<subscriber handler=".subscribers.notify_online_author_of_topic_comment" />
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
@@ -184,7 +184,7 @@
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
 		<implements interface="nti.dataserver.interfaces.IFavoritable" />
 	</class>
-	<class class="nti.dataserver.contenttypes.forums.topic.CommunityHeadlineTopic">
+	<class class="nti.dataserver.contenttypes.forums.topic.GeneralHeadlineTopic">
 		<implements interface="nti.dataserver.interfaces.IRatable" />
 		<implements interface="nti.dataserver.interfaces.ILikeable" />
 		<implements interface="nti.dataserver.interfaces.IFlaggable" />
@@ -198,18 +198,22 @@
 	</class>
 
 	<!-- Storing favorite objects -->
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogEntry
+					 contentratings.interfaces.IObjectRatedEvent"/>
 
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPersonalBlogComment
+					 contentratings.interfaces.IObjectRatedEvent"/>
 
 	<!-- Storing favorite objects -->
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+					 contentratings.interfaces.IObjectRatedEvent"/>
 
-	<subscriber handler=".views.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment contentratings.interfaces.IObjectRatedEvent"/>
+	<subscriber handler=".subscribers.temp_store_favorite_object"
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForumComment
+					 contentratings.interfaces.IObjectRatedEvent"/>
 
 	<!-- Publishing workflow -->
 	<subscriber factory=".decorators.PublishLinkDecorator"

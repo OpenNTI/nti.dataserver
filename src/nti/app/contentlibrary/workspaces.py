@@ -160,6 +160,9 @@ class LibraryCollection(object):
 	__name__ = 'Main'
 	name = alias('__name__')
 
+	# BWC
+	_library = alias('context')
+
 	def __init__( self, lib ):
 		self.context = lib
 

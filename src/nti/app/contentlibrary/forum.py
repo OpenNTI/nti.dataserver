@@ -32,6 +32,8 @@ from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 class ContentBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 	_ntiid_type = NTIID_TYPE_CONTENT_BOARD
 
+	mimeType = 'application/vnd.nextthought.forums.contentboard'
+
 	def createDefaultForum(self):
 		if ContentForum.__default_name__ in self:
 			return self[ContentForum.__default_name__]
@@ -65,6 +67,8 @@ from nti.dataserver.contenttypes.forums.forum import GeneralForum
 class ContentForum(GeneralForum):
 	_ntiid_type = NTIID_TYPE_CONTENT_FORUM
 
+	mimeType = 'application/vnd.nextthought.forums.contentforum'
+
 ### Topic
 
 from .interfaces import IContentHeadlineTopic
@@ -79,6 +83,8 @@ from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
 class ContentHeadlineTopic(GeneralHeadlineTopic):
 
 	_ntiid_type = NTIID_TYPE_CONTENT_TOPIC
+
+	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
 	@property
 	def sharingTargetsWhenPublished(self):
@@ -99,11 +105,11 @@ from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 
 @interface.implementer(IContentHeadlinePost)
 class ContentHeadlinePost(GeneralHeadlinePost):
-	pass
+	mimeType = 'application/vnd.nextthought.forums.contentheadlinepost'
 
 @interface.implementer(IContentCommentPost)
 class ContentCommentPost(GeneralForumComment):
-	pass
+	mimeType = 'application/vnd.nextthought.forums.contentheadlinecomment'
 
 
 ### Forum decorators
@@ -133,3 +139,41 @@ class ContentBoardLinkDecorator(object):
 
 			#link_belongs_to_user( link, context )
 			the_links.append( link )
+
+### Forum views
+
+from pyramid.view import view_config
+from pyramid.view import view_defaults
+
+### XXX: Finish refactoring this to break the dependency
+from nti.app.forums.views import _AbstractForumPostView
+from nti.app.forums.views import _AbstractTopicPostView
+from nti.app.forums.views import _c_view_defaults
+from nti.app.forums import VIEW_CONTENTS
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=IContentForum,
+				**_c_view_defaults )
+class ContentForumPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new topic in the content forum """
+
+	_constraint = IContentHeadlinePost.providedBy
+	@property
+	def _override_content_type(self):
+		return ContentHeadlinePost.mimeType
+	_factory = ContentHeadlineTopic
+
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=IContentHeadlineTopic,
+				**_c_view_defaults )
+class ContentHeadlineTopicPostView(_AbstractTopicPostView):
+	"""
+	Add a comment to a topic.
+	"""
+	_constraint = IContentCommentPost.providedBy
+	@property
+	def _override_content_type(self):
+		return ContentCommentPost.mimeType
