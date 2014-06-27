@@ -148,6 +148,19 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle" />
 
+
+	<!-- Traversal to the forum objects -->
+	<adapter factory="nti.dataserver.traversal.DefaultAdapterTraversable"
+			 for="nti.contentlibrary.interfaces.IContentPackageBundle pyramid.interfaces.IRequest" />
+
+	<adapter factory="nti.dataserver.traversal.DefaultAdapterTraversable"
+			 for="nti.contentlibrary.interfaces.IContentPackageBundle" />
+
+	<adapter factory=".forum.ContentBoardAdapter"
+			 for="nti.contentlibrary.interfaces.IContentPackageBundle"
+			 provides="zope.traversing.interfaces.IPathAdapter"
+			 name="DiscussionBoard" /> <!-- matches __default_name__ -->
+
 	<!-- externalization -->
 	<!-- Note that we want to use the externalization already present, we just need the
 	correct factories registered -->

@@ -85,7 +85,9 @@ def effective_principals( username,
 	# Ensure that the user is in there as a IPrincipal
 	result.update( (nti_interfaces.IPrincipal(username),) )
 	# Add the authenticated and everyone groups
+	result.add( 'Everyone' )
 	result.add( nti_interfaces.IPrincipal( nti_interfaces.EVERYONE_GROUP_NAME ) )
+
 	if authenticated:
 		result.add( nti_interfaces.IPrincipal( nti_interfaces.AUTHENTICATED_GROUP_NAME ) )
 	if '@' in username:

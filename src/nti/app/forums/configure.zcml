@@ -50,26 +50,31 @@
 
 	<!-- Activity stream updating -->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost zope.intid.interfaces.IIntIdAddedEvent"/>
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost
+					 zope.intid.interfaces.IIntIdAddedEvent"/>
 
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost zope.intid.interfaces.IIntIdRemovedEvent" />
+				for="nti.dataserver.contenttypes.forums.interfaces.ICommentPost
+					 zope.intid.interfaces.IIntIdRemovedEvent" />
 
 	<!--
 	Normal Blog entries are in /Activity automatically by dint of being stored as a user container.
 	We have to do something special to make other forum posts show up there.
 	-->
 	<subscriber handler=".activity.store_created_object_in_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdAddedEvent"/>
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 zope.intid.interfaces.IIntIdAddedEvent"/>
 
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic zope.intid.interfaces.IIntIdRemovedEvent" />
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
+					 zope.intid.interfaces.IIntIdRemovedEvent" />
 
 	<!--
 	Anything that becomes a deleted placeholder should no longer be in /Activity.
 	-->
 	<subscriber handler=".activity.unstore_created_object_from_global_activity"
-				for="nti.dataserver.interfaces.IDeletedObjectPlaceholder zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
+				for="nti.dataserver.interfaces.IDeletedObjectPlaceholder
+					 zope.lifecycleevent.interfaces.IObjectModifiedEvent" />
 
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
@@ -109,17 +114,17 @@
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
 					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityForum
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralForum
 					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory="nti.appserver.pyramid_renderers_edit_link_decorator.EditLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityBoard
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralBoard
 					 pyramid.interfaces.IRequest" />
 
 	<!--
@@ -208,7 +213,7 @@
 
 	<!-- Storing favorite objects -->
 	<subscriber handler=".subscribers.temp_store_favorite_object"
-				for="nti.dataserver.contenttypes.forums.interfaces.ICommunityHeadlineTopic
+				for="nti.dataserver.contenttypes.forums.interfaces.IGeneralHeadlineTopic
 					 contentratings.interfaces.IObjectRatedEvent"/>
 
 	<subscriber handler=".subscribers.temp_store_favorite_object"

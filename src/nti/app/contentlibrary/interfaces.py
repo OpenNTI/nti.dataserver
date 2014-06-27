@@ -28,6 +28,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
 import nti.dataserver.contenttypes.forums.interfaces as frm_interfaces
 
 NTIID_TYPE_CONTENT_BOARD   = frm_interfaces.NTIID_TYPE_BOARD + ':Content'
@@ -36,7 +37,6 @@ NTIID_TYPE_CONTENT_TOPIC   = frm_interfaces.NTIID_TYPE_GENERAL_TOPIC + 'Content'
 NTIID_TYPE_CONTENT_COMMENT = frm_interfaces.NTIID_TYPE_POST + ':ContentComment'
 
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
-from nti.dataserver.interfaces import IPublishable
 
 class IContentBoard(IDefaultForumBoard,
 					IShouldHaveTraversablePath):
@@ -60,7 +60,7 @@ class IContentHeadlinePost(IGeneralHeadlinePost):
 	__parent__.required = False
 
 class IContentHeadlineTopic(IGeneralHeadlineTopic,
-							IPublishable):
+							IPublishableTopic):
 	containers(IContentForum)
 	__parent__.required = False
 	headline = Object(IContentHeadlinePost,

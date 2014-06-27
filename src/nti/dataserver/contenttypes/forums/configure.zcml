@@ -67,10 +67,13 @@
 			 for=".interfaces.IPersonalBlogEntry"/>
 
 	<adapter factory=".acl._TopicACLProvider"
-			 for=".interfaces.ICommunityHeadlineTopic"/>
+			 for=".interfaces.IGeneralHeadlineTopic"/>
 
 	<adapter factory=".acl._ForumACLProvider"
 			 for=".interfaces.IPersonalBlog"/>
+
+	<adapter factory=".acl._ForumACLProvider"
+			 for=".interfaces.IGeneralForum"/>
 
 	<adapter factory=".acl._CommunityForumACLProvider"
 			 for=".interfaces.ICommunityForum"/>

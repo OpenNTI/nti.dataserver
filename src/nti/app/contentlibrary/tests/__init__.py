@@ -16,6 +16,11 @@ from zope import component
 from zope import interface
 from zope.location.interfaces import IRoot
 from nti.contentlibrary.interfaces import IContentPackageLibrary
+from zope.traversing.interfaces import IEtcNamespace
+
+
+from zope.site.folder import Folder
+from zope.site.folder import rootFolder
 
 from nti.app.testing.application_webtest import ApplicationTestLayer
 import os
@@ -26,11 +31,37 @@ from nti.contentlibrary.bundle import ContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import ISyncableContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+from nti.dataserver.interfaces import IDataserver
+
 class _SharedSetup(object):
 
 	@staticmethod
 	def _setup_library( cls, *args, **kwargs ):
 		return FileLibrary( cls.library_dir )
+
+	@staticmethod
+	def install_bundles(cls, ds):
+		# XXX: This duplicates a lot of what's done by subscribers
+		# in nti.contentlibrary
+		with mock_db_trans(ds):
+
+			ds = ds.dataserver_folder
+
+			global_bundle_library = ContentPackageBundleLibrary()
+			cls.bundle_library = global_bundle_library
+			ds.getSiteManager().registerUtility(global_bundle_library, IContentPackageBundleLibrary)
+			# For traversal purposes (for now) we put the library in '/dataserver2/++etc++bundles/bundles'
+			site = Folder()
+			ds['++etc++bundles'] = site
+			site['bundles'] = global_bundle_library
+
+			bucket = cls.global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
+			ISyncableContentPackageBundleLibrary(global_bundle_library).syncFromBucket(bucket)
+
+
+			ds.getSiteManager().registerUtility(site, provided=IEtcNamespace, name='bundles')
+
 
 	@staticmethod
 	def setUp(cls):
@@ -41,26 +72,11 @@ class _SharedSetup(object):
 		component.provideUtility(global_library, IContentPackageLibrary)
 		global_library.syncContentPackages()
 
-		# XXX: This duplicates a lot of what's done by subscribers
-		# in nti.contentlibrary
-
-		global_bundle_library = ContentPackageBundleLibrary()
-		cls.bundle_library = global_bundle_library
-		component.provideUtility(global_bundle_library, IContentPackageBundleLibrary)
-
-		bucket = global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
-		ISyncableContentPackageBundleLibrary(global_bundle_library).syncFromBucket(bucket)
-
-		# For traversal purposes (for now) we pretend that the library
-		# is a root
-		interface.alsoProvides(global_bundle_library, IRoot)
-
 	@staticmethod
 	def tearDown(cls):
 		# Must implement!
 		component.provideUtility(cls.__old_library, IContentPackageLibrary)
 
-		component.getGlobalSiteManager().unregisterUtility(cls.bundle_library, IContentPackageBundleLibrary)
 
 
 class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
@@ -80,10 +96,19 @@ class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
 		_SharedSetup.tearDown(cls)
 		# Must implement!
 
+	@classmethod
+	def testSetUp(cls, test=None):
+		test = test or find_test()
+		test.setUpDs = lambda *args: _SharedSetup.install_bundles(cls)
+
+	@classmethod
+	def testTearDown(cls, test=None):
+		pass
 
 	# TODO: May need to recreate the application with this library?
 
 import nti.contentlibrary.tests
+from nti.testing.layers import find_test
 
 class ContentLibraryApplicationTestLayer(ApplicationTestLayer):
 	library_dir = os.path.join( os.path.dirname(nti.contentlibrary.tests.__file__) )
@@ -100,5 +125,15 @@ class ContentLibraryApplicationTestLayer(ApplicationTestLayer):
 	def tearDown(cls):
 		_SharedSetup.tearDown(cls)
 		# Must implement!
+
+	@classmethod
+	def testSetUp(cls, test=None):
+		test = test or find_test()
+		test.setUpDs = lambda ds: _SharedSetup.install_bundles(cls, ds)
+
+	@classmethod
+	def testTearDown(cls, test=None):
+		pass
+
 
 	# TODO: May need to recreate the application with this library?

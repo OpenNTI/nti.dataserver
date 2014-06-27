@@ -19,27 +19,44 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from zope import interface
 from zope import schema
 
+from nti.utils.property import CachedProperty
+from nti.externalization.oids import to_external_ntiid_oid
+
 ### Board
 
 from .interfaces import IContentBoard
 from .interfaces import NTIID_TYPE_CONTENT_BOARD
 
-from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
+#from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.authorization_acl import acl_from_aces
+from nti.dataserver.interfaces import IPrincipal
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_CREATE
+
 @interface.implementer(IContentBoard)
-class ContentBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+class ContentBoard(GeneralBoard):
 	_ntiid_type = NTIID_TYPE_CONTENT_BOARD
 
 	mimeType = 'application/vnd.nextthought.forums.contentboard'
+
+
+	@property
+	def NTIID(self):
+		# Fall-back to OIDs for now
+		return to_external_ntiid_oid(self)
 
 	def createDefaultForum(self):
 		if ContentForum.__default_name__ in self:
 			return self[ContentForum.__default_name__]
 
 		forum = ContentForum()
-		#forum.creator = ???
+		forum.creator = self.creator
 		self[forum.__default_name__] = forum
 		forum.title = _('Forum')
 
@@ -49,12 +66,24 @@ class ContentBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 			raise errors[0][1]
 		return forum
 
+	@CachedProperty
+	def __acl__(self):
+		# Likewise with the acl
+		prin = IPrincipal( AUTHENTICATED_GROUP_NAME )
+		return acl_from_aces( ace_allowing( prin, ACT_READ, ContentBoard),
+							  ace_allowing( prin, ACT_CREATE, ContentBoard))
 
 
+from nti.dataserver.interfaces import system_user
 
 @interface.implementer(IContentBoard)
 def ContentBoardAdapter(context):
-	return AnnotatableBoardAdapter(context, ContentBoard, IContentBoard)
+	board = AnnotatableBoardAdapter(context, ContentBoard, IContentBoard)
+	# Who owns this? Who created it?
+	# Right now, we're saying "system" did it...
+	# see also the sharing targets
+	board.creator = system_user
+	return board
 
 ### Forum
 
@@ -69,15 +98,19 @@ class ContentForum(GeneralForum):
 
 	mimeType = 'application/vnd.nextthought.forums.contentforum'
 
+	@property
+	def NTIID(self):
+		# Fall-back to OIDs for now
+		return to_external_ntiid_oid(self)
+
 ### Topic
 
 from .interfaces import IContentHeadlineTopic
 from .interfaces import NTIID_TYPE_CONTENT_TOPIC
 
 from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
-
-from nti.dataserver.interfaces import IPrincipal
-from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+from nti.dataserver import users
+from nti.dataserver.interfaces import IDefaultPublished
 
 @interface.implementer(IContentHeadlineTopic)
 class ContentHeadlineTopic(GeneralHeadlineTopic):
@@ -87,13 +120,35 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
 	@property
+	def NTIID(self):
+		# Fall-back to OIDs for now
+		return to_external_ntiid_oid(self)
+
+
+	@property
 	def sharingTargetsWhenPublished(self):
 		# Instead of returning the default set from super, which would return
 		# the dynamic memberships of the *creator* of this object, we
 		# make it visible to the world
 		# XXX NOTE: This will change as I continue to flesh out
 		# the permissioning of the content bundles themselves
-		return IPrincipal( AUTHENTICATED_GROUP_NAME )
+		#auth = IPrincipal( AUTHENTICATED_GROUP_NAME )
+		#interface.alsoProvides(auth, IEntity)
+		return (users.Entity.get_entity('Everyone'),)
+
+	@property
+	def flattenedSharingTargetNames(self):
+		result = super(ContentHeadlineTopic, self).flattenedSharingTargetNames
+		if 'Everyone' in result:
+			result.add('system.Everyone')
+		return result
+
+	def isSharedWith(self, wants):
+		res = super(ContentHeadlineTopic,self).isSharedWith(wants)
+		if not res:
+			# again, implicitly with everyone
+			res = IDefaultPublished.providedBy(self)
+		return res
 
 ### Posts
 
@@ -109,8 +164,12 @@ class ContentHeadlinePost(GeneralHeadlinePost):
 
 @interface.implementer(IContentCommentPost)
 class ContentCommentPost(GeneralForumComment):
-	mimeType = 'application/vnd.nextthought.forums.contentheadlinecomment'
+	mimeType = 'application/vnd.nextthought.forums.contentforumcomment'
 
+	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
+		# if we get here, we're authenticated
+		# See above about the sharing stuff
+		return True
 
 ### Forum decorators
 from nti.externalization.singleton import SingletonDecorator

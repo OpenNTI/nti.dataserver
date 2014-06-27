@@ -88,6 +88,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.security.permission import Permission
 
 import nti.dataserver.interfaces as nti_interfaces
+from nti.utils.property import alias
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -249,8 +250,11 @@ class _EveryoneGroup(_StringGroup):
 	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
 	def __init__( self, string ):
 		assert string == self.REQUIRED_NAME
-		super(_EveryoneGroup,self).__init__( string )
+		super(_EveryoneGroup,self).__init__( unicode(string) )
 		self.title = self.description
+
+	username = alias('id')
+	__name__ = alias('id')
 
 	def __eq__(self,other):
 		"""
@@ -266,6 +270,8 @@ class _EveryoneGroup(_StringGroup):
 			result = self.id == other
 		return result
 
+	def toExternalObject(self, *args, **kwargs):
+		return {'Class': 'Entity', 'Username': self.id}
 
 _EveryoneGroup.description = _EveryoneGroup.__doc__
 
@@ -327,8 +333,6 @@ def _string_role_factory( name ):
 	if nti_interfaces.IRole.providedBy( result ):
 		return result
 	return _StringRole(name)
-
-from nti.utils.property import alias
 
 @interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(nti_interfaces.IUser)

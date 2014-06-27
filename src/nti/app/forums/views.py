@@ -337,17 +337,20 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 class ForumGetView(GenericGetView):
 	""" Support for simply returning the blog item """
 	def __call__(self):
-		readable = True
 		result = super(ForumGetView, self).__call__()
 		if result is not None:
-			current = result
+			pass
+			#current = result
+			#readable = True
 			# XXX FIXME: WTF are we doing here?
-			# This is completely bypassing the ACL model.
-			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
-				readable = is_readable(current)
-				current = getattr(current, '__parent__', None)
-			if not readable:
-				raise hexc.HTTPForbidden()
+			# This is completely bypassing the ACL model
+			# which *ALREADY* takes the parents into account.
+			# JAM: Commenting out, this breaks any generalization.
+			#while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
+			#	readable = is_readable(current)
+			#	current = getattr(current, '__parent__', None)
+			#if not readable:
+			#	raise hexc.HTTPForbidden()
 		return result
 
 @view_config(context=frm_interfaces.IBoard)
@@ -584,7 +587,7 @@ class CommunityTopicPutDisabled(object):
 		pass
 
 	def __call__(self):
-		raise hexc.HTTPForbidden()
+		raise hexc.HTTPForbidden('Connot PUT to a topic')
 
 def _do_aq_delete(theObject):
 	"""

@@ -52,7 +52,7 @@ from zope import interface
 from zope.schema.interfaces import ConstraintNotSatisfied
 
 
-from nti.dataserver.interfaces import IUser, IWritableShared
+from nti.dataserver.interfaces import IUser, IWritableShared, IPrincipal
 
 from ExtensionClass import Base
 
@@ -92,8 +92,9 @@ class TestTopic(ForumLayerTest):
 
 		headline = PersonalBlogEntryPost()
 		headline.__parent__ = topic
+		@interface.implementer(IPrincipal)
 		class Username(object):
-			username = 'foo'
+			id = username = 'foo'
 		headline.creator = Username()
 		topic.creator = Username()
 		topic.headline = headline

@@ -48,6 +48,7 @@ from nti.ntiids.ntiids import make_ntiid as _make_ntiid
 from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.utils.property import CachedProperty as _CachedProperty
 from nti.utils.property import alias as _alias
+from nti.dataserver.interfaces import IPrincipal
 
 class _CreatedNamedNTIIDMixin(object):
 	"""
@@ -73,7 +74,7 @@ class _CreatedNamedNTIIDMixin(object):
 
 	@property
 	def _ntiid_creator_username(self):
-		return self.creator.username if self.creator else None
+		return IPrincipal(self.creator).id if self.creator else None
 
 	@property
 	def _ntiid_specific_part(self):
@@ -84,7 +85,7 @@ class _CreatedNamedNTIIDMixin(object):
 				return self.__parent__.__name__ + '.' + self.__name__
 			else:
 				return None
-		except (AttributeError):  # Not ready yet
+		except AttributeError:  # Not ready yet
 			return None
 
 	@_CachedProperty('_ntiid_creator_username','_ntiid_specific_part')
