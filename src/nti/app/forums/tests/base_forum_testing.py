@@ -142,13 +142,15 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 	def setUp(self):
 		super(AbstractTestApplicationForumsBase,self).setUp()
 		self.forum_pretty_url = UQ('/dataserver2/users/' + self.default_entityname + '/' + self.forum_url_relative_to_user)
-		self.forum_ntiid_url = UQ('/dataserver2/NTIIDs/' + self.forum_ntiid)
+		if self.forum_ntiid:
+			self.forum_ntiid_url = UQ('/dataserver2/NTIIDs/' + self.forum_ntiid)
 		self.forum_pretty_contents_url = self.forum_pretty_url + '/contents'
 		self.default_username_url = UQ('/dataserver2/users/' + self.default_username )
 		self.default_username_pages_url = self.default_username_url + '/Pages'
 
 	def forum_topic_ntiid( self, entryid ):
-		return self.forum_topic_ntiid_base + entryid
+		if self.forum_topic_ntiid_base:
+			return self.forum_topic_ntiid_base + entryid
 
 	def forum_topic_href( self, entryid ):
 		return self.forum_pretty_url + '/' + UQ( entryid )
@@ -161,11 +163,15 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		pretty_url = self.forum_pretty_url
 		ntiid_url = self.forum_ntiid_url
 		for url in pretty_url, ntiid_url:
+			if not url:
+				continue
+
 			res = testapp.get( url )
 			blog_res = res
 			assert_that( res, has_property( 'content_type', self.forum_content_type ) )
 			assert_that( res.json_body, has_entry( 'title', self.forum_title ) )
-			assert_that( res.json_body, has_entry( 'NTIID', self.forum_ntiid ) )
+			if self.forum_ntiid:
+				assert_that( res.json_body, has_entry( 'NTIID', self.forum_ntiid ) )
 
 			# We have a contents URL
 			contents_href = self.require_link_href_with_rel( res.json_body, 'contents' )
@@ -235,7 +241,9 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		topic_res = self.testapp.get( res.json_body['href'] ) # as well as its internal href
 		assert_that( topic_res.json_body, has_entry( 'title', data['title'] ) )
 		# The standard transliteration has been applied
-		assert_that( topic_res.json_body, has_entry( 'NTIID', ends_with('ia_borshch') ) )
+		# if we're deriving NTIIDs that way
+		if self.forum_ntiid:
+			assert_that( topic_res.json_body, has_entry( 'NTIID', ends_with('ia_borshch') ) )
 
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -710,7 +718,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 
 		# Second user is able to see everything about it...
 		def assert_shared_with_community( data ):
-			assert_that( data,  has_entry( 'sharedWith', contains( 'TheCommunity' ) ) )
+			if self.check_sharedWith_community:
+				assert_that( data,  has_entry( 'sharedWith', contains( 'TheCommunity' ) ) )
 
 		# ...Its entry in the table-of-contents...
 		res = testapp2.get( self.forum_pretty_url )
@@ -831,6 +840,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 			# In fact the activity is empty
 			assert_that( res.json_body['Items'], is_empty() )
 
+	check_sharedWith_community = True
+
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_community_user_can_comment_in_published_topic(self):
@@ -846,7 +857,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		comment_data = self._create_comment_data_for_POST()
 		comment_res = testapp2.post_json( topic_url, comment_data, status=201 )
 		assert_that( comment_res, has_property( 'content_type', self.forum_topic_comment_content_type ) )
-		assert_that( comment_res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
+		if self.check_sharedWith_community:
+			assert_that( comment_res.json_body, has_entry( 'sharedWith', [fixture.community_name] ) )
 		self.require_link_href_with_rel( comment_res.json_body, 'edit' )
 		self.require_link_href_with_rel( comment_res.json_body, 'flag' )
 		self.require_link_href_with_rel( comment_res.json_body, 'favorite' )
@@ -938,7 +950,10 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		#assert_that( res.cache_control, has_property( 'max_age', 3600 ) )
 		assert_that( res.cache_control, has_property( 'max_age', 0 ) )
 		comment_data.pop('Class',None) # don't compare, it changes
-		comment_data['sharedWith'] = [fixture.community_name]
+		if self.check_sharedWith_community:
+			comment_data['sharedWith'] = [fixture.community_name]
+
+		assert_that( res.json_body['Items'], has_length(1) )
 		assert_that( res.json_body['Items'][0], has_entries( comment_data ) )
 
 	def _check_comment_in_topic_feed( self, testapp, topic_url, comment_data ):
@@ -984,7 +999,8 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 
 		comment_res = testapp2.put_json( edit_href, comment_data )
 
-		comment_data['sharedWith'] = [fixture.community_name]
+		if self.check_sharedWith_community:
+			comment_data['sharedWith'] = [fixture.community_name]
 		assert_that( comment_res.json_body, has_entries( comment_data ) )
 
 		self._check_comment_in_topic_contents( testapp, topic_url, comment_data, fixture )
@@ -1184,10 +1200,15 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		assert_that( res, has_property( 'content_type', self.forum_topic_content_type ) )
 		assert_that( res.json_body, has_entry( 'ID', ntiids.make_specific_safe( data['title'] ) ) )
 		entry_id = res.json_body['ID']
+		assert_that( entry_id, is_(not_none() ))
 		assert_that( res.json_body, has_entries( 'title', data['title'],
-												 'NTIID', self.forum_topic_ntiid( entry_id ),
-												 'ContainerId', self.forum_ntiid,
 												 'href', self.forum_topic_href( entry_id ) ) )
+
+		ntiid = self.forum_topic_ntiid(entry_id)
+		if ntiid:
+			assert_that(res.json_body, has_entry('NTIID', ntiid))
+		if self.forum_ntiid:
+			assert_that(res.json_body, has_entry('ContainerId', self.forum_ntiid))
 
 		assert_that( res.json_body['headline'], has_entries( 'title', data['title'],
 															 'body',  data['body'] ) )

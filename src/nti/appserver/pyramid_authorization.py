@@ -81,9 +81,14 @@ def ZopeACLAuthorizationPolicy():
 				# zope expects (unless we already have a string)
 				permission = getattr(permission, 'id', permission)
 				try:
-					permits = checkPermission(permission, context)
+					zope_permits = checkPermission(permission, context)
 				except NoInteraction:
 					pass
+
+				# try to maintain the debugging information from pyramid if
+				# it is present
+				if zope_permits:
+					permits = zope_permits
 
 			return permits
 

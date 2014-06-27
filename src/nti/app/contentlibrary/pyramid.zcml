@@ -8,4 +8,6 @@
 
 	<pyramid:scan package='.library_views' />
 	<pyramid:scan package='.card_views' />
+	<pyramid:scan package=".forum" />
+
 </configure>

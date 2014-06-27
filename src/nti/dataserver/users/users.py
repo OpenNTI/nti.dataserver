@@ -1140,4 +1140,5 @@ def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
 		except AttributeError:
 			pass
 
-		entity._noticeChange( msg )
+		if hasattr(entity, '_noticeChange'):
+			entity._noticeChange( msg )
