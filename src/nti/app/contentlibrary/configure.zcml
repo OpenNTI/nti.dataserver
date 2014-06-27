@@ -1,6 +1,7 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:ext="http://nextthought.com/ntp/ext"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -146,5 +147,13 @@
 	<subscriber factory=".forum.ContentBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle" />
+
+	<!-- externalization -->
+	<!-- Note that we want to use the externalization already present, we just need the
+	correct factories registered -->
+	<include package="nti.externalization" file="meta.zcml" />
+	<include package="nti.externalization" />
+
+	<ext:registerMimeFactories module=".forum" />
 
 </configure>

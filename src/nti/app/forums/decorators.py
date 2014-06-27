@@ -29,8 +29,8 @@ from nti.externalization.singleton import SingletonDecorator
 
 from nti.utils._compat import aq_base
 
-from .._util import link_belongs_to_user
-from ..pyramid_authorization import is_readable, can_create
+from nti.appserver._util import link_belongs_to_user
+from nti.appserver.pyramid_authorization import is_readable, can_create
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = ext_interfaces.StandardExternalFields.LINKS

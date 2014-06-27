@@ -23,7 +23,7 @@ from nti.schema.field import Object
 # so that things like analytics and notable data can distinguish them.
 # They are otherwise expected to be modeled exactly the same as community boards.
 
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
 from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
@@ -66,9 +66,8 @@ class IContentHeadlineTopic(IGeneralHeadlineTopic,
 	headline = Object(IContentHeadlinePost,
 					  title="The main, first post of this topic.")
 
-class IContentCommentPost(ICommentPost,
-						  IShouldHaveTraversablePath):
-	containers(b'.IPersonalBlogEntry') # Adds __parent__ as required
+class IContentCommentPost(IGeneralForumComment):
+	containers(IContentHeadlineTopic) # Adds __parent__ as required
 	__parent__.required = False
 
 

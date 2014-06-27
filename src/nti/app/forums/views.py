@@ -44,9 +44,8 @@ from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
-from nti.dataserver import users
 from nti.dataserver import authorization as nauth
-from nti.appserver import interfaces as app_interfaces
+
 from nti.dataserver import interfaces as nti_interfaces
 from nti.app.renderers import interfaces as app_renderers_interfaces
 
@@ -77,36 +76,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from . import VIEW_PUBLISH
 from . import VIEW_UNPUBLISH
 from . import VIEW_CONTENTS
-from ..pyramid_authorization import is_readable
-
-@interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(app_interfaces.IUserWorkspace)
-class _UserBlogCollection(object):
-	"""
-	Turns a User into a ICollection of data for their blog entries (individual containers).
-	"""
-
-	name = 'Blog'
-	__name__ = name
-	__parent__ = None
-
-	def __init__( self, user_workspace ):
-		self.__parent__ = user_workspace
-
-	@property
-	def container(self):
-		return frm_interfaces.IPersonalBlog( self.__parent__.user ).values() # ?
-
-	@property
-	def accepts(self):
-		return (PersonalBlogEntryPost.mimeType, Post.mimeType)
-
-@interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(app_interfaces.IUserWorkspace)
-def _UserBlogCollectionFactory(workspace):
-	blog = frm_interfaces.IPersonalBlog( workspace.user, None )
-	if blog is not None:
-		return _UserBlogCollection( workspace )
+from nti.appserver.pyramid_authorization import is_readable
 
 class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
 	""" HTTP says POST creates a NEW entity under the Request-URI """
@@ -353,14 +323,14 @@ class PersonalBlogEntryPostView(_AbstractTopicPostView):
 
 @view_config(context=frm_interfaces.IHeadlineTopic)
 @view_config(context=frm_interfaces.IForum)
-@view_config(context=frm_interfaces.ICommunityForum)
-@view_config(context=frm_interfaces.ICommunityBoard)
+@view_config(context=frm_interfaces.IGeneralForum)
+@view_config(context=frm_interfaces.IGeneralBoard)
 @view_config(context=frm_interfaces.IPersonalBlog)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogEntry)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogComment)  # need to re-list this one
 @view_config(context=frm_interfaces.IPersonalBlogEntryPost)  # need to re-list this one
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)  # need to re-list
-@view_config(context=frm_interfaces.ICommunityHeadlinePost)  # need to re-list
+@view_config(context=frm_interfaces.IGeneralHeadlineTopic)  # need to re-list
+@view_config(context=frm_interfaces.IGeneralHeadlinePost)  # need to re-list
 @view_config(context=frm_interfaces.IGeneralForumComment)  # need to re-list
 @view_config(context=frm_interfaces.IPost)
 @view_defaults( **_r_view_defaults )
@@ -381,7 +351,7 @@ class ForumGetView(GenericGetView):
 		return result
 
 @view_config(context=frm_interfaces.IBoard)
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IGeneralHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
@@ -450,13 +420,16 @@ class ForumsContainerContentsGetView(UGDQueryView):
 	def getObjectsForId( self, *args ):
 		return (self.request.context,)
 
-@view_config( context=frm_interfaces.ICommunityBoard )
-class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
+@view_config( context=frm_interfaces.IDefaultForumBoard )
+class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
 
 	def __init__( self, request ):
 		# Make sure that if it's going to have a default, it does
-		frm_interfaces.ICommunityForum( request.context.creator, None )
-		super(CommunityBoardContentsGetView,self).__init__( request )
+		try:
+			request.context.createDefaultForum()
+		except (TypeError,AttributeError):
+			pass
+		super(DefaultForumBoardContentsGetView,self).__init__( request )
 
 	def _update_last_modified_after_sort(self, objects, result ):
 		# We need to somehow take the modification date of the children
@@ -466,11 +439,11 @@ class CommunityBoardContentsGetView(ForumsContainerContentsGetView):
 		forumLastMod = max((x.lastModified for x in board.itervalues() if is_readable(x, self.request)))
 		lastMod = max(result.lastModified, forumLastMod)
 		result.lastModified = lastMod
-		super(CommunityBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
+		super(DefaultForumBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
 
 
 @view_config(context=frm_interfaces.IForum)
-@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.IGeneralForum)
 @view_config(context=frm_interfaces.IPersonalBlog)
 @view_defaults( name=VIEW_CONTENTS,
 				**_r_view_defaults )
@@ -579,8 +552,8 @@ class ForumContentsFeedView(AbstractFeedView):
 @view_config(context=frm_interfaces.IPersonalBlogEntryPost)
 @view_config(context=frm_interfaces.IPersonalBlogComment)
 @view_config(context=frm_interfaces.IGeneralForumComment)
-@view_config(context=frm_interfaces.ICommunityHeadlinePost)
-@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.IGeneralHeadlinePost)
+@view_config(context=frm_interfaces.IGeneralForum)
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
@@ -597,7 +570,8 @@ class ForumObjectPutView(UGDPutView):
 					del externalValue[name]
 		return externalValue
 
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.ICommunityHeadlineTopic) # Needed?
+@view_config(context=frm_interfaces.IGeneralHeadlineTopic)
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
@@ -629,7 +603,7 @@ def _do_aq_delete(theObject):
 	theObject.__dict__['__parent__'] = base_parent
 	del base_parent[theObject.__name__]
 
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic)
+@view_config(context=frm_interfaces.IGeneralHeadlineTopic)
 @view_config(context=frm_interfaces.IPersonalBlogEntry)
 @view_defaults(**_d_view_defaults)
 class HeadlineTopicDeleteView(UGDDeleteView):
@@ -643,7 +617,7 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		_do_aq_delete(theObject)
 		return theObject
 
-@view_config(context=frm_interfaces.ICommunityForum)
+@view_config(context=frm_interfaces.IGeneralForum)
 @view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
 	""" Deleting an existing forum """
@@ -655,8 +629,7 @@ class ForumDeleteView(UGDDeleteView):
 		_do_aq_delete(theObject)
 		return theObject
 
-@view_config(context=frm_interfaces.IGeneralForumComment)
-@view_config(context=frm_interfaces.IPersonalBlogComment)
+@view_config(context=frm_interfaces.ICommentPost)
 @view_defaults(**_d_view_defaults)
 class CommentDeleteView(UGDDeleteView):
 	""" Deleting an existing forum comment.
@@ -694,6 +667,7 @@ def match_title_of_post_to_blog( post, event ):
 
 
 ### Publishing workflow
+## TODO: This is more general than forums, can be moved.
 
 
 class _AbstractPublishingView(object):
@@ -747,27 +721,8 @@ class _UnpublishView(_AbstractPublishingView):
 		return nti_interfaces.IDefaultPublished.providedBy( topic )
 
 
-### Events
-## TODO: Under heavy construction
-###
-
-
-from nti.dataserver.liking import FAVR_CAT_NAME
-
-def temp_store_favorite_object( modified_object, event ):
-	if event.category != FAVR_CAT_NAME:
-		return
-
-	user = users.User.get_user( event.rating.userid )
-	if not user:
-		return
-	if bool(event.rating):
-		# ok, add it to the shared objects so that it can be seen
-		user._addSharedObject( modified_object )
-	else:
-		user._removeSharedObject( modified_object )
-
-del _view_defaults
-del _c_view_defaults
-del _r_view_defaults
-del _d_view_defaults
+# XXX Temporarily export these
+#del _view_defaults
+#del _c_view_defaults
+#del _r_view_defaults
+#del _d_view_defaults

@@ -278,9 +278,10 @@ def _ugd_odata_views(pyramid_config):
 
 def _modifying_ugd_views(pyramid_config):
 
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
-							renderer='rest',
-							permission=nauth.ACT_DELETE, request_method='DELETE')
+	### XXX Why was this installed with no predicate?
+	#pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDDeleteView',
+	#						renderer='rest',
+	#						permission=nauth.ACT_DELETE, request_method='DELETE')
 
 	pyramid_config.add_view(route_name='objects.generic.traversal',
 							view='nti.appserver.dataserver_pyramid_views._method_not_allowed',

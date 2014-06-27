@@ -373,7 +373,7 @@
 	<include package=".policies" file="configure.zcml" />
 	<include package="." file="configure_invitations.zcml" />
 
-	<include package=".forums" />
+	<include package="nti.app.forums" />
 	<include package=".dashboard" />
 	<include package="nti.app.contentlibrary" />
 
