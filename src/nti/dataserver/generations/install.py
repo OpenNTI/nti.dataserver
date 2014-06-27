@@ -33,6 +33,8 @@ import BTrees
 
 from zope import interface
 from zope import component
+from zope import lifecycleevent
+from zope.component.hooks import site
 from zope.component.interfaces import ISite
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
@@ -67,72 +69,88 @@ def install_main( context ):
 	root_folder = rootFolder()
 	conn.add( root_folder ) # Ensure we have a connection so we can become KeyRefs
 	assert root_folder._p_jar is conn
+
 	# The root is generally presumed to be an ISite, so make it so
 	root_sm = LocalSiteManager( root_folder ) # site is IRoot, so __base__ is the GSM
 	assert root_sm.__parent__ is root_folder
 	assert root_sm.__bases__ == (component.getGlobalSiteManager(),)
 	conn.add( root_sm ) # Ensure we have a connection so we can become KeyRefs
 	assert root_sm._p_jar is conn
+
 	root_folder.setSiteManager( root_sm )
 	assert ISite.providedBy( root_folder )
 
 	dataserver_folder = Folder()
 	interface.alsoProvides( dataserver_folder, nti_interfaces.IDataserverFolder )
 	#locate( dataserver_folder, root_folder, name='dataserver2' )
+	conn.add(dataserver_folder)
 	root_folder['dataserver2'] = dataserver_folder
 	assert dataserver_folder.__parent__ is root_folder
 	assert dataserver_folder.__name__ == 'dataserver2'
 	assert root_folder['dataserver2'] is dataserver_folder
 
 	lsm = LocalSiteManager( dataserver_folder )
+	conn.add(lsm)
 	assert lsm.__parent__ is dataserver_folder
 	assert lsm.__bases__ == (root_sm,)
 	# Change the dataserver_folder from IPossibleSite to ISite
 	dataserver_folder.setSiteManager( lsm )
 	assert ISite.providedBy( dataserver_folder )
 
-	# Set up the shard directory, and add this object to it
-	# Shard objects contain information about the shard, including
-	# object placement policies (?). They live in the main database
-	shards = container.LastModifiedBTreeContainer()
-	dataserver_folder['shards'] = shards
-	shards[conn.db().database_name] = ds_shards.ShardInfo()
-	if conn.db().database_name == 'unnamed':
-		logger.warn("Using an unnamed root database")
-	assert shards[conn.db().database_name].__name__
+	with site(dataserver_folder):
+		# from now on, operate in the site we're setting up.
+		# The first thing that needs to happen is that we get
+		# proper intid utilities set up so everything else
+		# can get registered correctly.
+		intids = install_intids( dataserver_folder )
 
-	# TODO: the 'users' key should probably be several different keys, one for each type of
-	# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
-	# simplified through dropping UserRootResource in favor of normal traversal
-	# TODO: These will become more than plain folders, they will
-	# become either zope.pluggableauth.plugins.principalfolder.PrincipalFolder
-	# or similar implementations of IAuthenticatorPlugin.
-	install_root_folders( dataserver_folder )
+		# Set up the shard directory, and add this object to it
+		# Shard objects contain information about the shard, including
+		# object placement policies (?). They live in the main database
+		shards = container.LastModifiedBTreeContainer()
+		dataserver_folder['shards'] = shards
+		shards[conn.db().database_name] = ds_shards.ShardInfo()
+		if conn.db().database_name == 'unnamed':
+			logger.warn("Using an unnamed root database")
+		assert shards[conn.db().database_name].__name__
 
-	# Install the site manager and register components
-	root['nti.dataserver_root'] = root_folder
-	root['nti.dataserver'] = dataserver_folder
-	root['Application'] = root_folder # The name that many Zope components assume
+		# TODO: the 'users' key should probably be several different keys, one for each type of
+		# Entity object; that way traversal works out much nicer and dataserver_pyramid_views is
+		# simplified through dropping UserRootResource in favor of normal traversal
+		# TODO: These will become more than plain folders, they will
+		# become either zope.pluggableauth.plugins.principalfolder.PrincipalFolder
+		# or similar implementations of IAuthenticatorPlugin.
+		install_root_folders( dataserver_folder )
 
-	oid_resolver =  _Dataserver.PersistentOidResolver()
-	conn.add( oid_resolver )
-	lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
+		# Install the site manager and register components
+		root['nti.dataserver_root'] = root_folder
+		root['nti.dataserver'] = dataserver_folder
+		root['Application'] = root_folder # The name that many Zope components assume
+		# the connection root doesn't fire events, do so for it
+		lifecycleevent.added(root_folder)
+		lifecycleevent.added(dataserver_folder)
 
-	sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
-	lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
+		assert intids.getId(root_folder) is not None
 
-	intids = install_intids( dataserver_folder )
-	install_user_catalog( dataserver_folder, intids )
-	install_metadata_catalog( dataserver_folder, intids )
+		oid_resolver =  _Dataserver.PersistentOidResolver()
+		conn.add( oid_resolver )
+		lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
 
-	everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
-	intids.register( everyone ) # Events didn't fire
+		sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
+		lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
 
-	install_flag_storage( dataserver_folder )
 
-	install_password_utility( dataserver_folder )
+		install_user_catalog( dataserver_folder, intids )
+		install_metadata_catalog( dataserver_folder, intids )
 
-	install_sites_folder( dataserver_folder )
+		everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
+		assert intids.getId(everyone) is not None
+
+		install_flag_storage( dataserver_folder )
+
+		install_password_utility( dataserver_folder )
+
+		install_sites_folder( dataserver_folder )
 
 	return dataserver_folder
 

@@ -95,7 +95,7 @@ class IntIds(_ZCIntIds):
 		setattr(ob, self.attribute, None)
 		if notify:
 			zope_event.notify(RemovedEvent(ob, self, uid))
-	
+
 	def __repr__( self ):
 		return "<%s.%s (%s) %s/%s>" % (self.__class__.__module__,
 									   self.__class__.__name__,
