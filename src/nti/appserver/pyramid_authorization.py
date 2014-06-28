@@ -77,6 +77,7 @@ def ZopeACLAuthorizationPolicy():
 			# that if we have the correct interaction in place, which allows us to
 			# derive the relevant principals (only a concern during impersonation)
 			if not permits: # Or maybe if permits.ace == '<default deny>'?
+				zope_permits = False
 				# Turn IPermission objects into the strings that
 				# zope expects (unless we already have a string)
 				permission = getattr(permission, 'id', permission)
