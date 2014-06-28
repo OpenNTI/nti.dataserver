@@ -99,6 +99,8 @@ class TestFilesystem(ContentlibraryLayerTest):
 
 	def test_library(self):
 		library = filesystem.EnumerateOnceFilesystemLibrary( os.path.dirname(__file__) )
+		library.syncContentPackages()
+
 		assert_that( library, has_property( 'lastModified', greater_than( 0 ) ) )
 
 		embed_paths = library.pathsToEmbeddedNTIID('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1')

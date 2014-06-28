@@ -113,7 +113,7 @@ from .interfaces import ISyncableContentPackageBundleLibrary
 from .interfaces import IEnumerableDelimitedHierarchyBucket
 from .interfaces import IDelimitedHierarchyKey
 from .interfaces import IContentPackageLibrary
-from .interfaces import ContentPackageBundleLibrarySynchedEvent
+from .interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
 
 from nti.schema.field import IndexedIterable
 from nti.ntiids.schema import ValidNTIID
@@ -269,6 +269,6 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 					lifecycleevent.modified(bundle)
 
 		if need_event:
-			event = ContentPackageBundleLibrarySynchedEvent(self.context)
+			event = ContentPackageBundleLibraryModifiedOnSyncEvent(self.context)
 			event.bucket = bucket
 			notify(event)

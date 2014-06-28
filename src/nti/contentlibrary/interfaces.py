@@ -14,6 +14,8 @@ from zope.location.interfaces import IContained as IZContained
 from zope.container.interfaces import IContentContainer
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 
+from zope.interface.interfaces import IObjectEvent
+from zope.interface.interfaces import ObjectEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -37,7 +39,7 @@ from nti.ntiids.schema import ValidNTIID
 
 # Disable pylint warnings about undefined variables, because it catches
 # all the __setitem__ and __parent__ in the interfaces.
-# pylint: disable=E0602
+# pylint: disable=I0011,E0602
 
 ### Hierarchy abstraction
 
@@ -222,7 +224,38 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 		events for individual content packages will have been fired.
 		"""
 
-class IContentPackageLibrarySynchedEvent(IObjectModifiedEvent):
+class IContentPackageLibraryWillSyncEvent(IObjectEvent):
+	"""
+	Fired when a content package library has been asked to sync,
+	before it does so.
+
+	If the sync process results in changes, the :class:`IContentPackageLibraryModifiedOnSyncEvent`
+	will be fired.
+
+	Finally, whether or not there were changes, if the synchronization
+	completed, the class:`IContentPackageLibraryDidSyncEvent`
+	will be fired.
+
+	.. warning:: Because the ``contentPackages`` property may be in the process
+		of mutating, and in general this library may not be stable,
+		you should avoid accessing any content-package related
+		information about this library in an event listener.
+	"""
+
+@interface.implementer(IContentPackageLibraryWillSyncEvent)
+class ContentPackageLibraryWillSyncEvent(ObjectEvent):
+	pass
+
+class IContentPackageLibraryDidSyncEvent(IObjectEvent):
+	"""
+	A library completed synchronization, with or without changes.
+	"""
+
+@interface.implementer(IContentPackageLibraryDidSyncEvent)
+class ContentPackageLibraryDidSyncEvent(ObjectEvent):
+	pass
+
+class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	"""
 	An event fired when a content package library has completed
 	a synchronization that resulted in changes. This is fired
@@ -233,8 +266,8 @@ class IContentPackageLibrarySynchedEvent(IObjectModifiedEvent):
 	# similar gets invoked)? But the `attributes` property
 	# of ModifiedEvent might be useful
 
-@interface.implementer(IContentPackageLibrarySynchedEvent)
-class ContentPackageLibrarySynchedEvent(ObjectModifiedEvent):
+@interface.implementer(IContentPackageLibraryModifiedOnSyncEvent)
+class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	"""
 	Content package synced event.
 	"""
@@ -654,15 +687,15 @@ class ISyncableContentPackageBundleLibrary(interface.Interface):
 		"""
 
 
-class IContentPackageBundleLibrarySynchedEvent(IObjectModifiedEvent):
+class IContentPackageBundleLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	"""
 	An event fired when a content package bundle library has completed
 	a synchronization that resulted in changes. This is fired
 	after events for individual content package changes.
 	"""
 
-@interface.implementer(IContentPackageBundleLibrarySynchedEvent)
-class ContentPackageBundleLibrarySynchedEvent(ObjectModifiedEvent):
+@interface.implementer(IContentPackageBundleLibraryModifiedOnSyncEvent)
+class ContentPackageBundleLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	"""
 	Content package bundle synced event.
 	"""

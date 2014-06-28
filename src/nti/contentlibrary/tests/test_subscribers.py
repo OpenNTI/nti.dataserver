@@ -122,7 +122,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		site_lib = subscribers.install_site_content_library( sm, NewLocalSite(sm))
 
-		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibrarySynchedEvent)
+		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibraryModifiedOnSyncEvent)
 		assert_that( evts, has_length(1) )
 
 		bundle_lib = evts[0].object
@@ -163,8 +163,9 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		evts = eventtesting.getEvents(IObjectModifiedEvent)
 
-		assert_that( evts, has_length(1))
+		assert_that( evts, has_length(2))
 		assert_that( evts[0], has_property( 'object', is_(bundle) ))
+		assert_that( evts[1], validly_provides(interfaces.IContentPackageBundleLibraryModifiedOnSyncEvent))
 
 		# there are some field events, but none of them are for this object
 		evts = eventtesting.getEvents(
