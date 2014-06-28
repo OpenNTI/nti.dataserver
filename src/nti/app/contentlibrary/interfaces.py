@@ -17,6 +17,7 @@ from zope.container.constraints import contains
 from zope.container.constraints import containers
 
 from nti.schema.field import Object
+from nti.schema.field import List
 
 #### Content-specific boards and forums
 # We define these as a distinct set of classes/interfaces/mimetypes/ntiids
@@ -89,3 +90,23 @@ class IAudioIndexMap(ICommonIndexMap):
 
 class IRelatedContentIndexMap(ICommonIndexMap):
 	pass
+
+####
+# External client preferences
+####
+
+from zope.location.interfaces import ILocation
+from nti.dataserver.interfaces import ILastModified
+
+from dolmen.builtins import IUnicode
+
+
+class IContentUnitPreferences(ILocation,
+							  ILastModified):
+	"""
+	Storage location for preferences related to a content unit.
+	"""
+	# NOTE: This can actually be None in some cases, which makes it
+	# impossible to validate this schema.
+	sharedWith = List( value_type=Object(IUnicode),
+					   title="List of usernames to share with" )

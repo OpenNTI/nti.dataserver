@@ -205,27 +205,3 @@ class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):
 
 		new_content_package = new_site_lib[0]
 		assert_that( new_content_package, has_property('absolute_path', '/DNE/Hah/sites/localsite/TestFilesystem/index.html'))
-
-from nti.app.testing.layers import AppTestLayer
-
-class TestAppFilesystem(ContentlibraryLayerTest):
-	layer = AppTestLayer
-
-	def test_adapter_prefs(self):
-		# TODO: This test does not really belong here
-		import zope.dottedname.resolve as dottedname
-		IPrefs = dottedname.resolve( 'nti.appserver.interfaces.IContentUnitPreferences' )
-
-		unit = filesystem.FilesystemContentPackage(
-			#filename='prealgebra/index.html',
-			href = 'index.html',
-			#root = 'prealgebra',
-			#icon = 'icons/The%20Icon.png'
-		)
-
-		assert_that( IPrefs( unit, None ), is_( none() ) )
-
-		unit.sharedWith = ['foo']
-
-		assert_that( IPrefs( unit ), verifiably_provides( IPrefs ) )
-		assert_that( IPrefs( unit ), has_property( '__parent__', unit ) )

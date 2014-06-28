@@ -3,8 +3,6 @@
 """
 Views for exposing the content library to clients.
 
-In addition to providing access to the content, this
-
 $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -12,28 +10,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import sys
-import time
-import itertools
-import persistent
 from urllib import quote as UQ
 
 from zope import interface
 from zope import component
-from zope.location.interfaces import LocationError
+
 from zope.location import interfaces as loc_interfaces
-from zope.annotation.factory import factory as an_factory
-from zope.traversing import interfaces as trv_interfaces
 
 from pyramid import traversal
 from pyramid import httpexceptions as hexc
-from pyramid.threadlocal import get_current_request
 from pyramid.view import view_config, view_defaults
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
 from nti.appserver import interfaces as app_interfaces
-from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.renderers import interfaces as app_renderers_interfaces
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
@@ -41,14 +29,9 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import links
-from nti.dataserver import containers
 from nti.dataserver import authorization as nauth
-from nti.dataserver import authorization_acl as nacl
 from nti.dataserver import interfaces as nti_interfaces
 from nti.mimetype.mimetype import  nti_mimetype_with_class
-
-from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.singleton import SingletonDecorator
 
 from nti.ntiids import ntiids
 
@@ -127,251 +110,6 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 		info.lastModified = last_modified
 	return info
 
-###
-# We look for content container preferences. For actual containers, we
-# store the prefs as an annotation on the container.
-# NOTE: This requires that the user must have created at least one object
-# on the page before they can store preferences.
-###
-
-@interface.implementer(app_interfaces.IContentUnitPreferences)
-@component.adapter(containers.LastModifiedBTreeContainer)
-class _ContentUnitPreferences(persistent.Persistent):
-
-	__parent__ = None
-	__name__ = None
-	sharedWith = None
-
-	def __init__( self, createdTime=None, lastModified=None, sharedWith=None ):
-		self.createdTime = createdTime if createdTime is not None else time.time()
-		self.lastModified = lastModified if lastModified is not None else self.createdTime
-		if sharedWith is not None:
-			self.sharedWith = sharedWith
-
-# For BWC, use the old data.
-_ContainerContentUnitPreferencesFactory = an_factory(_ContentUnitPreferences,
-													 key='nti.appserver.contentlibrary.library_views._ContentUnitPreferences')
-
-###
-# We can also look for preferences on the actual content unit
-# itself. We provide an adapter for IDelimitedHierarchyContentUnit, because
-# we know that :mod:`nti.contentlibrary.eclipse` may set up sharedWith
-# values for us.
-###
-@interface.implementer(app_interfaces.IContentUnitPreferences)
-@component.adapter(lib_interfaces.IDelimitedHierarchyContentUnit)
-def _DelimitedHierarchyContentUnitPreferencesFactory(content_unit):
-	sharedWith = getattr( content_unit, 'sharedWith', None )
-	if sharedWith is None:
-		return None
-
-	prefs = _ContentUnitPreferences( createdTime=time.mktime(content_unit.created.timetuple()),
-									 lastModified=time.mktime(content_unit.modified.timetuple()),
-									 sharedWith=content_unit.sharedWith )
-	prefs.__parent__ = content_unit
-	return prefs
-
-def _prefs_present( prefs ):
-	"""
-	Does `prefs` represent a valid preference stored by the user?
-	Note that even a blank, empty set of targets is a valid preference;
-	a None value removes the preference.
-	"""
-	return prefs and prefs.sharedWith is not None
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(app_interfaces.IContentUnitInfo)
-class _ContentUnitPreferencesDecorator(object):
-	"Decorates the mapping with the sharing preferences. Contains the algorithm to resolve them."
-
-	__metaclass__ = SingletonDecorator
-
-	def _find_prefs(self, context, remote_user):
-		# Walk up the parent tree of content units (not including the mythical root)
-		# until we run out, or find preferences
-		def units( ):
-			contentUnit = context.contentUnit
-			while lib_interfaces.IContentUnit.providedBy( contentUnit ):
-				yield contentUnit, contentUnit.ntiid, contentUnit.ntiid
-				contentUnit = contentUnit.__parent__
-		# Also include the root
-		root = ((None, '', ntiids.ROOT),)
-		# We will go at least once through this loop
-		contentUnit = provenance = prefs = None
-		for contentUnit, containerId, provenance in itertools.chain( units(), iter(root) ):
-			container = remote_user.getContainer( containerId )
-			prefs = app_interfaces.IContentUnitPreferences( container, None )
-			if _prefs_present( prefs ):
-				break
-			prefs = None
-
-		if not _prefs_present( prefs ):
-			# OK, nothing found by querying the user. What about looking at
-			# the units themselves?
-			for contentUnit, containerId, provenance in units():
-				prefs = app_interfaces.IContentUnitPreferences( contentUnit, None )
-				if _prefs_present( prefs ):
-					break
-				prefs = None
-
-		if not _prefs_present( prefs ):
-			# Ok, nothing the user has set, and nothing found looking at the content
-			# units themselves. Now we're into weird fallback territory. This is probably very shaky and
-			# needing constant review, but it's a start.
-			dfl_name = None
-			for dynamic_member in remote_user.dynamic_memberships:
-				# Can we find a DynamicFriendsList/DFL/Team that the user belongs too?
-				# And just one? If so, then it's our default sharing target
-				if nti_interfaces.IDynamicSharingTarget.providedBy( dynamic_member ) and not nti_interfaces.ICommunity.providedBy( dynamic_member ):
-					# Found one...
-					if dfl_name is None:
-						# and so far just one
-						dfl_name = dynamic_member.NTIID
-					else:
-						# damn, more than one.
-						dfl_name = None
-						break
-			if dfl_name:
-				# Yay, found one!
-				prefs = _ContentUnitPreferences( sharedWith=(dfl_name,) )
-				provenance = dfl_name
-
-		return prefs, provenance, contentUnit
-
-	def decorateExternalMapping( self, context, result_map ):
-		if context.contentUnit is None:
-			return
-
-		request = get_current_request()
-		if not request:
-			return
-		remote_user = users.User.get_user( request.authenticated_userid,
-										   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
-		if not remote_user:
-			return
-
-		prefs, provenance, contentUnit = self._find_prefs( context, remote_user )
-
-		if _prefs_present( prefs ):
-			ext_obj = {}
-			ext_obj['State'] = 'set' if contentUnit is context.contentUnit else 'inherited'
-			ext_obj['Provenance'] = provenance
-			ext_obj['sharedWith'] = prefs.sharedWith
-			ext_obj['Class'] = 'SharingPagePreference'
-
-			result_map['sharingPreference'] = ext_obj
-
-		if prefs:
-			# We found one, but it specified no sharing settings.
-			# we still want to copy its last modified
-			if prefs.lastModified > context.lastModified:
-				result_map['Last Modified'] = prefs.lastModified
-				context.lastModified = prefs.lastModified
-
-
-def _with_acl( prefs ):
-	"""
-	Proxies the preferences object to have an ACL
-	that allows only its owner to make changes.
-	"""
-	user = traversal.find_interface( prefs, nti_interfaces.IUser )
-	if user is None: # pragma: no cover
-		return prefs
-	# TODO: Replace this with a real ACL provider
-	return nti_interfaces.ACLLocationProxy(
-					prefs,
-					prefs.__parent__,
-					prefs.__name__,
-					nacl.acl_from_aces( nacl.ace_allowing( user.username, nti_interfaces.ALL_PERMISSIONS ) ) )
-
-
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(containers.LastModifiedBTreeContainer)
-class _ContainerFieldsTraversable(object):
-	"""
-	An :class:`zope.traversing.interfaces.ITraversable` for the updateable fields of a container.
-	Register as a namespace traverser for the ``fields`` namespace
-	"""
-
-	def __init__( self, context, request=None ):
-		self.context = context
-
-	def traverse( self, name, remaining_path ):
-		if name == 'sharingPreference':
-			return _with_acl( app_interfaces.IContentUnitPreferences( self.context ) )
-
-		raise LocationError( name ) # pragma: no cover
-
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(lib_interfaces.IContentUnit)
-class _ContentUnitFieldsTraversable(object):
-	"""
-	An :class:`zope.traversing.interfaces.ITraversable` for the preferences stored on a content unit.
-
-	Register as a namespace traverser for the ``fields`` namespace
-	"""
-
-	def __init__( self, context, request=None ):
-		self.context = context
-		self.request = request
-
-	def traverse( self, name, remaining_path ):
-		if name == 'sharingPreference':
-			request = self.request or get_current_request()
-			remote_user = users.User.get_user( request.authenticated_userid,
-											   dataserver=request.registry.getUtility(nti_interfaces.IDataserver) )
-			# Preferences for the root are actually stored
-			# on the unnamed node
-			ntiid = '' if self.context.ntiid == ntiids.ROOT else self.context.ntiid
-			container = remote_user.getContainer( ntiid )
-			# If we are expecting to write preferences, make sure the
-			# container exists, even if it hasn't been used
-			if container is None and self.request and self.request.method == 'PUT':
-				container = remote_user.containers.getOrCreateContainer(ntiid )
-			return _with_acl( app_interfaces.IContentUnitPreferences( container ) )
-
-		raise LocationError( name ) # pragma: no cover
-
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=app_interfaces.IContentUnitPreferences,
-			  permission=nauth.ACT_UPDATE, request_method='PUT' )
-class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
-
-	def _transformInput( self, value ):
-		return value
-
-	def updateContentObject( self, unit_prefs, externalValue, set_id=False, notify=True ):
-		# At this time, externalValue must be a dict containing the 'sharedWith' setting
-		try:
-			unit_prefs.sharedWith = externalValue['sharedWith']
-			unit_prefs.lastModified = time.time()
-			return unit_prefs
-		except KeyError:
-			exc_info = sys.exc_info()
-			raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
-
-	def __call__(self):
-		value = self.readInput()
-		self.updateContentObject( self.request.context, value )
-
-		# Since we are used as a field updater, we want to return
-		# the object whose field we updated (as is the general rule)
-		# Recall that the root is special cased as ''
-
-		ntiid = self.request.context.__parent__.__name__ or ntiids.ROOT
-		if ntiid == ntiids.ROOT:
-			# NOTE: This means that we are passing the wrong type of
-			# context object
-			self.request.view_name = ntiids.ROOT
-			return _RootLibraryTOCRedirectView( self.request )
-
-		content_lib = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
-
-		content_units = content_lib.pathToNTIID(ntiid)
-		self.request.context = content_units[-1]
-		return _LibraryTOCRedirectView( self.request )
-
 
 @view_config( name='' )
 @view_config( name='pageinfo+json' )
@@ -440,12 +178,17 @@ class _LibraryTOCRedirectClassView(object):
 		# we need to return one to get the right mime type header. So we
 		# fake it by rendering here
 		def _t_e_o(**kwargs):
-			return {"Class": "Link", "MimeType": self.link_mt, "href": href, "rel": "content", 'Last Modified': lastModified or None}
+			return {"Class": "Link",
+					"MimeType": self.link_mt,
+					"href": href,
+					"rel": "content",
+					'Last Modified': lastModified or None}
+
 		link.toExternalObject = _t_e_o
 		interface.alsoProvides( link, loc_interfaces.ILocationInfo )
 		link.__parent__ = request.context
 		link.__name__ = href
-		link.getNearestSite = lambda: request.registry.getUtility( nti_interfaces.IDataserver ).root
+		link.getNearestSite = lambda: component.getUtility( nti_interfaces.IDataserver ).root
 
 		return link
 

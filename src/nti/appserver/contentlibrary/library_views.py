@@ -7,10 +7,23 @@ $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 
-import nti.deprecated
+
 #########
 # IMPORTANT NOTE: This module cannot go away when all deprecations are removed.
 # It used to contain a persistent object stored in annotations, so
 # import compatibility has to be maintained.
 #########
-nti.deprecated.moved('nti.app.contentlibrary.library_views')
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.contentlibrary.content_unit_preferences",
+	"nti.app.contentlibrary.content_unit_preferences.adapters",
+	# ZODB persistent objects compat
+	"_ContentUnitPreferences")
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.app.contentlibrary.library_views",
+	"nti.app.contentlibrary.library_views",
+	"PAGE_INFO_MT",
+	"PAGE_INFO_MT_JSON",
+	"find_page_info_view_helper")
