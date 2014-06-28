@@ -135,6 +135,8 @@ class AbstractContentPackageLibrary(object):
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
+		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
+
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
@@ -203,9 +205,11 @@ class AbstractContentPackageLibrary(object):
 		if removed or added or changed or never_synced:
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
-			event = interfaces.ContentPackageLibrarySynchedEvent(self, attributes)
+			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
 
 			notify(event)
+
+		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 
 	#: A map from top-level content-package NTIID to the content package.
 	#: This is cached based on the value of the _contentPackages variable,
@@ -271,8 +275,12 @@ class AbstractContentPackageLibrary(object):
 		backwards). If you support removal, you should override this
 		method.
 		"""
+		# Refuse to do this if we're not sync'd!
+		if self._contentPackages is None:
+			return -1
+
 		lastModified = -1
-		for x in self.contentPackages: # does an implicit sync, setting _enumeration_last_modified
+		for x in self.contentPackages:
 			lastModified = max(lastModified, x.index_last_modified or -1)
 
 		lastModified = max(self._enumeration_last_modified, lastModified)

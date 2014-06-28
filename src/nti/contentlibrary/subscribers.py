@@ -22,21 +22,37 @@ from .annotation import ContentUnitAnnotationUtility
 
 from zope.component.hooks import site
 
+_LIBRARY_NAME = '++etc++library'
+
 # Note we don't declare what we adapt here, we keep
 # that in the zcml...the location of the interface
 # for local_site should be moving
-def install_site_content_library(local_site_manager, event):
+def install_site_content_library(local_site_manager, _=None):
 	"""
 	When a new local site, representing a site (host) policy
 	is added, install a site-local library and associated utilities
 	into it. The library is sync'd after this is done.
 
 	If you need to perform work, such as registering your own
-	utility in the local site, listen for the component
+	utility in the local site that uses the local library, listen for the component
 	registration event, :class:`zope.interface.interfaces.IRegistered`,
 	which is an ObjectEvent, whose object will be an
-	:class:`nti.contentlibrary.interfaces.IPersistentContentPackageLibrary`
+	:class:`nti.contentlibrary.interfaces.IPersistentContentPackageLibrary`.
+
+	Although this function is ordinarily called as an event listener
+	for a :class:`.INewLocalSite` event, it can also be called
+	manually, passing in just a site manager. In that case, if there
+	is no local library, and one can now be found, it will be created;
+	if a local library already exists, nothing will be done.
+
+	:returns: The site local content library, if one was found or installed.
 	"""
+
+	if _ is None and _LIBRARY_NAME in local_site_manager:
+		lib = local_site_manager[_LIBRARY_NAME]
+		logger.debug("Nothing to do for site %s, library already present %s",
+					 local_site_manager, lib)
+		return lib
 
 	global_library = component.getGlobalSiteManager().queryUtility(IContentPackageLibrary)
 	if global_library is None:
@@ -46,12 +62,15 @@ def install_site_content_library(local_site_manager, event):
 	local_site = local_site_manager.__parent__
 	assert bool(local_site.__name__), "sites must be named"
 
+
 	site_library_factory = ISiteLibraryFactory(global_library, None)
 	if site_library_factory is None:
 		logger.warning( "No site factory for %s; should only happen in tests", global_library)
 		return
 
 	library = site_library_factory.library_for_site_named( local_site.__name__ )
+	logger.info("Installing site library %s for %s",
+				library, local_site.__name__)
 	assert IPersistentContentPackageLibrary.providedBy(library)
 
 	# Contain the utilities we are about to install.
@@ -60,7 +79,7 @@ def install_site_content_library(local_site_manager, event):
 	# these need to be children of the SiteManager object: qNU walks from
 	# the context to the enclosing site manager, and then looks through ITS
 	# bases
-	local_site_manager['++etc++library'] = library
+	local_site_manager[_LIBRARY_NAME] = library
 	local_site_manager['++etc++contentannotation'] = annotes = ContentUnitAnnotationUtility()
 
 
@@ -85,13 +104,13 @@ from zope.interface.interfaces import IRegistered
 from zope.interface.interfaces import IUnregistered
 
 from .interfaces import IContentPackageBundleLibrary
-from .interfaces import IContentPackageLibrarySynchedEvent
+from .interfaces import IContentPackageLibraryDidSyncEvent
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 from .interfaces import ISyncableContentPackageBundleLibrary
 
 from .bundle import ContentPackageBundleLibrary
 
-_BUNDLE_LIBRARY_NAME = 'ContentPackageBundles'
+_BUNDLE_LIBRARY_NAME = 'ContentPackageBundles' # because it might be in traversal paths
 
 @component.adapter(IPersistentContentPackageLibrary, IRegistered)
 def install_bundle_library(library, event):
@@ -121,12 +140,13 @@ def uninstall_bundle_library(library, event):
 										  provided=IContentPackageBundleLibrary )
 	del local_site_manager[_BUNDLE_LIBRARY_NAME]
 
-@component.adapter(IPersistentContentPackageLibrary, IContentPackageLibrarySynchedEvent)
+@component.adapter(IPersistentContentPackageLibrary, IContentPackageLibraryDidSyncEvent)
 def sync_bundles_when_library_synched(library, event):
 	"""
 	When a persistent content library is synchronized
-	with the disk contents, and something changed,
-	we also synchronize the corresponding bundle library.
+	with the disk contents, whether or not anything actually changed,
+	we also synchronize the corresponding bundle library. (Because they could
+	change independently and in unknown ways)
 	"""
 
 	# Find the local site manager
@@ -144,7 +164,9 @@ def sync_bundles_when_library_synched(library, event):
 
 	bundle_bucket = enumeration_root.getChildNamed(bundle_library.__name__)
 	if bundle_bucket is None:
-		logger.info("Nothing to enumerate for %s/%s", bundle_bucket, library)
+		logger.info("No child named %s in %s for library %s",
+					bundle_library.__name__, getattr(enumeration_root, 'absolute_path', enumeration_root),
+					library)
 		return
 
 	ISyncableContentPackageBundleLibrary(bundle_library).syncFromBucket(bundle_bucket)

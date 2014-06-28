@@ -40,6 +40,12 @@
 	<subscriber handler=".subscribers.uninstall_bundle_library" />
 	<subscriber handler=".subscribers.sync_bundles_when_library_synched" />
 
+	<!-- No need to try to index these objects -->
+	<class class='.library.AbstractContentPackageLibrary'>
+		<implements interface="zope.catalog.interfaces.INoAutoIndex" />
+		<implements interface="zope.catalog.interfaces.INoAutoReindex" />
+	</class>
+
 	<!-- Externalization -->
 
 	<include package="nti.externalization" />

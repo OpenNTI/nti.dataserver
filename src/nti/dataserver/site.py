@@ -449,6 +449,11 @@ class HostPolicyFolder(Folder):
 	Simple container implementation for the named host site.
 	"""
 
+	def __str__(self):
+		return 'HostPolicyFolder(%s)' % self.__name__
+	def __repr__(self):
+		return 'HostPolicyFolder(%s,%s)' % (self.__name__,id(self))
+
 @interface.implementer(IHostPolicySiteManager)
 class HostPolicySiteManager(_ZLocalSiteManager):
 	pass
@@ -517,15 +522,19 @@ def synchronize_host_policies():
 		secondary_comps = ds_site_manager
 		for comps in site_ro:
 			name = comps.__name__
-			if name.startswith('base'):
+			logger.debug("Checking host policy for site %s", name)
+			if name.endswith('base') or name.startswith('base'):
 				# The GSM or the base global objects
+				# TODO: better way to do this...marker interface?
 				continue
 			if name in sites:
+				logger.debug("Host policy for %s already in place", name)
 				# Ok, we've already put one in for this level.
 				# We need to make it our next choice going forward
 				secondary_comps = sites[name].getSiteManager()
 			else:
 				# Great, create the site
+				logger.info("Installing site policy %s", name)
 
 				site = HostPolicyFolder()
 				# should fire object created event
@@ -570,17 +579,16 @@ def run_job_in_all_host_sites(func):
 	You are responsible for transaction management.
 
 	:raises: Whatever the callable raises.
+	:returns: A list of pairs `(site, result)` containing each site
+		and the result of running the function in that site.
+	:rtype: list
 	"""
-
-	# TODO: Might it be useful to specify the order in which
-	# site operations run? Perhaps top-down? As it stands,
-	# they will be executed in alphabetical order, because that's the
-	# iteration order of the folder.
 
 	sites = component.getUtility(IEtcNamespace, name='hostsites')
 	sites = list(sites.values())
+	logger.debug("Asked to run job %s in sites %s", func, sites)
 
-	# The eastiest way to go top-down is to again use the resolution order;
+	# The easyiest way to go top-down is to again use the resolution order;
 	# we just have to watch out for duplicates and non-persistent components
 	site_to_ro = {site: ro.ro(site.getSiteManager()) for site in sites}
 
@@ -610,9 +618,14 @@ def run_job_in_all_host_sites(func):
 				# Ie., it's a real one we haven't seen before
 				ordered.append( base_site )
 
+	results = list()
 	for site in ordered:
+		logger.debug('Running job %s in site %s', func, site.__name__)
 		with current_site(site):
-			func()
+			result = func()
+			results.append( (site, result) )
+
+	return results
 
 
 ## Legacy notes:
