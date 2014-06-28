@@ -149,16 +149,6 @@ class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.I
 									Bulk collections/requests will not have it.
 									"""	)
 
-class IContentUnitPreferences(ILocation,nti_interfaces.ILastModified):
-	"""
-	Storage location for preferences related to a content unit.
-	"""
-	# NOTE: This can actually be None in some cases, which makes it
-	# impossible to validate this schema.
-	sharedWith = schema.List( value_type=Object(IUnicode),
-							  title="List of usernames to share with" )
-
-
 class IPrincipalUGDFilter(interface.Interface):
 	"""
 	define subscriber object filter
