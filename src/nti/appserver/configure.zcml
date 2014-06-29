@@ -387,7 +387,7 @@
 		<subscriber handler=".gunicorn._replace_storage_on_open" />
 		<subscriber handler=".gunicorn._cache_conn_objects" />
 	</configure>
-	<subscriber handler=".application._configure_pyramid_zodbconn" />
+	<subscriber handler=".application._configure_zodb_tween" />
 
 
 	<include package="nti.contentrange" />

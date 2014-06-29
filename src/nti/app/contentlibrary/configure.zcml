@@ -8,41 +8,6 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<!-- Informative utilities -->
-	<!--
-	NOTE: These are global.
-	If we add sub-libraries, then depending on the visibility policy,
-	we would need to re-register a utility in the
-	same site (which by default would hide the parent) or
-	have them cooperate (in the same way that, e.g.,
-	zope.pluggableauth..principalfolder does.
-
-	JAM: As of 20140615, we now have sub-libraries that are
-	persistent, so we need to refactor these ASAP to support delegation.
-	-->
-	<!--
-	NOTE: Obviously the packaging is off here. Someone
-	started moving things and didn't finish, but it would be hard
-	to finish with this layout because the two packages are
-	interdependent...which is why they were a single package to start
-	with.
-	-->
-	<utility factory="._audio_index_map.AudioIndexMap"
-			 provides=".interfaces.IAudioIndexMap"/>
-
-	<utility factory="._video_index_map.VideoIndexMap"
-			 provides=".interfaces.IVideoIndexMap"/>
-
-	<utility factory="._related_content_map.RelatedContentIndexMap"
-			 provides=".interfaces.IRelatedContentIndexMap"/>
-
-	<!-- Events -->
-	<subscriber	handler="._audio_index_map.add_audio_items_from_new_content" />
-	<subscriber	handler="._audio_index_map.remove_audio_items_from_old_content" />
-	<subscriber	handler="._video_index_map.add_video_items_from_new_content" />
-	<subscriber	handler="._video_index_map.remove_video_items_from_old_content" />
-	<subscriber	handler="._related_content_map.add_related_content_items_from_new_content" />
-	<subscriber	handler="._related_content_map.remove_related_content_items_from_old_content" />
 
 	<!-- Content card resolution; temporary? -->
 	<utility factory=".card_views._ContentCardResolver" name="NTICard" />

@@ -26,8 +26,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as _hexc
 
-from nti.app.contentlibrary.interfaces import IVideoIndexMap
-from nti.app.contentlibrary.interfaces import IRelatedContentIndexMap
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
@@ -206,36 +206,26 @@ class _TopUserSummaryView(AbstractAuthenticatedView):
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
 	def _scan_related_content(self, total_user_map, total_by_type):
-		rc_map = component.queryUtility(IRelatedContentIndexMap)
-		if not rc_map:
-			return
-
 		# gather all paths for the request ntiid
 		all_paths = self._get_self_and_children(self.ntiid)
 
-		for unit in all_paths or ():
-			ntiid = getattr(unit, 'ntiid', None)
-			items = rc_map.by_container.get(ntiid)
-			for rc_id in items or ():
-				rc_entry = rc_map.get(rc_id, {})
+		for content_unit in all_paths or ():
+			related_content_info = IRelatedContentIndexedDataContainer(content_unit)
+			for rc_entry in related_content_info.get_data_items():
 				ntiid = rc_entry.get('ntiid')
-				if ntiid and rc_entry.get('ntiid') == u"application/vnd.nextthought.content":
+				if ntiid and rc_entry.get('type') == "application/vnd.nextthought.content":
 					usr_map, by_type = self._get_summary_items(ntiid, False)
 					self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 
 	def _scan_videos(self, total_user_map, total_by_type):
-		video_map = component.queryUtility(IVideoIndexMap)
-		if not video_map:
-			return
-
 		# gather all paths for the request ntiid
 		all_paths = self._get_self_and_children(self.ntiid)
 
 		# gather all ugd in the video containers
 		for unit in all_paths or ():
-			ntiid = getattr(unit, 'ntiid', None)
-			videos = video_map.by_container.get(ntiid)
-			for video_id in videos or ():
+			video_container = IVideoIndexedDataContainer(unit)
+			for video_data in video_container.get_data_items():
+				video_id = video_data['ntiid']
 				usr_map, by_type = self._get_summary_items(video_id, False)
 				self._merge_maps(total_user_map, total_by_type, usr_map, by_type)
 

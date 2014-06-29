@@ -36,8 +36,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.interfaces import IStreamChangeEvent
 
 from nti.appserver.interfaces import IApplicationSettings
-from nti.appserver.contentlibrary.interfaces import IAudioIndexMap
-from nti.appserver.contentlibrary.interfaces import IVideoIndexMap
+from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
@@ -157,23 +157,26 @@ class _TemplateArgs(object):
 		# FIXME: Eww, ugly. This implementation knows entirely
 		# too much. We would like to pull it out to a DisplayNameGenerator,
 		# but we have nothing to really register that adapter
-		# on
+		# on.
+		# It's also incredibly inefficient.
 		lib = component.getUtility(IContentPackageLibrary)
 		path = lib.pathToNTIID(name)
 		if path:
 			return path
 
-		def _find_in_map(mapiface):
-			index_map = component.getUtility(mapiface)
-			for key, value in index_map.by_container.items():
-				if name in value:
-					path = lib.pathToNTIID(key)
-					if path:
-						return path
-			return None
+		def _search(unit):
+			for iface in ifaces:
+				if name in iface(unit).contains_data_item_with_ntiid(name):
+					return lib.pathToNTIID(unit.ntiid)
+			for child in unit.children:
+				r = _search(child)
+				if r:
+					return r
 
-		result = _find_in_map(IVideoIndexMap) or _find_in_map(IAudioIndexMap)
-		return result
+		for package in lib.contentPackages:
+			r = _search(package)
+			if r:
+				return r
 
 	@property
 	def note_container_display_name(self):
