@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
+
 from zope import interface
 
 from pyramid import httpexceptions as _hexc
@@ -19,11 +19,11 @@ from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver import ugd_query_views as query_views
-from nti.appserver.contentlibrary import interfaces as app_interfaces
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
@@ -134,12 +134,10 @@ class _RelevantUGDView(query_views._UGDView):
 
 	def _scan_videos(self, ntiid, result=None):
 		result = LocatedExternalList() if result is None else result
-		video_map = component.queryUtility(app_interfaces.IVideoIndexMap)
-		if video_map:
-			unit = self._get_library_path(ntiid)
-			u_ntiid = getattr(unit, 'ntiid', None)
-			videos = video_map.by_container.get(u_ntiid)
-			for video_id in videos or ():
+		unit = self._get_library_path(ntiid)
+		if unit is not None:
+			for video_data in IVideoIndexedDataContainer(unit).get_data_items():
+				video_id = video_data['ntiid']
 				self._get_items(video_id, result)
 		return result
 

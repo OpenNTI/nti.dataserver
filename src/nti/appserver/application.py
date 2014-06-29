@@ -741,8 +741,6 @@ def _configure_zodb_tween( database_event, registry=None ):
 		registry = component.getGlobalSiteManager()
 	registry.nti_zodb_root_db = database_event.database
 
-_configure_pyramid_zodbconn = _configure_zodb_tween # bwc
-
 # These two functions exist for the sake of the installed executables
 # but they do nothing these days
 def sharing_listener_main():

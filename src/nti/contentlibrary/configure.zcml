@@ -63,4 +63,6 @@
 	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3KeyHrefMapper" />
 
+	<include package=".indexed_data" />
+
 </configure>

@@ -1,0 +1,38 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+	<include package="zope.location" />
+
+	<adapter factory=".adapters.audio_indexed_data_adapter"
+			 for="..interfaces.IContentUnit"
+			 provides=".interfaces.IAudioIndexedDataContainer"/>
+	<adapter factory=".adapters.video_indexed_data_adapter"
+			 for="..interfaces.IContentUnit"
+			 provides=".interfaces.IVideoIndexedDataContainer" />
+	<adapter factory=".adapters.related_content_indexed_data_adapter"
+			 for="..interfaces.IContentUnit"
+			 provides=".interfaces.IRelatedContentIndexedDataContainer" />
+
+	<!-- Events -->
+	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectAddedEvent" />
+	<subscriber handler=".subscribers._update_video_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectAddedEvent" />
+	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectModifiedEvent" />
+	<subscriber handler=".subscribers._update_video_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectModifiedEvent" />
+	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
+				for="..interfaces.IContentPackage zope.lifecycleevent.IObjectModifiedEvent" />
+
+</configure>

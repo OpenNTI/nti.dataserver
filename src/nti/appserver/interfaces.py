@@ -617,10 +617,3 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.notabledata",
 	"nti.app.notabledata.interfaces",
 	"IUserPresentationPriorityCreators")
-
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.app.contentlibrary.interfaces",
-	"nti.app.contentlibrary.interfaces",
-	"IAudioIndexMap",
-	"IVideoIndexMap",
-	"IRelatedContentIndexMap")
