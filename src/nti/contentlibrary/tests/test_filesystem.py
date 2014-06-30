@@ -108,14 +108,25 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( embed_paths[0], has_length( 3 ) )
 		assert_that( embed_paths[0][-1], has_property( 'ntiid', 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.28' ) )
 
-		pack_ext = to_external_object( library[0] )
+		package = library[0]
+
+		pack_ext = to_external_object( package )
 		assert_that( pack_ext, has_entry( 'href', '/TestFilesystem/index.html' ) )
+
+		assert_that( interfaces.IContentUnitHrefMapper(package.children[0].children[0]),
+					 has_property('href',
+								  '/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22'))
 
 		library.url_prefix = '/SomePrefix/'
 
-		pack_ext = to_external_object( library[0] )
+		pack_ext = to_external_object( package )
 		assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
 		assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )
+
+		assert_that( interfaces.IContentUnitHrefMapper(package.children[0].children[0]),
+					 has_property('href',
+								  '/SomePrefix/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22'))
+
 
 	def test_site_library(self):
 		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
