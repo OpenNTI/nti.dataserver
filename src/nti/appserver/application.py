@@ -218,7 +218,7 @@ def _library_settings(pyramid_config, server):
 			ds_site = conn.root()['nti.dataserver']
 			with site(ds_site):
 				# XXX: JAM: Note: this sync call will move around!
-				from nti.dataserver.site import synchronize_host_policies
+				from nti.site.hostpolicy import synchronize_host_policies
 				try:
 					synchronize_host_policies()
 				except LookupError:

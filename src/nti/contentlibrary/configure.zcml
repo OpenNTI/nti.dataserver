@@ -33,7 +33,7 @@
 
 	<!-- Event listeners -->
 	<subscriber handler=".subscribers.install_site_content_library"
-				for="nti.dataserver.interfaces.IHostPolicySiteManager
+				for="nti.site.interfaces.IHostPolicySiteManager
 					 zope.site.interfaces.INewLocalSite" />
 
 	<subscriber handler=".subscribers.install_bundle_library" />

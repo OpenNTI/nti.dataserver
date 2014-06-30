@@ -59,14 +59,6 @@ from . import meeting_container_storage
 ### into its own function and call it explicitly.
 ###
 
-from .site import _site_cm
-from .site import _connection_cm
-from .site import run_job_in_site
-
-zope.deprecation.deprecated(_connection_cm.__name__, 'Moved to .site')
-zope.deprecation.deprecated(_site_cm.__name__, 'Moved to .site')
-zope.deprecation.deprecated(run_job_in_site.__name__, 'Moved to .site')
-
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
 @interface.implementer(interfaces.IShardLayout)

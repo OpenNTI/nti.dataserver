@@ -4,8 +4,6 @@ from __future__ import print_function, unicode_literals
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-import os.path
-
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_entry
@@ -31,7 +29,7 @@ class TestApplicationContentCard(ApplicationLayerTest):
 	def test_fetch_content_card_by_ntiid_accept_pageinfo(self):
 		# If we fetch the URL of a content card, but specify that we accept PageInfo,
 		# that's what we get back
-		from nti.appserver.contentlibrary.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
+		from ..library_views import PAGE_INFO_MT_JSON as page_info_mt_json
 
 		res = self.fetch_by_ntiid( self.card_ntiid,
 								   headers={b'Accept': str(page_info_mt_json)} )

@@ -29,7 +29,13 @@ from hamcrest import same_instance
 from nti.testing.matchers import validly_provides
 from zope import component
 from zope.component.hooks import getSite, setSite
-from .mock_dataserver import SharedConfiguringTestLayer
+
+# XXX: These tests aren't really separated
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+
 
 from zope.interface import Interface
 from zope import interface
@@ -49,8 +55,8 @@ class MockSite(object):
 	def getSiteManager(self):
 		return self.site_man
 
-from ..site import threadSiteSubscriber
-from ..site import _HostSiteManager as HSM
+from ..subscribers import threadSiteSubscriber
+from ..transient import HostSiteManager as HSM
 from z3c.baseregistry.baseregistry import BaseComponents
 from zope.component import globalSiteManager as BASE
 
@@ -85,7 +91,7 @@ class TestSiteSubscriber(unittest.TestCase):
 
 		# It should have the marker property
 		assert_that( cur_site.getSiteManager(),
-					 has_property( '_host_components',
+					 has_property( 'host_components',
 								   host_comps ) )
 
 		assert_that( ro.ro( cur_site.getSiteManager() ),
@@ -131,20 +137,15 @@ _SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
 
 from zope.component.interfaces import IComponents
 
-from .mock_dataserver import DataserverLayerTest
-from .mock_dataserver import mock_db_trans
-
-from .mock_dataserver import WithMockDS
-
 from nti.testing.matchers import verifiably_provides
 from zope.component.interfaces import ISite
 from zope.site.interfaces import INewLocalSite
 from ..interfaces import IHostPolicySiteManager
 
 from ..site import get_site_for_site_names
-from ..site import synchronize_host_policies
+from ..hostpolicy import synchronize_host_policies
 from ..site import _find_site_components
-from ..site import run_job_in_all_host_sites
+from ..hostpolicy import run_job_in_all_host_sites
 
 class ITestSiteSync(interface.Interface):
 	pass
