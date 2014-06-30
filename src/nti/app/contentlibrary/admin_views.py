@@ -18,8 +18,8 @@ from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.dataserver.site import synchronize_host_policies
-from nti.dataserver.site import run_job_in_all_host_sites
+from nti.site.hostpolicy import synchronize_host_policies
+from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.contentlibrary.subscribers import install_site_content_library
 
 

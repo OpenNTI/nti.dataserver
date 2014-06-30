@@ -17,6 +17,7 @@ generation = 47
 from zope.component.hooks import site, setHooks
 
 from .install import install_sites_folder
+from nti.site.hostpolicy import synchronize_host_policies
 
 def evolve( context ):
 	"""
@@ -36,3 +37,5 @@ def evolve( context ):
 			# databases might actually have one of these
 			# in them. No biggie.
 			pass
+
+		synchronize_host_policies()

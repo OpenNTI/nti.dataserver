@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 46
+generation = 47
 
 # Allow going forward/backward for testing
 import os
@@ -198,7 +198,7 @@ def install_root_folders( parent_folder,
 		parent_folder[key] = folder_type()
 		parent_folder[key].__name__ = key
 
-from nti.dataserver.site import HostSitesFolder
+from nti.site.folder import HostSitesFolder
 from zope.traversing.interfaces import IEtcNamespace
 
 def install_sites_folder(dataserver_folder):

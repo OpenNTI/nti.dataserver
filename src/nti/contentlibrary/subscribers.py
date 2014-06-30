@@ -24,9 +24,6 @@ from zope.component.hooks import site
 
 _LIBRARY_NAME = '++etc++library'
 
-# Note we don't declare what we adapt here, we keep
-# that in the zcml...the location of the interface
-# for local_site should be moving
 def install_site_content_library(local_site_manager, _=None):
 	"""
 	When a new local site, representing a site (host) policy

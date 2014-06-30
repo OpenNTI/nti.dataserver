@@ -28,7 +28,10 @@ from pyramid import httpexceptions as hexc
 
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
-from nti.utils import schema
+
+from nti.schema.field import UniqueIterable
+from nti.schema.field import Object
+from nti.schema.field import ValidTextLine
 
 class TestIO(AppLayerTest):
 
@@ -58,14 +61,14 @@ class TestIO(AppLayerTest):
 	def test_wrong_contained_type(self):
 
 		class IThing(interface.Interface):
-			__name__ = schema.ValidTextLine(title="The name") # unicode
+			__name__ = ValidTextLine(title="The name") # unicode
 
 		@interface.implementer(IThing)
 		class Thing(object):
 			__name__ = b'not-unicode'
 
-		field = schema.UniqueIterable(
-			value_type=schema.Object(IThing, __name__='field'))
+		field = UniqueIterable(
+			value_type=Object(IThing, __name__='field'))
 		field.__name__ = 'field'
 
 		# So, a set of things having a unicode __name__

@@ -202,7 +202,7 @@ class site_tween(object):
 				logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
 
 from .interfaces import IMissingSitePolicy
-from nti.dataserver.site import get_site_for_site_names
+from nti.site.site import get_site_for_site_names
 def _get_site_for_request( request, parent_site ):
 	"""
 	In the context of a request, looks up the named site for the request.
