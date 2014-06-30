@@ -91,8 +91,8 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 			continue
 
 		if not is_valid_ntiid_string(ntiid):
-			logger.warn("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
-						ntiid, tocItem)
+			logger.debug("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
+						 ntiid, tocItem)
 			continue
 
 		if ntiid not in embeddedContainerNTIIDs:
