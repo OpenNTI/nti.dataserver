@@ -665,9 +665,31 @@ class IContentPackageBundle(IDisplayableContent,
 class IContentPackageBundleLibrary(IContentContainer):
 	"""
 	A \"library\" that contains bundles.
+
+	Although specified as a container, note that this is a hierarchy
+	of utilities. However, unless otherwise specified in this interface,
+	methods are only local to this object.
 	"""
 	contains(IContentPackageBundle)
 	__setitem__.__doc__ = None
+
+	def get(key,default=None):
+		"""
+		Find the bundle with the given ntiid in this library
+		or a parent.
+		"""
+
+	def __getitem__(key):
+		"""
+		Return the bundle with the given ntiid in this library
+		or a parent.
+		"""
+
+	def getBundles():
+		"""
+		Return all the bundles from this library
+		and the parents.
+		"""
 
 class ISyncableContentPackageBundleLibrary(interface.Interface):
 	"""
