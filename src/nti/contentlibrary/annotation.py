@@ -40,9 +40,13 @@ from nti.externalization.persistence import NoPickle
 
 # Not only are we modeled on zope.principalannotation, we
 # can use its implementation directly, just changing
-# out how we get NTIIDs.
+# out how we get NTIIDs....
+# ...sadly, that's not quite true, because we have to customize
+# the interface we look for
 
 from zope.principalannotation.utility import PrincipalAnnotationUtility
+from zope.principalannotation.utility import Annotations
+
 
 @NoPickle
 class _WithId(object):
@@ -68,6 +72,45 @@ class ContentUnitAnnotationUtility(PrincipalAnnotationUtility):
 	# These two methods are the only ones that depend on the id attribute
 	getAnnotations = _to_id(PrincipalAnnotationUtility.getAnnotations.im_func)
 	hasAnnotations = _to_id(PrincipalAnnotationUtility.hasAnnotations.im_func)
+
+	def getAnnotationsById(self, principalId):
+		"""Return object implementing `IAnnotations` for the given principal.
+
+		If there is no `IAnnotations` it will be created and then returned.
+		"""
+		annotations = self.annotations.get(principalId)
+		if annotations is None:
+			annotations = ContentUnitAnnotations(principalId, store=self.annotations)
+			annotations.__parent__ = self
+			annotations.__name__ = principalId
+		return annotations
+
+from zope.component import queryNextUtility
+
+class ContentUnitAnnotations(Annotations):
+
+	def __bool__(self):
+		nz = bool(self.data)
+		if not nz:
+			# maybe higher-level utility's annotations will be non-zero
+			next = queryNextUtility(self, IContentUnitAnnotationUtility)
+			if next is not None:
+				annotations = next.getAnnotationsById(self.principalId)
+				return bool(next)
+		return nz
+
+	__nonzero__ = __bool__
+
+	def __getitem__(self, key):
+		try:
+			return self.data[key]
+		except KeyError:
+			# We failed locally: delegate to a higher-level utility.
+			next = queryNextUtility(self, IContentUnitAnnotationUtility)
+			if next is not None:
+				annotations = next.getAnnotationsById(self.principalId)
+				return annotations[key]
+			raise
 
 @NoPickle
 class GlobalContentUnitAnnotationUtility(ContentUnitAnnotationUtility):
