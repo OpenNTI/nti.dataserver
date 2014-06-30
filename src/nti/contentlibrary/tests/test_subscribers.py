@@ -49,6 +49,9 @@ from . import ContentlibraryLayerTest
 from zope.site.interfaces import NewLocalSite
 from zope.site.folder import Folder
 from zope.site.site import LocalSiteManager
+from zope.component.hooks import site as current_site
+
+from zope.annotation.interfaces import IAnnotations
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -92,6 +95,26 @@ class TestSubscribers(ContentlibraryLayerTest):
 		# has access to the parent site content
 		embed_paths = site_lib.pathsToEmbeddedNTIID('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1')
 		assert_that( embed_paths, has_length( 1 ) )
+
+		# If we set annotations while we're in the global site...
+		unit = embed_paths[0][0]
+		IAnnotations(unit)['foo'] = 42
+
+		# ...we can read them in the child site...
+		with current_site(site):
+			ann = IAnnotations(unit)
+			assert_that( ann.get('foo'), is_(42))
+			assert_that( bool(ann), is_(True))
+
+			# ...and if we overwrite in the child...
+			ann['foo'] = -1
+			ann = IAnnotations(unit)
+			assert_that( ann.get('foo'), is_(-1))
+
+		# ... that doesn't make it to the parent
+		ann = IAnnotations(unit)
+		assert_that( ann.get('foo'), is_(42))
+
 
 		# This also had the side effect of registering the bundle library
 		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
