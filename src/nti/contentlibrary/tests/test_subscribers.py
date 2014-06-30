@@ -25,6 +25,7 @@ from hamcrest import has_property
 from hamcrest import has_entries
 from hamcrest import greater_than
 from hamcrest import empty as is_empty
+from hamcrest import contains
 
 
 from nti.testing import base
@@ -128,6 +129,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		bundle_lib = evts[0].object
 		bundle_bucket = evts[0].bucket
 
+
 		evts = eventtesting.getEvents(
 			IObjectAddedEvent,
 			filter=lambda e: interfaces.IContentPackageBundle.providedBy(getattr(e, 'object', None) ))
@@ -136,12 +138,16 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( evts[0], has_property('object',
 										   has_property('ContentPackages', has_length(1))) )
 
+		bundle = evts[0].object
+		assert_that( list(bundle_lib.getBundles()), contains(bundle) )
+		assert_that( bundle_lib.get(bundle.ntiid), is_(bundle) )
+		assert_that( bundle_lib.get('missing', 1), is_(1) )
 
 		### XXX: This doesn't exactly belong here, it's just convenient
 
 		# test externalization
 
-		bundle = evts[0].object
+
 		assert_that( bundle, validly_provides(interfaces.IContentPackageBundle) )
 
 		# check that we have the right kind of property, didn't overwrite through createFieldProperties

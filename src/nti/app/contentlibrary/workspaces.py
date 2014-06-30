@@ -243,7 +243,7 @@ class _BundleLibraryCollection(LibraryCollection):
 
 	@property
 	def library_items(self):
-		return self.library.values()
+		return self.library.getBundles()
 
 class _BundleLibraryWorkspace(LibraryWorkspace):
 

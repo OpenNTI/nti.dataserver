@@ -96,6 +96,8 @@ class PersistentContentPackageBundle(PersistentCreatedAndModifiedTimeObject,
 	ContentPackages = property(_get_ContentPackages, _set_ContentPackages)
 
 
+_marker = object()
+
 @interface.implementer(IContentPackageBundleLibrary)
 class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	"""
@@ -104,6 +106,50 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	__external_can_create__ = False
 
 	# TODO: APIs for walking up the utility tree
+
+	@property
+	def _parent_lib(self):
+		return component.queryNextUtility(self, IContentPackageBundleLibrary)
+
+	# Only these methods are expected to walk up the utility tree
+
+	def get(self, key, default=None):
+		obj = CheckingLastModifiedBTreeContainer.get(self, key, _marker)
+		if obj is _marker:
+			obj = default
+			parent_lib = self._parent_lib
+			if parent_lib is not None:
+				obj = parent_lib.get(key, default)
+
+		return obj
+
+	def __getitem__(self, key):
+		try:
+			return CheckingLastModifiedBTreeContainer.__getitem__(self, key)
+		except KeyError:
+			parent_lib = self._parent_lib
+			if parent_lib is None:
+				raise
+
+			return parent_lib[key]
+
+	def getBundles(self):
+		# recall that lower bundles override higher ones
+		seen_ids = set()
+		for k, v in self.items():
+			seen_ids.add(k)
+			yield v
+
+		parent_lib = self._parent_lib
+		if parent_lib is None:
+			# done
+			return
+
+		for bundle in parent_lib.getBundles():
+			if bundle.__name__ in seen_ids:
+				continue
+			seen_ids.add(bundle.__name__)
+			yield bundle
 
 #: The name of the file that identifies a directory
 #: as a content bundle
