@@ -98,6 +98,22 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( calling(find_page_info_view_helper).with_args(request, unit),
 						 raises(HTTPNotFound))
 
+
+class TestApplicationContent(ApplicationLayerTest):
+	layer = ContentLibraryApplicationTestLayer
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_sub_page_info(self):
+
+		href = '/dataserver2/NTIIDs/tag:nextthought.com,2011-10:USSC-HTML-Cohen.22'
+
+		res = self.testapp.get(href,
+							   headers={b"Accept": b'application/json' })
+
+		href = self.require_link_href_with_rel(res.json_body, 'content')
+		assert_that( href, is_('/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22') )
+
+
 class TestApplicationBundles(ApplicationLayerTest):
 
 	layer = ContentLibraryApplicationTestLayer
