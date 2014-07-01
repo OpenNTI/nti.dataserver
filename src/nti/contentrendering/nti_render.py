@@ -186,7 +186,9 @@ def main():
 	# Configure components and utilities
 	zope_conf_name = os.path.join(source_dir, 'configure.zcml')
 	if os.path.exists(zope_conf_name):
-		xml_conf_context = xmlconfig.file(os.path.abspath(zope_conf_name), package=nti.contentrendering, context=xml_conf_context)
+		xml_conf_context = xmlconfig.file(os.path.abspath(zope_conf_name), 
+										  package=nti.contentrendering, 
+										  context=xml_conf_context)
 
 	# Instantiate the TeX processor
 	tex = TeX(document, file=sourceFile)
@@ -220,11 +222,10 @@ def main():
 	# Load aux files for cross-document references
 	pauxname = '%s.paux' % jobname
 	for dirname in [cwd] + document.config['general']['paux-dirs']:
-	 	for fname in glob.glob(os.path.join(dirname, '*.paux')):
-	 		if os.path.basename(fname) == pauxname:
-	 			continue
-	 		document.context.restore(fname, document.config['general']['renderer'])
-
+		for fname in glob.glob(os.path.join(dirname, '*.paux')):
+			if os.path.basename(fname) == pauxname:
+				continue
+			document.context.restore(fname, document.config['general']['renderer'])
 
 	# Set up TEXINPUTS to include the current directory for the renderer,
 	# plus our packages directory
@@ -268,7 +269,11 @@ def main():
 		logger.info("Begin render")
 		render(document, document.config['general']['renderer'], db)
 		logger.info("Begin post render")
-		postRender(document, jobname=jobname, context=components, dochecking=dochecking, doindexing=doindexing)
+		postRender(document, 
+				   jobname=jobname,
+				   context=components, 
+				   dochecking=dochecking, 
+				   doindexing=doindexing)
 
 	elif outFormat == 'xml':
 		logger.info("To Xml.")
@@ -278,7 +283,6 @@ def main():
 		logger.info("Begin render")
 		render(document, document.config['general']['renderer'], db)
 
-
 	logger.info("Write metadata.")
 	write_dc_metadata(document, jobname)
 
@@ -287,7 +291,12 @@ def main():
 
 from nti.utils import setupChameleonCache
 
-def postRender(document, contentLocation='.', jobname='prealgebra', context=None, dochecking=True, doindexing=True):
+def postRender(document, 
+			   contentLocation='.', 
+			   jobname='prealgebra', 
+			   context=None, 
+			   dochecking=True,
+			   doindexing=True):
 	# FIXME: This was not particularly well thought out. We're using components,
 	# but named utilities, not generalized adapters or subscribers.
 	# That makes this not as extensible as it should be.
