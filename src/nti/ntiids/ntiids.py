@@ -193,34 +193,49 @@ def escape_provider( provider ):
 # it cannot be used because we allow the local parts to be Unicode and string.translate
 # works on bytes.
 # The below is a basic first pass, suitable for many uses, but not a complete solution
-# JAM: prior to 20140624, periods and colons were not allowed; that could
-# theoretically result in ids changing
-_sp_allowed = string.ascii_letters + string.digits + str('.:')
-_sp_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_allowed] )
-_sp_repl_byte = b'_'
-_sp_transtable = string.maketrans( _sp_removed, _sp_repl_byte * len(_sp_removed) )
 
-def make_specific_safe( specific ):
+# We start by being extremely safe and limiting it to ascii letters and numbers,
+# with no punctuation. There are some unicode characters that are dangerous
+# and used in attacks on certain platforms (not to mention being confusing)
+
+_sp_repl_byte = b'_'
+
+_sp_strict_allowed = string.ascii_letters + string.digits
+_sp_strict_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_strict_allowed] )
+_sp_strict_transtable = string.maketrans( _sp_strict_removed, _sp_repl_byte * len(_sp_strict_removed) )
+
+# lax allows all non-control characters that are non-whitespace printable and not defined to be illegal
+_sp_lax_allowed = [chr(x) for x in range(33,128) if chr(x) not in (_illegal_chars_ + '-')]
+_sp_lax_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_lax_allowed] )
+_sp_lax_transtable = string.maketrans( _sp_lax_removed, _sp_repl_byte * len(_sp_lax_removed) )
+
+def make_specific_safe( specific, strict=True ):
 	"""
 	Given a potential specific part, transform it so that it is valid
 	as part of an NTIID string. This includes removing disallowed characters,
-	and limiting the range of characters.
+	and limiting the range of characters to printable ASCII compatible characters.
 
 	.. caution:: This is not a reversible transformation.
+
+	:keyword bool strict: If true (the default) then a maximally compatible set
+		of characters will be substituted to make the safest part most
+		likely to be parsed even by borderline parsers (such as those that
+		are regex based). If set to false, however, only the minimal set of characters
+		prohibited by the conforming parser implementation of this module will
+		be replaced; typically only do this for backwards compatibility reasons.
 
 	:raises InvalidNTIIDError: If this cannot be done. In particular, we refuse
 		to create a safe part that consists entirely of the replacement characters;
 		at least one character originally supplied must be valid. We also refuse
 		to create a zero-length safe part.
 	"""
-	# We start by being extremely safe and limiting it to ascii letters and numbers,
-	# with no punctuation. There are some unicode characters that are dangerous
-	# and used in attacks on certain platforms (not to mention being confusing)
-	# TODO: We will probably want to open this up a bit
 
 	# Since we are is ascii-land here, easy way to strip all high-chars is to encode
-	specific = specific.encode( 'ascii', 'ignore') if isinstance(specific, unicode) else specific
-	specific = string.translate( specific, _sp_transtable )
+	if not isinstance(specific, bytes):
+		specific = specific.encode('ascii', 'ignore')
+
+	table = _sp_strict_transtable if strict else _sp_lax_transtable
+	specific = string.translate( specific, table )
 
 	if not specific or set(specific) == set(_sp_repl_byte):
 		raise ImpossibleToMakeSpecificPartSafe(specific)

@@ -234,7 +234,7 @@ class TestNTICard(unittest.TestCase):
 class TestRelatedWorkRef(unittest.TestCase):
 	base_example = br"""
 	\begin{relatedwork}
-	\label{relwk:Selection_Sort} 
+	\label{relwk:Selection_Sort}
 	\worktitle{Selection Sort}
 	\workcreator{Wikipedia}
 	\worksource{http://en.wikipedia.org/wiki/Selection_sort}
@@ -261,7 +261,7 @@ class TestRelatedWorkRef(unittest.TestCase):
 		assert_that( relatedworkref_el.targetMimeType, contains_string( 'application/vnd.nextthought.externallink' ) )
 		assert_that( relatedworkref_el.uri, contains_string( 'http://en.wikipedia.org/wiki/Selection_sort' ) )
 		assert_that( relatedworkref_el.visibility, contains_string( 'everyone' ) )
-		
+
 class TestSidebars(unittest.TestCase):
 
 	def test_sidebar_basic(self):
@@ -290,6 +290,7 @@ class TestSidebars(unittest.TestCase):
 		\end{sidebar}
 		"""
 		dom = _buildDomFromString( _simpleLatexDocument( (example,) ) )
+		dom.config.set('NTI', 'strict-ntiids', True)
 
 		# Check that the DOM has the expected structure
 		assert_that( dom.getElementsByTagName('sidebar'), has_length( 1 ) )
@@ -335,4 +336,3 @@ class TestSidebars(unittest.TestCase):
 		assert_that( sidebar_el.attributes.get('title').source, contains_string( 'Title' ) )
 		assert_that( sidebar_el.attributes.get('graphic_class'), contains_string( 'testing' ) )
 		assert_that( sidebar_el.childNodes[2].source, contains_string( 'Body Text' ) )
-
