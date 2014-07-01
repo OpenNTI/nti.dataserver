@@ -440,7 +440,8 @@ class TransactionLoop(object):
 
 				try:
 					_timing( transaction.abort, 'transaction.abort' ) # note: NOT our tx variable, whatever is current
-					logger.debug("Transaction aborted; %s", e)
+					logger.debug("Transaction aborted; retrying %s/%s; '%s'/%r",
+								 retryable, number, e, e)
 				except (AttributeError,ValueError):
 					# We've seen RelStorage do this:
 					# relstorage.cache:427 in after_poll: AttributeError: 'int' object has no attribute 'split' which looks like
