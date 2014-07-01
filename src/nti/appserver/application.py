@@ -169,7 +169,7 @@ def _dictionary_views(pyramid_config, settings):
 		dictionary = nti.dictserver.storage.JsonDictionaryTermDataStorage(storage)
 		pyramid_config.registry.registerUtility(dictionary)
 		logger.debug("Adding dictionary")
-	except Exception:
+	except StandardError:
 		logger.warn("Failed to add dictionary server", exc_info=True)
 
 def _service_odata_views(pyramid_config):
@@ -438,7 +438,6 @@ def _create_server(create_ds, process_args=False):
 	return server
 
 def createApplication( http_port,
-				#	   library=None,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
@@ -448,7 +447,7 @@ def createApplication( http_port,
 	:return: A WSGI callable.
 	"""
 	begin_time = time.time()
-	library = None
+
 	# Configure subscribers, etc.
 	__traceback_info__ = settings
 
