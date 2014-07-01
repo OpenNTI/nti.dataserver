@@ -169,7 +169,7 @@ class RenderContext(object):
 		res_db = None
 		if images:
 			from nti.contentrendering import nti_render
-			res_db = nti_render.generateImages( dom )
+			res_db = nti_render.generateImages( self.dom )
 
 		from nti.contentrendering.resources import ResourceRenderer
 		render = ResourceRenderer.createResourceRenderer('XHTML', res_db)
