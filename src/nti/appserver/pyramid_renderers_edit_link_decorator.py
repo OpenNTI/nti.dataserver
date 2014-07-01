@@ -119,8 +119,13 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 						  getattr(context, '__class__', type(context)) )
 			return
 
-
-		edit_link = self._make_link_to_context(context)
+		try:
+			edit_link = self._make_link_to_context(context)
+		except TypeError: # commonly a failure to adapt something
+			logger.debug( "Not providing edit/href links for %s, failed to get link",
+						  getattr(context, '__class__', type(context)),
+						  exc_info=True)
+			return
 
 		if needs_edit:
 			links.append( edit_link )
