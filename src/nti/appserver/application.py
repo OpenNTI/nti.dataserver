@@ -20,7 +20,7 @@ import warnings
 import time
 
 import nti.dictserver.storage
-
+from ZODB.interfaces import IDatabase
 from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.users
@@ -34,6 +34,7 @@ from zope.configuration import xmlconfig
 from zope.component.hooks import setHooks, site
 
 from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
+from nti.processlifetime import IApplicationTransactionOpenedEvent, ApplicationTransactionOpenedEvent
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
 webob_cookie_escaping_patch_on_import.patch()
@@ -200,8 +201,29 @@ def _renderer_settings(pyramid_config):
 	# so we can't use ".rml.pt" or some-such
 	pyramid_config.add_renderer(name='.rml', factory="nti.app.renderers.pdf.PDFRendererFactory")
 
-def _library_settings(pyramid_config, server):
-	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
+def _notify_application_opened_event():
+	import transaction
+	conn = None
+	try:
+		with transaction.manager:
+			# If we use db.transaction, we get a different transaction
+			# manager than the default, which causes problems at commit time
+			# if things tried to use transaction.get() to join it
+			db = component.getUtility(IDatabase)
+			conn = db.open()
+			ds_site = conn.root()['nti.dataserver']
+			with site(ds_site):
+				notify(ApplicationTransactionOpenedEvent())
+	finally:
+		if conn is not None:
+			try:
+				conn.close()
+			except StandardError:
+				pass
+
+@component.adapter(IApplicationTransactionOpenedEvent)
+def _sync_global_library(_):
+	library = component.getGlobalSiteManager().queryUtility(lib_interfaces.IContentPackageLibrary)
 
 	if library is not None:
 		# Ensure the library is enumerated at this time during startup
@@ -209,24 +231,18 @@ def _library_settings(pyramid_config, server):
 		# we are in control of the site.
 		# NOTE: We are doing this in a transaction for the dataserver
 		# to allow loading the packages to make persistent changes.
-		import transaction
-		with transaction.manager:
-			# If we use db.transaction, we get a different transaction
-			# manager than the default, which causes problems at commit time
-			# if things tried to use transaction.get() to join it
-			conn = server.db.open()
-			ds_site = conn.root()['nti.dataserver']
-			with site(ds_site):
-				# XXX: JAM: Note: this sync call will move around!
-				from nti.site.hostpolicy import synchronize_host_policies
-				try:
-					synchronize_host_policies()
-				except LookupError:
-					# We may not have evolved yet
-					pass
-				library.syncContentPackages()
-		conn.close()
+		library.syncContentPackages()
 
+@component.adapter(IApplicationTransactionOpenedEvent)
+def _sync_host_policies(_):
+	# XXX: JAM: Note: this sync call will move around!
+	from nti.site.hostpolicy import synchronize_host_policies
+	synchronize_host_policies()
+
+
+
+def _library_settings(pyramid_config, server):
+	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
 	return library
 
 def _ugd_odata_views(pyramid_config):
@@ -662,6 +678,10 @@ def createApplication( http_port,
 
 	_renderer_settings(pyramid_config)
 	_library_settings(pyramid_config, server)
+
+	# XXX: This is an arbitrary time to do this. Why are we doing it now?
+	# (answer: the call to _library_settings used to do it)
+	_notify_application_opened_event()
 
 	_service_odata_views(pyramid_config)
 
