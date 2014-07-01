@@ -90,7 +90,9 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 
 
 # Validation
-_illegal_chars_ = r"/\";=?<>#%'{}|^[]" # Space is technically legal (?)
+# This is a minimal set, required to make parsing wark;
+# space is technically legal, but we escape it away anyway (?)
+_illegal_chars_ = r"/\";=?<>#%'{}|^[]"
 
 
 class InvalidNTIIDError(sch_interfaces.ValidationError):
@@ -191,8 +193,9 @@ def escape_provider( provider ):
 # it cannot be used because we allow the local parts to be Unicode and string.translate
 # works on bytes.
 # The below is a basic first pass, suitable for many uses, but not a complete solution
-# JAM: prior to 20140624, periods were not allowed; is that any kind of compat issue? Don't think so...
-_sp_allowed = string.ascii_letters + string.digits + str('.')
+# JAM: prior to 20140624, periods and colons were not allowed; that could
+# theoretically result in ids changing
+_sp_allowed = string.ascii_letters + string.digits + str('.:')
 _sp_removed = b''.join( [chr(x) for x in range(0,256) if chr(x) not in _sp_allowed] )
 _sp_repl_byte = b'_'
 _sp_transtable = string.maketrans( _sp_removed, _sp_repl_byte * len(_sp_removed) )
@@ -214,7 +217,6 @@ def make_specific_safe( specific ):
 	# with no punctuation. There are some unicode characters that are dangerous
 	# and used in attacks on certain platforms (not to mention being confusing)
 	# TODO: We will probably want to open this up a bit
-	# TODO: n^2 algorithm
 
 	# Since we are is ascii-land here, easy way to strip all high-chars is to encode
 	specific = specific.encode( 'ascii', 'ignore') if isinstance(specific, unicode) else specific
