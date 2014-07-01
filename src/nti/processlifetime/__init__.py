@@ -61,3 +61,28 @@ class IProcessDidFork(interface.Interface):
 @interface.implementer(IProcessDidFork)
 class ProcessDidFork(object):
 	pass
+
+
+class IApplicationTransactionOpenedEvent(interface.Interface):
+	"""
+	An event fired during application startup, after :class:`IDatabaseOpenedWithRoot`
+	has been fired (and so :mod:`zope.generations` installs and evolutions
+	have been done), within the scope of a transaction manager, and within
+	the scope of the application's main :class:`zope.component.interfaces.ISite`.
+
+	This event is intended to allow additional (database) setup that cannot
+	be handled with simple generations, or that need to take place every time
+	the application starts. If the process is going to fork, this will be fired
+	before the fork, in the main process.
+
+	The transaction will be committed after this event has fired.
+
+	.. note:: Unlike the database events, which repeat during process
+		lifetime (such as after a fork, where the database must be re-opened)
+		this event is only fired once during a particular application lifetime.
+	"""
+
+
+@interface.implementer(IApplicationTransactionOpenedEvent)
+class ApplicationTransactionOpenedEvent(object):
+	pass

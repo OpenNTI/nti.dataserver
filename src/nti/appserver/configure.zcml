@@ -184,6 +184,9 @@
 
 	<!-- Events -->
 
+	<subscriber handler=".application._sync_host_policies" />
+	<subscriber handler=".application._sync_global_library" />
+
 	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
 	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
 
