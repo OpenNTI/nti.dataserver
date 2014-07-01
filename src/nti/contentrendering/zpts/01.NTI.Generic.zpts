@@ -16,9 +16,14 @@ name: ntixydisplaymath
 	<div tal:condition="self/ref" class="equation-number">(<span tal:content="self/ref">1.1.1</span>)</div>
 </div>
 
-name: math ensuremath
-<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
-<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python: '\\(' + self.source[1:-1] + '\\)'" />
+#XXX JAM: Moved to the .pyts file in order to avoid trailing
+# whitespace inserted automatically by Chameleon. That version
+# only supports the case that there is a resource (which seems
+# to be the only one nowadays?)
+
+#name: math ensuremath
+#<p tal:condition="python: hasattr(self, 'resource')" tal:replace="self/resource"/>
+#<span tal:condition="python: not hasattr(self, 'resource')" class="math tex2jax_process mathquill-embedded-latex" tal:content="python: '\\(' + self.source[1:-1] + '\\)'" />
 
 name: displaymath equation equation* eqnarray eqnarray* align align* gather gather* falign falign* \
       multiline multiline* alignat alignat* split
@@ -59,7 +64,7 @@ name: mathnumber mathname
 
 name: pageref
 <a tal:attributes="href self/idref/label/url" class="pageref" tal:content="self/getPageNameForRef">Page Reference</a>
- 
+
 name: caption*
 <div tal:condition="not:self/style" class="caption" data-foo="foobar"><span tal:content="self">Caption text</span></div>
 <div tal:condition="self/style" class="caption" tal:attributes="style self/style/inline"><span tal:content="self">Caption text</span></div>
