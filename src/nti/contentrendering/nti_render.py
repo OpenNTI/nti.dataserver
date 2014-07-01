@@ -174,6 +174,12 @@ def main():
 	document.config.set('NTI', 'extra-scripts', '')
 	document.config.set('NTI', 'extra-styles', '')
 	document.config.set('NTI', 'timezone-name', 'US/Central')
+
+	# For BWC, we need to set this to false (TODO: Can we look at file
+	# dates somewhere and figure out "new" content and go to true automatically for
+	# it?)
+	document.config.set('NTI', 'strict-ntiids', False)
+
 	conf_name = os.path.join(source_dir, "nti_render_conf.ini")
 	document.config.read((conf_name,))
 

@@ -22,9 +22,19 @@ from nti.deprecated import hiding_warnings
 
 from nti.ntiids import ntiids
 
+from plasTeX.ConfigManager import NoOptionError
+from plasTeX.ConfigManager import NoSectionError
+
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
-	local = ntiids.make_specific_safe(local)
+
+	try:
+		strict = document.config.get( "NTI", "strict-ntiids")
+	except (NoOptionError,NoSectionError):
+		# For BWC, we must default to false
+		strict = False
+
+	local = ntiids.make_specific_safe(local, strict=strict)
 
 	provider = document.config.get( "NTI", "provider" )
 
