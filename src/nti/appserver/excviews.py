@@ -90,12 +90,12 @@ class AbstractRateLimitedExceptionView(object):
 			self._last_aux_time = now
 			try:
 				self._do_aux_action()
-			except Exception:
+			except StandardError:
 				logger.exception("Failed to perform aux action.")
 
 		try:
 			response = self._do_create_response()
-		except Exception:
+		except StandardError:
 			logger.exception("Failed to create response")
 			response = self.__create_default_response()
 
@@ -112,6 +112,9 @@ class AbstractRateLimitedExceptionView(object):
 
 	def __create_default_response(self):
 		return exception_response(500)
+
+from zope.exceptions.exceptionformatter import format_exception
+
 
 class EmailReportingExceptionView(AbstractRateLimitedExceptionView):
 	"""
@@ -143,8 +146,16 @@ class EmailReportingExceptionView(AbstractRateLimitedExceptionView):
 
 		# Nark, didn't find it.
 		del tb
-		logger.warn("Failed to find errormiddleware, not reporting exception")
-		return lambda exc_info, environ: None
+
+		# Best we can do now is report it to the logs; we're in
+		# the throttled block here, so this shouldn't be overwhelming
+		def failed(exc_info, environ):
+			fmt = format_exception(*exc_info)
+			fmt = [x.decode('ascii', 'ignore') if isinstance(x, bytes) else x
+				   for x in fmt]
+			fmt = '\n\t'.join(fmt)
+			logger.warn("Failed to find errormiddleware, not reporting exception:\n%s", fmt)
+		return failed
 
 
 	def _do_aux_action(self):

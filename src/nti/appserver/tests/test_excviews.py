@@ -28,7 +28,17 @@ from nti.testing.time import time_monotonically_increases
 from ..excviews import AbstractRateLimitedExceptionView
 from ..excviews import EmailReportingExceptionView
 
+import zope.testing.loghandler
+
 class TestExcViews(unittest.TestCase):
+
+	def setUp(self):
+		super(TestExcViews,self).setUp()
+		self.log_handler = zope.testing.loghandler.Handler(self)
+
+	def tearDown(self):
+		self.log_handler.close()
+		super(TestExcViews,self).tearDown()
 
 	@time_monotonically_increases
 	def test_rate_limiting_and_exception_catching(self):
@@ -40,11 +50,11 @@ class TestExcViews(unittest.TestCase):
 			aux_called = False
 
 			def _do_create_response(self):
-				raise Exception()
+				raise StandardError()
 
 			def _do_aux_action(self):
 				self.aux_called = True
-				raise Exception()
+				raise StandardError()
 
 		view = TestView(None,None)
 
@@ -105,4 +115,39 @@ class TestExcViews(unittest.TestCase):
 
 		view._do_aux_action()
 		assert_that( environ['wsgi.errors'].getvalue(),
+					 contains_string('raise Exp'))
+
+	def test_not_find_paste(self):
+
+		class Exp(Exception):
+			pass
+
+		def app(*args):
+			raise Exp()
+
+		environ = {'paste.throw_errors': True}
+
+		try:
+			app(environ, None)
+			assert False
+		except Exp as e:
+			info = sys.exc_info()
+
+		class Request(object):
+			exc_info = None
+			environ = None
+
+		request = Request()
+		request.exc_info = info
+		request.environ = environ
+
+		self.log_handler.add('nti.appserver.excviews')
+		view = EmailReportingExceptionView(e,request)
+		view._do_aux_action()
+
+		recs = self.log_handler.records
+
+		assert_that( recs[0].getMessage(),
+					 contains_string('not reporting'))
+		assert_that( recs[0].getMessage(),
 					 contains_string('raise Exp'))
