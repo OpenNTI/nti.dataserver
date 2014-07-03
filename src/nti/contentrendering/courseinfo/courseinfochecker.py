@@ -36,12 +36,11 @@ class CourseInfoValidation():
 	def check_course_info(self, course_info_file):
 		course_info = course_info_validation.CourseInfoJSONChecker(course_info_file)
 		course_info.build_sample_course_info_schema()
-		check_json_syntax, course_info_dict= course_info.get_dict_from_file(course_info.file_name)
-		check_json_syntax, course_info_dict= course_info.get_dict_from_file(course_info.file_name)
+		check_json_file, course_info_dict, warning_msg = course_info.get_dict_from_file(course_info.file_name)
 		error_check = False
 		error_msg = 'CORRECT'
 		unmatched_fields = []
-		if course_info_dict!= None:			
+		if len(course_info_dict) > 0:			
 			#check course_info.json based on its schema
 			checker_list = course_info.check_json_schema(course_info_dict, course_info.course_info_schema)
 			error_check, error_msg, unmatched_fields = course_info.checking_result(checker_list)
@@ -65,7 +64,7 @@ class CourseInfoValidation():
 
 				#check course duration field
 				duration_number, duration_kind, duration_days = course_info.check_duration(course_info_dict)
-				logger.info("Course duration is %s",duration_kind," is %s",duration_number)
+				#logger.info("Course duration is %s",duration_kind," is %s",duration_number)
 				logger.info("Course duration in days is %s", duration_days)
 
 				#check course instructors field
@@ -102,11 +101,9 @@ class CourseInfoValidation():
 				logger.info('course_info.json is not valid')
 				return error_check, error_msg, unmatched_fields
 		else:
-			logger.info("JSON Format Error")
-			error_check = True
-			error_msg = 'JSON format error: course_info.json syntax is incorrect'
 			unmatched_fields = []
-			return error_check, error_msg, unmatched_fields
+			logger.info("%s", warning_msg)
+			return check_json_file, warning_msg, unmatched_fields
 
 		return error_check, error_msg, unmatched_fields
 

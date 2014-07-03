@@ -80,17 +80,28 @@ class CourseInfoJSONChecker():
 		Transform its content into python object and check if the json sytax is valid
 		Return course_info.json in the form of python object (course_info_dict)
 		"""
-		
-		f = open(file_name, 'r')
-		file_content = f.read()
-		check = False
-		try: 
-			dict_from_string = json.loads(file_content)
-			check = True
-		except (json.JSONDecodeError, ValueError, KeyError, TypeError):
-			logger.info('JSON format error')
-
-		return check, dict_from_string
+		check = 0 
+		dict_from_string = {}
+		warning_msg = ''
+		try:
+			f = open(file_name, 'r')	
+			file_content = f.read()
+			try: 
+				dict_from_string = json.loads(file_content)
+				check = 1
+			except (json.JSONDecodeError, ValueError, KeyError, TypeError):
+				check = 0
+				logger.info('JSON format error')
+				warning_msg = 'JSON format error'
+				return check, dict_from_string, warning_msg
+		except IOError:
+			logger.info('Can not find file or read data course_info.json')
+			check = 2 
+			warning_msg = 'Can not find file or read data course_info.json'
+			return check, dict_from_string, warning_msg
+		else:
+			f.close()
+			return check, dict_from_string, warning_msg
 	
 	def check_missing_fields(self, json_dict, data_schema_fields):
 		"""
@@ -102,6 +113,7 @@ class CourseInfoJSONChecker():
 		if len(missing_fields) > 0:
 			check = False
 			warning_msg = 'json file has some missing fields compare to its schema'
+			logger.info("%s %s", warning_msg, missing_fields)
 		else:
 			check = True
 		return check, warning_msg, missing_fields
@@ -127,6 +139,7 @@ class CourseInfoJSONChecker():
 			elif len(unmatched_fields) > 0:
 				check = False
 				warning_msg = 'json file contains fields not defined in its schema'
+				logger.info("%s %s", warning_msg, unmatched_fields)
 
 		return check, matched_fields, unmatched_fields, additional_field_in_dict, warning_msg
 
@@ -146,7 +159,7 @@ class CourseInfoJSONChecker():
 					if (type(json_dict[key]) is str and type(data_schema_field_types[key]) is unicode) or (type(json_dict[key]) is dict and key == 'enrollment'):
 						matched_fields_type.append(key)
 					else:
-						logger.info("unmatched field type")
+						logger.info("%s has unmatched field type", key)
 						unmatched_fields_type.append(key)
 						check = False
 						
@@ -219,7 +232,7 @@ class CourseInfoJSONChecker():
 		#check whether the json file has missing fields compare to fields defined in the schema
 		check_dict, warning_msg1, missing_fields = self.check_missing_fields(json_dict, data_schema_fields_name)
 		if check_dict == False:
-			logger.info("%s", warning_msg1)
+			logger.info("%s %s", warning_msg1, missing_fields)
 			logger.info("%s", missing_fields)
 		else:
 			logger.info("json file has all the schema fields")
@@ -230,7 +243,7 @@ class CourseInfoJSONChecker():
 		#check whether course_info.json has additional fields not defined in the schema
 		check_field_name, matched_fields, unmatched_fields, additional_field_in_dict, warning_msg2 = self.check_additional_fields(json_dict, data_schema_fields_name)
 		if check_field_name == True:
-			logger.info("json file has the same fields with its schema")
+			logger.info("all fields in the json file has the same name with its schema")
 		else:
 			logger.info("%s", warning_msg2)
 			logger.info("%s", unmatched_fields)
@@ -265,7 +278,7 @@ class CourseInfoJSONChecker():
 			instructor_list = course_info_dict['instructors']
 			for instructor_dict in instructor_list:
 				checker_list = self.check_json_schema(instructor_dict, self.instructor_o1)
-				print (len (checker_list))
+				#print (len (checker_list))
 				error_check, error_msg, unmatched_fields = self.checking_result(checker_list)
 		return error_check, error_msg, unmatched_fields
 

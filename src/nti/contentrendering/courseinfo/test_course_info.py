@@ -35,10 +35,10 @@ class TestCourseInfoValidation():
 
 
 	def test_course_info_validation(self):
-		course_info_file = '/Users/ega/Projects/AoPSBooks5/CHEM4970_Chemistry_of_Beer/Templates/Themes/Generic/course_info.json'
+		course_info_file = '/Users/ega/Projects/AoPSBooks/OU/Fall2013/CHEM1315_GeneralChemistry/Templates/Themes/Generic/course_info.json'
 		course_info = course_info_validation.CourseInfoJSONChecker(course_info_file)
 		course_info.build_sample_course_info_schema()
-		check_json_syntax, course_info_dict= course_info.get_dict_from_file(course_info.file_name)
+		check_json_file, course_info_dict, warning_msg  = course_info.get_dict_from_file(course_info.file_name)
 		error_check = False
 		error_msg = 'No ERROR'
 		unmatched_fields = []
@@ -49,6 +49,7 @@ class TestCourseInfoValidation():
 			checker_list = course_info.check_json_schema(course_info_dict, course_info.course_info_schema)
 
 			error_check, error_msg, unmatched_fields = course_info.checking_result(checker_list)
+			print (unmatched_fields)
 
 			if error_check == False or error_msg[0:7] == 'warning':
 				#check value of particular fields in course_info_dict
@@ -75,6 +76,7 @@ class TestCourseInfoValidation():
 				print("-------------------------------------------------------")
 				print ("Check Instructors")
 				error_check, error_msg, unmatched_fields = self.check_course_instructors(course_info, course_info_dict)
+				print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
@@ -82,6 +84,7 @@ class TestCourseInfoValidation():
 				print("-------------------------------------------------------")
 				print ("Check Prerequisites")
 				error_check, error_msg, unmatched_fields = self.check_course_prerequisites(course_info, course_info_dict)
+				print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
@@ -89,6 +92,7 @@ class TestCourseInfoValidation():
 				print("-------------------------------------------------------")
 				print("Check Credit")
 				error_check, error_msg, unmatched_fields = self.check_course_credit(course_info, course_info_dict)
+				print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
@@ -98,9 +102,11 @@ class TestCourseInfoValidation():
 				if 'credit' in course_info_dict.keys():
 					credit_fields = course_info_dict['credit']
 					error_check, error_msg, unmatched_fields = self.check_course_enrollment(course_info, credit_fields)
-				
-				if error_check == True and error_msg[0:7] != 'warning':
-					return error_check, error_msg, unmatched_fields
+					print(unmatched_fields)
+					if error_check == True and error_msg[0:7] != 'warning':
+						return error_check, error_msg, unmatched_fields
+
+				print("Everythings is ok")
 
 			else:
 				print('course_info.json is not valid')
