@@ -6,21 +6,24 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-import os
-import sys
-import time
-import glob
-import string
-import logging
-import argparse
-import datetime
-import functools
-import subprocess
+
+import os 						
+import sys 						
+import time 					
+import glob 					
+import string 					
+import logging 					
+import argparse 				
+import datetime 				
+import functools				
+import subprocess				
+
+
 from pkg_resources import resource_filename
 
-import plasTeX
-from plasTeX.TeX import TeX
-from plasTeX.Logging import getLogger
+import plasTeX 							
+from plasTeX.TeX import TeX 			
+from plasTeX.Logging import getLogger 	
 
 import isodate
 
@@ -36,7 +39,7 @@ import zope.dublincore.xmlmetadata
 from nti.ntiids.ntiids import escape_provider
 
 import nti.contentrendering
-from nti.contentrendering import archive
+from nti.contentrendering import archive 				
 from nti.contentrendering import interfaces
 from nti.contentrendering import transforms
 from nti.contentrendering import plastexids
@@ -52,6 +55,7 @@ from nti.contentrendering.RenderedBook import RenderedBook
 from nti.contentrendering.resources.ResourceDB import ResourceDB
 from nti.contentrendering.resources.ResourceRenderer import createResourceRenderer
 from nti.contentrendering.resources.resourcetypeoverrides import ResourceTypeOverrides
+from nti.contentrendering.courseinfo import courseinfochecker
 
 def _configure_logging(level='INFO'):
 	numeric_level = getattr(logging, level.upper(), None)
@@ -73,7 +77,7 @@ def _catching(f):
 	return y
 
 def _set_argparser():
-	arg_parser = argparse.ArgumentParser( description="Render NextThought contetn." )
+	arg_parser = argparse.ArgumentParser( description="Render NextThought content." )
 
 	arg_parser.add_argument( 'contentpath',
 							help="Path to top level content file." )
@@ -226,6 +230,7 @@ def main():
 			if os.path.basename(fname) == pauxname:
 				continue
 			document.context.restore(fname, document.config['general']['renderer'])
+	 		print ("fname ",fname)
 
 	# Set up TEXINPUTS to include the current directory for the renderer,
 	# plus our packages directory
@@ -269,11 +274,14 @@ def main():
 		logger.info("Begin render")
 		render(document, document.config['general']['renderer'], db)
 		logger.info("Begin post render")
-		postRender(document, 
+		error_check = postRender(document, 
 				   jobname=jobname,
 				   context=components, 
 				   dochecking=dochecking, 
 				   doindexing=doindexing)
+		if error_check == True:
+			logger.info('cancel render due to the error')
+			return
 
 	elif outFormat == 'xml':
 		logger.info("To Xml.")
@@ -303,6 +311,24 @@ def postRender(document,
 
 	# We very likely will get a book that has no pages
 	# because NTIIDs are not added yet.
+	contentPath = os.path.realpath(contentLocation)
+	course_info_file  = os.path.join(contentPath, 'course_info.json')
+	print(course_info_file)
+	#validate course_info.json
+	error_check = False
+	if dochecking and course_info_file != None:
+		logger.info('Running checks on course_info.json')
+		course_info = courseinfochecker.CourseInfoValidation()
+		error_check, error_msg, unmatched_fields = course_info.check_course_info(course_info_file)
+		if error_check == True and error_msg[0:7] != 'warning':
+			logger.info("%s", error_msg)
+			logger.info("%s", unmatched_fields)
+			return error_check
+		elif error_check == 2:
+			logger.info('%s', error_msg)
+		else:
+			logger.info('course_info.json is valid')
+
 	start_t = time.time()
 	logger.info('Creating rendered book')
 	book = RenderedBook(document, contentLocation)
@@ -330,12 +356,12 @@ def postRender(document,
 	# bad. So do this after taking thumbnails.
 	logger.info('Adding videos')
 	sectionvideoadder.performTransforms(book, context=context)
-
+	
 	if dochecking:
 		logger.info('Running checks on content')
 		contentchecks.performChecks(book, context=context)
 
-	contentPath = os.path.realpath(contentLocation)
+	
 	if doindexing and  not os.path.exists(os.path.join(contentPath, 'indexdir')):
 		# We'd like to be able to run this with pypy (it's /much/ faster)
 		# but some of the Zope libs we import during contentsearch (notably Persistent)
