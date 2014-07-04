@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 # This module is badly named now
 
 logger = __import__('logging').getLogger(__name__)
+from ZODB.loglevels import TRACE
 
 from lxml import etree
 
@@ -91,8 +92,9 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 			continue
 
 		if not is_valid_ntiid_string(ntiid):
-			logger.debug("Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
-						 ntiid, tocItem)
+			logger.log( TRACE,
+						"Ignoring ill-formed object NTIID (%s); please fix the rendering for %s",
+						ntiid, tocItem)
 			continue
 
 		if ntiid not in embeddedContainerNTIIDs:
