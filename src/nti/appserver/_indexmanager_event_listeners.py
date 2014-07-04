@@ -66,7 +66,8 @@ def add_s3_index( title, event ):
 
 	# TODO: We really want a utility to manage this cache.
 	# It would be created at startup by the application, and given the name of
-	# a directory to use. We would then use it to store and retrieve things.
+	# a directory to use. We would then use it to store and retrieve things,
+	# persistently, across restarts.
 	index_cache_dir = make_cache_dir( 'whoosh_content_index', env_var='NTI_INDEX_CACHE_DIR' )
 
 	index_name = title.get_parent_key().key
@@ -127,7 +128,15 @@ def add_s3_index( title, event ):
 		title.read_contents_of_sibling_entry( 'nti_default_presentation_properties.json' )
 		# See authorization_acl
 		title.read_contents_of_sibling_entry( '.nti_acl' )
-	except self.package.TRANSIENT_EXCEPTIONS:
+	except title.TRANSIENT_EXCEPTIONS:
 		pass
 
 	_add_book( indexmanager, index_name, title_index_cache_dir, title.ntiid )
+
+@component.adapter(lib_interfaces.IContentPackage,IObjectModifiedEvent)
+def reset_indexes_when_modified(content_package, event):
+	# XXX What should we do here? We need the index manager objects
+	# to expose modification times. And really to best do that we
+	# need to move "down" a level into something more tightly integrated,
+	# e.g., nti.app.contentsearch
+	pass

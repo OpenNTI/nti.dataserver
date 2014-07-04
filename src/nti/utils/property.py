@@ -23,6 +23,7 @@ def alias(prop_name, doc=None):
 	"""
 	if doc is None:
 		doc = 'Alias for :attr:`' + prop_name + '`'
+	prop_name = str(prop_name) # native string
 	return property( lambda self: getattr( self, prop_name ),
 					 lambda self, nv: setattr( self, prop_name, nv ),
 					 doc=doc )
@@ -49,6 +50,7 @@ def dict_alias(key_name, doc=None):
 	"""
 	if doc is None:
 		doc = 'Alias for :attr:`' + key_name + '`'
+	key_name = str(key_name) # native string
 	return property( lambda self: self.__dict__[key_name],
 					 lambda self, nv: operator.setitem( self.__dict__, key_name, nv),
 					 doc=doc )
@@ -80,6 +82,9 @@ def annotation_alias(annotation_name, annotation_property=None, default=None, de
 		to delete the annotation.
 	:keyword bool delete_quiet: If ``True`` and `delete` is also True, then the property
 		will ignore key errors when deleting the annotation value.
+	:keyword str annotation_property: If set to a string, it is this property
+		of the object that will be adapted to IAnnotations. Most often this will
+		be ``context`` when used inside an adapter.
 	"""
 
 	if doc is None:
@@ -152,7 +157,6 @@ def CachedProperty(*args):
 		return _CachedProperty( function, arg1, *names )
 	return factory
 
-	return arg1
 
 # Like the above, preserve docs
 _CachedProperty_init__ = _CachedProperty.__init__

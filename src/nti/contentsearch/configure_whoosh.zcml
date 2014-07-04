@@ -6,10 +6,10 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<utility factory=".whoosh_query._DefaultWhooshQueryParser" />
-	<utility factory=".whoosh_searcher._ContentSearcherFactory" />
-	
+	<utility component=".whoosh_searcher._ContentSearcherFactory" />
+
 	<include file="configure_whoosh_content.zcml" />
-	
+
 </configure>

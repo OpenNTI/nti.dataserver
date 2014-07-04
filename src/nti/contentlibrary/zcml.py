@@ -27,7 +27,7 @@ from .boto_s3 import NameEqualityBucket
 from .boto_s3 import BotoS3BucketContentLibrary
 
 from .interfaces import IContentPackageLibrary
-from .filesystem import EnumerateOnceFilesystemLibrary
+from .filesystem import GlobalFilesystemContentPackageLibrary
 
 from .externalization import map_all_buckets_to
 
@@ -69,7 +69,7 @@ def registerFilesystemLibrary( _context, directory=None, prefix="" ):
 	if prefix and not prefix.endswith( '/' ):
 		prefix = prefix + '/'
 
-	factory = functools.partial( EnumerateOnceFilesystemLibrary, root=directory, prefix=prefix )
+	factory = functools.partial( GlobalFilesystemContentPackageLibrary, root=directory, prefix=prefix )
 	utility( _context, factory=factory, provides=IContentPackageLibrary )
 
 class IS3Library(interface.Interface):
