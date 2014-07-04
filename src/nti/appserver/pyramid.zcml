@@ -18,7 +18,7 @@
 
 	<!-- Search Traversal -->
 
-	<include package="nti.contentsearch" file="pyramid.zcml" />
+	<include package="nti.app.contentsearch" file="pyramid.zcml" />
 
 	<!--
 		 NOTE: The order of registration matters,
