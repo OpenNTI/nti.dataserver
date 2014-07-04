@@ -21,7 +21,9 @@ except ImportError:
 from zope import interface
 from zope.proxy import ProxyBase
 
-from whoosh import index
+from persistent import Persistent
+
+from nti.utils.property import CachedProperty
 
 from . import constants
 from . import search_utils
@@ -89,8 +91,7 @@ class _Searchable(object):
 	def close(self):
 		self.index.close()
 
-INDEX_FACTORIES = \
-(
+INDEX_FACTORIES = (
 	(constants.book_prefix, whoosh_index.Book, constants.content_),
 	(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
 	(constants.atrans_prefix, whoosh_index.AudioTranscript, constants.audiotranscript_),
@@ -98,21 +99,34 @@ INDEX_FACTORIES = \
 )
 
 @interface.implementer(search_interfaces.IWhooshContentSearcher)
-class WhooshContentSearcher(object):
+class WhooshContentSearcher(Persistent):
+
+	_baseindexname = None
+	_parallel_search = False
 
 	def __init__(self, baseindexname, storage, ntiid=None,
-				 parallel_search=False, *args, **kwargs):
-		self._searchables = {}
+				 parallel_search=False):
 		self.storage = storage
 		self.ntiid = ntiid if ntiid else baseindexname
+		self._baseindexname = baseindexname
+		self._parallel_search = parallel_search
+		getattr(self, '_searchables') # build initial list
+
+	@CachedProperty
+	def _searchables(self):
+		result = dict()
+		baseindexname = self._baseindexname
 		for prefix, factory, classsname in INDEX_FACTORIES:
 			indexname = prefix + baseindexname
-			if not storage.index_exists(indexname):
+			if not self.storage.index_exists(indexname):
 				continue
-			index = storage.get_index(indexname)
-			self._searchables[indexname] = \
-						_Searchable(factory(), indexname, index, classsname)
-		self.parallel_search = parallel_search and len(self._searchables) > 1
+			index = self.storage.get_index(indexname)
+			result[indexname] = _Searchable(factory(), indexname, index, classsname)
+		return result
+
+	@property
+	def parallel_search(self):
+		return self._parallel_search and len(self._v_searchables) > 1
 
 	@property
 	def indices(self):
@@ -131,6 +145,11 @@ class WhooshContentSearcher(object):
 
 	def __len__(self):
 		return len(self._searchables)
+
+	def __nonzero__(self):
+		return True
+	def __bool__(self):
+		return True
 
 	def is_valid_content_query(self, s, query):
 		result = not query.is_empty
@@ -188,12 +207,10 @@ class WhooshContentSearcher(object):
 		for s in self._searchables.values():
 			s.close()
 
-@interface.implementer(search_interfaces.IWhooshContentSearcherFactory)
-class _ContentSearcherFactory(object):
-
-	def __call__(self, indexname=None, ntiid=None, indexdir=None, *args, **kwargs):
-		if indexname and indexdir and os.path.exists(indexdir):
-			storage = whoosh_storage.DirectoryStorage(indexdir)
-			searcher = WhooshContentSearcher(indexname, storage, ntiid, *args, **kwargs)
-			return searcher if len(searcher) > 0 else None
-		return None
+@interface.provider(search_interfaces.IWhooshContentSearcherFactory)
+def _ContentSearcherFactory(indexname=None, ntiid=None, indexdir=None):
+	if indexname and indexdir and os.path.exists(indexdir):
+		storage = whoosh_storage.DirectoryStorage(indexdir)
+		searcher = WhooshContentSearcher(indexname, storage, ntiid)
+		return searcher if len(searcher) > 0 else None
+	return None

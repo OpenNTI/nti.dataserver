@@ -13,9 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 import os
 import time
 import random
-import binascii
+import tempfile
 
 from zope import interface
+
+from persistent import Persistent
 
 from whoosh import index
 from whoosh.index import LockError
@@ -24,17 +26,7 @@ from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
 from . import interfaces as search_interfaces
 
-def oid_to_path(oid, max_bytes=3):
-	"""
-	Taken from ZODB/blob.py/BushyLayout
-	"""
-	count = 0
-	directories = []
-	for byte in str(oid):
-		count = count + 1
-		directories.append('0x%s' % binascii.hexlify(byte))
-		if count >= max_bytes: break
-	return os.path.sep.join(directories)
+from nti.utils.property import CachedProperty
 
 # segment writer
 max_segments = 10
@@ -78,30 +70,26 @@ writer_ctor_args = {'limitmb':96}
 writer_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
 
 @interface.implementer(search_interfaces.IWhooshIndexStorage)
-class IndexStorage(object):
+class IndexStorage(Persistent):
 
 	default_ctor_args = writer_ctor_args
 	default_commit_args = writer_commit_args
 
-	def create_index(self, indexname, schema, *args, **kwargs):
+	def create_index(self, indexname, schema):
 		raise NotImplementedError()
 
-	def index_exists(self, indexname, *args, **kwargs):
+	def index_exists(self, indexname):
 		raise NotImplementedError()
 
-	def get_index(self, indexname, *args, **kwargs):
-		if self.index_exists(indexname, **kwargs):
-			return self.open_index(indexname=indexname, **kwargs)
+	def get_index(self, indexname):
+		if self.index_exists(indexname):
+			return self.open_index(indexname=indexname)
 		return None
 
-	def get_or_create_index(self, indexname, schema=None, recreate=True,
-							*args, **kwargs):
+	def get_or_create_index(self, indexname, schema=None, recreate=True):
 		raise NotImplementedError()
 
-	def open_index(self, indexname, schema=None, *args, **kwargs):
-		raise NotImplementedError()
-
-	def storage(self, *args, **kwargs):
+	def open_index(self, indexname, schema=None):
 		raise NotImplementedError()
 
 	def ctor_args(self, *args, **kwargs):
@@ -119,9 +107,12 @@ class IndexStorage(object):
 		return self.default_commit_args
 
 def prepare_index_directory(indexdir=None):
-	dsdir = os.getenv('DATASERVER_DIR', "/tmp")
-	indexdir = os.path.join(dsdir, 'data', "indexes") if not indexdir else indexdir
+	if not indexdir:
+		dsdir = os.getenv('DATASERVER_DIR') or tempfile.gettempdir()
+		indexdir = os.path.join(dsdir, 'data', "indexes")
+
 	indexdir = os.path.expanduser(indexdir)
+
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
 	return indexdir
@@ -131,74 +122,55 @@ class DirectoryStorage(IndexStorage):
 	def __init__(self, indexdir=None):
 		self.folder = prepare_index_directory(indexdir)
 
-	def create_index(self, schema, indexname=_DEF_INDEX_NAME, **kwargs):
-		self.makedirs(**kwargs)
-		return self.storage(**kwargs).create_index(schema, indexname)
+	def create_index(self, schema, indexname=_DEF_INDEX_NAME):
+		self.makedirs()
+		return self.storage.create_index(schema, indexname)
 
-	def index_exists(self, indexname=_DEF_INDEX_NAME, **kwargs):
-		path = self.get_folder(**kwargs)
+	def index_exists(self, indexname=_DEF_INDEX_NAME):
+		path = self.get_folder()
 		return index.exists_in(path, indexname)
 
 	def get_or_create_index(self, indexname=_DEF_INDEX_NAME, schema=None,
-							recreate=False, **kwargs):
-		recreate = self.makedirs(**kwargs) or recreate
-		if not self.index_exists(indexname, **kwargs):
+							recreate=False):
+		recreate = self.makedirs() or recreate
+		if not self.index_exists(indexname):
 			recreate = True
 
 		if recreate:
-			return self.create_index(schema=schema, indexname=indexname, **kwargs)
-		else:
-			return self.open_index(indexname=indexname, **kwargs)
+			return self.create_index(schema=schema, indexname=indexname)
 
-	def open_index(self, indexname, schema=None, **kwargs):
-		return self.storage(**kwargs).open_index(indexname=indexname)
+		return self.open_index(indexname=indexname)
 
-	def storage(self, **kwargs):
-		s = getattr(self, "_storage", None)
-		if not s:
-			path = self.get_folder(**kwargs)
-			self._storage = WhooshFileStorage(path)
-			s = self._storage
-		return s
+	def open_index(self, indexname, schema=None):
+		return self.storage.open_index(indexname=indexname)
 
-	def makedirs(self, **kwargs):
-		path = self.get_folder(**kwargs)
+	@CachedProperty('folder')
+	def storage(self):
+		path = self.get_folder()
+		return WhooshFileStorage(path)
+
+	def __getstate__(self):
+		# FIXME: Although everything pickles fine,
+		# we are not robust to the locations of the paths
+		# changing between machines. We need to be storing
+		# the nti.contentlibrary IKey path, which
+		# is robust across machines or changing directory
+		# layouts.
+		state = super(DirectoryStorage,self).__getstate__()
+		if 'storage' in state:
+			del state['storage']
+		return state
+
+	def makedirs(self):
+		path = self.get_folder()
 		if not os.path.exists(path):
 			os.makedirs(path)
-			return True
+			return path
 		return False
 
-	def get_folder(self, **kwargs):
+	def get_folder(self):
 		return self.folder
 
-class UserDirectoryStorage(DirectoryStorage):
-
-	def __init__(self, indexdir=None, max_level=3):
-		super(UserDirectoryStorage, self).__init__(indexdir)
-		self.stores = {}
-		self.max_level = max_level
-
-	def storage(self, **kwargs):
-		username = kwargs.get('username', None)
-		if not username:
-			return super(UserDirectoryStorage, self).storage()
-		else:
-			key = self.oid_to_path(username, self.max_level)
-			if not self.stores.has_key(key):
-				path = os.path.join(self.folder, key)
-				self.stores[key] = WhooshFileStorage(path)
-			return self.stores[key]
-
-	def get_folder(self, **kwargs):
-		username = kwargs.get('username', None)
-		if username:
-			path = self.oid_to_path(username, self.max_level)
-			path = os.path.join(self.folder, path)
-			return path
-		return self.folder
-
-	def oid_to_path(self, oid, max_bytes=3):
-		return oid_to_path(oid, max_bytes)
 
 def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 	storage = DirectoryStorage(indexdir)

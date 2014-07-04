@@ -357,11 +357,6 @@ class IWhooshIndexStorage(interface.Interface):
 		:param schema: whoosh schema
 		"""
 
-	def storage():
-		"""
-		return a index underlying [file] data storage
-		"""
-
 	def ctor_args():
 		"""
 		return a dictionary with the arguments to be passed to an index writer constructor

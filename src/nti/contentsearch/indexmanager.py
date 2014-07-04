@@ -25,22 +25,21 @@ from . import search_utils
 from . import search_results
 from . import interfaces as search_interfaces
 
-@interface.implementer(search_interfaces.IIndexManager)
-class IndexManager(object):
+from nti.externalization.persistence import NoPickle
 
-	indexmanager = None
+@interface.implementer(search_interfaces.IIndexManager)
+@NoPickle
+class IndexManager(object):
 
 	@classmethod
 	def get_shared_indexmanager(cls):
-		return cls.indexmanager
+		return component.getGlobalSiteManager().getUtility(search_interfaces.IIndexManager)
 
-	def __new__(cls, *args, **kwargs):
-		if not cls.indexmanager:
-			cls.indexmanager = super(IndexManager, cls).__new__(cls)
-		return cls.indexmanager
+	parallel_search = False
 
 	def __init__(self, parallel_search=False):
-		self.parallel_search = parallel_search
+		if parallel_search:
+			self.parallel_search = parallel_search
 
 	@classmethod
 	def get_entity(cls, entity):
@@ -91,32 +90,38 @@ class IndexManager(object):
 		results = search_results.merge_suggest_results(cnt_results, ugd_results)
 		return results
 
-	def get_book_index_manager(self, indexid):
-		return self.books.get(indexid, None) if indexid is not None else None
-
 	def register_content(self, ntiid=None, *args, **kwargs):
+		# XXX Need a stronger contract for this method. It's not even in the interface
+		# for the class, makes it hard to refactor away from knowledge about
+		# whoosh-specific directories and layouts of content packages
+		# (_indexmanager_event_listeners).
+
 		if not ntiid:
 			return False
 		ntiid = ntiid.lower()
-		result = component.queryUtility(search_interfaces.IContentSearcher,
-									 	name=ntiid) is not None
-		if not result:
-			searcher = self.create_content_searcher(ntiid=ntiid,
-													parallel_search=self.parallel_search,
-												  	*args, **kwargs)
-			if searcher is not None:
-				component.provideUtility(searcher, search_interfaces.IContentSearcher,
-									 	 name=ntiid)
-				result = True
-				logger.info("Content '%s' has been added to index manager", ntiid)
-			else:
-				logger.error("Content '%s' could not be added to index manager", ntiid)
-		return result
+
+		searcher = component.queryUtility(search_interfaces.IContentSearcher,
+										  name=ntiid)
+		if searcher is not None:
+			return searcher
+
+		if self.parallel_search:
+			kwargs['parallel_search'] = self.parallel_search
+
+		searcher = self.create_content_searcher(ntiid=ntiid,
+												*args, **kwargs)
+		if searcher is not None:
+			component.provideUtility(searcher, search_interfaces.IContentSearcher,
+									 name=ntiid)
+			logger.info("Content '%s' has been added to index manager", ntiid)
+		else:
+			logger.error("Content '%s' could not be added to index manager", ntiid)
+		return searcher
 
 	add_book = register_content
 
 	def get_content_searcher(self, query):
-		name = query.indexid.lower() if query.indexid else u''
+		name = query.indexid.lower() if query.indexid else ''
 		searcher = component.queryUtility(search_interfaces.IContentSearcher, name=name)
 		return searcher
 
@@ -199,18 +204,16 @@ class IndexManager(object):
 		return controller.unindex(uid) if controller is not None else None
 
 	def close(self):
-		for bm in self.books.itervalues():
-			self._close(bm)
-
-	def _close(self, bm):
-		close_m = getattr(bm, 'close', None)
-		if close_m is not None:
-			close_m()
+		# In the past, this looked in `self.books`
+		# for things to close, but there is no longer
+		# any such attribute, so clearly this method was never
+		# called.
+		pass
 
 	@classmethod
 	def onChange(cls, datasvr, msg, target=None, broadcast=None):
 		pass
 
 @interface.implementer(search_interfaces.IIndexManager)
-def create_index_manager(parallel_search=False):
-	return IndexManager(parallel_search)
+def create_index_manager():
+	return IndexManager(parallel_search=False)
