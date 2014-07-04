@@ -726,15 +726,10 @@ def createApplication( http_port,
 	logger.info("Configured Dataserver in %.3fs", time.time() - begin_time)
 	return app
 
-def _configure_async_changes(ds, indexmanager=None):
-	import nti.contentsearch
-
+def _configure_async_changes(ds):
 	logger.info('Adding synchronous change listeners.')
 
 	ds.add_change_listener(nti.dataserver.users.onChange)
-	indexmanager = indexmanager or component.queryUtility(nti.contentsearch.interfaces.IIndexManager)
-	if indexmanager:
-		ds.add_change_listener(indexmanager.onChange)
 
 	logger.info('Finished adding listeners')
 
