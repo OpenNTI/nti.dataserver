@@ -49,6 +49,7 @@ from zope.component.interfaces import ISite
 from zope.site.interfaces import INewLocalSite
 from zope.site.interfaces import IRootFolder
 from zope.traversing.interfaces import IBeforeTraverseEvent
+from zope.location.interfaces import LocationError
 
 from zope.proxy import non_overridable
 from zope.proxy import ProxyBase
@@ -109,7 +110,7 @@ def threadSiteSubscriber( new_site, event ):
 		return
 
 	# We support exactly three cases:
-	# 1. No current site
+	# 1. No current site/same as current site
 	# 2. The current site is the site established by get_site_for_site_names
 	# 3. The current site is a site previously added by this function.
 	# Anything else is forbidden.
@@ -120,6 +121,13 @@ def threadSiteSubscriber( new_site, event ):
 	if current_site is None:
 		# Nothing to do
 		setSite( new_site )
+	elif current_site is new_site:
+		# This is typically the case when we traverse directly
+		# into utilities registered with the site, for example
+		#   /dataserver2/++etc++hostsites/janux.ou.edu/++etc++site/SOMEUTILITY/...
+		# with the current host being janux.ou.edu.
+		# Notice we prohibit traversing into a different named site.
+		pass
 	elif hasattr( current_site.getSiteManager(), 'host_components' ):
 		# A site synthesized by get_site_for_site_names
 		host_components = current_site.getSiteManager().host_components
@@ -143,7 +151,9 @@ def threadSiteSubscriber( new_site, event ):
 
 		setSite( new_fake_site )
 	else:
-		raise ValueError("Unknown kind of site", current_site)
+		# Cancel traversal using a LocationError. This typically
+		# will get surfaced as a 404.
+		raise LocationError("Unknown kind of site", new_site, current_site)
 
 
 @component.adapter(INewLocalSite)
