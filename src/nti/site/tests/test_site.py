@@ -25,10 +25,13 @@ from hamcrest import is_not as does_not
 from hamcrest import not_none
 from hamcrest import is_
 from hamcrest import same_instance
+from hamcrest import calling
+from hamcrest import raises
 
 from nti.testing.matchers import validly_provides
 from zope import component
-from zope.component.hooks import getSite, setSite
+from zope.component.hooks import getSite, setSite, site as currentSite
+from zope.location.interfaces import LocationError
 
 # XXX: These tests aren't really separated
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
@@ -103,6 +106,22 @@ class TestSiteSubscriber(unittest.TestCase):
 						 # in the ro of the new site
 						 host_comps,
 						 BASE ) )
+
+	def testTraverseFails(self):
+		new_comps = BaseComponents(BASE, 'sub_site', () )
+		new_site = MockSite(new_comps)
+		new_site.__name__ = new_comps.__name__
+
+		with currentSite(None):
+			threadSiteSubscriber(new_site,None)
+
+			new_comps2 = BaseComponents(BASE, 'sub_site', (new_comps,) )
+			new_site2 = MockSite(new_comps2)
+			new_site2.__name__ = new_comps2.__name__
+
+			assert_that(calling(threadSiteSubscriber).with_args('new_site2', None),
+						raises(LocationError))
+
 
 
 # Match a hierarchy we have in nti.app.sites.demo:
