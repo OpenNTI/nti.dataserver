@@ -187,9 +187,6 @@
 	<subscriber handler=".application._sync_host_policies" />
 	<subscriber handler=".application._sync_global_library" />
 
-	<subscriber handler="._indexmanager_event_listeners.add_filesystem_index" />
-	<subscriber handler="._indexmanager_event_listeners.add_s3_index" />
-
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
 	<subscriber handler=".account_creation_views.link_removed_on_user" />
@@ -394,7 +391,6 @@
 
 
 	<include package="nti.contentrange" />
-	<include package="nti.contentsearch" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
 	<include package="nti.contentfragments" />
@@ -479,6 +475,7 @@
 	<include package="nti.app.notabledata" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.pushnotifications" />
+	<include package="nti.app.contentsearch" />
 
 	<!-- Filters -->
 

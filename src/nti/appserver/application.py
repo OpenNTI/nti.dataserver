@@ -441,7 +441,6 @@ def createApplication( http_port,
 					   process_args=False,
 					   create_ds=True,
 					   pyramid_config=None,
-					   force_create_indexmanager=False, # For testing
 					   **settings ):
 	"""
 	:return: A WSGI callable.
@@ -480,13 +479,6 @@ def createApplication( http_port,
 		xml_conf_machine = xmlconfig.file( settings['site_zcml'],  package=nti.appserver, context=xml_conf_machine, execute=False )
 		# Preserve the conf machine so that when we load other files later any
 		# exclude settings get processed
-
-	if create_ds or force_create_indexmanager:
-		# This may be excluded by a previous setting in site.zcml, and replaced with something else
-		# If we are going to do it, it is important to do it as part of the same configuration transaction
-		# as everything else, otherwise the proper listeners won't get called or won't
-		# do the right thing (see e.g., _indexmanager_event_listeners)
-		xml_conf_machine = xmlconfig.file('configure_indexmanager.zcml', package=nti.appserver, context=xml_conf_machine, execute=False)
 
 	def load_dataserver_slugs( include_dir_name, context ):
 		if is_dataserver_dir( 'etc', include_dir_name ):
@@ -710,6 +702,8 @@ def createApplication( http_port,
 	# ignoring the argument. A second option is a new ZCML directive,
 	# if we could figure out how to get all the information to it
 	# (maybe writing out a tempfile with arguments filled in?)
+	# TODO: Or maybe using z3c.autoinclude from inside our own
+	# pyramid.zcml would be best?
 	class _pyramid_xmlconfig(object):
 		def file( self, filename, package, context=None, execute=False ):
 			# Ignore all that stuff except the context.

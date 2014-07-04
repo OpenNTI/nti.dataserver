@@ -1,9 +1,4 @@
 <!-- -*- mode: nxml -*- -->
-<!--
-Configure the index manager to use.
-This file is included after site.zcml. If customization is desired,
-it will usually be done there and this file excluded.
--->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
 			xmlns:zcml="http://namespaces.zope.org/zcml">
@@ -12,7 +7,14 @@ it will usually be done there and this file excluded.
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
+	<include package="nti.contentsearch" />
+
+
 	<utility factory="nti.contentsearch.indexmanager.create_index_manager"
 			 provides="nti.contentsearch.interfaces.IIndexManager" />
+
+	<subscriber handler=".subscribers.add_filesystem_index" />
+	<subscriber handler=".subscribers.add_s3_index" />
+
 
 </configure>

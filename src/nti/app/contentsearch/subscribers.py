@@ -23,6 +23,9 @@ except ImportError:
 from zc.lockfile import LockFile, LockError
 from zope import component
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
 from nti.contentlibrary import interfaces as lib_interfaces
 from nti.contentsearch import interfaces as search_interfaces
 
@@ -135,6 +138,15 @@ def add_s3_index( title, event ):
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectModifiedEvent)
 def reset_indexes_when_modified(content_package, event):
+	# XXX What should we do here? We need the index manager objects
+	# to expose modification times. And really to best do that we
+	# need to move "down" a level into something more tightly integrated,
+	# e.g., nti.app.contentsearch
+	pass
+
+
+@component.adapter(lib_interfaces.IContentPackage,IObjectRemovedEvent)
+def reset_indexes_when_removed(content_package, event):
 	# XXX What should we do here? We need the index manager objects
 	# to expose modification times. And really to best do that we
 	# need to move "down" a level into something more tightly integrated,
