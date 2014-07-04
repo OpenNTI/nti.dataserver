@@ -210,10 +210,6 @@ class IndexManager(object):
 		# called.
 		pass
 
-	@classmethod
-	def onChange(cls, datasvr, msg, target=None, broadcast=None):
-		pass
-
 @interface.implementer(search_interfaces.IIndexManager)
 def create_index_manager():
 	return IndexManager(parallel_search=False)
