@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
-from nti.testing.layers import find_test
+from zope.component.hooks import setHooks
 
 import zope.testing.cleanup
 
@@ -26,6 +26,7 @@ class ContentlibraryTestLayer(ZopeComponentLayer,
 
 	@classmethod
 	def setUp(cls):
+		setHooks() # in case something already tore this down
 		cls.setUpPackages()
 
 	@classmethod

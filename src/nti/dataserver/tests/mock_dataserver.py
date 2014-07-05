@@ -111,8 +111,6 @@ current_mock_ds = None
 
 from zope.site import LocalSiteManager, SiteManagerContainer
 from zope.component.hooks import site
-from zope.component.hooks import setHooks
-from zope.component.hooks import resetHooks
 import transaction
 
 import tempfile
@@ -129,7 +127,7 @@ def _mock_ds_wrapper_for( func,
 		_base_storage = base_storage
 		if callable(_base_storage):
 			_base_storage = _base_storage( *args )
-		setHooks()
+		# see comments about hooks in WithMockDS
 		ds = factory(base_storage=_base_storage)
 		current_mock_ds = ds
 		sitemanc = SiteManagerContainer()
@@ -144,7 +142,6 @@ def _mock_ds_wrapper_for( func,
 			finally:
 				current_mock_ds = None
 				ds.close()
-				resetHooks()
 				if teardown:
 					teardown()
 
@@ -272,7 +269,14 @@ def WithMockDSTrans( func ):
 	def with_mock_ds_trans( *args, **kwargs ):
 		global current_transaction
 		global current_mock_ds
-		setHooks() # must have hooks before we try to open the DS
+		# Previously, we setHooks() here and resetHooks()
+		# in the finally block. Setting is fine, and we do have to have
+		# them in place to run the ds, but resetting them here
+		# interferes with fixtures (layers) that assume they can
+		# set the hooks just once, so we musn't reset them.
+		# All fixtures now setHooks() before running, so no
+		# need to even do that anymore.
+		# setHooks()
 		ds = MockDataserver() if not getattr( func, 'with_ds_changes', False ) else ChangePassingMockDataserver()
 		current_mock_ds = ds
 
@@ -283,7 +287,8 @@ def WithMockDSTrans( func ):
 			current_mock_ds = None
 			current_transaction = None
 			ds.close()
-			resetHooks()
+			# see comments above
+			# resetHooks()
 
 	return nose.tools.make_decorator( func )( with_mock_ds_trans )
 
