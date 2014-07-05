@@ -118,7 +118,9 @@ class RealnameInvalid(_InvalidData):
 		super(RealnameInvalid,self).__init__( name, value=name )
 
 class BlankHumanNameError(RealnameInvalid):
-	pass
+
+	def __init__(self, name=''):
+		super(BlankHumanNameError,self).__init__(name)
 
 
 class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
