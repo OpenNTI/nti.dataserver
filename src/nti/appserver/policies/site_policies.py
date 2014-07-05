@@ -556,10 +556,10 @@ class AbstractSitePolicyEventListener(object):
 		# their real name, and we force the display name to be derived
 		# from it.
 		names = user_interfaces.IFriendlyNamed(user)
-		# nameparser 0.2.5 no longer raises BlankHumanNameError, so we do
+		# nameparser 0.2.5+ no longer raises BlankHumanNameError, so we do
 		if names.realname is None or not names.realname.strip():
 			if required:
-				raise nameparser.parser.BlankHumanNameError()
+				raise user_interfaces.BlankHumanNameError()
 			return # Not required
 
 		human_name = nameparser.HumanName(names.realname)
