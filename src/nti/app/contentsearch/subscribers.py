@@ -13,7 +13,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import os.path
 
 try:
 	from gevent import sleep
@@ -55,7 +54,6 @@ def add_filesystem_index( title, event ):
 	indexname = os.path.basename( title.get_parent_key().absolute_path ) # TODO: So many assumptions here
 	indexdir_key = title.make_sibling_key( 'indexdir' )
 	_add_book( indexmanager, indexname, indexdir_key.absolute_path, title.ntiid )
-
 
 @component.adapter(lib_interfaces.IS3ContentPackage, IObjectCreatedEvent)
 def add_s3_index( title, event ):
@@ -118,7 +116,6 @@ def add_s3_index( title, event ):
 	finally:
 		cache_lock.close()
 
-
 	# Touch some other properties to get them cached.
 	# Pay this cost at startup rather than at runtime (TODO: Why is this cost so high?)
 	getattr( title, 'lastModified', 0 )
@@ -143,7 +140,6 @@ def reset_indexes_when_modified(content_package, event):
 	# need to move "down" a level into something more tightly integrated,
 	# e.g., nti.app.contentsearch
 	pass
-
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectRemovedEvent)
 def reset_indexes_when_removed(content_package, event):

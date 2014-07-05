@@ -38,7 +38,6 @@ from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import SearchCompletedEvent
 
-
 class BaseView(AbstractAuthenticatedView):
 
 	name = None
