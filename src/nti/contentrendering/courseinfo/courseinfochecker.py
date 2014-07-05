@@ -7,14 +7,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-from nti.contentrendering.courseinfo import model
-from nti.contentrendering.courseinfo import interfaces
-from nti.contentrendering.courseinfo import course_info_validation
-from zope.schema import getFields
+from . import course_info_validation
 
-from collections import OrderedDict
 
-class CourseInfoValidation():
+class CourseInfoValidation(object):
 	def check_course_instructors(self, course_info, course_info_dict):
 		#check instructors listed in the course_info.json
 		return course_info.check_instructors(course_info_dict)
@@ -40,7 +36,7 @@ class CourseInfoValidation():
 		error_check = False
 		error_msg = 'CORRECT'
 		unmatched_fields = []
-		if len(course_info_dict) > 0:			
+		if len(course_info_dict) > 0:
 			#check course_info.json based on its schema
 			checker_list = course_info.check_json_schema(course_info_dict, course_info.course_info_schema)
 			error_check, error_msg, unmatched_fields = course_info.checking_result(checker_list)
@@ -58,8 +54,8 @@ class CourseInfoValidation():
 					error_msg = 'invalid ntiid value'
 					unmatched_fields = []
 					return error_check, error_msg, unmatched_fields
-				else:
-					logger.info('there is no ntiid field in the dictionary')
+
+				logger.info('there is no ntiid field in the dictionary')
 
 
 				#check course duration field
@@ -112,4 +108,3 @@ class CourseInfoValidation():
 #course_info_file = '/Users/ega/Projects/AoPSBooks5/CHEM4970_Chemistry_of_Beer/Templates/Themes/Generic/course_info.json'
 #check = CourseInfoValidation()
 #check.check_course_info(course_info_file)
-

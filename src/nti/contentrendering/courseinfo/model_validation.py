@@ -1,11 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+
+
+.. $Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+
 import simplejson as json
-from nti.contentrendering.courseinfo import model
-from nti.contentrendering.courseinfo import interfaces
+from . import model
+from . import interfaces
 
 import zope.schema
 from collections import OrderedDict
 
-class CourseInfoJSONChecker():
+class CourseInfoJSONChecker(object):
 
 	def __init__(self, data_schema, file_name):
 		self.data_schema = data_schema
@@ -29,9 +43,9 @@ class CourseInfoJSONChecker():
 		get all fields in course_info schema
 		"""
 		ifaces = data_schema.__provides__.__iro__
-		
-		print("Show course info instance variable names and their values")
-		# get field names from all course_info interfaces 
+
+
+		# get field names from all course_info interfaces
 		data_schema_fields_type = OrderedDict()
 		data_schema_fields_name = []
 		data_schema_fields_required = OrderedDict()
@@ -41,7 +55,7 @@ class CourseInfoJSONChecker():
 				data_schema_fields_type[name] = getattr(data_schema, name, None)
 				data_schema_fields_required[name] = field.required
 				data_schema_fields_name.append(name)
-				print (name, type(data_schema_fields_type[name]), field.required)
+				#print (name, type(data_schema_fields_type[name]), field.required)
 		return data_schema_fields_name, data_schema_fields_type, data_schema_fields_required
 
 
@@ -51,15 +65,15 @@ class CourseInfoJSONChecker():
 		Transform its content into python object and check if the json sytax is valid
 		Return course_info.json in the form of python object (course_info_dict)
 		"""
-		
+
 		f = open(file_name, 'r')
 		file_content = f.read()
-		try: 
+		try:
 			dict_from_string = json.loads(file_content)
 			return dict_from_string
 		except (json.JSONDecodeError, ValueError, KeyError, TypeError):
-			print 'JSON format error'
-			
+			raise
+
 
 	def set_unmatched_fields(self, unmatched_fields):
 		"""
@@ -96,7 +110,7 @@ class CourseInfoJSONChecker():
 
 	def check_additional_fields(self, json_dict, data_schema_fields):
 		"""
-		Check whether the course_info dict obtained from course_info.json 
+		Check whether the course_info dict obtained from course_info.json
 		has all the required fields in the course info schema.
 		"""
 		check = False
@@ -128,23 +142,21 @@ class CourseInfoJSONChecker():
 		unmatched_fields_type = []
 		for key in json_dict.keys() :
 			if key in data_schema_field_types :
-				print (key , "type in dict is", type(json_dict[key]), 
-					" - ", key, "type in schema is ", type(data_schema_field_types[key]))
 				if type(json_dict[key]) != type(data_schema_field_types[key]):
 					if type(json_dict[key]) is str and type(data_schema_field_types[key]) is unicode:
-						print ("unmatched but it is ok")
+						#print ("unmatched but it is ok")
 						matched_fields_type.append(key)
 					else:
-						print ("unmatched field type")
+						#print ("unmatched field type")
 						unmatched_fields_type.append(key)
 						check = False
-						
+
 		return check, matched_fields_type, unmatched_fields_type
 
 
 	def check_required_fields(self, json_dict, data_schema_fields_required):
 		"""
-		check if json_dict (json_dict) have all required fields 
+		check if json_dict (json_dict) have all required fields
 		"""
 		check = True
 		missing_required_fields = []
@@ -152,7 +164,7 @@ class CourseInfoJSONChecker():
 			if data_schema_fields_required[key] == True and key not in json_dict.keys():
 				missing_required_fields.append(key)
 				check = False
-				print ("json file does not contain ", key)
+				#print ("json file does not contain ", key)
 		return check, missing_required_fields
 
 
@@ -164,7 +176,7 @@ class CourseInfoJSONChecker():
 			ntiid_value = course_info_dict['ntiid']
 			str_end_len = len(required_string)
 			ntiid_len = len(ntiid_value)
-			
+
 			if ntiid_value[(ntiid_len - str_end_len) : ntiid_len] == required_string:
 				return True
 			else:
@@ -183,17 +195,3 @@ class CourseInfoJSONChecker():
 			return duration_number, duration_kind, duration_days
 		else:
 			return None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
