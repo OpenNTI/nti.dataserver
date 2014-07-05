@@ -19,16 +19,18 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+does_not = is_not
 from hamcrest import same_instance
 from hamcrest import has_length
+from hamcrest import has_key
 from hamcrest import has_property
 from hamcrest import has_entries
+from hamcrest import has_entry
 from hamcrest import greater_than
 from hamcrest import empty as is_empty
 from hamcrest import contains
 
 
-from nti.testing import base
 from nti.testing.matchers import validly_provides
 
 from nti.externalization.tests import externalizes
@@ -98,10 +100,14 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		# If we set annotations while we're in the global site...
 		unit = embed_paths[0][0]
+		assert_that( IAnnotations(unit), does_not(has_key('foo')) )
 		IAnnotations(unit)['foo'] = 42
+		ann = IAnnotations(unit)
+		assert_that( IAnnotations(unit), has_key('foo')) # check the dict contract
 
 		# ...we can read them in the child site...
 		with current_site(site):
+			assert_that(component.getSiteManager(), is_(same_instance(sm)))
 			ann = IAnnotations(unit)
 			assert_that( ann.get('foo'), is_(42))
 			assert_that( bool(ann), is_(True))
@@ -109,11 +115,14 @@ class TestSubscribers(ContentlibraryLayerTest):
 			# ...and if we overwrite in the child...
 			ann['foo'] = -1
 			ann = IAnnotations(unit)
-			assert_that( ann.get('foo'), is_(-1))
+			assert_that( ann.get('foo'), is_(-1) )
+			assert_that( ann, has_entry( 'foo', -1)) # check the dict contract
 
 		# ... that doesn't make it to the parent
+		assert_that(component.getSiteManager(), is_not(same_instance(sm)))
 		ann = IAnnotations(unit)
 		assert_that( ann.get('foo'), is_(42))
+		assert_that( ann, has_entry( 'foo', 42)) # check the dict contract
 
 
 		# This also had the side effect of registering the bundle library
