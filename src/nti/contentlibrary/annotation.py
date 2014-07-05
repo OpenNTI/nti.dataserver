@@ -78,25 +78,45 @@ class ContentUnitAnnotationUtility(PrincipalAnnotationUtility):
 
 		If there is no `IAnnotations` it will be created and then returned.
 		"""
-		annotations = self.annotations.get(principalId)
-		if annotations is None:
-			annotations = ContentUnitAnnotations(principalId, store=self.annotations)
-			annotations.__parent__ = self
-			annotations.__name__ = principalId
-		return annotations
+		notes = self.annotations.get(principalId)
+		if notes is None:
+			notes = ContentUnitAnnotations(principalId, store=self.annotations)
+			notes.__parent__ = self
+			notes.__name__ = principalId
+		return notes
 
 from zope.component import queryNextUtility
 
 class ContentUnitAnnotations(Annotations):
 
+	def __next_annotes(self):
+		next_utility = queryNextUtility(self, IContentUnitAnnotationUtility)
+		if next_utility is not None:
+			parent = next_utility.getAnnotationsById(self.principalId)
+			return parent
+
+	def items(self):
+		for i in self.data.items():
+			yield i
+		parent = self.__next_annotes()
+		if parent is not None:
+			for k, v in parent.items():
+				if k not in self.data:
+					yield k, v
+
+	def keys(self):
+		for k, _ in self.items():
+			yield k
+	def values(self):
+		for _, v in self.items():
+			yield v
+
 	def __bool__(self):
 		nz = bool(self.data)
 		if not nz:
 			# maybe higher-level utility's annotations will be non-zero
-			next = queryNextUtility(self, IContentUnitAnnotationUtility)
-			if next is not None:
-				annotations = next.getAnnotationsById(self.principalId)
-				return bool(next)
+			parent = self.__next_annotes()
+			return bool(parent)
 		return nz
 
 	__nonzero__ = __bool__
@@ -106,10 +126,9 @@ class ContentUnitAnnotations(Annotations):
 			return self.data[key]
 		except KeyError:
 			# We failed locally: delegate to a higher-level utility.
-			next = queryNextUtility(self, IContentUnitAnnotationUtility)
-			if next is not None:
-				annotations = next.getAnnotationsById(self.principalId)
-				return annotations[key]
+			parent = self.__next_annotes()
+			if parent is not None:
+				return parent[key]
 			raise
 
 @NoPickle
