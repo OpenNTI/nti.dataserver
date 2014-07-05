@@ -102,8 +102,9 @@ class FriendlyNamed(persistent.Persistent):
 				# of European last names. Take out any prefixes that match the components
 				# of this name and try again (avoid doing this if there are simply
 				# no components, as can happen on the mathcounts site or in tests)
-				prefixes = nameparser.constants.PREFIXES.symmetric_difference(self.realname.lower().split())
-				name = nameparser.HumanName(self.realname, prefixes_c=prefixes)
+				prefixes = nameparser.config.PREFIXES.symmetric_difference(self.realname.lower().split())
+				constants = nameparser.config.Constants(prefixes=prefixes)
+				name = nameparser.HumanName(self.realname, constants=constants)
 			# because we are cached, be sure to return an immutable
 			# value
 			return tuple([x for x in name[1:4] if x])

@@ -117,6 +117,9 @@ class RealnameInvalid(_InvalidData):
 	def __init__( self, name ):
 		super(RealnameInvalid,self).__init__( name, value=name )
 
+class BlankHumanNameError(RealnameInvalid):
+	pass
+
 
 class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
 	i18n_message = _("The password you supplied does not match the current password.")

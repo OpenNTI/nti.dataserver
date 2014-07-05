@@ -19,7 +19,6 @@ from . import MessageFactory as _
 import sys
 import itertools
 import transaction
-import nameparser.parser
 
 from zope import interface
 from zope import component
@@ -121,7 +120,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 								 external_value=externalValue,
 								 preflight_only=preflight_only ) # May throw validation error
 		return new_user
-	except nameparser.parser.BlankHumanNameError as e:
+	except user_interfaces.BlankHumanNameError as e:
 		exc_info = sys.exc_info()
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
@@ -177,7 +176,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						  { 'message': _("Please provide your first and last names." ),
 							'field': 'realname',
 							'fields': ['Username', 'realname'],
-							'code': nameparser.parser.BlankHumanNameError.__name__ },
+							'code': user_interfaces.BlankHumanNameError.__name__ },
 						   exc_info[2] )
 		policy, _site = site_policies.find_site_policy( request=request )
 		if policy:
