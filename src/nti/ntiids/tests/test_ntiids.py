@@ -65,7 +65,7 @@ class TestNTIIDS(unittest.TestCase):
 
 		# lax lets more through
 		assert_that( ntiids.make_specific_safe( '-Foo%Bar, +baz:?', strict=False ),
-					 is_( '_Foo_Bar,__baz:_' ) )
+					 is_( '_Foo_Bar,_+baz:_' ) )
 
 
 		# too short
