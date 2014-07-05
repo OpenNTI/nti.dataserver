@@ -7,8 +7,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import simplejson as json
-from nti.contentrendering.courseinfo import model
-from nti.contentrendering.courseinfo import interfaces
+from . import model
+
 
 import zope.schema
 from collections import OrderedDict
@@ -16,7 +16,7 @@ from collections import OrderedDict
 import datetime
 
 
-class CourseInfoJSONChecker():
+class CourseInfoJSONChecker(object):
 
 	def __init__(self, file_name):
 		self.file_name = file_name
@@ -25,14 +25,14 @@ class CourseInfoJSONChecker():
 		self.prerequisite_o = model.Prerequisite(id = "CHEM 3000-001", title="Senior standing or instructor permission")
 		self.enrollment_o = model.Enrollment(label = "Enroll with Ozone", url = "http://ozone.ou.edu/")
 		self.credit_o = model.Credit(hours = 1, enrollment = self.enrollment_o)
-		self.instructor_o1 = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533", 
+		self.instructor_o1 = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533",
 			name = "Mark Morvant, PhD", title = "Professor, Department of Chemistry")
 		self.instructor_o2 = model.Instructor(defaultphoto = "images/Sims.png", username = "sims2543",
 			name = "Paul Sims, PhD", title = "Associate Professor, Department of Chemistry")
 		self.course_info_schema = model.CourseInfo(ntiid = "tag:nextthought.com,2011-10:OU-HTML-CHEM4970_Chemistry_of_Beer.course_info",
 			id = "CHEM 4970-001", school = "Department of Chemistry and Biochemistry at the University of Oklahoma",
 			is_non_public = False, term = "Fall 2014", startDate = "2014-01-13T06:00:00+00:00", duration = "16 Weeks",
-			isPreview = True, instructors = [self.instructor_o1, self.instructor_o2], 
+			isPreview = True, instructors = [self.instructor_o1, self.instructor_o2],
 			video =  "kaltura://1500101/0_bxfatwxs/",
 			title = "Chemistry of Beer",
 			description = "This course covers the process of brewing from grain to final bottle product and the chemical and biochemical process involved in each step. Students will be required to utilize previous knowledge in General and Organic chemistry to understand: analytical techniques in brewing, chemistry of the ingredients and products, and the molecules involved in the biochemical processes.  During the course, students will also learn the similarities and differences between beer styles, home and commercial brewing processes, and analytical techniques.  There is a great deal of Biochemistry and Organic Chemistry involved in the malting, mashing and fermentation process and understanding the chemistry behind the flavor, aroma, and color of beer. Students should have a basic knowledge of general and organic chemistry.",
@@ -58,9 +58,9 @@ class CourseInfoJSONChecker():
 		get all fields in course_info schema
 		"""
 		ifaces = data_schema.__provides__.__iro__
-		
+
 		logger.info("Show course info instance variable names and their values")
-		# get field names from all course_info interfaces 
+		# get field names from all course_info interfaces
 		data_schema_fields_type = OrderedDict()
 		data_schema_fields_name = []
 		data_schema_fields_required = OrderedDict()
@@ -70,7 +70,7 @@ class CourseInfoJSONChecker():
 				data_schema_fields_type[name] = getattr(data_schema, name, None)
 				data_schema_fields_required[name] = field.required
 				data_schema_fields_name.append(name)
-				print (name, type(data_schema_fields_type[name]), field.required)
+
 		return data_schema_fields_name, data_schema_fields_type, data_schema_fields_required
 
 
@@ -80,13 +80,13 @@ class CourseInfoJSONChecker():
 		Transform its content into python object and check if the json sytax is valid
 		Return course_info.json in the form of python object (course_info_dict)
 		"""
-		check = 0 
+		check = 0
 		dict_from_string = {}
 		warning_msg = ''
 		try:
-			f = open(file_name, 'r')	
+			f = open(file_name, 'r')
 			file_content = f.read()
-			try: 
+			try:
 				dict_from_string = json.loads(file_content)
 				check = 1
 			except (json.JSONDecodeError, ValueError, KeyError, TypeError):
@@ -96,13 +96,13 @@ class CourseInfoJSONChecker():
 				return check, dict_from_string, warning_msg
 		except IOError:
 			logger.info('Can not find file or read data course_info.json')
-			check = 2 
+			check = 2
 			warning_msg = 'Can not find file or read data course_info.json'
 			return check, dict_from_string, warning_msg
 		else:
 			f.close()
 			return check, dict_from_string, warning_msg
-	
+
 	def check_missing_fields(self, json_dict, data_schema_fields):
 		"""
 		check whether json_dict (obtained from course_info.json) has missing fields
@@ -120,7 +120,7 @@ class CourseInfoJSONChecker():
 
 	def check_additional_fields(self, json_dict, data_schema_fields):
 		"""
-		Check whether the course_info dict obtained from course_info.json 
+		Check whether the course_info dict obtained from course_info.json
 		has all the required fields in the course info schema.
 		"""
 		check = False
@@ -153,7 +153,7 @@ class CourseInfoJSONChecker():
 		unmatched_fields_type = []
 		for key in json_dict.keys() :
 			if key in data_schema_field_types :
-				#logger.info (key , "type in dict is", type(json_dict[key]), 
+				#logger.info (key , "type in dict is", type(json_dict[key]),
 				#" - ", key, "type in schema is ", type(data_schema_field_types[key]))
 				if type(json_dict[key]) != type(data_schema_field_types[key]):
 					if (type(json_dict[key]) is str and type(data_schema_field_types[key]) is unicode) or (type(json_dict[key]) is dict and key == 'enrollment'):
@@ -162,13 +162,13 @@ class CourseInfoJSONChecker():
 						logger.info("%s has unmatched field type", key)
 						unmatched_fields_type.append(key)
 						check = False
-						
+
 		return check, matched_fields_type, unmatched_fields_type
 
 
 	def check_required_fields(self, json_dict, data_schema_fields_required):
 		"""
-		check if json_dict (json_dict) have all required fields 
+		check if json_dict (json_dict) have all required fields
 		"""
 		check = True
 		missing_required_fields = []
@@ -188,7 +188,7 @@ class CourseInfoJSONChecker():
 			ntiid_value = course_info_dict['ntiid']
 			str_end_len = len(required_string)
 			ntiid_len = len(ntiid_value)
-			
+
 			if ntiid_value[(ntiid_len - str_end_len) : ntiid_len] == required_string:
 				return True
 			else:
@@ -209,7 +209,7 @@ class CourseInfoJSONChecker():
 			return None
 
 
-	
+
 	def check_json_schema(self, json_dict, data_schema):
 		"""
 		compare dictionary from json file with its schema
@@ -218,7 +218,7 @@ class CourseInfoJSONChecker():
 		json_validation_report = []
 		data_schema_fields_name, data_schema_fields_type, data_schema_fields_required = self.get_schema_fields(data_schema)
 
-			
+
 		#check required field
 		check_missing_required_fields, missing_required_fields = self.check_required_fields(json_dict, data_schema_fields_required);
 		if len(missing_required_fields) == 0:
@@ -271,8 +271,8 @@ class CourseInfoJSONChecker():
 		"""
 		check instructor fields
 		"""
-		error_check = False 
-		error_msg = '' 
+		error_check = False
+		error_msg = ''
 		unmatched_fields = []
 		if 'instructors' in course_info_dict.keys():
 			instructor_list = course_info_dict['instructors']
@@ -286,8 +286,8 @@ class CourseInfoJSONChecker():
 		"""
 		check prerequisite fields
 		"""
-		error_check = False 
-		error_msg = '' 
+		error_check = False
+		error_msg = ''
 		unmatched_fields = []
 		if 'prerequisites' in course_info_dict.keys():
 			prerequisite_list = course_info_dict['prerequisites']
@@ -300,8 +300,8 @@ class CourseInfoJSONChecker():
 		"""
 		check credit fields
 		"""
-		error_check = False 
-		error_msg = '' 
+		error_check = False
+		error_msg = ''
 		unmatched_fields = []
 		if 'credit' in course_info_dict.keys():
 			credit_fields = course_info_dict['credit']
@@ -310,14 +310,14 @@ class CourseInfoJSONChecker():
 				error_check, error_msg, unmatched_fields = self.checking_result(checker_list)
 
 		return error_check, error_msg, unmatched_fields
-				
+
 
 	def check_enrollment_obj(self, credit_fields):
 		"""
 		check enrollment fields
 		"""
-		error_check = False 
-		error_msg = '' 
+		error_check = False
+		error_msg = ''
 		unmatched_fields = []
 		for credit_dict in credit_fields:
 			if 'enrollment' in credit_dict.keys():
@@ -344,7 +344,7 @@ class CourseInfoJSONChecker():
 		json_validation_report[11] : matched_fields_type
 		json_validation_report[12] : unmatched_fields_type
 		"""
-		print (len(json_validation_report))
+
 		error_check = False
 		warning_check = False
 		if json_validation_report[0] == False:
@@ -358,7 +358,7 @@ class CourseInfoJSONChecker():
 			missing_fields = json_validation_report[4]
 			return warning_check, warning_msg, missing_fields
 		elif json_validation_report [5] == False:
-			error_check = True 
+			error_check = True
 			error_msg = "course_info.json has different fields  than courseinfo schema"
 			unmatched_fields = json_validation_report[7]
 			return error_check, error_msg, unmatched_fields
@@ -372,29 +372,3 @@ class CourseInfoJSONChecker():
 			error_msg = 'course_info.json is valid'
 			unmatched_fields = []
 			return error_check, error_msg, unmatched_fields_type
-
-
-
-
-
-
-
-
-	
-
-		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

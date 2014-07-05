@@ -192,6 +192,13 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 
 		return k in ext_keys
 
+	def _ext_accept_external_id(self, ext_self, parsed):
+		"""
+		If the object we're updating does not have an ``id`` set, but there is an
+		``ID`` in the external object, should we be able to use it?
+		:return: boolean
+		"""
+		return False # false by default
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		updated = False
@@ -209,6 +216,10 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 			setattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed[StandardExternalFields.CONTAINER_ID] )
 		if StandardExternalFields.CREATOR in parsed and getattr( ext_self, StandardExternalFields.CREATOR, parsed ) is None:
 			setattr( ext_self, StandardExternalFields.CREATOR, parsed[StandardExternalFields.CREATOR] )
+		if (StandardExternalFields.ID in parsed
+			and getattr( ext_self, StandardInternalFields.ID, parsed ) is None
+			and self._ext_accept_external_id(ext_self, parsed)):
+			setattr( ext_self, StandardInternalFields.ID, parsed[StandardExternalFields.ID] )
 
 		return updated
 
@@ -257,6 +268,7 @@ class _InterfaceCache(object):
 	iface = None
 	ext_primitive_out_ivars = None
 	ext_all_possible_keys = None
+	ext_accept_external_id = None
 
 	@classmethod
 	def cache_for( cls, externalizer, ext_self ):
@@ -374,6 +386,20 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 	def _ext_setattr( self, ext_self, k, value ):
 		validate_named_field_value( ext_self, self._iface, k, value )()
+
+	def _ext_accept_external_id(self, ext_self, parsed):
+		"""
+		If the interface we're working from has a tagged value
+		of `__external_accept_id__` on the `id` field, then
+		this will return that value; otherwise, returns false.
+		"""
+		cache = _InterfaceCache.cache_for(self, ext_self)
+		if cache.ext_accept_external_id is None:
+			try:
+				cache.ext_accept_external_id = cache.iface['id'].getTaggedValue('__external_accept_id__')
+			except KeyError:
+				cache.ext_accept_external_id = False
+		return cache.ext_accept_external_id
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		result = super(InterfaceObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )

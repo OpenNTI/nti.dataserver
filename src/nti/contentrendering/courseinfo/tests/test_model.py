@@ -17,52 +17,39 @@ from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
 
-import time
-from datetime import datetime
 
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.tests import assert_does_not_pickle
 does_not = is_not
 
-import time 
-from datetime import datetime
 
-from nti.externalization import internalization
-from nti.externalization.externalization import toExternalObject
-from nti.externalization.tests import assert_does_not_pickle
 
 from nti.contentrendering.courseinfo import model
 from nti.contentrendering.courseinfo import interfaces
 
 from nti.testing.matchers import verifiably_provides
 
-from nti.contentrendering.tests import ContentrenderingLayerTest
+from . import CourseinfoLayerTest
 
 
 import zope.schema
 from collections import OrderedDict
 
-class TestCourseInfo(ContentrenderingLayerTest):
+class TestCourseInfo(CourseinfoLayerTest):
 
 	def test_instructor_object(self):
-		io = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533", 
+		io = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533",
 			name = "Mark Morvant, PhD", title = "Professor, Department of Chemistry")
-		print ("Instructor type is ", type(io.name))
-		print ("io")
 		out = OrderedDict()
 		# Check all interfaces provided by the object
 		ifaces = io.__provides__.__iro__
-		print("------------------------------")
-		print("Show Instructor instance variables name and their value")
 		# Check fields from all interfaces
 		for iface in ifaces:
 			fields = zope.schema.getFieldsInOrder(iface)
 			for name, field in fields:
 				out[name] = getattr(io, name, None)
-				print (name, " <-> ", out[name])
-		
-		print("------------------------------")
+
 
 		assert_that (io, verifiably_provides(interfaces.IInstructor))
 		assert_does_not_pickle(io)
@@ -70,7 +57,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		assert_that(io, has_property('name', is_('Mark Morvant, PhD')))
 
 		ext_obj = toExternalObject(io)
-		
+
 		assert_that(ext_obj, has_entry('Class', 'Instructor'))
 
 		factory = internalization.find_factory_for(ext_obj)
@@ -91,7 +78,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		assert_does_not_pickle(io)
 
 		ext_obj = toExternalObject(io)
-		
+
 		assert_that(ext_obj, has_entry('Class', 'Prerequisite'))
 
 		factory = internalization.find_factory_for(ext_obj)
@@ -111,7 +98,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		assert_does_not_pickle(io)
 
 		ext_obj = toExternalObject(io)
-		
+
 		assert_that(ext_obj, has_entry('Class', 'Enrollment'))
 
 		factory = internalization.find_factory_for(ext_obj)
@@ -131,7 +118,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		assert_does_not_pickle(io)
 
 		ext_obj = toExternalObject(io)
-		
+
 		assert_that(ext_obj, has_entry('Class', 'Credit'))
 
 		factory = internalization.find_factory_for(ext_obj)
@@ -147,7 +134,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		prerequisite_o = model.Prerequisite(id = "CHEM 3000-001", title="Senior standing or instructor permission")
 		enrollment_o = model.Enrollment(label = "Enroll with Ozone", url = "http://ozone.ou.edu/")
 		credit_o = model.Credit(hours = 1, enrollment = enrollment_o)
-		instructor1 = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533", 
+		instructor1 = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533",
 			name = "Mark Morvant, PhD", title = "Professor, Department of Chemistry")
 		instructor2 = model.Instructor(defaultphoto = "images/Sims.png", username = "sims2543",
 			name = "Paul Sims, PhD", title = "Associate Professor, Department of Chemistry")
@@ -155,7 +142,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		io = model.CourseInfo(ntiid = "tag:nextthought.com,2011-10:OU-HTML-CHEM4970_Chemistry_of_Beer.course_info",
 			id = "CHEM 4970-001", school = "Department of Chemistry and Biochemistry at the University of Oklahoma",
 			is_non_public = False, term = "Fall 2014", startDate = "2014-01-13T06:00:00+00:00", duration = "16 Weeks",
-			isPreview = True, instructors = [instructor1, instructor2], 
+			isPreview = True, instructors = [instructor1, instructor2],
 			video =  "kaltura://1500101/0_bxfatwxs/",
 			title = "Chemistry of Beer",
 			description = "This course covers the process of brewing from grain to final bottle product and the chemical and biochemical process involved in each step. Students will be required to utilize previous knowledge in General and Organic chemistry to understand: analytical techniques in brewing, chemistry of the ingredients and products, and the molecules involved in the biochemical processes.  During the course, students will also learn the similarities and differences between beer styles, home and commercial brewing processes, and analytical techniques.  There is a great deal of Biochemistry and Organic Chemistry involved in the malting, mashing and fermentation process and understanding the chemistry behind the flavor, aroma, and color of beer. Students should have a basic knowledge of general and organic chemistry.",
@@ -167,8 +154,7 @@ class TestCourseInfo(ContentrenderingLayerTest):
 
 		# Check all interfaces provided by the object
 		ifaces = io.__provides__.__iro__
-		print("------------------------------")
-		print("Show Course Info instance variables name and their value")
+
 		# Check fields from all interfaces
 		out = OrderedDict()
 		field_list = []
@@ -176,15 +162,12 @@ class TestCourseInfo(ContentrenderingLayerTest):
 			fields = zope.schema.getFieldsInOrder(iface)
 			for name, field in fields:
 				out[name] = getattr(io, name, None)
-				print (name, " : ", out[name], " , name type: ", type(name), " value type ", type(out[name]))
 				field_list.append(name)
-		
-		print("------------------------------")
 
-		
+
 		assert_that(io, verifiably_provides(interfaces.ICourseInfo))
 		assert_does_not_pickle(io)
-		
+
 		ext_obj = toExternalObject(io)
 		assert_that(ext_obj, has_entry('Class', 'CourseInfo'))
 
@@ -208,4 +191,3 @@ class TestCourseInfo(ContentrenderingLayerTest):
 		assert_that(new_io, has_property('video', is_('kaltura://1500101/0_bxfatwxs/')))
 		assert_that(new_io, has_property('title', is_('Chemistry of Beer')))
 		assert_that(new_io, has_property('description', is_('This course covers the process of brewing from grain to final bottle product and the chemical and biochemical process involved in each step. Students will be required to utilize previous knowledge in General and Organic chemistry to understand: analytical techniques in brewing, chemistry of the ingredients and products, and the molecules involved in the biochemical processes.  During the course, students will also learn the similarities and differences between beer styles, home and commercial brewing processes, and analytical techniques.  There is a great deal of Biochemistry and Organic Chemistry involved in the malting, mashing and fermentation process and understanding the chemistry behind the flavor, aroma, and color of beer. Students should have a basic knowledge of general and organic chemistry.')))
-

@@ -9,8 +9,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.container import contained
 
-import persistent
-
 from nti.externalization.persistence import NoPickle
 from nti.externalization.externalization import WithRepr
 
@@ -24,17 +22,15 @@ from .import interfaces
 @WithRepr
 @NoPickle
 @EqHash ('name', 'title')
-class Instructor (SchemaConfigured, contained.Contained):
-	
+class Instructor(SchemaConfigured, contained.Contained):
+
 	createFieldProperties(interfaces.IInstructor)
 
 	__external_can_create__ = True
 	__external_class_name__ = "Instructor"
 	mime_type = mimeType = 'application/vnd.nextthought.courseinfo.instructor'
-	
+
 	def __init__(self, *args, **kwargs):
- 
-		persistent.Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 
@@ -50,7 +46,6 @@ class Prerequisite(SchemaConfigured, contained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.prerequisite'
 
 	def __init__ (self, *args, **kwargs):
-		persistent.Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 
@@ -66,7 +61,6 @@ class Enrollment(SchemaConfigured, contained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.enrollment'
 
 	def __init__ (self, *args, **kwargs):
-		persistent.Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 
@@ -82,7 +76,6 @@ class Credit(SchemaConfigured, contained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.credit'
 
 	def __init__ (self, *args, **kwargs):
-		persistent.Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
 
@@ -91,8 +84,8 @@ class Credit(SchemaConfigured, contained.Contained):
 @WithRepr
 @NoPickle
 @EqHash('ntiid', 'id', 'school')
-class CourseInfo (SchemaConfigured, contained.Contained):
-	
+class CourseInfo(SchemaConfigured, contained.Contained):
+
 	createFieldProperties(interfaces.ICourseInfo)
 
 	__external_can_create__ = True
@@ -100,6 +93,4 @@ class CourseInfo (SchemaConfigured, contained.Contained):
 	mime_type = mimeType = 'application/vnd.nextthought.courseinfo'
 
 	def __init__(self, *args, **kwargs):
-		persistent.Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
-

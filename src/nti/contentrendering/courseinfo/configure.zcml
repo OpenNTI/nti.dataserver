@@ -21,12 +21,4 @@
 						 .interfaces.ICourseInfo"
 		modules=".model" />
 
-	<adapter factory=".internalization._NTICourseInfoUpdater"
-			 for=".interfaces.ICourseInfo"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-
-	<adapter factory=".internalization._NTIPrerequisiteUpdater"
-			 for=".interfaces.IPrerequisite"
-			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
-
 </configure>

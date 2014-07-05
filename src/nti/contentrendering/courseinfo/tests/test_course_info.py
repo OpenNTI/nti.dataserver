@@ -6,15 +6,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import unittest
 
-from nti.contentrendering.courseinfo import model
-from nti.contentrendering.courseinfo import interfaces
 from nti.contentrendering.courseinfo import course_info_validation
-from zope.schema import getFields
 
-from collections import OrderedDict
 
-class TestCourseInfoValidation():
+class TestCourseInfoValidation(unittest.TestCase):
 	def check_course_instructors(self, course_info, course_info_dict):
 		#check instructors listed in the course_info.json
 		checker_list = course_info.check_instructors(course_info_dict)
@@ -43,73 +40,73 @@ class TestCourseInfoValidation():
 		error_msg = 'No ERROR'
 		unmatched_fields = []
 
-		if course_info_dict!= None:		
-			
+		if course_info_dict!= None:
+
 			#check course_info.json based on its schema
 			checker_list = course_info.check_json_schema(course_info_dict, course_info.course_info_schema)
 
 			error_check, error_msg, unmatched_fields = course_info.checking_result(checker_list)
-			print (unmatched_fields)
 
 			if error_check == False or error_msg[0:7] == 'warning':
 				#check value of particular fields in course_info_dict
-				
+
 				#make sure that ntiid fields in course_info.json ends with 'course_info'
 				check = course_info.check_ntiid_value (course_info_dict, 'course_info')
-				if check == True :
-					print ("ntiid value ends with string 'course_info'")
+				if check:
+					#print ("ntiid value ends with string 'course_info'")
+					pass
 				elif check == False:
 					error_check = True
 					error_msg = 'invalid ntiid value'
 					unmatched_fields = []
 					return error_check, error_msg, unmatched_fields
-				else:
-					print("there is no ntiid field in the dictionary")
+
+				#print("there is no ntiid field in the dictionary")
 
 
 				#check course duration field
 				duration_number, duration_kind, duration_days = course_info.check_duration(course_info_dict)
-				print("Course duration is ",duration_kind," is ",duration_number)
-				print("Course duration in days is ", duration_days)
+				#print("Course duration is ",duration_kind," is ",duration_number)
+				#print("Course duration in days is ", duration_days)
 
 				#check course instructors field
-				print("-------------------------------------------------------")
-				print ("Check Instructors")
+				#print("-------------------------------------------------------")
+				#print ("Check Instructors")
 				error_check, error_msg, unmatched_fields = self.check_course_instructors(course_info, course_info_dict)
-				print(unmatched_fields)
+				#print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
 				#check course prerequisites field
-				print("-------------------------------------------------------")
-				print ("Check Prerequisites")
+				#print("-------------------------------------------------------")
+				#print ("Check Prerequisites")
 				error_check, error_msg, unmatched_fields = self.check_course_prerequisites(course_info, course_info_dict)
-				print(unmatched_fields)
+				#print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
 				#check course credit field
-				print("-------------------------------------------------------")
-				print("Check Credit")
+				#print("-------------------------------------------------------")
+				#print("Check Credit")
 				error_check, error_msg, unmatched_fields = self.check_course_credit(course_info, course_info_dict)
-				print(unmatched_fields)
+				#print(unmatched_fields)
 				if error_check == True and error_msg[0:7] != 'warning':
 					return error_check, error_msg, unmatched_fields
 
 				#check course enrollment field
-				print("-------------------------------------------------------")
-				print("Check Enrollment Information")
+				#print("-------------------------------------------------------")
+				#print("Check Enrollment Information")
 				if 'credit' in course_info_dict.keys():
 					credit_fields = course_info_dict['credit']
 					error_check, error_msg, unmatched_fields = self.check_course_enrollment(course_info, credit_fields)
-					print(unmatched_fields)
+					#print(unmatched_fields)
 					if error_check == True and error_msg[0:7] != 'warning':
 						return error_check, error_msg, unmatched_fields
 
-				print("Everythings is ok")
+				#print("Everythings is ok")
 
 			else:
-				print('course_info.json is not valid')
+				#print('course_info.json is not valid')
 				return error_check, error_msg, unmatched_fields
 
 		else:
@@ -119,11 +116,3 @@ class TestCourseInfoValidation():
 			return error_check, error_msg, unmatched_fields
 
 		return error_check, error_msg, unmatched_fields
-
-
-print ("start checking")
-check = TestCourseInfoValidation()
-error_check, msg, unmatched_fields = check.test_course_info_validation()
-print(msg)
-
-
