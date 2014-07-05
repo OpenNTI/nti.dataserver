@@ -98,6 +98,7 @@ def install_main( context ):
 	assert ISite.providedBy( dataserver_folder )
 
 	with site(dataserver_folder):
+		assert component.getSiteManager() is lsm, "Component hooks must have been reset"
 		# from now on, operate in the site we're setting up.
 		# The first thing that needs to happen is that we get
 		# proper intid utilities set up so everything else
