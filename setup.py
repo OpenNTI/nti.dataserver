@@ -253,7 +253,7 @@ setup(
 		'plone.namedfile',	 # much like zope.file, but some image-specific goodness.
 		'pyparsing >= 1.5.6, <=1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
 		# Pure python PDF reading and manipulation library.
-		'pyPDF2 >= 1.19',
+		'pyPDF2',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
 		# work with page templates as well.
 		# jquery-like traversing of python datastructures. lxml, cssselect
