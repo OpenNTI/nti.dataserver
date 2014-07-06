@@ -201,11 +201,6 @@
 				for="*"
 				zcml:condition="have devmode" />
 
-	<!--
-	<subscriber handler=".subscribers._set_change_listener"
-				for="pyramid.events.ApplicationCreated" />
-	-->
-
 	<!-- Content Resolvers -->
 
 	<subscriber factory=".content_utils._DefaultTagKeywordResolver"

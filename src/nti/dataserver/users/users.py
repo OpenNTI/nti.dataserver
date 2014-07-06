@@ -1126,19 +1126,14 @@ def user_devicefeedback( msg ):
 		component.getUtility( IDataserverTransactionRunner )( feedback )
 
 
-def onChange( datasvr, msg, target=None, broadcast=None, **kwargs ):
-	"""
-
-	:param broadcast: If true, then we ignore this event. See chat_transcripts.py.
-	"""
-	if target and not broadcast:
-		#logger.debug( 'Incoming change to %s', target )
-		entity = target
+@component.adapter(nti_interfaces.ITargetedStreamChangeEvent)
+def onChange( event ):
+	entity = event.entity
+	msg = event.object
+	if hasattr(entity, '_noticeChange'):
 		try:
 			entity._p_activate()
 			entity._p_jar.readCurrent( entity )
 		except AttributeError:
 			pass
-
-		if hasattr(entity, '_noticeChange'):
-			entity._noticeChange( msg )
+		entity._noticeChange( msg )

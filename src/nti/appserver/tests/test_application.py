@@ -381,7 +381,6 @@ class TestApplication(ApplicationLayerTest):
 	@WithSharedApplicationMockDSHandleChanges(users=('foo@bar',), testapp=True,default_authenticate=True)
 	@time_monotonically_increases
 	def test_post_put_conditionalput_to_pages_collection(self):
-		self.ds.add_change_listener( users.onChange )
 
 		testapp = self.testapp
 		testapp.username = 'sjohnson@nextthought.com'

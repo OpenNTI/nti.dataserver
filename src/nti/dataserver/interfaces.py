@@ -56,6 +56,8 @@ from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
 
+from nti.utils.property import alias
+
 class ACLLocationProxy(LocationProxy):
 	"""
 	Like :class:`LocationProxy` but also adds transparent storage
@@ -421,6 +423,27 @@ def _make_stream_subclasses():
 _make_stream_subclasses()
 del _make_stream_subclasses
 
+class ITargetedStreamChangeEvent(interface.interfaces.IObjectEvent):
+	"""
+	An object event wrapping up a :class:`IStreamChangeEvent`, along
+	with a specific targeted sharing entity. While the original stream change
+	event will be emitted one time, this wrapper may be emitted many
+	times for the same change event, but each time the targeted entity
+	will be different.
+	"""
+
+	entity = interface.Attribute("The specific entity that should see this change")
+
+from zope.interface.interfaces import ObjectEvent
+
+@interface.implementer(ITargetedStreamChangeEvent)
+class TargetedStreamChangeEvent(ObjectEvent):
+
+	target = alias('entity')
+
+	def __init__(self, change, target):
+		ObjectEvent.__init__(self, change)
+		self.entity = target
 
 class INeverStoredInSharedStream(interface.Interface):
 	"""
@@ -666,13 +689,13 @@ class IUserEvent(interface.interfaces.IObjectEvent):
 					title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
 	user = Object(IUser,
 				  title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
-from nti.utils.property import alias
+
 
 @interface.implementer(IUserEvent)
-class UserEvent(interface.interfaces.ObjectEvent):
+class UserEvent(ObjectEvent):
 
 	def __init__(self, user):
-		super(UserEvent, self).__init__(user)
+		ObjectEvent.__init__(self, user)
 
 	user = alias('object')
 
@@ -696,17 +719,18 @@ class IFollowerAddedEvent(interface.interfaces.IObjectEvent):
 	followed_by = Object(IEntity, title="The entity that is now following the object.")
 
 @interface.implementer(IEntityFollowingEvent)
-class EntityFollowingEvent(interface.interfaces.ObjectEvent):
+class EntityFollowingEvent(ObjectEvent):
 
 	def __init__( self, entity, now_following ):
-		super(EntityFollowingEvent,self).__init__( entity )
+		ObjectEvent.__init__(self, entity)
 		self.now_following = now_following
 
 @interface.implementer(IFollowerAddedEvent)
-class FollowerAddedEvent(interface.interfaces.ObjectEvent):
+class FollowerAddedEvent(ObjectEvent):
 
 	def __init__( self, entity, followed_by ):
-		super(FollowerAddedEvent,self).__init__( entity )
+		ObjectEvent.__init__(self, entity)
+
 		self.followed_by = followed_by
 
 class IStopFollowingEvent(interface.interfaces.IObjectEvent):
@@ -718,10 +742,10 @@ class IStopFollowingEvent(interface.interfaces.IObjectEvent):
 	not_following = Object(IEntity, title="The entity that is no longer being followed by the object.")
 
 @interface.implementer(IStopFollowingEvent)
-class StopFollowingEvent(interface.interfaces.ObjectEvent):
+class StopFollowingEvent(ObjectEvent):
 
 	def __init__(self, entity, not_following):
-		super(StopFollowingEvent, self).__init__(entity)
+		ObjectEvent.__init__(self, entity)
 		self.not_following = not_following
 
 class IStartDynamicMembershipEvent(interface.interfaces.IObjectEvent):
@@ -733,10 +757,10 @@ class IStartDynamicMembershipEvent(interface.interfaces.IObjectEvent):
 	target = Object(IDynamicSharingTarget, title="The dynamic target to join")
 
 @interface.implementer(IStartDynamicMembershipEvent)
-class StartDynamicMembershipEvent(interface.interfaces.ObjectEvent):
+class StartDynamicMembershipEvent(ObjectEvent):
 
 	def __init__(self, entity, target):
-		super(StartDynamicMembershipEvent, self).__init__(entity)
+		ObjectEvent.__init__(self, entity)
 		self.target = target
 
 class IStopDynamicMembershipEvent(interface.interfaces.IObjectEvent):
@@ -748,10 +772,10 @@ class IStopDynamicMembershipEvent(interface.interfaces.IObjectEvent):
 	target = Object(IDynamicSharingTarget, title="The dynamic target to be leaving")
 
 @interface.implementer(IStopDynamicMembershipEvent)
-class StopDynamicMembershipEvent(interface.interfaces.ObjectEvent):
+class StopDynamicMembershipEvent(ObjectEvent):
 
 	def __init__(self, entity, target):
-		super(StopDynamicMembershipEvent, self).__init__(entity)
+		ObjectEvent.__init__(self, entity)
 		self.target = target
 
 class IMissingUser(IMissingEntity):

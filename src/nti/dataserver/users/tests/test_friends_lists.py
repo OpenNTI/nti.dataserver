@@ -238,7 +238,7 @@ def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
 
 	:return: A tuple (owner, member1, member2, dfl)
 	"""
-	ds.add_change_listener( users.onChange )
+
 	password_kwargs = {}
 	if passwords:
 		password_kwargs = {'password': passwords}
@@ -419,7 +419,6 @@ class TestDFL(DataserverLayerTest):
 		"""
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
-			ds.add_change_listener( users.onChange )
 			jmadden = users.User.create_user( username='jmadden@nextthought.com' )
 			sjohnson = users.User.create_user( username='sjohnson@nextthought.com' )
 

@@ -181,7 +181,6 @@ class TestUGDQueryViews(NewRequestLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_rstream_not_found_following_community(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			self.ds.add_change_listener( users.onChange )
 
 			view = _RecursiveUGDStreamView( get_current_request() )
 			user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
@@ -225,7 +224,6 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		things they have shared with each other.
 		"""
 		with mock_dataserver.mock_db_trans( self.ds ):
-			self.ds.add_change_listener( users.onChange )
 
 			# Two users...
 			user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')
@@ -1060,7 +1058,6 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		things they have shared with each other.
 		"""
 		with mock_dataserver.mock_db_trans( self.ds ):
-			self.ds.add_change_listener( users.onChange )
 
 			# Two users...
 			user = self._create_user(  username='jason.madden@nextthought_com')

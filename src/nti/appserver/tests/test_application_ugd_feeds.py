@@ -59,7 +59,6 @@ class TestFeeds(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDSHandleChanges(users=('foo@bar',),default_authenticate=True,testapp=True)
 	def test_note_in_feed(self):
-		self.ds.add_change_listener( users.onChange )
 
 		testapp = self.testapp
 		containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_HTML, specific='1234' )

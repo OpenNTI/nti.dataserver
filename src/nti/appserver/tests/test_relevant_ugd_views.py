@@ -62,7 +62,6 @@ class TestRelevantUGDView(ApplicationLayerTest):
 		requestor = 'ichigo@nt.com'
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener(users.onChange)
 
 			gin = self._create_user(username='gin@nt.com')
 			aizen = self._create_user(username='aizen@nt.com')
@@ -104,7 +103,6 @@ class TestRelevantUGDView(ApplicationLayerTest):
 		parent = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
 		containerId = 'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener(users.onChange)
 			ichigo = self._create_user(username='ichigo@nt.com')
 			self._create_note(ichigo, "tensa zangetsu", 'Bankai', containerId)
 

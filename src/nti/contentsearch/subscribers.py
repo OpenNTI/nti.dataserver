@@ -19,7 +19,7 @@ from . import interfaces as search_interfaces
 
 @interface.implementer(search_interfaces.ISearchHitPredicate)
 class _DefaultSearchHitPredicate(object):
-	
+
 	__slots__ = ()
 
 	def __init__(self, *args):
@@ -27,11 +27,3 @@ class _DefaultSearchHitPredicate(object):
 
 	def allow(self, item, score=1.0):
 		return True
-
-@component.adapter(ApplicationCreated)
-def _set_change_listener(database_event):
-	dataserver = component.queryUtility(nti_interfaces.IDataserver)
-	indexmanager = component.queryUtility(search_interfaces.IIndexManager)
-	if dataserver is not None and indexmanager is not None:
-		dataserver.add_change_listener(indexmanager.onChange)
-
