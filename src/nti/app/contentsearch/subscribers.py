@@ -35,7 +35,7 @@ from nti.utils import make_cache_dir
 def _add_book(indexmanager, indexname, indexdir, ntiid):
 	try:
 		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		if indexmanager.add_book(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
+		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
 			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
 		else:
 			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
@@ -135,16 +135,30 @@ def add_s3_index( title, event ):
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectModifiedEvent)
 def reset_indexes_when_modified(content_package, event):
-	# XXX What should we do here? We need the index manager objects
-	# to expose modification times. And really to best do that we
-	# need to move "down" a level into something more tightly integrated,
-	# e.g., nti.app.contentsearch
-	pass
+	# The cheap and effective thing to do is to unregister
+	# and re-register. Note that we CANNOT simply
+	# broadcast a pair of Removed/Added events as that would
+	# have unknown consequences due to other listeners.
+	# Its our own problem that we do not have a more efficient way
+	# to deal with this.
+
+	reset_indexes_when_removed( content_package, event )
+
+	if lib_interfaces.IS3ContentPackage.providedBy(content_package):
+		add_s3_index(content_package, event)
+	elif lib_interfaces.IFilesystemContentPackage.providedBy(content_package):
+		add_filesystem_index(content_package, event)
 
 @component.adapter(lib_interfaces.IContentPackage,IObjectRemovedEvent)
 def reset_indexes_when_removed(content_package, event):
 	# XXX What should we do here? We need the index manager objects
 	# to expose modification times. And really to best do that we
 	# need to move "down" a level into something more tightly integrated,
-	# e.g., nti.app.contentsearch
-	pass
+	# e.g., nti.app.contentsearch...this would let us tighten up the
+	# interface for 'add_book'...although ideally we can move that
+	# information down into a set of adapters at that level
+	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
+	if indexmanager is None: # pragma: no cover
+		return
+
+	indexmanager.unregister_content(content_package.ntiid)
