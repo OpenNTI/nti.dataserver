@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 logger = __import__('logging').getLogger(__name__)
 
+import warnings
 
 import ZODB
 
@@ -86,10 +87,7 @@ class ChangePassingMockDataserver(Dataserver ):
 		return super( ChangePassingMockDataserver, self )._setup_dbs( *args )
 
 
-class MockDataserver(ChangePassingMockDataserver):
-
-	def enqueue_change( self, change, **kwargs ):
-		pass
+MockDataserver = ChangePassingMockDataserver
 
 
 def add_memory_shard( mock_ds, new_shard_name ):
@@ -168,6 +166,7 @@ def WithMockDS( *args, **kwargs ):
 	# Being used as a decorator factory
 	mock_ds_factory = MockDataserver
 	if kwargs.get( 'with_changes', None ):
+		warnings.warn('with_changes is deprecated', DeprecationWarning, stacklevel=2)
 		mock_ds_factory = ChangePassingMockDataserver
 
 	if 'database' in kwargs:

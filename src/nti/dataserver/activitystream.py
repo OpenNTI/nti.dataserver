@@ -15,19 +15,14 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 import nti.intid.interfaces
 
-from ZODB.loglevels import TRACE
-
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import TargetedStreamChangeEvent
+from zope.event import notify
 
 from nti.intid.interfaces import IntIdMissingError
 
 from .activitystream_change import Change
-
-def enqueue_change( change, **kwargs ):
-	ds = component.queryUtility( nti_interfaces.IDataserver )
-	if ds:
-		logger.log( TRACE, "Sending %s change to %s", change, kwargs )
-		ds.enqueue_change( change, **kwargs )
 
 def _enqueue_change_to_target( target, change, accum=None ):
 	"""
@@ -54,8 +49,8 @@ def _enqueue_change_to_target( target, change, accum=None ):
 		return
 	accum.add( target_key )
 
-	# Fire the change off to the user using different threads.
-	enqueue_change( change, target=target )
+	# Fire the change off to the user
+	notify(TargetedStreamChangeEvent(change, target))
 
 	# Make this work for DynamicFriendsLists.
 	# NOTE: We could now make it work for communities too, since
@@ -94,10 +89,8 @@ def stream_willRemoveIntIdForContainedObject(contained, event):
 	if deletion_targets is None:
 		return
 
-	# First a broadcast
 	event = Change(Change.DELETED, contained)
 	event.creator = contained.creator
-	enqueue_change(event, broadcast=True, target=contained.creator)
 
 	# Then targeted
 	accum = set()
@@ -110,10 +103,9 @@ def stream_didAddIntIdForContainedObject(contained, event):
 	if creation_targets is None:
 		return
 
-	# First a broadcast
 	event = Change(Change.CREATED, contained)
 	event.creator = contained.creator
-	enqueue_change(event, broadcast=True, target=contained.creator)
+
 	# Then targeted
 	accum = set()
 	for target in creation_targets:
@@ -154,7 +146,6 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 	if origSharing is None:
 		origSharing = set(current_sharing_targets)
 
-	# Step one is to announce all data changes globally as a broadcast.
 	try:
 		change = Change( changeType, obj )
 	except IntIdMissingError:
@@ -165,7 +156,7 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 		logger.error("Not sending any changes for deleted object %r", obj)
 		return
 	change.creator = self
-	enqueue_change( change, broadcast=True, target=self )
+
 
 	newSharing = set(current_sharing_targets)
 	seenTargets = set()

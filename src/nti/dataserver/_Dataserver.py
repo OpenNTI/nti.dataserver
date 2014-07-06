@@ -359,7 +359,6 @@ class Dataserver(MinimalDataserver):
 
 	def __init__(self, parentDir=None ):
 		super(Dataserver, self).__init__(parentDir)
-		self.changeListeners = []
 
 		with self.db.transaction() as conn:
 			root = conn.root()
@@ -412,35 +411,8 @@ class Dataserver(MinimalDataserver):
 		return self.session_manager
 	sessions = property( get_sessions )
 
-	def add_change_listener( self, listener ):
-		""" Adds a listener (a callable object) for changes."""
-		if listener and listener not in self.changeListeners:
-			self.changeListeners.append( listener )
-
-	def remove_change_listener( self, listener ):
-		self.changeListeners.remove( listener )
-
 	def close(self):
 		super(Dataserver,self).close()
-		# TODO: We should probably be cleaning up change listeners too, dropping our ref
-		# to them, but we cannot right now because we close pre-fork and only re-open
-		# the database afterwards.
-		#del self.changeListeners[:]
-
-	def enqueue_change( self, change, **kwargs ):
-		""" Distributes a change to all the queued listener functions."""
-		# Previous revisions were much more complicated. See them for comments.
-		self._on_recv_change( change, kwargs )
-
-	def _on_recv_change( self, change, kwargs ):
-		"""
-		Given a Change received, distribute it to all registered listeners.
-		"""
-		for changeListener in self.changeListeners:
-			changeListener( self, change, **kwargs )
-			# Since we are doing this synchronously now, we
-			# let the errors propagate so that they rollback the transaction
-			# (Otherwise, we could wind up with half-committed, bad state)
 
 
 _SynchronousChangeDataserver = Dataserver

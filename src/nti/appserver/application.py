@@ -714,24 +714,10 @@ def createApplication( http_port,
 	finally:
 		pyramid_zcml.xmlconfig = xmlconfig
 
-	# register change listeners
-	# Now, fork off the change listeners
-	# TODO: Make these be utilities so they can be registered
-	# in config and the expensive parts turned off in config dynamically.
-	if create_ds:
-		_configure_async_changes( server )
-
 	app = pyramid_config.make_wsgi_app()
 
 	logger.info("Configured Dataserver in %.3fs", time.time() - begin_time)
 	return app
-
-def _configure_async_changes(ds):
-	logger.info('Adding synchronous change listeners.')
-
-	ds.add_change_listener(nti.dataserver.users.onChange)
-
-	logger.info('Finished adding listeners')
 
 @component.adapter(IDatabaseOpenedWithRoot)
 def _configure_zodb_tween( database_event, registry=None ):

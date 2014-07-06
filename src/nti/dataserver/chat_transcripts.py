@@ -105,7 +105,6 @@ from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.activitystream import enqueue_change
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
@@ -373,11 +372,6 @@ def _save_message_to_transcripts_subscriber(msg_info, event):
 		__traceback_info__ = owner, meeting
 		storage = _ts_storage_for(owner)
 		storage.add_message(meeting, msg_info)
-
-		# TODO: I think we are broadcasting this strictly for the sake of
-		# getting it into the contentsearch indexes. Is this actually necessary? Could
-		# or should contentsearch piggyback other events?
-		enqueue_change(change, target=users.User.get_user(owner), broadcast=True)
 
 def transcript_for_user_in_room( username, room_id ):
 	"""

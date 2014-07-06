@@ -53,7 +53,6 @@ class TestDashboardViews(ApplicationLayerTest):
 		requestor = 'ichigo@nt.com'
 		containerId = make_ntiid(nttype='bleach', specific='manga')
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener(users.onChange)
 
 			gin = self._create_user(username='gin@nt.com')
 			aizen = self._create_user(username='aizen@nt.com')

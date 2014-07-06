@@ -50,6 +50,7 @@ from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from zope.container.interfaces import InvalidItemType
 from zope.location import interfaces as loc_interfaces
+from zope.component import eventtesting
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
@@ -204,7 +205,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_creating_friendslist_goes_to_stream(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 
 			user = User.create_user( self.ds, username='foo@bar' )
 			user2 = User.create_user( self.ds, username='friend@bar' )
@@ -264,7 +264,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_dynamic_friendslist(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -297,7 +296,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_friendslist(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -328,7 +326,6 @@ class TestUser(DataserverLayerTest):
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_with_dfl(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -365,7 +362,6 @@ class TestUser(DataserverLayerTest):
 	def test_share_note_directly_and_indirectly_with_community_unshare_with_community(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 			community = users.Community.create_entity( self.ds, username='TheCommunity' )
@@ -408,7 +404,6 @@ class TestUser(DataserverLayerTest):
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_directly(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -451,7 +446,6 @@ class TestUser(DataserverLayerTest):
 	def test_share_note_directly_and_indirectly_with_community_unshare_directly(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 			community = users.Community.create_entity( self.ds, username='TheCommunity' )
@@ -514,7 +508,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_dynamic_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -547,7 +540,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_share_unshare_note_with_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 
@@ -594,12 +586,8 @@ class TestUser(DataserverLayerTest):
 
 		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
-			nots = []
-			def _on_change(ds, change, broadcast=None, **kwargs):
-				if not broadcast:
-					nots.append( (change.type, change.object) )
-			mock_dataserver.current_mock_ds.add_change_listener( _on_change )
 			lm = None
+			eventtesting.clearEvents()
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
 				c_note.updateSharingTargets( c_note.sharingTargets | set( [User.get_user( 'fab@bar', dataserver=mock_dataserver.current_mock_ds )] ), notify=True )
@@ -610,8 +598,11 @@ class TestUser(DataserverLayerTest):
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( lm ) ) )
 			assert_that( user1.containers['c1'].lastModified, is_( greater_than_or_equal_to( user1.containers['c1'][note.id].lastModified ) ) )
 
-			assert_that( nots, is_( [('Shared', c_note)] ) )
+			evts = eventtesting.getEvents(nti_interfaces.ITargetedStreamChangeEvent)
 
+			assert_that(evts, has_length(1))
+			assert_that( evts[0].object, has_property('type', 'Shared') )
+			assert_that( evts[0].object, has_property('object', c_note) )
 
 	@mock_dataserver.WithMockDS(with_changes=True)
 	def test_delete_shared_note_notifications(self):
@@ -631,9 +622,9 @@ class TestUser(DataserverLayerTest):
 
 		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
-			nots = []
 			user1._postNotification = lambda *args: nots.append( args )
-			mock_dataserver.current_mock_ds.add_change_listener( lambda ds, change, broadcast=None, **kwargs: nots.append( (change.type, change.object) ) if not broadcast else None )
+			eventtesting.clearEvents()
+
 			lm = None
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
@@ -643,7 +634,12 @@ class TestUser(DataserverLayerTest):
 			del user1._postNotification
 
 			# No modified notices, just the Deleted notice.
-			assert_that( nots,  is_( [('Deleted', c_note)] ) )
+			evts = eventtesting.getEvents(nti_interfaces.ITargetedStreamChangeEvent)
+
+			assert_that(evts, has_length(1))
+			assert_that( evts[0].object, has_property('type', 'Deleted') )
+			assert_that( evts[0].object, has_property('object', c_note) )
+
 
 	@WithMockDSTrans
 	def test_getSharedContainer_defaults( self ):
@@ -940,7 +936,6 @@ class TestUser(DataserverLayerTest):
 	@WithMockDS(with_changes=True)
 	def test_owned_dfls_in_xxx_intids(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			self.ds.add_change_listener( users.onChange )
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
 

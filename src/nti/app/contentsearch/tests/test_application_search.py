@@ -83,7 +83,6 @@ class TestApplicationSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDSWithChanges
 	def test_post_share_delete_highlight(self):
-		self.ds.add_change_listener( users.onChange )
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
 			self._create_user( username='foo@bar' )
