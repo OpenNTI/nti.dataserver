@@ -382,7 +382,7 @@ class NotDevmodeSharedConfiguringTestLayer(ZopeComponentLayer,
 	:func:`WithMockDSTrans`).
 	"""
 
-	description = "nti.dataserver is ZCML configured without devmode"
+	#description = "nti.dataserver is ZCML configured without devmode"
 
 	set_up_packages = ('nti.dataserver',)
 	features = ()

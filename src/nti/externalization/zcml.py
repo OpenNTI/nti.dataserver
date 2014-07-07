@@ -37,6 +37,9 @@ class _MimeObjectFactory(Factory):
 		except AttributeError:
 			return NotImplemented
 
+	def __hash__(self):
+		return hash(self._callable)
+
 class IRegisterInternalizationMimeFactoriesDirective(interface.Interface):
 	"""
 	The arguments needed for registering factories.

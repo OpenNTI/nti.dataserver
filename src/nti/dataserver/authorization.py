@@ -269,6 +269,7 @@ class _EveryoneGroup(_StringGroup):
 		if result is NotImplemented and isinstance(other,basestring):
 			result = self.id == other
 		return result
+	__hash__ = _StringGroup.__hash__ # overriding __eq__ blocks inheritance of __hash__ in py3
 
 	def toExternalObject(self, *args, **kwargs):
 		return {'Class': 'Entity', 'Username': self.id}
