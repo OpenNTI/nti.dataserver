@@ -11,14 +11,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import repoze.lru
+from six import string_types
 
 from zope import component
 from zope import interface
 
-from . import content_utils
+from .content_utils import tokenize_content
 from . import default_ngram_minsize
 from . import default_ngram_maxsize
-from . import interfaces as cp_interfaces
+from .interfaces import INgramComputer
 
 @repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
@@ -32,7 +33,7 @@ def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
 	return result
 
 def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
-	tokens = content_utils.tokenize_content(text)
+	tokens = tokenize_content(text)
 	result = set() if unique else []
 	for text in tokens:
 		ngrams = _ngram_cache(text, minsize, maxsize, unique, lower)
@@ -44,11 +45,14 @@ def ngram_filter(text, minsize=3, maxsize=None, unique=True, lower=True):
 
 @repoze.lru.lru_cache(100)
 def compute_ngrams(text, lang="en"):
-	u = component.getUtility(cp_interfaces.INgramComputer, name=lang)
-	result = u.compute(text) if text else u''
+	if not text or not isinstance(text, string_types):
+		return ''
+
+	u = component.getUtility(INgramComputer, name=lang)
+	result = u.compute(text)
 	return unicode(result)
 
-@interface.implementer(cp_interfaces.INgramComputer)
+@interface.implementer(INgramComputer)
 class _DefaultNgramComputer(object):
 
 	minsize = default_ngram_minsize
@@ -59,5 +63,5 @@ class _DefaultNgramComputer(object):
 			result = ngram_filter(text, self.minsize, self.maxsize)
 			result = ' '.join(result)
 		else:
-			result = u''
+			result = ''
 		return result

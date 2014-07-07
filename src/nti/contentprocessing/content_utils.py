@@ -11,9 +11,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import re
-import six
 import difflib
 import unicodedata
+from six import string_types
 
 from pkg_resources import resource_filename
 
@@ -29,13 +29,14 @@ from nltk.tokenize import RegexpTokenizer
 
 import repoze.lru
 
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from . import space_pattern
 from . import non_alpha_pattern
 from . import special_regexp_chars
 from . import default_punk_char_pattern
 from . import interfaces as cp_interfaces
+from .interfaces import IContentTokenizer
 from . import default_punk_char_expression
 from . import default_word_tokenizer_pattern
 from . import default_punk_char_pattern_plus
@@ -72,17 +73,22 @@ def _default_punctuation_char_pattern_plus():
 
 @repoze.lru.lru_cache(500)
 def tokenize_content(text, lang='en'):
-	tokenizer = component.getUtility(cp_interfaces.IContentTokenizer, name=lang)
-	result = tokenizer.tokenize(unicode(text)) if text else ()
+	if not text or not isinstance(text, string_types):
+		return ()
+
+	tokenizer = component.getUtility(IContentTokenizer, name=lang)
+	result = tokenizer.tokenize(text)
 	return result
 
 split_content = tokenize_content
 
 def get_content(text=None, lang="en"):
-	text = unicode(text) if text else None
-	result = tokenize_content(text, lang) if text else ()
+	if not text or not isinstance(text, string_types):
+		return ''
+
+	result = tokenize_content(text, lang)
 	result = ' '.join(result)
-	return unicode(result)
+	return result
 
 def normalize(u, form='NFC'):
 	"""
@@ -104,17 +110,17 @@ class _ContentTokenizer(object):
 
 	@classmethod
 	def tokenize(cls, content):
-		if content and isinstance(content, six.string_types):
-			plain_text = cls.to_plain_text(content)
-			words = cls.tokenizer.tokenize(plain_text)
-		else:
-			words = ()
-		return words
+		if not content or not isinstance(content, string_types):
+			return ()
+
+		plain_text = cls.to_plain_text(content)
+		return cls.tokenizer.tokenize(plain_text)
+
 
 	@classmethod
 	def to_plain_text(cls, content):
 		text = component.getAdapter(content,
-									frg_interfaces.IPlainTextContentFragment,
+									IPlainTextContentFragment,
 									name='text')
 		return text
 
@@ -152,7 +158,7 @@ default_trans_table = None
 def _default_content_translation_table():
 
 	global default_trans_table
-	
+
 	if default_trans_table is None:
 		name = resource_filename(__name__, "punctuation-en.txt")
 		with open(name, 'r') as src:
