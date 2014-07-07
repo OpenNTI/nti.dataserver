@@ -225,12 +225,8 @@ class PersonalBlogPostView(_AbstractForumPostView):
 		return PersonalBlogEntryPost.mimeType
 	_factory = PersonalBlogEntry
 
-@view_config( name='' )
-@view_config( name=VIEW_CONTENTS )
-@view_defaults( context=frm_interfaces.ICommunityBoard,
-				**_c_view_defaults)
-class CommunityBoardPostView(_AbstractForumPostView):
-	""" Given an incoming IPost, creates a new forum in the community board """
+class AbstractBoardPostView(_AbstractForumPostView):
+	""" Given an incoming IPost, creates a new forum in the board """
 
 	# Still read the incoming IPost-like thing, but we discard it since our "topic" (aka forum)
 	# does not have a headline
@@ -243,18 +239,35 @@ class CommunityBoardPostView(_AbstractForumPostView):
 	def _override_content_type(self):
 		return Post.mimeType
 
-	def _constructor(self, external_value):
+	_forum_factory = None
+
+	def _constructor(self, external_value=None):
+		return self._forum_factory()
+
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.ICommunityBoard,
+				**_c_view_defaults)
+class CommunityBoardPostView(AbstractBoardPostView):
+	""" Given an incoming IPost, creates a new forum in the community board """
+
+	_forum_factory = CommunityForum
+
+
+	def _constructor(self, external_value=None):
 		# TODO: cleaner way to handle community forums with ACL
 		# TODO: We should do some validation of the entity names?
 		# By doing this, we potentially allow the user to create something he cannot
 		# subsequently access, violating a tenet by returning this
 		if external_value and 'ACL' in external_value:
-			result = ACLCommunityForum()
-			# at this point the ACE objects should have been created when _read_incoming_post is called
-			result.ACL = [x for x in external_value['ACL'] if frm_interfaces.IForumACE.providedBy(x)]
-		else:
-			result = CommunityForum()
-		return result
+			def f():
+				result = ACLCommunityForum()
+				# at this point the ACE objects should have been created when _read_incoming_post is called
+				result.ACL = [x for x in external_value['ACL'] if frm_interfaces.IForumACE.providedBy(x)]
+				return result
+			self._forum_factory = f
+		return super(CommunityBoardPostView,self)._constructor(external_value)
 
 	def _get_topic_creator( self ):
 		return self.request.context.creator # the community
@@ -424,6 +437,8 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		return (self.request.context,)
 
 @view_config( context=frm_interfaces.IDefaultForumBoard )
+@view_defaults( name=VIEW_CONTENTS,
+				**_r_view_defaults )
 class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
 
 	def __init__( self, request ):

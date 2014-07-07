@@ -28,6 +28,7 @@ from hamcrest import has_property
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_entries
+from hamcrest import not_none
 from hamcrest import calling
 from hamcrest import raises
 
@@ -165,6 +166,7 @@ class TestApplicationBundlesForum(AbstractTestApplicationForumsBaseMixin,Applica
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
 
 	board_ntiid = None
+	board_ntiid_checker = not_none()
 	board_content_type = None
 
 	forum_ntiid = None
@@ -195,3 +197,7 @@ class TestApplicationBundlesForum(AbstractTestApplicationForumsBaseMixin,Applica
 
 	def test_user_can_POST_new_forum_entry_resulting_in_blog_being_sublocation( self ):
 		pass # not applicable
+
+	def _get_board_href_via_rel(self):
+		# XXX: Where is the board decorated? On the bundle, right?
+		return self.board_pretty_url

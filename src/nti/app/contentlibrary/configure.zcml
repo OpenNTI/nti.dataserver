@@ -81,6 +81,9 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle" />
 
+	<adapter factory=".forum._ContentBoardACLProvider" />
+	<adapter factory=".forum._ContentForumACLProvider" />
+
 
 	<!-- Traversal to the forum objects -->
 	<adapter factory="nti.dataserver.traversal.DefaultAdapterTraversable"
