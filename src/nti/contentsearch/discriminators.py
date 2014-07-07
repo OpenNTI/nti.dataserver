@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from six import string_types
+
 import zope.intid
 from zope import component
 
@@ -29,7 +31,7 @@ def get_content(text, lang='en'):
 	else:
 		result = ' '.join(tokens)
 	return unicode(result)
-		
+
 def get_oid(obj):
 	result = oids.to_external_ntiid_oid(obj)
 	return result
@@ -83,11 +85,22 @@ def get_title(obj, default=None, language='en'):
 	result = get_content(adapted.title, language) if adapted else None
 	return result.lower() if result else default
 
+def _as_value_and_ngrams(value, default=None, lower=True, language='en'):
+	value_is_string = isinstance(value, string_types)
+	value_is_nonempty_string = value_is_string and bool(value)
+
+	if value_is_nonempty_string:
+		n_grams = compute_ngrams(value, language)
+		result = '%s %s' % (value, n_grams)
+		if lower:
+			result = result.lower()
+	else:
+		result = default
+	return result
+
 def get_title_and_ngrams(obj, default=None, language='en'):
 	title = get_title(obj, default, language)
-	n_grams = compute_ngrams(title, language)
-	result = '%s %s' % (title, n_grams) if title else None
-	return result.lower() if result else default
+	return _as_value_and_ngrams(title, default, True, language)
 
 def get_last_modified(obj, default=None):
 	adapted = search_interfaces.ILastModifiedResolver(obj, None)
@@ -150,15 +163,13 @@ get_redactionExplanation = get_redaction_explanation
 
 def get_replacement_content_and_ngrams(obj, default=None, language='en'):
 	result = get_replacement_content(obj, default, language)
-	ngrams = compute_ngrams(result, language)
-	result = '%s %s' % (result, ngrams) if result else None
-	return result or default
+	return _as_value_and_ngrams(result, default, False, language)
+
 
 def get_redaction_explanation_and_ngrams(obj, default=None, language='en'):
 	result = get_redaction_explanation(obj, default, language)
-	ngrams = compute_ngrams(result, language) if result else None
-	result = '%s %s' % (result, ngrams) if result else None
-	return result or default
+	return _as_value_and_ngrams(result, default, False, language)
+
 
 get_note_title = get_title
 get_note_title_and_ngrams = get_title_and_ngrams
@@ -174,11 +185,12 @@ def get_object_content(obj, default=None, language='en'):
 
 def get_object_ngrams(obj, default=None, language='en'):
 	content = get_object_content(obj, default, language)
-	n_grams = compute_ngrams(content, language) if content else default
-	return n_grams if n_grams else default
+	if isinstance(content, string_types) and content:
+		result = compute_ngrams(content, language) or default
+	else:
+		result = default
+	return result
 
 def get_content_and_ngrams(obj, default=None, language='en'):
 	content = get_object_content(obj, language)
-	n_grams = compute_ngrams(content, language)
-	result = '%s %s' % (content, n_grams) if content else u''
-	return result or default
+	return _as_value_and_ngrams(content, default, False, language)
