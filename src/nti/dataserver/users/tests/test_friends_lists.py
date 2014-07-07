@@ -318,7 +318,7 @@ class TestDFL(DataserverLayerTest):
 
 
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_sharing_with_dfl(self):
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans( ds ):
@@ -365,7 +365,7 @@ class TestDFL(DataserverLayerTest):
 			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( owner_user, child_note, 1 )
 
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_sharing_with_dfl_member_shares_top_level(self):
 		"""
 		If a member of the DFL shares something unrelated with the DFL,
@@ -411,7 +411,7 @@ class TestDFL(DataserverLayerTest):
 				__traceback_info__ = member, ids
 				assert_that( ids, contains( child_note.containerId ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_replace_dfl_sharing_with_a_member(self):
 		"""
 		After removing the DFL share from a note and replace it with a direct sharing

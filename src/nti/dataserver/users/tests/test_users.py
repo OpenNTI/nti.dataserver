@@ -202,7 +202,7 @@ class TestUser(DataserverLayerTest):
 		assert_that( user.notificationCount, has_property( 'value', 2 ) )
 
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_creating_friendslist_goes_to_stream(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 
@@ -261,7 +261,7 @@ class TestUser(DataserverLayerTest):
 		assert_that( persistent.wref.WeakRef( note ), is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 		assert_that( note.id, is_( 'foobar' ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_unshare_note_with_dynamic_friendslist(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -293,7 +293,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 			assert_that( user2.getSharedContainer( 'c1' ), has_length( 0 ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_unshare_note_with_friendslist(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -322,7 +322,7 @@ class TestUser(DataserverLayerTest):
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_with_dfl(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -358,7 +358,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( user2, is_in( note.sharingTargets ) )
 			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_community_unshare_with_community(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -400,7 +400,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
 
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_directly(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -442,7 +442,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( stream, has_length( 1 ) )
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_community_unshare_directly(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -505,7 +505,7 @@ class TestUser(DataserverLayerTest):
 			del user2._noticeChange
 
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_unshare_note_with_dynamic_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -537,7 +537,7 @@ class TestUser(DataserverLayerTest):
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_share_unshare_note_with_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -569,7 +569,7 @@ class TestUser(DataserverLayerTest):
 
 			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
 
-	@mock_dataserver.WithMockDS(with_changes=True)
+	@mock_dataserver.WithMockDS
 	@time_monotonically_increases
 	def test_share_note_with_updates(self):
 		with mock_dataserver.mock_db_trans():
@@ -604,7 +604,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( evts[0].object, has_property('type', 'Shared') )
 			assert_that( evts[0].object, has_property('object', c_note) )
 
-	@mock_dataserver.WithMockDS(with_changes=True)
+	@mock_dataserver.WithMockDS
 	def test_delete_shared_note_notifications(self):
 		with mock_dataserver.mock_db_trans():
 			user1 = User.create_user( mock_dataserver.current_mock_ds, username='foo@bar' )
@@ -933,7 +933,7 @@ class TestUser(DataserverLayerTest):
 			assert_that( to_external_object(user),
 						 does_not( has_key( 'DynamicMemberships')) )
 
-	@WithMockDS(with_changes=True)
+	@WithMockDS
 	def test_owned_dfls_in_xxx_intids(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
