@@ -13,6 +13,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not as does_not
 from hamcrest import none
+from hamcrest import contains_inanyorder
 from hamcrest import has_property
 from hamcrest import contains
 from hamcrest import greater_than
@@ -66,6 +67,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 
 		assert_that( package,
 					 validly_provides( interfaces.IFilesystemContentPackage ) )
+		assert_that( package, has_property('PlatformPresentationResources', has_length(3)))
 		assert_that( package.creators, is_( ('Jason',) ) )
 		assert_that( package.children[-1].children[-1],
 					 has_property( 'embeddedContainerNTIIDs',
@@ -94,6 +96,18 @@ class TestFilesystem(ContentlibraryLayerTest):
 																  'separator': '.' } } ) ) )
 		assert_that( ext_package, does_not( has_key( 'isCourse' ) ) )
 		assert_that( ext_package, does_not( validly_provides( interfaces.ILegacyCourseConflatedContentPackage ) ) )
+
+		assert_that( ext_package, has_entry( 'PlatformPresentationResources',
+											 contains_inanyorder(
+												 has_entry('PlatformName', 'iPad'),
+												 has_entry('PlatformName', 'webapp'),
+												 has_entry('PlatformName', 'shared')) ) )
+
+		assert_that( ext_package, has_entry( 'PlatformPresentationResources',
+											 contains_inanyorder(
+												 has_entry('href', '/TestFilesystem/presentation-assets/iPad/v1/'),
+												 has_entry('href', '/TestFilesystem/presentation-assets/webapp/v1/'),
+												 has_entry('href', '/TestFilesystem/presentation-assets/shared/v1/')) ) )
 
 		json.loads( json.dumps( ext_package ) ) # Round trips through JSON
 

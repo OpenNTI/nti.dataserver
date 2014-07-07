@@ -188,8 +188,6 @@ class FilesystemBucket(AbstractBucket,
 			else:
 				yield self._key_type(self, k)
 
-from nti.dublincore.interfaces import ILastModified
-
 @interface.implementer(ILastModified)
 class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentPackageEnumeration,
 									_FilesystemTimesMixin):

@@ -279,7 +279,7 @@ class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
 	"""
 
 class IPersistentContentPackageLibrary(IPersistent,
-									  ISyncableContentPackageLibrary):
+									   ISyncableContentPackageLibrary):
 	"""
 	A content library whose contents are expected to persist
 	and which needs synchronization only when external
@@ -303,8 +303,19 @@ class IDisplayablePlatformPresentationResources(interface.Interface):
 	PlatformName = TextLine(title="The name of the platform this package is meant for.")
 	InheritPlatformName = TextLine(title="A platform to inherit from",
 								   description="If present, this object should merge missing resources "
-								   "from this named platform.")
-	# XXX: Fill in missing to match disk layout
+								   "from this named platform.",
+								   required=False)
+	Version = Int(title="The version of the layout of resources",
+				  default=1, min=1 )
+
+	root = Object(IDelimitedHierarchyBucket,
+				 title="The key designating this entry in the hierarchy.",
+				 default=None)
+	root.setTaggedValue( '_ext_excluded_out', True)
+
+
+	# XXX: Fill in missing to match disk layout. Should we have pointers
+	# to children?
 
 class IDisplayableContent(IZContained,
 						  IDCOptionalDescriptiveProperties,

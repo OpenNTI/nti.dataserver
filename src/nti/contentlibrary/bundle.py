@@ -41,10 +41,12 @@ from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
+from .presentationresource import DisplayableContentMixin
 
 @interface.implementer(IContentPackageBundle,
 					   IAttributeAnnotatable)
 class ContentPackageBundle(CreatedAndModifiedTimeMixin,
+						   DisplayableContentMixin,
 						   SchemaConfigured):
 
 	"""
@@ -54,7 +56,8 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 	__external_can_create__ = False
 
 	# Be careful not to overwrite what we inherit
-	createFieldProperties(IDisplayableContent)
+	createFieldProperties(IDisplayableContent,
+						  omit='PlatformPresentationResources')
 	createDirectFieldProperties(IContentPackageBundle)
 
 	# the above defined the ntiid property and the name
@@ -70,6 +73,24 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 	subjects = ()
 	contributors = ()
 	publisher = ''
+
+	@property
+	def PlatformPresentationResources(self):
+		"""
+		If we do not have a set of presentation assets,
+		we echo the first content package we have that does contain
+		them. This should simplify things for the clients.
+		"""
+		ours = super(ContentPackageBundle,self).PlatformPresentationResources
+		if ours:
+			return ours
+
+		for package in self.ContentPackages:
+			theirs = package.PlatformPresentationResources
+			if theirs:
+				return theirs
+
+		return ()
 
 class PersistentContentPackageBundle(PersistentCreatedAndModifiedTimeObject,
 									 ContentPackageBundle):
