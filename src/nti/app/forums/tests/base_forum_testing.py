@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
+import unittest
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import is_
@@ -138,6 +138,13 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 
 	forum_comment_unique = 'UNIQUETOCOMMENT'
 	forum_headline_unique = 'UNIQUETOHEADLINE'
+
+	# Define these to get testing at the board level
+	board_pretty_url = None
+	board_link_rel = None
+	board_ntiid = None
+	board_ntiid_checker = None # Set this to board_ntiid or something like not_none()
+	board_content_type = None
 
 	def setUp(self):
 		super(AbstractTestApplicationForumsBase,self).setUp()
@@ -1049,8 +1056,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases
 	def test_community_user_can_search_for_publish_unpublished_comments(self):
-		#from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
-
 		fixture = UserCommunityFixture( self )
 		self.testapp = testapp = fixture.testapp
 		testapp2 = fixture.testapp2
@@ -1139,6 +1144,69 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		# When published, it is visible to the other user
 		testapp.post( pub_url )
 		_check_canvas( res, res.json_body['body'][1], acc_to_other=True )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_normal_user_cannot_post_to_board(self):
+		if not self.board_pretty_url:
+			raise unittest.SkipTest('No board url')
+		# attempting to do so gets you DENIED
+		self.testapp.post_json( self.board_pretty_url, self._create_post_data_for_POST(), status=403 )
+
+
+	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True)
+	def test_super_user_can_post_to_board_to_create_forum(self):
+		if not self.board_pretty_url:
+			raise unittest.SkipTest('No board url')
+
+		# relying on @nextthought.com automatically being an admin
+		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
+		forum_data = self._create_post_data_for_POST()
+		# Incoming mimetype is actually unimportant at this point
+		del forum_data['Class']
+		del forum_data['MimeType']
+		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
+
+		# Which creates a forum
+		assert_that( forum_res, has_property( 'content_type', self.forum_content_type ) )
+		forum_url = self.board_pretty_url + '/' + forum_res.json_body['ID']
+		assert_that( forum_res.json_body, has_entry( 'href', forum_url ) )
+		assert_that( forum_res, has_property( 'location', 'http://localhost' + forum_url + '/' ) )
+		assert_that( forum_res.json_body, has_entry( 'ContainerId', self.board_ntiid_checker ) )
+		self.require_link_href_with_rel( forum_res.json_body, 'edit' )
+		assert_that( forum_res.json_body, has_entry( 'title', forum_data['title'] ) )
+		assert_that( forum_res.json_body, has_entry( 'description', forum_data['description'] ) )
+
+	def _get_board_href_via_rel(self):
+		# default board has a contents href which can be fetched,
+		# returning the default forum
+		community = self.resolve_user(username=self.default_community)
+		board_href = self.require_link_href_with_rel( community, self.board_link_rel )
+		return board_href
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_default_board_contents( self ):
+		if not self.board_pretty_url:
+			raise unittest.SkipTest('No board url')
+
+		board_href = self._get_board_href_via_rel()
+		assert_that( board_href, is_(self.board_pretty_url))
+
+		board_res = self.testapp.get( board_href )
+		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
+		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
+		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid_checker ) )
+		assert_that( board_res.json_body, has_entry( 'href', self.board_pretty_url ) )
+		__traceback_info__ = board_res.json_body
+		contents_href = self.require_link_href_with_rel(board_res.json_body, 'contents')
+		add = self.link_with_rel( board_res.json_body, 'add' )
+		if add is not None:
+			assert_that(add, has_entry('method', 'POST'))
+			assert_that(contents_href, is_(add['href']))
+
+		contents_res = self.testapp.get( contents_href )
+		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( contents_res.json_body['Items'][0], has_entry( 'MimeType', _plain( self.forum_content_type ) ) )
+
 
 	def _create_post_data_for_POST(self):
 		unique = self.forum_headline_unique

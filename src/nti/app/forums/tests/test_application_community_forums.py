@@ -73,6 +73,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:TheCommunity-Topic:GeneralCommunity-Forum.'
 
 	board_ntiid = 'tag:nextthought.com,2011-10:TheCommunity-Board:GeneralCommunity-DiscussionBoard'
+	board_ntiid_checker = board_ntiid
 	board_content_type = None
 
 	forum_content_type = 'application/vnd.nextthought.forums.communityforum+json'
@@ -98,28 +99,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		href = self.require_link_href_with_rel( user, self.board_link_rel )
 		assert_that( href, is_( self.board_pretty_url ) )
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_default_board_contents( self ):
-		# default board has a contents href which can be fetched,
-		# returning the default forum
-		community = self.resolve_user(username=self.default_community)
-		board_href = self.require_link_href_with_rel( community, self.board_link_rel )
-
-		board_res = self.testapp.get( board_href )
-		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
-		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
-		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
-		assert_that( board_res.json_body, has_entry( 'href', self.board_pretty_url ) )
-		__traceback_info__ = board_res.json_body
-		contents_href = self.require_link_href_with_rel(board_res.json_body, 'contents')
-		add = self.link_with_rel( board_res.json_body, 'add' )
-		if add is not None:
-			assert_that(add, has_entry('method', 'POST'))
-			assert_that(contents_href, is_(add['href']))
-
-		contents_res = self.testapp.get( contents_href )
-		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
-		assert_that( contents_res.json_body['Items'][0], has_entry( 'MimeType', _plain( self.forum_content_type ) ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_default_board_can_be_resolved_by_ntiid( self ):
@@ -129,33 +108,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
 		assert_that( board_res.json_body, has_entry( 'NTIID', self.board_ntiid ) )
 		self.require_link_href_with_rel( board_res.json_body, 'contents' )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_normal_user_cannot_post_to_board(self):
-		# attempting to do so gets you DENIED
-		self.testapp.post_json( self.board_pretty_url, self._create_post_data_for_POST(), status=403 )
-
-
-	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True)
-	def test_super_user_can_post_to_board_to_create_forum(self):
-		# relying on @nextthought.com automatically being an admin
-		adminapp = _TestApp( self.app, extra_environ=self._make_extra_environ(username='sjohnson@nextthought.com') )
-		forum_data = self._create_post_data_for_POST()
-		# Incoming mimetype is actually unimportant at this point
-		del forum_data['Class']
-		del forum_data['MimeType']
-		forum_res = adminapp.post_json( self.board_pretty_url, forum_data, status=201 )
-
-		# Which creates a forum
-		assert_that( forum_res, has_property( 'content_type', self.forum_content_type ) )
-		forum_url = self.board_pretty_url + '/' + forum_res.json_body['ID']
-		assert_that( forum_res.json_body, has_entry( 'href', forum_url ) )
-		assert_that( forum_res, has_property( 'location', 'http://localhost' + forum_url + '/' ) )
-		assert_that( forum_res.json_body, has_entry( 'ContainerId', self.board_ntiid ) )
-		self.require_link_href_with_rel( forum_res.json_body, 'edit' )
-		assert_that( forum_res.json_body, has_entry( 'title', forum_data['title'] ) )
-		assert_that( forum_res.json_body, has_entry( 'description', forum_data['description'] ) )
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	@time_monotonically_increases

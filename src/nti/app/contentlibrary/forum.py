@@ -17,9 +17,9 @@ logger = __import__('logging').getLogger(__name__)
 from nti.dataserver.contenttypes.forums import MessageFactory as _
 
 from zope import interface
+from zope import component
 from zope import schema
 
-from nti.utils.property import CachedProperty
 from nti.externalization.oids import to_external_ntiid_oid
 
 ### Board
@@ -31,19 +31,11 @@ from .interfaces import NTIID_TYPE_CONTENT_BOARD
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
 
-from nti.dataserver.authorization_acl import ace_allowing
-from nti.dataserver.authorization_acl import acl_from_aces
-from nti.dataserver.interfaces import IPrincipal
-from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
-
-from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.authorization import ACT_CREATE
-
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
 	_ntiid_type = NTIID_TYPE_CONTENT_BOARD
 
-	mimeType = 'application/vnd.nextthought.forums.contentboard'
+	mime_type = mimeType = 'application/vnd.nextthought.forums.contentboard'
 
 
 	@property
@@ -66,12 +58,8 @@ class ContentBoard(GeneralBoard):
 			raise errors[0][1]
 		return forum
 
-	@CachedProperty
-	def __acl__(self):
-		# Likewise with the acl
-		prin = IPrincipal( AUTHENTICATED_GROUP_NAME )
-		return acl_from_aces( ace_allowing( prin, ACT_READ, ContentBoard),
-							  ace_allowing( prin, ACT_CREATE, ContentBoard))
+	def __setitem__(self, k, v):
+		return GeneralBoard.__setitem__(self, k, v)
 
 
 from nti.dataserver.interfaces import system_user
@@ -96,12 +84,17 @@ from nti.dataserver.contenttypes.forums.forum import GeneralForum
 class ContentForum(GeneralForum):
 	_ntiid_type = NTIID_TYPE_CONTENT_FORUM
 
-	mimeType = 'application/vnd.nextthought.forums.contentforum'
+	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforum'
 
 	@property
 	def NTIID(self):
 		# Fall-back to OIDs for now
 		return to_external_ntiid_oid(self)
+
+	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
+		# if we get here, we're authenticated
+		# See above about the sharing stuff
+		return True
 
 ### Topic
 
@@ -160,16 +153,50 @@ from nti.dataserver.contenttypes.forums.post import GeneralForumComment
 
 @interface.implementer(IContentHeadlinePost)
 class ContentHeadlinePost(GeneralHeadlinePost):
-	mimeType = 'application/vnd.nextthought.forums.contentheadlinepost'
+	mime_type = mimeType = 'application/vnd.nextthought.forums.contentheadlinepost'
 
 @interface.implementer(IContentCommentPost)
 class ContentCommentPost(GeneralForumComment):
-	mimeType = 'application/vnd.nextthought.forums.contentforumcomment'
+	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforumcomment'
 
 	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
 		# if we get here, we're authenticated
 		# See above about the sharing stuff
 		return True
+
+### ACLs
+
+from nti.dataserver.contenttypes.forums.acl import _CommunityForumACLProvider
+from nti.dataserver.contenttypes.forums.acl import _CommunityBoardACLProvider
+
+from nti.dataserver.authorization_acl import ace_allowing
+from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
+
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_CREATE
+
+@component.adapter(IContentBoard)
+class _ContentBoardACLProvider(_CommunityBoardACLProvider):
+	"""
+	We want exactly the same thing as the community gets:
+	admins can create/delete forums, and the creator gets nothing special,
+	with nothing inherited.
+	"""
+
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		acl.append( ace_allowing( AUTHENTICATED_GROUP_NAME, ACT_READ, ContentBoard ))
+
+		#acl.append( ace_allowing( prin, ACT_CREATE, ContentBoard ))
+		super(_ContentBoardACLProvider,self)._extend_acl_after_creator_and_sharing(acl)
+
+@component.adapter(IContentForum)
+class _ContentForumACLProvider(_CommunityForumACLProvider):
+	"""
+	Lets everyone create entries inside it right now.
+	"""
+
+	def _get_sharing_target_names(self):
+		return ('Everyone', AUTHENTICATED_GROUP_NAME)
 
 ### Forum decorators
 from nti.externalization.singleton import SingletonDecorator
@@ -207,8 +234,17 @@ from pyramid.view import view_defaults
 ### XXX: Finish refactoring this to break the dependency
 from nti.app.forums.views import _AbstractForumPostView
 from nti.app.forums.views import _AbstractTopicPostView
+from nti.app.forums.views import AbstractBoardPostView
 from nti.app.forums.views import _c_view_defaults
 from nti.app.forums import VIEW_CONTENTS
+
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
+@view_defaults( context=IContentBoard,
+				**_c_view_defaults)
+class ContentBoardPostView(AbstractBoardPostView):
+	_forum_factory = ContentForum
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
