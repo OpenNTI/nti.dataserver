@@ -19,6 +19,8 @@ from .interfaces import IPotentialLegacyCourseConflatedContentPackage
 from .interfaces import IDisplayableContent
 from .interfaces import ILegacyCourseConflatedContentPackage
 
+from .presentationresource import DisplayableContentMixin
+
 from nti.utils.property import alias
 
 from nti.schema.schema import PermissiveSchemaConfigured
@@ -61,7 +63,8 @@ class ContentUnit(PermissiveSchemaConfigured,
 
 
 @interface.implementer(IPotentialLegacyCourseConflatedContentPackage)
-class ContentPackage(ContentUnit):
+class ContentPackage(ContentUnit,
+					 DisplayableContentMixin):
 	"""
 	Simple implementation of :class:`IContentPackage`.
 	"""
@@ -70,7 +73,9 @@ class ContentPackage(ContentUnit):
 
 	index_last_modified = -1
 
-	createFieldProperties(IDisplayableContent)
+	createFieldProperties(IDisplayableContent,
+						  # Omit PPR because of the mixin; otherwise we would override the mixin
+						  omit=('PlatformPresentationResources'))
 	createDirectFieldProperties(IContentPackage)
 	createDirectFieldProperties(IPotentialLegacyCourseConflatedContentPackage)
 

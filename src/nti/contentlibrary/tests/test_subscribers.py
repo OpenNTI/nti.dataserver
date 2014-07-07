@@ -29,6 +29,7 @@ from hamcrest import has_entry
 from hamcrest import greater_than
 from hamcrest import empty as is_empty
 from hamcrest import contains
+from hamcrest import contains_inanyorder
 
 
 from nti.testing.matchers import validly_provides
@@ -191,7 +192,15 @@ class TestSubscribers(ContentlibraryLayerTest):
 													   'root', '/localsite/ContentPackageBundles/ABundle/',
 													   'NTIID', bundle.ntiid,
 													   'Last Modified', greater_than(0),
-												   )))
+													   'PlatformPresentationResources', contains_inanyorder(
+														   has_entry('PlatformName', 'iPad'),
+														   has_entry('PlatformName', 'webapp'),
+														   has_entry('PlatformName', 'shared')),
+													   'PlatformPresentationResources', contains_inanyorder(
+														   has_entry('href', '/TestFilesystem/presentation-assets/iPad/v1/'),
+														   has_entry('href', '/TestFilesystem/presentation-assets/webapp/v1/'),
+														   has_entry('href', '/TestFilesystem/presentation-assets/shared/v1/')) )
+									   ))
 
 		# test update existing object
 

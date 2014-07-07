@@ -150,6 +150,8 @@ class _ContentPackageExternal(object):
 			setattr( self.package, presentation_properties_cache_name, presentation_properties )
 
 		result['PresentationProperties'] = presentation_properties
+
+		result['PlatformPresentationResources'] = toExternalObject(self.package.PlatformPresentationResources)
 		return result
 
 
@@ -175,6 +177,24 @@ class _ContentBundleIO(InterfaceObjectIO):
 		root_url = _root_url_of_key( self._ext_self.root )
 		result._root_url = root_url
 		result['root'] = root_url
+
+		return result
+
+
+	def updateFromExternalObject(self, *args, **kwargs):
+		raise NotImplementedError()
+
+@component.adapter(interfaces.IDisplayablePlatformPresentationResources)
+class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
+
+	_ext_iface_upper_bound = interfaces.IDisplayablePlatformPresentationResources
+
+	def toExternalObject(self, *args, **kwargs):
+		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
+
+		root_url = _root_url_of_key( self._ext_self.root )
+		result._root_url = root_url
+		result['href'] = root_url
 
 		return result
 
