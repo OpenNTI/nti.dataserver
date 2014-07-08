@@ -11,8 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+#disable: accessing protected members, too many methods, unused variables
+#pylint: disable=I0011,W0212,R0904,W0612
 
 
 from hamcrest import assert_that
@@ -20,7 +20,7 @@ from hamcrest import is_
 from hamcrest import not_none
 from hamcrest import contains
 
-from nti.testing import base
+
 from nti.testing.matchers import is_empty
 
 from .mock_dataserver import WithMockDSTrans
@@ -28,10 +28,15 @@ from .mock_dataserver import DataserverLayerTest
 
 from .. import users
 from ..contenttypes import Note
+from ..interfaces import IDeletedObjectPlaceholder
 
+from zope import interface
 from zope import component
 from nti.dataserver.metadata_index import CATALOG_NAME
 from zope.catalog.interfaces import ICatalog
+
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 
 class TestMetadataIndex(DataserverLayerTest):
 
@@ -189,3 +194,29 @@ class TestMetadataIndex(DataserverLayerTest):
 		assert_that( list( catalog.searchResults(mimeType={'any_of': ('application/vnd.nextthought.change',)},
 												 containerId=('',''),) ),
 					 is_empty() )
+
+	@WithMockDSTrans
+	def test_deleting_note_as_placeholder(self):
+		greg, jason, root_note, note, catalog = self._fixture()
+
+		self._check_catalog( catalog, note, root_note )
+
+		# Now pretend to delete the note
+		interface.alsoProvides(note, IDeletedObjectPlaceholder)
+		notify(ObjectModifiedEvent(note))
+
+
+		for query in ( {'topics': 'deletedObjectPlaceholder'}, ):
+			__traceback_info__ = query
+			results = list(catalog.searchResults(**query))
+
+			assert_that( results, contains(note) )
+
+		interface.noLongerProvides(note,IDeletedObjectPlaceholder)
+		notify(ObjectModifiedEvent(note))
+
+		for query in ( {'topics': 'deletedObjectPlaceholder'}, ):
+			__traceback_info__ = query
+			results = list(catalog.searchResults(**query))
+
+			assert_that( results, is_empty() )

@@ -30,6 +30,14 @@ class TopicIndex(zope.index.topic.TopicIndex,
 	"""
 	A topic index that implements IContained and ICatalogIndex for use with
 	catalog indexes.
+
+	To summarize, a topic index is a way to divide objects into a set
+	of groups (aka topics). The groups are determined by the contents
+	of this object, which are called filters. Each filter is
+	conceptually like a mini-index itself, but in practice most of
+	them are simply used to store group membership when some criteria
+	are met; for that purpose the :class:`.ExtentFilteredSet` is
+	ideal.
 	"""
 
 	#: We default to 64-bit btrees.
@@ -80,21 +88,37 @@ class ExtentFilteredSet(zope.index.topic.filter.FilteredSetBase):
 	family = BTrees.family64
 
 	#: The extent object. We pull this apart to
-	#: get the value for `_ids`
+	#: get the value for `_ids` (used in the implementation
+	#: of `unindex_doc`)
 	_extent = None
+
+	#: The set-like object that holds docids. In our case,
+	#: this is an extent.
+	_ids = None
 
 	def __init__( self, id, filter, family=None ):
 		"""
 		Create a new filtered extent.
 
-		:param filter: A callable object (or none, if you will be implementing
-			that logic yourself). This will be available as the value of
-			:meth:`getExpression`. The callable takes three parameters:
-			this object, the docid, and the document.
+		:param filter: A callable object of three parameters: this
+			object, the docid, and the document. This will be
+			available as the value of :meth:`getExpression`.
+			If you pass `None`, you can override getExpression
+			yourself.
+
+			*Remember* that this is a persistent object, so if you
+			pass a filter, it must be picklable. In general and for
+			the most flexibility, instead of passing something like
+			`IFoo.providedBy`, instead pass a global (function) object
+			in your own module.
 		"""
 		super(ExtentFilteredSet, self).__init__( id, filter, family=family )
+		# The super implementation calls clear() to establish
+		# `_ids`
+
 
 	def clear(self):
+		# Note that we ignore the super implementation.
 		self._extent = zc.catalog.extentcatalog.FilterExtent(self.getExpression(),
 															 family=self.family)
 		self._ids = self._extent.set

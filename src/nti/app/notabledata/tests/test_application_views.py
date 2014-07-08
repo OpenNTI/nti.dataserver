@@ -36,8 +36,11 @@ from nti.testing.matchers import is_true
 from nti.externalization.internalization import update_from_external_object
 
 from zope import component
+from zope import interface
+from zope import lifecycleevent
 from ..interfaces import IUserNotableData
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
@@ -309,6 +312,20 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   has_item(has_entry('NTIID',ext_ntiid))))
 
 		self._check_notable_data(length=initial_count+1)
+
+		# If we mark it deleted, it is no longer notable
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			jason = self._get_user('jason')
+
+			top_n = jason.getContainedObject( 'tag:nti:foo', top_n_id )
+			interface.alsoProvides(top_n, IDeletedObjectPlaceholder)
+			lifecycleevent.modified(top_n)
+
+		res = self.testapp.get(path)
+		assert_that( res.json_body, has_entry( 'TotalItemCount', initial_count))
+		assert_that( res.json_body, has_entry( 'Items', has_length(initial_count) ))
+
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,

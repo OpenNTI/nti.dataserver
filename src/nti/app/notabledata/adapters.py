@@ -28,6 +28,10 @@ from nti.utils.property import annotation_alias
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 from nti.dataserver.metadata_index import IX_TAGGEDTO
+from nti.dataserver.metadata_index import IX_TOPICS
+from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
+
 
 from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
 
@@ -170,7 +174,7 @@ class UserNotableData(AbstractAuthenticatedView):
 		catalog = self._catalog
 		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
 
-		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
+		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
 
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
@@ -214,7 +218,8 @@ class UserNotableData(AbstractAuthenticatedView):
 		# TODO: See about optimizing this query plan. ZCatalog has a
 		# CatalogPlanner object that we might could use.
 		catalog = self._catalog
-		toplevel_intids_extent = catalog['topics']['topLevelContent'].getExtent()
+		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
+		deleted_intids_extent = catalog[IX_TOPICS][TP_DELETED_PLACEHOLDER].getExtent()
 
 		# Things tagged to me or my security-aware dynamic memberships
 		# XXX: This is probably slow? How many unions does this wind up doing?
@@ -280,7 +285,10 @@ class UserNotableData(AbstractAuthenticatedView):
 		# Make sure none of the stuff we created got in
 		intids_created_by_me = self._intids_created_by_me
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
-		return safely_viewable_intids
+
+		# Make sure nothing that's deleted got in
+		non_deleted_safely_viewable_intids = safely_viewable_intids - deleted_intids_extent
+		return non_deleted_safely_viewable_intids
 
 	def get_notable_intids(self, min_created_time=None, max_created_time=None):
 		self._time_range = (min_created_time, max_created_time)
