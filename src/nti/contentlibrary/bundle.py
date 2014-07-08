@@ -23,6 +23,9 @@ from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import EqHash
 
+from nti.externalization.externalization import WithRepr
+from nti.externalization.persistence import NoPickle
+
 import anyjson as json
 
 
@@ -45,6 +48,7 @@ from .presentationresource import DisplayableContentMixin
 
 @interface.implementer(IContentPackageBundle,
 					   IAttributeAnnotatable)
+@WithRepr
 class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 						   DisplayableContentMixin,
 						   SchemaConfigured):
@@ -54,6 +58,9 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 	"""
 	__external_class_name__ = 'ContentPackageBundle'
 	__external_can_create__ = False
+
+	# Equality and hashcode not defined on purpose,
+	# identity semantics for now!
 
 	# Be careful not to overwrite what we inherit
 	createFieldProperties(IDisplayableContent,
@@ -126,6 +133,9 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	"""
 	__external_can_create__ = False
 
+	def __repr__(self):
+		return "<%s(%s, %s) at %s>" % (self.__class__.__name__, self.__name__, len(self), id(self))
+
 	@property
 	def _parent_lib(self):
 		return component.queryNextUtility(self, IContentPackageBundleLibrary)
@@ -195,6 +205,8 @@ class _IContentBundleMetaInfo(IContentPackageBundle):
 
 @interface.implementer(_IContentBundleMetaInfo)
 @EqHash('ntiid')
+@NoPickle
+@WithRepr
 class _ContentBundleMetaInfo(PermissiveSchemaConfigured):
 	"""
 	Meta-information
@@ -283,8 +295,9 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 		# Ideally we want to "archive" the objects somewhere probably
 		# (a special 'archive' subcontainer?)
 
-		if not bundle_meta_keys:
-			need_event = bool(self.context)
+		if not bundle_meta_keys and self.context:
+			logger.info("Removing all bundles from library %s: %s", self.context, list(self.context))
+			need_event = True
 			for k in list(self.context):
 				del self.context[k] # fires bunches of events
 		else:
@@ -309,8 +322,8 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			# All of these remaining things haven't changed,
 			# but by definition must still be in the container
 			bundle_metas = bundle_metas - things_to_update
-			remaining_ntiids = {x.ntiid for x in bundle_metas}
-			# any ntiids in the container that are not in one of these two places
+
+			# any ntiids in the container that we don't have on disk
 			# have to go
 			del_ntiids = {x for x in self.context if x not in all_ntiids}
 
@@ -330,23 +343,32 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 
 
 			# Start with the adds
-			for meta in things_to_add:
+			if things_to_add:
 				need_event = True
-				bundle = PersistentContentPackageBundle()
-				bundle.createdTime = meta.createdTime
-				_update_bundle( bundle, meta )
+				logger.info("Adding bundles to library %s: %s",
+							self.context, things_to_add)
+				for meta in things_to_add:
+					bundle = PersistentContentPackageBundle()
+					bundle.createdTime = meta.createdTime
+					_update_bundle( bundle, meta )
 
-				lifecycleevent.created(bundle)
-				self.context[meta.ntiid] = bundle # added
+					lifecycleevent.created(bundle)
+					self.context[meta.ntiid] = bundle # added
 
 			# Now the deletions
-			for ntiid in del_ntiids:
-				need_event = True
-				del self.context[ntiid]
+			if del_ntiids:
+				logger.info("Removing bundles from library %s: %s",
+							self.context, del_ntiids)
+				for ntiid in del_ntiids:
+					need_event = True
+					del self.context[ntiid]
 
 			# Now any updates
 			if things_to_update:
 				need_event = True
+				logger.info("Updating bundles in library %s: %s",
+							self.context, things_to_update)
+
 				for meta in things_to_update:
 					bundle = self.context[meta.ntiid]
 					_update_bundle(bundle, meta)
@@ -357,3 +379,5 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			event = ContentPackageBundleLibraryModifiedOnSyncEvent(self.context)
 			event.bucket = bucket
 			notify(event)
+		else:
+			logger.info("Nothing to do to sync library %s", self.context)

@@ -41,6 +41,15 @@ class _AbstractDelimitedHierarchyObject(object):
 			self.name = name
 
 	def __repr__(self):
+		path = None
+		try:
+			path = getattr(self, 'absolute_path').encode('unicode_escape')
+		except AttributeError:
+			path = None
+
+		if path:
+			return "<%s '%s'>" % (self.__class__.__name__, getattr(self, 'absolute_path'))
+
 		return "<%s '%s'/'%s'>" % (type(self).__name__,
 								   self.bucket,
 								   self.name.encode('unicode_escape') if self.name else '')
