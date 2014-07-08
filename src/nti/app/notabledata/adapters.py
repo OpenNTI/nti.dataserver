@@ -193,7 +193,7 @@ class UserNotableData(AbstractAuthenticatedView):
 								  blogentry_intids_shared_to_me,
 								  toplevel_intids_forum_comments]
 
-		safely_viewable_intids.append(self._notable_storage._safe_intid_set)
+		self._notable_storage.add_intids(safely_viewable_intids, safe=True)
 
 		# We use low-level optimization to get this next one; otherwise
 		# we'd need some more indexes to make it efficient.
@@ -256,18 +256,16 @@ class UserNotableData(AbstractAuthenticatedView):
 		# topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
 		# 																	intids_by_priority_creators)
 
-		intids_from_storage = self._notable_storage._unsafe_intid_set
-
-
 		# Sadly, to be able to provide the "TotalItemCount" we have to
 		# apply security to all the intids not guaranteed to be
 		# viewable; if we didn't have to do that we could imagine
 		# doing so incrementally, as needed, on the theory that there
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
-		questionable_intids = catalog.family.IF.multiunion(	(toplevel_intids_by_priority_creators,
-															 intids_tagged_to_me,
-															 intids_from_storage) )
+		questionable_intids = [toplevel_intids_by_priority_creators,
+							   intids_tagged_to_me]
+		self._notable_storage.add_intids(questionable_intids,safe=False)
+		questionable_intids = catalog.family.IF.multiunion(	questionable_intids )
 		if self._intids_in_time_range is not None:
 			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																 questionable_intids)
@@ -423,6 +421,7 @@ class UserNotableDataStorage(Persistent,Contained):
 				# Programming error...somebody lost track of ownership
 				raise ValueError("Object already registered")
 			lifecycleevent.created(obj)
+			assert getattr(obj, '_ds_intid', None) is None
 			self._owned_objects.append(obj)
 			if getattr(obj, '__parent__', None) is None:
 				obj.__parent__ = self
@@ -431,5 +430,17 @@ class UserNotableDataStorage(Persistent,Contained):
 		if getattr(obj, '_ds_intid', None) is None:
 			raise ValueError("Object does not have intid")
 		return self.store_intid(getattr(obj, '_ds_intid'), safe=safe)
+
+	def add_intids(self, ids, safe=False):
+		"""
+		If we have intids for the given safety level, append them
+		to the array. Optimization for the common case where
+		we don't have one or the other to avoid creating expensive
+		Set objects.
+		"""
+		self._p_activate()
+		s = '_safe_intid_set' if safe else '_unsafe_intid_set'
+		if s in self.__dict__: # has Lazy kicked in?
+			ids.append( getattr(self, s) )
 
 UserNotableDataStorageFactory = an_factory(UserNotableDataStorage)
