@@ -182,6 +182,11 @@ class AbstractContentPackageLibrary(object):
 		self._content_packages_by_ntiid = _content_packages_by_ntiid
 		self._enumeration_last_modified = enumeration_last_modified
 
+		if (removed or added or changed) and not never_synced:
+			logger.info("Library %s adding packages %s", self, added)
+			logger.info("Library %s changing packages %s", self, changed)
+			logger.info("Library %s removing packages %s", self, removed)
+
 		# Now fire the events letting listeners (e.g., index and question adders)
 		# know that we have content. Randomize the order of this across worker
 		# processes so that we don't collide too badly on downloading indexes if need be

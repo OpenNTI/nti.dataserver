@@ -161,9 +161,12 @@ def sync_bundles_when_library_synched(library, event):
 
 	bundle_bucket = enumeration_root.getChildNamed(bundle_library.__name__)
 	if bundle_bucket is None:
-		logger.info("No child named %s in %s for library %s",
+		logger.info("Not synchronizing: no directory named %s in %s for library %s",
 					bundle_library.__name__, getattr(enumeration_root, 'absolute_path', enumeration_root),
 					library)
 		return
 
+	logger.info( "Synchronizing bundle library %s in site %s from directory %s",
+				 bundle_library, site_manager.__parent__.__name__,
+				 getattr(bundle_bucket, 'absolute_path', bundle_bucket) )
 	ISyncableContentPackageBundleLibrary(bundle_library).syncFromBucket(bundle_bucket)

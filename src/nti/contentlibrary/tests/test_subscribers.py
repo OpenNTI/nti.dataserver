@@ -46,6 +46,7 @@ from ..interfaces import IContentPackageLibrary
 from .. import filesystem
 from .. import subscribers
 from .. import interfaces
+from ..bundle import ContentPackageBundle
 
 from . import ContentlibraryLayerTest
 
@@ -58,6 +59,7 @@ from zope.annotation.interfaces import IAnnotations
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.schema.interfaces import IFieldUpdatedEvent
 
 from zope.component import eventtesting
@@ -226,3 +228,16 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		evts = eventtesting.getEvents(IObjectModifiedEvent)
 		assert_that( evts, has_length(0))
+
+		# If we put a 'fake' bundle in there, if we sync again, it gets
+		# removed
+		fake_bundle = ContentPackageBundle()
+		bundle_lib['tag:nextthought.com,2011-10:FOO-BAR-BAZ'] = fake_bundle
+
+		eventtesting.clearEvents()
+		interfaces.ISyncableContentPackageBundleLibrary(bundle_lib).syncFromBucket(bundle_bucket)
+
+		evts = eventtesting.getEvents(IObjectRemovedEvent)
+		assert_that( evts, has_length(1))
+
+		assert_that( evts[0], has_property('object', is_(fake_bundle)))
