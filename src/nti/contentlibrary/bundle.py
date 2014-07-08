@@ -126,8 +126,6 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	"""
 	__external_can_create__ = False
 
-	# TODO: APIs for walking up the utility tree
-
 	@property
 	def _parent_lib(self):
 		return component.queryNextUtility(self, IContentPackageBundleLibrary)
@@ -241,6 +239,15 @@ class _ContentBundleMetaInfo(PermissiveSchemaConfigured):
 
 		return cps
 
+def _readCurrent(lib):
+	try:
+		lib._p_jar.readCurrent(lib)
+	except AttributeError:
+		pass
+	try:
+		lib._SampleContainer__data._p_jar.readCurrent(lib._SampleContainer__data)
+	except AttributeError:
+		pass
 
 
 @interface.implementer(ISyncableContentPackageBundleLibrary)
@@ -253,6 +260,8 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 	def syncFromBucket(self, bucket):
 
 		content_library = component.getSiteManager(self.context).getUtility(IContentPackageLibrary)
+		_readCurrent(content_library)
+		_readCurrent(self.context)
 
 		bundle_meta_keys = list()
 
@@ -281,12 +290,21 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 		else:
 			bundle_metas = {_ContentBundleMetaInfo(k, content_library) for k in bundle_meta_keys}
 			all_ntiids = {x.ntiid for x in bundle_metas}
+			# Now determine what to add/update/remove.
+			# Order matters here, very much.
+			# The __contains__ operation for keys does not take parent
+			# libraries into account, nor does iterating the keys; thus,
+			# we're safe by checking the ntiids against our context.
+			# By the time we look for things to update, we know we will
+			# be accessing an item local in our context, not from parent,
+			# even though __getitem__ is recursive.
 
 			things_to_add = {x for x in bundle_metas if x.ntiid not in self.context}
 			# Take those out
 			bundle_metas = bundle_metas - things_to_add
 
-			things_to_update = {x for x in bundle_metas if x.lastModified > self.context[x.ntiid].lastModified}
+			things_to_update = {x for x in bundle_metas
+								if x.lastModified > self.context[x.ntiid].lastModified}
 
 			# All of these remaining things haven't changed,
 			# but by definition must still be in the container
