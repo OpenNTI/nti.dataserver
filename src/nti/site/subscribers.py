@@ -44,6 +44,7 @@ from zope.component.hooks import getSite
 from zope.component.hooks import setSite
 
 from .interfaces import IMainApplicationFolder
+from .interfaces import IHostPolicyFolder
 
 from zope.component.interfaces import ISite
 from zope.site.interfaces import INewLocalSite
@@ -109,14 +110,6 @@ def threadSiteSubscriber( new_site, event ):
 		# with this. That's probably the longterm answer.
 		return
 
-	# We support exactly three cases:
-	# 1. No current site/same as current site
-	# 2. The current site is the site established by get_site_for_site_names
-	# 3. The current site is a site previously added by this function.
-	# Anything else is forbidden.
-	# It turns out that case two and three are exactly the same:
-	# we always want to proxy, putting the preserved host components
-	# at the end of the new proxy RO.
 	current_site = getSite()
 	if current_site is None:
 		# Nothing to do
@@ -126,10 +119,22 @@ def threadSiteSubscriber( new_site, event ):
 		# into utilities registered with the site, for example
 		#   /dataserver2/++etc++hostsites/janux.ou.edu/++etc++site/SOMEUTILITY/...
 		# with the current host being janux.ou.edu.
-		# Notice we prohibit traversing into a different named site.
+		pass
+	elif IHostPolicyFolder.providedBy(current_site) and IHostPolicyFolder.providedBy(new_site):
+		# This is typically the case when we traverse directly
+		# into utilities registered with the site, for example
+		#   /dataserver2/++etc++hostsites/janux.ou.edu/++etc++site/SOMEUTILITY/...
+		# with the current host NOT being janux.ou.edu.
+		# We do not want to switch host configurations here, but we do
+		# want to allow traversal, so we take no action.
+		# TODO: We might want to only allow this if there is some
+		# inheritance relationship between the two sites?
 		pass
 	elif hasattr( current_site.getSiteManager(), 'host_components' ):
 		# A site synthesized by get_site_for_site_names
+		# OR one previously synthesized by this function. In either case,
+		# we always want to proxy, putting the preserved host components
+		# at the end of the new proxy RO.
 		host_components = current_site.getSiteManager().host_components
 		# We need to keep host_components in the bases
 		# for the new site. Where to put it is tricky

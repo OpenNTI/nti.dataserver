@@ -60,6 +60,9 @@ class MockSite(object):
 
 from ..subscribers import threadSiteSubscriber
 from ..transient import HostSiteManager as HSM
+
+from ..interfaces import IHostPolicyFolder
+
 from z3c.baseregistry.baseregistry import BaseComponents
 from zope.component import globalSiteManager as BASE
 
@@ -107,22 +110,31 @@ class TestSiteSubscriber(unittest.TestCase):
 						 host_comps,
 						 BASE ) )
 
-	def testTraverseFails(self):
+	def testTraverseFailsIntoSiblingSiteExceptHostPolicyFolders(self):
 		new_comps = BaseComponents(BASE, 'sub_site', () )
 		new_site = MockSite(new_comps)
 		new_site.__name__ = new_comps.__name__
 
 		with currentSite(None):
 			threadSiteSubscriber(new_site,None)
+			# If we walk into a site...
 
+			# ...and then try to walk into a sibling site with no apparent relationship...
 			new_comps2 = BaseComponents(BASE, 'sub_site', (new_comps,) )
 			new_site2 = MockSite(new_comps2)
 			new_site2.__name__ = new_comps2.__name__
 
-			assert_that(calling(threadSiteSubscriber).with_args('new_site2', None),
+			# ... we fail...
+			assert_that(calling(threadSiteSubscriber).with_args(new_site2, None),
 						raises(LocationError))
 
+			# ...unless they are both HostPolicyFolders...
+			interface.alsoProvides(new_site, IHostPolicyFolder)
+			interface.alsoProvides(new_site2, IHostPolicyFolder)
+			threadSiteSubscriber(new_site2,None)
 
+			# ... which does not change the site
+			assert_that( getSite(), is_(same_instance(new_site)) )
 
 # Match a hierarchy we have in nti.app.sites.demo:
 # global
