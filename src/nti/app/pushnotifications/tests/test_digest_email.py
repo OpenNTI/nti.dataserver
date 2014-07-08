@@ -15,6 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 from zope import interface
+from zope import component
 
 from hamcrest import assert_that
 from hamcrest import is_
@@ -55,6 +56,16 @@ SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend'
 																u'SentLast24Hours': u'195.0'},
 										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
 
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+from zope.container.contained import Contained
+from nti.app.notabledata.interfaces import IUserNotableDataStorage
+from nti.app.notabledata.interfaces import IUserNotableData
+from zope.mimetype.interfaces import IContentTypeAware
+
+
+@interface.implementer(IContentTypeAware) # must have a mimetype to make it through!
+class FakeNotable(PersistentCreatedAndModifiedTimeObject, Contained):
+	mime_type = mimeType = 'application/vnd.nextthought.fake'
 
 class TestApplicationDigest(ApplicationLayerTest):
 
@@ -114,6 +125,14 @@ class TestApplicationDigest(ApplicationLayerTest):
 			# A circled event
 			jason.accept_shared_data_from(user)
 
+			# an event we don't have a classifier for
+			extra_notable = FakeNotable()
+			extra_notable.createdTime = 110
+			IUserNotableDataStorage(jason).store_object(extra_notable, safe=True, take_ownership=True)
+
+			assert component.getMultiAdapter((jason,self.request),IUserNotableData).is_object_notable(extra_notable)
+
+
 			# make sure he has an email
 			from nti.dataserver.users import interfaces as user_interfaces
 			from zope.lifecycleevent import modified
@@ -145,6 +164,9 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
 		assert_that( msg, contains_string('<strong>Steve Johnson</strong> added'))
+
+		assert_that( msg, contains_string('See All Activity'))
+		assert_that( msg, contains_string('http://localhost/NextThoughtWebApp/#!profile/jason/Notifications'))
 
 		assert_that( msg, does_not(contains_string('replied to a note')))
 		assert_that( msg, does_not(contains_string('NO CONTENT')))

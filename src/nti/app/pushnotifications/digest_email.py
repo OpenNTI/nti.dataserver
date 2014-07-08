@@ -57,10 +57,11 @@ _TWO_MONTH = _ONE_MONTH * 2
 
 class _TemplateArgs(object):
 
-	def __init__(self, values, request):
+	def __init__(self, values, request, remoteUser=None):
 		self._primary = values[0]
 		self.request = request
 		self.remaining = len(values) - 1
+		self.remoteUser = remoteUser
 
 	def __getattr__(self, name):
 		return getattr(self._primary, name)
@@ -128,6 +129,14 @@ class _TemplateArgs(object):
 		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
 		# It MUST end with a trailing slash, but we don't want that
 		return web_root[:-1]
+
+	@property
+	def total_remaining_href(self):
+		anchor = '!profile/%s/Notifications' % self.remoteUser.username
+		return self.request.route_url('objects.generic.traversal',
+									  traverse=(),
+									  _anchor=anchor).replace('/dataserver2',
+															  self.web_root)
 
 	@property
 	def href(self):
@@ -319,7 +328,7 @@ class DigestEmailCollector(object):
 
 		# We need to group them by type in order to provide group summaries,
 		# but we only want to display the complete information
-		# about the first (most recent) item in each group
+		# about the first (most recent) item in each group.
 		# TODO: There should be heuristics around that, it should be the
 		# first, most notable, thing
 
@@ -328,9 +337,13 @@ class DigestEmailCollector(object):
 														  reverse=True,
 														  reify=True)
 
-		# Then we can sort them by type, trusting the stable sort to preserve
-		# relative creation times among items of the same type
-		# (TODO: Is this actually guaranteed stable? If not we need our own stable implementation)
+		# Then we can sort them by type, trusting the stable sort to
+		# preserve relative creation times among items of the same
+		# type. (TODO: Is this actually guaranteed stable? If not we
+		# need our own stable implementation)
+
+		# WARNING: If an item is not found in the mimeType index
+		# because it is not IContentTypeAware, it will be dropped!
 		sorted_by_type_time = notable_data.sort_notable_intids(sorted_by_time,
 															   field_name='mimeType',
 															   reify=True )
@@ -375,7 +388,7 @@ class DigestEmailCollector(object):
 		for name, objs in values.items():
 			if objs:
 				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
-				result[name] = _TemplateArgs(objs, request)
+				result[name] = _TemplateArgs(objs, request, self.remoteUser)
 
 		# If we really wanted to, we could stick a user authentication token
 		# on this view, but it's a lot safer not to.
