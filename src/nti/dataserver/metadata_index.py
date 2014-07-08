@@ -11,6 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+# disable 'redefining builtin id' because
+# we get that from superclass
+#pylint: disable=W0622
 
 #: The name of the utility that the Zope Catalog
 #: should be registered under
@@ -29,6 +32,7 @@ from .interfaces import ILastModified
 from .interfaces import IUser
 from .interfaces import IDynamicSharingTargetFriendsList
 from .interfaces import IUserTaggedContent
+from .interfaces import IDeletedObjectPlaceholder
 from .contenttypes.forums.interfaces import IHeadlinePost
 
 from zope.catalog.interfaces import ICatalog
@@ -223,6 +227,7 @@ def CreatorOfInReplyToIndex(family=None):
 
 def isTopLevelContentObjectFilter(extent, docid, document):
 	# TODO: This is messy
+	# NOTE: This is referenced by persistent objects, must stay
 	if getattr(document, '__is_toplevel_content__', False):
 		return True
 
@@ -254,6 +259,20 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
 			isTopLevelContentObjectFilter,
 			family=family)
 
+def isDeletedObjectPlaceholder(extent, docid, document):
+	# NOTE: This is referenced by persistent objects, must stay.
+	return IDeletedObjectPlaceholder.providedBy(document)
+
+class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
+	"""
+	A filter for a topic index that collects deleted placeholders.
+	"""
+	def __init__(self, id, family=None):
+		super(DeletedObjectPlaceholderExtentFilteredSet,self).__init__(
+			id,
+			isDeletedObjectPlaceholder,
+			family=family)
+
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 
@@ -281,6 +300,16 @@ IX_SHAREDWITH = 'sharedWith'
 IX_REPLIES_TO_CREATOR = 'repliesToCreator'
 IX_TAGGEDTO = 'taggedTo'
 IX_TOPICS = 'topics'
+
+#: The name of the topic/group in the topics index
+#: that stores top-level content.
+#: See :class:`TopLevelContentExtentFilteredSet`
+TP_TOP_LEVEL_CONTENT = 'topLevelContent'
+
+#: The name of the topic/group in the topics index
+#: that stores deleted placeholders.
+#: See :class:`DeletedObjectPlaceholderExtentFilteredSet`
+TP_DELETED_PLACEHOLDER = 'deletedObjectPlaceholder'
 
 def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
@@ -320,7 +349,8 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 		catalog[name] = index
 
 	topic_index = catalog['topics']
-	for filter_id, factory in ( ('topLevelContent', TopLevelContentExtentFilteredSet),):
+	for filter_id, factory in ( (TP_TOP_LEVEL_CONTENT, TopLevelContentExtentFilteredSet),
+								(TP_DELETED_PLACEHOLDER, DeletedObjectPlaceholderExtentFilteredSet)):
 		the_filter = factory(filter_id, family=intids.family)
 		topic_index.addFilter(the_filter)
 
