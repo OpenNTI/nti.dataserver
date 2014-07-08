@@ -194,6 +194,7 @@ Install the following ports:
 	- xpdf (optional)
 	- gtk2 (optional)
 	- asymptote (optional)
+	- enchant (optional)
 
 Install/download
 - phantomjs >= 1.9 < 2.0
