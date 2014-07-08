@@ -219,3 +219,10 @@ class TestSubscribers(ContentlibraryLayerTest):
 			IFieldUpdatedEvent,
 			filter=lambda e: not interfaces.IContentPackageBundle.providedBy(e.inst))
 		assert_that( evts, is_empty() )
+
+		# we can do it again, and nothing changes
+		eventtesting.clearEvents()
+		interfaces.ISyncableContentPackageBundleLibrary(bundle_lib).syncFromBucket(bundle_bucket)
+
+		evts = eventtesting.getEvents(IObjectModifiedEvent)
+		assert_that( evts, has_length(0))
