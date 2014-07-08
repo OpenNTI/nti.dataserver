@@ -69,6 +69,7 @@ Dependencies for content generation:
 	- openexr
 	- liblqr
 	- xpdf (optional)
+	- enchant (optional)
 
 - phantomjs >= 1.9
   http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g., 
