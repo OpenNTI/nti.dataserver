@@ -172,10 +172,11 @@ class ZODBStorageErrorExceptionView(EmailReportingExceptionView):
 	Reporter and handler for ZODB StorageErrors.
 	"""
 
+@view_config(context='redis.exceptions.ResponseError')
 @view_config(context='redis.exceptions.ConnectionError')
-class RedisConnectionErrorExceptionView(EmailReportingExceptionView):
+class RedisErrorExceptionView(EmailReportingExceptionView):
 	"""
-	Reporter and handler for Redis ConnectionErrors.
+	Reporter and handler for certain Redis Errors.
 	"""
 
 def _cleanup(base=None, seen=None):
