@@ -259,9 +259,10 @@ except ImportError:
 		"No-op because Acquisition is not installed."
 
 @interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
-class LastModifiedBTreeContainer(PersistentPropertyHolder,
+class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 								 BTreeContainer,
-								 interfaces.DCTimesLastModifiedMixin):
+								 PersistentPropertyHolder):
+
 	"""
 	A BTreeContainer that provides storage for lastModified and created
 	attributes (implements the :class:`interfaces.ILastModified` interface).
@@ -574,10 +575,12 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer = CaseInsensitiveLastModifiedBTreeContainer # BWC
 
 @interface.implementer(IFolder)
-class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer, SiteManagerContainer):
+class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer,
+											 SiteManagerContainer):
 	"""
 	Scalable case-insensitive :class:`IFolder` implementation.
 	"""
 
-class CaseInsensitiveCheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,CaseInsensitiveLastModifiedBTreeContainer):
+class CaseInsensitiveCheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,
+														CaseInsensitiveLastModifiedBTreeContainer):
 	pass
