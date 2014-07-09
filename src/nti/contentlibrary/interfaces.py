@@ -713,10 +713,14 @@ class ISyncableContentPackageBundleLibrary(interface.Interface):
 
 	def syncFromBucket(bundle_bucket):
 		"""
-		Synchronize the state of the library.
+		Synchronize the state of the library. The code that calls this should take
+		care to use the (abstractly) same bucket every time.
 
 		:param bundle_bucket: The :class:`IEnumerableDelimitedHierarchyBucket`
-			to read from.
+			to read from. If called with `None`, then the results are undefined;
+			in general, calling code should not pass a `None` value, representing a
+			missing bucket, as that is likely to be a temporary condition and
+			would result in much churn.
 		"""
 
 
