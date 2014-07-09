@@ -1,29 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import unittest
 
 import zope.testing.cleanup
+
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
-
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 ConfiguringLayerMixin):
 
-
-	set_up_packages = ('nti.contentrendering','nti.contentrendering.courseinfo')
+	set_up_packages = ('nti.contentrendering', 'nti.contentrendering.courseinfo')
 
 	@classmethod
 	def setUp(cls):
@@ -41,7 +35,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def testTearDown(cls):
 		pass
-
 
 class CourseinfoLayerTest(unittest.TestCase):
 	layer = SharedConfiguringTestLayer

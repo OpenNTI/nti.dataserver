@@ -9,48 +9,32 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import is_not
-from hamcrest import equal_to
 from hamcrest import not_none
 from hamcrest import has_entry
-from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
 
-
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.tests import assert_does_not_pickle
-does_not = is_not
-
-
 
 from nti.contentrendering.courseinfo import model
 from nti.contentrendering.courseinfo import interfaces
+
+from nti.externalization.tests import assert_does_not_pickle
 
 from nti.testing.matchers import verifiably_provides
 
 from . import CourseinfoLayerTest
 
-
-import zope.schema
-from collections import OrderedDict
-
 class TestCourseInfo(CourseinfoLayerTest):
 
 	def test_instructor_object(self):
+		
 		io = model.Instructor(defaultphoto = "images/Morvant.png", username = "morv1533",
-			name = "Mark Morvant, PhD", title = "Professor, Department of Chemistry")
-		out = OrderedDict()
-		# Check all interfaces provided by the object
-		ifaces = io.__provides__.__iro__
-		# Check fields from all interfaces
-		for iface in ifaces:
-			fields = zope.schema.getFieldsInOrder(iface)
-			for name, field in fields:
-				out[name] = getattr(io, name, None)
-
-
+							  name = "Mark Morvant, PhD", userid="112451533",
+							  title = "Professor, Department of Chemistry")
+		
 		assert_that (io, verifiably_provides(interfaces.IInstructor))
 		assert_does_not_pickle(io)
 
@@ -65,14 +49,14 @@ class TestCourseInfo(CourseinfoLayerTest):
 
 		new_io = factory()
 		internalization.update_from_external_object(new_io, ext_obj)
-	 	assert_that(new_io, has_property('defaultphoto', is_('images/Morvant.png')))
+		assert_that(new_io, has_property('defaultphoto', is_('images/Morvant.png')))
 		assert_that(new_io, has_property('username', is_('morv1533')))
 		assert_that(new_io, has_property('name', is_('Mark Morvant, PhD')))
 		assert_that(new_io, has_property('title', is_('Professor, Department of Chemistry')))
 
 	def test_prerequisite_object(self):
 		io = model.Prerequisite(id = "CHEM 3000-001", title="Senior standing or instructor permission")
-		out = OrderedDict();
+
 		# Check all interfaces provided by the object
 		assert_that (io, verifiably_provides(interfaces.IPrerequisite))
 		assert_does_not_pickle(io)
@@ -92,7 +76,7 @@ class TestCourseInfo(CourseinfoLayerTest):
 
 	def test_enrollment_object(self):
 		io = model.Enrollment(label = "Enroll with Ozone", url = "http://ozone.ou.edu/")
-		out = OrderedDict();
+
 		# Check all interfaces provided by the object
 		assert_that (io, verifiably_provides(interfaces.IEnrollment))
 		assert_does_not_pickle(io)
@@ -112,7 +96,7 @@ class TestCourseInfo(CourseinfoLayerTest):
 	def test_credit_object(self):
 		enrollment_o = model.Enrollment(label = "Enroll with Ozone", url = "http://ozone.ou.edu/")
 		io = model.Credit(hours = 1, enrollment = enrollment_o)
-		out = OrderedDict();
+		
 		# Check all interfaces provided by the object
 		assert_that (io, verifiably_provides(interfaces.ICredit))
 		assert_does_not_pickle(io)
@@ -150,21 +134,6 @@ class TestCourseInfo(CourseinfoLayerTest):
 			prerequisites = [prerequisite_o]
 			)
 
-
-
-		# Check all interfaces provided by the object
-		ifaces = io.__provides__.__iro__
-
-		# Check fields from all interfaces
-		out = OrderedDict()
-		field_list = []
-		for iface in ifaces:
-			fields = zope.schema.getFieldsInOrder(iface)
-			for name, field in fields:
-				out[name] = getattr(io, name, None)
-				field_list.append(name)
-
-
 		assert_that(io, verifiably_provides(interfaces.ICourseInfo))
 		assert_does_not_pickle(io)
 
@@ -175,7 +144,6 @@ class TestCourseInfo(CourseinfoLayerTest):
 		assert_that(factory, is_(not_none()))
 
 		new_io = factory()
-
 		internalization.update_from_external_object(new_io, ext_obj)
 		assert_that(new_io, has_property('ntiid', is_('tag:nextthought.com,2011-10:OU-HTML-CHEM4970_Chemistry_of_Beer.course_info')))
 		assert_that(new_io, has_property('id', is_('CHEM 4970-001')))
