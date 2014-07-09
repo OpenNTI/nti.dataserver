@@ -21,4 +21,6 @@
 						 .interfaces.ICourseInfo"
 		modules=".model" />
 
+	<utility component=".checkcourseinfo" name="checkcourseinfo" />
+
 </configure>
