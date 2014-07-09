@@ -51,6 +51,7 @@ class TestCourseInfo(CourseinfoLayerTest):
 		internalization.update_from_external_object(new_io, ext_obj)
 		assert_that(new_io, has_property('defaultphoto', is_('images/Morvant.png')))
 		assert_that(new_io, has_property('username', is_('morv1533')))
+		assert_that(new_io, has_property('userid', is_('112451533')))
 		assert_that(new_io, has_property('name', is_('Mark Morvant, PhD')))
 		assert_that(new_io, has_property('title', is_('Professor, Department of Chemistry')))
 
