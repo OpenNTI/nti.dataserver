@@ -173,9 +173,10 @@ class _TemplateArgs(object):
 		if path:
 			return path
 
+		ifaces = (IAudioIndexedDataContainer,IVideoIndexedDataContainer)
 		def _search(unit):
 			for iface in ifaces:
-				if name in iface(unit).contains_data_item_with_ntiid(name):
+				if iface(unit).contains_data_item_with_ntiid(name):
 					return lib.pathToNTIID(unit.ntiid)
 			for child in unit.children:
 				r = _search(child)

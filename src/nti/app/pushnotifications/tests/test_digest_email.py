@@ -21,7 +21,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import same_instance
 from hamcrest import is_not as does_not
-from hamcrest import has_key
+from hamcrest import has_property
 from hamcrest import contains_string
 from hamcrest import not_none
 from hamcrest import none
@@ -70,6 +70,13 @@ class FakeNotable(PersistentCreatedAndModifiedTimeObject, Contained):
 class TestApplicationDigest(ApplicationLayerTest):
 
 	layer = ExLibraryApplicationTestLayer
+
+	def test_path_to_note_container(self):
+		from ..digest_email import _TemplateArgs
+		args = _TemplateArgs([self], None)
+		args.__name__ = self.CONTAINER_ID + '.this.is.not_toplevel'
+		path = args._path_to_note_container()
+		assert_that( path, is_(none() ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
