@@ -83,6 +83,7 @@ StandardExternalFields_LINKS = StandardExternalFields.LINKS
 from nti.dataserver.links import Link
 
 from zope.location.interfaces import ILocation
+from nti.dataserver.interfaces import ICreated
 
 class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
@@ -148,8 +149,10 @@ class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorat
 		if rel is None: # Disabled in this case
 			return
 
-		# Use the NTIID rather than the 'physical' path because the 'physical'
-		# path may not quite be traversable at this point
+		# Use the OID NTIID rather than the 'physical' path because
+		# the 'physical' path may not quite be traversable at this
+		# point...plus, it's more semantically correct because the OID
+		# path points to this exact object, even if moved/renamed
 		target_ntiid = to_external_ntiid_oid( context )
 		if target_ntiid is None:
 			logger.warn( "Failed to get ntiid; not adding link %s for %s", rel, context )

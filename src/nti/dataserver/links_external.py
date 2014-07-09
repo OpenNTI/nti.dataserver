@@ -20,6 +20,8 @@ import zope.traversing.interfaces
 
 from nti.dataserver import traversal
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import IDataserver
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.externalization import interfaces as ext_interfaces
@@ -30,15 +32,15 @@ from nti.ntiids import ntiids
 
 def _root_for_ntiid_link( link, nearest_site ):
 	# Place the NTIID reference under the most specific place possible: the owner,
-	# if we can get one, otherwise the global Site
+	# if in belongs to someone, otherwise the global Site
 	root = None
 	target = link.target
-	if nti_interfaces.ICreated.providedBy( target ) and target.creator:
+	if ICreated.providedBy( target ) and target.creator:
 		try:
 			root = traversal.normal_resource_path( target.creator )
 		except TypeError:
 			pass
-	if root is None and nti_interfaces.ICreated.providedBy( link ) and link.creator:
+	if root is None and ICreated.providedBy( link ) and link.creator:
 		try:
 			root = traversal.normal_resource_path( link.creator )
 		except TypeError:
@@ -59,6 +61,7 @@ def render_link( link, nearest_site=None ):
 		provide a more localized representation; the link or its target has to implement
 		:class:`nti_interfaces.ICreated` for this to work or we will use the nearest
 		site (probably the root).
+	:param nearest_site: Currently unused.
 	:type link: :class:`nti_interfaces.ILink`
 	"""
 	__traceback_info__ = link, nearest_site
@@ -86,10 +89,18 @@ def render_link( link, nearest_site=None ):
 		# and we should be able to find it, get a traversal path for it, and use it here.
 		# That object should implement the lookup behaviour found currently in ntiids.
 		if ntiids.is_valid_ntiid_string( ntiid ):
-			if nearest_site is None:
-				nearest_site = traversal.find_nearest_site( link )
-
-			root = _root_for_ntiid_link( link, nearest_site )
+			# In the past, if the link was not ICreated, the root would become
+			# the nearest site. But not all site objects support the Objects and
+			# NTIIDs traversal. So the simplest thing to do is to use the root
+			# site
+			# FIXME: This may not be quite correct for NTIIDs in the future?
+			# It should always be correct for OIDs though.
+			try:
+				ds_root = component.getUtility( IDataserver ).root
+			except LookupError:
+				logger.warn("No dataserver found, you must have provided a site. Only in test cases")
+				ds_root = nearest_site
+			root = _root_for_ntiid_link( link, ds_root )
 
 			if ntiids.is_ntiid_of_type( ntiid, ntiids.TYPE_OID ):
 				href = root + '/Objects/' + urllib.quote( ntiid )
