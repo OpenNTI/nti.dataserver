@@ -42,7 +42,7 @@ from nti.wref.interfaces import IWeakRef
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
-from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .presentationresource import DisplayableContentMixin
 
@@ -99,14 +99,17 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 
 		return ()
 
-class PersistentContentPackageBundle(PersistentCreatedAndModifiedTimeObject,
-									 ContentPackageBundle):
+class PersistentContentPackageBundle(ContentPackageBundle,
+									 PersistentPropertyHolder):
 	"""
 	A persistent implementation of content package bundles.
 
 	As required, references to content packages are
 	maintained weakly.
 	"""
+	# NOTE we don't extend the convenience class PersistentCreatedAndModifiedTimeObject
+	# from time_mixins, because it re-introduces the CreatedAndModifiedTimeMixin
+	# we got from ContentPackageBundle; that makes it hard to further subclass.
 
 	_ContentPackages_wrefs = ()
 
