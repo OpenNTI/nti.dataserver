@@ -219,7 +219,8 @@ class TestSubscribers(ContentlibraryLayerTest):
 		# there are some field events, but none of them are for this object
 		evts = eventtesting.getEvents(
 			IFieldUpdatedEvent,
-			filter=lambda e: not interfaces.IContentPackageBundle.providedBy(e.inst))
+			filter=lambda e: interfaces.IContentPackageBundle.providedBy(e.inst))
+
 		assert_that( evts, is_empty() )
 
 		# we can do it again, and nothing changes

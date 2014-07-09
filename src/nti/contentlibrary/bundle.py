@@ -192,7 +192,7 @@ from .interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
 
 from nti.schema.field import IndexedIterable
 from nti.ntiids.schema import ValidNTIID
-from nti.schema.schema import PermissiveSchemaConfigured
+from zope.schema.fieldproperty import FieldProperty
 
 from .wref import contentunit_wref_to_missing_ntiid
 
@@ -203,16 +203,22 @@ class _IContentBundleMetaInfo(IContentPackageBundle):
 									  unique=True,
 									  default=())
 
-@interface.implementer(_IContentBundleMetaInfo)
 @EqHash('ntiid')
 @NoPickle
 @WithRepr
-class _ContentBundleMetaInfo(PermissiveSchemaConfigured):
+class _ContentBundleMetaInfo(object):
 	"""
-	Meta-information
+	Meta-information.
+
+	Instead of creating fields and a schema, we will simply read
+	in anything found in the json and store them in ourself.
+
+	Validation and updating is delayed until a full adapting schema call
+	can be used. The only exception is for the NTIIDs that make up
+	content package references.
 	"""
 
-	createFieldProperties(_IContentBundleMetaInfo)
+	ContentPackages = FieldProperty(_IContentBundleMetaInfo['ContentPackages'])
 
 	def __init__(self, key, content_library):
 		# For big/complex JSON, we want to avoid loading the JSON
@@ -220,13 +226,14 @@ class _ContentBundleMetaInfo(PermissiveSchemaConfigured):
 		# however, here we need the NTIID, which comes out of the file;
 		# also we expect it to be quite small
 		json_text = key.readContents().decode('utf-8')
-		self.json_value = json.loads(json_text)
+		json_value = json.loads(json_text)
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
-		if 'ntiid' not in self.json_value:
+		if 'ntiid' not in json_value:
 			raise ValueError("Missing ntiid", key)
 
-		super(_ContentBundleMetaInfo, self).__init__(**self.json_value)
+		for k, v in json_value.items():
+			setattr(self, str(k), v)
 		self.lastModified = key.lastModified
 		self.createdTime = key.createdTime
 		self.key = key
@@ -261,6 +268,57 @@ def _readCurrent(lib):
 	except AttributeError:
 		pass
 
+from nti.externalization.internalization import validate_named_field_value
+
+def sync_bundle_from_json_key(data_key, bundle, content_library=None,
+							  _meta=None):
+	"""
+	Given a :class:`IDelimitedHierarchyKey` whose contents are a JSON
+	object representing a :class:`IContentPackageBundle`, synchronize
+	the bundle fields (those declared in the interface) to match
+	the JSON values.
+
+	This is different from normal externalization/internalization in that
+	it takes care not to set any fields whose values haven't changed.
+
+	The bundle object will have its bundle-standard `root` property
+	set to the ``data_key`` bucket.
+
+	:keyword content_library: The implementation of :class:`IContentPackageLibrary`
+		that should be used to produce the ContentPackage objects. These will be
+		stored in the bundle as weak references, possibly to missing NTIIDs.
+		The bundle implementation should either extend :class`PersistentContentPackageBundle`
+		or provide its own setter implementation that deals with this.
+
+		If you do not provide this utility, the currently active library will
+		be used.
+	"""
+	# we can't check the lastModified dates, the bundle object
+	# might have been modified independently
+	if content_library is None:
+		content_library = component.getUtility(IContentPackageLibrary)
+
+	bundle_iface = IContentPackageBundle
+	# ^ In the past, we used interface.providedBy(bundle), but that
+	# could let anything be set
+	meta = _meta or _ContentBundleMetaInfo(data_key, content_library)
+
+	# Be careful to only update fields that have changed
+	modified = False
+	for k in meta.__dict__:
+		if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
+			modified = True
+			validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
+			setattr(bundle, str(k), getattr(meta, k))
+
+	if bundle.root != meta.key.__parent__:
+		modified = True
+		bundle.root = meta.key.__parent__
+
+	if modified:
+		bundle.updateLastMod( meta.lastModified )
+
+	return bundle
 
 @interface.implementer(ISyncableContentPackageBundleLibrary)
 @component.adapter(IContentPackageBundleLibrary)
@@ -328,17 +386,9 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			del_ntiids = {x for x in self.context if x not in all_ntiids}
 
 			def _update_bundle(bundle, meta):
-				bundle_iface = interface.providedBy(bundle)
-				# Be careful to only update fields that have changed
-				for k in meta.__dict__:
-					if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
-						setattr(bundle, str(k), getattr(meta, k))
-
-				if bundle.root != meta.key.__parent__:
-					bundle.root = meta.key.__parent__
-				# by definition this has changed or we wouldn't be here
-				bundle.lastModified = meta.lastModified
-
+				sync_bundle_from_json_key(meta.key, bundle,
+										  content_library=content_library,
+										  _meta=meta )
 				assert meta.ntiid == bundle.ntiid
 
 
