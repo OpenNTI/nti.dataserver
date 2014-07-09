@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*
-
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,15 +18,18 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
 
-from .import interfaces
+from .interfaces import ICredit
+from .interfaces import ICourseInfo
+from .interfaces import IEnrollment
+from .interfaces import IInstructor
+from .interfaces import IPrerequisite
 
-@interface.implementer(interfaces.IInstructor)
+@interface.implementer(IInstructor)
 @WithRepr
 @NoPickle
 @EqHash ('name', 'title')
 class Instructor(SchemaConfigured, contained.Contained):
-
-	createFieldProperties(interfaces.IInstructor)
+	createFieldProperties(IInstructor)
 
 	__external_can_create__ = True
 	__external_class_name__ = "Instructor"
@@ -33,13 +38,12 @@ class Instructor(SchemaConfigured, contained.Contained):
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
-
-@interface.implementer(interfaces.IPrerequisite)
+@interface.implementer(IPrerequisite)
 @WithRepr
 @NoPickle
 @EqHash('id', 'title')
 class Prerequisite(SchemaConfigured, contained.Contained):
-	createFieldProperties(interfaces.IPrerequisite)
+	createFieldProperties(IPrerequisite)
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Prerequisite'
@@ -48,13 +52,12 @@ class Prerequisite(SchemaConfigured, contained.Contained):
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
-
-@interface.implementer(interfaces.IEnrollment)
+@interface.implementer(IEnrollment)
 @WithRepr
 @NoPickle
 @EqHash('label', 'url')
 class Enrollment(SchemaConfigured, contained.Contained):
-	createFieldProperties(interfaces.IEnrollment)
+	createFieldProperties(IEnrollment)
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Enrollment'
@@ -63,13 +66,12 @@ class Enrollment(SchemaConfigured, contained.Contained):
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
-
-@interface.implementer(interfaces.ICredit)
+@interface.implementer(ICredit)
 @WithRepr
 @NoPickle
 @EqHash('hours', 'enrollment')
 class Credit(SchemaConfigured, contained.Contained):
-	createFieldProperties(interfaces.ICredit)
+	createFieldProperties(ICredit)
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Credit'
@@ -78,15 +80,12 @@ class Credit(SchemaConfigured, contained.Contained):
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
-
-
-@interface.implementer(interfaces.ICourseInfo)
+@interface.implementer(ICourseInfo)
 @WithRepr
 @NoPickle
 @EqHash('ntiid', 'id', 'school')
 class CourseInfo(SchemaConfigured, contained.Contained):
-
-	createFieldProperties(interfaces.ICourseInfo)
+	createFieldProperties(ICourseInfo)
 
 	__external_can_create__ = True
 	__external_class_name__ = "CourseInfo"
