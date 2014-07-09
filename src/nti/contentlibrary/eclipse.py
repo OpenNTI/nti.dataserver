@@ -14,6 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from ZODB.loglevels import TRACE
 
 from lxml import etree
+from urlparse import urlparse
+from urllib import unquote
 
 from zope import interface
 from zope.dublincore import xmlmetadata
@@ -53,6 +55,31 @@ def _node_get( node, name, default=None ):
 		val = val.decode('utf-8')
 	return val
 
+def _href_for_sibling_key(href):
+	__traceback_info__ = href
+	assert bool(href)
+	assert not href.startswith('/')
+
+	# Strip any fragment
+	path = urlparse(href).path
+	path = path.decode('utf-8') if isinstance(path, bytes) else path
+
+	# Just in case they send url-encoded things, decode them
+	# (TODO: Should this be implementation dependent? S3 might need url-encoding?)
+	# If so, probably the implementation of make_sibling_key should do that,
+	# it takes a 'name'-domain
+
+	# If we get a multi-segment path, we need to deconstruct it
+	# into bucket parts to be sure that it externalizes
+	# correctly.
+	parts = [unquote(x) for x in path.split('/')]
+	parts = [x.decode('utf-8') if isinstance(x, bytes) else x for x in parts]
+
+	# NOTE: This implementation makes it impossible to have an actual / in a
+	# href, even though they are technically legal in unix filenames
+	path = '/'.join(parts)
+	return path
+
 def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	tocItem = factory()
 	tocItem._v_toc_node = node # for testing and secret stuff
@@ -64,8 +91,13 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 	if node.get( 'sharedWith', '' ):
 		tocItem.sharedWith = _node_get( node, 'sharedWith' ).split( ' ' )
 
-	# Now the things that should be keys
-	tocItem.key = toc_entry.make_sibling_key( tocItem.href )
+	# Now the things that should be keys.
+	# NOTE: The href may have a fragment in it, but the key is supposed
+	# to point to an actual 'file' on disk, so we strip the fragment
+	# off (if there is one). Also, the hrefs may be URL encoded
+	# if they contain spaces, and since we are in the domain of knowing
+	# about URLs, it is our job to decode them.
+	tocItem.key = toc_entry.make_sibling_key( _href_for_sibling_key(tocItem.href) )
 	for i in _toc_item_key_attrs:
 		val = _node_get( node, i )
 		if val:
@@ -73,7 +105,7 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 			# it needs to deal with multi-level keys, either
 			# by creating a hierarchy of keys (filesystem)
 			# or by simply string appending (boto)
-			setattr( tocItem, str(i), toc_entry.make_sibling_key( val ) )
+			setattr( tocItem, str(i), toc_entry.make_sibling_key( _href_for_sibling_key(val) ) )
 
 	children = []
 	for ordinal, child in enumerate(node.iterchildren(tag='topic'), 1):

@@ -19,7 +19,7 @@ from hamcrest import greater_than_or_equal_to
 from hamcrest import has_key
 from hamcrest import is_not
 from hamcrest import is_
-from hamcrest import none
+from hamcrest import has_property
 
 from nti.contentlibrary import filesystem
 from nti.contentlibrary import boto_s3
@@ -151,10 +151,29 @@ class TestExternalization(ContentlibraryLayerTest):
 		bucket = filesystem.FilesystemBucket(name="prealgebra", bucket=child)
 		key = filesystem.FilesystemKey(bucket=bucket, name='index.html')
 
-		self._do_test_escape_if_needed( factory,
-										index=None,
-										key=key,
-										installable=True	)
+		package = self._do_test_escape_if_needed( factory,
+												  index=None,
+												  key=key,
+												  installable=True )
+
+		# If we have escaped spaces encoded and quoted and a fragment, we make it through
+		# the original href is encoded...
+		child_href_with_spaces = 'Sample_2_chFixedinc.html#SecPOjjaf%20copy%282%29'
+		# a href-to-pathname transformation is done...
+		from ..eclipse import _href_for_sibling_key
+		child_name_with_spaces = _href_for_sibling_key(child_href_with_spaces)
+		assert_that(child_name_with_spaces, is_('Sample_2_chFixedinc.html'))
+		# ...finally producing the key
+		child_key_with_spaces = package.make_sibling_key(child_name_with_spaces)
+		assert_that(child_key_with_spaces.name, is_('Sample_2_chFixedinc.html') )
+
+		child = filesystem.FilesystemContentUnit(key=child_key_with_spaces,
+												 href=child_href_with_spaces)
+
+		# and we reproduce the original href
+		mapper = interfaces.IContentUnitHrefMapper(child)
+		assert_that( mapper, has_property('href', '/prealgebra/' + child_href_with_spaces))
+
 
 
 

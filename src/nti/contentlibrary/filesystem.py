@@ -316,12 +316,12 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 		assert bool(sibling_name)
 		assert not sibling_name.startswith('/')
 
+		# At this point, everything should already be URL-decoded,
+		# (and fragments removed) and unicode
 		# If we get a multi-segment path, we need to deconstruct it
 		# into bucket parts to be sure that it externalizes
 		# correctly.
-		# Just in case they send url-encoded things, decode them
-		parts = [urllib.unquote(x) for x in sibling_name.split('/')]
-		parts = [x.decode('utf-8') if isinstance(x, bytes) else x for x in parts]
+		parts = sibling_name.split('/')
 		parent = self.key.bucket
 		for part in parts[:-1]:
 			parent = type(self.key.bucket)(bucket=parent, name=part)

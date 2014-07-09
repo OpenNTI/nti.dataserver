@@ -368,7 +368,19 @@ class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 	def make_sibling_key(sibling_name):
 		"""
 		Create a value suitable for use as the ``key`` attribute of this or a similar
-		object having the given `sibling_name`.
+		object having the given `sibling_name`. There is no guarantee whether such
+		a sibling key actually exists.
+
+		If the sibling_name has multiple levels, then the returned key
+		may be a key nested beneath new intermediate buckets.
+
+		If the sibling_name has a fragment identifier or is URL
+		encoded, the results are undefined and may vary from
+		implementation to implementation. In particular, different
+		sibling_names (because of fragment identifiers) may result in
+		the same returned key. Therefore, it is a best practice for the *caller*, who
+		presumably knows something about the domain the name is coming from,
+		to perform any URL-like manipulation.
 		"""
 
 	def read_contents_of_sibling_entry(sibling_name):
@@ -397,15 +409,17 @@ class IContentUnit(IZContained,
 
 	The ``__parent__`` of this object will be the containing content unit, which
 	will ultimately be the :class:`IContentPackage`; the containing unit of the package
-	will be the :class:`IContentPackageLibrary`.
+	will be the :class:`IContentPackageLibrary`. The ``__name__```` is fixed to be the ntiid.
 	"""
 	ordinal = Int(title="The number (starting at 1) representing which nth child of the parent I am.",
 				  default=1, min=1)
-	href = TextLine(title="DEPRECATED URI for the representation of this item.",
-					description="If this unit is within a package, then this is potentially a relative path",
+	href = TextLine(title="A relative path within the containing bucket",
+					description="This may include URL fragments when the same key is re-used",
 					default='')
 	key = Object(IDelimitedHierarchyKey,
-				 title="URI for the representation of this item",
+				 title="Key that identifies where the contents for this unit are",
+				 description="Should have a bucket its relative to; will not have fragment"
+				 	" identifiers, and thus may be reused within a hierarchy",
 				 default=None)
 	ntiid = ValidNTIID(title="The NTIID for this item",
 					 default=None,
