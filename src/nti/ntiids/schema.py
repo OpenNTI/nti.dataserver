@@ -24,6 +24,15 @@ class ValidNTIID(ValidURI):
 	"""
 	_type = unicode
 
+	def fromUnicode(self, value):
+		# The very first thing the superclass does is turn
+		# the value into a bytestring again (under py2),
+		# which is obviously wrong for us. So skip that.
+		value = value.strip()
+		self.validate(value)
+		return value
+
+
 	def _validate(self, value):
 		super(ValidNTIID,self)._validate(value)
 		validate_ntiid_string( value )
