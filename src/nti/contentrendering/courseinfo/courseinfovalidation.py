@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Validate course_info.json and schema.
+Validate course_info.json and schema. 
+(This module only an example of validating json file using external package. We do not use this module)
 
 .. $Id$
 """
