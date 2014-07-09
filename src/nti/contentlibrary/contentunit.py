@@ -22,6 +22,7 @@ from .interfaces import ILegacyCourseConflatedContentPackage
 from .presentationresource import DisplayableContentMixin
 
 from nti.utils.property import alias
+from nti.utils.property import read_alias
 
 from nti.schema.schema import PermissiveSchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
@@ -55,6 +56,8 @@ class ContentUnit(PermissiveSchemaConfigured,
 	# __name__ is commented out because the one test failure we saw has
 	# been fixed
 	#__name__ = alias('title')
+	# Now we should be able to match ntiid to name, which is distinct
+	__name__ = read_alias('ntiid')
 	label = alias('title')
 
 	def __repr__(self):

@@ -26,6 +26,7 @@ from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from . import interfaces
+from .interfaces import IContentUnitHrefMapper
 
 @interface.implementer(IExternalObject)
 @component.adapter(interfaces.IContentPackageLibrary)
@@ -53,7 +54,7 @@ def _path_join( root_url, path='' ):
 	return urljoin( root_url, path )
 
 def _root_url_of_key(key):
-	href = interfaces.IContentUnitHrefMapper( key ).href
+	href = IContentUnitHrefMapper( key ).href
 	return href + ('' if href.endswith( '/' ) else '/')  # trailing slash is important for urljoin
 
 def _root_url_of_unit( unit ):
@@ -100,16 +101,16 @@ class _ContentPackageExternal(object):
 		root_url = _root_url_of_unit( self.package )
 		result._root_url = root_url
 
-		result['icon'] = interfaces.IContentUnitHrefMapper( self.package.icon ).href if self.package.icon else None
-		result['href'] = interfaces.IContentUnitHrefMapper( self.package.key ).href if self.package.key else None
+		result['icon'] = IContentUnitHrefMapper( self.package.icon ).href if self.package.icon else None
+		result['href'] = IContentUnitHrefMapper( self.package.key ).href if self.package.key else None
 		result['root'] = root_url
 		result['title'] = self.package.title # Matches result['DCTitle']
 
 		index_dc = ''
 		if self.package.index_last_modified and self.package.index_last_modified > 0:
 			index_dc = '?dc=' + str(self.package.index_last_modified )
-		result['index'] = interfaces.IContentUnitHrefMapper( self.package.index ).href + index_dc if self.package.index else None
-		result['index_jsonp'] = interfaces.IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
+		result['index'] = IContentUnitHrefMapper( self.package.index ).href + index_dc if self.package.index else None
+		result['index_jsonp'] = IContentUnitHrefMapper( self.package.index_jsonp ).href if self.package.index_jsonp else None
 
 
 		result['version'] = '1.0' # This field was never defined. What does it mean?  I think we were thinking of generations
@@ -118,7 +119,7 @@ class _ContentPackageExternal(object):
 
 		result['installable'] = self.package.installable
 		if self.package.installable:
-			result['archive'] = interfaces.IContentUnitHrefMapper( self.package.archive_unit ).href
+			result['archive'] = IContentUnitHrefMapper( self.package.archive_unit ).href
 			result['Archive Last Modified'] = self.package.archive_unit.lastModified
 
 
@@ -204,30 +205,38 @@ class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
 
 ### key/path-to-URL-mapping
 
-@interface.implementer(interfaces.IContentUnitHrefMapper)
+@interface.implementer(IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemContentUnit)
 class _FilesystemContentUnitHrefMapper(object):
 	href = None
 
 	def __init__(self, unit):
-		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
+		key = unit.key
+		if key.bucket and unit.href:
+			# the href is relative to the bucket, and may contain
+			# a fragment
+			bucket_href = IContentUnitHrefMapper(key.bucket).href
+			self.href = _path_join(bucket_href, unit.href)
+		else:
+			# This shouldn't be hit?
+			self.href = IContentUnitHrefMapper( key ).href
 
 from zope.traversing.api import joinPath
 from zope.location.location import LocationIterator
 from zope.location.interfaces import IRoot
 
-@interface.implementer(interfaces.IContentUnitHrefMapper)
+@interface.implementer(IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
 	href = None
 
 	def __init__(self, key):
-		parent_path = interfaces.IContentUnitHrefMapper(key.bucket).href
+		parent_path = IContentUnitHrefMapper(key.bucket).href
 		self.href = _path_join( parent_path, key.name )
 
 
 
-@interface.implementer(interfaces.IContentUnitHrefMapper)
+@interface.implementer(IContentUnitHrefMapper)
 @component.adapter(interfaces.IFilesystemBucket)
 class _FilesystemBucketHrefMapper(object):
 
@@ -268,7 +277,7 @@ class _S3ContentUnitHrefMapper(object):
 	href = None
 
 	def __init__(self, unit):
-		self.href = interfaces.IContentUnitHrefMapper( unit.key ).href
+		self.href = IContentUnitHrefMapper( unit.key ).href
 
 @interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
 @component.adapter(interfaces.IS3Key)
