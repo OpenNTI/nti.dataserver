@@ -57,6 +57,9 @@ class _WithId(object):
 
 	def __init__(self, unit):
 		self.id = unit.ntiid
+		if self.id is None:
+			raise ValueError("ContentUnit with no NTIID cannot be annotated", unit)
+
 
 def _to_id(func):
 	@functools.wraps(func)

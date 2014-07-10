@@ -15,7 +15,7 @@
 	<subscriber handler=".threadable.threadable_removed" />
 
 	<!-- Externalization -->
-	
+
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
@@ -34,12 +34,19 @@
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
 
 	<!-- Blob file URL storage for canvas images -->
-	
+
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
-	
+
 	<include package="plone.namedfile" file="z3c-blobfile.zcml" />
 
 	<include package=".forums" />
+
+	<!-- Additional/plugin packages -->
+	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="." />
+
 
 </configure>

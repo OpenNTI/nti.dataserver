@@ -331,7 +331,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			<toc NTIRelativeScrollHeight="58" href="index.html"
 			icon="icons/Faa%20Aviation%20Maintenance%20Technician%20Knowledge%20Test%20Guide-Icon.png"
 			label="FAA Aviation Maintenance Technician Knowledge Test" ntiid="tag:nextthought.com,2011-10:foo-bar-baz" thumbnail="./thumbnails/index.png">
-			<topic label="C1" href="faa-index.html"/>
+			<topic label="C1" href="faa-index.html" ntiid="tag:nextthought.com,2011-10:foo-bar-baz.child"/>
 			</toc>""")
 		self.library = DynamicLibrary( self.temp_dir )
 		self.library.syncContentPackages()
