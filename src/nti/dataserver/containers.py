@@ -581,6 +581,10 @@ class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeCon
 	Scalable case-insensitive :class:`IFolder` implementation.
 	"""
 
+class CaseInsensitiveCheckingLastModifiedBTreeFolder(_CheckObjectOnSetMixin,
+													 CaseInsensitiveLastModifiedBTreeFolder):
+	pass
+
 class CaseInsensitiveCheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,
 														CaseInsensitiveLastModifiedBTreeContainer):
 	pass

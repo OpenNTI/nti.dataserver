@@ -401,7 +401,7 @@ class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 		self.request.body = to_json_representation( {'Username': 'jason@test.nextthought.com',
 													 'password': 'pass123word',
 													 'realname': 'Jason Madden',
-													 'email': 'foo@bar.com' } )
+													 'email': 'jason@test.nextthought.com' } )
 
 
 		new_user = account_create_view( self.request )
@@ -422,7 +422,7 @@ class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 		self.request.body = to_json_representation( {'Username': 'jason_nextthought_com',
 													 'password': 'pass132word',
 													 'realname': 'Jason Madden',
-													 'email': 'foo@bar.com' } )
+													 'email': 'jason@test.nextthought.com' } )
 
 		new_user = account_create_view( self.request )
 		assert_that( user_interfaces.IFriendlyNamed( new_user ), has_property( 'alias', 'Jason Madden' ) )

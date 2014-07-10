@@ -742,3 +742,31 @@ def sharing_listener_main():
 
 def index_listener_main():
 	pass
+
+
+####
+# z3c.autoinclude plugin points:
+# Although the first argument is specified as 'package', it actually
+# takes any GlobalObject that has a __name__; the __name__ is what
+# is used to look up plugins.
+# We define a class and set of global objects to serve as proxies for
+# the places that we do not actually have a package/configure.zcml to load.
+####
+
+class PluginPoint(object):
+	__name__ = None
+
+	def __init__(self, name):
+		self.__name__ = name
+
+# nti.app packages/plugins are meant to be part of the application
+# always, on every site. they provide standard functionality.
+PP_APP = PluginPoint('nti.app')
+
+# nti.app.products packages/plugins are optional, installed
+# and enabled on a site-by-site basis. they should be loaded second.
+PP_APP_PRODUCTS = PluginPoint('nti.app.products')
+
+# nti.app.sits packages/plugins provide specific site policies
+# and functionality. They should be loaded last.
+PP_APP_SITES = PluginPoint('nti.app.sites')

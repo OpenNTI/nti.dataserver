@@ -22,6 +22,7 @@
 	<include package="z3c.ptcompat" zcml:condition="not-have in-apidoc" /> <!-- regular pagetemplate usage uses chamelean engine -->
 	<include package="z3c.macro" />
 
+	<include package="nti.externalization" />
 	<include package="nti.dataserver" />
 	<include package="nti.mailer" />
 
@@ -471,14 +472,23 @@
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
 
+
+	<!-- Filters -->
+
+	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
+				provides=".interfaces.IPrincipalUGDFilter"/>
+
+	<!-- Additional/plugin packages -->
+	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.authentication" />
 	<include package="nti.app.notabledata" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.pushnotifications" />
 	<include package="nti.app.contentsearch" />
 
-	<!-- Filters -->
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP" />
+	<includePlugins package="nti.appserver.application.PP_APP_PRODUCTS" />
+	<includePlugins package="nti.appserver.application.PP_APP_SITES" />
 
-	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
-				provides=".interfaces.IPrincipalUGDFilter"/>
 </configure>
