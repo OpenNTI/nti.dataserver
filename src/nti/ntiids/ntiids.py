@@ -92,7 +92,7 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 # Validation
 # This is a minimal set, required to make parsing wark;
 # space is technically legal, but we escape it away anyway (?)
-_illegal_chars_ = r"/\";=?<>#%'{}|^[]"
+_illegal_chars_ = r"\";=?<>#%'{}|^[]"
 
 
 class InvalidNTIIDError(sch_interfaces.ValidationError):
