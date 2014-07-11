@@ -79,8 +79,11 @@
 											<div tal:condition="options/total_remaining"
 												 tal:define="total_remaining options/total_remaining"
 												 style="background:#3fb3f6;height:30px;text-align:center;padding-top:15px;margin-top:20px;">
-												<a href="${options/other/total_remaining_href}"
-												   style="color:white;font-weight:bold;font-size:15px;">See All Activity (${total_remaining})</a>
+												<a href="https://see-all"
+												   style="color:white;font-weight:bold;font-size:15px;"
+												   tal:attributes="href options/total_remaining_href">
+													See All Activity (${total_remaining})
+												</a>
 											</div>
 										</div>
 								</td>

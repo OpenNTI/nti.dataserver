@@ -92,7 +92,10 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 # Validation
 # This is a minimal set, required to make parsing wark;
 # space is technically legal, but we escape it away anyway (?)
-_illegal_chars_ = r"\";=?<>#%'{}|^[]"
+# Note specifically that neither path
+# delimiter (forward or backward slash) is allowed as ntiids often
+# wind up as filenames, and that would break many filename uses
+_illegal_chars_ = r"/\";=?<>#%'{}|^[]"
 
 
 class InvalidNTIIDError(sch_interfaces.ValidationError):
