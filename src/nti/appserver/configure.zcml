@@ -108,9 +108,6 @@
 			 for=".interfaces.ILibraryCollection" />
 
 
-	<subscriber factory="._adapters._DFLUserLikeDecorator"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
-
 	<subscriber factory=".dfl_views.DFLGetMembershipLinkProvider"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 

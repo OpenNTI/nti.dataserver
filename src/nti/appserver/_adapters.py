@@ -163,23 +163,6 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 		self._allowed_fields = allowed_fields
 
-from nti.dataserver.users import DynamicFriendsList
-
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
-@component.adapter(DynamicFriendsList)
-class _DFLUserLikeDecorator(object):
-	"""
-	For purposes of the web UI, cause DFL to use their unique NTIID as the 'username' field.
-	"""
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject( self, original, external ):
-		external['Username'] = original.NTIID
-		# The application gets confused. Sometimes it uses the ID,
-		# sometimes the Username.
-		external['ID'] = original.NTIID
-
-
 import nameparser
 from pyramid.threadlocal import get_current_request
 from zope.i18n.interfaces import IUserPreferredLanguages

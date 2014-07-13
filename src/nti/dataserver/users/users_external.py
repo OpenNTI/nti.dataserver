@@ -17,6 +17,7 @@ from zope import component
 from zope import interface
 
 from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import authorization_acl as auth
@@ -76,7 +77,11 @@ class _AbstractEntitySummaryExternalObject(object):
 		# not a real representation of the object, we don't want people to cache based
 		# on it.
 		extDict.pop( 'Last Modified', None )
-		extDict['Username'] = entity.username
+		if not IUseNTIIDAsExternalUsername.providedBy(entity):
+			extDict['Username'] = entity.username
+		else:
+			extDict['ID'] = extDict['Username'] = entity.NTIID
+
 		extDict['avatarURL'] = _avatar_url( entity )
 		names = interfaces.IFriendlyNamed( entity )
 		extDict['realname'] = names.realname or entity.username

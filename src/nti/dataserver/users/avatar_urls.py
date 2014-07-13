@@ -70,7 +70,6 @@ class GravatarComputedAvatarURL(object):
 	defaultGravatarType = 'identicon'
 
 	def __init__( self, context ):
-
 		email = _username_as_email( context.username )
 		from_real_email = False
 		try:

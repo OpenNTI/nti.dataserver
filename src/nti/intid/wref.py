@@ -89,6 +89,12 @@ class _AbstractWeakRef(object):
 		except AttributeError: #pragma: no cover
 			return NotImplemented
 
+	def __ne__(self, other):
+		if self is other: return False
+		eq = self.__eq__(other)
+		if eq is NotImplemented:
+			return eq
+		return not eq
 
 	def __hash__(self):
 		return hash((self._entity_id,self._entity_oid))

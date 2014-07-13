@@ -278,6 +278,8 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		except ZODB.POSException.ConnectionStateError:
 			return object.__str__(self)
 
+	__unicode__ = __str__
+
 	@property
 	def id(self):
 		""" Our ID is a synonym for our username"""
