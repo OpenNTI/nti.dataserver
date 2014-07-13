@@ -26,9 +26,6 @@ from nti.schema.schema import EqHash
 from nti.externalization.externalization import WithRepr
 from nti.externalization.persistence import NoPickle
 
-import anyjson as json
-
-
 # Because we only expect to store persistent versions
 # of these things, and we expect to update them directly
 # in place, we make them attribute annotatable.
@@ -186,6 +183,7 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 #: The name of the file that identifies a directory
 #: as a content bundle
 _BUNDLE_META_NAME = "bundle_meta_info.json"
+BUNDLE_META_NAME = _BUNDLE_META_NAME # export
 
 from .interfaces import ISyncableContentPackageBundleLibrary
 from .interfaces import IEnumerableDelimitedHierarchyBucket
@@ -228,8 +226,7 @@ class _ContentBundleMetaInfo(object):
 		# and turning it indo objects unless the timestamp is newer;
 		# however, here we need the NTIID, which comes out of the file;
 		# also we expect it to be quite small
-		json_text = key.readContents().decode('utf-8')
-		json_value = json.loads(json_text)
+		json_value = key.readContentsAsJson()
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
 		if 'ntiid' not in json_value:
@@ -313,8 +310,12 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	for k in meta.__dict__:
 		if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
 			modified = True
-			validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
-			setattr(bundle, str(k), getattr(meta, k))
+			# Our ContentPackages actually may bypass the interface by already
+			# being weakly referenced if missing
+			if k != 'ContentPackages':
+				validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
+			else:
+				setattr(bundle, str(k), getattr(meta, k))
 
 	if bundle.root != meta.key.__parent__:
 		modified = True

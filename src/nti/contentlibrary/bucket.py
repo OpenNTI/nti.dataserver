@@ -78,8 +78,15 @@ class _AbstractDelimitedHierarchyObject(object):
 class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
+import anyjson as json
+
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
 
 	def readContents(self):
 		raise NotImplementedError()
+
+	def readContentsAsJson(self):
+		json_text = self.readContents().decode('utf-8')
+		json_value = json.loads(json_text)
+		return json_value

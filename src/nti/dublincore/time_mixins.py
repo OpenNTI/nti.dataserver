@@ -168,10 +168,13 @@ class CreatedAndModifiedTimeMixin(CreatedTimeMixin,
 								  ModifiedTimeMixin,
 								  DCTimesLastModifiedMixin):
 
+	_SET_CREATED_MODTIME_ON_INIT = True
+
 	def __init__(self, *args, **kwargs):
 		# We set the times now so subclasses can rely on them
-		self.createdTime = time.time()
-		self.updateLastModIfGreater(self.createdTime)
+		if self._SET_CREATED_MODTIME_ON_INIT:
+			self.createdTime = time.time()
+			self.updateLastModIfGreater(self.createdTime)
 		super(CreatedAndModifiedTimeMixin,self).__init__(*args, **kwargs)
 
 

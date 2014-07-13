@@ -100,6 +100,12 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 		Return, as a byte-string, the contents of this leaf node.
 		"""
 
+	def readContentsAsJson():
+		"""
+		Read the contents and return a fresh JSON object (with unicode strings). If the contents
+		are not JSON, raises an exception.
+		"""
+
 
 class IContentPackageEnumeration(interface.Interface):
 	"""

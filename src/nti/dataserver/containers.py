@@ -291,6 +291,14 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 			self.lastModified = t
 		return self.lastModified
 
+	def clear(self):
+		"""
+		Convenience method to clear the entire tree at one time.
+		"""
+		if len(self) == 0:
+			return
+		for k in list(self.keys()):
+			del self[k]
 
 	# We know that these methods are implemented as iterators.
 	# This is not part of the IBTreeContainer interface, but it is
