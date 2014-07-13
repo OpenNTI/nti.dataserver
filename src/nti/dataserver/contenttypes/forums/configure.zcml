@@ -89,4 +89,10 @@
 	<adapter factory=".acl._ACLCommunityForumACLProvider"
 			 for=".interfaces.IACLCommunityForum"/>
 
+	<!-- Additional/plugin packages -->
+
+	<include package="z3c.autoinclude" file="meta.zcml" />
+	<includePlugins package="." />
+
+
 </configure>

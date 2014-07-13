@@ -74,7 +74,7 @@ def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	jar = IConnection(creator, None)
 	if jar:
 		jar.add(board)
-	errors = schema.getValidationErrors(for_interfaces.ICommunityBoard, board)
+	errors = schema.getValidationErrors(iface, board)
 	if errors:
 		__traceback_info__ = errors
 		raise errors[0][1]

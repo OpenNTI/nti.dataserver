@@ -444,10 +444,11 @@ def to_standard_external_dictionary( self, mergeFrom=None, name=_NotGiven,
 		# ids are in the old, version 1 format, without an intid component. If that's the case,
 		# then update them on the fly, but only for notes because odd things happen to other
 		# objects (chat rooms?) if we do this to them
-		result_id = result[StandardExternalFields_ID]
-		std_oid = to_external_ntiid_oid( self )
-		if std_oid and std_oid.startswith( result_id ) and self.__class__.__name__ == 'Note':
-			result[StandardExternalFields_ID] = std_oid
+		if self.__class__.__name__ == 'Note':
+			result_id = result[StandardExternalFields_ID]
+			std_oid = to_external_ntiid_oid( self )
+			if std_oid and std_oid.startswith( result_id ):
+				result[StandardExternalFields_ID] = std_oid
 		result[StandardExternalFields_OID] = result[StandardExternalFields_ID]
 	else:
 		oid = to_external_ntiid_oid( self, default_oid=None ) #toExternalOID( self )

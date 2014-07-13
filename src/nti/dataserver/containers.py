@@ -318,10 +318,19 @@ collections.Mapping.register( LastModifiedBTreeContainer )
 
 ModDateTrackingBTreeContainer = LastModifiedBTreeContainer # BWC
 
-class CheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,LastModifiedBTreeContainer):
+class CheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,
+										 LastModifiedBTreeContainer):
 	"""
 	A BTree container that validates constraints when items are added.
 	"""
+
+@interface.implementer(IFolder)
+class CheckingLastModifiedBTreeFolder(CheckingLastModifiedBTreeContainer,
+									  SiteManagerContainer):
+	"""
+	Scalable :class:`IFolder` implementation.
+	"""
+
 
 @component.adapter( interfaces.ILastModified, IContainerModifiedEvent )
 def update_container_modified_time( container, event ):

@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import is_not
 from hamcrest import none
 from hamcrest import not_none
 from hamcrest import has_property
@@ -111,3 +112,16 @@ class TestIntidWref(SharedConfiguringTestBase):
 		assert_that( bt[ref2], is_( 2 ) )
 
 		assert_that( bt.get('foo'), is_( none() ) )
+
+	@WithMockDSTrans
+	def test_eq_ne(self):
+		user = users.User.create_user( username='sjohnson@nextthought.com' )
+		user2 = users.User.create_user( username='sjohnson2@nextthought.com' )
+
+		ref = wref.ArbitraryOrderableWeakRef( user )
+		ref2 = wref.ArbitraryOrderableWeakRef( user2 )
+
+
+		assert_that( ref, is_(ref) )
+		assert_that( ref2, is_not(ref) )
+		assert_that( ref, is_not(ref2) )

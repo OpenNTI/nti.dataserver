@@ -1347,10 +1347,20 @@ class IFriendsList(IModeledContent, IEntity):
 
 		"""
 
-class IDynamicSharingTargetFriendsList(IDynamicSharingTarget, IFriendsList):
+class IUseNTIIDAsExternalUsername(interface.Interface):
+	"""
+	A marker interface for IEntity objects that are not globally resolvable
+	by their 'username'; instead, everywhere we would write out
+	a username we must instead write the NTIID.
+	"""
+
+class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,
+									   IFriendsList,
+									   IUseNTIIDAsExternalUsername):
 	"""
 	A type of :class:`IDynamicSharingTarget` that is a list of members.
 	"""
+
 	Locked = Bool(title='Locked flag. No group code, no removal', required=False, default=False)
 
 from zope.container.constraints import contains

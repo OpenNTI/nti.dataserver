@@ -271,6 +271,8 @@ def _readCurrent(lib):
 	except AttributeError:
 		pass
 
+	return lib
+
 from nti.externalization.internalization import validate_named_field_value
 
 def sync_bundle_from_json_key(data_key, bundle, content_library=None,
