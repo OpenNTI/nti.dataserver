@@ -1016,3 +1016,24 @@ class TestCommunity(DataserverLayerTest):
 
 		assert_that( container.iter_intids(),
 					 contains_inanyorder( user._ds_intid, user2._ds_intid ))
+
+	@WithMockDSTrans
+	def test_delete_community_clears_memberships(self):
+		user = User.create_user( self.ds, username='sjohnson@nextthought.com', password='temp001' )
+		user2 = User.create_user( self.ds, username='jason@nextthought.com', password='temp001' )
+		comm = Community.create_entity( self.ds, username='AoPS' )
+
+		user.record_dynamic_membership(comm)
+		user2.record_dynamic_membership(comm)
+
+		assert_that( user, is_in(comm) )
+		assert_that( user2, is_in(comm) )
+		assert_that( comm, is_in(user.dynamic_memberships))
+		assert_that( comm, is_in(user2.dynamic_memberships))
+
+		Community.delete_entity( comm.username, self.ds )
+
+		assert_that( user, is_not(is_in(comm) ))
+		assert_that( user2, is_not(is_in(comm) ))
+		assert_that( comm, is_not(is_in(user.dynamic_memberships)))
+		assert_that( comm, is_not(is_in(user2.dynamic_memberships)))

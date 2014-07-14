@@ -19,6 +19,7 @@
 	<subscriber handler=".users.user_devicefeedback" />
 	<subscriber handler=".users._add_member_to_community" />
 	<subscriber handler=".users._remove_member_from_community" />
+	<subscriber handler=".users._remove_all_members_when_community_deleted" />
 	<subscriber handler=".users.onChange" />
 
 	<!-- Externalization -->

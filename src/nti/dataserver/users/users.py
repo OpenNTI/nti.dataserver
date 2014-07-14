@@ -275,6 +275,10 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 	def iter_members(self):
 		return _iterable_of_entities_from_named_lazy_set_of_wrefs(self, '_members')
 
+	def __iter__(self):
+		# For testing convenience when formatting mismatches
+		return self.iter_members()
+
 	def iter_member_usernames(self):
 		return _set_of_usernames_from_named_lazy_set_of_wrefs(self, '_members')
 
@@ -299,6 +303,16 @@ def _add_member_to_community(entity, event):
 def _remove_member_from_community(entity, event):
 	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
 		event.target._del_member(entity)
+
+@component.adapter(nti_interfaces.ICommunity,zope.intid.interfaces.IIntIdRemovedEvent)
+def _remove_all_members_when_community_deleted(entity, event):
+	"Clean up the weak references"
+	for member in list(entity.iter_members()): # sadly we have to reify the list because we will be changing it
+		if hasattr(member, 'record_no_longer_dynamic_member'):
+			# Which in turn fires IStopDynamicMembershipEvent,
+			# which gets us to _del_member through the event handler
+			# above
+			member.record_no_longer_dynamic_member(entity)
 
 @interface.implementer(nti_interfaces.IEntityIntIdIterable,
 					   nti_interfaces.ILengthEnumerableEntityContainer)
