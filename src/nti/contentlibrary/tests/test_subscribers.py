@@ -187,7 +187,6 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		# check that we have the right kind of property, didn't overwrite through createFieldProperties
 		assert_that( bundle, has_property( '_lastModified', is_(NumericMaximum) ))
-		from IPython.core.debugger import Tracer; Tracer()() ## DEBUG ##
 
 		assert_that( bundle, externalizes( has_entries('Class', 'ContentPackageBundle',
 													   'ContentPackages', has_length(1),
