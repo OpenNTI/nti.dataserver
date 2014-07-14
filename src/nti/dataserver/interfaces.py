@@ -1318,7 +1318,8 @@ class IShareableModeledContent(IShareable, IModeledContent):
 		required=False,
 		default=frozenset())
 
-class IFriendsList(IModeledContent, IEntity):
+class IFriendsList(IModeledContent, IEntity,
+				   INotModifiedInStreamWhenContainerModified):
 	"""
 	Define a list of users.
 
