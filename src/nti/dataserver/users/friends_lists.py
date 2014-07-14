@@ -17,6 +17,9 @@ from zope import component
 from zope.component.factory import Factory
 from zc import intid as zc_intid
 
+from zope.container.contained import ContainerModifiedEvent
+from zope.event import notify
+
 from BTrees.OOBTree import OOTreeSet
 from BTrees.OOBTree import difference as OOBTree_difference
 from BTrees.OOBTree import intersection as OOBTree_intersection
@@ -115,6 +118,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			or was either already a member of this list or of an unrecognized type.
 
 		"""
+		# XXX: We don't fire containermodified events, we leave
+		# that to the _update_friends_from_external. if we did it both places,
+		# we'd have duplicate or many events. it's trickier to get correct
+		# since we're not a real container
 		if friend is None or friend is self or friend is self.creator:
 			return 0
 
@@ -265,7 +272,10 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 			__traceback_info__ = newFriends
 			update_count = self._update_friends_from_external( newFriends )
 			updated = update_count > 0
-			self.updateLastMod() # Sigh. Some general_purpose tests depend on this, regardless of whether any update got done.
+			if updated:
+				notify(ContainerModifiedEvent(self))
+			else:
+				self.updateLastMod() # Sigh. Some general_purpose tests depend on this, regardless of whether any update got done.
 
 		if self.username is None:
 			self.username = parsed.get( 'Username' )
