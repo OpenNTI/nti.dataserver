@@ -165,10 +165,7 @@ def EclipseContentPackage( toc_entry,
 	"""
 
 	try:
-		try:
-			root = etree.parse( toc_entry.filename ).getroot()
-		except AttributeError:
-			root = etree.fromstring( toc_entry.read_contents() )
+		root = toc_entry.key.readContentsAsETree()
 	except (IOError,etree.Error):
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
