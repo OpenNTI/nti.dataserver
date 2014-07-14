@@ -21,6 +21,9 @@ from .interfaces import IContentUnitAnnotationUtility
 from .annotation import ContentUnitAnnotationUtility
 
 from zope.component.hooks import site
+from nti.site.localutility import install_utility_on_registration
+from nti.site.localutility import uninstall_utility_on_unregistration
+from nti.site.localutility import install_utility
 
 _LIBRARY_NAME = '++etc++library'
 
@@ -70,28 +73,19 @@ def install_site_content_library(local_site_manager, _=None):
 				library, local_site.__name__)
 	assert IPersistentContentPackageLibrary.providedBy(library)
 
-	# Contain the utilities we are about to install.
-	# Note that for queryNextUtility, etc, to work properly if they
-	# use themselves as the context (which seems to be what people do)
-	# these need to be children of the SiteManager object: qNU walks from
-	# the context to the enclosing site manager, and then looks through ITS
-	# bases
-	local_site_manager[_LIBRARY_NAME] = library
-	local_site_manager['++etc++contentannotation'] = annotes = ContentUnitAnnotationUtility()
-
-
-	# Before we install (which fires a registration event that things might
-	# be listening for) set up the dependent utilities
-	local_site_manager.registerUtility( annotes,
-										provided=IContentUnitAnnotationUtility)
-
-	# Now we can register and sync our site library
-	local_site_manager.registerUtility( library,
-										provided=IPersistentContentPackageLibrary )
-
 	with site(local_site):
-		# sync in this site so the right utilities and event
-		# listeners are found
+		# Install and sync in this site so the right utilities and event
+		# listeners are found.
+		# Before we install the library (which fires a registration event that things might
+		# be listening for) set up the dependent utilities
+		install_utility(ContentUnitAnnotationUtility(),
+						'++etc++contentannotation',
+						IContentUnitAnnotationUtility,
+						local_site_manager)
+		install_utility(library,
+						_LIBRARY_NAME,
+						IPersistentContentPackageLibrary,
+						local_site_manager)
 		library.syncContentPackages()
 		return library
 
@@ -116,26 +110,16 @@ def install_bundle_library(library, event):
 	put something to manage (persistent) content bundles, driven
 	off the bucket that the library manages.
 	"""
-	registration = event.object
-	local_site_manager = registration.registry
-
-	# See above for why these need to be in the site manager
-	bundle_library = local_site_manager[_BUNDLE_LIBRARY_NAME] = ContentPackageBundleLibrary()
-
-	local_site_manager.registerUtility( bundle_library,
-										provided=IContentPackageBundleLibrary )
-
+	install_utility_on_registration(ContentPackageBundleLibrary(),
+									_BUNDLE_LIBRARY_NAME,
+									IContentPackageBundleLibrary,
+									event)
 
 @component.adapter(IPersistentContentPackageLibrary, IUnregistered)
 def uninstall_bundle_library(library, event):
-	registration = event.object
-	local_site_manager = registration.registry
-
-	bundle_library = local_site_manager[_BUNDLE_LIBRARY_NAME]
-
-	local_site_manager.unregisterUtility( bundle_library,
-										  provided=IContentPackageBundleLibrary )
-	del local_site_manager[_BUNDLE_LIBRARY_NAME]
+	uninstall_utility_on_unregistration(_BUNDLE_LIBRARY_NAME,
+										IContentPackageBundleLibrary,
+										event)
 
 @component.adapter(IPersistentContentPackageLibrary, IContentPackageLibraryDidSyncEvent)
 def sync_bundles_when_library_synched(library, event):
