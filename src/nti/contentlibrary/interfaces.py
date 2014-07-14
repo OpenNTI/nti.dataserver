@@ -106,6 +106,12 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 		are not JSON, raises an exception.
 		"""
 
+	def readContentsAsETree():
+		"""
+		Read the contents and return a fresh :mod:`lxml.etree` root node.
+		If the contents are not XML, raises an exception.
+		"""
+
 
 class IContentPackageEnumeration(interface.Interface):
 	"""

@@ -145,6 +145,7 @@ class _FilesystemTimesMixin(object):
 	created = TimeProperty('createdTime', writable=False, cached=True)
 
 from .contentunit import _content_cache
+from lxml import etree
 
 @interface.implementer(IFilesystemKey,
 					   ILastModified)
@@ -160,7 +161,10 @@ class FilesystemKey(AbstractKey,
 		except IOError:
 			return None
 
-
+	def readContentsAsETree(self):
+		# TODO: Pass the base_url?
+		root = etree.parse( self.absolute_path ).getroot()
+		return root
 
 
 @interface.implementer(IFilesystemBucket)

@@ -324,6 +324,7 @@ def _after_database_opened_listener(event):
 		@functools.wraps(orig_class_factory)
 		def nti_classFactory(connection, modulename, globalname):
 			result = orig_class_factory(connection, modulename, globalname)
+
 			replace = getattr(result, '_v_nti_pseudo_broken_replacement_name', None)
 			if replace is not None:
 				result = orig_class_factory(connection, modulename, replace)

@@ -125,8 +125,8 @@ class Lazy(_Lazy):
 # Actually, we do this by default, but encourage
 # the proper importing
 _Lazy_init__ = _Lazy.__init__
-def _patch_Lazy_init(self,func,**kwargs):
-	_Lazy_init__(self,func,**kwargs)
+def _patch_Lazy_init(self,func,*args,**kwargs):
+	_Lazy_init__(self,func,*args,**kwargs)
 	update_wrapper(self,func)
 _Lazy.__init__ = _patch_Lazy_init
 

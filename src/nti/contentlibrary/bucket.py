@@ -79,6 +79,7 @@ class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
 import anyjson as json
+from lxml import etree
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
@@ -90,3 +91,7 @@ class AbstractKey(_AbstractDelimitedHierarchyObject):
 		json_text = self.readContents().decode('utf-8')
 		json_value = json.loads(json_text)
 		return json_value
+
+	def readContentsAsETree(self):
+		root = etree.fromstring( self.readContents() )
+		return root
