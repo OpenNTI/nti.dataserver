@@ -55,6 +55,8 @@ class DisplayableContentMixin(object):
 	the presentation resources iterable.
 	"""
 
+	root = None
+
 	@CachedProperty('root')
 	def PlatformPresentationResources(self):
 		# If the root is not yet filled in (None), then
@@ -62,9 +64,11 @@ class DisplayableContentMixin(object):
 		# as a missing attribute...and SchemaConfigured would try
 		# to copy in the default value, which would overwrite
 		# our CachedProperty. Thus we have to be defensive.
-		if not self.root:
+		root = getattr(self, 'root', None)
+		if not root:
 			return ()
-		assets = self.root.getChildNamed('presentation-assets')
+
+		assets = root.getChildNamed('presentation-assets')
 		if assets is None or not IDelimitedHierarchyBucket.providedBy(assets):
 			return ()
 
