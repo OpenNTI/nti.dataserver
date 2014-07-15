@@ -64,6 +64,21 @@ Assets found beneath presentation-assets/iPad/v1/
 |                                    |            | that shows up on the books view of the library.                |
 +------------------------------------+------------+----------------------------------------------------------------+
 
+WebApp
+------
+
+Assets found beneath presentation-assets/webapp/v1/
+
++------------------------------------+------------+----------------------------------------------------------------+
+|Name                                |Size        |Description                                                     |
++====================================+============+================================================================+
+|``contentpackage-cover-232x170.png``|232 x 170 px| the cover image for this particular content package. Used in   |
+|                                    |            | library.                                                       |
++------------------------------------+------------+----------------------------------------------------------------+
+|``contentpackage-thumb-60x60.png``  | 60 x 60 px | thumbnail for this content package. Shown in the various small |
+|                                    |            | squares peppered throught the app (note context, nav bar)      |
++------------------------------------+------------+----------------------------------------------------------------+
+
 Legacy Presentation Assets Still In Use
 =======================================
 
@@ -72,15 +87,15 @@ This table defines the legacy assets in use by clients
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
 |Key Path                                         |Webapp                                      |iPad                                          |
 +=================================================+============================================+==============================================+
-|``ContentPackage/toc/icon``                      |                                            |Not Used                                      |
+|``ContentPackage/toc/icon``                      |Not Used                                    |Not Used                                      |
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
-|``ContentPackage/toc/background``                |                                            |Course background                             |
+|``ContentPackage/toc/background``                |Course Background                           |Course background                             |
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
-|``Purchasable/Icon``                             |                                            |Not Used                                      |
+|``Purchasable/Icon``                             |Purchase Window, Purchase Prompts, Library  |Not Used                                      |
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
-|``Purchasable/Thumbnail``                        |                                            |Not Used                                      |
+|``Purchasable/Thumbnail``                        |Not Used                                    |Not Used                                      |
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
-|``CourseCatalogEntry/LegacyPurchasableIcon``     |                                            |Home screen Catalog tab                       |
+|``CourseCatalogEntry/LegacyPurchasableIcon``     |Not Used                                    |Home screen Catalog tab                       |
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
-|``CourseCatalogEntry/LegacyPurchasableThumbnail``|                                            |Home screen Courses tab, Top of course outline|
+|``CourseCatalogEntry/LegacyPurchasableThumbnail``|Not Used                                    |Home screen Courses tab, Top of course outline|
 +-------------------------------------------------+--------------------------------------------+----------------------------------------------+
