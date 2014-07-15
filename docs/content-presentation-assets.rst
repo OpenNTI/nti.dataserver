@@ -20,8 +20,8 @@ Client Specific Presentation Assets
 Given the shortcomings discussed above, it seems prudent to start thinking about these assets as being auxiliary to the content rather than a part of how the content is modeled.  Each client would have a set of well-known paths that it looks for the various presentation related assets in.  For example we could use the following structure for the background image example.
 
 | presentation-assets/webapp/v1/background.png
-| presentation-assets/ipad/v1/background.png
-| presentation-assets/ipad/v1/background@2x.png
+| presentation-assets/iPad/v1/background.png
+| presentation-assets/iPad/v1/background@2x.png
 
 These are well-known paths.  Each client would be responsible for knowing what it needed and where to look for it given it's current context. This eliminates the meta-data defining where to find these assets.  This moves the presentation related information out of the models (think MVC) and provides flexibility for numerous clients and UIs.
 
@@ -31,9 +31,9 @@ These asset locations contain information not only about the client but also a v
 
 Should the same presentation asset be shared between two devices/version we can use a shared location and symlinks to prevent asset duplication.  For example if v1 and v2 of iPad both need a background.png that is the same we could create the following structure:
 
-| presentation-assets/ipad/shared/background.png
-| presentation-assets/ipad/v1/background.png -> presentation-assets/ipad/shared/background.png
-| presentation-assets/ipad/v2/background.png -> presentation-assets/ipad/shared/background.png
+| presentation-assets/iPad/shared/background.png
+| presentation-assets/iPad/v1/background.png -> presentation-assets/iPad/shared/background.png
+| presentation-assets/iPad/v2/background.png -> presentation-assets/iPad/shared/background.png
 
 A similar structure could be used if we need to share presentation assets between the iPad and webapp.
 
