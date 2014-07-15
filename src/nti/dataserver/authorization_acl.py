@@ -101,7 +101,7 @@ class _ACE(object):
 		self.actor = (nti_interfaces.IPrincipal( actor )
 						if not nti_interfaces.IPrincipal.providedBy( actor )
 						else actor)
-		if not hasattr( permission, '__iter__' ):
+		if not hasattr( permission, '__iter__' ): # XXX breaks on py3
 			permission = [permission]
 
 		if provenance:
