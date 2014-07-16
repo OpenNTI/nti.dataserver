@@ -199,6 +199,8 @@ def WithMockDS( *args, **kwargs ):
 
 current_transaction = None
 
+from nti.site.site import get_site_for_site_names
+
 class mock_db_trans(object):
 	"""
 	A context manager that returns a connection. Use
@@ -206,16 +208,25 @@ class mock_db_trans(object):
 	or similar.
 	"""
 
-	def __init__(self, ds=None):
+	def __init__(self, ds=None, site_name=None):
+		"""
+		:keyword site_name: If given, names a site (child of the ds site)
+			that will be made current during execption.
+		"""
 		self.ds = ds or current_mock_ds
 		self._site_cm = None
+		self._site_name = site_name
 
 	def __enter__(self):
 		transaction.begin()
 		self.conn = conn = self.ds.db.open()
 		global current_transaction
 		current_transaction = conn
+
 		sitemanc = conn.root()['nti.dataserver']
+		if self._site_name:
+			with site(sitemanc):
+				sitemanc = get_site_for_site_names((self._site_name,))
 
 		self._site_cm = site( sitemanc )
 		self._site_cm.__enter__()
