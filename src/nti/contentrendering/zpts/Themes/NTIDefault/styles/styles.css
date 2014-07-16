@@ -214,3 +214,15 @@ div.align-center ul.nav {
 	width: 625px;
 	padding-right: 12px;
 }
+
+#NTIContent .chapter.title {
+	font-size: 34px;
+}
+
+#NTIContent .subsection.title {
+	font-size: 28px;
+}
+
+#NTIContent .subsubsection.title {
+	font-size: 24px;
+}
