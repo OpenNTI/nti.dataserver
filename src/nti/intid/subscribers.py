@@ -108,11 +108,11 @@ def removeIntIdSubscriber(ob, event):
 	fired_event = False
 
 	for utility in utilities:
+		if not fired_event and utility.queryId( ob ) is not None:
+			fired_event = True
+			notify(nti_intid_interfaces.IntIdRemovedEvent(ob, event))
+			notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
 		try:
-			if not fired_event and utility.queryId( ob ) is not None:
-				fired_event = True
-				notify(nti_intid_interfaces.IntIdRemovedEvent(ob, event))
-				notify(zope_intid_interfaces.IntIdRemovedEvent(ob, event))
 			utility.unregister(ob)
 		except KeyError:
 			pass
