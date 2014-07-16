@@ -1456,6 +1456,10 @@ class IHighlight(ISelectedRange):
 		values=('plain', 'suppressed'),
 		default="plain")
 
+	fillColor = ValidTextLine(title="the fill color in rgb syntax")
+	fillOpacity = Number(title="The fill opacity between 0 and 1")
+	fillRGBAColor = ValidTextLine(title="the fill color and opacity")
+
 from nti.contentfragments import schema as frg_schema
 
 class IRedaction(ISelectedRange):

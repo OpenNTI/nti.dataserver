@@ -282,6 +282,10 @@ These are definitions related to content that a user can generate.
 		//suppressed is useful for subclasses that may or may not always
 		//want to display the highlight portion
 		string style;
+		//Three or four character string giving the fill color
+		//plus opacity in units from 0.1. Also readable
+		//and writable under fillColor+fillOpacity.
+		string fillRGBAColor;
    }
 
    struct Redaction : SelectedRange {

@@ -50,6 +50,7 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import update_from_external_object
+from nti.externalization.tests import externalizes
 
 from zc import intid as zc_intid
 
@@ -185,6 +186,17 @@ class TestHighlight(_BaseSelectedRangeTest):
 
 		assert_that( ex.exception, has_property( 'field' ) )
 		assert_that( ex.exception.field, has_property( '__name__', 'style' ) )
+
+	def test_default_fill_external(self):
+		highlight = self.CONSTRUCTOR()
+		assert_that( highlight, externalizes( has_entries( 'fillColor', 'rgb(224.9,243.8,254.0)',
+														   'fillOpacity', 1.0,
+														   'fillRGBAColor', '0.882 0.956 0.996' ) ) )
+
+		update_from_external_object(highlight, {'fillRGBAColor': "1.0 1.0 0.5 0.5"})
+		assert_that( highlight, externalizes( has_entries( 'fillColor', 'rgb(255.0,255.0,127.5)',
+														   'fillOpacity', 0.5,
+														   'fillRGBAColor', '1.000 1.000 0.500 0.50' ) ) )
 
 
 class TestBookmark(_BaseSelectedRangeTest):

@@ -215,6 +215,9 @@ class CanvasAffineTransform(object):
 	def __hash__(self):
 		return hash( tuple([getattr(self,x) for x in self.__slots__]) )
 
+from .color import createColorProperty
+from .color import updateColorFromExternalValue
+
 @interface.implementer(IExternalObject, nti_interfaces.IZContained)
 class _CanvasShape(ExternalizableInstanceDict):
 
@@ -228,15 +231,13 @@ class _CanvasShape(ExternalizableInstanceDict):
 	_a = _d = CanvasAffineTransform.A
 	_b = _c = _tx = _ty = CanvasAffineTransform.TY
 
+	createColorProperty('fill', opacity=0.0)
+	createColorProperty('stroke')
+
 	def __init__(self):
 		super(_CanvasShape, self).__init__()
 
-		# We expose stroke and fill properties optimized
-		# for both Web and iPad. The iPad format is a superset
-		# of the other format and so that's what we store
-		self._stroke_rgba = [1.0, 1.0, 1.0, 1.0]
-		self._fill_rgba = [1.0, 1.0, 1.0, 0.0]
-		# stroke width is the same both places, and stored in pts.
+		# stroke width is the same both platforms, and stored in pts.
 		self._stroke_width = 1.0
 
 	def get_transform(self):
@@ -256,99 +257,21 @@ class _CanvasShape(ExternalizableInstanceDict):
 
 	transform = property(get_transform, set_transform)
 
-	def _write_rgba(self, prop_name):
-		val = getattr(self, prop_name)
-		if val[3] == 1.0:  # Comparing with a constant
-			fs = "{:.3f} {:.3f} {:.3f}"
-			val = val[0:3]
-		else:
-			fs = "{:.3f} {:.3f} {:.3f} {:.2f}"
-		return fs.format(*val)
-
-	@property
-	def strokeRGBAColor(self):
-		return self._write_rgba('_stroke_rgba')
-	@property
-	def fillRGBAColor(self):
-		return self._write_rgba('_fill_rgba')
-	@property
-	def strokeColor(self):
-		return "rgb({:.1f},{:.1f},{:.1f})".format(*[x * 255.0 for x in self._stroke_rgba[0:3]])
-	@property
-	def strokeOpacity(self):
-		return self._stroke_rgba[3]
 	@property
 	def strokeWidth(self):
 		return "{:.3%}".format(self._stroke_width / 100)
-	@property
-	def fillColor(self):
-		return "rgb({:.1f},{:.1f},{:.1f})".format(*[x * 255.0 for x in self._fill_rgba[0:3]])
-	@property
-	def fillOpacity(self):
-		return self._fill_rgba[3]
+
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		super(_CanvasShape, self).updateFromExternalObject(parsed, *args, **kwargs)
 		# The matrix, if given, convert to our points
 		matrix = parsed.pop('transform', None)
-		if matrix: self.transform = matrix
+		if matrix:
+			self.transform = matrix
 
 		# If stroke/fill rgba are given, they take precedence.
-		stroke_rgba_string = parsed.pop('strokeRGBAColor', None)
-		fill_rgba_string = parsed.pop('fillRGBAColor', None)
-
-		def update_from_rgb_opacity(arr, colName, opacName):
-			stroke_color = parsed.pop(colName, None)  # "rgb(r,g,b)"
-			stroke_opacity = parsed.pop(opacName, None)  # float
-			if stroke_color:
-				try:
-					r, g, b = map(float, stroke_color.strip()[4:-1].split(','))
-				except ValueError:
-					logger.warn("Bad data for %s: %s", colName, stroke_color)
-				else:
-					assert(0.0 <= r <= 255.0)
-					assert(0.0 <= g <= 255.0)
-					assert(0.0 <= b <= 255.0)
-					arr[0], arr[1], arr[2] = r / 255.0, g / 255.0, b / 255.0
-					self._p_changed = True
-			if stroke_opacity is not None:
-				stroke_opacity = float(stroke_opacity)  # accept either string or float
-				assert(0.0 <= stroke_opacity <= 1.0)
-				# opacity and alpha are exactly the same,
-				# 0.0 fully transparent, 1.0 fully opaque
-				arr[3] = stroke_opacity
-				if hasattr(self, '_p_changed'): setattr(self, '_p_changed', True)
-
-		def update_from_rgba(arr, string, alpha=1.0):
-			"""
-			A missing alpha value is assumed to mean 1.0, matching what happens
-			with Omni's OQColor.
-			"""
-			string = string.strip()
-			string = string.lower()
-			if string.startswith('rgba('):
-				logger.warn("Bad data for RGBA: %s", string)
-				string = string.strip()[5:-1].split(',')
-				string = ' '.join(string)
-			rgba = string.split(' ')
-			if len(rgba) == 3: rgba = list(rgba); rgba.append(alpha)
-			r, g, b, a = map(float, rgba)
-			assert(0.0 <= r <= 1.0)
-			assert(0.0 <= g <= 1.0)
-			assert(0.0 <= b <= 1.0)
-			arr[0], arr[1], arr[2] = r, g, b
-			assert(0.0 <= a <= 1.0)
-			arr[3] = a
-			if hasattr(self, '_p_changed'): setattr(self, '_p_changed', True)
-
-		if stroke_rgba_string is not None:
-			update_from_rgba(self._stroke_rgba, stroke_rgba_string)
-		else:
-			update_from_rgb_opacity(self._stroke_rgba, 'strokeColor', 'strokeOpacity')
-		if fill_rgba_string is not None:
-			update_from_rgba(self._fill_rgba, fill_rgba_string)
-		else:
-			update_from_rgb_opacity(self._fill_rgba, 'fillColor', 'fillOpacity')
+		updateColorFromExternalValue(self, 'fill', parsed)
+		updateColorFromExternalValue(self, 'stroke', parsed)
 
 		stroke_width = parsed.pop('strokeWidth', None)
 		if stroke_width is not None:  # maybe string or float
@@ -359,8 +282,8 @@ class _CanvasShape(ExternalizableInstanceDict):
 				elif stroke_width.endswith('pt'):
 					stroke_width = stroke_width[0:-2]
 			stroke_width = float(stroke_width)
-			assert(stroke_width >= 0.0)
-			assert(stroke_width <= 100.0)
+			assert stroke_width >= 0.0
+			assert stroke_width <= 100.0
 			self._stroke_width = stroke_width
 
 	def toExternalDictionary(self, mergeFrom=None, **kwargs):
