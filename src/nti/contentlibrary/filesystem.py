@@ -147,8 +147,12 @@ class _FilesystemTimesMixin(object):
 from .contentunit import _content_cache
 from lxml import etree
 
+from nti.schema.schema import EqHash
+
+
 @interface.implementer(IFilesystemKey,
 					   ILastModified)
+@EqHash('absolute_path')
 class FilesystemKey(AbstractKey,
 					_AbsolutePathMixin,
 					_FilesystemTimesMixin):
