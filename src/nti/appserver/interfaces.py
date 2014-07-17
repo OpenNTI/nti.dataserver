@@ -303,6 +303,23 @@ class IUnauthenticatedUserLinkProvider(interface.Interface):
 		are specified independently, based on the link relationship.
 		"""
 
+class ILogonLinkFilter(interface.Interface):
+	"""
+	define subscriber logon link filter
+	"""
+
+	def allow_link(link, request):
+		"""
+		allow the specified link
+		"""
+		
+def get_logon_link_filter(request):
+	filters = component.subscribers((request,), ILogonLinkFilter)
+	filters = list(filters)
+	def uber_filter(link):
+		return all((f.allow_link(link, request) for f in filters))
+	return uber_filter
+
 IUserEvent = nti_interfaces.IUserEvent
 
 class IUserLogonEvent(IUserEvent):

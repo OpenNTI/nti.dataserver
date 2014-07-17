@@ -42,10 +42,12 @@ openid.oidutil.log = logging.getLogger('openid').info
 
 from zope import interface
 from zope import component
-from zope import lifecycleevent
-from zope.traversing import api as ztraversing
 from zope.event import notify
 from zope.i18n import translate
+from zope import lifecycleevent
+from zope.traversing import api as ztraversing
+
+from pyramid.interfaces import IRequest
 
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -63,6 +65,9 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.interfaces import ILogonPong
+from nti.appserver.interfaces import ILogonLinkFilter
+from nti.appserver.interfaces import get_logon_link_filter
+
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
@@ -140,6 +145,16 @@ AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 # the authentication process
 _REQUEST_TIMEOUT = 0.5
 
+@component.adapter(IRequest)
+@interface.implementer(ILogonLinkFilter)
+class DefaultLogonLinkFilter(object):
+	
+	def __init__(self, *args):
+		pass
+
+	def allow_link(self, link, request):
+		return True
+	
 def _authenticated_user( request ):
 	"""
 	Returns the User object authenticated by the request, or
@@ -159,18 +174,21 @@ def _links_for_authenticated_users( request ):
 	go to the user. Shared between ping and handshake.
 	"""
 	links = ()
-	remote_user = _authenticated_user( request )
+	remote_user = _authenticated_user(request)
+	link_filter = get_logon_link_filter(request)
 	if remote_user:
 		logger.debug( "Found authenticated user %s", remote_user )
 		# They are already logged in, provide a continue link
-		continue_href = request.route_path( 'user.root.service', _='' )
+		continue_href = request.route_path('user.root.service', _='' )
 		links = [ Link( continue_href, rel=REL_CONTINUE ) ]
 		logout_href = request.route_path( REL_LOGIN_LOGOUT )
 		links.append( Link( logout_href, rel=REL_LOGIN_LOGOUT ) )
 
-		for provider in component.subscribers( (remote_user,request), app_interfaces.IAuthenticatedUserLinkProvider ):
+		for provider in component.subscribers((remote_user,request),
+											  app_interfaces.IAuthenticatedUserLinkProvider):
 			links.extend( provider.get_links() )
 
+	links = tuple(x for x in links if link_filter(x)) if links else ()
 	return links
 
 def _links_for_unauthenticated_users( request ):
@@ -181,7 +199,8 @@ def _links_for_unauthenticated_users( request ):
 	In particular, this will provide a link to be able to create accounts.
 	"""
 	links = ()
-	remote_user = _authenticated_user( request )
+	remote_user = _authenticated_user(request)
+	link_filter = get_logon_link_filter(request)
 	if not remote_user:
 
 		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
@@ -207,10 +226,12 @@ def _links_for_unauthenticated_users( request ):
 				links.append( Link( route, rel=rel, target_mime_type=mimetype.nti_mimetype_from_object( users.User ) ) )
 
 
-		for provider in component.subscribers((request,), app_interfaces.IUnauthenticatedUserLinkProvider):
+		for provider in component.subscribers((request,),
+											  app_interfaces.IUnauthenticatedUserLinkProvider):
 			links.extend( provider.get_links() )
 
-	return tuple(links)
+	links = tuple(x for x in links if link_filter(x)) if links else ()
+	return links
 
 def _forgetting( request, redirect_param_name, no_param_class, redirect_value=None, error=None ):
 	"""
