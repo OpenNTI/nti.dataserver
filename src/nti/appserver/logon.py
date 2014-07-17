@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 # Clean up the logging of openid, which writes to stderr by default. Patching
 # the module like this is actually the recommended approach
-import openid.oidutil
+import openid
 openid.oidutil.log = logging.getLogger('openid').info
 
 from zope import interface
@@ -62,6 +62,7 @@ from nti.mimetype import mimetype
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
+from nti.appserver.interfaces import ILogonPong
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
 from nti.appserver.account_recovery_views import REL_FORGOT_USERNAME, REL_FORGOT_PASSCODE, REL_RESET_PASSCODE
@@ -279,7 +280,8 @@ def ping( request ):
 	links.sort() # for tests
 	return _Pong( links )
 
-@interface.implementer( ext_interfaces.IExternalObject,
+@interface.implementer( ILogonPong,
+						ext_interfaces.IExternalObject,
 						app_renderes_interfaces.IPrivateUncacheableInResponse)
 class _Pong(dict):
 
