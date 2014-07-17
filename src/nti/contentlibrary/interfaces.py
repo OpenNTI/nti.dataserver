@@ -698,6 +698,10 @@ class IContentPackageBundle(IDisplayableContent,
 	ContentPackages = UniqueIterable(value_type=Object(IContentPackage, title="A content package"),
 									 title="The referenced content packages",
 									 default=())
+	
+	creators = UniqueIterable(value_type=TextLine(title="A creator name"),
+							  title="The bundle creators", required=False,
+							  default=())
 
 class IContentPackageBundleLibrary(IContentContainer):
 	"""
