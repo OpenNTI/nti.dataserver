@@ -16,8 +16,6 @@ from zope.traversing import interfaces as trv_interfaces
 
 from pyramid import interfaces as pyramid_interfaces
 
-from dolmen.builtins import IUnicode
-
 from nti.contentlibrary import interfaces as lib_interfaces
 
 import nti.dataserver.interfaces as nti_interfaces
@@ -302,23 +300,6 @@ class IUnauthenticatedUserLinkProvider(interface.Interface):
 		Return an iterable of additional links to add. The semantics of each link
 		are specified independently, based on the link relationship.
 		"""
-
-class ILogonLinkFilter(interface.Interface):
-	"""
-	define subscriber logon link filter
-	"""
-
-	def allow_link(link, request):
-		"""
-		allow the specified link
-		"""
-		
-def get_logon_link_filter(request):
-	filters = component.subscribers((request,), ILogonLinkFilter)
-	filters = list(filters)
-	def uber_filter(link):
-		return all((f.allow_link(link, request) for f in filters))
-	return uber_filter
 
 IUserEvent = nti_interfaces.IUserEvent
 

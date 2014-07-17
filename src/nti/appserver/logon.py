@@ -47,8 +47,6 @@ from zope.i18n import translate
 from zope import lifecycleevent
 from zope.traversing import api as ztraversing
 
-from pyramid.interfaces import IRequest
-
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
@@ -65,8 +63,6 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.interfaces import ILogonPong
-from nti.appserver.interfaces import ILogonLinkFilter
-from nti.appserver.interfaces import get_logon_link_filter
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
@@ -144,16 +140,6 @@ AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 # The time limit for a GET request during
 # the authentication process
 _REQUEST_TIMEOUT = 0.5
-
-@component.adapter(IRequest)
-@interface.implementer(ILogonLinkFilter)
-class DefaultLogonLinkFilter(object):
-	
-	def __init__(self, *args):
-		pass
-
-	def allow_link(self, link, request):
-		return True
 	
 def _authenticated_user( request ):
 	"""
@@ -175,20 +161,35 @@ def _links_for_authenticated_users( request ):
 	"""
 	links = ()
 	remote_user = _authenticated_user(request)
-	link_filter = get_logon_link_filter(request)
 	if remote_user:
 		logger.debug( "Found authenticated user %s", remote_user )
+		
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path('user.root.service', _='' )
-		links = [ Link( continue_href, rel=REL_CONTINUE ) ]
-		logout_href = request.route_path( REL_LOGIN_LOGOUT )
-		links.append( Link( logout_href, rel=REL_LOGIN_LOGOUT ) )
+		links = [ Link(continue_href, rel=REL_CONTINUE) ]
+		
+		logout_href = request.route_path( REL_LOGIN_LOGOUT)
+		links.append( Link(logout_href, rel=REL_LOGIN_LOGOUT) )
 
-		for provider in component.subscribers((remote_user,request),
+		providers = []
+		for provider in component.subscribers((remote_user, request),
 											  app_interfaces.IAuthenticatedUserLinkProvider):
-			links.extend( provider.get_links() )
+			rels = getattr(provider ,'rels', ())
+			rels = list(getattr(provider ,'rel', ())) if not rels else rels
+			providers.append((rels, getattr(provider, 'priority', 0), provider))
 
-	links = tuple(x for x in links if link_filter(x)) if links else ()
+		ignored = set()
+		for rels, _, provider in sorted(providers, reverse=True):
+			try:
+				provider_links = provider.get_links() 
+			except NotImplementedError:
+				ignored.update(rels or ())
+			else:
+				for link in provider_links:
+					if link is not None and link.rel not in ignored:
+						links.append(link)
+		
+	links = tuple(links) if links else ()
 	return links
 
 def _links_for_unauthenticated_users( request ):
@@ -200,13 +201,14 @@ def _links_for_unauthenticated_users( request ):
 	"""
 	links = ()
 	remote_user = _authenticated_user(request)
-	link_filter = get_logon_link_filter(request)
 	if not remote_user:
 
 		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
 								rel=REL_FORGOT_USERNAME )
+		
 		forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
 								rel=REL_FORGOT_PASSCODE )
+		
 		reset_passcode = Link( request.route_path( REL_RESET_PASSCODE ),
 							   rel=REL_RESET_PASSCODE )
 
@@ -230,7 +232,7 @@ def _links_for_unauthenticated_users( request ):
 											  app_interfaces.IUnauthenticatedUserLinkProvider):
 			links.extend( provider.get_links() )
 
-	links = tuple(x for x in links if link_filter(x)) if links else ()
+	links = tuple(links) if links else ()
 	return links
 
 def _forgetting( request, redirect_param_name, no_param_class, redirect_value=None, error=None ):
