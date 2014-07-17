@@ -35,6 +35,8 @@
 	<subscriber factory=".logon.ImpersonationLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
+	<subscriber factory=".logon.DefaultLogonLinkFilter"
+				provides=".interfaces.ILogonLinkFilter" />
 
 	<!-- All the other logon types are disabled in production -->
 	<configure zcml:condition="have devmode">
