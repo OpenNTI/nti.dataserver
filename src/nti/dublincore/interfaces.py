@@ -11,12 +11,13 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
+from zope.dublincore.interfaces import IDCExtended
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from nti.schema.field import Number
-from nti.schema.field import ValidTextLine as TextLine
+from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidText as Text
-
+from nti.schema.field import ValidTextLine as TextLine
 
 class ICreatedTime(interface.Interface):
 	"""
@@ -41,5 +42,30 @@ class IDCOptionalDescriptiveProperties(IDCDescriptiveProperties):
 	"""
 	title = TextLine(title="The human-readable section name of this item; alias for `__name__`",
 					 default='')  # also defined by IDCDescriptiveProperties as required
+	
 	description = Text(title="The human-readable description",
 					   default='') # also defined by IDCDescriptiveProperties as required
+
+class IDCOptionalExtended(IDCExtended):
+	"""
+	Makes extended fields optional.
+	"""
+	creators = UniqueIterable(title = u'Creators',
+							  description = u"The unqualified Dublin Core 'Creator' element values",
+							  value_type = TextLine(title="A creator"),
+							  required=False)
+
+	subjects = UniqueIterable(title = u'Subjects',
+							  description = u"The unqualified Dublin Core 'Subject' element values",
+							  value_type = TextLine(title="A subject"),
+							  required=False)
+
+	publisher = Text(title = u'Publisher',
+					 description = u"The first unqualified Dublin Core 'Publisher' element value.",
+					 required=False)
+
+	contributors = UniqueIterable(title = u'Contributors',
+							  	  description = u"The unqualified Dublin Core 'Contributor' element values",
+							  	  value_type = TextLine(title="A subject"),
+							  	  required=False)
+
