@@ -20,6 +20,7 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
 
 from nti.dublincore.interfaces import ILastModified
+from nti.dublincore.interfaces import IDCOptionalExtended
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from persistent.interfaces import IPersistent
@@ -667,6 +668,7 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 # Content bundles
 ###
 class IContentPackageBundle(IDisplayableContent,
+							IDCOptionalExtended,
 							ILastModified,
 							dub_interfaces.IDCTimes,
 							IAnnotatable):
@@ -698,10 +700,6 @@ class IContentPackageBundle(IDisplayableContent,
 	ContentPackages = UniqueIterable(value_type=Object(IContentPackage, title="A content package"),
 									 title="The referenced content packages",
 									 default=())
-	
-	creators = UniqueIterable(value_type=TextLine(title="A creator name"),
-							  title="The bundle creators", required=False,
-							  default=())
 
 class IContentPackageBundleLibrary(IContentContainer):
 	"""
