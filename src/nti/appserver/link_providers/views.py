@@ -24,8 +24,11 @@ from .link_provider import VIEW_NAME_NAMED_LINKS
 def _find_link_providers( user, request, link_name ):
 	unique_providers = []
 	for provider in unique_link_providers( user, request ):
-		rels = getattr(provider ,'rels', ())
-		rels = list(getattr(provider ,'rel', ())) if not rels else rels
+		rels = set()
+		rels.add(getattr(provider ,'rel', None))
+		rels.update(getattr(provider ,'rels', ()))
+		rels.add(getattr(provider ,'__name__', None))
+		rels.discard(None)
 		unique_providers.append((rels, getattr(provider, 'priority', 0), provider))
 		
 	providers = []
