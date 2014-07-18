@@ -13,6 +13,7 @@ import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 from zope import component
+
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
 def safe_links(provider):
