@@ -20,7 +20,6 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
 
 from nti.dublincore.interfaces import ILastModified
-from nti.dublincore.interfaces import IDCOptionalExtended
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from persistent.interfaces import IPersistent
@@ -668,7 +667,6 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 # Content bundles
 ###
 class IContentPackageBundle(IDisplayableContent,
-							IDCOptionalExtended,
 							ILastModified,
 							dub_interfaces.IDCTimes,
 							IAnnotatable):
