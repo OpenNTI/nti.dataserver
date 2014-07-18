@@ -18,7 +18,7 @@ from urlparse import urlparse
 from urllib import unquote
 
 from zope import interface
-from zope.dublincore import xmlmetadata
+from .dublincore import read_dublincore_from_named_key
 
 from . import interfaces as lib_interfaces
 
@@ -32,9 +32,6 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 TOC_FILENAME = 'eclipse-toc.xml'
 #: A possibly-missing ZIP file containing the downloadable content.
 ARCHIVE_FILENAME = 'archive.zip'
-#: An optional XML file containing Dublin Core metadata to be associated
-#: with the content package
-DCMETA_FILENAME = 'dc_metadata.xml'
 #: A glossary file applicable to the entire content.
 #: .. todo:: In the future, if we need to, we can add a node property
 #: for sub-glossaries specific to just portions of the content
@@ -221,10 +218,7 @@ def EclipseContentPackage( toc_entry,
 													 title='Content Archive' )
 		content_package.archive_unit.__parent__ = content_package
 
-	dcmetafile_contents = content_package.read_contents_of_sibling_entry( DCMETA_FILENAME )
-	if dcmetafile_contents:
-		metadata = xmlmetadata.parseString( dcmetafile_contents )
-		if 'Creator' in metadata:
-			content_package.creators = metadata['Creator']
+
+	read_dublincore_from_named_key(content_package, content_package.root)
 
 	return content_package

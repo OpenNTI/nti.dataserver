@@ -32,6 +32,18 @@
 	<utility factory=".annotation.GlobalContentUnitAnnotationUtility"
 			 provides=".interfaces.IContentUnitAnnotationUtility" />
 
+	<!-- for dublincore annotations-->
+	<include package="zope.dublincore" />
+	<adapter factory=".dublincore.DisplayableContentZopeDublinCoreAdapter"
+			 for=".interfaces.IContentPackage"
+			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
+	<adapter factory=".dublincore.DisplayableContentZopeDublinCoreAdapter"
+			 for=".interfaces.IContentPackageBundle"
+			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
+	<adapter factory=".dublincore.DescriptivePropertiesZopeDublinCoreAdapter"
+			 for=".interfaces.IContentUnit"
+			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
+
 	<!-- Event listeners -->
 	<subscriber handler=".subscribers.install_site_content_library"
 				for="nti.site.interfaces.IHostPolicySiteManager
