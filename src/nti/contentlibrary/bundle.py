@@ -271,8 +271,11 @@ def _readCurrent(lib):
 	return lib
 
 from nti.externalization.internalization import validate_named_field_value
+from .dublincore import DCMETA_FILENAME
+from .dublincore import read_dublincore_from_named_key
 
 def sync_bundle_from_json_key(data_key, bundle, content_library=None,
+							  dc_meta_name=DCMETA_FILENAME,
 							  _meta=None):
 	"""
 	Given a :class:`IDelimitedHierarchyKey` whose contents are a JSON
@@ -294,6 +297,11 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 		If you do not provide this utility, the currently active library will
 		be used.
+
+	:keyword dc_meta_name: If given (defaults to a standard value),
+		DublinCore metadata will be read from this file (a sibling of the `data_key`).
+	    You can use a non-standard
+		filename if you might have multiple things in the same bucket.
 	"""
 	# we can't check the lastModified dates, the bundle object
 	# might have been modified independently
@@ -323,6 +331,9 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 	if modified:
 		bundle.updateLastMod( meta.lastModified )
+
+	# Metadata if we need it
+	read_dublincore_from_named_key(bundle, data_key.__parent__, dc_meta_name)
 
 	return bundle
 

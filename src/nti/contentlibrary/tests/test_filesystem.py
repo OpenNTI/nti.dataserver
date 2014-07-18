@@ -28,7 +28,7 @@ from nti.testing.matchers import validly_provides
 
 from nti.contentlibrary import interfaces, filesystem
 
-import nti.externalization.externalization
+from zope.dublincore.interfaces import IWriteZopeDublinCore
 from nti.externalization.externalization import to_external_object
 
 import anyjson as json
@@ -69,6 +69,13 @@ class TestFilesystem(ContentlibraryLayerTest):
 					 validly_provides( interfaces.IFilesystemContentPackage ) )
 		assert_that( package, has_property('PlatformPresentationResources', has_length(3)))
 		assert_that( package.creators, is_( ('Jason',) ) )
+		# stays in sync
+		zdc = IWriteZopeDublinCore(package)
+		zdc.creators = ['Foo']
+		assert_that( package.creators, is_( ('Foo',) ) )
+
+		zdc.creators = ['Jason']
+
 		assert_that( package.children[-1].children[-1],
 					 has_property( 'embeddedContainerNTIIDs',
 								   contains('tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1') ) )
