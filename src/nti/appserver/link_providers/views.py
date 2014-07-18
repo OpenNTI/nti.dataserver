@@ -22,12 +22,26 @@ from . import unique_link_providers
 from .link_provider import VIEW_NAME_NAMED_LINKS
 
 def _find_link_providers( user, request, link_name ):
-	providers = []
+	unique_providers = []
 	for provider in unique_link_providers( user, request ):
-		if getattr( provider, '__name__', '' ) == link_name:
-			providers.append( provider )
-		elif any( (x for x in safe_links(provider) if x.rel == link_name) ):
-			providers.append( provider )
+		rels = getattr(provider ,'rels', ())
+		rels = list(getattr(provider ,'rel', ())) if not rels else rels
+		unique_providers.append((rels, getattr(provider, 'priority', 0), provider))
+		
+	providers = []
+	ignored = set()
+	for rels, _, provider in sorted(unique_providers, reverse=True):
+		try:
+			provider_links = provider.get_links() 
+		except NotImplementedError:
+			ignored.update(rels or ())
+		else:
+			name = getattr(provider, '__name__', '')
+			if name == link_name and name not in ignored:
+				providers.append( provider )
+			elif any((x for x in provider_links if x.rel == link_name)) and \
+				 not any((x for x in provider_links if x.rel in ignored)):
+				providers.append( provider )
 	return providers
 
 def _preflight( request ):
