@@ -13,38 +13,21 @@ from pyramid.view import view_config
 from nti.appserver import httpexceptions as hexc
 
 from nti.dataserver.interfaces import IUser
-
 from nti.dataserver import authorization as nauth
 
 from . import safe_links
-from . import unique_link_providers
+from . import find_providers_and_links
 
 from .link_provider import VIEW_NAME_NAMED_LINKS
 
-def _find_link_providers( user, request, link_name ):
-	unique_providers = []
-	for provider in unique_link_providers( user, request ):
-		rels = set()
-		rels.add(getattr(provider ,'rel', None))
-		rels.update(getattr(provider ,'rels', ()))
-		rels.add(getattr(provider ,'__name__', None))
-		rels.discard(None)
-		unique_providers.append((rels, getattr(provider, 'priority', 0), provider))
-		
+def _find_link_providers(user, request, link_name):
 	providers = []
-	ignored = set()
-	for rels, _, provider in sorted(unique_providers, reverse=True):
-		try:
-			provider_links = provider.get_links() 
-		except NotImplementedError:
-			ignored.update(rels or ())
-		else:
-			name = getattr(provider, '__name__', '')
-			if name == link_name and name not in ignored:
-				providers.append( provider )
-			elif any((x for x in provider_links if x.rel == link_name)) and \
-				 not any((x for x in provider_links if x.rel in ignored)):
-				providers.append( provider )
+	for provider, provider_links in find_providers_and_links(user, request):
+		name = getattr(provider, '__name__', '')
+		if name == link_name:
+			providers.append(provider)
+		elif any((x for x in provider_links if x.rel == link_name)):
+			providers.append(provider)
 	return providers
 
 def _preflight( request ):

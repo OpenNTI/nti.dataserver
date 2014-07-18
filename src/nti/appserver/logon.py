@@ -63,6 +63,7 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.interfaces import ILogonPong
+from nti.appserver.link_providers import find_providers_and_links
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
@@ -170,27 +171,9 @@ def _links_for_authenticated_users( request ):
 		
 		logout_href = request.route_path( REL_LOGIN_LOGOUT)
 		links.append( Link(logout_href, rel=REL_LOGIN_LOGOUT) )
-
-		providers = []
-		for provider in component.subscribers((remote_user, request),
-											  app_interfaces.IAuthenticatedUserLinkProvider):
-			rels = set()
-			rels.add(getattr(provider ,'rel', None))
-			rels.update(getattr(provider ,'rels', ()))
-			rels.add(getattr(provider ,'__name__', None))
-			rels.discard(None)
-			providers.append((rels, getattr(provider, 'priority', 0), provider))
-
-		ignored = set()
-		for rels, _, provider in sorted(providers, reverse=True):
-			try:
-				provider_links = provider.get_links() 
-			except NotImplementedError:
-				ignored.update(rels or ())
-			else:
-				for link in provider_links:
-					if link is not None and link.rel not in ignored:
-						links.append(link)
+		
+		for _, plinks in find_providers_and_links(remote_user, request):
+			links.extend(plinks)
 		
 	links = tuple(links) if links else ()
 	return links
