@@ -174,8 +174,11 @@ def _links_for_authenticated_users( request ):
 		providers = []
 		for provider in component.subscribers((remote_user, request),
 											  app_interfaces.IAuthenticatedUserLinkProvider):
-			rels = getattr(provider ,'rels', ())
-			rels = list(getattr(provider ,'rel', ())) if not rels else rels
+			rels = set()
+			rels.add(getattr(provider ,'rel', None))
+			rels.update(getattr(provider ,'rels', ()))
+			rels.add(getattr(provider ,'__name__', None))
+			rels.discard(None)
 			providers.append((rels, getattr(provider, 'priority', 0), provider))
 
 		ignored = set()
