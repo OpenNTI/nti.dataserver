@@ -68,9 +68,11 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( package,
 					 validly_provides( interfaces.IFilesystemContentPackage ) )
 		assert_that( package, has_property('PlatformPresentationResources', has_length(3)))
+
 		assert_that( package.creators, is_( ('Jason',) ) )
 		# stays in sync
 		zdc = IWriteZopeDublinCore(package)
+		assert_that( zdc, has_property('lastModified', greater_than(0)))
 		zdc.creators = ['Foo']
 		assert_that( package.creators, is_( ('Foo',) ) )
 

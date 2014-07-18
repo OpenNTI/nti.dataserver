@@ -70,7 +70,18 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 				k = k.lower()
 			setattr(dublin_properties, str(k), metadata[k])
 
+	# Annotation-based instances may not actually store anything until
+	# after _changed is called, but we have to be sure we keep a modified
+	# time
+	try:
+		dublin_properties._changed()
+		core_mapping.lastModified = dublin_key.lastModified
+	except AttributeError:
+		pass
 	dublin_properties.lastModified = dublin_key.lastModified
+
+
+	return dublin_properties
 
 
 #: A standard adapter for the content packages and bundles
@@ -121,3 +132,22 @@ for x in map(str, ['creators', 'subjects', 'contributors']):
 DescriptivePropertiesZopeDublinCoreAdapter = partialAnnotatableAdapterFactory(
 	map(str,
 		['title', 'description']))
+
+# Both of them need a way to store last Modified, since the object is created on demand
+# (only the mapping is persistent)
+
+class _LastModifiedProperty(object):
+
+	def __init__(self):
+		pass
+
+	def __get__(self, inst, klass):
+		if inst is None:
+			return self
+		return getattr(inst._mapping, 'lastModified', 0)
+
+	def __set__(self, inst, value):
+		inst._mapping.lastModified = value
+
+DisplayableContentZopeDublinCoreAdapter.lastModified = _LastModifiedProperty()
+DescriptivePropertiesZopeDublinCoreAdapter.lastModified = _LastModifiedProperty()
