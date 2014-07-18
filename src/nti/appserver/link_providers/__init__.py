@@ -22,6 +22,35 @@ def safe_links(provider):
 	except NotImplementedError:
 		return ()
 	
+def find_providers_and_links(user, request):
+	providers = []
+	for provider in component.subscribers((user, request),
+										  IAuthenticatedUserLinkProvider):
+		rels = set()
+		rels.update(getattr(provider ,'rels', ()))
+		# legacy
+		rels.add(getattr(provider ,'rel', None))
+		rels.add(getattr(provider ,'__name__', None))
+		rels.discard(None)
+		# register w/ priority
+		providers.append((rels, getattr(provider, 'priority', 0), provider))
+		
+	result = []
+	ignored = set()
+	providers = sorted(providers, key=lambda t: t[1], reverse=True)
+	for rels, _, provider in providers:
+		try:
+			provider_links = provider.get_links() 
+		except NotImplementedError:
+			ignored.update(rels or ())
+		else:
+			name = getattr(provider, '__name__', '')
+			if name not in ignored:
+				links = [x for x in provider_links if x.rel not in ignored]
+				if links:
+					result.append((provider, links))
+	return result
+
 def unique_link_providers(user,request):
 	"""
 	Given a user and the request, find and return all the link
@@ -34,10 +63,11 @@ def unique_link_providers(user,request):
 	"""
 
 	seen_names = set()
+	providers = [provider for provider, _ in find_providers_and_links(user, request)]
 	# Subscribers are returned in REVERSE order, that is, from
 	# all the bases FIRST...so to let the lower levels win, we reverse again
 	# not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
-	for provider in reversed(component.subscribers( (user,request), IAuthenticatedUserLinkProvider )):
+	for provider in reversed(providers):
 		# Our objects have a __name__ and they only produce one link
 		name = getattr(provider, '__name__', None)
 		if name:
@@ -69,31 +99,3 @@ def provide_links(user, request):
 			seen_rels.add( link.rel )
 			yield link
 
-def find_providers_and_links(user, request):
-	providers = []
-	for provider in component.subscribers((user, request),
-										  IAuthenticatedUserLinkProvider):
-		rels = set()
-		rels.update(getattr(provider ,'rels', ()))
-		# legacy
-		rels.add(getattr(provider ,'rel', None))
-		rels.add(getattr(provider ,'__name__', None))
-		rels.discard(None)
-		# register w/ priority
-		providers.append((rels, getattr(provider, 'priority', 0), provider))
-		
-	result = []
-	ignored = set()
-	providers = sorted(providers, key=lambda t: t[1], reverse=True)
-	for rels, _, provider in providers:
-		try:
-			provider_links = provider.get_links() 
-		except NotImplementedError:
-			ignored.update(rels or ())
-		else:
-			name = getattr(provider, '__name__', '')
-			if name not in ignored:
-				links = [x for x in provider_links if x.rel not in ignored]
-				if links:
-					result.append((provider, links))
-	return result
