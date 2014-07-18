@@ -15,6 +15,12 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 from zope import component
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
+def safe_links(provider):
+	try:
+		return provider.get_links()
+	except NotImplementedError:
+		return ()
+	
 def unique_link_providers(user,request):
 	"""
 	Given a user and the request, find and return all the link
@@ -54,7 +60,7 @@ def provide_links(user, request):
 
 	seen_rels = set()
 	for provider in unique_link_providers(user,request):
-		for link in provider.get_links():
+		for link in safe_links(provider):
 			if link.rel in seen_rels:
 				# In the case of our objects, of course, rel is the same
 				# as the name configured in ZCML, and we only provide one link
