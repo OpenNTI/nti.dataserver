@@ -63,7 +63,7 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.interfaces import ILogonPong
-from nti.appserver.link_providers import find_providers_and_links
+from nti.appserver.link_providers import unique_link_providers
 
 from nti.appserver._util import logon_userid_with_request
 from nti.appserver.account_creation_views import REL_CREATE_ACCOUNT, REL_PREFLIGHT_CREATE_ACCOUNT
@@ -172,8 +172,8 @@ def _links_for_authenticated_users( request ):
 		logout_href = request.route_path( REL_LOGIN_LOGOUT)
 		links.append( Link(logout_href, rel=REL_LOGIN_LOGOUT) )
 		
-		for _, plinks in find_providers_and_links(remote_user, request):
-			links.extend(plinks)
+		for provider in unique_link_providers(remote_user, request):
+			links.extend(provider.get_links())
 		
 	links = tuple(links) if links else ()
 	return links

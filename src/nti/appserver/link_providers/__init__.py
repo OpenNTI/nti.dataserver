@@ -22,10 +22,11 @@ def safe_links(provider):
 	except NotImplementedError:
 		return ()
 	
-def find_providers_and_links(user, request):
+def find_providers_and_links(user, request, keeporder=False):
 	providers = []
-	for provider in component.subscribers((user, request),
-										  IAuthenticatedUserLinkProvider):
+	subscribers = list(component.subscribers((user, request), 
+											 IAuthenticatedUserLinkProvider))
+	for order, provider in enumerate(subscribers):
 		rels = set()
 		rels.update(getattr(provider ,'rels', ()))
 		# legacy
@@ -33,12 +34,12 @@ def find_providers_and_links(user, request):
 		rels.add(getattr(provider ,'__name__', None))
 		rels.discard(None)
 		# register w/ priority
-		providers.append((rels, getattr(provider, 'priority', 0), provider))
+		providers.append((rels, getattr(provider, 'priority', 0), provider, order))
 		
 	result = []
 	ignored = set()
 	providers = sorted(providers, key=lambda t: t[1], reverse=True)
-	for rels, _, provider in providers:
+	for rels, _, provider, order in providers:
 		try:
 			provider_links = provider.get_links() 
 		except NotImplementedError:
@@ -48,8 +49,11 @@ def find_providers_and_links(user, request):
 			if name not in ignored:
 				links = [x for x in provider_links if x.rel not in ignored]
 				if links:
-					result.append((provider, links))
-	return result
+					result.append((provider, links, order))
+
+	if keeporder:
+		result = sorted(result, key=lambda t:t[2])
+	return [(p, lnks) for p, lnks,_ in result]
 
 def unique_link_providers(user,request):
 	"""
@@ -61,9 +65,9 @@ def unique_link_providers(user,request):
 
 	:return: An iterable of link objects.
 	"""
-
 	seen_names = set()
-	providers = [provider for provider, _ in find_providers_and_links(user, request)]
+	prov_links = find_providers_and_links(user, request, True)
+	providers = [provider for provider, _ in prov_links]
 	# Subscribers are returned in REVERSE order, that is, from
 	# all the bases FIRST...so to let the lower levels win, we reverse again
 	# not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
