@@ -24,8 +24,8 @@ def safe_links(provider):
 	
 def find_providers_and_links(user, request, keeporder=True):
 	providers = []
-	subscribers = list(component.subscribers((user, request), 
-											 IAuthenticatedUserLinkProvider))
+	subscribers = component.subscribers((user, request), 
+										IAuthenticatedUserLinkProvider)
 	for order, provider in enumerate(subscribers):
 		rels = set()
 		rels.update(getattr(provider ,'rels', ()))
