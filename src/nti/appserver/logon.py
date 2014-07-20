@@ -172,8 +172,8 @@ def _links_for_authenticated_users( request ):
 		logout_href = request.route_path( REL_LOGIN_LOGOUT)
 		links.append( Link(logout_href, rel=REL_LOGIN_LOGOUT) )
 		
-		for provider in unique_link_providers(remote_user, request):
-			links.extend(provider.get_links())
+		for _, prov_links in unique_link_providers(remote_user, request, True):
+			links.extend(prov_links)
 		
 	links = tuple(links) if links else ()
 	return links

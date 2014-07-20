@@ -22,7 +22,7 @@ def safe_links(provider):
 	except NotImplementedError:
 		return ()
 	
-def find_providers_and_links(user, request, keeporder=False):
+def find_providers_and_links(user, request, keeporder=True):
 	providers = []
 	subscribers = list(component.subscribers((user, request), 
 											 IAuthenticatedUserLinkProvider))
@@ -55,7 +55,7 @@ def find_providers_and_links(user, request, keeporder=False):
 		result = sorted(result, key=lambda t:t[2])
 	return [(p, lnks) for p, lnks,_ in result]
 
-def unique_link_providers(user,request):
+def unique_link_providers(user, request, with_links=False):
 	"""
 	Given a user and the request, find and return all the link
 	providers for that user.
@@ -66,21 +66,22 @@ def unique_link_providers(user,request):
 	:return: An iterable of link objects.
 	"""
 	seen_names = set()
-	prov_links = find_providers_and_links(user, request, True)
-	providers = [provider for provider, _ in prov_links]
+	providers = find_providers_and_links(user, request, True)
 	# Subscribers are returned in REVERSE order, that is, from
 	# all the bases FIRST...so to let the lower levels win, we reverse again
 	# not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
-	for provider in reversed(providers):
+	for provider, prov_links in reversed(providers):
 		# Our objects have a __name__ and they only produce one link
 		name = getattr(provider, '__name__', None)
 		if name:
 			if name in seen_names:
 				continue
 			seen_names.add(name)
-			yield provider
+		if with_links:
+			yield (provider, prov_links)
 		else:
 			yield provider
+
 
 def provide_links(user, request):
 	"""
@@ -94,12 +95,11 @@ def provide_links(user, request):
 	"""
 
 	seen_rels = set()
-	for provider in unique_link_providers(user,request):
-		for link in safe_links(provider):
+	for _, links in unique_link_providers(user, request, True):
+		for link in links:
 			if link.rel in seen_rels:
 				# In the case of our objects, of course, rel is the same
 				# as the name configured in ZCML, and we only provide one link
 				continue
 			seen_rels.add( link.rel )
 			yield link
-
