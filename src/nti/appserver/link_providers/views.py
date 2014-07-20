@@ -16,17 +16,17 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver import authorization as nauth
 
 from . import safe_links
-from . import find_providers_and_links
+from . import unique_link_providers
 
 from .link_provider import VIEW_NAME_NAMED_LINKS
 
 def _find_link_providers(user, request, link_name):
 	providers = []
-	for provider, provider_links in find_providers_and_links(user, request):
+	for provider, links in unique_link_providers(user, request, True):
 		name = getattr(provider, '__name__', '')
 		if name == link_name:
 			providers.append(provider)
-		elif any((x for x in provider_links if x.rel == link_name)):
+		elif any((x for x in links if x.rel == link_name)):
 			providers.append(provider)
 	return providers
 
