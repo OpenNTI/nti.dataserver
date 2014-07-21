@@ -49,30 +49,32 @@ class TimeProperty(object):
 		if inst is None:
 			return self
 
-		match, dt = None, None
+		cached_ts, dt = None, None
 		if self._cached:
 			try:
-				match, dt =  getattr(inst, self._cached)
+				cached_ts, dt =  getattr(inst, self._cached)
 			except AttributeError:
 				pass
 
-		time = None
+		inst_time = None
 		try:
-			time = getattr(inst, self._name)
+			inst_time = getattr(inst, self._name)
 		except (AttributeError, TypeError, OSError):
 			# catch OSError to allow for using the filesystem
 			pass
 
-		if match is not None and time is not None and match == time:
+		if (cached_ts is not None
+			and inst_time is not None
+			and cached_ts == inst_time):
 			return dt
 
-		if time is None:
-			time = 0
+		if inst_time is None:
+			inst_time = 0
 
-		dt = _datetime.utcfromtimestamp(time)
+		dt = _datetime.utcfromtimestamp(inst_time)
 		if self._cached:
 			try:
-				setattr(inst, self._cached, (time, dt))
+				setattr(inst, self._cached, (inst_time, dt))
 			except AttributeError:
 				pass
 		return dt
