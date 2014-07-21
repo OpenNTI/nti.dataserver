@@ -12,14 +12,13 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 from os.path import join as path_join
-import urllib
 
 from zope import interface
 from zope import component
 
-import repoze.lru
-
 from nti.utils.property import readproperty
+from nti.utils.property import CachedProperty
+from zope.cachedescriptors.method import cachedIn
 
 from . import eclipse
 from . import library
@@ -80,26 +79,30 @@ def _package_factory(bucket, _package_factory=None, _unit_factory=None):
 
 class _FilesystemTime(object):
 	"""
-	A descriptor that caches a filesystem time, allowing
-	for errors in case its accessed too early.
+	A descriptor that optionally caches a filesystem time, allowing
+	for errors in case it is accessed too early.
 	"""
 
 	default_time = -1
+	cache = True
 
 	def __init__( self, name, st,
-				  attr_name=str('filename'),
-				  default_time=None ):
+				  attr_name='filename',
+				  default_time=None,
+				  cache=True ):
 		self._st = st
 		self._name = str(name)
-		self._attr_name = attr_name
+		self._attr_name = str(attr_name)
 		if default_time is not None:
 			self.default_time = default_time
+		if not cache:
+			self.cache = cache
 
 	def __get__(self, inst, klass):
 		if inst is None:
 			return self
 
-		if self._name in inst.__dict__:
+		if self.cache and self._name in inst.__dict__:
 			return inst.__dict__[self._name]
 
 		try:
@@ -137,14 +140,14 @@ class _AbsolutePathMixin(object):
 @interface.implementer(IDCTimes)
 class _FilesystemTimesMixin(object):
 
-	lastModified = _FilesystemTime('lastModified', os.path.stat.ST_MTIME, 'absolute_path')
+	lastModified = _FilesystemTime('lastModified', os.path.stat.ST_MTIME, 'absolute_path',
+								   cache=False)
 	createdTime = _FilesystemTime('createdTime', os.path.stat.ST_CTIME, 'absolute_path')
 
-
+	# Here we cache the datetime object based on the timestamp
 	modified = TimeProperty('lastModified', writable=False, cached=True)
 	created = TimeProperty('createdTime', writable=False, cached=True)
 
-from .contentunit import _content_cache
 from lxml import etree
 
 from nti.schema.schema import EqHash
@@ -157,13 +160,16 @@ class FilesystemKey(AbstractKey,
 					_AbsolutePathMixin,
 					_FilesystemTimesMixin):
 
-	@repoze.lru.lru_cache(None, cache=_content_cache)
-	def readContents(self):
+	@CachedProperty('absolute_path', 'lastModified')
+	def _contents(self):
 		try:
 			with open(self.absolute_path, 'rb') as f:
 				return f.read()
 		except IOError:
 			return None
+
+	def readContents(self):
+		return self._contents
 
 	def readContentsAsETree(self):
 		# TODO: Pass the base_url?
@@ -178,23 +184,42 @@ class FilesystemBucket(AbstractBucket,
 
 	_key_type = FilesystemKey
 
+	@CachedProperty
+	def _children_cache(self):
+		"""
+		Because there is caching done by keys/buckets of contents and
+		modification time, it is useful to return the same instances
+		every time.
+		"""
+		return {}
+
 	def enumerateChildren(self):
 		absolute_path = self.absolute_path
 		if not os.path.isdir(absolute_path):
 			return
 
+		# note that we don't handle an entry going from
+		# being a key to a bucket or vice versa;
+		# we also don't handle cleaning up deleted keys/buckets,
+		# they just leak memory
+		cache = self._children_cache
+
 		for k in os.listdir(absolute_path):
 			if k.startswith('.'):
 				continue
 
-			absk = os.path.join(absolute_path, k)
-			if isinstance(absk, bytes):
-				k = k.decode('utf-8')
-				absk = absk.decode('utf-8')
-			if os.path.isdir(absk):
-				yield type(self)(self, k)
-			else:
-				yield self._key_type(self, k)
+			if k not in cache:
+				absk = os.path.join(absolute_path, k)
+				if isinstance(absk, bytes):
+					k = k.decode('utf-8')
+					absk = absk.decode('utf-8')
+
+				if os.path.isdir(absk):
+					cache[k] = type(self)(self, k)
+				else:
+					cache[k] = self._key_type(self, k)
+
+			yield cache[k]
 
 @interface.implementer(ILastModified)
 class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentPackageEnumeration,
@@ -285,8 +310,6 @@ class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 		return "<%s(%s)>" % (self.__class__.__name__,
 						   getattr(self._enumeration, 'absolute_path', self._enumeration.root))
 
-from .contentunit import _exist_cache
-
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(_FilesystemTimesMixin,
 							ContentUnit):
@@ -319,7 +342,11 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 	def get_parent_key(self):
 		return self.key.bucket
 
+	@cachedIn('_v_make_sibling_keys')
 	def make_sibling_key(self, sibling_name):
+		# Because keys cache things like dates and contents, it is useful
+		# to return the same instance
+
 		__traceback_info__ = self.filename, sibling_name
 		assert bool(sibling_name)
 		assert not sibling_name.startswith('/')
@@ -340,19 +367,13 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 
 		return key
 
-	@repoze.lru.lru_cache(None, cache=_content_cache)  # first arg is ignored. This caches with the key (self, sibling_name)
 	def _do_read_contents_of_sibling_entry(self, sibling_name):
-		try:
-			with open(self.make_sibling_key(sibling_name).absolute_path, 'r') as f:
-				return f.read()
-		except (OSError, IOError):
-			return None
+		return self.make_sibling_key(sibling_name).readContents()
 
 	def read_contents_of_sibling_entry(self, sibling_name):
 		if self.filename:
 			return self._do_read_contents_of_sibling_entry(sibling_name)
 
-	@repoze.lru.lru_cache(None, cache=_exist_cache)
 	def does_sibling_entry_exist(self, sibling_name):
 		sib_key = self.make_sibling_key(sibling_name)
 		return sib_key if os.path.exists(sib_key.absolute_path) else None
