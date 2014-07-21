@@ -374,7 +374,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
 
-	def test_specific_acl_file(self):
+	def test_specific_acl_file_forbids(self):
 		acl_file = os.path.join( self.entry_dir, '.nti_acl' )
 		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:User:[nti.actions.create]\n" )
@@ -383,21 +383,18 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
+	def test_specific_acl_to_user(self):
+		acl_file = os.path.join( self.entry_dir, '.nti_acl' )
+
 		# Now, grant it to a user
 		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
-		# clear caches
-		import nti.contentlibrary.contentunit
-
-		nti.contentlibrary.contentunit._clear_caches()
-		self.library_collection._library._v_contentPackages = None
-		nti.appserver.pyramid_authorization._clear_caches()
-		# recall permissions are cached on the request
-		self.library_collection._library.request = self.beginRequest()
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
+	def test_specific_acl_to_user_chapter(self):
+		acl_file = os.path.join( self.entry_dir, '.nti_acl' )
 
 		# Back to the original entry on the ACL, denying it to everyone
 		with open( acl_file, 'w' ) as f:
@@ -408,12 +405,6 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		with open( acl_file + '.1', 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
-		# after clearing caches
-		import nti.contentlibrary.contentunit
-		nti.contentlibrary.contentunit._clear_caches()
-		self.beginRequest()
-		nti.appserver.pyramid_authorization._clear_caches()
-		# it is still visible
 		external = to_external_object( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 

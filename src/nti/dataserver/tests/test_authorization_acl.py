@@ -254,6 +254,13 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 			bucket = None
 			def __init__(self, bucket=None, name=None):
 				self.absolute_path = name
+
+			def readContents(self):
+				try:
+					with open(self.absolute_path, 'rb') as f:
+						return f.read()
+				except IOError:
+					return None
 		cls.library_entry.key = Key(name=os.path.join( cls.temp_dir, 'index.html' ))
 		cls.library_entry.children = []
 		cls.library_entry.make_sibling_key = lambda k: Key(name=os.path.join(cls.temp_dir, k))
@@ -284,7 +291,6 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 			os.unlink( self.acl_path )
 		except OSError:
 			pass
-		_clear_caches()
 
 	def test_no_acl_file(self):
 		acl_prov = nti_interfaces.IACLProvider( self.library_entry )
