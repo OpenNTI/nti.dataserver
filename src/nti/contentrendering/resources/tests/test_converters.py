@@ -148,3 +148,56 @@ class TestSvgConverter(unittest.TestCase):
 			converter_svg.ProcessPoolExecutor = orig_exec
 			os.chdir(cwd)
 			shutil.rmtree( tempdir )
+
+
+from .. converter_html_wrapped import _HTMLWrapper, HTMLWrappedBatchConverterDriver
+import codecs
+from hamcrest import contains_string
+
+class TestHTMLWrappedConverter(unittest.TestCase):
+	in_file = os.path.join(os.path.dirname(__file__),u'__init__.py')
+	ntiid = u'tag:nextthought.com,2011-10:NTI-HTML-UnitTests.html_wrapped_test'
+
+	def test_HTMLWrapper(self):
+		out_file = self.in_file + u'.html'
+
+		util = _HTMLWrapper(self.ntiid, self.in_file, out_file)
+		
+		assert_that( util.filename, contains_string(out_file) )
+		util.write_to_file()
+
+		data = u''
+		with codecs.open( out_file, 'rb', 'utf-8') as f:
+			data = f.read()
+
+		assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
+		assert_that( data, contains_string(util.data['last-modified']))
+		assert_that( data, contains_string(util.data['title']))
+
+		os.remove(out_file)
+
+	def test_converter(self):
+		class Dummy_Unit(object):
+			attributes = {}
+			source = u''
+			ntiid = u''
+		
+		converter = HTMLWrappedBatchConverterDriver()
+		unit = Dummy_Unit()
+		unit.attributes['src'] = self.in_file
+		unit.ntiid = self.ntiid
+
+		values = converter._convert_unit(unit)
+
+		data = u''
+		with codecs.open( values[0].path, 'rb', 'utf-8') as f:
+			data = f.read()
+			assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
+
+		data = u''
+		with codecs.open( values[1].path, 'rb', 'utf-8') as f:
+			data = f.read()
+			assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
+
+		if os.path.exists(converter.tempdir):
+			shutil.rmtree(converter.tempdir)

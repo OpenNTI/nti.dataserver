@@ -201,11 +201,25 @@ class RenderableMixin(BaseRenderableMixin):
 
 	@property
 	def raw(self):
-		return self.getResource(['jsonp', 'raw'])
+		resource_types = [['jsonp', 'raw'], ['html_wrapped', 'raw']]
+		resource = None
+		for resource_type in resource_types:
+			try:
+				resource = self.getResource(resource_type)
+			except KeyError:
+				pass
+		return resource
 
 	@property
 	def wrapped(self):
-		return self.getResource(['jsonp', 'wrapped'])
+		resource_types = [['jsonp', 'wrapped'], ['html_wrapped', 'wrapped']]
+		resource = None
+		for resource_type in resource_types:
+			try:
+				resource = self.getResource(resource_type)
+			except KeyError:
+				pass
+		return resource
 
 	@property
 	def image(self):
