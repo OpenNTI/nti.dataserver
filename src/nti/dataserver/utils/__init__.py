@@ -15,6 +15,7 @@ import functools
 from zope.exceptions.exceptionformatter import print_exception
 import zope.exceptions.log
 
+from zope import interface
 from zope import component
 from zope.component.hooks import setSite
 from zope.component.hooks import setHooks
@@ -23,6 +24,8 @@ from zope.dottedname import resolve as dottedname
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver._Dataserver import Dataserver, MinimalDataserver
+
+from nti.externalization.persistence import NoPickle
 
 # We are often, but not always, called from main,
 # so we need to be sure the relevant non-gevent
@@ -226,10 +229,24 @@ def run(function=None, as_main=True, verbose=False, config_features=(), xmlconfi
 
 	return result
 
+
+@interface.implementer(nti_interfaces.IDataserver)
+@NoPickle
+class _MockDataserver(object):
+
+	def __init__(self, dataserver_folder, root_connection):
+		self.dataserver_folder = dataserver_folder
+		self.root = dataserver_folder
+		self.root_connection = root_connection
+		self.users_folder = dataserver_folder['users']
+		self.shards = dataserver_folder['shards']
+		self.root_folder = dataserver_folder.__parent__
+
 def interactive_setup(root=".",
 					  config_features=(),
 					  xmlconfig_packages=(),
-					  in_site=True):
+					  in_site=True,
+					  with_dataserver=True):
 	"""
 	Set up the environment for interactive use, configuring the
 	database and dataserver site. The root database ('Users')
@@ -241,6 +258,9 @@ def interactive_setup(root=".",
 		will be opened and the ``nti.dataserver`` site will be made
 		the current ZCA site. The return value will be
 		(db, opened-connection, db-root)
+	:keyword with_dataserver: If ``True`` (the default), an object presenting
+		a minimal :class:`nti.dataserver.interfaces.IDataserver` interface
+		will be registered globally.
 	"""
 
 	logging.basicConfig(level=logging.INFO)
@@ -261,5 +281,9 @@ def interactive_setup(root=".",
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
 	setSite(ds_folder)
+
+	if with_dataserver:
+		component.getGlobalSiteManager().registerUtility(_MockDataserver(ds_folder,
+																		 conn))
 
 	return (db, conn, root)
