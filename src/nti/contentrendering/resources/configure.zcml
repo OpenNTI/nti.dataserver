@@ -38,4 +38,9 @@
 			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
 			 name="jsonp" />
 
+	<adapter factory=".converter_html_wrapped.HTMLWrappedBatchConverter"
+			 for="plasTeX.DOM.Node"
+			 provides=".interfaces.IContentUnitRepresentationBatchConverter"
+			 name="html_wrapped" />
+
 </configure>
