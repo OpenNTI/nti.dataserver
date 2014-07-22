@@ -431,15 +431,20 @@ def validate_field_value( self, field_name, field, value ):
 
 	if (field.readonly
 		and field.get(self) is None
-		and value is not None
 		and field.queryTaggedValue('_ext_allow_initial_set')):
-		# First time through we get to set it, but we must bypass
-		# the field
-		def _do_set():
-			setattr(self, str(field_name), value)
+		if value is not None:
+			# First time through we get to set it, but we must bypass
+			# the field
+			def _do_set():
+				setattr(self, str(field_name), value)
+		else:
+			def _do_set():
+				# no-op
+				return
 	else:
 		def _do_set():
 			return field.set(self, value)
+
 
 	return _do_set
 
