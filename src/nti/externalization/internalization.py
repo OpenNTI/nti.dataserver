@@ -17,16 +17,17 @@ import inspect
 import numbers
 import collections
 
-import zope.event
+from zope.event import notify as _zope_event_notify
 from zope import component
 from zope import interface
 from zope.dottedname.resolve import resolve
 from zope.schema import interfaces as sch_interfaces
-from zope.lifecycleevent import ObjectModifiedEvent, Attributes
+from zope.lifecycleevent import Attributes
 
 from persistent.interfaces import IPersistent
 
 from . import interfaces
+from .interfaces import ObjectModifiedFromExternalEvent
 
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
@@ -203,7 +204,7 @@ def update_from_external_object( containedObject, externalObject,
 		for the `containedObject.`
 	:param bool notify: If ``True`` (the default), then if the updater for the `containedObject` either has no preference
 		(returns None) or indicates that the object has changed,
-		then an :class:`~zope.lifecycleevent.interfaces.IObjectModifiedEvent` will be fired. This may
+		then an :class:`~nti.externalization.interfaces.IObjectModifiedFromExternalEvent` will be fired. This may
 		be a recursive process so a top-level call to this object may spawn
 		multiple events. The events that are fired will have a ``descriptions`` list containing
 		one or more :class:`~zope.lifecycleevent.interfaces.IAttributes` each with
@@ -291,16 +292,17 @@ def update_from_external_object( containedObject, externalObject,
 			# zope.formlib.form.applyData does this because it has a specific, configured mapping. We
 			# just do the best we can by looking at what's implemented. The most specific
 			# interface wins
-			descriptions = {} # map from interface class to list of keys
+			descriptions = collections.defaultdict(list) # map from interface class to list of keys
 			provides = interface.providedBy( containedObject )
 			for k in external_keys:
 				iface_providing_attr = None
 				iface_attr = provides.get( k )
 				if iface_attr:
 					iface_providing_attr = iface_attr.interface
-				descriptions.setdefault( iface_providing_attr, [] ).append( k )
+				descriptions[iface_providing_attr].append( k )
 			attributes = [Attributes(iface, *keys) for iface, keys in descriptions.items()]
-			event = ObjectModifiedEvent( containedObject, *attributes )
+			event = ObjectModifiedFromExternalEvent( containedObject, *attributes )
+			event.external_value = externalObject
 			# Let the updater have its shot at modifying the event, too, adding
 			# interfaces or attributes. (Note: this was added to be able to provide
 			# sharedWith information on the event, since that makes for a better stream.
@@ -311,7 +313,7 @@ def update_from_external_object( containedObject, externalObject,
 				pass
 			else:
 				event = meth( event )
-			zope.event.notify( event )
+			_zope_event_notify( event )
 
 	return containedObject
 
