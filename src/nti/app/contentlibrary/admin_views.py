@@ -13,6 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from zope.security.management import endInteraction
+from zope.security.management import restoreInteraction
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 
@@ -21,7 +24,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.site.hostpolicy import synchronize_host_policies
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.contentlibrary.subscribers import install_site_content_library
-
 
 from pyramid.view import view_config
 
@@ -46,7 +48,24 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 	"""
 
 	def __call__(self):
+		# Unfortunately, zope.dublincore includes a global subscriber registration
+		# (zope.dublincore.creatorannotator.CreatorAnnotator)
+		# that will update the `creators` property of IZopeDublinCore to include
+		# the current principal when any ObjectCreated /or/ ObjectModified event
+		# is fired, if there is a current interaction. Normally we want this,
+		# but here we care specifically about getting the dublincore metadata
+		# we specifically defined in the libraries, and not the requesting principal.
+		# Our simple-minded approach is to simply void the interaction during this process
+		# (which works so long as zope.securitypolicy doesn't get involved...)
 
+		# This is somewhat difficult to test the side-effects of, sadly.
+		endInteraction()
+		try:
+			return self._do_sync()
+		finally:
+			restoreInteraction()
+
+	def _do_sync(self):
 		# First, synchronize the policies, make sure everything is all nice and installed.
 		synchronize_host_policies()
 

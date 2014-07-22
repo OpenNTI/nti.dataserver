@@ -15,7 +15,6 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 from hamcrest import assert_that
-from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import empty
 
