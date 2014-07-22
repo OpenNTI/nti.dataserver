@@ -300,7 +300,8 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 	validate_ntiid_string( result )
 	return result
 
-NTIID = collections.namedtuple( 'NTIID', 'provider, nttype, specific,date' )
+NTIID = collections.namedtuple( 'NTIID',
+								map(str, ['provider', 'nttype', 'specific','date']) )
 interface.classImplements( NTIID, interfaces.INTIID )
 
 def _parse( ntiid ):

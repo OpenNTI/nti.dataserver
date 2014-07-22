@@ -34,6 +34,7 @@ from .interfaces import IDynamicSharingTargetFriendsList
 from .interfaces import IUserTaggedContent
 from .interfaces import IDeletedObjectPlaceholder
 from .contenttypes.forums.interfaces import IHeadlinePost
+from .contenttypes.forums.interfaces import ICommentPost
 
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.interfaces import ICatalogIndex
@@ -78,6 +79,12 @@ class ValidatingContainerId(object):
 	  and, as they are always unique, are not helpful to index.
 	  Likewise for UUID and INTIDs, although in practice these
 	  are not yet used.
+
+	  We make an exception for forum comments, which we do index
+	  even if they have an excluded type for a container id. This is
+	  because some forums, notably those associated with classes,
+	  may not have better NTIIDs (yet), and we need these in the index
+	  for notabledata to work (see ``_only_included_comments_in_my_topics_ntiids``).
 	"""
 
 	__slots__ = (b'containerId',)
@@ -88,7 +95,7 @@ class ValidatingContainerId(object):
 		contained = INTIContained(obj, default)
 		if contained is not None:
 			cid = contained.containerId
-			if is_ntiid_of_types( cid, self._IGNORED_TYPES ):
+			if is_ntiid_of_types( cid, self._IGNORED_TYPES ) and not ICommentPost.providedBy(obj):
 				self.containerId = None
 			else:
 				self.containerId = unicode(cid)

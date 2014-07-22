@@ -92,37 +92,45 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 		board = frm_interfaces.ICommunityBoard( community, None )
 		if board is None:
 			return None
-		specific = get_specific(ntiid)
+		return resolve_ntiid_in_board(ntiid, board)
 
-		if '.' not in specific:
-			forum_name, topic_name = specific, u''
-			logger.warn("unexpected nttid specific part '%s' while resolving topic " % specific)
-			return board.get( forum_name, {} ).get( topic_name )
+def resolve_ntiid_in_board(ntiid, board):
+	"""
+	Finds a specific topic inside a specific forum in a board,
+	given an NTIID. Handles the naming conventions within the board.
+	"""
 
-		# Unfortunately, we use the . as both the NameChooser-unique
-		# portion separator and the parent/child separator (we can't
-		# change this because there may be existing iPad data
-		# depending on this). Depending on which parts got uniqued, we
-		# may need to adjust the split.
-		# TODO: Is there still a case this could miss? If the IDs are just right?
-		names = specific.split('.')
-		if len(names) == 2:
-			# Unambiguous
-			forum_name, topic_name = names
-		elif len(names) == 3:
-			# Two dots, have to figure out which is parent/child and
-			# which is unique. This depends on our implementation
-			# of making names unique using numeric suffixes
-			if names[1].isdigit():
-				forum_name = names[0] + '.' + names[1]
-				topic_name = names[2]
-			else:
-				forum_name = names[0]
-				topic_name = names[1] + '.' + names[2]
-		else:
-			assert len(names) == 4
-			# unambiguous case
-			forum_name = names[0] + '.' + names[1]
-			topic_name = names[2] + '.' + names[3]
+	specific = get_specific(ntiid)
 
+	if '.' not in specific:
+		forum_name, topic_name = specific, u''
+		logger.warn("unexpected nttid specific part '%s' while resolving topic " % specific)
 		return board.get( forum_name, {} ).get( topic_name )
+
+	# Unfortunately, we use the . as both the NameChooser-unique
+	# portion separator and the parent/child separator (we can't
+	# change this because there may be existing iPad data
+	# depending on this). Depending on which parts got uniqued, we
+	# may need to adjust the split.
+	# TODO: Is there still a case this could miss? If the IDs are just right?
+	names = specific.split('.')
+	if len(names) == 2:
+		# Unambiguous
+		forum_name, topic_name = names
+	elif len(names) == 3:
+		# Two dots, have to figure out which is parent/child and
+		# which is unique. This depends on our implementation
+		# of making names unique using numeric suffixes
+		if names[1].isdigit():
+			forum_name = names[0] + '.' + names[1]
+			topic_name = names[2]
+		else:
+			forum_name = names[0]
+			topic_name = names[1] + '.' + names[2]
+	else:
+		assert len(names) == 4
+		# unambiguous case
+		forum_name = names[0] + '.' + names[1]
+		topic_name = names[2] + '.' + names[3]
+
+	return board.get( forum_name, {} ).get( topic_name )
