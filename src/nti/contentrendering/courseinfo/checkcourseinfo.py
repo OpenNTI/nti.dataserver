@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import sys
 from zope import interface
 
 from .. import interfaces
@@ -25,13 +24,22 @@ def check(book):
 	error_check, error_msg, unmatched_fields = \
 		 course_info.check_course_info(course_info_file)
 
-	if error_check and error_msg[0:7] != 'warning':
+	if error_check == True and error_msg[0:7] != 'warning':
 		logger.info(error_msg)
 		logger.info(unmatched_fields)
-		sys.exit([error_msg , unmatched_fields])
-	elif error_check and error_msg[0:7] == 'warning':
+		#raise CourseInfoError(error_msg, unmatched_fields)
+	elif error_check == True and error_msg[0:7] == 'warning':
 		logger.info(error_msg)
 		logger.info(unmatched_fields)
 	else: 
 		logger.info('course_info.json is valid')
 	
+"""
+class CourseInfoError(Exception):
+	def __init__(self, error_msg, unmatched_fields):
+		self.error_msg = error_msg
+		self.unmatched_fields = unmatched_fields
+	def __str__(self):
+		self.value = self.error_msg + ':'.join(self.unmatched_fields)
+		return repr(self.value )	
+"""
