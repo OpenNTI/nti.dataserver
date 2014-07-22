@@ -429,8 +429,19 @@ def validate_field_value( self, field_name, field, value ):
 			# right. Raise the original SchemaValidationError.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
+	if (field.readonly
+		and field.get(self) is None
+		and value is not None
+		and field.queryTaggedValue('_ext_allow_initial_set')):
+		# First time through we get to set it, but we must bypass
+		# the field
+		def _do_set():
+			setattr(self, str(field_name), value)
+	else:
+		def _do_set():
+			return field.set(self, value)
 
-	return lambda: field.set( self, value )
+	return _do_set
 
 def validate_named_field_value( self, iface, field_name, value ):
 	"""
