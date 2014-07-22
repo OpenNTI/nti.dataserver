@@ -271,3 +271,16 @@ class IInternalObjectIO(IInternalObjectExternalizer,IInternalObjectUpdater):
 	A single object responsible for both reading and writing internal objects
 	in external forms.
 	"""
+
+from zope.lifecycleevent import IObjectModifiedEvent
+from zope.lifecycleevent import ObjectModifiedEvent
+
+class IObjectModifiedFromExternalEvent(IObjectModifiedEvent):
+	"""
+	An object has been updated from an external value.
+	"""
+
+	external_value = interface.Attribute("The external value")
+
+class ObjectModifiedFromExternalEvent(ObjectModifiedEvent):
+	external_value = None
