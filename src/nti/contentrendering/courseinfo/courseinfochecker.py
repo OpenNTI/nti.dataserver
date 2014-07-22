@@ -55,9 +55,6 @@ class CourseInfoValidation(object):
 					unmatched_fields = []
 					return error_check, error_msg, unmatched_fields
 
-				logger.info('there is no ntiid field in the dictionary')
-
-
 				#check course duration field
 				duration_number, duration_kind, duration_days = course_info.check_duration(course_info_dict)
 				#logger.info("Course duration is %s",duration_kind," is %s",duration_number)

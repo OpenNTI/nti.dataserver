@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-
+import sys
 from zope import interface
 
 from .. import interfaces
@@ -28,6 +28,7 @@ def check(book):
 	if error_check and error_msg[0:7] != 'warning':
 		logger.info(error_msg)
 		logger.info(unmatched_fields)
+		sys.exit([error_msg , unmatched_fields])
 	elif error_check and error_msg[0:7] == 'warning':
 		logger.info(error_msg)
 		logger.info(unmatched_fields)
