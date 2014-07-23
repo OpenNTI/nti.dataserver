@@ -84,7 +84,6 @@ class Credit(SchemaConfigured, contained.Contained):
 @interface.implementer(ISchedule)
 @WithRepr
 @NoPickle
-@EqHash('hours', 'enrollment')
 class Schedule(SchemaConfigured, contained.Contained):
 	createFieldProperties(ISchedule)
 
