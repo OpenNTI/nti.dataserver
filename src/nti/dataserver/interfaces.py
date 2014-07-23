@@ -55,6 +55,7 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
+from nti.schema.field import Dict
 
 from nti.utils.property import alias
 
@@ -1447,7 +1448,32 @@ class IBookmark(ISelectedRange):
 	but automatically selected by the application).
 	"""
 
-class IHighlight(ISelectedRange):
+class IPresentationPropertyHolder(interface.Interface):
+	"""
+	Something that can hold UI-specific presentation properties.
+
+	Presentation properties are a small simple dictionary of keys and values
+	uninterpreted by the server. Their meaning is assigned by consensus of the
+	various user interface clients.
+
+	In order to prevent abuse, we are careful to limit the quantity
+	and type of values that can be stored here (there's a tradeoff
+	between coupling and abuse protection).
+	"""
+
+	# Initially we choose fairly small limits; in the future, if needed,
+	# this could be expanded to (small) lists of (small) strings, numbers,
+	# and booleans.
+
+	presentationProperties = Dict(title="The presentation properties",
+								  key_type=ValidTextLine(min_length=1,max_length=40),
+								  value_type=ValidTextLine(min_length=1,max_length=40),
+								  max_length=40,
+								  required=False,
+								  default=None)
+
+class IHighlight(IPresentationPropertyHolder,
+				 ISelectedRange):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
@@ -1455,10 +1481,6 @@ class IHighlight(ISelectedRange):
 		title='The style of the highlight',
 		values=('plain', 'suppressed'),
 		default="plain")
-
-	fillColor = ValidTextLine(title="the fill color in rgb syntax")
-	fillOpacity = Number(title="The fill opacity between 0 and 1")
-	fillRGBAColor = ValidTextLine(title="the fill color and opacity")
 
 from nti.contentfragments import schema as frg_schema
 

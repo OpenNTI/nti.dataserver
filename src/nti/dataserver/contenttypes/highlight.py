@@ -20,18 +20,14 @@ UserContentRoot = UserContentRoot # BWC top-level import
 from .selectedrange import SelectedRange # BWC top-level import
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .color import createColorProperty
-from .color import updateColorFromExternalValue
-
 @interface.implementer(nti_interfaces.IHighlight)
 class Highlight(SelectedRange): #, _HighlightBWC):
 	"""
 	Implementation of a highlight.
 	"""
+	createDirectFieldProperties(nti_interfaces.IPresentationPropertyHolder)
+	createDirectFieldProperties(nti_interfaces.IHighlight)
 
-	createDirectFieldProperties(nti_interfaces.IHighlight,
-								omit=('fillColor', 'fillOpacity', 'fillRGBAOpacity')) # style
-	createColorProperty('fill', r=0.882, g=0.956, b=0.996)
 
 	def __init__( self ):
 		super(Highlight,self).__init__()
@@ -44,5 +40,12 @@ class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
 
 
 	def updateFromExternalObject( self, ext_parsed, *args, **kwargs ):
-		updateColorFromExternalValue(self.context, 'fill', ext_parsed)
+		# Merge any incoming presentation properties with what we have;
+		# this allows clients to simply drop things they don't know about
+		ext_self = self._ext_self
+		if 'presentationProperties' in ext_parsed and ext_self.presentationProperties:
+			if ext_parsed['presentationProperties'] != ext_self.presentationProperties:
+				props = ext_self.presentationProperties
+				props.update(ext_parsed['presentationProperties'])
+				ext_parsed['presentationProperties'] = props
 		SelectedRangeInternalObjectIO.updateFromExternalObject(self, ext_parsed, *args, **kwargs)
