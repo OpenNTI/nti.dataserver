@@ -35,6 +35,8 @@ from . import MessageFactory as _
 import logging
 logger = logging.getLogger(__name__)
 
+import collections
+
 # Clean up the logging of openid, which writes to stderr by default. Patching
 # the module like this is actually the recommended approach
 import openid.oidutil
@@ -141,7 +143,7 @@ AX_TYPE_CONTENT_ROLES = 'tag:nextthought.com,2011:ax/contentroles/1'
 # The time limit for a GET request during
 # the authentication process
 _REQUEST_TIMEOUT = 0.5
-	
+
 def _authenticated_user( request ):
 	"""
 	Returns the User object authenticated by the request, or
@@ -164,17 +166,17 @@ def _links_for_authenticated_users( request ):
 	remote_user = _authenticated_user(request)
 	if remote_user:
 		logger.debug( "Found authenticated user %s", remote_user )
-		
+
 		# They are already logged in, provide a continue link
 		continue_href = request.route_path('user.root.service', _='' )
 		links = [ Link(continue_href, rel=REL_CONTINUE) ]
-		
+
 		logout_href = request.route_path( REL_LOGIN_LOGOUT)
 		links.append( Link(logout_href, rel=REL_LOGIN_LOGOUT) )
-		
+
 		for _, prov_links in unique_link_providers(remote_user, request, True):
 			links.extend(prov_links)
-		
+
 	links = tuple(links) if links else ()
 	return links
 
@@ -191,10 +193,10 @@ def _links_for_unauthenticated_users( request ):
 
 		forgot_username = Link( request.route_path( REL_FORGOT_USERNAME ),
 								rel=REL_FORGOT_USERNAME )
-		
+
 		forgot_passcode = Link( request.route_path( REL_FORGOT_PASSCODE ),
 								rel=REL_FORGOT_PASSCODE )
-		
+
 		reset_passcode = Link( request.route_path( REL_RESET_PASSCODE ),
 							   rel=REL_RESET_PASSCODE )
 
@@ -1002,10 +1004,10 @@ def _update_users_content_roles( user, idurl, content_roles ):
 
 	roles_to_add = []
 	# Set up a map from title to list-of specific-parts-of-ntiids for all content from this provider
-	provider_packages = {}
+	provider_packages = collections.defaultdict(list)
 	for package in (library.contentPackages if library is not None else ()):
 		if ntiids.get_provider( package.ntiid ).lower() == provider:
-			provider_packages.setdefault( package.title.lower(), [] ).append( ntiids.get_specific( package.ntiid ) )
+			provider_packages[package.title.lower()].append( ntiids.get_specific( package.ntiid ) )
 
 	for local_role in (content_roles or ()):
 		local_role = local_role.lower()
