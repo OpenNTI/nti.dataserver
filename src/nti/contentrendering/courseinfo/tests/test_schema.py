@@ -7,17 +7,17 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
-from hamcrest import equal_to
 from hamcrest import not_none
 from hamcrest import has_entry
-from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
 
-
+import isodate
 
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
@@ -147,7 +147,7 @@ class TestCourseInfo(CourseinfoLayerTest):
 
 		io = model.CourseInfo(ntiid="tag:nextthought.com,2011-10:OU-HTML-CHEM4970_Chemistry_of_Beer.course_info",
 			id="CHEM 4970-001", school="Department of Chemistry and Biochemistry at the University of Oklahoma",
-			is_non_public=False, term="Fall 2014", startDate="2014-01-13T06:00:00+00:00", duration="16 Weeks",
+			is_non_public=False, term="Fall 2014", startDate=isodate.parse_datetime("2014-01-13T06:00:00+00:00"), duration="16 Weeks",
 			isPreview=True, instructors=[instructor1, instructor2],
 			video= "kaltura://1500101/0_bxfatwxs/",
 			title="Chemistry of Beer",
@@ -189,7 +189,7 @@ class TestCourseInfo(CourseinfoLayerTest):
 		assert_that(new_io, has_property('school', is_('Department of Chemistry and Biochemistry at the University of Oklahoma')))
 		assert_that(new_io, has_property('is_non_public', is_(False)))
 		assert_that(new_io, has_property('term', is_('Fall 2014')))
-		assert_that(new_io, has_property('startDate', is_('2014-01-13T06:00:00+00:00')))
+		assert_that(new_io, has_property('startDate', is_not(none())))
 		assert_that(new_io, has_property('duration', is_('16 Weeks')))
 		assert_that(new_io, has_property('isPreview', is_(True)))
 		assert_that(new_io, has_property('instructors', is_([instructor1, instructor2])))

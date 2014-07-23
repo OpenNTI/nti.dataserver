@@ -19,6 +19,7 @@ from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
 
 from .interfaces import ICredit
+from .interfaces import ISchedule
 from .interfaces import ICourseInfo
 from .interfaces import IEnrollment
 from .interfaces import IInstructor
@@ -47,7 +48,7 @@ class Prerequisite(SchemaConfigured, contained.Contained):
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Prerequisite'
-	mime_type = mimeType = 'application/vnd.nextthought.prerequisite'
+	mime_type = mimeType = 'application/vnd.nextthought.courseinfo.prerequisite'
 
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
@@ -61,7 +62,7 @@ class Enrollment(SchemaConfigured, contained.Contained):
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Enrollment'
-	mime_type = mimeType = 'application/vnd.nextthought.enrollment'
+	mime_type = mimeType = 'application/vnd.nextthought.courseinfo.enrollment'
 
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
@@ -75,11 +76,25 @@ class Credit(SchemaConfigured, contained.Contained):
 
 	__external_can_create__ = True
 	__external_class_name__ = 'Credit'
-	mime_type = mimeType = 'application/vnd.nextthought.credit'
+	mime_type = mimeType = 'application/vnd.nextthought.courseinfo.credit'
 
 	def __init__ (self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 
+@interface.implementer(ISchedule)
+@WithRepr
+@NoPickle
+@EqHash('hours', 'enrollment')
+class Schedule(SchemaConfigured, contained.Contained):
+	createFieldProperties(ISchedule)
+
+	__external_can_create__ = True
+	__external_class_name__ = 'Credit'
+	mime_type = mimeType = 'application/vnd.nextthought.courseinfo.schedule'
+
+	def __init__ (self, *args, **kwargs):
+		SchemaConfigured.__init__(self, *args, **kwargs)
+		
 @interface.implementer(ICourseInfo)
 @WithRepr
 @NoPickle
