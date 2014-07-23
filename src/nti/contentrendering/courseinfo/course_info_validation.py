@@ -14,9 +14,9 @@ import zope.schema
 from collections import OrderedDict
 
 import datetime
+from .schema import DateTime 
 
-
-class CourseInfoJSONChecker(object):
+class CourseInfoValidation(object):
 
 	def __init__(self, file_name):
 		self.file_name = file_name
@@ -158,6 +158,11 @@ class CourseInfoJSONChecker(object):
 				if type(json_dict[key]) != type(data_schema_field_types[key]):
 					if (type(json_dict[key]) is str and type(data_schema_field_types[key]) is unicode) or (type(json_dict[key]) is dict and key == 'enrollment'):
 						matched_fields_type.append(key)
+					elif(type(data_schema_field_types[key]) is datetime.datetime):
+						if (DateTime().fromUnicode(json_dict[key])):
+							matched_fields_type.append(key)
+						else:
+							unmatched_fields_type.append(key)
 					else:
 						logger.info("%s has unmatched field type", key)
 						unmatched_fields_type.append(key)

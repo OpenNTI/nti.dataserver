@@ -10,7 +10,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import course_info_validation
 
 
-class CourseInfoValidation(object):
+class CourseInfoJSONChecker(object):
 	def check_course_instructors(self, course_info, course_info_dict):
 		#check instructors listed in the course_info.json
 		return course_info.check_instructors(course_info_dict)
@@ -30,7 +30,7 @@ class CourseInfoValidation(object):
 
 
 	def check_course_info(self, course_info_file):
-		course_info = course_info_validation.CourseInfoJSONChecker(course_info_file)
+		course_info = course_info_validation.CourseInfoValidation(course_info_file)
 		course_info.build_sample_course_info_schema()
 		check_json_file, course_info_dict, warning_msg = course_info.get_dict_from_file(course_info.file_name)
 		error_check = False
