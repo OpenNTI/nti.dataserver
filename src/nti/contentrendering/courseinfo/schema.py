@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import isodate
-from datetime import datetime
+import datetime
 
 from zope import interface
 from zope.schema.interfaces import IFromUnicode
