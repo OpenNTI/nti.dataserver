@@ -31,7 +31,7 @@ class CourseInfoJSONChecker(object):
 			name = "Paul Sims, PhD", title = "Associate Professor, Department of Chemistry")
 		self.course_info_schema = model.CourseInfo(ntiid = "tag:nextthought.com,2011-10:OU-HTML-CHEM4970_Chemistry_of_Beer.course_info",
 			id = "CHEM 4970-001", school = "Department of Chemistry and Biochemistry at the University of Oklahoma",
-			is_non_public = False, term = "Fall 2014", startDate = "2014-01-13T06:00:00+00:00", duration = "16 Weeks",
+			is_non_public = False, term = "Fall 2014", startDate = datetime.datetime.now(), duration = "16 Weeks",
 			isPreview = True, instructors = [self.instructor_o1, self.instructor_o2],
 			video =  "kaltura://1500101/0_bxfatwxs/",
 			title = "Chemistry of Beer",
