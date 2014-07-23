@@ -40,8 +40,8 @@ from nti.appserver.link_providers import flag_link_provider as user_link_provide
 
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
-from .test_application import WithSharedApplicationMockDS
-from .test_application import TestApp
+from nti.appserver.tests.test_application import WithSharedApplicationMockDS
+from nti.appserver.tests.test_application import TestApp
 from nti.dataserver.tests import mock_dataserver
 from pyramid.threadlocal import get_current_request
 
@@ -62,7 +62,7 @@ from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_rep
 from nti.dataserver import users
 
 from zope.component.hooks import setSite, clearSite
-from nti.dataserver.site import get_site_for_site_names
+from nti.site.site import get_site_for_site_names
 
 
 class DummyView(object):
@@ -173,7 +173,7 @@ class TestApplicationLogon(ApplicationLayerTest):
 		# Now that we have the cookie, we should be able to request ourself
 		testapp.get('/dataserver2/users/sjohnson@nextthought.com')
 
-from . import ExLibraryApplicationTestLayer
+from nti.appserver.tests import ExLibraryApplicationTestLayer
 
 class TestLogonViews(ApplicationLayerTest):
 	layer = ExLibraryApplicationTestLayer
@@ -415,7 +415,7 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that( user.lastLoginTime,
 					 is_( greater_than( 0 ) ) )
 
-        # Or a redirect
+		# Or a redirect
 		get_current_request().params['success'] = '/the/url/to/go/to'
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPSeeOther ) )
@@ -571,7 +571,6 @@ class TestLogonViews(ApplicationLayerTest):
 		local_roles = ('cosmetology',)
 
 		_update_users_content_roles( user, idurl, local_roles )
-
 		assert_that( content_roles.groups, contains( nauth.role_for_providers_content( 'mn', 'MiladyCosmetology.cosmetology' ),
 													 nauth.role_for_providers_content( 'mn', 'Uncensored.cosmetology' ) ) )
 
