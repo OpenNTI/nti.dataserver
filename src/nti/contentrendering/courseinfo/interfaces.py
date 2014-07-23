@@ -14,6 +14,8 @@ from nti.schema.field import Object
 from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 
+from .schema import Duration
+
 class IInstructor(interface.Interface):
 	defaultphoto = ValidTextLine(title='course instructor default photo', required=False)
 	username = ValidTextLine(title='course instructor username', required=False)
@@ -45,7 +47,7 @@ class ICourseInfo (interface.Interface):
 	is_non_public = Bool(title='course privacy', required=False)
 	term = ValidTextLine(title='term', required=False)
 	startDate = ValidTextLine(title='course start date', required=False)
-	duration = ValidTextLine(title='course duration', required=False)
+	duration = Duration(title='course duration', required=False)
 	isPreview = Bool (title='course preview', required=False)
 	
 	instructors = ListOrTuple(value_type=Object(IInstructor), 
