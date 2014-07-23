@@ -18,6 +18,7 @@
 						 .interfaces.IPrerequisite
 						 .interfaces.IEnrollment
 						 .interfaces.ICredit
+						 .interfaces.ISchedule
 						 .interfaces.ICourseInfo"
 		modules=".model" />
 
