@@ -8,6 +8,8 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
+from nti.ntiids.schema import ValidNTIID
+
 from nti.schema.field import Bool
 from nti.schema.field import Number
 from nti.schema.field import Object
@@ -39,7 +41,7 @@ class ICredit(interface.Interface):
 	enrollment = Object(IEnrollment, title='course enrollment information', required=False)
 
 class ICourseInfo (interface.Interface):
-	ntiid = ValidTextLine(title='NTIID', required=True)
+	ntiid = ValidNTIID(title='NTIID', required=True)
 	
 	id = ValidTextLine(title= 'course id', required=False)
 	id.setTaggedValue('__external_accept_id__', True)
