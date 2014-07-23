@@ -187,16 +187,18 @@ class TestHighlight(_BaseSelectedRangeTest):
 		assert_that( ex.exception, has_property( 'field' ) )
 		assert_that( ex.exception.field, has_property( '__name__', 'style' ) )
 
-	def test_default_fill_external(self):
+	def test_presentation_properties_external(self):
 		highlight = self.CONSTRUCTOR()
-		assert_that( highlight, externalizes( has_entries( 'fillColor', 'rgb(224.9,243.8,254.0)',
-														   'fillOpacity', 1.0,
-														   'fillRGBAColor', '0.882 0.956 0.996' ) ) )
+		assert_that( highlight, externalizes( has_entries( 'presentationProperties', none() ) ) )
 
-		update_from_external_object(highlight, {'fillRGBAColor': "1.0 1.0 0.5 0.5"})
-		assert_that( highlight, externalizes( has_entries( 'fillColor', 'rgb(255.0,255.0,127.5)',
-														   'fillOpacity', 0.5,
-														   'fillRGBAColor', '1.000 1.000 0.500 0.50' ) ) )
+		update_from_external_object(highlight, {'presentationProperties': {'key': 'val'} } )
+		assert_that( highlight, externalizes( has_entries( 'presentationProperties', {'key': 'val'} ) ) )
+
+		update_from_external_object(highlight, {'presentationProperties': {'key2': 'val2'} } )
+		# updates merge
+		assert_that( highlight, externalizes( has_entries( 'presentationProperties', {'key': 'val',
+																					  'key2': 'val2'} ) ) )
+
 
 
 class TestBookmark(_BaseSelectedRangeTest):
