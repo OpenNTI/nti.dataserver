@@ -10,7 +10,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
-import collections
+from collections import Mapping
+
 import simplejson as json
 
 from zope import interface
@@ -30,28 +31,29 @@ from .model import Prerequisite
 MIMETYPE = StandardExternalFields.MIMETYPE
 
 def validate(data):
-	assert isinstance(data, collections.Mapping)
+	assert isinstance(data, Mapping)
 	
 	# complete mime types
 	if MIMETYPE not in data:
 		data[MIMETYPE] = CourseInfo.mimeType
 	
 	for inst in data.get('instructors',()):
-		if MIMETYPE not in inst:
+		if isinstance(inst, Mapping) and MIMETYPE not in inst:
 			inst[MIMETYPE] = Instructor.mimeType
 			
 	for preq in data.get('prerequisites',()):
-		if MIMETYPE not in preq:
+		if isinstance(preq, Mapping) and MIMETYPE not in preq:
 			preq[MIMETYPE] = Prerequisite.mimeType
 	
 	for credit in data.get('credit', ()):
 		if MIMETYPE not in credit:
 			credit[MIMETYPE] = Credit.mimeType
-		if 'enrollment' in credit and MIMETYPE not in credit['enrollment']:
+		enrollment = credit.get('enrollment')
+		if isinstance(enrollment, Mapping) and MIMETYPE not in enrollment:
 			credit['enrollment'][MIMETYPE] = Enrollment.mimeType
 			
 	schedule = data.get('schedule')
-	if schedule and MIMETYPE not in schedule:
+	if isinstance(schedule, Mapping) and MIMETYPE not in schedule:
 		schedule[MIMETYPE] = Schedule.mimeType
 
 	# start validation
@@ -129,7 +131,7 @@ def _try_unicode(obj, encoding='utf-8', errors='replace'):
 	return obj
 
 def convert(data, encoding='utf-8'):
-	if isinstance(data, collections.Mapping):
+	if isinstance(data, Mapping):
 		return {convert(key): convert(value) for key, value in data.iteritems()}
 	elif isinstance(data, (list, tuple)):
 		return [convert(element) for element in data]
