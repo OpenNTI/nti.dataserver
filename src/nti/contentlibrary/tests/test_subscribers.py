@@ -191,7 +191,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( bundle, externalizes( has_entries('Class', 'ContentPackageBundle',
 													   'ContentPackages', has_length(1),
 													   'title', 'A Title',
-													   'root', '/localsite/ContentPackageBundles/ABundle/',
+													   'root', '/sites/localsite/ContentPackageBundles/ABundle/',
 													   'NTIID', bundle.ntiid,
 													   'Last Modified', greater_than(0),
 													   'PlatformPresentationResources', contains_inanyorder(
