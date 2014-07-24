@@ -11,12 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 import isodate
 import datetime
 
-from zope import interface
-from zope.schema.interfaces import IFromUnicode
 from zope.schema.interfaces import InvalidValue
 
 from nti.schema.field import ValidTextLine
-from nti.schema.field import DateTime as _DateTime
 
 class Duration(ValidTextLine):
      
@@ -29,13 +26,11 @@ class Duration(ValidTextLine):
                 raise InvalidValue('Invalid duration', value, self.__name__)     
         super(Duration, self)._validate(value)
 
-@interface.implementer(IFromUnicode)
-class DateTime(_DateTime):
+class DateTime(ValidTextLine):
     
-    def fromUnicode(self, s):
+    def _validate(self, value):
         try:
-            result = isodate.parse_datetime(s)
+            isodate.parse_datetime(value)
         except Exception:
-            raise InvalidValue('Invalid datetime', s, self.__name__)  
-        self.validate(result)
-        return result
+            raise InvalidValue('Invalid datetime', value, self.__name__)  
+        super(DateTime, self)._validate(value)
