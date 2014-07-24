@@ -276,6 +276,7 @@ from .dublincore import read_dublincore_from_named_key
 
 def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 							  dc_meta_name=DCMETA_FILENAME,
+							  excluded_keys=(),
 							  _meta=None):
 	"""
 	Given a :class:`IDelimitedHierarchyKey` whose contents are a JSON
@@ -315,7 +316,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 	# Be careful to only update fields that have changed
 	modified = False
-	for k in meta.__dict__:
+	for k in (set(meta.__dict__) - set(excluded_keys)):
 		if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
 			modified = True
 			# Our ContentPackages actually may bypass the interface by already
