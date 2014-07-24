@@ -56,10 +56,19 @@ class _WithId(object):
 	__slots__ = (b'id',)
 
 	def __init__(self, unit):
+		# Because for various included items, the content units NTIID
+		# can actually wind up the same, we also have to include
+		# the ordinal...and even the path at which we reached the
+		# ntiid
 		self.id = unit.ntiid
 		if self.id is None:
 			raise ValueError("ContentUnit with no NTIID cannot be annotated", unit)
+		self.id = self.id + ':ordinal %s' % unit.ordinal
 
+		try:
+			self.id += _WithId(unit.__parent__).id
+		except (AttributeError,ValueError):
+			pass
 
 def _to_id(func):
 	@functools.wraps(func)
