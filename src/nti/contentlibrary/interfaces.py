@@ -681,8 +681,11 @@ class IContentPackageBundle(IDisplayableContent,
 	should be a class:`IContentPackageBundleLibrary`, and its
 	``__name__`` should be a synonym for its NTIID.
 	"""
-	containers(str('.IContentPackageBundleLibrary'))
-	__parent__.required = False
+
+	# However, there are other places that can refer to a bundle,
+	# so we don't *force* them to be inside a library
+	#containers(str('.IContentPackageBundleLibrary'))
+	#__parent__.required = False
 
 
 	root = Object(IDelimitedHierarchyItem,
