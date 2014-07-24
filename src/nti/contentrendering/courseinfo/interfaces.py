@@ -16,8 +16,8 @@ from nti.schema.field import Bool
 from nti.schema.field import Choice
 from nti.schema.field import Object
 from nti.schema.field import ListOrTuple
-from nti.schema.field import ValidTextLine
 from nti.schema.field import UniqueIterable
+from nti.schema.field import ValidTextLine as TextLine
 
 from .schema import DateTime
 from .schema import Duration
@@ -29,24 +29,24 @@ DAYS_VOCABULARY = \
 class ISchedule(interface.Interface):
 	days = UniqueIterable(value_type=Choice(vocabulary=DAYS_VOCABULARY, title=u'day'),
 						  required=False)
-	times = ListOrTuple(value_type=ValidTextLine(title=u"time-slot"), required=False)
+	times = ListOrTuple(value_type=TextLine(title=u"time-slot"), required=False)
 		
 class IInstructor(interface.Interface):
-	defaultphoto = ValidTextLine(title=u'course instructor default photo', required=False)
-	username = ValidTextLine(title=u'course instructor username', required=False)
-	userid = ValidTextLine(title=u'course instructor userid', required=False)
-	name = ValidTextLine(title=u'course instructor name' , required=True)
-	title = ValidTextLine(title=u'course instructor title', required=True)
+	defaultphoto = TextLine(title=u'course instructor default photo', required=False)
+	username = TextLine(title=u'course instructor username', required=False)
+	userid = TextLine(title=u'course instructor userid', required=False)
+	name = TextLine(title=u'course instructor name' , required=True)
+	title = TextLine(title=u'course instructor title', required=True)
 
 class IPrerequisite(interface.Interface):
-	id = ValidTextLine(title=u'prerequisite id', required=False)
+	id = TextLine(title=u'prerequisite id', required=False)
 	id.setTaggedValue('__external_accept_id__', True)
 	
-	title = ValidTextLine(title=u"prerequisite title", required=False)
+	title = TextLine(title=u"prerequisite title", required=False)
 
 class IEnrollment(interface.Interface):
-	label = ValidTextLine(title=u'enrollment label', required=False)
-	url = ValidTextLine(title=u'enrollment url', required=False)
+	label = TextLine(title=u'enrollment label', required=False)
+	url = TextLine(title=u'enrollment url', required=False)
 
 class ICredit(interface.Interface):
 	hours = Int(title=u'credit hours', required=False, default=0, min=0)
@@ -55,12 +55,12 @@ class ICredit(interface.Interface):
 class ICourseInfo (interface.Interface):
 	ntiid = ValidNTIID(title=u'NTIID', required=True)
 	
-	id = ValidTextLine(title= 'course id', required=False)
+	id = TextLine(title= 'course id', required=False)
 	id.setTaggedValue('__external_accept_id__', True)
 
-	school = ValidTextLine(title=u'school offering the course', required=True)
+	school = TextLine(title=u'school offering the course', required=True)
 	is_non_public = Bool(title=u'course privacy', required=False)
-	term = ValidTextLine(title=u'term', required=False)
+	term = TextLine(title=u'term', required=False)
 	startDate = DateTime(title=u'course start date', required=False)
 	duration = Duration(title=u'course duration', required=False)
 	schedule = Object(ISchedule, title=u"course schedule", required=False)
@@ -78,6 +78,6 @@ class ICourseInfo (interface.Interface):
 						  title=u'course credits',
 						  required=False)
 	
-	video = ValidTextLine(title=u'course videp', required=False)
-	title = ValidTextLine(title=u'course title', required=False)
-	description = ValidTextLine(title=u'course description', required=False)
+	video = TextLine(title=u'course videp', required=False)
+	title = TextLine(title=u'course title', required=False)
+	description = TextLine(title=u'course description', required=False)

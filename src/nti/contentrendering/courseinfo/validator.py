@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import simplejson
 import collections
+import simplejson as json
 
 from zope import interface
 
@@ -18,30 +18,47 @@ from nti.externalization.internalization import find_factory_for
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.internalization import update_from_external_object
 
+from .model import Credit
+from .model import Schedule
 from .model import CourseInfo
+from .model import Enrollment
+from .model import Instructor
+from .model import Prerequisite
 
-class CourseInfoError(Exception):
-	pass
+MIMETYPE = StandardExternalFields.MIMETYPE
 
-def validate(source):
-	if hasattr(source, 'read'):
-		data = simplejson.load(source)
-	else:
-		with open(source, "r") as fp:
-			data = simplejson.load(fp, encoding="UTF-8")
-		
+def validate(data):
 	assert isinstance(data, collections.Mapping)
 	
-	# add mime type
-	if StandardExternalFields.MIMETYPE not in data:
-		data[StandardExternalFields.MIMETYPE] = CourseInfo.mimeType
+	# complete mime types
+	if MIMETYPE not in data:
+		data[MIMETYPE] = CourseInfo.mimeType
 	
+	for inst in data.get('instructors',()):
+		if MIMETYPE not in inst:
+			inst[MIMETYPE] = Instructor.mimeType
+			
+	for preq in data.get('prerequisites',()):
+		if MIMETYPE not in preq:
+			preq[MIMETYPE] = Prerequisite.mimeType
+	
+	for credit in data.get('credit', ()):
+		if MIMETYPE not in credit:
+			credit[MIMETYPE] = Credit.mimeType
+		if 'enrollment' in credit and MIMETYPE not in credit['enrollment']:
+			credit['enrollment'][MIMETYPE] = Enrollment.mimeType
+			
+	schedule = data.get('schedule')
+	if schedule and MIMETYPE not in schedule:
+		schedule[MIMETYPE] = Schedule.mimeType
+
+	# start validation
 	factory = find_factory_for(data)
 	course_info = factory()
 	try:
 		update_from_external_object(course_info, data, notify=False)
-	except Exception,e:
-		raise CourseInfoError(str(e))
+	except Exception:
+		raise #TODO: RequiredMissing is poor
 	
 	result = []
 	
@@ -89,6 +106,41 @@ def validate(source):
 	
 	return result
 
+UTF8_ALIASES = ('utf-8', 'utf8', 'utf_8', 'utf', 'u8')
+
+LATIN1_ALIASES = ('latin-1', 'latin1',  'latin', 'l1', 'cp819', '8859',
+				  'iso8859-1', 'iso-8859-1')
+
+def _try_unicode(obj, encoding='utf-8', errors='replace'):
+	if isinstance(obj, basestring):
+		encoding = (encoding or '').lower()
+		if isinstance(obj, unicode):
+			return obj
+		if encoding in UTF8_ALIASES:
+			return unicode(obj, 'utf-8', errors)
+		if encoding in LATIN1_ALIASES:
+			return unicode(obj, 'latin-1', errors)
+		return obj.decode(encoding, errors)
+	return obj
+
+def convert(data, encoding='utf-8'):
+	if isinstance(data, collections.Mapping):
+		return {convert(key): convert(value) for key, value in data.iteritems()}
+	elif isinstance(data, (list, tuple)):
+		return [convert(element) for element in data]
+	else:
+		return _try_unicode(data, encoding)
+
+def validate_file(source):
+	if hasattr(source, 'read'):
+		data = json.load(source)
+	else:
+		with open(source, "r") as fp:
+			data = json.load(fp)
+
+	data = convert(data) # make sure we have unicode
+	return validate(data)
+
 def check(book):
 	contentPath = os.path.dirname(book.toc.root_topic.filename )
 	course_info_file = os.path.join(contentPath, 'course_info.json')
@@ -96,7 +148,7 @@ def check(book):
 		logger.warn("Course info file was not found")
 		return
 	
-	for msg in validate(course_info_file):
+	for msg in validate_file(course_info_file):
 		logger.warn(msg)
 
 from .. import interfaces

@@ -1,0 +1,29 @@
+{
+	"ntiid": "tag:nextthought.com,2011-10:OU-HTML-UCOL1002_F_2014_Gateway_to_College_Learning.course_info",
+	"id": "UCOL 1002",
+	"term" : "F2014",
+	"school": "University College/Freshman Programs at the University of Oklahoma",
+	"video": "kaltura://1500101/0_j8mgxw4a/",
+	"title": "Gateway to College Learning",
+	"credit": [
+		{
+			"hours":2,
+			"enrollment": {
+				"label":"Enroll with Ozone.",
+				"url":"http://ozone.ou.edu/"
+			}
+		}
+	],
+	"startDate": "2014-07-01T06:00:00+00:00",
+	"duration": "16 Weeks",
+	"description": "Gateway to College Learning is a course that teaches incoming students how to successfully navigate OU and build a strong foundation for collegiate success. This course focuses on the process of learning and becoming a successful student rather than on a specific academic subject. This course features guest lecturers from across campus to share their insight on various topics. During the course, students will learn about the University of Oklahoma and the many resources available to them, develop and refine academic skills that will help ensure collegiate success, and have opportunities to better understand themselves as students and citizens of their communities.",
+	"instructors": [
+		{
+			"defaultphoto":"images/LiMiller.png",
+			"username":"112667568",
+			"userid":"mill7568",
+			"name":"Lillian Miller, M.Ed.",
+			"title": "Director of Freshman Programs, University of Oklahoma"
+		}
+	]
+}
