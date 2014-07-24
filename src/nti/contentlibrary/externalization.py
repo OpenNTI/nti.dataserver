@@ -192,7 +192,6 @@ class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
 
 	def toExternalObject(self, *args, **kwargs):
 		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
-
 		root_url = _root_url_of_key( self._ext_self.root )
 		result._root_url = root_url
 		result['href'] = root_url
@@ -242,20 +241,49 @@ class _FilesystemBucketHrefMapper(object):
 
 	href = None
 
+	@staticmethod
+	def _url_prefix_of(p):
+		if hasattr(p, 'url_prefix'):
+			if p.url_prefix:
+				# can't have empty segments in the path;
+				# also, the leading '/' if any, is assumed
+				name = p.url_prefix
+				if name.startswith('/'):
+					name = name[1:]
+				if name.endswith('/'):
+					name = name[:-1]
+				return name
+
+
 	def __init__(self, bucket):
 		parents = []
 		for p in LocationIterator(bucket):
 			if hasattr(p, 'url_prefix'):
-				if p.url_prefix:
-					# can't have empty segments in the path;
-					# also, the leading '/' if any, is assumed
-					name = p.url_prefix
-					if name.startswith('/'):
-						name = name[1:]
-					if name.endswith('/'):
-						name = name[:-1]
-					parents.append(name)
+				pfx = self._url_prefix_of(p)
+				if pfx:
+					parents.append(pfx)
 				break
+
+			if hasattr(p, 'parent_enumeration') and p.parent_enumeration is not None:
+				# XXX: Tight coupling. We're passing here into
+				# the layers of libraries and how they are set up.
+				# We expect a relationship like this:
+				# GlobalLibrary/
+				#  GlobalEnumeration
+				#   p (this enumeration)
+				#     bucket/...
+				# This path is only partly tested in this code base,
+				# but see nti.app.products.courseware.tests.test_workspaces
+				# TODO: Test this case in this code base.
+				# Ideally we can do something more elegant, maybe implement
+				# ILocationInfo?
+				parents.append(p.root.__name__)
+				global_lib = p.parent_enumeration.__parent__
+				pfx = self._url_prefix_of(global_lib)
+				if pfx:
+					parents.append(pfx)
+				break
+
 			if IRoot.providedBy(p):
 				break
 
