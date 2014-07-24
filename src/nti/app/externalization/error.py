@@ -31,6 +31,7 @@ from zope.interface import Invalid
 
 from zope.schema.interfaces import RequiredMissing
 from zope.schema.interfaces import ValidationError
+from zope.schema.interfaces import ConstraintNotSatisfied
 
 def _json_error_map(o):
 	if isinstance(o, set):
@@ -99,6 +100,10 @@ def _validation_error_to_dict( request, validation_error ):
 
 	if not field_name and isinstance( validation_error, RequiredMissing ) and validation_error.args:
 		field_name = validation_error.args[0]
+
+	if not field_name and isinstance( validation_error, ConstraintNotSatisfied ) and validation_error.args:
+		value =  validation_error.args[0]
+		field_name = validation_error.args[1]
 
 	if not value:
 		value = getattr( validation_error, 'value', value )
