@@ -74,9 +74,38 @@ def check2(book):
 		raise CourseInfoError(str(e))
 	
 	# log warnings
+	
+	if not course_info.term:
+		logger.warn("Course term was not specified")
+	
+	if not course_info.startDate:
+		logger.warn("Course start date was not specified")
+	
+	if not course_info.duration:
+		logger.warn("Course duration was not specified")
+	
+	if course_info.isPreview is None:
+		logger.warn("Course preview flag was not specified")
+	
+	# check course schedule
 	if not course_info.schedule:
 		logger.warn("No course schedule was specified")
+	else:
+		if not course_info.schedule.days:
+			logger.warn("Course schedule days not were specified")
+		if not course_info.schedule.times:
+			logger.warn("Course schedule time slots were not specified")
 	
+	# prerequisites
+	if not course_info.prerequisites:
+		logger.warn("No course prerequisites were specified")
+	else:
+		for idx, prereq in enumerate(course_info.prerequisites):
+			if not prereq.id:
+				logger.warn("No prerequisite id was specified at index %s", idx)
+			if not prereq.title:
+				logger.warn("No prerequisite title was specified at index %s", idx)
+
 	# check instructors
 	for instructor in course_info.instructors:
 		name = instructor.name
