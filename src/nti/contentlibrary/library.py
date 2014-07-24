@@ -226,6 +226,7 @@ class AbstractContentPackageLibrary(object):
 	def contentPackages(self):
 		if self._contentPackages is None:
 			warnings.warn("Please sync the library first.", stacklevel=2)
+			warnings.warn("Please sync the library first.", stacklevel=3)
 			self.syncContentPackages()
 
 		# We would like to use a generator here, to avoid

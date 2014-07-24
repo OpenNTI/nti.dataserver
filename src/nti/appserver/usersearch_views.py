@@ -341,16 +341,19 @@ def _make_visibility_test(remote_user):
 				logger.warning( "Failed to filter entity with id %s", hex(u64(x._p_oid)) )
 				return False
 			# User can see himself
-			if x == remote_user:
+			if x is remote_user:
 				return True
-			# User can see dynamic memberships he's a member of
-			# or owns
-			if nti_interfaces.IDynamicSharingTarget.providedBy(x):
-				return x.username in remote_com_names or getattr(x, 'creator', None) == remote_user
 			# No one can see the Koppa Kids
 			# FIXME: Hardcoding this site/user policy
 			if nti_interfaces.ICoppaUserWithoutAgreement.providedBy( x ):
 				return False
+
+			# User can see dynamic memberships he's a member of
+			# or owns. First, the general case
+			container = nti_interfaces.IEntityContainer(x, None)
+			if container is not None:
+				return remote_user in container or getattr(x, 'creator', None) is remote_user
+
 			# Otherwise, visible if it doesn't have dynamic memberships, or we share dynamic memberships
 			return not hasattr(x, 'usernames_of_dynamic_memberships') or x.usernames_of_dynamic_memberships.intersection( remote_com_names )
 		return test
