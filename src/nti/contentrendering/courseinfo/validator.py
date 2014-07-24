@@ -9,10 +9,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import sys
 import collections
 import simplejson as json
 
 from zope import interface
+from zope.schema.interfaces import RequiredMissing
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.interfaces import StandardExternalFields
@@ -57,8 +59,11 @@ def validate(data):
 	course_info = factory()
 	try:
 		update_from_external_object(course_info, data, notify=False)
+	except RequiredMissing:
+		exc_info = sys.exc_info()
+		raise Exception("Missing data. Field %s",exc_info[1].args[0],)
 	except Exception:
-		raise #TODO: RequiredMissing is poor
+		raise
 	
 	result = []
 	
