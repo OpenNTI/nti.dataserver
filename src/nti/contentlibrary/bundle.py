@@ -15,6 +15,7 @@ from zope import interface
 from zope import component
 from zope import lifecycleevent
 from zope.event import notify
+from zope.container.contained import Contained
 
 from nti.utils.property import alias
 
@@ -48,6 +49,7 @@ from .presentationresource import DisplayableContentMixin
 @WithRepr
 class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 						   DisplayableContentMixin,
+						   Contained,
 						   SchemaConfigured):
 
 	"""
