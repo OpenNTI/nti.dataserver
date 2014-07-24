@@ -459,6 +459,7 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 	def _ext_find_schema( self, ext_self, iface_upper_bound ):
 		# If the upper bound is given, then let the super class handle it all.
 		# Presumably the user has given the correct branch to search.
+
 		if iface_upper_bound is not None:
 			return super(ModuleScopedInterfaceObjectIO,self)._ext_find_schema( ext_self, iface_upper_bound )
 
