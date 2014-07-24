@@ -214,12 +214,14 @@ def _resolve_user(exact_match, remote_user):
 	if isinstance(exact_match, bytes):
 		exact_match = exact_match.decode('utf-8')
 
-	exact_match = exact_match.lower()
+	# This does an NTIID lookup if needed, so we can't alter the case
+	# yet
 	entity = users.Entity.get_entity(exact_match)
 	# NOTE2: Going through this API lets some private objects be found if an NTIID is passed
 	# (DynamicFriendsLists, specifically). We should probably lock that down
 
 	if entity is None:
+		exact_match = exact_match.lower()
 		# To avoid ambiguity, we limit this to just friends lists.
 		scoped = _search_scope_to_remote_user(remote_user, exact_match, op=operator.eq, fl_only=True)
 		if not scoped:
