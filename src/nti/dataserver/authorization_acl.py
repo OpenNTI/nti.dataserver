@@ -261,6 +261,13 @@ def has_permission( permission, context, username, **kwargs ):
 		context.__acl__
 	except AttributeError:
 		try:
+			# XXX: JAM: This is probably a bug. Although it lets us work
+			# with a pure stock pyramid authorization policy, if the policy
+			# is actually the one supplied by nti.appserver.pyramid_authorization
+			# that automatically fills in the ACLs, then we are potentially
+			# losing the tree.
+			# A workaround, where this is a problem, is to be sure the ACL provider
+			# object returns the parent of its context.
 			to_check = nti_interfaces.IACLProvider( context )
 		except TypeError:
 			return pyramid.security.Denied( "No ACL found" )

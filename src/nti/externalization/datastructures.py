@@ -443,15 +443,24 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 	"""
-	Only considers the interfaces provided within a given module (usually declared
-	as a class attribute) when searching for the schema to use to externalize an object;
-	the most derived version of interfaces within that module will be used. Subclasses
-	must declare the class attribute ``_ext_search_module`` to be a module (something with the ``__name__``)
-	attribute to locate interfaces in.
+	Only considers the interfaces provided within a given module
+	(usually declared as a class attribute) when searching for the
+	schema to use to externalize an object; the most derived version
+	of interfaces within that module will be used. Subclasses must
+	declare the class attribute ``_ext_search_module`` to be a module
+	(something with the ``__name__``) attribute to locate interfaces
+	in.
 
-	Suitable for use when all the externalizable fields of interest are declared by an
-	interface within a module, and an object does not implement two unrelated interfaces
-	from the same module.
+	Suitable for use when all the externalizable fields of interest
+	are declared by an interface within a module, and an object does
+	not implement two unrelated interfaces from the same module.
+
+	.. note:: If the object does implement unrelated interfaces, but
+		one (set) of them is a marker interface (featuring no schema
+		fields or attributes), then it can be tagged with
+		``_ext_is_marker_interface`` and it will be excluded when
+		determining the most derived interfaces. This can correct some
+		cases that would otherwise raise a TypeError.
 	"""
 
 	_ext_search_module = None
@@ -476,4 +485,6 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 		return most_derived
 
 	def _ext_schemas_to_consider( self, ext_self ):
-		return (x for x in interface.providedBy( ext_self ) if x.__module__ == self._ext_search_module.__name__)
+		return (x for x in interface.providedBy( ext_self )
+				if x.__module__ == self._ext_search_module.__name__
+				and not x.queryTaggedValue('_ext_is_marker_interface'))
