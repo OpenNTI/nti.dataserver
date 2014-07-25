@@ -10,6 +10,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
+import datetime
 from collections import Mapping
 
 import simplejson as json
@@ -102,6 +103,11 @@ def validate(data):
 				result.append("No prerequisite id was specified at index %s" % idx)
 			if not prereq.title:
 				result.append("No prerequisite title was specified at index %s" % idx)
+		
+	if course_info.isPreview is not None:
+		if course_info.startDate and datetime.datetime.utcnow() < course_info.startDate:
+			if not course_info.isPreview:
+				raise Exception('isPreview flag must be set to True')
 
 	# check instructors
 	for instructor in course_info.instructors:
@@ -110,15 +116,7 @@ def validate(data):
 			result.append("username for instructor %s was not specified" % name)
 		if not instructor.userid:
 			result.append("userid for instructor %s was not specified" % name)
-	
-# 	# derive preview information if not provided.
-# 	if 'isPreview' in info_json_dict:
-# 		catalog_entry.Preview = info_json_dict['isPreview']
-# 	else:
-# 		_quiet_delattr(catalog_entry, 'Preview')
-# 		if catalog_entry.StartDate and datetime.datetime.utcnow() < catalog_entry.StartDate:
-# 			assert catalog_entry.Preview
-			
+		
 	return result
 
 UTF8_ALIASES = ('utf-8', 'utf8', 'utf_8', 'utf', 'u8')
