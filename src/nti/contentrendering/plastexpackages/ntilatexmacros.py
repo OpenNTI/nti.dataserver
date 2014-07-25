@@ -501,6 +501,9 @@ class ntiglossaryterm(Base.Command):
 class ntiimagehref(Base.Command):
 	args = 'img url'
 
+class ntifancyhref(Base.Command):
+	args = 'url:str:source self class'
+
 class textsuperscript(Base.Command):
 	args = 'self'
 
@@ -1248,6 +1251,25 @@ class ntiidref(Base.Crossref.ref):
 	"""
 	macroName = 'ntiidref'
 
+@interface.implementer(resource_interfaces.IRepresentableContentUnit,
+		       resource_interfaces.IRepresentationPreferences)
+class ntifileview(Command, plastexids.NTIIDMixin):
+	args = '[options:dict] src:str:source self class'
+	resourceTypes = ( 'html_wrapped', )
+
+	counter = 'fileview'
+	_ntiid_cache_map_name = '_fileview_ntiid_map'
+	_ntiid_allow_missing_title = True
+	_ntiid_suffix = 'fileview.'
+	_ntiid_title_attr_name = 'src'
+	_ntiid_type = 'HTML:FileView'
+
+	def invoke( self, tex ):
+		result = super(ntifileview, self).invoke( tex )
+		self.attributes['src'] = os.path.join(
+			self.ownerDocument.userdata.getPath('working-dir'), self.attributes['src'])
+		self.attributes['presentation'] = 'popup'
+		return result
 
 def ProcessOptions( options, document ):
 	document.context.newcounter('ntiaudio')
@@ -1260,6 +1282,7 @@ def ProcessOptions( options, document ):
 	document.context.newcounter('relatedworkref', initial=-1)
 	document.context.newcounter('ntidiscussion')
 	document.context.newcounter('sidebar')
+	document.context.newcounter('fileview')
 
 from plasTeX.interfaces import IOptionAwarePythonPackage
 interface.moduleProvides(IOptionAwarePythonPackage)

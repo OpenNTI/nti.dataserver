@@ -164,6 +164,9 @@ name: ntiglossaryterm
 name: ntiimagehref
 <a class="thumb" tal:attributes="href self/attributes/url"><img tal:attributes="src self/attributes/img"></a>
 
+name: ntifancyhref
+<a tal:attributes="class self/attributes/class; href self/attributes/url" tal:content="self">Link Text</a>
+
 name: sidebar
 <div tal:condition="self" tal:attributes="class python: type(self).__name__; ntiid self/ntiid; data-ntiid self/ntiid">
 <div tal:condition="self/title" class="sidebar-title" tal:content="self/title">Sidebar Title</div>
@@ -306,3 +309,6 @@ name: ntidirectionsblock
 
 name: ntiidref
 <a tal:attributes="href self/idref/label/embedded_doc_cross_ref_url|self/idref/label/ntiid" tal:content="self/idref/label/title">#.#.#</a>
+
+name: ntifileview
+<a tal:attributes="class self/attributes/class; href self/raw/url; data-presentation self/attributes/presentation; data-source-wrapped self/wrapped/url" tal:content="self">View File</a>
