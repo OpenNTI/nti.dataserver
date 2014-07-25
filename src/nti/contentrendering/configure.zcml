@@ -73,7 +73,6 @@
 
 	<include package=".transforms" />
 	<include package=".contentchecks" />
-	<include package=".courseinfo" />
 	<include package=".resources" />
 	<include package=".plastexpackages" />
 	<include package=".indexing" />

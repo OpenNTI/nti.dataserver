@@ -166,5 +166,5 @@ def check(book):
 	for msg in validate_file(course_info_file):
 		logger.warn(msg)
 
-from .. import interfaces
+from ... import interfaces
 interface.moduleProvides(interfaces.IRenderedBookValidator)

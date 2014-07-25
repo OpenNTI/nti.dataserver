@@ -18,14 +18,14 @@ does_not = is_not
 from nti.externalization import internalization
 from nti.externalization.externalization import toExternalObject
 
-from nti.contentrendering.courseinfo import model
-from nti.contentrendering.courseinfo import interfaces
+from nti.contentrendering.contentchecks.courseinfo import model
+from nti.contentrendering.contentchecks.courseinfo import interfaces
 
 from nti.externalization.tests import assert_does_not_pickle
 
 from nti.testing.matchers import verifiably_provides
 
-from . import CourseinfoLayerTest
+from nti.contentrendering.contentchecks.courseinfo.tests import CourseinfoLayerTest
 
 class TestCourseInfo(CourseinfoLayerTest):
 

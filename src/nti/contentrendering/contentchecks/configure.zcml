@@ -8,8 +8,11 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 
+	
+	<utility component=".mathjaxerror" name="mathjaxerror" />
 	<utility component=".checkpagewidth" name="checkpagewidth"/>
 	<utility component=".overflowedmath" name="overflowedmath" />
-	<utility component=".mathjaxerror" name="mathjaxerror" />
 
+	<include package=".courseinfo" />
+	
 </configure>
