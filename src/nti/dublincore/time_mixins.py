@@ -113,10 +113,11 @@ class DCTimesLastModifiedMixin(object):
 
 class CreatedTimeMixin(object):
 
+	_SET_CREATED_MODTIME_ON_INIT = True
 	createdTime = 0
 
 	def __init__(self, *args, **kwargs):
-		if self.createdTime == 0:
+		if self._SET_CREATED_MODTIME_ON_INIT and self.createdTime == 0:
 			self.createdTime = time.time()
 		super(CreatedTimeMixin,self).__init__( *args, **kwargs )
 
@@ -169,8 +170,6 @@ class ModifiedTimeMixin(object):
 class CreatedAndModifiedTimeMixin(CreatedTimeMixin,
 								  ModifiedTimeMixin,
 								  DCTimesLastModifiedMixin):
-
-	_SET_CREATED_MODTIME_ON_INIT = True
 
 	def __init__(self, *args, **kwargs):
 		# We set the times now so subclasses can rely on them
