@@ -22,5 +22,5 @@
 						 .interfaces.ICourseInfo"
 		modules=".model" />
 
-	<utility component=".checkcourseinfo" name="checkcourseinfo" />
+	<utility component=".validator" name="checkcourseinfo" />
 </configure>

@@ -14,9 +14,9 @@ does_not = is_not
 
 import os
 
-from nti.contentrendering.courseinfo import validator
+from nti.contentrendering.contentchecks.courseinfo import validator
 
-from nti.contentrendering.courseinfo.tests import CourseinfoLayerTest
+from nti.contentrendering.contentchecks.courseinfo.tests import CourseinfoLayerTest
 
 class TestValidator(CourseinfoLayerTest):
 

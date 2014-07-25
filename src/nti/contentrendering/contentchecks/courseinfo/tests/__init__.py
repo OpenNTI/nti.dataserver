@@ -17,7 +17,8 @@ from nti.testing.layers import ConfiguringLayerMixin
 class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 ConfiguringLayerMixin):
 
-	set_up_packages = ('nti.contentrendering', 'nti.contentrendering.courseinfo')
+	set_up_packages = ('nti.contentrendering',
+					   'nti.contentrendering.contentchecks.courseinfo')
 
 	@classmethod
 	def setUp(cls):
