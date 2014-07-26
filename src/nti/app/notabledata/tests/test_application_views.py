@@ -364,7 +364,6 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user()
 			jason = self._get_user('jason')
-
 			user.accept_shared_data_from(jason)
 
 		path = '/dataserver2/users/%s/Pages(%s)/RUGDByOthersThatIMightBeInterestedIn' % ( self.extra_environ_default_user, ntiids.ROOT )

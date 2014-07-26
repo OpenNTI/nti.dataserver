@@ -195,14 +195,6 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		self._notable_storage.add_intids(safely_viewable_intids, safe=True)
 
-		# We use low-level optimization to get this next one; otherwise
-		# we'd need some more indexes to make it efficient.
-		# XXX: Note: this is deprecated and no longer used. We should
-		# do a migration.
-		intids_of_my_circled_events = getattr(self.remoteUser, '_circled_events_intids_storage', None)
-		if intids_of_my_circled_events is not None:
-			safely_viewable_intids.append(intids_of_my_circled_events)
-
 		safely_viewable_intids = catalog.family.IF.multiunion(safely_viewable_intids)
 		if self._intids_in_time_range is not None:
 			safely_viewable_intids = catalog.family.IF.intersection(self._intids_in_time_range,

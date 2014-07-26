@@ -779,18 +779,20 @@ class User(Principal):
 			change.__parent__ = self
 			assert change.__name__ == source.username
 			change.useSummaryExternalObject = True # Don't send the whole user
+
+			# Now that it's all configured, store it, give it an intid, and let
+			# it get indexed. Let listeners do things do it (e.g., notabledata).
+			# We still keep ownership though (its parent is set to us)...
+			# it's important to do this before going through _noticeChange, which will
+			# further disseminate this event
+			self._circled_events_storage.append( change )
+			lifecycleevent.created( change )
+			lifecycleevent.added( change )
+
 			# Bypass the whole mess of broadcasting and going through the DS and change listeners,
 			# and just notice the incoming change.
 			# TODO: Clean this up, go back to event based.
 			self._noticeChange( change )
-
-			# Now store this object and broadcast events for it so it gets
-			# indexed.
-			# TODO: Let the listner in notabledata take ownership of this;
-			# but that requires broadcasting some event first to get it there.
-			self._circled_events_storage.append( change )
-			lifecycleevent.created( change )
-			lifecycleevent.added( change )
 
 			return change # which is both True and useful
 
