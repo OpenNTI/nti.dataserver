@@ -26,6 +26,8 @@ from nti.utils.property import alias
 
 from . import interfaces
 
+from nti.site.localutility import queryNextUtility
+
 @interface.implementer(interfaces.IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
 	"""
@@ -234,7 +236,7 @@ class AbstractContentPackageLibrary(object):
 		# requires that this be indexable, for some reason.
 		# Note that our values always take precedence over anything
 		# we get from the parent
-		parent = component.queryNextUtility(self, interfaces.IContentPackageLibrary)
+		parent = queryNextUtility(self, interfaces.IContentPackageLibrary)
 		if parent is None:
 			# We can directly return our tuple, yay
 			return self._contentPackages
@@ -310,7 +312,7 @@ class AbstractContentPackageLibrary(object):
 			return self._content_packages_by_ntiid[key]
 
 		# We no longer check titles
-		parent = component.queryNextUtility(self,interfaces.IContentPackageLibrary)
+		parent = queryNextUtility(self,interfaces.IContentPackageLibrary)
 		if parent is None:
 			raise KeyError( key )
 

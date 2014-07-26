@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
 def install_utility(utility, utility_name, provided, local_site_manager):
 	"""
 	Call this to install a local utility. Often you will
@@ -74,3 +76,60 @@ def uninstall_utility_on_unregistration(utility_name, provided, event):
 	local_site_manager.unregisterUtility( child_component,
 										  provided=provided)
 	del local_site_manager[utility_name]
+
+
+def queryNextUtility(context, interface, default=None):
+	"""
+	Our persistent sites are a mix of persistent and non-persistent
+	bases, with many of them having multiple bases. For example (using
+	the notation: name (bases,) [type])::
+
+		platform.ou.edu (GlobalSiteManager) [global]
+		Dataserver (GlobalSiteManager) [persistent]
+		site-platform.ou.edu (Dataserver, platform.ou.edu) [persistent]
+		janux.ou.edu (platform.ou.edu) [global]
+		site-janux.ou.edu (janux.ou.edu, site-platform.ou.edu) [persistent]
+
+	This gives site-janux.ou.edu this (correct) resolution order::
+
+  		site-janux.ou.edu, janux.ou.edu, site-platform.ou.edu, dataserver, GSM
+
+	However, queryNextUtility only looks in the *first* base to find
+	a next utility. Therefore, when site-janux.ou.edu asks for a next utility,
+	instead of getting something persistent from site-platform.ou.edu,
+	it instead gets the global non-persistent version from platform.ou.edu.
+
+	We don't generally want to change the resolution order, but we do need
+	to tweak it here for getting next utilities so that we consider
+	persistent things first. Note that this breaks down if we have
+	utilities registered both persistently and non-persistently at the same level
+	"""
+
+	try:
+		sm = component.getSiteManager(context)
+	except LookupError:
+		return default
+
+	# These are returned starting from the GlobalSiteManager
+	# and working down the resolution chain
+	all_utilities = sm.getAllUtilitiesRegisteredFor(interface)
+	if not all_utilities:
+		return default
+
+	try:
+		me = all_utilities.index(context)
+		next_ = me - 1
+	except ValueError:
+		# Not in it. That means our site manager is the global site manager,
+		# and we hit the global catalog
+		assert sm == component.getGlobalSiteManager()
+		next_ = 0
+
+	result = default
+	if next_ >= 0:
+		result = all_utilities[next_]
+		if result is context:
+			# in the GSM, we're querying for the GSM utility?
+			result = default
+
+	return result
