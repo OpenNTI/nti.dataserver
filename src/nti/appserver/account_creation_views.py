@@ -484,6 +484,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
 		# Flip the internal/external name of the Username field. Probably some other
 		# stuff gets this wrong?
 		ext_schema['Username'] = ext_schema['username']
+		ext_schema['Username']['readonly'] = True
 		del ext_schema['username']
 
 		# Ensure password is marked required (it's defined at the wrong level to tag it)
@@ -510,6 +511,11 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 		"""
 
 		result = super(_AccountCreationProfileSchemafier,self).make_schema()
+
+		# In the past, the 'readonly' status of the Username field was always set to False;
+		# now that it's set to true to reflect reality, i'm not sure how the login app
+		# will react, so at account creation time mark it mutable again
+		result['Username']['readonly'] = False
 
 		if nti_interfaces.ICoppaUser.providedBy(self.user):
 			for x in ('about', 'About'):

@@ -294,6 +294,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 		class NID(object):
 			ntiid = child_ntiid
 		class Lib(object):
+			contentPackages = ()
 			def childrenOfNTIID( self, nti ): return [NID] if nti == ntiids.ROOT else []
 		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 		view = _UGDAndRecursiveStreamView( get_current_request() )
