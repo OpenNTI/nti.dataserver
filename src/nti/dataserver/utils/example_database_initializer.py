@@ -3,7 +3,7 @@
 """
 Utility to initialize an environment
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
@@ -75,12 +75,12 @@ class ExampleDatabaseInitializer(object):
 				  ('ethan.berman@nextthought.com', 'Ethan Berman')]
 
 		# Add the ok people
-		for uid in ('grey.allman', 'ken.parker', 'logan.testi', 'jason.madden',
-				   'chris.utz', 'carlos.sanchez', 'jonathan.grimes',
-				   'pacifique.mahoro', 'eric.anderson', 'jeff.muehring',
-				   'aaron.eskam', 'kaley.white', 'greg.higgins',
-				   'leo.parker', 'troy.daley', 'steve.johnson', 'vitalik.buterin',
-				   'josh.zuech', 'chris.hansen', 'sean.jones'):
+		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez', 'chris.hansen', 
+					'chris.utz', 'greg.higgins', 'grey.allman', 'jason.madden', 
+					'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'kaley.white',
+					'ken.parker', 'logan.testi', 'pacifique.mahoro', 'peggy.sabatini', 
+					'ray.hatfield', 'sean.jones', 'steve.johnson', 'troy.daley', 
+					'vitalik.buterin'):
 			USERS.append( (uid + '@nextthought.com',
 						   uid.replace( '.', ' ').title(),
 						   uid + '@nextthought.com') )
