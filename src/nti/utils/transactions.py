@@ -428,7 +428,7 @@ class TransactionLoop(object):
 				self.__free(tx); del tx
 				logger.log( TRACE, "Aborted %s transaction for %s in %ss", e.reason, note, duration )
 				return e.response
-			except Exception as e:
+			except Exception as e: #pylint:disable=I0011,W0703
 				exc_info = orig_excinfo = sys.exc_info()
 				# The code in the transaction package checks the retryable state
 				# BEFORE aborting the current transaction. This matters because
@@ -443,6 +443,12 @@ class TransactionLoop(object):
 					logger.debug("Transaction aborted; retrying %s/%s; '%s'/%r",
 								 retryable, number, e, e)
 				except (AttributeError,ValueError):
+					try:
+						logger.exception("Failed to abort transaction following exception "
+										 "(retrying %s/%s; '%s'/%r). New exception:",
+										 retryable, number, e, e)
+					except: #pylint:disable=I0011,W0702
+						pass
 					# We've seen RelStorage do this:
 					# relstorage.cache:427 in after_poll: AttributeError: 'int' object has no attribute 'split' which looks like
 					# an issue with how it stores checkpoints in memcache.
@@ -455,17 +461,21 @@ class TransactionLoop(object):
 					# after the call to commit has begun, and some exception slips through
 					# such that, instead of calling `tpc_abort`, the stack unwinds.
 					# The sendmail object appears to have been `tpc_begin`, but not
-					# `tpc_vote`.
+					# `tpc_vote`. (This may happen if the original exception was a ReadConflictError?)
 					# Again, no idea what state things are in, so abort with prejudice.
 					try: # pragma: no cover
 						from zope.exceptions.exceptionformatter import format_exception
 						fmt = format_exception(*orig_excinfo)
-						logger.warning("Failed to commit transaction. Original exception:\n%s", fmt)
+						logger.warning("Failed to abort transaction following exception. Original exception:\n%s",
+									   '\n'.join(fmt))
 					except: #pylint:disable=I0011,W0702
 						exc_info = sys.exc_info()
 					finally:
 						del orig_excinfo
 					self.__free(tx); del tx
+					# XXX: We raise StorageError because at one time we had
+					# a higher level component watching for and ignoring those
+					# ideally this would be a TransactionError
 					raise StorageError, exc_info[1], exc_info[2]
 
 				self.__free(tx); del tx
@@ -488,7 +498,7 @@ class TransactionLoop(object):
 				# Be sure to reraise the original SystemExit
 				try:
 					transaction.abort() # note: NOT our tx variable, whatever is current
-				except:
+				except: #pylint:disable=I0011,W0702
 					from zope.exceptions.exceptionformatter import print_exception
 					print_exception( *sys.exc_info() )
 
