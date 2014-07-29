@@ -462,6 +462,7 @@ class TransactionLoop(object):
 					# such that, instead of calling `tpc_abort`, the stack unwinds.
 					# The sendmail object appears to have been `tpc_begin`, but not
 					# `tpc_vote`. (This may happen if the original exception was a ReadConflictError?)
+					# https://github.com/repoze/repoze.sendmail/issues/31 (introduced in 4.2)
 					# Again, no idea what state things are in, so abort with prejudice.
 					try: # pragma: no cover
 						from zope.exceptions.exceptionformatter import format_exception
