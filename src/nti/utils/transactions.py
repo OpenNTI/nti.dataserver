@@ -21,6 +21,7 @@ from zope import interface
 from ZODB.loglevels import TRACE
 
 import transaction
+from transaction.interfaces import TransactionError
 try:
 	from gevent.queue import Full as QFull
 	from gevent import sleep as _sleep
@@ -242,15 +243,7 @@ def _do_commit( tx, description, long_commit_duration ):
 			raise exc_info[0], None, exc_info[2]
 
 		raise
-	## except ZODB.POSException.StorageError as e:
-	## 	if str(e) == 'Unable to acquire commit lock':
-	## 		# Relstorage locks. Who's holding it? What's this worker doing?
-	## 		# if the problem is some other worker this doesn't help much.
-	## 		# Of course by definition, we won't catch it in the act if we're running.
-	## 		from ._util import dump_stacks
-	## 		body = '\n'.join(dump_stacks())
-	## 		print( body, file=sys.stderr )
-	## 	raise
+
 from perfmetrics import Metric
 def _timing( operation, name):
 	"""
@@ -474,10 +467,8 @@ class TransactionLoop(object):
 					finally:
 						del orig_excinfo
 					self.__free(tx); del tx
-					# XXX: We raise StorageError because at one time we had
-					# a higher level component watching for and ignoring those
-					# ideally this would be a TransactionError
-					raise StorageError, exc_info[1], exc_info[2]
+
+					raise TransactionError, exc_info[1], exc_info[2]
 
 				self.__free(tx); del tx
 

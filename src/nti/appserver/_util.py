@@ -122,6 +122,42 @@ def dump_stacks_view(request):
 	request.response.content_type = b'text/plain'
 	return request.response
 
+from ZODB.interfaces import IDatabase
+from zope import component
+
+def dump_database_cache(gc=False):
+	"""
+	Request information about the various ZODB database caches
+	and returns a sequence of text lines describing them.
+
+	:keyword gc: If set to True, then each database will be
+		asked to minimize its cache.
+	"""
+
+	db = component.queryUtility(IDatabase)
+	if db is None:
+		return ["No database"]
+
+	databases = db.databases or {'': db}
+	lines = []
+	for name, value in databases.items():
+		lines.append( "Database\tCacheSize" )
+		lines.append( "%s\t%s" % (name, value.cacheSize()) )
+
+		lines.append("\tConnections")
+		for row in value.cacheDetailSize():
+			lines.append( "\t\t%s" % row )
+
+		lines.append("\tTypes")
+		for kind, count in sorted(value.cacheDetail(),key=lambda x: x[1]):
+			lines.append( '\t\t%s\t%s' % (kind, count))
+
+		if gc:
+			value.cacheMinimize()
+
+	return lines
+
+
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.externalization.internalization",
 	"nti.app.externalization.internalization",
