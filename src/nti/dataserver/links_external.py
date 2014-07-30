@@ -123,7 +123,7 @@ def render_link( link, nearest_site=None ):
 		href = href + ('/' if not href.endswith('/') else '') + '/'.join( link.elements )
 		# TODO: quoting
 	if link.params:
-		href = href + '?' + ''.join( '%s=%s' % item for item in link.params.items() )
+		href = href + '?%s' % urllib.urlencode(link.params)
 		# TODO: AGAIN: quoting
 	result = component.getMultiAdapter( (), ext_interfaces.ILocatedExternalMapping )
 	result.update( { StandardExternalFields.CLASS: 'Link',
