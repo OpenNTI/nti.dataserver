@@ -283,6 +283,7 @@ def _has_permission( permission, context, reg, authn_policy, principals  ):
 
 	return authz_policy.permits(context, principals, permission)
 
-def has_permission( permission, context, request ):
+def has_permission( permission, context, request=None ):
+	request = request or get_current_request()
 	principals, authn_policy, reg = _get_effective_principals( request )
 	return _has_permission( permission, context, reg, authn_policy, principals )
