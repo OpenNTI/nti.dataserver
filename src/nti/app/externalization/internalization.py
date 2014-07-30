@@ -16,7 +16,6 @@ logger = __import__('logging').getLogger(__name__)
 import collections
 import sys
 import simplejson
-from webob.compat import url_unquote
 
 from zope import component
 
@@ -124,7 +123,9 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		# transformInput may raise TypeError if the request is bad, but it
 		# may also raise AttributeError if the inputClass is bad, but that
 		# could also come from other places. We call it all client error.
-		logger.exception( "Failed to parse/transform value %s", value )
+		# Note that value could be a byte string at this point if decoding failed,
+		# so be careful not to try to log it as a string
+		logger.exception( "Failed to parse/transform value %r", value )
 		tb = sys.exc_info()[2]
 		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input") )
 		raise ex, None, tb
