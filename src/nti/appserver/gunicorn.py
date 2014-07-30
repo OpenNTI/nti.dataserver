@@ -603,8 +603,9 @@ def _post_fork( arbiter, worker ):
 	# See also
 	# https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217
 
-	# Since we're in the child worker, go ahead and establish our USR2 handler
-	# (the master wants to handle USR2 for reloads)
+	# Since we're in the child worker, go ahead and establish our signal handler
+	# (the master wants to register a bunch of signals so we don't get a lot of choice;
+	# even in the child worker they stick around)
 	prev_handler = None
 	import signal
 	from ._util import dump_stacks
