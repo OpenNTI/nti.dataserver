@@ -191,6 +191,21 @@ def configure():
 	from nti.dataserver.utils import _configure
 	_configure(set_up_packages=('nti.dataserver',))
 
+
+	# Similarly, some pickles to site components exist in the database
+	# but we don't want to actually try to load all the sites, so replace
+	# the component lookup with simply returning a new registry
+	# (they pickle as a call to the global function BC with args (parent, name))
+	# which is what the constructor takes
+	import z3c.baseregistry.baseregistry
+	z3c.baseregistry.baseregistry.BC = z3c.baseregistry.baseregistry.BaseComponents
+
+	# Some pickles may also refer to a library
+	from zope import component
+	from nti.contentlibrary.library import EmptyLibrary
+	from nti.contentlibrary.interfaces import IContentPackageLibrary
+	component.provideUtility(EmptyLibrary(), IContentPackageLibrary)
+
 def fixrefs():
 	import zc.zodbdgc
 	zc.zodbdgc.getrefs = getrefs
