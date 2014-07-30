@@ -249,10 +249,12 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 			print( "Greenlet switching from", event, "to", origin, file=sys.stderr )
 		greenlet.settrace( greenlet_trace )
 
-	# We monkey patched threads out of the way, so there's
-	# no need for the GIL checking for thread switches. Turn it
-	# way down to reduce its overhead (default 100
-	_CHECK_INTERVAL = 10000
+	# We monkey patched threads out of the way, so there's no need for
+	# the GIL checking for thread switches. However, it is still
+	# needed for signal handling, and some versions of gevent do
+	# internally use a separate thread. So turn it down but not too
+	# far down to reduce its overhead (default 100)
+	_CHECK_INTERVAL = 1000
 	if sys.getcheckinterval() < _CHECK_INTERVAL:
 		sys.setcheckinterval( _CHECK_INTERVAL )
 
