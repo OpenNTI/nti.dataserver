@@ -1478,3 +1478,9 @@ class TestUtil(unittest.TestCase):
 		seq = nti.appserver._util.dump_stacks()
 
 		assert_that( seq, has_item( contains_string( 'dump_stacks' ) ) )
+
+class TestAppUtil(ApplicationLayerTest):
+	@WithSharedApplicationMockDS
+	def test_database(self):
+		seq = nti.appserver._util.dump_database_cache(gc=True)
+		assert_that( seq, has_item( contains_string( 'Database' ) ) )

@@ -600,9 +600,27 @@ def _post_fork( arbiter, worker ):
 	hub = gevent.hub.get_hub()
 	if hub._threadpool is not None and hub._threadpool._size: # same condition it uses
 		hub._threadpool._on_fork()
-	notify( ProcessDidFork() )
 	# See also
 	# https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217
+
+	# Since we're in the child worker, go ahead and establish our USR2 handler
+	# (the master wants to handle USR2 for reloads)
+	prev_handler = None
+	import signal
+	from ._util import dump_stacks
+	from ._util import dump_database_cache
+	import sys
+	def handle_info(signum, frame):
+		stacks = dump_stacks()
+		print( '\n'.join(stacks), file=sys.stderr )
+		caches = dump_database_cache(gc=True)
+		print( '\n'.join(caches), file=sys.stderr )
+		if callable(prev_handler):
+			prev_handler(signum, frame)
+
+	prev_handler = signal.signal( signal.SIGPROF, handle_info )
+
+	notify( ProcessDidFork() )
 
 def _pre_exec( arbiter ):
 	# Called during sigusr2 handling from arbiter.reexec(),
