@@ -19,7 +19,13 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.contentlibrary.interfaces import IContentPackageBundle
+
+from nti.dataserver.interfaces import IDataserverTransactionRunner
+
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import is_ntiid_of_type
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from . import common
 from . import constants
@@ -38,8 +44,7 @@ def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
 	site_names = getattr(request, 'possible_site_names', ()) or ('',)
 
 	def _runner():
-		transactionRunner = \
-			component.getUtility(nti_interfaces.IDataserverTransactionRunner)
+		transactionRunner = component.getUtility(IDataserverTransactionRunner)
 		transactionRunner = functools.partial(transactionRunner,
 											  site_names=site_names,
 											  side_effect_free=side_effect_free)
@@ -119,8 +124,19 @@ def _parse_dateRange(args, fields):
 		raise hexc.HTTPBadRequest()
 	return result
 
-def create_queryobject(username, params, matchdict):
+def _resolve_ntiid(ntiid):
+	if ntiid and is_ntiid_of_type(ntiid, TYPE_OID):
+		obj = find_object_with_ntiid(ntiid)
+		bundle = IContentPackageBundle(obj, None)
+		if bundle is not None:
+			tmp = getattr(bundle, 'ntiid', None) 
+			if not tmp and bundle.ContentPackages:
+				ntiid = bundle.ContentPackages[0].ntiid # take first
+			else:
+				ntiid = tmp
+	return ntiid
 
+def create_queryobject(username, params, matchdict):
 	indexable_type_names = common.get_indexable_types()
 	username = username or matchdict.get('user', None)
 
@@ -136,7 +152,7 @@ def create_queryobject(username, params, matchdict):
 
 	args['username'] = username
 
-	ntiid = matchdict.get('ntiid', None)
+	ntiid = _resolve_ntiid(matchdict.get('ntiid', None))		
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
 	if ntiid:
