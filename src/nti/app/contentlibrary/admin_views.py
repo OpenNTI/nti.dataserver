@@ -50,6 +50,15 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 		from there.
 	"""
 
+	#: Because we'll be doing a lot of filesystem IO, which may not
+	#: be well cooperatively tasked (gevent), we would like to give
+	#: the opportunity for other greenlets to run by sleeping inbetween
+	#: syncing each library. However, for some reason, under unittests,
+	#: this leads to very odd and unexpected test failures
+	#: (specifically in nti.app.products.courseware) so we allow
+	#: disabling it.
+	_SLEEP = True
+
 	def __call__(self):
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
@@ -91,11 +100,12 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			if site_lib in seen:
 				return
 			seen.add(site_lib)
+			if self._SLEEP:
+				gevent.sleep()
 
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				gevent.sleep()
 				return site_lib.syncContentPackages()
 
 
