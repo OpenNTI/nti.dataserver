@@ -18,19 +18,29 @@ from zope import interface
 from perfmetrics import metric
 
 from nti.dataserver.users import Entity
-from nti.dataserver import interfaces as nti_interfaces
-
-from . import search_query
-from . import search_utils
-from . import search_results
-
-from .interfaces import IIndexManager
-from .interfaces import IContentSearcherFactory
-from .interfaces import IContentSearcher
-from .interfaces import ISearchQuery
-from .interfaces import IEntityIndexController
+from nti.dataserver.interfaces import IEntity
 
 from nti.externalization.persistence import NoPickle
+
+from .interfaces import ISearchQuery
+from .interfaces import IIndexManager
+from .interfaces import IContentSearcher
+from .interfaces import IEntityIndexController
+from .interfaces import IContentSearcherFactory
+
+from .search_query import QueryObject
+
+from .search_utils import gevent_spawn
+
+from .search_results import empty_search_results
+from .search_results import merge_search_results
+from .search_results import empty_suggest_results
+from .search_results import merge_suggest_results
+from .search_results import get_or_create_search_results
+from .search_results import get_or_create_suggest_results
+from .search_results import empty_suggest_and_search_results
+from .search_results import merge_suggest_and_search_results
+from .search_results import get_or_create_suggest_and_search_results
 
 @interface.implementer(IIndexManager)
 @NoPickle
@@ -49,7 +59,7 @@ class IndexManager(object):
 	@classmethod
 	def get_entity(cls, entity):
 		result = Entity.get_entity(str(entity)) \
-				 if not nti_interfaces.IEntity.providedBy(entity) else entity
+				 if not IEntity.providedBy(entity) else entity
 		return result
 
 	@classmethod
@@ -59,40 +69,40 @@ class IndexManager(object):
 		return result
 
 	@metric
-	def search(self, query):
-		query = search_query.QueryObject.create(query)
-		results = search_results.empty_search_results(query)
+	def search(self, query, store=None):
+		query = QueryObject.create(query)
+		results = get_or_create_search_results(query, store)
 		start = time.time()
 		if self.parallel_search:
-			greenlet = search_utils.gevent_spawn(func=self.user_data_search,
-												 query=query,
-									  			 store=results)
+			greenlet = gevent_spawn(func=self.user_data_search,
+									query=query,
+									store=results)
 			cnt_results = self.content_search(query=query, store=results)
 			ugd_results = greenlet.get()
 		else:
 			cnt_results = self.content_search(query=query, store=results)
 			ugd_results = self.user_data_search(query=query, store=results)
-		results = search_results.merge_search_results(cnt_results, ugd_results)
+		results = merge_search_results(cnt_results, ugd_results)
 		logger.debug("Query '%s' returned %s hit(s). Took %.3f(secs)" %
 					 (query, len(results), time.time() - start))
 		return results
 
 	@metric
-	def suggest_and_search(self, query):
-		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_and_search_results(query)
+	def suggest_and_search(self, query, store=None):
+		query = QueryObject.create(query)
+		results = get_or_create_suggest_and_search_results(query, store)
 		cnt_data = self.content_suggest_and_search(query=query, store=results)
 		ugd_data = self.user_data_suggest_and_search(query=query, store=results)
-		results = search_results.merge_suggest_and_search_results(cnt_data, ugd_data)
+		results = merge_suggest_and_search_results(cnt_data, ugd_data)
 		return results
 
 	@metric
-	def suggest(self, query):
-		query = search_query.QueryObject.create(query)
-		results = search_results.empty_suggest_results(query)
+	def suggest(self, query, store=None):
+		query = QueryObject.create(query)
+		results = get_or_create_suggest_results(query, store)
 		cnt_results = self.content_suggest(query=query, store=results)
 		ugd_results = self.user_data_suggest(query=query, store=results)
-		results = search_results.merge_suggest_results(cnt_results, ugd_results)
+		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
 
 	def register_content(self, ntiid=None, *args, **kwargs):
@@ -152,29 +162,29 @@ class IndexManager(object):
 
 	def content_search(self, query, store=None):
 		query = ISearchQuery(query)
-		results = search_results.get_or_create_search_results(query, store)
+		results = get_or_create_search_results(query, store)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			r = searcher.search(query, store=results)
-			results = search_results.merge_search_results(results, r)
+			results = merge_search_results(results, r)
 		return results
 
 	def content_suggest_and_search(self, query, store=None):
 		query = ISearchQuery(query)
-		results = search_results.get_or_create_suggest_and_search_results(query, store)
+		results = get_or_create_suggest_and_search_results(query, store)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			rs = searcher.suggest_and_search(query, store=results)
-			results = search_results.merge_suggest_and_search_results(results, rs)
+			results = merge_suggest_and_search_results(results, rs)
 		return results
 
 	def content_suggest(self, query, store=None, *args, **kwargs):
 		query = ISearchQuery(query)
-		results = search_results.get_or_create_suggest_results(query, store)
+		results = get_or_create_suggest_results(query, store)
 		searcher = self.get_content_searcher(query)
 		if searcher is not None:
 			rs = searcher.suggest(query, store=results)
-			results = search_results.merge_suggest_results(results, rs)
+			results = merge_suggest_results(results, rs)
 		return results
 
 	def user_data_search(self, query, store=None, *args, **kwargs):
@@ -182,7 +192,7 @@ class IndexManager(object):
 		entity = self.get_entity(query.username)
 		controller = IEntityIndexController(entity, None)
 		results = controller.search(query, store=store) if controller is not None \
-				  else search_results.empty_search_results(query)
+				  else empty_search_results(query)
 		return results
 
 	def user_data_suggest_and_search(self, query, store=None, *args, **kwargs):
@@ -191,7 +201,7 @@ class IndexManager(object):
 		controller = IEntityIndexController(entity, None)
 		results = controller.suggest_and_search(query, store=store) \
 				  if controller is not None \
-				  else search_results.empty_suggest_and_search_results(query)
+				  else empty_suggest_and_search_results(query)
 		return results
 
 	def user_data_suggest(self, query, store=None, *args, **kwargs):
@@ -199,7 +209,7 @@ class IndexManager(object):
 		entity = self.get_entity(query.username)
 		controller = IEntityIndexController(entity, None)
 		results = controller.suggest(query, store=store) if controller is not None \
-				  else search_results.empty_suggest_results(query)
+				  else empty_suggest_results(query)
 		return results
 
 	def index_user_content(self, target, data, *args, **kwargs):
