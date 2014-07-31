@@ -20,11 +20,18 @@ from pyramid import httpexceptions as hexc
 
 from z3c.batching.batch import Batch
 
-from nti.app.renderers.interfaces import IUncacheableInResponse
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.internalization import update_object_from_external_object
+
+from nti.app.renderers.interfaces import IUncacheableInResponse
+
+from nti.contentsearch.interfaces import IIndexManager
+from nti.contentsearch.interfaces import ISearchResults
+from nti.contentsearch.interfaces import SearchCompletedEvent
+from nti.contentsearch.search_utils import construct_queryobject
 
 from nti.dataserver.users import Entity
 
@@ -32,19 +39,13 @@ from nti.externalization.internalization import find_factory_for
 
 from nti.utils.property import CachedProperty
 
-from nti.contentsearch import search_utils
-
-from nti.contentsearch.interfaces import IIndexManager
-from nti.contentsearch.interfaces import ISearchResults
-from nti.contentsearch.interfaces import SearchCompletedEvent
-
 class BaseView(AbstractAuthenticatedView):
 
 	name = None
 
 	@property
 	def query(self):
-		return search_utils.construct_queryobject(self.request)
+		return construct_queryobject(self.request)
 
 	@CachedProperty
 	def indexmanager(self):
@@ -62,7 +63,7 @@ class BaseView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		query = self.query
-		result = self.search(query=query)
+		result = self.search(query)
 		result = self.locate(result, self.request.root)
 		return result
 
@@ -85,9 +86,15 @@ class BaseSearchView(BaseView,
 			new_results.Batch = batch_hits  # save for decorator
 		return new_results, results
 
-	def search(self, query):
+	def _do_search(self, query, store=None):
+		result = self.indexmanager.search(query=query, store=store)
+		return result
+	
+	def search(self, *queries):
+		result = None
 		now = time.time()
-		result = self.indexmanager.search(query=query)
+		for query in queries:
+			result = self._do_search(query=query, store=result)
 		result, original = self._batch_results(result)
 		elapsed = time.time() - now
 		entity = Entity.get_entity(query.username)
@@ -105,9 +112,15 @@ UserSearch = UserDataSearchView  # BWC
 class SuggestView(BaseView):
 	name = 'Suggest'
 
-	def search(self, query):
+	def _do_search(self, query, store=None):
+		result = self.indexmanager.suggest(query=query, store=store)
+		return result
+	
+	def search(self, *queries):
+		result = None
 		now = time.time()
-		result = self.indexmanager.suggest(query=query)
+		for query in queries:
+			result = self._do_search(query=query, store=result)
 		elapsed = time.time() - now
 		entity = Entity.get_entity(query.username)
 		notify(SearchCompletedEvent(entity, result, elapsed))

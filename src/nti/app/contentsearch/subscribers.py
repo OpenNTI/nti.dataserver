@@ -19,14 +19,16 @@ try:
 except ImportError:
 	from time import sleep
 
-from zc.lockfile import LockFile, LockError
 from zope import component
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from zc.lockfile import LockFile, LockError
 
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentsearch import interfaces as search_interfaces
+
+from nti.contentsearch.interfaces import IIndexManager
 
 from nti.contentlibrary.boto_s3 import key_last_modified
 
@@ -47,7 +49,7 @@ def _add_book(indexmanager, indexname, indexdir, ntiid):
 
 @component.adapter(lib_interfaces.IFilesystemContentPackage, IObjectCreatedEvent)
 def add_filesystem_index( title, event ):
-	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
+	indexmanager = component.queryUtility(IIndexManager)
 	if indexmanager is None: # pragma: no cover
 		return
 
@@ -61,7 +63,7 @@ def add_s3_index( title, event ):
 	Adds an index for things that exist in S3, possibly making a local
 	cache of them as needed.
 	"""
-	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
+	indexmanager = component.queryUtility(IIndexManager)
 	if indexmanager is None: # pragma: no cover
 		return
 
@@ -76,7 +78,9 @@ def add_s3_index( title, event ):
 	if not os.path.isdir( title_index_cache_dir ):
 		os.makedirs( title_index_cache_dir )
 
-	indexdir_keys = title.key.bucket.list( delimiter='/', prefix=title.make_sibling_key( 'indexdir' ).key + '/' )
+	indexdir_keys = title.key.bucket.list(delimiter='/', 
+										  prefix=title.make_sibling_key( 'indexdir' ).key + '/' )
+	
 	# TODO: We are caching based on timestamp. Caching based on version_ids
 	# might be more reliable
 
@@ -149,7 +153,7 @@ def reset_indexes_when_modified(content_package, event):
 	elif lib_interfaces.IFilesystemContentPackage.providedBy(content_package):
 		add_filesystem_index(content_package, event)
 
-@component.adapter(lib_interfaces.IContentPackage,IObjectRemovedEvent)
+@component.adapter(lib_interfaces.IContentPackage, IObjectRemovedEvent)
 def reset_indexes_when_removed(content_package, event):
 	# XXX What should we do here? We need the index manager objects
 	# to expose modification times. And really to best do that we
@@ -157,7 +161,7 @@ def reset_indexes_when_removed(content_package, event):
 	# e.g., nti.app.contentsearch...this would let us tighten up the
 	# interface for 'add_book'...although ideally we can move that
 	# information down into a set of adapters at that level
-	indexmanager = component.queryUtility( search_interfaces.IIndexManager )
+	indexmanager = component.queryUtility(IIndexManager )
 	if indexmanager is None: # pragma: no cover
 		return
 
