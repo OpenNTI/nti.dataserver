@@ -18,6 +18,7 @@ from abc import abstractmethod
 
 from nti.utils.property import alias
 from nti.utils.property import Lazy
+from nti.utils.property import readproperty
 
 from nti.app.authentication import get_remote_user
 
@@ -73,9 +74,14 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 	def remoteUser(self):
 		return get_remote_user(self.request)
 
-	@property
+	@readproperty
 	def authenticated_userid(self):
-		return self.request.authenticated_userid
+		try:
+			return self.request.authenticated_userid
+		except AttributeError:
+			# request was None, or the authentication policy was
+			# not present
+			return None
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import StandardExternalFields
