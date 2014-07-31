@@ -22,6 +22,16 @@ from nti.schema.schema import EqHash
 
 @EqHash('bucket', 'name')
 class _AbstractDelimitedHierarchyObject(object):
+	"""
+	Non-persistent base class for hierarchy objects.
+
+	We behave somewhat like a persistent object in that
+	properties in the instance dictionary beginning with
+	``_v`` are not pickled, or if they are found in the state
+	dictionary, they are discarded. This facilitates the use
+	of the :class:`.CachedProperty` decorator.
+	"""
+
 
 	__name__ = None
 	__parent__ = None
@@ -53,6 +63,21 @@ class _AbstractDelimitedHierarchyObject(object):
 		return "<%s '%s'/'%s'>" % (type(self).__name__,
 								   self.bucket,
 								   self.name.encode('unicode_escape') if self.name else '')
+
+	### persistence methods
+
+	def __getstate__(self):
+		# object defines neither getstate or setstate
+		return {k: v for
+				k, v in self.__dict__.iteritems()
+				if not k.startswith('_v')}
+
+	def __setstate__(self, state):
+		# older pickles may have _v properties in them
+		self_dict = self.__dict__
+		for k, v in state.iteritems():
+			if not k.startswith('_v'):
+				self_dict[str(k)] = v
 
 
 	### Methods from IEnumerableDelimitedHierarchyBucket

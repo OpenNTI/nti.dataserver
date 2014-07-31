@@ -124,6 +124,7 @@ def dump_stacks_view(request):
 
 from ZODB.interfaces import IDatabase
 from zope import component
+import gc
 
 def dump_database_cache(gc=False):
 	"""
@@ -154,6 +155,7 @@ def dump_database_cache(gc=False):
 
 		if gc:
 			value.cacheMinimize()
+			gc.collect()
 
 	return lines
 

@@ -6,7 +6,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-	
+
 	<include package="zope.copypastemove" />
 
 	<adapter factory=".copy.wref_copy_factory" />
