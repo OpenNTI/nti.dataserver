@@ -8,16 +8,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
-from pyramid.events import ApplicationCreated
+from .interfaces import ISearchHitPredicate
 
-from nti.dataserver import interfaces as nti_interfaces
-
-from . import interfaces as search_interfaces
-
-@interface.implementer(search_interfaces.ISearchHitPredicate)
+@interface.implementer(ISearchHitPredicate)
 class _DefaultSearchHitPredicate(object):
 
 	__slots__ = ()
