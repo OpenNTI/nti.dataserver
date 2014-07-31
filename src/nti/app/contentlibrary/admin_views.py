@@ -11,6 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import gc
+import gevent
+
 from zope import component
 
 from zope.security.management import endInteraction
@@ -92,7 +95,10 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
+				gevent.sleep()
 				return site_lib.syncContentPackages()
 
+
 		results = run_job_in_all_host_sites(sync_site_library)
+		gc.collect()
 		return [x[1] for x in results]

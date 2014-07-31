@@ -611,9 +611,11 @@ def _post_fork( arbiter, worker ):
 	from ._util import dump_stacks
 	from ._util import dump_database_cache
 	import sys
+	import gc
 	def handle_info(signum, frame):
 		stacks = dump_stacks()
 		print( '\n'.join(stacks), file=sys.stderr )
+		print( '\nGC Enabled:', gc.isenabled() )
 		caches = dump_database_cache(gc=True)
 		print( '\n'.join(caches), file=sys.stderr )
 		if callable(prev_handler):
