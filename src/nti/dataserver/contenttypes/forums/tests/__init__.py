@@ -15,6 +15,7 @@ from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer as DataserverTestLayer
 from zope import component
 from zope import interface
+from nti.dataserver.interfaces import IRedisClient
 
 from zope.keyreference.interfaces import IKeyReference
 @interface.implementer(IKeyReference)
@@ -23,9 +24,11 @@ class _CommentKeyRef(object):
 		pass
 
 class ForumTestLayer(DataserverTestLayer):
-	description = 'Forum layer'
+
 	@classmethod
 	def setUp(cls):
+		gsm = component.getGlobalSiteManager()
+
 		# Set up weak refs
 		from nti.intid import utility as intid_utility
 		import zope.intid
@@ -39,26 +42,28 @@ class ForumTestLayer(DataserverTestLayer):
 
 		intids = intid_utility.IntIds('_ds_intid', family=BTrees.family64 )
 		intids.__name__ = '++etc++intids'
-		component.provideUtility( intids, provides=zope.intid.IIntIds )
+		gsm.registerUtility( intids, provided=zope.intid.IIntIds )
 		# Make sure to register it as both types of utility, one is a subclass of the other
-		component.provideUtility( intids, provides=zc.intid.IIntIds )
+		gsm.registerUtility( intids, provided=zc.intid.IIntIds )
 		cls.__intids = intids
 
 
-		component.provideAdapter(_CommentKeyRef, adapts=(IPost,))
-		component.provideAdapter(_CommentKeyRef, adapts=(IPersonalBlogEntry,) )
-		component.provideAdapter(_CommentKeyRef, adapts=(IForum,) )
-		component.provideAdapter(_CommentKeyRef, adapts=(ITopic,) )
+		gsm.registerAdapter(_CommentKeyRef, required=(IPost,))
+		gsm.registerAdapter(_CommentKeyRef, required=(IPersonalBlogEntry,) )
+		gsm.registerAdapter(_CommentKeyRef, required=(IForum,) )
+		gsm.registerAdapter(_CommentKeyRef, required=(ITopic,) )
 
 		from nti.dataserver.tests import mock_redis
 		cls.__client = mock_redis.InMemoryMockRedis()
-		component.provideUtility( cls.__client )
+		gsm.registerUtility( cls.__client, provided=IRedisClient )
+
+		assert component.getUtility(IRedisClient) is cls.__client
 
 	@classmethod
 	def tearDown(cls):
 		gsm = component.getGlobalSiteManager()
 
-		gsm.unregisterUtility(cls.__client)
+		gsm.unregisterUtility(cls.__client, provided=IRedisClient)
 		del cls.__client
 
 		import zope.intid
@@ -80,7 +85,7 @@ class ForumTestLayer(DataserverTestLayer):
 
 
 	@classmethod
-	def testSetUp(cls):
+	def testSetUp(cls, test=None):
 		pass
 
 	@classmethod

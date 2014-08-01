@@ -156,12 +156,10 @@ class _ACLBasedProvider(object):
 	@classmethod
 	def _resolve_entities(cls, eid):
 		result = ()
-		if ntiids.is_valid_ntiid_string(eid):
-			dfl = ntiids.find_object_with_ntiid(eid)
-			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
-				result = (dfl, dfl.creator)  # make sure we  specify the DFL creator
+		entity = Entity.get_entity(eid)
+		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(entity):
+			result = (entity, entity.creator)  # make sure we  specify the DFL creator
 		else:
-			entity = Entity.get_entity(eid)
 			result = (entity,) if entity is not None else ()
 		return result
 
