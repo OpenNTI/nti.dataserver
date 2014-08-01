@@ -31,7 +31,5 @@ class TestSearchQuery(unittest.TestCase):
 		assert_that(qo.digest(), is_('06a99f8a1958ecb9280936db814e87fc'))
 		qo.searchOn = ('redaction', 'note')
 		assert_that(qo.digest(), is_('06a99f8a1958ecb9280936db814e87fc'))
-		qo.indexid = 'xyz'
-		assert_that(qo.digest(), is_('ffc69c392775747d75855e56d697d25a'))
 		qo.applyHighlights = False
-		assert_that(qo.digest(), is_('cd93c78072ac3e34558fc934c0238b29'))
+		assert_that(qo.digest(), is_('8e253b8436c9392b5aced6681fd7f22b'))

@@ -68,6 +68,13 @@ class QueryObject(SchemaConfigured):
 
 	createDirectFieldProperties(search_interfaces.ISearchQuery)
 
+	def __init__(self, *args, **kwargs):
+		indexid = kwargs.get('indexid', None)
+		packages = kwargs.get('packages', ())
+		if indexid and not packages:
+			kwargs['packages'] = (indexid,)
+		super(QueryObject, self).__init__(*args, **kwargs)
+		
 	def __str__(self):
 		return self.term
 
@@ -80,10 +87,6 @@ class QueryObject(SchemaConfigured):
 	@property
 	def query(self):
 		return self.term
-
-	@property
-	def content_id(self):
-		return self.indexid
 
 	@property
 	def IsEmpty(self):
@@ -122,7 +125,7 @@ class QueryObject(SchemaConfigured):
 		return xhash
 	
 	def digest(self):
-		names = ('term', 'limit', 'indexid', 'prefix',
+		names = ('term', 'limit', 'packages', 'prefix',
 				 'threshold', 'maxdist', 'creator')
 		md5 = hashlib.md5()
 		for name in names:
