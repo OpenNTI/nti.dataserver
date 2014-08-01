@@ -21,10 +21,10 @@ def safe_links(provider):
 		return provider.get_links()
 	except NotImplementedError:
 		return ()
-	
+
 def find_providers_and_links(user, request, keeporder=True):
 	providers = []
-	subscribers = component.subscribers((user, request), 
+	subscribers = component.subscribers((user, request),
 										IAuthenticatedUserLinkProvider)
 	for order, provider in enumerate(subscribers):
 		rels = set()
@@ -35,13 +35,14 @@ def find_providers_and_links(user, request, keeporder=True):
 		rels.discard(None)
 		# register w/ priority
 		providers.append((rels, getattr(provider, 'priority', 0), provider, order))
-		
+
 	result = []
 	ignored = set()
 	providers = sorted(providers, key=lambda t: t[1], reverse=True)
+
 	for rels, _, provider, order in providers:
 		try:
-			provider_links = provider.get_links() 
+			provider_links = provider.get_links()
 		except NotImplementedError:
 			ignored.update(rels or ())
 		else:

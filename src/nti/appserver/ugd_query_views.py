@@ -516,7 +516,6 @@ class _UGDView(AbstractAuthenticatedView,
 		__traceback_info__ = owner, containerId
 		mystuffDict = get_owned( owner, containerId, context_cache=context_cache ) if get_owned else ()
 		sharedstuffList = get_shared( owner, containerId, context_cache=context_cache) if get_shared else () # see comments in _meonly_predicate_factory
-
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
 		# may be empty or not empty.
@@ -576,7 +575,7 @@ class _UGDView(AbstractAuthenticatedView,
 		if self.user:
 			the_filter = get_principal_ugd_filter(self.user)
 			predicate = _combine_predicate(the_filter, predicate, operator=operator)
-			
+
 		filter_names = self._get_filter_names()
 
 		for filter_name in filter_names:

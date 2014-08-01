@@ -255,6 +255,7 @@ class TestLogonViews(ApplicationLayerTest):
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
+
 		__traceback_info__ = result.links
 		len_links = len(result.links)
 		#assert_that( result.links[0].target, ends_with( '/dataserver2/handshake' ) )
