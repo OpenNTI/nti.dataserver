@@ -14,13 +14,19 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
+from pyramid.traversal import find_interface
+
 from nti.appserver.interfaces import IContainerCollection
 from nti.appserver.interfaces import IUserWorkspace
 
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.links import Link
 from nti.dataserver.users.entity import Entity
+
+from nti.externalization import externalization
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
@@ -34,12 +40,13 @@ class _UserBoardCollection(object):
 	__parent__ = None
 
 	accepts = ()
+	container = ()
 
 	def __init__( self, user_workspace ):
 		self.__parent__ = user_workspace
 
 	@property
-	def container(self):
+	def links(self):
 		site = component.queryUtility( ICommunitySitePolicyUserEventListener )
 		community_name = getattr( site, 'COM_USERNAME', None )
 		community = Entity.get_entity( community_name )
@@ -47,7 +54,11 @@ class _UserBoardCollection(object):
 		if community is not None:
 			# We just want the user's community board.
 			board = ICommunityBoard( community )
-			result.append( board )
+			board_ntiid = externalization.to_external_ntiid_oid( board )
+			link = Link( board_ntiid, rel='global.site.board' )
+			link._name_ = 'global.site.board'
+			#link.__parent__ = ds_folder
+			result.append( link )
 		return result
 
 @interface.implementer(IContainerCollection)
