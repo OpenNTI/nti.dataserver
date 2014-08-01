@@ -124,17 +124,20 @@ def _parse_dateRange(args, fields):
 		raise hexc.HTTPBadRequest()
 	return result
 
-def _resolve_ntiid(ntiid):
-	if ntiid and is_ntiid_of_type(ntiid, TYPE_OID):
-		obj = find_object_with_ntiid(ntiid)
-		bundle = IContentPackageBundle(obj, None)
-		if bundle is not None:
-			tmp = getattr(bundle, 'ntiid', None) 
-			if not tmp and bundle.ContentPackages:
-				ntiid = bundle.ContentPackages[0].ntiid # take first
-			else:
-				ntiid = tmp
-	return ntiid
+def _is_type_oid(ntiid):
+	return is_ntiid_of_type(ntiid, TYPE_OID)
+
+def _resolve_package_ntiids(ntiid):
+	result = []
+	if ntiid:
+		if _is_type_oid(ntiid):
+			obj = find_object_with_ntiid(ntiid)
+			bundle = IContentPackageBundle(obj, None)
+			if bundle is not None and bundle.ContentPackages:
+				result = [x.ntiid for x in bundle.ContentPackages]
+		else:
+			result = [ntiid]
+	return result
 
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = common.get_indexable_types()
@@ -151,18 +154,26 @@ def create_queryobject(username, params, matchdict):
 	args['term'] = term
 
 	args['username'] = username
+	packages = args['packages'] = list()
+	
+	ntiid = matchdict.get('ntiid', None)
+	package_ntiids = _resolve_package_ntiids(ntiid)		
+	if package_ntiids:
+		# predictable order for digest
+		package_ntiids.sort() 
+		# make sure we register the location where the search query is being made
+		args['location'] = ntiid if not _is_type_oid(ntiid) else package_ntiids[0]
+		for pid in package_ntiids:
+			root_ntiid = content_utils.get_collection_root_ntiid(pid)
+			if root_ntiid is None:
+				logger.debug("Could not find collection for ntiid '%s'" % pid)
+			else:
+				packages.append(root_ntiid)
+				if 'indexid' not in args: # legacy
+					args['indexid'] = root_ntiid
 
-	ntiid = _resolve_ntiid(matchdict.get('ntiid', None))		
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
-	if ntiid:
-		# make sure we register the location where the search query is being made
-		args['location'] = ntiid
-		indexid = content_utils.get_collection_root_ntiid(ntiid)
-		if indexid is None:
-			logger.debug("Could not find collection for ntiid '%s'" % ntiid)
-		else:
-			args['indexid'] = indexid
 	if accept:
 		aset = set(accept.split(','))
 		if '*/*' not in aset:
