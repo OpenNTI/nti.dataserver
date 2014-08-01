@@ -269,6 +269,9 @@ class TestUserService(ApplicationLayerTest):
 		assert_that( user_ws['Items'], has_item( has_entry( 'Links', has_item(
 			has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
 
+		assert_that( user_ws['Items'], has_item( has_entry( 'Title', 'Boards' ) ) )
+
+
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
 		#"A user's Pages collection only claims to accept things that are externally creatable."
