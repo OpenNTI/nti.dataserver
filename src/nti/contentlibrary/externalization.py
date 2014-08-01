@@ -193,6 +193,7 @@ class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
 	def toExternalObject(self, *args, **kwargs):
 		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
 		root_url = _root_url_of_key( self._ext_self.root )
+		root_url = _path_maybe_quote( root_url )
 		result._root_url = root_url
 		result['href'] = root_url
 
