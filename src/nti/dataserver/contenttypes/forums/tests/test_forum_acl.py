@@ -24,14 +24,23 @@ from nti.externalization.internalization import update_from_external_object
 
 from ..interfaces import IForumACE
 from ..interfaces import IACLCommunityForum
+from ..interfaces import IACLCommunityBoard
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+from zope import interface
+from zope.security.interfaces import IPrincipal
+from nti.dataserver.users import Community
+from ..board import CommunityBoard
 
 from ..ace import ForumACE
 from ..forum import ACLCommunityForum
 from ..acl import _ACLCommunityForumACLProvider
 
 from nti.testing.matchers import verifiably_provides, validly_provides
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ForumLayerTest
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 class TestForumACL(ForumLayerTest):
 
@@ -73,3 +82,28 @@ class TestForumACL(ForumLayerTest):
 		new_ace = factory()
 		update_from_external_object(new_ace, ace_external)
 		assert_that(ace, is_(new_ace))
+
+class TestBoardACL(DataserverLayerTest):
+
+	@WithMockDSTrans
+	def test_acl_from_ntiid_of_community(self):
+		board = CommunityBoard()
+		community = Community.create_community(dataserver=self.ds, username='TestCommunity')
+		creator = Community.create_community(dataserver=self.ds, username='Creator')
+
+		com_ntiid = community.NTIID
+		assert_that( com_ntiid, is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-testcommunity') )
+
+		ace = ForumACE(Action='Allow',
+					   Permissions=('Read',),
+					   Entities=(com_ntiid,))
+		board.ACL = [ace]
+		board.creator = creator
+
+		interface.alsoProvides(board, IACLCommunityBoard)
+
+		prov = IACLProvider(board)
+		acl = prov.__acl__
+
+		assert_that( list(acl[-2])[:2],
+					 is_( [ACE_ACT_ALLOW, IPrincipal(community)]) )
