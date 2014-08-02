@@ -277,6 +277,8 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 
 	def __iter__(self):
 		# For testing convenience when formatting mismatches
+		# and also to let instances implement IEntityIterable/ISharingTargetEntityIterable
+		# if desired.
 		return self.iter_members()
 
 	def iter_member_usernames(self):
