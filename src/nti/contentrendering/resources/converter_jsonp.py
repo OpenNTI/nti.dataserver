@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import tempfile
+import shutil
 
 import nti.contentrendering.resources as resources
 from nti.contentrendering.jsonpbuilder import _JSONPWrapper
@@ -23,18 +24,20 @@ from . import converters
 
 _RESOURCE_TYPE = 'jsonp'
 
+# XXX: TODO: Very similar to converter_html_wrapped
+
 class JSONPBatchConverterDriver(object):
 
 	fileExtension = '.jsonp'
 	resourceType = _RESOURCE_TYPE
 
 	def __init__(self):
-		self.tempdir = tempfile.mkdtemp()
+		self._jsonp_tempdir = tempfile.mkdtemp()
 
 	def _convert_unit(self, unit):
 		unit_path = unit.attributes['src']
 		ext = os.path.splitext(unit_path)[1]
-		resource_path = tempfile.mkstemp(suffix=ext,dir=self.tempdir)[1]
+		resource_path = tempfile.mkstemp(suffix=ext,dir=self._jsonp_tempdir)[1]
 
 		plain = resources.Resource()
 		plain.path = resource_path
@@ -53,13 +56,15 @@ class JSONPBatchConverterDriver(object):
 
 		return [plain, jsonp]
 
-	def convert_batch(self, content_units):	
+	def convert_batch(self, content_units):
 		# Here we need to convert the incoming blog to jsonp and write both versions to
 		# the resource folder.
-		resources = []
-		for unit in content_units:
-			resources.extend(self._convert_unit(unit))
-		return resources
+		return [self._convert_unit(unit) for unit in content_units]
+
+	def close(self):
+		shutil.rmtree(self._jsonp_tempdir, True)
+		self._jsonp_tempdir = None
+
 
 class JSONPBatchConverter(converters.AbstractContentUnitRepresentationBatchConverter):
 	"""

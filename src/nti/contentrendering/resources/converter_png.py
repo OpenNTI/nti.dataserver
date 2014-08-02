@@ -291,6 +291,7 @@ class GSPDFPNG2BatchConverter(converters.ImagerContentUnitRepresentationBatchCon
 
 		#Create a tempdir to work in
 		tempdir = tempfile.mkdtemp()
+		self._imager_paths.append(tempdir)
 
 		imagesToResizeSource = []
 		imagesToResizeDest = []

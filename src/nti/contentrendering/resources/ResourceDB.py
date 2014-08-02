@@ -67,7 +67,8 @@ class ResourceDB(object):
 
 	def generateResourceSets(self):
 
-		# Generate a mapping of representation names to nodes  {'png': {node1, node2}, 'mathml': {node3, node4}}
+		# Generate a mapping of representation names to nodes
+		#   {'png': {node1, node2}, 'mathml': {node3, node4}}
 		rep_names_to_nodes = defaultdict(set)
 
 		for node in self._locate_representable_nodes(self._document):
@@ -89,8 +90,15 @@ class ResourceDB(object):
 		generator = self._loadGenerator(resourceType)
 		new_representations = generator.process_batch( nodes )
 		for new_representation in new_representations:
-			keys = (resourceType,) + tuple(new_representation.qualifiers)
-			self.setResource(self._normalize_source(new_representation.source), keys, new_representation)
+			qualifiers = (resourceType,) + tuple(new_representation.qualifiers)
+			self.setResource(self._normalize_source(new_representation.source),
+							 qualifiers,
+							 new_representation)
+
+		try:
+			generator.close()
+		except AttributeError:
+			pass
 
 	def _loadGenerator(self, resourceType):
 		return component.getAdapter( self._document,
@@ -152,8 +160,7 @@ class ResourceDB(object):
 				logger.exception( 'Error loading cache %s. Starting from scratch', filename )
 
 
-	def setResource(self, source, keys, resource):
-
+	def setResource(self, source, qualifiers, resource):
 		self.dirty = True
 
 		source = self._normalize_source(source)
@@ -161,14 +168,14 @@ class ResourceDB(object):
 			self._db[source] = ContentUnitRepresentations(source)
 
 		resourceSet = self._db[source]
+		resourceSet.setResource(self._storeResource(resourceSet, qualifiers, resource),
+								qualifiers)
 
-		resourceSet.setResource(self._storeResource(resourceSet, keys, resource), keys)
 
-
-	def _storeResource(self, rs, keys, origResource):
+	def _storeResource(self, rs, qualifiers, origResource):
 		resource = _clone(origResource)
 
-		digest = digester.digestKeys(keys)
+		digest = digester.digestKeys(qualifiers)
 		name = '%s%s' % (digest, os.path.splitext(resource.path)[1])
 
 		relativeToDB = os.path.join(rs.path, name)
@@ -179,7 +186,6 @@ class ResourceDB(object):
 		resource.filename = name
 		resource.resourceSet = rs
 		resource.url = self.urlForResource(resource)
-
 
 		return resource
 
@@ -199,7 +205,8 @@ class ResourceDB(object):
 		if not self.dirty:
 			return
 
-		mPickle.dump(self._db, open(self._indexPath,'wb'))
+		with open(self._indexPath, 'wb') as f:
+			mPickle.dump(self._db, f)
 
 	def _getResourceSet(self, source):
 		if source in self._db:

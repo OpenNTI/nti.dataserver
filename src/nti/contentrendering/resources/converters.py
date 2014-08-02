@@ -48,14 +48,18 @@ class AbstractContentUnitRepresentationBatchConverter(object):
 					   'generateResources', 'storeResources', 'canGenerate',
 					   '_prepare_compile_driver_with_sources')
 
+	def __new__(cls, document, *args, **kwargs):
+		self = super(AbstractContentUnitRepresentationBatchConverter,cls).__new__(cls, document)
+		for final in AbstractContentUnitRepresentationBatchConverter._final_methods:
+			if getattr( self, final ) is not getattr( AbstractContentUnitRepresentationBatchConverter, final ):
+				raise ValueError( "Cannot override deprecated method %s" % final ) #pragma: no cover
+		return self
 
 	def __init__(self, document):
 		self.document = document
 		self.batch_args = ()
 		self.batch_kwargs = {}
-		for final in self._final_methods:
-			if getattr( self, final ) is not getattr( AbstractContentUnitRepresentationBatchConverter, final ):
-				raise ValueError( "Cannot override deprecated method %s" % final ) #pragma: no cover
+		self._batch_drivers = []
 
 
 	def _new_batch_converter_driver(self, *args, **kwargs):
@@ -81,9 +85,20 @@ class AbstractContentUnitRepresentationBatchConverter(object):
 		if not size > 0:
 			return ()
 
-		return self._new_batch_converter_driver( *self.batch_args, **self.batch_kwargs ).convert_batch( generatable_units )
+		driver = self._new_batch_converter_driver( *self.batch_args, **self.batch_kwargs )
+		if driver is not self:
+			self._batch_drivers.append(driver)
+
+		return driver.convert_batch( generatable_units )
 
 
+	def close(self):
+		for driver in self._batch_drivers:
+			try:
+				driver.close()
+			except AttributeError:
+				pass
+		self._batch_drivers = []
 
 @interface.implementer(interfaces.IContentUnitRepresentationBatchCompilingConverter)
 class AbstractCompilingContentUnitRepresentationBatchConverter(AbstractContentUnitRepresentationBatchConverter):
@@ -96,6 +111,10 @@ class AbstractCompilingContentUnitRepresentationBatchConverter(AbstractContentUn
 	compiler = ''
 	debug = False
 
+	def __init__(self, document):
+		super(AbstractCompilingContentUnitRepresentationBatchConverter,self).__init__(document)
+		self._compiler_drivers = []
+
 	def _new_batch_converter_driver(self, *args, **kwargs ):
 		return self
 
@@ -103,8 +122,12 @@ class AbstractCompilingContentUnitRepresentationBatchConverter(AbstractContentUn
 		raise NotImplementedError  # pragma: no cover
 
 	def _prepare_compile_driver_with_content_units( self, content_units ):
+		"""
+		Responsible for adding the generators used to ``_compiler_drivers``
+		"""
 		encoding = self.document.config['files']['input-encoding']
 		generator = self._new_batch_compile_driver( self.document, compiler=self.compiler, encoding=encoding)
+		self._compiler_drivers.append(generator)
 		generator.writePreamble()
 		for unit in content_units:
 			generator.add_content_unit_to_batch(unit)
@@ -121,6 +144,15 @@ class AbstractCompilingContentUnitRepresentationBatchConverter(AbstractContentUn
 		generator = self._prepare_compile_driver_with_content_units( content_units )
 
 		return generator.compile_batch_to_representations()
+
+	def close(self):
+		super(AbstractCompilingContentUnitRepresentationBatchConverter,self).close()
+		for generator in self._compiler_drivers:
+			try:
+				generator.close()
+			except AttributeError:
+				pass
+		self._compiler_drivers = []
 
 class AbstractConcurrentCompilingContentUnitRepresentationBatchConverter(AbstractCompilingContentUnitRepresentationBatchConverter):
 	"""
@@ -213,6 +245,7 @@ class AbstractDocumentCompilerDriver(object):
 			self.compiler = compiler
 		self._encoding = encoding
 		self._generatables = list()
+		self._delete_paths = list()
 
 	def __getstate__(self):
 		# In concurrency, we need to be pickled. The plasTeX document
@@ -261,7 +294,6 @@ class AbstractDocumentCompilerDriver(object):
 		self.write( source )
 
 	def compile_batch_to_representations(self):
-
 		start = time.time()
 
 		workdir = self.compileSource()
@@ -314,6 +346,7 @@ class AbstractDocumentCompilerDriver(object):
 
 		# Make a temporary directory to work in
 		tempdir = tempfile.mkdtemp()
+		self._delete_paths.append(tempdir)
 
 		filename = os.path.join(tempdir, self.document_filename + '.' + self.document_extension )
 
@@ -372,6 +405,12 @@ class AbstractDocumentCompilerDriver(object):
 				data = data.encode(self._encoding)
 
 			self._writer.write(data)
+
+	def close(self):
+		for p in self._delete_paths:
+			shutil.rmtree(p, True)
+		self._delete_paths = []
+
 
 class AbstractOneOutputDocumentCompilerDriver(AbstractDocumentCompilerDriver):
 	"""
@@ -475,6 +514,8 @@ class ImagerContentUnitRepresentationBatchConverter(AbstractContentUnitRepresent
 		else:
 			self.resourceType = self.imagerClass.fileExtension[1:]
 
+		self._imager_paths = list()
+
 	def _new_batch_converter_driver(self, *args, **kwargs ):
 		return ImagerContentUnitRepresentationBatchConverterDriver(self.createImager(), self.resourceType)
 
@@ -490,3 +531,9 @@ class ImagerContentUnitRepresentationBatchConverter(AbstractContentUnitRepresent
 											newImager.__class__.__name__+'.images')
 
 		return newImager
+
+	def close(self):
+		super(ImagerContentUnitRepresentationBatchConverter,self).close()
+		for p in self._imager_paths:
+			shutil.rmtree(p, True)
+		self._imager_paths = []
