@@ -81,6 +81,12 @@ class IContentUnitRepresentationBatchConverter(interface.Interface):
 			`source` and `resourceType` but different `qualifiers.`
 		"""
 
+	def close():
+		"""
+		An optional method, called once all the return values from all the processed
+		batches have been used.
+		"""
+
 class IContentUnitRepresentationBatchCompilingConverter(IContentUnitRepresentationBatchConverter):
 	"""
 	A specialized converter that drives an *external* compiler programe to convert

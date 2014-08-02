@@ -86,7 +86,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 		# Filter spaceing / formatting bits that MathJax does not handle
 		tex_without_delimiters = re.sub(r'\[[0-9][0-9]*ex\]', '', tex_without_delimiters)
 
-		return '<span class="mathjax math tex2jax_process">\(%s\)</span>' % cgi.escape(tex_without_delimiters)
+		return r'<span class="mathjax math tex2jax_process">\(%s\)</span>' % cgi.escape(tex_without_delimiters)
 
 	def writePostamble(self):
 		self.write('</body></html>')
@@ -96,6 +96,8 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 
 		htmlSource = self.source_bytes()
 		tempdir = tempfile.mkdtemp()
+		self._delete_paths.append(tempdir)
+
 		# We need to copy the html file
 		htmlOutFile = os.path.join(tempdir, self.htmlfile)
 		__traceback_info__ = tempdir, htmlOutFile, htmlSource
@@ -130,6 +132,7 @@ class MathjaxInlineCompilerDriver(converters.AbstractOneOutputDocumentCompilerDr
 	def convert(self, output, workdir):
 
 		tempdir = tempfile.mkdtemp()
+		self._delete_paths.append(tempdir)
 
 		maths = [math.strip() for math in output.split('\n') if math.strip()]
 		if len(maths) != len(self._generatables):

@@ -14,7 +14,6 @@ from zope import interface
 from zope import component
 from zope.event import notify
 from zope import lifecycleevent
-from zope.security.interfaces import IPrincipal
 from zope.container.interfaces import INameChooser
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.schema.fieldproperty import FieldProperty
@@ -220,10 +219,6 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 					if action == nti_interfaces.ACE_ACT_ALLOW and for_interfaces.can_read(perm):
 						entity = users.Entity.get_entity(entity)
 						result.add(entity)
-						entity_prin = IPrincipal(entity, None)
-						# We don't know what kind of objects we might find here...
-						if entity_prin is not None and entity_prin is not entity:
-							result.add(entity_prin)
 			result.discard(None)
 			return result
 

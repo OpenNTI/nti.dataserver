@@ -31,6 +31,8 @@ from zope import interface
 from zope.security.interfaces import IPrincipal
 from nti.dataserver.users import Community
 from ..board import CommunityBoard
+from ..topic import CommunityHeadlineTopic
+from ..post import CommunityHeadlinePost
 
 from ..ace import ForumACE
 from ..forum import ACLCommunityForum
@@ -41,6 +43,8 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from . import ForumLayerTest
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from zope import schema
 
 class TestForumACL(ForumLayerTest):
 
@@ -88,6 +92,7 @@ class TestBoardACL(DataserverLayerTest):
 	@WithMockDSTrans
 	def test_acl_from_ntiid_of_community(self):
 		board = CommunityBoard()
+		self.ds.root_folder['board'] = board
 		community = Community.create_community(dataserver=self.ds, username='TestCommunity')
 		creator = Community.create_community(dataserver=self.ds, username='Creator')
 

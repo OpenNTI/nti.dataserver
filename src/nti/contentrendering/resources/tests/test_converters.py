@@ -162,7 +162,7 @@ class TestHTMLWrappedConverter(unittest.TestCase):
 		out_file = self.in_file + u'.html'
 
 		util = _HTMLWrapper(self.ntiid, self.in_file, out_file)
-		
+
 		assert_that( util.filename, contains_string(out_file) )
 		util.write_to_file()
 
@@ -181,23 +181,23 @@ class TestHTMLWrappedConverter(unittest.TestCase):
 			attributes = {}
 			source = u''
 			ntiid = u''
-		
+
 		converter = HTMLWrappedBatchConverterDriver()
-		unit = Dummy_Unit()
-		unit.attributes['src'] = self.in_file
-		unit.ntiid = self.ntiid
+		try:
+			unit = Dummy_Unit()
+			unit.attributes['src'] = self.in_file
+			unit.ntiid = self.ntiid
 
-		values = converter._convert_unit(unit)
+			values = converter._convert_unit(unit)
 
-		data = u''
-		with codecs.open( values[0].path, 'rb', 'utf-8') as f:
-			data = f.read()
-			assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
+			data = u''
+			with codecs.open( values[0].path, 'rb', 'utf-8') as f:
+				data = f.read()
+				assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
 
-		data = u''
-		with codecs.open( values[1].path, 'rb', 'utf-8') as f:
-			data = f.read()
-			assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
-
-		if os.path.exists(converter.tempdir):
-			shutil.rmtree(converter.tempdir)
+			data = u''
+			with codecs.open( values[1].path, 'rb', 'utf-8') as f:
+				data = f.read()
+				assert_that( data, contains_string(u'# -*- coding: utf-8 -*-'))
+		finally:
+			converter.close()

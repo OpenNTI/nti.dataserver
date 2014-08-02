@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A resource converter the copies a resource into the resource system and then wraps 
+A resource converter the copies a resource into the resource system and then wraps
 it inside of an HTML PRE block.
 
 .. $Id$
@@ -15,6 +15,7 @@ import codecs
 import isodate
 import os
 import tempfile
+import shutil
 
 import nti.contentrendering.resources as resources
 
@@ -65,12 +66,12 @@ class HTMLWrappedBatchConverterDriver(object):
 	resourceType = _RESOURCE_TYPE
 
 	def __init__(self):
-		self.tempdir = tempfile.mkdtemp()
+		self._html_tempdir = tempfile.mkdtemp()
 
 	def _convert_unit(self, unit):
 		unit_path = unit.attributes['src']
 		ext = os.path.splitext(unit_path)[1]
-		resource_path = tempfile.mkstemp(suffix=ext,dir=self.tempdir)[1]
+		resource_path = tempfile.mkstemp(suffix=ext,dir=self._html_tempdir)[1]
 
 		plain = resources.Resource()
 		plain.path = resource_path
@@ -89,12 +90,13 @@ class HTMLWrappedBatchConverterDriver(object):
 
 		return [plain, html]
 
-	def convert_batch(self, content_units):	
+	def convert_batch(self, content_units):
 		# Here we need to wrap the input inside of a PRE block of a stand alone HTML file.
-		resources = []
-		for unit in content_units:
-			resources.extend(self._convert_unit(unit))
-		return resources
+		return [self._convert_unit(unit) for unit in content_units]
+
+	def close(self):
+		shutil.rmtree(self._html_tempdir, True)
+		self._html_tempdir = None
 
 class HTMLWrappedBatchConverter(converters.AbstractContentUnitRepresentationBatchConverter):
 	"""
