@@ -1,28 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-from nti.testing.matchers import implements, verifiably_provides
+from hamcrest import is_
+from hamcrest import assert_that
 
+from zope import component
 
 from nti.contentfragments import interfaces
 from nti.contentfragments import latex as contentfragments
 
+from nti.testing.matchers import implements, verifiably_provides
 
-from zope import component
-
-from hamcrest import assert_that
-from hamcrest import greater_than_or_equal_to
-from hamcrest import is_
-from hamcrest import none
-
+from nti.contentfragments.tests import ContentfragmentsLayerTest
 
 def _tex_convert( val ):
 	if not interfaces.IPlainTextContentFragment.providedBy( val ):
@@ -31,8 +26,6 @@ def _tex_convert( val ):
 
 def _tex_assert( val, answer ):
 	assert_that( _tex_convert( val ), is_(answer) )
-
-from . import ContentfragmentsLayerTest
 
 class TestLatexTransforms(ContentfragmentsLayerTest):
 
