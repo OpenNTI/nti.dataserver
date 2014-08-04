@@ -88,12 +88,15 @@ class ResourceDB(object):
 	def _create_representations(self, resourceType, nodes):
 		# Load a resource generate
 		generator = self._loadGenerator(resourceType)
-		new_representations = generator.process_batch( nodes )
-		for new_representation in new_representations:
-			qualifiers = (resourceType,) + tuple(new_representation.qualifiers)
-			self.setResource(self._normalize_source(new_representation.source),
-							 qualifiers,
-							 new_representation)
+		sources = generator.process_batch(nodes)
+		for new_representations in sources:
+			if not isinstance(new_representations, (list, tuple)):
+				new_representations = (new_representations,)
+			for new_presentation in new_representations:
+				qualifiers = (resourceType,) + tuple(new_presentation.qualifiers)
+				self.setResource(self._normalize_source(new_presentation.source),
+								 qualifiers,
+								 new_presentation)
 
 		try:
 			generator.close()
