@@ -3,7 +3,7 @@
 	<span metal:fill-slot="content">
 		<strong tal:content="notable/creator">Greg Higgins</strong>
 		<span tal:condition="notable/top_level_note">shared a note.</span>
-		<span tal:condition="not:notable/top_level_note">replied to your note in</span>
+		<span tal:condition="not:notable/top_level_note">replied to your note </span>
 		<br />
 		<!--! Notes that consist of just a whiteboard may not have a title or snippet -->
 		<a style="color: #3fb3f6;" href=""
@@ -13,7 +13,6 @@
 		<span tal:condition="notable/__parent__/note_container_display_name">
 			in <a style="color: #3fb3f6;" href=""
 			tal:attributes="href notable/__parent__/note_container_href|default"
-			tal:content="notable/__parent__/note_container_display_name|default">a book</a>
-			</span>.
+			tal:content="notable/__parent__/note_container_display_name|default">a book</a></span>.
 	</span>
 </div>
