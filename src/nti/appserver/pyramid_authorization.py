@@ -130,6 +130,7 @@ import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _clear_caches )
 
 from ZODB.POSException import POSKeyError
+from nti.utils.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
 	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
@@ -144,7 +145,8 @@ def _lineage_that_ensures_acls(obj):
 			yield location
 		except AttributeError:
 			# OK, can we create one?
-			acl = cache.get( location )
+			cache_key = id(removeAllProxies(location))
+			acl = cache.get( cache_key )
 			if acl is None:
 				try:
 					acl = ACL( location, default=_marker )
@@ -152,7 +154,7 @@ def _lineage_that_ensures_acls(obj):
 					# Sometimes the ACL providers might fail with this;
 					# especially common in test objects
 					acl = _marker
-				cache[location] = acl
+				cache[cache_key] = acl
 
 			if acl is _marker:
 				# Nope. So still return the original object,
