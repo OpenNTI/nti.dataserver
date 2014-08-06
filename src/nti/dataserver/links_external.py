@@ -69,12 +69,20 @@ def render_link( link, nearest_site=None ):
 	target = link.target
 	assert target is not None
 	rel = link.rel
-	content_type = link.target_mime_type or nti_mimetype_from_object( target )
+	content_type = link.target_mime_type
+	content_type_derived_from_target = False
+	if not content_type:
+		content_type = nti_mimetype_from_object( target )
+		content_type_derived_from_target = True
 
 	href = None
 	ntiid = getattr( target, 'ntiid', None ) \
-		or getattr( target, 'NTIID', None ) \
-		or (isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target) and target)
+		or getattr( target, 'NTIID', None )
+	if ntiid:
+		ntiid_derived_from_target = True
+	elif isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target):
+		ntiid = target
+		ntiid_derived_from_target = False # it *is* the target
 
 	if ntiid and not nti_interfaces.IShouldHaveTraversablePath.providedBy( target ):
 		# Although (enclosures and entities and other things with IShouldHaveTraversablePath)
@@ -124,7 +132,7 @@ def render_link( link, nearest_site=None ):
 		# TODO: quoting
 	if link.params:
 		href = href + '?%s' % urllib.urlencode(link.params)
-		# TODO: AGAIN: quoting
+
 	result = component.getMultiAdapter( (), ext_interfaces.ILocatedExternalMapping )
 	result.update( { StandardExternalFields.CLASS: 'Link',
 					 StandardExternalFields.HREF: href,
@@ -132,10 +140,14 @@ def render_link( link, nearest_site=None ):
 	if content_type:
 		# If a method was provided, do not try to infer from the target object,
 		# must be explicit
-		if (link.method and link.target_mime_type) or not link.method:
+		if link.method and link.target_mime_type:
 			result['type'] = content_type
+		elif not link.method:
+			if not link.ignore_properties_of_target and not content_type_derived_from_target:
+				result['type'] = content_type
 	if ntiids.is_valid_ntiid_string( ntiid ):
-		result['ntiid'] = ntiid
+		if not link.ignore_properties_of_target or not ntiid_derived_from_target:
+			result['ntiid'] = ntiid
 	if link.method:
 		result['method'] = link.method
 	if link.title:
