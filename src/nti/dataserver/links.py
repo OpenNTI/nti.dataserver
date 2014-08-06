@@ -17,11 +17,13 @@ from zope import interface
 from zope import component
 
 from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.persistence import NoPickle
 
 from . import interfaces
 
 @interface.implementer( interfaces.ILink )
 @functools.total_ordering
+@NoPickle
 class Link(object):
 	"""
 	Default implementation of ILink.
@@ -33,6 +35,7 @@ class Link(object):
 	method = None
 	title = None
 	params = None
+	ignore_properties_of_target = False
 
 	def __init__(self, target,
 				 rel='alternate',
@@ -40,7 +43,8 @@ class Link(object):
 				 target_mime_type=None,
 				 method=None,
 				 title=None,
-				 params=None):
+				 params=None,
+				 ignore_properties_of_target=False):
 		"""
 		:param target: The destination object for this link. Required to be
 			non-``None``. The exact value of what is accepted depends on
@@ -55,7 +59,12 @@ class Link(object):
 		:keyword str title: If given, a human-readable description for the link
 			(usually localized).
 		:keyword dict params: If given, a dictionary of query string parameters
-			that will be added to the link.
+			that will be added to the link. You should not mutate this dictionary
+			after giving it to us, we may copy it.
+		:keyword bool ignore_properties_of_target: If given and ``True``, this
+			will cause the externalization process to ignore any information
+			that would otherwise be derived from the ``target``, such as its
+			ntiid and mime type.
 		"""
 		__traceback_info__ = target, rel, elements, target_mime_type
 		# If the target is None, it won't externalize correctly,
@@ -73,13 +82,10 @@ class Link(object):
 			self.method = method
 		if title:
 			self.title = title
-		if params:
+		if params is not None:
 			self.params = params
-
-	# Make them non-picklable
-	def __reduce__( self, *args, **kwargs ):
-		raise TypeError( "Links cannot be pickled." )
-	__reduce_ex__ = __reduce__
+		if ignore_properties_of_target:
+			self.ignore_properties_of_target = True
 
 	def __repr__( self ):
 		# Its very easy to get into an infinite recursion here
