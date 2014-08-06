@@ -77,7 +77,6 @@ def uninstall_utility_on_unregistration(utility_name, provided, event):
 										  provided=provided)
 	del local_site_manager[utility_name]
 
-
 def queryNextUtility(context, interface, default=None):
 	"""
 	Our persistent sites are a mix of persistent and non-persistent
@@ -94,7 +93,7 @@ def queryNextUtility(context, interface, default=None):
 
   		site-janux.ou.edu, janux.ou.edu, site-platform.ou.edu, dataserver, GSM
 
-	However, queryNextUtility only looks in the *first* base to find
+	However, :func:`zope.component.queryNextUtility` only looks in the *first* base to find
 	a next utility. Therefore, when site-janux.ou.edu asks for a next utility,
 	instead of getting something persistent from site-platform.ou.edu,
 	it instead gets the global non-persistent version from platform.ou.edu.
@@ -102,7 +101,7 @@ def queryNextUtility(context, interface, default=None):
 	We don't generally want to change the resolution order, but we do need
 	to tweak it here for getting next utilities so that we consider
 	persistent things first. Note that this breaks down if we have
-	utilities registered both persistently and non-persistently at the same level
+	utilities registered both persistently and non-persistently at the same level.
 	"""
 
 	try:

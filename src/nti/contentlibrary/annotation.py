@@ -97,12 +97,18 @@ class ContentUnitAnnotationUtility(PrincipalAnnotationUtility):
 			notes.__name__ = principalId
 		return notes
 
-from zope.component import queryNextUtility
+from nti.site.localutility import queryNextUtility
 
 class ContentUnitAnnotations(Annotations):
 
 	def __next_annotes(self):
-		next_utility = queryNextUtility(self, IContentUnitAnnotationUtility)
+		if isinstance(self.__parent__, GlobalContentUnitAnnotationUtility):
+			# prevent infinite recursion getting the next site manager
+			# (XXX: what's the loop?)
+			next_utility = None
+		else:
+			next_utility = queryNextUtility(self.__parent__, IContentUnitAnnotationUtility)
+
 		if next_utility is not None:
 			parent = next_utility.getAnnotationsById(self.principalId)
 			return parent
