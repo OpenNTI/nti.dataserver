@@ -179,7 +179,36 @@ class _AbstractPrincipal(object):
 	id = ''
 	def __eq__(self,other):
 		try:
-			return self is other or self.id == other.id
+			# JAM: XXX: Comparing NTIIDs to our ID is a HACK. Here's the particular
+			# case:
+			# * Forum objects (actually, anything using the
+			#   AbstractCreatedAndSharedACLProvider) take a round-trip
+			#   through the 'flattenedSharingTargetNames' before
+			#   coming up with principals, which wind up being
+			#   _StringPrincipal objects below. It's not exactly clear
+			#   why they do that.
+			# * Meantime, authentication winds up returning actual
+			# * objects like _CommunityGroup.
+			# * Typical _UserPrincipal objects, like _CommunityGroup,
+			#   capture 'username' as their ID.
+			# * However, certain types of dynamic memberships
+			#   (increasingly, all of them!) do not have a globally
+			#   useful username. Thus, everything is moving to
+			#   IUseNTIIDAsExternalUsername; this NTIID winds up in
+			#   flattenedSharingTargetNames, but the 'username' may or
+			#   may not be globally unqualified.
+			# * In that case, whether an ACL entry matches or not is a
+			#   crapshoot. Checking the NTIID additionally gives
+			#   better odds.
+			#
+			# The solution, obviously, is to eliminate the trip
+			# through strings so that the particular Principal
+			# implementations that *already know* about NTIIDs can be
+			# used. (In some cases, this only works for dynamicly
+			# created ACLs, but that's already the case, and is even
+			# the expected case in the Zope world, where principal IDs
+			# are separate from logon name and are typically numbers.)
+			return self is other or self.id == other.id or self.id == other.NTIID
 		except AttributeError:
 			return NotImplemented
 
@@ -345,6 +374,7 @@ class _UserPrincipal(_AbstractPrincipal):
 	def __init__( self, user ):
 		self.context = user
 		self.id = user.username
+		self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
 
 	username = alias('id')
 	title = alias('id')
