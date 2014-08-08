@@ -15,6 +15,7 @@ from zope import component
 from zope.event import notify
 from zope import lifecycleevent
 from zope.container.interfaces import INameChooser
+from zope.location.interfaces import ILocationInfo
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.schema.fieldproperty import FieldProperty
 from zope.annotation import interfaces as an_interfaces
@@ -193,8 +194,22 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 
 	@CachedProperty('__parent__')
 	def _community(self):
-		"Return the community we are embedded in"
-		return find_interface(self,ICommunity,strict=False)
+		"""
+		Return the community we are embedded in
+		"""
+		# test legacy. Find community in lineage
+		result = find_interface(self, ICommunity, strict=False)
+		if result is None:
+			# for new obejcts (e.g. new style courses)
+			# find a creator that is a comunity in the lineage
+			lineage = ILocationInfo(self).getParents()
+			lineage.insert(0, self)
+			for item in lineage:
+				creator = getattr(item, 'creator', None)
+				if creator is not None and ICommunity.providedBy(creator):
+					result = creator
+					break
+		return result
 
 	@readproperty
 	def _ntiid_creator_username(self):
@@ -211,6 +226,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# This ACL must be static.
 		# TODO: Remove hack
 		_forum = self.__parent__
+		#TODO: REMOVE IACL 
 		if for_interfaces.IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
 			result = set()
