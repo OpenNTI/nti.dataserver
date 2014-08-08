@@ -139,6 +139,7 @@ class AbstractContentPackageLibrary(object):
 		"""
 		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
 
+		from IPython.core.debugger import Tracer; Tracer()()
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
@@ -162,7 +163,7 @@ class AbstractContentPackageLibrary(object):
 		for old in old_content_packages:
 			new = None
 			for x in new_content_packages:
-				if x.key == o.key:
+				if x.key == old.key:
 					new = x
 					break
 			if new is None:
