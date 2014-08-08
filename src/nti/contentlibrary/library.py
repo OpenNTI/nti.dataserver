@@ -157,7 +157,7 @@ class AbstractContentPackageLibrary(object):
 		content package, as appropriate.
 		"""
 		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
-		from IPython.core.debugger import Tracer; Tracer()()
+
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
