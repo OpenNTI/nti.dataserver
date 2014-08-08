@@ -44,11 +44,10 @@ class _CourseExtractor(object):
 			# Write the course data to course_outline.xml
 			with open(os.path.join(outpath, "course_outline.xml"), "wb") as fp:
 				course_nodes.writexml(fp)
-#			dom.childNodes[0].appendChild(course_nodes)
-#			dom.childNodes[0].setAttribute('isCourse', 'true')
-#		else:
-#			dom.childNodes[0].setAttribute('isCourse', 'false')
-		dom.childNodes[0].setAttribute('isCourse', 'false')
+			dom.childNodes[0].appendChild(course_nodes)
+			dom.childNodes[0].setAttribute('isCourse', 'true')
+		else:
+			dom.childNodes[0].setAttribute('isCourse', 'false')
 		book.toc.save()
 
 	def _process_course(self, dom, outpath, doc_el, courseinfo):
