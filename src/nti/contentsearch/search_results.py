@@ -87,6 +87,7 @@ class SearchHitMetaData(object):
 	__external_can_create__ = True
 	mime_type = mimeType = nti_mimetype_with_class('SearchHitMetaData')
 
+	filtered_count = 0
 	SearchTime = lastModified = createdTime = 0
 
 	def __init__(self):
@@ -110,6 +111,12 @@ class SearchHitMetaData(object):
 	def TotalHitCount(self):
 		return sum(self.type_count.values())
 
+	def _get_filtered_count(self):
+		return self.filtered_count
+	def _set_filtered_count(self, count):
+		self.filtered_count = count
+	FilteredCount = property(_get_filtered_count, _set_filtered_count)
+	
 	def track(self, selected):
 		self.SearchTime = time.time() - self._ref
 
@@ -273,6 +280,8 @@ class _SearchResults(_BaseSearchResults):
 				self.metadata.track(item)
 			else:
 				del hit
+		else:
+			self.metadata.filtered_count += 1
 
 	def add(self, hit, score=1.0):
 		self._add(hit, score)

@@ -749,6 +749,9 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 	TotalHitCount = Int(title='Total hit count', required=True,
 						readonly=True, default=0)
 
+	FilteredCount = Int(title='Total hit filtered', required=True,
+						readonly=False, default=0)
+	
 	def track(hit):
 		"""
 		track any metadata from the specified search hit
