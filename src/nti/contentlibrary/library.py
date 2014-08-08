@@ -151,7 +151,7 @@ class AbstractContentPackageLibrary(object):
 		
 		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 		
-	def syncContentPackages(self, persistent=True):
+	def syncContentPackages(self):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
@@ -175,20 +175,19 @@ class AbstractContentPackageLibrary(object):
 		old_content_packages_keys = [o.key for o in old_content_packages]
 	
 		for new in new_content_packages:
-			if (persistent and new not in old_content_packages) or \
-			   (not persistent and new.key not in old_content_packages_keys):
+			if new.key not in old_content_packages_keys:
 				added.append(new)
 		
 		for old in old_content_packages:
 			new = None
 			for x in new_content_packages:
-				if (persistent and x == old) or (not persistent and x.key == o.key):
+				if x.key == o.key:
 					new = x
 					break
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				changed.append(new if persistent else old)
+				changed.append(old)
 			else:
 				unmodified.append(old)
 

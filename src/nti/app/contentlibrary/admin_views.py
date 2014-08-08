@@ -106,54 +106,8 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				return site_lib.syncContentPackages(False)
+				return site_lib.syncContentPackages()
 
-
-		results = run_job_in_all_host_sites(sync_site_library)
-		gc.collect()
-		return [x[1] for x in results]
-
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context='nti.dataserver.interfaces.IDataserverFolder',
-			  request_method='POST',
-			  permission=ACT_COPPA_ADMIN,
-			  name='BlastAllLibraries') # XXX better permission
-class _BlastAllLibrariesView(AbstractAuthenticatedView):
-	
-	_SLEEP = True
-
-	def __call__(self):
-		endInteraction()
-		try:
-			return self._do_blast()
-		finally:
-			restoreInteraction()
-
-	def _do_blast(self):
-		# First, synchronize the policies, make sure everything is all nice and installed.
-		synchronize_host_policies()
-
-		seen = set()
-		seen.add(None)
-		global_lib = component.getGlobalSiteManager().queryUtility(IContentPackageLibrary)
-		seen.add(global_lib)
-
-		def sync_site_library():
-			# Mostly for testing, if we started up with a different library
-			# that could not provide valid site libraries, install
-			# one if we can get there now.
-			site_lib = install_site_content_library(component.getSiteManager())
-			if site_lib in seen:
-				return
-			seen.add(site_lib)
-			if self._SLEEP:
-				gevent.sleep()
-
-			syncer = ISyncableContentPackageLibrary(site_lib, None)
-			if syncer is not None:
-				logger.info("Blasting library %s", site_lib)
-				return site_lib.blastContentPackages()
 
 		results = run_job_in_all_host_sites(sync_site_library)
 		gc.collect()
