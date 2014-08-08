@@ -1036,7 +1036,9 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 										.replace(u'\u2013', u'--') \
 										.replace(u'\u2014', u'---')
 		self.relatedwork = self.idref['label']
+		self._creator = None
 		self._description = None
+		self._title = None
 
 		# Remove the empty NTIID key so auto NTIID generation works
 
@@ -1055,6 +1057,12 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 	@readproperty
 	def category(self):
 		return self._options.get('category') or u'required'
+
+	@readproperty
+	def creator(self):
+		if self._creator is None:
+			return self.relatedwork.creator
+		return self._creator
 
 	@readproperty
 	def description(self):
@@ -1083,6 +1091,12 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		if self._targetMimeType is None:
 			self.gen_target_ntiid()
 		return self._targetMimeType
+
+	@readproperty
+	def title(self):
+		if self._title is None:
+			return self.relatedwork.title
+		return self._title
 
 	@readproperty
 	def uri(self):
