@@ -40,11 +40,15 @@ class _CourseExtractor(object):
 		courseinfo = book.document.getElementsByTagName('courseinfo')
 		dom = book.toc.dom
 		if course_els:
-			node = self._process_course(dom, outpath, course_els[0], courseinfo)
-			dom.childNodes[0].appendChild(node)
-			dom.childNodes[0].setAttribute('isCourse', 'true')
-		else:
-			dom.childNodes[0].setAttribute('isCourse', 'false')
+			course_nodes = self._process_course(dom, outpath, course_els[0], courseinfo)
+			# Write the course data to course_outline.xml
+			with open(os.path.join(outpath, "course_outline.xml"), "wb") as fp:
+				course_nodes.writexml(fp)
+#			dom.childNodes[0].appendChild(course_nodes)
+#			dom.childNodes[0].setAttribute('isCourse', 'true')
+#		else:
+#			dom.childNodes[0].setAttribute('isCourse', 'false')
+		dom.childNodes[0].setAttribute('isCourse', 'false')
 		book.toc.save()
 
 	def _process_course(self, dom, outpath, doc_el, courseinfo):
@@ -130,7 +134,7 @@ class _CourseExtractor(object):
 		# SAJ: Only produce and overview JSON for lessons with content driven overviews
 		overview_nodes = lesson_node.getElementsByTagName('courseoverviewgroup')
 		if len(overview_nodes) > 0:
-			ntiid = self._safe_ntiid(lesson_node.ntiid.replace('\\', '_'))
+			ntiid = re.sub('[\.,/,\*,\?,\<,\>,\|]', '_', lesson_node.ntiid.replace('\\', '_'))
 			outfile = '%s.json' % ntiid
 
 			trx = IJSONTransformer(lesson_node, None)
