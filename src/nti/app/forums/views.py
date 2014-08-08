@@ -102,6 +102,7 @@ class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadReque
 
 	def _read_incoming_post( self ):
 		# Note the similarity to ugd_edit_views
+		from IPython.core.debugger import Tracer; Tracer()()
 		creator = self.getRemoteUser()
 		externalValue = self.readInput()
 		datatype = self.findContentType( externalValue )
@@ -147,6 +148,7 @@ class _AbstractForumPostView(_AbstractIPostPOSTView):
 		return self.getRemoteUser()
 
 	def _do_call( self ):
+		from IPython.core.debugger import Tracer; Tracer()()
 		forum = self.request.context
 		topic_post, external_value = self._read_incoming_post()
 
@@ -293,6 +295,7 @@ class _AbstractTopicPostView(_AbstractIPostPOSTView):
 		return ('Post', Post.mimeType, 'Posts')
 
 	def _do_call( self ):
+		from IPython.core.debugger import Tracer; Tracer()()
 		incoming_post, _ = self._read_incoming_post()
 
 		topic = self.request.context
@@ -706,6 +709,7 @@ class _AbstractPublishingView(object):
 		raise NotImplementedError() # pragma: no cover
 
 	def __call__(self):
+		from IPython.core.debugger import Tracer; Tracer()()
 		request = self.request
 		topic = request.context
 		if self._test_provides( topic ):
