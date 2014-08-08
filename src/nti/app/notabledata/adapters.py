@@ -113,16 +113,18 @@ class UserNotableData(AbstractAuthenticatedView):
 		return topics_created_by_me_intids
 
 	def __topic_ntiids(self, excluded_topic_oids=()):
-		topic_ntiids = [x.NTIID for x in ResultSet(self._topics_created_by_me_intids, self._intids)
-						if to_external_ntiid_oid(x) not in excluded_topic_oids]
-
-		return topic_ntiids
+		topic_ntiids = {x.NTIID for x in ResultSet(self._topics_created_by_me_intids, self._intids)
+						if to_external_ntiid_oid(x) not in excluded_topic_oids}
+		topic_ntiids.discard(None)
+		return list(topic_ntiids)
 
 	@CachedProperty
 	def _all_comments_in_my_topics_intids(self):
 		# Note that we're not doing a join to the Mime index, as only comments
 		# should have this as a container id.
-		comments_in_my_topics_intids = self._catalog['containerId'].apply({'any_of': self.__topic_ntiids()})
+		__topic_ntiids = self.__topic_ntiids()
+		__traceback_info__ = __topic_ntiids
+		comments_in_my_topics_intids = self._catalog['containerId'].apply({'any_of': __topic_ntiids})
 		return comments_in_my_topics_intids
 
 	@CachedProperty
