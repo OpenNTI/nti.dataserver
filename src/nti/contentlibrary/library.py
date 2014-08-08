@@ -188,7 +188,7 @@ class AbstractContentPackageLibrary(object):
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				changed.append(new)
+				changed.append(new if persistent else old)
 			else:
 				unmodified.append(old)
 
