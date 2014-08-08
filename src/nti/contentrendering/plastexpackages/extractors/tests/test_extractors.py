@@ -109,7 +109,7 @@ class TestCourseExtractor(unittest.TestCase):
 			course_outline = minidom.parse(course_outline_file)
 
 			assert_that(course_outline.getElementsByTagName('course'), has_length(1))
-			assert_that(book.toc.dom.documentElement.attributes, has_entry('isCourse', 'false'))
+			assert_that(book.toc.dom.documentElement.attributes, has_entry('isCourse', 'true'))
 			assert_that(book.toc.dom.getElementsByTagNameNS("http://www.nextthought.com/toc", 'related'),
 						has_length(1))
 
