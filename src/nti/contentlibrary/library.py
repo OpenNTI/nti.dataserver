@@ -15,18 +15,18 @@ import warnings
 
 from persistent import Persistent
 
-from zope import component
 from zope import interface
-from zope import lifecycleevent
 from zope.event import notify
+from zope import lifecycleevent
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.externalization.persistence import NoPickle
+
+from nti.site.localutility import queryNextUtility
+
 from nti.utils.property import alias
 
 from . import interfaces
-
-from nti.site.localutility import queryNextUtility
 
 @interface.implementer(interfaces.IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
@@ -157,7 +157,7 @@ class AbstractContentPackageLibrary(object):
 		content package, as appropriate.
 		"""
 		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
-
+		from IPython.core.debugger import Tracer; Tracer()()
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
@@ -168,20 +168,21 @@ class AbstractContentPackageLibrary(object):
 		# we can present a consistent view to any listeners that
 		# will be watching
 
-		removed = []
 		added = []
+		removed = []
 		changed = []
 		unmodified = []
-
+		old_content_packages_keys = [o.key for o in old_content_packages]
+	
 		for new in new_content_packages:
 			if (persistent and new not in old_content_packages) or \
-			   (not persistent and new.key not in [o.key for o in old_content_packages]):
+			   (not persistent and new.key not in old_content_packages_keys):
 				added.append(new)
 		
 		for old in old_content_packages:
 			new = None
 			for x in new_content_packages:
-				if (persistent and x == old) or (not persistent and x.key == o.keye):
+				if (persistent and x == old) or (not persistent and x.key == o.key):
 					new = x
 					break
 			if new is None:
