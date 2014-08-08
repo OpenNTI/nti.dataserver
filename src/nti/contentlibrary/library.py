@@ -131,25 +131,6 @@ class AbstractContentPackageLibrary(object):
 		assert enumeration is not None
 		if prefix:
 			self.url_prefix = prefix
-
-	def blastContentPackages(self):
-		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
-		old_content_packages = list(self._contentPackages or ())
-
-		self._contentPackages = []
-		self._content_packages_by_ntiid = {}
-		self._enumeration_last_modified = 0
-
-		for old in old_content_packages:
-			logger.info("Blasting %s", old)
-			lifecycleevent.removed(old)
-			old.__parent__ = None
-		
-		attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary, 'contentPackages')
-		event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
-		notify(event)
-		
-		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 		
 	def syncContentPackages(self):
 		"""
