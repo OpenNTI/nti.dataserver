@@ -17,6 +17,8 @@ from hamcrest import assert_that
 import os.path
 import unittest
 
+from xml.dom import minidom
+
 course_string = r"""
 %Course lessons defined
 
@@ -93,6 +95,7 @@ class TestCourseExtractor(unittest.TestCase):
 			render = ResourceRenderer.createResourceRenderer('XHTML', None)
 			render.render( ctx.dom )
 			book.toc = EclipseTOC(os.path.join(ctx.docdir, 'eclipse-toc.xml'))
+			course_outline_file = os.path.join(ctx.docdir, 'course_outline.xml')
 			ctx.dom.renderer = render
 
 			ext = _CourseExtractor()
@@ -103,12 +106,14 @@ class TestCourseExtractor(unittest.TestCase):
 
 			__traceback_info__ = book.toc.dom.toprettyxml()
 
-			assert_that(book.toc.dom.getElementsByTagName('course'), has_length(1))
-			assert_that(book.toc.dom.documentElement.attributes, has_entry('isCourse', 'true'))
+			course_outline = minidom.parse(course_outline_file)
+
+			assert_that(course_outline.getElementsByTagName('course'), has_length(1))
+			assert_that(book.toc.dom.documentElement.attributes, has_entry('isCourse', 'false'))
 			assert_that(book.toc.dom.getElementsByTagNameNS("http://www.nextthought.com/toc", 'related'),
 						has_length(1))
 
-			course = book.toc.dom.getElementsByTagName('course')[0]
+			course = course_outline.getElementsByTagName('course')[0]
 			assert_that( course.getElementsByTagName('unit'), has_length(1) )
 			unit = course.getElementsByTagName('unit')[0]
 			assert_that( unit.attributes, has_entry( 'levelnum', '0'))
