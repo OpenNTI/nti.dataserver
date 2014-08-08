@@ -113,8 +113,10 @@ class UserNotableData(AbstractAuthenticatedView):
 		return topics_created_by_me_intids
 
 	def __topic_ntiids(self, excluded_topic_oids=()):
-		topic_ntiids = {x.NTIID for x in ResultSet(self._topics_created_by_me_intids, self._intids)
-						if to_external_ntiid_oid(x) not in excluded_topic_oids}
+		topic_ntiids = {
+			x.NTIID or None for x in ResultSet(self._topics_created_by_me_intids, self._intids)
+			if to_external_ntiid_oid(x) not in excluded_topic_oids
+		}
 		topic_ntiids.discard(None)
 		return list(topic_ntiids)
 
