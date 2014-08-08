@@ -116,13 +116,13 @@ class _RelatedWorkRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['creator'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.relatedwork.creator ))).strip()
-		output['desc'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.relatedwork.description ))).strip()
+		output['creator'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.creator ))).strip()
+		output['desc'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.description ))).strip()
 		output['href'] = self.el.uri
 		output['MimeType'] = self.el.mimeType
 		output['targetMimeType'] = self.el.targetMimeType
 		output['icon'] = self.el.relatedwork.iconResource.image.url
-		output['label'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.relatedwork.title ))).strip()
+		output['label'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.title ))).strip()
 		output['NTIID'] = self.el.ntiid
 		output['target-NTIID'] = self.el.target_ntiid
 		output['section'] = self.el.category
