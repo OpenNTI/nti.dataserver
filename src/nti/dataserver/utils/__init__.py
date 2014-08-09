@@ -33,7 +33,7 @@ from nti.externalization.persistence import NoPickle
 import nti.monkey.relstorage_patch_all_except_gevent_on_import
 nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
 
-def _configure(self=None, set_up_packages=(), features=(), context=None):
+def _configure(self=None, set_up_packages=(), features=(), context=None, execute=True):
 
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
@@ -55,7 +55,7 @@ def _configure(self=None, set_up_packages=(), features=(), context=None):
 
 			if isinstance( package, basestring ):
 				package = dottedname.resolve( package )
-			context = xmlconfig.file( filename, package=package, context=context )
+			context = xmlconfig.file( filename, package=package, context=context, execute=execute )
 
 		return context
 
@@ -242,11 +242,15 @@ class _MockDataserver(object):
 		self.shards = dataserver_folder['shards']
 		self.root_folder = dataserver_folder.__parent__
 
+import os
+import os.path
+
 def interactive_setup(root=".",
 					  config_features=(),
 					  xmlconfig_packages=(),
 					  in_site=True,
-					  with_dataserver=True):
+					  with_dataserver=True,
+					  with_library=False):
 	"""
 	Set up the environment for interactive use, configuring the
 	database and dataserver site. The root database ('Users')
@@ -261,6 +265,9 @@ def interactive_setup(root=".",
 	:keyword with_dataserver: If ``True`` (the default), an object presenting
 		a minimal :class:`nti.dataserver.interfaces.IDataserver` interface
 		will be registered globally.
+	:keyword with_library: If ``True`` (*not* the default) then the library will
+		be loaded from the ``etc/library.zcml`` file during the configuration process.
+
 	"""
 
 	logging.basicConfig(level=logging.INFO)
@@ -268,8 +275,31 @@ def interactive_setup(root=".",
 
 	setHooks()
 	packages = ['nti.dataserver']
-	packages.extend(xmlconfig_packages)
-	_configure(set_up_packages=packages, features=config_features)
+	if xmlconfig_packages:
+		packages = set(xmlconfig_packages)
+	context = _configure(set_up_packages=packages, features=config_features, execute=False)
+	if with_library:
+		# XXX: Very similar to nti.appserver.application.
+		DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
+		dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
+		if dataserver_dir_exists:
+			DATASERVER_DIR = os.path.abspath( DATASERVER_DIR )
+		def dataserver_file( *args ):
+			return os.path.join( DATASERVER_DIR, *args )
+		def is_dataserver_file( *args ):
+			return dataserver_dir_exists and os.path.isfile( dataserver_file( *args ) )
+		if is_dataserver_file( 'etc', 'library.zcml'):
+			library_zcml = dataserver_file( 'etc', 'library.zcml' )
+			context = xmlconfig.file(library_zcml,
+									 package=dottedname.resolve('nti.appserver'),
+									 context=context,
+									 execute=False)
+
+	context.execute_actions()
+
+	if with_library:
+		from nti.contentlibrary.interfaces import IContentPackageLibrary
+		component.getUtility(IContentPackageLibrary).syncContentPackages()
 
 	from nti.dataserver.config import temp_get_config
 	env = temp_get_config(root)
