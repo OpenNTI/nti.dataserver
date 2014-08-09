@@ -49,6 +49,9 @@ from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.utils.property import CachedProperty as _CachedProperty
 from nti.utils.property import alias as _alias
 from nti.dataserver.interfaces import IPrincipal
+from .interfaces import IUseOIDForNTIID
+from nti.dataserver.traversal import find_interface
+from nti.externalization.oids import to_external_ntiid_oid
 
 class _CreatedNamedNTIIDMixin(object):
 	"""
@@ -95,6 +98,9 @@ class _CreatedNamedNTIIDMixin(object):
 		set; until then it is none. We cache based on this value and
 		our specific part (which includes our __name__)
 		"""
+		if find_interface(self, IUseOIDForNTIID, strict=False) is not None:
+			return to_external_ntiid_oid(self, mask_creator=True)
+
 		creator_name = self._ntiid_creator_username
 		if creator_name:
 			return _make_ntiid( date=_NTIID_DATE,
