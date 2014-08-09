@@ -226,7 +226,7 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	value.
 	"""
 
-	def syncContentPackages(force_update=False):
+	def syncContentPackages():
 		"""
 		Do whatever is necessary to sync content packages.
 
