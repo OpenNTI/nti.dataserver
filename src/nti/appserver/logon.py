@@ -927,7 +927,6 @@ def _deal_with_external_account(request, username, fname, lname, email, idurl, i
 	:param iface: The interface that the user object will implement.
 	:return: The user object
 	"""
-
 	dataserver = component.getUtility(nti_interfaces.IDataserver)
 	user = users.User.get_user( username=username, dataserver=dataserver )
 	url_attr = iface.names()[0] if iface and iface.names() and idurl else None
