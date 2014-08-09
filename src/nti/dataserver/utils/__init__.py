@@ -297,10 +297,6 @@ def interactive_setup(root=".",
 
 	context.execute_actions()
 
-	if with_library:
-		from nti.contentlibrary.interfaces import IContentPackageLibrary
-		component.getUtility(IContentPackageLibrary).syncContentPackages()
-
 	from nti.dataserver.config import temp_get_config
 	env = temp_get_config(root)
 	db = env.connect_databases()
@@ -315,5 +311,8 @@ def interactive_setup(root=".",
 	if with_dataserver:
 		component.getGlobalSiteManager().registerUtility(_MockDataserver(ds_folder,
 																		 conn))
+	if with_library:
+		from nti.contentlibrary.interfaces import IContentPackageLibrary
+		component.getUtility(IContentPackageLibrary).syncContentPackages()
 
 	return (db, conn, root)
