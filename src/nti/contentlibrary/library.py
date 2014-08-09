@@ -132,7 +132,7 @@ class AbstractContentPackageLibrary(object):
 		if prefix:
 			self.url_prefix = prefix
 
-	def syncContentPackages(self, force_update=False):
+	def syncContentPackages(self):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
@@ -167,8 +167,7 @@ class AbstractContentPackageLibrary(object):
 					break
 			if new is None:
 				removed.append(old)
-			elif old.lastModified < new.lastModified or force_update:
-				# TODO We are not updating our lastMod time here.
+			elif old.lastModified < new.lastModified:
 				changed.append(old)
 			else:
 				unmodified.append(old)

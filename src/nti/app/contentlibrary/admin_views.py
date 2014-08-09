@@ -23,7 +23,6 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.externalization.internalization import read_body_as_external_object
 
 from nti.site.hostpolicy import synchronize_host_policies
 from nti.site.hostpolicy import run_job_in_all_host_sites
@@ -82,12 +81,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 		# First, synchronize the policies, make sure everything is all nice and installed.
 		synchronize_host_policies()
 
-		force_update = False
-		if self.request is not None:
-			body = read_body_as_external_object(self.request)
-			force_update = body.get('force_update') or body.get('forceUpdate', False)
-			force_update = bool(force_update)
-
 		# Next, the libraries.
 		# NOTE: We do not synchronize the global library; it is not
 		# expected to be persistent and is not shared across
@@ -113,7 +106,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				return site_lib.syncContentPackages(force_update=force_update)
+				return site_lib.syncContentPackages()
 
 
 		results = run_job_in_all_host_sites(sync_site_library)
