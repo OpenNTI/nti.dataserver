@@ -51,6 +51,8 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 
+from nti.externalization.externalization import to_external_object
+
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.schema.interfaces import InvalidValue
@@ -535,6 +537,16 @@ class AbstractSitePolicyEventListener(object):
 			return
 		assert getattr(user_interfaces.IEmailAddressable(profile, None), 'email', None) == email
 		assert getattr(IPrincipal(profile, None), 'id', None) == user.username
+
+		user_ext = to_external_object(user)
+		informal_username = user_ext.get('NonI18NFirstName', profile.realname) or user.username
+
+		args = {'user': user,
+				'profile': profile,
+				'email': email,
+				'informal_username': informal_username,
+				'context': user }
+
 		# Need to send both HTML and plain text if we send HTML, because
 		# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 		# only works with a text part)
@@ -542,7 +554,7 @@ class AbstractSitePolicyEventListener(object):
 			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
 			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
 			recipients=[profile],
-			template_args={'user': user, 'profile': profile, 'context': user },
+			template_args=args,
 			request=event.request,
 			package=self.__find_my_package())
 
