@@ -81,6 +81,11 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 		# First, synchronize the policies, make sure everything is all nice and installed.
 		synchronize_host_policies()
 
+		force_update = False
+		if self.request is not None:
+			force_update = self.request.params.get( 'force_update', False )
+			force_update = bool( force_update )
+
 		# Next, the libraries.
 		# NOTE: We do not synchronize the global library; it is not
 		# expected to be persistent and is not shared across
@@ -106,7 +111,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				return site_lib.syncContentPackages()
+				return site_lib.syncContentPackages( force_update=force_update )
 
 
 		results = run_job_in_all_host_sites(sync_site_library)
