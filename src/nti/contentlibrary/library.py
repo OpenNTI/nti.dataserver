@@ -131,8 +131,8 @@ class AbstractContentPackageLibrary(object):
 		assert enumeration is not None
 		if prefix:
 			self.url_prefix = prefix
-		
-	def syncContentPackages(self):
+
+	def syncContentPackages(self, force_update=False):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
@@ -154,11 +154,11 @@ class AbstractContentPackageLibrary(object):
 		changed = []
 		unmodified = []
 		old_content_packages_keys = [o.key for o in old_content_packages]
-	
+
 		for new in new_content_packages:
 			if new.key not in old_content_packages_keys:
 				added.append(new)
-		
+
 		for old in old_content_packages:
 			new = None
 			for x in new_content_packages:
@@ -167,7 +167,8 @@ class AbstractContentPackageLibrary(object):
 					break
 			if new is None:
 				removed.append(old)
-			elif old.lastModified < new.lastModified:
+			elif old.lastModified < new.lastModified or force_update:
+				# TODO We are not updating our lastMod time here.
 				changed.append(old)
 			else:
 				unmodified.append(old)
