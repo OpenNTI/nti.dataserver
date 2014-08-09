@@ -352,9 +352,12 @@ class ntivideo(ntimedia):
 
 	subtitle = None
 
+	_poster_override = None
+	_thumb_override = None
+
 	# A Float subclass to get \caption handling
 	class caption(Base.Floats.Caption):
-		counter = 'figure'
+		counter = 'ntivideo'
 
 	class ntivideosource( Command ):
 		args = '[ options:dict ] service:str id:str'
@@ -402,6 +405,30 @@ class ntivideo(ntimedia):
 				else:
 					logger.warning('Unknown video type: %s', self.attributes['service'])
 
+	class ntiposteroverride( Command ):
+		args = '[ options:dict ] url:str:source'
+		blockType = True
+
+		def digest(self, tokens):
+			tok = super(ntivideo.ntiposteroverride,self).digest(tokens)
+			self.parentNode._poster_override = self.attributes['url']
+			sources = self.parentNode.getElementsByTagName( 'ntivideosource' )
+			for source in sources:
+				source.poster = self.attributes['url']
+			return tok
+
+	class ntithumbnailoverride( Command ):
+		args = '[ options:dict ] url:str:source'
+		blockType = True
+
+		def digest(self, tokens):
+			tok = super(ntivideo.ntithumbnailoverride,self).digest(tokens)
+			self.parentNode._thumb_override = self.attributes['url']
+			sources = self.parentNode.getElementsByTagName( 'ntivideosource' )
+			for source in sources:
+				source.thumbnail = self.attributes['url']
+			return tok
+
 	def digest(self, tokens):
 		res = super(ntivideo, self).digest(tokens)
 		if self.macroMode == self.MODE_BEGIN:
@@ -436,8 +463,17 @@ class ntivideo(ntimedia):
 
 	@readproperty
 	def poster(self):
-		sources = self.getElementsByTagName( 'ntivideosource' )
-		return sources[0].poster
+		if not self._poster_override:
+			sources = self.getElementsByTagName( 'ntivideosource' )
+			return sources[0].poster
+		return self._poster_override
+
+	@readproperty
+	def thumbnail(self):
+		if not self._thumbnail_override:
+			sources = self.getElementsByTagName( 'ntivideosource' )
+			return sources[0].thumbnail
+		return self._thumbnail_override
 
 	@readproperty
 	def video_sources(self):
