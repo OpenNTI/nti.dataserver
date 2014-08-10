@@ -133,7 +133,7 @@ class _CourseExtractor(object):
 		# SAJ: Only produce and overview JSON for lessons with content driven overviews
 		overview_nodes = lesson_node.getElementsByTagName('courseoverviewgroup')
 		if len(overview_nodes) > 0:
-			ntiid = re.sub('[\.,/,\*,\?,\<,\>,\|]', '_', lesson_node.ntiid.replace('\\', '_'))
+			ntiid = re.sub('[:,\.,/,\*,\?,\<,\>,\|]', '_', lesson_node.ntiid.replace('\\', '_'))
 			outfile = '%s.json' % ntiid
 
 			trx = IJSONTransformer(lesson_node, None)
