@@ -176,6 +176,16 @@ class TestFilesystem(ContentlibraryLayerTest):
 		# doesn't have access to its parent contents yet.
 		assert_that( site_lib, has_property( 'contentPackages', is_empty() ))
 
+	def test_state(self):
+		unit = filesystem.FilesystemContentUnit()
+		unit._v_foo = 1
+		assert_that( unit.__getstate__(), is_({} ))
+
+		unit = filesystem.PersistentFilesystemContentUnit()
+		unit._v_foo = 1
+		unit._foo = 42
+		assert_that( unit.__getstate__(), is_( {'_foo': 42} ))
+
 from zope import component
 
 class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):

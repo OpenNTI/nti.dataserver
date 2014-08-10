@@ -64,6 +64,21 @@ class ContentUnit(PermissiveSchemaConfigured,
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
 									  self.__name__, getattr(self, 'key', self.href))
 
+	def __getstate__(self):
+		# object defines neither getstate or setstate, but subclasses may
+		# mixin a superclass, Persistent, that does. If they do so, they must
+		# put it BEFORE this object in the MRO
+		return {k: v for
+				k, v in self.__dict__.iteritems()
+				if not k.startswith('_v')}
+
+	def __setstate__(self, state):
+		# older pickles may have _v properties in them
+		self_dict = self.__dict__
+		for k, v in state.iteritems():
+			if not k.startswith('_v'):
+				self_dict[str(k)] = v
+
 
 @interface.implementer(IPotentialLegacyCourseConflatedContentPackage)
 class ContentPackage(ContentUnit,

@@ -417,6 +417,8 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 
 
 
+# Order matters, we must inherit Persistent FIRST to get the right __getstate__,etc,
+# behaviour
 
 from persistent import Persistent
 
