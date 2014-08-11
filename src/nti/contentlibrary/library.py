@@ -179,8 +179,8 @@ class AbstractContentPackageLibrary(object):
 		# now set up our view of the world
 		_contentPackages = []
 		_contentPackages.extend(added)
-		_contentPackages.extend(changed)
 		_contentPackages.extend(unmodified)
+		_contentPackages.extend([p.new for p in changed])
 
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
