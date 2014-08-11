@@ -38,6 +38,8 @@ class ContentUnitWeakRef(object):
 
 
 	def __call__(self):
+		# We're not a caching weak ref, we need to pick
+		# up on changes that happen in the library
 		lib = component.getUtility(IContentPackageLibrary)
 		return lib.get(self._ntiid)
 

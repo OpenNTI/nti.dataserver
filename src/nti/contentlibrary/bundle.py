@@ -223,7 +223,9 @@ class _ContentBundleMetaInfo(object):
 
 	ContentPackages = FieldProperty(_IContentBundleMetaInfo['ContentPackages'])
 
-	def __init__(self, key, content_library):
+	_ContentPackages_wrefs = ()
+
+	def __init__(self, key, content_library, require_ntiid=True):
 		# For big/complex JSON, we want to avoid loading the JSON
 		# and turning it indo objects unless the timestamp is newer;
 		# however, here we need the NTIID, which comes out of the file;
@@ -231,7 +233,7 @@ class _ContentBundleMetaInfo(object):
 		json_value = key.readContentsAsJson()
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
-		if 'ntiid' not in json_value:
+		if require_ntiid and 'ntiid' not in json_value:
 			raise ValueError("Missing ntiid", key)
 
 		for k, v in json_value.items():
@@ -241,7 +243,8 @@ class _ContentBundleMetaInfo(object):
 		self.key = key
 
 		if self.ContentPackages:
-			self.__dict__[str('ContentPackages')] = self.getContentPackagesWrefs(content_library)
+			self._ContentPackages_wrefs = self.getContentPackagesWrefs(content_library)
+			self.__dict__[str('ContentPackages')] = self._ContentPackages_wrefs
 
 
 	def getContentPackagesWrefs(self, library):
@@ -314,20 +317,34 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	bundle_iface = IContentPackageBundle
 	# ^ In the past, we used interface.providedBy(bundle), but that
 	# could let anything be set
-	meta = _meta or _ContentBundleMetaInfo(data_key, content_library)
-
+	meta = _meta or _ContentBundleMetaInfo(data_key, content_library,
+										   require_ntiid='ntiid' not in excluded_keys)
+	fields_to_update = set(meta.__dict__) - set(excluded_keys)
 	# Be careful to only update fields that have changed
 	modified = False
-	for k in (set(meta.__dict__) - set(excluded_keys)):
-		# if _meta is None then we are rebuilding references
-		if bundle_iface.get(k) and (_meta is None or getattr(bundle, k, None) != getattr(meta, k)):
+	for k in fields_to_update:
+		if not bundle_iface.get(k):
+			# not an interface field, ignore
+			continue
+
+		if k == 'ContentPackages':
+			# Treat these specially so that we don't have to resolve
+			# weak references; if everything was *missing*, the ContentPackages
+			# could come back as empty both places
+			try:
+				needs_copy = bundle._ContentPackages_wrefs != meta._ContentPackages_wrefs
+			except AttributeError:
+				needs_copy = getattr(bundle, k, None) != getattr(meta, k)
+			if needs_copy:
+				# Our ContentPackages actually may bypass the interface by already
+				# being weakly referenced if missing, hence avaiding
+				# the validation step
+				modified = True
+				bundle.ContentPackages = meta.ContentPackages
+		elif getattr(bundle, k, None) != getattr(meta, k):
 			modified = True
-			# Our ContentPackages actually may bypass the interface by already
-			# being weakly referenced if missing
-			if k != 'ContentPackages':
-				validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
-			else:
-				setattr(bundle, str(k), getattr(meta, k))
+			validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
+
 
 	if bundle.root != meta.key.__parent__:
 		modified = True
@@ -409,6 +426,7 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			def _update_bundle(bundle, meta):
 				sync_bundle_from_json_key(meta.key, bundle,
 										  content_library=content_library,
+										  # pass in the existing object as an optimization
 										  _meta=meta )
 				assert meta.ntiid == bundle.ntiid
 
