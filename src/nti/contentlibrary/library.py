@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import numbers
 import warnings
+from collections import namedtuple
 
 from persistent import Persistent
 
@@ -91,6 +92,8 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 		return root.enumerateChildren()
 
 
+_ProxyChange = namedtuple('_ProxyChange', ['ntiid', 'new', 'old'])
+
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
 	"""
@@ -168,7 +171,8 @@ class AbstractContentPackageLibrary(object):
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				changed.append(old)
+				proxy = _ProxyChange(new.ntiid, new, old)
+				changed.append(proxy)
 			else:
 				unmodified.append(old)
 
@@ -202,15 +206,25 @@ class AbstractContentPackageLibrary(object):
 		# XXX: Note that we are not doing it in parallel, because if we need
 		# ZODB site access, we can have issues. Also not we're not
 		# randomizing because we expect to be preloaded.
-		for old in removed:
+		
+		def _remove_unit(old):
 			lifecycleevent.removed(old)
 			old.__parent__ = None
-		for up in changed:
-			lifecycleevent.modified(up)
-		for new in added:
+		
+		def _add_unit(new):
 			new.__parent__ = self
 			lifecycleevent.created(new)
 			lifecycleevent.added(new)
+				
+		for old in removed:
+			_remove_unit(old)
+			
+		for up in changed:
+			_remove_unit(up.old)
+			_add_unit(up.new)
+
+		for new in added:
+			_add_unit(new)
 
 		if removed or added or changed or never_synced:
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
