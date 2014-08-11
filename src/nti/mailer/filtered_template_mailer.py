@@ -49,6 +49,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 									  template_args=None,
 									  attachments=(),
 									  package=None,
+									  bcc=None,
 									  text_template_extension='.txt',
 									  **kwargs):
 		# Implementation wise, we know that all activity
@@ -65,6 +66,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 			local, _ = addr.split('@')
 			return 'dummy.email+' + local + '@nextthought.com'
 		filtered_recip = [_tx(addr) for addr in recipients]
+		filtered_bcc = [_tx(addr) for addr in bcc] if bcc else None
 
 		if '_level' in kwargs:
 			kwargs['_level'] = kwargs['_level'] + 1
@@ -77,6 +79,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 																  recipients=filtered_recip,
 																  template_args=template_args,
 																  attachments=attachments,
+																  bcc=filtered_bcc,
 																  package=package,
 																  text_template_extension=text_template_extension,
 																  **kwargs)
@@ -97,6 +100,7 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 									  request=None,
 									  recipients=(),
 									  template_args=None,
+									  bcc=None,
 									  attachments=(),
 									  package=None,
 									  text_template_extension='.txt',
@@ -130,5 +134,6 @@ class ImpersonatedMailer(NextThoughtOnlyMailer):
 					  template_args=template_args,
 					  attachments=attachments,
 					  package=package,
+					  bcc=bcc,
 					  text_template_extension=text_template_extension,
 					  **kwargs)

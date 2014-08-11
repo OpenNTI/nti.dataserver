@@ -122,6 +122,7 @@ class ITemplatedMailer(interface.Interface):
 									  template_args=None,
 									  attachments=(),
 									  package=None,
+									  bcc=None,
 									  text_template_extension='.txt'):
 		"""
 		The same arguments and return types as :meth:`queue_simple_html_text_email`,

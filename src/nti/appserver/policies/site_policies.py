@@ -472,6 +472,7 @@ class AbstractSitePolicyEventListener(object):
 	#: such as "the.package:other_dir/foobar"
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = None
 	NEW_USER_CREATED_EMAIL_SUBJECT = None
+	NEW_USER_CREATED_BCC = None
 
 	#: If defined, this will be send in the ``nti.landing_page``
 	#: cookie when a user logs on. Must be a byte string.
@@ -553,6 +554,7 @@ class AbstractSitePolicyEventListener(object):
 		component.getUtility(ITemplatedMailer).queue_simple_html_text_email(
 			self.NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME,
 			subject=self.NEW_USER_CREATED_EMAIL_SUBJECT,
+			bcc=self.NEW_USER_CREATED_BCC,
 			recipients=[profile],
 			template_args=args,
 			request=event.request,

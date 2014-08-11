@@ -53,7 +53,7 @@ class _BaseMixin(object):
 		assert_that( self.mailer(),
 					 validly_provides(ITemplatedMailer))
 
-	def _do_check(self, recipient, to, extra_environ=None):
+	def _do_check(self, recipient, to, bcc=None, bcc_to=None, extra_environ=None):
 		user = User()
 		profile = Profile()
 		request = Request()
@@ -66,6 +66,7 @@ class _BaseMixin(object):
 		msg = self.mailer().create_simple_html_text_email('new_user_created',
 													 subject='Hi there',
 													 recipients=[recipient],
+													 bcc=bcc,
 													 template_args={'user': user, 'profile': profile, 'context': user },
 													 package='nti.appserver',
 													 request=request)
@@ -73,12 +74,12 @@ class _BaseMixin(object):
 		base_msg = msg.to_message()
 		assert_that( base_msg, has_entry('To', to) )
 
-	def _check(self, recipient, to, extra_environ=None):
+	def _check(self, recipient, to, extra_environ=None, **kwargs ):
 		self._do_check(recipient, to, extra_environ=extra_environ)
 		if isinstance(recipient, basestring):
 			prin = Principal()
 			prin.email = recipient
-			self._do_check(EmailAddresablePrincipal(prin), to, extra_environ=extra_environ)
+			self._do_check(EmailAddresablePrincipal(prin), to, extra_environ=extra_environ, **kwargs)
 
 
 class TestNextThoughtOnlyEmail(AppLayerTest,_BaseMixin):
@@ -90,6 +91,13 @@ class TestNextThoughtOnlyEmail(AppLayerTest,_BaseMixin):
 
 	def test_create_mail_message_to_other(self):
 		self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com')
+
+	def test_bcc_to_nextthought(self):
+		bcc = Principal()
+		bcc.email = 'jamadden@ou.edu'
+		bcc = [bcc]
+		self._check( 'jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com',
+					bcc=bcc, bcc_to='dummy.email+jamadden@nextthought.com' )
 
 class TestImpersonatedEmail(AppLayerTest,_BaseMixin):
 
