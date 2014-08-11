@@ -99,7 +99,7 @@ def do_html_text_templates_exist(base_template,
 def _as_recipient_list(recipients):
 	if recipients:
 		# accept a raw string
-		recipients = [recipients] if not is_nonstr_iter(recipients) else recipients
+		recipients = recipients if is_nonstr_iter(recipients) else [recipients]
 		# Convert any IEmailAddressable into their email, and strip
 		# empty strings
 		recipients = [getattr(IEmailAddressable(x,x), 'email', x)

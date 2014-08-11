@@ -96,7 +96,14 @@ class TestNextThoughtOnlyEmail(AppLayerTest,_BaseMixin):
 	def test_create_mail_message_to_other(self):
 		self._check('jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com')
 
-	def test_bcc_to_nextthought(self):
+	def test_bcc_to_nextthought_realname(self):
+		bcc = Principal()
+		bcc.email = 'Name <bcc@foo.com>'
+		msg = self._check( 'jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com',
+						   bcc=bcc)
+		assert_that( msg, has_property('bcc', ['"Name" <dummy.email+bcc@nextthought.com>']) )
+
+	def test_bcc_to_nextthought_no_realname(self):
 		bcc = Principal()
 		bcc.email = 'bcc@foo.com'
 		msg = self._check( 'jamadden@ou.edu', 'dummy.email+jamadden@nextthought.com',

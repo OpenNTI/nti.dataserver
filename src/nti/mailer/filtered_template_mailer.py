@@ -20,6 +20,8 @@ from .interfaces import IEmailAddressable
 from pyramid.threadlocal import get_current_request
 from pyramid.compat import is_nonstr_iter
 
+import rfc822
+
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
 
@@ -35,11 +37,31 @@ class _BaseFilteredMailer(object):
 	def __getattr__(self, name):
 		return getattr(self._default_mailer, name)
 
+def _as_recipient_list(recipients):
+	if recipients:
+		return recipients if is_nonstr_iter(recipients) else [recipients]
+	return ()
+
 class NextThoughtOnlyMailer(_BaseFilteredMailer):
 	"""
 	This mailer ensures we only send email to nextthought.com
 	addresses. It should only be registered in \"testing\" sites.
 	"""
+
+	def _transform_recipient(self, addr):
+		# support IEmailAddressable. We lose
+		# VERP, but that's alright
+		addr = getattr(IEmailAddressable(addr, addr), 'email', addr)
+		if addr.endswith('@nextthought.com'):
+			return addr
+
+		realname, addr = rfc822.parseaddr(addr)
+		# XXX This blows up if we get a malformed
+		# email address
+		local, _ = addr.split('@')
+		addr = 'dummy.email+' + local + '@nextthought.com'
+		return rfc822.dump_address_pair( (realname, addr) )
+
 
 	def create_simple_html_text_email(self,
 									  base_template,
@@ -55,20 +77,10 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 		# Implementation wise, we know that all activity
 		# gets directed through this method, so we only need to filter
 		# here.
-		recipients = [recipients] if recipients and not is_nonstr_iter(recipients) else recipients
-		bcc = [bcc] if bcc and not is_nonstr_iter(bcc) else bcc
-		def _tx(addr):
-			# support IEmailAddressable. We lose
-			# VERP, but that's alright
-			addr = getattr(IEmailAddressable(addr, addr), 'email', addr)
-			if addr.endswith('@nextthought.com'):
-				return addr
-			# XXX This blows up if we get a malformed
-			# email address
-			local, _ = addr.split('@')
-			return 'dummy.email+' + local + '@nextthought.com'
-		filtered_recip = [_tx(addr) for addr in recipients]
-		filtered_bcc = [_tx(addr) for addr in bcc] if bcc else bcc
+		recipients = _as_recipient_list(recipients)
+		bcc = _as_recipient_list(bcc)
+		filtered_recip = [self._transform_recipient(addr) for addr in recipients]
+		filtered_bcc = [self._transform_recipient(addr) for addr in bcc]
 
 		if '_level' in kwargs:
 			kwargs['_level'] = kwargs['_level'] + 1
