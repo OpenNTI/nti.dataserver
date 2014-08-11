@@ -59,6 +59,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 									  'TestFilesystem' )
 		bucket = filesystem.FilesystemBucket(name='TestFilesystem')
 		bucket.absolute_path = absolute_path
+
 		package = filesystem._package_factory( bucket,
 											   filesystem.PersistentFilesystemContentPackage,
 											   filesystem.PersistentFilesystemContentUnit)
