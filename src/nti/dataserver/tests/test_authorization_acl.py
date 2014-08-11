@@ -25,7 +25,7 @@ from nti.dataserver.users import User, FriendsList
 
 try:
 	# FIXME: I'm not really sure where this code should live
-	from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
+	from nti.appserver.pyramid_authorization import ZopeACLAuthorizationPolicy as ACLAuthorizationPolicy
 except:
 	from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -354,23 +354,29 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 
 
 from zope.security.permission import Permission
+from pyramid.compat import is_nonstr_iter
 class Permits(BaseMatcher):
 
 	def __init__( self, prin, perm, policy=ACLAuthorizationPolicy() ):
 		super(Permits,self).__init__( )
-		self.prin = nti_interfaces.IPrincipal( prin )
+		if is_nonstr_iter(prin):
+			self.prin = [nti_interfaces.IPrincipal(x) for x in prin]
+		else:
+			self.prin = (nti_interfaces.IPrincipal( prin ),)
 		self.perm = perm if nti_interfaces.IPermission.providedBy( perm ) else Permission( perm )
 		self.policy = policy
 
 	def _matches( self, item ):
 		if not hasattr( item, '__acl__' ):
 			item = nti_interfaces.IACLProvider( item, item )
-		return self.policy.permits( item, [self.prin], self.perm )
+		return self.policy.permits( item,
+									self.prin,
+									self.perm )
 
 	__description__ = 'ACL permitting '
 	def describe_to( self, description ):
 		description.append_text( self.__description__ ) \
-								 .append_text( self.prin.id ) \
+								 .append_text( ','.join([x.id for x in self.prin] )) \
 								 .append_text( ' permission ' ) \
 								 .append( self.perm.id )
 
