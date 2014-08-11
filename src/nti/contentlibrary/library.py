@@ -12,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import numbers
 import warnings
-from collections import namedtuple
 
 from persistent import Persistent
 
@@ -91,9 +90,6 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 
 		return root.enumerateChildren()
 
-
-_ProxyChange = namedtuple('_ProxyChange', ['ntiid', 'new', 'old'])
-
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
 	"""
@@ -141,7 +137,7 @@ class AbstractContentPackageLibrary(object):
 		content package, as appropriate.
 		"""
 		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
-
+		# from IPython.core.debugger import Tracer; Tracer()()
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
 
@@ -154,8 +150,9 @@ class AbstractContentPackageLibrary(object):
 
 		added = []
 		removed = []
-		changed = []
 		unmodified = []
+		changed_new = []
+		changed_old = []
 		old_content_packages_keys = [o.key for o in old_content_packages]
 
 		for new in new_content_packages:
@@ -171,30 +168,31 @@ class AbstractContentPackageLibrary(object):
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				proxy = _ProxyChange(new.ntiid, new, old)
-				changed.append(proxy)
+				changed_new.append(new)
+				changed_old.append(old)
 			else:
 				unmodified.append(old)
-
+		
 		# now set up our view of the world
 		_contentPackages = []
 		_contentPackages.extend(added)
 		_contentPackages.extend(unmodified)
-		_contentPackages.extend([p.new for p in changed])
+		_contentPackages.extend(changed_new)
 
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
-		self._contentPackages = _contentPackages
-		self._content_packages_by_ntiid = _content_packages_by_ntiid
-		self._enumeration_last_modified = enumeration_last_modified
-
-		if (removed or added or changed) and not never_synced:
+		if removed or added or changed_new or never_synced:
+			self._contentPackages = _contentPackages
+			self._enumeration_last_modified = enumeration_last_modified
+			self._content_packages_by_ntiid = _content_packages_by_ntiid
+						
+		if (removed or added or changed_new) and not never_synced:
 			logger.info("Library %s adding packages %s", self, added)
-			logger.info("Library %s changing packages %s", self, changed)
 			logger.info("Library %s removing packages %s", self, removed)
+			logger.info("Library %s changing packages %s", self, changed_new)
 
 		# Now fire the events letting listeners (e.g., index and question adders)
 		# know that we have content. Randomize the order of this across worker
@@ -206,7 +204,7 @@ class AbstractContentPackageLibrary(object):
 		# XXX: Note that we are not doing it in parallel, because if we need
 		# ZODB site access, we can have issues. Also not we're not
 		# randomizing because we expect to be preloaded.
-		
+			
 		def _remove_unit(old):
 			lifecycleevent.removed(old)
 			old.__parent__ = None
@@ -219,14 +217,16 @@ class AbstractContentPackageLibrary(object):
 		for old in removed:
 			_remove_unit(old)
 			
-		for up in changed:
-			_remove_unit(up.old)
-			_add_unit(up.new)
+		# add remove so new content units can be found
+		# e.g. new assigments are introduced
+		for new, old in zip(changed_new, changed_old):
+			_remove_unit(old)
+			_add_unit(new)
 
 		for new in added:
 			_add_unit(new)
 
-		if removed or added or changed or never_synced:
+		if removed or added or changed_new or never_synced:
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
 			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
