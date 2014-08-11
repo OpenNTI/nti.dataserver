@@ -242,6 +242,10 @@ class _MockDataserver(object):
 		self.shards = dataserver_folder['shards']
 		self.root_folder = dataserver_folder.__parent__
 
+	def get_by_oid(self, *args, **kwargs):
+		from nti.dataserver._Dataserver import get_by_oid
+		return get_by_oid(*args, **kwargs)
+
 import os
 import os.path
 

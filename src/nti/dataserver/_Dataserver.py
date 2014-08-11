@@ -61,6 +61,13 @@ from . import meeting_container_storage
 
 DATASERVER_DEMO = 'DATASERVER_DEMO' in os.environ and 'DATASERVER_NO_DEMO' not in os.environ
 
+def get_by_oid(oid_string, ignore_creator=False):
+	resolver = component.queryUtility( interfaces.IOIDResolver )
+	if resolver is None:
+		logger.warn( "Using dataserver without a proper ISiteManager configuration." )
+	return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
+
+
 @interface.implementer(interfaces.IShardLayout)
 class MinimalDataserver(object):
 	"""
@@ -294,10 +301,7 @@ class MinimalDataserver(object):
 			gsm.unregisterUtility( self.redis )
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
-		resolver = component.queryUtility( interfaces.IOIDResolver )
-		if resolver is None:
-			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
-		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
+		return get_by_oid(oid_string, ignore_creator=ignore_creator)
 
 	def _reopen( self ):
 		self._open_dbs()
