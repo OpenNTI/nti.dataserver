@@ -18,6 +18,7 @@ from .interfaces import ITemplatedMailer
 from .interfaces import IEmailAddressable
 
 from pyramid.threadlocal import get_current_request
+from pyramid.compat import is_nonstr_iter
 
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
@@ -34,7 +35,6 @@ class _BaseFilteredMailer(object):
 	def __getattr__(self, name):
 		return getattr(self._default_mailer, name)
 
-
 class NextThoughtOnlyMailer(_BaseFilteredMailer):
 	"""
 	This mailer ensures we only send email to nextthought.com
@@ -49,12 +49,14 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 									  template_args=None,
 									  attachments=(),
 									  package=None,
-									  bcc=None,
+									  bcc=(),
 									  text_template_extension='.txt',
 									  **kwargs):
 		# Implementation wise, we know that all activity
 		# gets directed through this method, so we only need to filter
 		# here.
+		recipients = [recipients] if recipients and not is_nonstr_iter(recipients) else recipients
+		bcc = [bcc] if bcc and not is_nonstr_iter(bcc) else bcc
 		def _tx(addr):
 			# support IEmailAddressable. We lose
 			# VERP, but that's alright
@@ -66,7 +68,7 @@ class NextThoughtOnlyMailer(_BaseFilteredMailer):
 			local, _ = addr.split('@')
 			return 'dummy.email+' + local + '@nextthought.com'
 		filtered_recip = [_tx(addr) for addr in recipients]
-		filtered_bcc = [_tx(addr) for addr in bcc] if bcc else None
+		filtered_bcc = [_tx(addr) for addr in bcc] if bcc else bcc
 
 		if '_level' in kwargs:
 			kwargs['_level'] = kwargs['_level'] + 1
