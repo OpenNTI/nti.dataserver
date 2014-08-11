@@ -45,8 +45,7 @@ class SESMailer(object):
 	def send(self, fromaddr, toaddrs, message):
 		if not isinstance(message, Message): # pragma: no cover
 			raise ValueError('Message must be instance of email.message.Message')
-		if len(toaddrs) != 1: # pragma: no cover
-			raise ValueError("Message con only go to one recipient")
+
 		message = encode_message(message)
 
 		# Send the mail using SES, transforming SESError and known
@@ -56,8 +55,22 @@ class SESMailer(object):
 		# the fromaddr found in the message, but still use the VERP form
 		# in the fromaddr we pass to SES. In this way we can handle bounces
 		# with the recipient none-the-wiser. See also :mod:`nti.app.bulkemail.process`
+		# NOTE: Each recipient (To, CC, BCC) counts as a distinct message
+		# for purposes of the quota limits. There are a maximum of
+		# 50 dests per address. (http://docs.aws.amazon.com/ses/latest/APIReference/API_SendRawEmail.html)
+		# NOTE: It is recommended to send an email to individuals:
+		# http://docs.aws.amazon.com/ses/latest/DeveloperGuide/sending-email.html
+		# "When you send an email to multiple recipients (recipients
+		# are "To", "CC", and "BCC" addresses) and the call to Amazon
+		# SES fails, the entire email is rejected and none of the
+		# recipients will receive the intended email. We therefore
+		# recommend that you send an email to one recipient at a time."
+
+		# QQQ: The docs for SendRawEmail say that destinations is not required,
+		# so how does that interact with what's in the message body?
+		# Boto will accept either a string, a list of strings, or None
 		try:
-			self.sesconn.send_raw_email( message, fromaddr, toaddrs[0] )
+			self.sesconn.send_raw_email( message, fromaddr, toaddrs )
 		except SESAddressBlacklistedError:
 			# A permanent error, cause the processor
 			# to ditch the message

@@ -68,6 +68,11 @@ def _update_index_when_content_changes(content_package, index_iface):
 
 	set_contents(content_package)
 
+# These are called an add and on update;
+# note, though, that because of the way annotations are stored,
+# if children are removed, that annotation data stays
+# around
+
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
 											  IAudioIndexedDataContainer)
