@@ -414,7 +414,7 @@ setup(
 		# Plug to make zope.schema's vocabulary registry ZCA
 		# based and thus actually useful
 		'zope.vocabularyregistry >= 1.0.0',
-		'zopyx.txng3.ext >= 3.3.4' if not IS_PYPY else '',  # extensions don't build
+		'zopyx.txng3.ext == 3.3.4' if not IS_PYPY else '',  # extensions don't build
 		# Data analysis
 		# pandas,
 		# scikit-learn,
