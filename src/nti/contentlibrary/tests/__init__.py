@@ -18,6 +18,9 @@ from zope.component.hooks import setHooks
 
 import zope.testing.cleanup
 
+from ..interfaces import IContentUnitAnnotationUtility
+from zope import component
+
 class ContentlibraryTestLayer(ZopeComponentLayer,
 							  ConfiguringLayerMixin):
 
@@ -36,7 +39,10 @@ class ContentlibraryTestLayer(ZopeComponentLayer,
 
 	@classmethod
 	def testSetUp(cls, test=None):
-		pass
+		# If we installed any annotations, clear them, since
+		# they are tracked by NTIID and would otherwise persist
+		annotations = component.getUtility(IContentUnitAnnotationUtility)
+		annotations.annotations.clear()
 
 	@classmethod
 	def testTearDown(cls):

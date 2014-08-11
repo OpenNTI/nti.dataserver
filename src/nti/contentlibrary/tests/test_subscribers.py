@@ -205,7 +205,6 @@ class TestSubscribers(ContentlibraryLayerTest):
 									   ))
 
 		# test update existing object
-
 		bundle.lastModified = 0
 		eventtesting.clearEvents()
 		interfaces.ISyncableContentPackageBundleLibrary(bundle_lib).syncFromBucket(bundle_bucket)

@@ -58,6 +58,8 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 	__external_class_name__ = 'ContentPackageBundle'
 	__external_can_create__ = False
 
+	_SET_CREATED_MODTIME_ON_INIT = False
+
 	# Equality and hashcode not defined on purpose,
 	# identity semantics for now!
 
@@ -251,17 +253,18 @@ class _ContentBundleMetaInfo(object):
 		"""
 		persistent content bundles want to refer to weak refs;
 		we read the meta as ntiid strings that we either resolve
-		to actual packages, or weak refs to missing ntiids
+		to actual packages (which we then weak ref, so that equality works out),
+		or weak refs to missing ntiids
 		"""
 		cps = []
 		for ntiid in self.ContentPackages:
 			cp = library.get(ntiid)
 			if cp:
-				cps.append(cp)
+				cps.append(IWeakRef(cp))
 			else:
 				cps.append(contentunit_wref_to_missing_ntiid(ntiid))
 
-		return cps
+		return tuple(cps)
 
 def _readCurrent(lib):
 	try:
@@ -319,7 +322,9 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	# could let anything be set
 	meta = _meta or _ContentBundleMetaInfo(data_key, content_library,
 										   require_ntiid='ntiid' not in excluded_keys)
-	fields_to_update = set(meta.__dict__) - set(excluded_keys)
+	fields_to_update = (set(meta.__dict__)
+						- set(excluded_keys)
+						- {'lastModified', 'createdTime', 'modified', 'created'})
 	# Be careful to only update fields that have changed
 	modified = False
 	for k in fields_to_update:
@@ -337,7 +342,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 				needs_copy = getattr(bundle, k, None) != getattr(meta, k)
 			if needs_copy:
 				# Our ContentPackages actually may bypass the interface by already
-				# being weakly referenced if missing, hence avaiding
+				# being weakly referenced if missing, hence avoiding
 				# the validation step
 				modified = True
 				bundle.ContentPackages = meta.ContentPackages
@@ -352,6 +357,8 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 	if modified:
 		bundle.updateLastMod( meta.lastModified )
+	elif bundle.lastModified < meta.lastModified:
+		bundle.updateLastModIfGreater(meta.lastModified)
 
 	# Metadata if we need it
 	read_dublincore_from_named_key(bundle, data_key.__parent__, dc_meta_name)
@@ -457,7 +464,6 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 				need_event = True
 				logger.info("Updating bundles in library %s: %s",
 							self.context, things_to_update)
-
 				for meta in things_to_update:
 					bundle = self.context[meta.ntiid]
 					_update_bundle(bundle, meta)
