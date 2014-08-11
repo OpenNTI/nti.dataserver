@@ -12,7 +12,7 @@ from zope.dublincore import interfaces as dub_interfaces
 
 from zope.location.interfaces import IContained as IZContained
 from zope.container.interfaces import IContentContainer
-from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.container.constraints import contains # If passing strings, they require bytes, NOT unicode, or they fail
 
 from zope.interface.interfaces import IObjectEvent
 from zope.interface.interfaces import ObjectEvent
@@ -34,6 +34,8 @@ from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidTextLine as TextLine
 
 from nti.ntiids.schema import ValidNTIID
+
+from nti.utils.property import alias
 
 # pylint: disable=I0011,E0213,E0211
 
@@ -281,7 +283,7 @@ class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 @interface.implementer(IContentPackageLibraryModifiedOnSyncEvent)
 class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	"""
-	Content package synced event.
+	Content package library synced event.
 	"""
 
 class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
@@ -498,6 +500,39 @@ class IContentPackage(IContentUnit,
 	renderVersion = Int(title="Version of the rendering process that produced this package.",
 							   default=1,
 						min=1)
+
+
+class IContentPackageReplacedEvent(IObjectModifiedEvent):
+	"""
+	A special type of modification event sent when a content package
+	is replaced in the library by an update.
+
+	Unlike most normal containers, a content package library is not
+	guaranteed to maintain identity when objects change. This event
+	can and should be used to determine when a content package is being
+	replaced; you have access to both the old and incoming object. If
+	you have data stored directly on the content package object, you should
+	take appropriate steps to copy/move/update that data on the new object.
+
+	Note particularly that the children might be different between the two
+	objects.
+	"""
+
+	replacement = Object(IContentPackage,
+						 title="The replacement object; same as .object")
+	original = Object(IContentPackage,
+					  title="The object being replaced")
+
+@interface.implementer(IContentPackageReplacedEvent)
+class ContentPackageReplacedEvent(ObjectModifiedEvent):
+
+	replacement = alias('object')
+	original = None
+
+	def __init__(self, replacement, original, *descriptions):
+		ObjectModifiedEvent.__init__(self, replacement, *descriptions)
+		self.original = original
+
 
 class IPersistentContentUnit(IPersistent, IContentUnit):
 	"""

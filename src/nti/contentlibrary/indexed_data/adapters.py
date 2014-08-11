@@ -11,20 +11,23 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from zope.annotation.interfaces import IAnnotations
 
-from .container import IndexedDataContainer
-from .container import AudioIndexedDataContainer
-from .container import VideoIndexedDataContainer
-from .container import RelatedContentIndexedDataContainer
+from . import container
+from . import interfaces
 
 _KEY =  'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
 
+from .interfaces import TAG_NAMESPACE_FILE
+
 def indexed_data_adapter(content_unit,
-						 factory=IndexedDataContainer,
-						 namespace=''):
+						 factory=container.IndexedDataContainer,
+						 iface=interfaces.IIndexedDataContainer):
 
 	key = _KEY
+	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE,'')
 	if namespace:
 		key = key + '_' + namespace
 
@@ -32,24 +35,39 @@ def indexed_data_adapter(content_unit,
 	result = annotations.get(key)
 	if result is None:
 		result = annotations[key] = factory(content_unit.ntiid)
+		result.__name__ = key
+		# Notice that, unlike a typical annotation factory,
+		# we do not set (or check!) the result object parent
+		# to be the content unit. This is because we don't want to
+		# hold a reference to it because the annotations may be
+		# on a different utility
 
 	return result
 
-# TODO: The namespace data is duplicated in subscribers.py;
-# a bit of meta-programming (and iface tagged data) could
-# fix the duplication.
+import sys
+def _make_adapters():
+	frame = sys._getframe(1)
+	__module__ = frame.f_globals['__name__']
 
-def audio_indexed_data_adapter(content_unit):
-	return indexed_data_adapter(content_unit,
-								factory=AudioIndexedDataContainer,
-								namespace='audio_index.json')
+	types = ('audio', 'video', 'related_content')
 
-def video_indexed_data_adapter(content_unit):
-	return indexed_data_adapter(content_unit,
-								factory=VideoIndexedDataContainer,
-								namespace='video_index.json')
+	def make_func(iface, factory):
+		@interface.implementer(iface)
+		def func(content_unit):
+			return indexed_data_adapter(content_unit,
+										factory=factory,
+										iface=iface)
+		return func
 
-def related_content_indexed_data_adapter(content_unit):
-	return indexed_data_adapter(content_unit,
-								factory=RelatedContentIndexedDataContainer,
-								namespace='related_content_index.json')
+	for base in types:
+		identifier = ''.join([x.capitalize() for x in base.split('_')])
+		identifier = identifier + 'IndexedDataContainer'
+		iface = getattr(interfaces, 'I' + identifier )
+		factory = getattr(container, identifier)
+
+		func = make_func(iface, factory)
+		func_name = base + '_indexed_data_adapter'
+		func.__name__ = str(func_name)
+		frame.f_globals[func_name] = func
+
+_make_adapters()

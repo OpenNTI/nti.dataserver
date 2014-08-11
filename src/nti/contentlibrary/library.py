@@ -151,8 +151,8 @@ class AbstractContentPackageLibrary(object):
 		added = []
 		removed = []
 		unmodified = []
-		changed_new = []
-		changed_old = []
+		changed = []
+
 		old_content_packages_keys = [o.key for o in old_content_packages]
 
 		for new in new_content_packages:
@@ -168,31 +168,30 @@ class AbstractContentPackageLibrary(object):
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				changed_new.append(new)
-				changed_old.append(old)
+				changed.append( (new, old) )
 			else:
 				unmodified.append(old)
-		
+
 		# now set up our view of the world
 		_contentPackages = []
 		_contentPackages.extend(added)
 		_contentPackages.extend(unmodified)
-		_contentPackages.extend(changed_new)
+		_contentPackages.extend([x[0] for x in changed])
 
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
-		if removed or added or changed_new or never_synced:
+		if removed or added or changed or never_synced:
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
-						
-		if (removed or added or changed_new) and not never_synced:
+
+		if (removed or added or changed) and not never_synced:
 			logger.info("Library %s adding packages %s", self, added)
 			logger.info("Library %s removing packages %s", self, removed)
-			logger.info("Library %s changing packages %s", self, changed_new)
+			logger.info("Library %s changing packages %s", self, changed)
 
 		# Now fire the events letting listeners (e.g., index and question adders)
 		# know that we have content. Randomize the order of this across worker
@@ -204,29 +203,29 @@ class AbstractContentPackageLibrary(object):
 		# XXX: Note that we are not doing it in parallel, because if we need
 		# ZODB site access, we can have issues. Also not we're not
 		# randomizing because we expect to be preloaded.
-			
+
 		def _remove_unit(old):
 			lifecycleevent.removed(old)
 			old.__parent__ = None
-		
+
 		def _add_unit(new):
 			new.__parent__ = self
 			lifecycleevent.created(new)
 			lifecycleevent.added(new)
-				
+
 		for old in removed:
 			_remove_unit(old)
-			
-		# add remove so new content units can be found
-		# e.g. new assigments are introduced
-		for new, old in zip(changed_new, changed_old):
-			_remove_unit(old)
-			_add_unit(new)
+
+		for new, old in changed:
+			# Note that this is the special event that shows
+			# both objects.
+			new.__parent__ = self
+			notify(interfaces.ContentPackageReplacedEvent(new, old))
 
 		for new in added:
 			_add_unit(new)
 
-		if removed or added or changed_new or never_synced:
+		if removed or added or changed or never_synced:
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
 			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
@@ -271,21 +270,43 @@ class AbstractContentPackageLibrary(object):
 		to enforce a complete removal of the entire value, and the next
 		sync will be from scratch.
 		"""
-		if name == 'contentPackages' and '_contentPackages' in self.__dict__:
-			# When we are uncached to force re-enumeration,
-			# we need to send the corresponding object removed events
-			# so that people that care can clean up.
-			# TODO: What's the right order for this, before or after
-			# we do the delete?
-			for title in self._contentPackages:
-				lifecycleevent.removed(title)
-			name = '_contentPackages'
-			# Must also take care to clear its dependents
-			if '_content_packages_by_ntiid' in self.__dict__:
-				del self._content_packages_by_ntiid
-		super(AbstractContentPackageLibrary,self).__delattr__(name)
+		if name == 'contentPackages':
+			self.resetContentPackages()
+		else:
+			super(AbstractContentPackageLibrary,self).__delattr__(name)
 
 	titles = alias('contentPackages')
+
+	def resetContentPackages(self):
+		"""
+		As a nuclear option, this enforces a complete removal of all
+		the packages directly stored here. The next sync will be from
+		scratch.
+		"""
+
+		try:
+			# let subclasses be persistent
+			self._p_activate()
+		except AttributeError:
+			pass
+
+		if '_contentPackages' not in self.__dict__:
+			return
+
+		# When we are uncached to force re-enumeration,
+		# we need to send the corresponding object removed events
+		# so that people that care can clean up.
+		# TODO: What's the right order for this, before or after
+		# we do the delete?
+		for title in self._contentPackages:
+			lifecycleevent.removed(title)
+			title.__parent__ = None
+
+		# Must also take care to clear its dependents
+		if '_content_packages_by_ntiid' in self.__dict__:
+			del self._content_packages_by_ntiid
+		del self._contentPackages
+
 
 	@property
 	def createdTime(self):
