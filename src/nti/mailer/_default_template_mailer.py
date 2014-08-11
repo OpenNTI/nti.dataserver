@@ -20,6 +20,7 @@ from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid.path import caller_package
 from pyramid.threadlocal import get_current_request
+from pyramid.compat import is_nonstr_iter
 
 from pyramid_mailer.message import Message
 
@@ -95,6 +96,17 @@ def do_html_text_templates_exist(base_template,
 		return False
 	return True
 
+def _as_recipient_list(recipients):
+	if recipients:
+		# accept a raw string
+		recipients = [recipients] if not is_nonstr_iter(recipients) else recipients
+		# Convert any IEmailAddressable into their email, and strip
+		# empty strings
+		recipients = [getattr(IEmailAddressable(x,x), 'email', x)
+					  for x in recipients]
+		recipients = [x for x in recipients if isinstance(x, string_types) and x]
+	return recipients
+
 def create_simple_html_text_email(base_template,
 								  subject='',
 								  request=None,
@@ -102,7 +114,7 @@ def create_simple_html_text_email(base_template,
 								  template_args=None,
 								  attachments=(),
 								  package=None,
-								  bcc=None,
+								  bcc=(),
 								  text_template_extension='.txt',
 								  _level=3):
 	"""
@@ -119,12 +131,7 @@ def create_simple_html_text_email(base_template,
 		If no package is given, the package of the caller of this function is used.
 	"""
 
-	if recipients:
-		# Convert any IEmailAddressable into their email, and strip
-		# empty strings
-		recipients = [getattr(IEmailAddressable(x,x), 'email', x)
-					  for x in recipients]
-		recipients = [x for x in recipients if isinstance(x, string_types) and x]
+	recipients = _as_recipient_list(recipients)
 
 	if not recipients:
 		logger.debug( "Refusing to attempt to send email with no recipients" )
@@ -136,6 +143,8 @@ def create_simple_html_text_email(base_template,
 
 	if request is None:
 		request = get_current_request()
+
+	bcc = _as_recipient_list(bcc)
 
 	def make_args(extension):
 		# Mako gets bitchy if 'context' comes in as an argument, but

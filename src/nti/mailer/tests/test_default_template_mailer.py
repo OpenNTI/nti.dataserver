@@ -19,7 +19,7 @@ from hamcrest import assert_that
 from hamcrest import contains_string
 from hamcrest import not_none
 from hamcrest import is_
-
+from hamcrest import has_property
 
 from nti.app.testing.layers  import AppLayerTest
 from .._default_template_mailer import create_simple_html_text_email
@@ -49,7 +49,7 @@ class Request(object):
 
 class TestEmail(AppLayerTest):
 
-	def test_create_mail_message_with_non_ascii_name(self):
+	def test_create_mail_message_with_non_ascii_name_and_string_bcc(self):
 		class User(object):
 			username = 'the_user'
 
@@ -66,6 +66,7 @@ class TestEmail(AppLayerTest):
 		msg = create_simple_html_text_email('new_user_created',
 											subject='Hi there',
 											recipients=['jason.madden@nextthought.com'],
+											bcc='foo@bar.com',
 											template_args={'user': user, 'profile': profile, 'context': user },
 											package='nti.appserver',
 											request=request)
@@ -79,6 +80,9 @@ class TestEmail(AppLayerTest):
 
 		# Because we can't get to IPrincial, no VERP info
 		assert_that( msg.sender, is_('"NextThought" <no-reply@nextthought.com>') )
+
+		#
+		assert_that( msg, has_property('bcc', ['foo@bar.com']))
 
 
 	def test_create_email_with_verp(self):

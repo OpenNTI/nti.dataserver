@@ -81,6 +81,7 @@ class ITemplatedMailer(interface.Interface):
 									 subject='',
 									 request=None,
 									 recipients=(),
+									 bcc=(),
 									 template_args=None,
 									 attachments=(),
 									 package=None,
@@ -99,7 +100,7 @@ class ITemplatedMailer(interface.Interface):
 			(optionally) be able to become :class:`zope.security.interfaces.IPrincipal`
 			by adaptation; this may permit us to construct a better (e.g., VERP)
 			message.
-
+		:keyword bcc: As for recipients.
 		:keyword text_template_extension: The filename extension for the plain text template. Valid
 			values are ".txt" for Chameleon templates (this is the
 			default and preferred version) and ".mak" for Mako
@@ -122,7 +123,7 @@ class ITemplatedMailer(interface.Interface):
 									  template_args=None,
 									  attachments=(),
 									  package=None,
-									  bcc=None,
+									  bcc=(),
 									  text_template_extension='.txt'):
 		"""
 		The same arguments and return types as :meth:`queue_simple_html_text_email`,
