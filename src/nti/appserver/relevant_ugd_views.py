@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 
 
 from zope import interface
+from zope import component
 
 from pyramid import httpexceptions as _hexc
 
@@ -116,19 +117,21 @@ class _RelevantUGDView(query_views._UGDView):
 		return result
 
 	def _get_library_path(self, ntiid):
-		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
+		library = component.getUtility(lib_interfaces.IContentPackageLibrary)
 		paths = library.pathToNTIID(ntiid) if library else None
 		return paths[-1] if paths else None
 
 	def _scan_quizzes(self, ntiid, result=None):
 		result = LocatedExternalList() if result is None else result
-		library = self.request.registry.getUtility(lib_interfaces.IContentPackageLibrary)
+		library = component.getUtility(lib_interfaces.IContentPackageLibrary)
 		# quizzes are often subcontainers, so we look at the parent
 		# and its children
+		ntiids = set()
 		for unit in library.childrenOfNTIID(ntiid) + [self._get_library_path(ntiid)]:
-			for question in IQAssessmentItemContainer(unit, ()):
-				q_ntiid = getattr(question, 'ntiid', None)
-				if q_ntiid:
+			for asm_item in IQAssessmentItemContainer(unit, ()):
+				q_ntiid = getattr(asm_item, 'ntiid', None)
+				if q_ntiid and q_ntiid not in ntiids:
+					ntiids.add(q_ntiid)
 					self._get_items(q_ntiid, result)
 		return result
 

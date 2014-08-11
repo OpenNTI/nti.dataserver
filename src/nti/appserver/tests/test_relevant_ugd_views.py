@@ -100,11 +100,12 @@ class TestRelevantUGDView(ApplicationLayerTest):
 	@WithSharedApplicationMockDSWithChanges
 	def test_relevant_view_quiz(self):
 		requestor = 'ichigo@nt.com'
-		parent = 'tag:nextthought.com,2011-10:mathcounts-HTML-MN.2012.0'
+		parent = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.cosmetology'
 		containerId = 'tag:nextthought.com,2011-10:MN-NAQ-MiladyCosmetology.naq.1'
 		with mock_dataserver.mock_db_trans(self.ds):
 			ichigo = self._create_user(username='ichigo@nt.com')
-			self._create_note(ichigo, "tensa zangetsu", 'Bankai', containerId)
+			note = self._create_note(ichigo, "tensa zangetsu", 'Bankai', containerId)
+			note.body = [IPlainTextContentFragment("test_relevant_view_quiz")]
 
 		testapp = TestApp(self.app)
 		path = '/dataserver2/users/%s/Pages(%s)/RelevantUserGeneratedData' % (requestor, parent)

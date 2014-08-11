@@ -137,40 +137,38 @@ class AbstractContentPackageLibrary(object):
 		content package, as appropriate.
 		"""
 		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
-		# from IPython.core.debugger import Tracer; Tracer()()
+
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
+		old_content_packages_by_ntiid = {x.ntiid: x for x in old_content_packages}
 
 		new_content_packages = list(self._enumeration.enumerateContentPackages())
+		new_content_packages_by_ntiid = {x.ntiid: x for x in new_content_packages}
+		assert len(new_content_packages) == len(new_content_packages_by_ntiid), "Invalid library"
 		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
 
 		# Before we fire any events, compute all the work so that
 		# we can present a consistent view to any listeners that
 		# will be watching
 
-		added = []
 		removed = []
 		unmodified = []
 		changed = []
-
-		old_content_packages_keys = [o.key for o in old_content_packages]
-
-		for new in new_content_packages:
-			if new.key not in old_content_packages_keys:
-				added.append(new)
+		added = [package
+				 for ntiid, package in new_content_packages_by_ntiid.items()
+				 if ntiid not in old_content_packages_by_ntiid]
 
 		for old in old_content_packages:
-			new = None
-			for x in new_content_packages:
-				if x.key == old.key:
-					new = x
-					break
+			new = new_content_packages_by_ntiid.get(old.ntiid)
+
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
 				changed.append( (new, old) )
 			else:
 				unmodified.append(old)
+
+		something_changed = removed or added or changed
 
 		# now set up our view of the world
 		_contentPackages = []
@@ -180,58 +178,52 @@ class AbstractContentPackageLibrary(object):
 
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
-
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
-		if removed or added or changed or never_synced:
+
+		if something_changed or never_synced:
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
 
-		if (removed or added or changed) and not never_synced:
-			logger.info("Library %s adding packages %s", self, added)
-			logger.info("Library %s removing packages %s", self, removed)
-			logger.info("Library %s changing packages %s", self, changed)
+			if not never_synced:
+				logger.info("Library %s adding packages %s", self, added)
+				logger.info("Library %s removing packages %s", self, removed)
+				logger.info("Library %s changing packages %s", self, changed)
 
-		# Now fire the events letting listeners (e.g., index and question adders)
-		# know that we have content. Randomize the order of this across worker
-		# processes so that we don't collide too badly on downloading indexes if need be
-		# (only matters if we are not preloading).
-		# Do this in greenlets/parallel. This can radically speed up
-		# S3 loading when we need the network.
-		# XXX: Does order matter?
-		# XXX: Note that we are not doing it in parallel, because if we need
-		# ZODB site access, we can have issues. Also not we're not
-		# randomizing because we expect to be preloaded.
+			# Now fire the events letting listeners (e.g., index and question adders)
+			# know that we have content. Randomize the order of this across worker
+			# processes so that we don't collide too badly on downloading indexes if need be
+			# (only matters if we are not preloading).
+			# Do this in greenlets/parallel. This can radically speed up
+			# S3 loading when we need the network.
+			# XXX: Does order matter?
+			# XXX: Note that we are not doing it in parallel, because if we need
+			# ZODB site access, we can have issues. Also not we're not
+			# randomizing because we expect to be preloaded.
 
-		def _remove_unit(old):
-			lifecycleevent.removed(old)
-			old.__parent__ = None
+			for old in removed:
+				lifecycleevent.removed(old)
+				old.__parent__ = None
 
-		def _add_unit(new):
-			new.__parent__ = self
-			lifecycleevent.created(new)
-			lifecycleevent.added(new)
+			for new, old in changed:
+				# Note that this is the special event that shows
+				# both objects.
+				new.__parent__ = self
+				notify(interfaces.ContentPackageReplacedEvent(new, old))
 
-		for old in removed:
-			_remove_unit(old)
+			for new in added:
+				new.__parent__ = self
+				lifecycleevent.created(new)
+				lifecycleevent.added(new)
 
-		for new, old in changed:
-			# Note that this is the special event that shows
-			# both objects.
-			new.__parent__ = self
-			notify(interfaces.ContentPackageReplacedEvent(new, old))
-
-		for new in added:
-			_add_unit(new)
-
-		if removed or added or changed or never_synced:
+			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
 			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
-
 			notify(event)
 
+		# Finish up by saying that we sync'd, even if nothing changed
 		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 
 	#: A map from top-level content-package NTIID to the content package.

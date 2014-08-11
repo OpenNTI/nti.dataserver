@@ -43,14 +43,21 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 	def setUp(cls):
 		# Must implement!
 		cls.__old_library = component.getUtility(IContentPackageLibrary)
+		cls.__old_library.resetContentPackages()
+
 		lib = cls._setup_library()
+
 		component.provideUtility(lib, IContentPackageLibrary)
 		lib.syncContentPackages()
+		cls.__current_library = lib
 
 	@classmethod
 	def tearDown(cls):
 		# Must implement!
+		cls.__current_library.resetContentPackages()
+		del cls.__current_library
 		component.provideUtility(cls.__old_library, IContentPackageLibrary)
+		cls.__old_library.syncContentPackages()
 
 	# TODO: May need to recreate the application with this library?
 
