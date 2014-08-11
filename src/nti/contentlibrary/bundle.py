@@ -319,7 +319,8 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	# Be careful to only update fields that have changed
 	modified = False
 	for k in (set(meta.__dict__) - set(excluded_keys)):
-		if bundle_iface.get(k) and getattr(bundle, k, None) != getattr(meta, k):
+		# if _meta is None then we are rebuilding references
+		if bundle_iface.get(k) and (_meta is None or getattr(bundle, k, None) != getattr(meta, k)):
 			modified = True
 			# Our ContentPackages actually may bypass the interface by already
 			# being weakly referenced if missing
