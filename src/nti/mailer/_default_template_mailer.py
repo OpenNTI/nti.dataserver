@@ -102,6 +102,7 @@ def create_simple_html_text_email(base_template,
 								  template_args=None,
 								  attachments=(),
 								  package=None,
+								  bcc=None,
 								  text_template_extension='.txt',
 								  _level=3):
 	"""
@@ -195,6 +196,7 @@ def create_simple_html_text_email(base_template,
 					   recipients=recipients,
 					   body=text_body,
 					   html=html_body,
+					   bcc=bcc,
 					   attachments=attachments )
 
 	return message
