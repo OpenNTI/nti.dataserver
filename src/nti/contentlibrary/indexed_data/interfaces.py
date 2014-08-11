@@ -62,17 +62,28 @@ class IWritableIndexedDataContainer(IIndexedDataContainer):
 		Make this container hold the given sequence of data items.
 		"""
 
+TAG_NAMESPACE_FILE = 'nti.contentlibrary.indexed_data.NamespaceFile'
+
 class IAudioIndexedDataContainer(IWritableIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for audio index data.
 	"""
+
+IAudioIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
+										  'audio_index.json')
 
 class IVideoIndexedDataContainer(IWritableIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for video index data.
 	"""
 
+IVideoIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
+										  'video_index.json')
+
 class IRelatedContentIndexedDataContainer(IWritableIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for related content index data.
 	"""
+
+IRelatedContentIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
+												   'related_content_index.json')

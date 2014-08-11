@@ -13,11 +13,17 @@ logger = __import__('logging').getLogger(__name__)
 
 import anyjson as json
 
-def _update_index_when_content_changes(content_package, namespace, index_iface):
+from .interfaces import IAudioIndexedDataContainer
+from .interfaces import IRelatedContentIndexedDataContainer
+from .interfaces import IVideoIndexedDataContainer
+from .interfaces import TAG_NAMESPACE_FILE
+
+def _update_index_when_content_changes(content_package, index_iface):
+
 	# We track the modification timestamp of the key, if it exists,
 	# and compare it to the modification timestamp of the root unit, updating
 	# everything when the root unit changes
-
+	namespace = index_iface.getTaggedValue(TAG_NAMESPACE_FILE)
 	sibling_key = content_package.does_sibling_entry_exist(namespace)
 	if not sibling_key:
 		# Nothing to do
@@ -62,23 +68,43 @@ def _update_index_when_content_changes(content_package, namespace, index_iface):
 
 	set_contents(content_package)
 
-from .interfaces import IAudioIndexedDataContainer
-from .interfaces import IRelatedContentIndexedDataContainer
-from .interfaces import IVideoIndexedDataContainer
-
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  'audio_index.json',
 											  IAudioIndexedDataContainer)
 
 
 def _update_video_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  'video_index.json',
 											  IVideoIndexedDataContainer)
 
 
 def _update_related_content_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  'related_content_index.json',
 											  IRelatedContentIndexedDataContainer)
+
+def _clear_when_removed(content_package, index_iface):
+	"""
+	Because we don't know where the data is stored, when an
+	content package is removed we need to clear its data.
+	"""
+	# in practice these are stored as annotations, which
+	# live in a unique utility
+
+	def recur(unit):
+		container = index_iface(unit)
+		container.set_data_items(())
+		container.lastModified = -1
+
+		for child in unit.children:
+			recur(child)
+
+	recur(content_package)
+
+def _clear_audio_index_when_content_removed(content_package, event):
+	return _clear_when_removed(content_package, IAudioIndexedDataContainer)
+
+def _clear_video_index_when_content_removed(content_package, event):
+	return _clear_when_removed(content_package, IVideoIndexedDataContainer)
+
+def _clear_related_index_when_content_removed(content_package, event):
+	return _clear_when_removed(content_package, IRelatedContentIndexedDataContainer)
