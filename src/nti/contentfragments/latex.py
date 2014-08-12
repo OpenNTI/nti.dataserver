@@ -13,7 +13,10 @@ import re
 from zope import interface
 from zope import component
 
-from nti.contentfragments import interfaces
+from .interfaces import ITextLatexEscaper
+from .interfaces import LatexContentFragment
+from .interfaces import ILatexContentFragment
+from .interfaces import IPlainTextContentFragment
 
 # Map from unicode to tex name
 _TEX_OPERATORS = [('\u00d7', '\\times'),
@@ -115,7 +118,7 @@ def _escape_tex(text):
 		escaped_text = escaped_text.replace(escape[0], escape[1])
 	return escaped_text
 
-@interface.implementer(interfaces.ITextLatexEscaper)
+@interface.implementer(ITextLatexEscaper)
 class _DefaultTextLatexEscaper(object):
 	
 	__slots__ = ()
@@ -124,7 +127,7 @@ class _DefaultTextLatexEscaper(object):
 		return _escape_tex(text)
 
 def escape_tex(text, name=u''):
-	scaper = component.queryUtility(interfaces.ITextLatexEscaper, name=name)
+	scaper = component.queryUtility(ITextLatexEscaper, name=name)
 	scaper = _escape_tex if scaper is None else scaper
 	return scaper(text)
 	
@@ -176,9 +179,9 @@ def cleanup_equation_tokens(tokens):
 	return ('', tokens, '')
 
 
-@interface.implementer(interfaces.ILatexContentFragment)
-@component.adapter(interfaces.IPlainTextContentFragment)
-def PlainTextToLatexFragmentConverter(plain_text):
+@interface.implementer(ILatexContentFragment)
+@component.adapter(IPlainTextContentFragment)
+def PlainTextToLatexFragmentConverter(plain_text, text_scaper=u''):
 	"""
 	Attempt to convert plain-text strings into LaTeX strings
 	by detecting equations/expressions that could be rendered in
@@ -193,7 +196,7 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	# space.  If so, just return what we were given.
 
 	if plain_text.isspace():
-		return interfaces.LatexContentFragment(plain_text)
+		return LatexContentFragment(plain_text)
 
 
 	# First, replace some whitespace sensitive tokens
@@ -247,7 +250,7 @@ def PlainTextToLatexFragmentConverter(plain_text):
 			eq = bef + '$' + eq + '$' + aft
 
 			# Everything before us goes in the accumulator
-			accum.extend([escape_tex(x) for x in tokens[0:beginning]])
+			accum.extend([escape_tex(x, name=text_scaper) for x in tokens[0:beginning]])
 			# and then us
 			accum.append(eq)
 			# and now we can remove the beginning and start over
@@ -258,7 +261,7 @@ def PlainTextToLatexFragmentConverter(plain_text):
 			i += 1
 
 	# Any tokens left go in the accumulator
-	accum.extend([escape_tex(x) for x in tokens])
+	accum.extend([escape_tex(x, name=text_scaper) for x in tokens])
 
 	# SAJ: If the fragment starts or ends with a space, respect that
 	if plain_text and plain_text[0].isspace():
@@ -267,4 +270,4 @@ def PlainTextToLatexFragmentConverter(plain_text):
 	if plain_text and plain_text[-1].isspace():
 		accum.append('')
 
-	return interfaces.LatexContentFragment(' '.join(accum))
+	return LatexContentFragment(' '.join(accum))
