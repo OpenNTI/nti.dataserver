@@ -198,10 +198,12 @@ def _word_plus_trivial_profanity_scanner():
 class DefaultCensoredContentPolicy(object):
 	"""
 	A content censoring policy that looks up the default
-	scanner and strategy and uses them.
+	scanner and strategy utilities and uses them.
 
-	This package does not register this policy as an adapter for anything,
-	you must do that yourself.
+	This package does not register this policy as an adapter for
+	anything, you must do that yourself, on (content-fragment, target-object);
+	it can also be registered as a utility or instantiated directly with
+	no arguments.
 	"""
 
 	def __init__(self, fragment=None, target=None):
@@ -238,6 +240,22 @@ class DefaultCensoredContentPolicy(object):
 			result = self.censor_text(fragment, target)
 		return result
 
+@interface.implementer(interfaces.ICensoredContentPolicy)
+class NoOpCensoredContentPolicy(object):
+	"""
+	A content censoring policy that does no censoring whatesover.
+
+	This package does not register this policy as an adapter for
+	anything, you must do that yourself, on (content-fragment, target-object);
+	it can also be registered as a utility or instantiated directly with
+	no arguments.
+	"""
+
+	def __init__(self, *args, **kwargs):
+		pass
+
+	def censor(self, fragment, target):
+		return fragment
 
 from nti.schema.interfaces import BeforeTextAssignedEvent
 

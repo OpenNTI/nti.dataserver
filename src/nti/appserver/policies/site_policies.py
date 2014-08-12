@@ -41,6 +41,7 @@ from nti.appserver import interfaces as app_interfaces
 from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.contentfragments import censor
+from nti.contentfragments.interfaces import ICensoredContentPolicy
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -404,9 +405,12 @@ def dispatch_user_logon_to_site_policy(user, event):
 
 def _censor_usernames(entity, event=None):
 	"""
-	Censore the username field of the entity. Can be used as an event listener as well.
+	Censor the username field of the entity. Can be used as an event
+	listener as well.
 	"""
-	policy = censor.DefaultCensoredContentPolicy()
+	# Try a named utility so it can be overridden on a site by site basis
+	policy = component.queryUtility(ICensoredContentPolicy, name='username')
+	policy = policy or censor.DefaultCensoredContentPolicy()
 
 	if policy.censor(entity.username, entity) != entity.username:
 		raise FieldContainsCensoredSequence(_("Username contains a censored sequence"), 'Username', entity.username)
