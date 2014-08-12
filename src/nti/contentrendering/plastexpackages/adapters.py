@@ -13,9 +13,13 @@ from zope import interface
 
 from plasTeX.Renderers import render_children
 
-from nti.contentrendering import interfaces as crd_interfaces
+from ..interfaces import IJSONTransformer
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+def _render_children(renderer, child_nodes, strip=True):
+	result = unicode(''.join(render_children(renderer, child_nodes)))
+	return result.strip() if result else result
+
+@interface.implementer(IJSONTransformer)
 class _CourseLessonJSONTransformer(object):
 
 	def __init__(self, element):
@@ -24,17 +28,17 @@ class _CourseLessonJSONTransformer(object):
 	def transform(self):
 		output = {}
 		output['NTIID'] = self.el.ntiid
-		output['MimeType'] = "application/vnd.nextthought.ntilessonoverview"
-		output['title'] = unicode(''.join(render_children( self.el.renderer, self.el.title )))
+		output['MimeType'] = u"application/vnd.nextthought.ntilessonoverview"
+		output['title'] = _render_children(self.el.renderer, self.el.title, False)
 		output['Items'] = items = []
 		group_els = self.el.getElementsByTagName('courseoverviewgroup')
 		for group_el in group_els:
-			trx = crd_interfaces.IJSONTransformer(group_el, None)
+			trx = IJSONTransformer(group_el, None)
 			if trx is not None:
 				items.append(trx.transform())
 		return output
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _CourseOverviewGroupJSONTransformer(object):
 
 	def __init__(self, element):
@@ -43,16 +47,16 @@ class _CourseOverviewGroupJSONTransformer(object):
 	def transform(self):
 		output = {}
 		output['MimeType'] =  self.el.mime_type
-		output['title'] = unicode(''.join(render_children( self.el.renderer, self.el.title )))
-		output['accentColor'] = unicode(''.join(render_children( self.el.renderer, self.el.title_background_color )))
+		output['title'] = _render_children(self.el.renderer, self.el.title, False)
+		output['accentColor'] = _render_children(self.el.renderer, self.el.title_background_color, False)
 		output['Items'] = items = []
 		for child in self.el.childNodes:
-			trx = crd_interfaces.IJSONTransformer(child, None)
+			trx = IJSONTransformer(child, None)
 			if trx is not None:
 				items.append(trx.transform())
 		return output
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _CourseOverviewSpacerJSONTransformer(object):
 
 	def __init__(self, element):
@@ -63,7 +67,7 @@ class _CourseOverviewSpacerJSONTransformer(object):
 		output['MimeType'] =  self.el.mime_type
 		return output
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _DiscussionRefJSONTransformer(object):
 
 	def __init__(self, element):
@@ -73,13 +77,13 @@ class _DiscussionRefJSONTransformer(object):
 		output = {}
 		output['MimeType'] = self.el.discussion.targetMimeType
 		output['icon'] = self.el.discussion.iconResource.image.url
-		output['label'] = unicode(''.join(render_children( self.el.discussion.renderer, self.el.discussion.title ))).strip()
+		output['label'] = _render_children(self.el.discussion.renderer, self.el.discussion.title)
 		output['NTIID'] = self.el.discussion.topic_ntiid
-		output['title'] = unicode(''.join(render_children( self.el.discussion.renderer, self.el.discussion.subtitle ))).strip()
+		output['title'] = _render_children(self.el.discussion.renderer, self.el.discussion.subtitle)
 		return output
 
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _NTIAudioRefJSONTransformer(object):
 
 	def __init__(self, element):
@@ -87,13 +91,13 @@ class _NTIAudioRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['label'] = unicode(''.join(render_children( self.el.media.renderer, self.el.media.title ))).strip()
+		output['label'] = _render_children(self.el.media.renderer, self.el.media.title)
 		output['MimeType'] = self.el.media.mimeType
 		output['NTIID'] = self.el.media.ntiid
 		output['visibility'] = self.el.visibility
 		return output
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _NTIVideoRefJSONTransformer(object):
 
 	def __init__(self, element):
@@ -101,14 +105,14 @@ class _NTIVideoRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['label'] = unicode(''.join(render_children( self.el.media.renderer, self.el.media.title ))).strip()
+		output['label'] = _render_children(self.el.media.renderer, self.el.media.title)
 		output['MimeType'] = self.el.media.mimeType
 		output['NTIID'] = self.el.media.ntiid
 		output['poster'] = self.el.media.poster
 		output['visibility'] = self.el.visibility
 		return output
 
-@interface.implementer(crd_interfaces.IJSONTransformer)
+@interface.implementer(IJSONTransformer)
 class _RelatedWorkRefJSONTransformer(object):
 
 	def __init__(self, element):
@@ -116,13 +120,13 @@ class _RelatedWorkRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['creator'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.creator ))).strip()
-		output['desc'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.description ))).strip()
+		output['creator'] = _render_children(self.el.relatedwork.renderer, self.el.creator)
+		output['desc'] = _render_children( self.el.relatedwork.renderer, self.el.description)
 		output['href'] = self.el.uri
 		output['MimeType'] = self.el.mimeType
 		output['targetMimeType'] = self.el.targetMimeType
 		output['icon'] = self.el.relatedwork.iconResource.image.url
-		output['label'] = unicode(''.join(render_children( self.el.relatedwork.renderer, self.el.title ))).strip()
+		output['label'] = _render_children(self.el.relatedwork.renderer, self.el.title)
 		output['NTIID'] = self.el.ntiid
 		output['target-NTIID'] = self.el.target_ntiid
 		output['section'] = self.el.category
