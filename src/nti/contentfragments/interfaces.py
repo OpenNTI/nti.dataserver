@@ -421,3 +421,10 @@ class CensoredContentEvent(object):
 		self.censored_content = censored_content
 		self.name = name
 		self.context = context
+
+class ITextLatexEscaper(interface.Interface):
+	
+	def __call_(text):
+		"""
+		scape the specifed text
+		"""

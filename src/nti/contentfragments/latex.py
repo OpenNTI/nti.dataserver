@@ -115,6 +115,19 @@ def _escape_tex(text):
 		escaped_text = escaped_text.replace(escape[0], escape[1])
 	return escaped_text
 
+@interface.implementer(interfaces.ITextLatexEscaper)
+class _DefaultTextLatexEscaper(object):
+	
+	__slots__ = ()
+	
+	def __call__(self, text):
+		return _escape_tex(text)
+
+def escape_tex(text, name=u''):
+	scaper = component.queryUtility(interfaces.ITextLatexEscaper, name=name)
+	scaper = _escape_tex if scaper is None else scaper
+	return scaper(text)
+	
 _PLAIN_BINARY_OPS = ('+', '-', '*', '/', '=', '<', '>', '\u2260')
 _UNICODE_OPS = [_x[0] for _x in _TEX_OPERATORS]
 
@@ -234,7 +247,7 @@ def PlainTextToLatexFragmentConverter(plain_text):
 			eq = bef + '$' + eq + '$' + aft
 
 			# Everything before us goes in the accumulator
-			accum.extend([_escape_tex(x) for x in tokens[0:beginning]])
+			accum.extend([escape_tex(x) for x in tokens[0:beginning]])
 			# and then us
 			accum.append(eq)
 			# and now we can remove the beginning and start over
@@ -245,7 +258,7 @@ def PlainTextToLatexFragmentConverter(plain_text):
 			i += 1
 
 	# Any tokens left go in the accumulator
-	accum.extend([_escape_tex(x) for x in tokens])
+	accum.extend([escape_tex(x) for x in tokens])
 
 	# SAJ: If the fragment starts or ends with a space, respect that
 	if plain_text and plain_text[0].isspace():

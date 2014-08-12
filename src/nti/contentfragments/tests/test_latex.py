@@ -8,6 +8,8 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
 from hamcrest import assert_that
 
 from zope import component
@@ -33,6 +35,11 @@ class TestLatexTransforms(ContentfragmentsLayerTest):
 	def _convert( self, val ):
 		return _tex_convert( val )
 
+	def test_escaper(self):
+		scaper = component.queryUtility(interfaces.ITextLatexEscaper)
+		assert_that(scaper, is_not(none()))
+		assert_that(scaper(u'\u2026'), is_('\ldots '))
+		
 	def test_provides(self):
 		assert_that( contentfragments.PlainTextToLatexFragmentConverter, implements(interfaces.ILatexContentFragment) )
 		assert_that( contentfragments.PlainTextToLatexFragmentConverter('foo'), verifiably_provides(interfaces.ILatexContentFragment) )
