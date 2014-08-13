@@ -202,3 +202,86 @@ def landing_html_view(request):
 		response.delete_cookie(_SITE_LANDING_COOKIE_NAME)
 
 	return response
+
+
+from pyramid.static import static_view
+from pyramid.path import caller_package
+
+import os
+import scss
+
+@interface.implementer(IView)
+class _StaticView(static_view):
+
+	assets_dir = None
+
+	def __new__(cls, package, **kwargs):
+		# XXX: Assuming this is broken out on the filesystem. Could use
+		# pyramid's package stuff to handle that better
+
+		_my_dir = os.path.dirname( package.__file__ )
+		_my_dir = os.path.abspath(_my_dir)
+		assets_dir = os.path.join(_my_dir, 'assets')
+		inst = super(_StaticView,cls).__new__(cls,assets_dir,**kwargs)
+		inst.assets_dir = assets_dir
+		return inst
+
+	def __init__(self, package, **kwargs):
+		super(_StaticView,self).__init__(self.assets_dir, **kwargs)
+
+
+
+@interface.named('strings.js')
+class _StringsJsView(_StaticView):
+	pass
+
+@interface.named('site.css')
+class _CompilingSCSSView(_StaticView):
+
+	def __new__(cls, *args, **kwargs):
+		inst = super(_CompilingSCSSView,cls).__new__(cls, *args, **kwargs)
+
+		_my_dir = inst.assets_dir
+
+		_scss_dir = os.path.join( _my_dir, 'NextThoughtWebApp', 'resources', 'scss' )
+		_css_dir = os.path.join( _my_dir, 'NextThoughtWebApp', 'resources', 'css' )
+		_scss_file = os.path.join( _scss_dir, 'site.scss' )
+		_css_file = os.path.join( _css_dir, 'site.css' )
+		# Sadly, logging is ineffective at this time, we expect to be at the
+		# module level
+		if os.path.isfile(_scss_file) and os.stat(_scss_file).st_size:
+			 # TODO: Remove CSS if this file goes away/to zero bytes?
+			if not os.path.isdir( _css_dir ):
+				os.mkdir( _css_dir )
+
+			if not os.path.isfile( _css_file ) or os.stat(_scss_file).st_mtime > os.stat(_css_file).st_mtime:
+				compiler = scss.Scss(
+					scss_opts={'compress': False, 'debug_info': False} )
+				compiled = compiler.compile(scss_file=_scss_file)
+				with open(_css_file, 'w') as f:
+					f.write(compiled)
+		return inst
+
+def make_strings_view():
+	"""
+	Return a view for strings.js, in the standard assets path.
+
+	Register as a utility.
+	"""
+	pack = caller_package()
+	return _StringsJsView(pack)
+
+def make_scss_view():
+	"""
+	Return a view for the site CSS in the standard assets path.
+	If the SCSS cannot compile, this will raise an exception.
+	Empty and missing files are ignored.
+
+	Register as a utility.
+	"""
+	packs = []
+	for i in range(10):
+		packs.append(caller_package(level=i))
+
+	pack = caller_package()
+	return _CompilingSCSSView(pack)
