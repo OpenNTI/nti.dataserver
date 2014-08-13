@@ -27,11 +27,19 @@ from nti.testing.base import SharedConfiguringTestBase as _BaseSharedConfiguring
 
 from . import mock_redis
 
+from zope import interface
+
+class IMockDataserver(nti_interfaces.IDataserver):
+	"""
+	A mock dataserver.
+	"""
+
 class MockConfig(object):
 	zeo_conf = None
 	zeo_client_conf = None
 
-class ChangePassingMockDataserver(Dataserver ):
+@interface.implementer(IMockDataserver)
+class ChangePassingMockDataserver(Dataserver):
 
 	_mock_database = None
 	#: A demo storage will be created on top of this

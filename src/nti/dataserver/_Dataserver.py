@@ -67,6 +67,9 @@ def get_by_oid(oid_string, ignore_creator=False):
 		logger.warn( "Using dataserver without a proper ISiteManager configuration." )
 	return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
+@interface.implementer(interfaces.IDataserverClosedEvent)
+class DataserverClosedEvent(interfaces.ObjectEvent):
+	pass
 
 @interface.implementer(interfaces.IShardLayout)
 class MinimalDataserver(object):
@@ -268,7 +271,7 @@ class MinimalDataserver(object):
 					close_func()
 				elif obj is not None:
 					logger.log( level, "Don't know how to close %s = %s", name, obj )
-			except (Exception,AttributeError):
+			except Exception: # pylint:disable=I0011,W0703
 				logger.log( level, 'Failed to close %s = %s', name, obj, exc_info=True )
 
 		# other_closeables were added after our setup completed, so they
@@ -299,6 +302,7 @@ class MinimalDataserver(object):
 		gsm = component.getGlobalSiteManager()
 		if gsm.queryUtility( interfaces.IRedisClient ) is self.redis:
 			gsm.unregisterUtility( self.redis )
+		notify(DataserverClosedEvent(self))
 
 	def get_by_oid( self, oid_string, ignore_creator=False ):
 		return get_by_oid(oid_string, ignore_creator=ignore_creator)
