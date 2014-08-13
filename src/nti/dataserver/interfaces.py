@@ -93,6 +93,9 @@ class ACLProxy(ProxyBase):
 class IDataserver(interface.Interface):
 	pass
 
+class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
+	"Fired when a dataserver is closed"
+
 class IRedisClient(interface.Interface):
 	"""
 	A very poor abstraction of a :class:`redis.StrictRedis` client.
