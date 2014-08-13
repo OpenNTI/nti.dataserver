@@ -105,12 +105,15 @@ class IndexManager(object):
 		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
 
-	def register_content(self, ntiid=None, *args, **kwargs):
-		# XXX Need a stronger contract for this method. It's not even in the interface
-		# for the class, makes it hard to refactor away from knowledge about
-		# whoosh-specific directories and layouts of content packages
-		# (_indexmanager_event_listeners).
-
+	def is_content_registered(self, ntiid, site=None):
+		ntiid = ntiid.lower() if ntiid else ''
+		sm = site or component.getSiteManager()
+		srchr = sm.queryUtility(IContentSearcher, name=ntiid) if sm is not None else None
+		return srchr is not None
+		
+	def register_content(self, ntiid=None, indexname=None, indexdir=None,
+						 parallel_search=False, *args, **kwargs):
+		
 		if not ntiid:
 			return False
 		ntiid = ntiid.lower()
@@ -124,8 +127,7 @@ class IndexManager(object):
 		if self.parallel_search:
 			kwargs['parallel_search'] = self.parallel_search
 
-		searcher = self.create_content_searcher(ntiid=ntiid,
-												*args, **kwargs)
+		searcher = self.create_content_searcher(ntiid=ntiid, *args, **kwargs)
 		if searcher is not None:
 			sm.registerUtility(searcher,
 							   provided=IContentSearcher,
