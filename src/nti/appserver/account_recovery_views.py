@@ -30,6 +30,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.users import user_profile
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from nti.app.externalization.error import raise_json_error
 from nti.app.externalization.error import handle_validation_error
@@ -93,23 +94,29 @@ def forgot_username_view(request):
 
 	email_assoc_with_account = _preflight_email_based_request( request )
 
-
 	matching_users = find_users_with_email( email_assoc_with_account, request.registry.getUtility(nti_interfaces.IDataserver) )
 	if matching_users:
 		matching_users = filter( nti_interfaces.IUser.providedBy, matching_users ) # ensure only real users, not profiles or other matches
+
 	# Need to send both HTML and plain text if we send HTML, because
 	# many clients still do not render HTML emails well (e.g., the popup notification on iOS
 	# only works with a text part)
-	base_template = 'username_recovery_email'
+	policy = component.getUtility(ISitePolicyUserEventListener)
+	base_template = getattr( policy, 'USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME', 'username_recovery_email' )
+
 	text_ext = ".mak"
 	if not matching_users:
 		base_template = 'failed_' + base_template
 		text_ext = ".txt"
 
-	queue_simple_html_text_email( base_template, subject=_("NextThought Username Reminder"),
+	subject = getattr( policy, 'USERNAME_RECOVERY_EMAIL_SUBJECT', 'NextThought Username Reminder' )
+	package = getattr( policy, 'PACKAGE', None )
+
+	queue_simple_html_text_email( base_template, subject=_(subject),
 								  recipients=[email_assoc_with_account],
-								  template_args={'users': matching_users},
+								  template_args={'users': matching_users, 'email': email_assoc_with_account},
 								  request=request,
+								  package=package,
 								  text_template_extension=text_ext)
 
 	return hexc.HTTPNoContent()
@@ -156,8 +163,9 @@ def forgot_passcode_view(request):
 											component.getUtility(nti_interfaces.IDataserver),
 											username=username	)
 
+	policy = component.getUtility(ISitePolicyUserEventListener)
+	base_template = getattr( policy, 'PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME', 'password_reset_email' )
 	# Ok, we either got one user on no users
-	base_template = 'password_reset_email'
 	if matching_users and len(matching_users) == 1:
 		# We got one user. So we need to generate a token, and
 		# store the timestamped value, while also invalidating any other
@@ -191,10 +199,16 @@ def forgot_passcode_view(request):
 		reset_url = None
 		base_template = 'failed_' + base_template
 
+	subject = getattr( policy, 'PASSWORD_RESET_EMAIL_SUBJECT', 'NextThought Password Reset' )
+	package = getattr( policy, 'PACKAGE', None )
 
-	queue_simple_html_text_email( base_template, subject=_("NextThought Password Reset"),
+	queue_simple_html_text_email( base_template, subject=_( subject ),
 								  recipients=[email_assoc_with_account],
-								  template_args={'users': matching_users, 'user': matching_user, 'reset_url': reset_url},
+								  template_args={'users': matching_users,
+												'user': matching_user,
+												'reset_url': reset_url,
+												'email': email_assoc_with_account },
+								  package=package,
 								  request=request )
 
 

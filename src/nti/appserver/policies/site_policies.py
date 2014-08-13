@@ -478,6 +478,12 @@ class AbstractSitePolicyEventListener(object):
 	NEW_USER_CREATED_EMAIL_SUBJECT = None
 	NEW_USER_CREATED_BCC = None
 
+	PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = 'password_reset_email'
+	PASSWORD_RESET_EMAIL_SUBJECT = "NextThought Password Reset"
+
+	USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = 'username_recovery_email'
+	USERNAME_RECOVERY_EMAIL_SUBJECT = "Username Reminder"
+
 	#: If defined, this will be send in the ``nti.landing_page``
 	#: cookie when a user logs on. Must be a byte string.
 	LANDING_PAGE_NTIID = None

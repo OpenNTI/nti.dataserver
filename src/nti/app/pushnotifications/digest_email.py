@@ -478,6 +478,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 	_subject = "Your ${site_name} Updates"
 
 	text_template_extension = ".mak"
+
 	template_name = 'nti.app.pushnotifications:templates/digest_email'
 
 	@Lazy
