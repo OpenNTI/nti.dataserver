@@ -119,15 +119,17 @@ class IndexManager(object):
 		ntiid = ntiid.lower()
 
 		sm = component.getSiteManager()
-		searcher = sm.queryUtility(IContentSearcher,
-								   name=ntiid)
+		searcher = sm.queryUtility(IContentSearcher, name=ntiid)
 		if searcher is not None:
 			return searcher
 
 		if self.parallel_search:
 			kwargs['parallel_search'] = self.parallel_search
 
-		searcher = self.create_content_searcher(ntiid=ntiid, *args, **kwargs)
+		searcher = self.create_content_searcher(ntiid=ntiid, 
+												indexdir=indexdir,
+												indexname=indexname,
+												*args, **kwargs)
 		if searcher is not None:
 			sm.registerUtility(searcher,
 							   provided=IContentSearcher,
