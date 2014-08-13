@@ -279,9 +279,5 @@ def make_scss_view():
 
 	Register as a utility.
 	"""
-	packs = []
-	for i in range(10):
-		packs.append(caller_package(level=i))
-
 	pack = caller_package()
 	return _CompilingSCSSView(pack)
