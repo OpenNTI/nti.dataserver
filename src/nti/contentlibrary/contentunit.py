@@ -61,8 +61,9 @@ class ContentUnit(PermissiveSchemaConfigured,
 	label = alias('title')
 
 	def __repr__(self):
-		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
-									  self.__name__, getattr(self, 'key', self.href))
+		return "<%s.%s '%s' '%s' %s>" % (self.__class__.__module__, self.__class__.__name__,
+										 self.__name__, getattr(self, 'key', self.href),
+										 id(self))
 
 	def __getstate__(self):
 		# object defines neither getstate or setstate, but subclasses may

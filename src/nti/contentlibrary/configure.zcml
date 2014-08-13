@@ -14,7 +14,16 @@
 	<include package="zope.site" />
 
 	<!-- weak refs -->
+	<!-- if we neglect to include the main configuration, our local
+		 wref tests pass without the persistent override registration, when
+		 in fact the will fail at runtime.
+	-->
+	<include package="nti.wref" />
 	<adapter factory=".wref.ContentUnitWeakRef" />
+	<!-- also override for persistent units, which we want to
+		 be referenced by NTIID and looked up in the library. -->
+	<adapter factory=".wref.ContentUnitWeakRef"
+			 for=".interfaces.IPersistentContentUnit" />
 
 	<!-- site libraries, when we're using the filesystem -->
 	<adapter factory=".filesystem.GlobalFilesystemSiteLibraryFactory" />
