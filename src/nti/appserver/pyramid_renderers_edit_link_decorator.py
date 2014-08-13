@@ -18,11 +18,10 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.appserver.pyramid_authorization import is_writable
-
-
 from zope.location.interfaces import ILocation
 
 from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.links import Link
 from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
@@ -68,9 +67,17 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			interface.alsoProvides( link, ILocation )
 
 		try:
-			# XXX: Why are we doing this?
-			link.creator = context.creator
-			interface.alsoProvides( link, ICreated )
+			# We make the link ICreated so that we go to the /Objects/
+			# path under the user to access it, if we are writing
+			# out OID links. The only reason I (JAM) can think this matters,
+			# at this writing, is for legacy tests.
+			# Since community objects have never been traversable to /Objects/
+			# (Actually, nothing besides IUser is), and we don't necessarily
+			# want to make them so, don't do it in that case
+			creator = context.creator
+			if IUser.providedBy(creator):
+				link.creator = context.creator
+				interface.alsoProvides( link, ICreated )
 		except AttributeError:
 			pass
 		return link
