@@ -66,6 +66,7 @@
 	<include package="nti.app.bulkemail" file="pyramid.zcml" />
 	<pyramid:scan package=".user_views" />
 
+	<include package="nti.app.publishing" file="pyramid.zcml" />
 	<include package="nti.app.forums" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
 	<include package="nti.app.contentlibrary" file="pyramid.zcml" />

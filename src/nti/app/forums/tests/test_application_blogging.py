@@ -371,7 +371,8 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		assert_that( res.json_body['Items'][0]['Item'], has_entry( 'title', data['title'] ) )
 
 		# (Though not the non-follower)
-		self.fetch_user_root_rstream( testapp=testapp3, username=user3_username, status=404 )
+		# XXX: See r46562
+		# self.fetch_user_root_rstream( testapp=testapp3, username=user3_username, status=404 )
 
 		# it currently has no contents
 		testapp2.get( contents_href, status=200 )
