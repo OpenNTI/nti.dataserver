@@ -107,7 +107,7 @@ class IndexManager(object):
 
 	def is_content_registered(self, ntiid):
 		ntiid = ntiid.lower() if ntiid else ''
-		manager = component.getGlobalSiteManager()
+		manager = component.getSiteManager()
 		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
 		return searcher is not None
 		
@@ -118,7 +118,7 @@ class IndexManager(object):
 			return False
 		ntiid = ntiid.lower()
 
-		manager = component.getGlobalSiteManager()
+		manager = component.getSiteManager()
 		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
 		if searcher is not None:
 			return searcher
