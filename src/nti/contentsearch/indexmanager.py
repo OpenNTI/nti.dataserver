@@ -42,6 +42,8 @@ from .search_results import empty_suggest_and_search_results
 from .search_results import merge_suggest_and_search_results
 from .search_results import get_or_create_suggest_and_search_results
 
+from nti.site.interfaces import IHostPolicySiteManager
+
 @interface.implementer(IIndexManager)
 @NoPickle
 class IndexManager(object):
@@ -101,22 +103,29 @@ class IndexManager(object):
 		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
 
-	def is_content_registered(self, ntiid):
-		ntiid = ntiid.lower() if ntiid else ''
-		manager = component.getSiteManager()
-		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
-		return searcher is not None
-
 	def register_content(self, ntiid=None, indexname=None, indexdir=None,
 						 parallel_search=False, *args, **kwargs):
+		"""
+		Register the content by ntiid in the current site if it is not
+		already registered in the current site.
 
+		If the current site is NOT a host policy site, register instead in the
+		global site (because we probably do not get the events that allow
+		us to unregister for anything except host policy sites)
+		"""
 		if not ntiid:
 			return False
 		ntiid = ntiid.lower()
 
-		manager = component.getSiteManager()
-		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
-		if searcher is not None:
+		sm = component.getSiteManager()
+		if not IHostPolicySiteManager.providedBy(sm):
+			sm = component.getGlobalSiteManager()
+
+		searcher = sm.queryUtility(IContentSearcher, name=ntiid)
+		if searcher is not None and getattr(searcher, '__parent__', None) == sm:
+			# Don't re-register, IF we're already registered at this
+			# level; if we're registered somewhere higher, we need to
+			# register here to override the parent. (Old searchers have no __parent__)
 			return searcher
 
 		if self.parallel_search:
@@ -127,10 +136,13 @@ class IndexManager(object):
 												indexname=indexname,
 												*args, **kwargs)
 		if searcher is not None:
-			manager.registerUtility(searcher,
+			searcher.__parent__ = sm
+			searcher.__name__ = ntiid
+			sm.registerUtility(searcher,
 							   		provided=IContentSearcher,
 							   		name=ntiid)
-			logger.info("Content '%s' has been added to index manager", ntiid)
+			logger.info("Content '%s' has been added to index manager in site %s",
+						ntiid, sm)
 		else:
 			logger.error("Content '%s' could not be added to index manager", ntiid)
 		return searcher
@@ -140,7 +152,9 @@ class IndexManager(object):
 		# current sitemanager. If nothing is registered at all,
 		# return None. Otherwise, return True if we removed something
 		# from this site manager, and False if we had nothing to remove
-		# (meaning it was registered at a higher site)
+		# (meaning it was registered at a higher site).
+		# Special case for unregistering something only registered globally
+		# if we're currently in a subsite.
 		ntiid = ntiid.lower() if ntiid else ''
 
 		sm = component.getSiteManager()
@@ -148,11 +162,14 @@ class IndexManager(object):
 								   name=ntiid)
 		result = searcher
 		if searcher is not None:
+			if getattr(searcher, '__parent__', sm) == component.getGlobalSiteManager():
+				sm = component.getGlobalSiteManager()
 			result = sm.unregisterUtility(searcher,
 										  provided=IContentSearcher,
 										  name=ntiid)
 
-		logger.info("Unregistered content '%s' from index manager? %s", ntiid, result)
+		logger.info("Unregistered content '%s' from index manager and site %s? %s",
+					ntiid, sm, result)
 		return result
 
 	def get_content_searcher(self, query):
