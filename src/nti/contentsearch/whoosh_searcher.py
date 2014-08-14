@@ -25,13 +25,36 @@ from persistent import Persistent
 
 from nti.utils.property import CachedProperty
 
-from . import constants
-from . import search_utils
-from . import whoosh_query
-from . import whoosh_index
-from . import search_results
-from . import whoosh_storage
-from . import interfaces as search_interfaces
+from .constants import content_
+from .constants import nticard_
+from .constants import book_prefix
+from .constants import atrans_prefix
+from .constants import vtrans_prefix
+from .constants import nticard_prefix
+from .constants import audiotranscript_
+from .constants import videotranscript_
+
+from .interfaces import ISearchQuery
+from .interfaces import IWhooshContentSearcher
+from .interfaces import IWhooshContentSearcherFactory
+
+from . search_utils import gevent_spawn
+
+from .search_results import merge_search_results
+from .search_results import merge_suggest_results
+from .search_results import get_or_create_search_results
+from .search_results import get_or_create_suggest_results
+from .search_results import merge_suggest_and_search_results
+from .search_results import get_or_create_suggest_and_search_results
+
+from .whoosh_query import CosineScorerModel
+	
+from .whoosh_storage import DirectoryStorage
+
+from .whoosh_index import Book as WhooshBook
+from .whoosh_index import NTICard as WhooshNTICard
+from .whoosh_index import AudioTranscript as WhooshAudioTranscript
+from .whoosh_index import VideoTranscript as WhooshVideoTranscript
 
 class _BoundingProxy(ProxyBase):
 
@@ -56,7 +79,7 @@ class _BoundingProxy(ProxyBase):
 
 class _Searchable(object):
 
-	CSM = whoosh_query.CosineScorerModel
+	CSM = CosineScorerModel
 
 	def __init__(self, searchable, indexname, index, classname):
 		self.index = index
@@ -71,19 +94,19 @@ class _Searchable(object):
 		return '%s(indexname=%s)' % (self.__class__.__name__, self.indexname)
 
 	def search(self, query, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
+		query = ISearchQuery(query)
 		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.search(s, query, *args, **kwargs)
 		return results
 
 	def suggest_and_search(self, query, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
+		query = ISearchQuery(query)
 		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.suggest_and_search(s, query, *args, **kwargs)
 		return results
 
 	def suggest(self, query, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
+		query = ISearchQuery(query)
 		with _BoundingProxy(self.index.searcher(weighting=self.CSM)) as s:
 			results = self.searchable.suggest(s, query, *args, **kwargs)
 		return results
@@ -92,13 +115,13 @@ class _Searchable(object):
 		self.index.close()
 
 INDEX_FACTORIES = (
-	(constants.book_prefix, whoosh_index.Book, constants.content_),
-	(constants.nticard_prefix, whoosh_index.NTICard, constants.nticard_),
-	(constants.atrans_prefix, whoosh_index.AudioTranscript, constants.audiotranscript_),
-	(constants.vtrans_prefix, whoosh_index.VideoTranscript, constants.videotranscript_)
+	(book_prefix, 	 WhooshBook, content_),
+	(nticard_prefix, WhooshNTICard, nticard_),
+	(atrans_prefix,  WhooshAudioTranscript, audiotranscript_),
+	(vtrans_prefix,  WhooshVideoTranscript, videotranscript_)
 )
 
-@interface.implementer(search_interfaces.IWhooshContentSearcher)
+@interface.implementer(IWhooshContentSearcher)
 class WhooshContentSearcher(Persistent):
 
 	_baseindexname = None
@@ -107,11 +130,10 @@ class WhooshContentSearcher(Persistent):
 	def __init__(self, baseindexname, storage, ntiid=None,
 				 parallel_search=False):
 		self.storage = storage
-		self.ntiid = ntiid if ntiid else baseindexname
 		self._baseindexname = baseindexname
 		self._parallel_search = parallel_search
-		getattr(self, '_searchables') # build initial list
-
+		self.ntiid = ntiid if ntiid else baseindexname
+			
 	@CachedProperty
 	def _searchables(self):
 		result = dict()
@@ -119,6 +141,8 @@ class WhooshContentSearcher(Persistent):
 		for prefix, factory, classsname in INDEX_FACTORIES:
 			indexname = prefix + baseindexname
 			if not self.storage.index_exists(indexname):
+				logger.warn("Index %s does not exists in storage %r", 
+							indexname, self.storage)
 				continue
 			index = self.storage.get_index(indexname)
 			result[indexname] = _Searchable(factory(), indexname, index, classsname)
@@ -148,6 +172,7 @@ class WhooshContentSearcher(Persistent):
 
 	def __nonzero__(self):
 		return True
+
 	def __bool__(self):
 		return True
 
@@ -165,52 +190,56 @@ class WhooshContentSearcher(Persistent):
 
 	def search(self, query, store=None, *args, **kwargs):
 		greenlets = []
-		query = search_interfaces.ISearchQuery(query)
-		store = search_results.get_or_create_search_results(query, store)
+		query = ISearchQuery(query)
+		store = get_or_create_search_results(query, store)
 		for searcher in self._searchables.values():
 			if self.parallel_search:
-				greenlet = search_utils.gevent_spawn(func=self._execute_search,
-													 searcher=searcher,
-										  			 method="search",
-										  			 query=query,
-										  			 store=store)
+				greenlet = gevent_spawn(func=self._execute_search,
+										searcher=searcher,
+										method="search",
+										query=query,
+										store=store)
 				greenlets.append(greenlet)
 			else:
 				rs = self._execute_search(searcher=searcher, method="search",
 										  query=query, store=store)
-				store = search_results.merge_search_results(store, rs)
+				store = merge_search_results(store, rs)
 		if greenlets:
 			gevent.joinall(greenlets)
 			for greenlet in greenlets:
-				store = search_results.merge_search_results(store, greenlet.get())
+				store = merge_search_results(store, greenlet.get())
 		return store
 
 	def suggest_and_search(self, query, store=None, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
-		store = search_results.get_or_create_suggest_and_search_results(query, store)
+		query = ISearchQuery(query)
+		store = get_or_create_suggest_and_search_results(query, store)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
 				rs = s.suggest_and_search(query, store=store)
-				store = search_results.merge_suggest_and_search_results(store, rs)
+				store = merge_suggest_and_search_results(store, rs)
 		return store
 
 	def suggest(self, query, store=None, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
-		store = search_results.get_or_create_suggest_results(query, store)
+		query = ISearchQuery(query)
+		store = get_or_create_suggest_results(query, store)
 		for s in self._searchables.values():
 			if self.is_valid_content_query(s, query):
 				rs = s.suggest(query, store=store)
-				store = search_results.merge_suggest_results(store, rs)
+				store = merge_suggest_results(store, rs)
 		return store
 
 	def close(self):
 		for s in self._searchables.values():
 			s.close()
 
-@interface.provider(search_interfaces.IWhooshContentSearcherFactory)
+@interface.provider(IWhooshContentSearcherFactory)
 def _ContentSearcherFactory(indexname=None, ntiid=None, indexdir=None):
 	if indexname and indexdir and os.path.exists(indexdir):
-		storage = whoosh_storage.DirectoryStorage(indexdir)
+		storage = DirectoryStorage(indexdir)
 		searcher = WhooshContentSearcher(indexname, storage, ntiid)
-		return searcher if len(searcher) > 0 else None
+		result = searcher if len(searcher) > 0 else None
+		if result is None:
+			logger.error("No indexes were registered for %s,%s (%s)", 
+						 indexname, indexdir, ntiid)
+		return result
 	return None
