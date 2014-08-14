@@ -90,6 +90,8 @@ from zope.security.permission import Permission
 import nti.dataserver.interfaces as nti_interfaces
 from nti.utils.property import alias
 
+from nti.externalization.interfaces import IExternalObject
+
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
 	Permission.__str__ = lambda x: x.id
@@ -237,6 +239,10 @@ class _StringPrincipal(_AbstractPrincipal):
 def _system_user_factory( string ):
 	assert string in (nti_interfaces.SYSTEM_USER_NAME, nti_interfaces.SYSTEM_USER_ID)
 	return nti_interfaces.system_user
+
+# Let the system user externalize
+nti_interfaces.system_user.toExternalObject = staticmethod(lambda *args, **kwargs: {'Class': 'SystemUser',
+																					'Username': nti_interfaces.SYSTEM_USER_NAME})
 
 @interface.implementer(nti_interfaces.IGroup)
 @component.adapter(basestring)
@@ -398,7 +404,7 @@ def _UserGroupAwarePrincipalAnnotations( _ugaware_principal, *args ): # optional
 	return IAnnotations(_ugaware_principal.context)
 
 # Reverses that back to externalization
-from nti.externalization.interfaces import IExternalObject
+
 def _UserGroupAwarePrincipalExternalObject( _ugaware_principal ):
 	return IExternalObject(_ugaware_principal.context)
 

@@ -19,29 +19,35 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from zope import interface
 from zope import component
 from zope import schema
+from zope.cachedescriptors.property import cachedIn
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 ### Board
 
 from .interfaces import IContentBoard
-from .interfaces import NTIID_TYPE_CONTENT_BOARD
+from nti.ntiids.ntiids import TYPE_OID
 
 #from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
+from nti.dataserver.interfaces import system_user
 
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
-	_ntiid_type = NTIID_TYPE_CONTENT_BOARD
-
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentboard'
 
+	# Override things related to ntiids.
+	# These don't have global names, so they must be referenced
+	# by OID. We are also IUseOIDForNTIID so our children
+	# inherit this.
+	NTIID_TYPE = _ntiid_type = TYPE_OID
+	NTIID = cachedIn('_v_ntiid')(to_external_ntiid_oid)
 
-	@property
-	def NTIID(self):
-		# Fall-back to OIDs for now
-		return to_external_ntiid_oid(self)
+	# Who owns this? Who created it?
+	# Right now, we're saying "system" did it...
+	# see also the sharing targets
+	creator = system_user
 
 	def createDefaultForum(self):
 		if ContentForum.__default_name__ in self:
@@ -58,38 +64,22 @@ class ContentBoard(GeneralBoard):
 			raise errors[0][1]
 		return forum
 
-	def __setitem__(self, k, v):
-		return GeneralBoard.__setitem__(self, k, v)
-
-
-from nti.dataserver.interfaces import system_user
 
 @interface.implementer(IContentBoard)
 def ContentBoardAdapter(context):
 	board = AnnotatableBoardAdapter(context, ContentBoard, IContentBoard)
-	# Who owns this? Who created it?
-	# Right now, we're saying "system" did it...
-	# see also the sharing targets
 	board.creator = system_user
 	return board
 
 ### Forum
 
 from .interfaces import IContentForum
-from .interfaces import NTIID_TYPE_CONTENT_FORUM
 
 from nti.dataserver.contenttypes.forums.forum import GeneralForum
 
 @interface.implementer(IContentForum)
 class ContentForum(GeneralForum):
-	_ntiid_type = NTIID_TYPE_CONTENT_FORUM
-
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforum'
-
-	@property
-	def NTIID(self):
-		# Fall-back to OIDs for now
-		return to_external_ntiid_oid(self)
 
 	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
 		# if we get here, we're authenticated
@@ -99,7 +89,6 @@ class ContentForum(GeneralForum):
 ### Topic
 
 from .interfaces import IContentHeadlineTopic
-from .interfaces import NTIID_TYPE_CONTENT_TOPIC
 
 from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
 from nti.dataserver import users
@@ -107,16 +96,7 @@ from nti.dataserver.interfaces import IDefaultPublished
 
 @interface.implementer(IContentHeadlineTopic)
 class ContentHeadlineTopic(GeneralHeadlineTopic):
-
-	_ntiid_type = NTIID_TYPE_CONTENT_TOPIC
-
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
-
-	@property
-	def NTIID(self):
-		# Fall-back to OIDs for now
-		return to_external_ntiid_oid(self)
-
 
 	@property
 	def sharingTargetsWhenPublished(self):
@@ -173,7 +153,6 @@ from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.interfaces import AUTHENTICATED_GROUP_NAME
 
 from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.authorization import ACT_CREATE
 
 @component.adapter(IContentBoard)
 class _ContentBoardACLProvider(_CommunityBoardACLProvider):
