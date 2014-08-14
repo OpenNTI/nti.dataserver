@@ -9,9 +9,6 @@ __docformat__ = "restructuredtext en"
 # disable: too many ancestors
 # pylint: disable=I0011,R0901
 
-from zope import schema
-from zope.interface.common import mapping
-
 # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.constraints import contains
 from zope.container.constraints import containers
@@ -32,15 +29,11 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
 import nti.dataserver.contenttypes.forums.interfaces as frm_interfaces
 
-NTIID_TYPE_CONTENT_BOARD   = frm_interfaces.NTIID_TYPE_BOARD + ':Content'
-NTIID_TYPE_CONTENT_FORUM   = frm_interfaces.NTIID_TYPE_FORUM + ':Content'
-NTIID_TYPE_CONTENT_TOPIC   = frm_interfaces.NTIID_TYPE_GENERAL_TOPIC + 'Content'
-NTIID_TYPE_CONTENT_COMMENT = frm_interfaces.NTIID_TYPE_POST + ':ContentComment'
-
 from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 class IContentBoard(IDefaultForumBoard,
-					IShouldHaveTraversablePath):
+					IShouldHaveTraversablePath,
+					frm_interfaces.IUseOIDForNTIID):
 	"""
 	A board belonging to a particular piece of content.
 	"""

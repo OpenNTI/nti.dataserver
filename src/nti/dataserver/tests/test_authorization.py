@@ -8,7 +8,9 @@ from hamcrest import assert_that, has_length, is_, same_instance, is_not
 from hamcrest import contains
 from hamcrest import equal_to
 from hamcrest import has_property as has_attr
+from hamcrest import has_entries
 from nti.testing.matchers import provides
+from nti.externalization.tests import externalizes
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
@@ -28,6 +30,12 @@ class TestAuthorization(DataserverLayerTest):
 	def test_everyone_equal_string(self):
 		iprin = nti_interfaces.IPrincipal('system.Everyone')
 		assert_that( iprin, is_(equal_to('system.Everyone')))
+
+	def test_system_user_external(self):
+		assert_that( nti_interfaces.system_user,
+					 externalizes( has_entries( 'Class', 'SystemUser',
+												'Username', nti_interfaces.SYSTEM_USER_NAME)))
+
 
 	def test_user_adapts_to_group_member( self ):
 		u = users.User( 'sjohnson@nextthought.com', 't' )
