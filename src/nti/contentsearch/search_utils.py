@@ -92,8 +92,6 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 		# lead to unloadable pickles. We've seen this manifest as ImportError
 		logger.exception("Failed to add book search %s", indexname)
 
-auto_register_content = register_content # alias
-
 _extractor_pe = re.compile('[?*]*(.*)')
 
 def is_true(v):
@@ -204,7 +202,6 @@ def create_queryobject(username, params, matchdict):
 		for pid in package_ntiids:
 			root = get_collection_root(pid)
 			if root is not None:
-				auto_register_content(package=root)
 				root_ntiid = root.ntiid
 				packages.append(root_ntiid)
 				if 'indexid' not in args: # legacy
