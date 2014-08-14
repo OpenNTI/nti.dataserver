@@ -105,11 +105,11 @@ class IndexManager(object):
 		results = merge_suggest_results(cnt_results, ugd_results)
 		return results
 
-	def is_content_registered(self, ntiid, site=None):
+	def is_content_registered(self, ntiid):
 		ntiid = ntiid.lower() if ntiid else ''
-		sm = site or component.getSiteManager()
-		srchr = sm.queryUtility(IContentSearcher, name=ntiid) if sm is not None else None
-		return srchr is not None
+		manager = component.getGlobalSiteManager()
+		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
+		return searcher is not None
 		
 	def register_content(self, ntiid=None, indexname=None, indexdir=None,
 						 parallel_search=False, *args, **kwargs):
@@ -118,8 +118,8 @@ class IndexManager(object):
 			return False
 		ntiid = ntiid.lower()
 
-		sm = component.getSiteManager()
-		searcher = sm.queryUtility(IContentSearcher, name=ntiid)
+		manager = component.getGlobalSiteManager()
+		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
 		if searcher is not None:
 			return searcher
 
@@ -131,9 +131,9 @@ class IndexManager(object):
 												indexname=indexname,
 												*args, **kwargs)
 		if searcher is not None:
-			sm.registerUtility(searcher,
-							   provided=IContentSearcher,
-							   name=ntiid)
+			manager.registerUtility(searcher,
+							   		provided=IContentSearcher,
+							   		name=ntiid)
 			logger.info("Content '%s' has been added to index manager", ntiid)
 		else:
 			logger.error("Content '%s' could not be added to index manager", ntiid)

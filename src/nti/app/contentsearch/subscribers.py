@@ -26,39 +26,25 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zc.lockfile import LockFile, LockError
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.boto_s3 import key_last_modified
+from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IS3ContentPackage
+from nti.contentlibrary.interfaces import IFilesystemContentPackage
 
 from nti.contentsearch.interfaces import IIndexManager
-
-from nti.contentlibrary.boto_s3 import key_last_modified
+from nti.contentsearch.search_utils import register_content
 
 from nti.utils import make_cache_dir
 
-def _add_book(indexmanager, indexname, indexdir, ntiid):
-	try:
-		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
-			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
-		else:
-			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
-	except ImportError: # pragma: no cover
-		# Adding a book on disk loads the Whoosh indexes, which
-		# are implemented as pickles. Incompatible version changes
-		# lead to unloadable pickles. We've seen this manifest as ImportError
-		logger.exception( "Failed to add book search %s", indexname )
-
-@component.adapter(lib_interfaces.IFilesystemContentPackage, IObjectCreatedEvent)
-def add_filesystem_index( title, event ):
+@component.adapter(IFilesystemContentPackage, IObjectCreatedEvent)
+def add_filesystem_index(package, event):
 	indexmanager = component.queryUtility(IIndexManager)
 	if indexmanager is None: # pragma: no cover
 		return
+	register_content(package=package, indexmanager=indexmanager)
 
-	indexname = os.path.basename( title.get_parent_key().absolute_path ) # TODO: So many assumptions here
-	indexdir_key = title.make_sibling_key( 'indexdir' )
-	_add_book( indexmanager, indexname, indexdir_key.absolute_path, title.ntiid )
-
-@component.adapter(lib_interfaces.IS3ContentPackage, IObjectCreatedEvent)
-def add_s3_index( title, event ):
+@component.adapter(IS3ContentPackage, IObjectCreatedEvent)
+def add_s3_index(title, event ):
 	"""
 	Adds an index for things that exist in S3, possibly making a local
 	cache of them as needed.
@@ -73,8 +59,8 @@ def add_s3_index( title, event ):
 	# persistently, across restarts.
 	index_cache_dir = make_cache_dir( 'whoosh_content_index', env_var='NTI_INDEX_CACHE_DIR' )
 
-	index_name = title.get_parent_key().key
-	title_index_cache_dir = os.path.join( index_cache_dir, index_name, 'indexdir' )
+	indexname = title.get_parent_key().key
+	title_index_cache_dir = os.path.join(index_cache_dir, indexname, 'indexdir')
 	if not os.path.isdir( title_index_cache_dir ):
 		os.makedirs( title_index_cache_dir )
 
@@ -135,9 +121,12 @@ def add_s3_index( title, event ):
 	except title.TRANSIENT_EXCEPTIONS:
 		pass
 
-	_add_book( indexmanager, index_name, title_index_cache_dir, title.ntiid )
+	register_content(indexmanager=indexmanager, 
+					 indexname=indexname, 
+					 indexdir=title_index_cache_dir, 
+					 ntiid=title.ntiid )
 
-@component.adapter(lib_interfaces.IContentPackage,IObjectModifiedEvent)
+@component.adapter(IContentPackage, IObjectModifiedEvent)
 def reset_indexes_when_modified(content_package, event):
 	# The cheap and effective thing to do is to unregister
 	# and re-register. Note that we CANNOT simply
@@ -146,14 +135,14 @@ def reset_indexes_when_modified(content_package, event):
 	# Its our own problem that we do not have a more efficient way
 	# to deal with this.
 
-	reset_indexes_when_removed( content_package, event )
+	reset_indexes_when_removed(content_package, event)
 
-	if lib_interfaces.IS3ContentPackage.providedBy(content_package):
+	if IS3ContentPackage.providedBy(content_package):
 		add_s3_index(content_package, event)
-	elif lib_interfaces.IFilesystemContentPackage.providedBy(content_package):
+	elif IFilesystemContentPackage.providedBy(content_package):
 		add_filesystem_index(content_package, event)
 
-@component.adapter(lib_interfaces.IContentPackage, IObjectRemovedEvent)
+@component.adapter(IContentPackage, IObjectRemovedEvent)
 def reset_indexes_when_removed(content_package, event):
 	# XXX What should we do here? We need the index manager objects
 	# to expose modification times. And really to best do that we

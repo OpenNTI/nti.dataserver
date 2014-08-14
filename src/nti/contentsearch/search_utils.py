@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import re
 import gevent
 import functools
@@ -27,11 +28,20 @@ from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from . import common
-from . import constants
-from . import search_query
-from . import content_utils
-from . import interfaces as search_interfaces
+from .common import sort_search_types
+from .common import get_indexable_types
+from .common import get_type_from_mimetype
+
+from .constants import invalid_type_
+
+from .content_utils import get_collection_root
+from .content_utils import get_content_translation_table
+
+from .interfaces import ISearchQuery
+from .interfaces import IIndexManager
+
+from .search_query import QueryObject
+from .search_query import DateTimeRange
 
 def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
 	assert func is not None
@@ -56,6 +66,35 @@ def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
 
 	return greenlet
 
+def register_content(package=None, indexname=None, indexdir=None, ntiid=None, indexmanager=None):
+	indexmanager = indexmanager or component.queryUtility(IIndexManager)
+	if package is None:
+		assert indexname, 'must provided and index name'
+		assert indexdir, 'must provided and index location directory'
+		ntiid = ntiid or indexname
+	else:
+		ntiid = ntiid or package.ntiid
+		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
+		indexname = os.path.basename(package.get_parent_key().absolute_path) # TODO: So many assumptions here
+	
+	if indexmanager is None or indexmanager.is_content_registered(ntiid):
+		return
+	
+	try:
+		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
+		from IPython.core.debugger import Tracer; Tracer()()
+		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
+			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
+		else:
+			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
+	except ImportError: # pragma: no cover
+		# Adding a book on disk loads the Whoosh indexes, which
+		# are implemented as pickles. Incompatible version changes
+		# lead to unloadable pickles. We've seen this manifest as ImportError
+		logger.exception("Failed to add book search %s", indexname)
+
+auto_register_content = register_content # alias
+
 _extractor_pe = re.compile('[?*]*(.*)')
 
 def is_true(v):
@@ -68,7 +107,7 @@ def clean_search_query(query, language='en'):
 		m = _extractor_pe.search(result)
 		result = m.group() if m else u''
 
-	table = content_utils.get_content_translation_table(language)
+	table = get_content_translation_table(language)
 	result = result.translate(table) if result else u''
 	result = unicode(result)
 
@@ -113,7 +152,7 @@ def _parse_dateRange(args, fields):
 		value = args.pop(name, None)
 		value = check_time(value) if value is not None else None
 		if value is not None:
-			result = result or search_query.DateTimeRange()
+			result = result or DateTimeRange()
 			if idx == 0: #after 
 				result.startTime = value
 			else:  # before
@@ -138,15 +177,15 @@ def _resolve_package_ntiids(ntiid):
 		else:
 			result = [ntiid]
 	return result
-
+		
 def create_queryobject(username, params, matchdict):
-	indexable_type_names = common.get_indexable_types()
+	indexable_type_names = get_indexable_types()
 	username = username or matchdict.get('user', None)
 
 	# parse params:
 	args = dict(params)
 	for name in list(args.keys()):
-		if name not in search_interfaces.ISearchQuery and name not in accepted_keys:
+		if name not in ISearchQuery and name not in accepted_keys:
 			del args[name]
 
 	term = matchdict.get('term', u'')
@@ -164,31 +203,33 @@ def create_queryobject(username, params, matchdict):
 		# make sure we register the location where the search query is being made
 		args['location'] = ntiid if not _is_type_oid(ntiid) else package_ntiids[0]
 		for pid in package_ntiids:
-			root_ntiid = content_utils.get_collection_root_ntiid(pid)
-			if root_ntiid is None:
-				logger.debug("Could not find collection for ntiid '%s'" % pid)
-			else:
+			root = get_collection_root(pid)
+			if root is not None:
+				auto_register_content(package=root)
+				root_ntiid = root.ntiid
 				packages.append(root_ntiid)
 				if 'indexid' not in args: # legacy
 					args['indexid'] = root_ntiid
+			else:
+				logger.debug("Could not find collection for ntiid '%s'" % pid)
 
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
 	if accept:
 		aset = set(accept.split(','))
 		if '*/*' not in aset:
-			aset = {common.get_type_from_mimetype(e) for e in aset}
+			aset = {get_type_from_mimetype(e) for e in aset}
 			aset.discard(None)
-			aset = aset if aset else (constants.invalid_type_,)
-			args['searchOn'] = common.sort_search_types(aset)
+			aset = aset if aset else (invalid_type_,)
+			args['searchOn'] = sort_search_types(aset)
 	elif exclude:
 		eset = set(exclude.split(','))
 		if '*/*' in eset:
-			args['searchOn'] = (constants.invalid_type_,)
+			args['searchOn'] = (invalid_type_,)
 		else:
-			eset = {common.get_type_from_mimetype(e) for e in eset}
+			eset = {get_type_from_mimetype(e) for e in eset}
 			eset.discard(None)
-			args['searchOn'] = common.sort_search_types(indexable_type_names - eset)
+			args['searchOn'] = sort_search_types(indexable_type_names - eset)
 
 	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
 	
@@ -199,7 +240,7 @@ def create_queryobject(username, params, matchdict):
 	args['modificationTime'] = modificationTime
 	args['applyHighlights'] = is_true(args.get('applyHighlights', True))
 
-	return search_query.QueryObject(**args)
+	return QueryObject(**args)
 
 def construct_queryobject(request):
 	username = request.matchdict.get('user', None)
