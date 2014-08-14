@@ -77,7 +77,7 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
 		indexname = os.path.basename(package.get_parent_key().absolute_path) # TODO: So many assumptions here
 
-	if indexmanager is None or indexmanager.is_content_registered(ntiid):
+	if indexmanager is None:
 		return
 
 	try:
