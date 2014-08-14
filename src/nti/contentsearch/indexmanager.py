@@ -79,8 +79,8 @@ class IndexManager(object):
 			cnt_results = self.content_search(query=query, store=results)
 			ugd_results = self.user_data_search(query=query, store=results)
 		results = merge_search_results(cnt_results, ugd_results)
-		logger.debug("Query '%s' returned %s hit(s). Took %.3f(secs)" %
-					 (query, len(results), time.time() - start))
+		logger.debug("Query '%s' returned %s hit(s). Took %.3f(secs)",
+					 query, len(results), time.time() - start)
 		return results
 
 	@metric
