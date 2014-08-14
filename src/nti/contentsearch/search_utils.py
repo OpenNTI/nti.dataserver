@@ -82,7 +82,6 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 	
 	try:
 		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
-		from IPython.core.debugger import Tracer; Tracer()()
 		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
 			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
 		else:
