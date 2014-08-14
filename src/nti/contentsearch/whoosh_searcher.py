@@ -20,8 +20,9 @@ except ImportError:
 
 from zope import interface
 from zope.proxy import ProxyBase
+from zope.container.contained import Contained
 
-from persistent import Persistent
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.utils.property import CachedProperty
 
@@ -48,7 +49,7 @@ from .search_results import merge_suggest_and_search_results
 from .search_results import get_or_create_suggest_and_search_results
 
 from .whoosh_query import CosineScorerModel
-	
+
 from .whoosh_storage import DirectoryStorage
 
 from .whoosh_index import Book as WhooshBook
@@ -122,18 +123,20 @@ INDEX_FACTORIES = (
 )
 
 @interface.implementer(IWhooshContentSearcher)
-class WhooshContentSearcher(Persistent):
+class WhooshContentSearcher(Contained,
+							PersistentCreatedAndModifiedTimeObject):
 
 	_baseindexname = None
 	_parallel_search = False
 
 	def __init__(self, baseindexname, storage, ntiid=None,
 				 parallel_search=False):
+		PersistentCreatedAndModifiedTimeObject.__init__(self)
 		self.storage = storage
 		self._baseindexname = baseindexname
 		self._parallel_search = parallel_search
 		self.ntiid = ntiid if ntiid else baseindexname
-			
+
 	@CachedProperty
 	def _searchables(self):
 		result = dict()
@@ -141,7 +144,7 @@ class WhooshContentSearcher(Persistent):
 		for prefix, factory, classsname in INDEX_FACTORIES:
 			indexname = prefix + baseindexname
 			if not self.storage.index_exists(indexname):
-				logger.warn("Index %s does not exists in storage %r", 
+				logger.warn("Index %s does not exists in storage %r",
 							indexname, self.storage)
 				continue
 			index = self.storage.get_index(indexname)
@@ -239,7 +242,7 @@ def _ContentSearcherFactory(indexname=None, ntiid=None, indexdir=None):
 		searcher = WhooshContentSearcher(indexname, storage, ntiid)
 		result = searcher if len(searcher) > 0 else None
 		if result is None:
-			logger.error("No indexes were registered for %s,%s (%s)", 
+			logger.error("No indexes were registered for %s,%s (%s)",
 						 indexname, indexdir, ntiid)
 		return result
 	return None

@@ -15,6 +15,8 @@ from zope.mimetype import interfaces as zmime_interfaces
 
 from nti.dataserver import interfaces as nti_interfaces
 
+from zope.container.interfaces import IContained
+
 from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import Dict
@@ -61,7 +63,7 @@ class ISearchQuery(interface.Interface):
 
 	packages = ListOrTuple(ValidTextLine(title="Book content NTIID to search on"),
 						   required=False)
-	
+
 	indexid = ValidTextLine(title="Book content NTIID", required=False)
 
 	searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
@@ -155,7 +157,8 @@ class ISearcher(interface.Interface):
 		:param query: Search query
 		"""
 
-class IContentSearcher(ISearcher):
+class IContentSearcher(ISearcher,
+					   IContained):
 	indices = interface.Attribute("index names")
 
 class IWhooshContentSearcher(IContentSearcher):
@@ -751,7 +754,7 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 
 	FilteredCount = Int(title='Total hit filtered', required=True,
 						readonly=False, default=0)
-	
+
 	def track(hit):
 		"""
 		track any metadata from the specified search hit
