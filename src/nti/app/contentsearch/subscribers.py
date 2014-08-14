@@ -64,9 +64,9 @@ def add_s3_index(title, event ):
 	if not os.path.isdir( title_index_cache_dir ):
 		os.makedirs( title_index_cache_dir )
 
-	indexdir_keys = title.key.bucket.list(delimiter='/', 
+	indexdir_keys = title.key.bucket.list(delimiter='/',
 										  prefix=title.make_sibling_key( 'indexdir' ).key + '/' )
-	
+
 	# TODO: We are caching based on timestamp. Caching based on version_ids
 	# might be more reliable
 
@@ -121,9 +121,9 @@ def add_s3_index(title, event ):
 	except title.TRANSIENT_EXCEPTIONS:
 		pass
 
-	register_content(indexmanager=indexmanager, 
-					 indexname=indexname, 
-					 indexdir=title_index_cache_dir, 
+	register_content(indexmanager=indexmanager,
+					 indexname=indexname,
+					 indexdir=title_index_cache_dir,
 					 ntiid=title.ntiid )
 
 @component.adapter(IContentPackage, IObjectModifiedEvent)

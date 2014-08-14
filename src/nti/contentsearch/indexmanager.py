@@ -46,10 +46,6 @@ from .search_results import get_or_create_suggest_and_search_results
 @NoPickle
 class IndexManager(object):
 
-	@classmethod
-	def get_shared_indexmanager(cls):
-		return component.getGlobalSiteManager().getUtility(IIndexManager)
-
 	parallel_search = False
 
 	def __init__(self, parallel_search=False):
@@ -110,10 +106,10 @@ class IndexManager(object):
 		manager = component.getSiteManager()
 		searcher = manager.queryUtility(IContentSearcher, name=ntiid)
 		return searcher is not None
-		
+
 	def register_content(self, ntiid=None, indexname=None, indexdir=None,
 						 parallel_search=False, *args, **kwargs):
-		
+
 		if not ntiid:
 			return False
 		ntiid = ntiid.lower()
@@ -126,7 +122,7 @@ class IndexManager(object):
 		if self.parallel_search:
 			kwargs['parallel_search'] = self.parallel_search
 
-		searcher = self.create_content_searcher(ntiid=ntiid, 
+		searcher = self.create_content_searcher(ntiid=ntiid,
 												indexdir=indexdir,
 												indexname=indexname,
 												*args, **kwargs)

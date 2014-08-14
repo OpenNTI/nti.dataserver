@@ -76,10 +76,10 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 		ntiid = ntiid or package.ntiid
 		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
 		indexname = os.path.basename(package.get_parent_key().absolute_path) # TODO: So many assumptions here
-	
+
 	if indexmanager is None or indexmanager.is_content_registered(ntiid):
 		return
-	
+
 	try:
 		__traceback_info__ = indexdir, indexmanager, indexname, ntiid
 		if indexmanager.register_content(indexname=indexname, indexdir=indexdir, ntiid=ntiid):
@@ -142,7 +142,7 @@ def check_time(value):
 	if value < 0:
 		raise hexc.HTTPBadRequest()
 	return value
-	
+
 def _parse_dateRange(args, fields):
 	result = None
 	for idx, name in enumerate(fields):
@@ -150,7 +150,7 @@ def _parse_dateRange(args, fields):
 		value = check_time(value) if value is not None else None
 		if value is not None:
 			result = result or DateTimeRange()
-			if idx == 0: #after 
+			if idx == 0: #after
 				result.startTime = value
 			else:  # before
 				result.endTime = value
@@ -174,7 +174,7 @@ def _resolve_package_ntiids(ntiid):
 		else:
 			result = [ntiid]
 	return result
-		
+
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = get_indexable_types()
 	username = username or matchdict.get('user', None)
@@ -191,12 +191,12 @@ def create_queryobject(username, params, matchdict):
 
 	args['username'] = username
 	packages = args['packages'] = list()
-	
+
 	ntiid = matchdict.get('ntiid', None)
-	package_ntiids = _resolve_package_ntiids(ntiid)		
+	package_ntiids = _resolve_package_ntiids(ntiid)
 	if package_ntiids:
 		# predictable order for digest
-		package_ntiids.sort() 
+		package_ntiids.sort()
 		# make sure we register the location where the search query is being made
 		args['location'] = ntiid if not _is_type_oid(ntiid) else package_ntiids[0]
 		for pid in package_ntiids:
@@ -228,7 +228,7 @@ def create_queryobject(username, params, matchdict):
 			args['searchOn'] = sort_search_types(indexable_type_names - eset)
 
 	args['batchSize'], args['batchStart'] = get_batch_size_start(args)
-	
+
 	creationTime = _parse_dateRange(args, ('createdAfter', 'createdBefore',))
 	modificationTime = _parse_dateRange(args, ('modifiedAfter', 'modifiedBefore'))
 
