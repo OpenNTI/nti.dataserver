@@ -847,6 +847,30 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 			# In fact the activity is empty
 			assert_that( res.json_body['Items'], is_empty() )
 
+	@WithSharedApplicationMockDS
+	@time_monotonically_increases
+	def test_published_topic_is_in_rstream_until_DELETEd(self):
+		fixture = UserCommunityFixture( self )
+		self.testapp = testapp = fixture.testapp
+		testapp2 = fixture.testapp2
+
+		publish_res, data = self._POST_and_publish_topic_entry()
+
+		# ...It can be seen in the recursive stream for the people
+		# is shared with ...
+		for app, uname in (#(testapp, fixture.user_username),
+						   (testapp2, fixture.user2_username),):
+			res = self.fetch_user_root_rstream( app, uname )
+			assert_that( res.json_body['Items'], contains( has_entry('Item', has_entry( 'title', data['title'] ) ) ))
+
+		# Until it is deleted
+		testapp.delete( publish_res.location )
+		# When it is no longer anywhere
+		for app, uname in (#(testapp, fixture.user_username),
+						   (testapp2, fixture.user2_username),):
+			res = self.fetch_user_root_rstream( app, uname, status=404 )
+
+
 	check_sharedWith_community = True
 
 	@WithSharedApplicationMockDS
