@@ -79,12 +79,12 @@ def main():
 
 	# process arguments
 	contentpath = os.path.expanduser(args.contentpath)
+	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 	jobname = os.path.basename(contentpath)
 
 	verbose = args.verbose
 	name = args.name or jobname
 	indexer = _type_map[args.type]
-	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
 	if not os.path.exists(contentpath) or not os.path.isdir(contentpath):
 		raise IOError("Invalid content directory")
 
