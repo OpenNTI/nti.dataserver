@@ -78,6 +78,7 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 		indexname = os.path.basename(package.get_parent_key().absolute_path) # TODO: So many assumptions here
 
 	if indexmanager is None:
+
 		return
 
 	try:
