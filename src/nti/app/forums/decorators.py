@@ -41,9 +41,9 @@ _BLOG_NAME = PersonalBlog.__default_name__
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
 
-from . import VIEW_PUBLISH
+from nti.app.publishing import VIEW_PUBLISH
 from . import VIEW_CONTENTS
-from . import VIEW_UNPUBLISH
+from nti.app.publishing import VIEW_UNPUBLISH
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)

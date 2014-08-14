@@ -8,7 +8,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-VIEW_CONTENTS = 'contents'
+VIEW_PUBLISH = "publish"
+VIEW_UNPUBLISH = "unpublish"
 
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')

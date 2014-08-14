@@ -14,7 +14,6 @@ import re
 
 import datetime
 import operator
-from abc import ABCMeta, abstractmethod
 
 from zope import component
 from zope import interface
@@ -33,7 +32,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.utils._compat import aq_base
 
 from nti.appserver.traversal import find_interface
-from nti.app.renderers.caching import uncached_in_response
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver.ugd_query_views import Operator
@@ -73,9 +72,7 @@ from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.externalization.interfaces import StandardExternalFields
 
-from . import VIEW_PUBLISH
-from . import VIEW_UNPUBLISH
-from . import VIEW_CONTENTS
+from .. import VIEW_CONTENTS
 from nti.appserver.pyramid_authorization import is_readable
 
 class _AbstractIPostPOSTView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
@@ -682,65 +679,3 @@ def match_title_of_post_to_blog( post, event ):
 	if frm_interfaces.IHeadlineTopic.providedBy( post.__parent__ ) and aq_base(post) is aq_base(post.__parent__.headline) and post.title != post.__parent__.title:
 		post.__parent__.title = post.title
 	return
-
-
-### Publishing workflow
-## TODO: This is more general than forums, can be moved.
-
-
-class _AbstractPublishingView(object):
-	__metaclass__ = ABCMeta
-
-	_iface = nti_interfaces.IDefaultPublished
-
-	def __init__( self, request ):
-		self.request = request
-
-	@abstractmethod
-	def _do_provide(self, topic):
-		"""This method is responsible for firing any ObjectSharingModifiedEvents needed."""
-		# Which is done by the topic object's publish/unpublish method
-		raise NotImplementedError() # pragma: no cover
-	@abstractmethod
-	def _test_provides(self, topic):
-		raise NotImplementedError() # pragma: no cover
-
-	def __call__(self):
-		request = self.request
-		topic = request.context
-		if self._test_provides( topic ):
-			self._do_provide( topic )
-
-		request.response.location = request.resource_path( topic )
-		return uncached_in_response( topic )
-
-@view_config(context=frm_interfaces.IPublishableTopic)
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_UPDATE,
-				request_method='POST',
-				name=VIEW_PUBLISH )
-class _PublishView(_AbstractPublishingView):
-	def _do_provide( self, topic ):
-		topic.publish()
-	def _test_provides( self, topic ):
-		return not nti_interfaces.IDefaultPublished.providedBy( topic )
-
-@view_config(context=frm_interfaces.IPublishableTopic)
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_UPDATE,
-				request_method='POST',
-				name=VIEW_UNPUBLISH )
-class _UnpublishView(_AbstractPublishingView):
-	def _do_provide( self, topic ):
-		topic.unpublish()
-	def _test_provides( self, topic ):
-		return nti_interfaces.IDefaultPublished.providedBy( topic )
-
-
-# XXX Temporarily export these
-#del _view_defaults
-#del _c_view_defaults
-#del _r_view_defaults
-#del _d_view_defaults

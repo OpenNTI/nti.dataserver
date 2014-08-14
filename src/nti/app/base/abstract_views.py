@@ -39,9 +39,9 @@ class AbstractView(object):
 		return component.getUtility(IDataserver)
 
 
-class AbstractAuthenticatedView(AbstractView):
+class AuthenticatedViewMixin(object):
 	"""
-	Base class for views that expect authentication to be required.
+	Mixin class for views that expect to be authenticated.
 	"""
 
 	def getRemoteUser( self ):
@@ -100,3 +100,8 @@ class AbstractAuthenticatedView(AbstractView):
 					return is_readable(x, request)
 
 		return security_check
+
+class AbstractAuthenticatedView(AbstractView, AuthenticatedViewMixin):
+	"""
+	Base class for views that expect authentication to be required.
+	"""
