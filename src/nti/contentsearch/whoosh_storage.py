@@ -24,9 +24,13 @@ from whoosh.index import LockError
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from . import interfaces as search_interfaces
+from nti.externalization.externalization import WithRepr
 
 from nti.utils.property import CachedProperty
+
+from nti.schema.schema import EqHash
+
+from .interfaces import IWhooshIndexStorage
 
 # segment writer
 max_segments = 10
@@ -69,7 +73,7 @@ def get_index_writer(index, writer_ctor_args={}, maxiters=40, delay=0.25):
 writer_ctor_args = {'limitmb':96}
 writer_commit_args = {'merge':False, 'optimize':False, 'mergetype':segment_merge}
 
-@interface.implementer(search_interfaces.IWhooshIndexStorage)
+@interface.implementer(IWhooshIndexStorage)
 class IndexStorage(Persistent):
 
 	default_ctor_args = writer_ctor_args
@@ -112,11 +116,12 @@ def prepare_index_directory(indexdir=None):
 		indexdir = os.path.join(dsdir, 'data', "indexes")
 
 	indexdir = os.path.expanduser(indexdir)
-
 	if not os.path.exists(indexdir):
 		os.makedirs(indexdir)
 	return indexdir
 
+@WithRepr
+@EqHash("folder",)
 class DirectoryStorage(IndexStorage):
 
 	def __init__(self, indexdir=None):
@@ -171,6 +176,8 @@ class DirectoryStorage(IndexStorage):
 	def get_folder(self):
 		return self.folder
 
+	def __str__(self):
+		return self.folder
 
 def create_directory_index(indexname, schema, indexdir=None, close_index=True):
 	storage = DirectoryStorage(indexdir)
