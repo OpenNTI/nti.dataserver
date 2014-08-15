@@ -19,11 +19,11 @@ from zope import interface
 
 from plasTeX.Renderers import render_children
 
-from nti.contentrendering.interfaces import IRenderedBook
-from nti.contentrendering.interfaces import ICourseExtractor
-from nti.contentrendering.interfaces import IJSONTransformer
-
 from nti.externalization.externalization import to_external_object
+
+from ...interfaces import IRenderedBook
+from ...interfaces import ICourseExtractor
+from ...interfaces import IJSONTransformer
 
 @interface.implementer(ICourseExtractor)
 @component.adapter(IRenderedBook)
@@ -44,6 +44,7 @@ class _CourseExtractor(object):
 			# Write the course data to course_outline.xml
 			with open(os.path.join(outpath, "course_outline.xml"), "wb") as fp:
 				course_nodes.writexml(fp)
+
 			dom.childNodes[0].appendChild(course_nodes)
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
@@ -62,10 +63,13 @@ class _CourseExtractor(object):
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
 		if hasattr(doc_el, 'discussion_board'):
 			toc_el.setAttribute('discussionBoard', doc_el.discussion_board)
+			
 		if hasattr(doc_el, 'announcement_board'):
 			toc_el.setAttribute('instructorForum', doc_el.announcement_board)
+			
 		if courseinfo:
 			toc_el.setAttribute('courseInfo', courseinfo[0].ntiid)
+			
 		units = doc_el.getElementsByTagName('courseunit')
 
 		# SAJ: All courses should now have a course_info.json file, so always add this node

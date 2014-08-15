@@ -226,7 +226,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# This ACL must be static.
 		# TODO: Remove hack
 		_forum = self.__parent__
-		#TODO: REMOVE IACL 
+		#TODO: REMOVE IACL
 		if for_interfaces.IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
 			result = set()

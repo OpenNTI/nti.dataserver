@@ -215,7 +215,12 @@ class _EnglishFirstAndLastNameDecorator(object):
 
 		preflangs = IUserPreferredLanguages( original, None )
 		if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
-			human_name = nameparser.HumanName( realname )
+			# FIXME: Duplicated from users.user_profile
+			# CFA: another suffix we see from certain financial quorters
+			suffixes = nameparser.config.SUFFIXES | set(('cfa',))
+			constants = nameparser.config.Constants(suffixes=suffixes)
+
+			human_name = nameparser.HumanName( realname, constants=constants )
 			first = human_name.first or human_name.last
 			last = human_name.last or human_name.first
 

@@ -22,6 +22,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import interface
 
 from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
@@ -76,6 +77,15 @@ class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _extend_acl_after_creator_and_sharing( self, acl ):
 		self._extend_with_admin_privs( acl )
 
+# Sometimes we have topics and headline posts that are owned by
+# non-user entities like communities; in that case, we want the permissions to only
+# grant the creator read access
+def _do_get_perms_for_creator_by_kind(self):
+	if nti_interfaces.IUser.providedBy(self.context.creator):
+		return self._PERMS_FOR_CREATOR
+	return (nauth.ACT_READ,)
+
+
 class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	People that can see topics are allowed to create new objects (posts)
@@ -87,6 +97,8 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
 
+	_do_get_perms_for_creator = _do_get_perms_for_creator_by_kind
+
 	def _get_sharing_target_names( self ):
 		# The context is usually an IPublishable. In the simple case,
 		# we could directly return `self.context.sharingTargets`, saving a lookup step, because
@@ -96,6 +108,9 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 		# (otherwise, some things like IDynamicSharingTarget are not valid
 		# IPrincipals to put in the ACL---only their members are)
 		return self.context.flattenedSharingTargetNames
+
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		return self._extend_with_admin_privs(acl)
 
 
 @component.adapter(frm_interfaces.IPost)
@@ -115,6 +130,8 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_DENY_ALL = True
 
+	_do_get_perms_for_creator = _do_get_perms_for_creator_by_kind
+
 	def _get_sharing_target_names( self ):
 		try:
 			return self.context.__parent__.flattenedSharingTargetNames
@@ -127,6 +144,21 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 		if topic_creator:
 			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
 			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
+
+@component.adapter(frm_interfaces.IHeadlinePost)
+@interface.implementer(nti_interfaces.IACLProvider)
+class _HeadlinePostACLProvider(object):
+	"""
+	Headline posts are never permissioned any differently than topic
+	in which they are contained.
+	"""
+
+	def __init__(self, context):
+		self.context = context
+
+	@property
+	def __acl__(self):
+		return nti_interfaces.IACLProvider(self.context.__parent__).__acl__
 
 
 ###################################################

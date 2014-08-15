@@ -166,3 +166,9 @@ class TestFriendlyNamed(unittest.TestCase):
 
 		assert_that( fn.get_searchable_realname_parts(),
 					 is_(('Di', 'Lu')))
+
+	def test_cfa(self):
+		fn = FriendlyNamed(self)
+		fn.realname = "Jason Madden, CFA"
+		assert_that( fn.get_searchable_realname_parts(),
+					 is_(('Jason', 'Madden')))

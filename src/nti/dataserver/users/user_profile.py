@@ -93,7 +93,10 @@ class FriendlyNamed(persistent.Persistent):
 		# first, middle, and last if they are not blank. How does
 		# this handle more complex naming scenarios?
 		if self.realname:
-			name = nameparser.HumanName(self.realname)
+			# CFA: another suffix we see from certain financial quorters
+			suffixes = nameparser.config.SUFFIXES | set(('cfa',))
+			constants = nameparser.config.Constants(suffixes=suffixes)
+			name = nameparser.HumanName(self.realname, constants=constants)
 			# We try to be a bit more sophisticated around certain
 			# naming scenarios.
 			if name.first == self.realname and ' ' in self.realname:
@@ -103,7 +106,7 @@ class FriendlyNamed(persistent.Persistent):
 				# of this name and try again (avoid doing this if there are simply
 				# no components, as can happen on the mathcounts site or in tests)
 				prefixes = nameparser.config.PREFIXES.symmetric_difference(self.realname.lower().split())
-				constants = nameparser.config.Constants(prefixes=prefixes)
+				constants = nameparser.config.Constants(prefixes=prefixes, suffixes=suffixes)
 				name = nameparser.HumanName(self.realname, constants=constants)
 			# because we are cached, be sure to return an immutable
 			# value
