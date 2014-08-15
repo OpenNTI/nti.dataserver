@@ -393,11 +393,11 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 
 		def _has_both_comments( res, items=None ):
 			items = items or res.json_body['Items']
-			assert_that( items, has_length( 2 ) )
-			assert_that( items, contains_inanyorder(
-				has_entry( 'title', data['title'] ),
-				has_entry( 'title', 'A comment' ) ),
-				has_key( 'href' ) )
+			assert_that( items, has_length( greater_than_or_equal_to(2) ) )
+			assert_that( items, has_item(
+				has_entry( 'title', data['title'] ) ) )
+			assert_that( items, has_item(
+				has_entry( 'title', 'A comment' ) ) )
 
 		# These created notifications to the author...
 		# ... both on the socket...
@@ -419,8 +419,8 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		user2_followerapp.put_json( '/dataserver2/users/' + user2_follower_username,
 									 {'mute_conversation': entry_ntiid } )
 		# thus removing them from his stream
-		self.fetch_user_root_rstream( testapp=user2_followerapp, username=user2_follower_username, status=404 )
-
+		res = self.fetch_user_root_rstream( testapp=user2_followerapp, username=user2_follower_username )
+		assert_that( res.json_body['Items'], has_length(1) ) # the blog entry
 
 		# ...and in the notable data of the owner of the blog
 		res = self.fetch_user_recursive_notable_ugd(testapp=testapp, username=user_username)
@@ -606,7 +606,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		# As well as the RecursiveStream
 		for uname, app, status, length in ((user_username, testapp, 404, 0),
 										   (user2_username, testapp2, 200, 1), # He still has the blog notifications
-										   (user3_username, testapp3, 404, 0)):
+										   (user3_username, testapp3, 200, 1)): # and him too, given a change in sharing rules
 			__traceback_info__ = uname
 			res = app.get( '/dataserver2/users/' + uname  + '/Pages(' + ntiids.ROOT + ')/RecursiveStream', status=status )
 			if status == 200:
