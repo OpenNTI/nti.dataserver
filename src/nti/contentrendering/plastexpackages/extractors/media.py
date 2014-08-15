@@ -18,14 +18,16 @@ from zope import interface
 from plasTeX.Renderers import render_children
 from plasTeX.Base.LaTeX import Document as LaTexDocument
 
-from nti.contentrendering import interfaces as crd_interfaces
+from ...interfaces import IRenderedBook
+from ...interfaces import INTIAudioExtractor
+from ...interfaces import INTIVideoExtractor
 
-@component.adapter(crd_interfaces.IRenderedBook)
+@component.adapter(IRenderedBook)
 class _NTIMediaExtractor(object):
 
 	ntimedia = u'ntimedia'
 	ntimediaref = u'ntimediaref'
-	index_file = u"media_index.json"
+	index_file  = u'media_index.json'
 	media_mimeType = u'application/vnd.nextthought.ntimedia'
 	index_mimeType = u'application/vnd.nextthought.mediaindex'
 
@@ -235,7 +237,7 @@ class _NTIMediaExtractor(object):
 				if lesson_el is not None:
 					lesson_el.appendChild(toc_el)
 
-@interface.implementer(crd_interfaces.INTIVideoExtractor)
+@interface.implementer(INTIVideoExtractor)
 class _NTIVideoExtractor(_NTIMediaExtractor):
 
 	ntimedia = u'ntivideo'
@@ -279,12 +281,12 @@ class _NTIVideoExtractor(_NTIMediaExtractor):
 
 		return entry, container
 
-@interface.implementer(crd_interfaces.INTIAudioExtractor)
+@interface.implementer(INTIAudioExtractor)
 class _NTIAudioExtractor(_NTIMediaExtractor):
 
 	ntimedia = u'ntiaudio'
 	ntimediaref = u'ntiaudioref'
-	index_file = u"audio_index.json"
+	index_file  = u'audio_index.json'
 	media_mimeType = u'application/vnd.nextthought.ntiaudio'
 	index_mimeType = u'application/vnd.nextthought.audioindex'
 

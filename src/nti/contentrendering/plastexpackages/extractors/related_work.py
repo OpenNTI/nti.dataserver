@@ -17,8 +17,8 @@ from zope import interface
 
 from plasTeX.Renderers import render_children
 
-from nti.contentrendering.interfaces import IRenderedBook
-from nti.contentrendering.interfaces import IRelatedWorkExtractor
+from ...interfaces import IRenderedBook
+from ...interfaces import IRelatedWorkExtractor
 
 def _render_children(renderer, nodes):
 	return unicode(''.join(render_children(renderer, nodes)))
