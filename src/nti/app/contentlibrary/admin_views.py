@@ -35,13 +35,14 @@ from nti.dataserver.authorization import ACT_COPPA_ADMIN
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context='nti.dataserver.interfaces.IDataserverFolder',
-			  request_method='POST',
 			  permission=ACT_COPPA_ADMIN,
 			  name='SyncAllLibraries') # XXX better permission
 class _SyncAllLibrariesView(AbstractAuthenticatedView):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
+	If you GET this view, changes to not take effect but are just
+	logged.
 
 	.. note:: TODO: While this may be useful for scripts,
 		we also need to write a pretty HTML page that shows
