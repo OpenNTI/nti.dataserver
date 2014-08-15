@@ -82,6 +82,7 @@
 			 for=".interfaces.ICommunityBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
+	<adapter factory=".acl._HeadlinePostACLProvider" />
 
 	<adapter factory=".acl._ACLCommunityBoardACLProvider"
 			 for=".interfaces.IACLCommunityBoard"/>
