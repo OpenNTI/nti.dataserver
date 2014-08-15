@@ -20,7 +20,7 @@ from plasTeX.Renderers import render_children
 from nti.contentrendering.interfaces import IRenderedBook
 from nti.contentrendering.interfaces import IRelatedWorkExtractor
 
-def _render_children(self, renderer, nodes):
+def _render_children(renderer, nodes):
 	return unicode(''.join(render_children(renderer, nodes)))
 	
 @interface.implementer(IRelatedWorkExtractor)
