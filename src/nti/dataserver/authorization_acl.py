@@ -531,6 +531,10 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		return
 
 	def _extend_with_admin_privs( self, acl, provenance=None ):
+		"""
+		Subclasses need to call this if admins should have full permissions,
+		from `_extend_acl_after_creator_and_sharing`.
+		"""
 		provenance = provenance or self
 		_add_admin_moderation( acl, provenance )
 		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
