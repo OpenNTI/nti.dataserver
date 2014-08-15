@@ -17,30 +17,38 @@ from zope import interface
 
 from plasTeX.Renderers import render_children
 
-from nti.contentrendering import interfaces as crd_interfaces
+from nti.contentrendering.interfaces import IRenderedBook
+from nti.contentrendering.interfaces import IRelatedWorkExtractor
 
-@interface.implementer(crd_interfaces.IRelatedWorkExtractor)
-@component.adapter(crd_interfaces.IRenderedBook)
+def _render_children(self, renderer, nodes):
+	return unicode(''.join(render_children(renderer, nodes)))
+	
+@interface.implementer(IRelatedWorkExtractor)
+@component.adapter(IRenderedBook)
 class _RelatedWorkExtractor(object):
 
 	def __init__(self, book=None):
 		pass
-
-	def transform( self, book ):
+		
+	def transform(self, book):
 		dom = book.toc.dom
-		reference_els = book.document.getElementsByTagName( 'relatedworkref' )
-		related_els = book.document.getElementsByTagName( 'relatedwork' )
+		related_els = book.document.getElementsByTagName('relatedwork')
+		reference_els = book.document.getElementsByTagName('relatedworkref')
 		if reference_els or related_els:
 			outpath = os.path.expanduser(book.contentLocation)
-			# add name space
-			# FIXME: This is not the right way to do that. It should be
-			# managed automatically?
-			dom.childNodes[0].setAttribute('xmlns:content', "http://www.nextthought.com/toc")
+			
 			# cache topics
 			topic_map = self._get_topic_map(dom)
+			
+			# add name space FIXME: This is not the right way to do that. 
+			# It should be # managed automatically?
+			dom.childNodes[0].setAttribute('xmlns:content',
+										   "http://www.nextthought.com/toc")
+			
 			# get content data
 			content = self._process_references(dom, reference_els, topic_map)
 			content.extend(self._process_related(dom, related_els))
+			
 			# save dom and files
 			self._save_related_content(outpath, dom, content)
 			book.toc.save()
@@ -55,28 +63,30 @@ class _RelatedWorkExtractor(object):
 
 	def _process_references(self, dom, els, topic_map):
 		result = []
-		for el in els:
+		for el in els or ():
 			if el.parentNode:
 				# Discover the nearest topic in the toc that is a 'course' node
-				parent_el = el.parentNode
 				lesson_el = None
+				parent_el = el.parentNode
 				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 					lesson_el = topic_map.get(parent_el.ntiid)
+					
 				while lesson_el is None and parent_el.parentNode is not None:
 					parent_el = parent_el.parentNode
 					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				if el.uri == '':
-					logger.warn('We have no valid URI!!!!!!!!!!!!!!!!!!!!!!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
+					logger.warn('We have no valid URI!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
 
 				targetMimeType = el.targetMimeType
 
-				title = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.title )))
-				creator = unicode(''.join(render_children( el.relatedwork.renderer, el.relatedwork.creator )))
+				title = _render_children(el.relatedwork.renderer, el.relatedwork.title)
+				creator = _render_children(el.relatedwork.renderer, el.relatedwork.creator)
+				
 				# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
 				# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-				description = unicode(''.join(render_children( el.renderer, el.description )).replace('&amp;', '&'))
+				description = _render_children(el.renderer, el.description).replace('&amp;', '&')
 
 				content = {
 					'label': title,
@@ -96,7 +106,7 @@ class _RelatedWorkExtractor(object):
 
 	def _process_related(self, dom, els):
 		result = []
-		for el in els:
+		for el in els or ():
 			if el.iconResource is not None:
 				icon = el.iconResource.image.url
 			elif el.icon is not None:
@@ -112,11 +122,12 @@ class _RelatedWorkExtractor(object):
 			if uri != '' and el.targetMimeType is None:
 				el.gen_target_ntiid()
 
-			title = unicode(''.join(render_children( el.renderer, el.title )))
-			creator = unicode(''.join(render_children( el.renderer, el.creator )))
+			title = _render_children(el.renderer, el.title)
+			creator = _render_children(el.renderer, el.creator)
+			
 			# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
 			# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-			description = unicode(''.join(render_children( el.renderer, el.description )).replace('&amp;', '&'))
+			description = _render_children(el.renderer, el.description).replace('&amp;', '&')
 
 			content = {
 				'label': title,
@@ -136,12 +147,13 @@ class _RelatedWorkExtractor(object):
 		items = {}
 		filename = 'related_content_index.json'
 		containers = collections.defaultdict(set)
-		related_content_index = {'Items': items, 'Containers':containers}
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
-
+		related_content_index = {'Items': items, 'Containers':containers}
+		
 		for d, node in content_items:
 			if node is None:
 				continue
+
 			el = dom.createElementNS("http://www.nextthought.com/toc", 'content:related')
 			for name, value in d.items():
 				el.setAttribute(unicode(name), unicode(value))
