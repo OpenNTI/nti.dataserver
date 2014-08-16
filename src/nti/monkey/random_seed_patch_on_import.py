@@ -20,13 +20,14 @@ def _do_patch():
 	from random import Random
 
 	def seed(self, a=None):
-		try:
-			# Seed with enough bytes to span the 19937 bit
-			# state space for the Mersenne Twister
-			a = long(_hexlify(_urandom(2500)), 16)
-		except NotImplementedError:
-			import time
-			a = long(time.time() * 256) # use fractional seconds
+		if a is None:
+			try:
+				# Seed with enough bytes to span the 19937 bit
+				# state space for the Mersenne Twister
+				a = long(_hexlify(_urandom(2500)), 16)
+			except NotImplementedError:
+				import time
+				a = long(time.time() * 256) # use fractional seconds
 
 		super(Random, self).seed(a)
 		self.gauss_next = None
