@@ -17,14 +17,14 @@ import simplejson as json
 from zope import component
 from zope import interface
 
-from plasTeX.Renderers import render_children
-
 from nti.externalization.externalization import to_external_object
+
+from ._utils import _render_children
 
 from ...interfaces import IRenderedBook
 from ...interfaces import ICourseExtractor
 from ...interfaces import IJSONTransformer
-
+	
 @interface.implementer(ICourseExtractor)
 @component.adapter(IRenderedBook)
 class _CourseExtractor(object):
@@ -55,10 +55,10 @@ class _CourseExtractor(object):
 		toc_el = dom.createElement('course')
 		
 		toc_el.setAttribute('label', 
-							''.join(render_children( doc_el.renderer, doc_el.title)))
+							_render_children( doc_el.renderer, doc_el.title))
 		
 		toc_el.setAttribute('courseName', 
-							''.join(render_children( doc_el.renderer, doc_el.number)))
+							_render_children( doc_el.renderer, doc_el.number))
 		
 		toc_el.setAttribute('ntiid', doc_el.ntiid)
 		if hasattr(doc_el, 'discussion_board'):

@@ -9,15 +9,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import interface
 
 from plasTeX.Renderers import render_children
 
 from ..interfaces import IJSONTransformer
 
-def _render_children(renderer, child_nodes, strip=True):
-	result = unicode(''.join(render_children(renderer, child_nodes)))
-	return result.strip() if result else result
+def _render_children(renderer, nodes, strip=True):
+	if not isinstance(nodes, six.string_types):
+		result = unicode(''.join(render_children(renderer, nodes)))
+	else:
+		result = nodes.decode("utf-8") if isinstance(nodes, bytes) else nodes
+	return result.strip() if result and strip else result
 
 @interface.implementer(IJSONTransformer)
 class _CourseLessonJSONTransformer(object):

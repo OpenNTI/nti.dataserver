@@ -15,8 +15,9 @@ import simplejson as json
 from zope import component
 from zope import interface
 
-from plasTeX.Renderers import render_children
 from plasTeX.Base.LaTeX import Document as LaTexDocument
+
+from ._utils import _render_children
 
 from ...interfaces import IRenderedBook
 from ...interfaces import INTIAudioExtractor
@@ -222,7 +223,7 @@ class _NTIMediaExtractor(object):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				media_title = getattr(el.media, 'title', u'')
-				title = unicode(''.join(render_children(el.media.renderer, media_title)))
+				title = _render_children(el.media.renderer, media_title)
 
 				toc_el = dom.createElement('object')
 				toc_el.setAttribute('label', title)
