@@ -135,7 +135,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		if isinstance( friend, Entity ):
 			wref = wref_interfaces.IWeakRef(friend)
 			__traceback_info__ = friend, wref
-			assert wref.username.lower() == friend.username.lower()
 			result = self._friends_wref_set.add( wref )
 			if result:
 				self._on_added_friend( friend )
