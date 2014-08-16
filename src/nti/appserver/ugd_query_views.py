@@ -1010,7 +1010,16 @@ class _RecursiveUGDView(_UGDView):
 
 			readable = True
 			current = obj.object
-			while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
+			while (readable
+				   and current is not None
+				   # Sigh. Here's where it gets really bad. we're assuming that we know about the lineage
+				   # of these objects. But they do not necessarily reside underneath an entity
+				   # anymore--they could reside beneath a course. Ideally we would just switch this to use
+				   # the ACL checks already in place, but the less risky short-term fix is to
+				   # stop when we hit a Board (which should be one level below the entity
+				   # in the legacy case; we never permission at that level).
+				   and not nti_interfaces.IEntity.providedBy(current)
+				   and not for_interfaces.IBoard.providedBy(current)):
 				try:
 					readable = is_readable(current)
 					if not readable:
