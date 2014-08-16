@@ -11,14 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from plasTeX.Renderers import render_children
+from ._utils import _render_children
 
 from ...interfaces import IRenderedBook
 from ...interfaces import IDiscussionExtractor
-
-def _render_children(renderer, nodes):
-	return unicode(''.join(render_children(renderer, nodes)))
-
+	
 @interface.implementer(IDiscussionExtractor)
 @component.adapter(IRenderedBook)
 class _DiscussionExtractor(object):
