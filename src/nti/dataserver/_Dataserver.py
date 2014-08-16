@@ -352,6 +352,10 @@ def _after_database_opened_listener(event):
 # at the time of fork. (Note that if we are not preloading the app,
 # then this config won't even be loaded in the parent process so this
 # won't fire...still, be safe)
+
+from nti.monkey import random_seed_patch_on_import
+random_seed_patch_on_import.patch() # since we'll be reseeding, make sure we get good seeds
+
 from nti.processlifetime import IProcessDidFork
 @component.adapter(IProcessDidFork)
 def _process_did_fork_listener( event ):
@@ -359,6 +363,17 @@ def _process_did_fork_listener( event ):
 	if ds:
 		# Re-open in place. pre-fork we called ds.close()
 		ds._reopen()
+
+	# Reseed the random number generator, especially for the use of
+	# intid utilities. This should help reduce conflicts across worker
+	# processes. (This is supposedly done by gunicorn in
+	# workers.base.init_process, but it's not documented as such.)
+	import random
+	random.seed()
+
+	# The zc.intid utility keeps a cache of the next id to use
+	# in _v_nextid. However, we just closed and reopened the database,
+	# so that volatile attribute will not be present
 
 @interface.implementer(interfaces.IDataserver)
 class Dataserver(MinimalDataserver):

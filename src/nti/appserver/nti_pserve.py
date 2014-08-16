@@ -21,11 +21,15 @@ logger = __import__('logging').getLogger(__name__)
 from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
 
+from nti.monkey import webob_cookie_escaping_patch_on_import
+webob_cookie_escaping_patch_on_import.patch()
+
+from nti.monkey import random_seed_patch_on_import
+random_seed_patch_on_import.patch()
+
 import sys
 from pkg_resources import load_entry_point, get_distribution
 
-from nti.monkey import webob_cookie_escaping_patch_on_import
-webob_cookie_escaping_patch_on_import.patch()
 
 def main():
 	# We used to monkey patch some things in 1.3. We no longer
