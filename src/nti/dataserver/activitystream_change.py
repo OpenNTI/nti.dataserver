@@ -21,6 +21,7 @@ from ZODB.POSException import POSError
 from nti.mimetype import mimetype
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
+from .interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.authorization_acl import ACL
 
 from nti.externalization.oids import toExternalOID
@@ -208,8 +209,14 @@ class _ChangeExternalObject(object):
 
 		result[StandardExternalFields.LAST_MODIFIED] = change.lastModified
 		result[StandardExternalFields.CREATOR] = None
-		if change.creator:
-			result[StandardExternalFields.CREATOR] = change.creator.username if hasattr( change.creator, 'username' ) else change.creator
+		change_creator = change.creator
+		if change_creator:
+			if IUseNTIIDAsExternalUsername.providedBy(change_creator):
+				result[StandardExternalFields.CREATOR] = change_creator.NTIID
+			elif hasattr( change_creator, 'username'):
+				result[StandardExternalFields.CREATOR] = change_creator.username
+			else:
+				result[StandardExternalFields.CREATOR] = change_creator
 
 		result['ChangeType'] = change.type
 		result[StandardExternalFields.ID] = change.id or None
