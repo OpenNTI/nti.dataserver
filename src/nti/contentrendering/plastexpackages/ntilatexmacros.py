@@ -527,16 +527,22 @@ class ntiincludeannotationgraphics(includegraphics):
 	@readproperty
 	def caption(self):
 		if self.title:
-			output = render_children( self.renderer, [self.title] )
-			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+			title = TeXFragment()
+			title.parentNode = self
+			title.ownerDocument = self.ownerDocument
+			title.appendChild(self.title)
+			return title
 
 class ntiincludenoannotationgraphics(includegraphics):
 
 	@readproperty
 	def caption(self):
 		if self.title:
-			output = render_children( self.renderer, [self.title] )
-			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
+			title = TeXFragment()
+			title.parentNode = self
+			title.ownerDocument = self.ownerDocument
+			title.appendChild(self.title)
+			return title
 
 class ntipagenum(_OneText):
 	pass
