@@ -29,9 +29,15 @@ def flag_object(context, username):
 	Cause `username` to flag the object `context` for moderation action.
 
 	.. note:: Currently, it does not take the username into account.
-	"""
 
-	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).flag(context)
+	:return: A true value if the object was flagged for the first time;
+		if the object was already flagged returns none, and if the
+		object could not be flagged returns False
+	"""
+	try:
+		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).flag(context)
+	except LookupError:
+		return False
 
 def flags_object(context, username):
 	"""
@@ -39,9 +45,13 @@ def flags_object(context, username):
 	take into account the username who is asking.
 
 	.. note:: Currently, it does not take the username into account.
-	"""
 
-	return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).is_flagged(context)
+	:return: If the object is not capable of being flagged, returns None.
+	"""
+	try:
+		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).is_flagged(context)
+	except LookupError:
+		return None
 
 def unflag_object(context, username):
 	"""
@@ -49,8 +59,10 @@ def unflag_object(context, username):
 
 	.. note:: Currently, it does not take the username into account.
 	"""
-
-	component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).unflag(context)
+	try:
+		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).unflag(context)
+	except LookupError:
+		return False
 
 @component.adapter(nti_interfaces.IFlaggable, intid_interfaces.IIntIdRemovedEvent)
 def _delete_flagged_object(flaggable, event):
@@ -85,6 +97,7 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 		if not self.is_flagged(context):
 			self.flagged.add(self._intids.getId(context))
 			notify(nti_interfaces.ObjectFlaggedEvent(context))
+			return True
 
 	def is_flagged(self, context):
 		try:
@@ -101,6 +114,7 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 
 		if sets.discard_p(self.flagged, iid):
 			notify(nti_interfaces.ObjectUnflaggedEvent(context))
+			return True
 
 	def iterflagged(self):
 		intids = self._intids

@@ -14,7 +14,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import contains
 from hamcrest import has_length
-import unittest
+
 
 from zope import component
 from zope.intid import interfaces as intid_interfaces
@@ -29,7 +29,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import flagging
 from nti.dataserver.contenttypes import Note as _Note
 
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer, WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest, WithMockDSTrans
 
 from nti.contentrange.contentrange import ContentRangeDescription
 def Note():
@@ -37,14 +37,15 @@ def Note():
 	n.applicableRange = ContentRangeDescription()
 	return n
 
-class TestFlagging(unittest.TestCase):
+class NonFlaggable(object):
+	pass
 
-	layer = SharedConfiguringTestLayer
+class TestFlagging(DataserverLayerTest):
 
 	@WithMockDSTrans
 	@time_monotonically_increases
-	def test_flagging(self):
-		"Notes can be flagged and unflagged"
+	def test_note_flagging(self):
+		#"Notes can be flagged and unflagged"
 		n = Note()
 		component.getUtility( intid_interfaces.IIntIds ).register( n )
 
@@ -54,7 +55,7 @@ class TestFlagging(unittest.TestCase):
 		# first time does something
 		n.lastModified = 0
 		now = time.time()
-		assert_that( flagging.flag_object( n, 'foo@bar' ), is_( none() ) )
+		assert_that( flagging.flag_object( n, 'foo@bar' ), is_true() )
 		# second time no-op
 		assert_that( flagging.flag_object( n, 'foo@bar' ), is_( none() ) )
 
@@ -68,7 +69,7 @@ class TestFlagging(unittest.TestCase):
 		assert_that( list(component.getAdapter( n, nti_interfaces.IGlobalFlagStorage ).iterflagged()), contains( n ) )
 
 		# first time does something
-		assert_that( flagging.unflag_object( n, 'foo@bar' ), is_( none() ) )
+		assert_that( flagging.unflag_object( n, 'foo@bar' ), is_true() )
 		# second time no-op
 		assert_that( flagging.unflag_object( n, 'foo@bar' ), is_( none() ) )
 		# Fired one event
@@ -78,7 +79,30 @@ class TestFlagging(unittest.TestCase):
 		assert_that( flagging.flags_object( n, 'foo@bar' ), is_false() )
 
 		# If we unregister while flagged, the flagging status changes
-		assert_that( flagging.flag_object( n, 'foo@bar' ), is_( none() ) )
+		assert_that( flagging.flag_object( n, 'foo@bar' ), is_true() )
 		component.getUtility( intid_interfaces.IIntIds ).unregister( n )
 
 		assert_that( flagging.flags_object( n, 'foo@bar' ), is_false() )
+
+
+	@WithMockDSTrans
+	@time_monotonically_increases
+	def test_flagging_non_flaggable(self):
+		# arbitrary objects cannot be, but they fail gracefully.
+		n = NonFlaggable()
+		component.getUtility( intid_interfaces.IIntIds ).register( n )
+
+		eventtesting.clearEvents()
+
+		# first time does nothing
+		assert_that( flagging.flag_object( n, 'foo@bar' ), is_false() )
+
+		# Fired no event
+		assert_that( eventtesting.getEvents(nti_interfaces.IObjectFlaggedEvent), has_length(0) )
+
+		assert_that( flagging.flags_object( n, 'foo@bar' ), is_(none()) )
+
+		# first time does nothing
+		assert_that( flagging.unflag_object( n, 'foo@bar' ), is_false() )
+		# Fired no event
+		assert_that( eventtesting.getEvents(nti_interfaces.IObjectUnflaggedEvent), has_length(0) )
