@@ -22,6 +22,7 @@
 	<adapter factory="._meeting_post_policy.MeetingPostPolicy"
 			 for=".interfaces.IMeeting"
 			 provides=".interfaces.IMeetingPolicy" />
+	<ext:registerMimeFactories module=".meeting" />
 
 	<subscriber handler="._meeting_post_policy.meeting_should_change_moderation_state" />
 

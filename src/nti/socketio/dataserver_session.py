@@ -15,6 +15,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from zope.deprecation import deprecate
+from nti.utils.property import CachedProperty
+
 
 from nti.dataserver.interfaces import IDataserver
 
@@ -49,7 +51,7 @@ class Session(AbstractSession):
 	def protocol_handler(self):
 		return self.socket
 
-	@property
+	@CachedProperty
 	def message_handler(self):
 		return SessionConsumer()
 

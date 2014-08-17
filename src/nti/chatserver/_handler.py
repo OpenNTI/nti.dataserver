@@ -111,9 +111,6 @@ class _ChatHandler(object):
 	__emits__ = ('recvMessageForAttention', 'presenceOfUserChangedTo',
 				 'data_noticeIncomingChange', 'failedToEnterRoom',
 				 'setPresenceOfUsersTo')
-	_session_consumer_args_search_ = ('nti.chatserver.meeting', 'nti.chatserver.messageinfo',
-									  'nti.chatserver.presenceinfo')
-
 
 	event_prefix = 'chat' #: the namespace of events we handle
 

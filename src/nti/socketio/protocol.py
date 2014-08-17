@@ -16,10 +16,15 @@ from zope import component
 from zope.cachedescriptors.property import Lazy
 
 from nti.externalization.externalization import to_json_representation_externalized
+from nti.externalization.persistence import NoPickle
+
+from nti.schema.schema import EqHash
 
 from . import interfaces
 
 @interface.implementer(interfaces.ISocketIOSocket)
+@NoPickle
+@EqHash('channel', 'version')
 class SocketIOSocket(object):
 	"""
 	A socket is little more than a wrapper around a channel (pair of queues)
@@ -34,13 +39,10 @@ class SocketIOSocket(object):
 		self.channel = channel
 		self.version = version
 
-	def __reduce__(self):
-		"Cannot be pickled"
-		raise TypeError()
-
 	@Lazy
 	def protocol(self):
-		return component.getUtility( interfaces.ISocketIOProtocolFormatter, name=self.version )
+		return component.getUtility( interfaces.ISocketIOProtocolFormatter,
+									 name=self.version )
 
 	def send(self, message):
 		self.channel.queue_message_to_client( message )
@@ -116,7 +118,7 @@ class SocketIOProtocolFormatter1(object):
 		return (b"5:::" + self.encode({'name': name, 'args': args})).encode('utf-8')
 
 	def make_heartbeat( self ):
-		return (b"2::")
+		return b"2::"
 
 	def make_noop( self ):
 		return b"8::"
