@@ -10,19 +10,22 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import sys
+
 import itertools
 import simplejson as json
+from collections import defaultdict
 
 from zope import interface
 from zope.interface.exceptions import Invalid
 from zope import component
 from zope.event import notify
 from zope.i18n import translate
+from zope.cachedescriptors.method import cachedIn
 
 import transaction
 
-import nti.externalization.internalization
+
+from nti.externalization.persistence import NoPickle
 from nti.externalization.externalization import toExternalObject
 
 from nti.socketio import interfaces as sio_interfaces
@@ -31,6 +34,7 @@ class UnauthenticatedSessionError(ValueError):
 	"Raised when a session consumer is called but is not authenticated."
 
 @interface.implementer(sio_interfaces.ISocketSessionClientMessageConsumer)
+@NoPickle
 class SessionConsumer(object):
 	"""
 	A callable object that responds to events from a client session.
@@ -54,20 +58,27 @@ class SessionConsumer(object):
 
 		return self._create_event_handlers( session.socket, session )
 
+	# we expect to be getting the same socket and session object
+	# over and over because we are actually a cached property on the session
+	# which in turn caches its socket, so it's effective to cache
+	# the handlers
+	@cachedIn('_v_create_event_handlers')
 	def _create_event_handlers( self, socket_obj, session=None ):
 		"""
 		:return: A mapping from event prefix (empty string for no prefix) no list of possible
 			handlers for that prefix.
 		"""
-		subscribers = component.subscribers( (socket_obj,), sio_interfaces.ISocketEventHandler )
+		subscribers = component.subscribers( (socket_obj,),
+											 sio_interfaces.ISocketEventHandler )
 		if session is not None:
 			subscribers = itertools.chain( subscribers,
 										   component.subscribers( (session,), sio_interfaces.ISocketEventHandler ) )
-		result = dict()
+		result = defaultdict(list)
 		for subscriber in subscribers:
-			if subscriber is None: continue
+			if subscriber is None:
+				continue
 			pfx = getattr( subscriber, 'event_prefix', '' )
-			result.setdefault( pfx, [] ).append( subscriber )
+			result[pfx].append( subscriber )
 
 		return result
 
@@ -78,8 +89,35 @@ class SessionConsumer(object):
 		"""
 		for v in itertools.chain( *self._create_event_handlers(session.socket,session).values() ):
 			destroy = getattr( v, 'destroy', None )
-			if callable(destroy): destroy()
+			if callable(destroy):
+				destroy()
 
+	@cachedIn('_v_event_handlers_in_namespace')
+	def __event_handlers_for_event_in_namespace(self, handler_list, event, namespace):
+		"""
+		For caching optimization. Handler_list must be a tuple.
+		"""
+		if not handler_list:
+			return ()
+
+		if event != namespace:
+			_l = []
+			for handler in handler_list:
+				handler = getattr(handler, event, None)
+				if handler:
+					_l.append(handler)
+			handler_list = tuple(_l)
+		return handler_list
+
+
+	def _event_handlers_in_namespace(self, event_handlers, event, namespace):
+		# Ideally we'd cache these here, but event_handlers, as a dict,
+		# is unhashable
+		handler_list = event_handlers.get(namespace)
+		return self.__event_handlers_for_event_in_namespace(
+			tuple(handler_list) if handler_list else (),
+			event,
+			namespace )
 
 	def _find_handler( self, event_handlers, session, message ):
 		"""
@@ -97,15 +135,7 @@ class SessionConsumer(object):
 			l()
 			return
 
-		handler_list = event_handlers.get(namespace)
-		if not handler_list:
-			l()
-			return
-
-		if event != namespace:
-			handler_list = [getattr( handler, event, None ) for handler in handler_list]
-			handler_list = [handler for handler in handler_list if handler]
-
+		handler_list = self._event_handlers_in_namespace(event_handlers, event, namespace)
 		if not handler_list:
 			l()
 			return
@@ -152,6 +182,8 @@ class SessionConsumer(object):
 		# complete the transaction and commit it even if an exception occurs (because we have
 		# handled this message; retrying won't help), but the work done
 		# by the handlers should not be saved so as to ensure a consistent state.
+		# Note that in ZODB, this causes the connection to do `cacheGC`, which
+		# may or may not be a good thing
 		savepoint = transaction.savepoint( optimistic=True )
 		try:
 			result = handler( )
@@ -206,6 +238,10 @@ def _exception_to_event( the_error ):
 
 _registered_legacy_search_mods = set()
 
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
+from .interfaces import SocketSessionCreatedObjectEvent
+
 def _convert_message_args_to_objects( handler, session, message ):
 	"""
 	Convert the list/dictionary external (incoming) structures into objects to pass to
@@ -218,41 +254,13 @@ def _convert_message_args_to_objects( handler, session, message ):
 	:return: A list of argument objects
 	"""
 	args = []
-	# We use the dataserver to handle the conversion. We
-	# inspect the handler to find out where it lives so that we can
-	# limit the types the dataserver needs to search.
-	# TODO: This is deprecated, the MimeType factories should be used to handle
-	# this. We need to start issuing warnings.
-	# NOTE: If we get factory objects and not the actual class, then we
-	# are constrained to a zero-arg constructor
-	search_modules = ['nti.dataserver.users', 'nti.dataserver.contenttypes']
-	def handlers_from_class( cls ):
-		mods = getattr( cls, '_session_consumer_args_search_', () )
-		search_modules.extend( mods )
-	if hasattr( handler, 'im_class' ):
-		#bound method
-		search_modules.append( sys.modules[handler.im_class.__module__] )
-		handlers_from_class( handler.im_class )
-	elif isinstance( handler, type ):
-		#callable class
-		search_modules.append( sys.modules[handler.__module__] )
-		handlers_from_class( handler )
-	else:
-		handlers_from_class( handler )
-
-	for mod in search_modules:
-		if mod in _registered_legacy_search_mods:
-			continue
-		nti.externalization.internalization.register_legacy_search_module( mod )
-		_registered_legacy_search_mods.add( mod )
-
 	for arg in message['args']:
-		ext_factory = nti.externalization.internalization.find_factory_for( arg )
+		ext_factory = find_factory_for( arg )
 
 		if ext_factory:
 			v = ext_factory()
-			notify( sio_interfaces.SocketSessionCreatedObjectEvent( v, session, message, arg ) )
-			arg = nti.externalization.internalization.update_from_external_object( v, arg )
+			notify( SocketSessionCreatedObjectEvent( v, session, message, arg ) )
+			arg = update_from_external_object( v, arg )
 		args.append( arg ) # strings and such fall through here
 
 	return args

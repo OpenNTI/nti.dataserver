@@ -9,10 +9,10 @@
 
 	<adapter factory=".transports.XHRPollingTransport"
 			 name="xhr-polling"/>
-			 
+
 	<adapter factory=".transports.WebsocketTransport"
 			 name="websocket" />
-			 
+
 	<adapter factory=".transports.FlashsocketTransport"
 			 name="flashsocket" />
 

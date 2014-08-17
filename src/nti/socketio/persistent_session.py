@@ -28,7 +28,12 @@ from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDi
 
 import ZODB.POSException
 
-@interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable)
+from nti.schema.schema import EqHash
+from nti.externalization.externalization import WithRepr
+
+@interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable) #pylint:disable=R0921
+@EqHash('session_id')
+@WithRepr
 class AbstractSession(PersistentPropertyHolder):
 	"""
 	Abstract base for persistent session implementations. Because this
@@ -101,15 +106,6 @@ class AbstractSession(PersistentPropertyHolder):
 
 		return state
 
-	def __eq__( self, other ):
-		try:
-			return other is self or self.session_id == other.session_id
-		except AttributeError: # pragma: no cover
-			return NotImplemented
-
-	def __hash__( self ):
-		return hash(self.session_id)
-
 	owner = dict_read_alias('owner')
 	id = alias('session_id')
 
@@ -140,16 +136,6 @@ class AbstractSession(PersistentPropertyHolder):
 			# be other log messages about trying to load state when connection is closed,
 			# so we don't need to try to log it as well
 			return object.__str__(self)
-
-	def __repr__(self):
-		try:
-			return '<%s/%s/%s at %s>' % (type(self), self.session_id, self.state, id(self))
-		except (ZODB.POSException.ConnectionStateError,AttributeError):
-			# This most commonly (only?) comes up in unit tests when nose defers logging of an
-			# error until after the transaction has exited. There will
-			# be other log messages about trying to load state when connection is closed,
-			# so we don't need to try to log it as well
-			return object.__repr__(self)
 
 	@property
 	def connected(self):

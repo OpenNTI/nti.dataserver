@@ -15,7 +15,7 @@ import nti.socketio.interfaces as sio_interfaces
 from nti.chatserver import _handler as chat_handler, messageinfo
 
 from nti.socketio.session_consumer import SessionConsumer, UnauthenticatedSessionError
-
+from ..dataserver_session import Session
 
 import nti.socketio as socketio
 from nti.dataserver.tests import mock_dataserver
@@ -50,7 +50,7 @@ class MockSocketIO(object):
 	socket = property(new_protocol)
 	def incr_hits(self): pass
 
-class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
+class TestSessionConsumer(mock_dataserver.DataserverLayerTest):
 	cons = None
 	handler = None
 	socket = None
@@ -71,9 +71,8 @@ class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
 					 is_( False ) )
 
 	def test_unauth_session(self):
-		self.socket.owner = None
 		with self.assertRaises(UnauthenticatedSessionError):
-			self.cons( self.socket, None )
+			Session().queue_message_from_client(None)
 
 	def test_create_event_handlers(self):
 		# There's no IChatserver registered, so this is all you get
@@ -98,7 +97,9 @@ class TestSessionConsumer(mock_dataserver.SharedConfiguringTestBase):
 		assert_that( handlers, has_entry( '', has_item(is_(MockChat)) ) )
 
 		MockChat.event_prefix = 'chat'
+		self.cons._create_event_handlers.invalidate(self.cons, self.socket)
 		handlers = self.cons._create_event_handlers( self.socket )
+
 		assert_that( handlers, has_entry( 'chat', has_item(is_(MockChat)) ) )
 
 		component.getGlobalSiteManager().unregisterUtility( o )

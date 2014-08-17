@@ -30,6 +30,7 @@ from nti.dataserver.contenttypes.base import _make_getitem
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+from nti.externalization.internalization import register_legacy_search_module
 from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 from nti.mimetype import mimetype
@@ -252,3 +253,5 @@ class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectI
 		# This also results in us copying incoming recipients
 		if msg.recipients and 'recipients' in parsed:
 			msg.recipients = PersistentList( msg.recipients )
+
+register_legacy_search_module('nti.chatserver.messageinfo')
