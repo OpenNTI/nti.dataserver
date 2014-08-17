@@ -12,8 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
-from zope.annotation import IAnnotations
-from zope.lifecycleevent import IObjectRemovedEvent, IObjectCreatedEvent
+from zope.keyreference.interfaces import IKeyReference
+from zope.keyreference.interfaces import NotYet
+from ZODB.interfaces import IConnection
+from zope.lifecycleevent import IObjectRemovedEvent
 
 import BTrees
 
@@ -25,33 +27,15 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.intid import utility as intid_utility
 
 from nti.utils.sets import discard
+from nti.utils.property import Lazy
 
+# Leaving this key around for historical purposes:
+# We used to use this as an annotation key on users that held
+# an LLTreeSet to hold session_ids. But that was a duplicate
+# of what we're already doing in the intids `refs` btree
+# When we switched, we didn't delete annotations
 _OWNED_SESSIONS_KEY = __name__ + '.' + '_OwnerAnnotationBasedServiceStorage' + '.' + 'session_set'
 
-def _session_id_set_for_session_owner( session_owner_or_user, family, default=None, create=True ):
-	"""
-	:param dict default: If not none, this will be used as the :class:`IAnnotations` value
-		if the session's owner cannot be found or adapted to annotations.
-	:param bool create: If True (the default) a new set will be created (and stored
-		in the annotations) if needed; otherwise, an empty tuple will be returned
-		(and not stored anywhere)
-	"""
-	__traceback_info__ = session_owner_or_user, default, create
-	user = users.User.get_user(session_owner_or_user) \
-	if not nti_interfaces.IUser.providedBy(session_owner_or_user) else session_owner_or_user
-
-	if user is None and default is None:
-		raise KeyError( "No such user " + session_owner_or_user )
-	annotations = IAnnotations( user ) if default is None else IAnnotations( user, default )
-	try:
-		session_set = annotations[_OWNED_SESSIONS_KEY]
-	except KeyError:
-		if create:
-			session_set = annotations.setdefault( _OWNED_SESSIONS_KEY, family.II.TreeSet() )
-		else:
-			session_set = ()
-
-	return session_set
 
 def _read_current(obj):
 	"""
@@ -75,15 +59,85 @@ def _read_current(obj):
 		pass
 	return obj
 
+def _u(o):
+	return getattr(o, 'username', o)
+
+class _OwnerSetMapping(persistent.Persistent):
+	__name__ = None
+	__parent__ = None
+
+	family = BTrees.family64
+
+	def __init__(self, family=None):
+		if family:
+			self.family = family
+
+		self._by_owner = self.family.OO.BTree()
+
+	def set_for_owner(self, username, create=True, current=True):
+		username = _u(username)
+		if current:
+			_read_current(self._by_owner)
+		try:
+			result = self._by_owner[username]
+			if current:
+				_read_current(result)
+		except KeyError:
+			if create:
+				result = self._by_owner[username] = self.family.OO.Set()
+			else:
+				result = ()
+		return result
+
+	def add_session(self, session):
+		for_owner = self.set_for_owner(session.owner, current=False)
+		try:
+			ref = IKeyReference(session)
+		except NotYet:
+			# ok, can we find an owner user? Fallback is us
+			user = users.User.get_user(session.owner)
+			for o in user, self:
+				try:
+					IConnection(o, None).add(session)
+					break
+				except AttributeError:
+					pass
+			ref = IKeyReference(session)
+		for_owner.add(ref)
+
+
+	def drop_session(self, session):
+		for_owner = self.set_for_owner(session.owner)
+		try:
+			ref = IKeyReference(session)
+		except NotYet:
+			# Could never have had it
+			pass
+		else:
+			discard(for_owner, ref)
+
+	def drop_all_sessions_for_owner(self, session_owner):
+		session_owner = _u(session_owner)
+		try:
+			del self._by_owner[session_owner]
+		except KeyError:
+			pass
+
+	def sessions_for_owner(self, session_owner):
+		for_owner = self.set_for_owner(session_owner,
+									   create=False,
+									   current=False)
+		for ref in for_owner:
+			yield ref()
+
+
+
 @interface.implementer(nti_interfaces.ISessionServiceStorage)
 class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 	"""
-	Stores sessions on the owner using annotations. Keeps an index
+	A global utility to keep track of sessions. Keeps an index
 	of the sessions using an intid utility we keep private to us
-	(so as not to overwhelm the main intid utilities). (TODO: Is that
-	wise/necessary?)
-	TODO: Given the current policy (see chatserver), we can probably
-	really go down to only keeping one active session per user.
+	(so as not to overwhelm the main intid utilities).
 	"""
 
 	family = BTrees.family64
@@ -102,10 +156,29 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 		self.intids = intids
 
+	@Lazy
+	def _by_owner(self):
+		self._p_changed = True
+
+		by_owner = _OwnerSetMapping(self.family)
+		by_owner.__parent__ = self
+		by_owner.__name__ = '_by_owner'
+
+		for session in self._intids_rc.refs.values():
+			by_owner.add_session(session)
+
+		return by_owner
+
+	@property
+	def _intids_rc(self):
+		_read_current(self.intids)
+		_read_current(self.intids.refs)
+		return self.intids
+
 	def register_session( self, session ):
-		session_id = self.intids.register( session )
-		session.id = hex(session_id).encode( 'ascii' )
-		_session_id_set_for_session_owner( session.owner, self.family ).add( session_id )
+		session_id = self._intids_rc.register( session )
+		session.id = hex(session_id)
+		self._by_owner.add_session(session)
 		logger.info( 'Registered session id %s for %s', session.id, session.owner )
 
 	def get_session( self, session_id ):
@@ -123,52 +196,26 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 			pass
 
 	def get_sessions_by_owner( self, session_owner ):
-		session_ids = _session_id_set_for_session_owner( session_owner, self.family, default={}, create=False )
-		_read_current(session_ids)
-		_read_current(self.intids.refs)
-
-		for sid in session_ids:
-			__traceback_info__ = session_owner, session_ids, sid
-			# If the object doesn't exist, we have an inconsistency.
-			# This has happened about two or three times so far. How?
-			# We should at least detect it. It's probably not of much
-			# danger (just storage space), but ultimately should be
-			# repaired. Note that once we get in this state for a
-			# user, we're stuck in that state until it is repaired.
-			# It's possible that the uses of _read_current, which were inserted
-			# after the most recent known incident, will solve this.
-			try:
-				session = self.intids.getObject( sid )
-			except KeyError: # pragma: no cover
-				logger.exception("Session id %s for %s does not have a matching session object",
-								 sid, session_owner )
-			else:
-				yield session
+		return self._by_owner.sessions_for_owner(session_owner)
 
 	def unregister_session( self, session ):
-		_read_current(self.intids.refs)
-		session_id = self.intids.queryId( _read_current( session ) )
-		if session_id is None:
-			# Not registered, or gone
+		if session is None:
 			return
 
-		discard( _read_current(_session_id_set_for_session_owner( session.owner, self.family )),
-				 session_id )
-		self.intids.unregister( session )
+		session_id = self._intids_rc.queryId( session )
+		if session_id is not None:
+			# Not registered, or gone
+			self.intids.unregister( session )
+
+		self._by_owner.drop_session(session)
 		logger.info( "Unregistered session %s for %s", hex(session_id), session.owner )
 
 	def unregister_all_sessions_for_owner( self, session_owner ):
-		_read_current(self.intids.refs)
-		session_ids = _read_current(_session_id_set_for_session_owner( session_owner, None, default={}, create=False ))
-		if session_ids:
-			for sid in session_ids:
-				try:
-					session = self.intids.getObject( sid )
-					self.intids.unregister( session )
-				except KeyError:
-					logger.warn("Session owner %s had corrupt data; missing session %s", session_owner, sid)
-			session_ids.clear()
-			logger.info( "Unregistered all sessions for %s", session_owner )
+		for session in list(self._by_owner.sessions_for_owner(session_owner)):
+			self.unregister_session(session)
+
+		self._by_owner.drop_all_sessions_for_owner(session_owner)
+		logger.info( "Unregistered all sessions for %s", session_owner )
 
 @component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
 def _remove_sessions_for_removed_user( user, event ):
@@ -182,16 +229,3 @@ def _remove_sessions_for_removed_user( user, event ):
 			# The consequence might be some extra storage space used
 			# but nothing dire
 			logger.exception("Failed to remove all sessions for %s", user)
-
-@component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
-def _create_sessions_for_new_user( user, event ):
-	# Users commonly create sessions immediately after they create accounts
-	# Go ahead and create the session storage in the transaction where
-	# the user is created so it already exists. Lots of things want to start
-	# adding annotations to the user as soon as it exists, and if we don't have
-	# to modify the IAnnotations BTree to get to the session store, we stand
-	# a better chance of avoiding conflicts
-	storage = component.queryUtility( nti_interfaces.ISessionServiceStorage )
-
-	family = getattr( storage, 'family', BTrees.family64 )
-	_session_id_set_for_session_owner( user, family )
