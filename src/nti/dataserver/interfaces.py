@@ -1681,7 +1681,7 @@ class ISessionServiceStorage(interface.Interface):
 			does not exist or otherwise has no sessions registered, returns an empty
 			sequence.
 		:return: A sequence (possibly a generator) of session objects belonging to
-			the given user.
+			the given user. These are returned in no particular order.
 		"""
 
 
