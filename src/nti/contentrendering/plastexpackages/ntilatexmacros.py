@@ -523,10 +523,20 @@ class ntilocalvideo( Base.Environment ):
 
 
 class ntiincludeannotationgraphics(includegraphics):
-	pass
+
+	@readproperty
+	def caption(self):
+		if self.title:
+			output = render_children( self.renderer, [self.title] )
+			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 class ntiincludenoannotationgraphics(includegraphics):
-	pass
+
+	@readproperty
+	def caption(self):
+		if self.title:
+			output = render_children( self.renderer, [self.title] )
+			return cfg_interfaces.HTMLContentFragment( ''.join( output ).strip() )
 
 class ntipagenum(_OneText):
 	pass
