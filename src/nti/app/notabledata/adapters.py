@@ -243,14 +243,17 @@ class UserNotableData(AbstractAuthenticatedView):
 		toplevel_intids_by_priority_creators = catalog.family.IF.difference(toplevel_intids_by_priority_creators,
 																			self._all_blog_comment_intids)
 
-		# TODO We will eventually want to notify students when
-		# instructors create new discussions, but we'll have to sort
-		# out the CSV generated discussions first.
+		# As-of fall 2014, auto-created topics are not created by the instuctor,
+		# but instead a separate entity, so we want to return those too. In the past,
+		# they were created by the instructor, which means that if you go far enough
+		# back in notable data you'll find them (and at the time they were created, we
+		# were explicitly excluding them)---but the benefit to knowing about new discussions
+		# from the instructors outweighs any oddity from the old stuff.
 
 		# Now any topics by our a-listers, but only non-excluded topics
-		# topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
-		# topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
-		# 																	intids_by_priority_creators)
+		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,)})
+		topic_intids_by_priority_creators = catalog.family.IF.intersection(	topic_intids,
+		 																	intids_by_priority_creators)
 
 		# Sadly, to be able to provide the "TotalItemCount" we have to
 		# apply security to all the intids not guaranteed to be
@@ -259,7 +262,9 @@ class UserNotableData(AbstractAuthenticatedView):
 		# are probably more things shared directly with me or replied
 		# to me than created by others that I happen to be able to see
 		questionable_intids = [toplevel_intids_by_priority_creators,
-							   intids_tagged_to_me]
+							   intids_tagged_to_me,
+							   topic_intids_by_priority_creators,
+						   ]
 		self._notable_storage.add_intids(questionable_intids,safe=False)
 		questionable_intids = catalog.family.IF.multiunion(	questionable_intids )
 		if self._intids_in_time_range is not None:
