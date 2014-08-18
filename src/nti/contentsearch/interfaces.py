@@ -107,6 +107,10 @@ class ISearchQuery(interface.Interface):
 
 	decayFactor = Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
 
+	context = Dict(ValidTextLine(title='name'),
+				   ValidTextLine(title='value'),
+				   title="Search query context", required=False, default={})
+
 	IsEmpty = Bool(title="Returns true if this is an empty search",
 				   required=True, readonly=True)
 
@@ -731,7 +735,7 @@ class ISearchHitPredicate(interface.Interface):
 	Search hit filter - implemented as subscriber"
 	"""
 
-	def allow(item, score=1.0):
+	def allow(item, score=1.0, query=None):
 		"""
 		allow a search hit into the results
 		"""
