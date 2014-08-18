@@ -250,13 +250,6 @@ def _create_zeo_program(env_root, zeo_config='zeo_conf.xml' ):
 	program.priority = 0
 	return program
 
-def _create_rqworker_program(env):
-	redis_file = env.run_file('redis.sock')
-	program = _Program('rqworker', 'rqworker %s --socket %s' % (env.env_root, redis_file))
-	program.priority = 50
-	env.add_program(program)
-	return program
-
 def _configure_zeo( env_root ):
 	"""
 	:return: A list of URIs that can be passed to db_from_uris to directly connect
@@ -581,16 +574,14 @@ def _make_connect_databases(env, ini=None, root=None):
 
 	return connect_databases
 
-def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False, write_rqworker=False):
+def write_configs(root_dir, pserve_ini, update_existing=False, write_supervisord=False):
 	env = _Env(root_dir, create=(not update_existing), only_new=update_existing)
 	uris = _configure_zeo( env )
 	if not update_existing:
 		_configure_database_while_writing_config( env, uris )
 
-	_configure_redis( env )
-	if write_rqworker:
-		_create_rqworker_program(env)
-
+	_configure_redis(env)
+	
 	if not update_existing or write_supervisord:
 		env.write_supervisor_conf_file( pserve_ini )
 		env.write_main_conf()
