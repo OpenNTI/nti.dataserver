@@ -231,7 +231,18 @@ def _exception_to_event( the_error ):
 		msg = translate( the_error.i18n_message )
 	else:
 		msg = (the_error.args[0] if the_error.args else '') or msg
-		msg = translate(msg)
+		# theoretically, translate can and will take any type of object,
+		# but it needs to treat it as a "message id", and will use
+		# that by default if no translation exists. That means it does a
+		# unicode conversion, which, since this is an arbatrary object
+		# might fail
+		try:
+			__traceback_info__ = msg
+			# TODO: Rethink this, why were we trying to translate here?
+			msg = translate(msg)
+		except UnicodeDecodeError: #pragma: no cover
+			msg = "Unknown error"
+			logger.exception("What kind of error got us here? %r", the_error)
 
 	return {'message': msg,
 			'code': the_error.__class__.__name__ }
