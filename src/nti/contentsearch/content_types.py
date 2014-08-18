@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Content types.
-
 .. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -11,60 +9,58 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.container import contained as zcontained
+from zope.container.contained import Contained
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.externalization import WithRepr
 
 from nti.mimetype import mimetype
 
-from nti.utils.property import alias
+from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces as search_interfaces
+from nti.utils.property import alias
 
-class _DocNumMixin(zcontained.Contained):
+from .interfaces import IWhooshBookContent
+from .interfaces import IWhooshNTICardContent
+from .interfaces import IWhooshAudioTranscriptContent
+from .interfaces import IWhooshVideoTranscriptContent
 
-	__repr__ = make_repr()
-
-	def __eq__(self, other):
-		try:
-			return self is other or self.docnum == other.docnum
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.docnum)
-		return xhash
-
-@interface.implementer(search_interfaces.IWhooshBookContent)
-class BookContent(SchemaConfigured, _DocNumMixin):
+@interface.implementer(IWhooshBookContent)
+@WithRepr
+@EqHash('docnum',)
+class BookContent(SchemaConfigured, Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(search_interfaces.IWhooshBookContent)
+	createDirectFieldProperties(IWhooshBookContent)
 
 	intid = alias('docnum')
 	last_modified = alias('lastModified')
 	containerId = ContainerId = alias('ntiid')
 
-@interface.implementer(search_interfaces.IWhooshVideoTranscriptContent)
-class VideoTranscriptContent(SchemaConfigured, _DocNumMixin):
+@interface.implementer(IWhooshVideoTranscriptContent)
+@WithRepr
+@EqHash('docnum',)
+class VideoTranscriptContent(SchemaConfigured, Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(search_interfaces.IWhooshVideoTranscriptContent)
+	createDirectFieldProperties(IWhooshVideoTranscriptContent)
 
 	last_modified = alias('lastModified')
 
-@interface.implementer(search_interfaces.IWhooshAudioTranscriptContent)
-class AudioTranscriptContent(SchemaConfigured, _DocNumMixin):
+@interface.implementer(IWhooshAudioTranscriptContent)
+@WithRepr
+@EqHash('docnum',)
+class AudioTranscriptContent(SchemaConfigured, Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(search_interfaces.IWhooshAudioTranscriptContent)
+	createDirectFieldProperties(IWhooshAudioTranscriptContent)
 
 	last_modified = alias('lastModified')
 
-@interface.implementer(search_interfaces.IWhooshNTICardContent)
-class NTICardContent(SchemaConfigured, _DocNumMixin):
+@interface.implementer(IWhooshNTICardContent)
+@WithRepr
+@EqHash('docnum',)
+class NTICardContent(SchemaConfigured, Contained):
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	createDirectFieldProperties(search_interfaces.IWhooshNTICardContent)
+	createDirectFieldProperties(IWhooshNTICardContent)
 	
 	content = alias('description')
 	last_modified = alias('lastModified')
