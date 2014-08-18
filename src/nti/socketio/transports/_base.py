@@ -18,6 +18,8 @@ from nti.utils import transactions
 
 from ZODB.loglevels import TRACE
 
+from nti.externalization.persistence import NoPickle
+
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 try:
@@ -36,6 +38,7 @@ Queue = Queue
 from Queue import Empty
 Empty = Empty
 
+@NoPickle
 class BaseTransport(object):
 	"""Base class for all transports. Mostly wraps handler class functions."""
 
@@ -95,6 +98,7 @@ def run_job_in_site( *args, **kwargs ):
 	return runner( *args, **kwargs )
 
 
+@NoPickle
 class SessionEventProxy(object):
 	"""
 	Can be used as a session proxy for getting events when

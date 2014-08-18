@@ -31,6 +31,12 @@ import ZODB.POSException
 from nti.schema.schema import EqHash
 from nti.externalization.externalization import WithRepr
 
+_state_progression = [sio_interfaces.SESSION_STATE_NEW,
+					  sio_interfaces.SESSION_STATE_CONNECTED,
+					  sio_interfaces.SESSION_STATE_DISCONNECTING,
+					  sio_interfaces.SESSION_STATE_DISCONNECTED]
+_reversed_state_progression = reversed(_state_progression)
+
 @interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable) #pylint:disable=R0921
 @EqHash('session_id')
 @WithRepr
@@ -56,7 +62,15 @@ class AbstractSession(PersistentPropertyHolder):
 	_session_intid = None # from the intid utility
 	originating_site_names = ()
 
-	last_heartbeat_time = minmax.NumericPropertyDefaultingToZero( str('_last_heartbeat_time'), minmax.NumericMaximum, as_number=True )
+	last_heartbeat_time = minmax.NumericPropertyDefaultingToZero( str('_last_heartbeat_time'),
+																  minmax.NumericMaximum,
+																  as_number=True )
+
+	owner = dict_read_alias('owner')
+	id = alias('session_id')
+
+	creation_time = None
+	createdTime = alias('creation_time')
 
 	def __init__(self, owner=None):
 		self.creation_time = time.time()
@@ -94,20 +108,12 @@ class AbstractSession(PersistentPropertyHolder):
 
 		# The 'state' value goes through a defined sequence. We accept whichever one is
 		# farthest along
-		ordered_states = [sio_interfaces.SESSION_STATE_NEW,
-						  sio_interfaces.SESSION_STATE_CONNECTED,
-						  sio_interfaces.SESSION_STATE_DISCONNECTING,
-						  sio_interfaces.SESSION_STATE_DISCONNECTED]
-
-		for next_state in reversed(ordered_states):
+		for next_state in _reversed_state_progression:
 			if savedState.get( 'state', None ) == next_state or newState.get( 'state', None ) == next_state:
 				state[str('state')] = next_state
 				break
 
 		return state
-
-	owner = dict_read_alias('owner')
-	id = alias('session_id')
 
 	@cachedIn('_v_socket')
 	def socket(self):
@@ -201,5 +207,6 @@ class AbstractSession(PersistentPropertyHolder):
 
 # for BWC, copy the vocab choices
 # as class attributes
-map(lambda x: setattr( AbstractSession, 'STATE_' + x, x ), sio_interfaces.ISocketSession['state'].vocabulary.by_token )
+map(lambda x: setattr( AbstractSession, str('STATE_' + x), x ),
+	sio_interfaces.ISocketSession['state'].vocabulary.by_token )
 AbstractSession.state = sio_interfaces.SESSION_STATE_NEW
