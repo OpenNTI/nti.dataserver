@@ -15,7 +15,11 @@ from collections import namedtuple
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from . import interfaces as search_interfaces
+from nti.externalization.externalization import WithRepr
+
+from nti.schema.schema import EqHash
+
+from .interfaces import ISearchFragment
 
 Range = namedtuple('Range', ('start', 'end'))
 
@@ -93,7 +97,9 @@ def create_from_terms(text, termset, check_word, punkt_pattern):
 	result.matches = matches if matches else ()
 	return result
 	
-@interface.implementer(search_interfaces.ISearchFragment, IFiniteSequence)
+@interface.implementer(ISearchFragment, IFiniteSequence)
+@WithRepr
+@EqHash('text', 'matches')
 class SearchFragment(object):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
@@ -106,20 +112,3 @@ class SearchFragment(object):
 	def __iter__(self):
 		return iter(self.matches)
 
-	def __str__(self):
-		return "%s(%r,%r)" % (self.__class__.__name__, self.text, self.matches)
-
-	__repr__ = __str__
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.text == other.text
-									 and self.matches == other.matches)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.text)
-		xhash ^= hash(self.matches)
-		return xhash

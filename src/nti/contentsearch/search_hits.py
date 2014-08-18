@@ -18,12 +18,19 @@ from zope import component
 from zope import interface
 from zope.location.interfaces import IContained
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IMessageInfo
 
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IHighlight
+from nti.dataserver.interfaces import IRedaction
+from nti.dataserver.interfaces import ITitledContent
+from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.externalization.externalization import WithRepr
 
@@ -31,27 +38,48 @@ from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.utils.property import alias
 
-from . import discriminators
-from . import interfaces as search_interfaces
+from .discriminators import get_uid
 
-from .constants import (HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE,
-						VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE,
-						AUDIO_TRANSCRIPT, AUDIO_TRANSCRIPT_MIME_TYPE,
-						NTI_CARD_MIME_TYPE, FORUM)
+from .interfaces import ISearchHit
+from .interfaces import INoteSearchHit
+from .interfaces import IPostSearchHit
+from .interfaces import IForumSearchHit
+from .interfaces import IWhooshBookContent
+from .interfaces import IHighlightSearchHit
+from .interfaces import IRedactionSearchHit
+from .interfaces import INoteContentResolver
+from .interfaces import IPostContentResolver
+from .interfaces import IUserContentResolver
+from .interfaces import IWhooshBookSearchHit
+from .interfaces import IForumContentResolver
+from .interfaces import IMessageInfoSearchHit
+from .interfaces import IWhooshNTICardContent
+from .interfaces import IWhooshNTICardSearchHit
+from .interfaces import IHighlightContentResolver
+from .interfaces import IRedactionContentResolver
+from .interfaces import IMessageInfoContentResolver
+from .interfaces import IWhooshAudioTranscriptContent
+from .interfaces import IWhooshVideoTranscriptContent
+from .interfaces import IWhooshAudioTranscriptSearchHit
+from .interfaces import IWhooshVideoTranscriptSearchHit
+
+from .constants import VIDEO_TRANSCRIPT, NTI_CARD, VIDEO_TRANSCRIPT_MIME_TYPE
+from .constants import HIT, CONTENT, OID, POST, BOOK_CONTENT_MIME_TYPE, FORUM
+from .constants import AUDIO_TRANSCRIPT, AUDIO_TRANSCRIPT_MIME_TYPE, NTI_CARD_MIME_TYPE
 
 def get_search_hit(obj, score=1.0, query=None):
-	hit = search_interfaces.ISearchHit(obj)
+	hit = ISearchHit(obj)
 	hit.Score = score
 	hit.Query = query
 	return hit
-create_search_hit = get_search_hit
+create_search_hit = get_search_hit # alias BWC
 
 def get_hit_id(obj):
 	if obj is None:
 		result = None
-	elif nti_interfaces.IModeledContent.providedBy(obj) or \
-		 nti_interfaces.ITitledContent.providedBy(obj):
-		result = unicode(discriminators.get_uid(obj))
+	elif IModeledContent.providedBy(obj) or \
+		 ITitledContent.providedBy(obj):
+		result = unicode(get_uid(obj))
 	elif isinstance(obj, collections.Mapping):
 		result = obj.get(OID, None)
 	else:
@@ -69,7 +97,7 @@ class _MetaSearchHit(type):
 		setattr(t, '__external_class_name__', HIT)
 		return t
 
-@interface.implementer(search_interfaces.ISearchHit, IContained)
+@interface.implementer(ISearchHit, IContained)
 @WithRepr
 class BaseSearchHit(object):
 
@@ -80,10 +108,10 @@ class BaseSearchHit(object):
 
 	Score = lastModified = 0
 
-	Fragments = TargetMimeType = ContainerId = None
+	Creator = SYSTEM_USER_NAME
 	Type = NTIID = Query = Snippet = None
-	Creator = nti_interfaces.SYSTEM_USER_NAME
-
+	Fragments = TargetMimeType = ContainerId = None
+	
 	createdTime = alias('lastModified')
 
 	def __init__(self, original=None, oid=None, score=1.0):
@@ -121,7 +149,7 @@ def get_field_value(obj, name, default=u''):
 
 class SearchHit(BaseSearchHit):
 
-	adapter_interface = search_interfaces.IUserContentResolver
+	adapter_interface = IUserContentResolver
 
 	def __init__(self, original=None, score=1.0):
 		super(SearchHit, self).__init__(original, get_hit_id(original), score)
@@ -139,15 +167,13 @@ class SearchHit(BaseSearchHit):
 	@classmethod
 	def get_snippet(cls, adapted):
 		text = get_field_value(adapted, 'content')
-		text = component.getAdapter(text,
-									frg_interfaces.IPlainTextContentFragment,
-									name='text')
+		text = component.getAdapter(text, IPlainTextContentFragment, name='text')
 		return text
 
-@component.adapter(nti_interfaces.INote)
-@interface.implementer(search_interfaces.INoteSearchHit)
+@component.adapter(INote)
+@interface.implementer(INoteSearchHit)
 class NoteSearchHit(SearchHit):
-	adapter_interface = search_interfaces.INoteContentResolver
+	adapter_interface = INoteContentResolver
 
 	Title = None
 
@@ -158,15 +184,15 @@ class NoteSearchHit(SearchHit):
 		self.Title = get_field_value(adapted, 'title')
 		return adapted
 
-@component.adapter(nti_interfaces.IHighlight)
-@interface.implementer(search_interfaces.IHighlightSearchHit)
+@component.adapter(IHighlight)
+@interface.implementer(IHighlightSearchHit)
 class HighlightSearchHit(SearchHit):
-	adapter_interface = search_interfaces.IHighlightContentResolver
+	adapter_interface = IHighlightContentResolver
 
-@component.adapter(nti_interfaces.IRedaction)
-@interface.implementer(search_interfaces.IRedactionSearchHit)
+@component.adapter(IRedaction)
+@interface.implementer(IRedactionSearchHit)
 class RedactionSearchHit(SearchHit):
-	adapter_interface = search_interfaces.IRedactionContentResolver
+	adapter_interface = IRedactionContentResolver
 
 	replacementContent = alias('ReplacementContent')
 	redactionExplanation = alias('RedactionExplanation')
@@ -177,15 +203,15 @@ class RedactionSearchHit(SearchHit):
 		self.RedactionExplanation = get_field_value(adapted, "redactionExplanation")
 		return adapted
 
-@component.adapter(chat_interfaces.IMessageInfo)
-@interface.implementer(search_interfaces.IMessageInfoSearchHit)
+@component.adapter(IMessageInfo)
+@interface.implementer(IMessageInfoSearchHit)
 class MessageInfoSearchHit(SearchHit):
-	adapter_interface = search_interfaces.IMessageInfoContentResolver
+	adapter_interface = IMessageInfoContentResolver
 
-@component.adapter(for_interfaces.IPost)
-@interface.implementer(search_interfaces.IPostSearchHit)
+@component.adapter(IPost)
+@interface.implementer(IPostSearchHit)
 class PostSearchHit(SearchHit):
-	adapter_interface = search_interfaces.IPostContentResolver
+	adapter_interface = IPostContentResolver
 
 	Title = ID = Tags = None
 
@@ -205,17 +231,17 @@ class PostSearchHit(SearchHit):
 		t = get_field_value(adapted, "tags" , ())
 		return unicode(' '.join(t))
 
-@component.adapter(for_interfaces.IHeadlineTopic)
+@component.adapter(IHeadlineTopic)
 class HeadlineTopicSearchHit(PostSearchHit):
 
 	def __init__(self, original=None, score=1.0):
 		original = getattr(original, 'headline', None)
 		super(HeadlineTopicSearchHit, self).__init__(original, score)
 
-@component.adapter(for_interfaces.IGeneralForum)
-@interface.implementer(search_interfaces.IForumSearchHit)
+@component.adapter(IGeneralForum)
+@interface.implementer(IForumSearchHit)
 class ForumSearchHit(SearchHit):
-	adapter_interface = search_interfaces.IForumContentResolver
+	adapter_interface = IForumContentResolver
 
 	Title = None
 
@@ -227,8 +253,8 @@ class ForumSearchHit(SearchHit):
 		self.Title = get_field_value(adapted, "title")
 		return adapted
 
-@component.adapter(search_interfaces.IWhooshBookContent)
-@interface.implementer(search_interfaces.IWhooshBookSearchHit)
+@component.adapter(IWhooshBookContent)
+@interface.implementer(IWhooshBookSearchHit)
 class WhooshBookSearchHit(BaseSearchHit):
 
 	Title = None
@@ -275,8 +301,8 @@ class WhooshMediaTranscriptSearchHit(BaseSearchHit):
 		self.StartMilliSecs = hit.start_millisecs
 		self.TargetMimeType = self.TRANSCRIPT_MIME_TYPE
 
-@component.adapter(search_interfaces.IWhooshVideoTranscriptContent)
-@interface.implementer(search_interfaces.IWhooshVideoTranscriptSearchHit)
+@component.adapter(IWhooshVideoTranscriptContent)
+@interface.implementer(IWhooshVideoTranscriptSearchHit)
 class WhooshVideoTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
 
 	VideoID = None
@@ -299,8 +325,8 @@ class WhooshVideoTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
 			result = None
 		return result
 
-@component.adapter(search_interfaces.IWhooshAudioTranscriptContent)
-@interface.implementer(search_interfaces.IWhooshAudioTranscriptSearchHit)
+@component.adapter(IWhooshAudioTranscriptContent)
+@interface.implementer(IWhooshAudioTranscriptSearchHit)
 class WhooshAudioTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
 
 	AudioID = None
@@ -323,8 +349,8 @@ class WhooshAudioTranscriptSearchHit(WhooshMediaTranscriptSearchHit):
 			result = None
 		return result
 
-@component.adapter(search_interfaces.IWhooshNTICardContent)
-@interface.implementer(search_interfaces.IWhooshNTICardSearchHit)
+@component.adapter(IWhooshNTICardContent)
+@interface.implementer(IWhooshNTICardSearchHit)
 class WhooshNTICardSearchHit(BaseSearchHit):
 
 	TargetNTIID = Title = Href = None
@@ -350,4 +376,3 @@ class WhooshNTICardSearchHit(BaseSearchHit):
 	@classmethod
 	def get_oid(cls, hit):
 		return unicode(hit.ntiid) if hit is not None else None
-
