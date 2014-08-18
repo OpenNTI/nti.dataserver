@@ -60,7 +60,7 @@ class ObjectDataManager(object):
 	to rollback. Moroever, if a transaction savepoint is activated
 	before a manager joins, then that manager is not asked for its own
 	savepoint: it is simply aborted and unjoined from the transaction if
-	the previos savepoint is rolledback.
+	the previous savepoint is rolledback.
 
 	"""
 
