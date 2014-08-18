@@ -176,16 +176,27 @@ def _resolve_package_ntiids(ntiid):
 			result = [ntiid]
 	return result
 
+def safestr(s):
+	s = s.decode("utf-8") if isinstance(s, bytes) else s
+	return unicode(s) if s is not None else None
+
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = get_indexable_types()
 	username = username or matchdict.get('user', None)
 
+	context = {}
+	
 	# parse params:
 	args = dict(params)
 	for name in list(args.keys()):
 		if name not in ISearchQuery and name not in accepted_keys:
+			value = args[name]
+			if value:
+				context[safestr(name)] = safestr(value)
 			del args[name]
 
+	args['context'] = context
+	
 	term = matchdict.get('term', u'')
 	term = clean_search_query(unicode(term))
 	args['term'] = term

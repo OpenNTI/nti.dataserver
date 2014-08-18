@@ -17,21 +17,40 @@ import collections
 
 from zope import interface
 from zope import component
+from zope.container.contained import Contained
 from zope.location.interfaces import ISublocations
-from zope.container import contained as zcontained
-from zope.mimetype import interfaces as zmime_interfaces
+from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.utils.sort import isorted
 from nti.utils.property import Lazy, alias
 
-from . import common
-from . import constants
-from . import search_hits
-from . import interfaces as search_interfaces
+from .common import get_mimetype_from_type
 
-create_search_hit = search_hits.get_search_hit  # alias
+from .constants import VIDEO_TRANSCRIPT_MIME_TYPE
+
+from .search_hits import get_search_hit
+
+from .interfaces import ISearchQuery
+from .interfaces import ITypeResolver
+from .interfaces import INTIIDResolver
+from .interfaces import ISearchResults
+from .interfaces import ISuggestResults
+from .interfaces import IContentSearchHit
+from .interfaces import ISearchHitMetaData
+from .interfaces import IUserDataSearchHit
+from .interfaces import ISearchHitPredicate
+from .interfaces import IContainerIDResolver
+from .interfaces import ISearchHitComparator
+from .interfaces import ILastModifiedResolver
+from .interfaces import ISearchResultsCreator
+from .interfaces import ISuggestResultsCreator
+from .interfaces import ISuggestAndSearchResults
+from .interfaces import ISearchHitComparatorFactory
+from .interfaces import ISuggestAndSearchResultsCreator
+
+create_search_hit = get_search_hit  # alias
 
 def _lookup_subscribers(subscriptions=()):
 	result = []
@@ -46,12 +65,12 @@ def _get_predicate(subscriptions=()):
 	if not filters:
 		result = lambda *args:True
 	else:
-		def uber_filter(item, score=1.0):
-			return all((f.allow(item, score) for f in filters))
+		def uber_filter(item, score=1.0, query=None):
+			return all((f.allow(item, score, query=query) for f in filters))
 		result = uber_filter
 	return result
 	
-def _get_subscriptions(item, provided=search_interfaces.ISearchHitPredicate):
+def _get_subscriptions(item, provided=ISearchHitPredicate):
 	adapters = component.getSiteManager().adapters
 	subscriptions = adapters.subscriptions([interface.providedBy(item)], provided)
 	return tuple(subscriptions)
@@ -71,15 +90,15 @@ class _FilterCache(object):
 			self.cache[subscriptions] = predicate
 		return predicate
 		
-	def eval(self, item, score=1.0):
+	def eval(self, item, score=1.0, query=None):
 		predicate = self._lookup(item)
-		return predicate(item, score)
+		return predicate(item, score, query=query)
 
-def _allow_search_hit(filter_cache, item, score):
-	result = filter_cache.eval(item, score)
+def _allow_search_hit(filter_cache, item, score, query=None):
+	result = filter_cache.eval(item, score, query=query)
 	return result
 
-@interface.implementer(search_interfaces.ISearchHitMetaData)
+@interface.implementer(ISearchHitMetaData)
 class SearchHitMetaData(object):
 
 	unspecified_container = u'+++unspecified_container+++'
@@ -120,26 +139,26 @@ class SearchHitMetaData(object):
 	def track(self, selected):
 		self.SearchTime = time.time() - self._ref
 
-		resolver = search_interfaces.ITypeResolver(selected, None)
+		resolver = ITypeResolver(selected, None)
 		name = getattr(resolver, 'type', u'')
-		isVideo = common.get_mimetype_from_type(name) == constants.VIDEO_TRANSCRIPT_MIME_TYPE
+		isVideo = get_mimetype_from_type(name) == VIDEO_TRANSCRIPT_MIME_TYPE
 
 		# container count
 		if isVideo:  # a video it's its own container
-			resolver = search_interfaces.INTIIDResolver(selected, None)
+			resolver = INTIIDResolver(selected, None)
 			containerId = resolver.ntiid if resolver else self.unspecified_container
 		else:
-			resolver = search_interfaces.IContainerIDResolver(selected, None)
+			resolver = IContainerIDResolver(selected, None)
 			containerId = resolver.containerId if resolver else self.unspecified_container
 		self.container_count[containerId] = self.container_count[containerId] + 1
 
 		# last modified
-		resolver = search_interfaces.ILastModifiedResolver(selected, None)
+		resolver = ILastModifiedResolver(selected, None)
 		lastModified = resolver.lastModified if resolver else 0
 		self.lastModified = max(self.lastModified, lastModified or 0)
 
 		# type count
-		resolver = search_interfaces.ITypeResolver(selected, None)
+		resolver = ITypeResolver(selected, None)
 		type_name = resolver.type if resolver else u'unknown'
 		self.type_count[type_name] = self.type_count[type_name] + 1
 
@@ -170,7 +189,7 @@ class _MetaSearchResults(type):
 		t.parameters = dict()
 		return t
 
-class _BaseSearchResults(zcontained.Contained):
+class _BaseSearchResults(Contained):
 
 	sorted = False
 
@@ -178,7 +197,7 @@ class _BaseSearchResults(zcontained.Contained):
 
 	def __init__(self, query=None):
 		super(_BaseSearchResults,self).__init__()
-		self.query = search_interfaces.ISearchQuery(query, None)
+		self.query = ISearchQuery(query, None)
 
 	def __repr__(self):
 		return '%s(hits=%s)' % (self.__class__.__name__, len(self))
@@ -195,8 +214,8 @@ class _BaseSearchResults(zcontained.Contained):
 		return iter(self.Hits)
 
 @interface.implementer(ISublocations,
-					   search_interfaces.ISearchResults,
-					   zmime_interfaces.IContentTypeAware)
+					   ISearchResults,
+					   IContentTypeAware)
 class _SearchResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -236,13 +255,13 @@ class _SearchResults(_BaseSearchResults):
 	@property
 	def ContentHits(self):
 		for hit in self._raw_hits():
-			if search_interfaces.IContentSearchHit.providedBy(hit):
+			if IContentSearchHit.providedBy(hit):
 				yield hit
 
 	@property
 	def UserDataHits(self):
 		for hit in self._raw_hits():
-			if search_interfaces.IUserDataSearchHit.providedBy(hit):
+			if IUserDataSearchHit.providedBy(hit):
 				yield hit
 
 	@property
@@ -274,7 +293,7 @@ class _SearchResults(_BaseSearchResults):
 		if isinstance(item, (list, tuple)):
 			item, score = item[0], item[1]
 
-		if _allow_search_hit(self._filterCache, item, score):
+		if _allow_search_hit(self._filterCache, item, score, self.Query):
 			hit = create_search_hit(item, score, self.Query)
 			if self._add_hit(hit):
 				self.metadata.track(item)
@@ -292,7 +311,7 @@ class _SearchResults(_BaseSearchResults):
 
 	def sort(self, sortOn=None):
 		sortOn = sortOn or (self.query.sortOn if self.query else u'')
-		factory = component.queryUtility(search_interfaces.ISearchHitComparatorFactory,
+		factory = component.queryUtility(ISearchHitComparatorFactory,
 										 name=sortOn)
 		comparator = factory(self) if factory is not None else None
 		if comparator is not None:
@@ -308,16 +327,15 @@ class _SearchResults(_BaseSearchResults):
 		return self.count
 
 	def __iadd__(self, other):
-		if 	search_interfaces.ISearchResults.providedBy(other) or \
-			search_interfaces.ISuggestAndSearchResults.providedBy(other):
+		if 	ISearchResults.providedBy(other) or \
+			ISuggestAndSearchResults.providedBy(other):
 
 			self._set_hits(other._raw_hits())
 			self.HitMetaData += other.HitMetaData
 
 		return self
 
-@interface.implementer(search_interfaces.ISuggestResults,
-					   zmime_interfaces.IContentTypeAware)
+@interface.implementer(ISuggestResults, IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -347,12 +365,12 @@ class _SuggestResults(_BaseSearchResults):
 	extend = _extend
 
 	def __iadd__(self, other):
-		if 	search_interfaces.ISuggestResults.providedBy(other) or \
-			search_interfaces.ISuggestAndSearchResults.providedBy(other):
+		if 	ISuggestResults.providedBy(other) or \
+			ISuggestAndSearchResults.providedBy(other):
 			self._words.update(other.suggestions)
 		return self
 
-@interface.implementer(search_interfaces.ISuggestAndSearchResults)
+@interface.implementer(ISuggestAndSearchResults)
 class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 
 	__metaclass__ = _MetaSearchResults
@@ -382,19 +400,19 @@ class _SuggestAndSearchResults(_SearchResults, _SuggestResults):
 		_SuggestResults.__iadd__(self, other)
 		return self
 
-@interface.implementer(search_interfaces.ISearchResultsCreator)
+@interface.implementer(ISearchResultsCreator)
 class _SearchResultCreator(object):
 
 	def __call__(self, query=None):
 		return _SearchResults(query)
 
-@interface.implementer(search_interfaces.ISuggestResultsCreator)
+@interface.implementer(ISuggestResultsCreator)
 class _SuggestResultsCreator(object):
 
 	def __call__(self, query=None):
 		return _SuggestResults(query)
 
-@interface.implementer(search_interfaces.ISuggestAndSearchResultsCreator)
+@interface.implementer(ISuggestAndSearchResultsCreator)
 class _SuggestAndSearchResultsCreator(object):
 
 	def __call__(self, query=None):
@@ -403,8 +421,7 @@ class _SuggestAndSearchResultsCreator(object):
 # sort
 
 def sort_hits(hits, reverse=False, sortOn=None):
-	comparator = component.queryUtility(search_interfaces.ISearchHitComparator,
-										name=sortOn) if sortOn else None
+	comparator = component.queryUtility(ISearchHitComparator, name=sortOn) if sortOn else None
 	if comparator is not None:
 		if isinstance(hits, list):
 			hits.sort(comparator.compare, reverse=reverse)
@@ -420,7 +437,7 @@ def sort_hits(hits, reverse=False, sortOn=None):
 # legacy results
 
 def empty_search_results(query):
-	result = component.getUtility(search_interfaces.ISearchResultsCreator)(query)
+	result = component.getUtility(ISearchResultsCreator)(query)
 	return result
 
 def get_or_create_search_results(query, store=None):
@@ -428,8 +445,7 @@ def get_or_create_search_results(query, store=None):
 	return results
 
 def empty_suggest_and_search_results(query):
-	result = component.getUtility(
-						search_interfaces.ISuggestAndSearchResultsCreator)(query)
+	result = component.getUtility(ISuggestAndSearchResultsCreator)(query)
 	return result
 
 def get_or_create_suggest_and_search_results(query, store=None):
@@ -437,7 +453,7 @@ def get_or_create_suggest_and_search_results(query, store=None):
 	return results
 
 def empty_suggest_results(query):
-	result = component.getUtility(search_interfaces.ISuggestResultsCreator)(query)
+	result = component.getUtility(ISuggestResultsCreator)(query)
 	return result
 
 def get_or_create_suggest_results(query, store=None):

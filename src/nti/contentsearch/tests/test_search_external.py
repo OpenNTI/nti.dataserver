@@ -190,7 +190,7 @@ class TestSearchExternal(unittest.TestCase):
 	def test_search_query(self):
 		creationTime = DateTimeRange(startTime=0, endTime=100)
 		qo = QueryObject.create("sode no shirayuki", sortOn='relevance', searchOn=('note',),
-								creationTime=creationTime)
+								creationTime=creationTime, context={'theotokos':'Mater Dei'})
 		# externalize
 		eo = toExternalObject(qo)
 		assert_that(eo, has_entry(u'Class', u'SearchQuery'))
@@ -198,6 +198,7 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(eo, has_entry(u'sortOn', u'relevance'))
 		assert_that(eo, has_entry(u'term', u'sode no shirayuki'))
 		assert_that(eo, has_entry(u'searchOn', is_([u'note'])))
+		assert_that(eo, has_entry(u'context', has_entry('theotokos','Mater Dei')))
 		assert_that(eo, has_key(u'creationTime'))
 		entry = eo['creationTime']
 		assert_that(entry, has_entry(u'startTime', is_(0)))
@@ -211,3 +212,5 @@ class TestSearchExternal(unittest.TestCase):
 		assert_that(new_query, has_property('sortOn', 'relevance'))
 		assert_that(new_query, has_property('searchOn', is_(['note'])))
 		assert_that(new_query, has_property('creationTime', is_(equal_to(qo.creationTime))))
+		assert_that(new_query, has_property('context', has_entry('theotokos','Mater Dei')))
+
