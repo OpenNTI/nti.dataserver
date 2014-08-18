@@ -20,5 +20,5 @@ class _DefaultSearchHitPredicate(object):
 	def __init__(self, *args):
 		pass
 
-	def allow(self, item, score=1.0):
+	def allow(self, item, score=1.0, query=None):
 		return True
