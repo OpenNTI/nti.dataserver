@@ -11,9 +11,10 @@ __docformat__ = "restructuredtext en"
 from zope import component
 from zope import interface
 from zope.deprecation import deprecated
-from zope.mimetype import interfaces as zmime_interfaces
+from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ILastModified
 
 from zope.container.interfaces import IContained
 
@@ -375,10 +376,10 @@ class IWhooshIndexStorage(interface.Interface):
 
 # content
 
-class IBaseContent(nti_interfaces.ILastModified):
+class IBaseContent(ILastModified):
 	pass
 
-class IWhooshContent(zmime_interfaces.IContentTypeAware):
+class IWhooshContent(IContentTypeAware):
 	pass
 
 class IBookContent(IBaseContent):
@@ -637,7 +638,7 @@ class IBaseHit(interface.Interface):
 	Query = Object(ISearchQuery, title="Search query", required=False)
 	Score = Number(title="hit relevance score", required=False, default=1.0, min=0.0)
 
-class ISearchHit(IBaseHit, nti_interfaces.ILastModified):
+class ISearchHit(IBaseHit, ILastModified):
 	"""
 	represent an externalized search hit
 	"""
@@ -735,7 +736,7 @@ class ISearchHitPredicate(interface.Interface):
 		allow a search hit into the results
 		"""
 
-class ISearchHitMetaData(nti_interfaces.ILastModified):
+class ISearchHitMetaData(ILastModified):
 	"""Class to track search hit meta data"""
 
 	TypeCount = Dict(ValidTextLine(title='type'),
@@ -763,7 +764,7 @@ class ISearchHitMetaData(nti_interfaces.ILastModified):
 	def __iadd__(other):
 		pass
 
-class IBaseSearchResults(nti_interfaces.ILastModified):
+class IBaseSearchResults(ILastModified):
 	Query = Object(ISearchQuery, title="Search query", required=True)
 
 class ISearchResults(IBaseSearchResults):
@@ -843,7 +844,7 @@ class IWhooshAnalyzer(interface.Interface):
 class ISearchCompletedEvent(interface.Interface):
 	elpased = Float(title="The search elapsed time")
 	query = Object(ISearchQuery, title="The search query")
-	user = Object(nti_interfaces.IEntity, title="The search entity")
+	user = Object(IEntity, title="The search entity")
 	metadata = Object(ISearchHitMetaData, title="The result meta-data")
 	results = Object(IBaseSearchResults, title="The results")
 
