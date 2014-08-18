@@ -266,17 +266,7 @@ class _ContentBundleMetaInfo(object):
 
 		return tuple(cps)
 
-def _readCurrent(lib):
-	try:
-		lib._p_jar.readCurrent(lib)
-	except AttributeError:
-		pass
-	try:
-		lib._SampleContainer__data._p_jar.readCurrent(lib._SampleContainer__data)
-	except AttributeError:
-		pass
-
-	return lib
+from nti.zodb import readCurrent as _readCurrent
 
 from nti.externalization.internalization import validate_named_field_value
 from .dublincore import DCMETA_FILENAME
