@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Defines search/index hit comparators.
-
 .. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -22,9 +20,13 @@ from nti.ntiids import ntiids
 
 from nti.utils.property import Lazy
 
-from . import common
-from . import content_utils
-from . import interfaces as search_interfaces
+from .common import get_sort_order
+
+from .content_utils import get_ntiid_path as content_ntiid_path
+
+from .interfaces import ISearchHit
+from .interfaces import ISearchHitComparator
+from .interfaces import ISearchHitComparatorFactory
 
 class _CallableComparator(object):
 
@@ -34,13 +36,13 @@ class _CallableComparator(object):
 	def __call__(self, a, b):
 		return self.compare(a, b)
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _ScoreSearchHitComparator(_CallableComparator):
 
 	@classmethod
 	def get_score(cls, item):
 		result = None
-		if search_interfaces.ISearchHit.providedBy(item):
+		if ISearchHit.providedBy(item):
 			result = item.Score
 		return result or 1.0
 
@@ -55,7 +57,7 @@ class _ScoreSearchHitComparator(_CallableComparator):
 	def compare(cls, a, b):
 		return cls.compare_score(a, b)
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _ScoreSearchHitComparatorFactory(object):
 
 	singleton = _ScoreSearchHitComparator()
@@ -63,17 +65,14 @@ class _ScoreSearchHitComparatorFactory(object):
 	def __call__(self, results=None):
 		return self.singleton
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _LastModifiedSearchHitComparator(_CallableComparator):
 
 	@classmethod
 	def get_lm(cls, item):
-		if 	search_interfaces.ISearchHit.providedBy(item) or \
-			hasattr(item, 'lastModified'):
-			result = item.lastModified
-		else:
-			result = 0
-		return result
+		if ISearchHit.providedBy(item) or hasattr(item, 'lastModified'):
+			return item.lastModified
+		return 0
 
 	@classmethod
 	def compare_lm(cls, a, b):
@@ -86,7 +85,7 @@ class _LastModifiedSearchHitComparator(_CallableComparator):
 	def compare(cls, a, b):
 		return cls.compare_lm(a, b)
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _LastModifiedSearchHitComparatorFactory(object):
 
 	singleton = _LastModifiedSearchHitComparator()
@@ -94,19 +93,19 @@ class _LastModifiedSearchHitComparatorFactory(object):
 	def __call__(self, results=None):
 		return self.singleton
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 							   _LastModifiedSearchHitComparator):
 
 	@classmethod
 	def get_type_name(cls, item):
-		result = item.Type if search_interfaces.ISearchHit.providedBy(item) else u''
+		result = item.Type if ISearchHit.providedBy(item) else u''
 		return result or u''
 
 	@classmethod
 	def compare_type(cls, a, b):
-		a_order = common.get_sort_order(cls.get_type_name(a))
-		b_order = common.get_sort_order(cls.get_type_name(b))
+		a_order = get_sort_order(cls.get_type_name(a))
+		b_order = get_sort_order(cls.get_type_name(b))
 		result = cmp(a_order, b_order)
 		return result
 
@@ -119,7 +118,7 @@ class _TypeSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _TypeSearchHitComparatorFactory(object):
 
 	singleton = _TypeSearchHitComparator()
@@ -127,7 +126,7 @@ class _TypeSearchHitComparatorFactory(object):
 	def __call__(self, results=None):
 		return self.singleton
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 							  	  _LastModifiedSearchHitComparator):
 
@@ -147,7 +146,7 @@ class _CreatorSearchHitComparator(_ScoreSearchHitComparator,
 			result = cls.compare_score(a, b)
 		return result
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _CreatorSearchHitComparatorFactory(object):
 
 	singleton = _CreatorSearchHitComparator()
@@ -155,7 +154,7 @@ class _CreatorSearchHitComparatorFactory(object):
 	def __call__(self, results=None):
 		return self.singleton
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _DecayFactorSearchHitComparator(_CallableComparator):
 
 	def __init__(self, results):
@@ -183,7 +182,7 @@ class _DecayFactorSearchHitComparator(_CallableComparator):
 		result = cmp(a_score, b_score)
 		return result
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _DecaySearchHitComparatorFactory(object):
 
 	__slots__ = ()
@@ -204,10 +203,10 @@ def _path_intersection(x, y):
 
 @repoze.lru.lru_cache(maxsize=2000, timeout=60)
 def get_ntiid_path(item):
-	result = content_utils.get_ntiid_path(item)
+	result = content_ntiid_path(item)
 	return result
 
-@interface.implementer(search_interfaces.ISearchHitComparator)
+@interface.implementer(ISearchHitComparator)
 class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 
 	IGNORED_TYPES = {ntiids.TYPE_OID, ntiids.TYPE_UUID, ntiids.TYPE_INTID,
@@ -238,7 +237,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_ntiid_path(cls, item):
 		result = ()
-		if search_interfaces.ISearchHit.providedBy(item):
+		if ISearchHit.providedBy(item):
 			result = get_ntiid_path(item.Query.location)
 		elif isinstance(item, six.string_types) and item and \
 			 not ntiids.is_ntiid_of_types(item, cls.IGNORED_TYPES):
@@ -248,7 +247,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 	@classmethod
 	def get_containerId(cls, item):
 		result = None
-		if search_interfaces.ISearchHit.providedBy(item):
+		if ISearchHit.providedBy(item):
 			result = item.ContainerId
 		return result
 
@@ -272,7 +271,7 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 		result = cls.compare_score(a, b) if result == 0 else result
 		return result
 
-@interface.implementer(search_interfaces.ISearchHitComparatorFactory)
+@interface.implementer(ISearchHitComparatorFactory)
 class _RelevanceSearchHitComparatorFactory(object):
 
 	singleton = _RelevanceSearchHitComparator()

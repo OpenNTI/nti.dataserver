@@ -18,32 +18,43 @@ from zope import interface
 
 import repoze.lru
 
-from whoosh import analysis
-from whoosh import highlight
+from whoosh.analysis import RegexTokenizer
+from whoosh.analysis import CompositeAnalyzer
+
+from whoosh.highlight import FIRST
+from whoosh.highlight import NullFormatter
+from whoosh.highlight import ContextFragmenter
+from whoosh.highlight import BasicFragmentScorer
 
 from nti.contentprocessing import tokenize_content
-from nti.contentprocessing import interfaces as cp_interfaces
+from nti.contentprocessing.interfaces import IWordTokenizerExpression
+from nti.contentprocessing.interfaces import IPunctuationCharPatternPlus
+from nti.contentprocessing.interfaces import IPunctuationCharExpressionPlus
 
-from . import search_fragments
-from . import interfaces as search_interfaces
+from .search_fragments import Range
+from .search_fragments import create_from_terms
+from .search_fragments import create_from_whoosh_fragment
 
-null_formatter = highlight.NullFormatter()
-basic_fragment_scorer = highlight.BasicFragmentScorer()
+from .interfaces import ISearchQuery
+from .interfaces import IWhooshAnalyzer
 
-@interface.implementer(search_interfaces.IWhooshAnalyzer)
+null_formatter = NullFormatter()
+basic_fragment_scorer = BasicFragmentScorer()
+
+@interface.implementer(IWhooshAnalyzer)
 def create_default_analyzer(lang='en'):
-	expression = component.getUtility(cp_interfaces.IWordTokenizerExpression, name=lang)
-	analyzers = [analysis.RegexTokenizer(expression=expression, gaps=False)]
-	return analysis.CompositeAnalyzer(*analyzers)
+	expression = component.getUtility(IWordTokenizerExpression, name=lang)
+	analyzers = [RegexTokenizer(expression=expression, gaps=False)]
+	return CompositeAnalyzer(*analyzers)
 
 def retokenize(text, lang='en'):
-	analyzer = component.getUtility(search_interfaces.IWhooshAnalyzer, name=lang)
+	analyzer = component.getUtility(IWhooshAnalyzer, name=lang)
 	tokens = analyzer(text, chars=True, mode="query", removestops=False)
 	return tokens
 
 @repoze.lru.lru_cache(5)
 def create_fragmenter(maxchars=300, surround=50):
-	result = highlight.ContextFragmenter(maxchars=maxchars, surround=surround)
+	result = ContextFragmenter(maxchars=maxchars, surround=surround)
 	return result
 
 def get_query_terms(query, lang='en'):
@@ -105,7 +116,7 @@ def prune_phrase_terms_fragments(termset, original_snippet, original_fragments,
 
 		matched = re.search(pattern, fragment.text)
 		if matched:
-			fragment.matches = [search_fragments.Range(matched.start(), matched.end())]
+			fragment.matches = [Range(matched.start(), matched.end())]
 			fragments.append(fragment)
 			snippets.append(fragment.text)
 
@@ -153,8 +164,7 @@ def get_context_fragments(fragment, termset, query, maxchars, surround, punkt_pa
 		count += len(slc)
 
 		# create fragment
-		sf = search_fragments.create_from_terms(slc, termset, query.IsPhraseSearch,
-												punkt_pattern)
+		sf = create_from_terms(slc, termset, query.IsPhraseSearch, punkt_pattern)
 		fragments.append(sf)
 		if count > maxchars:
 			break
@@ -162,7 +172,7 @@ def get_context_fragments(fragment, termset, query, maxchars, surround, punkt_pa
 	snippet = '...'.join(snippet)
 	return fragments, snippet
 
-def top_fragments(whoosh_fragments, scorer, count=5, order=highlight.FIRST, minscore=1):
+def top_fragments(whoosh_fragments, scorer, count=5, order=FIRST, minscore=1):
 	scored_fragments = [(scorer(f), f) for f in whoosh_fragments]
 	total_fragments = len(scored_fragments)
 	if count:
@@ -189,14 +199,13 @@ def _set_matched_filter(tokens, termset):
 		yield t
 
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
-							 order=highlight.FIRST, lang='en'):
+							 order=FIRST, lang='en'):
 	# get lang. punkt char regex patter
-	punkt_pattern = component.getUtility(cp_interfaces.IPunctuationCharPatternPlus,
-										 name=lang)
+	punkt_pattern = component.getUtility(IPunctuationCharPatternPlus, name=lang)
 
 	# get query terms
 	text = unicode(text)
-	query = search_interfaces.ISearchQuery(query)
+	query = ISearchQuery(query)
 	termset = get_query_terms(query)
 
 	# prepare fragmenter
@@ -217,14 +226,13 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 	if whoosh_fragments:
 		fragments = []
 		for f in whoosh_fragments:
-			sf = search_fragments.create_from_whoosh_fragment(f, termset, punkt_pattern)
+			sf = create_from_whoosh_fragment(f, termset, punkt_pattern)
 			fragments.append(sf)
 		snippet = formatter(text, whoosh_fragments)
 	else:
-		sf = search_fragments.create_from_terms(text, termset, query.IsPhraseSearch,
-												punkt_pattern)
-
-		frags, snippet = get_context_fragments(sf, termset, query, maxchars=maxchars,
+		sf = create_from_terms(text, termset, query.IsPhraseSearch, punkt_pattern)
+		frags, snippet = get_context_fragments(sf, termset, query,
+											   maxchars=maxchars,
 											   surround=surround,
 											   punkt_pattern=punkt_pattern)
 
@@ -242,10 +250,9 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 			total_fragments = len(frags)
 
 	if query.IsPhraseSearch:
-		punkt_exp = component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus,
-										 name=lang)
+		punkt_exp = component.getUtility(IPunctuationCharExpressionPlus,name=lang)
 		snippet, fragments = \
-				prune_phrase_terms_fragments(termset, snippet, fragments, punkt_exp)
+			prune_phrase_terms_fragments(termset, snippet, fragments, punkt_exp)
 
 	result = HighlightInfo(snippet, fragments, total_fragments)
 	return result
