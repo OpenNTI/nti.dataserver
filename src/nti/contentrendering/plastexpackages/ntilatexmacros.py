@@ -1288,6 +1288,9 @@ class ntidirectionsblock(Base.Command):
 	blockType = True
 
 # The sidebar environment is to be the base class for other side types such as those from AoPS.
+class sidebarname(Command):
+	unicode = ''
+
 class sidebar(Environment, plastexids.NTIIDMixin):
 	args = 'title'
 	blockType = True
