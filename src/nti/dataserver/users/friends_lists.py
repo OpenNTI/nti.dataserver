@@ -99,7 +99,11 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		try:
 			return wref_interfaces.IWeakRef(entity, None) in self._friends_wref_set
 		except TypeError:
-			return False # "Object has default comparison"
+			# "Object has default comparison"
+			return False
+		except KeyError:
+			# intid missing error
+			return False
 
 	def iter_intids(self):
 		for wref in self._friends_wref_set:
