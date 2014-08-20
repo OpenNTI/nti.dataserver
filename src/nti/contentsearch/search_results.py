@@ -66,7 +66,7 @@ def _get_predicate(subscriptions=()):
 		result = lambda *args, **kwargs:True
 	else:
 		def uber_filter(item, score=1.0, query=None):
-			return all((f.allow(item, score, query=query) for f in filters))
+			return all((f.allow(item, score, query) for f in filters))
 		result = uber_filter
 	return result
 	
@@ -92,10 +92,11 @@ class _FilterCache(object):
 		
 	def eval(self, item, score=1.0, query=None):
 		predicate = self._lookup(item)
-		return predicate(item, score, query=query)
+		__traceback_info__ = predicate
+		return predicate(item, score, query)
 
 def _allow_search_hit(filter_cache, item, score, query=None):
-	result = filter_cache.eval(item, score, query=query)
+	result = filter_cache.eval(item, score, query)
 	return result
 
 @interface.implementer(ISearchHitMetaData)
