@@ -63,7 +63,7 @@ def _lookup_subscribers(subscriptions=()):
 def _get_predicate(subscriptions=()):
 	filters = _lookup_subscribers(subscriptions)
 	if not filters:
-		result = lambda *args:True
+		result = lambda *args, **kwargs:True
 	else:
 		def uber_filter(item, score=1.0, query=None):
 			return all((f.allow(item, score, query=query) for f in filters))
