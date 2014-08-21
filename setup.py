@@ -13,6 +13,7 @@ entry_points = {
 		"nti_join_dfl = nti.dataserver.utils.nti_join_dfl:main",
 		"nti_join_community = nti.dataserver.utils.nti_join_community:main",
 		"nti_update_community = nti.dataserver.utils.nti_update_community:main",
+		"nti_community_members = nti.dataserver.utils.nti_community_members:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
