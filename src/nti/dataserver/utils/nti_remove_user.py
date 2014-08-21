@@ -13,13 +13,15 @@ relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import sys
 import argparse
 
-from zope import component
+from zope.component import hooks
 
 from nti.dataserver import users
 from nti.dataserver.utils import run_with_dataserver
+from nti.site.site import get_site_for_site_names
 
 _type_map = { 'user': (users.User.get_user, users.User.delete_user),
 			  'community': (users.Community.get_entity,  users.Community.delete_entity) }
@@ -28,16 +30,13 @@ def _delete_user(factory, username, site=None):
 	__traceback_info__ = locals().items()
 
 	if site:
-		from pyramid.testing import DummyRequest
-		from pyramid.testing import setUp as psetUp
+		cur_site = hooks.getSite()
+		new_site = get_site_for_site_names( (site,), site=cur_site )
+		if new_site is cur_site:
+			raise ValueError("Unknown site name", site)
 
-		request = DummyRequest()
-		config = psetUp(registry=component.getGlobalSiteManager(),
-						request=request,
-						hook_zca=False)
-		config.setup_registry()
-		request.headers['origin'] = 'http://' + site if not site.startswith('http') else site
-		request.possible_site_names = (site if not site.startswith('http') else site[7:],)
+		hooks.setSite(new_site)
+
 
 	getter, deleter = factory
 	entity = getter(username)
@@ -62,18 +61,19 @@ def main():
 	args = arg_parser.parse_args()
 
 	site = args.site
-	
-	import os
-	
+
 	env_dir = args.env_dir
 	if not env_dir:
 		env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
-	
+
 	username = args.username
 
 	run_with_dataserver( environment_dir=env_dir,
+						 # MUST be sure to get the site configurations
+						 # loaded.
+						 xmlconfig_packages=('nti.appserver',),
 						 function=lambda: _delete_user(_type_map[args.type], username, site))
 	sys.exit( 0 )
 
