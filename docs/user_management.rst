@@ -32,6 +32,10 @@ Follow an entity:
 
 Delete a user:
 
+.. warning:: It is critically important that you supply the ``site``
+			 argument for the user's home site. Failure to do so can
+			 result in corruption.
+
 .. command-output:: nti_remove_user -h
 
 Set a password:
