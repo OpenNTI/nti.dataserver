@@ -22,6 +22,8 @@ from hamcrest import has_key
 from hamcrest import is_not
 from hamcrest import same_instance
 from hamcrest import contains
+from hamcrest import calling
+from hamcrest import raises
 
 from hamcrest.library import has_property as has_attr
 import unittest
@@ -33,14 +35,18 @@ import json
 import plistlib
 from ZODB.broken import Broken
 
-from nose.tools import assert_raises
 from nti.testing.matchers import has_attr
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization import externalization
 from nti.externalization.oids import toExternalOID, fromExternalOID
 
-from nti.externalization.externalization import EXT_FORMAT_PLIST, EXT_FORMAT_JSON, to_external_representation, toExternalObject, catch_replace_action, to_standard_external_dictionary
+from ..externalization import EXT_FORMAT_PLIST
+from ..externalization import EXT_FORMAT_JSON
+from ..externalization import to_external_representation
+from ..externalization import toExternalObject
+from ..externalization import catch_replace_action
+from ..externalization import to_standard_external_dictionary
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
 
@@ -139,8 +145,9 @@ class TestFunctions(ExternalizationLayerTest):
 					 is_( [catch_replace_action(None,None)] ) )
 
 		# Default doesn't catch
-		with assert_raises(AssertionError):
-			toExternalObject( [Raises()] )
+		assert_that( calling(toExternalObject).with_args([Raises()]),
+					 raises(AssertionError) )
+
 
 	def test_search_for_external(self):
 		class Y(object):
@@ -267,6 +274,52 @@ class TestToExternalObject(ExternalizationLayerTest):
 
 		assert_that( toExternalObject( test ), is_( {'test': test } ) )
 
+	def test_memo(self):
+
+		@interface.implementer(IExternalObject)
+		class Test(object):
+
+			def toExternalObject(self, **kwargs):
+				# a new dict each time we're called;
+				# we only want to be called once
+				return {}
+
+		test = Test()
+
+		tests = [test, test]
+
+		ext_val = toExternalObject(tests)
+		assert_that( ext_val[0],
+					 is_(same_instance(ext_val[1]) ) )
+
+	def test_memo_changes_names(self):
+		# if we're called with a different name,
+		# the memo changes too
+		@interface.implementer(IExternalObject)
+		class Test(object):
+			def toExternalObject(self, **kwargs):
+				# a new dict each time we're called;
+				# we only want to be called once
+				return {}
+
+
+		@interface.implementer(IExternalObject)
+		class Parent(object):
+			def __init__(self):
+				self.test = Test()
+
+			def toExternalObject(self, **kwargs):
+
+				return [toExternalObject(self.test),
+						toExternalObject(self.test, name="other")]
+
+
+		ext_val = toExternalObject(Parent())
+		assert_that( ext_val[0],
+					 is_not(same_instance(ext_val[1]) ) )
+
+
+
 
 	def test_to_stand_dict_uses_dubcore(self):
 
@@ -281,7 +334,7 @@ class TestToExternalObject(ExternalizationLayerTest):
 		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( Number ) ) )
 		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( Number ) ) )
 
-from ..externalization import NoPickle
+from ..persistence import NoPickle
 
 from . import assert_does_not_pickle
 
