@@ -52,9 +52,10 @@ def get_member_info(community):
 		realname = _get_field_value(uid, catalog, 'realname')
 		yield [safestr(user.username), realname, alias, email]
 
-def _output_members(username, output=None, site=None, verbose=False):
+def _output_members(username, tabs=False, output=None, site=None, verbose=False):
 	__traceback_info__ = locals().items()
 
+	sep = '\t' if tabs else ','
 	if site:
 		cur_site = hooks.getSite()
 		new_site = get_site_for_site_names( (site,), site=cur_site )
@@ -72,14 +73,14 @@ def _output_members(username, output=None, site=None, verbose=False):
 	output = codecs.open(output, 'w', 'utf-8') \
 			 if output else sys.stdout
 	header = ['username', 'realname', 'alias', 'email']
-	output.write('%s\n' % '\t'.join(header))
+	output.write('%s\n' % sep.join(header))
 	
 	for row in get_member_info(community):
 		__traceback_info__ = row
 		try:
-			output.write('%s\n' % '\t'.join(row))
+			output.write('%s\n' % sep.join(row))
 		except UnicodeDecodeError:
-			output.write('%r\n' % '\t'.join(row))
+			output.write('%r\n' % sep.join(row))
 
 	if should_close:
 		output.close()
@@ -89,6 +90,8 @@ def process_args(args=None):
 	arg_parser.add_argument('username', help="The community username")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
+	arg_parser.add_argument('-t', '--tabs', help="use tabs as separator",
+							action='store_true', dest='tabs')
 	arg_parser.add_argument('-o', '--output',
 							dest='output',
 							help="Output file name.")
@@ -106,6 +109,7 @@ def process_args(args=None):
 						xmlconfig_packages=('nti.appserver',),
 						verbose=args.verbose,
 						function=lambda: _output_members(args.username,
+														 args.tabs,
 														 args.output,
 														 args.site, 
 														 verbose=args.verbose))
