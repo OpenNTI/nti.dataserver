@@ -171,10 +171,26 @@ class FilesystemKey(AbstractKey,
 	def readContents(self):
 		return self._contents
 
+	@cachedIn('_v_readContentsAsText')
+	def _do_readContentsAsText(self, contents, encoding):
+		if contents is not None:
+			return contents.decode(encoding)
+
+	def readContentsAsText(self, encoding="utf-8"):
+		return self._do_readContentsAsText(self._contents, encoding)
+
 	def readContentsAsETree(self):
 		# TODO: Pass the base_url?
 		root = etree.parse( self.absolute_path ).getroot()
 		return root
+
+	def readContentsAsYaml(self):
+		# simplejson.loads does a .read() to get the full
+		# contents in one go anyway, so we're better off
+		# just using our cached contents. However, yaml actually
+		# offers the possibility of using a streaming parser
+		with open(self.absolute_path, 'rb') as f:
+			return self._do_readContentsAsYaml(f)
 
 
 @interface.implementer(IFilesystemBucket)

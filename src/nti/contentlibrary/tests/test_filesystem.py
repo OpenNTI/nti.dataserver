@@ -52,6 +52,25 @@ class TestFilesystem(ContentlibraryLayerTest):
 
 		assert_that( unit, verifiably_provides( interfaces.IFilesystemContentPackage ) )
 
+	def test_read_contents(self):
+		absolute_path = os.path.join( os.path.dirname( __file__ ),
+									  'TestFilesystem' )
+		bucket = filesystem.FilesystemBucket(name='TestFilesystem')
+		bucket.absolute_path = absolute_path
+
+		package = filesystem._package_factory( bucket,
+											   filesystem.PersistentFilesystemContentPackage,
+											   filesystem.PersistentFilesystemContentUnit)
+
+		props = package.make_sibling_key('nti_default_presentation_properties.json')
+		as_json = props.readContentsAsJson()
+		as_yaml = props.readContentsAsYaml()
+
+		assert_that(as_json, is_(as_yaml))
+		assert_that(list(as_json.keys())[0],
+						 is_(unicode))
+		assert_that(list(as_yaml.keys())[0],
+						 is_(unicode))
 
 
 	def test_from_filesystem(self):
