@@ -777,7 +777,7 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 		to extract Twitter card or `Facebook OpenGraph <http://opengraphprotocol.org>`_ data from it; this allows
 		you to skip specifying an image and description.
 	"""
-	args = 'href:str <options:dict>'
+	args = 'href:str:source <options:dict>'
 	# Note the options dict is in <>, and uses the default comma separator, which means
 	# values cannot have commas (that's why href, which may be an NTIID is its own argument).
 	# See also ntiassessment.naqsolution.
