@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import sys
+import codecs
 import argparse
 
 import zope.intid
@@ -67,7 +68,9 @@ def _output_members(username, output=None, site=None, verbose=False):
 		print("Community does not exists", file=sys.stderr)
 		sys.exit(2)
 
-	output = open(output, "w") if output else sys.stdout
+	should_close = output is not None
+	output = codecs.open(output, 'w', 'utf-8') \
+			 if output else sys.stdout
 	header = ['username', 'realname', 'alias', 'email']
 	output.write('%s\n' % '\t'.join(header))
 	
@@ -77,6 +80,9 @@ def _output_members(username, output=None, site=None, verbose=False):
 			output.write('%s\n' % '\t'.join(row))
 		except UnicodeDecodeError:
 			output.write('%r\n' % '\t'.join(row))
+
+	if should_close:
+		output.close()
 
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Return community members")
