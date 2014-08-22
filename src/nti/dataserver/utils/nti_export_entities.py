@@ -19,14 +19,30 @@ import json
 import argparse
 import datetime
 
+import zope.intid
+
 from zope import component
+from zope.component import hooks
 
-from nti.dataserver.users import entity
+from nti.dataserver.users import Entity
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users.interfaces import IUserProfile
 
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_external_object
+
+from zope.catalog.interfaces import ICatalog
+
+from nti.site.site import get_site_for_site_names
+
+def _get_field_value(userid, ent_catalog, indexname):
+	idx = ent_catalog.get(indexname, None)
+	rev_index = getattr(idx, '_rev_index', {})
+	result = rev_index.get(userid, u'')
+	return result
 
 def export_entities(entities, use_profile=False, export_dir=None, verbose=False):
 	export_dir = export_dir or os.getcwd()
@@ -34,26 +50,29 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 	if not os.path.exists(export_dir):
 		os.makedirs(export_dir)
 
-	ext = 'txt' if use_profile else 'json'
+	intids = component.getUtility(zope.intid.IIntIds)
+	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+	
 	utc_datetime = datetime.datetime.utcnow()
+	ext = 'txt' if use_profile else 'json'
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
 	outname = "entities-%s.%s" % (s, ext)
 	outname = os.path.join(export_dir, outname)
 
 	objects = []
 	for entityname in entities:
-		e = entity.Entity.get_entity(entityname)
+		e = Entity.get_entity(entityname)
 		if e is not None:
 			to_add = None
-			if use_profile and nti_interfaces.IUser.providedBy(e):
-				profile = user_interfaces.IUserProfile(e)
-				alias = getattr(profile, 'alias', u'')
-				email = getattr(profile, 'email', u'')
-				realname = getattr(profile, 'realname', u'')
-				birthdate = getattr(profile, 'birthdate', u'')
+			if use_profile and IUser.providedBy(e):
+				uid = intids.getId(e)
+				alias = _get_field_value(uid, catalog, 'alias')
+				email = _get_field_value(uid, catalog, 'email')
+				realname = _get_field_value(uid, catalog, 'realname')
+				birthdate = getattr(IUserProfile(e), 'birthdate', u'')
 				to_add = (entityname, realname, alias, email, str(birthdate))
 			elif not use_profile:
-				to_add = toExternalObject(e)
+				to_add = to_external_object(e)
 			if to_add:
 				objects.append(to_add)
 		elif verbose:
@@ -65,7 +84,7 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 				json.dump(objects, fp, indent=4)
 			else:
 				for o in objects:
-					fp.write('\t'.join(o))
+					fp.write('\t'.join(o).encode("utf-8"))
 					fp.write('\n')
 
 def _process_args(args):
@@ -75,32 +94,32 @@ def _process_args(args):
 	entities = set(args.entities or ())
 
 	if args.all:
-		dataserver = component.getUtility(nti_interfaces.IDataserver)
-		_users = nti_interfaces.IShardLayout(dataserver).users_folder
+		dataserver = component.getUtility(IDataserver)
+		_users = IShardLayout(dataserver).users_folder
 		entities.update(_users.keys())
 
 	if args.site:
-		from pyramid.testing import DummyRequest
-		from pyramid.testing import setUp as psetUp
-
-		request = DummyRequest()
-		config = psetUp(registry=component.getGlobalSiteManager(),
-						request=request,
-						hook_zca=False)
-		config.setup_registry()
-		request.headers['origin'] = 'http://' + args.site if not args.site.startswith('http') else args.site
-		request.possible_site_names = (args.site if not args.site.startswith('http') else args.site[7:],)
+		cur_site = hooks.getSite()
+		new_site = get_site_for_site_names( (args.site,), site=cur_site )
+		if new_site is cur_site:
+			print("Unknown site name", args.site)
+			sys.exit(2)
+		hooks.setSite(new_site)
 
 	entities = sorted(entities)
 	export_entities(entities, use_profile, export_dir, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
-	arg_parser.add_argument('--site', dest='site', help="Application SITE. Use this to get profile info")
-	arg_parser.add_argument('--profile', help="Return profile info", action='store_true', dest='profile')
-	arg_parser.add_argument('--all', help="Process all entities", action='store_true', dest='all')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose",
+							action='store_true', dest='verbose')
+	arg_parser.add_argument('--site', dest='site', 
+							help="Application SITE. Use this to get profile info")
+	arg_parser.add_argument('--profile', 
+							help="Return profile info", action='store_true',
+							dest='profile')
+	arg_parser.add_argument('--all', help="Process all entities", action='store_true',
+							dest='all')
 	arg_parser.add_argument('entities',
 							 nargs="*",
 							 help="The entities to process")
@@ -110,18 +129,15 @@ def main():
 							 help="Output export directory")
 	args = arg_parser.parse_args()
 
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv( 'DATASERVER_DIR' )
+	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+		print("Invalid dataserver environment root directory", env_dir)
+		sys.exit(2)
 	
-	conf_packages = () if not args.site else ('nti.appserver',)
-
 	# run export
 	run_with_dataserver(environment_dir=env_dir,
 						verbose=args.verbose,
-						xmlconfig_packages=conf_packages,
+						xmlconfig_packages=('nti.appserver',),
 						function=lambda: _process_args(args))
 
 if __name__ == '__main__':

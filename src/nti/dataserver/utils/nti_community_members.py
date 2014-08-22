@@ -54,7 +54,8 @@ def _output_members(username, output=None, site=None, verbose=False):
 		cur_site = hooks.getSite()
 		new_site = get_site_for_site_names( (site,), site=cur_site )
 		if new_site is cur_site:
-			raise ValueError("Unknown site name", site)
+			print("Unknown site name", site)
+			sys.exit(2)
 		hooks.setSite(new_site)
 	
 	community = Community.get_community(username)
@@ -84,7 +85,8 @@ def process_args(args=None):
 
 	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError("Invalid dataserver environment root directory", env_dir)
+		print("Invalid dataserver environment root directory", env_dir)
+		sys.exit(2)
 
 	run_with_dataserver(environment_dir=env_dir,
 						xmlconfig_packages=('nti.appserver',),
