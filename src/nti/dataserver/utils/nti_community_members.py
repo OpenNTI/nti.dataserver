@@ -35,7 +35,19 @@ def _get_field_value(userid, ent_catalog, indexname):
 	result = rev_index.get(userid, u'')
 	return result
 			
-def get_members(username, site=None, verbose=False):
+def get_member_info(community):
+	intids = component.getUtility(zope.intid.IIntIds)
+	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+	for user in community:
+		if not IUser.providedBy(user):
+			continue
+		uid = intids.getId(user)
+		alias = _get_field_value(uid, catalog, 'alias')
+		email = _get_field_value(uid, catalog, 'email')
+		realname = _get_field_value(uid, catalog, 'realname')
+		yield [user.username, realname, alias, email]
+
+def _output_members(username, output=None, site=None, verbose=False):
 	__traceback_info__ = locals().items()
 
 	if site:
@@ -50,24 +62,21 @@ def get_members(username, site=None, verbose=False):
 		print("Community does not exists", file=sys.stderr)
 		sys.exit(2)
 
+	output = open(output, "w") if output else sys.stdout
 	header = ['username', 'realname', 'alias', 'email']
-	print('\t'.join(header))
+	output.write('%s\n' % '\t'.join(header))
 	
-	intids = component.getUtility(zope.intid.IIntIds)
-	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-	for user in community:
-		if user is not None and IUser.providedBy(user):
-			uid = intids.getId(user)
-			alias = _get_field_value(uid, catalog, 'alias')
-			email = _get_field_value(uid, catalog, 'email')
-			realname = _get_field_value(uid, catalog, 'realname')
-			print('\t'.join([user.username, realname, alias, email]).encode('utf-8'))
+	for row in get_member_info(community):
+		output.write('%s\n' %'\t'.join(row).encode('utf-8'))
 
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Return community members")
 	arg_parser.add_argument('username', help="The community username")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
+	arg_parser.add_argument('-o', '--output',
+							dest='output',
+							help="Output file name.")
 	arg_parser.add_argument('--site',
 							dest='site',
 							help="Application SITE.")
@@ -77,12 +86,13 @@ def process_args(args=None):
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError("Invalid dataserver environment root directory", env_dir)
 
-	conf_packages = () if not args.site else ('nti.appserver',)
-
 	run_with_dataserver(environment_dir=env_dir,
-						xmlconfig_packages=conf_packages,
+						xmlconfig_packages=('nti.appserver',),
 						verbose=args.verbose,
-						function=lambda: get_members(args.username, args.site, args.verbose))
+						function=lambda: _output_members(args.username,
+														 args.output,
+														 args.site, 
+														 verbose=args.verbose))
 def main(args=None):
 	process_args(args)
 	sys.exit(0)
