@@ -102,16 +102,36 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 		Return, as a byte-string, the contents of this leaf node.
 		"""
 
+	def readContentsAsText(encoding="utf-8"):
+		"""
+		Return, as a unicode-string, the contents of this leaf node.
+		"""
+
 	def readContentsAsJson():
 		"""
-		Read the contents and return a fresh JSON object (with unicode strings). If the contents
-		are not JSON, raises an exception.
+		Read the contents and return a fresh JSON object (with unicode
+		strings). If the contents are not JSON, raises an exception.
 		"""
 
 	def readContentsAsETree():
 		"""
 		Read the contents and return a fresh :mod:`lxml.etree` root node.
 		If the contents are not XML, raises an exception.
+		"""
+
+	def readContentsAsYaml():
+		"""
+		Read the contents and return a fresh YAML object (with  unicode
+		strings). The contents should define one YAML document; if
+		it has more than one the results are undefined.
+
+		YAML (in the version we have) is nearly a superset of JSON,
+		but it can load arbitrary python objects, so do not use it on
+		untrusted input. Also note that it is likely to be slower than
+		JSON (at this writing we don't have libYAML), especially for
+		large documents; however, it does support comments and can
+		also efficiently support object graphs that reference the same
+		(identical) object multiple times.
 		"""
 
 

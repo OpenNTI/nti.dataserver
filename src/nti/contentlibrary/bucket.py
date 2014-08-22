@@ -103,8 +103,23 @@ class _AbstractDelimitedHierarchyObject(object):
 class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
-import anyjson as json
+import simplejson as json
 from lxml import etree
+from yaml import Loader
+from yaml.scanner import ScannerError
+import yaml
+
+class _UnicodeLoader(Loader):
+
+	def construct_yaml_str(self, node):
+		# yaml defines strings to be unicode, but
+		# the default reader encodes anything that can be
+		# represented as ASCII back to bytes. We don't
+		# want that.
+		return self.construct_scalar(node)
+
+_UnicodeLoader.add_constructor('tag:yaml.org,2002:str',
+							   _UnicodeLoader.construct_yaml_str)
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
@@ -112,11 +127,44 @@ class AbstractKey(_AbstractDelimitedHierarchyObject):
 	def readContents(self):
 		raise NotImplementedError()
 
+	def readContentsAsText(self, encoding="utf-8"):
+		return self.readContents().decode(encoding)
+
 	def readContentsAsJson(self):
-		json_text = self.readContents().decode('utf-8')
+		json_text = self.readContentsAsText()
+		# Our contract requires that we return a fresh object. We
+		# handle that via parsing each time. For a small data set,
+		# this is faster than deep copying, and about the same as
+		# pickling, which are semantically equivalent:
+
+		# In [47]: %timeit anyjson.loads(json_s)
+		# 100000 loops, best of 3: 5.58 us per loop
+		# In [52]: %timeit simplejson.loads(json_s)
+		# 100000 loops, best of 3: 4.45 us per loop
+		# In [48]: %timeit copy.deepcopy(data)
+		# 10000 loops, best of 3: 22.8 us per loop
+		# In [58]: %timeit cPickle.loads(pdata)
+		# 100000 loops, best of 3: 4.25 us per loop
+
+		# A simple copy is faster, but not equivalent
+		# In [49]: %timeit copy.copy(data)
+		# 1000000 loops, best of 3: 984 ns per loop
 		json_value = json.loads(json_text)
 		return json_value
 
 	def readContentsAsETree(self):
 		root = etree.fromstring( self.readContents() )
 		return root
+
+	def _do_readContentsAsYaml(self, stream):
+		try:
+			return yaml.load(stream, Loader=_UnicodeLoader)
+		except ScannerError:
+			# most of our use cases for this are transitioning
+			# off of JSON and yaml 1.1 isn't a strictly compatible
+			# parser; 1.2 is, but support for it hasn't landed yet.
+			# so if we get scanning errors, try again as json
+			return self.readContentsAsJson()
+
+	def readContentsAsYaml(self):
+		return self._do_readContentsAsYaml(self.readContents())
