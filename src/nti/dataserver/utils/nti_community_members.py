@@ -74,9 +74,9 @@ def _output_members(username, output=None, site=None, verbose=False):
 	for row in get_member_info(community):
 		__traceback_info__ = row
 		try:
-			output.write('%s\n' %'\t'.join(row))
+			output.write('%s\n' % '\t'.join(row))
 		except UnicodeDecodeError:
-			print('Cannot output %r', row)
+			output.write('%r\n' % '\t'.join(row))
 
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Return community members")
