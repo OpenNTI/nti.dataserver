@@ -13,11 +13,13 @@ import six
 import numbers
 import plistlib
 import collections
+from collections import defaultdict
 import simplejson as json  # import the fast, flexible C version
 
 import ZODB
 import persistent
 import BTrees.OOBTree
+
 
 from zope import interface
 from zope import component
@@ -60,7 +62,8 @@ StandardInternalFields_NTIID = StandardInternalFields.NTIID
 _NotGiven = object()
 
 from pyramid.threadlocal import ThreadLocalManager
-_manager = ThreadLocalManager(default=lambda: {'name': _NotGiven})
+_manager = ThreadLocalManager(default=lambda: {'name': _NotGiven,
+											   'memos': None})
 
 # Things that can be directly externalized
 _primitives = six.string_types + (numbers.Number,bool)
@@ -103,22 +106,36 @@ SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
 #: all map onto a dict.
 MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
 
+from zope.cachedescriptors.property import CachedProperty
+
 class _ExternalizationState(object):
-	__slots__ = ( 'coerceNone', 'name', 'registry', 'catch_components', 'catch_component_action',
-				  'default_non_externalizable_replacer',
-				  'ext_obj_cache',
-				  'request')
+
+	name = ''
+	request = None
+	registry = None
 
 	def __init__( self, **kwargs ):
-		self.ext_obj_cache = dict()
-		self.name = ''
+
 		for k, v in kwargs.iteritems():
 			setattr( self, k, v )
 
+	@CachedProperty
+	def memo(self):
+		# We take a similar approach to pickle.Pickler
+		# for memoizing objects we've seen:
+		# we map the id of an object to a two tuple: (obj, external-value)
+		# the original object is kept in the tuple to keep transient objects alive
+		# and thus ensure no overlapping ids
+		return {}
+
 def _to_external_object_state(obj, state, top_level=False):
 	__traceback_info__ = obj
+	orig_obj = obj
+	orig_obj_id = id(obj)
+	if orig_obj_id in state.memo:
+		return state.memo[orig_obj_id][1]
+
 	try:
-		orig_obj = obj
 		# TODO: This is needless for the mapping types and sequence types. rework to avoid.
 		# Benchmarks show that simply moving it into the last block doesn't actually save much
 		# (due to all the type checks in front of it?)
@@ -176,6 +193,7 @@ def _to_external_object_state(obj, state, top_level=False):
 			for decorator in state.registry.subscribers( (orig_obj, state.request), IExternalObjectDecorator):
 				decorator.decorateExternalObject( orig_obj, result )
 
+		state.memo[orig_obj_id] = (orig_obj, result)
 		return result
 	except state.catch_components as t:
 		if top_level:
@@ -231,8 +249,14 @@ def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 		name = _manager.get()['name']
 	if name is _NotGiven:
 		name = ''
-	_manager.push( {'name': name} )
+
+	memos = _manager.get()['memos']
+	if memos is None:
+		memos = defaultdict(dict)
+
+	_manager.push( {'name': name, 'memos': memos} )
 	state.name = name
+	state.memo = memos[name]
 
 	if request is _NotGiven:
 		request = get_current_request()
