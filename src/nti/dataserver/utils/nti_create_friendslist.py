@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Creates a friend list
-
 .. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -17,54 +15,54 @@ import sys
 import pprint
 import argparse
 
-from zope import component
+from zope.component import hooks
 
-from nti.dataserver import users
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.users import FriendsList
+from nti.dataserver.users import DynamicFriendsList
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import to_external_object
 
-def create_friends_list(owner, username, realname=None, members=(), dynamic=False,
-						locked=False):
+from nti.site.site import get_site_for_site_names
 
-	factory = users.DynamicFriendsList if dynamic else users.FriendsList
-	dfl = factory(username=unicode(username))
-	dfl.creator = owner
+def create_friends_list(owner, username, realname=None, members=(), 
+						dynamic=False, locked=False):
+
+	# set factory
+	factory = DynamicFriendsList if dynamic else FriendsList
+	result = factory(username=unicode(username))
+	result.creator = owner
 	if dynamic:
-		dfl.Locked = locked
+		result.Locked = locked
 	if realname:
-		user_interfaces.IFriendlyNamed( dfl ).realname = unicode(realname)
+		IFriendlyNamed(result).realname = unicode(realname)
 
 	# add to container b4 adding members
-	owner.addContainedObject( dfl )
+	owner.addContainedObject(result)
 
+	# add members
 	for member_name in members or ():
-		member = users.User.get_user( member_name )
+		member = User.get_user( member_name )
 		if member and member != owner:
-			dfl.addFriend( member )
-
-	return dfl
+			result.addFriend(member)
+	return result
 
 def _process_args(args):
-	owner = users.User.get_user(args.owner)
-	if not owner or not nti_interfaces.IUser.providedBy(owner):
-		print( "No owner found", args, file=sys.stderr )
+	owner = User.get_user(args.owner)
+	if not owner or not IUser.providedBy(owner):
+		print("No owner found", args, file=sys.stderr )
 		sys.exit( 2 )
 
 	site = args.site
 	if site:
-		from pyramid.testing import DummyRequest
-		from pyramid.testing import setUp as psetUp
-
-		request = DummyRequest()
-		config = psetUp(registry=component.getGlobalSiteManager(),
-						request=request,
-						hook_zca=False)
-		config.setup_registry()
-		request.headers['origin'] = 'http://' + site if not site.startswith('http') else site
-		request.possible_site_names = (site if not site.startswith('http') else site[7:],)
+		cur_site = hooks.getSite()
+		new_site = get_site_for_site_names( (site,), site=cur_site )
+		if new_site is cur_site:
+			raise ValueError("Unknown site name", site)
+		hooks.setSite(new_site)
 
 	result = create_friends_list(owner, args.username, args.name, args.members,
 								 args.dynamic, args.locked)
@@ -96,16 +94,14 @@ def main():
 	arg_parser.add_argument('-m', '--members',
 							dest='members',
 							nargs="+",
-							help="The usernames of the entities to add; must already exist")
+							help="The usernames of the entities to add")
 	args = arg_parser.parse_args()
 
 	import os
 	
 	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+		raise ValueError("Invalid dataserver environment root directory", env_dir)
 	
 	run_with_dataserver( environment_dir=env_dir,
 						 verbose=args.verbose,
