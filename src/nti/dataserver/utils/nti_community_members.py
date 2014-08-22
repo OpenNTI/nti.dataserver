@@ -29,10 +29,14 @@ from nti.dataserver.utils import run_with_dataserver
 
 from nti.site.site import get_site_for_site_names
 
+def safestr(s):
+	s = s.decode("utf-8") if isinstance(s, bytes) else s
+	return unicode(s) if s is not None else None
+
 def _get_field_value(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(idx, '_rev_index', {})
-	result = rev_index.get(userid, u'')
+	result = safestr(rev_index.get(userid, u''))
 	return result
 			
 def get_member_info(community):
@@ -45,7 +49,7 @@ def get_member_info(community):
 		alias = _get_field_value(uid, catalog, 'alias')
 		email = _get_field_value(uid, catalog, 'email')
 		realname = _get_field_value(uid, catalog, 'realname')
-		yield [user.username, realname, alias, email]
+		yield [safestr(user.username), realname, alias, email]
 
 def _output_members(username, output=None, site=None, verbose=False):
 	__traceback_info__ = locals().items()
@@ -68,7 +72,11 @@ def _output_members(username, output=None, site=None, verbose=False):
 	output.write('%s\n' % '\t'.join(header))
 	
 	for row in get_member_info(community):
-		output.write('%s\n' %'\t'.join(row).encode('utf-8'))
+		__traceback_info__ = row
+		try:
+			output.write('%s\n' %'\t'.join(row))
+		except UnicodeDecodeError:
+			print('Cannot output %r', row)
 
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Return community members")
