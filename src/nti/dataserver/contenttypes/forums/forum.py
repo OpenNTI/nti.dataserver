@@ -246,7 +246,7 @@ class GeneralForum(Forum,_SingleInstanceNTIIDMixin):
 
 @interface.implementer(frm_interfaces.ICommunityForum)
 class CommunityForum(GeneralForum):
-	__external_can_create__ = False
+	__external_can_create__ = True
 	_ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
 
 @interface.implementer(frm_interfaces.ICommunityForum)
@@ -285,6 +285,6 @@ def GeneralForumCommunityAdapter(community):
 
 @interface.implementer(frm_interfaces.IACLCommunityForum)
 class ACLCommunityForum(CommunityForum):
-	__external_can_create__ = True
+	__external_can_create__ = False
 	mime_type = 'application/vnd.nextthought.forums.communityforum'
 	ACL = ()

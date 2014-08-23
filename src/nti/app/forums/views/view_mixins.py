@@ -10,10 +10,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import re
-
-import datetime
-import operator
 
 from zope import component
 from zope import interface
@@ -29,28 +25,10 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.utils._compat import aq_base
-
-from nti.appserver.traversal import find_interface
 
 from nti.app.base.abstract_views import AuthenticatedViewMixin
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.appserver.ugd_query_views import Operator
-from nti.appserver.ugd_edit_views import UGDPutView
-from nti.appserver.ugd_edit_views import UGDDeleteView
-from nti.appserver.ugd_feed_views import AbstractFeedView
-from nti.appserver.ugd_query_views import _combine_predicate
-from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
-
-from nti.dataserver import authorization as nauth
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.app.renderers import interfaces as app_renderers_interfaces
-
-from nti.contentprocessing import content_utils
-from nti.contentsearch import interfaces as search_interfaces
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -61,20 +39,9 @@ frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-from nti.dataserver.contenttypes.forums.post import Post
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
-from nti.dataserver.contenttypes.forums.forum import ACLCommunityForum
-from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
-from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
-from nti.dataserver.contenttypes.forums.post import GeneralForumComment
-from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
-from nti.dataserver.contenttypes.forums.post import CommunityHeadlinePost
-from nti.dataserver.contenttypes.forums.topic import CommunityHeadlineTopic
 
 from nti.externalization.interfaces import StandardExternalFields
 
-from .. import VIEW_CONTENTS
-from nti.appserver.pyramid_authorization import is_readable
 
 class PostUploadMixin(AuthenticatedViewMixin,
 					  ModeledContentUploadRequestUtilsMixin):
@@ -82,38 +49,19 @@ class PostUploadMixin(AuthenticatedViewMixin,
 	Support for uploading of IPost objects.
 	"""
 
-	_constraint = frm_interfaces.IPost.providedBy
+	def _read_incoming_post( self, datatype, constraint ):
 
-	_override_content_type = None
-	#: Set to a non-empty sequence to require one of a particular type. The `_override_content_type`
-	#: is only applied if the incoming type is in the sequence; you must have a valid
-	#: `_constraint` in that case to protect against other incoming types.
-	#: Set to None to always use the _override_content_type (forcing parsing the incoming data
-	#: as that type no matter what)
-	_allowed_content_types = ()
-
-	def _transformContentType( self, contenttype ):
-		if self._override_content_type:
-			if self._allowed_content_types is None:
-				contenttype = self._override_content_type
-			elif contenttype in self._allowed_content_types:
-				contenttype = self._override_content_type
-		return contenttype
-
-	def _read_incoming_post( self ):
 		# Note the similarity to ugd_edit_views
 		creator = self.getRemoteUser()
 		externalValue = self.readInput()
-		datatype = self.findContentType( externalValue )
-		tx_datatype = self._transformContentType( datatype )
-		if tx_datatype is not datatype:
-			datatype = tx_datatype
-			if '/' in datatype:
-				externalValue[StandardExternalFields.MIMETYPE] = datatype
-			else:
-				externalValue[StandardExternalFields.CLASS] = datatype
 
-		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator, self._constraint )
+		if '/' in datatype:
+			externalValue[StandardExternalFields.MIMETYPE] = datatype
+		else:
+			externalValue[StandardExternalFields.CLASS] = datatype
+
+		containedObject = self.createAndCheckContentObject( creator, datatype, externalValue, creator,
+															constraint )
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
@@ -132,27 +80,56 @@ class PostUploadMixin(AuthenticatedViewMixin,
 
 		return containedObject, externalValue
 
+	def _find_factory_from_precondition(self, forum):
+		provided_by_forum = interface.providedBy(forum)
+		forum_container_precondition = provided_by_forum.get('__setitem__').getTaggedValue('precondition')
+		topic_types = forum_container_precondition.types
+		assert len(topic_types) == 1
+		topic_type = topic_types[0]
+		topic_factories = list(component.getFactoriesFor(topic_type))
+		if len(topic_factories) == 1:
+			topic_factory_name, topic_factory = topic_factories[0]
+		else:
+			# nuts. ok, if we can find *exactly* what we're looking for
+			# as the most-derived thing implemented by a factory, that's
+			# what we take
+			found = False
+			for topic_factory_name, topic_factory in topic_factories:
+				if list(topic_factory.getInterfaces().flattened())[0] == topic_type:
+					found = True
+					break
+			assert found, "Programming error: ambiguous types"
+
+		return topic_factory_name, topic_factory, topic_type
+
+
 class _AbstractForumPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
 	""" Given an incoming IPost, creates a new container in the context. """
-
-	@property
-	def _allowed_content_types(self):
-		return ('Post', Post.mimeType, 'Posts' )
-	_factory = None
-
-	def _constructor(self, external_value=None):
-		return self._factory()
 
 	def _get_topic_creator( self ):
 		return self.getRemoteUser()
 
 	def _do_call( self ):
 		forum = self.request.context
-		topic_post, external_value = self._read_incoming_post()
+		topic_factory_name, topic_factory, topic_type = self._find_factory_from_precondition(forum)
+		topic_type = topic_factory.getInterfaces()
+
+		headline_field = topic_type.get('headline')
+		headline_mimetype = None
+		headline_constraint = frm_interfaces.IPost.providedBy
+		if headline_field:
+			headline_iface = headline_field.schema
+			headline_constraint = headline_iface.providedBy
+			headline_factories = list(component.getFactoriesFor(headline_iface))
+			headline_mimetype = headline_factories[0][0]
+		else:
+			headline_mimetype = 'application/vnd.nextthought.forums.post'
+
+		topic_post, external_value = self._read_incoming_post(headline_mimetype, headline_constraint)
 
 		# Now the topic
-		topic = self._constructor(external_value)
+		topic = topic_factory()
 		topic.creator = self._get_topic_creator()
 
 		# Business rule: titles of the personal blog entry match the post
@@ -170,7 +147,7 @@ class _AbstractForumPostView(PostUploadMixin,
 		assert topic.id == name
 		assert topic.containerId == forum.NTIID
 
-		if interface.providedBy( topic ).get('headline'):
+		if headline_field:
 			# not all containers have headlines; those that don't simply use
 			# the incoming post as a template
 			topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
@@ -205,36 +182,15 @@ class _AbstractForumPostView(PostUploadMixin,
 class AbstractBoardPostView(_AbstractForumPostView):
 	""" Given an incoming IPost, creates a new forum in the board """
 
-	# Still read the incoming IPost-like thing, but we discard it since our "topic" (aka forum)
-	# does not have a headline
-	_factory = None
-
-	#: We always override the incoming content type and parse simply as an IPost.
-	#: All we care about is topic and description.
-	_allowed_content_types = None
-	@property
-	def _override_content_type(self):
-		return Post.mimeType
-
-	_forum_factory = None
-
-	def _constructor(self, external_value=None):
-		return self._forum_factory()
-
-
-
 
 class _AbstractTopicPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
 
-	@property
-	def _allowed_content_types(self):
-		return ('Post', Post.mimeType, 'Posts')
-
 	def _do_call( self ):
-		incoming_post, _ = self._read_incoming_post()
-
 		topic = self.request.context
+		comment_factory_name, _, comment_iface = self._find_factory_from_precondition(topic)
+
+		incoming_post, _ = self._read_incoming_post(comment_factory_name, comment_iface.providedBy)
 
 		# The actual name of these isn't tremendously important
 		name = topic.generateId( prefix='comment' )

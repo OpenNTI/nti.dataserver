@@ -369,12 +369,13 @@ class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
 	A forum belonging to a particular community.
 	"""
 	containers(nti_interfaces.ICommunity, ICommunityBoard)
+	contains(b'.ICommunityHeadlineTopic')
 	__parent__.required = False
 
 class IGeneralTopic(ITopic):
 	containers(IGeneralForum)
 	__parent__.required = False
-	contains(b".IGeneralPost") # XXX Shouldn't this be IGeneralForumComment?
+	contains(b".IGeneralForumComment")
 
 class IGeneralHeadlineTopic(IGeneralTopic,IHeadlineTopic,
 							nti_interfaces.ICreated,

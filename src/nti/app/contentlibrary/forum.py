@@ -79,6 +79,7 @@ from nti.dataserver.contenttypes.forums.forum import GeneralForum
 
 @interface.implementer(IContentForum)
 class ContentForum(GeneralForum):
+	__external_can_create__ = True
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforum'
 
 	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
@@ -96,6 +97,7 @@ from nti.dataserver.interfaces import IDefaultPublished
 
 @interface.implementer(IContentHeadlineTopic)
 class ContentHeadlineTopic(GeneralHeadlineTopic):
+	__external_can_create__ = True
 	mimeType = 'application/vnd.nextthought.forums.contentheadlinetopic'
 
 	@property
@@ -204,50 +206,3 @@ class ContentBoardLinkDecorator(object):
 
 			#link_belongs_to_user( link, context )
 			the_links.append( link )
-
-### Forum views
-
-from pyramid.view import view_config
-from pyramid.view import view_defaults
-
-### XXX: Finish refactoring this to break the dependency
-from nti.app.forums.views import _AbstractForumPostView
-from nti.app.forums.views import _AbstractTopicPostView
-from nti.app.forums.views import AbstractBoardPostView
-from nti.app.forums.views import _c_view_defaults
-from nti.app.forums import VIEW_CONTENTS
-
-
-@view_config( name='' )
-@view_config( name=VIEW_CONTENTS )
-@view_defaults( context=IContentBoard,
-				**_c_view_defaults)
-class ContentBoardPostView(AbstractBoardPostView):
-	_forum_factory = ContentForum
-
-@view_config( name='' )
-@view_config( name=VIEW_CONTENTS )
-@view_defaults( context=IContentForum,
-				**_c_view_defaults )
-class ContentForumPostView(_AbstractForumPostView):
-	""" Given an incoming IPost, creates a new topic in the content forum """
-
-	_constraint = IContentHeadlinePost.providedBy
-	@property
-	def _override_content_type(self):
-		return ContentHeadlinePost.mimeType
-	_factory = ContentHeadlineTopic
-
-
-@view_config( name='' )
-@view_config( name=VIEW_CONTENTS )
-@view_defaults( context=IContentHeadlineTopic,
-				**_c_view_defaults )
-class ContentHeadlineTopicPostView(_AbstractTopicPostView):
-	"""
-	Add a comment to a topic.
-	"""
-	_constraint = IContentCommentPost.providedBy
-	@property
-	def _override_content_type(self):
-		return ContentCommentPost.mimeType

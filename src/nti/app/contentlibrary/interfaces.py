@@ -46,6 +46,7 @@ class IContentForum(IGeneralForum,
 	A forum belonging to a particular piece of content.
 	"""
 	containers(IContentBoard)
+	contains(b'.IContentHeadlineTopic')
 	__parent__.required = False
 
 class IContentHeadlinePost(IGeneralHeadlinePost):
@@ -56,6 +57,7 @@ class IContentHeadlinePost(IGeneralHeadlinePost):
 class IContentHeadlineTopic(IGeneralHeadlineTopic,
 							IPublishableTopic):
 	containers(IContentForum)
+	contains(b'.IContentCommentPost')
 	__parent__.required = False
 	headline = Object(IContentHeadlinePost,
 					  title="The main, first post of this topic.")
