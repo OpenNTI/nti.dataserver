@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -24,11 +24,18 @@ from zope.catalog.interfaces import ICatalog
 from nti.appserver.utils import is_true
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.users import User
-from nti.dataserver.users import index as user_index
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICoppaUser
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.users.index import CATALOG_NAME
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
+from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
@@ -38,13 +45,17 @@ from nti.utils.maps import CaseInsensitiveDict
 
 from nti.schema.interfaces import find_most_derived_interface
 
+def safestr(s):
+	s = s.decode("utf-8") if isinstance(s, bytes) else s
+	return unicode(s) if s is not None else None
+
 # user_info_extract
 
 def _write_generator(generator, stream=None, seek0=True, separator="\n"):
 	stream = StringIO() if stream is None else stream
 	for line in generator():
-		stream.write(line)
-		stream.write(separator)
+		stream.write(line.encode("UTF-8"))
+		stream.write(separator.encode("UTF-8"))
 	stream.flush()
 	if seek0:
 		stream.seek(0)
@@ -59,12 +70,12 @@ def _get_userids(ent_catalog, indexname='realname'):
 def _get_field_info(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(idx, '_rev_index', {})
-	result = rev_index.get(userid, u'')
+	result = safestr(rev_index.get(userid, u''))
 	return result
 
 def _get_user_info_extract():
 	_ds_intid = component.getUtility(zope.intid.IIntIds)
-	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	userids = _get_userids(ent_catalog)
 
 	header = ['username', 'realname', 'alias', 'email']
@@ -72,18 +83,17 @@ def _get_user_info_extract():
 
 	for iid in userids:
 		u = _ds_intid.queryObject(iid, None)
-		if u is not None and nti_interfaces.IUser.providedBy(u):
+		if u is not None and IUser.providedBy(u):
 			alias = _get_field_info(iid, ent_catalog, 'alias')
 			email = _get_field_info(iid, ent_catalog, 'email')
 			realname = _get_field_info(iid, ent_catalog, 'realname')
-			yield ','.join([u.username, realname, alias, email]).encode('utf-8')
+			yield ','.join([safestr(u.username), realname, alias, email])
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 def user_info_extract(request):
-	# TODO: Filtering in this
 	response = request.response
 	response.content_type = b'text/csv; charset=UTF-8'
 	response.content_disposition = b'attachment; filename="usr_info.csv"'
@@ -104,27 +114,26 @@ def _get_user_info(user):
 	lastModified = _parse_time(getattr(user, 'lastModified', 0))
 	lastLoginTime = getattr(user, 'lastLoginTime', None)
 	lastLoginTime = _parse_time(lastLoginTime) if lastLoginTime is not None else u''
-	is_copaWithAgg = str(nti_interfaces.ICoppaUserWithAgreementUpgraded.providedBy(user))
+	is_copaWithAgg = str(ICoppaUserWithAgreementUpgraded.providedBy(user))
 	return [createdTime, lastModified, lastLoginTime, is_copaWithAgg]
 
 def _get_opt_in_comm(coppaOnly=False):
-
 	header = ['username', 'email', 'createdTime', 'lastModified',
 			  'lastLoginTime', 'is_copaWithAgg']
 	yield ','.join(header).encode('utf-8')
 
-	ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	users = ent_catalog.searchResults(topics='opt_in_email_communication')
 	_ds_intid = component.getUtility(zope.intid.IIntIds)
 	for user in users:
-		if coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user):
+		if coppaOnly and not ICoppaUser.providedBy(user):
 			continue
 
 		iid = _ds_intid.queryId(user, None)
 		if iid is not None:
 			email = _get_field_info(iid, ent_catalog, 'email')
-			info = [user.username, email] + _get_user_info(user)
-			yield ','.join(info).encode('utf-8')
+			info = [safestr(user.username), email] + _get_user_info(user)
+			yield ','.join(info)
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_opt_in_comm',
@@ -146,24 +155,23 @@ def user_opt_in_email_communication(request):
 # user profile
 
 def _get_profile_info(coppaOnly=False):
-
 	header = ['username', 'email', 'contact_email', 'createdTime', 'lastModified',
 			  'lastLoginTime', 'is_copaWithAgg']
-	yield ','.join(header).encode('utf-8')
+	yield ','.join(header)
 
-	dataserver = component.getUtility( nti_interfaces.IDataserver)
-	_users = nti_interfaces.IShardLayout( dataserver ).users_folder
+	dataserver = component.getUtility(IDataserver)
+	_users = IShardLayout( dataserver ).users_folder
 
 	for user in _users.values():
-		if 	not nti_interfaces.IUser.providedBy(user) or \
-			(coppaOnly and not nti_interfaces.ICoppaUser.providedBy(user)):
+		if 	not IUser.providedBy(user) or \
+			(coppaOnly and not ICoppaUser.providedBy(user)):
 			continue
 
-		profile = user_interfaces.IUserProfile(user)
-		email = getattr(profile, 'email', None)
-		contact_email =  getattr(profile, 'contact_email', None)
-		info = [user.username, email or u'', contact_email or u''] + _get_user_info(user)
-		yield ','.join(info).encode('utf-8')
+		profile = IUserProfile(user)
+		email = getattr(profile, 'email', None) or u''
+		contact_email =  getattr(profile, 'contact_email', None) or u''
+		info = [safestr(user.username), email, contact_email] + _get_user_info(user)
+		yield ','.join(info)
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_profile_info',
@@ -195,7 +203,7 @@ def readInput(request):
 
 def allowed_fields(user):
 	result = {}
-	profile_iface = user_interfaces.IUserProfileSchemaProvider(user).getSchema()
+	profile_iface = IUserProfileSchemaProvider(user).getSchema()
 	profile = profile_iface(user)
 	profile_schema = \
 		find_most_derived_interface(profile,
@@ -204,7 +212,7 @@ def allowed_fields(user):
 
 	for k, v in profile_schema.namesAndDescriptions(all=True):
 		if 	interface.interfaces.IMethod.providedBy(v) or \
-			v.queryTaggedValue(user_interfaces.TAG_HIDDEN_IN_UI) :
+			v.queryTaggedValue(TAG_HIDDEN_IN_UI) :
 			continue
 		result[k] = v
 
@@ -217,9 +225,10 @@ def allowed_fields(user):
 			 permission=nauth.ACT_MODERATE)
 def user_profile_update(request):
 	values = readInput(request)
-	username = values.get('username') or values.get('user') or request.authenticated_userid
+	authenticated_userid = request.authenticated_userid
+	username = values.get('username') or values.get('user') or authenticated_userid
 	user = User.get_user(username)
-	if user is None or not nti_interfaces.IUser.providedBy(user):
+	if user is None or not IUser.providedBy(user):
 		raise hexc.HTTPNotFound('User not found')
 
 	external = {}
@@ -227,19 +236,18 @@ def user_profile_update(request):
 	for name, sch_def in fields.items():
 		value = values.get(name, None)
 		if value is not None:
-			if value and isinstance(value, bytes):
-				value = unicode(value.decode("UTF-8"))
+			value = safestr(value)
 			external[name] = sch_def.fromUnicode(unicode(value)) if value else None
 
 	restore_iface = False
-	if user_interfaces.IImmutableFriendlyNamed.providedBy(user):
+	if IImmutableFriendlyNamed.providedBy(user):
 		restore_iface = True
-		interface.noLongerProvides(user, user_interfaces.IImmutableFriendlyNamed)
+		interface.noLongerProvides(user, IImmutableFriendlyNamed)
 
 	update_from_external_object(user, external)
 
 	if restore_iface:
-		interface.alsoProvides(user, user_interfaces.IImmutableFriendlyNamed)
+		interface.alsoProvides(user, IImmutableFriendlyNamed)
 
 	result = LocatedExternalDict()
 	result['External'] = external
