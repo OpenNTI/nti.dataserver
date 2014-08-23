@@ -103,23 +103,10 @@ class _AbstractDelimitedHierarchyObject(object):
 class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
-import simplejson as json
 from lxml import etree
-from yaml import Loader
 from yaml.scanner import ScannerError
-import yaml
-
-class _UnicodeLoader(Loader):
-
-	def construct_yaml_str(self, node):
-		# yaml defines strings to be unicode, but
-		# the default reader encodes anything that can be
-		# represented as ASCII back to bytes. We don't
-		# want that.
-		return self.construct_scalar(node)
-
-_UnicodeLoader.add_constructor('tag:yaml.org,2002:str',
-							   _UnicodeLoader.construct_yaml_str)
+from nti.externalization.interfaces import IExternalRepresentationReader
+from zope import component
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):
@@ -149,7 +136,7 @@ class AbstractKey(_AbstractDelimitedHierarchyObject):
 		# A simple copy is faster, but not equivalent
 		# In [49]: %timeit copy.copy(data)
 		# 1000000 loops, best of 3: 984 ns per loop
-		json_value = json.loads(json_text)
+		json_value = component.getUtility(IExternalRepresentationReader,name='json').load(json_text)
 		return json_value
 
 	def readContentsAsETree(self):
@@ -158,7 +145,7 @@ class AbstractKey(_AbstractDelimitedHierarchyObject):
 
 	def _do_readContentsAsYaml(self, stream):
 		try:
-			return yaml.load(stream, Loader=_UnicodeLoader)
+			return component.getUtility(IExternalRepresentationReader,name='yaml').load(stream)
 		except ScannerError:
 			# most of our use cases for this are transitioning
 			# off of JSON and yaml 1.1 isn't a strictly compatible

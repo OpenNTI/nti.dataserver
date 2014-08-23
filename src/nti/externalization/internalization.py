@@ -27,9 +27,17 @@ from zope.lifecycleevent import Attributes
 from persistent.interfaces import IPersistent
 
 from . import interfaces
+from .interfaces import IMimeObjectFactory
+from .interfaces import IClassObjectFactory
+from .interfaces import IExternalizedObjectFactoryFinder
+from .interfaces import IExternalReferenceResolver
+from .interfaces import IInternalObjectUpdater
 from .interfaces import ObjectModifiedFromExternalEvent
 
 LEGACY_FACTORY_SEARCH_MODULES = set()
+
+StandardExternalFields_MIMETYPE = interfaces.StandardExternalFields.MIMETYPE
+StandardExternalFields_CLASS = interfaces.StandardExternalFields.CLASS
 
 def register_legacy_search_module( module_name ):
 	"""
@@ -87,22 +95,22 @@ def default_externalized_object_factory_finder( externalized_object ):
 	# We use specialized interfaces instead of plain IFactory to make it clear
 	# that these are being created from external data
 	try:
-		if interfaces.StandardExternalFields.MIMETYPE in externalized_object:
-			factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory,
-											  name=externalized_object[interfaces.StandardExternalFields.MIMETYPE] )
+		if StandardExternalFields_MIMETYPE in externalized_object:
+			factory = component.queryAdapter( externalized_object, IMimeObjectFactory,
+											  name=externalized_object[StandardExternalFields_MIMETYPE] )
 			if not factory:
 				# What about a named utility?
-				factory = component.queryUtility( interfaces.IMimeObjectFactory,
-												  name=externalized_object[interfaces.StandardExternalFields.MIMETYPE] )
+				factory = component.queryUtility( IMimeObjectFactory,
+												  name=externalized_object[StandardExternalFields_MIMETYPE] )
 
 			if not factory:
 				# Is there a default?
-				factory = component.queryAdapter( externalized_object, interfaces.IMimeObjectFactory )
+				factory = component.queryAdapter( externalized_object, IMimeObjectFactory )
 
 
-		if not factory and interfaces.StandardExternalFields.CLASS in externalized_object:
-			class_name = externalized_object[interfaces.StandardExternalFields.CLASS]
-			factory = component.queryAdapter( externalized_object, interfaces.IClassObjectFactory,
+		if not factory and StandardExternalFields_CLASS in externalized_object:
+			class_name = externalized_object[StandardExternalFields_CLASS]
+			factory = component.queryAdapter( externalized_object, IClassObjectFactory,
 											  name=class_name )
 			if not factory:
 				factory = find_factory_for_class_name( class_name )
@@ -113,13 +121,13 @@ def default_externalized_object_factory_finder( externalized_object ):
 
 default_externalized_object_factory_finder.find_factory = default_externalized_object_factory_finder
 
-@interface.implementer(interfaces.IExternalizedObjectFactoryFinder)
+@interface.implementer(IExternalizedObjectFactoryFinder)
 def default_externalized_object_factory_finder_factory( externalized_object ):
 	return default_externalized_object_factory_finder
 
 
 def find_factory_for_class_name( class_name ):
-	factory = component.queryUtility( interfaces.IClassObjectFactory,
+	factory = component.queryUtility( IClassObjectFactory,
 									  name=class_name )
 	if not factory:
 		factory = _search_for_external_factory( class_name )
@@ -133,7 +141,7 @@ def find_factory_for( externalized_object, registry=component ):
 	Given a :class:`IExternalizedObject`, locate and return a factory
 	to produce a Python object to hold its contents.
 	"""
-	factory_finder = registry.getAdapter( externalized_object, interfaces.IExternalizedObjectFactoryFinder )
+	factory_finder = registry.getAdapter( externalized_object, IExternalizedObjectFactoryFinder )
 
 	return factory_finder.find_factory(externalized_object)
 
@@ -153,7 +161,7 @@ def _resolve_externals(object_io, updating_object, externalObject, registry=comp
 
 		for i in range(0,len(externalObjectOid)):
 			resolver = registry.queryMultiAdapter( (updating_object,externalObjectOid[i]),
-												   interfaces.IExternalReferenceResolver )
+												   IExternalReferenceResolver )
 			if resolver:
 				externalObjectOid[i] = resolver.resolve( externalObjectOid[i] )
 		if unwrap and keyPath in externalObject: # Only put it in if it was there to start with
@@ -269,7 +277,7 @@ def update_from_external_object( containedObject, externalObject,
 		else:
 			get = registry.queryAdapter
 
-		updater = get( containedObject, interfaces.IInternalObjectUpdater )
+		updater = get( containedObject, IInternalObjectUpdater )
 
 	if updater is not None:
 		# Let the updater resolve externals too
