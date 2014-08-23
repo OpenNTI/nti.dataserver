@@ -11,10 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import numbers
-import plistlib
 import collections
 from collections import defaultdict
-import simplejson as json  # import the fast, flexible C version
 
 import ZODB
 import persistent
@@ -270,71 +268,12 @@ def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 
 to_external_object = toExternalObject
 
-def stripNoneFromExternal( obj ):
-	""" Given an already externalized object, strips ``None`` values. """
-	if isinstance( obj, list ) or isinstance(obj, tuple):
-		obj = [stripNoneFromExternal(x) for x in obj if x is not None]
-	elif isinstance( obj, collections.Mapping ):
-		obj = {k:stripNoneFromExternal(v)
-			   for k,v in obj.iteritems()
-			   if v is not None and k is not None}
-	return obj
-
 def stripSyntheticKeysFromExternalDictionary( external ):
 	""" Given a mutable dictionary, removes all the external keys
 	that might have been added by :func:`to_standard_external_dictionary` and echoed back. """
 	for key in _syntheticKeys():
 		external.pop( key, None )
 	return external
-
-EXT_FORMAT_JSON = 'json' #: Constant requesting JSON format data
-EXT_FORMAT_PLIST = 'plist' #: Constant requesting PList (XML) format data
-
-def _second_pass_to_external_object( obj ):
-	result = to_external_object( obj, name='second-pass' )
-	if result is obj:
-		raise TypeError(repr(obj) + " is not JSON serializable")
-	return result
-
-def to_external_representation( obj, ext_format=EXT_FORMAT_PLIST, name=_NotGiven, registry=component ):
-	"""
-	Transforms (and returns) the `obj` into its external (string) representation.
-
-	:param ext_format: One of :const:`EXT_FORMAT_JSON` or :const:`EXT_FORMAT_PLIST`.
-	"""
-	# It would seem nice to be able to do this in one step during
-	# the externalization process itself, but we would wind up traversing
-	# parts of the datastructure more than necessary. Here we traverse
-	# the whole thing exactly twice.
-	ext = toExternalObject( obj, name=name, registry=registry )
-
-	if ext_format == EXT_FORMAT_PLIST:
-		ext = stripNoneFromExternal( ext )
-		try:
-			ext = plistlib.writePlistToString( ext )
-		except TypeError:
-			logger.exception( "Failed to externalize %s", ext )
-			raise
-	else:
-		ext = to_json_representation_externalized( ext )
-	return ext
-
-def to_json_representation( obj ):
-	""" A convenience function that calls :func:`to_external_representation` with :data:`EXT_FORMAT_JSON`."""
-	return to_external_representation( obj, EXT_FORMAT_JSON )
-
-def to_json_representation_externalized( obj ):
-	"""
-	Given an object that is known to already be in an externalized form,
-	convert it to JSON. This can be about 10% faster then requiring a pass
-	across all the sub-objects of the object to check that they are in external
-	form, while still handling a few corner cases with a second-pass conversion.
-	(These things creep in during the object decorator phase and are usually
-	links.)
-	"""
-	return json.dumps( obj, check_circular=False,
-					   sort_keys=__debug__, # Makes testing easier
-					   default=_second_pass_to_external_object )
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
@@ -536,38 +475,6 @@ def to_minimal_standard_external_dictionary( self, mergeFrom=None, **kwargs ):
 		result[StandardExternalFields_MIMETYPE] = mime_type
 	return result
 
-def make_repr(default=None):
-	if default is None:
-		default = lambda self: "%s().__dict__.update( %s )" % (self.__class__.__name__, self.__dict__ )
-	def __repr__( self ):
-		try:
-			return default(self)
-		except ZODB.POSException.ConnectionStateError:
-			return '%s(Ghost)' % self.__class__.__name__
-		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
-			return '%s(%s)' % (self.__class__.__name__, e)
-	return __repr__
-
-def WithRepr(default=object()):
-	"""
-	A class decorator factory to give a __repr__ to
-	the object. Useful for persistent objects.
-
-	:keyword default: A callable to be used for the default value.
-	"""
-
-	# If we get one argument that is a type, we were
-	# called bare (@WithRepr), so decorate the type
-	if isinstance(default, type):
-		default.__repr__ = make_repr()
-		return default
-
-	# If we got None or anything else, we were called as a factory,
-	# so return a decorator
-	def d(cls):
-		cls.__repr__ = make_repr()
-		return cls
-	return d
 
 # Things that have moved
 import zope.deferredimport
@@ -576,3 +483,16 @@ zope.deferredimport.deprecatedFrom(
 	"Import from .persistence",
 	"nti.externalization.persistence",
 	"NoPickle" )
+
+
+EXT_FORMAT_JSON = 'json' #: Constant requesting JSON format data
+EXT_FORMAT_PLIST = 'plist' #: Constant requesting PList (XML) format data
+
+zope.deferredimport.deprecatedFrom(
+	"Import from .representation",
+	"nti.externalization.representation",
+	"to_external_representation",
+	"to_json_representation",
+	"to_json_representation_externalized",
+	"make_repr",
+	"WithRepr")

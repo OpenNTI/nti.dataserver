@@ -198,6 +198,56 @@ class LocatedExternalList(list):
 	__acl__ = ()
 	mimeType = None
 
+
+###
+# Representations as strings
+###
+
+class IExternalObjectRepresenter(interface.Interface):
+	"""
+	Something that can represent an external object as a sequence of bytes.
+
+	These will be registered as named utilities and may each have slightly
+	different representation characteristics.
+	"""
+
+	def dump(obj, fp=None):
+		"""
+		Write the given object. If `fp` is None, then the string
+		representation will be returned, otherwise, fp specifies a writeable
+		object to which the representation will be written.
+		"""
+
+class IExternalRepresentationReader(interface.Interface):
+	"""
+	Something that can read an external string, as produced by
+	:class:`.IExternalObjectRepresenter` and return an equivalent
+	external value.`
+	"""
+
+	def load(stream):
+		"""
+		Load from the stream an external value. String values should be
+		read as unicode.
+
+		All objects must support the stream being a sequence of bytes,
+		some may support an open file object.
+		"""
+
+class IExternalObjectIO(IExternalObjectRepresenter,
+						IExternalRepresentationReader):
+	"""
+	Something that can read and write external values.
+	"""
+
+
+#: Constant requesting JSON format data
+EXT_REPR_JSON = 'json'
+#: Constant requesting PList (XML) format data
+EXT_REPR_PLIST = 'plist'
+#: Constant requesting YAML format data
+EXT_REPR_YAML = 'yaml'
+
 ### Creating and updating new and existing objects given external forms
 
 class IMimeObjectFactory(IFactory):

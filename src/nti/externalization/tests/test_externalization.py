@@ -43,12 +43,14 @@ from nti.externalization.oids import toExternalOID, fromExternalOID
 
 from ..externalization import EXT_FORMAT_PLIST
 from ..externalization import EXT_FORMAT_JSON
-from ..externalization import to_external_representation
+from ..interfaces import EXT_REPR_YAML
+from ..representation import to_external_representation
 from ..externalization import toExternalObject
 from ..externalization import catch_replace_action
 from ..externalization import to_standard_external_dictionary
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
-
+from ..interfaces import LocatedExternalList
+from ..interfaces import LocatedExternalDict
 
 from zope import component
 import nti.testing.base
@@ -116,6 +118,16 @@ class TestFunctions(ExternalizationLayerTest):
 		# PList strips it
 		assert_that( plistlib.readPlistFromString( to_external_representation( d, EXT_FORMAT_PLIST ) ),
 					 is_( { 'a': 1 } ) )
+
+	def test_to_external_representation_yaml(self):
+		l = LocatedExternalList()
+		l.append(LocatedExternalDict(k='v'))
+		class SubUnicode(unicode):
+			pass
+		l.append(LocatedExternalDict(k2=SubUnicode('foo')))
+
+		assert_that( to_external_representation(l, EXT_REPR_YAML),
+					 is_('- {k: v}\n- {k2: foo}\n') )
 
 	def test_external_class_name( self ):
 		class C(UserDict.UserDict,ExternalizableDictionaryMixin):

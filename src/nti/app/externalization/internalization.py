@@ -15,7 +15,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import collections
 import sys
-import simplejson
 
 from zope import component
 
@@ -23,6 +22,7 @@ from pyramid import httpexceptions as hexc
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.mimetype.mimetype import nti_mimetype_class
+from nti.externalization.interfaces import IExternalRepresentationReader
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization.internalization import find_factory_for
 
@@ -78,7 +78,8 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		ext_format = 'plist'
 
 	__traceback_info__ = ext_format, value
-	if ext_format != 'json': # pragma: no cover
+	reader = component.queryUtility(IExternalRepresentationReader, name=ext_format)
+	if reader is None: # pragma: no cover
 		# We're officially dropping support for plist values.
 		# primarily due to the lack of support for null values, and
 		# unsure about encoding issues
@@ -99,19 +100,15 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		#				   for k, v
 		#				   in pairs) )
 		try:
-			value = simplejson.loads(unicode(value, request.charset))
+			value = unicode(value, request.charset)
 		except UnicodeError:
 			# Try the most common web encoding
-			value = simplejson.loads(unicode(value, 'iso-8859-1'))
+			value = unicode(value, 'iso-8859-1')
+
+		value = reader.load(value)
 
 		if not isinstance( value, expected_type ):
 			raise TypeError( type(value) )
-
-		# Depending on whether the simplejson C speedups are active, we can still
-		# get back a non-unicode string if the object was a naked string. (If the python
-		# version is used, it returns unicode; the C version returns str.)
-		if isinstance( value, str ):
-			value = unicode(value, 'utf-8') # we know it's simple ascii or it would have produced unicode
 
 		return value
 	except hexc.HTTPException: # pragma: no cover
