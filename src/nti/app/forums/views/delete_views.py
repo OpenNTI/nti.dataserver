@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 
-from zope import component
 from zope import interface
 from zope import lifecycleevent
 from zope.event import notify
@@ -19,13 +18,10 @@ from zope.event import notify
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
-from pyramid import httpexceptions as hexc
-
 
 from nti.utils._compat import aq_base
 
 
-from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth

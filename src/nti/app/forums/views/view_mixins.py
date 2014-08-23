@@ -14,14 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 from zope import lifecycleevent
-from zope.event import notify
 from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
-from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
-from pyramid import httpexceptions as hexc
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -112,7 +108,7 @@ class _AbstractForumPostView(PostUploadMixin,
 
 	def _do_call( self ):
 		forum = self.request.context
-		topic_factory_name, topic_factory, topic_type = self._find_factory_from_precondition(forum)
+		_, topic_factory, _ = self._find_factory_from_precondition(forum)
 		topic_type = topic_factory.getInterfaces()
 
 		headline_field = topic_type.get('headline')
