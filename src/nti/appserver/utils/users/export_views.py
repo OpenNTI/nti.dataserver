@@ -25,11 +25,13 @@ from zope.catalog.interfaces import ICatalog
 from ZODB.interfaces import IBroken
 from ZODB.POSException import POSKeyError
 
-from nti.contentlibrary import interfaces as lib_interfaces
-
-from nti.dataserver import users
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IUser
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ITranscript
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
@@ -59,8 +61,8 @@ def _make_min_max_btree_range(search_term):
 
 def username_search(search_term):
 	min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)
-	dataserver = component.getUtility(nti_interfaces.IDataserver)
-	_users = nti_interfaces.IShardLayout(dataserver).users_folder
+	dataserver = component.getUtility(IDataserver)
+	_users = IShardLayout(dataserver).users_folder
 	usernames = list(_users.iterkeys(min_inclusive, max_exclusive, excludemax=True))
 	return usernames
 
@@ -70,8 +72,8 @@ def all_objects_iids(users=(), mime_types=()):
 	for uid in intids:
 		try:
 			obj = intids.getObject(uid)
-			if	IBroken.providedBy(obj) or nti_interfaces.IUser.providedBy(obj) or \
-				nti_interfaces.IDeletedObjectPlaceholder.providedBy(obj):
+			if	IBroken.providedBy(obj) or IUser.providedBy(obj) or \
+				IDeletedObjectPlaceholder.providedBy(obj):
 				continue
 
 			creator = getattr(obj, 'creator', None)
@@ -88,7 +90,7 @@ def all_objects_iids(users=(), mime_types=()):
 
 			if isinstance(obj, DMTS):
 				if not mime_types or _transcript_mime_type in mime_types:
-					obj = component.getAdapter(obj, nti_interfaces.ITranscript)
+					obj = component.getAdapter(obj, ITranscript)
 				else:
 					continue
 
@@ -140,7 +142,7 @@ def user_export_objects(request):
 def sharedWith_export_objects(request):
 	params = CaseInsensitiveDict(**request.params)
 	username = params.get('username') or request.authenticated_userid
-	user = users.User.get_user(username)
+	user = User.get_user(username)
 	if not user:
 		raise hexc.HTTPNotFound(detail=_('User not found'))
 	mime_types = params.get('mime_types', params.get('mimeTypes', u''))
@@ -204,72 +206,22 @@ def object_resolver(request):
 			 permission=nauth.ACT_MODERATE)
 def export_users(request):
 	values = CaseInsensitiveDict(**request.params)
-	term = values.get('term', values.get('search', None))
-	usernames = values.get('usernames', values.get('username', None))
+	term = values.get('term') or values.get('search')
+	usernames = values.get('usernames') or values.get('username')
 	if term:
 		usernames = username_search(term)
 	elif usernames:
 		usernames = usernames.split(',')
 	else:
-		dataserver = component.getUtility(nti_interfaces.IDataserver)
-		_users = nti_interfaces.IShardLayout(dataserver).users_folder
+		dataserver = component.getUtility(IDataserver)
+		_users = IShardLayout(dataserver).users_folder
 		usernames = _users.keys()
 
 	result = LocatedExternalDict()
 	items = result['Items'] = {}
 	for username in usernames:
-		user = users.User.get_user(username)
-		if user and nti_interfaces.IUser.providedBy(user):
+		user = User.get_user(username)
+		if user and IUser.providedBy(user):
 			items[user.username] = toExternalObject(user, name='summary')
 	result['Total'] = len(items)
-	return result
-
-exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
-
-def get_collection_root(ntiid):
-	library = component.queryUtility(lib_interfaces.IContentPackageLibrary)
-	paths = library.pathToNTIID(ntiid) if library else None
-	return paths[0] if paths else None
-
-def _check_users_containers(usernames=()):
-	for name in usernames:
-		user = users.User.get_entity(name)
-		if not user:
-			continue
-
-		usermap = {}
-		method = getattr(user, 'getAllContainers', lambda : ())
-		for name in method():
-			if name in exclude_containers:
-				continue
-
-			if get_collection_root(name) is None:
-				container = user.getContainer(name)
-				usermap[name] = len(container) if container is not None else 0
-
-		if usermap:
-			yield user.username, usermap
-
-@view_config(route_name='objects.generic.traversal',
-			 name='user_ghost_containers',
-			 renderer='rest',
-			 request_method='GET',
-			 permission=nauth.ACT_MODERATE)
-def user_ghost_containers(request):
-	values = CaseInsensitiveDict(**request.params)
-	term = values.get('term', values.get('search', None))
-	usernames = values.get('usernames', values.get('username', None))
-	if term:
-		usernames = username_search(term)
-	elif usernames:
-		usernames = usernames.split(',')
-	else:
-		dataserver = component.getUtility(nti_interfaces.IDataserver)
-		_users = nti_interfaces.IShardLayout(dataserver).users_folder
-		usernames = _users.keys()
-
-	result = LocatedExternalDict()
-	items = result['Items'] = {}
-	for username, rmap in _check_users_containers(usernames):
-		items[username] = rmap
 	return result
