@@ -5,6 +5,7 @@
 5) execute:
 	sudo port install python27
 	sudo port install py27-setuptools
+	sudo port install py27-yaml
 	sudo port install spidermonkey +fileobject
 	sudo port install libxml
 	sudo port install libxml2
