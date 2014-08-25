@@ -16,9 +16,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import functools
+import six
+import sys
 
 from zope import component
 from zope import interface
+from zope.keyreference.interfaces import NotYet
 from zc import intid as zc_intid
 
 from nti.wref import interfaces as wref_interfaces
@@ -26,8 +29,10 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import missing_user
 
 from nti.utils.property import read_alias
+from nti.schema.schema import EqHash
 
 @functools.total_ordering
+@EqHash('username', '_entity_id')
 @interface.implementer(wref_interfaces.ICachingWeakRef)
 @component.adapter(nti_interfaces.IEntity)
 class WeakRef(object):
@@ -56,12 +61,27 @@ class WeakRef(object):
 
 	# Because entity names may be reused, we keep both the intid of the object
 	# as well as the username and only return the entity if both of those things match.
+	# pylint: disable=E0236,W0212
+	if six.PY2:
+		__slots__ = (b'username',
+					 b'_entity_id',
+					 b'_v_entity_cache')
 
-	__slots__ = ('username', '_entity_id', '_v_entity_cache')
+	else:
+		__slots__ = ('username',
+					 '_entity_id',
+					 '_v_entity_cache')
+
 
 	def __init__( self, entity ):
 		self.username = entity.username.lower()
-		self._entity_id = component.getUtility( zc_intid.IIntIds ).getId( entity )
+		try:
+			self._entity_id = component.getUtility( zc_intid.IIntIds ).getId( entity )
+		except KeyError:
+			# Turn the missing-id KeyError into a NotYet
+			# error, which makes more sense
+			_, v, tb = sys.exc_info()
+			six.reraise(NotYet, str(v), tb)
 		# _v_entity_cache is a volatile attribute. It's either None, meaning we have
 		# no idea, the resolved Entity object, or False
 		self._v_entity_cache = entity
@@ -123,34 +143,26 @@ class WeakRef(object):
 
 		return result
 
-	def __eq__( self, other ):
-		try:
-			return self is other or ( (self.username, self._entity_id) == (other.username, other._entity_id) )
-		except AttributeError: #pragma: no cover
-			return NotImplemented
-
-	def _ne__( self, other ):
-		try:
-			return (self.username, self._entity_id) != (other.username, other._entity_id)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
-
 	def __lt__( self, other ):
 		try:
 			return (self.username, self._entity_id) < (other.username, other._entity_id)
 		except AttributeError: # pragma: no cover
 			return NotImplemented
 
-	def __gt__( self, other ):
-		try:
-			return (self.username, self._entity_id) > (other.username, other._entity_id)
-		except AttributeError: # pragma: no cover
-			return NotImplemented
-
-	def __hash__(self):
-		return hash((self.username, self._entity_id))
-
 	def __repr__(self):
 		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, self.username, self._entity_id)
 
 	# TODO: Consider making this object act like a proxy for the entity if its found.
+
+
+
+
+@interface.implementer(wref_interfaces.ICachingWeakRef)
+@component.adapter(nti_interfaces.IEntity)
+def WeakRefFactory(entity):
+	try:
+		return WeakRef(entity)
+	except NotYet:
+		# returning None will let the adapter
+		# raise or default
+		return None

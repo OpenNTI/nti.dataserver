@@ -101,9 +101,6 @@ class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters
 		except TypeError:
 			# "Object has default comparison"
 			return False
-		except KeyError:
-			# intid missing error
-			return False
 
 	def iter_intids(self):
 		for wref in self._friends_wref_set:

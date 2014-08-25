@@ -75,7 +75,7 @@
 
 
 	<!-- WeakRefs to entity objects -->
-	<adapter factory=".wref.WeakRef" />
+	<adapter factory=".wref.WeakRefFactory" />
 	<!-- Due to a mistake in inheritance
 	(IFriendsList extends IModeledContent,IEntity in that order)
 	to be sure we get the right behaviour where it is involved
