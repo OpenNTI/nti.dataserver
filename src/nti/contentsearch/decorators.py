@@ -15,37 +15,50 @@ from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.dataserver.links import Link
 
-from . import search_highlights
-from . import interfaces as search_interfaces
+from .search_highlights import empty_hi_marker
+from .search_highlights import word_fragments_highlight
 
-from .constants import (tags_, content_, title_, replacementContent_,
-						redactionExplanation_)
+from .interfaces import ISearchHit
+from .interfaces import ISearchQuery
+from .interfaces import INoteSearchHit
+from .interfaces import IPostSearchHit
+from .interfaces import ISearchResults
+from .interfaces import IForumSearchHit
+from .interfaces import ISuggestResults
+from .interfaces import ISearchHitMetaData
+from .interfaces import IRedactionSearchHit
+from .interfaces import IWhooshNTICardSearchHit
+from .interfaces import ISuggestAndSearchResults
 
-from .constants import (FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS,
-						QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME, SEARCH_QUERY,
-						SNIPPET)
+from .constants import SNIPPET
+from .constants import FRAGMENTS, TOTAL_FRAGMENTS, FIELD, ITEMS, SUGGESTIONS, HITS
+from .constants import QUERY, HIT_COUNT, PHRASE_SEARCH, CREATED_TIME, SEARCH_QUERY
+
+from .constants import tags_, content_, title_
+from .constants import replacementContent_, redactionExplanation_
 
 def _word_fragments_highlight(query=None, text=None):
-	query = search_interfaces.ISearchQuery(query, None)
+	query = ISearchQuery(query, None)
 	if query and text:
 		surround = query.surround or 50
 		maxchars = query.maxchars or 300
-		result = search_highlights.word_fragments_highlight(query, text,
-															maxchars=maxchars,
-															surround=surround,
-															lang=query.language)
+		result = word_fragments_highlight(	query, text,
+											maxchars=maxchars,
+											surround=surround,
+											lang=query.language)
 	else:
-		result = search_highlights.empty_hi_marker
+		result = empty_hi_marker
 	return result
 
-@component.adapter(search_interfaces.ISearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(ISearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _SearchHitHighlightDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -85,15 +98,15 @@ class _SearchHitHighlightDecorator(object):
 
 SearchHitHighlightDecorator = _SearchHitHighlightDecorator  # export
 
-@component.adapter(search_interfaces.INoteSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(INoteSearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _NoteSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
 		return ((content_, external.get(SNIPPET)), (title_, hit.Title))
 
-@component.adapter(search_interfaces.IRedactionSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IRedactionSearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _RedactionSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
@@ -101,8 +114,8 @@ class _RedactionSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 				(replacementContent_, hit.ReplacementContent),
 				(redactionExplanation_, hit.RedactionExplanation))
 
-@component.adapter(search_interfaces.IPostSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IPostSearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _PostSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
@@ -110,22 +123,22 @@ class _PostSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 				(title_, hit.Title),
 				(tags_, hit.Tags))
 
-@component.adapter(search_interfaces.IForumSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IForumSearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _ForumSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
 		return ((title_, hit.Title), (content_, external.get(SNIPPET)))
 
-@component.adapter(search_interfaces.IWhooshNTICardSearchHit)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(IWhooshNTICardSearchHit)
+@interface.implementer(IExternalObjectDecorator)
 class _NTICardSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
 		return ((content_, external.get(SNIPPET)), (title_, hit.Title))
 
-@component.adapter(search_interfaces.ISearchResults)
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@component.adapter(ISearchResults)
+@interface.implementer(IExternalObjectDecorator)
 class _SearchResultsLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -149,7 +162,7 @@ class _SearchResultsLinkDecorator(object):
 		# clean
 		original.Batch = None
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 class _ResultsDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -165,22 +178,22 @@ class _ResultsDecorator(object):
 		external[ITEMS] = external.pop(HITS, [])
 		self.decorateCommon(original, external)
 
-@component.adapter(search_interfaces.ISearchResults)
+@component.adapter(ISearchResults)
 class _SearchResultsDecorator(_ResultsDecorator):
 	pass
 
-@component.adapter(search_interfaces.ISuggestResults)
+@component.adapter(ISuggestResults)
 class _SuggestResultsDecorator(_ResultsDecorator):
 
 	def decorateExternalObject(self, original, external):
-		if not search_interfaces.ISuggestAndSearchResults.providedBy(original):
+		if not ISuggestAndSearchResults.providedBy(original):
 			external[ITEMS] = external.pop(SUGGESTIONS, [])
 			self.decorateCommon(original, external)
 
-@component.adapter(search_interfaces.ISearchHitMetaData)
+@component.adapter(ISearchHitMetaData)
 class _SearchHitMetaDataDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, original, external):
-		external.pop(ext_interfaces.StandardExternalFields.CREATED_TIME, None)
+		external.pop(StandardExternalFields.CREATED_TIME, None)

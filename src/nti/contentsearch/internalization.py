@@ -25,7 +25,7 @@ from .interfaces import ISuggestResults
 from .interfaces import ISearchHitMetaData
 from .interfaces import ISuggestAndSearchResults
 
-from .constants import (ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY)
+from .constants import ITEMS, HITS, SUGGESTIONS, QUERY, SEARCH_QUERY
 
 def _readonly(iface):
 	result = set()

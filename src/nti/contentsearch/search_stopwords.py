@@ -15,9 +15,9 @@ from zope import interface
 
 from nti.utils.property import Lazy
 
-from . import interfaces as search_interfaces
+from .interfaces import IStopWords
 
-@interface.implementer(search_interfaces.IStopWords)
+@interface.implementer(IStopWords)
 class _FileBasedStopWords(object):
 
 	@Lazy
@@ -41,7 +41,7 @@ class _FileBasedStopWords(object):
 	def available_languages(self,):
 		return tuple(sorted(self._cache.keys()))
 
-@interface.implementer(search_interfaces.IStopWords)
+@interface.implementer(IStopWords)
 class _NoStopWords(object):
 
 	__slots__ = ()
@@ -53,5 +53,3 @@ class _NoStopWords(object):
 		return ('en', 'es', 'ru')
 
 _DefaultStopWords = _NoStopWords
-
-

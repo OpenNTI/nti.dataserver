@@ -24,7 +24,7 @@ from whoosh.index import LockError
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.utils.property import CachedProperty
 

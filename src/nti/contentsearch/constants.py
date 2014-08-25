@@ -10,20 +10,21 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import StandardInternalFields
 
 from nti.mimetype.mimetype import MIME_BASE
 
-ID 				 = unicode(ext_interfaces.StandardExternalFields.ID)
+ID 				 = unicode(StandardExternalFields.ID)
 HIT 			 = u'Hit'
 HITS 			 = u'Hits'
-OID 			 = unicode(ext_interfaces.StandardExternalFields.OID)
+OID 			 = unicode(StandardExternalFields.OID)
 TYPE 			 = u'Type'
 BODY			 = u'Body'
 POST			 = u'Post'
 FORUM			 = u'Forum'
-NTIID 			 = unicode(ext_interfaces.StandardExternalFields.NTIID)
-CLASS 			 = unicode(ext_interfaces.StandardExternalFields.CLASS)
+NTIID 			 = unicode(StandardExternalFields.NTIID)
+CLASS 			 = unicode(StandardExternalFields.CLASS)
 FIELD 			 = u'Field'
 ITEMS			 = u'Items'
 QUERY			 = u'Query'
@@ -38,19 +39,19 @@ FRAGMENT_COUNT	 = u'Fragment Count'
 TOTAL_FRAGMENTS	 = u'Total Fragments'
 AUDIO_TRANSCRIPT = u'AudioTranscript'
 VIDEO_TRANSCRIPT = u'VideoTranscript'
-CREATOR 		 = unicode(ext_interfaces.StandardExternalFields.CREATOR)
+CREATOR 		 = unicode(StandardExternalFields.CREATOR)
 AUTO_TAGS		 = u'AutoTags'
-MIME_TYPE		 = unicode(ext_interfaces.StandardExternalFields.MIMETYPE)
+MIME_TYPE		 = unicode(StandardExternalFields.MIMETYPE)
 HIT_COUNT 		 = u'Hit Count'
 MESSAGE_INFO	 = u'MessageInfo'
 SUGGESTIONS		 = u'Suggestions'
 HIT_META_DATA	 = u'HitMetaData'
 PHRASE_SEARCH 	 = u'PhraseSearch'
-CONTAINER_ID	 = unicode(ext_interfaces.StandardExternalFields.CONTAINER_ID)
-LAST_MODIFIED	 = unicode(ext_interfaces.StandardExternalFields.LAST_MODIFIED)
-CREATED_TIME 	 = unicode(ext_interfaces.StandardExternalFields.CREATED_TIME)
+CONTAINER_ID	 = unicode(StandardExternalFields.CONTAINER_ID)
+LAST_MODIFIED	 = unicode(StandardExternalFields.LAST_MODIFIED)
+CREATED_TIME 	 = unicode(StandardExternalFields.CREATED_TIME)
 
-id_				 = unicode(ext_interfaces.StandardInternalFields.ID)
+id_				 = unicode(StandardInternalFields.ID)
 acl_			 = u'acl'
 oid_			 = u'oid'
 body_ 			 = u'body'
@@ -63,7 +64,7 @@ title_			 = u'title'
 intid_			 = u'intid'
 score_			 = u'score'
 docnum_			 = u'docnum'
-ntiid_			 = unicode(ext_interfaces.StandardInternalFields.NTIID)
+ntiid_			 = unicode(StandardInternalFields.NTIID)
 color_			 = u'color'
 p_oid_			 = u'_p_oid'
 title_			 = u'title'
@@ -72,7 +73,7 @@ channel_		 = u'channel'
 section_		 = u'section'
 videoId_		 = u'videoId'
 username_		 = u'username'
-creator_		 = unicode(ext_interfaces.StandardInternalFields.CREATOR)
+creator_		 = unicode(StandardInternalFields.CREATOR)
 related_		 = u'related'
 content_		 = u'content'
 keywords_		 = u'keywords'
@@ -80,11 +81,11 @@ references_		 = u'references'
 inReplyTo_		 = u'inReplyTo'
 recipients_		 = u'recipients'
 sharedWith_		 = u'sharedWith'
-createdTime_	 = unicode(ext_interfaces.StandardInternalFields.CREATED_TIME)
-lastModified_	 = unicode(ext_interfaces.StandardInternalFields.LAST_MODIFIED)
+createdTime_	 = unicode(StandardInternalFields.CREATED_TIME)
+lastModified_	 = unicode(StandardInternalFields.LAST_MODIFIED)
 selectedText_	 = u'selectedText'
 target_ntiid_ 	 = u'target_ntiid'
-containerId_	 = unicode(ext_interfaces.StandardInternalFields.CONTAINER_ID)
+containerId_	 = unicode(StandardInternalFields.CONTAINER_ID)
 collectionId_	 = u'collectionId'
 last_modified_	 = u'last_modified'
 end_timestamp_	 = u'end_timestamp'
@@ -100,13 +101,13 @@ tag_fields = (tags_, AUTO_TAGS)
 creator_fields = (CREATOR, creator_)
 oid_fields = (OID, p_oid_, oid_, id_)
 container_id_fields = (CONTAINER_ID, 'ContainerID', containerId_, 'container')
-last_modified_fields = (ext_interfaces.StandardInternalFields.LAST_MODIFIED,
-						ext_interfaces.StandardInternalFields.LAST_MODIFIEDU,
+last_modified_fields = (StandardInternalFields.LAST_MODIFIED,
+						StandardInternalFields.LAST_MODIFIEDU,
 						LAST_MODIFIED,
 						last_modified_)
 
-created_time_fields = (ext_interfaces.StandardInternalFields.CREATED_TIME,
-					   ext_interfaces.StandardExternalFields.CREATED_TIME)
+created_time_fields = (StandardInternalFields.CREATED_TIME,
+					   StandardExternalFields.CREATED_TIME)
 
 book_prefix = u''
 atrans_prefix = u'atrans_'

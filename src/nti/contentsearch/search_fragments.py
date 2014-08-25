@@ -15,7 +15,7 @@ from collections import namedtuple
 from zope import interface
 from zope.interface.common.sequence import IFiniteSequence
 
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import EqHash
 
