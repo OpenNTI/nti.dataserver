@@ -13,18 +13,18 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.autopackage import AutoPackageSearchingScopedInterfaceObjectIO
 
-from . import interfaces as search_interfaces
+from .interfaces import ISearchHitMetaData
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(search_interfaces.ISearchHitMetaData)
+@interface.implementer(IInternalObjectIO)
+@component.adapter(ISearchHitMetaData)
 class _SearchHitMetaDataExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = search_interfaces.ISearchHitMetaData
+	_ext_iface_upper_bound = ISearchHitMetaData
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
+@interface.implementer(IInternalObjectIO)
 class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	_excluded_out_ivars_ = {'Query'} | AutoPackageSearchingScopedInterfaceObjectIO._excluded_out_ivars_
@@ -40,7 +40,7 @@ class _SearchHitInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 _SearchHitInternalObjectIO.__class_init__()
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
+@interface.implementer(IInternalObjectIO)
 class _SearchResultsInternalObjectIO(AutoPackageSearchingScopedInterfaceObjectIO):
 
 	_excluded = {'ContentHits', 'UserDataHits'}

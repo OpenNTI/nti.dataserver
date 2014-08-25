@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.container.contained import Contained
 
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 from nti.mimetype import mimetype
 

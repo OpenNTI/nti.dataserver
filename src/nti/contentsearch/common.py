@@ -14,24 +14,23 @@ import re
 import six
 import math
 import time
-import collections
 from time import mktime
 from datetime import datetime
+from collections import Iterable
 
 from zope import component
 
-from . import interfaces as search_interfaces
+from .interfaces import ISearchTypeMetaData
 
-from .constants import (CLASS, MIME_TYPE)
-
-from .constants import (transcript_, messageinfo_, nti_mimetype_prefix,)
+from .constants import CLASS, MIME_TYPE
+from .constants import transcript_, messageinfo_, nti_mimetype_prefix
 
 _mappers = None
 def get_type_mappers():
 	global _mappers
 	if not _mappers:
 		result = []
-		for _, m in component.getUtilitiesFor(search_interfaces.ISearchTypeMetaData):
+		for _, m in component.getUtilitiesFor(ISearchTypeMetaData):
 			result.append(m)
 		_mappers = sorted(result, key=lambda m: m.Order)
 	return _mappers
@@ -154,14 +153,14 @@ def to_list(data):
 		data = [data]
 	elif isinstance(data, list):
 		pass
-	elif isinstance(data, collections.Iterable):
+	elif isinstance(data, Iterable):
 		data = list(data)
 	elif data is not None:
 		data = [data]
 	return data
 
 def get_sort_order(type_name):
-	m = component.queryUtility(search_interfaces.ISearchTypeMetaData, name=type_name)
+	m = component.queryUtility(ISearchTypeMetaData, name=type_name)
 	return m.Order if m is not None else 0
 
 def sort_search_types(type_names=()):
