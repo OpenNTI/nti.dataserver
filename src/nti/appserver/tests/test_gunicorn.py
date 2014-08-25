@@ -17,10 +17,8 @@ logger = __import__('logging').getLogger(__name__)
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import same_instance
-from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import has_property
-from hamcrest import none
 
 #from pyramid.testing import DummyRequest
 from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest

@@ -15,10 +15,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from zope.deprecation import deprecate
-from nti.utils.property import CachedProperty
-
 
 from nti.dataserver.interfaces import IDataserver
+
+from nti.utils.property import CachedProperty
 
 from .session_consumer import SessionConsumer
 from .persistent_session import AbstractSession

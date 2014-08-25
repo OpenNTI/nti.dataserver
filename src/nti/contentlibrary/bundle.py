@@ -24,8 +24,8 @@ from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import EqHash
 
-from nti.externalization.externalization import WithRepr
 from nti.externalization.persistence import NoPickle
+from nti.externalization.representation import WithRepr
 
 # Because we only expect to store persistent versions
 # of these things, and we expect to update them directly

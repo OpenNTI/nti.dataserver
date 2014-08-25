@@ -12,7 +12,7 @@ from zope import interface
 
 from . import interfaces
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
@@ -20,6 +20,7 @@ from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 # functionality to create new internal objects from externals
 
 @interface.implementer(interfaces.IContentRangeDescription)
+@WithRepr
 class ContentRangeDescription(SchemaConfigured):
 	"""
 	Implementation of :class:`interfaces.IContentRangeDescription`
@@ -32,12 +33,12 @@ class ContentRangeDescription(SchemaConfigured):
 	# so we violate best practices a bit and check equal types directly
 	def __eq__(self, other):
 		return type(self) is type(other) and type(other) is ContentRangeDescription
+	
 	def __ne__(self, other):
 		return not self.__eq__(other)
+	
 	def __hash__(self):
 		return hash(ContentRangeDescription)
-
-	__repr__ = make_repr()
 
 @interface.implementer(interfaces.IDomContentRangeDescription)
 class DomContentRangeDescription(ContentRangeDescription):
@@ -69,6 +70,7 @@ class ContentPointer(SchemaConfigured):
 	mime_type = 'application/vnd.nextthought.contentrange.contentpointer'
 
 @interface.implementer(interfaces.IDomContentPointer)
+@WithRepr
 class DomContentPointer(ContentPointer):
 
 	mime_type = 'application/vnd.nextthought.contentrange.domcontentpointer'
@@ -84,8 +86,6 @@ class DomContentPointer(ContentPointer):
 			return self is not other and self.role != other.role
 		except AttributeError:
 			return NotImplemented
-
-	__repr__ = make_repr()
 
 	def __hash__(self):
 		return hash((self.role,))
@@ -110,6 +110,7 @@ class ElementDomContentPointer(DomContentPointer):
 		return hash((self.elemendId, self.elementTagName, self.role))
 
 @interface.implementer(interfaces.ITextContext)
+@WithRepr
 class TextContext(SchemaConfigured):
 
 	mime_type = 'application/vnd.nextthought.contentrange.textcontext'
@@ -124,8 +125,6 @@ class TextContext(SchemaConfigured):
 									 and self.contextOffset == other.contextOffset)
 		except AttributeError:
 			return NotImplemented
-
-	__repr__ = make_repr()
 
 	def __hash__(self):
 		return hash((self.contextText, self.contextOffset))

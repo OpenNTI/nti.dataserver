@@ -15,7 +15,7 @@ from zope import interface
 from zope import component
 from zope.cachedescriptors.property import Lazy
 
-from nti.externalization.externalization import to_json_representation_externalized
+from nti.externalization.representation import to_json_representation_externalized
 from nti.externalization.persistence import NoPickle
 
 from nti.schema.schema import EqHash
