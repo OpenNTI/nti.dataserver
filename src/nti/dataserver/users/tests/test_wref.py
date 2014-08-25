@@ -12,6 +12,8 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import has_property
 from hamcrest import has_entry
+from hamcrest import calling
+from hamcrest import raises
 
 import cPickle
 import unittest
@@ -32,6 +34,22 @@ from nti.testing.matchers import verifiably_provides
 
 class TestWref(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
+
+	@WithMockDSTrans
+	def test_missing_intid( self ):
+		user = users.User.create_user( username='sjohnson@nextthought.com' )
+		del user._ds_intid
+
+
+		assert_that( calling(wref.WeakRef).with_args(user),
+					 raises(wref.NotYet))
+
+		assert_that( calling(wref_interfaces.IWeakRef).with_args(user),
+					 raises(TypeError))
+
+		assert_that( wref_interfaces.IWeakRef(user, None),
+					 is_(none()))
+
 
 	@WithMockDSTrans
 	def test_pickle( self ):

@@ -49,8 +49,6 @@ from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 from nti.externalization.interfaces import StandardExternalFields
 
-from nti.intid.interfaces import IntIdMissingError
-
 from nti.ntiids import ntiids
 
 from nti.wref import interfaces as wref_interfaces
@@ -273,8 +271,6 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 			return wref_interfaces.IWeakRef(other, None) in self._members
 		except TypeError:
 			return False # "Object has default comparison""
-		except IntIdMissingError:
-			return False  # entity deleted?
 
 	def iter_members(self):
 		return _iterable_of_entities_from_named_lazy_set_of_wrefs(self, '_members')
