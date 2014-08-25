@@ -30,7 +30,7 @@ from nti.ntiids import ntiids
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
-from nti.externalization.externalization import to_external_representation
+from nti.externalization.representation import to_external_representation
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces

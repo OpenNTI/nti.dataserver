@@ -28,7 +28,6 @@ from quopri import decodestring
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver import users
-from nose.tools import assert_raises
 
 from zope import component
 from zope import interface

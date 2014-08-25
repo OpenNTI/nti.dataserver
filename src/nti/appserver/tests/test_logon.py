@@ -17,22 +17,15 @@ from hamcrest import has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
 from hamcrest import contains_string
 from hamcrest import contains
-from hamcrest import none
 
 from hamcrest.library import has_property
 from nti.testing.matchers import provides
 from nose.tools import assert_raises
 import zope.testing.loghandler
 
-import pyramid.testing
-#from pyramid.testing import DummyRequest
-from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
-
 from zope import component
 from zope import interface
 from zope.component import eventtesting
-
-import os
 
 from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon, google_login, openid_login, ROUTE_OPENID_RESPONSE, _update_users_content_roles, _checksum, _openidcallback)
@@ -58,7 +51,8 @@ import nti.dataserver.interfaces as nti_interfaces
 import nti.appserver.interfaces as app_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_representation, to_external_object
+from nti.externalization.externalization import EXT_FORMAT_JSON, to_external_object
+from nti.externalization.representation import to_external_representation
 from nti.dataserver import users
 
 from zope.component.hooks import setSite, clearSite
@@ -120,9 +114,8 @@ class TestApplicationLogon(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_impersonate(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			admin_user = self._create_user( ) # relying on default role
+			self._create_user( ) # relying on default role / admin user
 			other_user = self._create_user( 'nobody@nowhere' )
-			#admin_user_username = admin_user.username
 			other_user_username = other_user.username
 
 		testapp = TestApp( self.app )

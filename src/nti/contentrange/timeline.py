@@ -10,7 +10,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.externalization.externalization import make_repr
+from nti.externalization.representation import WithRepr
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -18,12 +18,11 @@ from . import interfaces
 from . import contentrange
 
 @interface.implementer(interfaces.ITimeContentPointer)
+@WithRepr
 class TimeContentPointer(contentrange.ContentPointer):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.timecontentpointer'
 	createDirectFieldProperties(interfaces.ITimeContentPointer)
-
-	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -36,12 +35,11 @@ class TimeContentPointer(contentrange.ContentPointer):
 		return hash((self.role, self.seconds))
 
 @interface.implementer(interfaces.ITimeRangeDescription)
+@WithRepr
 class TimeRangeDescription(contentrange.ContentRangeDescription):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.timerangedescription'
 	createDirectFieldProperties(interfaces.ITimeRangeDescription)
-
-	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -55,11 +53,10 @@ class TimeRangeDescription(contentrange.ContentRangeDescription):
 		return hash((self.seriesId, self.start, self.end))
 
 @interface.implementer(interfaces.ITranscriptContentPointer)
+@WithRepr
 class TranscriptContentPointer(TimeContentPointer):
 	mime_type = 'application/vnd.nextthought.contentrange.transcriptcontentpointer'
 	createDirectFieldProperties(interfaces.ITranscriptContentPointer)
-
-	__repr__ = make_repr()
 
 	def __eq__(self, other):
 		try:
@@ -72,6 +69,7 @@ class TranscriptContentPointer(TimeContentPointer):
 		return hash((self.pointer, self.cueid))
 
 @interface.implementer(interfaces.ITranscriptRangeDescription)
+@WithRepr
 class TranscriptRangeDescription(TimeRangeDescription):
 	mime_type = 'application/vnd.nextthought.contentrange.transcriptrangedescription'
 	createDirectFieldProperties(interfaces.ITranscriptRangeDescription)
@@ -86,4 +84,3 @@ class TranscriptRangeDescription(TimeRangeDescription):
 	def __hash__(self):
 		return hash((self.start, self.end))
 
-	__repr__ = make_repr()

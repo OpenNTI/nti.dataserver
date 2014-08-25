@@ -40,16 +40,9 @@ zope.deferredimport.deprecatedFrom(
 	"ConfiguringTestBase",
 	"SharedConfiguringTestBase")
 
-
-
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.externalization.externalization import to_json_representation
-import nti.contentsearch
-
-import pyramid.config
-from pyramid.events import NewRequest
-
+from nti.externalization.representation import to_json_representation
 
 import webob.datetime_utils
 import datetime
@@ -73,7 +66,6 @@ from urllib import quote as UQ
 from persistent import Persistent
 from zope import interface
 from zope import component
-from zope.event import notify
 
 
 from zope.keyreference.interfaces import IKeyReference
@@ -105,9 +97,7 @@ from nti.app.testing.application_webtest import NonDevmodeApplicationLayerTest
 
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges
-from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
-from nti.app.testing.site import trivial_transaction_in_root_site as _trivial_db_transaction_cm
 
 class NonDevmodeButAnySiteApplicationTestLayer(NonDevmodeApplicationTestLayer):
 
@@ -617,7 +607,7 @@ class TestApplication(ApplicationLayerTest):
 							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user()
+			self._create_user()
 
 
 		json_data = json.serialize( data )
@@ -647,7 +637,7 @@ class TestApplication(ApplicationLayerTest):
 							   u'url': u'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='}]}
 
 		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user()
+			self._create_user()
 
 
 		json_data = json.serialize( data )

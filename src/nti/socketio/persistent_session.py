@@ -29,7 +29,7 @@ from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDi
 import ZODB.POSException
 
 from nti.schema.schema import EqHash
-from nti.externalization.externalization import WithRepr
+from nti.externalization.representation import WithRepr
 
 _state_progression = [sio_interfaces.SESSION_STATE_NEW,
 					  sio_interfaces.SESSION_STATE_CONNECTED,

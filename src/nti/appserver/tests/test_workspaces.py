@@ -8,7 +8,6 @@ from hamcrest import none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_item
-from hamcrest import has_items
 from hamcrest import greater_than_or_equal_to
 from hamcrest import is_not
 from hamcrest import all_of
@@ -16,9 +15,7 @@ from hamcrest import is_in
 
 from hamcrest import has_property
 from hamcrest import has_value
-from hamcrest import has_entries
 does_not = is_not
-import unittest
 
 from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
 from nti.appserver.workspaces import UserEnumerationWorkspace as UEW

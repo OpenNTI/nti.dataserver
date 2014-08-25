@@ -48,7 +48,7 @@ from nti.dataserver import users
 from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.externalization.externalization import to_json_representation as to_external_representation
+from nti.externalization.representation import to_json_representation as to_external_representation
 from nti.dataserver.datastructures import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
@@ -493,7 +493,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 			reply_n_id = reply_n.id
 			reply_n.lastModified = 2
 
-			top_n_ext_id = to_external_ntiid_oid( top_n )
+			to_external_ntiid_oid( top_n )
 
 		testapp = TestApp( self.app )
 		path = '/dataserver2/users/sjohnson@nextthought.com/Pages(' + top_n_containerId + ')/UserGeneratedData'
@@ -792,7 +792,6 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 			user = users.User.get_user( user.username )
 			from nti.chatserver import interfaces as chat_interfaces
 			import zc.intid as zc_intid
-			from zope import component
 			storage = chat_interfaces.IUserTranscriptStorage(user)
 
 			from nti.chatserver.messageinfo import MessageInfo as Msg

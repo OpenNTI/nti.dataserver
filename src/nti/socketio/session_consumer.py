@@ -24,7 +24,6 @@ from zope.cachedescriptors.method import cachedIn
 
 import transaction
 
-
 from nti.externalization.persistence import NoPickle
 from nti.externalization.externalization import toExternalObject
 

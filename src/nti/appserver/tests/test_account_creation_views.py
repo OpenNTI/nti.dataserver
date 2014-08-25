@@ -20,7 +20,6 @@ from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import assert_that
 from hamcrest import has_entry
-from hamcrest import has_entries
 from hamcrest import has_length
 from hamcrest import has_key
 from hamcrest import contains_string
@@ -29,8 +28,6 @@ from hamcrest import has_property
 from hamcrest import greater_than
 from hamcrest import has_item
 
-
-from nti.testing.matchers import validly_provides as verifiably_provides
 from nose.tools import assert_raises
 import itertools
 
@@ -50,14 +47,13 @@ from nti.dataserver import users
 
 from nti.dataserver import shards
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.externalization.externalization import to_json_representation
+from nti.externalization.representation import to_json_representation
 
 from nti.dataserver.users import interfaces as user_interfaces
 
 from zope.component import eventtesting
 from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
-from zope.annotation.interfaces import IAnnotations
 
 import datetime
 
