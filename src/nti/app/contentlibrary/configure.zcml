@@ -105,4 +105,10 @@
 
 	<ext:registerMimeFactories module=".forum" />
 
+	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentlibrary.interfaces.IContentPackageBundle
+					 pyramid.interfaces.IRequest"/>
+
+
 </configure>

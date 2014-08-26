@@ -115,6 +115,8 @@ class TestApplicationContent(ApplicationLayerTest):
 		assert_that( href, is_('/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22') )
 
 
+from hamcrest import contains
+
 class TestApplicationBundles(ApplicationLayerTest):
 
 	layer = ContentLibraryApplicationTestLayer
@@ -135,6 +137,19 @@ class TestApplicationBundles(ApplicationLayerTest):
 												 'titles', has_length(1) ) )
 
 		package = res.json_body['titles'][0]
-
+		assert_that(package, has_entry('ContentPackages', contains(has_entry('Class', 'ContentPackage'))))
 		assert_that( self.require_link_href_with_rel(package, 'DiscussionBoard'),
 					 is_('/dataserver2/%2B%2Betc%2B%2Bbundles/bundles/tag%3Anextthought.com%2C2011-10%3ANTI-Bundle-ABundle/DiscussionBoard'))
+
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_ipad_hack(self):
+		href = '/dataserver2/users/sjohnson@nextthought.com/ContentBundles/VisibleContentBundles'
+
+		res = self.testapp.get(href,
+							   extra_environ={b'HTTP_USER_AGENT': b"NTIFoundation DataLoader NextThought/1.2.0/46149 (x86_64; 7.1)"})
+
+		package = res.json_body['titles'][0]
+		assert_that(package,
+					has_entry('ContentPackages',
+							  contains('tag:nextthought.com,2011-10:USSC-HTML-Cohen.cohen_v._california.')))
