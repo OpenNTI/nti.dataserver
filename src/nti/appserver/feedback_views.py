@@ -150,7 +150,7 @@ def send_feedback_view( request ):
 						  request.authenticated_userid,
 						  'Feedback',
 						  'Feedback From %s on %s',
-						  'feedback@nextthought.com' )
+						  'support@nextthought.com' )
 
 
 @view_config( route_name='objects.generic.traversal',
