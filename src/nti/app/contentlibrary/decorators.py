@@ -45,4 +45,20 @@ class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDec
 				return True
 
 	def _do_decorate_external(self, context, result):
-		result['ContentPackages'] = [x.get('NTIID') for x in result['ContentPackages']]
+		# Depending on what we're registered on, the result
+		# may already contain externalized values or still ContentPackage
+		# objects.
+		new_packages = []
+		for x in result['ContentPackages']:
+			ntiid = None
+			try:
+				ntiid = x.get('NTIID')
+			except AttributeError:
+				pass
+			if not ntiid:
+				ntiid = getattr(x, 'ntiid', None) or getattr(x, 'NTIID', None)
+
+			if ntiid:
+				new_packages.append(ntiid)
+
+		result['ContentPackages'] = new_packages
