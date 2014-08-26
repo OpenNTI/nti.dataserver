@@ -49,14 +49,12 @@ class IIntIdEvent(Interface):
 
 	original_event = Attribute("The ObjectEvent related to this event")
 
-
 class IIntIdRemovedEvent(IIntIdEvent):
 	"""A unique id will be removed
 
 	The event is published before the unique id is removed
 	from the utility so that the indexing objects can unindex the object.
 	"""
-
 
 @implementer(IIntIdRemovedEvent)
 class IntIdRemovedEvent(object):
@@ -68,7 +66,6 @@ class IntIdRemovedEvent(object):
 		self.object = o
 		self.original_event = event
 
-
 class IIntIdAddedEvent(IIntIdEvent):
 	"""A unique id has been added
 
@@ -77,7 +74,6 @@ class IIntIdAddedEvent(IIntIdEvent):
 	"""
 
 	idmap = Attribute("The dictionary that holds an (utility -> id) mapping of created ids")
-
 
 @implementer(IIntIdAddedEvent)
 class IntIdAddedEvent(object):

@@ -19,7 +19,7 @@ import BTrees
 from BTrees.Length import Length
 import persistent
 from nti.zodb.containers import time_to_64bit_int, bit64_int_to_time, ZERO_64BIT_INT
-from nti.externalization.externalization import make_repr
+from nti.externalization.representation import make_repr
 from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
 

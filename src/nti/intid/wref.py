@@ -25,7 +25,8 @@ from nti.externalization import integer_strings
 
 from nti.ntiids import ntiids
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import ICachingWeakRef
+from nti.wref.interfaces import IWeakRefToMissing
 
 class _AbstractWeakRef(object):
 	"""
@@ -112,8 +113,7 @@ class _AbstractWeakRef(object):
 		# base64 might be nice, but that doesn't play well with ntiids
 		return ntiids.make_ntiid( nttype=ntiids.TYPE_MISSING, specific=eid )
 
-@interface.implementer(wref_interfaces.IWeakRefToMissing,
-					   wref_interfaces.ICachingWeakRef)
+@interface.implementer(IWeakRefToMissing, ICachingWeakRef)
 class WeakRef(_AbstractWeakRef):
 	"""
 	A weak reference to a content object (generally, anything
