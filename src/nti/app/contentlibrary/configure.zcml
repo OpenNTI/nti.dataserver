@@ -109,6 +109,14 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle
 					 pyramid.interfaces.IRequest"/>
+	<!-- this thing is not a real IBundle -->
+	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.app.products.courseware.legacy_course._LegacyCommunityBasedCourseInstanceFakeBundle
+					 pyramid.interfaces.IRequest"
+				zcml:condition="installed nti.app.products.courseware"/>
+
+
 
 
 </configure>
