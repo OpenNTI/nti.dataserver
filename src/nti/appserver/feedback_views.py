@@ -94,7 +94,12 @@ def _format_email( request, body_key, userid, report_type, subject, to ):
 	# IP address, so it could be used by anyone until it times out.
 	request_details = dict(request.environ)
 	# TODO: Preserve just the names? Blacklist only certain cookies?
-	for k in 'HTTP_COOKIE', 'paste.cookies', 'HTTP_AUTHORIZATION', 'repoze.who.api', 'repoze.who.identity':
+	for k in ('HTTP_COOKIE',
+			  'paste.cookies',
+			  'webob._parsed_cookies',
+			  'HTTP_AUTHORIZATION',
+			  'repoze.who.api',
+			  'repoze.who.identity'):
 		request_details.pop(k, None)
 
 	request_detail_table = _format_table( request_details )
