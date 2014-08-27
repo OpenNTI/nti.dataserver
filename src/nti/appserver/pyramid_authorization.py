@@ -266,13 +266,6 @@ def _has_permission( permission, context, reg, authn_policy, principals  ):
 	"""
 	Check the given permission on the given context object in the given request.
 
-	:param request: The currently active Pyramid HTTP request object, or
-		None. If not provided (and we do not look for a current request),
-		then the global component registry will be used to find Authentication
-		and Authorization policies, and the only principal that will be checked is
-		:const:`pyramid.security.Everyone` (since there will be no identifiable
-		principal from the request).
-
 	:return: A tuple (permission, principals).
 	"""
 	if authn_policy is None:
