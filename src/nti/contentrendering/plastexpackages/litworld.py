@@ -22,7 +22,7 @@ class litclubsection(Base.subsection):
 class litclubsubsection(Base.subsubsection):
     pass
 
-class litclubwelcomesection(Base.subsection):
+class litclubwelcomesection(Base.section):
     pass
 
 class litclubhellosongsubsection(Base.subsubsection):
@@ -31,22 +31,22 @@ class litclubhellosongsubsection(Base.subsubsection):
 class litclubcheckinsubsection(Base.subsubsection):
     pass
 
-class litclubcommunitysection(Base.subsection):
+class litclubcommunitysection(Base.section):
     pass
 
-class litclubreadaloudsection(Base.subsection):
+class litclubreadaloudsection(Base.section):
     pass
 
 class litclubdiscussionsubsection(Base.subsubsection):
     pass
 
-class litclubcoresection(Base.subsection):
+class litclubcoresection(Base.section):
     pass
 
 class litclubindereadingsection(Base.subsection):
     pass
 
-class litclubwrapupsection(Base.subsection):
+class litclubwrapupsection(Base.section):
     pass
 
 class litclubpraisesubsection(Base.subsubsection):
