@@ -22,8 +22,6 @@ from hamcrest import has_property
 
 from hamcrest import has_entry
 from hamcrest import has_key
-from hamcrest import has_length
-from hamcrest import has_entries
 from hamcrest import greater_than
 from nose.tools import assert_raises
 
@@ -156,6 +154,7 @@ class ContentUnitInfo(object):
 	contentUnit = None
 	lastModified = 0
 
+from pyramid.threadlocal import get_current_request
 
 class TestContainerPrefs(NewRequestLayerTest):
 	layer = _SecurityPolicyNewRequestSharedConfiguringTestLayer
@@ -170,7 +169,7 @@ class TestContainerPrefs(NewRequestLayerTest):
 
 		info = ContentUnitInfo()
 		info.contentUnit = unit
-		decorator = _ContentUnitPreferencesDecorator( info )
+		decorator = _ContentUnitPreferencesDecorator( info, get_current_request() )
 		result_map = {}
 
 		decorator.decorateExternalMapping( info, result_map )
@@ -334,7 +333,7 @@ class TestContainerPrefs(NewRequestLayerTest):
 
 		info = ContentUnitInfo()
 		info.contentUnit = content_unit
-		decorator = _ContentUnitPreferencesDecorator( info )
+		decorator = _ContentUnitPreferencesDecorator( info, get_current_request() )
 		result_map = {}
 
 		decorator.decorateExternalMapping( info, result_map )
