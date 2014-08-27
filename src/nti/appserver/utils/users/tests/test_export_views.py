@@ -80,27 +80,6 @@ class TestApplicationUserExporViews(ApplicationLayerTest):
 		assert_that(stream.readlines(), has_length(1))
 
 	@WithSharedApplicationMockDS
-	def test_ghost_containers(self):
-		with mock_dataserver.mock_db_trans(self.ds):
-			user = self._create_user(external_value={u'email':u"nti@nt.com",
-													 u'opt_in_email_communication':True})
-			username = user.username
-			note = Note()
-			note.body = [u'bankai']
-			note.creator = user
-			note.containerId = u'mycontainer'
-			note = user.addContainedObject(note)
-
-		testapp = TestApp(self.app)
-		environ = self._make_extra_environ()
-		path = '/dataserver2/@@user_ghost_containers'
-		res = testapp.get(path, params={"usernames":username}, extra_environ=environ)
-		assert_that(res.status_int, is_(200))
-		result = simplejson.loads(res.body)
-		assert_that(result, has_entry('Items', has_entry('sjohnson@nextthought.com', has_length(1))))
-		assert_that(result['Items']['sjohnson@nextthought.com'], has_entry('mycontainer', 1))
-
-	@WithSharedApplicationMockDS
 	def test_export_users(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			self._create_user(external_value={u'email':u"nti@nt.com",
