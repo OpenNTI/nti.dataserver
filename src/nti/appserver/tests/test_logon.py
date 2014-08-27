@@ -119,10 +119,18 @@ class TestApplicationLogon(ApplicationLayerTest):
 			other_user_username = other_user.username
 
 		testapp = TestApp( self.app )
-
+		nobody_env = self._make_extra_environ(username=other_user_username)
 		# Forbidden
-		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ( username=other_user_username ),
+		testapp.get( '/dataserver2/logon.nti.impersonate',
+					 extra_environ=nobody_env,
 					 status=403 )
+		# He doesn't get a link for it on a ping or handshake anyway
+		res = testapp.get('/dataserver2/logon.ping',
+						  extra_environ=nobody_env)
+		self.forbid_link_with_rel(res.json_body, 'logon.nti.impersonate')
+		res = testapp.post('/dataserver2/logon.handshake',
+						   params={'username': other_user_username})
+		self.forbid_link_with_rel(res.json_body, 'logon.nti.impersonate')
 
 		# Bad request
 		testapp.get( '/dataserver2/logon.nti.impersonate', extra_environ=self._make_extra_environ(  ),
@@ -133,8 +141,14 @@ class TestApplicationLogon(ApplicationLayerTest):
 					 extra_environ=self._make_extra_environ(),
 					 status=404)
 
-		# Good request
-		res = testapp.get( '/dataserver2/logon.nti.impersonate', params={'username': other_user_username},
+		# Good request...
+		# right person gets it in ping
+		res = testapp.get('/dataserver2/logon.ping',
+						  extra_environ=self._make_extra_environ())
+		self.require_link_href_with_rel(res.json_body, 'logon.nti.impersonate')
+
+		res = testapp.get( '/dataserver2/logon.nti.impersonate',
+						   params={'username': other_user_username},
 						   extra_environ=self._make_extra_environ() )
 		assert_that( testapp.cookies, has_key( 'nti.auth_tkt' ) )
 		# The auth_tkt cookie contains both the original and new username

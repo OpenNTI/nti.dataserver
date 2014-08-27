@@ -319,7 +319,6 @@ def handshake(request):
 	The second step in authentication. Inspects provided credentials
 	to decide what sort of logins are possible.
 	"""
-
 	desired_username = request.params.get( 'username' )
 	if not desired_username:
 		return hexc.HTTPBadRequest(detail="Must provide username")
@@ -731,7 +730,9 @@ class ImpersonationLinkProvider(object):
 		self.user = user
 
 	def get_links( self ):
-		if has_permission( nauth.ACT_IMPERSONATE, self.user, self.request ):
+		# check on the parent of the user, because users typically get
+		# the AllPermission on themselves
+		if has_permission( nauth.ACT_IMPERSONATE, self.user.__parent__, self.request ):
 			return (Link( self.request.route_path( self.rel ),
 						 rel=self.rel ),)
 		return ()
