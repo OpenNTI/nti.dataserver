@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nti.dataserver 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2014-04-02 08:16-0500\n"
+"POT-Creation-Date: 2014-08-27 11:37-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,23 +17,32 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
 
-#: src/nti/app/externalization/error.py:202
+#: src/nti/app/contentlibrary/forum.py:59
+#: src/nti/dataserver/contenttypes/forums/forum.py:278
+msgid "Forum"
+msgstr ""
+
+#: src/nti/app/externalization/error.py:207
 msgid "You cannot store that type of object here."
 msgstr ""
 
-#: src/nti/app/externalization/internalization.py:143
+#: src/nti/app/externalization/internalization.py:127
 msgid "Failed to parse/transform input"
-msgstr ""
-
-#: src/nti/app/externalization/view_mixins.py:361
-msgid "Unexpected internal error; see logs"
 msgstr ""
 
 #: src/nti/app/externalization/view_mixins.py:433
 msgid "Unsupported/missing Class"
 msgstr ""
 
-#: src/nti/app/pushnotifications/views.py:62
+#: src/nti/app/externalization/view_mixins.py:361
+msgid "Unexpected internal error; see logs"
+msgstr ""
+
+#: src/nti/app/forums/adapters.py:41
+msgid "${username}'s Thoughts"
+msgstr ""
+
+#: src/nti/app/pushnotifications/views.py:78
 msgid "Thank you. You have been unsubscribed."
 msgstr ""
 
@@ -41,11 +50,11 @@ msgstr ""
 msgid "Rendering to a browser not supported yet"
 msgstr ""
 
-#: src/nti/appserver/_adapters.py:539
+#: src/nti/appserver/_adapters.py:503
 msgid "This item has been deleted."
 msgstr ""
 
-#: src/nti/appserver/_adapters.py:541 src/nti/appserver/flagging_views.py:202
+#: src/nti/appserver/_adapters.py:505 src/nti/appserver/flagging_views.py:203
 msgid "This item has been deleted by the moderator."
 msgstr ""
 
@@ -53,39 +62,31 @@ msgstr ""
 msgid "Cannot create that type of object:"
 msgstr ""
 
-#: src/nti/appserver/account_creation_views.py:106
-msgid "Missing data"
-msgstr ""
-
-#: src/nti/appserver/account_creation_views.py:128
-#: src/nti/appserver/account_creation_views.py:177
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:210
-msgid "Please provide your first and last names."
-msgstr ""
-
-#: src/nti/appserver/account_creation_views.py:200
-msgid "That username is not available. Please choose another."
-msgstr ""
-
-#: src/nti/appserver/account_creation_views.py:270
-#: src/nti/appserver/account_creation_views.py:353
+#: src/nti/appserver/account_creation_views.py:269
+#: src/nti/appserver/account_creation_views.py:352
 msgid "Cannot create new account while logged on."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:68
-#: src/nti/appserver/account_recovery_views.py:274
+#: src/nti/appserver/account_creation_views.py:105
+msgid "Missing data"
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:127
+#: src/nti/appserver/account_creation_views.py:176
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:213
+msgid "Please provide your first and last names."
+msgstr ""
+
+#: src/nti/appserver/account_creation_views.py:199
+msgid "That username is not available. Please choose another."
+msgstr ""
+
+#: src/nti/appserver/account_recovery_views.py:69
+#: src/nti/appserver/account_recovery_views.py:288
 msgid "Cannot look for forgotten accounts while logged on."
 msgstr ""
 
-#: src/nti/appserver/account_recovery_views.py:109
-msgid "NextThought Username Reminder"
-msgstr ""
-
-#: src/nti/appserver/account_recovery_views.py:195
-msgid "NextThought Password Reset"
-msgstr ""
-
-#: src/nti/appserver/account_recovery_views.py:294
+#: src/nti/appserver/account_recovery_views.py:308
 msgid "Your reset link is not valid. Please request a new one."
 msgstr ""
 
@@ -93,20 +94,20 @@ msgstr ""
 msgid "No session found or illegal session id"
 msgstr ""
 
-#: src/nti/appserver/logon.py:413
+#: src/nti/appserver/logon.py:427
 msgid "Sign in with ${domain}"
 msgstr ""
 
-#: src/nti/appserver/logon.py:626
+#: src/nti/appserver/logon.py:640
 msgid "Multiple usernames"
 msgstr ""
 
-#: src/nti/appserver/logon.py:633
-msgid "No username"
+#: src/nti/appserver/logon.py:899
+msgid "The request was canceled by the remote server."
 msgstr ""
 
-#: src/nti/appserver/logon.py:885
-msgid "The request was canceled by the remote server."
+#: src/nti/appserver/logon.py:647
+msgid "No username"
 msgstr ""
 
 #: src/nti/appserver/rating_views.py:54
@@ -125,10 +126,6 @@ msgstr ""
 msgid "Not an image upload"
 msgstr ""
 
-#: src/nti/appserver/forums/adapters.py:40
-msgid "${username}'s Thoughts"
-msgstr ""
-
 #: src/nti/appserver/invitations/interfaces.py:150
 msgid "The invitation code is not valid."
 msgstr ""
@@ -137,86 +134,82 @@ msgstr ""
 msgid "The invitation code has expired."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:373
-msgid "Username contains a censored sequence"
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:378
-msgid "Alias contains a censored sequence"
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:530
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:217
-msgid "Please provide your first name."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:534
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:224
-msgid "Please provide your last name."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:552
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:189
-msgid "Birthdate must be in the past."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:555
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:195
-msgid "Birthdate must be at least four years ago."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:558
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:201
-msgid "Birthdate must be less than 150 years ago."
-msgstr ""
-
-#: src/nti/appserver/policies/site_policies.py:600
+#: src/nti/appserver/policies/site_policies.py:661
 msgid "Welcome to NextThought"
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:615
+#: src/nti/appserver/policies/site_policies.py:416
+msgid "Username contains a censored sequence"
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:421
+msgid "Alias contains a censored sequence"
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:591
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:220
+msgid "Please provide your first name."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:595
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:227
+msgid "Please provide your last name."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:613
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:192
+msgid "Birthdate must be in the past."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:676
 msgid "That username is not valid. Please choose another."
 msgstr ""
 
-#: src/nti/appserver/policies/site_policies.py:729
+#: src/nti/appserver/policies/site_policies.py:616
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:198
+msgid "Birthdate must be at least four years ago."
+msgstr ""
+
+#: src/nti/appserver/policies/site_policies.py:789
 msgid "Username ${username} cannot include any part of the real name ${realname}."
 msgstr ""
 
-#: src/nti/appserver/policies/user_policies.py:174
-msgid "NextThought Account Confirmation"
+#: src/nti/appserver/policies/site_policies.py:619
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:204
+msgid "Birthdate must be less than 150 years ago."
 msgstr ""
 
-#: src/nti/appserver/policies/user_policies.py:226
+#: src/nti/appserver/policies/user_policies.py:227
 msgid ""
 "It is too soon to send another consent request email. Please try again "
 "tomorrow."
 msgstr ""
 
-#: src/nti/appserver/policies/user_policies.py:267
+#: src/nti/appserver/policies/user_policies.py:268
 msgid "Please Confirm Your Child's NextThought Account"
 msgstr ""
 
-#: src/nti/appserver/store/views.py:80
-msgid "Purchase Confirmation"
-msgstr ""
-
-#: src/nti/appserver/templates/new_user_created.pt:52
-msgid "Hi ${name}!"
-msgstr ""
-
-#: src/nti/appserver/templates/new_user_created.pt:54
-msgid "Thank you for creating your new account and welcome to NextThought!"
+#: src/nti/appserver/policies/user_policies.py:175
+msgid "NextThought Account Confirmation"
 msgstr ""
 
 #: src/nti/appserver/templates/new_user_created.pt:60
+msgid "Hi ${name}!"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:66
+msgid "Thank you for creating your new account and welcome to NextThought!"
+msgstr ""
+
+#: src/nti/appserver/templates/new_user_created.pt:75
 msgid "Username:"
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:61
+#: src/nti/appserver/templates/new_user_created.pt:81
 msgid "Log in at:"
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:65
+#: src/nti/appserver/templates/new_user_created.pt:88
 msgid ""
 "NextThought offers interactive content and rich features to make learning "
 "both social and personal. Explore the NextThought Help Center in your Library"
@@ -224,35 +217,34 @@ msgid ""
 "NextThought has to offer."
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:74
+#: src/nti/appserver/templates/new_user_created.pt:100
 msgid "Sincerely,"
 msgstr ""
 
-#: src/nti/appserver/templates/new_user_created.pt:79
+#: src/nti/appserver/templates/new_user_created.pt:109
 msgid ""
 "If you feel this email was sent in error, or this account was created without"
 " your consent, you may email us at ${support_email}"
 msgstr ""
 
 #: src/nti/appserver/utils/link_providers_admin_views.py:50
-#: src/nti/store/admin_views.py:74 src/nti/store/admin_views.py:96
-#: src/nti/store/admin_views.py:116 src/nti/store/admin_views.py:140
+#: src/nti/appserver/utils/users/export_views.py:147
 msgid "User not found"
 msgstr ""
 
-#: src/nti/appserver/utils/coppa/coppa_admin_views.py:142
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:144
 msgid "Name"
 msgstr ""
 
-#: src/nti/appserver/utils/coppa/coppa_admin_views.py:152
+#: src/nti/appserver/utils/coppa/coppa_admin_views.py:154
 msgid "Contact Email"
 msgstr ""
 
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:162
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:165
 msgid "Please provide a valid ${field}."
 msgstr ""
 
-#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:181
+#: src/nti/appserver/utils/coppa/coppa_upgrade_views.py:184
 msgid "Please provide a valid birthdate."
 msgstr ""
 
@@ -260,15 +252,15 @@ msgstr ""
 msgid "Invalid ACL specification"
 msgstr ""
 
-#: src/nti/appserver/utils/forums/forum_admin_views.py:68
 #: src/nti/appserver/utils/forums/forum_admin_views.py:89
+#: src/nti/appserver/utils/forums/forum_admin_views.py:68
 #: src/nti/appserver/utils/forums/forum_admin_views.py:145
 #: src/nti/appserver/utils/forums/forum_admin_views.py:172
 msgid "Community not found"
 msgstr ""
 
-#: src/nti/appserver/utils/forums/forum_admin_views.py:75
 #: src/nti/appserver/utils/forums/forum_admin_views.py:95
+#: src/nti/appserver/utils/forums/forum_admin_views.py:75
 #: src/nti/appserver/utils/forums/forum_admin_views.py:120
 msgid "Board not found"
 msgstr ""
@@ -278,8 +270,8 @@ msgid "Community does not allow a forum"
 msgstr ""
 
 #: src/nti/appserver/utils/forums/forum_admin_views.py:105
-#: src/nti/appserver/utils/forums/forum_admin_views.py:154
 #: src/nti/appserver/utils/forums/forum_admin_views.py:180
+#: src/nti/appserver/utils/forums/forum_admin_views.py:154
 msgid "Forum not found"
 msgstr ""
 
@@ -299,44 +291,40 @@ msgid ""
 "shapes"
 msgstr ""
 
-#: src/nti/dataserver/contenttypes/forums/forum.py:278
-msgid "Forum"
-msgstr ""
-
-#: src/nti/dataserver/users/interfaces.py:60
+#: src/nti/dataserver/users/interfaces.py:64
 msgid "The field cannot be blank."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:76
+#: src/nti/dataserver/users/interfaces.py:80
 msgid "The username cannot be blank."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:90
-msgid ""
-"Username contains an illegal character. Only letters, digits, and "
-"${allowed_chars} are allowed."
-msgstr ""
-
-#: src/nti/dataserver/users/interfaces.py:103
+#: src/nti/dataserver/users/interfaces.py:107
 msgid "The email address you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:110
+#: src/nti/dataserver/users/interfaces.py:114
 msgid "The first or last name you have entered is not valid."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:118
+#: src/nti/dataserver/users/interfaces.py:127
 msgid "The password you supplied does not match the current password."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:121
+#: src/nti/dataserver/users/interfaces.py:130
 msgid "Your pasword cannot contain only whitespace. Please try again."
 msgstr ""
 
-#: src/nti/dataserver/users/interfaces.py:124
+#: src/nti/dataserver/users/interfaces.py:133
 msgid ""
 "The password you supplied has been identified by security researchers as "
 "commonly used and insecure. Please try again."
+msgstr ""
+
+#: src/nti/dataserver/users/interfaces.py:94
+msgid ""
+"Username contains an illegal character. Only letters, digits, and "
+"${allowed_chars} are allowed."
 msgstr ""
 
 #: src/nti/dataserver/users/missing_user.py:37
@@ -355,93 +343,7 @@ msgstr ""
 msgid "Deleted User"
 msgstr ""
 
-#: src/nti/ntiids/ntiids.py:102
+#: src/nti/ntiids/ntiids.py:107
 msgid "The value you have used is not valid."
-msgstr ""
-
-#: src/nti/store/admin_views.py:51 src/nti/store/pyramid_views.py:135
-msgid "Must specify a valid purchase attempt id"
-msgstr ""
-
-#: src/nti/store/admin_views.py:55 src/nti/store/pyramid_views.py:139
-#: src/nti/store/pyramid_views.py:206
-msgid "Purchase attempt not found"
-msgstr ""
-
-#: src/nti/store/admin_views.py:101 src/nti/store/admin_views.py:121
-#: src/nti/store/admin_views.py:190 src/nti/store/pyramid_views.py:251
-msgid "Purchasable not found"
-msgstr ""
-
-#: src/nti/store/admin_views.py:186 src/nti/store/pyramid_views.py:197
-msgid "Must specify a valid purchasable id"
-msgstr ""
-
-#: src/nti/store/invitations.py:37
-msgid "The limit for this invitation code has been exceeded."
-msgstr ""
-
-#: src/nti/store/invitations.py:43
-msgid "Invitation already accepted"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:202
-msgid "Must specify a valid invitation code"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:209
-msgid "Not redeemable purchase"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:213
-msgid "The invitation code is not for this purchasable"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:222
-msgid "The invitation code has already been accepted"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:225
-msgid "There are no remaining invitations for this code"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:244
-msgid "Invalid quantity"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:267 src/nti/store/pyramid_views.py:285
-msgid "Course not found"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:288
-msgid "User not enrolled"
-msgstr ""
-
-#: src/nti/store/pyramid_views.py:290
-msgid "Invalid enrollment attempt"
-msgstr ""
-
-#: src/nti/store/payments/stripe/pyramid_views.py:67
-msgid "Provider not found"
-msgstr ""
-
-#: src/nti/store/payments/stripe/pyramid_views.py:300
-msgid "Transaction not found"
-msgstr ""
-
-#: src/nti/store/payments/stripe/pyramid_views.py:302
-msgid "Purchase was not successful"
-msgstr ""
-
-#: src/nti/store/payments/stripe/stripe_key.py:37
-msgid "PrivateKey"
-msgstr ""
-
-#: src/nti/store/payments/stripe/stripe_key.py:38
-msgid "Alias"
-msgstr ""
-
-#: src/nti/utils/schema.py:265
-msgid "${field} is too short."
 msgstr ""
 
