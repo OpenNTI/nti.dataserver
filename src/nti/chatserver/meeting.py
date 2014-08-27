@@ -24,7 +24,7 @@ from zope.deprecation import deprecated
 from nti.dataserver.contenttypes import threadable
 
 from nti.externalization import datastructures
-from nti.externalization.externalization import make_repr
+from nti.externalization.representation import make_repr
 
 from nti.utils.property import alias
 from nti.utils.property import read_alias
