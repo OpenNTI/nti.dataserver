@@ -37,7 +37,7 @@ from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DM
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import to_json_representation_externalized
+from nti.externalization.representation import to_json_representation_externalized
 
 from nti.ntiids import ntiids
 
