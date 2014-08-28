@@ -28,10 +28,11 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from . import interfaces as search_interfaces
 
 from .constants import (POST_MIME_TYPE, NTI_CARD_MIME_TYPE, BOOK_CONTENT_MIME_TYPE,
-						VIDEO_TRANSCRIPT_MIME_TYPE)
+						VIDEO_TRANSCRIPT_MIME_TYPE, AUDIO_TRANSCRIPT_MIME_TYPE)
 
 from .constants import (nticard_, content_, videotranscript_, transcript_, note_,
-						highlight_, redaction_, messageinfo_, post_, forum_)
+						highlight_, redaction_, messageinfo_, post_, forum_,
+						audiotranscript_)
 
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
@@ -129,7 +130,7 @@ def _communityforum_metadata():
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
 def _nticard_metadata():
 	return SearchTypeMetaData(Name=nticard_, MimeType=NTI_CARD_MIME_TYPE,
-							  IsUGD=False, Order=3,
+							  IsUGD=False, Order=4,
 							  Interface=search_interfaces.INTICardContent)
 
 @interface.implementer(search_interfaces.ISearchTypeMetaData)
@@ -149,3 +150,9 @@ def _videotranscript_metadata():
 	return SearchTypeMetaData(Name=videotranscript_, MimeType=VIDEO_TRANSCRIPT_MIME_TYPE,
 							  IsUGD=False, Order=2,
 							  Interface=search_interfaces.IVideoTranscriptContent)
+
+@interface.implementer(search_interfaces.ISearchTypeMetaData)
+def _audiotranscript_metadata():
+	return SearchTypeMetaData(Name=audiotranscript_, MimeType=AUDIO_TRANSCRIPT_MIME_TYPE,
+							  IsUGD=False, Order=3,
+							  Interface=search_interfaces.IAudioTranscriptContent)
