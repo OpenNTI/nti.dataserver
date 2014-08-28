@@ -15,11 +15,14 @@ $Id$
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 # Note that we must not import *anything* before the patch
 from nti.monkey import gevent_patch_on_import
 gevent_patch_on_import.patch()
+
+logger = __import__('logging').getLogger(__name__)
+
+from nti.monkey import relstorage_patch_all_on_import
+relstorage_patch_all_on_import.patch()
 
 from nti.monkey import webob_cookie_escaping_patch_on_import
 webob_cookie_escaping_patch_on_import.patch()
