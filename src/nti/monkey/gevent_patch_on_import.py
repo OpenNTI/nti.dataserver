@@ -74,26 +74,39 @@ def _patch_thread_stop():
 	setattr( threading.Thread, '_Thread__stop', __stop )
 
 def _patch_logging():
-	# Patch the logging package to be aware of greenlets and format things
-	# nicely
+	# Patch the logging package to be aware of greenlets and format
+	# things nicely. The default logging Formatter object simply takes
+	# the __dict__ of the record and applies it to the format string,
+	# so any information must be reified, not properties.
+
 	import logging
 	from logging import LogRecord
-	from gevent import getcurrent, Greenlet
+	from gevent import getcurrent
+
+	# The logging module defines a bunch of undocumented (just commented)
+	# constants like 'logThreads', 'logProcesses' and 'logMultiprocessing'
+	# These are all true by default, and control, respectively, the
+	# thread/threadName, process (aka pid) and processName attributes.
+
 	class _LogRecord(LogRecord):
 		def __init__( self, *args, **kwargs ):
 			LogRecord.__init__( self, *args, **kwargs )
-			# TODO: Respect logging.logThreads?
-			if self.threadName and (self.threadName == 'MainThread' or self.threadName.startswith( 'Dummy-' )):
+			if not self.threadName:
+				# logger.logThreads was set to False probably
+				return
+
+			if (self.threadName == 'MainThread'
+				or self.threadName.startswith( 'Dummy-' )):
+
 				current = getcurrent()
-				thread_info = getattr( current, '__thread_name__', None )
+				# We define __thread_name__ in our custom greenlet worker
+				# subclass (see nti.appserver.gunicorn); _formatinfo is
+				# an internal debugging method from gevent
+				thread_info = (getattr(current, '__thread_name__', None)
+							   or getattr(current, '_formatinfo', None))
 				if thread_info:
 					self.thread = id(current)
 					self.threadName = thread_info()
-
-				elif type(current) == Greenlet \
-				  or isinstance( current, Greenlet ):
-					self.thread = id( current )
-					self.threadName = current._formatinfo()
 
 	logging.LogRecord = _LogRecord
 
