@@ -18,6 +18,7 @@ from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.appserver.pyramid_authorization import is_writable
+from nti.appserver.pyramid_authorization import is_deletable
 from zope.location.interfaces import ILocation
 
 from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
@@ -52,15 +53,20 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	#: object identifies
 	allow_traversable_paths = True
 
+	#: The method to use to send to the link
+	link_method = None
+
 	def _make_link_to_context(self, context):
 		if self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context):
 			link = Link(context,
-						rel='edit')
+						rel='edit',
+						method=self.link_method)
 			link.__parent__ = context.__parent__
 			link.__name__ = context.__name__
 		else:
 			link = Link( to_external_ntiid_oid( context ),
-						 rel='edit' )
+						 rel='edit',
+						 method=self.link_method)
 			link.__parent__ = context
 			# XXX: Is this necessary anymore?
 			link.__name__ = ''
@@ -154,10 +160,25 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 class OIDEditLinkDecorator(EditLinkDecorator):
 	"""
-	A decorator for persistent objects.
+	A decorator for persistent objects, producing stable
+	OIDs.
 	"""
 
 	allow_traversable_paths = False
+
+class OIDEditOrDeleteLinkDecorator(OIDEditLinkDecorator):
+	"""
+	If not writable, how about delete?
+	"""
+
+	def _has_permission(self, context):
+		writable = super(OIDEditOrDeleteLinkDecorator,self)._has_permission(context)
+		if writable:
+			return writable
+		deleteable = is_deletable(context, request=self.request)
+		if deleteable:
+			self.link_method = 'DELETE'
+			return deleteable
 
 class UserEditLinkDecorator(EditLinkDecorator):
 	"""

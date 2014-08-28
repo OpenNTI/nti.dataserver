@@ -23,7 +23,7 @@ from pyramid.traversal import lineage as _pyramid_lineage
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
-from nti.dataserver.authorization import ACT_UPDATE, ACT_READ, ACT_CREATE
+from nti.dataserver.authorization import ACT_UPDATE, ACT_READ, ACT_CREATE, ACT_DELETE
 from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -198,6 +198,14 @@ def is_writable(obj, request=None, skip_cache=False):
 	or Yes if it is the returned object and we have permission.
 	"""
 	return _caching_permission_check('_acl_is_writable_cache', ACT_UPDATE, obj, request, skip_cache=skip_cache)
+
+def is_deletable(obj, request=None, skip_cache=False):
+	"""
+	Is the given object deletable by the current user? Yes if the creator matches,
+	or Yes if it is the returned object and we have permission.
+	"""
+	return _caching_permission_check('_acl_is_deletable_cache', ACT_DELETE, obj, request, skip_cache=skip_cache)
+
 
 def is_readable(obj, request=None, skip_cache=False):
 	"""
