@@ -198,7 +198,7 @@ def create_queryobject(username, params, matchdict):
 	args['context'] = context
 	
 	term = matchdict.get('term', u'')
-	term = clean_search_query(unicode(term))
+	term = clean_search_query(safestr(term))
 	args['term'] = term
 
 	args['username'] = username
