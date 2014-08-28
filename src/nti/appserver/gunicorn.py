@@ -31,17 +31,25 @@ from gunicorn.app.pasterapp import PasterServerApplication
 
 if gunicorn.version_info != (18,0):
 	raise ImportError("Unknown gunicorn version")
+
+from gevent import getcurrent
+
 # Gunicorn 18.0 and below have a bug formatting times:
 # (see https://github.com/benoitc/gunicorn/issues/621)
 # which causes our logging to be VERY misleading
 # a fix is committed that we replicate below,
 # so when the version changes, review
 # this patch.
-# We also have a change to make the 'u' variable actually do something
+
+# NOTE: We also have a change to make the 'u' variable actually do something,
+# plus a custom atom to get the greenlet id and pid into the message, just like
+# in normal log messages
 from gunicorn import glogging
 def _glogging_atoms(self, resp, req, environ, request_time):
-	""" Gets atoms for log formating.
 	"""
+	Gets atoms for log formating.
+	"""
+	mypid = os.getpid()
 	status = resp.status.split(None, 1)[0]
 	atoms = {
 		'h': environ.get('REMOTE_ADDR', '-'),
@@ -56,7 +64,8 @@ def _glogging_atoms(self, resp, req, environ, request_time):
 		'a': environ.get('HTTP_USER_AGENT', '-'),
 		'T': request_time.seconds,
 		'D': request_time.microseconds,
-		'p': "<%s>" % os.getpid()
+		'p': "<%s>" % mypid,
+		'G': "[%d:%d]" % (id(getcurrent()), mypid),
 	}
 
 	# add request headers
@@ -321,7 +330,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# value is between 0 and one whole second; we need to properly set formatting
 		# field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
-		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(T)s.%(D)06ds" )
+		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
 		# Then the default propagation settings mean we get two copies of access logging.
 		# make that stop.
