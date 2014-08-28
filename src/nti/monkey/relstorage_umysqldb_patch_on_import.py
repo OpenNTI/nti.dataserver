@@ -214,6 +214,8 @@ def _patch():
 	relstorage_zlibstorage_patch_on_import.patch()
 	from . import relstorage_explicitly_close_memcache_patch_on_import
 	relstorage_explicitly_close_memcache_patch_on_import.patch()
+	from . import relstorage_locker_patch_on_import
+	relstorage_locker_patch_on_import.patch()
 
 _patch()
 

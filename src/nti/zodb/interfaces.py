@@ -86,3 +86,15 @@ class INumericCounter(INumericValue):
 
 		:return: The counter with the incremented value.
 		"""
+
+from ZODB.POSException import StorageError
+
+class UnableToAcquireCommitLock(StorageError):
+	"""
+	A ZODB storage (typically RelStorage) was unable
+	to acquire the required commit lock.
+
+	Expect this actual class to be temporary, replaced with
+	a BWC import when RelStorage accepts a patch to include
+	the functionality directly.
+	"""
