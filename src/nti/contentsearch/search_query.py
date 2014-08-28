@@ -23,8 +23,9 @@ from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import constants
-from . import interfaces as search_interfaces
+from .constants import descending_
+from .interfaces import ISearchQuery
+from .interfaces import IDateTimeRange
 
 phrase_search = re.compile(r'"(?P<text>.*?)"')
 prefix_search = re.compile(r'(?P<text>[^ \t\r\n*]+)[*](?= |$|\\)')
@@ -35,20 +36,20 @@ def is_phrase_search(term):
 def is_prefix_search(term):
 	return prefix_search.match(term) is not None if term else False
 
-@interface.implementer(search_interfaces.ISearchQuery)
+@interface.implementer(ISearchQuery)
 @component.adapter(basestring)
 def _default_query_adapter(query, *args, **kwargs):
 	if query is not None:
 		query = QueryObject.create(query, *args, **kwargs)
 	return query
 
-@interface.implementer(search_interfaces.IDateTimeRange)
+@interface.implementer(IDateTimeRange)
 @WithRepr
 @EqHash('startTime', 'endTime')
 class DateTimeRange(SchemaConfigured):
 	__external_can_create__ = True
 	mime_type = mimeType = 'application/vnd.nextthought.search.datetimerange'
-	createDirectFieldProperties(search_interfaces.IDateTimeRange)
+	createDirectFieldProperties(IDateTimeRange)
 
 	def digest(self):
 		md5 = hashlib.md5()
@@ -57,7 +58,7 @@ class DateTimeRange(SchemaConfigured):
 		result = md5.hexdigest()
 		return result
 
-@interface.implementer(search_interfaces.ISearchQuery)
+@interface.implementer(ISearchQuery)
 @WithRepr
 class QueryObject(SchemaConfigured):
 
@@ -66,7 +67,7 @@ class QueryObject(SchemaConfigured):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.query'
 
-	createDirectFieldProperties(search_interfaces.ISearchQuery)
+	createDirectFieldProperties(ISearchQuery)
 
 	def __init__(self, *args, **kwargs):
 		indexid = kwargs.get('indexid', None)
@@ -105,7 +106,7 @@ class QueryObject(SchemaConfigured):
 	
 	@property
 	def IsDescendingSortOrder(self):
-		return self.sortOrder == constants.descending_
+		return self.sortOrder == descending_
 	is_descending_sort_order = IsDescendingSortOrder
 
 	@property
