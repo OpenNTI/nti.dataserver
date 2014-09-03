@@ -87,12 +87,13 @@ class IntIds(_ZCIntIds):
 		self.refs[uid] = unwrapped
 		return uid
 
-	def forceUnregister(self, uid, ob, notify=False):
+	def forceUnregister(self, uid, ob, notify=False, removeAttribute=True):
 		unwrapped = unwrap(aq_base(ob))
 		if not uid in self.refs or self.refs[uid] is not unwrapped:
 			raise KeyError(ob)
 		del self.refs[uid]
-		setattr(ob, self.attribute, None)
+		if removeAttribute:
+			setattr(ob, self.attribute, None)
 		if notify:
 			zope_event.notify(RemovedEvent(ob, self, uid))
 
