@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
 
 import os
 import sys
@@ -17,7 +16,6 @@ import argparse
 import datetime
 import functools
 import subprocess
-
 
 from pkg_resources import resource_filename
 
@@ -31,6 +29,7 @@ log = getLogger(__name__)
 logger = log
 
 import zope.exceptions.log
+
 from zope import component
 from zope.configuration import xmlconfig
 
@@ -101,7 +100,9 @@ def _set_argparser():
 
 @_catching
 def main():
-	""" Main program routine """
+	""" 
+	Main program routine 
+	"""
 	argv = sys.argv[1:]
 	arg_parser = _set_argparser()
 	args = arg_parser.parse_args(args=argv)
@@ -141,9 +142,12 @@ def main():
 	zope_pre_conf_name = os.path.join(source_dir, str('pre_configure.zcml'))
 	xml_conf_context = None
 	if os.path.exists(zope_pre_conf_name):
-		xml_conf_context = xmlconfig.file(os.path.abspath(zope_pre_conf_name), package=nti.contentrendering)
+		xml_conf_context = xmlconfig.file(os.path.abspath(zope_pre_conf_name), 
+										  package=nti.contentrendering)
 
-	xml_conf_context = xmlconfig.file('configure.zcml', package=nti.contentrendering, context=xml_conf_context)
+	xml_conf_context = xmlconfig.file('configure.zcml', 
+									   package=nti.contentrendering,
+									   context=xml_conf_context)
 
 
 	# Create document instance that output will be put into
@@ -339,20 +343,6 @@ def postRender(document,
 
 	contentPath = os.path.realpath(contentLocation)
 
-	if doindexing and  not os.path.exists(os.path.join(contentPath, 'indexdir')):
-		# We'd like to be able to run this with pypy (it's /much/ faster)
-		# but some of the Zope libs we import during contentsearch (notably Persistent)
-		# are not quite compatible. A previous version of this code made the correct
-		# changes PYTHONPATH changes for this to work (before contentsearch grew those deps);
-		# now it just generates exceptions, so we don't try right now
-		start_t = time.time()
-		logger.info("Indexing content in-process.")
-		for name, impl in component.getUtilitiesFor(interfaces.IRenderedBookIndexer):
-			logger.info("Indexing %s content", name)
-			impl.transform(book, jobname)
-		elapsed = time.time() - start_t
-		logger.info("Content indexing took %s(s)", elapsed)
-
 	# TODO: Aren't the things in the archive mirror file the same things
 	# we want to list in the manifest? If so, we should be able to combine
 	# these steps (if nothing else, just list the contents of the archive to get the
@@ -368,11 +358,24 @@ def postRender(document,
 	# Ideally order shouldn't matter, and if it does it should be
 	# handled by a specialized dispatching utility.
 	for name, extractor in sorted(component.getUtilitiesFor(interfaces.IRenderedBookTransformer)):
-		if interfaces.IRenderedBookIndexer.providedBy(extractor):
-			continue
-		logger.info("Extracting %s/%s", name, extractor)
-		extractor.transform(book)
+		if not interfaces.IRenderedBookIndexer.providedBy(extractor):
+			logger.info("Extracting %s/%s", name, extractor)
+			extractor.transform(book)
 
+	if doindexing and  not os.path.exists(os.path.join(contentPath, 'indexdir')):
+		# We'd like to be able to run this with pypy (it's /much/ faster)
+		# but some of the Zope libs we import during contentsearch (notably Persistent)
+		# are not quite compatible. A previous version of this code made the correct
+		# changes PYTHONPATH changes for this to work (before contentsearch grew those deps);
+		# now it just generates exceptions, so we don't try right now
+		start_t = time.time()
+		logger.info("Indexing content in-process.")
+		for name, extractor in component.getUtilitiesFor(interfaces.IRenderedBookIndexer):
+			logger.info("Indexing %s content", name)
+			extractor.transform(book, jobname)
+		elapsed = time.time() - start_t
+		logger.info("Content indexing took %s(s)", elapsed)
+		
 	logger.info("Creating JSONP content")
 	jsonpbuilder.transform(book)
 
@@ -422,10 +425,11 @@ def write_dc_metadata(document, jobname):
 		f.write(xml_string.encode('utf-8'))
 
 def generateImages(document):
-	### Generates required images ###
-	# Replace this with configuration/use of ZCA?
+	## Generates required images ###
+	## Replace this with configuration/use of ZCA?
+	OVERRIDE_INDEX_NAME = getattr(ResourceTypeOverrides, 'OVERRIDE_INDEX_NAME')
 	local_overrides = os.path.join(os.getcwd(), '../nti.resourceoverrides')
-	if os.path.exists(os.path.join(local_overrides, ResourceTypeOverrides.OVERRIDE_INDEX_NAME)):
+	if os.path.exists(os.path.join(local_overrides, OVERRIDE_INDEX_NAME)):
 		overrides = local_overrides
 	else:
 		overrides = resource_filename(__name__, 'resourceoverrides')
