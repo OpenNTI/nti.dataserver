@@ -35,6 +35,8 @@ from nti.utils.maps import CaseInsensitiveDict
 from .common import to_list
 from .common import get_type_name
 
+from .content_utils import resolve_content_parts
+
 from .interfaces import IACLResolver
 from .interfaces import IBookContent
 from .interfaces import ITypeResolver
@@ -208,16 +210,6 @@ class _RedactionContentResolver(_HighLightContentResolver):
 		result = self.obj.redactionExplanation
 		return result if result else None
 	redactionExplanation = property(get_redaction_explanation)
-
-def resolve_content_parts(data):
-	result = []
-	items = to_list(data)
-	for item in items or ():
-		adapted = IContentResolver(item, None)
-		if adapted:
-			result.append(adapted.content)
-	result = u' '.join([x for x in result if x is not None])
-	return result
 
 class _PartsContentResolver(object):
 
