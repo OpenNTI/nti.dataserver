@@ -43,9 +43,9 @@ from .interfaces import IVideoTranscriptContent
 from .constants import VIDEO_TRANSCRIPT_MIME_TYPE, AUDIO_TRANSCRIPT_MIME_TYPE
 from .constants import POST_MIME_TYPE, NTI_CARD_MIME_TYPE, BOOK_CONTENT_MIME_TYPE
 
-from .constants import highlight_, redaction_, messageinfo_, post_, audiotranscript_
-from .constants import nticard_, content_, videotranscript_, transcript_, note_, forum_
-
+from .constants import content_, nticard_
+from .constants import audiotranscript_, videotranscript_, transcript_
+from .constants import note_, highlight_, redaction_, messageinfo_, post_, comment_, forum_
 
 @interface.implementer(ISearchTypeMetaData)
 @WithRepr
@@ -112,49 +112,56 @@ def _post_metadata():
 def _legacypost_metadata():
 	return SearchTypeMetaData(Name=post_,
 							  MimeType=(MIME_BASE + "." + post_),
-							  IsUGD=True, Order=9,
+							  IsUGD=True,
+							  Order=9,
 							  Interface=IPost)
 
 @interface.implementer(ISearchTypeMetaData)
 def _personalblogcomment_metadata():
-	return SearchTypeMetaData(Name=post_,
+	return SearchTypeMetaData(Name=comment_,
 							  MimeType=(MIME_BASE + ".forums.personalblogcomment"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True,
+							  Order=9,
 							  Interface=IPersonalBlogComment)
 	
 @interface.implementer(ISearchTypeMetaData)
 def _generalforumcomment_metadata():
-	return SearchTypeMetaData(Name=post_,
+	return SearchTypeMetaData(Name=comment_,
 							  MimeType=(MIME_BASE + ".forums.generalforumcomment"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True, 
+							  Order=9,
 							  Interface=IGeneralForumComment)
 
 @interface.implementer(ISearchTypeMetaData)
 def _personalblogentrypost_metadata():
 	return SearchTypeMetaData(Name=post_,
 							  MimeType=(MIME_BASE + ".forums.personalblogentrypost"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True,
+							  Order=9,
 							  Interface=IPersonalBlogEntryPost)
 
 @interface.implementer(ISearchTypeMetaData)
 def _communityheadlinepost_metadata():
 	return SearchTypeMetaData(Name=post_,
 							  MimeType=(MIME_BASE + ".forums.communityheadlinepost"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True, 
+							  Order=9,
 							  Interface=ICommunityHeadlinePost)
 
 @interface.implementer(ISearchTypeMetaData)
 def _generalforum_metadata():
 	return SearchTypeMetaData(Name=forum_,
 							  MimeType=(MIME_BASE + ".forums.generalforum"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True,
+							  Order=9,
 							  Interface=IGeneralForum)
 
 @interface.implementer(ISearchTypeMetaData)
 def _communityforum_metadata():
 	return SearchTypeMetaData(Name=forum_,
 							  MimeType=(MIME_BASE + ".forums.communityforum"),
-							  IsUGD=True, Order=9,
+							  IsUGD=True, 
+							  Order=9,
 							  Interface=ICommunityForum)
 
 @interface.implementer(ISearchTypeMetaData)
