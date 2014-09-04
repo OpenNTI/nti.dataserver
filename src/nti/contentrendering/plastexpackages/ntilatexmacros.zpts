@@ -262,17 +262,34 @@ name: relatedwork
 name: worktitle workcreator worksource worksourceref
 
 name: relatedworkref
-<object class="ntirelatedworkref">
-	<param name="creator" value="creator" tal:attributes="value self/relatedwork/creator" />
-	<param name="desc" value="description" tal:attributes="value self/description" />
-	<param name="href" value="target URI" tal:attributes="value self/uri" />
-	<param name="type" value="target MIME type" tal:attributes="value self/targetMimeType" />
-	<param name="icon" value="icon" tal:attributes="value self/relatedwork/iconResource/image/url" />
-	<param name="label" value="related work title" tal:attributes="value self/relatedwork/title" />
-	<param name="ntiid" value="the reference's NTIID" tal:attributes="value self/ntiid" />
-	<param name="target-ntiid" value="the target's NTIID" tal:attributes="value self/target_ntiid" />
+<object type="application/vnd.nextthought.relatedworkref"
+		class="ntirelatedworkref"
+		data-ntiid="tag:relatedworkref-ntiid"
+		data-type="summary"
+		data-title="The Short Title"
+		data-creator=""
+		data-target_ntiid="tag:target-ntiid"
+		data-href="/path/to/resource.pdf"
+		tal:attributes="data-ntiid self/ntiid;
+						data-target_ntiid self/target_ntiid | nothing;
+						data-title self/relatedwork/title;
+						data-creator self/relatedwork/creator | nothing;
+						data-href self/uri;
+						type self/mimeType" >
+
+	<param name="ntiid" value="tag:card-ntiid" tal:attributes="value self/ntiid" />
+	<param name="type"    value="summary" />
+	<param name="title" value="The Short Title" tal:attributes="value self/relatedwork/title" />
+	<param name="creator" value="Joe Smith"      tal:attributes="value self/relatedwork/creator | nothing" />
+	<param name="href"    value="/path/to/resource.pdf" tal:attributes="value self/uri" />
+	<param name="target_ntiid" value="tag:target-ntiid" tal:attributes="value self/target_ntiid" />
+	<param name="targetMimeType" value="target MIME type" tal:attributes="value self/targetMimeType" />
 	<param name="section" value="section" tal:attributes="value self/category" />
 	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
+	<span class="description" tal:content="self/description" tal:condition="self/description">
+			The description of the target.
+	</span>
+	<img src="${self/relatedwork/iconResource/image/url}" height="${self/relatedwork/iconResource/image/height/px}" width="${self/relatedwork/iconResource/image/width/px}" />
 </object>
 
 name: ntidiscussion
