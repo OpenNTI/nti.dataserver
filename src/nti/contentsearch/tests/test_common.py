@@ -65,7 +65,7 @@ class TestCommon(unittest.TestCase):
 		assert_that(mmap, has_entry('application/vnd.nextthought.nticard', 'nticard'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.videotranscript', 'videotranscript'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogentrypost', 'post'))
-		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'post'))
+		assert_that(mmap, has_entry('application/vnd.nextthought.forums.personalblogcomment', 'comment'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.generalforum', 'forum'))
 		assert_that(mmap, has_entry('application/vnd.nextthought.forums.communityforum', 'forum'))
 
@@ -73,7 +73,7 @@ class TestCommon(unittest.TestCase):
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.generalforum'), is_('forum'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.communityforum'), is_('forum'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogentrypost'), is_('post'))
-		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('post'))
+		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.personalblogcomment'), is_('comment'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.forums.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.post'), is_('post'))
 		assert_that(get_type_from_mimetype('application/vnd.nextthought.content'), is_('content'))
