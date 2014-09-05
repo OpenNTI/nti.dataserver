@@ -97,7 +97,7 @@ class _SearchableContent(object):
 
 class Book(_SearchableContent):
 
-	type = constants.book_
+	type = constants.content_
 	prefix = constants.book_prefix
 
 	@Lazy
