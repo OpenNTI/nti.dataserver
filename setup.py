@@ -192,6 +192,7 @@ setup(
 		'umysqldb == 1.0.4dev2', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage >= 1.5.1',
 		'PyMySQL',  # current >= 0.6.1
+        'PyYAML',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson >= 0.3.3',
