@@ -288,20 +288,22 @@
 	<utility factory=".search_metadata._audiotranscript_metadata" name="audiotranscript" />
 	<utility factory=".search_metadata._videotranscript_metadata" name="videotranscript" />
 
-	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
-	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
+	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
+	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
 	<utility factory=".search_metadata._personalblogcomment_metadata" name="personalblogcomment" />
 	<utility factory=".search_metadata._generalforumcomment_metadata" name="generalforumcomment" />
 	<utility factory=".search_metadata._personalblogentrypost_metadata" name="personalblogentrypost" />
 	<utility factory=".search_metadata._communityheadlinepost_metadata" name="communityheadlinepost" />
-
-	<utility factory=".search_metadata._generalforum_metadata" name="generalforum" />
-	<utility factory=".search_metadata._communityforum_metadata" name="communityforum" />
+	
+	<utility factory=".search_metadata._legacypost_metadata" name="legacypost" />
+	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
 
 	<!-- Search highlights -->
 
+	<utility factory=".search_highlights.create_default_analyzer" />
 	<utility factory=".search_highlights.create_default_analyzer" name="en" />
 	<utility factory=".search_highlights.create_default_analyzer" name="es" />
+	<utility factory=".search_highlights.create_default_analyzer" name="ru" />
 
 	<!-- Search results -->
 
