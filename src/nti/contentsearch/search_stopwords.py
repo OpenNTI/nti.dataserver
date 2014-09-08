@@ -38,7 +38,7 @@ class _FileBasedStopWords(object):
 	def stopwords(self, lang='en'):
 		return self._cache.get(lang, ())
 
-	def available_languages(self,):
+	def available_languages(self):
 		return tuple(sorted(self._cache.keys()))
 
 @interface.implementer(IStopWords)
