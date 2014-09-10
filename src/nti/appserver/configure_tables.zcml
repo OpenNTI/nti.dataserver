@@ -1,8 +1,13 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
+	
 	<include package="z3c.table" />
 
 	<adapter factory="._table_utils.TrivialTableAbsoluteURL" />
@@ -30,10 +35,12 @@
 	<adapter factory="._table_utils.NoteLikeBodyColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn" />
+			 
 	<adapter factory="._table_utils.KindColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn"
 			 name="note-kind"/>
+			 
 	<adapter factory="._table_utils.ContainerColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 provides="z3c.table.interfaces.IColumn"
@@ -48,6 +55,7 @@
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
 			 name="note-modified" />
+			 
 	<adapter factory="._table_utils.CreatorColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * .flagging_views.ModerationAdminTable"
@@ -61,10 +69,13 @@
 	<!-- Content providers for this table (actually, the NoteLikeBodyColumn) -->
 	<adapter factory="._table_utils.NoteContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+			 
 	<adapter factory="._table_utils.MessageInfoContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+			 
 	<adapter factory="._table_utils.HeadlineTopicContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
+			 
 	<adapter factory="._table_utils.TopicCommentContentProvider"
 			 provides="zope.contentprovider.interfaces.IContentProvider"/>
 
@@ -73,10 +84,12 @@
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"
 			 provides="z3c.table.interfaces.IColumn"
 			 name="new-note-body" />
+			 
 	<adapter factory="._table_utils.CreatedColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"
 			 name="new-note-created"/>
+			 
 	<adapter factory="._table_utils.CreatorColumn"
 			 provides="z3c.table.interfaces.IColumn"
 			 for="* * ._stream_event_listeners.NewNoteBodyTable"

@@ -1,9 +1,13 @@
 <!-- -*- mode: nxml -*- -->
-<configure
-	xmlns="http://namespaces.zope.org/zope"
-	xmlns:zcml="http://namespaces.zope.org/zcml"
-	xmlns:invite="http://nextthought.com/ntp/invite">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:invite="http://nextthought.com/ntp/invite">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
+	
 	<include package=".invitations" file="meta.zcml" />
 
 	<!--
@@ -23,7 +27,6 @@
 	<invite:joinCommunities
 		code="MATHCOUNTS"
 		entities="MATHCOUNTS" />
-
 
 	<subscriber
 		factory=".invitation_views.DFLGetInvitationLinkProvider"
