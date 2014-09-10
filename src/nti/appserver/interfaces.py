@@ -44,7 +44,7 @@ class IUserRootResource(ILocation):
 # data for portions of the URL space
 ###
 
-class ICollection(ILocation):
+class  ICollection(ILocation):
 	"""
 	A collection (in the Atom sense) contains individual objects (entries).
 	It may be writable.

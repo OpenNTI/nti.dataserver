@@ -1,8 +1,12 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:i18n="http://namespaces.zope.org/i18n"
-		   xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<adapter factory=".workspaces.ContainerEnumerationWorkspace" />
 
@@ -29,6 +33,7 @@
 			 provides=".interfaces.IContainerCollection" />
 
 	<adapter factory=".workspaces.WorkspaceExternalizer" />
+	
 	<adapter factory=".workspaces.UserService"
 			 provides='.interfaces.IUserService'/>
 
@@ -38,23 +43,30 @@
 	-->
 	<subscriber factory=".workspaces._user_workspace"
 				provides=".interfaces.IWorkspace" />
+				
 	<subscriber factory=".workspaces._global_workspace"
 				provides=".interfaces.IWorkspace" />
 
 	<adapter factory=".workspaces.ServiceExternalizer" />
+	
 	<adapter factory=".workspaces.UserServiceExternalizer"
 			 for=".interfaces.IUserService" />
+			 
 	<adapter factory=".workspaces._NTIIDEntryExternalizer" />
+	
 	<subscriber factory=".workspaces.ContentUnitInfoHrefDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
-
 	<adapter factory=".workspaces.CollectionSummaryExternalizer" />
+	
 	<adapter factory=".workspaces.CollectionSummaryExternalizer"
 			 name="summary"/>
+			 
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer"
 			 name="detail"/>
+			 
 	<adapter factory=".workspaces.ContainerCollectionDetailExternalizer" />
+	
 	<adapter factory=".workspaces.CollectionContentTypeAware" />
 
 </configure>
