@@ -15,22 +15,24 @@ import gc
 import gevent
 
 from zope import component
-
+from zope.event import notify
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
+from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.site.hostpolicy import synchronize_host_policies
-from nti.site.hostpolicy import run_job_in_all_host_sites
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.subscribers import install_site_content_library
-
-from pyramid.view import view_config
+from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
+from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
 
 from nti.dataserver.authorization import ACT_COPPA_ADMIN
+
+from nti.site.hostpolicy import synchronize_host_policies
+from nti.site.hostpolicy import run_job_in_all_host_sites
+
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -107,9 +109,17 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				return site_lib.syncContentPackages()
+				result = site_lib.syncContentPackages()
+				if result is None:
+					result = "%s" % site_lib
+				return result
 
-
+		# sync
 		results = run_job_in_all_host_sites(sync_site_library)
 		gc.collect()
+		
+		# notify
+		notify(AllContentPackageLibrariesDidSyncEvent())
+		
+		# return results
 		return [x[1] for x in results]

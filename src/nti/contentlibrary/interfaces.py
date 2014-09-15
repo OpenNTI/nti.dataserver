@@ -306,6 +306,17 @@ class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	Content package library synced event.
 	"""
 
+class IAllContentPackageLibrariesDidSyncEvent(interface.Interface):
+	"""
+	An event fired when all ContentPackage Libraries have been synced
+	"""
+	
+@interface.implementer(IAllContentPackageLibrariesDidSyncEvent)
+class AllContentPackageLibrariesDidSyncEvent(object):
+	"""
+	All Content package libraries synced event.
+	"""
+	
 class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
 	"""
 	A non-persistent content library that needs to be synchronized
