@@ -11,59 +11,60 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import logging
 import argparse
 
 from zope import interface
 from zope import component
+from zope.configuration import xmlconfig, config
 
-from nti.contentrendering import interfaces as cr_interfaces
+from nti.contentrendering.interfaces import IBookIndexer
+from nti.contentrendering.interfaces import INTICardIndexer
+from nti.contentrendering.interfaces import IRenderedBookIndexer
+from nti.contentrendering.interfaces import IAudioTranscriptIndexer
+from nti.contentrendering.interfaces import IVideoTranscriptIndexer
 
-_type_map = { 'book': cr_interfaces.IBookIndexer,
-			  'audio': cr_interfaces.IAudioTranscriptIndexer,
-			  'video': cr_interfaces.IVideoTranscriptIndexer,
-			  'nticard': cr_interfaces.INTICardIndexer }
+import nti.contentrendering
+from nti.contentrendering.utils import EmptyMockDocument
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 
-def transform(book, iface=cr_interfaces.IBookIndexer, name=''):
+_type_map = { 'book': IBookIndexer,
+			  'audio': IAudioTranscriptIndexer,
+			  'video': IVideoTranscriptIndexer,
+			  'nticard': INTICardIndexer }
+
+def transform(book, iface=IBookIndexer, name=''):
 	name = name or u''
 	indexer = component.queryUtility(iface, name=name)
 	if indexer is None:
 		indexer = component.getUtility(iface)
 	indexer.index(book)
 
-@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+@interface.implementer(IRenderedBookIndexer)
 class BookIndexer(object):
 	def transform(self, book, name=''):
-		transform(book, cr_interfaces.IBookIndexer, name=name)
+		transform(book, IBookIndexer, name=name)
 
-@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+@interface.implementer(IRenderedBookIndexer)
 class NTICardIndexer(object):
 	def transform(self, book, name=''):
-		transform(book, cr_interfaces.INTICardIndexer, name=name)
+		transform(book, INTICardIndexer, name=name)
 
-@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+@interface.implementer(IRenderedBookIndexer)
 class AudioTrancriptIndexer(object):
 	def transform(self, book, name=''):
-		transform(book, cr_interfaces.IAudioTranscriptIndexer, name=name)
+		transform(book, IAudioTranscriptIndexer, name=name)
 
-@interface.implementer(cr_interfaces.IRenderedBookIndexer)
+@interface.implementer(IRenderedBookIndexer)
 class VideoTrancriptIndexer(object):
 	def transform(self, book, name=''):
-		transform(book, cr_interfaces.IVideoTranscriptIndexer, name=name)
+		transform(book, IVideoTranscriptIndexer, name=name)
 
 def main():
-	from nti.contentrendering.utils import EmptyMockDocument
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
+	context = config.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives(context)
+	xmlconfig.file("configure.zcml", nti.contentrendering, context=context)
 	
-	def register():
-		from zope.configuration import xmlconfig
-		from zope.configuration.config import ConfigurationMachine
-		from zope.configuration.xmlconfig import registerCommonDirectives
-		context = ConfigurationMachine()
-		registerCommonDirectives(context)
-
-		import nti.contentrendering as contentrendering
-		xmlconfig.file("configure.zcml", contentrendering, context=context)
-
 	# parse arguments
 	arg_parser = argparse.ArgumentParser(description="Content Transcript indexer")
 	arg_parser.add_argument('contentpath', help="Content book location")
@@ -89,12 +90,8 @@ def main():
 		raise IOError("Invalid content directory")
 
 	if verbose:
-		import logging
 		ei = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
 		logging.basicConfig(level=logging.DEBUG, format=ei)
-
-	# register zcml
-	register()
 
 	# do indexing
 	document = EmptyMockDocument()
