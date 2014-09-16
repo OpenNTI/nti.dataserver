@@ -18,13 +18,16 @@ import argparse
 
 from zope import interface
 from zope import component
+from zope.configuration import xmlconfig, config
 
-from nti.contentrendering import interfaces as cr_interfaces
+import nti.contentrendering
+from nti.contentrendering.interfaces import IRenderedBookArchiver
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
 BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip', r'htaccess')
 BLACK_LIST_RE = tuple([re.compile(x) for x in BLACK_LIST])
 
-interface.moduleProvides(cr_interfaces.IRenderedBookArchiver)
+interface.moduleProvides(IRenderedBookArchiver)
 
 def is_black_listed(name):
 	for pattern in BLACK_LIST_RE:
@@ -77,25 +80,16 @@ def archive(book, out_dir=None, verbose=False):
 	return _archive(location, out_dir, verbose)
 
 def create_archive(book, out_dir=None, verbose=False, name=u''):
-	archiver = component.queryUtility(cr_interfaces.IRenderedBookArchiver, name=name)
+	archiver = component.queryUtility(IRenderedBookArchiver, name=name)
 	if archiver is None:
-		archiver = component.queryUtility(cr_interfaces.IRenderedBookArchiver)
+		archiver = component.queryUtility(IRenderedBookArchiver)
 	result = archiver.archive(book, out_dir, verbose)
 	return result
 	
 def main():
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
-
-	def register():
-		from zope.configuration import xmlconfig
-		from zope.configuration.config import ConfigurationMachine
-		from zope.configuration.xmlconfig import registerCommonDirectives
-		context = ConfigurationMachine()
-		registerCommonDirectives(context)
-
-		import nti.contentrendering as contentrendering
-		xmlconfig.file("configure.zcml", contentrendering, context=context)
-	register()
+	context = config.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives(context)
+	xmlconfig.file("configure.zcml", nti.contentrendering, context=context)
 
 	arg_parser = argparse.ArgumentParser(description="Archive book content")
 	arg_parser.add_argument('content_path', help="Book content path")
