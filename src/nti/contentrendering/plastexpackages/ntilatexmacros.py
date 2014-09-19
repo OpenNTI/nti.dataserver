@@ -657,6 +657,12 @@ class texttriangle(Base.Command):
 class textdoublehyphen(Command):
 	unicode = u'\u002D' + u'\u002D'
 
+class textcelsius(Base.Command):
+	unicode = u'\u2103'
+
+class textfahrenheit(Base.Command):
+	unicode = u'\u2109'
+
 # Currency symbols
 class yen(Base.Command):
 	unicode = u'\xA5'
