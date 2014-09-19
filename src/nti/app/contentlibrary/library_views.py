@@ -3,10 +3,9 @@
 """
 Views for exposing the content library to clients.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -15,7 +14,6 @@ from urllib import quote as UQ
 
 from zope import component
 from zope import interface
-
 from zope.location.interfaces import ILocationInfo
 
 from pyramid import traversal

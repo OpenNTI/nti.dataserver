@@ -19,11 +19,11 @@ from zope.container.contained import Contained
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver import authorization as nauth
 
-from nti.ntiids import interfaces as nid_interfaces
+from nti.ntiids.interfaces import INTIIDResolver
 
 from .library_views import PAGE_INFO_MT_JSON
 from .library_views import find_page_info_view_helper
@@ -39,13 +39,13 @@ class _ContentCard(Contained):
 	def __init__(self, path):
 		self.path = path
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _ContentCardResolver(object):
 	"""
 	Provisional resolver for cards in content.
 	"""
 	def resolve(self, key):
-		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
+		library = component.queryUtility(IContentPackageLibrary)
 		paths = library.pathsToEmbeddedNTIID(key) if library else None
 		if paths:
 			# We arbitrarily choose the first one.

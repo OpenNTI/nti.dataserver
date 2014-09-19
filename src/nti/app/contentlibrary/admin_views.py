@@ -24,15 +24,15 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.subscribers import install_site_content_library
 from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
+
+from nti.contentlibrary.subscribers import install_site_content_library
 
 from nti.dataserver.authorization import ACT_COPPA_ADMIN
 
 from nti.site.hostpolicy import synchronize_host_policies
 from nti.site.hostpolicy import run_job_in_all_host_sites
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
