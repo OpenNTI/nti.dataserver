@@ -76,11 +76,9 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	# directly. This saves a round trip, and is more compatible with broken clients that
 	# don't follow redirects parts of the request should be native strings, 
 	# which under py2 are bytes. Also make sure we pass any params to subrequest
-	path = [b'/dataserver2/Objects/', _encode(page_ntiid)]
+	path = b'/dataserver2/Objects/' + _encode(page_ntiid)
 	if request.query_string:
-		path.append('?')
-		path.append(_encode(request.query_string))
-	path = ''.join(path)
+		path += '?' + _encode(request.query_string)
 		
 	# set subrequest
 	subrequest = request.blank( path )
