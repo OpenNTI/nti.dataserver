@@ -23,6 +23,10 @@ def _set_generation(args):
 	ds = component.getUtility(nti_interfaces.IDataserver)
 	conn = ds.root._p_jar
 	root = conn.root()
+	old_value = root['zope.generations'].get( args.id )
+	if old_value is None:
+		raise ValueError( 'Invalid key, location does not exist (%s)', args.id )
+
 	root['zope.generations'][args.id] = args.generation
 
 def main():
@@ -36,7 +40,7 @@ def main():
 	args = arg_parser.parse_args()
 
 	import os
-	
+
 	env_dir = args.env_dir
 	if not env_dir:
 		env_dir = os.getenv( 'DATASERVER_DIR' )
