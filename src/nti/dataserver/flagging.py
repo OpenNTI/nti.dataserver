@@ -3,7 +3,7 @@
 """
 Support for flagging modeled content.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -14,13 +14,17 @@ from zope import intid
 from zope import component
 from zope import interface
 from zope.event import notify
-from zope.intid import interfaces as intid_interfaces
+from zope.intid.interfaces import IIntIdRemovedEvent
 from zope.cachedescriptors.property import CachedProperty
 
 import BTrees
-import persistent
 
-from nti.dataserver import interfaces as nti_interfaces
+from persistent import Persistent
+
+from .interfaces import IFlaggable
+from .interfaces import IGlobalFlagStorage
+from .interfaces import ObjectFlaggedEvent
+from .interfaces import ObjectUnflaggedEvent
 
 from nti.utils import sets
 
@@ -35,7 +39,7 @@ def flag_object(context, username):
 		object could not be flagged returns False
 	"""
 	try:
-		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).flag(context)
+		return component.getAdapter(context, IGlobalFlagStorage).flag(context)
 	except LookupError:
 		return False
 
@@ -49,7 +53,7 @@ def flags_object(context, username):
 	:return: If the object is not capable of being flagged, returns None.
 	"""
 	try:
-		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).is_flagged(context)
+		return component.getAdapter(context, IGlobalFlagStorage).is_flagged(context)
 	except LookupError:
 		return None
 
@@ -60,25 +64,25 @@ def unflag_object(context, username):
 	.. note:: Currently, it does not take the username into account.
 	"""
 	try:
-		return component.getAdapter(context, nti_interfaces.IGlobalFlagStorage).unflag(context)
+		return component.getAdapter(context, IGlobalFlagStorage).unflag(context)
 	except LookupError:
 		return False
 
-@component.adapter(nti_interfaces.IFlaggable, intid_interfaces.IIntIdRemovedEvent)
+@component.adapter(IFlaggable, IIntIdRemovedEvent)
 def _delete_flagged_object(flaggable, event):
 	unflag_object(flaggable, None)
 
-@interface.implementer(nti_interfaces.IGlobalFlagStorage)
-@component.adapter(nti_interfaces.IFlaggable)
+@interface.implementer(IGlobalFlagStorage)
+@component.adapter(IFlaggable)
 def FlaggableGlobalFlagStorageFactory(context):
 	"""
 	Finds the global flag storage as a registered utility
 	"""
 
-	return component.getUtility(nti_interfaces.IGlobalFlagStorage)
+	return component.getUtility(IGlobalFlagStorage)
 
-@interface.implementer(nti_interfaces.IGlobalFlagStorage)
-class IntIdGlobalFlagStorage(persistent.Persistent):
+@interface.implementer(IGlobalFlagStorage)
+class IntIdGlobalFlagStorage(Persistent):
 	"""
 	The storage for flags based on simple intids.
 	"""
@@ -96,7 +100,7 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 	def flag(self, context):
 		if not self.is_flagged(context):
 			self.flagged.add(self._intids.getId(context))
-			notify(nti_interfaces.ObjectFlaggedEvent(context))
+			notify(ObjectFlaggedEvent(context))
 			return True
 
 	def is_flagged(self, context):
@@ -113,7 +117,7 @@ class IntIdGlobalFlagStorage(persistent.Persistent):
 			return
 
 		if sets.discard_p(self.flagged, iid):
-			notify(nti_interfaces.ObjectUnflaggedEvent(context))
+			notify(ObjectUnflaggedEvent(context))
 			return True
 
 	def iterflagged(self):
