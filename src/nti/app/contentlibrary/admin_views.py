@@ -109,10 +109,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 			syncer = ISyncableContentPackageLibrary(site_lib, None)
 			if syncer is not None:
 				logger.info("Sync library %s", site_lib)
-				result = site_lib.syncContentPackages()
-				if result is None:
-					result = "%s" % site_lib
-				return result
+				return site_lib.syncContentPackages()
 
 		# sync
 		results = run_job_in_all_host_sites(sync_site_library)
