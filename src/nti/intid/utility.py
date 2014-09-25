@@ -92,7 +92,7 @@ class IntIds(_ZCIntIds):
 		if not uid in self.refs or self.refs[uid] is not unwrapped:
 			raise KeyError(ob)
 		del self.refs[uid]
-		if removeAttribute:
+		if removeAttribute and getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
 		if notify:
 			zope_event.notify(RemovedEvent(ob, self, uid))
