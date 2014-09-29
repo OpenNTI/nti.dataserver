@@ -8,20 +8,23 @@ something similar in its own version of :class:`pyramid.authentication.AuthTkt`.
 The :mod:`repoze.who` system relies on Paste in 2.0, but no longer
 does in 2.1, so this also performs cleanup work in that module.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
 
 import functools
 
-from hashlib import sha512
 from hashlib import md5
+from hashlib import sha512
 
 import paste.auth.auth_tkt
+
 import repoze.who.plugins.auth_tkt
+
 from pyramid.authentication import parse_ticket as _pyramid_parse, BadTicket as _pyramid_BadTicket
 
 @functools.wraps(_pyramid_parse)

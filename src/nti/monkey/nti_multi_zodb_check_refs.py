@@ -15,22 +15,24 @@ replace its dependency on that with the new :mod:`zodbpickle` package (and
 even then its not clear this would work; it seems that noload is only
 available in the C code, not the python version).
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import relstorage_patch_all_except_gevent_on_import
+logger = __import__('logging').getLogger(__name__)
 
+from . import relstorage_patch_all_except_gevent_on_import
 relstorage_patch_all_except_gevent_on_import.patch()
 
 from . import python_persistent_bugs_patch_on_import
 python_persistent_bugs_patch_on_import.patch()
 
 # See extensive comments.
-from nti.monkey.nti_multi_zodb_gc import fixrefs
 from nti.monkey.nti_multi_zodb_gc import report
+from nti.monkey.nti_multi_zodb_gc import fixrefs
+
 import sys
 from pkg_resources import load_entry_point
 
@@ -40,7 +42,6 @@ def main():
 		ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-check-refs')()
 	finally:
 		report()
-
 	sys.exit(ec)
 
 if __name__ == '__main__':
