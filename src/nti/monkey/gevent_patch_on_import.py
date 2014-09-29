@@ -7,11 +7,13 @@ hence the unwieldy name.
 
 If this is imported too late and we know that things will not work, we raise an exception.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 # All the patching uses private things so turn that warning off
 #pylint: disable=W0212

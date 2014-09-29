@@ -13,31 +13,31 @@ disconnections better---fewer ``<class '_mysql_exceptions.OperationalError'>: (2
 We do make relstorage work with newer releases of
 persistent and make it compatible with zlibstorage.
 
-$Id$
+.. $Id$
 """
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from nti.monkey import relstorage_umysqldb_patch_on_import
-from nti.monkey import relstorage_timestamp_repr_patch_on_import
 from nti.monkey import relstorage_zlibstorage_patch_on_import
+from nti.monkey import relstorage_timestamp_repr_patch_on_import
 from nti.monkey import relstorage_explicitly_close_memcache_patch_on_import
 
 relstorage_umysqldb_patch_on_import.patch()
-relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_zlibstorage_patch_on_import.patch()
+relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_explicitly_close_memcache_patch_on_import.patch()
 
 from . import python_persistent_bugs_patch_on_import
 python_persistent_bugs_patch_on_import.patch()
 
-
 # NOTE: Not importing patch_all, don't want gevent
 
 import sys
 from pkg_resources import load_entry_point, get_distribution
-
 
 def main():
 	zeo_dist = get_distribution( 'ZEO' )
