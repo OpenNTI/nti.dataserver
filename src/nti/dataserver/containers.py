@@ -302,11 +302,12 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 
 	def _delitemf(self, key):
 		# make sure our lazy property gets set
-		l = self.__len
+		l = self._BTreeContainer__len
 		item = self._SampleContainer__data[key]
 		del self._SampleContainer__data[key]
 		l.change(-1)
-        
+		return item
+		
 	# We know that these methods are implemented as iterators.
 	# This is not part of the IBTreeContainer interface, but it is
 	# dict-like.
