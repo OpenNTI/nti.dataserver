@@ -160,12 +160,13 @@ def create_user(args=None):
 	username = args.username
 	password = args.password
 
+	package = 'nti.dataserver' if not args.site else 'nti.appserver'
 	run_with_dataserver(environment_dir=env_dir,
-						 xmlconfig_packages=('nti.appserver',),
-						 verbose=args.verbose,
-						 function=lambda: _create_user(_type_map[args.type], username,
-													   password, args.name, 
-													   args.communities, args))
+						xmlconfig_packages=(package,),
+						verbose=args.verbose,
+						function=lambda: _create_user(_type_map[args.type], username,
+													  password, args.name, 
+													  args.communities, args))
 
 def main(args=None):
 	create_user(args)
