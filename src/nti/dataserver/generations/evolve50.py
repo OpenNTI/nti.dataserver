@@ -23,9 +23,9 @@ COM_USERNAMES = ('litworld.nextthought.com',
 				 'symmys.nextthought.com',
 				 'Carnegie Mellon University')
 	
-def evolver(users):
+def evolver(users, communities=COM_USERNAMES):
 	count = 0
-	for name in COM_USERNAMES:
+	for name in communities:
 		try:
 			community = users[name]
 			for user in community:
