@@ -137,7 +137,7 @@ def datetime_from_string(string, assume_local=False, local_tzname=None):
 		local timezone will be determined automatically.
 	"""
 	dt =_parse_with( isodate.parse_datetime, string )
-	return _as_utc_naive(dt, assume_local=assume_local)
+	return _as_utc_naive(dt, assume_local=assume_local, local_tzname=local_tzname)
 
 @component.adapter(zope.interface.common.idatetime.IDate)
 @interface.implementer(interfaces.IInternalObjectExternalizer)
