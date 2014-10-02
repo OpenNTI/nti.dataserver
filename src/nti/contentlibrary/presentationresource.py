@@ -76,22 +76,26 @@ class DisplayableContentMixin(object):
 		data = list()
 
 		for platform_bucket in assets.enumerateChildren():
+			
 			if not IDelimitedHierarchyBucket.providedBy(platform_bucket):
 				continue
+
 			if platform_bucket.name == 'shared':
 				inherit = platform_bucket.name
 
 			for version_bucket in platform_bucket.enumerateChildren():
-				if not IDelimitedHierarchyBucket.providedBy(version_bucket) \
-				   or not version_bucket.name.startswith('v'):
+				if 	not IDelimitedHierarchyBucket.providedBy(version_bucket) \
+					or not version_bucket.name.startswith('v'):
 					continue
 				version = int(version_bucket.name[1:])
 				data.append( (platform_bucket, version_bucket, version) )
 
-		return tuple([DisplayablePlatformPresentationResources(PlatformName=x[0].name,
-															   root=x[1],
-															   Version=x[2],
-															   InheritPlatformName=('shared'
-																					if inherit and x[0].name != 'shared'
-																					else None))
-					  for x in data])
+		result = list()
+		for x in data:
+			ip_name = 'shared' if inherit and x[0].name != 'shared' else None
+			dr = DisplayablePlatformPresentationResources(PlatformName=x[0].name,
+														  root=x[1],
+														  Version=x[2],
+														  InheritPlatformName=ip_name)
+			result.append(dr)
+		return tuple(result)
