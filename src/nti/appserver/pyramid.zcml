@@ -74,6 +74,7 @@
 
 	<!-- Util views -->
 	<include package=".utils.users" file="pyramid.zcml" />
+	<include package=".utils.k20" file="pyramid.zcml" />
 
 	<!-- Admin views -->
 	<pyramid:scan package='.utils.forums.forum_admin_views' />
