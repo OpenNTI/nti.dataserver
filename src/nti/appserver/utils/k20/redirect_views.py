@@ -37,6 +37,9 @@ def _get_user_token( user ):
 			 request_method='GET',
 			 permission=nauth.ACT_READ )
 class K20Link( AbstractAuthenticatedView ):
+	"""
+	Given a link, returns the link with an appended user identifying parameter.
+	"""
 
 	def __call__(self):
 		request = self.request
