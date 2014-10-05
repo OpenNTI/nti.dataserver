@@ -474,7 +474,6 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
-		'git+https://github.com/NextThought/numpy.git#egg=numpy-1.9.0.dev-8015369',
 		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
 	],
 	packages=find_packages('src'),
