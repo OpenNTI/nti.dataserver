@@ -9,7 +9,51 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import repoze.lru
+
+from zope import component
+from zope import interface
+
+from pyramid.interfaces import IRequest
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+
+from nti.appserver.interfaces import IContentUnitInfo
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.ntiids.ntiids import is_valid_ntiid_string
+
+@repoze.lru.lru_cache(500)
+def get_content_package_ntiid(ntiid):
+	library = component.queryUtility(IContentPackageLibrary)
+	paths = library.pathToNTIID(ntiid) if library else ()
+	result = paths[0].ntiid if paths else None
+	return result
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IContentUnitInfo, IRequest)
+class _ContentUnitInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
+	"""
+	Decorates context with ContentPackage NTIID
+	"""
+
+	def _predicate(self, context, result):
+		result = bool(self._is_authenticated and context.contentUnit is not None)
+		if result:
+			try:
+				ntiid = context.contentUnit.ntiid
+				result = bool(is_valid_ntiid_string(ntiid))
+			except AttributeError:
+				result = False
+		return result
+	
+	def _do_decorate_external(self, context, result):
+		ntiid = get_content_package_ntiid(context.contentUnit.ntiid)
+		if ntiid is not None:
+			result['ContentPackageNTIID'] = ntiid
 
 class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDecorator):
 	"""
