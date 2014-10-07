@@ -19,9 +19,9 @@
 	<!-- Workspaces/collections -->
 	<subscriber factory=".workspaces._library_workspace"
 				provides="nti.appserver.interfaces.IWorkspace" />
+
 	<subscriber factory=".workspaces._bundle_workspace"
 				provides="nti.appserver.interfaces.IWorkspace" />
-
 
 	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces._BundleLibraryCollection" />
@@ -54,16 +54,13 @@
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_user" />
 
-	<adapter
-			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+	<adapter for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_for_user" />
 
-	<adapter
-			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
+	<adapter for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_for_library" />
 
-	<adapter
-			 for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
+	<adapter for="nti.contentlibrary.interfaces.IContentPackageLibrary pyramid.interfaces.IRequest"
 			 factory=".workspaces._library_workspace_for_library" />
 
 	<!--
@@ -106,18 +103,21 @@
 
 	<ext:registerMimeFactories module=".forum" />
 
+	<subscriber factory=".decorators._ContentUnitInfoDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.appserver.interfaces.IContentUnitInfo
+					 pyramid.interfaces.IRequest"/>
+
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle
 					 pyramid.interfaces.IRequest"/>
+					 
 	<!-- this thing is not a real IBundle -->
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for="nti.app.products.courseware.legacy_course._LegacyCommunityBasedCourseInstanceFakeBundle
 					 pyramid.interfaces.IRequest"
 				zcml:condition="installed nti.app.products.courseware"/>
-
-
-
 
 </configure>
