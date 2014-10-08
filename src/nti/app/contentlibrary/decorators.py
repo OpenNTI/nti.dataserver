@@ -26,7 +26,7 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
-@repoze.lru.lru_cache(500)
+@repoze.lru.lru_cache(500, timeout=18000)
 def get_content_package_ntiid(ntiid):
 	library = component.queryUtility(IContentPackageLibrary)
 	paths = library.pathToNTIID(ntiid) if library else ()
