@@ -16,6 +16,7 @@ entry_points = {
 		"nti_community_members = nti.dataserver.utils.nti_community_members:main",
 		"nti_set_generation = nti.dataserver.utils.nti_set_generation:main",
 		"nti_set_password = nti.dataserver.utils.nti_set_password:main",
+		"nti_site_ops = nti.dataserver.utils.nti_site_ops:main",
 		"nti_follow_entity = nti.dataserver.utils.nti_follow_entity:main",
 		"nti_remove_user = nti.dataserver.utils.nti_remove_user:main",
 		"nti_export_entities = nti.dataserver.utils.nti_export_entities:main",
