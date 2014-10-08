@@ -450,7 +450,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 				pass
 		return containedObject
 
-	def readCreateUpdateContentObject( self, user, search_owner=False  ):
+	def readCreateUpdateContentObject(self, user, search_owner=False, externalValue=None):
 		"""
 		Combines reading the external input, deriving the expected data
 		type, creating the content object, and updating it in one step.
@@ -459,10 +459,12 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			look for a user along our context's lineage; the user
 			will be used by default. It will be returned. If False,
 			the return will only be the contained object.
+			
+		:keyword dict externalValue: External value use to create the content object
 
 		"""
 		creator = user
-		externalValue = self.readInput()
+		externalValue = self.readInput() if not externalValue else externalValue
 		datatype = self.findContentType( externalValue )
 
 		context = self.request.context
@@ -482,7 +484,6 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		owner = owner_root if owner_root else creator
 
 		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
-
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
