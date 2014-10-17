@@ -59,8 +59,6 @@ class LegacyResourceView(object):
 		new_path.append( self.name )
 		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
 
-
-
 def _response_for_site_resource_with_marker( marker_interface, request, resource, mime_type ):
 	"""
 	Searches for an :class:`.IView` utility having the given resource name
@@ -122,7 +120,6 @@ def _response_for_site_resource_with_marker( marker_interface, request, resource
 		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
 		if web_root != '/NextThoughtWebApp/' and request.environ['PATH_INFO'].startswith(web_root):
 			request.environ['PATH_INFO'] = request.environ['PATH_INFO'].replace(web_root, '/NextThoughtWebApp/')
-
 		return view( request.context, request )
 
 	# Extra legacy support...these markers are DEPRECATED
@@ -149,7 +146,6 @@ def site_css_view(request):
 
 	return _response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
 
-
 @view_config(route_name="logon.strings_js",
 			 request_method='GET')
 @view_config(route_name="webapp.strings_js",
@@ -170,7 +166,6 @@ def webapp_strings_view(request):
 												   request,
 												   'strings.js',
 												   b'application/javascript')
-
 
 _SITE_LANDING_COOKIE_NAME = b'nti.landing_site_name'
 @view_config(route_name='landing.site_html',
@@ -203,7 +198,6 @@ def landing_html_view(request):
 
 	return response
 
-
 from pyramid.static import static_view
 from pyramid.path import caller_package
 
@@ -229,8 +223,6 @@ class _StaticView(static_view):
 	def __init__(self, package, **kwargs):
 		super(_StaticView,self).__init__(self.assets_dir, **kwargs)
 
-
-
 @interface.named('strings.js')
 class _StringsJsView(_StaticView):
 	pass
@@ -250,14 +242,16 @@ class _CompilingSCSSView(_StaticView):
 		# Sadly, logging is ineffective at this time, we expect to be at the
 		# module level
 		if os.path.isfile(_scss_file) and os.stat(_scss_file).st_size:
-			 # TODO: Remove CSS if this file goes away/to zero bytes?
+			# TODO: Remove CSS if this file goes away/to zero bytes?
 			if not os.path.isdir( _css_dir ):
 				os.mkdir( _css_dir )
 
-			if not os.path.isfile( _css_file ) or os.stat(_scss_file).st_mtime > os.stat(_css_file).st_mtime:
-				compiler = scss.Scss(
-					scss_opts={'compress': False, 'debug_info': False} )
-				compiled = compiler.compile(scss_file=_scss_file)
+			if 	not os.path.isfile( _css_file ) or \
+				os.stat(_scss_file).st_mtime > os.stat(_css_file).st_mtime:
+				compiler = scss.Scss(scss_opts={'compress': False, 'debug_info': False})
+				with open(_scss_file, "rb") as source:
+					scss_string = source.read()
+				compiled = compiler.compile(scss_string=scss_string)
 				with open(_css_file, 'w') as f:
 					f.write(compiled)
 		return inst
