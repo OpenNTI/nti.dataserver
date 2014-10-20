@@ -16,7 +16,8 @@ from zope import component
 
 from .adapters import IUserNotableData
 from nti.appserver.interfaces import INamedLinkView
-from nti.app.renderers.interfaces import IUGDExternalCollection
+from nti.app.renderers.interfaces import IUncacheableInResponse
+#from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.externalization.interfaces import LocatedExternalDict
 
 from pyramid.view import view_config
@@ -96,7 +97,7 @@ class _NotableRecursiveUGDView(_UGDView):
 		result.__parent__ = self.request.context
 		result.__name__ = self.ntiid
 		result.mimeType = nti_mimetype_with_class( None )
-		interface.alsoProvides( result, IUGDExternalCollection )
+		interface.alsoProvides( result, IUncacheableInResponse )
 
 		safely_viewable_intids = user_notable_data.get_notable_intids()
 
