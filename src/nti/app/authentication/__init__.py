@@ -28,5 +28,6 @@ def get_remote_user(request=None, dataserver=None):
 
 	result = None
 	if request is not None and dataserver is not None:
-		result = users.User.get_user(request.authenticated_userid, dataserver=dataserver)
+		username = request.authenticated_userid or u''
+		result = users.User.get_user(username, dataserver=dataserver)
 	return result
