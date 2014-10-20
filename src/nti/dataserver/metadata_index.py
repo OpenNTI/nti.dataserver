@@ -337,7 +337,6 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
 	Installs the global metadata catalog.
 	"""
-
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
@@ -346,7 +345,7 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 	catalog.__name__ = CATALOG_NAME
 	catalog.__parent__ = site_manager_container
 	intids.register( catalog )
-	lsm.registerUtility( catalog, provided=ICatalog, name=CATALOG_NAME )
+	lsm.registerUtility( catalog, provided=IMetadataCatalog, name=CATALOG_NAME )
 
 	for name, clazz in ( (IX_MIMETYPE, MimeTypeIndex),
 						 (IX_CONTAINERID, ContainerIdIndex),
