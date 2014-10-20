@@ -32,6 +32,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from .adapters import UserNotableData
+
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 
 @view_config(route_name='objects.generic.traversal',
@@ -88,28 +90,28 @@ class _NotableRecursiveUGDView(_UGDView):
 			except ValueError: # pragma no cover
 				raise HTTPBadRequest()
 
-		user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
-													   IUserNotableData )
-
-
 		result = LocatedExternalDict()
 		result['Last Modified'] = result.lastModified = 0
 		result.__parent__ = self.request.context
 		result.__name__ = self.ntiid
-		result.mimeType = nti_mimetype_with_class( None )
-		interface.alsoProvides( result, IUncacheableInResponse )
+		result.mimeType = nti_mimetype_with_class(None)
+		interface.alsoProvides(result, IUncacheableInResponse)
 
-		safely_viewable_intids = user_notable_data.get_notable_intids()
-
+		#user_notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
+		#											   IUserNotableData )
+	
+		#from IPython.core.debugger import Tracer; Tracer()()
+		safely_viewable_intids = UserNotableData.compute_notable_intids(self.request, self.remoteUser)
 		result['TotalItemCount'] = len(safely_viewable_intids)
-
+		
 		# Our best LastModified time will be that of the most recently
 		# modified object; unfortunately, we have no way of tracking deletes...
-		most_recently_modified_object = list(user_notable_data.iter_notable_intids(
-			user_notable_data.sort_notable_intids(safely_viewable_intids,
-												  field_name='lastModified',
-												  limit=2,
-												  reverse=True) ))
+		most_recently_modified_object = \
+			list(UserNotableData.do_iter_notable_intids(
+					UserNotableData.do_sort_notable_intids(	safely_viewable_intids,
+												   			field_name='lastModified',
+												   			limit=2,
+												   			reverse=True) ))
 		if most_recently_modified_object:
 			result['Last Modified'] = result.lastModified = most_recently_modified_object[0].lastModified
 
@@ -117,13 +119,17 @@ class _NotableRecursiveUGDView(_UGDView):
 		# handling of before could be much more efficient
 		# (we could do this join early on)
 		if batch_before is not None:
-			safely_viewable_intids = user_notable_data.get_notable_intids(max_created_time=batch_before)
+			safely_viewable_intids = \
+				UserNotableData.return_notable_intids(self.request, 
+													  self.remoteUser,
+													  max_created_time=batch_before)
 
-		sorted_intids = user_notable_data.sort_notable_intids( safely_viewable_intids,
-															   limit=limit,
-															   reverse=request.params.get('sortOrder') != 'ascending')
+		sorted_intids = \
+			UserNotableData.do_sort_notable_intids(safely_viewable_intids,
+												   limit=limit,
+												   reverse=request.params.get('sortOrder') != 'ascending')
 
-		items = user_notable_data.iter_notable_intids(sorted_intids)
+		items = UserNotableData.do_iter_notable_intids(sorted_intids)
 		self._batch_items_iterable(result, items,
 								   number_items_needed=limit,
 								   batch_size=batch_size,
@@ -131,7 +137,14 @@ class _NotableRecursiveUGDView(_UGDView):
 		# Note that we insert lastViewed into the result set as a convenience,
 		# but we don't change the last-modified header based on this;
 		# eventually we want this to go away (?)
-		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
+		lastViewed = UserNotableData.get_notable_lastViewed(self.remoteUser)
+		_NotableUGDLastViewed.write_last_viewed(request, lastViewed, result)
+		
+		# gc
+		del sorted_intids
+		del safely_viewable_intids
+		del most_recently_modified_object
+		
 		return result
 
 from nti.dataserver.links import Link
@@ -154,7 +167,8 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 
 	@classmethod
 	def write_last_viewed(cls, request, user_notable_data, result):
-		last_viewed = user_notable_data.lastViewed
+		last_viewed = user_notable_data.lastViewed \
+					  if IUserNotableData.providedBy(user_notable_data) else user_notable_data
 
 		result['lastViewed'] = last_viewed
 		links = result.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
