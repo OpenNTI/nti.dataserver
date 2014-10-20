@@ -13,12 +13,16 @@ from array import array
 
 from zope import interface
 from zope import component
+from zope.intid.interfaces import IIntIds
+
+from zope.catalog.catalog import ResultSet
+from zope.catalog.interfaces import ICatalog
 
 from BTrees.OOBTree import Set
 
 from .interfaces import IUserNotableData
-from .interfaces import IUserPresentationPriorityCreators
 from .interfaces import IUserNotableDataStorage
+from .interfaces import IUserPresentationPriorityCreators
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -26,19 +30,13 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.utils.property import CachedProperty
 from nti.utils.property import annotation_alias
 
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
-from nti.dataserver.metadata_index import IX_TAGGEDTO
 from nti.dataserver.metadata_index import IX_TOPICS
-from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata_index import IX_TAGGEDTO
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
-
+from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
-
-from zope.catalog.interfaces import ICatalog
-from zope.catalog.catalog import ResultSet
-
-from zope.intid.interfaces import IIntIds
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -125,7 +123,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		# Note that we're not doing a join to the Mime index, as only comments
 		# should have this as a container id.
 		__topic_ntiids = self.__topic_ntiids()
-		__traceback_info__ = __topic_ntiids
 		comments_in_my_topics_intids = self._catalog['containerId'].apply({'any_of': __topic_ntiids})
 		return comments_in_my_topics_intids
 
@@ -134,7 +131,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		excluded_topic_oids = self._not_notable_oids or ()
 		if not excluded_topic_oids:
 			return self._all_comments_in_my_topics_intids
-
 		return self._catalog['containerId'].apply({'any_of': self.__topic_ntiids(excluded_topic_oids)})
 
 	def __find_generalForum_comment_intids(self):
