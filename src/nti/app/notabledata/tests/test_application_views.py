@@ -1,46 +1,48 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
-
-from hamcrest import has_entry
 from hamcrest import has_item
-
-from hamcrest import has_length
-from hamcrest import greater_than
 from hamcrest import contains
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.decorators import WithSharedApplicationMockDS
 from urllib import unquote
 from datetime import datetime
-
-from nti.dataserver import users
-from nti.dataserver import contenttypes
-from nti.contentrange import contentrange
-from nti.ntiids import ntiids
-from nti.externalization.oids import to_external_ntiid_oid
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.testing.time import time_monotonically_increases
-from nti.testing.matchers import is_true
-
-from nti.externalization.internalization import update_from_external_object
 
 from zope import component
 from zope import interface
 from zope import lifecycleevent
-from ..interfaces import IUserNotableData
-from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
+from nti.app.notabledata.interfaces import IUserNotableData
+
+from nti.contentrange import contentrange
+
+from nti.dataserver import users
+from nti.dataserver import contenttypes
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
+
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.internalization import update_from_external_object
+
+from nti.ntiids import ntiids
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.testing.matchers import is_true
+from nti.testing.time import time_monotonically_increases
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
@@ -66,7 +68,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 			# these substantially different created times
 			top_n = contenttypes.Note()
 			top_n.applicableRange = contentrange.ContentRangeDescription()
-			top_n_containerId = top_n.containerId = u'tag:nti:foo'
+			_ = top_n.containerId = u'tag:nti:foo'
 			top_n.body = ("Top",)
 			top_n.createdTime = 100
 			user.addContainedObject( top_n )

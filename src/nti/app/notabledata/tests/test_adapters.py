@@ -1,41 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from hamcrest import is_
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import not_none
+from hamcrest import assert_that
+from hamcrest import has_property
+
+import pickle
 
 from zope import component
 
-import unittest
-from hamcrest import assert_that
-from hamcrest import calling
-from hamcrest import raises
-from hamcrest import not_none
-from hamcrest import has_property
-from hamcrest import is_
+from nti.dataserver.activitystream_change import Change
 
+from nti.app.notabledata.interfaces import IUserNotableData
+from nti.app.notabledata.interfaces import IUserNotableDataStorage
 
-import pickle
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+
 from nti.testing.matchers import validly_provides
 
 from nti.app.testing.layers import AppLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
-from ..interfaces import IUserNotableData
-from ..interfaces import IUserNotableDataStorage
-
-from nti.dataserver.activitystream_change import Change
 
 class TestUserNotableData(AppLayerTest):
 
@@ -52,7 +45,6 @@ class TestUserNotableData(AppLayerTest):
 			# Cannot be pickled
 			assert_that( calling(pickle.dumps).with_args(data),
 						 raises(TypeError) )
-
 
 class TestUserNotableDataStorage(AppLayerTest):
 
