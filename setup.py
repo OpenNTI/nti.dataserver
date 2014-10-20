@@ -254,7 +254,7 @@ setup(
 		'plone.i18n >= 2.0.9',	# provides ISO3166 country/codes and flag images
 		'plone.scale >= 1.3.2',	 # image scaling/storage based on PIL
 		'plone.namedfile',	 # much like zope.file, but some image-specific goodness.
-		'pyparsing >= 1.5.6, <=1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
+		'pyparsing >= 1.5.7',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
 		# Pure python PDF reading and manipulation library.
 		'pyPDF2',
 		# See also z3c.rml for a complete PDF layout and rendering environment, which should
