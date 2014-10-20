@@ -13,10 +13,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.catalog.interfaces import INoAutoIndex
 from zope.catalog.interfaces import INoAutoReindex
+from zope.catalog.interfaces import ICatalog
 
 class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	"""
 	Marker interface for objects that should not automatically
 	be added to catalogs when created or modified events
 	fire.
+	"""
+
+class IMetadataCatalog(ICatalog):
+	"""
+	The nti metadata catalog.
 	"""
