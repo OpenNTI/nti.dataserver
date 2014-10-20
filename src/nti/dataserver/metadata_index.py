@@ -20,6 +20,7 @@ logger = __import__('logging').getLogger(__name__)
 CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 
 from zope import component
+from zope import interface
 
 from .interfaces import IContained as INTIContained
 from .interfaces import ICreatedUsername
@@ -55,6 +56,8 @@ from nti.zope_catalog.index import SetIndex as RawSetIndex
 
 from nti.zope_catalog.string import StringTokenNormalizer
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
+
+from nti.zope_catalog.interfaces import IMetadataCatalog
 
 class MimeTypeIndex(ValueIndex):
 	default_field_name = 'mimeType'
@@ -318,6 +321,18 @@ TP_TOP_LEVEL_CONTENT = 'topLevelContent'
 #: See :class:`DeletedObjectPlaceholderExtentFilteredSet`
 TP_DELETED_PLACEHOLDER = 'deletedObjectPlaceholder'
 
+@interface.implementer(IMetadataCatalog)
+class MetadataCatalog(Catalog):
+
+	super_index_doc = Catalog.index_doc
+
+	def index_doc(self, id, ob):
+		# We do not want to index here. We'll index via our catalog processor.
+		pass
+
+	def force_index_doc(self, id, ob):
+		self.super_index_doc( id, ob )
+
 def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
 	Installs the global metadata catalog.
@@ -327,7 +342,7 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
 
-	catalog = Catalog(family=intids.family)
+	catalog = MetadataCatalog(family=intids.family)
 	catalog.__name__ = CATALOG_NAME
 	catalog.__parent__ = site_manager_container
 	intids.register( catalog )

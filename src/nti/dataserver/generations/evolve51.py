@@ -13,18 +13,17 @@ generation = 51
 
 import zope.intid
 
+import BTrees
+
 from zope import component
 from zope.component.hooks import site, setHooks
 
 from zope.catalog.interfaces import ICatalog
 
 from nti.dataserver.metadata_index import CATALOG_NAME
-
-from nti.metadata.queue import MetadataQueue
+from nti.dataserver.metadata_index import MetadataCatalog
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
-# FIXME Only in nti.metadata?
-from nti.metadata.interfaces import IMetadataQueue
 
 def do_evolve(context):
 	setHooks()
@@ -39,20 +38,24 @@ def do_evolve(context):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
-		# Register our queue
-		queue = MetadataQueue()
-		queue.__parent__ = ds_folder
-		queue.__name__ = '++etc++metadata++queue'
-		intids.register(queue)
-		lsm.registerUtility(queue, provided=IMetadataQueue)
-
-		# Unregister and re-register under our new interface.
-		# Our install script should not have to change.
-		# Existing catalog consumers should not have to change.
-		# We should also not need downtime.
+		# Unregister our old metadata index
 		old_catalog = lsm.getUtility(provided=ICatalog, name=CATALOG_NAME)
+		intids.unregister(old_catalog)
 		lsm.unregisterUtility( old_catalog, provided=ICatalog, name=CATALOG_NAME )
-		lsm.registerUtility( old_catalog, provided=IMetadataCatalog, name=CATALOG_NAME )
+		old_catalog.__parent__ = None
+
+		# Add our new catalog
+		new_catalog = MetadataCatalog( family=BTrees.family64 )
+		new_catalog.__parent__ = ds_folder
+		new_catalog.__name__ = CATALOG_NAME
+		intids.register(new_catalog)
+		lsm.registerUtility(new_catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
+
+		# Migrate indexes
+		for k, v in old_catalog.items():
+			# Fires re-index event...
+			#new_catalog[k] = v
+			new_catalog._setitemf( k, v )
 
 		logger.info( 'nti.dataserver evolve51 complete.' )
 		return

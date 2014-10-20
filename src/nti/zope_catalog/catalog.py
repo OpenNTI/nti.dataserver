@@ -11,14 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope.catalog.catalog import Catalog as _ZCatalog
 from .interfaces import INoAutoIndex
-from .interfaces import IMetadataCatalog
 
 from ZODB.POSException import POSKeyError
 
-@interface.implementer(IMetadataCatalog)
 class Catalog(_ZCatalog):
 	"""
 	An extended catalog. Features include:
@@ -69,6 +66,3 @@ class Catalog(_ZCatalog):
 					logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
 
 
-	def index_doc(self,id,ob):
-		# We do not want to index here. We'll index via our catalog processor.
-		pass

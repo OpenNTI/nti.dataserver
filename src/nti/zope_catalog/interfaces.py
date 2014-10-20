@@ -26,3 +26,13 @@ class IMetadataCatalog(ICatalog):
 	"""
 	The nti metadata catalog.
 	"""
+
+	def index_doc(self, id, ob):
+		"""
+		This may or may not update our underlying index.
+		"""
+
+	def force_index_doc(self, id, ob):
+		"""
+		Force the underlying index to update.
+		"""
