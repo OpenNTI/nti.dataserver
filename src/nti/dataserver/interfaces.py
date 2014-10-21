@@ -15,6 +15,8 @@ import six
 
 from zope.annotation.interfaces import IAnnotatable
 
+from zope.catalog.interfaces import ICatalog
+
 from zope.container.interfaces import IContainer as IZContainer
 from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
 
@@ -1723,6 +1725,20 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 		"""
 		super(DataChangedUserNotificationEvent,self).__init__( "data_noticeIncomingChange", targets, change )
 
+class IMetadataCatalog(ICatalog):
+	"""
+	The nti metadata catalog.
+	"""
+
+	def index_doc(self, id, ob):
+		"""
+		This may or may not update our underlying index.
+		"""
+
+	def force_index_doc(self, id, ob):
+		"""
+		Force the underlying index to update.
+		"""
 
 ####
 # # Weak Refs and related BWC exports

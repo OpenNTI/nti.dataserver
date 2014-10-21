@@ -23,7 +23,7 @@ from zope.catalog.interfaces import ICatalog
 from nti.dataserver.metadata_index import CATALOG_NAME
 from nti.dataserver.metadata_index import MetadataCatalog
 
-from nti.zope_catalog.interfaces import IMetadataCatalog
+from nti.dataserver.interfaces import IMetadataCatalog
 
 def do_evolve(context):
 	setHooks()
