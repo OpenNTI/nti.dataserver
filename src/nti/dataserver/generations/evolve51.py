@@ -26,6 +26,14 @@ from nti.dataserver.metadata_index import CATALOG_NAME
 from nti.dataserver.metadata_index import MetadataCatalog
 
 def do_evolve(context):
+	"""
+	This moves the catalog that indexes lastModified and CreatedTime to a
+	special known catalog that ends up being updated in another metadata
+	process.  This leaves the other catalog (with keys:
+	[u'alias', u'contact_email', u'contact_email_recovery_hash', u'email',
+	u'password_recovery_email_hash', u'realname', u'realname_parts', u'topics'] )
+	as-is since collisions on those indexes should be rare.
+	"""
 	setHooks()
 	conn = context.connection
 	root = conn.root()
