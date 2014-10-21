@@ -82,7 +82,7 @@ class GravatarComputedAvatarURL(object):
 				from_real_email = True
 
 		gravatar_type = _find_default_gravatar_type( profile, context, self )
-		self.avatarURL = create_gravatar_url( email, gravatar_type )
+		self.avatarURL = create_gravatar_url( email, gravatar_type, secure=True )
 		if from_real_email:
 			scheme, netloc, url, params, query, fragment = urlparse.urlparse( self.avatarURL )
 			fragment = 'using_provided_email_address'
@@ -101,7 +101,7 @@ class GravatarComputedCoppaAvatarURL(object):
 
 	def __init__( self, context ):
 		gravatar_type = _find_default_gravatar_type( context, self )
-		self.avatarURL = create_gravatar_url( _username_as_email( context.username ), gravatar_type )
+		self.avatarURL = create_gravatar_url( _username_as_email( context.username ), gravatar_type, secure=True )
 
 @component.adapter(basestring)
 @interface.implementer(interfaces.IAvatarChoices)
@@ -134,7 +134,7 @@ class StringComputedAvatarURLChoices(object):
 		choices = []
 		for name in self._compute_permutations():
 			for gen_type in GENERATED_GRAVATAR_TYPES:
-				choices.append( create_gravatar_url( name, gen_type ) )
+				choices.append( create_gravatar_url( name, gen_type, secure=True ) )
 		# Shuffle the choices so it's not obvious we're following a pattern to
 		# create them. But shuffle them deterministically for the same input
 		# so that we don't appear to jump around as we re-request this, which
