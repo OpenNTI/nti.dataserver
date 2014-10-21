@@ -204,7 +204,7 @@ class ILogonPong(interface.Interface):
 	"""
 	Marker interface for a Pong class
 	"""
-	
+
 class IUserViewTokenCreator(interface.Interface):
 	"""
 	Registered as a named utility that can create
