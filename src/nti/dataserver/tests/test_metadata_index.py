@@ -23,12 +23,12 @@ from hamcrest import contains
 
 from nti.testing.matchers import is_empty
 
-from .mock_dataserver import WithMockDSTrans
-from .mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-from .. import users
-from ..contenttypes import Note
-from ..interfaces import IDeletedObjectPlaceholder
+from nti.dataserver import users
+from nti.dataserver.contenttypes import Note
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from zope import interface
 from zope import component
