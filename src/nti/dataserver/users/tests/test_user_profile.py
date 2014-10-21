@@ -50,7 +50,7 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that( prof,
 					 verifiably_provides( interfaces.ICompleteUserProfile ) )
 		assert_that( prof,
-					 has_property( 'avatarURL', contains_string( 'http://' ) ) )
+					 has_property( 'avatarURL', contains_string( 'https://' ) ) )
 		assert_that( prof,
 					 has_property( 'opt_in_email_communication', is_false() ) )
 
