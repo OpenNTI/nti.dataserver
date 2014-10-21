@@ -80,7 +80,7 @@ class TestingMappingMeetingStorage(object):
 									 nttype=ntiids.TYPE_UUID,
 									 specific=uuid.uuid4().hex )
 		ids = component.queryUtility( zc_intid.IIntIds )
-		if ids:
+		if ids is not None:
 			ids.register( room )
 		self.meetings[room.id] = room
 
