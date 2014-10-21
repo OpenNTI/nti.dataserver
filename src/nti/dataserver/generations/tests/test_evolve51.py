@@ -38,7 +38,7 @@ from nti.deprecated import hides_warnings
 
 from nti.dataserver.metadata_index import CATALOG_NAME
 
-from nti.zope_catalog.interfaces import IMetadataCatalog
+from nti.dataserver.interfaces import IMetadataCatalog
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 class TestEvolve51(mock_dataserver.DataserverLayerTest):

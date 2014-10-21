@@ -57,7 +57,7 @@ from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.string import StringTokenNormalizer
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
-from nti.zope_catalog.interfaces import IMetadataCatalog
+from nti.dataserver.interfaces import IMetadataCatalog
 
 class MimeTypeIndex(ValueIndex):
 	default_field_name = 'mimeType'
