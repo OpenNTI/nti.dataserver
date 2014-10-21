@@ -16,7 +16,6 @@ from .interfaces import INoAutoIndex
 
 from ZODB.POSException import POSKeyError
 
-
 class Catalog(_ZCatalog):
 	"""
 	An extended catalog. Features include:
@@ -65,3 +64,5 @@ class Catalog(_ZCatalog):
 					index.index_doc(uid, obj)
 				except to_catch as e:
 					logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
+
+

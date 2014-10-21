@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.catalog.interfaces import INoAutoIndex
 from zope.catalog.interfaces import INoAutoReindex
+from zope.catalog.interfaces import ICatalog
 
 class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	"""
@@ -20,3 +21,18 @@ class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	be added to catalogs when created or modified events
 	fire.
 	"""
+
+class IMetadataCatalog(ICatalog):
+	"""
+	The nti metadata catalog.
+	"""
+
+	def index_doc(self, id, ob):
+		"""
+		This may or may not update our underlying index.
+		"""
+
+	def force_index_doc(self, id, ob):
+		"""
+		Force the underlying index to update.
+		"""
