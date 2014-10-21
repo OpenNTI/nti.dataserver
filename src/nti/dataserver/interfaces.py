@@ -45,6 +45,7 @@ from nti.contentfragments.schema import SanitizedHTMLContentFragment
 from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
+from nti.schema.field import Dict
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Variant
@@ -57,7 +58,6 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
-from nti.schema.field import Dict
 
 from nti.utils.property import alias
 

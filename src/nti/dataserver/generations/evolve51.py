@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 schema generation installation.
@@ -20,10 +21,9 @@ from zope.component.hooks import site, setHooks
 
 from zope.catalog.interfaces import ICatalog
 
+from nti.dataserver.interfaces import IMetadataCatalog
 from nti.dataserver.metadata_index import CATALOG_NAME
 from nti.dataserver.metadata_index import MetadataCatalog
-
-from nti.dataserver.interfaces import IMetadataCatalog
 
 def do_evolve(context):
 	setHooks()
@@ -53,12 +53,10 @@ def do_evolve(context):
 
 		# Migrate indexes
 		for k, v in old_catalog.items():
-			# Fires re-index event...
-			#new_catalog[k] = v
+			# Avoid firing re-index event...
 			new_catalog._setitemf( k, v )
-
+			
 		logger.info( 'nti.dataserver evolve51 complete.' )
-		return
 
 def evolve(context):
 	do_evolve(context)
