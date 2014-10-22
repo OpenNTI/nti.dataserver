@@ -254,7 +254,7 @@ def _safe_close(conn):
 		except StandardError:
 			pass
 
-def _open_all_databases(db):
+def open_all_databases(db, close_children=False):
 	conn = None
 	try:
 		with transaction.manager:
@@ -263,7 +263,8 @@ def _open_all_databases(db):
 			for name in list(db.databases.keys()):
 				if name not in current:
 					child = conn.get_connection(name)
-					_safe_close(child)
+					if close_children:
+						_safe_close(child)
 	finally:
 		_safe_close(conn)
 			
