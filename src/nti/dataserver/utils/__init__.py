@@ -129,8 +129,6 @@ def run_with_dataserver( environment_dir=None,
 				runner = component.getUtility(IDataserverTransactionRunner)
 				return runner(run_user_fun_print_exception)
 			else:
-				if minimal_ds:
-					_open_all_databases(ds.db)
 				return run_user_fun_print_exception()
 		except AttributeError:
 			# we have seen this if the function closed the dataserver manually, but left
