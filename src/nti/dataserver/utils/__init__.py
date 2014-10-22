@@ -321,7 +321,7 @@ def interactive_setup(root=".",
 	if xmlconfig_packages:
 		packages = set(xmlconfig_packages)
 	context = _configure(set_up_packages=packages, 
-						 eatures=config_features, 
+						 features=config_features, 
 						 execute=False)
 	if with_library:
 		# XXX: Very similar to nti.appserver.application.
