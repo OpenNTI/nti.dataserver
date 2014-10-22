@@ -129,6 +129,8 @@ def run_with_dataserver( environment_dir=None,
 				runner = component.getUtility(IDataserverTransactionRunner)
 				return runner(run_user_fun_print_exception)
 			else:
+				if minimal_ds:
+					_open_all_databases(ds.db)
 				return run_user_fun_print_exception()
 		except AttributeError:
 			# we have seen this if the function closed the dataserver manually, but left
@@ -245,6 +247,28 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 
 	return result
 
+import transaction
+
+def _safe_close(conn):
+	if conn is not None:
+		try:
+			conn.close()
+		except StandardError:
+			pass
+
+def _open_all_databases(db):
+	conn = None
+	try:
+		with transaction.manager:
+			conn = db.open()
+			current = set(conn.connections.keys())
+			for name in list(db.databases.keys()):
+				if name not in current:
+					child = conn.get_connection(name)
+					_safe_close(child)
+	finally:
+		_safe_close(conn)
+			
 @interface.implementer(IDataserver)
 @NoPickle
 class _MockDataserver(object):
