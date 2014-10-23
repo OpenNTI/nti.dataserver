@@ -25,6 +25,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from nti.ntiids import interfaces as nid_interfaces
 from nti.ntiids.ntiids import get_provider, get_specific
+from nti.ntiids.ntiids import ROOT as NTIID_ROOT
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -167,6 +168,10 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 class _ContentResolver(object):
 
 	def resolve( self, key ):
+		# Shortcut for the root ntiid
+		if key == NTIID_ROOT:
+			return
+
 		result = None
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		path = library.pathToNTIID( key ) if library else None
