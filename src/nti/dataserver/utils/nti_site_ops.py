@@ -62,10 +62,10 @@ def info_site(name):
 	
 	def _print(key, value, tabs=1):
 		s = '\t' * tabs
+		print(s, key, value)
 		if isinstance(value, Mapping):
 			for k, v  in value.items():
 				_print(k, v, tabs+1)
-		print(s, key, value)
 				
 	sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
 	local_site = sites_folder[name]
