@@ -43,7 +43,7 @@ class _CourseExtractor(object):
 			course_nodes = self._process_course(dom, outpath, course_els[0], courseinfo)
 			# Write the course data to course_outline.xml
 			with open(os.path.join(outpath, "course_outline.xml"), "wb") as fp:
-				course_nodes.writexml(fp)
+				fp.write(course_nodes.toxml('utf-8'))
 
 			dom.childNodes[0].appendChild(course_nodes)
 			dom.childNodes[0].setAttribute('isCourse', 'true')
