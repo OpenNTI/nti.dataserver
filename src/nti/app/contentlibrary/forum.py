@@ -68,7 +68,8 @@ class ContentBoard(GeneralBoard):
 @interface.implementer(IContentBoard)
 def ContentBoardAdapter(context):
 	board = AnnotatableBoardAdapter(context, ContentBoard, IContentBoard)
-	board.creator = system_user
+	if board.creator is None:
+		board.creator = system_user
 	return board
 
 ### Forum
