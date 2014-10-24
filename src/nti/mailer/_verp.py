@@ -77,14 +77,14 @@ def _make_signer(default_key='$Id$',
 								 digest_method=digest_method)
 	return signer
 
-def _find_default_realname():
+def _find_default_realname( request=None ):
 	"""
 	Called when the given fromaddr does not have a realname portion.
 	We would prefer to use whatever is in the site policy, if there
 	is one, otherwise we have a hardcoded default.
 	"""
 	realname = None
-	policy, policy_name = find_site_policy()
+	policy, policy_name = find_site_policy( request=request )
 	if policy is not None and policy_name and getattr(policy, 'DEFAULT_EMAIL_SENDER', None):
 		realname, _ = rfc822.parseaddr(policy.DEFAULT_EMAIL_SENDER)
 		if realname is not None:
@@ -120,7 +120,7 @@ def realname_from_recipients(fromaddr, recipients, request=None):
 	if not realname and not addr:
 		raise ValueError("Invalid fromaddr", fromaddr)
 	if not realname:
-		realname = _find_default_realname()
+		realname = _find_default_realname( request=request )
 
 	return rfc822.dump_address_pair( (realname, addr) )
 
