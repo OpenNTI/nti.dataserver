@@ -45,10 +45,13 @@ class Currency(object):
 	# Tales will call anything we provide that is callable
 	# and a method, or it can access any property we provide
 
-	def _format_currency(self, decimal, currency=None):
-		request = get_current_request()
+	def _format_currency(self, decimal, currency=None, request=None):
+		# TODO We most likely will not have a thread-local request
+		request = request or get_current_request()
 		if request is None:
-			return decimal
+			# Use a USD default
+			result = '$ %s' % '{:20,.2f}'.format( decimal )
+			return result
 
 		locale = IBrowserRequest(request).locale
 		# We're using the Zope local system to format numbers as currencies;
@@ -79,24 +82,27 @@ class Currency(object):
 		"""
 		return self._format_currency( self.context )
 
-	def format_obj_with_currency(self):
+	def format_obj_with_currency(self, request=None):
 		return self._format_currency( self.context,
-									  getattr( self.context, 'Currency' ) )
+									  getattr( self.context, 'Currency' ),
+									  request=request )
 
-	def format_with_currency(self):
+	def format_with_currency(self, request=None):
 		return self._format_currency( self.context,
-									  self.currency )
+									  self.currency,
+									  request=request )
 
-	def format_currency_object(self, obj):
-		return self._format_currency( obj )
+	def format_currency_object(self, obj, request=None):
+		return self._format_currency( obj, request=request )
 
-	def format_currency_attribute(self, obj, attrname):
+	def format_currency_attribute(self, obj, attrname, request=None):
 		"""
-		This method is intendted to be used from Mako templates
+		This method is intended to be used from Mako templates
 		or other places that do not support path traversal.
 		"""
 		return self._format_currency(getattr(obj, attrname),
-									 getattr(obj, 'Currency'))
+									 getattr(obj, 'Currency'),
+									 request=request)
 
 	def __getattr__( self, name ):
 		if name.startswith( 'ATTR_W_CURRENCY_' ):
