@@ -1726,17 +1726,17 @@ class INotableFilter(interface.Interface):
 	These will typically be registered as subscription adapters
 	"""
 
-	def is_notable(notable, user):
+	def is_notable(notable, user=None):
 		"""
-		Given an objet and user and returns True if the
+		Given an objet and possible a user and returns True if the
 		objet is a notable		
 		"""
 
-def get_notable_filter(user):
-	filters = component.subscribers((user,), INotableFilter)
+def get_notable_filter(obj):
+	filters = component.subscribers((obj,), INotableFilter)
 	filters = list(filters)
-	def uber_filter(badge):
-		return any((f.is_notable(user, badge) for f in filters))
+	def uber_filter(user=None):
+		return any((f.is_notable(obj, user) for f in filters))
 	return uber_filter
 
 ####
