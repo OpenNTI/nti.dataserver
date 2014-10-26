@@ -20,7 +20,7 @@ from persistent import Persistent
 from .transient import TrivialSite
 from .transient import HostSiteManager
 
-def _find_site_components(site_names):
+def find_site_components(site_names):
 	"""
 	Return an IComponents implementation named for the first virtual site
 	found in the sequence of site_names. If no such components can be found,
@@ -29,11 +29,10 @@ def _find_site_components(site_names):
 	for site_name in site_names:
 		if not site_name: # Empty/default. We want the global. This should only ever be at the end
 			return None
-
 		components = component.queryUtility( IComponents, name=site_name )
-
 		if components is not None:
 			return components
+_find_site_components = find_site_components # BWC
 
 def get_site_for_site_names( site_names, site=None ):
 	"""
