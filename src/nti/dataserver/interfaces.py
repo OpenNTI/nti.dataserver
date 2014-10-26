@@ -293,7 +293,6 @@ from nti.dublincore.interfaces import ICreatedTime
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
-
 class ILastViewed(ILastModified):
 	"""
 	In addition to tracking modification and creation times, this
@@ -335,7 +334,6 @@ class IContained(IZContained):
 	id = DecodingValidTextLine(title="The locally unique ID (name) of this object in the container it belongs. Should match the __name__",
 							   required=False)
 
-
 class IAnchoredRepresentation(IContained):
 	"""
 	Something not only contained within a container, but that has a
@@ -358,7 +356,6 @@ class IContainerIterable(interface.Interface):
 		"""
 		:return: An iteration across the containers held in this object.
 		"""
-
 
 # ## Changes related to content objects/users
 SC_CREATED = "Created"
@@ -399,6 +396,7 @@ IStreamChangeSharedEvent = None
 IStreamChangeCircledEvent = None
 
 import sys
+
 def make_stream_change_event_interface(event_name,
 									   bases=(),
 									   __module__=None):
@@ -544,7 +542,6 @@ class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
 		:return: A context manager callable.
 		"""
 
-
 class IGroupMember(interface.Interface):
 	"""
 	Something that can report on the groups it belongs to.
@@ -571,7 +568,6 @@ class IGroupMember(interface.Interface):
 #  IGroupAwarePrincipal
 IGroupAwarePrincipal.__bases__ = IGroupAwarePrincipal.__bases__ + (IGroupMember,)
 
-
 class IMutableGroupMember(IGroupMember):
 	"""
 	Something that can change the groups it belongs to. See :class:`zope.security.interfaces.IMemberAwareGroup`
@@ -587,10 +583,8 @@ class IMutableGroupMember(IGroupMember):
 			to which the member now belongs.
 		"""
 
-
 def valid_entity_username(entity_name):
 	return not username_is_reserved(entity_name)
-
 
 class ICreatedUsername(interface.Interface):
 	"""
@@ -641,7 +635,6 @@ class IMissingEntity(IEntity):
 	entity.
 	"""
 
-
 class IDynamicSharingTarget(IEntity):
 	"""
 	These objects reverse the normal sharing; instead of being
@@ -664,7 +657,6 @@ class ICommunity(IDynamicSharingTarget):
 		"""
 		Return an iterable of the usernames of members of this community.
 		"""
-
 
 class IUnscopedGlobalCommunity(ICommunity):
 	"""
@@ -695,7 +687,6 @@ class IUserEvent(interface.interfaces.IObjectEvent):
 					title="The User (an alias for user). You can add event listeners based on the interfaces of this object.")
 	user = Object(IUser,
 				  title="The User (an alias for object). You can add event listeners based on the interfaces of this object.")
-
 
 @interface.implementer(IUserEvent)
 class UserEvent(ObjectEvent):
@@ -974,7 +965,6 @@ class IACE(interface.Interface):
 		Returns three items.
 		"""
 
-
 class IACL(interface.Interface):
 	"""
 	Something that can iterate across :class:`IACE` objects.
@@ -1029,7 +1019,6 @@ class IContent(ILastModified, ICreated):
 	It's All Content.
 	"""
 
-
 def Title():
 	"""
 	Return a :class:`zope.schema.interfaces.IField` representing
@@ -1042,7 +1031,6 @@ def Title():
 					required=False,
 					title="The human-readable title of this object",
 					__name__='title')
-
 
 def CompoundModeledContentBody():
 	"""
@@ -1104,12 +1092,12 @@ class IUserTaggedContent(interface.Interface):
 							default=())
 
 from nti.mimetype import interfaces as ds_mime_interfaces
+
 class IModeledContent(IContent, IContained, ds_mime_interfaces.IContentTypeMarker):
 	"""
 	Content accessible as objects.
 	Interfaces that extend this MUST directly provide IContentTypeAware.
 	"""
-
 
 class IEnclosedContent(IContent, IContained, IContentTypeAware, IShouldHaveTraversablePath):
 	"""
@@ -1246,7 +1234,6 @@ class IReadableShared(interface.Interface):
 		required=False,
 		default=frozenset(),
 		readonly=True)
-
 
 # 	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
 	def getFlattenedSharingTargetNames():
@@ -1402,7 +1389,6 @@ class ITranscript(ITranscriptSummary):
 class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
-
 class ICanvas(IShareableModeledContent, IThreadable):
 	"""
 	A drawing or whiteboard that maintains a Z-ordered list of figures/shapes.
@@ -1519,7 +1505,6 @@ class ILikeable(IAnnotatable):
 	liked by users using the :class:`contentratings.interfaces.IUserRating` interface.
 	"""
 
-
 class IFavoritable(IAnnotatable):
 	"""
 	Marker interface that promises that an implementing object may be
@@ -1538,8 +1523,6 @@ class IRatable(IAnnotatable, IUserRatable):
 	Marker interface that promises that an implementing object may be
 	rated by users using the :class:`contentratings.interfaces.IUserRating` interface.
 	"""
-
-# from zope.interface.interfaces import IObjectEvent
 
 class IGlobalFlagStorage(interface.Interface):
 
@@ -1583,7 +1566,6 @@ class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
 class ObjectUnflaggedEvent(interface.interfaces.ObjectEvent):
 	pass
 
-
 class INote(IHighlight, IThreadable, ITitledContent):
 	"""
 	A user-created note attached to other content.
@@ -1601,9 +1583,9 @@ class IDeletedObjectPlaceholder(interface.Interface):
 
 # ## Dynamic event handling
 import nti.socketio.interfaces
+
 class ISocketProxySession(nti.socketio.interfaces.ISocketIOChannel):
 	pass
-
 
 class ISessionService(interface.Interface):
 	"""
@@ -1686,7 +1668,6 @@ class ISessionServiceStorage(interface.Interface):
 			the given user. These are returned in no particular order.
 		"""
 
-
 class IUserNotificationEvent(interface.Interface):
 	"""
 	An event that is emitted with the intent of resulting in
@@ -1700,7 +1681,6 @@ class IUserNotificationEvent(interface.Interface):
 	name = DecodingValidTextLine( title="The name of the event to deliver" )
 	args = Iterable( title="Iterable of objects to externalize and send as arguments." )
 
-
 @interface.implementer( IUserNotificationEvent )
 class UserNotificationEvent(object):
 	"Base class for user notification events"
@@ -1712,7 +1692,6 @@ class UserNotificationEvent(object):
 
 	def __repr__( self ):
 		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__, self.name, self.targets, self.args)
-
 
 class DataChangedUserNotificationEvent(UserNotificationEvent):
 	"""
@@ -1739,6 +1718,26 @@ class IMetadataCatalog(ICatalog):
 		"""
 		Force the underlying index to update.
 		"""
+
+class INotableFilter(interface.Interface):
+	"""
+	A filter to determine if an object is a notable
+
+	These will typically be registered as subscription adapters
+	"""
+
+	def is_notable(notable, user):
+		"""
+		Given an objet and user and returns True if the
+		objet is a notable		
+		"""
+
+def get_notable_filter(user):
+	filters = component.subscribers((user,), INotableFilter)
+	filters = list(filters)
+	def uber_filter(badge):
+		return any((f.is_notable(user, badge) for f in filters))
+	return uber_filter
 
 ####
 # # Weak Refs and related BWC exports
