@@ -515,6 +515,10 @@ class AbstractSitePolicyEventListener(object):
 			user.follow(community)
 
 	def __find_my_package(self):
+		specific_package = getattr( self, 'PACKAGE', None )
+		if specific_package is not None:
+			return specific_package
+
 		if self._v_my_package is None:
 			package = package_of(dottedname.resolve(type(self).__module__))
 			# As a temporary measure, if we find that we are in the old
