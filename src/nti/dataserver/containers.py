@@ -21,6 +21,7 @@ from random import randint
 
 from zope import interface
 from zope import component
+from zope import lifecycleevent
 from zope.annotation import interfaces as annotation
 from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -37,6 +38,7 @@ from zope.container.interfaces import IContainerModifiedEvent
 from zope.site.interfaces import IFolder
 from zope.site.site import SiteManagerContainer
 
+from ZODB.interfaces import IBroken
 from ZODB.interfaces import IConnection
 
 from nti.ntiids import ntiids
@@ -201,8 +203,8 @@ class AbstractNTIIDSafeNameChooser(object):
 		return factory( self.context ).chooseName( name, obj )
 
 
-
 from zope.container.constraints import checkObject
+
 class _CheckObjectOnSetMixin(object):
 	"""
 	Works only with the standard BTree container.
@@ -300,12 +302,20 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 		for k in list(self.keys()):
 			del self[k]
 
-	def _delitemf(self, key):
+	def _delitemf(self, key, event=True):
 		# make sure our lazy property gets set
 		l = self._BTreeContainer__len
 		item = self._SampleContainer__data[key]
+		if event:
+			# notify with orignal name
+			lifecycleevent.removed(item, self, item.__name__)
+		# remove
 		del self._SampleContainer__data[key]
 		l.change(-1)
+		# clean containment
+		if event and not IBroken.providedBy(item):
+			item.__name__ = None
+			item.__parent__ = None
 		return item
 		
 	# We know that these methods are implemented as iterators.
@@ -448,8 +458,8 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		del self._SampleContainer__data[key]
 		l.change(-1)
 
-
 import functools
+
 @functools.total_ordering
 class _CaseInsensitiveKey(object):
 	"""
@@ -537,7 +547,6 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 				if k == 'Last Modified': continue
 				yield k
 
-
 	def __getitem__( self, key ):
 		return self._SampleContainer__data[_tx_key_insen(key)]
 
@@ -557,6 +566,10 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		del self._SampleContainer__data[_tx_key_insen(key)]
 		l.change(-1)
 
+	def _delitemf(self, key, event=True):
+		item = LastModifiedBTreeContainer._delitemf(self, _tx_key_insen(key), event)
+		return item
+	
 	def items( self, key=None ):
 		if key is not None:
 			key = _tx_key_insen( key )
