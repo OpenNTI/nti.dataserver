@@ -514,15 +514,6 @@ def _cache_objects(db, pred=id):
 		except (AttributeError,LookupError):
 			pass
 
-		if ICommunity.providedBy(k):
-			# Go into courses and sub-course objects
-			# like the gradebook, assignment history, etc, which
-			# are all annotations
-			an = IAnnotations(k, ())
-			for k in an:
-				l = an.get(k)
-				_act(l, seen)
-
 	seen = set()
 	for user in conn.root()['nti.dataserver']['users'].values():
 		# Activate each user and his sublocations
