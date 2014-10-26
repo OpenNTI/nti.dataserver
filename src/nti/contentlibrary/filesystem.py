@@ -15,10 +15,10 @@ from os.path import join as path_join
 
 from zope import interface
 from zope import component
+from zope.cachedescriptors.method import cachedIn
 
 from nti.utils.property import readproperty
 from nti.utils.property import CachedProperty
-from zope.cachedescriptors.method import cachedIn
 
 from . import eclipse
 from . import library
@@ -26,19 +26,19 @@ from . import library
 from .contentunit import ContentUnit
 from .contentunit import ContentPackage
 
-from .interfaces import IContentPackageLibrary
-from .interfaces import IDelimitedHierarchyContentPackageEnumeration
-from .interfaces import IEnumerableDelimitedHierarchyBucket
-from .interfaces import IFilesystemContentUnit
-from .interfaces import IFilesystemContentPackage
-from .interfaces import IFilesystemContentPackageLibrary
 from .interfaces import IFilesystemKey
 from .interfaces import IFilesystemBucket
+from .interfaces import IContentPackageLibrary
+from .interfaces import IFilesystemContentUnit
+from .interfaces import IFilesystemContentPackage
 from .interfaces import IGlobalContentPackageLibrary
-from .interfaces import IGlobalFilesystemContentPackageLibrary
+from .interfaces import IFilesystemContentPackageLibrary
+from .interfaces import IEnumerableDelimitedHierarchyBucket
 from .interfaces import IPersistentFilesystemContentUnit
 from .interfaces import IPersistentFilesystemContentPackage
+from .interfaces import IGlobalFilesystemContentPackageLibrary
 from .interfaces import IPersistentFilesystemContentPackageLibrary
+from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 def _TOCPath(path):
 	return os.path.abspath(path_join(path, eclipse.TOC_FILENAME))
@@ -122,9 +122,8 @@ class _FilesystemTime(object):
 		# Should we allow set?
 		pass
 
-
-from .bucket import AbstractBucket
 from .bucket import AbstractKey
+from .bucket import AbstractBucket
 
 from zope.dublincore.interfaces import IDCTimes
 from nti.dublincore.interfaces import ILastModified
@@ -194,7 +193,6 @@ class FilesystemKey(AbstractKey,
 		# offers the possibility of using a streaming parser
 		with open(self.absolute_path, 'rb') as f:
 			return self._do_readContentsAsYaml(f)
-
 
 @interface.implementer(IFilesystemBucket)
 class FilesystemBucket(AbstractBucket,
@@ -299,7 +297,6 @@ class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentP
 
 	def _package_factory(self, bucket):
 		return _package_factory(bucket, self.__package_factory, self._unit_factory)
-
 
 @interface.implementer(IFilesystemContentPackageLibrary)
 class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
@@ -435,7 +432,6 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 		return max( self.index_last_modified, self._directory_last_modified )
 
 
-
 # Order matters, we must inherit Persistent FIRST to get the right __getstate__,etc,
 # behaviour
 
@@ -502,8 +498,6 @@ def _GlobalFilesystemUnpickle(library_name):
 
 	return lib
 
-
-
 @interface.implementer(IGlobalFilesystemContentPackageLibrary)
 class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
 											AbstractFilesystemLibrary):
@@ -523,7 +517,6 @@ class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
 		return _GlobalFilesystemUnpickle, (self.__name__,)
 	__reduce_ex__ = __reduce__
 
-
 # A measure of BWC
 EnumerateOnceFilesystemLibrary = GlobalFilesystemContentPackageLibrary
 DynamicFilesystemLibrary = EnumerateOnceFilesystemLibrary
@@ -539,8 +532,6 @@ def CachedNotifyingStaticFilesystemLibrary(paths=()):
 	raise TypeError("Unsupported use of multiple paths")
 	# Though we could support it without too much trouble
 
-
-
 @interface.implementer(IPersistentFilesystemContentPackageLibrary)
 class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
 								  library.PersistentContentPackageLibrary):
@@ -550,8 +541,9 @@ class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
 		assert isinstance(root, _PersistentFilesystemLibraryEnumeration)
 		return root
 
-from .interfaces import ISiteLibraryFactory
 from nti.externalization.persistence import NoPickle
+
+from .interfaces import ISiteLibraryFactory
 
 @component.adapter(IGlobalFilesystemContentPackageLibrary)
 @interface.implementer(ISiteLibraryFactory)
@@ -563,10 +555,7 @@ class GlobalFilesystemSiteLibraryFactory(object):
 
 	def library_for_site_named(self, name):
 		enumeration = IDelimitedHierarchyContentPackageEnumeration(self.context)
-		root = enumeration.root
-
 		site_enumeration = enumeration.childEnumeration('sites').childEnumeration(name)
-
 		# whether or not it exists we return it so that
 		# it can be registered for the future.
 		return PersistentFilesystemLibrary(site_enumeration)
