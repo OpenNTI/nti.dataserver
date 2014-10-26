@@ -110,9 +110,12 @@ class _FilesystemTime(object):
 		except (OSError,TypeError):
 			return self.default_time
 		else:
-			inst.__dict__[self._name] = val
-			if hasattr(inst, '_p_changed'):
-				inst._p_changed = True
+			if 		self._name not in inst.__dict__ \
+				or 	inst.__dict__[self._name] != val:
+				# Store only if we've changed.
+				inst.__dict__[self._name] = val
+				if hasattr(inst, '_p_changed'):
+					inst._p_changed = True
 			return val
 
 	def __set__(self, inst, val):
