@@ -1418,7 +1418,7 @@ class TestRootPageEntryLibrary(TestApplicationLibraryBase):
 						   data,
 						   headers={"Accept": accept_type},
 						   extra_environ=self._make_extra_environ() )
-		assert_that( res.status_int, is_( 404 ) )
+		assert_that( res.status_int, is_( 200 ) )
 
 		assert_that( res.content_type, is_( 'application/vnd.nextthought.pageinfo+json' ) )
 		assert_that( res.json_body, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )

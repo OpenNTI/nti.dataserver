@@ -168,10 +168,6 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 class _ContentResolver(object):
 
 	def resolve( self, key ):
-		# Shortcut for the root ntiid
-		if key == NTIID_ROOT:
-			return
-
 		result = None
 		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
 		path = library.pathToNTIID( key ) if library else None
