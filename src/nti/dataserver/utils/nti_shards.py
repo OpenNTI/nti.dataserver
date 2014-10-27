@@ -52,6 +52,7 @@ def main():
 	site_group.add_argument('-l', '--list',
 							 dest='list',
 							 help='List shards', action='store_true')
+
 	site_group.add_argument('-c', '--create',
 							 dest='create',
 							 help='Create shard', action='store_true')
@@ -64,7 +65,7 @@ def main():
 	env_dir = os.getenv('DATASERVER_DIR')
 	
 	if args.create:
-		shard_name = args.shard_name
+		shard_name = args.name
 		if not shard_name:
 			raise IOError("Must specify a shard name")
 		init_shard(env_dir, shard_name)
