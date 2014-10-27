@@ -179,6 +179,9 @@ def create_simple_html_text_email(base_template,
 	try:
 		html_body, text_body = do_render( package )
 	except ValueError as e:
+		# This is just to handle the case where the
+		# site specifies a package, but wants to use
+		# a default template in some cases.
 		if package is None:
 			raise e
 		# Do ew have to add to level
