@@ -163,17 +163,28 @@ def create_simple_html_text_email(base_template,
 			del result['context']
 		return result
 
-	specs_and_packages = [_get_renderer_spec_and_package( base_template,
-														  extension,
-														  package=package,
-														  level=_level) + (extension,)
-							for extension in ('.pt', text_template_extension)]
+	def do_render( pkg ):
+		specs_and_packages = [_get_renderer_spec_and_package( base_template,
+															  extension,
+															  package=pkg,
+															  level=_level + 1) + (extension,)
+								for extension in ('.pt', text_template_extension)]
 
-	html_body, text_body = [render( spec,
-									make_args(extension),
-									request=request,
-									package=package)
-							for spec, package, extension in specs_and_packages]
+		return [render( spec,
+						make_args(extension),
+						request=request,
+						package=pkg)
+						for spec, pkg, extension in specs_and_packages]
+
+	try:
+		html_body, text_body = do_render( package )
+	except ValueError as e:
+		if package is None:
+			raise e
+		# Do ew have to add to level
+		# Ok, let's try to find the package.
+		html_body, text_body = do_render( None )
+
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
 	# Under python2, at least, the text templates (Chameleon alone) produces byte objects,
 	# (JAM: TODO: Can we make it stay in the unicode realm? Pyramid config?)
