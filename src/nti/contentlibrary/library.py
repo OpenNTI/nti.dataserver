@@ -22,6 +22,8 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.externalization.persistence import NoPickle
 
+from nti.ntiids.ntiids import ROOT as NTI_ROOT
+
 from nti.site.localutility import queryNextUtility
 
 from nti.utils.property import alias
@@ -373,6 +375,17 @@ class AbstractContentPackageLibrary(object):
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""
+		# We special case the root ntiid by only looking in
+		# the top level of content packages for our ID.  We should
+		# always return None unless there are root content prefs.
+		# TODO Would we want to do something similar for all ntiid
+		# queries?
+		if ntiid == NTI_ROOT:
+			for title in self.contentPackages:
+				if getattr( title, 'ntiid', None ) == ntiid:
+					return [title]
+			return None
+
 		for title in self.contentPackages:
 			result = _pathToPropertyValue( title, 'ntiid', ntiid )
 			if result:
