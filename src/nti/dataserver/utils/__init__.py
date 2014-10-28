@@ -354,8 +354,9 @@ def interactive_setup(root=".",
 	setSite(ds_folder)
 
 	if with_dataserver:
-		component.getGlobalSiteManager().registerUtility(_MockDataserver(ds_folder,
-																		 conn))
+		dataserver = _MockDataserver(ds_folder, conn)
+		component.getGlobalSiteManager().registerUtility(dataserver)
+
 	if with_library:
 		from nti.contentlibrary.interfaces import IContentPackageLibrary
 		component.getUtility(IContentPackageLibrary).syncContentPackages()
