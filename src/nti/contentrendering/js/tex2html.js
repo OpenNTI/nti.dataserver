@@ -1,4 +1,6 @@
-if(phantom.args.length < 1){
+var system = require('system');
+
+if(system.args.length < 2){
 	console.log('Usage: phantomjs tex2html.js page.html');
 }
 
@@ -9,6 +11,11 @@ page.onConsoleMessage = function(msg, line, source){
 	if (msg === 'Exit process'){
 		phantom.exit();
 	}
+	else if (msg === 'Processing error'){
+		console.log(page.content);
+		console.log('There was a serious error while processing.');
+		phantom.exit(42);
+	}
 	else { //phantom.exit() is async so this must be in an else to avoid spurious output
 		// This is something of an abuse, but the page directly sends us html,
 		// which we write to stdout on a line
@@ -17,6 +24,10 @@ page.onConsoleMessage = function(msg, line, source){
 };
 
 var processPage = function(){
+	if (typeof(MathJax) == 'undefined'){
+		console.log('Processing error');
+	}
+
 	MathJax.Hub.Queue(function()
 	{
 		jQuery.fn.outerhtml=function outerHTML()
@@ -46,4 +57,4 @@ var onPageOpen = function(status){
 	}
 };
 
-page.open(phantom.args[0], onPageOpen);
+page.open(system.args[1], onPageOpen);

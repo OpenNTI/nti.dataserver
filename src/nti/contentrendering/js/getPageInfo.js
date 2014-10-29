@@ -1,4 +1,6 @@
-if(phantom.args.length < 1){
+var system = require('system')
+
+if(system.args.length < 2){
 	console.log('Usage: phantomjs getPageInfo.js page.html');
 }
 
@@ -58,4 +60,4 @@ var onPageOpen = function(status){
 	phantom.exit();
 };
 
-page.open(phantom.args[0], onPageOpen);
+page.open(system.args[1], onPageOpen);
