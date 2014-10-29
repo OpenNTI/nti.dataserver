@@ -45,6 +45,7 @@ from gevent import getcurrent
 # plus a custom atom to get the greenlet id and pid into the message, just like
 # in normal log messages
 from gunicorn import glogging
+
 def _glogging_atoms(self, resp, req, environ, request_time):
 	"""
 	Gets atoms for log formating.
@@ -131,6 +132,7 @@ class _PhonyRequest(object):
 		raise Exception("Not implemented for phony request")
 
 from gunicorn.http import Request
+
 class _NonParsingRequest(Request):
 	def parse(self, unreader):
 		pass
@@ -214,13 +216,15 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			request.headers.append( (k, v) )
 		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
 		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
-		_, gunicorn_env = gunicorn.http.wsgi.create(request, self.socket, self.client_address, self.socket.getsockname(), cfg)
+		_, gunicorn_env = gunicorn.http.wsgi.create(request,
+													self.socket, 
+													self.client_address, 
+													self.socket.getsockname(), 
+													cfg)
 		gunicorn_env.update( gunicorn.http.wsgi.proxy_environ(self.__request) )
 		environ.update( gunicorn_env )
 
-
 		return environ
-
 
 class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	"""
@@ -244,9 +248,9 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		just our socket when we create it. So this method DOES NOT call
 		super (which patches the whole system).
 		"""
-		import nti.monkey.gevent_patch_on_import # But we do import the patches, to make sure we get the patches we do want
+		# But we do import the patches, to make sure we get the patches we do want
+		import nti.monkey.gevent_patch_on_import
 		nti.monkey.gevent_patch_on_import.patch()
-
 
 		from nti.monkey import webob_cookie_escaping_patch_on_import
 		webob_cookie_escaping_patch_on_import.patch()
@@ -261,15 +265,16 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 	def _load_legacy_app( self ):
 		try:
 			if not isinstance( self.app, _PasterServerApplication ):
-				logger.warn( "Deprecated code path, please update your .ini:\n[server:main]\nuse = egg:nti.dataserver#gunicorn" )
+				logger.warn("Deprecated code path, please update your .ini:\n" +
+							"[server:main]\nuse = egg:nti.dataserver#gunicorn" )
 				dummy_app = self.app.app
-				wsgi_app = loadwsgi.loadapp( 'config:' + dummy_app.global_conf['__file__'], name='dataserver_gunicorn' )
+				wsgi_app = loadwsgi.loadapp('config:' + dummy_app.global_conf['__file__'], 
+											name='dataserver_gunicorn' )
 				self.app.app = wsgi_app
 				self.app.callable = wsgi_app
 		except Exception:
 			logger.exception( "Failed to load app" )
 			raise
-
 
 	def init_process(self, _call_super=True):
 		"""
@@ -314,21 +319,21 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# of machines, and we quickly run out. We probably can't really handle
 		# 1000 simultaneous connections anyway, even though we are non-blocking
 		worker_connections = self.cfg.settings['worker_connections']
-		if worker_connections.value == worker_connections.default and worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS:
+		if	worker_connections.value == worker_connections.default and \
+			worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS:
 			worker_connections.set( self.PREFERRED_MAX_CONNECTIONS )
 			self.worker_connections = self.PREFERRED_MAX_CONNECTIONS
-
 
 		# Change/update the logging format.
 		# It's impossible to configure this from the ini file because
 		# Paste uses plain ConfigParser, which doesn't understand escaped % chars,
 		# and tries to interpolate the settings for the log file.
-		# For now, we just add on the time in seconds and  microseconds with %(T)s.%(D)s. Other options include
-		# using a different key with a fake % char, like ^,
+		# For now, we just add on the time in seconds and  microseconds with %(T)s.%(D)s.
+		# Other options include using a different key with a fake % char, like ^,
 		# (Note: microseconds and seconds are not /total/, they are each fractions;
-		# they come from a `datetime.timedelta` object, which guarantees that the microsecond
-		# value is between 0 and one whole second; we need to properly set formatting
-		# field width to account for this)
+		# they come from a `datetime.timedelta` object, which guarantees that the
+		# microsecond value is between 0 and one whole second; we need to properly set 
+		# formatting field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
 		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds" )
 		# Also, if there is a handler set for the gunicorn access log (e.g., '-' for stderr)
@@ -435,8 +440,9 @@ class _ServerFactory(object):
 from zope import interface
 from zope import component
 from zope.event import notify
-from nti.processlifetime import IProcessWillFork, ProcessWillFork
+
 from nti.processlifetime import ProcessDidFork
+from nti.processlifetime import IProcessWillFork, ProcessWillFork
 
 class _IGunicornWillFork(IProcessWillFork):
 	"""
@@ -468,12 +474,14 @@ class _GunicornDidForkWillExec(object):
 		self.arbiter = arbiter
 
 _fork_count = 1
-from zope.location.interfaces import ISublocations
-from zope.annotation import IAnnotations
+
 import transaction
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
-from nti.dataserver.interfaces import ICommunity
+
 from relstorage.storage import RelStorage
+
+from zope.location.interfaces import ISublocations
+
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 def _cache_objects(db, pred=id):
 	conn = db.open()
@@ -528,28 +536,33 @@ def _process_will_fork_listener( event ):
 	from nti.dataserver import interfaces as nti_interfaces
 	ds = component.queryUtility( nti_interfaces.IDataserver )
 	if ds:
-
-		# Prepopulate the cache before we fork to start all workers
-		# off with an even keel.
-		# This just ensures memcache is current, and
-		# gets the bytes storage in place; it doesn't yet
-		# do anything about connection level object caches
-		if False and not _master_storages and isinstance(ds.db.storage.base, RelStorage):
-			logger.info("Warming cache in %s", os.getpid())
-			for name, db in ds.db.databases.items():
-				_master_storages[name] = db.storage
-			_cache_objects(ds.db)
-			logger.info("Done warming cache")
+		if False:
+			try:
+				# Prepopulate the cache before we fork to start all workers
+				# off with an even keel.
+				# This just ensures memcache is current, and
+				# gets the bytes storage in place; it doesn't yet
+				# do anything about connection level object caches
+				if not _master_storages and isinstance(ds.db.storage.base, RelStorage):
+					logger.info("Warming cache in %s", os.getpid())
+					for name, db in ds.db.databases.items():
+						_master_storages[name] = db.storage
+					_cache_objects(ds.db)
+					logger.info("Done warming cache")
+			except AttributeError:
+				pass
 		# Close the ds in the master, we don't need those connections
 		# sticking around here. It will be reopened in the child
 		ds.close()
 
 from zope.processlifetime import IDatabaseOpened
+
 @component.adapter(IDatabaseOpened)
 def _replace_storage_on_open(event):
 
 	if event.database.database_name in _master_storages:
-		logger.info("Installing cached storage in pid %s: %s", os.getpid(), _master_storages)
+		logger.info("Installing cached storage in pid %s: %s", 
+					os.getpid(), _master_storages)
 		event.database.storage = _master_storages[event.database.database_name]
 
 from zope.processlifetime import IDatabaseOpenedWithRoot
@@ -558,10 +571,10 @@ def _cache_conn_objects(event):
 
 	if event.database.database_name in _master_storages:
 		logger.info("Caching objects in pid %s: %s", os.getpid(), _master_storages)
-		glts = [gevent.spawn(_cache_objects, event.database) for _ in range(event.database.pool.getSize())]
+		glts = [gevent.spawn(_cache_objects, event.database) \
+				for _ in range(event.database.pool.getSize())]
 		gevent.joinall(glts)
 		logger.info("Done caching objects in pid %s", os.getpid())
-
 
 @component.adapter(_IGunicornDidForkWillExec)
 def _process_did_fork_will_exec( event ):
@@ -583,7 +596,6 @@ def _pre_fork( arbiter, worker ):
 	global _fork_count
 	_fork_count += 1
 	os.environ['DATASERVER_ZEO_CLIENT_NAME'] = 'gunicorn_' + str(_fork_count)
-
 	notify( _GunicornWillFork( arbiter, worker ) )
 
 def _post_fork( arbiter, worker ):
@@ -600,6 +612,7 @@ def _post_fork( arbiter, worker ):
 	hub = gevent.hub.get_hub()
 	if hub._threadpool is not None and hub._threadpool._size: # same condition it uses
 		hub._threadpool._on_fork()
+
 	# See also
 	# https://bitbucket.org/jgehrcke/gipc/src/bbfa4a02c756c81408e15016ad0ef836d1dcbad5/gipc/gipc.py?at=default#cl-217
 
@@ -622,7 +635,6 @@ def _post_fork( arbiter, worker ):
 			prev_handler(signum, frame)
 
 	prev_handler = signal.signal( signal.SIGPROF, handle_info )
-
 	notify( ProcessDidFork() )
 
 def _pre_exec( arbiter ):
@@ -653,7 +665,8 @@ class _PasterServerApplication(PasterServerApplication):
 
 	def __init__( self, app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
 
-		super(_PasterServerApplication, self).__init__( app, gcfg=gcfg, host=host, port=port, *args, **kwargs )
+		super(_PasterServerApplication, self).__init__( app, gcfg=gcfg, host=host,
+														port=port, *args, **kwargs )
 		self.cfg.set( 'pre_fork', _pre_fork )
 		self.cfg.set( 'post_fork', _post_fork )
 		self.cfg.set( 'pre_exec', _pre_exec )
@@ -690,7 +703,8 @@ class _PasterServerApplication(PasterServerApplication):
 
 	def load(self):
 		if self.app is None:
-			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn', relative_to=self.relpath)
+			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn', 
+										relative_to=self.relpath)
 		return self.app
 
 def paste_server_runner(app, gcfg=None, host="127.0.0.1", port=None, *args, **kwargs):
