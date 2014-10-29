@@ -86,7 +86,7 @@ class HTMLWrappedBatchConverterDriver(object):
 		html.qualifiers = ('wrapped',)
 		html.source = unit.source
 		ntiid = unit.ntiid if hasattr(unit,'ntiid') else unit.id
-		_HTMLWrapper(ntiid, plain.path, html.path).write_to_file()
+		_HTMLWrapper(ntiid, unit_path, html.path).write_to_file()
 
 		return [plain, html]
 
