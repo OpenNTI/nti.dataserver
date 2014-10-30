@@ -223,7 +223,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		intids_tagged_to_me = catalog[IX_TAGGEDTO].apply({'any_of': tagged_to_usernames_or_intids})
 
 		safely_viewable_intids = self._safely_viewable_notable_intids
-
 		important_creator_usernames = set()
 		for provider in component.subscribers( (self.remoteUser, self.request),
 											   IUserPresentationPriorityCreators ):

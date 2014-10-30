@@ -8,8 +8,8 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import has_item
 from hamcrest import contains
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -29,6 +29,7 @@ from nti.contentrange import contentrange
 from nti.dataserver import users
 from nti.dataserver import contenttypes
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+from nti.dataserver.interfaces import get_notable_filter
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.externalization.oids import to_external_ntiid_oid
@@ -46,6 +47,22 @@ from nti.testing.time import time_monotonically_increases
 
 class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
+	def _check_stream(self, username=None):
+		if username:
+			extra_environ=self._make_extra_environ(user=username)
+			stream_res = self.fetch_user_root_rstream( username=username, extra_environ=extra_environ )
+		else:
+			stream_res = self.fetch_user_root_rstream()
+
+		assert_that( stream_res.json_body,
+					has_entry( 'Items',
+								has_item( has_entry('RUGDByOthersThatIMightBeInterestedIn', is_true()))))
+
+	def _check_ad_hoc_notable(self, obj, user):
+		notable_filter = get_notable_filter( obj )
+		# We still do not handle all cases (indirect sharing)
+		#assert_that( notable_filter( user ), is_true() )
+
 	def _check_notable_data(self, username=None, length=1):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user(username)
@@ -53,7 +70,10 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 			nd = component.getMultiAdapter((user,None), IUserNotableData)
 			assert_that( nd, has_length( length ))
 			for o in nd:
+				__traceback_info__ = o
+				# Check our legacy and ad-hoc algorithms
 				assert_that( nd.is_object_notable(o), is_true() )
+				self._check_ad_hoc_notable( o, user )
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -139,6 +159,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 
 		self._check_notable_data(length=2)
+		# TODO Fails, cannot find recursivestream URL for sjohnson?
+		# self._check_stream()
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -193,8 +215,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains(has_entry('NTIID', top_ext_ntiid))))
 
-		self._check_notable_data()
-
+		self._check_stream()
 
 	@WithSharedApplicationMockDS(users=('jason'),
 								 testapp=True,
@@ -215,6 +236,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains(has_entry('Class', 'PersonalBlogEntry')) ) )
 
 		self._check_notable_data(username='jason')
+		self._check_stream( username='jason' )
 
 
 	def _setup_community(users_map):
@@ -251,6 +273,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains(has_entry('body', ['A comment'])) ) )
 
 		self._check_notable_data()
+		self._check_stream()
 
 		# Now we can turn it off too
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -291,7 +314,6 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'TotalItemCount', initial_count))
 		assert_that( res.json_body, has_entry( 'Items', has_length(initial_count) ))
 
-
 		# Now I share it indirectly with me. The sharing is indirect
 		# to verify we hit on the tagged property, not the sharedWith property
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -314,6 +336,8 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   has_item(has_entry('NTIID',ext_ntiid))))
 
 		self._check_notable_data(length=initial_count+1)
+		# TODO Don't handle indirect sharing yet
+		# self._check_stream()
 
 		# If we mark it deleted, it is no longer notable
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -375,7 +399,4 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   contains( has_entry( 'ChangeType', 'Circled' ))))
 
 		self._check_notable_data()
-		stream_res = self.fetch_user_root_rstream()
-
-		assert_that( stream_res.json_body, has_entry( 'Items',
-													  contains(has_entry('RUGDByOthersThatIMightBeInterestedIn', is_true()))))
+		self._check_stream()

@@ -1729,7 +1729,7 @@ class INotableFilter(interface.Interface):
 	def is_notable(notable, user=None):
 		"""
 		Given an objet and possible a user and returns True if the
-		objet is a notable		
+		objet is a notable
 		"""
 
 def get_notable_filter(obj):
