@@ -22,6 +22,7 @@ from nti.app.notabledata.interfaces import IUserPresentationPriorityCreators
 from nti.app.products.gradebook.interfaces import IGrade
 
 from nti.dataserver.interfaces import INotableFilter
+from nti.dataserver.interfaces import IStreamChangeCircledEvent
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
@@ -30,11 +31,27 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.metadata_index import isTopLevelContentObjectFilter
 
 # We should not have to worry about deleted items, correct?
-# TODO How about the sharing security check performed in abstract_views.py.
 # TODO How about community level sharing?
 #    - Also a dynamic memberships that participate in security check we dont do.
-# TODO Circled (added to contacts)?
 # TODO Excluded topics (object_is_not_notable)
+
+@interface.implementer( INotableFilter )
+class CircledNotableFilter(object):
+	"""
+	Check to see if the given object is a circled event for our user.
+	"""
+
+	# We currently only store circled events in the user's storage.
+	# Therefore, let's check for that specific object when determining
+	# notability.  We could also check the user's storage (safe and unsafe)
+	# like the legacy algorithm does.
+
+	def __init__(self, context):
+		self.context = context
+
+	def is_notable(self, obj, user):
+		return	IStreamChangeCircledEvent.providedBy( obj ) \
+			and obj.__parent__ == user
 
 @interface.implementer( INotableFilter )
 class AssignmentGradeNotableFilter(object):
@@ -45,11 +62,8 @@ class AssignmentGradeNotableFilter(object):
 		self.context = context
 
 	def is_notable(self, obj, user):
-		result = False
-		if IGrade.providedBy( obj ):
-			if obj.Username == user.username:
-				result = True
-		return result
+		return 	IGrade.providedBy( obj ) \
+			and	obj.Username == user.username
 
 @interface.implementer( INotableFilter )
 class AssignmentFeedbackNotableFilter(object):
@@ -185,9 +199,5 @@ class BlogNotableFilter(object):
 		self.context = context
 
 	def is_notable(self, obj, user):
-		result = False
-		if _is_blog( obj ):
-			if user.username in obj.sharedWith:
-				result = True
-
-		return result
+		return 	_is_blog( obj ) \
+			and user.username in obj.sharedWith

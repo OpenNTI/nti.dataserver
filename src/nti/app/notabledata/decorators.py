@@ -14,10 +14,14 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.dataserver.interfaces import IStreamChangeEvent
+from zope.intid.interfaces import IIntIds
+
 from pyramid.interfaces import IRequest
+
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import get_notable_filter
+
 from nti.externalization.interfaces import IExternalObjectDecorator
-from .interfaces import IUserNotableData
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
@@ -30,18 +34,23 @@ class _StreamChangeNotableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	# delegation (when we send on a socket, for example)
 
 	def _is_notable(self, context):
-		request = self.request
-		# This is really what's zope's request annotations are for
-		cache = getattr(request, '_StreamChangeNotableDecorator', None)
-		if cache is None:
-			cache = dict()
-			setattr(request, '_StreamChangeNotableDecorator', cache)
-		nd = cache.get(self.authenticated_userid)
-		if nd is None:
-			nd = component.getMultiAdapter( (self.remoteUser, request), IUserNotableData)
-			cache[self.authenticated_userid] = nd
+		# In local timings,
+		# the legacy method of checking if the give context id is in
+		# our notable set is about 100x slower when we do not have a
+		# cache in play (either we do not have a cache object or our
+		# cache has been invalidated).  As expected, when we do have a cache,
+		# it is about 100x faster than running our object through the algorithm.
+		result = False
+		intids = component.getUtility( IIntIds )
 
-		return nd.is_object_notable(context) or nd.is_object_notable(context.object)
+		# Check if this object is persistent first
+		if intids.queryId( context ) or intids.queryId( context.object ):
+			# TODO We may have to pass the request to INotableFilter
+			is_notable_ctx = get_notable_filter( context )
+			is_notable_obj = get_notable_filter( context.object )
+			result = is_notable_ctx( self.remoteUser ) or is_notable_obj( self.remoteUser )
+
+		return result
 
 
 	def _predicate(self, context, result):
