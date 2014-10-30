@@ -30,12 +30,11 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.metadata_index import isTopLevelContentObjectFilter
 
 # We should not have to worry about deleted items, correct?
-# TODO Do we need to see if the id is registered, we do at a high level.
 # TODO How about the sharing security check performed in abstract_views.py.
 # TODO How about community level sharing?
 #    - Also a dynamic memberships that participate in security check we dont do.
-# TODO Filter out specific non-notables?
 # TODO Circled (added to contacts)?
+# TODO Excluded topics (object_is_not_notable)
 
 @interface.implementer( INotableFilter )
 class AssignmentGradeNotableFilter(object):
@@ -84,10 +83,9 @@ class ReplyToNotableFilter(object):
 
 	def is_notable(self, obj, user):
 		result = False
-
 		obj_creator = getattr( obj, 'creator', None )
-		obj_parent = getattr( obj, '__parent__', None )
-		parent_creator = getattr( obj_parent, '__parent__', None )
+		obj_parent = getattr( obj, 'inReplyTo', None )
+		parent_creator = getattr( obj_parent, 'creator', None )
 
 		if 		obj_creator is not None \
 			and obj_parent is not None \
@@ -156,6 +154,7 @@ class TopLevelNotableFilter(object):
 			return False
 
 		# Ok, we have a top-level object; check our parentage.
+		# TODO Do we want to check inReplyTo here as well?
 		parent_obj = getattr( obj, '__parent__', None )
 		parent_creator = getattr( parent_obj, 'creator', None )
 		shared_with = getattr( obj, 'sharedWith', None )
