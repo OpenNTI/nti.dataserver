@@ -91,8 +91,8 @@ class ReplyToNotableFilter(object):
 
 		if 		obj_creator is not None \
 			and obj_parent is not None \
-			and obj_creator != user.username \
-			and parent_creator == user.username:
+			and obj_creator != user \
+			and parent_creator == user:
 
 			result = True
 
@@ -124,14 +124,14 @@ class TopLevelPriorityNotableFilter(object):
 		# Ok, we have a top-level object; let's see if
 		# we have an important creator.
 		important_creator_usernames = set()
-		# TODO What is request, do we have a threadlocal request?
+		# TODO Do we have a threadlocal request?
 		request = get_current_request()
 
 		for provider in component.subscribers( (user, request),
 											   IUserPresentationPriorityCreators ):
 			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
 
-		return obj_creator in important_creator_usernames
+		return obj_creator.username in important_creator_usernames
 
 @interface.implementer( INotableFilter )
 class TopLevelNotableFilter(object):
@@ -161,8 +161,8 @@ class TopLevelNotableFilter(object):
 		shared_with = getattr( obj, 'sharedWith', None )
 
 		result = False
-		if 		parent_creator == user.username \
-			and obj_creator != user.username:
+		if 		parent_creator == user \
+			and obj_creator != user:
 			# Top level in objects I created (topics, blogs, etc).
 			result = True
 		elif 	shared_with is not None \
