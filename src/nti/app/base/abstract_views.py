@@ -37,7 +37,7 @@ def make_sharing_security_check(request, remoteUser):
 	(The intids of the user and his memberships are defined in another
 	private property ``xxx_intids_of_memberships_and_self`` defined elsewhere.)
 	"""
-	
+
 	remote_request = request
 	remote_user = remoteUser
 	family = component.getUtility(IIntIds).family

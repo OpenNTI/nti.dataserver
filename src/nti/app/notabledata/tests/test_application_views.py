@@ -60,8 +60,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 	def _check_ad_hoc_notable(self, obj, user):
 		notable_filter = get_notable_filter( obj )
-		# We still do not handle all cases (indirect sharing)
-		#assert_that( notable_filter( user ), is_true() )
+		assert_that( notable_filter( user ), is_true() )
 
 	def _check_notable_data(self, username=None, length=1):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -336,8 +335,7 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 											   has_item(has_entry('NTIID',ext_ntiid))))
 
 		self._check_notable_data(length=initial_count+1)
-		# TODO Don't handle indirect sharing yet
-		# self._check_stream()
+		self._check_stream()
 
 		# If we mark it deleted, it is no longer notable
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -378,7 +376,6 @@ class TestApplicationNotableUGDQueryViews(ApplicationLayerTest):
 
 			# Manually clear out the notable for the circled event
 			#user._circled_events_intids_storage.clear()
-
 		self._do_test_notable_ugd_tagged_to_entity(dfl_ntiid, initial_count=1)
 
 	@WithSharedApplicationMockDS(users=('jason'),
