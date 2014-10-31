@@ -16,57 +16,63 @@ from abc import ABCMeta, abstractmethod
 from zope import component
 from zope import interface
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IUserTranscriptStorage
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ACLLocationProxy
 
 from nti.dataserver import authorization_acl as nacl
-from nti.dataserver import interfaces as nti_interfaces
 
-from nti.ntiids import interfaces as nid_interfaces
+from nti.ntiids.ntiids import ROOT
+from nti.ntiids.interfaces import INTIIDResolver
 from nti.ntiids.ntiids import get_provider, get_specific
-from nti.ntiids.ntiids import ROOT as NTIID_ROOT
 
 import zope.deferredimport
 zope.deferredimport.initialize()
 
 zope.deferredimport.deprecatedFrom(
-    "Moved to nti.ntiids.ntiids",
-    "nti.ntiids.ntiids",
-    "datetime",
-    "unicode_literals",
-    "InvalidNTIIDError",
-    "TYPE_MEETINGROOM_CLASS",
-    "TYPE_MEETINGROOM_GROUP",
-    "TYPE_MEETINGROOM",
-    "TYPE_ROOM",
-    "DATE",
-    "TYPE_TRANSCRIPT_SUMMARY",
-    "validate_ntiid_string",
-    "TYPE_MEETINGROOM_SECT",
-    "TYPE_QUIZ",
-    "TYPE_OID",
-    "is_valid_ntiid_string",
-    "NTIID",
-    "ROOT",
-    "get_parts",
-    "get_provider",
-    "get_specific",
-    "is_ntiid_of_type",
-    "escape_provider",
-    "TYPE_TRANSCRIPT",
-    "print_function",
-    "time",
-    "make_ntiid",
-    "TYPE_HTML",
-    "TYPE_CLASS",
-    "find_object_with_ntiid")
+	"Moved to nti.ntiids.ntiids",
+	"nti.ntiids.ntiids",
+	"datetime",
+	"unicode_literals",
+	"InvalidNTIIDError",
+	"TYPE_MEETINGROOM_CLASS",
+	"TYPE_MEETINGROOM_GROUP",
+	"TYPE_MEETINGROOM",
+	"TYPE_ROOM",
+	"DATE",
+	"TYPE_TRANSCRIPT_SUMMARY",
+	"validate_ntiid_string",
+	"TYPE_MEETINGROOM_SECT",
+	"TYPE_QUIZ",
+	"TYPE_OID",
+	"is_valid_ntiid_string",
+	"NTIID",
+	"ROOT",
+	"get_parts",
+	"get_provider",
+	"get_specific",
+	"is_ntiid_of_type",
+	"escape_provider",
+	"TYPE_TRANSCRIPT",
+	"print_function",
+	"time",
+	"make_ntiid",
+	"TYPE_HTML",
+	"TYPE_CLASS",
+	"find_object_with_ntiid")
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+NTIID_ROOT = ROOT # re-export
+
+@interface.implementer(INTIIDResolver)
 class _OIDResolver(object):
 
 	def resolve( self, key ):
-		dataserver = component.queryUtility( nti_interfaces.IDataserver )
+		dataserver = component.queryUtility( IDataserver )
 		try:
 			return dataserver.get_by_oid( key, ignore_creator=True ) if dataserver else None
 		except ValueError:
@@ -75,7 +81,7 @@ class _OIDResolver(object):
 			return None # per our spec
 
 def _resolve_user( provider_name, namespace ):
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	dataserver = component.queryUtility( IDataserver )
 	user = None
 	if dataserver:
 		user = dataserver.root[namespace].get( provider_name )
@@ -90,7 +96,7 @@ def _resolve_user( provider_name, namespace ):
 
 	return user
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _NamedEntityResolver(object):
 
 	def resolve( self, key ):
@@ -108,7 +114,7 @@ def _match( x, container_id, case_sensitive=True ):
 	if case_sensitive:
 		return x if getattr( x, 'NTIID', None ) == container_id else None
 
-	#warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
+	# warnings.warn( "Hack for UI: making some NTIIDS case-insensitive." )
 	return x if getattr( x, 'NTIID', '' ).lower() == (container_id.lower() or 'B').lower() else None
 
 class AbstractUserBasedResolver(object):
@@ -126,7 +132,7 @@ class AbstractUserBasedResolver(object):
 
 	#: Set this to an interface derived from :class:`.IEntity` to enforce
 	#: a particular type of globally named entity.
-	required_iface = nti_interfaces.IEntity
+	required_iface = IEntity
 
 	def resolve( self, ntiid ):
 		provider_name = get_provider( ntiid )
@@ -151,7 +157,7 @@ class AbstractAdaptingUserBasedResolver(AbstractUserBasedResolver):
 	adapt_to = None
 
 	def _resolve( self, ntiid, user ):
-		return component.queryAdapter( user, self.adapt_to, default=self.default_value )
+		return component.queryAdapter(user, self.adapt_to, default=self.default_value)
 
 class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver):
 	"""
@@ -164,21 +170,21 @@ class AbstractMappingAdaptingUserBasedResolver(AbstractAdaptingUserBasedResolver
 		if mapping is not None:
 			return mapping.get( get_specific( ntiid ) )
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _ContentResolver(object):
 
 	def resolve( self, key ):
 		result = None
-		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
+		library = component.queryUtility(IContentPackageLibrary)
 		path = library.pathToNTIID( key ) if library else None
 		if path:
 			result = path[-1]
 			# TODO: ACL Proxy can probably go away
-			result = nti_interfaces.ACLLocationProxy( result, result.__parent__, result.__name__, nacl.ACL( result ) )
+			result = ACLLocationProxy( result, result.__parent__, 
+									   result.__name__, nacl.ACL(result) )
 		return result
 
-
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _MeetingRoomResolver(_AbstractUserBasedResolver):
 
 	def _resolve( self, key, user ):
@@ -189,22 +195,22 @@ class _MeetingRoomResolver(_AbstractUserBasedResolver):
 				break
 		return result
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _TranscriptResolver(_AbstractUserBasedResolver):
 
 	def _resolve( self, key, user ):
-		result = chat_interfaces.IUserTranscriptStorage(user).transcript_for_meeting( key )
+		result = IUserTranscriptStorage(user).transcript_for_meeting( key )
 		if result is None: # bool is based on messages
 			logger.debug( "Failed to find transcript given oid: %s", key )
 		return result
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(INTIIDResolver)
 class _UGDResolver(_AbstractUserBasedResolver):
 
 	def _resolve( self, key, user ):
 		# Try looking up the ntiid by name in each container
 		# TODO: This is terribly expensive
-		if not nti_interfaces.IUser.providedBy( user ):
+		if not IUser.providedBy( user ):
 			# NOTE: We are abusing this interface. We actually look
 			# at a property not defined by this interface, user.containers.
 			# We really want nti_interfaces.IContainerIterable, but cannot use it.
@@ -214,7 +220,8 @@ class _UGDResolver(_AbstractUserBasedResolver):
 		result = None
 		for container_name in user.containers.containers:
 			container = user.containers.containers[container_name]
-			if isinstance( container, numbers.Number ): continue
+			if isinstance(container, numbers.Number): 
+				continue
 			result = container.get( key )
 			if result:
 				break
