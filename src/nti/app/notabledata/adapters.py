@@ -265,7 +265,6 @@ class UserNotableData(AbstractAuthenticatedView):
 			questionable_intids = catalog.family.IF.intersection(self._intids_in_time_range,
 																 questionable_intids)
 
-
 		uidutil = self._intids
 		security_check = self.make_sharing_security_check()
 		for questionable_uid in questionable_intids:
