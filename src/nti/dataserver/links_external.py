@@ -14,19 +14,25 @@ import collections
 
 from zope import component
 from zope import interface
-from zope.location import interfaces as loc_interfaces
+from zope.location.interfaces import LocationError
 
 import zope.traversing.interfaces
 
 from nti.dataserver import traversal
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import ILink
 from nti.dataserver.interfaces import ICreated
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import ILinkExternalHrefOnly
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
+
 from nti.mimetype.mimetype import nti_mimetype_from_object
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
+from nti.externalization.interfaces import ILocatedExternalMapping
+from nti.externalization.interfaces import IInternalObjectExternalizer
 
 from nti.ntiids import ntiids
 
@@ -84,7 +90,7 @@ def render_link( link, nearest_site=None ):
 		ntiid = target
 		ntiid_derived_from_target = False # it *is* the target
 
-	if ntiid and not nti_interfaces.IShouldHaveTraversablePath.providedBy( target ):
+	if ntiid and not IShouldHaveTraversablePath.providedBy( target ):
 		# Although (enclosures and entities and other things with IShouldHaveTraversablePath)
 		# have an NTIID, we want to avoid using it
 		# if possible because it has a much nicer pretty url.
@@ -133,7 +139,7 @@ def render_link( link, nearest_site=None ):
 	if link.params:
 		href = href + '?%s' % urllib.urlencode(link.params)
 
-	result = component.getMultiAdapter( (), ext_interfaces.ILocatedExternalMapping )
+	result = component.getMultiAdapter( (), ILocatedExternalMapping )
 	result.update( { StandardExternalFields.CLASS: 'Link',
 					 StandardExternalFields.HREF: href,
 					 'rel': rel } )
@@ -166,9 +172,8 @@ def render_link( link, nearest_site=None ):
 
 	return result
 
-
-@interface.implementer(ext_interfaces.IInternalObjectExternalizer)
-@component.adapter(nti_interfaces.ILink)
+@interface.implementer(IInternalObjectExternalizer)
+@component.adapter(ILink)
 class LinkExternal(object):
 	"See :func:`render_link`"
 
@@ -178,13 +183,15 @@ class LinkExternal(object):
 	def toExternalObject(self, **kwargs):
 		return render_link( self.context )
 
-ILink_providedBy = nti_interfaces.ILink.providedBy
-ILinkExternalHrefOnly_providedBy = nti_interfaces.ILinkExternalHrefOnly.providedBy
-_MutableSequence = collections.MutableSequence
 _MutableMapping = collections.MutableMapping
+_MutableSequence = collections.MutableSequence
+
+ILink_providedBy = ILink.providedBy
+ILinkExternalHrefOnly_providedBy = ILinkExternalHrefOnly.providedBy
+
 LINKS = StandardExternalFields.LINKS
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 @component.adapter(object)
 class LinkExternalObjectDecorator(object):
 	"""
@@ -205,7 +212,7 @@ class LinkExternalObjectDecorator(object):
 				try:
 					rendered_linked = render_link(link) if ILink_providedBy(link) else link
 					links.append(rendered_linked)
-				except (TypeError, loc_interfaces.LocationError):
+				except (TypeError, LocationError):
 					logger.error("Error rendering link %s" % link)
 
 			obj[LINKS] = links

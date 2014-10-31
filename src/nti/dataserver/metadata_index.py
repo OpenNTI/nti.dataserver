@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 # disable 'redefining builtin id' because
 # we get that from superclass
-#pylint: disable=W0622
+# pylint: disable=W0622
 
 #: The name of the utility that the Zope Catalog
 #: should be registered under
@@ -22,46 +22,11 @@ CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 from zope import component
 from zope import interface
 
-from .interfaces import IContained as INTIContained
-from .interfaces import ICreatedUsername
-from .interfaces import IModeledContent
-from .interfaces import IInspectableWeakThreadable
-from .interfaces import IThreadable
-from .interfaces import IFriendsList
-from .interfaces import IDevice
-from .interfaces import ILastModified
-from .interfaces import IUser
-from .interfaces import IDynamicSharingTargetFriendsList
-from .interfaces import IUserTaggedContent
-from .interfaces import IDeletedObjectPlaceholder
-from .contenttypes.forums.interfaces import IHeadlinePost
-from .contenttypes.forums.interfaces import ICommentPost
+from zc.intid import IIntIds
 
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.interfaces import ICatalogIndex
-from zc.intid import IIntIds
-
-from nti.zope_catalog.catalog import Catalog
-
 from zope.mimetype.interfaces import IContentTypeAware
-
-from nti.zope_catalog.topic import TopicIndex
-from nti.zope_catalog.topic import ExtentFilteredSet
-
-from nti.zope_catalog.index import NormalizationWrapper
-from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
-from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
-from nti.zope_catalog.index import ValueIndex as RawValueIndex
-from nti.zope_catalog.index import SetIndex as RawSetIndex
-
-from nti.zope_catalog.string import StringTokenNormalizer
-from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
-
-from nti.dataserver.interfaces import IMetadataCatalog
-
-class MimeTypeIndex(ValueIndex):
-	default_field_name = 'mimeType'
-	default_interface = IContentTypeAware
 
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import TYPE_UUID
@@ -70,6 +35,39 @@ from nti.ntiids.ntiids import TYPE_NAMED_ENTITY
 from nti.ntiids.ntiids import TYPE_MEETINGROOM
 from nti.ntiids.ntiids import is_ntiid_of_types
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.topic import TopicIndex
+from nti.zope_catalog.topic import ExtentFilteredSet
+from nti.zope_catalog.index import NormalizationWrapper
+from nti.zope_catalog.index import SetIndex as RawSetIndex
+from nti.zope_catalog.index import ValueIndex as RawValueIndex
+from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
+from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
+
+from nti.zope_catalog.string import StringTokenNormalizer
+from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
+
+from .interfaces import IUser
+from .interfaces import IDevice
+from .interfaces import IThreadable
+from .interfaces import IFriendsList
+from .interfaces import ILastModified
+from .interfaces import IModeledContent
+from .interfaces import ICreatedUsername
+from .interfaces import IMetadataCatalog
+from .interfaces import IUserTaggedContent
+from .interfaces import IDeletedObjectPlaceholder
+from .interfaces import IInspectableWeakThreadable
+from .interfaces import IContained as INTIContained
+from .interfaces import IDynamicSharingTargetFriendsList
+
+from .contenttypes.forums.interfaces import ICommentPost
+from .contenttypes.forums.interfaces import IHeadlinePost
+
+class MimeTypeIndex(ValueIndex):
+	default_field_name = 'mimeType'
+	default_interface = IContentTypeAware
 
 class ValidatingContainerId(object):
 	"""
@@ -197,7 +195,6 @@ def TaggedToIndex(family=None):
 	"""
 	Indexes the NTIIDs of entities mentioned in tags.
 	"""
-
 	return NormalizationWrapper(field_name='tagged_usernames',
 								normalizer=StringTokenNormalizer(),
 								index=TaggedToRawIndex(family=family),
@@ -265,9 +262,9 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
 	"""
 	def __init__(self, id, family=None):
 		super(TopLevelContentExtentFilteredSet,self).__init__(
-			id,
-			isTopLevelContentObjectFilter,
-			family=family)
+			  id,
+			  isTopLevelContentObjectFilter,
+			  family=family)
 
 def isDeletedObjectPlaceholder(extent, docid, document):
 	# NOTE: This is referenced by persistent objects, must stay.
@@ -301,15 +298,15 @@ def LastModifiedIndex(family=None):
 								index=LastModifiedRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
-IX_MIMETYPE = 'mimeType'
-IX_CONTAINERID = 'containerId'
+IX_TOPICS = 'topics'
 IX_CREATOR = 'creator'
+IX_MIMETYPE = 'mimeType'
+IX_TAGGEDTO = 'taggedTo'
+IX_SHAREDWITH = 'sharedWith'
+IX_CONTAINERID = 'containerId'
 IX_CREATEDTIME = 'createdTime'
 IX_LASTMODIFIED = 'lastModified'
-IX_SHAREDWITH = 'sharedWith'
 IX_REPLIES_TO_CREATOR = 'repliesToCreator'
-IX_TAGGEDTO = 'taggedTo'
-IX_TOPICS = 'topics'
 
 #: The name of the topic/group in the topics index
 #: that stores top-level content.
@@ -375,10 +372,10 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 		the_filter = factory(filter_id, family=intids.family)
 		topic_index.addFilter(the_filter)
 
-
 	return catalog
 
 from .interfaces import IEntity
+
 from zope.lifecycleevent import IObjectRemovedEvent
 
 @component.adapter(IEntity, IObjectRemovedEvent)
