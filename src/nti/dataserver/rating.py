@@ -3,7 +3,7 @@
 """
 An implementation of rating adapters.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -15,29 +15,34 @@ import functools
 from zope import component
 from zope import interface
 from zope.event import notify
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAnnotations
 
 from pyramid.threadlocal import get_current_request
 
 from persistent.interfaces import IPersistent
-from nti.utils._compat import patch_acquisition
-patch_acquisition()
 
 from contentratings.rating import NPRating
 from contentratings.category import BASE_KEY
 from contentratings.events import ObjectRatedEvent
 from contentratings.storage import UserRatingStorage
-from contentratings import interfaces as cr_interfaces
 
-from nti.dataserver import interfaces
+from contentratings.interfaces import IUserRating
+from contentratings.interfaces import IObjectRatedEvent
+
+from nti.dataserver.interfaces import IRatable
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import IMemcacheClient
 
 from nti.externalization.oids import to_external_oid
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.utils._compat import patch_acquisition
+patch_acquisition()
 
 RATING_CAT_NAME = u'rating'
 
-class IObjectUnratedEvent(cr_interfaces.IObjectRatedEvent):
+class IObjectUnratedEvent(IObjectRatedEvent):
 	pass
 
 @interface.implementer(IObjectUnratedEvent)
@@ -71,8 +76,8 @@ def lookup_rating_for_read(context, cat_name, safe=False):
 	# default adapter does not create a OOBTree and set the __annotations__ attribute
 	# until it is written to, so this is safe
 	try:
-		annotations = an_interfaces.IAnnotations(context) \
-		if not safe else an_interfaces.IAnnotations(context, {})
+		annotations = IAnnotations(context) \
+		if not safe else IAnnotations(context, {})
 		storage = annotations.get( key )
 		if storage:
 			# Ok, we already have one. Use it.
@@ -82,7 +87,7 @@ def lookup_rating_for_read(context, cat_name, safe=False):
 			raise
 
 def lookup_rating_for_write(context, cat_name):
-	return component.getAdapter(context, cr_interfaces.IUserRating, name=cat_name)
+	return component.getAdapter(context, IUserRating, name=cat_name)
 
 def rate_object(context, username, rating, cat_name=RATING_CAT_NAME):
 	storage = lookup_rating_for_write(context, cat_name)
@@ -113,7 +118,7 @@ def cached_decorator(key_func):
 		def _caching( *args, **kwargs ):
 			key = key_func(*args, **kwargs)
 			if key:
-				cache = component.queryUtility(interfaces.IMemcacheClient)
+				cache = component.queryUtility(IMemcacheClient)
 				if cache:
 					cached = cache.get( key )
 					if cached is not None:
@@ -166,8 +171,8 @@ def rates_object(context, username):
 		result = NPRating(float(result), username)
 	return result
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(interfaces.IRatable)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IRatable)
 class RatingDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -198,10 +203,10 @@ def update_last_mod(modified_object, event):
 		# not contained or not contained in a ILastModified container
 		pass
 
-@component.adapter(interfaces.ILastModified, cr_interfaces.IObjectRatedEvent)
+@component.adapter(ILastModified, IObjectRatedEvent)
 def update_last_mod_on_rated(modified_object, event):
 	update_last_mod(modified_object, event)
-	cache = component.queryUtility(interfaces.IMemcacheClient)
+	cache = component.queryUtility(IMemcacheClient)
 	if cache:
 		try:
 			cache.delete(_rate_count_cache_key(modified_object, event.category))
