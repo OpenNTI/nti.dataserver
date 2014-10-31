@@ -21,4 +21,18 @@
 	<subscriber factory=".decorators._StreamChangeNotableDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				/>
+
+	<!-- Notables -->
+	<subscriber factory=".notables.BlogNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
+
+	<subscriber factory=".notables.TopLevelPriorityNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
+
+	<subscriber factory=".notables.TopLevelNotableFilter"
+				provides="nti.dataserver.interfaces.INotableFilter"
+				for="*" />
+
 </configure>
