@@ -196,16 +196,18 @@ class _WebVTTCueTimingsAndSettingsParser():
 					continue
 
 				if value[-1] == "%":
+					value = value[:-1]
 					if int(value, 10) > 100:
 						self.err("Line position cannot be >100%.")
 						continue
-					cue['snap_to_lines'] = False
+					cue.snap_to_lines = False
 				cue.line_position = int(value, 10)
 			elif setting == "position":  # text position
 				if value[-1] != "%":
 					self.err("Text position must be a percentage.")
 					continue
-
+	
+				value = value[:-1]
 				if int(value, 10) > 100:
 					self.err("Size cannot be >100%.")
 					continue
@@ -216,6 +218,7 @@ class _WebVTTCueTimingsAndSettingsParser():
 					self.err("Size must be a percentage.")
 					continue
 
+				value = value[:-1]
 				if int(value, 10) > 100:
 					self.err("Size cannot be >100%.")
 					continue
@@ -525,7 +528,7 @@ class WebVTTParser(object):
 			err("No valid signature. (File needs to start with \"WEBVTT\".)", linepos)
 
 		linepos += 1
-
+		
 		# HEADER
 		meta = {}
 		while linepos < len(lines) and lines[linepos] != "":

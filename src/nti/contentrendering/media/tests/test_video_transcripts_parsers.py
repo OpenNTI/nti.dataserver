@@ -77,3 +77,11 @@ class TestVideoTranscriptParser(ContentrenderingLayerTest):
 		assert_that(transcript, has_length(4))
 		for entry in transcript:
 			assert_that(entry.transcript, is_not(u''))
+			
+	def test_webvtt_parser_okstate(self):
+		path = os.path.join(os.path.dirname(__file__), 'transcripts/dairy_products_and_consumers.vtt')
+		parser = component.getUtility(media_interfaces.IVideoTranscriptParser, name="vtt")
+		with codecs.open(path, "r", "UTF-8") as source:
+			transcript = parser.parse(source)
+		assert_that(transcript, is_not(none()))
+		assert_that(transcript, has_length(434))
