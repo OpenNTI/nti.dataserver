@@ -10,11 +10,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope.cachedescriptors.property import readproperty
 
 from plasTeX.Renderers import render_children
 
-from nti.contentfragments import interfaces as cfg_interfaces
+from nti.contentfragments.interfaces import HTMLContentFragment
+from nti.contentfragments.interfaces import ILatexContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 def _asm_local_textcontent(self):
 	"""
@@ -31,15 +34,20 @@ def _asm_local_textcontent(self):
 	# We are doing an interface conversion here, because
 	# getting the unicode may be unescaping and we need to escap
 	# again (?)
-	return cfg_interfaces.ILatexContentFragment(''.join(output).strip())
+	return ILatexContentFragment(''.join(output).strip())
 
-def _textcontent_rendered_elements(renderer, elements):
+def _htmlcontent_rendered_elements(renderer, elements):
 	output = render_children(renderer, elements)
 	# Now return an actual HTML content fragment. Note that this
 	# has been rendered so there's no need to do the interface
 	# conversion
-	result = cfg_interfaces.HTMLContentFragment(''.join(output).strip())
+	result = HTMLContentFragment(''.join(output).strip())
 	return result
+
+def _textcontent_rendered_elements(renderer, elements):
+	content = _htmlcontent_rendered_elements(renderer, elements)
+	text = component.getAdapter(content, IPlainTextContentFragment, name='text')
+	return text
 
 def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	"""
@@ -58,7 +66,7 @@ def _asm_rendered_textcontent(self, ignorable_renderables=()):
 			tuple(node for node in self.childNodes \
 			 	  if not isinstance(node, ignorable_renderables))
 
-	result = _textcontent_rendered_elements(self.renderer, selected_children)
+	result = _htmlcontent_rendered_elements(self.renderer, selected_children)
 	return result
 
 class LocalContentMixin(object):
@@ -85,5 +93,5 @@ class LocalContentMixin(object):
 	#: has been rendered, replaced with their HTML content.
 	_asm_local_content = readproperty(_asm_local_textcontent)
 
-	def _after_render( self, rendered ):
+	def _after_render(self, rendered):
 		self._asm_local_content = _asm_rendered_textcontent(self, self._asm_ignorable_renderables)
