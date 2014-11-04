@@ -18,6 +18,7 @@ from zope import component
 from zope import interface
 
 from nti.externalization.externalization import to_external_object
+from nti.externalization.interfaces import INonExternalizableReplacement 
 
 from ._utils import _render_children
 
@@ -109,13 +110,14 @@ class _CourseExtractor(object):
 	
 	def _process_lesson(self, dom, outpath, course_node, lesson_node,
 						lesson_dates=None, level=1):
-		date_strings = None
-		if lesson_dates:
-			date_strings = []
-			# TODO: These might be relative to the parent (e.g., +1 week)
-			for date in lesson_dates:
-				# The correct timezone information has already been taken care of
-				date_strings.append( to_external_object(date ) )
+		date_strings = [] if lesson_dates else None
+		# TODO: These might be relative to the parent (e.g., +1 week)
+		for date in lesson_dates or ():
+			# The correct timezone information has already been taken care of
+			external = to_external_object(date)
+			__traceback_info__ = date, external
+			assert not INonExternalizableReplacement.providedBy(external)
+			date_strings.append(external)
 
 		toc_el = dom.createElement('lesson')
 		if date_strings:
