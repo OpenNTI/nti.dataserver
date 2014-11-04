@@ -33,6 +33,14 @@ def _asm_local_textcontent(self):
 	# again (?)
 	return cfg_interfaces.ILatexContentFragment(''.join(output).strip())
 
+def _textcontent_rendered_elements(renderer, elements):
+	output = render_children(renderer, elements)
+	# Now return an actual HTML content fragment. Note that this
+	# has been rendered so there's no need to do the interface
+	# conversion
+	result = cfg_interfaces.HTMLContentFragment(''.join(output).strip())
+	return result
+
 def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	"""
 	Collects the rendered values of the children of self. Can only be used
@@ -46,15 +54,12 @@ def _asm_rendered_textcontent(self, ignorable_renderables=()):
 	if not ignorable_renderables:
 		selected_children = self.childNodes
 	else:
-		selected_children = (node for node in self.childNodes \
-							 if not isinstance(node, ignorable_renderables))
+		selected_children = \
+			tuple(node for node in self.childNodes \
+			 	  if not isinstance(node, ignorable_renderables))
 
-	output = render_children( self.renderer, selected_children )
-
-	# Now return an actual HTML content fragment. Note that this
-	# has been rendered so there's no need to do the interface
-	# conversion
-	return cfg_interfaces.HTMLContentFragment(''.join(output).strip())
+	result = _textcontent_rendered_elements(self.renderer, selected_children)
+	return result
 
 class LocalContentMixin(object):
 	"""
