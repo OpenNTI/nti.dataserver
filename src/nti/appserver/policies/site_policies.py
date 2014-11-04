@@ -481,6 +481,8 @@ class AbstractSitePolicyEventListener(object):
 	PASSWORD_RESET_EMAIL_TEMPLATE_BASE_NAME = 'password_reset_email'
 	PASSWORD_RESET_EMAIL_SUBJECT = "NextThought Password Reset"
 
+	SUPPORT_EMAIL = 'support@nextthought.com'
+
 	USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = 'username_recovery_email'
 	USERNAME_RECOVERY_EMAIL_SUBJECT = "Username Reminder"
 
