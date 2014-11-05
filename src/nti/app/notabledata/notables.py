@@ -121,9 +121,7 @@ class TopLevelNotableFilter(object):
 	def is_notable(self, obj, user):
 		obj_creator = getattr( obj, 'creator', None )
 
-		# Filter out blog comments that might cause confusion.
-		if 		obj_creator is None \
-			or 	IPersonalBlogComment.providedBy( obj ):
+		if obj_creator is None:
 			return False
 
 		# Note: pulled from metadata_index; first two params not used.

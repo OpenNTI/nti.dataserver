@@ -490,6 +490,7 @@ class AbstractSitePolicyEventListener(object):
 	#: cookie when a user logs on. Must be a byte string.
 	LANDING_PAGE_NTIID = None
 
+	BRAND = 'NextThought'
 
 	COM_USERNAME = None
 	COM_ALIAS = None
