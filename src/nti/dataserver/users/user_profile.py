@@ -63,8 +63,34 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 ####
 # TODO: Isn't this extremely similar to dm.zope.schema? Did we forget about that?
 
+def get_searchable_realname_parts(realname):
+	nameparser_config = getattr(nameparser, 'config')
+	
+	# This implementation is fairly naive, returning
+	# first, middle, and last if they are not blank. How does
+	# this handle more complex naming scenarios?
+	if realname:
+		# CFA: another suffix we see from certain financial quorters
+		suffixes = nameparser_config.SUFFIXES | set(('cfa',))
+		constants = nameparser_config.Constants(suffixes=suffixes)
+		name = nameparser.HumanName(realname, constants=constants)
+		# We try to be a bit more sophisticated around certain
+		# naming scenarios.
+		if name.first == realname and ' ' in realname:
+			# It failed to parse. We've seen this with names like 'Di Lu',
+			# where 'Di' is in the prefix list as a common component
+			# of European last names. Take out any prefixes that match the components
+			# of this name and try again (avoid doing this if there are simply
+			# no components, as can happen on the mathcounts site or in tests)
+			prefixes = nameparser_config.PREFIXES.symmetric_difference(realname.lower().split())
+			constants = nameparser_config.Constants(prefixes=prefixes, suffixes=suffixes)
+			name = nameparser.HumanName(realname, constants=constants)
+		# because we are cached, be sure to return an immutable
+		# value
+		return tuple([x for x in name[1:4] if x])
+
 @component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IFriendlyNamed,zope.location.interfaces.ILocation)
+@interface.implementer(interfaces.IFriendlyNamed, zope.location.interfaces.ILocation)
 class FriendlyNamed(persistent.Persistent):
 	"""
 	An adapter for storing naming data for users. Intended to be an
@@ -89,33 +115,12 @@ class FriendlyNamed(persistent.Persistent):
 
 	@CachedProperty('realname')
 	def _searchable_realname_parts(self):
-		# This implementation is fairly naive, returning
-		# first, middle, and last if they are not blank. How does
-		# this handle more complex naming scenarios?
-		if self.realname:
-			# CFA: another suffix we see from certain financial quorters
-			suffixes = nameparser.config.SUFFIXES | set(('cfa',))
-			constants = nameparser.config.Constants(suffixes=suffixes)
-			name = nameparser.HumanName(self.realname, constants=constants)
-			# We try to be a bit more sophisticated around certain
-			# naming scenarios.
-			if name.first == self.realname and ' ' in self.realname:
-				# It failed to parse. We've seen this with names like 'Di Lu',
-				# where 'Di' is in the prefix list as a common component
-				# of European last names. Take out any prefixes that match the components
-				# of this name and try again (avoid doing this if there are simply
-				# no components, as can happen on the mathcounts site or in tests)
-				prefixes = nameparser.config.PREFIXES.symmetric_difference(self.realname.lower().split())
-				constants = nameparser.config.Constants(prefixes=prefixes, suffixes=suffixes)
-				name = nameparser.HumanName(self.realname, constants=constants)
-			# because we are cached, be sure to return an immutable
-			# value
-			return tuple([x for x in name[1:4] if x])
+		result =  get_searchable_realname_parts(self.realname)
 		# Returning none keeps the entity out of the index
+		return result
 
 	def get_searchable_realname_parts(self):
 		return self._searchable_realname_parts
-
 
 class _AvatarUrlProperty(urlproperty.UrlProperty):
 	"""
