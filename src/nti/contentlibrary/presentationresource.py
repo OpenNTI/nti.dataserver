@@ -48,7 +48,7 @@ class DisplayablePlatformPresentationResources(DCTimesLastModifiedMixin,
 	def lastModified(self):
 		return self.root.lastModified
 
-def get_platformp_resentation_resources(root=None):
+def get_platform_resentation_resources(root=None):
 	if not root:
 		return ()
 
@@ -92,6 +92,11 @@ class DisplayableContentMixin(object):
 
 	root = None
 
+	@classmethod
+	def get_platform_resentation_resources(self, root=None):
+		result = get_platform_resentation_resources(root)
+		return result
+
 	@CachedProperty('root')
 	def PlatformPresentationResources(self):
 		# If the root is not yet filled in (None), then
@@ -100,5 +105,5 @@ class DisplayableContentMixin(object):
 		# to copy in the default value, which would overwrite
 		# our CachedProperty. Thus we have to be defensive.
 		root = getattr(self, 'root', None)
-		result = get_platformp_resentation_resources(root)
+		result = get_platform_resentation_resources(root)
 		return result
