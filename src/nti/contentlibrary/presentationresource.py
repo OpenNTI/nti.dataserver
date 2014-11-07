@@ -96,14 +96,28 @@ class DisplayableContentMixin(object):
 	def get_platform_resentation_resources(self, root=None):
 		result = get_platform_resentation_resources(root)
 		return result
-
-	@CachedProperty('root')
-	def PlatformPresentationResources(self):
+	
+	@property
+	def _v_root(self):
 		# If the root is not yet filled in (None), then
 		# the resulting AttributeError can get interpreted by hasattr()
 		# as a missing attribute...and SchemaConfigured would try
 		# to copy in the default value, which would overwrite
 		# our CachedProperty. Thus we have to be defensive.
 		root = getattr(self, 'root', None)
-		result = get_platform_resentation_resources(root)
+		return root
+
+	@property
+	def _v_rootLastModified(self):
+		result = getattr(self._v_root, 'lastModified', 0)
+		return result
+	
+	@CachedProperty('root', '_v_rootLastModified')
+	def _v_PlatformPresentationResources(self):
+		result = get_platform_resentation_resources(self._v_root)
+		return result
+
+	@CachedProperty('root')
+	def PlatformPresentationResources(self):
+		result = get_platform_resentation_resources(self._v_root)
 		return result
