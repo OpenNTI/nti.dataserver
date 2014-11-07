@@ -59,6 +59,7 @@ def _root_url_of_key(key):
 
 def _root_url_of_unit( unit ):
 	return _root_url_of_key( unit.get_parent_key() )
+root_url_of_unit = _root_url_of_unit
 
 #: This file, if present, will be read to gain a dictionary
 #: of presentation properties to be attached to the external
