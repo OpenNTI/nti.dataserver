@@ -48,6 +48,41 @@ class DisplayablePlatformPresentationResources(DCTimesLastModifiedMixin,
 	def lastModified(self):
 		return self.root.lastModified
 
+def get_platformp_resentation_resources(root=None):
+	if not root:
+		return ()
+
+	assets = root.getChildNamed('presentation-assets')
+	if assets is None or not IDelimitedHierarchyBucket.providedBy(assets):
+		return ()
+
+	data = list()
+	inherit = None
+	for platform_bucket in assets.enumerateChildren():
+		
+		if not IDelimitedHierarchyBucket.providedBy(platform_bucket):
+			continue
+
+		if platform_bucket.name == 'shared':
+			inherit = platform_bucket.name
+
+		for version_bucket in platform_bucket.enumerateChildren():
+			if 	not IDelimitedHierarchyBucket.providedBy(version_bucket) \
+				or not version_bucket.name.startswith('v'):
+				continue
+			version = int(version_bucket.name[1:])
+			data.append( (platform_bucket, version_bucket, version) )
+
+	result = list()
+	for x in data:
+		ip_name = 'shared' if inherit and x[0].name != 'shared' else None
+		dr = DisplayablePlatformPresentationResources(PlatformName=x[0].name,
+													  root=x[1],
+													  Version=x[2],
+													  InheritPlatformName=ip_name)
+		result.append(dr)
+	result = tuple(result)
+	return result
 
 class DisplayableContentMixin(object):
 	"""
@@ -65,37 +100,5 @@ class DisplayableContentMixin(object):
 		# to copy in the default value, which would overwrite
 		# our CachedProperty. Thus we have to be defensive.
 		root = getattr(self, 'root', None)
-		if not root:
-			return ()
-
-		assets = root.getChildNamed('presentation-assets')
-		if assets is None or not IDelimitedHierarchyBucket.providedBy(assets):
-			return ()
-
-		inherit = None
-		data = list()
-
-		for platform_bucket in assets.enumerateChildren():
-			
-			if not IDelimitedHierarchyBucket.providedBy(platform_bucket):
-				continue
-
-			if platform_bucket.name == 'shared':
-				inherit = platform_bucket.name
-
-			for version_bucket in platform_bucket.enumerateChildren():
-				if 	not IDelimitedHierarchyBucket.providedBy(version_bucket) \
-					or not version_bucket.name.startswith('v'):
-					continue
-				version = int(version_bucket.name[1:])
-				data.append( (platform_bucket, version_bucket, version) )
-
-		result = list()
-		for x in data:
-			ip_name = 'shared' if inherit and x[0].name != 'shared' else None
-			dr = DisplayablePlatformPresentationResources(PlatformName=x[0].name,
-														  root=x[1],
-														  Version=x[2],
-														  InheritPlatformName=ip_name)
-			result.append(dr)
-		return tuple(result)
+		result = get_platformp_resentation_resources(root)
+		return result
