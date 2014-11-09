@@ -1,23 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from nti.externalization.persistence import PersistentExternalizableList, PersistentExternalizableWeakList
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-import unittest
-from persistent import Persistent
-
-from hamcrest import calling
-from hamcrest import raises
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import assert_that
 
-class TestPersistentExternalizableList(unittest.TestCase):
+from persistent import Persistent
+
+from nti.externalization.persistence import PersistentExternalizableList
+from nti.externalization.persistence import PersistentExternalizableWeakList
+
+from nti.externalization.tests import ExternalizationLayerTest
+
+class TestPersistentExternalizableList(ExternalizationLayerTest):
 
 	def test_externalize(self):
 		obj = PersistentExternalizableList([1,2, None, 3])
@@ -31,8 +34,7 @@ class TestPersistentExternalizableList(unittest.TestCase):
 		assert_that( obj.values(), is_( obj ) )
 		assert_that( list( iter(obj.values() ) ), is_( [1,2,None,3] ) )
 
-
-class TestPersistentExternalizableWeakList(unittest.TestCase):
+class TestPersistentExternalizableWeakList(ExternalizationLayerTest):
 
 	def test_mutate(self):
 

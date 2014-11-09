@@ -1,22 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
+
 from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import assert_that
+from hamcrest import has_property
 
 import sys
 
 from zope import interface
 
-from ..datastructures import ModuleScopedInterfaceObjectIO
+from nti.externalization.datastructures import ModuleScopedInterfaceObjectIO
 
-import unittest
-from hamcrest import assert_that
-from hamcrest import has_property
+from nti.externalization.tests import ExternalizationLayerTest
+
 from nose.tools import assert_raises
 
-class TestDatastructures(unittest.TestCase):
+class TestDatastructures(ExternalizationLayerTest):
+	
 	def test_finding_linear_interface(self):
 
 		class IRoot(interface.Interface): pass

@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+import hamcrest
+from hamcrest.core.base_matcher import BaseMatcher
 
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import INonExternalizableReplacement
-
-from hamcrest.core.base_matcher import BaseMatcher
-import hamcrest
-
 
 class Externalizes(BaseMatcher):
 
@@ -18,10 +19,10 @@ class Externalizes(BaseMatcher):
 		super(Externalizes,self).__init__( )
 		self.matcher = matcher
 
-
 	def _matches( self, item ):
 		ext_obj = toExternalObject( item )
-		result = ext_obj is not None and not INonExternalizableReplacement.providedBy( ext_obj )
+		result = ext_obj is not None and \
+				 not INonExternalizableReplacement.providedBy( ext_obj )
 		if result and self.matcher is not None:
 			result = self.matcher.matches( ext_obj )
 		if result == bool( ext_obj ):
@@ -52,9 +53,10 @@ def externalizes( matcher=None ):
 	"""
 	return Externalizes( matcher=matcher )
 
-from hamcrest import calling
 from hamcrest import raises
+from hamcrest import calling
 from hamcrest import assert_that
+
 import pickle
 
 def assert_does_not_pickle(o):
@@ -65,15 +67,14 @@ def assert_does_not_pickle(o):
 				 raises(TypeError))
 
 import nti.testing.base
-class ConfiguringTestBase(nti.testing.base.ConfiguringTestBase):
-	set_up_packages = (nti.externalization,)
 
+class ConfiguringTestBase(nti.testing.base.ConfiguringTestBase):
+	set_up_packages = ('nti.externalization',)
 
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
+
 import zope.testing.cleanup
-
-
 
 class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 ConfiguringLayerMixin):
@@ -98,5 +99,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 		pass
 
 import unittest
+
 class ExternalizationLayerTest(unittest.TestCase):
 	layer = SharedConfiguringTestLayer
