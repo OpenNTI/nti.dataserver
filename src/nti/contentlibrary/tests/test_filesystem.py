@@ -1,42 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
-from __future__ import print_function, unicode_literals
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import is_not as does_not
-from hamcrest import none
-from hamcrest import contains_inanyorder
-from hamcrest import has_property
-from hamcrest import contains
-from hamcrest import greater_than
-from hamcrest import has_length
-from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import greater_than
+from hamcrest import has_property
 from hamcrest import same_instance
 from hamcrest import empty as is_empty
+from hamcrest import is_not as does_not
+from hamcrest import contains_inanyorder
+from hamcrest import greater_than_or_equal_to
 
-from nti.testing.matchers import verifiably_provides
-from nti.testing.matchers import validly_provides
+import os.path
+import anyjson as json
+try:
+	from six.moves import cPickle as pickle
+except ImportError:
+	import pickle
+
+from zope import component
+from zope.dublincore.interfaces import IWriteZopeDublinCore
 
 from nti.contentlibrary import interfaces, filesystem
 
-from zope.dublincore.interfaces import IWriteZopeDublinCore
 from nti.externalization.externalization import to_external_object
 
-import anyjson as json
-import os.path
+from nti.contentlibrary.tests import ContentlibraryLayerTest
 
-from . import ContentlibraryLayerTest
-
-from six.moves import cPickle as pickle
+from nti.testing.matchers import validly_provides
+from nti.testing.matchers import verifiably_provides
 
 class TestFilesystem(ContentlibraryLayerTest):
 
@@ -108,7 +110,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 		# use `touch` if you have to
 		assert_that( package,
 					 has_property('lastModified',
-								  greater_than( package.key.lastModified )
+								  greater_than_or_equal_to( package.key.lastModified )
 						 ))
 
 		# package pickles ok
@@ -170,7 +172,6 @@ class TestFilesystem(ContentlibraryLayerTest):
 					 has_property('href',
 								  '/SomePrefix/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22'))
 
-
 	def test_site_library(self):
 		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
 		global_library.syncContentPackages()
@@ -205,8 +206,6 @@ class TestFilesystem(ContentlibraryLayerTest):
 		unit._v_foo = 1
 		unit._foo = 42
 		assert_that( unit.__getstate__(), is_( {'_foo': 42} ))
-
-from zope import component
 
 class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):
 
@@ -254,9 +253,7 @@ class TestGlobalFilesystemLibrary(ContentlibraryLayerTest):
 		assert_that( content_package, has_property('absolute_path',
 												   os.path.join(site_path, 'TestFilesystem', 'index.html')) )
 
-
 		sites = pickle.dumps(site_lib)
-
 
 		# Now if we change the global library path, this
 		# should all change too
