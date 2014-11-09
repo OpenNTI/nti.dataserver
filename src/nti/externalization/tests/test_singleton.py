@@ -1,33 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import assert_that
 from hamcrest import same_instance
+
+from nti.externalization.singleton import SingletonDecorator
+
 from nose.tools import assert_raises
 
-from ..singleton import SingletonDecorator
+from nti.externalization.tests import ExternalizationLayerTest
 
-class TestSingleton(unittest.TestCase):
+class TestSingleton(ExternalizationLayerTest):
+	
 	def test_singleton_decorator(self):
 
 		class X(object):
 			__metaclass__ = SingletonDecorator
-
 
 		# No context
 		assert_that( X(), is_( same_instance( X() ) ) )
@@ -36,7 +31,8 @@ class TestSingleton(unittest.TestCase):
 		assert_that( X('context'), is_( same_instance( X('other_context') ) ) )
 
 		# two contexts for the common multi-adapter case
-		assert_that( X('context', 'request'), is_( same_instance( X('other_context', 'other_request') ) ) )
+		assert_that( X('context', 'request'), 
+					 is_( same_instance( X('other_context', 'other_request') ) ) )
 
 		x = X()
 		with assert_raises(AttributeError):

@@ -1,41 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import has_property
+from hamcrest import assert_that
 
 import os
 import time
-
-from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import none
-from hamcrest import has_property
-from hamcrest import calling
-from hamcrest import raises
-
-from . import externalizes
-from ..datetime import _datetime_to_string
-from ..datetime import datetime_from_string
-
-
-from nti.schema.interfaces import InvalidValue
 from datetime import date
 from datetime import timedelta
 from zope.interface.common.idatetime import IDate
 from zope.interface.common.idatetime import IDateTime
 
-from . import ExternalizationLayerTest
+from nti.externalization.datetime import _datetime_to_string
+from nti.externalization.datetime import datetime_from_string
+
+from nti.schema.interfaces import InvalidValue
+
+from nti.externalization.tests import externalizes
+from nti.externalization.tests import ExternalizationLayerTest
 
 class TestDatetime(ExternalizationLayerTest):
 
@@ -99,11 +91,8 @@ class TestDatetime(ExternalizationLayerTest):
 			assert_that( datetime_from_string('2014-01-20T00:00',
 											  assume_local=True,
 											  local_tzname='US/Eastern'),
-							 is_( IDateTime('2014-01-20T06:00Z')))
-
+							 is_( IDateTime('2014-01-20T05:00Z')))
 
 	def test_timedelta_to_string(self):
-
 		the_delt = timedelta(weeks=16)
-
 		assert_that( the_delt, externalizes( is_( 'P112D' )))

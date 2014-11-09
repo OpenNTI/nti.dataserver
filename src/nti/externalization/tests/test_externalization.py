@@ -1,61 +1,63 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from hamcrest import assert_that
 from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import has_key
+from hamcrest import contains
 from hamcrest import has_entry
 from hamcrest import has_items
-from hamcrest import has_key
-from hamcrest import is_not
+from hamcrest import assert_that
 from hamcrest import same_instance
-from hamcrest import contains
-from hamcrest import calling
-from hamcrest import raises
+from hamcrest import has_property as has_attr
 
-from hamcrest.library import has_property as has_attr
+does_not = is_not
+
+import sys
+import json
+import plistlib
 import unittest
 import UserDict
 
-
 import persistent
-import json
-import plistlib
-from ZODB.broken import Broken
-
-from nti.testing.matchers import has_attr
-
-from nti.externalization.persistence import getPersistentState
-from nti.externalization import externalization
-from nti.externalization.oids import toExternalOID, fromExternalOID
-
-from ..externalization import EXT_FORMAT_PLIST
-from ..externalization import EXT_FORMAT_JSON
-from ..interfaces import EXT_REPR_YAML
-from ..representation import to_external_representation
-from ..externalization import toExternalObject
-from ..externalization import catch_replace_action
-from ..externalization import to_standard_external_dictionary
-from nti.externalization.datastructures import ExternalizableDictionaryMixin
-from ..interfaces import LocatedExternalList
-from ..interfaces import LocatedExternalDict
 
 from zope import component
-import nti.testing.base
 
-from . import ExternalizationLayerTest
+from ZODB.broken import Broken
+
+from nti.externalization import externalization
+from nti.externalization.internalization import _search_for_external_factory
+
+from nti.externalization.interfaces import EXT_REPR_YAML
+from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.externalization.externalization import EXT_FORMAT_PLIST
+from nti.externalization.externalization import EXT_FORMAT_JSON
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import catch_replace_action
+from nti.externalization.externalization import to_standard_external_dictionary
+
+from nti.externalization.datastructures import ExternalizableDictionaryMixin
+from nti.externalization.datastructures import ExternalizableInstanceDict
+
+from nti.externalization.persistence import getPersistentState
+from nti.externalization.persistence import PersistentExternalizableWeakList
+
+from nti.externalization.oids import toExternalOID, fromExternalOID
+
+from nti.externalization.representation import to_external_representation
+
+from nti.externalization.tests import ExternalizationLayerTest
 
 class TestFunctions(ExternalizationLayerTest):
 
@@ -139,8 +141,8 @@ class TestFunctions(ExternalizationLayerTest):
 	def test_broken(self):
 		# Without the devmode hooks
 		gsm = component.getGlobalSiteManager()
-		v = gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=() )
-		v = gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=(interface.Interface,) )
+		gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=() )
+		gsm.unregisterAdapter( factory=externalization._DevmodeNonExternalizableObjectReplacer, required=(interface.Interface,) )
 
 		assert_that( toExternalObject( Broken(), registry=gsm ),
 					 has_entry( "Class", "NonExternalizableObject" ) )
@@ -159,7 +161,6 @@ class TestFunctions(ExternalizationLayerTest):
 		# Default doesn't catch
 		assert_that( calling(toExternalObject).with_args([Raises()]),
 					 raises(AssertionError) )
-
 
 	def test_search_for_external(self):
 		class Y(object):
@@ -182,12 +183,6 @@ class TestFunctions(ExternalizationLayerTest):
 		# something unresolvable
 		assert_that( _search_for_external_factory( 'FooBar', search_set=[n] ), is_( none() ) )
 
-
-import sys
-from hamcrest import same_instance, none
-from nti.externalization.internalization import _search_for_external_factory
-from nti.externalization.persistence import PersistentExternalizableWeakList
-
 class TestPersistentExternalizableWeakList(unittest.TestCase):
 
 	def test_plus_extend( self ):
@@ -209,11 +204,8 @@ class TestPersistentExternalizableWeakList(unittest.TestCase):
 		assert_that( l, is_( [c1, c2, c3] ) )
 		assert_that( l, is_(l) )
 
-from nti.externalization.datastructures import ExternalizableInstanceDict
-
-does_not = is_not
-
 class TestExternalizableInstanceDict(ExternalizationLayerTest):
+
 	class C(ExternalizableInstanceDict):
 		def __init__( self ):
 			super(TestExternalizableInstanceDict.C,self).__init__()
@@ -254,13 +246,17 @@ class TestExternalizableInstanceDict(ExternalizationLayerTest):
 		assert_that( newObj.A1, is_( 1 ) )
 		assert_that( newObj.A2, is_( "2" ) )
 
+import datetime
+from numbers import Number
+
 from zope import interface
 from zope.dublincore import interfaces as dub_interfaces
-from ..interfaces import IExternalObject, IExternalObjectDecorator, StandardExternalFields
 
-import datetime
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
+
 from nti.testing.matchers import verifiably_provides
-from numbers import Number
 
 class TestToExternalObject(ExternalizationLayerTest):
 
@@ -330,9 +326,6 @@ class TestToExternalObject(ExternalizationLayerTest):
 		assert_that( ext_val[0],
 					 is_not(same_instance(ext_val[1]) ) )
 
-
-
-
 	def test_to_stand_dict_uses_dubcore(self):
 
 		@interface.implementer(dub_interfaces.IDCTimes)
@@ -346,9 +339,9 @@ class TestToExternalObject(ExternalizationLayerTest):
 		assert_that( ex_dic, has_entry( StandardExternalFields.LAST_MODIFIED, is_( Number ) ) )
 		assert_that( ex_dic, has_entry( StandardExternalFields.CREATED_TIME, is_( Number ) ) )
 
-from ..persistence import NoPickle
+from nti.externalization.persistence import NoPickle
 
-from . import assert_does_not_pickle
+from nti.externalization.tests import assert_does_not_pickle
 
 @NoPickle
 class Foo(object):
