@@ -97,8 +97,7 @@
 
 	<adapter factory=".adapters.bundle_to_principal"
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle"
-			 provides="zope.security.interfaces.IPrincipal"
-			 zcml:condition="have devmode" />
+			 provides="zope.security.interfaces.IPrincipal" />
 			 
 	<!-- externalization -->
 	<!-- Note that we want to use the externalization already present, we just need the
