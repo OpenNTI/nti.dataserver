@@ -95,6 +95,11 @@
 			 provides="zope.traversing.interfaces.IPathAdapter"
 			 name="DiscussionBoard" /> <!-- matches __default_name__ -->
 
+	<adapter factory=".adapters.bundle_to_principal"
+			 for="nti.contentlibrary.interfaces.IContentPackageBundle"
+			 provides="zope.security.interfaces.IPrincipal"
+			 zcml:condition="have devmode" />
+			 
 	<!-- externalization -->
 	<!-- Note that we want to use the externalization already present, we just need the
 	correct factories registered -->

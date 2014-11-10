@@ -11,27 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-# disable: too many ancestors
-# pylint: disable=I0011,R0901
-
 from nti.dataserver.contenttypes.forums import MessageFactory as _
 
+from zope import schema
 from zope import interface
 from zope import component
-from zope import schema
 from zope.cachedescriptors.property import cachedIn
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 ### Board
 
-from .interfaces import IContentBoard
-from nti.ntiids.ntiids import TYPE_OID
-
-#from nti.dataserver.contenttypes.forums import _CreatedNamedNTIIDMixin
+from nti.dataserver.interfaces import system_user
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
-from nti.dataserver.interfaces import system_user
+
+from nti.ntiids.ntiids import TYPE_OID
+
+from .interfaces import IContentBoard
 
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
@@ -64,7 +61,6 @@ class ContentBoard(GeneralBoard):
 			raise errors[0][1]
 		return forum
 
-
 @interface.implementer(IContentBoard)
 def ContentBoardAdapter(context):
 	board = AnnotatableBoardAdapter(context, ContentBoard, IContentBoard)
@@ -74,9 +70,9 @@ def ContentBoardAdapter(context):
 
 ### Forum
 
-from .interfaces import IContentForum
-
 from nti.dataserver.contenttypes.forums.forum import GeneralForum
+
+from .interfaces import IContentForum
 
 @interface.implementer(IContentForum)
 class ContentForum(GeneralForum):
@@ -90,11 +86,11 @@ class ContentForum(GeneralForum):
 
 ### Topic
 
-from .interfaces import IContentHeadlineTopic
-
-from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
 from nti.dataserver import users
 from nti.dataserver.interfaces import IDefaultPublished
+from nti.dataserver.contenttypes.forums.topic import GeneralHeadlineTopic
+
+from .interfaces import IContentHeadlineTopic
 
 @interface.implementer(IContentHeadlineTopic)
 class ContentHeadlineTopic(GeneralHeadlineTopic):
@@ -128,11 +124,11 @@ class ContentHeadlineTopic(GeneralHeadlineTopic):
 
 ### Posts
 
-from .interfaces import IContentHeadlinePost
-from .interfaces import IContentCommentPost
-
 from nti.dataserver.contenttypes.forums.post import GeneralHeadlinePost
 from nti.dataserver.contenttypes.forums.post import GeneralForumComment
+
+from .interfaces import IContentCommentPost
+from .interfaces import IContentHeadlinePost
 
 @interface.implementer(IContentHeadlinePost)
 class ContentHeadlinePost(GeneralHeadlinePost):
@@ -181,15 +177,17 @@ class _ContentForumACLProvider(_CommunityForumACLProvider):
 		return ('Everyone', AUTHENTICATED_GROUP_NAME)
 
 ### Forum decorators
-from nti.externalization.singleton import SingletonDecorator
-from nti.externalization import interfaces as ext_interfaces
-
-# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
-LINKS = ext_interfaces.StandardExternalFields.LINKS
 
 from nti.dataserver.links import Link
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
+
+# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
+LINKS = StandardExternalFields.LINKS
+
+@interface.implementer(IExternalMappingDecorator)
 class ContentBoardLinkDecorator(object):
 	#### XXX Very similar to the decorators for Community and PersonalBlog;
 	# can we unify these?
