@@ -33,6 +33,7 @@ class StandardExternalFields(object):
 	MIMETYPE = 'MimeType'
 	LINKS = 'Links'
 	HREF = 'href'
+	ITEMS = 'Items'
 
 StandardExternalFields.ALL = (lambda : [ v for k,v in StandardExternalFields.__dict__.iteritems() if not k.startswith( '_' ) ])()
 
