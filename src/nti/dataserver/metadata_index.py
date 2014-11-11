@@ -96,7 +96,8 @@ class ValidatingContainerId(object):
 		contained = INTIContained(obj, default)
 		if contained is not None:
 			cid = contained.containerId
-			if is_ntiid_of_types( cid, self._IGNORED_TYPES ) and not ICommentPost.providedBy(obj):
+			if	is_ntiid_of_types( cid, self._IGNORED_TYPES ) and \
+				not ICommentPost.providedBy(obj):
 				self.containerId = None
 			else:
 				self.containerId = unicode(cid)
@@ -180,9 +181,9 @@ class TaggedTo(object):
 				if entity is not None:
 					# We actually have to be a bit careful here; we only want
 					# to catch certain types of entity tags, those that are either
-					# to an individual or those that participate in security relationships;
-					# (e.g., it doesn't help to use a regular FriendsList since that is effectively
-					# flattened).
+					# to an individual or those that participate in security 
+					# relationships; (e.g., it doesn't help to use a regular FriendsList 
+					# since that is effectively flattened).
 					# Currently, this abstraction doesn't exactly exist so we
 					# are very specific about it. See also :mod:`sharing`
 					if IUser.providedBy(entity):
@@ -396,7 +397,7 @@ def clear_replies_to_creator_when_creator_removed(entity, event):
 		return
 
 	# These we can simply remove, this creator doesn't exist anymore
-	for ix_name in 'repliesToCreator', 'taggedTo':
+	for ix_name in (IX_REPLIES_TO_CREATOR, IX_TAGGEDTO):
 		index = catalog[ix_name]
 		query = {ix_name: {'any_of': (entity.username,)} }
 		results = catalog.searchResults(**query)
@@ -404,7 +405,7 @@ def clear_replies_to_creator_when_creator_removed(entity, event):
 			index.unindex_doc(uid)
 
 	# These, though, may still be shared, so we need to reindex them
-	index = catalog['sharedWith']
+	index = catalog[IX_SHAREDWITH]
 	results = catalog.searchResults(sharedWith={'all_of': (entity.username,)})
 	uidutil = results.uidutil
 	for uid in results.uids:
