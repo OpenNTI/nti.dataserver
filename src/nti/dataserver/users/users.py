@@ -22,17 +22,20 @@ from persistent.list import PersistentList
 from persistent.persistence import Persistent
 
 import zope.intid
+
 from zope import interface
 from zope import component
 from zope import annotation
 from zope import lifecycleevent
-from ZODB.interfaces import IConnection
 from zope.deprecation import deprecated
 from zope.component.factory import Factory
 from zope.cachedescriptors.property import cachedIn
+from zope.location.interfaces import ISublocations
 from zope.password.interfaces import IPasswordManager
-from zope.location import interfaces as loc_interfaces
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
+from ZODB.POSException import POSError
+from ZODB.interfaces import IConnection
 
 from z3c.password import interfaces as pwd_interfaces
 
@@ -40,16 +43,44 @@ from nti.apns import interfaces as apns_interfaces
 
 from nti.dataserver import dicts
 from nti.dataserver import sharing
-from nti.mimetype import mimetype
 from nti.dataserver import datastructures
+
+from nti.dataserver.interfaces import IHTC_NEW_FACTORY
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDevice
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IOpenIdUser
+from nti.dataserver.interfaces import ITranscript
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import IFacebookUser
+from nti.dataserver.interfaces import IIntIdIterable
+from nti.dataserver.interfaces import INamedContainer
+from nti.dataserver.interfaces import IDeviceContainer
+from nti.dataserver.interfaces import IContainerIterable
+from nti.dataserver.interfaces import IEntityIntIdIterable
+from nti.dataserver.interfaces import ITranscriptContainer
+from nti.dataserver.interfaces import IDynamicSharingTarget
+from nti.dataserver.interfaces import IUserBlacklistedStorage
+from nti.dataserver.interfaces import IUnscopedGlobalCommunity
+from nti.dataserver.interfaces import ITargetedStreamChangeEvent
+from nti.dataserver.interfaces import IStopDynamicMembershipEvent
+from nti.dataserver.interfaces import IStartDynamicMembershipEvent
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
+				
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.activitystream_change import Change
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
-from nti.externalization.datastructures import ExternalizableDictionaryMixin
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.datastructures import ExternalizableDictionaryMixin
+
+from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
@@ -60,8 +91,8 @@ from nti.zodb.containers import time_to_64bit_int
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
-		return component.queryUtility(nti_interfaces.IDataserver, context=context, default=default)
-	return component.getUtility(nti_interfaces.IDataserver, context=context)
+		return component.queryUtility(IDataserver, context=context, default=default)
+	return component.getUtility(IDataserver, context=context)
 
 # Starts as none, which matches what _get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use
@@ -95,7 +126,8 @@ class _Password(object):
 			and :mod:`zope.password`.
 		"""
 
-		self.__encoded = component.getUtility( IPasswordManager, name=manager_name ).encodePassword( password )
+		manager = component.getUtility( IPasswordManager, name=manager_name )
+		self.__encoded = manager.encodePassword( password )
 		self.password_manager = manager_name
 
 	def checkPassword( self, password ):
@@ -103,7 +135,9 @@ class _Password(object):
 		:return: Whether the given (plain text) password matches the
 		encoded password stored by this object.
 		"""
-		return component.getUtility( IPasswordManager, name=self.password_manager ).checkPassword( self.__encoded, password )
+		manager = component.getUtility( IPasswordManager, name=self.password_manager )
+		result = manager.checkPassword( self.__encoded, password )
+		return result
 
 	def getPassword( self ):
 		"""
@@ -117,10 +151,9 @@ class _Password(object):
 	# be directly compared outside the context of their
 	# manager.
 
-
 def named_entity_ntiid(entity):
 	return ntiids.make_ntiid( date=ntiids.DATE,
-							  provider=nti_interfaces.SYSTEM_USER_NAME,
+							  provider=SYSTEM_USER_NAME,
 							  nttype=entity.NTIID_TYPE,
 							  specific=ntiids.escape_provider(entity.username.lower()))
 
@@ -139,6 +172,7 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 	# TODO: Continue migrating this towards zope.security.principal, the zope principalfolder
 	# concept.
 	password_manager_name = 'bcrypt'
+	
 	def __init__(self,
 				 username=None,
 				 password=None,
@@ -184,13 +218,14 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
 	Principal.password_manager_name = 'Plain Text'
 
-from nti.utils.property import Lazy
+
 from nti.dataserver.sharing import _remove_entity_from_named_lazy_set_of_wrefs
 from nti.dataserver.sharing import _set_of_usernames_from_named_lazy_set_of_wrefs
 from nti.dataserver.sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
 
-@interface.implementer(nti_interfaces.ICommunity,
-					   loc_interfaces.ISublocations)
+from nti.utils.property import Lazy
+
+@interface.implementer(ICommunity, ISublocations)
 class Community(sharing.DynamicSharingTargetMixin,Entity):
 	# order of inheritance matters
 
@@ -299,17 +334,17 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 			for wref in self._members:
 				yield wref.username
 
-@component.adapter(nti_interfaces.IUser,nti_interfaces.IStartDynamicMembershipEvent)
+@component.adapter(IUser, IStartDynamicMembershipEvent)
 def _add_member_to_community(entity, event):
-	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
+	if ICommunity.providedBy(event.target) and not IUnscopedGlobalCommunity.providedBy(event.target):
 		event.target._note_member(entity)
 
-@component.adapter(nti_interfaces.IUser,nti_interfaces.IStopDynamicMembershipEvent)
+@component.adapter(IUser, IStopDynamicMembershipEvent)
 def _remove_member_from_community(entity, event):
-	if nti_interfaces.ICommunity.providedBy(event.target) and not nti_interfaces.IUnscopedGlobalCommunity.providedBy(event.target):
+	if ICommunity.providedBy(event.target) and not IUnscopedGlobalCommunity.providedBy(event.target):
 		event.target._del_member(entity)
 
-@component.adapter(nti_interfaces.ICommunity,zope.intid.interfaces.IIntIdRemovedEvent)
+@component.adapter(ICommunity, zope.intid.interfaces.IIntIdRemovedEvent)
 def _remove_all_members_when_community_deleted(entity, event):
 	"Clean up the weak references"
 	for member in list(entity.iter_members()): # sadly we have to reify the list because we will be changing it
@@ -319,9 +354,8 @@ def _remove_all_members_when_community_deleted(entity, event):
 			# above
 			member.record_no_longer_dynamic_member(entity)
 
-@interface.implementer(nti_interfaces.IEntityIntIdIterable,
-					   nti_interfaces.ILengthEnumerableEntityContainer)
-@component.adapter(nti_interfaces.ICommunity)
+@interface.implementer(IEntityIntIdIterable, ILengthEnumerableEntityContainer)
+@component.adapter(ICommunity)
 class CommunityEntityContainer(object):
 
 	def __init__( self, context ):
@@ -345,10 +379,13 @@ class CommunityEntityContainer(object):
 		except AttributeError:
 			return False
 
-@interface.implementer(nti_interfaces.IUnscopedGlobalCommunity)
+@interface.implementer(IUnscopedGlobalCommunity)
 class Everyone(Community):
-	""" A community that represents the entire world. """
+	""" 
+	A community that represents the entire world.
+	 """
 	__external_class_name__ = 'Community'
+	
 	# 'everyone@nextthought.com' hash
 	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
 	_realname = 'Everyone'
@@ -362,7 +399,6 @@ class Everyone(Community):
 			if k in state:
 				del state[k]
 		super(Everyone,self).__setstate__( state )
-
 
 from nti.dataserver.users.friends_lists import FriendsList
 from nti.dataserver.users.friends_lists import _FriendsListMap # bwc
@@ -380,7 +416,7 @@ ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 
 @functools.total_ordering
-@interface.implementer( nti_interfaces.IDevice, nti_interfaces.IZContained )
+@interface.implementer(IDevice, IZContained)
 class Device(datastructures.PersistentCreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
 
@@ -404,6 +440,7 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 
 	def get_containerId( self ):
 		return _DevicesMap.container_name
+
 	def set_containerId( self, cid ):
 		pass
 	containerId = property( get_containerId, set_containerId )
@@ -435,10 +472,9 @@ class Device(datastructures.PersistentCreatedModDateTrackingObject,
 	def __hash__(self):
 		return self.deviceId.__hash__()
 
-
-@interface.implementer( nti_interfaces.IDeviceContainer )
+@interface.implementer(IDeviceContainer )
 class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
-	contained_type = nti_interfaces.IDevice
+	contained_type = IDevice
 	container_name = 'Devices'
 
 	__name__ = container_name
@@ -449,20 +485,19 @@ class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
 		super(_DevicesMap,self).__setitem__( key, value )
 
 
-nti_interfaces.IDevice.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
-									   Factory( Device,
-												interfaces=(nti_interfaces.IDevice,)) )
+IDevice.setTaggedValue( IHTC_NEW_FACTORY,
+						Factory( Device, interfaces=(IDevice,)) )
 
-
-@interface.implementer( nti_interfaces.ITranscriptContainer )
+@interface.implementer(ITranscriptContainer )
 class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
-	contained_type = nti_interfaces.ITranscript
+	contained_type = ITranscript
 	container_name = 'Transcripts'
 	__name__ = container_name
 
-@interface.implementer( nti_interfaces.IContainerIterable,
-						nti_interfaces.IUser,
-						loc_interfaces.ISublocations )
+@interface.implementer( IContainerIterable,
+						IUser,
+						IIntIdIterable,
+						ISublocations )
 class User(Principal):
 	"""A user is the central class for data storage. It maintains
 	not only a few distinct pieces of data but also a collection of
@@ -557,7 +592,7 @@ class User(Principal):
 				 parent=None, _stack_adjust=0):
 		super(User,self).__init__(username, password=password,
 								  parent=parent)
-		nti_interfaces.IUser['username'].bind(self).validate( self.username )
+		IUser['username'].bind(self).validate( self.username )
 		# We maintain a Map of our friends lists, organized by
 		# username (only one friend with a username)
 
@@ -693,7 +728,6 @@ class User(Principal):
 				reset( x )
 				add( value )
 
-
 		# These two arrays cancel each other out. In order to just have to
 		# deal with sending one array or the other, the presence of an entry
 		# in one array will remove it from the other. This happens
@@ -715,7 +749,6 @@ class User(Principal):
 				accepting )
 		return updated
 
-
 	### Sharing
 
 	def _get_dynamic_sharing_targets_for_read( self ):
@@ -727,7 +760,7 @@ class User(Principal):
 													   "Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
 
 		for fl in self.friendsLists.values():
-			if nti_interfaces.IDynamicSharingTarget.providedBy( fl ):
+			if IDynamicSharingTarget.providedBy( fl ):
 				result.add( fl )
 		return result
 
@@ -868,7 +901,6 @@ class User(Principal):
 		stored_value = self.containers.getContainer( containerId, defaultValue )
 		return stored_value
 
-
 	def getAllContainers( self ):
 		""" Returns all containers, as a map from containerId to container.
 		The returned value *MUST NOT* be modified."""
@@ -982,7 +1014,8 @@ class User(Principal):
 					seen.add( k )
 					yield k
 
-		interesting_dynamic_things = set(self.dynamic_memberships) | {x for x in self.friendsLists.values() if nti_interfaces.IDynamicSharingTarget.providedBy(x)}
+		fl_set = {x for x in self.friendsLists.values() if IDynamicSharingTarget.providedBy(x)}
+		interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
 		for com in interesting_dynamic_things:
 			if not stream_only and hasattr( com, 'containersOfShared' ):
 				for k in com.containersOfShared:
@@ -995,15 +1028,43 @@ class User(Principal):
 						seen.add( k )
 						yield k
 
-
 	def itercontainers( self ):
 		# TODO: Not sure about this. Who should be responsible for
 		# the UGD containers? Should we have some different layout
 		# for that (probably).
 		return (v
 				for v in self.containers.containers.itervalues()
-				if nti_interfaces.INamedContainer.providedBy( v ) )
+				if INamedContainer.providedBy( v ) )
 
+	def iter_intids(self, include_stream=True, stream_only=False):
+		seen = set()
+		intid = component.getUtility( zope.intid.IIntIds )
+		if not stream_only:
+			for container in self.containers.itervalues():
+				if isinstance(container, collections.Mapping):
+					collection = container.values()
+				else:
+					collection = container
+				for obj in collection:
+					try:
+						obj = self.containers._v_unwrap(obj)
+						uid = intid.queryId(obj)
+						if uid is not None and uid not in seen:
+							seen.add(uid)
+							yield uid
+					except POSError:
+						pass
+					
+		if include_stream:
+			for container in self.streamCache.values():
+				for obj in container:
+					try:
+						uid = intid.queryId(obj)
+						if uid is not None and uid not in seen:
+							seen.add(uid)
+							yield uid
+					except POSError:
+						pass
 
 	#@deprecate("No replacement; not needed") # noisy if enabled; logic in flagging_views still needs its existence until rewritten
 	def updates( self ):
@@ -1066,7 +1127,7 @@ class User(Principal):
 		result = set(relationships)
 		discarded = []
 		for x in list(result):
-			if nti_interfaces.IFriendsList.providedBy( x ) and self not in x:
+			if IFriendsList.providedBy( x ) and self not in x:
 				discarded.append( (x,x.NTIID) )
 				result.discard( x )
 
@@ -1079,11 +1140,9 @@ class User(Principal):
 		# We want things shared with the DFLs we own to be counted
 		# as visible to us
 		for x in self.friendsLists.values():
-			if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(x):
+			if IDynamicSharingTargetFriendsList.providedBy(x):
 				# Direct access is a perf optimization, this is called a lot
 				yield x._ds_intid
-
-
 
 # We have a few subclasses of User that store some specific
 # information and directly implement some interfaces.
@@ -1092,7 +1151,7 @@ class User(Principal):
 # be 'User' as well.
 # TODO: MimeTypes?
 
-@interface.implementer( nti_interfaces.IOpenIdUser )
+@interface.implementer( IOpenIdUser )
 class OpenIdUser(User):
 	__external_class_name__ = 'User'
 
@@ -1104,7 +1163,7 @@ class OpenIdUser(User):
 		if id_url:
 			self.identity_url = id_url
 
-@interface.implementer( nti_interfaces.IFacebookUser )
+@interface.implementer( IFacebookUser )
 class FacebookUser(User):
 	__external_class_name__ = 'User'
 	facebook_url = None
@@ -1146,8 +1205,7 @@ def user_devicefeedback( msg ):
 	else:
 		component.getUtility( IDataserverTransactionRunner )( feedback )
 
-
-@component.adapter(nti_interfaces.ITargetedStreamChangeEvent)
+@component.adapter(ITargetedStreamChangeEvent)
 def onChange( event ):
 	entity = event.entity
 	msg = event.object
@@ -1159,9 +1217,8 @@ def onChange( event ):
 			pass
 		entity._noticeChange( msg )
 
-
-@interface.implementer(nti_interfaces.IZContained)
-@interface.implementer(nti_interfaces.IUserBlacklistedStorage)
+@interface.implementer(IZContained)
+@interface.implementer(IUserBlacklistedStorage)
 class UserBlacklistedStorage( Persistent ):
 	"""
 	Stores deleted/blacklisted usernames case-insensitively in a btree
@@ -1198,8 +1255,7 @@ class UserBlacklistedStorage( Persistent ):
 	def __len__(self):
 		return len( self._storage )
 
-@component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
+@component.adapter(IUser, IObjectRemovedEvent)
 def _blacklist_username( user, event ):
-	user_blacklist = component.getUtility( nti_interfaces.IUserBlacklistedStorage )
+	user_blacklist = component.getUtility( IUserBlacklistedStorage )
 	user_blacklist.blacklist_user( user )
-

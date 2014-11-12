@@ -690,9 +690,7 @@ class TestUser(DataserverLayerTest):
 		component.getUtility( zc.intid.IIntIds ).register( reply )
 		change = Change( Change.SHARED, reply )
 		user._noticeChange( change )
-
-
-
+	
 		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 
@@ -705,7 +703,6 @@ class TestUser(DataserverLayerTest):
 		component.getUtility( zc.intid.IIntIds ).register( reference )
 		change = Change( Change.SHARED, reference )
 		user._noticeChange( change )
-
 
 		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
@@ -753,7 +750,9 @@ class TestUser(DataserverLayerTest):
 		# This way we're sure it's the one we have above
 		assert_that( user.getContainedStream('foo')[0].creator, is_( 42 ) )
 
-
+		intids = list(user2.iter_intids())
+		assert_that(intids, has_length(1))
+		
 	@WithMockDSTrans
 	def test_getContainedStream_more_items_in_comm_cache_than_cap_returns_newest(self):
 		#"""If a community we follow has a larger stream cache than our cap parameter, we get only the newest from the cache."""
@@ -802,7 +801,6 @@ class TestUser(DataserverLayerTest):
 		assert_that( stream[0].creator, is_( x ) )
 		assert_that( stream[1].creator, is_( x - 1 ) )
 
-
 	@WithMockDSTrans
 	def test_deleting_user_with_contained_objects_removes_intids(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -849,10 +847,11 @@ class TestUser(DataserverLayerTest):
 
 		_traverse( user1 )
 
-
 		assert_that( sublocs, has_item( user1.getContainer( note.containerId ) ) )
 		assert_that( sublocs, has_item( user1.friendsLists ) )
-
+		
+		intids = list(user1.iter_intids())
+		assert_that(intids, has_length(1))
 
 	@unittest.skip("Annotations disabled for now; causes problems with indexing.")
 	@WithMockDSTrans
