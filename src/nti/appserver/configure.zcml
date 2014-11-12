@@ -482,6 +482,7 @@
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.pushnotifications" />
 	<include package="nti.app.contentsearch" />
+	<include package="nti.app.users" />
 
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="nti.appserver.application.PP_APP" />

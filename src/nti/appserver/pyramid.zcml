@@ -87,6 +87,7 @@
 
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 	<include package="nti.app.notabledata" file="pyramid.zcml" />
+	<include package="nti.app.users" file="pyramid.zcml" />
 
 
 	<!-- Additional/plugin packages -->

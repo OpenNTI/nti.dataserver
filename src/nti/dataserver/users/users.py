@@ -19,6 +19,7 @@ import functools
 import collections
 
 from persistent.list import PersistentList
+from persistent.persistence import Persistent
 
 import zope.intid
 from zope import interface
@@ -31,6 +32,7 @@ from zope.component.factory import Factory
 from zope.cachedescriptors.property import cachedIn
 from zope.password.interfaces import IPasswordManager
 from zope.location import interfaces as loc_interfaces
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
 from z3c.password import interfaces as pwd_interfaces
 
@@ -54,6 +56,7 @@ from nti.ntiids import ntiids
 from nti.wref import interfaces as wref_interfaces
 
 from nti.zodb import minmax
+from nti.zodb.containers import time_to_64bit_int
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -1155,3 +1158,36 @@ def onChange( event ):
 		except AttributeError:
 			pass
 		entity._noticeChange( msg )
+
+
+@interface.implementer(nti_interfaces.IZContained)
+@interface.implementer(nti_interfaces.IUserBlacklistedStorage)
+class UserBlacklistedStorage( Persistent ):
+	"""
+	Stores deleted/blacklisted usernames case-insensitively in a btree
+	to their int-encoded delete times.
+	"""
+
+	def __init__(self):
+		self._storage = BTrees.OLBTree.BTree()
+
+	def _get_user_key(self, user):
+		return user.username.lower()
+
+	def blacklist_user(self, user):
+		user_key = self._get_user_key( user )
+		now = time.time()
+		self._storage[user_key] = time_to_64bit_int(now)
+
+	def is_user_blacklisted(self, user):
+		user_key = self._get_user_key( user )
+		return user_key in self._storage
+
+	def __len__(self):
+		return len( self._storage )
+
+@component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
+def _blacklist_username( user, event ):
+	user_blacklist = component.getUtility( nti_interfaces.IUserBlacklistedStorage )
+	user_blacklist.blacklist_user( user )
+

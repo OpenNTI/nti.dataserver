@@ -530,3 +530,4 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 			result[item_schema['name']] = item_schema
 
 		return result
+
