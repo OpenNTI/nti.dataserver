@@ -1739,6 +1739,23 @@ def get_notable_filter(obj):
 		return any((f.is_notable(obj, user) for f in filters))
 	return uber_filter
 
+
+class IUserBlacklistedStorage(interface.Interface):
+	"""
+	Stores blacklisted users.
+	"""
+
+	def is_user_blacklisted(self, user):
+		"""
+		For the given user, return a bool whether the user is blacklisted or not.
+		Useful during user creation time.
+		"""
+
+	def blacklist_user(self, user):
+		"""
+		Blacklists the given user.
+		"""
+
 ####
 # # Weak Refs and related BWC exports
 ####

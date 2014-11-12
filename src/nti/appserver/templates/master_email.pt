@@ -74,6 +74,19 @@
 			line-height: 20pt;
 			color: #757474;
 			}
+			table, th, td {
+		    border-collapse: collapse;
+		    margin-left: 30px;
+			}
+			th,td {
+			    padding: 15px;
+			}
+			tr.border_bottom td {
+			border-bottom:1pt solid black;
+			}
+			td.blue {
+			color: #3fb3f6;
+			}
 		</style>
 	</head>
 	<body class="normal-text">

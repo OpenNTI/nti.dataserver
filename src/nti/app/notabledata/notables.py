@@ -129,7 +129,6 @@ class TopLevelNotableFilter(object):
 			return False
 
 		# Ok, we have a top-level object; check our parentage.
-		# TODO Do we want to check inReplyTo here as well?
 		parent_obj = getattr( obj, '__parent__', None )
 		parent_creator = getattr( parent_obj, 'creator', None )
 

@@ -21,6 +21,7 @@
 	<subscriber handler=".users._remove_member_from_community" />
 	<subscriber handler=".users._remove_all_members_when_community_deleted" />
 	<subscriber handler=".users.onChange" />
+	<subscriber handler=".users._blacklist_username" />
 
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"

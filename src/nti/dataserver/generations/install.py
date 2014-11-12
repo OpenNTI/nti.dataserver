@@ -54,7 +54,10 @@ from nti.dataserver import shards as ds_shards
 from nti.dataserver import password_utility
 
 from nti.dataserver.users import index as user_index
+from nti.dataserver.users.users import UserBlacklistedStorage
+
 from nti.dataserver import metadata_index
+from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.intid import utility as intid_utility
 
@@ -153,6 +156,8 @@ def install_main( context ):
 
 		install_sites_folder( dataserver_folder )
 
+		install_username_blacklist( dataserver_folder )
+
 	return dataserver_folder
 
 def install_intids( dataserver_folder ):
@@ -247,3 +252,19 @@ def install_shard( root_conn, new_shard_name ):
 	# events
 	install_root_folders( dataserver_folder,
 						  folder_type=container.EventlessLastModifiedBTreeContainer )
+
+def install_username_blacklist( dataserver_folder ):
+	"""
+	Given the IDataserverFolder, create the username blacklist btree, mapping
+	case-insensitive usernames to their int-encoded delete time.
+	"""
+	name = '++etc++username_blacklist'
+	user_blacklist = UserBlacklistedStorage()
+	user_blacklist.__name__ = name
+	user_blacklist.__parent__ = dataserver_folder
+	dataserver_folder[name] = user_blacklist
+
+	lsm = dataserver_folder.getSiteManager()
+	intids = lsm.getUtility(zope.intid.IIntIds)
+	intids.register( user_blacklist )
+	lsm.registerUtility(user_blacklist, provided=IUserBlacklistedStorage)
