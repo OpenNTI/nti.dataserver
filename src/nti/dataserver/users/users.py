@@ -1183,6 +1183,18 @@ class UserBlacklistedStorage( Persistent ):
 		user_key = self._get_user_key( user )
 		return user_key in self._storage
 
+	def remove_blacklist_for_user(self, username):
+		result = False
+		try:
+			del self._storage[username]
+			result = True
+		except KeyError:
+			pass
+		return result
+
+	def __iter__(self):
+		return iter( self._storage.items() )
+
 	def __len__(self):
 		return len( self._storage )
 

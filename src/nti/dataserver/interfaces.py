@@ -59,6 +59,8 @@ from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
 
+from nti.schema.interfaces import InvalidValue
+
 from nti.utils.property import alias
 
 class ACLLocationProxy(LocationProxy):
@@ -1755,6 +1757,17 @@ class IUserBlacklistedStorage(interface.Interface):
 		"""
 		Blacklists the given user.
 		"""
+
+	def remove_blacklist_for_user(self, username):
+		"""
+		Remove the given username from the blacklist.
+		"""
+
+class BlacklistedUsernameError(InvalidValue):
+	"""
+	Indicates the given username has been blacklisted.
+	"""
+	pass
 
 ####
 # # Weak Refs and related BWC exports

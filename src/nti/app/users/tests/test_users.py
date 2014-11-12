@@ -17,10 +17,9 @@ from zope import component
 from zope import lifecycleevent
 
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import BlacklistedUsernameError
 
 from nti.dataserver.users import User
-
-from nti.app.users.users import BlacklistedUsername
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
@@ -53,10 +52,10 @@ class TestUsers(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Same name
 			assert_that( calling( User.create_user).with_args( username=username ),
-						raises( BlacklistedUsername ))
+						raises( BlacklistedUsernameError ))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Now case insensitive
 			assert_that( calling( User.create_user).with_args( username=username.upper() ),
-						raises( BlacklistedUsername ))
+						raises( BlacklistedUsernameError ))
 

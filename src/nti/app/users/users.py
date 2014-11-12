@@ -14,12 +14,9 @@ from zope import component
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
+from nti.dataserver.interfaces import BlacklistedUsernameError
 
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
-
-from nti.schema.interfaces import InvalidValue
-
-class BlacklistedUsername(InvalidValue): pass
 
 @component.adapter( IUser, IWillCreateNewEntityEvent )
 def new_user_is_not_blacklisted(user, event):
@@ -29,4 +26,4 @@ def new_user_is_not_blacklisted(user, event):
 	user_blacklist = component.getUtility( IUserBlacklistedStorage )
 
 	if user_blacklist.is_user_blacklisted( user ):
-		raise BlacklistedUsername( user.username )
+		raise BlacklistedUsernameError( user.username )
