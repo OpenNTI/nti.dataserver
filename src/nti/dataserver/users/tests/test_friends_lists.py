@@ -410,6 +410,9 @@ class TestDFL(DataserverLayerTest):
 				ids = list(member.iterntiids())
 				__traceback_info__ = member, ids
 				assert_that( ids, contains( child_note.containerId ) )
+				
+				intids = list(member.iter_intids())
+				assert_that(intids, has_length(1))
 
 	@WithMockDS
 	def test_replace_dfl_sharing_with_a_member(self):
