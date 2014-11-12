@@ -14,8 +14,8 @@ from zope import component
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
-from nti.dataserver.interfaces import BlacklistedUsernameError
 
+from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 
 @component.adapter( IUser, IWillCreateNewEntityEvent )

@@ -510,6 +510,12 @@ class FriendlyNamedSchemaProvider(object):
 	def getSchema(self):
 		return IFriendlyNamed
 
+class BlacklistedUsernameError(InvalidValue):
+	"""
+	Indicates the given username has been blacklisted.
+	"""
+	pass
+
 def validateAccept(value):
 	if not value == True:
 		return False
