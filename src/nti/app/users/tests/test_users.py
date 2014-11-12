@@ -17,7 +17,7 @@ from zope import component
 from zope import lifecycleevent
 
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import BlacklistedUsernameError
+from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
 from nti.dataserver.users import User
 
