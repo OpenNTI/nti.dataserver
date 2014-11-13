@@ -448,9 +448,10 @@
 	<include package="." file="configure_restricted_contenttypes.zcml" />
 
 	<includeOverrides file="overrides.zcml" />
-	<include package=".policies" file="configure.zcml" />
-	<include package="." file="configure_invitations.zcml" />
 
+	<include package="." file="configure_invitations.zcml" />
+	<include package=".policies" file="configure.zcml" />
+	
 	<include package=".dashboard" />
 	<include package="nti.app.forums" />
 	<include package="nti.app.contentlibrary" />
@@ -466,7 +467,6 @@
 
 	<utility name="tag"
 			 factory=".metadata_resolvers.TagURLHandler" />
-
 
 	<!-- Filters -->
 	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
