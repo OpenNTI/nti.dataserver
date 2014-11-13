@@ -16,12 +16,15 @@ from zope import component
 from zope.catalog.interfaces import ICatalog
 
 from ZODB.interfaces import IBroken
-from ZODB.POSException import POSKeyError
+from ZODB.POSException import POSError
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.chatserver.interfaces import IMessageInfo
+from nti.chatserver.interfaces import IUserTranscriptStorage
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
@@ -48,6 +51,7 @@ from nti.utils.maps import CaseInsensitiveDict
 ITEMS = StandardExternalFields.ITEMS
 
 transcript_mime_type = u'application/vnd.nextthought.transcript'
+messageinfo_mime_type =  u'application/vnd.nextthought.messageinfo'
 
 def parse_mime_types(value):
 	mime_types = set(value.split(',')) if value else ()
@@ -74,31 +78,56 @@ def get_user_objects(user, mime_types=()):
 	intids = component.getUtility(zope.intid.IIntIds)
 	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 	
-	username = user.username
-	created_ids = catalog[IX_CREATOR].apply({'any_of': (username,)})
-	
-	if mime_types:
-		mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
-	else:
-		mime_types_intids = None
-		
 	result_ids = None
+	created_ids = None
+	mime_types_intids = None
+	
+	username = user.username
+	process_transcripts = False
+
+	if mime_types:
+		mime_types = set(mime_types)
+		process_transcripts = \
+				bool(transcript_mime_type in mime_types or
+				     messageinfo_mime_type in mime_types)
+		if process_transcripts:
+			mime_types.discard(transcript_mime_type)
+			mime_types.discard(messageinfo_mime_type)
+	
+		if mime_types:
+			mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': tuple(mime_types)})
+		else:
+			created_ids = () # mark so we don't query the catalog
+	else:
+		process_transcripts = True
+		
+	if created_ids is None:
+		created_ids = catalog[IX_CREATOR].apply({'any_of': (username,)})
+		
 	if mime_types_intids is None:
 		result_ids = created_ids
-	else:
+	elif created_ids:
 		result_ids = catalog.family.IF.intersection(created_ids, mime_types_intids)
 			
-	for uid in result_ids:
+	for uid in result_ids or ():
 		try:
 			obj = intids.queryObject(uid)
-			if	obj is not None and \
-				not IBroken.providedBy(obj) and \
-				not IUser.providedBy(obj) and \
-				not IDeletedObjectPlaceholder.providedBy(obj):
-				yield obj
-		except (TypeError, POSKeyError) as e:
+			if	obj is None or \
+				IUser.providedBy(obj) or \
+				IBroken.providedBy(obj) or \
+				IDeletedObjectPlaceholder.providedBy(obj):
+				continue
+			if process_transcripts and IMessageInfo.providedBy(obj):
+				continue
+			yield obj
+		except (TypeError, POSError) as e:
 			logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 
+	if process_transcripts:
+		storage = IUserTranscriptStorage(user)
+		for transcript in storage.transcripts:
+			yield transcript
+		
 @view_config(route_name='objects.generic.traversal',
 			 name='export_user_objects',
 			 request_method='GET',
@@ -179,7 +208,7 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 					not IUser.providedBy(obj) and \
 					not IDeletedObjectPlaceholder.providedBy(obj):
 					items.append(obj)
-			except (TypeError, POSKeyError) as e:
+			except (TypeError, POSError) as e:
 				logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 		result['Total'] = len(items)
 		return result
