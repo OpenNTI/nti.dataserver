@@ -516,6 +516,13 @@ class BlacklistedUsernameError(InvalidValue):
 	"""
 	pass
 
+class IRecreatableUser(Interface):
+	"""
+	Apply this as a marker to a context object (user) that can be
+	recreated (e.g. not blacklisted).  This is useful for unit tests
+	that create and destroy users.
+	"""
+
 def validateAccept(value):
 	if not value == True:
 		return False

@@ -15,9 +15,11 @@ from hamcrest import calling
 
 from zope import component
 from zope import lifecycleevent
+from zope import interface
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
+from nti.dataserver.users.interfaces import IRecreatableUser
 
 from nti.dataserver.users import User
 
@@ -51,11 +53,33 @@ class TestUsers(ApplicationLayerTest):
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Same name
-			assert_that( calling( User.create_user).with_args( username=username ),
+			assert_that( calling( User.create_user ).with_args( username=username ),
 						raises( BlacklistedUsernameError ))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Now case insensitive
-			assert_that( calling( User.create_user).with_args( username=username.upper() ),
+			assert_that( calling( User.create_user ).with_args( username=username.upper() ),
 						raises( BlacklistedUsernameError ))
 
+	@WithSharedApplicationMockDSWithChanges
+	def test_recreate(self):
+		username = 'lazarus'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			# Create user
+			user_one = User.create_user( username=username )
+			interface.alsoProvides( user_one, IRecreatableUser )
+
+		with mock_dataserver.mock_db_trans(self.ds):
+			# Remove user that is not blacklisted
+			User.delete_user(username)
+
+			dataserver = component.getUtility( IDataserver )
+			ds_folder = dataserver.dataserver_folder
+			blacklist_folder = ds_folder['++etc++username_blacklist']
+			assert_that( blacklist_folder, has_length( 0 ) )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			# Recreate user, no problem
+			dataserver = component.getUtility( IDataserver )
+			ds_folder = dataserver.dataserver_folder
+			user_one = User.create_user( username=username )

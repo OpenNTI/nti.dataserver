@@ -71,8 +71,9 @@ from nti.dataserver.interfaces import IStopDynamicMembershipEvent
 from nti.dataserver.interfaces import IStartDynamicMembershipEvent
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
-				
+
 from nti.dataserver.users.entity import Entity
+from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.users import interfaces as user_interfaces
 from nti.dataserver.interfaces import IDataserverTransactionRunner
@@ -172,7 +173,7 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 	# TODO: Continue migrating this towards zope.security.principal, the zope principalfolder
 	# concept.
 	password_manager_name = 'bcrypt'
-	
+
 	def __init__(self,
 				 username=None,
 				 password=None,
@@ -381,11 +382,11 @@ class CommunityEntityContainer(object):
 
 @interface.implementer(IUnscopedGlobalCommunity)
 class Everyone(Community):
-	""" 
+	"""
 	A community that represents the entire world.
 	 """
 	__external_class_name__ = 'Community'
-	
+
 	# 'everyone@nextthought.com' hash
 	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
 	_realname = 'Everyone'
@@ -1054,7 +1055,7 @@ class User(Principal):
 							yield uid
 					except POSError:
 						pass
-					
+
 		if include_stream:
 			for container in self.streamCache.values():
 				for obj in container:
@@ -1257,5 +1258,7 @@ class UserBlacklistedStorage( Persistent ):
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _blacklist_username( user, event ):
-	user_blacklist = component.getUtility( IUserBlacklistedStorage )
-	user_blacklist.blacklist_user( user )
+	# See if our user has been marked as recreatable (probably by tests).
+	if not IRecreatableUser.providedBy( user ):
+		user_blacklist = component.getUtility( IUserBlacklistedStorage )
+		user_blacklist.blacklist_user( user )
