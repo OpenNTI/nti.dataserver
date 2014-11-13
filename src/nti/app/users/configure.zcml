@@ -10,6 +10,6 @@
 	<include package="zope.security" />
 
 	<!-- Events -->
-	<subscriber handler=".users.new_user_is_not_blacklisted" />
+	<subscriber handler=".subscribers.new_user_is_not_blacklisted" />
 
 </configure>
