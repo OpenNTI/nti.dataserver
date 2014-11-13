@@ -22,6 +22,7 @@ from zope.component.hooks import site, getSite
 import zope.generations.generations
 from zope.generations import interfaces as gen_interfaces
 
+from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users import User, Community, FriendsList
 
 def load_jfile(jfile):
@@ -198,7 +199,6 @@ class ExampleDatabaseInitializer(object):
 			#print( u, _id, utility, id(u) )
 			assert utility.getObject( _id ) is u
 
-
 		def add_user( u ):
 			assert u.__parent__ is root['users']
 			root['users'][u.username] = u
@@ -227,6 +227,7 @@ class ExampleDatabaseInitializer(object):
 			ext_value['alias'] = user_tuple[1].split()[0] if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value
 			user = User.create_user( **args )
+			interface.alsoProvides(user, IRecreatableUser)
 			register_user( user )
 
 			for  c in communities:
