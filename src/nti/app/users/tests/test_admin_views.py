@@ -24,7 +24,7 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 class TestBlacklistViews(ApplicationLayerTest):
 
-	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_blacklist_views(self):
 
 		username = 'user_one'
