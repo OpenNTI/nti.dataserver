@@ -87,40 +87,52 @@ from zope import intid
 from zope import interface
 from zope import component
 
-from nti.zope_catalog.interfaces import INoAutoIndexEver
-
-from nti.utils.property import CachedProperty, Lazy
-
 import ZODB.POSException
 
 from persistent import Persistent
 
 from repoze.lru import lru_cache
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IMeeting
+from nti.chatserver.interfaces import IMessageInfo
+from nti.chatserver.interfaces import IUserTranscriptStorage
+from nti.chatserver.interfaces import IMessageInfoPostedToRoomEvent
 
 from nti.dataserver import links
 from nti.dataserver import users
-from nti.mimetype import mimetype
-from nti.dataserver import datastructures
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ILinked
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import ITranscript
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+from nti.dataserver.interfaces import ITranscriptSummary
 from nti.dataserver.activitystream_change import Change
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.datastructures import ZContainedMixin
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
-from nti.externalization import interfaces as ext_interfaces
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
+
+from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.ntiids import ntiids
 
 from nti.schema.field import Object
+
+from nti.utils.property import Lazy
 from nti.utils.property import read_alias
+from nti.utils.property import CachedProperty
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import IWeakRef
 
-class _IMeetingTranscriptStorage(nti_interfaces.ICreated, # ICreated so they get an ACL
+from nti.zope_catalog.interfaces import INoAutoIndexEver
+
+class _IMeetingTranscriptStorage(ICreated, # ICreated so they get an ACL
 								 INoAutoIndexEver):
 
-	meeting = Object(chat_interfaces.IMeeting, title="The meeting we hold messages to; may go null")
+	meeting = Object(IMeeting, title="The meeting we hold messages to; may go null")
 
 	def add_message(msg):
 		"""Store the message with this transcript."""
@@ -132,18 +144,18 @@ class _IMeetingTranscriptStorage(nti_interfaces.ICreated, # ICreated so they get
 		"""Iterate all the messages in this transcript"""
 
 @interface.implementer(_IMeetingTranscriptStorage)
-class _AbstractMeetingTranscriptStorage(datastructures.PersistentCreatedModDateTrackingObject,
-                                        datastructures.ZContainedMixin):
+class _AbstractMeetingTranscriptStorage(PersistentCreatedModDateTrackingObject,
+                                        ZContainedMixin):
 
 	"""
 	The storage for the transcript of a single session. Private object, not public.
 	"""
 
-	creator = nti_interfaces.SYSTEM_USER_NAME
+	creator = SYSTEM_USER_NAME
 
 	def __init__(self, meeting):
 		super(_AbstractMeetingTranscriptStorage,self).__init__()
-		self._meeting_ref = wref_interfaces.IWeakRef(meeting)
+		self._meeting_ref = IWeakRef(meeting)
 
 	@property
 	def meeting(self):
@@ -176,11 +188,12 @@ class _AbstractMeetingTranscriptStorage(datastructures.PersistentCreatedModDateT
 # stored messages in an OOBTree as WeakRefs keyed by message ID. With the move
 # to user-based message storage, it should have gotten dropped and all instances left
 # in the old Sessions DB. Old migration code that happens to encounter them
-# will instead encounter these objects that are not iterable and will be ignored...they are just
-# enough skeletons to enable them to be deleted from the user...this is temporary
-# likewise for from nti.zodb.wref import CopyingWeakRef as _CopyingWeakRef # bwc for things in the database
+# will instead encounter these objects that are not iterable and will be ignored...
+# they are just enough skeletons to enable them to be deleted from the user...
+# this is temporary likewise for from nti.zodb.wref import CopyingWeakRef as 
+# _CopyingWeakRef # bwc for things in the database
 @interface.implementer(_IMeetingTranscriptStorage)
-class _MeetingTranscriptStorage(Persistent, datastructures.ZContainedMixin):
+class _MeetingTranscriptStorage(Persistent, ZContainedMixin):
 	pass
 
 @interface.implementer(_IMeetingTranscriptStorage)
@@ -239,8 +252,8 @@ def _get_by_oid(*args,**kwargs):
 	return None
 _get_by_oid.get_by_oid = _get_by_oid
 
-@interface.implementer(chat_interfaces.IUserTranscriptStorage)
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(IUser)
+@interface.implementer(IUserTranscriptStorage)
 class _UserTranscriptStorageAdapter(object):
 	"""
 	The storage for all of a user's transcripts.
@@ -258,7 +271,7 @@ class _UserTranscriptStorageAdapter(object):
 		if not ntiids.is_ntiid_of_type( meeting_oid, ntiids.TYPE_OID ):
 			# We'll take any type, usually a TRANSCRIPT type
 			meeting_oid = ntiids.make_ntiid( base=meeting_oid,
-											 provider=nti_interfaces.SYSTEM_USER_NAME,
+											 provider=SYSTEM_USER_NAME,
 											 nttype=ntiids.TYPE_OID )
 
 		meeting = ntiids.find_object_with_ntiid( meeting_oid )
@@ -282,22 +295,34 @@ class _UserTranscriptStorageAdapter(object):
 
 			for value in self._user.values( of_type=_IMeetingTranscriptStorage ):
 				value_meeting_id = value.meeting.ID
-				if value_meeting_id in acceptable_oids or (ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
-														   and ntiids.get_specific( value_meeting_id ) == specific ):
+				if 	value_meeting_id in acceptable_oids or \
+					(ntiids.is_ntiid_of_type(value_meeting_id, ntiids.TYPE_UUID)
+					 and ntiids.get_specific( value_meeting_id ) == specific ):
 					result = Transcript( value )
 					break
 
 		return result
 
-	@property
-	def transcript_summaries(self):
-		result = []
+	def _transcript_storages(self):
 		for container in self._user.getAllContainers().values():
-			if isinstance(container, float ):
+			if not hasattr(container, "values"):
 				continue
 			for storage in container.values():
 				if _IMeetingTranscriptStorage.providedBy( storage ):
-					result.append( TranscriptSummaryAdapter( storage ) )
+					yield storage
+
+	@property
+	def transcripts(self):
+		result = []
+		for storage in self._transcript_storages():
+			result.append( Transcript( storage ) )
+		return result
+
+	@property
+	def transcript_summaries(self):
+		result = []
+		for storage in self._transcript_storages():
+			result.append( TranscriptSummaryAdapter( storage ) )
 		return result
 
 	def add_message(self, meeting, msg):
@@ -317,7 +342,6 @@ class _UserTranscriptStorageAdapter(object):
 			storage.containerId = meeting.containerId
 			storage.creator = self._user
 			self._user.addContainedObject(storage)
-
 		storage.add_message(msg)
 		return storage
 
@@ -332,7 +356,7 @@ class _UserTranscriptStorageAdapter(object):
 			storage.remove_message(msg)
 		return storage
 
-@interface.implementer(chat_interfaces.IUserTranscriptStorage)
+@interface.implementer(IUserTranscriptStorage)
 class _MissingStorage(object):
 	"""
 	A storage that's always empty and blank.
@@ -341,6 +365,10 @@ class _MissingStorage(object):
 	def transcript_for_meeting( self, meeting_id ):
 		return None # pragma: no cover
 
+	@property
+	def transcripts(self):
+		return () # pragma: no cover
+	
 	@property
 	def transcript_summaries(self):
 		return () # pragma: no cover
@@ -355,10 +383,10 @@ _BLANK_STORAGE = _MissingStorage()
 
 def _ts_storage_for(owner):
 	user = users.User.get_user( owner )
-	storage = component.queryAdapter(user, chat_interfaces.IUserTranscriptStorage, default=_BLANK_STORAGE)
+	storage = component.queryAdapter(user, IUserTranscriptStorage, default=_BLANK_STORAGE)
 	return storage
 
-@component.adapter(chat_interfaces.IMessageInfo, chat_interfaces.IMessageInfoPostedToRoomEvent)
+@component.adapter(IMessageInfo, IMessageInfoPostedToRoomEvent)
 def _save_message_to_transcripts_subscriber(msg_info, event):
 	"""
 	Event handler that saves messages to the appropriate transcripts.
@@ -380,7 +408,6 @@ def transcript_for_user_in_room( username, room_id ):
 	"""
 	storage = _ts_storage_for( username )
 	return storage.transcript_for_meeting( room_id )
-
 
 def transcript_summaries_for_user_in_container( username, containerId ):
 	"""
@@ -410,7 +437,7 @@ def list_transcripts_for_user( username ):
 	storage = _ts_storage_for( username )
 	return storage.transcript_summaries
 
-@interface.implementer(nti_interfaces.ITranscriptSummary)
+@interface.implementer(ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
 def TranscriptSummaryAdapter(meeting_storage):
 	"""
@@ -426,21 +453,21 @@ def TranscriptSummaryAdapter(meeting_storage):
 		logger.exception( "Meeting object gone missing." )
 		return None
 
-@interface.implementer(ext_interfaces.IInternalObjectIO)
+@interface.implementer(IInternalObjectIO)
 @component.adapter(_IMeetingTranscriptStorage)
 def _MeetingTranscriptStorageExternalObjectAdapter(meeting_storage):
-	summary = nti_interfaces.ITranscriptSummary( meeting_storage )
-	return ext_interfaces.IInternalObjectIO(summary)
+	summary = ITranscriptSummary( meeting_storage )
+	return IInternalObjectIO(summary)
 
-@interface.implementer(nti_interfaces.IZContained,
-					   nti_interfaces.ILinked,
-					   nti_interfaces.ITranscriptSummary)
+@interface.implementer(IZContained,
+					   ILinked,
+					   ITranscriptSummary)
 @component.adapter(_IMeetingTranscriptStorage)
 class TranscriptSummary(object):
 	"""
 	The transcript summary for a user in a room.
 	"""
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	__parent__ = None
 	__name__ = None
@@ -495,11 +522,10 @@ class TranscriptSummary(object):
 		""" # because they hold other persistent objects that are meant to be weak-refd
 		raise TypeError()
 
-
-@interface.implementer(ext_interfaces.IInternalObjectIO)
-@component.adapter(nti_interfaces.ITranscriptSummary)
+@interface.implementer(IInternalObjectIO)
+@component.adapter(ITranscriptSummary)
 class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
-	_ext_iface_upper_bound = nti_interfaces.ITranscriptSummary
+	_ext_iface_upper_bound = ITranscriptSummary
 
 # For purposes of filtering during UGD queries, make the objects that
 # store messages (and which are in the users containers) appear to be
@@ -507,14 +533,13 @@ class TranscriptSummaryInternalObjectIO(InterfaceObjectIO):
 # TODO: This design is wonky
 _AbstractMeetingTranscriptStorage.mimeType = TranscriptSummary.mimeType
 
-@interface.implementer(nti_interfaces.ITranscript)
+@interface.implementer(ITranscript)
 @component.adapter(_IMeetingTranscriptStorage)
 class Transcript(TranscriptSummary):
 	"""
 	The transcript for a user in a room.
 	"""
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
 
 	_NTIID_TYPE_ = ntiids.TYPE_TRANSCRIPT
 

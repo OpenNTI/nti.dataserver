@@ -204,7 +204,6 @@ class IMeetingContainer(Interface):
 			(username, sid) tuples.
 		"""
 
-
 	def meeting_became_empty( chatserver, meeting ):
 		"""
 		Called to notify that all occupants have left the meeting. The
@@ -234,7 +233,6 @@ class IMeetingContainer(Interface):
 		:return: A tuple (meeting or None, created). If the first param is not None, the second
 			param will say whether it was already active (False) or freshly created (True).
 		"""
-
 
 class IMeetingStorage(Interface):
 	"""
@@ -303,12 +301,19 @@ class IUserTranscriptStorage(Interface):
 	An object that knows how to store transcripts for users
 	in a meeting.
 	"""
+	
+	transcripts = interface.Attribute("Return all Transcript objects")
+			
+	transcript_summaries = interface.Attribute("Return all Transcript summary objects")
+	
+	def transcript_for_meeting(meeting_id): 
+		pass
 
-	def transcript_for_meeting(meeting_id): pass
+	def add_message(meeting, msg):
+		pass
 
-	def add_message(meeting, msg): pass
-
-	def remove_message(meeting, msg): pass
+	def remove_message(meeting, msg):
+		pass
 
 # Presence
 class IUnattachedPresenceInfo(Interface):
@@ -320,10 +325,12 @@ class IUnattachedPresenceInfo(Interface):
 				   values=('available', 'unavailable'),
 				   default='available',
 				   required=True)
+
 	show = Choice( title="A hint of how the UI should present the user",
 				   values=('away', 'chat', 'dnd', 'xa'),
 				   default='chat',
 				   required=False )
+
 	status = PlainTextLine( title="Optional plain text status information",
 							required=False,
 							max_length=140 )
