@@ -8,9 +8,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gzip
-from io import BytesIO
-
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
@@ -24,20 +21,23 @@ from ZODB.POSException import POSKeyError
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.dataserver.users import User
 from nti.dataserver.interfaces import IUser
-from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import ITranscript
 from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.dataserver.users import User
+from nti.dataserver import authorization as nauth
+
+from nti.dataserver.metadata_index import IX_CREATOR
+from nti.dataserver.metadata_index import IX_MIMETYPE
+from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
-from nti.dataserver.chat_transcripts import _DocidMeetingTranscriptStorage as DMTS
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.representation import to_json_representation_externalized
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -68,41 +68,39 @@ def username_search(search_term):
 	usernames = list(_users.iterkeys(min_inclusive, max_exclusive, excludemax=True))
 	return usernames
 
-def all_objects_iids(users=(), mime_types=()):
+def get_user_objects(user, mime_types=()):
 	intids = component.getUtility(zope.intid.IIntIds)
-	usernames = {getattr(user, 'username', user).lower() for user in users or ()}
-	for uid in intids:
+	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
+	
+	username = user.username
+	created_ids = catalog[IX_CREATOR].apply({'any_of': (username,)})
+	
+	if mime_types:
+		mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
+	else:
+		mime_types_intids = None
+		
+	result_ids = None
+	if mime_types_intids is None:
+		result_ids = created_ids
+	else:
+		result_ids = catalog.family.IF.intersection(created_ids, mime_types_intids)
+			
+	for uid in result_ids:
 		try:
-			obj = intids.getObject(uid)
-			if	IBroken.providedBy(obj) or IUser.providedBy(obj) or \
-				IDeletedObjectPlaceholder.providedBy(obj):
-				continue
-
-			creator = getattr(obj, 'creator', None)
-			creator = getattr(creator, 'username', creator)
-			if not creator:
-				continue
-
-			if usernames and creator.lower() not in usernames:
-				continue
-
-			mime_type = getattr(obj, "mimeType", getattr(obj, 'mime_type', None))
-			if mime_types and mime_type not in mime_types:
-				continue
-
-			if isinstance(obj, DMTS):
-				if not mime_types or transcript_mime_type in mime_types:
-					obj = component.getAdapter(obj, ITranscript)
-				else:
-					continue
-
-			yield uid, obj
+			obj = intids.queryObject(uid)
+			if	obj is not None and \
+				not IBroken.providedBy(obj) and \
+				not IUser.providedBy(obj) and \
+				not IDeletedObjectPlaceholder.providedBy(obj):
+				yield obj
 		except (TypeError, POSKeyError) as e:
-			logger.error("Error processing object %s(%s); %s", type(obj), uid, e)
+			logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 
 @view_config(route_name='objects.generic.traversal',
 			 name='export_user_objects',
 			 request_method='GET',
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_MODERATE)
 class ExportUserObjectsView(AbstractAuthenticatedView):
 	
@@ -110,7 +108,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
 		term = values.get('term', values.get('search', None))
-		usernames = values.get('usernames', values.get('username', None))
+		usernames = values.get('usernames') or values.get('username')
 		if term:
 			usernames = username_search(term)
 		elif usernames:
@@ -121,27 +119,19 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		mime_types = values.get('mime_types', values.get('mimeTypes', u''))
 		mime_types = parse_mime_types(mime_types)
 	
-		stream = BytesIO()
-		gzstream = gzip.GzipFile(fileobj=stream, mode="wb")
-		response = request.response
-		response.content_encoding = b'gzip'
-		response.content_type = b'application/json; charset=UTF-8'
-		response.content_disposition = b'attachment; filename="objects.txt.gz"'
-	
-		if usernames:
-			for _, obj in all_objects_iids(usernames, mime_types):
-				external = to_json_representation_externalized(obj)
-				gzstream.write(external)
-				gzstream.write(b"\n")
-	
-		gzstream.flush()
-		gzstream.close()
-		stream.seek(0)
-		response.body_file = stream
-		return response
+		result = LocatedExternalDict()
+		items = result[ITEMS] = {}
+		for username in usernames:
+			user = User.get_user(username)
+			if user is None:
+				continue
+			objects = items[username] = []
+			for obj in get_user_objects(user, mime_types):
+				objects.append(obj)
+		return result
 
 @view_config(route_name='objects.generic.traversal',
-			 name='sharedwith_export_objects',
+			 name='export_objects_sharedwith',
 			 request_method='GET',
 			 permission=nauth.ACT_MODERATE)
 class ExportObjectsSharedWithView(AbstractAuthenticatedView):
@@ -157,12 +147,12 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		intids = component.getUtility(zope.intid.IIntIds)
 		catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 		
-		sharedWith_ids = catalog['sharedWith'].apply({'any_of': (username,)})
+		sharedWith_ids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
 		
 		mime_types = params.get('mime_types') or params.get('mimeTypes') or u''
 		mime_types = parse_mime_types(mime_types)
 		if mime_types:
-			mime_types_intids = catalog['mimeType'].apply({'any_of': mime_types})
+			mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
 		else:
 			mime_types_intids = None
 		
@@ -170,17 +160,21 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		if mime_types_intids is None:
 			result_ids = sharedWith_ids
 		else:
-			result_ids = catalog.family.IF.intersection(sharedWith_ids, mime_types_intids)
+			result_ids = catalog.family.IF.intersection(sharedWith_ids,
+														mime_types_intids)
 			
-		items = []
-		not_found = []
-		result = LocatedExternalDict({ITEMS:items, 'NotFound':not_found})
+		result = LocatedExternalDict()
+		items = result[ITEMS] = []
 		for uid in result_ids:
-			obj = intids.queryObject(uid)
-			if obj is not None:
-				items.append(obj)
-			else:
-				not_found.append(uid)
+			try:
+				obj = intids.queryObject(uid)
+				if	obj is not None and \
+					not IBroken.providedBy(obj) and \
+					not IUser.providedBy(obj) and \
+					not IDeletedObjectPlaceholder.providedBy(obj):
+					items.append(obj)
+			except (TypeError, POSKeyError) as e:
+				logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 		result['Total'] = len(items)
 		return result
 

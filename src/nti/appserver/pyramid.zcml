@@ -63,43 +63,36 @@
 	<pyramid:scan package='.dfl_views' />
 
 	<pyramid:scan package=".link_providers.views" />
+	
 	<include package="nti.app.bulkemail" file="pyramid.zcml" />
 	<pyramid:scan package=".user_views" />
 
-	<include package="nti.app.publishing" file="pyramid.zcml" />
-	<include package="nti.app.forums" file="pyramid.zcml" />
 	<include package=".dashboard" file="pyramid.zcml" />
+	<include package="nti.app.forums" file="pyramid.zcml" />
+	<include package="nti.app.publishing" file="pyramid.zcml" />
 	<include package="nti.app.contentlibrary" file="pyramid.zcml" />
 
-
 	<!-- Util views -->
-	<include package=".utils.users" file="pyramid.zcml" />
 	<include package=".utils.k20" file="pyramid.zcml" />
 
-	<!-- Admin views -->
-	<pyramid:scan package='.utils.forums.forum_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
+	
+	<pyramid:scan package='.utils.forums.forum_admin_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 
 	<!-- Exception views -->
 	<pyramid:scan package=".excviews" />
 
-	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
-	<include package="nti.app.notabledata" file="pyramid.zcml" />
-	<include package="nti.app.users" file="pyramid.zcml" />
-
-
-	<!-- Additional/plugin packages -->
+	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+	<include package="nti.app.users" file="pyramid.zcml" />
+	<include package="nti.app.notabledata" file="pyramid.zcml" />
+	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 
+	<!-- Plugin packages -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
-	<includePlugins package="nti.appserver.application.PP_APP"
-					file="pyramid.zcml" />
-	<includePlugins package="nti.appserver.application.PP_APP_PRODUCTS"
-					file="pyramid.zcml" />
-	<includePlugins package="nti.appserver.application.PP_APP_SITES"
-					file="pyramid.zcml" />
-
-
+	<includePlugins package="nti.appserver.application.PP_APP" file="pyramid.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP_SITES" file="pyramid.zcml" />
+	<includePlugins package="nti.appserver.application.PP_APP_PRODUCTS" file="pyramid.zcml" />
 </configure>
