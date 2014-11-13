@@ -14,6 +14,14 @@ from hamcrest import assert_that
 
 from urllib import quote
 
+import zc.intid as zc_intid
+
+from zope import component
+
+from nti.chatserver.meeting import _Meeting as Meet
+from nti.chatserver.messageinfo import MessageInfo as Msg
+from nti.chatserver.interfaces import IUserTranscriptStorage
+
 from nti.dataserver.users import User
 from nti.dataserver.contenttypes import Note
 
@@ -28,21 +36,66 @@ class TestUserExporViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_export_user_objects(self):
-		with mock_dataserver.mock_db_trans(self.ds):
+		with mock_dataserver.mock_db_trans(self.ds) as conn:
 			user = User.get_user(self.default_username)
 			note = Note()
 			note.body = [u'bankai']
 			note.creator = user
 			note.containerId = u'mycontainer'
 			note = user.addContainedObject(note)
+			
+			storage = IUserTranscriptStorage(user)
+			msg = Msg()
+			meet = Meet()
+			meet.containerId = u'tag:nti:foo'
+			meet.creator = user
+			meet.ID = 'the_meeting'
+			msg.containerId = meet.containerId
+			msg.ID = '42'
+			msg.creator = user
+			msg.__parent__ = meet
+			
+			conn.add( msg )
+			conn.add( meet )
+			component.getUtility( zc_intid.IIntIds ).register( msg )
+			component.getUtility( zc_intid.IIntIds ).register( meet )
+			
+			storage.add_message( meet, msg )
 
 		path = '/dataserver2/@@export_user_objects'
-		params = {"usernames":self.default_username, "mimeTypes":'application/vnd.nextthought.note'}
+		params = {"usernames": self.default_username, 
+				  "mimeTypes": 'application/vnd.nextthought.note,application/vnd.nextthought.transcript'}
+		res = self.testapp.get(path, params, status=200)
+		assert_that(res.json_body, has_entry('Total', is_(2)))
+		assert_that(res.json_body, 
+					has_entry('Items', 
+					 		  has_entry(self.default_username, has_length(2))))
+	
+		path = '/dataserver2/@@export_user_objects'
+		params = {"usernames": self.default_username, 
+				  "mimeTypes": 'application/vnd.nextthought.messageinfo'}
 		res = self.testapp.get(path, params, status=200)
 		assert_that(res.json_body, has_entry('Total', is_(1)))
 		assert_that(res.json_body, 
 					has_entry('Items', 
 					 		  has_entry(self.default_username, has_length(1))))
+	
+		path = '/dataserver2/@@export_user_objects'
+		params = {"usernames": self.default_username, 
+				  "mimeTypes": 'application/vnd.nextthought.note'}
+		res = self.testapp.get(path, params, status=200)
+		assert_that(res.json_body, has_entry('Total', is_(1)))
+		assert_that(res.json_body, 
+					has_entry('Items', 
+					 		  has_entry(self.default_username, has_length(1))))
+		
+		path = '/dataserver2/@@export_user_objects'
+		params = {"usernames": self.default_username}
+		res = self.testapp.get(path, params, status=200)
+		assert_that(res.json_body, has_entry('Total', is_(2)))
+		assert_that(res.json_body, 
+					has_entry('Items', 
+					 		  has_entry(self.default_username, has_length(2))))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_export_objects_sharedwith(self):
