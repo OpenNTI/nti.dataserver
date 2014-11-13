@@ -8,8 +8,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.view import view_config
-from pyramid import httpexceptions as hexc
+from urllib import unquote
 
 import zope.intid
 
@@ -18,6 +17,9 @@ from zope.catalog.interfaces import ICatalog
 
 from ZODB.interfaces import IBroken
 from ZODB.POSException import POSKeyError
+
+from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -119,6 +121,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		mime_types = values.get('mime_types', values.get('mimeTypes', u''))
 		mime_types = parse_mime_types(mime_types)
 	
+		total = 0
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		for username in usernames:
@@ -128,11 +131,14 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 			objects = items[username] = []
 			for obj in get_user_objects(user, mime_types):
 				objects.append(obj)
+				total += 1
+		result['Total'] = total
 		return result
 
 @view_config(route_name='objects.generic.traversal',
 			 name='export_objects_sharedwith',
 			 request_method='GET',
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_MODERATE)
 class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 	
@@ -182,6 +188,7 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 			 renderer='rest',
 			 name='object_resolver',
 			 request_method='GET',
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_MODERATE)
 class ObjectResolverView(AbstractAuthenticatedView):
 
@@ -191,6 +198,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		if not ntiid:
 			raise hexc.HTTPUnprocessableEntity("Must specify a ntiid")
 		
+		ntiid = unquote(ntiid)
 		result = find_object_with_ntiid(ntiid)
 		if result is None:
 			raise hexc.HTTPNotFound()
@@ -200,6 +208,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
 			 name='export_users',
 			 renderer='rest',
 			 request_method='GET',
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_MODERATE)
 class ExportUsersView(AbstractAuthenticatedView):
 	
