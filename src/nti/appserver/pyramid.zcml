@@ -74,11 +74,8 @@
 
 	<!-- Util views -->
 	<include package=".utils.k20" file="pyramid.zcml" />
-
 	<pyramid:scan package='.utils.coppa.coppa_admin_views' />
 	<pyramid:scan package='.utils.coppa.coppa_upgrade_views' />
-	
-	<pyramid:scan package='.utils.forums.forum_admin_views' />
 	<pyramid:scan package='.utils.link_providers_admin_views' />
 
 	<!-- Exception views -->
