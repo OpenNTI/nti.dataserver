@@ -13,6 +13,7 @@ import zope.intid
 from zope import component
 
 from ZODB.POSException import POSError
+from ZODB.POSException import POSKeyError
 
 from pyramid.view import view_config
 
@@ -42,10 +43,10 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 		for uid in intids:
 			total += 1
 			try:
-				obj = intids.queryObject(uid)
-				if obj is None:
-					intids.forceUnregister(uid, notify=False, removeAttribute=False)
-					missing.append(uid)
+				obj = intids.getObject(uid)
+			except (KeyError, POSKeyError):
+				missing.append(uid)
+				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			except (POSError, TypeError):
 				broken[uid] = str(type(obj))
 		result['Total'] = total
