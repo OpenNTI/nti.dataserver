@@ -3,7 +3,7 @@
 """
 Contains renderers for the REST api.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -12,18 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-from repoze.who.interfaces import IRequestClassifier
-
 from zope import interface
 
-from pyramid.httpexceptions import HTTPForbidden
+from repoze.who.interfaces import IRequestClassifier
 
 from pyramid.interfaces import IRendererFactory
+from pyramid.httpexceptions import HTTPForbidden
 
-from .interfaces import IPreRenderResponseCacheController
 from .interfaces import IResponseRenderer
 from .interfaces import IResponseCacheController
-
+from .interfaces import IPreRenderResponseCacheController
 
 @interface.provider(IRendererFactory)
 @interface.implementer(IResponseRenderer)
@@ -68,7 +66,6 @@ class AbstractCachingRenderer(object):
 
 	def _render_to_non_browser(self, data, system):
 		raise NotImplementedError()
-
 
 @interface.provider(IRendererFactory)
 @interface.implementer(IResponseRenderer)

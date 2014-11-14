@@ -4,7 +4,7 @@
 Decorator helpers for :mod:`nti.externalization` that are
 used when externalizing for a remote client.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -16,11 +16,11 @@ from zope import interface
 from abc import ABCMeta
 from abc import abstractmethod
 
-from nti.utils.property import alias
-from nti.utils.property import Lazy
-from nti.utils.property import readproperty
-
 from nti.app.authentication import get_remote_user
+
+from nti.utils.property import Lazy
+from nti.utils.property import alias
+from nti.utils.property import readproperty
 
 class AbstractRequestAwareDecorator(object):
 	"""
@@ -66,6 +66,7 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 	# but do not call each other, for speed.
 	def _predicate(self, context, result):
 		return bool(self.authenticated_userid)
+
 	@Lazy
 	def _is_authenticated(self):
 		return bool(self.authenticated_userid)
@@ -83,13 +84,14 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 			# not present
 			return None
 
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.interfaces import StandardExternalFields
-StandardExternalFields_LINKS = StandardExternalFields.LINKS
+from zope.location.interfaces import ILocation
+
 from nti.dataserver.links import Link
 
-from zope.location.interfaces import ILocation
-from nti.dataserver.interfaces import ICreated
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.interfaces import StandardExternalFields
+
+StandardExternalFields_LINKS = StandardExternalFields.LINKS
 
 class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
@@ -123,7 +125,6 @@ class AbstractTwoStateViewLinkDecorator(AbstractAuthenticatedRequestAwareDecorat
 	false_view = None
 	true_view = None
 	link_predicate = None
-
 
 	def _do_decorate_external( self, context, mapping ):
 		"""
