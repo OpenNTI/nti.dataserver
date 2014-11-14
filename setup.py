@@ -3,7 +3,11 @@ from setuptools import setup, find_packages
 
 entry_points = {
 	'console_scripts': [
+		# library
+		"nti_sync_all_libraries = nti.app.contentlibrary.utils.synchronizer:main",
+		# rendering
 		"nti_render = nti.contentrendering.nti_render:main",
+		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
 		"nti_interactive = nti.dataserver.utils.nti_interactive:main",
@@ -479,11 +483,11 @@ setup(
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
 	],
-	packages=find_packages('src'),
+	zip_safe=False,
 	package_dir={'': 'src'},
+	packages=find_packages('src'),
 	include_package_data=True,
 	namespace_packages=['nti', ],
-	zip_safe=False,
 	entry_points=entry_points,
 	test_suite='nose2.compat.unittest.collector'
-	)
+)
