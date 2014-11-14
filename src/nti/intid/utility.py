@@ -87,14 +87,22 @@ class IntIds(_ZCIntIds):
 		self.refs[uid] = unwrapped
 		return uid
 
-	def forceUnregister(self, uid, ob, notify=False, removeAttribute=True):
-		unwrapped = unwrap(aq_base(ob))
-		if not uid in self.refs or self.refs[uid] is not unwrapped:
-			raise KeyError(ob)
+	def forceUnregister(self, uid, ob=None, notify=False, removeAttribute=True):
+		if not uid in self.refs:
+			raise KeyError(uid)
+		
+		if ob is not None:
+			unwrapped = unwrap(aq_base(ob))
+			if self.refs[uid] is not unwrapped:
+				raise KeyError(ob)
+	
 		del self.refs[uid]
-		if removeAttribute and getattr(ob, self.attribute, None) is not None:
+		
+		if 	ob is not None and removeAttribute and \
+			getattr(ob, self.attribute, None) is not None:
 			setattr(ob, self.attribute, None)
-		if notify:
+
+		if notify and ob is not None:
 			zope_event.notify(RemovedEvent(ob, self, uid))
 
 	def __repr__( self ):
