@@ -119,8 +119,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 
 		post_data = {'username':'ichigo@nt.com', 'alias':'Ichigo'}
 		path = '/dataserver2/@@user_profile_update'
-		res = self.testapp.post_json(path, post_data)
-		assert_that(res.status_int, is_(200))
+		res = self.testapp.post_json(path, post_data, status=200)
 
 		assert_that(res.json_body, has_entry('Allowed Fields', has_length(12)))
 		assert_that(res.json_body, has_entry('External', has_entry('alias', 'Ichigo')))
