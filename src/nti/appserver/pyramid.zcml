@@ -84,6 +84,7 @@
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.users" file="pyramid.zcml" />
+	<include package="nti.app.intids" file="pyramid.zcml" />
 	<include package="nti.app.notabledata" file="pyramid.zcml" />
 	<include package="nti.app.pushnotifications" file="pyramid.zcml" />
 

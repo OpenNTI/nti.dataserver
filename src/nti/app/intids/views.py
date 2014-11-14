@@ -42,6 +42,7 @@ class UnregisterMissingView(AbstractAuthenticatedView,
 			try:
 				obj = intids.queryObject(uid)
 				if obj is None:
+					intids.forceUnregister(uid, notify=False, removeAttribute=False)
 					missing.append(uid)
 			except (POSError, TypeError):
 				broken[uid] = str(type(obj))

@@ -8,23 +8,24 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import raises
+from hamcrest import calling
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import only_contains
-from hamcrest import calling
 
 from zope import component
-from zope import lifecycleevent
 from zope import interface
+from zope import lifecycleevent
 
 from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.users.interfaces import BlacklistedUsernameError
-from nti.dataserver.users.interfaces import IRecreatableUser
 
 from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IRecreatableUser
+from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
+
 from nti.dataserver.tests import mock_dataserver
 
 class TestUsers(ApplicationLayerTest):
