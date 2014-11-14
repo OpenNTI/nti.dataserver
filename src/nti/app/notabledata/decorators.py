@@ -48,10 +48,8 @@ class _StreamChangeNotableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			# TODO We may have to pass the request to INotableFilter
 			is_notable_ctx = get_notable_filter( context )
 			is_notable_obj = get_notable_filter( context.object )
-			result = is_notable_ctx( self.remoteUser ) or is_notable_obj( self.remoteUser )
-
+			result = is_notable_ctx( self.remoteUser ) or is_notable_obj(self.remoteUser)
 		return result
-
 
 	def _predicate(self, context, result):
 		return self._is_authenticated and self._is_notable(context)
