@@ -25,20 +25,22 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.externalization.interfaces import LocatedExternalDict
 
 @view_config(route_name='objects.generic.traversal',
-			 name='unregister_missing',
+			 name='unregister_missing_objects',
 			 renderer='rest',
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_MODERATE)
-class UnregisterMissingView(AbstractAuthenticatedView, 
-						 	ModeledContentUploadRequestUtilsMixin):
+class UnregisterMissingObjectsView(AbstractAuthenticatedView, 
+						 		   ModeledContentUploadRequestUtilsMixin):
 	
 	def __call__(self):
+		total = 0
 		result = LocatedExternalDict()
 		broken = result['Broken'] = {}
 		missing = result['Missing'] = []
 		intids = component.getUtility(zope.intid.IIntIds)
 		for uid in intids:
+			total += 1
 			try:
 				obj = intids.queryObject(uid)
 				if obj is None:
@@ -46,6 +48,7 @@ class UnregisterMissingView(AbstractAuthenticatedView,
 					missing.append(uid)
 			except (POSError, TypeError):
 				broken[uid] = str(type(obj))
+		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
 		return result
