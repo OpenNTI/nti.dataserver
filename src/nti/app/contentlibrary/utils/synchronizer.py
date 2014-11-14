@@ -58,7 +58,7 @@ def create_context(env_dir, devmode=False):
 	if os.path.exists(library_zcml):
 		xmlconfig.include(context, file=library_zcml)
 	else:
-		logger.warn("Library not loaded")
+		raise IOError("Library not loaded")
 	
 	# Include zope.browserpage.meta.zcm for tales:expressiontype
 	# before including the products
