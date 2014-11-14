@@ -15,28 +15,31 @@ from hamcrest import contains_string
 from hamcrest import has_entry
 does_not = is_not
 
-from nti.dataserver import users
-from nti.ntiids import ntiids
+import anyjson as json
+
+from zope import interface
+from zope.keyreference.interfaces import IKeyReference
+
+from persistent import Persistent
+
 from nti.dataserver.datastructures import ZContainedMixin
+
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.ntiids import ntiids
 
 from nti.dataserver.tests import mock_dataserver
 
-import anyjson as json
-
-from persistent import Persistent
-from zope import interface
-
 from nti.app.testing.webtest import TestApp
-from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
-from zope.keyreference.interfaces import IKeyReference
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 @interface.implementer(IKeyReference) # IF we don't, we won't get intids
 class ContainedExternal(ZContainedMixin):
 	_str = None
+	
 	def __str__( self ):
 		if '_str' in self.__dict__:
 			return self._str
@@ -44,25 +47,27 @@ class ContainedExternal(ZContainedMixin):
 
 	def toExternalObject( self, **kwargs ):
 		return str(self)
+	
 	def to_container_key(self):
 		return to_external_ntiid_oid(self, default_oid=str(id(self)))
 
-
 class PersistentContainedExternal(ContainedExternal,Persistent):
 	pass
-
 
 class TestApplicationSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_search_empty_term_user_ugd_book(self):
+		
 		#"Searching with an empty term returns empty results"
 		with mock_dataserver.mock_db_trans( self.ds ):
 			contained = ContainedExternal()
 			user = self._create_user()
 			user2 = self._create_user('foo@bar')
 			user2_username = user2.username
-			contained.containerId = ntiids.make_ntiid( provider='OU', nttype=ntiids.TYPE_MEETINGROOM, specific='1234' )
+			contained.containerId = ntiids.make_ntiid(provider='OU', 
+													  nttype=ntiids.TYPE_MEETINGROOM,
+													  specific='1234' )
 			user.addContainedObject( contained )
 			assert_that( user.getContainer( contained.containerId ), has_length( 1 ) )
 
@@ -83,6 +88,7 @@ class TestApplicationSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDSWithChanges
 	def test_post_share_delete_highlight(self):
+
 		with mock_dataserver.mock_db_trans(self.ds):
 			_ = self._create_user()
 			self._create_user( username='foo@bar' )

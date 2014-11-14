@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Implementations of cache controllers, both generic
-and concrete.
+Implementations of cache controllers, both generic and concrete.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -22,8 +21,6 @@ from zope.file import interfaces as zf_interfaces
 
 
 from pyramid.threadlocal import get_current_request
-
-
 
 from nti.appserver import traversal
 from nti.appserver import interfaces as app_interfaces
