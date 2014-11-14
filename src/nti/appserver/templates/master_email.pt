@@ -82,7 +82,7 @@
 			    padding: 15px;
 			}
 			tr.border_bottom td {
-			border-bottom:1pt solid black;
+			border-bottom:1pt solid #EFEFEF;
 			}
 			td.blue {
 			color: #3fb3f6;
