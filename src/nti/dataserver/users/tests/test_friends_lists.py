@@ -7,43 +7,42 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import has_entry
-from hamcrest import has_item
-from hamcrest import has_length
-from hamcrest import has_property
-from hamcrest import contains
 from hamcrest import is_
-from hamcrest import same_instance
 from hamcrest import is_in
+from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import same_instance
 from hamcrest import is_not as does_not
 from hamcrest import greater_than_or_equal_to
 is_not = does_not
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.testing.matchers import is_true, is_false
+from nti.contentrange.contentrange import ContentRangeDescription
 
-from zope.component import eventtesting
-
-#from zope import interface
-#from nti.dataserver import interfaces as nti_interfaces
-#from nti.dataserver.users import interfaces
-
-from nti.dataserver.users import DynamicFriendsList
-from nti.dataserver.users import FriendsList
 from nti.dataserver.users import User
+from nti.dataserver.users import users
+from nti.dataserver.users import FriendsList
+from nti.dataserver.users import DynamicFriendsList
+
+from nti.dataserver.contenttypes import Note
 
 import nti.externalization.internalization
 import nti.externalization.externalization
-from nti.externalization.externalization import to_external_object
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-from nti.dataserver.tests import mock_dataserver
+from zope.component import eventtesting
+
 from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
-from nti.dataserver.users import users
-from nti.dataserver.contenttypes import Note
-from nti.contentrange.contentrange import ContentRangeDescription
+
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.testing.matchers import is_true, is_false
 
 class TestFriendsLists(DataserverLayerTest):
 
@@ -412,7 +411,7 @@ class TestDFL(DataserverLayerTest):
 				assert_that( ids, contains( child_note.containerId ) )
 				
 				intids = list(member.iter_intids())
-				assert_that(intids, has_length(1))
+				assert_that(intids, has_length(greater_than_or_equal_to(1)))
 
 	@WithMockDS
 	def test_replace_dfl_sharing_with_a_member(self):
