@@ -11,11 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import gc
-import gevent
-
-from zope import component
-from zope.event import notify
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
@@ -23,20 +18,14 @@ from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
-from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
-
-from nti.contentlibrary.subscribers import install_site_content_library
-
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_COPPA_ADMIN
 
-from nti.site.hostpolicy import synchronize_host_policies
-from nti.site.hostpolicy import run_job_in_all_host_sites
+from .synchronize import synchronize
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
-			  context='nti.dataserver.interfaces.IDataserverFolder',
+			  context=IDataserverFolder,
 			  permission=ACT_COPPA_ADMIN,
 			  name='SyncAllLibraries') # XXX better permission
 class _SyncAllLibrariesView(AbstractAuthenticatedView):
@@ -76,47 +65,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 		# This is somewhat difficult to test the side-effects of, sadly.
 		endInteraction()
 		try:
-			return self._do_sync()
+			return synchronize(sleep=self._SLEEP)
 		finally:
 			restoreInteraction()
-
-	def _do_sync(self):
-		# First, synchronize the policies, make sure everything is all nice and installed.
-		synchronize_host_policies()
-
-		# Next, the libraries.
-		# NOTE: We do not synchronize the global library; it is not
-		# expected to be persistent and is not shared across
-		# instances, so synchronizing it now will actually cause
-		# things to be /out/ of sync.
-		# We just keep track of it to make sure we don't.
-		seen = set()
-		seen.add(None)
-		global_lib = component.getGlobalSiteManager().queryUtility(IContentPackageLibrary)
-		seen.add(global_lib)
-
-		def sync_site_library():
-			# Mostly for testing, if we started up with a different library
-			# that could not provide valid site libraries, install
-			# one if we can get there now.
-			site_lib = install_site_content_library(component.getSiteManager())
-			if site_lib in seen:
-				return
-			seen.add(site_lib)
-			if self._SLEEP:
-				gevent.sleep()
-
-			syncer = ISyncableContentPackageLibrary(site_lib, None)
-			if syncer is not None:
-				logger.info("Sync library %s", site_lib)
-				return site_lib.syncContentPackages()
-
-		# sync
-		results = run_job_in_all_host_sites(sync_site_library)
-		gc.collect()
-		
-		# notify
-		notify(AllContentPackageLibrariesDidSyncEvent())
-		
-		# return results
-		return [x[1] for x in results]
