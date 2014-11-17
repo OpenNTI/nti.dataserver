@@ -60,7 +60,6 @@
 	<!-- Languages -->
 	<include package="nti.app.pyramid_zope" />
 
-
 	<!-- Zope Requests. This is also cacheable. -->
 	<!--
 		XXX: If the zope.publisher package gets configured, as it
@@ -181,7 +180,6 @@
 	<!-- Assessment -->
 
 	<!-- Events -->
-
 	<subscriber handler=".application._sync_host_policies" />
 	<subscriber handler=".application._sync_global_library" />
 
@@ -215,7 +213,6 @@
 			 name="fields" />
 
 	<!-- Object graph traversal -->
-
 	<!--
 	The default traversable is registered by zope.traversing for no
 	request and zope's request. Here we register it for our request;
@@ -238,7 +235,6 @@
 			 for="* pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 factory="._dataserver_pyramid_traversal.resource" />
-
 
 	<adapter
 		name="etc"
@@ -317,8 +313,6 @@
 		factory="zope.traversing.namespace.vh"
 		/>
 
-
-
 	<!-- <adapter -->
 	<!--	name="adapter" -->
 	<!--	for=".dataserver_pyramid_views._AbstractObjectResource pyramid.interfaces.IRequest" -->
@@ -373,7 +367,6 @@
 		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>
 
-
 	<!-- Forking events -->
 	<!--
 	 Note that if we are not preloading the app, then this doesn't
@@ -387,10 +380,9 @@
 	</configure>
 	<subscriber handler=".application._configure_zodb_tween" />
 
-
-	<include package="nti.contentrange" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
+	<include package="nti.contentrange" />
 	<include package="nti.contentfragments" />
 	<include package="nti.contentprocessing" />
 
@@ -472,6 +464,11 @@
 	<subscriber	factory=".ugd_query_views._DefaultPrincipalUGDFilter"
 				provides=".interfaces.IPrincipalUGDFilter"/>
 
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SiteNameAdder"
+				for=".interfaces.ILogonPong"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+				
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.users" />
