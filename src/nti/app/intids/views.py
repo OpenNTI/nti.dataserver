@@ -13,7 +13,6 @@ import zope.intid
 from zope import component
 
 from ZODB.POSException import POSError
-from ZODB.POSException import POSKeyError
 
 from pyramid.view import view_config
 
@@ -44,7 +43,8 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 			total += 1
 			try:
 				obj = intids.getObject(uid)
-			except (KeyError, POSKeyError):
+				getattr(obj, "creator", None)
+			except (KeyError):
 				missing.append(uid)
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			except (POSError, TypeError):
