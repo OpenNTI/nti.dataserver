@@ -23,6 +23,7 @@ import transaction
 from zope import interface
 from zope import component
 from zope.event import notify
+
 import zope.schema.interfaces
 
 import z3c.password.interfaces
@@ -30,6 +31,7 @@ import z3c.password.interfaces
 from pyramid.view import view_config
 
 import nti.appserver.httpexceptions as hexc
+
 from nti.appserver.policies import site_policies
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver._util import logon_user_with_request
@@ -44,10 +46,22 @@ from nti.app.externalization.error import handle_validation_error
 from nti.app.externalization.error import handle_possible_validation_error
 from nti.app.externalization import internalization as obj_io
 
-from nti.dataserver import users
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICoppaUser
+from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+
+from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IAvatarChoices
+from nti.dataserver.users.interfaces import BlankHumanNameError
+from nti.dataserver.users.interfaces import EmailAddressInvalid
+from nti.dataserver.users.interfaces import IRequireProfileUpdate
+from nti.dataserver.users.interfaces import UsernameCannotBeBlank
+from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
+from nti.dataserver.users.interfaces import BlacklistedUsernameError
+from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.intid.utility import IntIdMissingError
 
@@ -83,7 +97,7 @@ _PLACEHOLDER_USERNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOL
 _PLACEHOLDER_REALNAME = site_policies.GenericKidSitePolicyEventListener.PLACEHOLDER_REALNAME
 
 def _create_user(request, externalValue, preflight_only=False, require_password=True,
-				 user_factory=users.User.create_user):
+				 user_factory=User.create_user):
 
 	try:
 		desired_userid = externalValue['Username'] # May throw KeyError
@@ -120,7 +134,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 								 external_value=externalValue,
 								 preflight_only=preflight_only ) # May throw validation error
 		return new_user
-	except user_interfaces.BlankHumanNameError as e:
+	except BlankHumanNameError as e:
 		exc_info = sys.exc_info()
 		_raise_error( request,
 					  hexc.HTTPUnprocessableEntity,
@@ -141,7 +155,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 					   'code': e.__class__.__name__,
 					   'value': getattr(e, 'value', None)},
 					  exc_info[2] )
-	except user_interfaces.EmailAddressInvalid as e:
+	except EmailAddressInvalid as e:
 		exc_info = sys.exc_info()
 		if e.value == desired_userid:
 			# Given a choice, identify this on the username, since
@@ -164,10 +178,11 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 			_raise_error( request, hexc.HTTPUnprocessableEntity,
 						  {'field': 'Username',
 						   'fields': ['Username', 'realname'],
-						   'message': user_interfaces.UsernameCannotBeBlank.i18n_message,
+						   'message': UsernameCannotBeBlank.i18n_message,
 						   'code': 'UsernameCannotBeBlank'},
 						  exc_info[2] )
-		if e.value == desired_userid and e.value and externalValue.get( 'realname' ) is _PLACEHOLDER_REALNAME:
+		if 	e.value == desired_userid and e.value and \
+			externalValue.get( 'realname' ) is _PLACEHOLDER_REALNAME:
 			# This is an extreme corner case. You have to work really hard
 			# to trigger this conflict
 			exc_info = sys.exc_info()
@@ -176,7 +191,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						  { 'message': _("Please provide your first and last names." ),
 							'field': 'realname',
 							'fields': ['Username', 'realname'],
-							'code': user_interfaces.BlankHumanNameError.__name__ },
+							'code': getattr(BlankHumanNameError,'__name__', None) },
 						   exc_info[2] )
 		policy, _site = site_policies.find_site_policy( request=request )
 		if policy:
@@ -188,6 +203,14 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 		# Hmm. This is a serious type of KeyError, one unexpected
 		# it deserves a 500
 		raise
+	except BlacklistedUsernameError as e:
+		exc_info = sys.exc_info()
+		_raise_error( request,
+					  hexc.HTTPConflict,
+					  {'field': 'Username',
+					   'message': _('That username is not available. Please choose another.'),
+					   'code': 'BlacklistedUsernameError'},
+					   exc_info[2] )
 	except KeyError as e:
 		# Sadly, key errors can be several things, not necessarily just
 		# usernames. It's hard to tell them apart though
@@ -202,10 +225,12 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 	except Exception as e:
 		handle_possible_validation_error( request, e )
 
-from nti.dataserver.authorization_acl import acl_from_aces
-from nti.dataserver.authorization_acl import ace_allowing_all
-from nti.dataserver.authorization_acl import ace_denying_all
+
 from zope.container.contained import Contained
+
+from nti.dataserver.authorization_acl import acl_from_aces
+from nti.dataserver.authorization_acl import ace_denying_all
+from nti.dataserver.authorization_acl import ace_allowing_all
 
 class AccountCreatePathAdapter(Contained):
 	"""
@@ -395,7 +420,7 @@ def account_preflight_view(request):
 @view_config(route_name='objects.generic.traversal',
 			 name=REL_ACCOUNT_PROFILE_SCHEMA,
 			 request_method='GET',
-			 context=nti_interfaces.IUser,
+			 context=IUser,
 			 permission=nauth.ACT_UPDATE,
 			 renderer='rest')
 def account_profile_schema_view(request):
@@ -416,7 +441,7 @@ def account_profile_schema_view(request):
 			'AvatarURLChoices': _get_avatar_choices_for_username( request.context.username, request ),
 			'ProfileSchema': _AccountProfileSchemafier( request.context ).make_schema() }
 
-@component.adapter(nti_interfaces.IUser, user_interfaces.IWillCreateNewEntityEvent)
+@component.adapter(IUser, IWillCreateNewEntityEvent)
 def accept_invitations_on_user_creation(user, event):
 	"""
 	Registered as an event handler on the WillCreate notification (not the
@@ -431,7 +456,7 @@ def accept_invitations_on_user_creation(user, event):
 		accept_invitations( user, invite_codes )
 
 
-@component.adapter(nti_interfaces.IUser,app_interfaces.IUserUpgradedEvent)
+@component.adapter(IUser, app_interfaces.IUserUpgradedEvent)
 def request_profile_update_on_user_upgrade(user, event):
 	"""
 	When we get the event that a user has upgraded from one account type
@@ -442,21 +467,18 @@ def request_profile_update_on_user_upgrade(user, event):
 	flag_link_provider.add_link( user, REL_ACCOUNT_PROFILE_UPGRADE )
 	# Apply the marker interface, which vanishes when the user's profile
 	# is updated
-	interface.alsoProvides( user, user_interfaces.IRequireProfileUpdate )
+	interface.alsoProvides( user, IRequireProfileUpdate )
 
-@component.adapter(user_interfaces.IRequireProfileUpdate, link_interfaces.IFlagLinkRemovedEvent)
+@component.adapter(IRequireProfileUpdate, link_interfaces.IFlagLinkRemovedEvent)
 def link_removed_on_user(user,event):
 	if event.link_name == REL_ACCOUNT_PROFILE_UPGRADE:
 		# If they clear the flag without resetting the profile, take that
 		# ability off. (This is idempotent)
-		interface.noLongerProvides( user, user_interfaces.IRequireProfileUpdate )
-
-
-
+		interface.noLongerProvides( user, IRequireProfileUpdate )
 
 def _get_avatar_choices_for_username( username, request ):
 	avatar_choices = ()
-	avatar_choices_factory = component.queryAdapter( username, user_interfaces.IAvatarChoices )
+	avatar_choices_factory = component.queryAdapter( username, IAvatarChoices )
 	if avatar_choices_factory:
 		avatar_choices = avatar_choices_factory.get_choices()
 	return avatar_choices
@@ -467,14 +489,17 @@ class _AccountProfileSchemafier(JsonSchemafier):
 
 	def __init__( self, user, readonly_override=None ):
 		self.user = user
-		profile_iface = user_interfaces.IUserProfileSchemaProvider( user ).getSchema()
+		profile_iface = IUserProfileSchemaProvider( user ).getSchema()
 		profile = profile_iface( user )
-		profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
-		super(_AccountProfileSchemafier,self).__init__( profile_schema, readonly_override=readonly_override)
+		profile_schema = find_most_derived_interface( 
+									profile, profile_iface,
+									possibilities=interface.providedBy(profile) )
+		super(_AccountProfileSchemafier,self).__init__( profile_schema,
+														readonly_override=readonly_override)
 
 	def _iter_names_and_descriptions( self ):
 		"""We tack the user fields on first."""
-		return itertools.chain( nti_interfaces.IUser.namesAndDescriptions(all=False),
+		return itertools.chain( IUser.namesAndDescriptions(all=False),
 								super(_AccountProfileSchemafier,self)._iter_names_and_descriptions() )
 
 
@@ -490,12 +515,11 @@ class _AccountProfileSchemafier(JsonSchemafier):
 		# Ensure password is marked required (it's defined at the wrong level to tag it)
 		ext_schema['password']['required'] = True
 
-		if user_interfaces.IImmutableFriendlyNamed.providedBy( self.user ) and self.readonly_override is None:
+		if IImmutableFriendlyNamed.providedBy( self.user ) and self.readonly_override is None:
 			# This interface isn't actually in the inheritance tree, so it
 			# wouldn't be used to determine the readonly status
 			ext_schema['alias']['readonly'] = True
 			ext_schema['realname']['readonly'] = True
-
 
 		return ext_schema
 
@@ -517,11 +541,11 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 		# will react, so at account creation time mark it mutable again
 		result['Username']['readonly'] = False
 
-		if nti_interfaces.ICoppaUser.providedBy(self.user):
+		if ICoppaUser.providedBy(self.user):
 			for x in ('about', 'About'):
 				result.pop(x, None)
 
-		if not nti_interfaces.ICoppaUserWithoutAgreement.providedBy( self.user ):
+		if not ICoppaUserWithoutAgreement.providedBy( self.user ):
 			# Business rule on 12/12/12: don't provide invitation codes to coppa users
 			item_schema = { 'name': 'invitation_codes',
 							'required': False,
@@ -530,4 +554,3 @@ class _AccountCreationProfileSchemafier(_AccountProfileSchemafier):
 			result[item_schema['name']] = item_schema
 
 		return result
-
