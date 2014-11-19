@@ -70,9 +70,6 @@ def _patch_hold_logging(cls):
 	cls.hold_commit_lock = hold_commit_lock
 	cls.release_commit_lock = release_commit_lock
 
-
-
-
 def _patch():
 	locker.StorageError = _StorageError
 
@@ -80,9 +77,9 @@ def _patch():
 	# already, so we need to patch in place
 
 	_patch_hold_logging(locker.MySQLLocker)
-	_patch_hold_logging(locker.PostgreSQLLocker)
 	_patch_hold_logging(locker.OracleLocker)
-
+	_patch_hold_logging(locker.PostgreSQLLocker)
+	
 _patch()
 del _patch
 
