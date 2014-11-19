@@ -184,7 +184,6 @@ def create_simple_html_text_email(base_template,
 		# a default template in some cases.
 		if package is None:
 			raise e
-		# Do ew have to add to level
 		# Ok, let's try to find the package.
 		html_body, text_body = do_render( None )
 
