@@ -56,14 +56,14 @@ from . import safestr
 
 # user_info_extract
 
-def safestr_utf8(s):
-	s = safestr(s)
-	s = s.encode('utf-8') if s else s
+def _tx_string(s):
+	if s and isinstance(s, unicode):
+		s = s.encode('utf-8')
 	return s
 
 def _write_generator(generator, writer, stream):
 	for line in generator():
-		writer.writerow(line)
+		writer.writerow([_tx_string(x) for x in line])
 	stream.flush()
 	stream.seek(0)
 	return stream
@@ -93,7 +93,7 @@ def _get_user_info_extract():
 			alias = _get_index_field_value(iid, ent_catalog, 'alias')
 			email = _get_index_field_value(iid, ent_catalog, 'email')
 			realname = _get_index_field_value(iid, ent_catalog, 'realname')
-			yield [u.username, safestr_utf8(realname), safestr_utf8(alias), email]
+			yield [u.username, realname, alias, email]
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
