@@ -162,7 +162,7 @@ def _parse_dateRange(args, fields):
 	return result
 
 def _is_type_oid(ntiid):
-	return is_ntiid_of_type(ntiid, TYPE_OID)
+	return bool( is_ntiid_of_type(ntiid, TYPE_OID) )
 
 def _resolve_package_ntiids(ntiid):
 	result = []
@@ -210,7 +210,7 @@ def create_queryobject(username, params, matchdict):
 		# predictable order for digest
 		package_ntiids.sort()
 		# make sure we register the location where the search query is being made
-		args['location'] = ntiid if not _is_type_oid(ntiid) else package_ntiids[0]
+		args['location'] = package_ntiids[0] if _is_type_oid(ntiid) else ntiid
 		for pid in package_ntiids:
 			root = get_collection_root(pid)
 			if root is not None:
