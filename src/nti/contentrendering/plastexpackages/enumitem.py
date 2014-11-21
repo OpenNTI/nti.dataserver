@@ -23,7 +23,7 @@ class enumerate_(Base.enumerate_):
         # Only attempt to parse options if we are initialing the environment,
         # and not when we are exiting it.
         if self.macroMode != Environment.MODE_END:
-            if 'options' in self.attributes:
+            if 'options' in self.attributes and self.attributes['options'] is not None:
                 options = self.attributes['options'].textContent.split(',')
             else:
                 options = []
