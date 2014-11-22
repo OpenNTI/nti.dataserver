@@ -607,12 +607,12 @@ class DefaultCreatedUsername(object):
 	@property
 	def creator_username(self):
 		try:
-			username = self.context.creator.username
+			creator = self.context.creator
+			username = getattr(creator, 'username', creator)
 			if isinstance(username, six.string_types):
-				return username
+				return username.lower()
 		except (AttributeError,TypeError):
 			return None
-
 
 class IShouldHaveTraversablePath(interface.Interface):
 	"""

@@ -19,12 +19,10 @@ logger = __import__('logging').getLogger(__name__)
 #: should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++metadata-catalog'
 
-from zope import component
 from zope import interface
 
 from zc.intid import IIntIds
 
-from zope.catalog.interfaces import ICatalog
 from zope.catalog.interfaces import ICatalogIndex
 from zope.mimetype.interfaces import IContentTypeAware
 
