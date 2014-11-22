@@ -1708,16 +1708,22 @@ class IMetadataCatalog(ICatalog):
 	"""
 	The nti metadata catalog.
 	"""
-
-	def index_doc(self, id, ob):
+	def index_doc(self, iid, ob):
 		"""
 		This may or may not update our underlying index.
 		"""
 
-	def force_index_doc(self, id, ob):
+	def force_index_doc(self, iid, ob):
 		"""
 		Force the underlying index to update.
 		"""
+
+class IMetadataCatalogableObjects(interface.Interface):
+	"""
+	subscriber for objects that can be indexed in the metadata catalog for a principal
+	"""
+	def iter_objects():
+		pass
 
 class INotableFilter(interface.Interface):
 	"""
