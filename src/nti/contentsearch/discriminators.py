@@ -51,23 +51,23 @@ def get_oid(obj):
 	return result
 
 def get_uid(obj, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(zope.intid.IIntIds) if intids is None else intids
 	result = intids.getId(obj)
 	return result
 
 def query_uid(obj, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
-	result = intids.queryId(obj)
+	intids = component.queryUtility(zope.intid.IIntIds) if intids is None else intids
+	result = intids.queryId(obj) if intids is not None else None
 	return result
 
 def get_object(uid, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(zope.intid.IIntIds) if intids is None else intids
 	result = intids.getObject(int(uid))
 	return result
 
 def query_object(uid, default=None, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
-	result = intids.queryObject(int(uid), default)
+	intids = component.queryUtility(zope.intid.IIntIds) if intids is None else intids
+	result = intids.queryObject(int(uid), default) if intids is not None else None
 	return result
 
 def get_type(obj, default=None):
