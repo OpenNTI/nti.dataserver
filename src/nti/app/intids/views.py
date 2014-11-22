@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 import zope.intid
 
 from zope import component
+from zope.mimetype.interfaces import IContentTypeAware
 
 from ZODB.POSException import POSError
 
@@ -21,6 +22,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.externalization.interfaces import LocatedExternalDict
 
@@ -43,12 +45,16 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 			total += 1
 			try:
 				obj = intids.getObject(uid)
+				# load to validate
 				getattr(obj, "creator", None)
-			except (KeyError):
+				IDeletedObjectPlaceholder.providedBy(obj)
+				IContentTypeAware(obj, None)
+			except KeyError:
 				missing.append(uid)
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			except (POSError, TypeError):
 				broken[uid] = str(type(obj))
+				logger.debug("Ignoring broken object %s,%s", uid, type(obj))
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
