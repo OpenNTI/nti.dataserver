@@ -149,6 +149,12 @@ class WhooshContentSearcher(Contained,
 				continue
 			index = self.storage.get_index(indexname)
 			result[indexname] = _Searchable(factory(), indexname, index, classsname)
+		if not result:
+			logger.error("No searchables were found for Index %s in storage %s",
+						 baseindexname, self.storage)
+		else:
+			logger.info("%s searchables were found for Index %s in storage %s",
+						len(result), baseindexname, self.storage)
 		return result
 
 	@property
@@ -240,9 +246,13 @@ def _ContentSearcherFactory(indexname=None, ntiid=None, indexdir=None):
 	if indexname and indexdir and os.path.exists(indexdir):
 		storage = DirectoryStorage(indexdir)
 		searcher = WhooshContentSearcher(indexname, storage, ntiid)
-		result = searcher if len(searcher) > 0 else None
+		seacher_length = len(searcher)
+		result = searcher if seacher_length > 0 else None
 		if result is None:
 			logger.error("No indexes were registered for %s,%s (%s)",
 						 indexname, indexdir, ntiid)
+		else:
+			logger.info("%s search-indexes were registered for %s,%s (%s)",
+						 seacher_length, indexname, indexdir, ntiid)
 		return result
 	return None
