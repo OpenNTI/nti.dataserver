@@ -1718,7 +1718,7 @@ class IMetadataCatalog(ICatalog):
 		Force the underlying index to update.
 		"""
 
-class IPrincipalMetadataObjectIntIds(IIntIdIterable):
+class IPrincipalMetadataObjectsIntIds(IIntIdIterable):
 	"""
 	subscriber for object int ids that can be indexed in the metadata catalog for a principal
 	"""
