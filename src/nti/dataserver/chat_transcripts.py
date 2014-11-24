@@ -167,12 +167,24 @@ class _AbstractMeetingTranscriptStorage(PersistentCreatedModDateTrackingObject,
 		"""
 		raise NotImplementedError()
 
+	def remove_message_by_id(self, uid):
+		"""
+		Removes the message from this transcript.
+		"""
+		raise NotImplementedError()
+	
 	def remove_message(self, msg):
 		"""
 		Removes the message from this transcript.
 		"""
 		raise NotImplementedError()
 
+	def __contains__(self, key):
+		"""
+		Check if a message is in this transcript
+		"""
+		raise NotImplementedError()
+	
 	def itervalues(self):
 		raise NotImplementedError()
 
@@ -219,13 +231,19 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 		"""
 		self.messages.add(self._intids.getId(msg))
 
+	def remove_message_by_id(self, uid):
+		if uid is not None and uid in self.messages:
+			self.messages.remove(uid)
+			return True
+		return False
+	
 	def remove_message(self, msg):
 		"""
 		Removes the message from this transcript.
 		"""
 		uid = self._intids.queryId(msg)
-		if uid is not None and uid in self.messages:
-			self.messages.remove(uid)
+		result = self.remove_message_by_id(uid)
+		return result
 
 	def itervalues(self):
 		intids = self._intids
@@ -234,6 +252,11 @@ class _DocidMeetingTranscriptStorage(_AbstractMeetingTranscriptStorage):
 			if msg is not None:
 				yield msg
 
+	def __contains__(self, key):
+		if not isinstance(key, (long,int)):
+			key = self._intids.queryId(key)
+		return key is not None and key in self.messages
+	
 	@CachedProperty
 	def _intids(self):
 		return component.getUtility(intid.IIntIds)
