@@ -27,12 +27,16 @@ from zope import interface
 from zope import component
 from zope import annotation
 from zope import lifecycleevent
-from zope.deprecation import deprecated
 from zope.component.factory import Factory
-from zope.cachedescriptors.property import cachedIn
-from zope.location.interfaces import ISublocations
-from zope.password.interfaces import IPasswordManager
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
+from zope.cachedescriptors.property import cachedIn
+
+from zope.deprecation import deprecated
+
+from zope.location.interfaces import ISublocations
+
+from zope.password.interfaces import IPasswordManager
 
 from ZODB.POSException import POSError
 from ZODB.interfaces import IConnection
@@ -68,15 +72,19 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IStopDynamicMembershipEvent
+from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IStartDynamicMembershipEvent
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
 
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.users.interfaces import IRecreatableUser
+from nti.dataserver.users.interfaces import _VERBOTEN_PASSWORDS
+from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
+from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespace
+from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
+
 from nti.dataserver.activitystream_change import Change
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
@@ -85,7 +93,7 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import IWeakRef
 
 from nti.zodb import minmax
 from nti.zodb.containers import time_to_64bit_int
@@ -196,12 +204,12 @@ class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 		# all whitespace, so we implement that manually here.
 		# TODO: Subclass the policy and implement one that does, install that and migrate
 		if np and not np.strip(): # but do allow leading/trailing whitespace
-			raise user_interfaces.PasswordCannotConsistOfOnlyWhitespace()
+			raise PasswordCannotConsistOfOnlyWhitespace()
 		# NOTE: The password policy objects do not have an option to forbid
 		# specific passwords from a list, so we implement that manually here.
 		# TODO: Subclass the policy and implement one that does, as per above
-		if np and np.strip().upper() in user_interfaces._VERBOTEN_PASSWORDS:
-			raise user_interfaces.InsecurePasswordIsForbidden(np)
+		if np and np.strip().upper() in _VERBOTEN_PASSWORDS:
+			raise InsecurePasswordIsForbidden(np)
 
 		self.__dict__['password'] = _Password(np, self.password_manager_name)
 		# otherwise, no change
@@ -281,7 +289,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 
 	def _note_member(self, entity):
 		members = self._members
-		wref = wref_interfaces.IWeakRef(entity)
+		wref = IWeakRef(entity)
 		# Adding an entity, even if it is already in the set, causes
 		# the set to invoke jar.readCurrent on itself, whereas
 		# checking for containment does not. (This can cause us to run
@@ -307,7 +315,7 @@ class Community(sharing.DynamicSharingTargetMixin,Entity):
 
 	def __contains__(self, other):
 		try:
-			return wref_interfaces.IWeakRef(other, None) in self._members
+			return IWeakRef(other, None) in self._members
 		except TypeError:
 			return False # "Object has default comparison""
 
@@ -681,7 +689,7 @@ class User(Principal):
 				old_pw = parsed.pop( 'old_password', '' )
 				# And it must match
 				if not self.password.checkPassword( old_pw ):
-					raise user_interfaces.OldPasswordDoesNotMatchCurrentPassword()
+					raise OldPasswordDoesNotMatchCurrentPassword()
 			password = parsed.pop( 'password' )
 			# TODO: Names/sites for these? That are distinct from the containment structure?
 			component.getUtility( pwd_interfaces.IPasswordUtility ).verify( password, old_pw )
