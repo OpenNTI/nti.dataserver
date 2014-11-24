@@ -1718,12 +1718,11 @@ class IMetadataCatalog(ICatalog):
 		Force the underlying index to update.
 		"""
 
-class IMetadataCatalogableObjects(interface.Interface):
+class IPrincipalMetadataObjectIntIds(IIntIdIterable):
 	"""
-	subscriber for objects that can be indexed in the metadata catalog for a principal
+	subscriber for object int ids that can be indexed in the metadata catalog for a principal
 	"""
-	def iter_objects():
-		pass
+	pass
 
 class INotableFilter(interface.Interface):
 	"""
