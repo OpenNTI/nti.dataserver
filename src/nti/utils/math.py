@@ -1,15 +1,12 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Math utilities
-
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-import numpy as np
 
 def choose(n, k, *args):
 	"""
@@ -49,6 +46,11 @@ try:
 except ImportError:
 	comb = choose
 
+try:
+	import numpy as _numpy
+except ImportError:
+	_numpy = None
+
 def bernstein_poly(i, n, t):
 	"""
 	The Bernstein polynomial of n, i as a function of t
@@ -68,16 +70,19 @@ def bezier_curve(x_points, y_points, nTimes=1000):
 	
 	See http://processingjs.nihongoresources.com/bezierinfo/
 	"""
-
+	if _numpy == None:
+		raise ImportError("Numpy not avaiable")
+	
 	nPoints = len(x_points)
-	xPoints = np.array(x_points)
-	yPoints = np.array(y_points)
+	xPoints = _numpy.array(x_points)
+	yPoints = _numpy.array(y_points)
 
-	t = np.linspace(0.0, 1.0, nTimes)
+	t = _numpy.linspace(0.0, 1.0, nTimes)
 
-	polynomial_array = np.array([ bernstein_poly(i, nPoints - 1, t) for i in range(0, nPoints)   ])
+	polynomial_array = _numpy.array([ bernstein_poly(i, nPoints - 1, t)
+									  for i in range(0, nPoints)   ])
 
-	xvals = np.dot(xPoints, polynomial_array)
-	yvals = np.dot(yPoints, polynomial_array)
+	xvals = _numpy.dot(xPoints, polynomial_array)
+	yvals = _numpy.dot(yPoints, polynomial_array)
 
 	return xvals, yvals
