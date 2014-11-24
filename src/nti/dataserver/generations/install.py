@@ -2,14 +2,14 @@
 """
 zope.generations installer for nti.dataserver
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 52
+generation = 53
 
 # Allow going forward/backward for testing
 import os
@@ -29,13 +29,13 @@ def evolve( context ):
 	install_chat( context )
 	return result
 
-import BTrees
-
 from zope import interface
 from zope import component
 from zope import lifecycleevent
+
 from zope.component.hooks import site
 from zope.component.interfaces import ISite
+
 from zope.site import LocalSiteManager
 from zope.site.folder import Folder, rootFolder
 
@@ -44,20 +44,25 @@ import zope.intid
 
 import z3c.password.interfaces
 
-from nti.dataserver import _Dataserver
+import BTrees
+
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import session_storage
-from nti.dataserver import containers as container
 from nti.dataserver import flagging
-from nti.dataserver import shards as ds_shards
+from nti.dataserver import _Dataserver
+from nti.dataserver import metadata_index
+from nti.dataserver import session_storage
 from nti.dataserver import password_utility
+from nti.dataserver import shards as ds_shards
+from nti.dataserver import containers as container
+
+from nti.dataserver.interfaces import IOIDResolver
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IGlobalFlagStorage
+from nti.dataserver.interfaces import ISessionServiceStorage
+from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users import index as user_index
 from nti.dataserver.users.users import UserBlacklistedStorage
-
-from nti.dataserver import metadata_index
-from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.intid import utility as intid_utility
 
@@ -84,8 +89,8 @@ def install_main( context ):
 	assert ISite.providedBy( root_folder )
 
 	dataserver_folder = Folder()
-	interface.alsoProvides( dataserver_folder, nti_interfaces.IDataserverFolder )
-	#locate( dataserver_folder, root_folder, name='dataserver2' )
+	interface.alsoProvides( dataserver_folder, IDataserverFolder )
+	# locate( dataserver_folder, root_folder, name='dataserver2' )
 	conn.add(dataserver_folder)
 	root_folder['dataserver2'] = dataserver_folder
 	assert dataserver_folder.__parent__ is root_folder
@@ -138,10 +143,10 @@ def install_main( context ):
 
 		oid_resolver =  _Dataserver.PersistentOidResolver()
 		conn.add( oid_resolver )
-		lsm.registerUtility( oid_resolver, provided=nti_interfaces.IOIDResolver )
+		lsm.registerUtility( oid_resolver, provided=IOIDResolver )
 
 		sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
-		lsm.registerUtility( sess_storage, provided=nti_interfaces.ISessionServiceStorage )
+		lsm.registerUtility( sess_storage, provided=ISessionServiceStorage )
 
 
 		install_user_catalog( dataserver_folder, intids )
@@ -193,7 +198,7 @@ def install_password_utility( dataserver_folder ):
 
 def install_flag_storage( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()
-	lsm.registerUtility( flagging.IntIdGlobalFlagStorage(), provided=nti_interfaces.IGlobalFlagStorage )
+	lsm.registerUtility( flagging.IntIdGlobalFlagStorage(), provided=IGlobalFlagStorage )
 
 def install_root_folders( parent_folder,
 						  folder_type=container.CaseInsensitiveLastModifiedBTreeFolder,
@@ -241,7 +246,7 @@ def install_shard( root_conn, new_shard_name ):
 	root_folder = root_layout.root_folder
 
 	dataserver_folder = Folder()
-	interface.alsoProvides( dataserver_folder, nti_interfaces.IDataserverFolder )
+	interface.alsoProvides( dataserver_folder, IDataserverFolder )
 	shard_conn.add( dataserver_folder ) # Put it in the right DB
 	shard_root['nti.dataserver'] = dataserver_folder
 	# make it a child of the root folder (TODO: Yes? This gets some cross-db stuff into the root
