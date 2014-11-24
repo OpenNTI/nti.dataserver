@@ -1037,36 +1037,56 @@ class User(Principal):
 				for v in self.containers.containers.itervalues()
 				if INamedContainer.providedBy( v ) )
 
-	def iter_intids(self, include_stream=True, stream_only=False):
+	def iter_intids(self, include_stream=True, stream_only=False,
+					include_shared=False, only_ntiid_containers=False):
 		seen = set()
 		intid = component.getUtility( zope.intid.IIntIds )
+		
+		def _loop(container, unwrap=False):
+			if isinstance(container, collections.Mapping):
+				collection = container.values()
+			else:
+				collection = container
+			for obj in collection:
+				uid = None
+				try:
+					obj = self.containers._v_unwrap(obj) if unwrap else obj
+					uid = intid.queryId(obj)
+					if uid is not None and uid not in seen:
+						seen.add(uid)
+						yield uid
+				except POSError:
+					pass
+
 		if not stream_only:
-			for container in self.containers.itervalues():
-				if isinstance(container, collections.Mapping):
-					collection = container.values()
-				else:
-					collection = container
-				for obj in collection:
-					try:
-						obj = self.containers._v_unwrap(obj)
-						uid = intid.queryId(obj)
-						if uid is not None and uid not in seen:
-							seen.add(uid)
-							yield uid
-					except POSError:
-						pass
-
+			for name, container in self.containers.iteritems():
+				if not only_ntiid_containers or self._is_container_ntiid(name):
+					for uid in _loop(container, True):
+						yield uid
+				
 		if include_stream:
-			for container in self.streamCache.values():
-				for obj in container:
-					try:
-						uid = intid.queryId(obj)
-						if uid is not None and uid not in seen:
-							seen.add(uid)
-							yield uid
-					except POSError:
-						pass
+			for name, container in self.streamCache.iteritems():
+				if not only_ntiid_containers or self._is_container_ntiid(name):
+					for uid in _loop(container, False):
+						yield uid
 
+		if include_shared:
+			fl_set = {x for x in self.friendsLists.values() 
+					  if IDynamicSharingTarget.providedBy(x)}
+			interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
+			for com in interesting_dynamic_things:
+				if not stream_only and hasattr( com, 'containersOfShared' ):
+					for name, container in com.containersOfShared.items():
+						if not only_ntiid_containers or self._is_container_ntiid( name ):
+							for uid in _loop(container, True):
+								yield uid
+							
+				if include_stream and hasattr( com, 'streamCache' ):
+					for name, container in com.streamCache.iteritems():
+						if not only_ntiid_containers or self._is_container_ntiid( name ):
+							for uid in _loop(container, True):
+								yield uid
+	
 	#@deprecate("No replacement; not needed") # noisy if enabled; logic in flagging_views still needs its existence until rewritten
 	def updates( self ):
 		"""
