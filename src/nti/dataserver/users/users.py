@@ -1056,7 +1056,7 @@ class User(Principal):
 						seen.add(uid)
 						yield uid
 				except POSError:
-					pass
+					logger.error("ignoring broken object %s", type(obj))
 
 		if not stream_only:
 			for name, container in self.containers.iteritems():
@@ -1078,13 +1078,13 @@ class User(Principal):
 				if not stream_only and hasattr( com, 'containersOfShared' ):
 					for name, container in com.containersOfShared.items():
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
-							for uid in _loop(container, True):
+							for uid in _loop(container, False):
 								yield uid
 							
 				if include_stream and hasattr( com, 'streamCache' ):
 					for name, container in com.streamCache.iteritems():
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
-							for uid in _loop(container, True):
+							for uid in _loop(container, False):
 								yield uid
 	
 	#@deprecate("No replacement; not needed") # noisy if enabled; logic in flagging_views still needs its existence until rewritten
