@@ -10,15 +10,27 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.externalization.representation import WithRepr
+
+from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces as util_interfaces
+from .property import alias
 
-@interface.implementer(util_interfaces.IOAuthKeys)
+from .cypher import get_plaintext
+
+from .interfaces import IOAuthKeys
+
+@interface.implementer(IOAuthKeys)
+@WithRepr
+@EqHash('APIKey', 'SecretKey')
 class OAuthKeys(SchemaConfigured):
-	createDirectFieldProperties(util_interfaces.IOAuthKeys)
-
+	createDirectFieldProperties(IOAuthKeys)
+	
+	apiKey = alias('APIKey')
+	secretKey = alias('SecretKey')
+	
 	@property
 	def id(self):
 		return self.APIKey
@@ -26,19 +38,11 @@ class OAuthKeys(SchemaConfigured):
 	def __str__(self):
 		return self.APIKey
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__.__name__, self.APIKey, self.SecretKey)
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.APIKey == other.APIKey and
-									 self.SecretKey == other.SecretKey)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.APIKey)
-		xhash ^= hash(self.SecretKey)
-		return xhash
-
+	def __setattr__(self, name, value):
+		if name in ("apiKey", "APIKey", "secretKey", "SecretKey"):
+			try:
+				key = get_plaintext(value)
+				value = unicode(key)
+			except (TypeError, StandardError):
+				pass
+		return SchemaConfigured.__setattr__(self, name, value)

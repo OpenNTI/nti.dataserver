@@ -11,17 +11,27 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.annotation import interfaces as an_interfaces
 
+from nti.externalization.representation import WithRepr
+
+from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces as util_interfaces
+from .property import alias
 
-@interface.implementer(util_interfaces.ILDAP, an_interfaces.IAttributeAnnotatable)
+from .interfaces import ILDAP
+
+from .cypher import get_plaintext
+
+@interface.implementer(ILDAP)
+@WithRepr
+@EqHash('ID')
 class LDAP(SchemaConfigured):
-	createDirectFieldProperties(util_interfaces.ILDAP)
+	createDirectFieldProperties(ILDAP)
 
+	password = alias('Password')
+	
 	@property
 	def id(self):
 		return self.ID
@@ -29,16 +39,11 @@ class LDAP(SchemaConfigured):
 	def __str__(self):
 		return self.URL
 
-	def __repr__(self):
-		return "%s(%s,%s)" % (self.__class__, self.URL, self.Usermame)
-
-	def __eq__(self, other):
-		try:
-			return self is other or self.ID == other.ID
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.ID)
-		return xhash
+	def __setattr__(self, name, value):
+		if name in ("Password", "password"):
+			try:
+				key = get_plaintext(value)
+				value = unicode(key)
+			except (TypeError, StandardError):
+				pass
+		return SchemaConfigured.__setattr__(self, name, value)
