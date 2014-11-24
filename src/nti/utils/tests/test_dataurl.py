@@ -14,7 +14,7 @@ from hamcrest import has_property
 
 import unittest
 
-from ..dataurl import DataURL
+from nti.utils.dataurl import DataURL
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 

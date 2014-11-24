@@ -17,6 +17,7 @@ from nti.utils import create_gravatar_url
 class TestGravatar(unittest.TestCase):
 	
 	def test_create_gravatar_url(self):
+
 		assert_that( create_gravatar_url( 'jason.madden@nextthought.com' ),
 					 is_( 'http://www.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=mm' ) )
 	
