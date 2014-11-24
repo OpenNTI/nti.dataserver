@@ -19,7 +19,6 @@ from .install import install_username_blacklist
 
 def do_evolve(context):
 
-	# How about blacklisting all deleted users to this point?
 	setHooks()
 	conn = context.connection
 	root = conn.root()
