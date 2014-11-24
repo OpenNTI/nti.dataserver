@@ -1043,7 +1043,7 @@ class User(Principal):
 		intid = component.getUtility( zope.intid.IIntIds )
 		
 		def _loop(container, unwrap=False):
-			if isinstance(container, collections.Mapping):
+			if hasattr(container, 'values'):
 				collection = container.values()
 			else:
 				collection = container
