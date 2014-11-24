@@ -14,7 +14,7 @@ from hamcrest import assert_that
 import unittest
 import itertools
 
-from ..iterables import IterableWrapper
+from nti.utils.iterables import IterableWrapper
 
 class TestIterables(unittest.TestCase):
 
@@ -30,4 +30,3 @@ class TestIterables(unittest.TestCase):
 
 		w = IterableWrapper(itertools.chain(a, b), 10)
 		assert_that(w[4:6], is_([5, 6]))
-

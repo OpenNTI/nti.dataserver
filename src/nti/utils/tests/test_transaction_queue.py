@@ -1,10 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from nti.testing.base import AbstractTestBase
-from hamcrest import assert_that, is_
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+
+from hamcrest import is_
 from hamcrest import has_length
+from hamcrest import assert_that
 
 import transaction
 
@@ -15,8 +21,9 @@ except ImportError:
 	from Queue import Full
 	from Queue import Queue
 
-
 from nti.utils.transactions import put_nowait
+
+from nti.testing.base import AbstractTestBase
 
 class PutQueueTest(AbstractTestBase):
 
