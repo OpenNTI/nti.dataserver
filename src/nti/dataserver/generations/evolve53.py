@@ -19,8 +19,7 @@ from zope.component.hooks import setHooks
 
 from ZODB.POSException import POSError
 
-from nti.dataserver.users import User
-from nti.dataserver.interfaces import IUser
+from nti.externalization.oids import to_external_oid
 
 BROKEN = ('nti.salesforce.users.SalesforceTokenInfo',
 		  'nti.contentsearch._repoze_adpater._RepozeEntityIndexManager')
@@ -31,25 +30,32 @@ def do_evolve(context):
 	conn = context.connection
 	root = conn.root()
 	ds_folder = root['nti.dataserver']
-
+	
 	with site(ds_folder):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
+		
+		bad_usernames = []
 		users = ds_folder['users']
-		for username in users.keys():		
+		for username, user in users.items():
 			try:
-				user = User.get_entity(username)
-				if user is None or not IUser.providedBy(user):
-					continue
-			
+				user._p_activate()
+			except (POSError, KeyError): # pragma: no cover
+				logger.warn( "Invalid user %s/%s. Shard not mounted?", username, 
+							 to_external_oid( user ) )
+				bad_usernames.append( (username, to_external_oid(user) ) )
+				continue
+					
+			try:			
 				annotations = user.__annotations__
 				for name in BROKEN:
 					annotations.pop(name, None)
 			except AttributeError:
 				pass
-			except POSError:
-				logger.exception("Ignoring broken entity object")
-			
+		
+		if bad_usernames:	
+			logger.warn( "Found %s bad users", bad_usernames )
+		
 		logger.info('Dataserver evolution %s done', generation)
 
 def evolve(context):
