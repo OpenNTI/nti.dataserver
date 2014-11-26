@@ -7,6 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<!-- ACL/ACE permissions -->
 	<include file="meta.zcml" package="zope.security" />
@@ -44,20 +45,23 @@
 		permission="nti.actions.moderate" />
 
 	<!-- ACL providers -->
-	<adapter factory=".authorization_acl._EntityACLProvider" />
 	<adapter factory=".authorization_acl._UserACLProvider" />
-	<adapter factory=".authorization_acl._CoppaUserWithoutAgreementACLProvider" />
+	<adapter factory=".authorization_acl._EntityACLProvider" />
 	<adapter factory=".authorization_acl._CreatedACLProvider" />
-	<adapter factory=".authorization_acl._ShareableModeledContentACLProvider" />
-	<adapter factory=".authorization_acl._EnclosedContentACLProvider" />
 	<adapter factory=".authorization_acl._FriendsListACLProvider" />
-	<adapter factory=".authorization_acl._DelimitedHierarchyContentUnitACLProvider" />
-	<adapter factory=".authorization_acl._DelimitedHierarchyContentPackageACLProvider" />
+	<adapter factory=".authorization_acl._EnclosedContentACLProvider" />
 	<adapter factory=".authorization_acl._DataserverFolderACLProvider" />
 	<adapter factory=".authorization_acl._ContentPackageLibraryACLProvider" />
+	<adapter factory=".authorization_acl._ShareableModeledContentACLProvider" />
+	<adapter factory=".authorization_acl._CoppaUserWithoutAgreementACLProvider" />
 	<adapter factory=".authorization_acl._ContentPackageBundleLibraryACLProvider" />
-
+	<adapter factory=".authorization_acl._DelimitedHierarchyContentUnitACLProvider" />
+	<adapter factory=".authorization_acl._DelimitedHierarchyContentPackageACLProvider" />
+	
 	<adapter factory=".authorization_acl._TestingLibraryTOCEntryACLProvider"
 			 zcml:condition="have testmode" />
 
+	<class class="zope.security.management.system_user">
+		<implements interface=".interfaces.ISystemUserPrincipal" />
+	</class>
 </configure>

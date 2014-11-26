@@ -131,19 +131,24 @@ class IMemcacheClient(interface.Interface):
 	def delete(key):
 		"Remove the key from the cache."
 
-from nti.site.interfaces import InappropriateSiteError
-from nti.site.interfaces import SiteNotInstalledError
-from nti.site.interfaces import IMainApplicationFolder
 from nti.site.interfaces import IHostSitesFolder
 from nti.site.interfaces import IHostPolicyFolder
+from nti.site.interfaces import SiteNotInstalledError
+from nti.site.interfaces import InappropriateSiteError
+from nti.site.interfaces import IMainApplicationFolder
+
 # bwc exports
-IDataserverFolder = IMainApplicationFolder
-InappropriateSiteError = InappropriateSiteError
-SiteNotInstalledError = SiteNotInstalledError
 IHostSitesFolder = IHostSitesFolder
 IHostPolicyFolder = IHostPolicyFolder
+IDataserverFolder = IMainApplicationFolder
+SiteNotInstalledError = SiteNotInstalledError
+InappropriateSiteError = InappropriateSiteError
 
-class IShardInfo(zope.component.interfaces.IPossibleSite, zope.container.interfaces.IContained):
+from zope.component.interfaces import IPossibleSite
+
+from zope.container.interfaces import IContained as IContainerContained
+
+class IShardInfo(IPossibleSite, IContainerContained):
 	"""
 	Information about a database shared.
 
@@ -161,7 +166,7 @@ class IShardLayout(interface.Interface):
 	users_folder = Object(zope.site.interfaces.IFolder,
 						  title="The folder containing users that live in this shard.")
 
-	shards = Object(zope.container.interfaces.IContained,
+	shards = Object(IContainerContained,
 					 title="The root shard will contain a shards folder.",
 					 required=False)
 	root_folder = Object(zope.site.interfaces.IRootFolder,
@@ -184,10 +189,12 @@ class INewUserPlacer(interface.Interface):
 		"""
 
 from nti.site.interfaces import ISiteTransactionRunner
+
 # BWC export
 IDataserverTransactionRunner = ISiteTransactionRunner
 
 class IOIDResolver(interface.Interface):
+	
 	def get_object_by_oid(oid_string, ignore_creator=False):
 		"""
 		Given an object id string as found in an OID value
@@ -196,7 +203,6 @@ class IOIDResolver(interface.Interface):
 		:param ignore_creator: If True, then creator access checks will be
 			bypassed.
 		"""
-
 
 class IEnvironmentSettings(interface.Interface):
 	pass
@@ -209,7 +215,8 @@ class ILink(interface.Interface):
 
 	rel = Choice(
 		title=u'The type of relationship',
-		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like', 'unlike', 'content'))
+		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like',
+				'unlike', 'content'))
 
 	target = interface.Attribute(
 		"""
@@ -258,6 +265,7 @@ class ILinked(interface.Interface):
 # TODO: Very much of our home-grown container
 # stuff can be replaced by zope.container
 IContainer = IZContainer
+
 # Recall that IContainer is an IReadContainer and IWriteContainer, providing:
 # __setitem__, __delitem__, __getitem__, keys()/values()/items()
 IContainerNamesContainer = IZContainerNamesContainer
@@ -292,6 +300,10 @@ class INamedContainer(IContainer):
 from nti.dublincore.interfaces import ICreatedTime
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
+
+# prevent warning
+ICreatedTime = ICreatedTime
+DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
 
 class ILastViewed(ILastModified):
 	"""
@@ -358,11 +370,11 @@ class IContainerIterable(interface.Interface):
 		"""
 
 # ## Changes related to content objects/users
-SC_CREATED = "Created"
-SC_MODIFIED = "Modified"
-SC_DELETED = "Deleted"
 SC_SHARED = "Shared"
+SC_CREATED = "Created"
+SC_DELETED = "Deleted"
 SC_CIRCLED = "Circled"
+SC_MODIFIED = "Modified"
 
 SC_CHANGE_TYPES = set( (SC_CREATED, SC_MODIFIED, SC_DELETED, SC_SHARED, SC_CIRCLED) )
 SC_CHANGE_TYPE_MAP = dict()
@@ -389,11 +401,12 @@ class IStreamChangeEvent(interface.interfaces.IObjectEvent,
 								 "these are the only change types; new ones may be added at any time")
 
 # statically define some names to keep pylint from complaining
-IStreamChangeCreatedEvent = None
-IStreamChangeModifiedEvent = None
-IStreamChangeDeletedEvent = None
+
 IStreamChangeSharedEvent = None
 IStreamChangeCircledEvent = None
+IStreamChangeCreatedEvent = None
+IStreamChangeDeletedEvent = None
+IStreamChangeModifiedEvent = None
 
 import sys
 
@@ -473,11 +486,16 @@ class INotModifiedInStreamWhenContainerModified(interface.Interface):
 # ## Groups/Roles/ACLs
 
 # some aliases
-from zope.security.interfaces import IPrincipal
-IPrincipal = IPrincipal  # prevent warning
+
 from zope.security.interfaces import IGroup
-from zope.security.interfaces import IGroupAwarePrincipal
+from zope.security.interfaces import IPrincipal
 from zope.security.interfaces import IPermission
+from zope.security.interfaces import IGroupAwarePrincipal
+
+class ISystemUserPrincipal(IPrincipal):
+	"""
+	Marker for a system user principal
+	"""
 
 class IRole(IGroup):
 	"""
@@ -487,25 +505,31 @@ class IRole(IGroup):
 from zope.security.management import system_user
 SYSTEM_USER_ID = system_user.id
 SYSTEM_USER_NAME = system_user.title.lower()
+
+ME_USER_ID = 'me'
 EVERYONE_GROUP_NAME = 'system.Everyone'
 AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
-ME_USER_ID = 'me'
 
-RESERVED_USER_IDS = (SYSTEM_USER_ID, SYSTEM_USER_NAME, EVERYONE_GROUP_NAME, AUTHENTICATED_GROUP_NAME, ME_USER_ID)
+RESERVED_USER_IDS = (SYSTEM_USER_ID, SYSTEM_USER_NAME, EVERYONE_GROUP_NAME,
+					 AUTHENTICATED_GROUP_NAME, ME_USER_ID)
+
 _LOWER_RESERVED_USER_IDS = tuple((x.lower() for x in RESERVED_USER_IDS))
 def username_is_reserved(username):
-	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or username.lower().startswith('system.'))
+	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or \
+						 username.lower().startswith('system.'))
 
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
 IAuthorizationPolicy = IAuthorizationPolicy  # prevent unused warning
-from pyramid.interfaces import IAuthenticationPolicy
-import pyramid.security as _psec
 
+import pyramid.security as _psec
+from pyramid.interfaces import IAuthenticationPolicy
+
+ACE_ACT_DENY = _psec.Deny
+ACE_ACT_ALLOW = _psec.Allow
 EVERYONE_USER_NAME = _psec.Everyone
 AUTHENTICATED_GROUP_NAME = _psec.Authenticated
-ACE_ACT_ALLOW = _psec.Allow
-ACE_ACT_DENY = _psec.Deny
+
 # : Constant for use in an ACL indicating that all permissions
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
 interface.directlyProvides(ALL_PERMISSIONS, IPermission)
@@ -513,8 +537,8 @@ interface.directlyProvides(ALL_PERMISSIONS, IPermission)
 ACE_DENY_ALL = _psec.DENY_ALL
 ACE_ALLOW_ALL = (ACE_ACT_ALLOW, EVERYONE_USER_NAME, ALL_PERMISSIONS)
 
-import nti.externalization.oids
-nti.externalization.oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
+from nti.externalization import oids
+oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
 
 class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
 	"""
@@ -623,7 +647,9 @@ class IShouldHaveTraversablePath(interface.Interface):
 	exclusively.
 	"""
 
-class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath, INeverStoredInSharedStream):
+class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath,
+			  INeverStoredInSharedStream):
+	
 	username = DecodingValidTextLine(
 		title=u'The username',
 		constraint=valid_entity_username
@@ -1166,9 +1192,9 @@ class IThreadable(interface.Interface):
 	referents.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
 
 #IThreadable['inReplyTo'].schema = IThreadable
-#IThreadable['references'].value_type.schema = IThreadable
 #IThreadable['replies'].value_type.schema = IThreadable
 #IThreadable['referents'].value_type.schema = IThreadable
+#IThreadable['references'].value_type.schema = IThreadable
 
 class IWeakThreadable(IThreadable):
 	"""
