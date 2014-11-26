@@ -335,6 +335,13 @@ class _UserTranscriptStorageAdapter(object):
 					yield storage
 
 	@property
+	def meetings(self):
+		result = []
+		for storage in self._transcript_storages():
+			result.append( storage.meeting )
+		return result
+	
+	@property
 	def transcripts(self):
 		result = []
 		for storage in self._transcript_storages():

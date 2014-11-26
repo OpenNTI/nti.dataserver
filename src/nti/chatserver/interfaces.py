@@ -302,6 +302,8 @@ class IUserTranscriptStorage(Interface):
 	in a meeting.
 	"""
 	
+	meetings = interface.Attribute("Return all Meetings objects")
+	
 	transcripts = interface.Attribute("Return all Transcript objects")
 			
 	transcript_summaries = interface.Attribute("Return all Transcript summary objects")
