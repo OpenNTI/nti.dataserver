@@ -39,7 +39,7 @@ from zope.location.interfaces import ISublocations
 from zope.password.interfaces import IPasswordManager
 
 from ZODB.POSException import POSError
-from ZODB.interfaces import IConnection
+from ZODB.interfaces import IConnection, IBroken
 
 from z3c.password import interfaces as pwd_interfaces
 
@@ -1059,10 +1059,13 @@ class User(Principal):
 				uid = None
 				try:
 					obj = self.containers._v_unwrap(obj) if unwrap else obj
-					uid = intid.queryId(obj)
-					if uid is not None and uid not in seen:
-						seen.add(uid)
-						yield uid
+					if IBroken.providedBy(obj):
+						logger.error("ignoring broken object %s", type(obj))
+					else:
+						uid = intid.queryId(obj)
+						if uid is not None and uid not in seen:
+							seen.add(uid)
+							yield uid
 				except POSError:
 					logger.error("ignoring broken object %s", type(obj))
 
