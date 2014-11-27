@@ -45,10 +45,13 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 			total += 1
 			try:
 				obj = intids.getObject(uid)
-				# load to validate
-				getattr(obj, "creator", None)
-				IDeletedObjectPlaceholder.providedBy(obj)
-				IContentTypeAware(obj, None)
+				if obj is not None and hasattr(obj, '_p_activate'):
+					obj._p_activate()
+				else:
+					# load to validate
+					getattr(obj, "creator", None)
+					IDeletedObjectPlaceholder.providedBy(obj)
+					IContentTypeAware(obj, None)
 			except KeyError:
 				missing.append(uid)
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
