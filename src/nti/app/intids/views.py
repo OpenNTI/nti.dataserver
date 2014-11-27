@@ -61,4 +61,5 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
+		logger.info("unregister missing objects %s", result)
 		return result
