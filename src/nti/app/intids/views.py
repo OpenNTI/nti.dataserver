@@ -42,6 +42,7 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 		missing = result['Missing'] = []
 		intids = component.getUtility(zope.intid.IIntIds)
 		for uid in intids:
+			obj = None
 			total += 1
 			try:
 				obj = intids.getObject(uid)
@@ -54,10 +55,12 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 					IContentTypeAware(obj, None)
 			except KeyError:
 				missing.append(uid)
+				logger.info("Unregistering missing %s", uid)
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
-			except (POSError, TypeError):
+			except POSError:
 				broken[uid] = str(type(obj))
-				logger.debug("Ignoring broken object %s,%s", uid, type(obj))
+				logger.info("Unregistering broken object %s,%s", uid, type(obj))
+				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
