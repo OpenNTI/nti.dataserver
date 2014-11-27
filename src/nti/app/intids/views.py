@@ -43,7 +43,6 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 		intids = component.getUtility(zope.intid.IIntIds)
 		for uid in intids:
 			obj = None
-			total += 1
 			try:
 				obj = intids.getObject(uid)
 				if obj is not None and hasattr(obj, '_p_activate'):
@@ -61,6 +60,8 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 				broken[uid] = str(type(obj))
 				logger.info("Unregistering broken object %s,%s", uid, type(obj))
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
+			else:
+				total += 1
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
