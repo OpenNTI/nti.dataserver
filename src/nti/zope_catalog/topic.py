@@ -113,16 +113,16 @@ class ExtentFilteredSet(zope.index.topic.filter.FilteredSetBase):
 			in your own module.
 		"""
 		super(ExtentFilteredSet, self).__init__( id, filter, family=family )
-		# The super implementation calls clear() to establish
-		# `_ids`
+		# The super implementation calls clear() to establish `_ids`
 
+	def ids(self):
+		return list(self._ids) if self._ids is not None else ()
 
 	def clear(self):
 		# Note that we ignore the super implementation.
 		self._extent = zc.catalog.extentcatalog.FilterExtent(self.getExpression(),
 															 family=self.family)
 		self._ids = self._extent.set
-
 
 	def index_doc( self, docid, context ):
 		try:
