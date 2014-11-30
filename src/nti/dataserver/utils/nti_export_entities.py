@@ -65,7 +65,8 @@ def get_index_field_value(userid, ent_catalog, indexname):
 	result = rev_index.get(userid, u'')
 	return result
 
-def export_entities(entities, as_csv=False, export_dir=None, verbose=False):
+def export_entities(entities, full=False, as_csv=False, 
+					export_dir=None, verbose=False):
 	export_dir = export_dir or os.getcwd()
 	export_dir = os.path.expanduser(export_dir)
 	if not os.path.exists(export_dir):
@@ -83,32 +84,39 @@ def export_entities(entities, as_csv=False, export_dir=None, verbose=False):
 	objects = []
 	for entityname in entities:
 		e = Entity.get_entity(entityname)
-		if e is not None:
-			to_add = None
-			if as_csv and IUser.providedBy(e):
-				uid = intids.getId(e)
-				alias = get_index_field_value(uid, catalog, 'alias')
-				email = get_index_field_value(uid, catalog, 'email')
-				birthdate = getattr(IUserProfile(e), 'birthdate', u'')
-				realname = get_index_field_value(uid, catalog, 'realname')
-				to_add = [entityname, realname, alias, email, 
-						  str(birthdate) if birthdate else None]
-			elif not as_csv:
-				to_add = to_external_object(e)
-			if to_add:
-				objects.append(to_add)
-		elif verbose:
-			print("Entity '%s' does not exists" % entityname, file=sys.stderr)
+		if e is None:
+			if verbose:
+				print("Entity '%s' does not exists" % entityname, file=sys.stderr)
+			continue
 
-	if objects:
-		with open(outname, "w") as fp:
-			if not as_csv:
-				json.dump(objects, fp, indent=4)
+		to_add = None
+		if as_csv and IUser.providedBy(e):
+			uid = intids.getId(e)
+			alias = get_index_field_value(uid, catalog, 'alias')
+			email = get_index_field_value(uid, catalog, 'email')
+			birthdate = getattr(IUserProfile(e), 'birthdate', u'')
+			realname = get_index_field_value(uid, catalog, 'realname')
+			to_add = [entityname, realname, alias, email, 
+					  str(birthdate) if birthdate else None]
+		elif not as_csv:
+			if full:
+				to_add = to_external_object(e)
 			else:
-				writer = csv.writer(fp)
-				writer.writerow(['username', 'realname', 'alias', 'email', 'birthdate'])
-				for o in objects:
-					writer.writerow([_tx_string(x) for x in o])
+				to_add = to_external_object(e, name="summary")
+		if to_add:
+			objects.append(to_add)
+
+	with open(outname, "w") as fp:
+		if not as_csv:
+			json.dump(objects, fp, indent=4)
+		else:
+			writer = csv.writer(fp)
+			writer.writerow(['username', 'realname', 'alias', 'email', 'birthdate'])
+			for o in objects:
+				writer.writerow([_tx_string(x) for x in o])
+					
+	if verbose:
+		print(len(objects), " entities outputed to ", outname)
 
 def _create_context(env_dir):
 	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
@@ -142,6 +150,7 @@ def _create_context(env_dir):
 	return context
 
 def _process_args(args):
+	full = args.full
 	as_csv = args.as_csv
 	verbose = args.verbose
 	export_dir = args.export_dir
@@ -162,7 +171,7 @@ def _process_args(args):
 		hooks.setSite(new_site)
 
 	entities = sorted(entities)
-	export_entities(entities, as_csv, export_dir, verbose)
+	export_entities(entities, full, as_csv, export_dir, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
@@ -170,10 +179,8 @@ def main():
 							action='store_true', dest='verbose')
 	arg_parser.add_argument('--site', dest='site', 
 							help="Application SITE.")
-	arg_parser.add_argument('--csv', 
-							help="Output CSV", action='store_true',
-							dest='as_csv')
-	arg_parser.add_argument('--all', help="Process all entities", action='store_true',
+	arg_parser.add_argument('--all', help="Process all entities",
+							action='store_true',
 							dest='all')
 	arg_parser.add_argument('entities',
 							 nargs="*",
@@ -182,6 +189,14 @@ def main():
 							 dest='export_dir',
 							 default=None,
 							 help="Output export directory")
+	site_group = arg_parser.add_mutually_exclusive_group()
+	site_group.add_argument('--full',
+							 dest='full',
+							 help="Use full externalizer")
+	site_group.add_argument('--csv', 
+							help="Output CSV", action='store_true',
+							dest='as_csv')
+	
 	args = arg_parser.parse_args()
 
 	env_dir = os.getenv('DATASERVER_DIR')
