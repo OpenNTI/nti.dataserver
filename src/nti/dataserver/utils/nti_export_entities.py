@@ -18,13 +18,14 @@ import csv
 import sys
 import json
 import argparse
-import datetime
+from datetime import datetime
 
 import zope.intid
 import zope.browserpage
 
 from zope import component
 from zope.component import hooks
+from zope.catalog.interfaces import ICatalog
 from zope.container.contained import Contained
 from zope.configuration import xmlconfig, config
 from zope.dottedname import resolve as dottedname
@@ -40,8 +41,6 @@ from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.externalization import to_external_object
-
-from zope.catalog.interfaces import ICatalog
 
 from nti.site.site import get_site_for_site_names
 
@@ -59,6 +58,13 @@ def _tx_string(s):
 		s = s.encode('utf-8')
 	return s
 
+def _parse_time(t):
+	try:
+		return datetime.fromtimestamp(t).isoformat() if t else u''
+	except ValueError:
+		logger.debug("Cannot parse time '%s'" % t)
+		return str(t)
+	
 def get_index_field_value(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(idx, '_rev_index', {})
@@ -75,7 +81,7 @@ def export_entities(entities, full=False, as_csv=False,
 	intids = component.getUtility(zope.intid.IIntIds)
 	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	
-	utc_datetime = datetime.datetime.utcnow()
+	utc_datetime = datetime.utcnow()
 	ext = 'csv' if as_csv else 'json'
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
 	outname = "entities-%s.%s" % (s, ext)
@@ -96,8 +102,10 @@ def export_entities(entities, full=False, as_csv=False,
 			email = get_index_field_value(uid, catalog, 'email')
 			birthdate = getattr(IUserProfile(e), 'birthdate', u'')
 			realname = get_index_field_value(uid, catalog, 'realname')
-			to_add = [entityname, realname, alias, email, 
-					  str(birthdate) if birthdate else None]
+			createdTime = _parse_time(getattr(e, 'createdTime', 0))
+			lastLoginTime = _parse_time(getattr(e, 'lastLoginTime', None))
+			to_add = [entityname, realname, alias, email, createdTime, 
+					  lastLoginTime, str(birthdate) if birthdate else None]
 		elif not as_csv:
 			if full:
 				to_add = to_external_object(e)
@@ -111,7 +119,8 @@ def export_entities(entities, full=False, as_csv=False,
 			json.dump(objects, fp, indent=4)
 		else:
 			writer = csv.writer(fp)
-			writer.writerow(['username', 'realname', 'alias', 'email', 'birthdate'])
+			writer.writerow(['username', 'realname', 'alias', 'email', 'createdTime',
+							 'lastLoginTime', 'birthdate'])
 			for o in objects:
 				writer.writerow([_tx_string(x) for x in o])
 					
