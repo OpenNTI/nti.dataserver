@@ -14,15 +14,22 @@ relstorage_patch_all_except_gevent_on_import.patch()
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import csv
 import sys
 import json
 import argparse
 import datetime
 
 import zope.intid
+import zope.browserpage
 
 from zope import component
 from zope.component import hooks
+from zope.container.contained import Contained
+from zope.configuration import xmlconfig, config
+from zope.dottedname import resolve as dottedname
+
+from z3c.autoinclude.zcml import includePluginsDirective
 
 from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
@@ -38,13 +45,27 @@ from zope.catalog.interfaces import ICatalog
 
 from nti.site.site import get_site_for_site_names
 
-def _get_field_value(userid, ent_catalog, indexname):
+class PluginPoint(Contained):
+
+	def __init__(self, name):
+		self.__name__ = name
+
+PP_APP = PluginPoint('nti.app')
+PP_APP_SITES = PluginPoint('nti.app.sites')
+PP_APP_PRODUCTS = PluginPoint('nti.app.products')
+
+def _tx_string(s):
+	if s and isinstance(s, unicode):
+		s = s.encode('utf-8')
+	return s
+
+def get_index_field_value(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
 	rev_index = getattr(idx, '_rev_index', {})
 	result = rev_index.get(userid, u'')
 	return result
 
-def export_entities(entities, use_profile=False, export_dir=None, verbose=False):
+def export_entities(entities, as_csv=False, export_dir=None, verbose=False):
 	export_dir = export_dir or os.getcwd()
 	export_dir = os.path.expanduser(export_dir)
 	if not os.path.exists(export_dir):
@@ -54,7 +75,7 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	
 	utc_datetime = datetime.datetime.utcnow()
-	ext = 'txt' if use_profile else 'json'
+	ext = 'csv' if as_csv else 'json'
 	s = utc_datetime.strftime("%Y-%m-%d-%H%M%SZ")
 	outname = "entities-%s.%s" % (s, ext)
 	outname = os.path.join(export_dir, outname)
@@ -64,14 +85,15 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 		e = Entity.get_entity(entityname)
 		if e is not None:
 			to_add = None
-			if use_profile and IUser.providedBy(e):
+			if as_csv and IUser.providedBy(e):
 				uid = intids.getId(e)
-				alias = _get_field_value(uid, catalog, 'alias')
-				email = _get_field_value(uid, catalog, 'email')
-				realname = _get_field_value(uid, catalog, 'realname')
+				alias = get_index_field_value(uid, catalog, 'alias')
+				email = get_index_field_value(uid, catalog, 'email')
 				birthdate = getattr(IUserProfile(e), 'birthdate', u'')
-				to_add = (entityname, realname, alias, email, str(birthdate))
-			elif not use_profile:
+				realname = get_index_field_value(uid, catalog, 'realname')
+				to_add = [entityname, realname, alias, email, 
+						  str(birthdate) if birthdate else None]
+			elif not as_csv:
 				to_add = to_external_object(e)
 			if to_add:
 				objects.append(to_add)
@@ -80,23 +102,56 @@ def export_entities(entities, use_profile=False, export_dir=None, verbose=False)
 
 	if objects:
 		with open(outname, "w") as fp:
-			if not use_profile:
+			if not as_csv:
 				json.dump(objects, fp, indent=4)
 			else:
+				writer = csv.writer(fp)
+				writer.writerow(['username', 'realname', 'alias', 'email', 'birthdate'])
 				for o in objects:
-					fp.write('\t'.join(o).encode("utf-8"))
-					fp.write('\n')
+					writer.writerow([_tx_string(x) for x in o])
+
+def _create_context(env_dir):
+	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
+	etc = os.path.expanduser(etc)
+
+	context = config.ConfigurationMachine()
+	xmlconfig.registerCommonDirectives(context)
+		
+	slugs = os.path.join(etc, 'package-includes')
+	if os.path.exists(slugs) and os.path.isdir(slugs):
+		package = dottedname.resolve('nti.dataserver')
+		context = xmlconfig.file('configure.zcml', package=package, context=context)
+		xmlconfig.include(context, files=os.path.join(slugs, '*.zcml'),
+						  package='nti.appserver')
+
+	library_zcml = os.path.join(etc, 'library.zcml')
+	if os.path.exists(library_zcml):
+		xmlconfig.include(context, file=library_zcml)
+	else:
+		logger.warn("Library not loaded")
+	
+	# Include zope.browserpage.meta.zcm for tales:expressiontype
+	# before including the products
+	xmlconfig.include(context, file="meta.zcml", package=zope.browserpage)
+
+	# include plugins
+	includePluginsDirective(context, PP_APP)
+	includePluginsDirective(context, PP_APP_SITES)
+	includePluginsDirective(context, PP_APP_PRODUCTS)
+	
+	return context
 
 def _process_args(args):
+	as_csv = args.as_csv
 	verbose = args.verbose
-	use_profile = args.profile
 	export_dir = args.export_dir
-	entities = set(args.entities or ())
-
+	
 	if args.all:
 		dataserver = component.getUtility(IDataserver)
-		_users = IShardLayout(dataserver).users_folder
-		entities.update(_users.keys())
+		users_folder = IShardLayout(dataserver).users_folder
+		entities = users_folder.keys()
+	else:
+		entities = set(args.entities or ())
 
 	if args.site:
 		cur_site = hooks.getSite()
@@ -107,17 +162,17 @@ def _process_args(args):
 		hooks.setSite(new_site)
 
 	entities = sorted(entities)
-	export_entities(entities, use_profile, export_dir, verbose)
+	export_entities(entities, as_csv, export_dir, verbose)
 
 def main():
 	arg_parser = argparse.ArgumentParser(description="Export user objects")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose",
 							action='store_true', dest='verbose')
 	arg_parser.add_argument('--site', dest='site', 
-							help="Application SITE. Use this to get profile info")
-	arg_parser.add_argument('--profile', 
-							help="Return profile info", action='store_true',
-							dest='profile')
+							help="Application SITE.")
+	arg_parser.add_argument('--csv', 
+							help="Output CSV", action='store_true',
+							dest='as_csv')
 	arg_parser.add_argument('--all', help="Process all entities", action='store_true',
 							dest='all')
 	arg_parser.add_argument('entities',
@@ -134,10 +189,14 @@ def main():
 		print("Invalid dataserver environment root directory", env_dir)
 		sys.exit(2)
 	
+	context = _create_context(env_dir)
+	conf_packages = ('nti.appserver',)
+	
 	# run export
 	run_with_dataserver(environment_dir=env_dir,
+						xmlconfig_packages=conf_packages,
 						verbose=args.verbose,
-						xmlconfig_packages=('nti.appserver',),
+						context=context,
 						function=lambda: _process_args(args))
 
 if __name__ == '__main__':
