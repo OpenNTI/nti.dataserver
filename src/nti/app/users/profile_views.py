@@ -39,6 +39,7 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users import User
 from nti.dataserver.users.index import CATALOG_NAME
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 
@@ -80,20 +81,39 @@ def _get_index_field_value(userid, ent_catalog, indexname):
 	result = rev_index.get(userid, u'')
 	return result
 
+def _format_time(t):
+	try:
+		return datetime.fromtimestamp(t).isoformat() if t else u''
+	except ValueError:
+		logger.debug("Cannot parse time '%s'", t)
+		return str(t)
+	
+def _format_date(d):
+	try:
+		return d.isoformat() if d is not None else u''
+	except ValueError:
+		logger.debug("Cannot parse time '%s'", d)
+		return str(d)
+
 def _get_user_info_extract():
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	userids = _get_index_userids(ent_catalog)
 
-	yield ['username', 'realname', 'alias', 'email']
+	yield ['username', 'realname', 'alias', 'email', 'createdTime', 
+		   'lastLoginTime', 'birthdate']
 
 	for iid in userids:
 		u = intids.queryObject(iid, None)
 		if u is not None and IUser.providedBy(u):
 			alias = _get_index_field_value(iid, ent_catalog, 'alias')
 			email = _get_index_field_value(iid, ent_catalog, 'email')
+			createdTime = _format_time(getattr(u, 'createdTime', 0))
 			realname = _get_index_field_value(iid, ent_catalog, 'realname')
-			yield [u.username, realname, alias, email]
+			lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
+			birthdate = _format_date(getattr(IUserProfile(u), 'birthdate', None))
+			yield [u.username, realname, alias, email, createdTime, 
+				   lastLoginTime, birthdate]
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
