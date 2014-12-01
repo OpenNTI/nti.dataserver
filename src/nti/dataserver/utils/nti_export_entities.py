@@ -58,12 +58,19 @@ def _tx_string(s):
 		s = s.encode('utf-8')
 	return s
 
-def _parse_time(t):
+def _format_time(t):
 	try:
 		return datetime.fromtimestamp(t).isoformat() if t else u''
 	except ValueError:
-		logger.debug("Cannot parse time '%s'" % t)
+		logger.debug("Cannot parse time '%s'", t)
 		return str(t)
+	
+def _format_date(d):
+	try:
+		return d.isoformat() if d is not None else u''
+	except ValueError:
+		logger.debug("Cannot parse time '%s'", d)
+		return str(d)
 	
 def get_index_field_value(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)
@@ -100,12 +107,12 @@ def export_entities(entities, full=False, as_csv=False,
 			uid = intids.getId(e)
 			alias = get_index_field_value(uid, catalog, 'alias')
 			email = get_index_field_value(uid, catalog, 'email')
-			birthdate = getattr(IUserProfile(e), 'birthdate', u'')
+			createdTime = _format_time(getattr(e, 'createdTime', 0))
 			realname = get_index_field_value(uid, catalog, 'realname')
-			createdTime = _parse_time(getattr(e, 'createdTime', 0))
-			lastLoginTime = _parse_time(getattr(e, 'lastLoginTime', None))
+			lastLoginTime = _format_time(getattr(e, 'lastLoginTime', None))
+			birthdate = _format_date(getattr(IUserProfile(e), 'birthdate', None))
 			to_add = [entityname, realname, alias, email, createdTime, 
-					  lastLoginTime, str(birthdate) if birthdate else None]
+					  lastLoginTime, birthdate]
 		elif not as_csv:
 			if full:
 				to_add = to_external_object(e)
