@@ -16,39 +16,48 @@ from . import MessageFactory as _
 import time
 import collections
 
+from zope.intid.interfaces import IIntIds
+
 from zope import interface
 from zope import component
-
-from pyramid.traversal import find_interface
-
-from nti.dataserver.interfaces import IUser
-from nti.dataserver.users.interfaces import IFriendlyNamed
-from nti.app.notabledata.interfaces import IUserNotableData
-from nti.mailer.interfaces import IEmailAddressable
-from nti.mailer.interfaces import EmailAddresablePrincipal
-from nti.contentfragments.interfaces import IPlainTextContentFragment
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.dataserver.interfaces import INote
-from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
-from nti.dataserver.interfaces import IStreamChangeEvent
-
-from nti.appserver.interfaces import IApplicationSettings
-from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+from zope.interface.interfaces import ComponentLookupError
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
-from nti.utils.property import Lazy
-from nti.utils.property import annotation_alias
+from pyramid.traversal import find_interface
 
-from nti.ntiids.ntiids import get_parts as parse_ntiid
+from nti.appserver.interfaces import IApplicationSettings
 
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
+from nti.app.notabledata.interfaces import IUserNotableData
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.users.interfaces import IFriendlyNamed
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
+
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.intid.interfaces import IntIdMissingError
+
+from nti.mailer.interfaces import IEmailAddressable
+from nti.mailer.interfaces import EmailAddresablePrincipal
+
+from nti.ntiids.ntiids import get_parts as parse_ntiid
+
+from nti.utils.property import Lazy
+from nti.utils.property import annotation_alias
 
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
@@ -96,7 +105,6 @@ class _TemplateArgs(object):
 			from nti.assessment.interfaces import IQAssignment
 			asg = component.queryUtility(IQAssignment, name=asg_id)
 			return getattr(asg, 'title', None)
-
 
 	@property
 	def snippet(self):
@@ -213,7 +221,6 @@ class _TemplateArgs(object):
 										  _anchor="!HTML/" + provider + '/' + specific).replace('/dataserver2',
 																								self.web_root)
 
-
 	@property
 	def creator_avatar_url(self):
 		return self.request.resource_url(self._primary.creator, '@@avatar')
@@ -229,7 +236,6 @@ class DigestEmailTemplateArgs(dict):
 		# that the copied dict will actually return
 		# our fake key
 		self['context'] = self
-
 
 from zope.security.interfaces import IParticipation
 from zope.security.management import endInteraction
@@ -295,7 +301,7 @@ class DigestEmailCollector(object):
 		we should send a mail message.
 		"""
 		# If we have no email address on file, we can't send anything, obviously
-		addr = IEmailAddressable(self.remoteUser,None)
+		addr = IEmailAddressable(self.remoteUser, None)
 		if not addr or not addr.email:
 			return
 
@@ -303,7 +309,17 @@ class DigestEmailCollector(object):
 		if not self.is_subscribed:
 			return
 
-
+		# validate that the user has not been removed
+		# we saw this in janux after a user removal
+		try:
+			intids = component.getUtility(IIntIds)
+			intids.getId(self.remoteUser)
+		except ComponentLookupError:
+			return
+		except IntIdMissingError:
+			logger.error("Ignoring removed/unregistered user %s", self.remoteUser)
+			return
+		
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
 
