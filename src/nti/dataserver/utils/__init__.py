@@ -292,7 +292,8 @@ def interactive_setup(root=".",
 					  xmlconfig_packages=(),
 					  in_site=True,
 					  with_dataserver=True,
-					  with_library=False):
+					  with_library=False,
+					  context=None):
 	"""
 	Set up the environment for interactive use, configuring the
 	database and dataserver site. The root database ('Users')
@@ -317,12 +318,13 @@ def interactive_setup(root=".",
 	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter(log_format))
 
 	setHooks()
-	packages = ['nti.dataserver']
-	if xmlconfig_packages:
-		packages = set(xmlconfig_packages)
-	context = _configure(set_up_packages=packages, 
-						 features=config_features, 
-						 execute=False)
+	if context is None:
+		packages = ['nti.dataserver']
+		if xmlconfig_packages:
+			packages = set(xmlconfig_packages)
+		context = _configure(set_up_packages=packages, 
+							 features=config_features, 
+							 execute=False)
 	if with_library:
 		# XXX: Very similar to nti.appserver.application.
 		DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
