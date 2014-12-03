@@ -30,7 +30,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 class GetUserBlacklist(AbstractAuthenticatedView):
 
 	def __call__(self):
-		user_blacklist = component.getUtility( IUserBlacklistedStorage )
+		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 
 		result = LocatedExternalDict()
 		result.__name__ = self.request.view_name
@@ -38,10 +38,9 @@ class GetUserBlacklist(AbstractAuthenticatedView):
 		result['Items'] = vals = {}
 
 		count = 0
-		for key, val in user_blacklist:
+		for key, val in list(user_blacklist):
 			vals[key] = val
 			count += 1
-
 		result['Count'] = count
 		return result
 
@@ -61,7 +60,7 @@ class RemoveFromUserBlacklist(	AbstractAuthenticatedView,
 		values = self.readInput()
 		username = values.get( 'username' )
 
-		user_blacklist = component.getUtility( IUserBlacklistedStorage )
+		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		did_remove = user_blacklist.remove_blacklist_for_user( username )
 
 		result = LocatedExternalDict()
@@ -69,6 +68,4 @@ class RemoveFromUserBlacklist(	AbstractAuthenticatedView,
 		result.__parent__ = self.request.context
 		result['username'] = username
 		result['did_remove'] = did_remove
-
 		return result
-
