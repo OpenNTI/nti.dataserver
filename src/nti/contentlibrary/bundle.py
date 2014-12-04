@@ -272,6 +272,17 @@ from nti.externalization.internalization import validate_named_field_value
 from .dublincore import DCMETA_FILENAME
 from .dublincore import read_dublincore_from_named_key
 
+def _validate_package_refs(bundle, meta):
+	try:
+		if 		len( bundle._ContentPackages_wrefs ) == len( meta._ContentPackages_wrefs ) \
+			and len( [x() for x in meta._ContentPackages_wrefs if x() is not None] ) == 0:
+			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
+			# Or should we just check if some wrefs are no longer resolvable.
+			raise ValueError( 'A package reference no longer exists in the library. Content issue?' )
+	except AttributeError:
+		# Not sure we can do anything here.
+		pass
+
 def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 							  dc_meta_name=DCMETA_FILENAME,
 							  excluded_keys=(),
@@ -315,6 +326,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 	fields_to_update = (set(meta.__dict__)
 						- set(excluded_keys)
 						- {'lastModified', 'createdTime', 'modified', 'created'})
+
 	# Be careful to only update fields that have changed
 	modified = False
 	for k in fields_to_update:
@@ -336,10 +348,13 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 				# the validation step
 				modified = True
 				bundle.ContentPackages = meta.ContentPackages
+
+			# We may not have had changes to our wrefs, but we should still validate
+			# that something weird did not occur with our packages.
+			_validate_package_refs(bundle, meta)
 		elif getattr(bundle, k, None) != getattr(meta, k):
 			modified = True
 			validate_named_field_value(bundle, bundle_iface, str(k), getattr(meta, k))()
-
 
 	if bundle.root != meta.key.__parent__:
 		modified = True
@@ -387,7 +402,6 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 		# TODO: How do we want to handle deletions?
 		# Ideally we want to "archive" the objects somewhere probably
 		# (a special 'archive' subcontainer?)
-
 		if not bundle_meta_keys and self.context:
 			logger.info("Removing all bundles from library %s: %s", self.context, list(self.context))
 			need_event = True
