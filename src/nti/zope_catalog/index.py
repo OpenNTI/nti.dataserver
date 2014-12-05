@@ -161,6 +161,7 @@ class IntegerAttributeIndex(IntegerValueIndex,
 @interface.implementer(IKeywordIndex)
 class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 							  zope.container.contained.Contained):
+	
 	family = BTrees.family64
 
 	def parseQuery(self, query):
@@ -208,6 +209,9 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 	
 	def ids(self):
 		return self._rev_index.keys()
+
+class AttributeKeywordIndex(AttributeIndex, NormalizingKeywordIndex):
+	pass
 
 @interface.implementer(ICatalogIndex) # The superclass forgets this
 class NormalizationWrapper(_ZCApplyMixin,
