@@ -43,6 +43,7 @@ from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
+from nti.zope_catalog.index import AttributeKeywordIndex
 from nti.zope_catalog.string import StringTokenNormalizer
 from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
 
@@ -297,6 +298,24 @@ def LastModifiedIndex(family=None):
 								index=LastModifiedRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
+class RevSharedWith(object):
+	
+	__slots__ = (b'context',)
+
+	def __init__( self, context, default=None):
+		self.context = context
+
+	@property
+	def usernames(self):
+		result = getattr(self.context, 'sharedWith', None)
+		result = None if not result else result
+		return result
+	
+def RevSharedWithIndex(family=None):
+	return AttributeKeywordIndex(field_name='usernames', 
+								 interface=RevSharedWith,
+								 family=family)
+
 IX_TOPICS = 'topics'
 IX_CREATOR = 'creator'
 IX_MIMETYPE = 'mimeType'
@@ -305,6 +324,7 @@ IX_SHAREDWITH = 'sharedWith'
 IX_CONTAINERID = 'containerId'
 IX_CREATEDTIME = 'createdTime'
 IX_LASTMODIFIED = 'lastModified'
+IX_REVSHAREDWITH = 'revSharedWith'
 IX_REPLIES_TO_CREATOR = 'repliesToCreator'
 
 #: The name of the topic/group in the topics index
