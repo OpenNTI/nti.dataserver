@@ -275,7 +275,8 @@ from .dublincore import read_dublincore_from_named_key
 def _validate_package_refs(bundle, meta):
 	try:
 		if 		len( bundle._ContentPackages_wrefs ) == len( meta._ContentPackages_wrefs ) \
-			and len( [x() for x in meta._ContentPackages_wrefs if x() is not None] ) == 0:
+			and len( [x for x in meta._ContentPackages_wrefs if x() is not None] ) == 0 \
+			and bundle.ContentPackages:
 			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
 			raise ValueError( 'A package reference no longer exists in the library. Content issue?' )
 	except AttributeError:
