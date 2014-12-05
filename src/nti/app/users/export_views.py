@@ -8,7 +8,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from urllib import unquote
+import six
 
 import zope.intid
 
@@ -52,6 +52,10 @@ ITEMS = StandardExternalFields.ITEMS
 
 transcript_mime_type = u'application/vnd.nextthought.transcript'
 messageinfo_mime_type =  u'application/vnd.nextthought.messageinfo'
+
+def is_true(value):
+	value = value if isinstance(value, six.string_types) else str(value)
+	return value.lower() in  ('1', 'y', 'yes', 't', 'true')
 
 def parse_mime_types(value):
 	mime_types = set(value.split(',')) if value else ()
@@ -138,7 +142,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 	def __call__(self):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
-		term = values.get('term', values.get('search', None))
+		term = values.get('term') or values.get('search')
 		usernames = values.get('usernames') or values.get('username')
 		if term:
 			usernames = username_search(term)
@@ -147,7 +151,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 		else:
 			usernames = ()
 	
-		mime_types = values.get('mime_types', values.get('mimeTypes', u''))
+		mime_types = values.get('mime_types') or values.get('mimeTypes') or u''
 		mime_types = parse_mime_types(mime_types)
 	
 		total = 0
@@ -227,7 +231,6 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		if not ntiid:
 			raise hexc.HTTPUnprocessableEntity("Must specify a ntiid")
 		
-		ntiid = unquote(ntiid)
 		result = find_object_with_ntiid(ntiid)
 		if result is None:
 			raise hexc.HTTPNotFound()
@@ -245,6 +248,7 @@ class ExportUsersView(AbstractAuthenticatedView):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
 		term = values.get('term') or values.get('search')
+		summary = is_true(values.get('summary') or u'')
 		usernames = values.get('usernames') or values.get('username')
 		if term:
 			usernames = username_search(term)
@@ -252,14 +256,17 @@ class ExportUsersView(AbstractAuthenticatedView):
 			usernames = usernames.split(',')
 		else:
 			dataserver = component.getUtility(IDataserver)
-			_users = IShardLayout(dataserver).users_folder
-			usernames = _users.keys()
+			users_folder = IShardLayout(dataserver).users_folder
+			usernames = users_folder.keys()
 	
 		result = LocatedExternalDict()
 		items = result[ITEMS] = {}
 		for username in usernames:
 			user = User.get_user(username)
 			if user and IUser.providedBy(user):
-				items[user.username] = toExternalObject(user, name='summary')
+				if summary:
+					items[user.username] = toExternalObject(user, name='summary')
+				else:
+					items[user.username] = toExternalObject(user)
 		result['Total'] = len(items)
 		return result
