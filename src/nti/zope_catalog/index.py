@@ -11,39 +11,59 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+import sys
+import collections
+
 from zope import interface
 
 from zope.catalog.field import IFieldIndex
+from zope.catalog.keyword import IKeywordIndex
 from zope.catalog.attribute import AttributeIndex
 from zope.catalog.interfaces import ICatalogIndex
 
 import zope.index.field
+import zope.index.keyword
 import zope.container.contained
 
-import zc.catalog.catalogindex
 import zc.catalog.index
+import zc.catalog.catalogindex
 
 import BTrees
 
 from nti.utils.property import alias
+
+# True if we are running on Python 3.
+PY3 = sys.version_info[0] == 3
+
+if PY3: # pragma: no cover
+	def is_nonstr_iter(v):
+		if isinstance(v, str):
+			return False
+		return hasattr(v, '__iter__')
+else:
+	def is_nonstr_iter(v):
+		return hasattr(v, '__iter__')
+	
+def convertQuery(query):
+	# Convert zope.index style two-tuple (min/max)
+	# query to new-style
+	if isinstance(query, tuple) and len(query) == 2:
+		if query[0] == query[1]:
+			# common case of exact match
+			query = {'any_of': (query[0],)}
+		else:
+			query = {'between': query}
+	return query
 
 class _ZCApplyMixin(object):
 	"""
 	Convert zope.index style two-tuple query to new style.
 	"""
 
-
 	def apply(self, query):
-		# Convert zope.index style two-tuple (min/max)
-		# query to new-style
-		if isinstance(query, tuple) and len(query) == 2:
-			if query[0] == query[1]:
-				# common case of exact match
-				query = {'any_of': (query[0],)}
-			else:
-				query = {'between': query}
+		query = convertQuery(query)
 		return super(_ZCApplyMixin,self).apply(query)
-
 
 class _ZCAbstractIndexMixin(object):
 	"""
@@ -52,10 +72,9 @@ class _ZCAbstractIndexMixin(object):
 	"""
 
 	family = BTrees.family64
+	_num_docs = alias('documentCount')
 	_fwd_index = alias('values_to_documents')
 	_rev_index = alias('documents_to_values')
-	_num_docs = alias('documentCount')
-
 
 @interface.implementer(IFieldIndex)
 class NormalizingFieldIndex(zope.index.field.FieldIndex,
@@ -138,6 +157,57 @@ class IntegerAttributeIndex(IntegerValueIndex,
 	also an attribute index it cannot be used to wrap this class, and your normalizer
 	will have to return an object that has the right attribute.
 	"""
+
+@interface.implementer(IKeywordIndex)
+class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
+							  zope.container.contained.Contained):
+	family = BTrees.family64
+
+	def parseQuery(self, query):
+		if isinstance(query, collections.Mapping):
+			if len(query) > 1:
+				raise ValueError('may only pass one of key, value pair')
+			elif not query:
+				return None, None
+			query_type, query = query.items()[0]
+			query_type = query_type.lower()
+			query = list(query) if is_nonstr_iter(query) else [query]
+		elif isinstance(query, six.string_types):
+			query_type = 'and'
+			query = [query]
+		elif is_nonstr_iter(query):
+			query_type = 'and'
+			query = [x for x in query]
+		else:
+			raise ValueError('Invalid query')
+		
+		query = [x.lower() for x in query if isinstance(x, six.string_types)]
+		if not query:
+			return None, None
+		
+		if query_type in ('any_of', 'any'):
+			query_type = 'or'	
+		return query_type, query
+	
+	def apply(self, query): # any_of, any, between, none,
+		query = convertQuery(query)
+		query_type, query = self.parseQuery(query)
+		if query_type is None:
+			res = self.family.IF.Set()
+		elif query_type in ('or', 'and'):
+			res = super(NormalizingKeywordIndex,self).apply(query, operator=query_type)
+		elif query_type in ('between'):
+			query = list(self._fwd_index.iterkeys(query[0], query[1]))
+			res = super(NormalizingKeywordIndex,self).apply(query, operator='or')
+		elif query_type == 'none':
+			assert zc.catalog.interfaces.IExtent.providedBy(query)
+			res = query - self.family.IF.Set(self.ids())
+		else:
+			raise ValueError("unknown query type", query_type)
+		return res
+	
+	def ids(self):
+		return self._rev_index.keys()
 
 @interface.implementer(ICatalogIndex) # The superclass forgets this
 class NormalizationWrapper(_ZCApplyMixin,
