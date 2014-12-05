@@ -20,5 +20,3 @@ class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	be added to catalogs when created or modified events
 	fire.
 	"""
-
-
