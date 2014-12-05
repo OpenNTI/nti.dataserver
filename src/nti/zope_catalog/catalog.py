@@ -12,9 +12,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope.catalog.catalog import Catalog as _ZCatalog
-from .interfaces import INoAutoIndex
 
 from ZODB.POSException import POSKeyError
+
+from .interfaces import INoAutoIndex
 
 class Catalog(_ZCatalog):
 	"""
@@ -43,10 +44,10 @@ class Catalog(_ZCatalog):
 	# we may get TypeError: __setstate__() takes exactly 2 arguments (1 given)
 	# error or creator cannot be resolved (if a user has been deleted)
 	# catch and continue
-	_PERSISTENCE_EXCEPTIONS = (POSKeyError,TypeError)
+	_PERSISTENCE_EXCEPTIONS = (POSKeyError, TypeError)
 
 	# disable warning about different number of arguments than superclass
-	#pylint: disable=I0011,W0221
+	# pylint: disable=I0011,W0221
 	def updateIndex(self, index, ignore_persistence_exceptions=True):
 		to_catch = self._PERSISTENCE_EXCEPTIONS if ignore_persistence_exceptions else ()
 		for uid, obj in self._visitSublocations():
@@ -64,5 +65,3 @@ class Catalog(_ZCatalog):
 					index.index_doc(uid, obj)
 				except to_catch as e:
 					logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
-
-

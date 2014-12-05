@@ -11,23 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+from pytz import UTC
+from datetime import datetime
+
 from zope import interface
 
 from zc.catalog.interfaces import INormalizer
+from zc.catalog.index import DateTimeNormalizer
+
+from persistent import Persistent
 
 from nti.zodb.containers import time_to_64bit_int
 from nti.zodb.containers import bit64_int_to_time
-from persistent import Persistent
-
-from pytz import UTC
-from datetime import datetime
-import time
-
-from zc.catalog.index import DateTimeNormalizer
 
 from nti.utils.property import CachedProperty
 
 class _AbstractNormalizerMixin(object):
+
 	def any(self, value, index):
 		return self.value(value),
 
@@ -59,8 +60,7 @@ class TimestampTo64BitIntNormalizer(_AbstractNormalizerMixin):
 		return bit64_int_to_time(value)
 
 @interface.implementer(INormalizer)
-class TimestampNormalizer(Persistent,
-						  _AbstractNormalizerMixin):
+class TimestampNormalizer(Persistent, _AbstractNormalizerMixin):
 	"""
 	Normalizes incoming Unix timestamps to have a set
 	resolution, by default minutes.
@@ -98,8 +98,7 @@ class TimestampNormalizer(Persistent,
 	# because we don't do these kind of searches with this index...?
 
 @interface.implementer(INormalizer)
-class TimestampToNormalized64BitIntNormalizer(Persistent,
-											  _AbstractNormalizerMixin):
+class TimestampToNormalized64BitIntNormalizer(Persistent, _AbstractNormalizerMixin):
 	"""
 	Normalizes incoming Unix timestamps to have a set resolution,
 	by default minutes, and then converts them to integers
