@@ -400,7 +400,6 @@ def account_preflight_view(request):
 		# is an email.
 		externalValue['email'] = externalValue['Username']
 
-	from IPython.core.debugger import Tracer; Tracer()()
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 	ext_schema = _AccountCreationProfileSchemafier( preflight_user, readonly_override=False ).make_schema()
 
