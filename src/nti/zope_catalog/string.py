@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
 
 from zc.catalog.interfaces import INormalizer
@@ -30,7 +29,6 @@ class StringTokenNormalizer(_AbstractNormalizerMixin):
 	def value(self, value):
 		if value is None:
 			return
-
 		if isinstance(value, bytes):
 			value = value.decode('utf-8')
 		return value.lower().strip()
