@@ -7,7 +7,7 @@ Creating an account is expected to be carried out in an asynchronous,
 XHR based fashion involving no redirects. Contrast this with the logon
 process, where there are page redirects happening frequently.
 
-$Id$
+.. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
@@ -33,18 +33,22 @@ from pyramid.view import view_config
 import nti.appserver.httpexceptions as hexc
 
 from nti.appserver.policies import site_policies
-from nti.appserver import interfaces as app_interfaces
 from nti.appserver._util import logon_user_with_request
 
-from nti.appserver.link_providers import flag_link_provider
-from nti.appserver.invitations.utility import accept_invitations
-from nti.appserver.invitations import interfaces as invite_interfaces
-from nti.appserver.link_providers import interfaces as link_interfaces
+from nti.appserver.interfaces import IUserUpgradedEvent
+from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
-from nti.app.externalization.error import raise_json_error as _raise_error
-from nti.app.externalization.error import handle_validation_error
-from nti.app.externalization.error import handle_possible_validation_error
+from nti.appserver.invitations.utility import accept_invitations
+from nti.appserver.invitations.interfaces import InvitationValidationError
+
+from nti.appserver.link_providers import flag_link_provider
+from nti.appserver.link_providers.interfaces import IFlagLinkRemovedEvent
+
 from nti.app.externalization import internalization as obj_io
+
+from nti.app.externalization.error import handle_validation_error
+from nti.app.externalization.error import raise_json_error as _raise_error
+from nti.app.externalization.error import handle_possible_validation_error
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
@@ -167,9 +171,17 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						   'code': e.__class__.__name__},
 						exc_info[2] )
 		handle_validation_error( request, e )
-	except invite_interfaces.InvitationValidationError as e:
+	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error( request, e )
+	except BlacklistedUsernameError as e:
+		exc_info = sys.exc_info()
+		_raise_error( request,
+					  hexc.HTTPUnprocessableEntity,
+					  {'field': 'Username',
+					   'message': _('That username is not available. Please choose another.'),
+					   'code': 'BlacklistedUsernameError'},
+					   exc_info[2] )
 	except InvalidValue as e:
 		if e.value is _PLACEHOLDER_USERNAME:
 			# Not quite sure what the conflict actually was, but at least we know
@@ -203,14 +215,6 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 		# Hmm. This is a serious type of KeyError, one unexpected
 		# it deserves a 500
 		raise
-	except BlacklistedUsernameError as e:
-		exc_info = sys.exc_info()
-		_raise_error( request,
-					  hexc.HTTPConflict,
-					  {'field': 'Username',
-					   'message': _('That username is not available. Please choose another.'),
-					   'code': 'BlacklistedUsernameError'},
-					   exc_info[2] )
 	except KeyError as e:
 		# Sadly, key errors can be several things, not necessarily just
 		# usernames. It's hard to tell them apart though
@@ -224,7 +228,6 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 					   exc_info[2] )
 	except Exception as e:
 		handle_possible_validation_error( request, e )
-
 
 from zope.container.contained import Contained
 
@@ -307,7 +310,7 @@ def account_create_view(request):
 
 	request.response.location = request.resource_url( new_user )
 	logger.debug( "Notifying of creation of new user %s", new_user )
-	notify( app_interfaces.UserCreatedWithRequestEvent( new_user, request ) )
+	notify(UserCreatedWithRequestEvent( new_user, request ) )
 	logon_user_with_request( new_user, request, request.response )
 
 	# Ensure the user is rendered his full profile;
@@ -397,7 +400,7 @@ def account_preflight_view(request):
 		# is an email.
 		externalValue['email'] = externalValue['Username']
 
-
+	from IPython.core.debugger import Tracer; Tracer()()
 	preflight_user = _create_user( request, externalValue, preflight_only=True )
 	ext_schema = _AccountCreationProfileSchemafier( preflight_user, readonly_override=False ).make_schema()
 
@@ -456,7 +459,7 @@ def accept_invitations_on_user_creation(user, event):
 		accept_invitations( user, invite_codes )
 
 
-@component.adapter(IUser, app_interfaces.IUserUpgradedEvent)
+@component.adapter(IUser, IUserUpgradedEvent)
 def request_profile_update_on_user_upgrade(user, event):
 	"""
 	When we get the event that a user has upgraded from one account type
@@ -469,7 +472,7 @@ def request_profile_update_on_user_upgrade(user, event):
 	# is updated
 	interface.alsoProvides( user, IRequireProfileUpdate )
 
-@component.adapter(IRequireProfileUpdate, link_interfaces.IFlagLinkRemovedEvent)
+@component.adapter(IRequireProfileUpdate, IFlagLinkRemovedEvent)
 def link_removed_on_user(user,event):
 	if event.link_name == REL_ACCOUNT_PROFILE_UPGRADE:
 		# If they clear the flag without resetting the profile, take that
