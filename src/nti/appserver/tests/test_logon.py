@@ -231,23 +231,25 @@ class TestLogonViews(ApplicationLayerTest):
 	# 	library = FileLibrary( os.path.join( os.path.dirname(__file__), 'ExLibrary' ) )
 	# 	component.provideUtility( library, lib_interfaces.IContentPackageLibrary )
 
+	def _get_link_by_rel(self, links, rel_name):
+		return next( (x for x in links if x.rel == rel_name) )
+
 	@WithMockDSTrans
 	def test_unathenticated_ping(self):
-		#"An unauthenticated ping returns one link, to the handshake."
-
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to(6) ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-2].target, ends_with( '/dataserver2/logon.handshake' ) )
-		assert_that( result.links[0].target, ends_with( '/dataserver2/account.create') )
-		assert_that( result.links[0].target_mime_type, is_( 'application/vnd.nextthought.user' ) )
+
+		handshake_link = self._get_link_by_rel( result.links, 'logon.handshake' )
+		create_link = self._get_link_by_rel( result.links, 'account.create' )
+		assert_that( handshake_link.target, ends_with( '/dataserver2/logon.handshake' ) )
+		assert_that( create_link.target, ends_with( '/dataserver2/account.create') )
+		assert_that( create_link.target_mime_type, is_( 'application/vnd.nextthought.user' ) )
 		to_external_representation( result, EXT_FORMAT_JSON, name='wsgi' )
 
 
 	@WithMockDSTrans
 	def test_authenticated_ping(self):
-		#"An authenticated ping returns two links, to the handshake and the root"
-
 		user = users.User.create_user( dataserver=self.ds, username='jason.madden@nextthought.com' )
 		class Policy(object):
 			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
@@ -256,9 +258,7 @@ class TestLogonViews(ApplicationLayerTest):
 			def effective_principals(self, request):
 				return [user]
 
-
 		get_current_request().registry.registerUtility( Policy() )
-
 
 		result = ping( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
@@ -300,11 +300,15 @@ class TestLogonViews(ApplicationLayerTest):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-3].target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( result.links[-3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[-3].target, contains_string( 'oidcsum=1290829754' ) )
 
-		assert_that( result.links[-6].target, is_( '/dataserver2/logon.facebook1?username=jason.madden%40nextthought.com' ) )
+		google_link = self._get_link_by_rel( result.links, 'logon.google' )
+		assert_that( google_link, not_none() )
+		assert_that( google_link.target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( google_link.target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( google_link.target, contains_string( 'oidcsum=1290829754' ) )
+
+		facebook_link = self._get_link_by_rel( result.links, 'logon.facebook' )
+		assert_that( facebook_link.target, is_( '/dataserver2/logon.facebook1?username=jason.madden%40nextthought.com' ) )
 		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
 		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
@@ -328,10 +332,13 @@ class TestLogonViews(ApplicationLayerTest):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to(7) ) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.nti.password?' ) )
-		assert_that( result.links[-3].target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( result.links[-3].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[-3].target, contains_string( 'oidcsum=1290829754' ) )
+
+		pw_link = self._get_link_by_rel( result.links, 'logon.nti.password' )
+		google_link = self._get_link_by_rel( result.links, 'logon.google' )
+		assert_that( pw_link.target, contains_string( '/dataserver2/logon.nti.password?' ) )
+		assert_that( google_link.target, contains_string( '/dataserver2/logon.google?') )
+		assert_that( google_link.target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( google_link.target, contains_string( 'oidcsum=1290829754' ) )
 
 
 		# Give us a specific identity_url, and that changes to open id
@@ -341,11 +348,14 @@ class TestLogonViews(ApplicationLayerTest):
 		result = handshake( get_current_request() )
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to(7)) ) )
 		__traceback_info__ = result.links
-		assert_that( result.links[-3].target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[-2].target, contains_string( '/dataserver2/logon.openid?') )
-		assert_that( result.links[-2].target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( result.links[-2].target, contains_string( 'oidcsum=1290829754' ) )
-		assert_that( result.links[-2].target, contains_string( 'openid=http' ) )
+
+		pw_link = self._get_link_by_rel( result.links, 'logon.nti.password' )
+		openid_link = self._get_link_by_rel( result.links, 'logon.openid' )
+		assert_that( pw_link.target, is_( '/dataserver2/logon.nti.password?username=jason.madden%40nextthought.com' ) )
+		assert_that( openid_link.target, contains_string( '/dataserver2/logon.openid?') )
+		assert_that( openid_link.target, contains_string( 'username=jason.madden%40nextthought.com' ) )
+		assert_that( openid_link.target, contains_string( 'oidcsum=1290829754' ) )
+		assert_that( openid_link.target, contains_string( 'openid=http' ) )
 
 	def test_openid_login( self ):
 		fail = google_login( None, get_current_request() )
