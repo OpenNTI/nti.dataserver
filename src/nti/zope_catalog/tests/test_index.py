@@ -71,8 +71,8 @@ class TestNormalizingKeywordIndex(unittest.TestCase):
 		res = self.index.apply({'any_of': ('aizen','kuchiki')})
 		assert_that(res, has_length(2))
 		
-		res = self.index.apply({'any': ('aizen','ichigo')})
-		assert_that(res, has_length(2))
+		res = self.index.apply({'any': None})
+		assert_that(res, has_length(4))
 		
 		res = self.index.apply({'all': ('aizen','ichigo')})
 		assert_that(res, has_length(0))
