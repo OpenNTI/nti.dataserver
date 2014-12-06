@@ -89,6 +89,9 @@ class TestNormalizingKeywordIndex(unittest.TestCase):
 		res = self.index.apply(['rukia'])
 		assert_that(res, has_length(0))
 		
+		res = self.index.apply([1,2,3])
+		assert_that(res, has_length(0))
+		
 class TestCaseInsensitiveAttributeIndex(unittest.TestCase):
 
 	field = 'VALUE'
