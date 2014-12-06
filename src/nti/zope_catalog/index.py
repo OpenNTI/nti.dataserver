@@ -166,28 +166,34 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 
 	def parseQuery(self, query):
 		if isinstance(query, collections.Mapping):
-			if len(query) > 1:
+			if 'query' in query: # support legacy 
+				query_type = query.get('operator') or 'and'
+				query = query['query']
+				query = list(query) if is_nonstr_iter(query) else [query]
+			elif len(query) > 1:
 				raise ValueError('may only pass one of key, value pair')
 			elif not query:
 				return None, None
-			query_type, query = query.items()[0]
-			query_type = query_type.lower()
-			query = list(query) if is_nonstr_iter(query) else [query]
+			else:
+				query_type, query = query.items()[0]
+				query_type = query_type.lower()
+				query = list(query) if is_nonstr_iter(query) else [query]
 		elif isinstance(query, six.string_types):
 			query_type = 'and'
 			query = [query]
 		elif is_nonstr_iter(query):
 			query_type = 'and'
-			query = [x for x in query]
 		else:
 			raise ValueError('Invalid query')
 		
-		query = [x.lower() for x in query if isinstance(x, six.string_types)]
+		# make sure we have a query valid array
+		query = [x for x in query if isinstance(x, six.string_types)]
 		if not query:
-			return None, None
-		
+			return None, None	
 		if query_type in ('any_of', 'any'):
 			query_type = 'or'	
+		elif query_type in ('all'):
+			query_type = 'and'
 		return query_type, query
 	
 	def apply(self, query): # any_of, any, between, none,
@@ -196,10 +202,10 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 		if query_type is None:
 			res = self.family.IF.Set()
 		elif query_type in ('or', 'and'):
-			res = super(NormalizingKeywordIndex,self).apply(query, operator=query_type)
+			res = super(NormalizingKeywordIndex,self).search(query, operator=query_type)
 		elif query_type in ('between'):
 			query = list(self._fwd_index.iterkeys(query[0], query[1]))
-			res = super(NormalizingKeywordIndex,self).apply(query, operator='or')
+			res = super(NormalizingKeywordIndex,self).search(query, operator='or')
 		elif query_type == 'none':
 			assert zc.catalog.interfaces.IExtent.providedBy(query)
 			res = query - self.family.IF.Set(self.ids())
