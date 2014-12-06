@@ -371,6 +371,7 @@ def install_metadata_catalog( site_manager_container, intids=None ):
 						 (IX_SHAREDWITH, SharedWithIndex),
 						 (IX_REPLIES_TO_CREATOR, CreatorOfInReplyToIndex),
 						 (IX_TAGGEDTO, TaggedToIndex),
+						 (IX_REVSHAREDWITH, RevSharedWithIndex)
 						 (IX_TOPICS, TopicIndex)):
 		index = clazz( family=intids.family )
 		assert ICatalogIndex.providedBy(index)
