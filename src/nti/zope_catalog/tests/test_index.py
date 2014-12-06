@@ -1,36 +1,94 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from hamcrest import is_
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
 
 import unittest
-from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_property
-from hamcrest import calling
-from hamcrest import raises
-from hamcrest import contains
-
-from nti.testing import base
-from nti.testing import matchers
 
 import BTrees
 
-from ..index import CaseInsensitiveAttributeFieldIndex
-from ..index import IntegerAttributeIndex
+from nti.zope_catalog.index import IntegerAttributeIndex
+from nti.zope_catalog.index import NormalizingKeywordIndex
+from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex
 
+family = BTrees.family64
+
+class TestNormalizingKeywordIndex(unittest.TestCase):
+
+	field = 'VALUE'
+
+	def setUp(self):
+		super(TestNormalizingKeywordIndex,self).setUp()
+		self.index = NormalizingKeywordIndex()
+
+	def test_family(self):
+		assert_that( self.index, has_property('family', family) )
+
+	def test_ids(self):
+		self.index.index_doc( 1, ('aizen',))
+		self.index.index_doc( 2, ['ichigo'])
+		self.index.index_doc( 3, ['Kuchiki', 'rukia'])
+		ids = sorted(list(self.index.ids()))
+		assert_that(ids, is_([1,2,3]))
+		
+	def test_apply(self):
+		self.index.index_doc( 1, ('aizen',))
+		self.index.index_doc( 2, ['ichigo'])
+		self.index.index_doc( 3, ['Kuchiki'])
+		self.index.index_doc( 4, ['renji', 'zaraki'])
+		
+		res = self.index.apply({'query':['ichigo']})
+		assert_that(res, has_length(1))
+		assert_that(res, contains(2))
+		
+		res = self.index.apply({'query':'kuchiki'})
+		assert_that(res, has_length(1))
+		assert_that(res, contains(3))
+		
+		res = self.index.apply({'query':['aizen','kuchiki'], 'operator':'or'})
+		assert_that(res, has_length(2))
+		
+		res = self.index.apply({'query':['aizen','kuchiki'], 'operator':'and'})
+		assert_that(res, has_length(0))
+		
+		res = self.index.apply('aizen')
+		assert_that(res, has_length(1))
+		assert_that(res, contains(1))
+		
+		res = self.index.apply({'any_of': ('aizen','kuchiki')})
+		assert_that(res, has_length(2))
+		
+		res = self.index.apply({'any': ('aizen','ichigo')})
+		assert_that(res, has_length(2))
+		
+		res = self.index.apply({'all': ('aizen','ichigo')})
+		assert_that(res, has_length(0))
+		
+		res = self.index.apply({'all': ('zaraki','renji')})
+		assert_that(res, has_length(1))
+		
+		res = self.index.apply({'between': ('a','z')})
+		assert_that(res, has_length(4))
+				
+		res = self.index.apply({'between': ('r','z')})
+		assert_that(res, has_length(1))
+		
+		res = self.index.apply(['rukia'])
+		assert_that(res, has_length(0))
+		
 class TestCaseInsensitiveAttributeIndex(unittest.TestCase):
 
 	field = 'VALUE'
@@ -40,13 +98,11 @@ class TestCaseInsensitiveAttributeIndex(unittest.TestCase):
 		self.index = CaseInsensitiveAttributeFieldIndex('field')
 
 	def test_family(self):
-		assert_that( self.index, has_property('family',
-											  BTrees.family64) )
+		assert_that( self.index, has_property('family', family) )
 
 	def test_noramlize_on_index(self):
 		self.index.index_doc( 1, self)
 		assert_that( self.index._fwd_index, has_key('value'))
-
 
 class TestIntegerAttributeIndex(unittest.TestCase):
 
@@ -57,12 +113,11 @@ class TestIntegerAttributeIndex(unittest.TestCase):
 		self.index = IntegerAttributeIndex('field')
 
 	def test_family(self):
-		assert_that( self.index, has_property('family',
-											  BTrees.family64) )
+		assert_that( self.index, has_property('family', family) )
 		assert_that( self.index, has_property('_rev_index',
-											  is_(BTrees.family64.II.BTree)))
+											  is_(family.II.BTree)))
 		assert_that( self.index, has_property('_fwd_index',
-											  is_(BTrees.family64.IO.BTree)))
+											  is_(family.IO.BTree)))
 
 	def test_index_wrong_value(self):
 		self.field = 'str'
