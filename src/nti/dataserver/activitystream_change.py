@@ -182,15 +182,15 @@ class Change(PersistentCreatedModDateTrackingObject):
 		"""
 		yield self.object
 
-	@property
-	def sharedWith(self):
-		"""
-		for indexing purposes we want to get the underlying object 'sharedWith' property
-		"""
-		try:
-			return getattr(self.object, 'sharedWith', None)
-		except POSError:
-			pass
+	def _get_sharedWith( self ):
+		sharedWith = self.__dict__.get('sharedWith')
+		if not sharedWith:
+			sharedWith = getattr(self.object, 'sharedWith', None)
+		return sharedWith
+	def _set_sharedWith(self, sharedWith):
+		if sharedWith:
+			self.__dict__[str('sharedWith')] = sharedWith
+	sharedWith = property(_get_sharedWith,_set_sharedWith)
 	
 	def is_object_shareable(self):
 		"""
