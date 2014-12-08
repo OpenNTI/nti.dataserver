@@ -5,6 +5,7 @@ Functions and architecture for general activity streams.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,19 +19,31 @@ from zope.interface.declarations import ObjectSpecificationDescriptor
 
 from ZODB.POSException import POSError
 
-from nti.mimetype import mimetype
-from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
-from .interfaces import IUseNTIIDAsExternalUsername
 from nti.dataserver.authorization_acl import ACL
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.externalization.oids import toExternalOID
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.wref import interfaces as wref_interfaces
+
+from .interfaces import SC_SHARED
+from .interfaces import SC_CREATED
+from .interfaces import SC_CIRCLED
+from .interfaces import SC_DELETED
+from .interfaces import SC_MODIFIED
+from .interfaces import SC_CHANGE_TYPE_MAP
+
+from .interfaces import IContained
+from .interfaces import IZContained
+from .interfaces import IStreamChangeEvent
+from .interfaces import INeverStoredInSharedStream
+from .interfaces import IUseNTIIDAsExternalUsername
 
 def _weak_ref_to( obj ):
 	try:
@@ -42,14 +55,12 @@ class _DynamicChangeTypeProvidedBy(ObjectSpecificationDescriptor):
 	def __get__(self, inst, cls):
 		result = ObjectSpecificationDescriptor.__get__(self, inst, cls)
 
-		if inst is not None and inst.type in nti_interfaces.SC_CHANGE_TYPE_MAP:
-			result = result + nti_interfaces.SC_CHANGE_TYPE_MAP[inst.type]
+		if inst is not None and inst.type in SC_CHANGE_TYPE_MAP:
+			result = result + SC_CHANGE_TYPE_MAP[inst.type]
 		return result
 
-
-@interface.implementer(nti_interfaces.IStreamChangeEvent,
-					   nti_interfaces.IZContained)
-class Change(datastructures.PersistentCreatedModDateTrackingObject):
+@interface.implementer(IStreamChangeEvent, IZContained)
+class Change(PersistentCreatedModDateTrackingObject):
 	"""
 	A change notification. For convenience, it acts like a
 	Contained object if the underlying object was Contained.
@@ -68,15 +79,14 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	and go across different sites or configurations.
 	"""
 
-	mimeType = mimetype.nti_mimetype_with_class( b'Change' )
-	mime_type = mimeType
+	mime_type = mimeType = nti_mimetype_with_class(b'Change')
 	parameters = {} # immutable
 
-	CREATED  = nti_interfaces.SC_CREATED
-	MODIFIED = nti_interfaces.SC_MODIFIED
-	DELETED  = nti_interfaces.SC_DELETED
-	SHARED   = nti_interfaces.SC_SHARED
-	CIRCLED  = nti_interfaces.SC_CIRCLED
+	SHARED   = SC_SHARED
+	CREATED  = SC_CREATED
+	CIRCLED  = SC_CIRCLED
+	DELETED  = SC_DELETED
+	MODIFIED = SC_MODIFIED
 
 	#: If set to `True` (not the default) then when this object
 	#: is externalized, the externalizer named "summary" will
@@ -92,14 +102,18 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 	#: that if you assign to this property it must be a valid persistent
 	#: object, such as a module global.
 	externalObjectTransformationHook = None
+	
 	# JAM: I'm not quite happy with the above. it's convenient, but is it
 	# the best abstraction?
 
-	object_is_shareable = property( lambda self: self.__dict__.get('_v_object_is_shareable', None),
-									lambda self, val: setitem( self.__dict__, '_v_object_is_shareable', val ) )
+	object_is_shareable = \
+		property(lambda self: self.__dict__.get('_v_object_is_shareable', None),
+				 lambda self, val: setitem( self.__dict__, '_v_object_is_shareable', val ) )
+		
 	# FIXME: So badly wrong at this level
-	send_change_notice = property(  lambda self: self.__dict__.get('_v_send_change_notice', True), # default to true
-									lambda self, val: setitem( self.__dict__, '_v_send_change_notice', val ) )
+	send_change_notice = \
+		property(lambda self: self.__dict__.get('_v_send_change_notice', True), # default to true
+				 lambda self, val: setitem( self.__dict__, '_v_send_change_notice', val ) )
 
 	__name__ = None
 	__parent__ = None
@@ -127,7 +141,7 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 				setattr( self, str(k), v ) # ensure native string in dict
 
 		if self.id and self.containerId:
-			interface.alsoProvides( self, nti_interfaces.IContained )
+			interface.alsoProvides( self, IContained )
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
@@ -185,19 +199,20 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		if self.object_is_shareable is not None:
 			return self.object_is_shareable
 
-		result = not nti_interfaces.INeverStoredInSharedStream.providedBy( self.object )
+		result = not INeverStoredInSharedStream.providedBy( self.object )
 		# We assume this won't change for the lifetime of the object
 		self.object_is_shareable = result
 		return result
 
 	def __repr__(self):
 		try:
-			return "%s('%s',%s)" % (self.__class__.__name__, self.type, self.object.__class__.__name__)
-		except (POSError,AttributeError):
+			return "%s('%s',%s)" % (self.__class__.__name__, self.type, 
+									self.object.__class__.__name__)
+		except (POSError, AttributeError):
 			return object.__repr__( self )
 
-@interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(nti_interfaces.IStreamChangeEvent)
+@interface.implementer(IExternalObject)
+@component.adapter(IStreamChangeEvent)
 class _ChangeExternalObject(object):
 
 	def __init__( self, change ):
@@ -216,7 +231,6 @@ class _ChangeExternalObject(object):
 		result[StandardExternalFields.CLASS] = 'Change'
 		result[StandardExternalFields.MIMETYPE] = Change.mimeType
 
-
 		result[StandardExternalFields.LAST_MODIFIED] = change.lastModified
 		result[StandardExternalFields.CREATOR] = None
 		change_creator = change.creator
@@ -232,9 +246,8 @@ class _ChangeExternalObject(object):
 		result[StandardExternalFields.ID] = change.id or None
 		# OIDs must be unique
 		result[StandardExternalFields.OID] = toExternalOID( change )
-		#if result['OID'] is None:
-		#	del result['OID']
 		result['Item'] = None
 		if wrapping is not None:
-			result['Item'] = toExternalObject( wrapping, name=('summary' if change.useSummaryExternalObject else ''), **kwargs )
+			name = ('summary' if change.useSummaryExternalObject else '')
+			result['Item'] = toExternalObject( wrapping, name=name, **kwargs )
 		return result
