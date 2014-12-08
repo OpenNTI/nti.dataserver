@@ -94,8 +94,9 @@ def effective_principals( username,
 		# Make the domain portion of the username available as a group
 		# TODO: Prefix this, like we do with roles?
 		domain = username.split( '@', 1 )[-1]
-		result.add( domain )
-		result.add( nti_interfaces.IPrincipal( domain ) )
+		if domain:
+			result.add( domain )
+			result.add( nti_interfaces.IPrincipal( domain ) )
 
 	if request is not None:
 		if not hasattr(request, '_v_nti_ds_authentication_eff_prin_cache'):
