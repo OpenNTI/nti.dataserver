@@ -44,6 +44,31 @@ class TestNormalizingKeywordIndex(unittest.TestCase):
 		ids = sorted(list(self.index.ids()))
 		assert_that(ids, is_([1,2,3]))
 		
+	def test_remove_words(self):
+		self.index.index_doc( 1, ('aizen',))
+		self.index.index_doc( 2, ['ichigo'])
+		self.index.index_doc( 3, ['Kuchiki', 'rukia'])
+		assert_that(self.index.documentCount(), is_(3))
+		assert_that(self.index.wordCount(), is_(4))
+		
+		self.index.remove_words(('aizen',))
+		ids = sorted(list(self.index.ids()))
+		assert_that(ids, is_([2,3]))
+		assert_that(self.index.documentCount(), is_(2))
+		assert_that(self.index.wordCount(), is_(3))
+		
+		self.index.remove_words(('rukia',))
+		ids = sorted(list(self.index.ids()))
+		assert_that(ids, is_([2,3]))
+		assert_that(self.index.documentCount(), is_(2))
+		assert_that(self.index.wordCount(), is_(2))
+		
+		self.index.remove_words(('Kuchiki',))
+		ids = sorted(list(self.index.ids()))
+		assert_that(ids, is_([2]))
+		assert_that(self.index.documentCount(), is_(1))
+		assert_that(self.index.wordCount(), is_(1))
+
 	def test_apply(self):
 		self.index.index_doc( 1, ('aizen',))
 		self.index.index_doc( 2, ['ichigo'])

@@ -28,3 +28,8 @@ class IKeywordIndex(zope.catalog.keyword.IKeywordIndex):
 		"""
 		return the docids in this Index
 		"""
+		
+	def remove_words(*words):
+		"""
+		remove the specified sequence of words
+		"""
