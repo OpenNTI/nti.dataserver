@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import zope.catalog.keyword
 from zope.catalog.interfaces import INoAutoIndex
 from zope.catalog.interfaces import INoAutoReindex
 
@@ -20,3 +21,10 @@ class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	be added to catalogs when created or modified events
 	fire.
 	"""
+
+class IKeywordIndex(zope.catalog.keyword.IKeywordIndex):
+	
+	def ids():
+		"""
+		return the docids in this Index
+		"""

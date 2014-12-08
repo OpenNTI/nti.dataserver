@@ -18,7 +18,6 @@ import collections
 from zope import interface
 
 from zope.catalog.field import IFieldIndex
-from zope.catalog.keyword import IKeywordIndex
 from zope.catalog.attribute import AttributeIndex
 from zope.catalog.interfaces import ICatalogIndex
 
@@ -32,6 +31,8 @@ import zc.catalog.catalogindex
 import BTrees
 
 from nti.utils.property import alias
+
+from .interfaces import IKeywordIndex
 
 # True if we are running on Python 3.
 PY3 = sys.version_info[0] == 3
