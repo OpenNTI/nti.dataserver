@@ -17,6 +17,8 @@ from zope import interface
 from zope import component
 from zope.interface.declarations import ObjectSpecificationDescriptor
 
+from zope.security.interfaces import IPrincipal
+
 from ZODB.POSException import POSError
 
 from nti.dataserver.authorization_acl import ACL
@@ -192,6 +194,25 @@ class Change(PersistentCreatedModDateTrackingObject):
 			self.__dict__[str('sharedWith')] = sharedWith
 	sharedWith = property(_get_sharedWith,_set_sharedWith)
 	
+	def hasSharedWith(self):
+		return 'sharedWith' in self.__dict__
+
+	def isSharedDirectlyWith(self, principal):
+		"""
+		Test if the principal is directly shared with this Change object
+		"""
+		principal = IPrincipal(principal)
+		sharedWith = self.__dict__.get('sharedWith') or ()
+		return principal.id in sharedWith
+		
+	def isSharedIndirectlyWith(self, principal):
+		"""
+		Test if the principal is in the underlying's object sharedWith attribute
+		"""
+		principal = IPrincipal(principal)
+		sharedWith = getattr(self.object, 'sharedWith', None) or ()			
+		return principal.id in sharedWith
+		
 	def is_object_shareable(self):
 		"""
 		Returns true if the object is supposed to be copied into local shared data.
