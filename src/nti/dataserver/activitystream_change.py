@@ -168,6 +168,16 @@ class Change(datastructures.PersistentCreatedModDateTrackingObject):
 		"""
 		yield self.object
 
+	@property
+	def sharedWith(self):
+		"""
+		for indexing purposes we want to get the underlying object 'sharedWith' property
+		"""
+		try:
+			return getattr(self.object, 'sharedWith', None)
+		except POSError:
+			pass
+	
 	def is_object_shareable(self):
 		"""
 		Returns true if the object is supposed to be copied into local shared data.
