@@ -222,6 +222,25 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 	
 	def ids(self):
 		return self._rev_index.keys()
+	
+	def remove_words(self, *seq):
+		seq = self.normalize(*seq)
+		for word in seq:
+			try:
+				docids = self._fwd_index[word]
+				del self._fwd_index[word]
+				for docid in docids:
+					s = self._rev_index[docid]
+					try:
+						s.remove(word)
+						if not s:
+							del self._rev_index[docid]
+							self._num_docs.change(-1)
+					except KeyError:
+						pass
+			except KeyError:
+				pass
+	removeWords = remove_words
 
 class AttributeKeywordIndex(AttributeIndex, NormalizingKeywordIndex):
 	pass
