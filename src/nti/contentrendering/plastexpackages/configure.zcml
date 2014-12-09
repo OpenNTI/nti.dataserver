@@ -12,6 +12,7 @@
 
 	<utility component=".nticourse" name="nticourse" />
 	<utility component=".ntilatexmacros" name="ntilatexmacros" />
+	<utility component=".ntitimeline" name="ntitimeline" />
 
 	<include package=".extractors" file="configure.zcml" />
 			 
@@ -63,6 +64,10 @@
 
 	<adapter factory=".adapters._RelatedWorkRefJSONTransformer"
 			 for="nti.contentrendering.plastexpackages.ntilatexmacros.relatedworkref"
+			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
+
+	<adapter factory=".adapters._TimelineJSONTransformer"
+			 for="nti.contentrendering.plastexpackages.ntitimeline.ntitimeline"
 			 provides="nti.contentrendering.interfaces.IJSONTransformer" />
 
 </configure>

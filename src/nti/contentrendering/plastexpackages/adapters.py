@@ -138,3 +138,24 @@ class _RelatedWorkRefJSONTransformer(object):
 		output['visibility'] = self.el.visibility
 		return output
 
+@interface.implementer(IJSONTransformer)
+class _TimelineJSONTransformer(object):
+
+	def __init__(self, element):
+		self.el = element
+
+	def transform(self):
+		output = {}
+		output['desc'] = _render_children( self.el.renderer, self.el.description)
+		output['href'] = self.el.uri
+		output['MimeType'] = self.el.mime_type
+		output['icon'] = self.el.icon.image.url
+		output['label'] = _render_children(self.el.renderer, self.el.title)
+		output['NTIID'] = self.el.ntiid
+		output['suggested-inline'] = self.el.suggested_inline
+		if self.el.suggested_height:
+			output['suggested-height'] = self.el.suggested_height
+		if self.el.suggested_width:
+			output['suggested-width'] = self.el.suggested_width
+		return output
+

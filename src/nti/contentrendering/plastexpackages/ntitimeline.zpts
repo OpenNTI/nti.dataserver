@@ -1,0 +1,16 @@
+# -*- mode: html -*-
+
+name: ntitimeline
+<object class="ntitimeline">
+	<param name="MimeType" value="MIME type" tal:attributes="value self/mime_type" />
+	<param name="icon" value="icon" tal:attributes="value self/icon/image/url" />
+	<param name="label" value="Timeline title" tal:attributes="value self/title" />
+	<param name="NTIID" value="NTIID" tal:attributes="value self/ntiid" />
+	<param name="desc" value="Timeline description" tal:attributes="value self/description" />
+	<param name="href" value="Timeline uri" tal:attributes="value self/uri" />
+	<param name="suggested-inline" value="Timeline uri" tal:attributes="value self/suggested_inline" />
+	<param name="suggested-height" value="Timeline uri" tal:condition="self/suggested_height" tal:attributes="value self/suggested_height" />
+	<param name="suggested-width" value="Timeline uri" tal:condition="self/suggested_width" tal:attributes="value self/suggested_width" />
+</object>
+
+name: ntitimelinesource
