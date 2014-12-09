@@ -51,6 +51,12 @@ class TestNormalizingKeywordIndex(unittest.TestCase):
 		assert_that(self.index.documentCount(), is_(3))
 		assert_that(self.index.wordCount(), is_(4))
 		
+		self.index.remove_words(['xxx'])
+		ids = sorted(list(self.index.ids()))
+		assert_that(ids, is_([1,2,3]))
+		assert_that(self.index.documentCount(), is_(3))
+		assert_that(self.index.wordCount(), is_(4))
+		
 		self.index.remove_words(('aizen',))
 		ids = sorted(list(self.index.ids()))
 		assert_that(ids, is_([2,3]))
