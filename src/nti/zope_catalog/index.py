@@ -230,8 +230,8 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 				docids = self._fwd_index[word]
 				del self._fwd_index[word]
 				for docid in docids:
-					s = self._rev_index[docid]
 					try:
+						s = self._rev_index[docid]
 						s.remove(word)
 						if not s:
 							del self._rev_index[docid]
