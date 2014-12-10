@@ -4,6 +4,7 @@ adapters for externalizing plasTeX objects
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -53,7 +54,9 @@ class _CourseOverviewGroupJSONTransformer(object):
 		output = {}
 		output['MimeType'] =  self.el.mime_type
 		output['title'] = _render_children(self.el.renderer, self.el.title, False)
-		output['accentColor'] = _render_children(self.el.renderer, self.el.title_background_color, False)
+		output['accentColor'] = _render_children(self.el.renderer,
+												 self.el.title_background_color, 
+												 False)
 		output['Items'] = items = []
 		for child in self.el.childNodes:
 			trx = IJSONTransformer(child, None)
@@ -82,9 +85,11 @@ class _DiscussionRefJSONTransformer(object):
 		output = {}
 		output['MimeType'] = self.el.discussion.targetMimeType
 		output['icon'] = self.el.discussion.iconResource.image.url
-		output['label'] = _render_children(self.el.discussion.renderer, self.el.discussion.title)
+		output['label'] = _render_children(self.el.discussion.renderer, 
+										   self.el.discussion.title)
 		output['NTIID'] = self.el.discussion.topic_ntiid
-		output['title'] = _render_children(self.el.discussion.renderer, self.el.discussion.subtitle)
+		output['title'] = _render_children(self.el.discussion.renderer, 
+										   self.el.discussion.subtitle)
 		return output
 
 
@@ -125,13 +130,16 @@ class _RelatedWorkRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['creator'] = _render_children(self.el.relatedwork.renderer, self.el.creator)
-		output['desc'] = _render_children( self.el.relatedwork.renderer, self.el.description)
+		output['creator'] = _render_children(self.el.relatedwork.renderer, 
+											 self.el.creator)
+		output['desc'] = _render_children(self.el.relatedwork.renderer, 
+										  self.el.description)
 		output['href'] = self.el.uri
 		output['MimeType'] = self.el.mimeType
 		output['targetMimeType'] = self.el.targetMimeType
 		output['icon'] = self.el.relatedwork.iconResource.image.url
-		output['label'] = _render_children(self.el.relatedwork.renderer, self.el.title)
+		output['label'] = _render_children(self.el.relatedwork.renderer, 
+										   self.el.title)
 		output['NTIID'] = self.el.ntiid
 		output['target-NTIID'] = self.el.target_ntiid
 		output['section'] = self.el.category
@@ -158,4 +166,3 @@ class _TimelineJSONTransformer(object):
 		if self.el.suggested_width:
 			output['suggested-width'] = self.el.suggested_width
 		return output
-
