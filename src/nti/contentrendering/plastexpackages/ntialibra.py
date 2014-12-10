@@ -10,9 +10,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from plasTeX import Base
 from plasTeX.Packages import graphicx
 
-from nti.contentrendering.plastexpackages.ntilatexmacros import ntidirectionsblock
+from ._util import LocalContentMixin
+from .ntilatexmacros import ntidirectionsblock
+
+# pylint
+Base = Base
+LocalContentMixin = LocalContentMixin
 
 class rightpic(graphicx.includegraphics):
 	packageName = 'ntialibra'
