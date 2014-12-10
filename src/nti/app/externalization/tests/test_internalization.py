@@ -7,16 +7,18 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from .. import MessageFactory as _
+
 from zope import interface
 from zope.schema.interfaces import ValidationError
 
 from hamcrest import assert_that
-from hamcrest import is_
 from hamcrest import has_entry
 from hamcrest import contains
 from hamcrest import has_entries
 from hamcrest import calling
 from hamcrest import raises
+from hamcrest import contains_string
 from nose.tools import assert_raises
 
 from nti.app.testing.layers import AppLayerTest
@@ -107,3 +109,32 @@ class TestIO(AppLayerTest):
 				error.handle_validation_error( DummyRequest(), e )
 
 		assert_that( exc.exception.json_body, has_entry( 'message', '' ) )
+
+	def test_translate(self):
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			try:
+				raise ValidationError( b'abcd' )
+			except ValidationError as e:
+				error.raise_json_error( DummyRequest(),
+									hexc.HTTPUnprocessableEntity,
+									{ 	'message': _("Please provide a valid ${field}.",
+													mapping={'field': 'email'} ),
+									 	'field': 'email',
+										'code': e.__class__.__name__ },
+									None )
+
+		assert_that( exc.exception.json_body, has_entry( 'message',
+														contains_string( 'valid email' ) ) )
+
+		# Now with non-json
+		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
+			try:
+				raise ValidationError( b'abcd' )
+			except ValidationError as e:
+				error.raise_json_error( DummyRequest(),
+									hexc.HTTPUnprocessableEntity,
+									 _("Please provide a valid ${field}.",
+													mapping={'field': 'email'} ),
+									None )
+
+		assert_that( exc.exception.json_body, contains_string( 'valid email' ) )

@@ -61,13 +61,19 @@ def raise_json_error( request,
 		# Our internal schema field is username, but that maps to Username on the outside
 		v['field'] = 'Username'
 
+	if isinstance( v, collections.Mapping ):
+		# Make sure to translate our message, if we have one.
+		v['message'] = translate( v.get( 'message' ), context=request )
+	else:
+		v = translate( v, context=request )
+
 	if accept_type == b'application/json':
 		try:
 			v = json.dumps( v, ensure_ascii=False, default=_json_error_map )
 		except TypeError:
 			v = json.dumps( {'UnrepresentableError': unicode(v) } )
 	else:
-		v = unicode(v)
+		v = unicode( v )
 
 	result = factory()
 	result.text = v
