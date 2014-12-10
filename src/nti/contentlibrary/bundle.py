@@ -277,7 +277,8 @@ def _validate_package_refs(bundle, meta):
 		if 		len( bundle._ContentPackages_wrefs ) == len( meta._ContentPackages_wrefs ) \
 			and len( [x for x in meta._ContentPackages_wrefs if x() is not None] ) == 0:
 			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
-			raise ValueError( 'A package reference no longer exists in the library. Content issue?' )
+			raise ValueError( 'A package reference no longer exists in the library. Content issue? (refs=%s)' %
+							[getattr(x, '_ntiid', None) for x in meta._ContentPackages_wrefs] )
 	except AttributeError:
 		# Not sure we can do anything here.
 		pass
