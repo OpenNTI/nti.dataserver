@@ -16,8 +16,8 @@ from datetime import timedelta
 import pytz
 
 from plasTeX import Command
-from plasTeX.Base.LaTeX.Crossref import ref
 from plasTeX import Environment
+from plasTeX.Base.LaTeX.Crossref import ref
 from plasTeX.Base.LaTeX.Sectioning import part
 from plasTeX.Base.LaTeX.Sectioning import chapter
 from plasTeX.Base.LaTeX.Sectioning import section
@@ -168,7 +168,8 @@ class courselessonref(ref):
 						date = date.split('/')
 						# FIXME: Non-standard date representation
 						iso_date = '%s-%s-%s' % (date[2], date[0], date[1])
-						logger.info("Interpreting %s to mean %s in ISO format (YYYY-MM-DD)", date, iso_date)
+						logger.info("Interpreting %s to mean %s in ISO format (YYYY-MM-DD)", 
+									date, iso_date)
 						date = iso_date
 					if 'T' not in date:
 						date += 'T00:00'
@@ -297,7 +298,9 @@ class courseoverviewgroupname(Command):
 
 class courseoverviewgroup(Environment):
 	"""
-	Data structure to organize a 'lessons' resources on the overview page. If the content author does not sepecify and overview groups, then the resources will be grouped by resource type.
+	Data structure to organize a 'lessons' resources on the overview page. 
+	If the content author does not sepecify and overview groups, then the
+	resources will be grouped by resource type.
 	"""
 	args = '[ options:dict ] <title>'
 	blockType = True
@@ -308,7 +311,8 @@ class courseoverviewgroup(Environment):
 
 	class titlebackgroundcolor(Command):
 		"""
-		Sets the background color of the overview title bar. This should be specified in hex.
+		Sets the background color of the overview title bar.
+		This should be specified in hex.
 		"""
 		args = 'color:string'
 
@@ -321,11 +325,12 @@ class courseoverviewspacer(Command):
 	mime_type = "application/vnd.nextthought.nticourseoverviewspacer"
 
 def ProcessOptions( options, document ):
-	for counter_cls in (course, courseinfo, courseunit, coursepart, courselesson, courselessonsection,
-						courselessonsubsection, courselessonsubsubsection, courseoverviewgroup):
+	for counter_cls in (course, courseinfo, courseunit, coursepart, courselesson,
+						courselessonsection, courselessonsubsection,
+						courselessonsubsubsection, courseoverviewgroup):
 		document.context.newcounter(counter_cls.counter)
 
 from zope import interface
-from plasTeX.interfaces import IOptionAwarePythonPackage
 
+from plasTeX.interfaces import IOptionAwarePythonPackage
 interface.moduleProvides(IOptionAwarePythonPackage)
