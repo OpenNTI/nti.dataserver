@@ -16,9 +16,10 @@ from zope.cachedescriptors.property import readproperty
 
 from plasTeX import Command
 
-from nti.contentrendering.resources import interfaces as resource_interfaces
-from .ntilatexmacros import ntimedia
+from ..resources.interfaces import IRepresentableContentUnit
+from ..resources.interfaces import IRepresentationPreferences
 
+from .ntilatexmacros import ntimedia
 
 class ntitimelinename(Command):
 	unicode = u'Timeline'
@@ -40,8 +41,7 @@ class ntitimeline(ntimedia):
 	suggested_width = None
 	suggested_inline = False
 
-	@interface.implementer(resource_interfaces.IRepresentableContentUnit,
-			       resource_interfaces.IRepresentationPreferences)
+	@interface.implementer(IRepresentableContentUnit, IRepresentationPreferences)
 	class ntitimelinesource(Command):
 		args = '[options:dict] src:str:source'
 		blockType = True

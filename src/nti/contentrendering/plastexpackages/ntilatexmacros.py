@@ -16,11 +16,13 @@ import hashlib
 from zope import interface
 from zope.cachedescriptors.property import readproperty
 
+from plasTeX import Base
+from plasTeX import Command 
+from plasTeX import Environment 
+from plasTeX import TeXFragment
 from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
 from plasTeX.Renderers import render_children
-from plasTeX import Base, Command, Environment
-from plasTeX import TeXFragment
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
@@ -521,7 +523,6 @@ class ntilocalvideo( Base.Environment ):
 	class ntiincludelocalvideo( Base.Command ):
 		args = '[ options:dict ] src title poster'
 
-
 class ntiincludeannotationgraphics(includegraphics):
 
 	@readproperty
@@ -689,10 +690,10 @@ class ntidescription(Base.Command):
 	args = 'content:str:source'
 
 # Media collection
-class ntimediacollection(Base.Command):
-	pass
+# class ntimediacollection(Base.Command):
+# 	pass
 
-class ntimediacollection(Base.Environment,plastexids.NTIIDMixin):
+class ntimediacollection(Base.Environment, plastexids.NTIIDMixin):
 	args = '[options] <title:str:source>'
 	blockType = True
 
@@ -711,7 +712,6 @@ class ntimediacollection(Base.Environment,plastexids.NTIIDMixin):
 		if descriptions:
 			description = descriptions[0].attributes.get('content')
 		return description
-
 
 # Videos
 class ntivideorollname(Base.Command):
