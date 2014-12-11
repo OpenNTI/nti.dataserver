@@ -223,6 +223,9 @@ class NormalizingKeywordIndex(zope.index.keyword.CaseInsensitiveKeywordIndex,
 	def ids(self):
 		return self._rev_index.keys()
 	
+	def words(self):
+		return self._fwd_index.keys()
+	
 	def remove_words(self, *seq):
 		seq = self.normalize(*seq)
 		for word in seq:
