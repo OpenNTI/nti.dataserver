@@ -5,6 +5,7 @@ Creates an archive for a book assets.
 
 .. $Id$
 """
+
 from __future__ import unicode_literals, print_function, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -21,10 +22,12 @@ from zope import component
 from zope.configuration import xmlconfig, config
 
 import nti.contentrendering
+
 from nti.contentrendering.interfaces import IRenderedBookArchiver
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 
-BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip', r'htaccess')
+BLACK_LIST = (r'.*\.jsonp', r'indexdir', r'cache-manifest', r'archive\.zip',
+			  r'htaccess', r'assessment_index\.json')
 BLACK_LIST_RE = tuple([re.compile(x) for x in BLACK_LIST])
 
 interface.moduleProvides(IRenderedBookArchiver)
@@ -68,7 +71,8 @@ def _archive(source_path, out_dir=None, verbose=False):
 					added.add(arcname)
 					if verbose:
 						print("Adding %s" % arcname)
-					zf.write(pathname, arcname=arcname, compress_type=zipfile.ZIP_DEFLATED)
+					zf.write(pathname, arcname=arcname, 
+							 compress_type=zipfile.ZIP_DEFLATED)
 		_process(source_path)
 	finally:
 		zf.close()
@@ -94,8 +98,10 @@ def main():
 	arg_parser = argparse.ArgumentParser(description="Archive book content")
 	arg_parser.add_argument('content_path', help="Book content path")
 	arg_parser.add_argument("-o", "--outdir", dest='out_dir', help="Output directory")
-	arg_parser.add_argument('-a', '--archiver', dest='archiver', help="The archiver name")
-	arg_parser.add_argument('-v', '--verbose', help="Verbose output", action='store_true', dest='verbose')
+	arg_parser.add_argument('-a', '--archiver', dest='archiver', 
+							help="The archiver name")
+	arg_parser.add_argument('-v', '--verbose', help="Verbose output",
+							action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	verbose = args.verbose
