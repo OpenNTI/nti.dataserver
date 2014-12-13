@@ -13,11 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 import numbers
 import warnings
 
+import repoze.lru
+
 from persistent import Persistent
 
 from zope import interface
-from zope.event import notify
 from zope import lifecycleevent
+
+from zope.event import notify
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.externalization.persistence import NoPickle
@@ -145,6 +148,7 @@ class AbstractContentPackageLibrary(object):
 		old_content_packages_by_ntiid = {x.ntiid: x for x in old_content_packages}
 
 		new_content_packages = list(self._enumeration.enumerateContentPackages())
+
 		new_content_packages_by_ntiid = {x.ntiid: x for x in new_content_packages}
 		assert len(new_content_packages) == len(new_content_packages_by_ntiid), "Invalid library"
 		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
@@ -152,7 +156,6 @@ class AbstractContentPackageLibrary(object):
 		# Before we fire any events, compute all the work so that
 		# we can present a consistent view to any listeners that
 		# will be watching
-
 		removed = []
 		unmodified = []
 		changed = []
@@ -203,7 +206,6 @@ class AbstractContentPackageLibrary(object):
 			# XXX: Note that we are not doing it in parallel, because if we need
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
-
 			for old in removed:
 				lifecycleevent.removed(old)
 				old.__parent__ = None
@@ -222,6 +224,7 @@ class AbstractContentPackageLibrary(object):
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
+
 			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
 			notify(event)
 
@@ -372,6 +375,10 @@ class AbstractContentPackageLibrary(object):
 		return True
 	__nonzero__ = __bool__
 
+	# Hot code path, using an aggressive cache.
+	# TODO Need to clear this on sync
+	# TODO Need wrefs?
+	@repoze.lru.lru_cache(2000)
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""
@@ -440,15 +447,24 @@ def _pathToPropertyValue( unit, prop, value ):
 	the sequence of children required to reach one with a property equal to
 	the given value.
 	"""
+	results = __pathToPropertyValue( unit, prop, value )
+	if results:
+		results.reverse()
+	return results
+
+def __pathToPropertyValue( unit, prop, value ):
+	"""
+	A convenience function for returning, in order from the root down,
+	the sequence of children required to reach one with a property equal to
+	the given value.
+	"""
 	if getattr( unit, prop, None ) == value:
 		return [unit]
+
 	for child in unit.children:
-		childPath = _pathToPropertyValue( child, prop, value )
+		childPath = __pathToPropertyValue( child, prop, value )
 		if childPath:
-			# We very inefficiently append to the front
-			# each time, rather than trying to find when recursion ends
-			# and reverse
-			childPath.insert( 0, unit )
+			childPath.append( unit )
 			return childPath
 	return None
 
