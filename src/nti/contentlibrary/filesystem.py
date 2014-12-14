@@ -126,6 +126,7 @@ from .bucket import AbstractKey
 from .bucket import AbstractBucket
 
 from zope.dublincore.interfaces import IDCTimes
+
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.time_mixins import TimeProperty
 
@@ -249,6 +250,8 @@ class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentP
 	This makes it safe to use speculatively.
 	"""
 
+	lastSynchronized = 0
+	
 	#: Used during persistence and when making absolute paths,
 	#: this is the parent enumeration that birthed us.
 	parent_enumeration = None
@@ -430,7 +433,6 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 		this object represents the entire package as a whole.
 		"""
 		return max( self.index_last_modified, self._directory_last_modified )
-
 
 # Order matters, we must inherit Persistent FIRST to get the right __getstate__,etc,
 # behaviour
