@@ -10,18 +10,19 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
 import numbers
 import warnings
 
 import repoze.lru
-
-from persistent import Persistent
 
 from zope import interface
 from zope import lifecycleevent
 
 from zope.event import notify
 from zope.annotation.interfaces import IAttributeAnnotatable
+
+from persistent import Persistent
 
 from nti.externalization.persistence import NoPickle
 
@@ -125,7 +126,7 @@ class AbstractContentPackageLibrary(object):
 	#: When we sync, we capture the `lastModified` timestamp
 	#: of the enumeration, if it provides it.
 	_enumeration_last_modified = 0
-
+	
 	__name__ = 'Library'
 	__parent__ = None
 
@@ -157,8 +158,8 @@ class AbstractContentPackageLibrary(object):
 		# we can present a consistent view to any listeners that
 		# will be watching
 		removed = []
-		unmodified = []
 		changed = []
+		unmodified = []
 		added = [package
 				 for ntiid, package in new_content_packages_by_ntiid.items()
 				 if ntiid not in old_content_packages_by_ntiid]
@@ -184,7 +185,6 @@ class AbstractContentPackageLibrary(object):
 		_contentPackages = tuple(_contentPackages)
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
-
 
 		if something_changed or never_synced:
 			self._contentPackages = _contentPackages
@@ -231,6 +231,8 @@ class AbstractContentPackageLibrary(object):
 		# Finish up by saying that we sync'd, even if nothing changed
 		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 
+		self._enumeration.lastSynchronized = time.time()
+		
 	#: A map from top-level content-package NTIID to the content package.
 	#: This is cached based on the value of the _contentPackages variable,
 	#: and uses that variable, which must not be modified outside the
@@ -259,7 +261,6 @@ class AbstractContentPackageLibrary(object):
 			if i.ntiid not in self._content_packages_by_ntiid:
 				contentPackages.append(i)
 		return contentPackages
-
 
 	def __delattr__(self, name):
 		"""
@@ -304,7 +305,6 @@ class AbstractContentPackageLibrary(object):
 			del self._content_packages_by_ntiid
 		del self._contentPackages
 
-
 	@property
 	def createdTime(self):
 		return getattr(self._enumeration, 'createdTime', 0)
@@ -329,6 +329,10 @@ class AbstractContentPackageLibrary(object):
 		lastModified = max(self._enumeration_last_modified, lastModified)
 		return lastModified
 
+	@property
+	def lastSynchronized(self):
+		return getattr(self._enumeration, 'lastSynchronized', 0)
+	
 	def __getitem__( self, key ):
 		"""
 		:return: The LibraryEntry having an ntiid that matches `key`.
@@ -440,7 +444,6 @@ class AbstractContentPackageLibrary(object):
 			rec(package)
 		return result
 
-
 def _pathToPropertyValue( unit, prop, value ):
 	"""
 	A convenience function for returning, in order from the root down,
@@ -467,7 +470,6 @@ def __pathToPropertyValue( unit, prop, value ):
 			childPath.append( unit )
 			return childPath
 	return None
-
 
 @interface.implementer(IAttributeAnnotatable)
 @NoPickle
