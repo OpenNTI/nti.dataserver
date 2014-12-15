@@ -32,8 +32,6 @@ from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 
-from nti.ntiids import ntiids
-
 from . import interfaces as frm_interfaces
 
 ALL_PERMISSIONS = nti_interfaces.ALL_PERMISSIONS
