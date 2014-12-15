@@ -413,7 +413,6 @@ class AbstractContentPackageLibrary(object):
 			for title in self.contentPackages:
 				vals = _pathToPropertyValue( title, 'ntiid', ntiid )
 				if vals:
-					logger.info( '----------------------------- Found (%s)', ntiid )
 					result = vals
 					break
 
