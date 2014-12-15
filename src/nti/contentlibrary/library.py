@@ -14,7 +14,7 @@ import time
 import numbers
 import warnings
 
-import repoze.lru
+from repoze.lru import LRUCache
 
 from zope import interface
 from zope import lifecycleevent
@@ -31,7 +31,7 @@ from nti.ntiids.ntiids import ROOT as NTI_ROOT
 from nti.site.localutility import queryNextUtility
 
 from nti.utils.property import alias
-from nti.utils.property import Lazy
+from nti.utils.property import CachedProperty
 
 from . import interfaces
 
@@ -94,9 +94,8 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 		root = self.root
 		if root is None:
 			return ()
-
 		return root.enumerateChildren()
-
+		
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
 	"""
@@ -137,10 +136,6 @@ class AbstractContentPackageLibrary(object):
 		assert enumeration is not None
 		if prefix:
 			self.url_prefix = prefix
-
-	@Lazy
-	def _v_path_to_ntiid_cache(self):
-		return repoze.lru.LRUCache( 2000 )
 
 	def syncContentPackages(self):
 		"""
@@ -192,7 +187,6 @@ class AbstractContentPackageLibrary(object):
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
 		if something_changed or never_synced:
-			self._clear_caches()
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -238,6 +232,8 @@ class AbstractContentPackageLibrary(object):
 		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 
 		self._enumeration.lastSynchronized = time.time()
+		if something_changed or never_synced:
+			self._clear_caches()
 
 	#: A map from top-level content-package NTIID to the content package.
 	#: This is cached based on the value of the _contentPackages variable,
@@ -335,10 +331,6 @@ class AbstractContentPackageLibrary(object):
 		lastModified = max(self._enumeration_last_modified, lastModified)
 		return lastModified
 
-	@property
-	def lastSynchronized(self):
-		return getattr(self._enumeration, 'lastSynchronized', 0)
-
 	def __getitem__( self, key ):
 		"""
 		:return: The LibraryEntry having an ntiid that matches `key`.
@@ -385,19 +377,29 @@ class AbstractContentPackageLibrary(object):
 		return True
 	__nonzero__ = __bool__
 
+	@property
+	def lastSynchronized(self):
+		return getattr(self._enumeration, 'lastSynchronized', 0)
+
+	@CachedProperty("lastSynchronized")
+	def _v_path_to_ntiid_cache(self):
+		result = LRUCache(2000)
+		return result
+
 	def _clear_caches(self):
 		self._v_path_to_ntiid_cache.clear()
 
 	# Hot code path, using an aggressive cache.
 	# TODO How big are these objecxts?
-	# TODO Need wrefs?
 	def pathToNTIID(self, ntiid):
-		""" Returns a list of TOCEntry objects in order until
-		the given ntiid is encountered, or None of the id cannot be found."""
+		"""
+		 Returns a list of TOCEntry objects in order until
+		the given ntiid is encountered, or None of the id cannot be found.
+		"""
 		# We special case the root ntiid by only looking in
 		# the top level of content packages for our ID.  We should
 		# always return None unless there are root content prefs.
-		result = self._v_path_to_ntiid_cache.get( ntiid )
+		result = self._v_path_to_ntiid_cache.get(ntiid)
 		if result is not None:
 			return result
 		elif result:
