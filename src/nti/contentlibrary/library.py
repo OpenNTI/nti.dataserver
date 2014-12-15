@@ -31,6 +31,7 @@ from nti.ntiids.ntiids import ROOT as NTI_ROOT
 from nti.site.localutility import queryNextUtility
 
 from nti.utils.property import alias
+from nti.utils.property import Lazy
 
 from . import interfaces
 
@@ -126,7 +127,7 @@ class AbstractContentPackageLibrary(object):
 	#: When we sync, we capture the `lastModified` timestamp
 	#: of the enumeration, if it provides it.
 	_enumeration_last_modified = 0
-	
+
 	__name__ = 'Library'
 	__parent__ = None
 
@@ -136,6 +137,10 @@ class AbstractContentPackageLibrary(object):
 		assert enumeration is not None
 		if prefix:
 			self.url_prefix = prefix
+
+	@Lazy
+	def _v_path_to_ntiid_cache(self):
+		return repoze.lru.LRUCache( 2000 )
 
 	def syncContentPackages(self):
 		"""
@@ -187,6 +192,7 @@ class AbstractContentPackageLibrary(object):
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
 		if something_changed or never_synced:
+			self._clear_caches()
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -232,7 +238,7 @@ class AbstractContentPackageLibrary(object):
 		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
 
 		self._enumeration.lastSynchronized = time.time()
-		
+
 	#: A map from top-level content-package NTIID to the content package.
 	#: This is cached based on the value of the _contentPackages variable,
 	#: and uses that variable, which must not be modified outside the
@@ -332,7 +338,7 @@ class AbstractContentPackageLibrary(object):
 	@property
 	def lastSynchronized(self):
 		return getattr(self._enumeration, 'lastSynchronized', 0)
-	
+
 	def __getitem__( self, key ):
 		"""
 		:return: The LibraryEntry having an ntiid that matches `key`.
@@ -379,29 +385,44 @@ class AbstractContentPackageLibrary(object):
 		return True
 	__nonzero__ = __bool__
 
+	def _clear_caches(self):
+		self._v_path_to_ntiid_cache.clear()
+
 	# Hot code path, using an aggressive cache.
-	# TODO Need to clear this on sync
+	# TODO How big are these objecxts?
 	# TODO Need wrefs?
-	@repoze.lru.lru_cache(2000)
 	def pathToNTIID(self, ntiid):
 		""" Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found."""
 		# We special case the root ntiid by only looking in
 		# the top level of content packages for our ID.  We should
 		# always return None unless there are root content prefs.
-		# TODO Would we want to do something similar for all ntiid
-		# queries?
+		result = self._v_path_to_ntiid_cache.get( ntiid )
+		if result is not None:
+			return result
+		elif result:
+			# Empty list
+			return None
+
 		if ntiid == NTI_ROOT:
 			for title in self.contentPackages:
 				if getattr( title, 'ntiid', None ) == ntiid:
-					return [title]
-			return None
+					result = [title]
+					break
+		else:
+			for title in self.contentPackages:
+				vals = _pathToPropertyValue( title, 'ntiid', ntiid )
+				if vals:
+					logger.info( '----------------------------- Found (%s)', ntiid )
+					result = vals
+					break
 
-		for title in self.contentPackages:
-			result = _pathToPropertyValue( title, 'ntiid', ntiid )
-			if result:
-				return result
-		return None
+		if result:
+			self._v_path_to_ntiid_cache.put( ntiid, result )
+		else:
+			# Make sure we don't lose these worst-cases.
+			self._v_path_to_ntiid_cache.put( ntiid, [] )
+		return result
 
 	def childrenOfNTIID( self, ntiid ):
 		"""
@@ -456,11 +477,6 @@ def _pathToPropertyValue( unit, prop, value ):
 	return results
 
 def __pathToPropertyValue( unit, prop, value ):
-	"""
-	A convenience function for returning, in order from the root down,
-	the sequence of children required to reach one with a property equal to
-	the given value.
-	"""
 	if getattr( unit, prop, None ) == value:
 		return [unit]
 
