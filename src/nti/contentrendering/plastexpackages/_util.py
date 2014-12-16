@@ -5,6 +5,7 @@ Helpers and utilities used for implementing other parts of the packages.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -36,6 +37,22 @@ def _asm_local_textcontent(self):
 	# again (?)
 	return ILatexContentFragment(''.join(output).strip())
 
+def _is_renderable(renderer, elements):
+	"""
+	quick test to find out if elements are renderable
+	"""
+	result = bool(renderer is not None and elements)
+	if result:
+		for element in elements:
+			result = hasattr(element, 'nodeType') and \
+					 hasattr(element, 'unicode')  and \
+					 hasattr(element, 'nodeName') and \
+					 hasattr(element, 'attributes') and \
+					 hasattr(element, 'filename')
+			if not result:
+				break
+	return result
+	
 def _htmlcontent_rendered_elements(renderer, elements):
 	output = render_children(renderer, elements)
 	# Now return an actual HTML content fragment. Note that this
