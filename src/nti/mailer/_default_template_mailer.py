@@ -114,6 +114,7 @@ def create_simple_html_text_email(base_template,
 								  template_args=None,
 								  attachments=(),
 								  package=None,
+								  cc=(),
 								  bcc=(),
 								  text_template_extension='.txt',
 								  _level=3):
@@ -144,6 +145,7 @@ def create_simple_html_text_email(base_template,
 	if request is None:
 		request = get_current_request()
 
+	cc = _as_recipient_list(cc)
 	bcc = _as_recipient_list(bcc)
 
 	def make_args(extension):
@@ -218,6 +220,7 @@ def create_simple_html_text_email(base_template,
 					   recipients=recipients,
 					   body=text_body,
 					   html=html_body,
+					   cc=cc,
 					   bcc=bcc,
 					   attachments=attachments )
 
