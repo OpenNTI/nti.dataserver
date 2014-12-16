@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_key
 from hamcrest import contains
 from hamcrest import has_entry
@@ -21,6 +22,7 @@ from hamcrest import is_not as does_not
 from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
 
+import time
 import os.path
 import anyjson as json
 try:
@@ -171,6 +173,32 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( interfaces.IContentUnitHrefMapper(package.children[0].children[0]),
 					 has_property('href',
 								  '/SomePrefix/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22'))
+
+	def test_path_to_ntiid(self):
+		library = filesystem.EnumerateOnceFilesystemLibrary( os.path.dirname(__file__) )
+		library.syncContentPackages()
+
+		path1 = 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.18'
+		found_path = library.pathToNTIID( path1 )
+		assert_that( found_path, has_length( 2 ) )
+
+		cache = library._v_path_to_ntiid_cache
+		assert_that( cache.get( path1 ), is_( found_path ) )
+
+		# Path with no result cached
+		dne_path = 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.18-DoesNotExist'
+		found_path = library.pathToNTIID( dne_path )
+		assert_that( found_path, none() )
+		assert_that( cache.get( dne_path ), is_( [] ) )
+
+		# Invalidate our cache
+		library._enumeration.lastSynchronized = time.time() + 1
+		new_cache = library._v_path_to_ntiid_cache
+		assert_that( new_cache, does_not( cache ))
+		assert_that( new_cache.get( path1 ), none() )
+		found_path = library.pathToNTIID( path1 )
+		assert_that( found_path, has_length( 2 ) )
+
 
 	def test_site_library(self):
 		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
