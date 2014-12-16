@@ -112,6 +112,10 @@
 			margin-left: 30px;
 			margin-bottom: 30px;
 			}
+			ol,ul {
+			margin-left: 30px;
+			margin-right: 30px;
+			}
 		</style>
 	</head>
 	<body class="normal-text">
