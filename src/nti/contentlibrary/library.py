@@ -95,7 +95,7 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 		if root is None:
 			return ()
 		return root.enumerateChildren()
-		
+
 @interface.implementer(interfaces.ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
 	"""
@@ -383,7 +383,7 @@ class AbstractContentPackageLibrary(object):
 
 	@CachedProperty("lastSynchronized")
 	def _v_path_to_ntiid_cache(self):
-		result = LRUCache(2000)
+		result = LRUCache(100)
 		return result
 
 	def _clear_caches(self):
