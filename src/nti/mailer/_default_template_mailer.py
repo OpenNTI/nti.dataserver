@@ -16,6 +16,8 @@ from zope import interface
 
 from zope.dottedname import resolve as dottedname
 
+from premailer import transform
+
 from pyramid.renderers import render
 from pyramid.renderers import get_renderer
 from pyramid.path import caller_package
@@ -188,6 +190,9 @@ def create_simple_html_text_email(base_template,
 			raise e
 		# Ok, let's try to find the package.
 		html_body, text_body = do_render( None )
+
+	# Some clients (e.g. gmail) do not handle CSS well unless it's inlined.
+	html_body = transform( html_body )
 
 	# PageTemplates (Chameleon and Z3c.pt) produce Unicode strings.
 	# Under python2, at least, the text templates (Chameleon alone) produces byte objects,
