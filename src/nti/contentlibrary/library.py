@@ -383,14 +383,16 @@ class AbstractContentPackageLibrary(object):
 
 	@CachedProperty("lastSynchronized")
 	def _v_path_to_ntiid_cache(self):
-		result = LRUCache(100)
+		# We may want to use WRefs here to reduce memory usage.
+		# Doing so easily requires these objects to be registered
+		# in our intid utility.  If we do use wrefs, we can increase
+		# this cache substantially.
+		result = LRUCache(2000)
 		return result
 
 	def _clear_caches(self):
 		self._v_path_to_ntiid_cache.clear()
 
-	# Hot code path, using an aggressive cache.
-	# TODO How big are these objecxts?
 	def pathToNTIID(self, ntiid):
 		"""
 		 Returns a list of TOCEntry objects in order until
