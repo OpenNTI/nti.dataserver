@@ -60,6 +60,7 @@ def do_evolve(context):
 		
 		logger.info('Dataserver evolution %s done. %s user(s) migrated', 
 					generation, count)
+		return count
 
 def evolve(context):
 	do_evolve(context)
