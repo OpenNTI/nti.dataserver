@@ -161,6 +161,9 @@ name: nobreak
 name: ntiglossaryterm
 <b tal:content="self/attributes/term"></b>
 
+name: ntihref
+<a tal:attributes="class self/attributes/class; href self/attributes/url; data-nti-requirements self/attributes/nti-requirements | nothing" tal:content="self">Link Text</a>
+
 name: ntiimagehref
 <a class="thumb" tal:attributes="href self/attributes/url"><img tal:attributes="src self/attributes/img"></a>
 
@@ -236,6 +239,7 @@ name: nticard
 						data-title self/title;
 						data-creator self/creator | nothing;
 						data-href self/href;
+						data-nti-requirements self/attributes/nti-requirements | nothing;
 						type self/mimeType" >
 
 	<param name="ntiid" value="tag:card-ntiid" tal:attributes="value self/ntiid" />
@@ -244,6 +248,7 @@ name: nticard
 	<param name="creator" value="Joe Smith"      tal:attributes="value self/creator | nothing" />
 	<param name="href"    value="/path/to/resource.pdf" tal:attributes="value self/href" />
 	<param name="target_ntiid" value="tag:target-ntiid" tal:attributes="value self/target_ntiid" />
+	<param name="nti-requirements" value="requirements" tal:condition="self/attributes/nti-requirements" tal:attributes="value self/attributes/nti-requirements | nothing" />
 	<span class="description" tal:content="self/description" tal:condition="self/description">
 			The description of the target.
 	</span>
@@ -275,6 +280,7 @@ name: relatedworkref
 						data-title self/relatedwork/title;
 						data-creator self/relatedwork/creator | nothing;
 						data-href self/uri;
+						data-nti-requirements self/attributes/nti-requirements | nothing;
 						type self/mimeType" >
 
 	<param name="ntiid" value="tag:card-ntiid" tal:attributes="value self/ntiid" />
@@ -286,6 +292,7 @@ name: relatedworkref
 	<param name="targetMimeType" value="target MIME type" tal:attributes="value self/targetMimeType" />
 	<param name="section" value="section" tal:attributes="value self/category" />
 	<param name="visibility" value="visibility" tal:attributes="value self/visibility" />
+	<param name="nti-requirements" value="requirements" tal:condition="self/attributes/nti-requirements" tal:attributes="value self/attributes/nti-requirements | nothing" />
 	<span class="description" tal:content="self/description" tal:condition="self/description">
 			The description of the target.
 	</span>
