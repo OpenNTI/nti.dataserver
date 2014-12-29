@@ -23,6 +23,7 @@ from plasTeX import TeXFragment
 from plasTeX.Base import Crossref
 from plasTeX.Base import TextCommand
 from plasTeX.Renderers import render_children
+from plasTeX.Packages.hyperref import href as base_href
 
 from nti.contentfragments import interfaces as cfg_interfaces
 
@@ -551,6 +552,26 @@ class ntipagenum(_OneText):
 class ntiglossaryterm(Base.Command):
 	args = 'term self'
 
+class ntihref(base_href):
+	args = '[options:dict] url:url self'
+
+	def invoke(self, tex):
+		_t = super(ntihref, self).invoke(tex)
+		if 'options' not in self.attributes or not self.attributes['options']:
+			self.attributes['options'] = {}
+		options = self.attributes.get('options')
+		self.attributes['nti-requirements'] = u''
+		requirements = options.get('nti-requirements', u'').split()
+		for requirement in requirements:
+			if requirement == u'flash':
+				requirement = u'mime-type:application/x-shockwave-flash'
+			self.attributes['nti-requirements'] = ' '.join([self.attributes['nti-requirements'], requirement])
+		self.attributes['nti-requirements'] = self.attributes['nti-requirements'].strip()
+		if self.attributes['nti-requirements'] == u'':
+			self.attributes['nti-requirements'] = None
+
+		return _t
+
 class ntiimagehref(Base.Command):
 	args = 'img url'
 
@@ -904,6 +925,15 @@ class nticard(LocalContentMixin,Base.Float,plastexids.NTIIDMixin):
 			if not getattr(self, 'title', ''):
 				raise ValueError("Must specify a title using \\caption")
 
+			self.attributes['nti-requirements'] = u''
+			requirements = options.get('nti-requirements', u'').split()
+			for requirement in requirements:
+				if requirement == u'flash':
+					requirement = u'mime-type:application/x-shockwave-flash'
+				self.attributes['nti-requirements'] = ' '.join([self.attributes['nti-requirements'], requirement])
+			self.attributes['nti-requirements'] = self.attributes['nti-requirements'].strip()
+			if self.attributes['nti-requirements'] == u'':
+				self.attributes['nti-requirements'] = None
 
 			if 'creator' in options:
 				self.creator = options['creator']
@@ -1083,6 +1113,15 @@ class relatedworkref(Base.Crossref.ref, plastexids.NTIIDMixin):
 		tok = super(relatedworkref, self).digest(tokens)
 
 		self._options = self.attributes.get( 'options', {} ) or {}
+		self.attributes['nti-requirements'] = u''
+		requirements = self._options.get('nti-requirements', u'').split()
+		for requirement in requirements:
+			if requirement == u'flash':
+				requirement = u'mime-type:application/x-shockwave-flash'
+			self.attributes['nti-requirements'] = ' '.join([self.attributes['nti-requirements'], requirement])
+		self.attributes['nti-requirements'] = self.attributes['nti-requirements'].strip()
+		if self.attributes['nti-requirements'] == u'':
+			self.attributes['nti-requirements'] = None
 		self.label = self.attributes.get('label')
 
 		self._uri = self.attributes['uri']

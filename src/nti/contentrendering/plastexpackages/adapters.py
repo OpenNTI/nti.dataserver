@@ -144,6 +144,8 @@ class _RelatedWorkRefJSONTransformer(object):
 		output['target-NTIID'] = self.el.target_ntiid
 		output['section'] = self.el.category
 		output['visibility'] = self.el.visibility
+		if self.el.attributes.get('nti-requirements') is not None:
+			output['nti-requirements'] = self.el.attributes.get('nti-requirements')
 		return output
 
 @interface.implementer(IJSONTransformer)
