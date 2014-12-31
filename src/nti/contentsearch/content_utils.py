@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -67,5 +68,5 @@ def resolve_content_parts(data):
 		adapted = IContentResolver(item, None)
 		if adapted:
 			result.append(adapted.content)
-	result = u' '.join([x for x in result if x is not None])
+	result = u' '.join(x for x in result if x is not None)
 	return result
