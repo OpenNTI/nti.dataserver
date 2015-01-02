@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,11 +12,15 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.dataserver.users import User
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
@@ -27,7 +32,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 			   request_method='GET',
 			   context=IDataserverFolder,
 			   name='GetUserBlacklist')
-class GetUserBlacklist(AbstractAuthenticatedView):
+class GetUserBlacklistView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
@@ -50,8 +55,8 @@ class GetUserBlacklist(AbstractAuthenticatedView):
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 name='RemoveFromUserBlacklist')
-class RemoveFromUserBlacklist(	AbstractAuthenticatedView,
-							   	ModeledContentUploadRequestUtilsMixin):
+class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
+							   	  ModeledContentUploadRequestUtilsMixin):
 
 	"""
 	Remove username from blacklist.
@@ -69,3 +74,28 @@ class RemoveFromUserBlacklist(	AbstractAuthenticatedView,
 		result['username'] = username
 		result['did_remove'] = did_remove
 		return result
+	
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 permission=nauth.ACT_MODERATE,
+			 request_method='POST',
+			 context=IDataserverFolder,
+			 name='RemoveUser')
+class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+
+	"""
+	Remove a user
+	"""
+
+	def __call__(self):
+		values = self.readInput()
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity("must specify a username")
+		
+		user = User.get_user(username)
+		if user is None or not IUser.providedBy(user):
+			raise hexc.HTTPUnprocessableEntity("user not found")
+		
+		User.delete_user(username)
+		return hexc.HTTPNoContent()
