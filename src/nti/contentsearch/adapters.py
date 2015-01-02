@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -23,10 +24,15 @@ from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IRedaction
 from nti.dataserver.interfaces import IReadableShared
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes import CanvasTextShape
-from nti.dataserver.contenttypes.forums import interfaces as forum_interfaces
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -109,8 +115,12 @@ class _AbstractIndexDataResolver(_BasicContentResolver):
 	def get_creator(self):
 		result = self.obj.creator
 		if IEntity.providedBy(result):
-			result = unicode(result.username)
-		return unicode(result) if result else None
+			if not IUseNTIIDAsExternalUsername.providedBy(result):
+				result = unicode(result.username)
+			else:
+				result = result.NTIID
+		result = unicode(result) if result else None
+		return result
 	creator = property(get_creator)
 
 	def get_containerId(self):
@@ -285,20 +295,19 @@ class _BlogContentResolverMixin(_AbstractIndexDataResolver, _PartsContentResolve
 	def get_id(self):
 		result = None
 		obj = self.obj
-		if forum_interfaces.IHeadlinePost.providedBy(obj):
+		if IHeadlinePost.providedBy(obj):
 			obj = getattr(self.obj, '__parent__', None)
-		if 	forum_interfaces.ITopic.providedBy(obj) or \
-			forum_interfaces.IPost.providedBy(obj):
+		if 	ITopic.providedBy(obj) or IPost.providedBy(obj):
 			result = getattr(obj, 'id', None)
 		return result or u''
 	ID = id = property(get_id)
 
-@component.adapter(forum_interfaces.IPost)
+@component.adapter(IPost)
 @interface.implementer(IPostContentResolver)
 class _PostContentResolver(_BlogContentResolverMixin):
 	pass
 
-@component.adapter(forum_interfaces.IHeadlineTopic)
+@component.adapter(IHeadlineTopic)
 @interface.implementer(IHeadlineTopicContentResolver)
 class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
 
@@ -306,7 +315,7 @@ class _HeadlineTopicContentResolver(_BlogContentResolverMixin):
 		super(_HeadlineTopicContentResolver, self).__init__(obj.headline)
 		self.topic = obj
 
-@component.adapter(forum_interfaces.IGeneralForum)
+@component.adapter(IGeneralForum)
 @interface.implementer(IForumContentResolver)
 class _ForumContentResolver(_AbstractIndexDataResolver):
 
