@@ -7,13 +7,14 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from zope import lifecycleevent
-
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_item
 from hamcrest import assert_that
+
+from zope import lifecycleevent
 
 from nti.dataserver.users import User
 
@@ -58,3 +59,26 @@ class TestBlacklistViews(ApplicationLayerTest):
 		body = res.json_body
 		assert_that( body, has_entry( 'Items', has_length( 0 )) )
 		assert_that( body, has_entry( 'Count', is_( 0 )))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_remove_user(self):
+		username = 'user_one'
+		
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user(username=username )
+			assert_that(user, is_(none()))
+	
+		with mock_dataserver.mock_db_trans( self.ds ):
+			User.create_user( username=username )
+
+		self.testapp.post_json( '/dataserver2/@@RemoveUser',
+								{'username':username},
+								status=204 )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user(username=username )
+			assert_that(user, is_(none()))
+			
+		self.testapp.post_json( '/dataserver2/@@RemoveUser',
+								{'username':username},
+								status=422 )
