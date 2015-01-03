@@ -35,15 +35,21 @@ class _NTIMediaExtractor(object):
 	def __init__(self, book=None):
 		pass
 
-	def transform(self, book):
+	def transform(self, book, savetoc=True, outpath=None):
+		outpath = outpath or book.contentLocation
+		outpath = os.path.expanduser(outpath)
+		
 		dom = book.toc.dom
-		outpath = os.path.expanduser(book.contentLocation)
 		media_els = book.document.getElementsByTagName(self.ntimedia)
 		reference_els = book.document.getElementsByTagName(self.ntimediaref)
-		if reference_els or media_els:
-			topic_map = self._get_topic_map(dom)
-			self._process_references(dom, reference_els, topic_map)
-			self._process_media_els(dom, media_els, outpath, topic_map)
+		if not (reference_els or media_els):
+			return
+
+		# cache topics
+		topic_map = self._get_topic_map(dom)
+		self._process_references(dom, reference_els, topic_map)
+		self._process_media_els(dom, media_els, outpath, topic_map)
+		if savetoc:
 			book.toc.save()
 
 	def _get_topic_map(self, dom):
@@ -214,12 +220,14 @@ class _NTIMediaExtractor(object):
 				lesson_el = None
 				# Discover the nearest topic in the toc that is a 'course' node
 				parent_el = el.parentNode
-				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+				if 	hasattr(parent_el, 'ntiid') and \
+					parent_el.tagName.startswith('course'):
 					lesson_el = topic_map.get(parent_el.ntiid)
 
 				while lesson_el is None and parent_el.parentNode is not None:
 					parent_el = parent_el.parentNode
-					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					if hasattr(parent_el, 'ntiid') and \
+						parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				media_title = getattr(el.media, 'title', u'')
@@ -248,7 +256,8 @@ class _NTIVideoExtractor(_NTIMediaExtractor):
 	index_mimeType = u'application/vnd.nextthought.videoindex'
 
 	def _process_media(self, dom, video, topic_map):
-		entry, container = super(_NTIVideoExtractor, self)._process_media(dom, video, topic_map)
+		entry, container = super(_NTIVideoExtractor, self)._process_media(dom, video,
+																		  topic_map)
 		
 		entry['description'] = video.description
 		entry['closedCaptions'] = video.closed_caption
@@ -292,7 +301,8 @@ class _NTIAudioExtractor(_NTIMediaExtractor):
 	index_mimeType = u'application/vnd.nextthought.audioindex'
 
 	def _process_media(self, dom, audio, topic_map):
-		entry, container = super(_NTIAudioExtractor, self)._process_media(dom, audio, topic_map)
+		entry, container = super(_NTIAudioExtractor, self)._process_media(dom, audio,
+																		  topic_map)
 		entry['description'] = getattr(audio, 'description', None)
 		for source in audio.getElementsByTagName('ntiaudiosource'):
 			val = {'source':[], 'type':[]}
@@ -304,5 +314,4 @@ class _NTIAudioExtractor(_NTIMediaExtractor):
 				val['source'].append(source.src['mp3'])
 				val['source'].append(source.src['wav'])
 			entry['sources'].append(val)
-
 		return entry, container

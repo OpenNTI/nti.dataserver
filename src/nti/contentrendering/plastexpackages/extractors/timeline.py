@@ -28,8 +28,11 @@ class _TimelineExtractor(object):
 	def __init__(self, *args, **kwargs):
 		pass
 		
-	def transform(self, book):
+	def transform(self, book, savetoc=True, outpath=None):
 		dom = book.toc.dom
+		outpath = outpath or book.contentLocation
+		outpath = os.path.expanduser(outpath)
+		
 		timeline_els = book.document.getElementsByTagName('ntitimeline')
 		if timeline_els:
 			outpath = os.path.expanduser(book.contentLocation)

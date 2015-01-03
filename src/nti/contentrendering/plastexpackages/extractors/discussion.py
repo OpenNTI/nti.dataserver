@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -23,12 +24,16 @@ class _DiscussionExtractor(object):
 	def __init__(self, book=None):
 		pass
 
-	def transform(self, book):
-		lesson_els = book.document.getElementsByTagName('courselesson')
+	def transform(self, book, savetoc=True, outpath=None):	
 		dom = book.toc.dom
-		if lesson_els:
-			topic_map = self._get_topic_map(dom)
-			self._process_lessons(dom, lesson_els, topic_map)
+		lesson_els = book.document.getElementsByTagName('courselesson')
+		if not lesson_els:
+			return
+		
+		# cache topics
+		topic_map = self._get_topic_map(dom)
+		self._process_lessons(dom, lesson_els, topic_map)
+		if savetoc:
 			book.toc.save()
 
 	def _get_topic_map(self, dom):
@@ -46,19 +51,24 @@ class _DiscussionExtractor(object):
 				# Discover the nearest topic in the toc that is a 'course' node
 				lesson_el = None
 				parent_el = discussion_el.parentNode
-				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+				if 	hasattr(parent_el, 'ntiid') and \
+					parent_el.tagName.startswith('course'):
 					lesson_el = topic_map.get(parent_el.ntiid)
 
 				while lesson_el is None and parent_el.parentNode is not None:
 					parent_el = parent_el.parentNode
-					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					if 	hasattr(parent_el, 'ntiid') and \
+						parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				icon = 	discussion_el.iconResource.image.url \
 						if discussion_el.iconResource is not None else ''
 				
-				title = _render_children(discussion_el.renderer, discussion_el.title)
-				subtitle = _render_children(discussion_el.renderer, discussion_el.subtitle)
+				title = _render_children(discussion_el.renderer, 
+										 discussion_el.title)
+				
+				subtitle = _render_children(discussion_el.renderer, 
+											discussion_el.subtitle)
 
 				toc_el = dom.createElement('object')
 				toc_el.setAttribute('label', title)
@@ -74,12 +84,14 @@ class _DiscussionExtractor(object):
 				# Discover the nearest topic in the toc that is a 'course' node
 				lesson_el = None
 				parent_el = discussionref_el.parentNode
-				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+				if 	hasattr(parent_el, 'ntiid') and \
+					parent_el.tagName.startswith('course'):
 					lesson_el = topic_map.get(parent_el.ntiid)
 					
 				while lesson_el is None and parent_el.parentNode is not None:
 					parent_el = parent_el.parentNode
-					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					if 	hasattr(parent_el, 'ntiid') and \
+						parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				icon = 	discussionref_el.discussion.iconResource.image.url \
@@ -95,7 +107,8 @@ class _DiscussionExtractor(object):
 				toc_el.setAttribute('label', title)
 				toc_el.setAttribute('title', subtitle)
 				toc_el.setAttribute('ntiid', discussionref_el.discussion.topic_ntiid)
-				toc_el.setAttribute('mimeType', discussionref_el.discussion.targetMimeType)
+				toc_el.setAttribute('mimeType', 
+									discussionref_el.discussion.targetMimeType)
 				toc_el.setAttribute('icon', icon)
 				if lesson_el:
 					lesson_el.appendChild(toc_el)

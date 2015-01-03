@@ -5,6 +5,7 @@ course extractors
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -33,7 +34,7 @@ class _CourseExtractor(object):
 	def __init__(self, book=None):
 		pass
 
-	def transform(self, book, outpath=None):
+	def transform(self, book, savetoc=True, outpath=None):
 		outpath = outpath or book.contentLocation
 		outpath = os.path.expanduser(outpath)
 
@@ -50,7 +51,9 @@ class _CourseExtractor(object):
 			dom.childNodes[0].setAttribute('isCourse', 'true')
 		else:
 			dom.childNodes[0].setAttribute('isCourse', 'false')
-		book.toc.save()
+		
+		if savetoc:
+			book.toc.save()
 
 	def _process_course(self, dom, outpath, doc_el, courseinfo):
 		toc_el = dom.createElement('course')
@@ -73,7 +76,8 @@ class _CourseExtractor(object):
 			
 		units = doc_el.getElementsByTagName('courseunit')
 
-		# SAJ: All courses should now have a course_info.json file, so always add this node
+		## SAJ: All courses should now have a course_info.json file,
+		## so always add this node
 		info = dom.createElement('info')
 		info.setAttribute('src', u'course_info.json')
 		toc_el.appendChild(info)

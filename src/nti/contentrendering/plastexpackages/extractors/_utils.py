@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,4 +18,5 @@ def _render_children(renderer, nodes, strip=False):
         result = unicode(''.join(render_children(renderer, nodes)))
     else:
         result = nodes.decode("utf-8") if isinstance(nodes, bytes) else nodes
-    return result.strip() if strip and result else result
+    result = result.strip() if strip and result else result
+    return result
