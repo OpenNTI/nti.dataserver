@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-NTISlideDeck extractor
-
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,9 +17,11 @@ import collections
 
 from zope import interface
 
-from nti.contentrendering import interfaces as cr_interfaces
+from nti.contentrendering.interfaces import ISlideDeckExtractor
+interface.moduleProvides(ISlideDeckExtractor)
 
-interface.moduleProvides(cr_interfaces.ISlideDeckExtractor)
+from nti.contentrendering.utils import EmptyMockDocument
+from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 
 def get_attribute(node, name):
 	attributes = node.attrib if node is not None else {}
@@ -42,7 +43,8 @@ def _store_param(p, data, exclude=()):
 
 def process_ntislidedecks(topic, result):
 	for node in topic.dom(b'object').filter(b'.ntislidedeck'):
-		d = {u'class': u'ntislidedeck', u'MimeType':u'application/vnd.nextthought.ntislidedeck'}
+		d = {u'class': u'ntislidedeck', 
+			 u'MimeType':u'application/vnd.nextthought.ntislidedeck'}
 		for p in node.iterchildren():
 			_store_param(p, d, ('type',))
 
@@ -69,6 +71,7 @@ def process_book(book):
 	decks = {}
 	slides = collections.defaultdict(list)
 	videos = collections.defaultdict(list)
+
 	def _loop(topic):
 		process_ntislidedecks(topic, decks)
 		process_elements(topic, slides, u'application/vnd.nextthought.slide')
@@ -86,22 +89,28 @@ def process_book(book):
 		if dv is not None:
 			deck['Videos'] = list(dv)
 
-	return list(decks.values())
+	result = list(decks.values())
+	return result
 
-def transform(book, outpath=None):
+def transform(book, savetoc=True, outpath=None):
 	result = []
-	decks = process_book(book)
 	dom = book.toc.dom
+	decks = process_book(book)
+	
 	outpath = outpath or book.contentLocation
 	outpath = os.path.expanduser(outpath)
+	
 	for deck in decks:
 		ntiid = deck.get('ntiid')
-		if not ntiid: continue
+		if not ntiid: 
+			continue
+
 		ntiid = re.sub('[:,\.,/,\*,\?,\<,\>,\|]', '_', ntiid.replace('\\', '_'))
 		outfile = os.path.join(outpath, '%s.json' % ntiid)
 		with open(outfile, "wt") as fp:
 			result.append(outfile)
 			simplejson.dump(deck, fp, indent=2)
+	
 		node = dom.createTextNode(u'    ')
 		dom.childNodes[0].appendChild(node)
 		node = dom.createElement('reference')
@@ -111,22 +120,19 @@ def transform(book, outpath=None):
 		dom.childNodes[0].appendChild(node)
 		node = dom.createTextNode(u'\n')
 		dom.childNodes[0].appendChild(node)
-	book.toc.save()
+
+	if savetoc:
+		book.toc.save()
 	return result
 
 def extract(contentpath, outpath=None, jobname=None):
-
-	from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook, EmptyMockDocument
 	jobname = jobname or os.path.basename(contentpath)
-
 	document = EmptyMockDocument()
 	document.userdata['jobname'] = jobname
 	book = NoConcurrentPhantomRenderedBook(document, contentpath)
-
 	return transform(book, outpath)
 
 def main():
-
 	def register():
 		from zope.configuration import xmlconfig
 		from zope.configuration.config import ConfigurationMachine
@@ -140,13 +146,13 @@ def main():
 
 	arg_parser = argparse.ArgumentParser(description="Content indexer")
 	arg_parser.add_argument('contentpath', help="Content book location")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+							action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	contentpath = os.path.expanduser(args.contentpath)
 	jobname = os.path.basename(contentpath)
 	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
-
 	extract(contentpath, jobname=jobname)
 
 if __name__ == '__main__':
