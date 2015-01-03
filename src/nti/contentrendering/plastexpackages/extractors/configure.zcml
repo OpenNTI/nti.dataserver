@@ -54,6 +54,6 @@
 			 
 	<utility factory=".timeline._TimelineExtractor"
 			 provides="nti.contentrendering.interfaces.ITimelineExtractor"
-			 name="035.TimelineExtracto" />
+			 name="035.TimelineExtractor" />
 			 
 </configure>
