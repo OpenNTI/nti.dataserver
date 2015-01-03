@@ -60,8 +60,10 @@ def main():
 		os.chdir(source_dir)
 		
 		# do extraction
-		document = parse_tex(contentpath, perform_transforms=False)
-		book = NoConcurrentPhantomRenderedBook(document, contentpath)
+		document, _, _, _ = parse_tex(contentpath, perform_transforms=True)
+		outdir = os.getcwd() # we have switch to the output directory
+		
+		book = NoConcurrentPhantomRenderedBook(document, outdir)
 		transform(book, save_toc=save_toc, outpath=outpath)
 	finally:
 		os.chdir(current_path)
