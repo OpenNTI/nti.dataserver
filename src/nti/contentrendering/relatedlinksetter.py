@@ -76,7 +76,6 @@ def _node_of_id_type_qual(document, ntiid, tpe, qualifier="", nodename='page'):
 
 class AbstractRelatedAdder(object):
 
-
 	@classmethod
 	def transform(cls,book):
 		cls(book)()
@@ -157,13 +156,14 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 		"""
 
 		eclipseTOC = self.book.toc
-		def _error(node):
-			page = eclipseTOC.getPageForDocumentNode(node)
-			attrs = getattr(page, 'attributes',None)
-			raise ValueError( "No NTIID for entry %s doc node %s page %s attrs %s" % 
-							 (entry, node, page, attrs) )
-			
 		toc_func = eclipseTOC.getPageForDocumentNode
+		
+		def _error(node):
+			page = toc_func(node)
+			attrs = getattr(page, 'attributes',None)
+			raise ValueError("No NTIID for entry %s doc node %s page %s attrs %s" % 
+							 (entry, node, page, attrs) )
+
 		pages = [self.book.pages[(toc_func(page).getAttribute('ntiid') or _error(page))]
 				 for page in entry.pages if toc_func(page) is not None]
 		pageIds = [page.ntiid for page in pages if page is not None]
