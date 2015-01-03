@@ -231,7 +231,9 @@ class INTICardIndexer(IContentIndexer):
 ####
 
 class IRenderedBookExtractor(IRenderedBookTransformer):
-	pass
+	
+	def transform(book, savetoc=True, outpath=None):
+		pass
 
 class INTIVideoExtractor(IRenderedBookExtractor):
 	"""

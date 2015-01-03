@@ -27,27 +27,32 @@ class _RelatedWorkExtractor(object):
 	def __init__(self, book=None):
 		pass
 		
-	def transform(self, book):
+	def transform(self, book, savetoc=True, outpath=None):
+		outpath = outpath or book.contentLocation
+		outpath = os.path.expanduser(outpath)
+		
 		dom = book.toc.dom
 		related_els = book.document.getElementsByTagName('relatedwork')
 		reference_els = book.document.getElementsByTagName('relatedworkref')
-		if reference_els or related_els:
-			outpath = os.path.expanduser(book.contentLocation)
+		if not (reference_els or related_els):
+			return
 			
-			# cache topics
-			topic_map = self._get_topic_map(dom)
-			
-			# add name space FIXME: This is not the right way to do that. 
-			# It should be # managed automatically?
-			dom.childNodes[0].setAttribute('xmlns:content',
-										   "http://www.nextthought.com/toc")
-			
-			# get content data
-			content = self._process_references(dom, reference_els, topic_map)
-			content.extend(self._process_related(dom, related_els))
-			
-			# save dom and files
-			self._save_related_content(outpath, dom, content)
+		# cache topics
+		topic_map = self._get_topic_map(dom)
+		
+		# add name space FIXME: This is not the right way to do that. 
+		# It should be # managed automatically?
+		dom.childNodes[0].setAttribute('xmlns:content',
+									   "http://www.nextthought.com/toc")
+		
+		# get content data
+		content = self._process_references(dom, reference_els, topic_map)
+		content.extend(self._process_related(dom, related_els))
+		
+		# save dom and files
+		self._save_related_content(outpath, dom, content)
+
+		if savetoc:
 			book.toc.save()
 
 	def _get_topic_map(self, dom):
@@ -65,25 +70,31 @@ class _RelatedWorkExtractor(object):
 				# Discover the nearest topic in the toc that is a 'course' node
 				lesson_el = None
 				parent_el = el.parentNode
-				if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+				if 	hasattr(parent_el, 'ntiid') and \
+					parent_el.tagName.startswith('course'):
 					lesson_el = topic_map.get(parent_el.ntiid)
 					
 				while lesson_el is None and parent_el.parentNode is not None:
 					parent_el = parent_el.parentNode
-					if hasattr(parent_el, 'ntiid') and parent_el.tagName.startswith('course'):
+					if 	hasattr(parent_el, 'ntiid') and \
+						parent_el.tagName.startswith('course'):
 						lesson_el = topic_map.get(parent_el.ntiid)
 
 				if el.uri == '':
-					logger.warn('We have no valid URI!!! %s %s' % (el.ntiid, el.relatedwork.ntiid))
+					logger.warn('We have no valid URI!!! %s %s', 
+								el.ntiid, el.relatedwork.ntiid)
 
 				targetMimeType = el.targetMimeType
 
 				title = _render_children(el.relatedwork.renderer, el.relatedwork.title)
-				creator = _render_children(el.relatedwork.renderer, el.relatedwork.creator)
+				creator = _render_children(	el.relatedwork.renderer, 
+											el.relatedwork.creator)
 				
-				# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
-				# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-				description = _render_children(el.renderer, el.description).replace('&amp;', '&')
+				# SAJ: Have to un-HTML escape & to prevent it from being double escaped.
+				# It is likely that we will have to unescape all HTML escape codes prior
+				# to the writing out of the ToC
+				description = _render_children(	el.renderer, 
+												el.description).replace('&amp;', '&')
 
 				content = {
 					'label': title,
@@ -122,9 +133,11 @@ class _RelatedWorkExtractor(object):
 			title = _render_children(el.renderer, el.title)
 			creator = _render_children(el.renderer, el.creator)
 			
-			# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
-			# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-			description = _render_children(el.renderer, el.description).replace('&amp;', '&')
+			# SAJ: Have to un-HTML escape & to prevent it from being double escaped.
+			# It is likely that we will have to unescape all HTML escape codes prior to
+			# the writing out of the ToC
+			description = _render_children(	el.renderer, 
+											el.description).replace('&amp;', '&')
 
 			content = {
 				'label': title,
@@ -151,7 +164,8 @@ class _RelatedWorkExtractor(object):
 			if node is None:
 				continue
 
-			el = dom.createElementNS("http://www.nextthought.com/toc", 'content:related')
+			el = dom.createElementNS("http://www.nextthought.com/toc", 
+									 'content:related')
 			for name, value in d.items():
 				el.setAttribute(unicode(name), unicode(value))
 			node.appendChild(el)
