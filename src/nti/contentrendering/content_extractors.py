@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,51 +14,45 @@ import logging
 import argparse
 
 from zope import component
-from zope.configuration import xmlconfig, config
 
-import nti.contentrendering
-from nti.contentrendering.utils import EmptyMockDocument
-from nti.contentrendering.interfaces import IRenderedBookExtractor
-from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
+from .render_document import parse_tex
+from .interfaces import IRenderedBookExtractor
+from .utils import NoConcurrentPhantomRenderedBook
 
-def transform(book, savetoc=False):
+def transform(book, savetoc=False, outpath=None):
 	for name, extractor in sorted(component.getUtilitiesFor(IRenderedBookExtractor)):
 		logger.info("Extracting %s/%s", name, extractor)
-		extractor.transform(book, savetoc=savetoc)
+		extractor.transform(book, savetoc=savetoc, outpath=outpath)
 
 def main():
-	context = config.ConfigurationMachine()
-	xmlconfig.registerCommonDirectives(context)
-	xmlconfig.file("configure.zcml", nti.contentrendering, context=context)
-	
-	# parse arguments
 	arg_parser = argparse.ArgumentParser(description="Run content extractor")
-	arg_parser.add_argument('contentpath', help="Content book location")
+	arg_parser.add_argument('contentpath', help="Path to tex content file")
 	arg_parser.add_argument('-t', '--toc', help="Save objects in toc",
 							action='store_true', dest='savetoc')
+	arg_parser.add_argument('-o', '--out', help="Output directoty", dest='outpath')
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose",
 							action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
 
 	# process arguments
 	contentpath = os.path.expanduser(args.contentpath)
-	contentpath = contentpath[:-1] if contentpath.endswith(os.path.sep) else contentpath
-	jobname = os.path.basename(contentpath)
+	if not os.path.exists(contentpath) or os.path.isdir(contentpath):
+		raise IOError("Invalid content file")
+	
+	outpath = os.path.expanduser(args.outpath)
+	if outpath and not os.path.exists(outpath):
+		raise IOError("Invalid output directory")
 
 	verbose = args.verbose
 	savetoc = args.savetoc
-	if not os.path.exists(contentpath) or not os.path.isdir(contentpath):
-		raise IOError("Invalid content directory")
-
 	if verbose:
-		ei = '%(asctime)-15s %(name)-5s %(levelname)-8s %(message)s'
+		ei = '[%(asctime)-15s] [%(name)s] %(levelname)s: %(message)s'
 		logging.basicConfig(level=logging.DEBUG, format=ei)
 
 	# do extraction
-	document = EmptyMockDocument()
-	document.userdata['jobname'] = jobname
+	document = parse_tex(contentpath, perform_transforms=False)
 	book = NoConcurrentPhantomRenderedBook(document, contentpath)
-	transform(book, savetoc=savetoc)
+	transform(book, savetoc=savetoc, outpath=outpath)
 
 if __name__ == '__main__':
 	main()

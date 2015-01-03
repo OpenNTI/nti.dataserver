@@ -97,6 +97,7 @@ def parse_tex(sourceFile, outFormat=None, outdir=None,
 	# XML entities for high characters. This is more likely to survive
 	# through various processing steps that may not be UTF-8 aware
 	document.config['files']['output-encoding'] = 'ascii'
+	
 	document.config['general']['theme'] = 'NTIDefault'
 	document.config['general']['theme-base'] = 'NTIDefault'
 	
@@ -200,4 +201,4 @@ def parse_tex(sourceFile, outFormat=None, outdir=None,
 		logger.info("Perform prerender transforms.")
 		performTransforms(document, context=components)
 
-	return document, components, jobname
+	return document, components, jobname, outdir
