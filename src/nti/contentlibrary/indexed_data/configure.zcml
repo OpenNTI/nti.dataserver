@@ -22,6 +22,10 @@
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IRelatedContentIndexedDataContainer" />
 
+	<adapter factory=".adapters.timeline_indexed_data_adapter"
+			 for="..interfaces.IContentUnit"
+			 provides=".interfaces.ITimelineIndexedDataContainer" />
+
 	<!-- Events -->
 
 	<!-- addition -->
@@ -34,6 +38,10 @@
 					 zope.lifecycleevent.IObjectAddedEvent" />
 					 
 	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
+				for="..interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_timeline_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectAddedEvent" />
 
@@ -50,6 +58,10 @@
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectModifiedEvent" />
 
+	<subscriber handler=".subscribers._update_timeline_index_when_content_changes"
+				for="..interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
 	<!-- removal -->
 	<subscriber handler=".subscribers._clear_audio_index_when_content_removed"
 				for="..interfaces.IContentPackage
@@ -63,4 +75,8 @@
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectRemovedEvent" />
 
+	<subscriber handler=".subscribers._clear_timeline_index_when_content_removed"
+				for="..interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+					 
 </configure>
