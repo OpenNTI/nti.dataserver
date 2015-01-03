@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
+
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
@@ -44,7 +46,6 @@ def indexed_data_adapter(content_unit,
 
 	return result
 
-import sys
 def _make_adapters():
 	frame = sys._getframe(1)
 	__module__ = frame.f_globals['__name__']

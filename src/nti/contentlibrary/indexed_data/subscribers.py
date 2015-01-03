@@ -13,13 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 import anyjson as json
 
-from .interfaces import IAudioIndexedDataContainer
-from .interfaces import IRelatedContentIndexedDataContainer
-from .interfaces import IVideoIndexedDataContainer
 from .interfaces import TAG_NAMESPACE_FILE
+from .interfaces import IAudioIndexedDataContainer
+from .interfaces import IVideoIndexedDataContainer
+from .interfaces import ITimelineIndexedDataContainer
+from .interfaces import IRelatedContentIndexedDataContainer
 
 def _update_index_when_content_changes(content_package, index_iface):
-
 	# We track the modification timestamp of the key, if it exists,
 	# and compare it to the modification timestamp of the root unit, updating
 	# everything when the root unit changes
@@ -87,6 +87,10 @@ def _update_related_content_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
 											  IRelatedContentIndexedDataContainer)
 
+def _update_timeline_index_when_content_changes(content_package, event):
+	return _update_index_when_content_changes(content_package,
+											  ITimelineIndexedDataContainer)
+	
 def _clear_when_removed(content_package, index_iface):
 	"""
 	Because we don't know where the data is stored, when an
@@ -99,7 +103,6 @@ def _clear_when_removed(content_package, index_iface):
 		container = index_iface(unit)
 		container.set_data_items(())
 		container.lastModified = -1
-
 		for child in unit.children:
 			recur(child)
 
@@ -113,3 +116,6 @@ def _clear_video_index_when_content_removed(content_package, event):
 
 def _clear_related_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package, IRelatedContentIndexedDataContainer)
+
+def _clear_timeline_index_when_content_removed(content_package, event):
+	return _clear_when_removed(content_package, ITimelineIndexedDataContainer)
