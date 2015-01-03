@@ -14,51 +14,10 @@ from hamcrest import has_length
 from hamcrest import has_entries
 from hamcrest import assert_that
 
-import os.path
+import os
 import unittest
 
 from xml.dom import minidom
-
-course_string = r"""
-%Course lessons defined
-
-\courselesson{Title 1}{l1}{is_outline_stub_only=true} % AKA chapter
-\courselessonsection{Section Title 1} % a section
-\section{This is ignored}
-
-\courselesson{Title 2}{l2} % another chapter
-\section{This is ignored}
-\courselessonsection{Section Title 2}{not_before_date=2013-12-31,not_after_date=2014-01-02} % section
-\subsection{This Subsection is also ignored}
-\courselessonsubsection{SubSection Title 2}{is_outline_stub_only=true,not_after_date=2014-01-03}
-
-% A lesson not included in a unit
-\courselesson{Title 3}{l3}
-
-
-\begin{course}{Law And Justice}{Number}
-%Define the Course Discussion Board
-\coursecommunity{CLC3403.ou.nextthought.com}
-\coursecommunity[scope=restricted]{tag:nextthought.com,2011-10:harp4162-MeetingRoom:Group-clc3403fall2013.ou.nextthought.com}
-\courseboard{tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Board:GeneralCommunity-DiscussionBoard}
-\courseannouncementboard{tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Forum:GeneralCommunity-In_Class_Announcements tag:nextthought.com,2011-10:CLC3403.ou.nextthought.com-Forum:GeneralCommunity-Open_Announcements}
-
-%Course units defined
-
-\begin{courseunit}{Unit}
-\courselessonref{l1} % no date, but stub
-\courselessonref{l2}{08/19/2013,08/21/2013} % with date
-\end{courseunit}
-
-\end{course}
-
-"""
-
-works_string = r"""
-\begin{relatedwork} \label{relwk:AdditionalResources_01.01} \worktitle{1.1 Aristotle}\workcreator{Wikipedia}\worksource{https://en.wikipedia.org/wiki/Aristotle}
-Aristotle was a Greek philosopher and polymath, a student of Plato and teacher of Alexander the Great.
-\end{relatedwork}
-"""
 
 from nti.contentrendering.tests import RenderContext
 from nti.contentrendering.tests import simpleLatexDocumentText
@@ -77,18 +36,23 @@ class TestCourseExtractor(unittest.TestCase):
 
 	def test_course_and_related_extractor_works(self):
 		# Does very little verification. Mostly makes sure we don't crash
-
+		name = 'sample_course.tex'
+		with open(os.path.join( os.path.dirname(__file__), name)) as fp:
+			course_string = fp.read()
+		name = 'sample_relatedwork.tex'
+		with open(os.path.join( os.path.dirname(__file__), name)) as fp:
+			works_string = fp.read()
+			
 		class Book(object):
 			toc = None
 			document = None
 			contentLocation = None
-
 		book = Book()
-
+		
 		with RenderContext(simpleLatexDocumentText(
 								preludes=("\\usepackage{nticourse}", "\\usepackage{ntilatexmacros}"),
 								bodies=(course_string, works_string)),
-						   packages_on_texinputs=True) as ctx:
+						   	packages_on_texinputs=True) as ctx:
 			book.document = ctx.dom
 			book.contentLocation = ctx.docdir
 
@@ -130,7 +94,6 @@ class TestCourseExtractor(unittest.TestCase):
 									  'date', "2013-08-19T05:00:00Z,2013-08-22T04:59:59Z",
 									  'topic-ntiid', "tag:nextthought.com,2011-10:testing-HTML-temp.l2",
 									  'isOutlineStubOnly', 'false'))
-
 
 			sub_lessons = lesson.childNodes
 			assert_that( sub_lessons, has_length(1))

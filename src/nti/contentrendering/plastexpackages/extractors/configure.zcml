@@ -1,11 +1,11 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
 			xmlns:i18n="http://namespaces.zope.org/i18n"
-			xmlns:zcml="http://namespaces.zope.org/zcml"
-			xmlns:gdb="http://nextthought.com/ntp/graphdb">
+			xmlns:zcml="http://namespaces.zope.org/zcml">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.security" />
 	<include package="zope.component" />
 	
 	<adapter factory=".course._CourseExtractor"
@@ -47,5 +47,13 @@
 	<utility factory=".media._NTIAudioExtractor"
 			 provides="nti.contentrendering.interfaces.INTIAudioExtractor"
 			 name="025.NTIAudioExtractor" />
+			 
+	<adapter factory=".timeline._TimelineExtractor"
+			 for="nti.contentrendering.interfaces.IRenderedBook"
+			 provides="nti.contentrendering.interfaces.ITimelineExtractor" />
+			 
+	<utility factory=".timeline._TimelineExtractor"
+			 provides="nti.contentrendering.interfaces.ITimelineExtractor"
+			 name="035.NTIAudioExtractor" />
 			 
 </configure>
