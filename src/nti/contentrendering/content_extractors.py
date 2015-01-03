@@ -54,10 +54,17 @@ def main():
 	else:
 		logging.basicConfig(level=logging.INFO, format=DEFAULT_LOG_FORMAT)
 	
-	# do extraction
-	document = parse_tex(contentpath, perform_transforms=False)
-	book = NoConcurrentPhantomRenderedBook(document, contentpath)
-	transform(book, save_toc=save_toc, outpath=outpath)
+	current_path = os.getcwd()
+	try:
+		source_dir = os.path.dirname(os.path.abspath(contentpath))
+		os.chdir(source_dir)
+		
+		# do extraction
+		document = parse_tex(contentpath, perform_transforms=False)
+		book = NoConcurrentPhantomRenderedBook(document, contentpath)
+		transform(book, save_toc=save_toc, outpath=outpath)
+	finally:
+		os.chdir(current_path)
 
 if __name__ == '__main__':
 	main()
