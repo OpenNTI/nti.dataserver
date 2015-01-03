@@ -13,9 +13,11 @@
 	<adapter factory=".adapters.audio_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IAudioIndexedDataContainer"/>
+			 
 	<adapter factory=".adapters.video_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IVideoIndexedDataContainer" />
+			 
 	<adapter factory=".adapters.related_content_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IRelatedContentIndexedDataContainer" />
@@ -26,9 +28,11 @@
 	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectAddedEvent" />
+					 
 	<subscriber handler=".subscribers._update_video_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectAddedEvent" />
+					 
 	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectAddedEvent" />
@@ -37,9 +41,11 @@
 	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectModifiedEvent" />
+					 
 	<subscriber handler=".subscribers._update_video_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectModifiedEvent" />
+					 
 	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectModifiedEvent" />
@@ -48,12 +54,13 @@
 	<subscriber handler=".subscribers._clear_audio_index_when_content_removed"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectRemovedEvent" />
+					 
 	<subscriber handler=".subscribers._clear_video_index_when_content_removed"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectRemovedEvent" />
+					 
 	<subscriber handler=".subscribers._clear_related_index_when_content_removed"
 				for="..interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectRemovedEvent" />
-
 
 </configure>

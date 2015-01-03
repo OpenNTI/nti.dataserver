@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Interfaces representing the indexed data that can be
-attached to content units.
-
+Interfaces representing the indexed data that can be attached to content units.
 
 .. $Id$
 """
@@ -16,9 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from zope.container.interfaces import ILocation
+
 from nti.dublincore.interfaces import ILastModified
-
-
 
 class IIndexedDataContainer(ILocation, ILastModified):
 	"""
@@ -87,3 +84,12 @@ class IRelatedContentIndexedDataContainer(IWritableIndexedDataContainer):
 
 IRelatedContentIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 												   'related_content_index.json')
+
+
+class ITimelineIndexedDataContainer(IWritableIndexedDataContainer):
+	"""
+	Special adapter, pre-namespaced for timeline data.
+	"""
+
+ITimelineIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
+									  		'timeline_index.json')

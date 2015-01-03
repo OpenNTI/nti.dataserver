@@ -7,7 +7,6 @@ extracted at content rendering time.
 It is typically accessed by adapting content units to the interfaces
 of this package.
 
-
 .. $Id$
 """
 

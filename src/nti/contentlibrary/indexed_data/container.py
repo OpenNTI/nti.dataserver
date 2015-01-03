@@ -13,10 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from .interfaces import IWritableIndexedDataContainer
 from .interfaces import IAudioIndexedDataContainer
-from .interfaces import IRelatedContentIndexedDataContainer
 from .interfaces import IVideoIndexedDataContainer
+from .interfaces import IWritableIndexedDataContainer
+from .interfaces import ITimelineIndexedDataContainer
+from .interfaces import IRelatedContentIndexedDataContainer
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
@@ -77,12 +78,14 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 class AudioIndexedDataContainer(IndexedDataContainer):
 	pass
 
-
 @interface.implementer(IVideoIndexedDataContainer)
 class VideoIndexedDataContainer(IndexedDataContainer):
 	pass
 
-
 @interface.implementer(IRelatedContentIndexedDataContainer)
 class RelatedContentIndexedDataContainer(IndexedDataContainer):
+	pass
+
+@interface.implementer(ITimelineIndexedDataContainer)
+class TimelineIndexedDataContainer(IndexedDataContainer):
 	pass
