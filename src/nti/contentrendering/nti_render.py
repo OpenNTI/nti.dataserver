@@ -109,7 +109,7 @@ def main():
 
 	logger.info("Start rendering for %s", sourceFile)
 	start_t = time.time()
-	document, components, jobname = parse_tex(sourceFile, outFormat=outFormat)
+	document, components, jobname, _ = parse_tex(sourceFile, outFormat=outFormat)
 	
 	db = None
 	if outFormat in ('images', 'xhtml', 'text'):

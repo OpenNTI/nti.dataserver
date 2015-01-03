@@ -1,29 +1,39 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
 import os
+import six
 import sys
-from RenderedBook import RenderedBook, EclipseTOC
 import itertools
 import collections
-import six
 
-import logging
-logger = logging.getLogger(__name__)
-
-import domutils
-
-from . import interfaces
 from zope import interface
 from zope import component
 
+from .interfaces import IStaticRelatedItemsAdder
+from .RenderedBook import RenderedBook, EclipseTOC
+
+from .domutils import node_has_attribute_with_value
+from .domutlls import getOrCreateNodeInDocumentBeneathWithName
+
 def main(args):
- 	""" Main program routine """
+	""" 
+ 	Main program routine 
+ 	"""
 
 	if not len(args)>0:
-		print "Usage: contentsizesetter.py path/to/content"
+		print("Usage: contentsizesetter.py path/to/content")
 		sys.exit()
 
 	contentLocation = args.pop(0)
-
 	performTransforms(RenderedBook(contentLocation))
 
 def performTransforms(book, save_toc=True, context=None):
@@ -35,7 +45,7 @@ def performTransforms(book, save_toc=True, context=None):
 	:return: A list of tuples whose length is the number of transforms applied
 	"""
 
-	utils = list(component.getUtilitiesFor(interfaces.IStaticRelatedItemsAdder,context=context))
+	utils = list(component.getUtilitiesFor(IStaticRelatedItemsAdder,context=context))
 	for name, util in utils:
 		logger.info( "Running transform %s (%s)", name, util )
 		util.transform( book )
@@ -44,26 +54,22 @@ def performTransforms(book, save_toc=True, context=None):
 		book.toc.save()
 	return utils
 
-
 def _is_relation_of_type_and_qual(page1, ntiid, tpe, qualifier):
+	return 		node_has_attribute_with_value(page1, 'ntiid', ntiid) \
+			and node_has_attribute_with_value(page1, 'type', tpe) \
+			and node_has_attribute_with_value(page1, 'qualifier', qualifier)
 
-	return domutils.node_has_attribute_with_value(page1, 'ntiid', ntiid) \
-		and domutils.node_has_attribute_with_value(page1, 'type', tpe) \
-		and domutils.node_has_attribute_with_value(page1, 'qualifier', qualifier)
-
-def _nodes_contain_relation_of_type_qual( alreadyrelatednodes, ntiid, tpe, qualifier ):
+def _nodes_contain_relation_of_type_qual(alreadyrelatednodes, ntiid, tpe, qualifier):
 	for node in alreadyrelatednodes:
 		if _is_relation_of_type_and_qual( node, ntiid, tpe, qualifier ):
 			return True
 	return False
 
-def _node_of_id_type_qual( document, ntiid, tpe, qualifier="", nodename='page' ):
+def _node_of_id_type_qual(document, ntiid, tpe, qualifier="", nodename='page'):
 	pageNode = document.createElement( nodename )
-
 	pageNode.setAttribute('ntiid', ntiid)
 	pageNode.setAttribute('type', tpe)
 	pageNode.setAttribute('qualifier', qualifier)
-
 	return pageNode
 
 class AbstractRelatedAdder(object):
@@ -91,7 +97,7 @@ class AbstractRelatedAdder(object):
 		"""
 		:return: A list of nodes added as new relations.
 		"""
-		relatedPages = domutils.getOrCreateNodeInDocumentBeneathWithName(relatesToNode, 'Related')
+		relatedPages = getOrCreateNodeInDocumentBeneathWithName(relatesToNode, 'Related')
 
 		if not isinstance(relatedToIds, collections.Iterable) or isinstance(relatedToIds, six.string_types):
 			relatedToIds = [relatedToIds]
@@ -110,7 +116,7 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 	"""
 	Adds relationships based on finding things that contain the same index terms.
 	"""
-	interface.classProvides(interfaces.IStaticRelatedItemsAdder)
+	interface.classProvides(IStaticRelatedItemsAdder)
 
 	def __call__( self ):
 		book = self.book
@@ -165,7 +171,7 @@ class ExistingTOCRelatedAdder(AbstractRelatedAdder):
 	"""
 	Copies all related nodes from an existing TOC file.
 	"""
-	interface.classProvides(interfaces.IStaticRelatedItemsAdder)
+	interface.classProvides(IStaticRelatedItemsAdder)
 	def __call__(self):
 		existing_toc_file = os.path.join( self.book.contentLocation, '..', 'related-items.xml' )
 		if not os.path.exists( existing_toc_file ):
@@ -198,7 +204,7 @@ class LinkRelatedAdder(AbstractRelatedAdder):
 	"""
 	Adds relationships based on links found between pages (specified in the source text).
 	"""
-	interface.classProvides(interfaces.IStaticRelatedItemsAdder)
+	interface.classProvides(IStaticRelatedItemsAdder)
 
 	def __call__( self ):
 		for _, page in self.book.pages.items():
@@ -227,4 +233,3 @@ class LinkRelatedAdder(AbstractRelatedAdder):
 				if not tocNodes: continue
 				tocNode = tocNodes[0]
 				self._pageid_is_related_to_pageids( page.ntiid, tocNode.getAttribute('ntiid'), 'link', qualifier=link )
-
