@@ -36,10 +36,10 @@ from nti.utils import setupChameleonCache
 
 out_format_to_render_name = {'xhtml': 'XHTML', 'text': 'Text'}
 	
-def parse_tex(sourceFile, outFormat=None, outdir=None, 
+def parse_tex(sourceFile, outFormat='xhtml', outdir=None, 
 			  perform_transforms=True, set_chameleon_cache=True, 
 			  xml_conf_context=None):
-	
+
 	source_dir = os.path.dirname(os.path.abspath(os.path.expanduser(sourceFile)))
 
 	# Set up imports for style files. The preferred, if verbose, way is to
