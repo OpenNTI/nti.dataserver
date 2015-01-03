@@ -7,6 +7,9 @@ entry_points = {
 		"nti_sync_all_libraries = nti.app.contentlibrary.utils.synchronizer:main",
 		# rendering
 		"nti_render = nti.contentrendering.nti_render:main",
+		"nti_create_book_archive = nti.contentrendering.archive:main",
+		"nti_content_indexer = nti.contentrendering.content_indexer:main",
+		"nti_content_extractors = nti.contentrendering.content_extractors:main",
 		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
@@ -31,8 +34,6 @@ entry_points = {
 		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
 		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
 		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
-		"nti_content_indexer = nti.contentrendering.content_indexer:main",
-		"nti_create_book_archive = nti.contentrendering.archive:main",
 		# NOTE: The command line tools are deprecated. Leave the setup.py entry points
 		# pointing to this package to get the deprecation notice
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
@@ -54,7 +55,6 @@ entry_points = {
 		"main = nti.appserver.standalone:configure_app",
 		"gunicorn = nti.appserver.gunicorn:dummy_app_factory"
 	],
-
 	"paste.filter_app_factory": [
 		"cors = nti.wsgi.cors:cors_filter_factory", # BWC
 		"cors_options = nti.wsgi.cors:cors_option_filter_factory", # BWC
@@ -90,7 +90,6 @@ TESTS_REQUIRE = [
 	'nose-pudb >= 0.1.2',  # Nose integration: --pudb --pudb-failures. 0.1.2 requires trivial patch
 	'pyhamcrest >= 1.8.0',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
-	# 'z3c.coverage >= 2.0.0', # For HTML coverage reports that are prettier than plain 'coverage' TODO: Do we need this?
 	'zope.testing >= 4.1.2',
 	'nti.nose_traceback_info',
 	'nti.testing',
