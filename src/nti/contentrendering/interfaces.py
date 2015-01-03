@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -262,6 +263,11 @@ class ISlideDeckExtractor(IRenderedBookExtractor):
 	Looks through the rendered book and extracts slide decks.
 	"""
 
+class ITimelineExtractor(IRenderedBookExtractor):
+	"""
+	Looks through the rendered book and extracts timelime information.
+	"""
+	
 class IJSONTransformer(interface.Interface):
 	"""
 	Given a :class:`plasTeX.Node`, create a JSON serializable dictionary.
