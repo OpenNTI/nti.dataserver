@@ -13,6 +13,8 @@ import os
 import collections
 import simplejson as json
 
+from plasTeX.Base.LaTeX import Document as LaTexDocument
+
 from zope import component
 from zope import interface
 
@@ -52,8 +54,8 @@ class _TimelineExtractor(object):
 		for el in elements or ():
 			uri = el.uri
 			ntiid = el.ntiid
-			icon = el.icon.image.url if el.icon else None
 			title = _render_children(el.renderer, el.title)
+			icon = el.icon.image.url if el.icon is not None else None
 			description = _render_children(el.renderer, el.description)
 			content = {
 				'href': uri,
@@ -62,43 +64,47 @@ class _TimelineExtractor(object):
 				'ntiid': ntiid,
 				'desc': description,
 			}
-			result.append((content, dom.childNodes[0]))
+			# find parent document
+			parent = el.parentNode
+			while parent is not None and not isinstance(parent, LaTexDocument.document):
+				ntiid = getattr(parent, 'ntiid', None) or u''
+				if ntiid in topic_map:
+					break
+				else:
+					parent = parent.parentNode
+	
+			container = getattr(parent, 'ntiid', None) if parent else None
+			result.append((content, container))
 		return result
 
 	def _save_timeline_content(self, outpath, dom, content_items):
-		return
-# 		items = {}
-# 		filename = 'related_content_index.json'
-# 		containers = collections.defaultdict(set)
-# 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
-# 		related_content_index = {'Items': items, 'Containers':containers}
-# 		
-# 		for d, node in content_items:
-# 			if node is None:
-# 				continue
-# 
-# 			el = dom.createElementNS("http://www.nextthought.com/toc", 'content:related')
-# 			for name, value in d.items():
-# 				el.setAttribute(unicode(name), unicode(value))
-# 			node.appendChild(el)
-# 
-# 			items[d['ntiid']] = d
-# 			container = node.getAttribute('ntiid') or doc_ntiid
-# 			containers[container].add(d['ntiid'])
-# 
-# 		for ntiid, vid_ids in list(containers.items()):
-# 			containers[ntiid] = list(vid_ids)  # Make JSON Serializable
-# 
-# 		# Write the normal version
-# 		with open(os.path.join(outpath, filename), "wb") as fp:
-# 			json.dump(related_content_index, fp, indent=4)
-# 
-# 		# Write the JSONP version
-# 		with open(os.path.join(outpath, filename + 'p'), "wb") as fp:
-# 			fp.write('jsonpReceiveContent(')
-# 			json.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
-# 					   'Content-Type': 'application/json',
-# 					   'Content-Encoding': 'json',
-# 					   'content': related_content_index,
-# 					   'version': '1'}, fp, indent=4)
-# 			fp.write(');')
+		items = {}
+		filename = 'timelime_index.json'
+		containers = collections.defaultdict(set)
+		doc_ntiid = dom.documentElement.getAttribute('ntiid')
+		related_content_index = {'Items': items, 'Containers':containers}
+	
+		for data, container in content_items:
+			container = container or doc_ntiid
+			if not container:
+				continue
+	
+			items[data['ntiid']] = data
+			containers[container].add(data['ntiid'])
+
+		for ntiid, tid_ids in list(containers.items()):
+			containers[ntiid] = list(tid_ids)  # Make JSON Serializable
+
+		# Write the normal version
+		with open(os.path.join(outpath, filename), "wb") as fp:
+			json.dump(related_content_index, fp, indent=4)
+
+		# Write the JSONP version
+		with open(os.path.join(outpath, filename + 'p'), "wb") as fp:
+			fp.write('jsonpReceiveContent(')
+			json.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
+					   'Content-Type': 'application/json',
+					   'Content-Encoding': 'json',
+					   'content': related_content_index,
+					   'version': '1'}, fp, indent=4)
+			fp.write(');')

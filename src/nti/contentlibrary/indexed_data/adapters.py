@@ -50,7 +50,7 @@ def _make_adapters():
 	frame = sys._getframe(1)
 	__module__ = frame.f_globals['__name__']
 
-	types = ('audio', 'video', 'related_content')
+	types = ('audio', 'video', 'related_content', 'timeline')
 
 	def make_func(iface, factory):
 		@interface.implementer(iface)
