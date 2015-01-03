@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-# $Id$
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 
-from pyquery import PyQuery
-from . import RenderedBook
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-import logging
-logger = logging.getLogger(__name__)
+logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from . import interfaces
 
-interface.moduleProvides( interfaces.IRenderedBookTransformer )
+from .interfaces import IRenderedBookTransformer
+interface.moduleProvides( IRenderedBookTransformer )
 
 def transform( book, save_toc=True ):
 
@@ -18,7 +20,6 @@ def transform( book, save_toc=True ):
 		result = 0
 		hrefs = ()
 		dom = topic.dom
-
 		if dom:
 			hrefs = []
 			# The main body
@@ -39,8 +40,8 @@ def transform( book, save_toc=True ):
 				continue
 			if filename.startswith( 'tag:nextthought' ):
 				# Yay, it's already a NTIID
-				# Note that we're not using the nti.dataserver.ntiids module to validate this to
-				# avoid dependencies (which may not be important)
+				# Note that we're not using the nti.dataserver.ntiids module to 
+				# validate this to avoid dependencies (which may not be important)
 				continue
 			if filename.startswith( 'http:' ) or filename.startswith( 'https:' ):
 				# An absolute link. Nothing to do for it either
@@ -61,13 +62,13 @@ def transform( book, save_toc=True ):
 				else:
 					# Bare links to the current page occur as part of some referencing
 					# schemes. (E.g., "Problem number <Section>.<Counter>" generates
-					# two links, one for the current page, one for the counter.) The first
-					# link is useless and annoying if you click it, so make it do
+					# two links, one for the current page, one for the counter.) The 
+					# first link is useless and annoying if you click it, so make it do
 					# nothing (But this doesn't count as real work)
-					logger.debug( "Stripping a bare link to the current page '%s' in %s", href.attrib['href'], topic )
+					logger.debug("Stripping a bare link to the current page '%s' in %s",
+								 href.attrib['href'], topic )
 					href.attrib['href'] = '#'
 				continue
-
 
 			ntiid_topic = book.toc.root_topic.topic_with_filename( filename )
 			if ntiid_topic and ntiid_topic.ntiid:
@@ -76,13 +77,16 @@ def transform( book, save_toc=True ):
 				href.attrib['href'] = ntiid_topic.ntiid + fragment
 				result += 1
 			else:
-				logger.warning( "Unable to resolve NTIID for href '%s' and file '%s' in %s", href.attrib['href'], filename, topic )
+				logger.warn("Unable to resolve NTIID for href '%s' and file '%s' in %s", 
+							href.attrib['href'], filename, topic )
 
 		if result:
 			topic.write_dom()
+
 		# recurse
 		for t in topic.childTopics:
 			result += modify_hrefs_in_topic( t )
 		return result
 
-	return modify_hrefs_in_topic( book.toc.root_topic )
+	result = modify_hrefs_in_topic( book.toc.root_topic )
+	return result
