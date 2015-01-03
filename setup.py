@@ -242,7 +242,7 @@ setup(
 		'logilab-common',
 		'lxml', # Powerful and Pythonic HTML/XML processing library combining libxml2/libxslt with the ElementTree API. Also a pull parser.
 		'nameparser', # Human name parsing
-		'nltk >= 2.0.4',
+		'nltk',
 		# numpy is req'd by nltk, but not depended on. sigh.
 		# This turns out to be because it CANNOT be installed in a setup.py:
 		# Apparently it ships its own distutils. If you try to install from setup.py, you get
@@ -252,7 +252,7 @@ setup(
 		# or have it in requirements.txt (which we do).
 		# It also works to install it with buildout, which is the currently
 		# supported mechanism.
-		'numpy >= 1.8.0b2' if not IS_PYPY else '',
+		'numpy' if not IS_PYPY else '',
 		'paste >= 1.7.5.1',
 		'perfmetrics',  # easy statsd metrics.
 		'plone.i18n >= 2.0.9',	# provides ISO3166 country/codes and flag images
@@ -482,7 +482,8 @@ setup(
 		'git+https://github.com/NextThought/nti.plasTeX.git#egg=nti.plasTeX',
 		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
-		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2'
+		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2',
+        'git+https://github.com/papachoco/nltk.git#egg=nltk-3.0.0dev'
 	],
 	zip_safe=False,
 	package_dir={'': 'src'},
