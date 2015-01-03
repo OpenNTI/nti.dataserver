@@ -35,49 +35,35 @@ class _TimelineExtractor(object):
 		
 		timeline_els = book.document.getElementsByTagName('ntitimeline')
 		if timeline_els:
-			outpath = os.path.expanduser(book.contentLocation)
-			content = self._process_timelime(dom, timeline_els)
+			topic_map = self._get_topic_map(dom)
+			content = self._process_timelime(dom, timeline_els, topic_map)
 			self._save_timeline_content(outpath, dom, content)
 
-	def _process_timelime(self, dom, elements=()):
-		pass
-# 		result = []
-# 		for el in elements or ():
-# 			if el.iconResource is not None:
-# 				icon = el.iconResource.image.url
-# 			elif el.icon is not None:
-# 				icon = el.icon
-# 			else:
-# 				icon = ''
-# 
-# 			uri = el.uri
-# 
-# 			if uri == '':
-# 				logger.warn('No URI specified for %s' % el.ntiid)
-# 
-# 			if uri != '' and el.targetMimeType is None:
-# 				el.gen_target_ntiid()
-# 
-# 			title = _render_children(el.renderer, el.title)
-# 			creator = _render_children(el.renderer, el.creator)
-# 			
-# 			# SAJ: Have to un-HTML escape & to prevent it from being double escaped. It is likely
-# 			# that we will have to unescape all HTML escape codes prior to the writing out of the ToC
-# 			description = _render_children(el.renderer, el.description).replace('&amp;', '&')
-# 
-# 			content = {
-# 				'label': title,
-# 				'creator': creator,
-# 				'href': uri,
-# 				'type': el.targetMimeType,
-# 				'icon': icon,
-# 				'desc': description,
-# 				'visibility': el.visibility,
-# 				'target-ntiid': el.target_ntiid,
-# 				'ntiid': el.ntiid
-# 			}
-# 			result.append((content, dom.childNodes[0]))
-# 		return result
+	def _get_topic_map(self, dom):
+		result = {}
+		for topic_el in dom.getElementsByTagName('topic'):
+			ntiid = topic_el.getAttribute('ntiid')
+			if ntiid:
+				result[ntiid] = topic_el
+		return result
+	
+	def _process_timelime(self, dom, elements, topic_map):
+		result = []
+		for el in elements or ():
+			uri = el.uri
+			ntiid = el.ntiid
+			icon = el.icon.image.url if el.icon else None
+			title = _render_children(el.renderer, el.title)
+			description = _render_children(el.renderer, el.description)
+			content = {
+				'href': uri,
+				'icon': icon,
+				'label': title,
+				'ntiid': ntiid,
+				'desc': description,
+			}
+			result.append((content, dom.childNodes[0]))
+		return result
 
 	def _save_timeline_content(self, outpath, dom, content_items):
 		return
