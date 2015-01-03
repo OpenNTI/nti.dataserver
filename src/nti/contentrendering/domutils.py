@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 def findNodes(node, nodeName):
 	nodes = []
-	#print 'looking at node %s'%node
+	
 	if getattr(node, 'nodeName', '') == nodeName:
 		nodes.append(node)
 
@@ -29,7 +29,7 @@ def findNodes(node, nodeName):
 
 def findNodesStartsWith(node, startsWith):
 	nodes = []
-	#print 'looking at node %s'%node
+	
 	if getattr(node, 'nodeName', '').startswith(startsWith):
 		nodes.append(node)
 
@@ -47,7 +47,7 @@ def findNodesStartsWith(node, startsWith):
 
 def get_or_create_node_in_document_beneath_with_name(parent, nodeName):
 	"""
-	Return an existing or newly added node directly a child of `parent.`
+	 Return an existing or newly added node directly a child of `parent.`
 	:param parent: The node in the document to be the parent of the node.
 	:param str nodeName: A string naming the new node.
 	"""
