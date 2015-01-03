@@ -31,7 +31,7 @@ def main(args):
  	Main program routine 
  	"""
 
-	if not len(args)>0:
+	if not len(args) > 0:
 		print("Usage: contentsizesetter.py path/to/content")
 		sys.exit()
 
@@ -47,7 +47,7 @@ def performTransforms(book, save_toc=True, context=None):
 	:return: A list of tuples whose length is the number of transforms applied
 	"""
 
-	utils = list(component.getUtilitiesFor(IStaticRelatedItemsAdder,context=context))
+	utils = list(component.getUtilitiesFor(IStaticRelatedItemsAdder, context=context))
 	for name, util in utils:
 		logger.info( "Running transform %s (%s)", name, util )
 		util.transform( book )
@@ -139,7 +139,6 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 
 		for group in theIndex.groups:
 			entries = [entry for column in group for entry in column]
-
 			for entry in entries:
 				related = self._recursive_related_pages_for_index_entry(entry)
 				relatedTuples.append(related)
@@ -148,7 +147,8 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 
 		for key, relationships in relatedTuples:
 			for relatesTo, relatedTo in relationships:
-				self._pageid_is_related_to_pageids( relatesTo, relatedTo, 'index', qualifier=key )
+				self._pageid_is_related_to_pageids( relatesTo, relatedTo, 
+													'index', qualifier=key )
 
 	def _recursive_related_pages_for_index_entry(self, entry):
 		"""
@@ -156,16 +156,16 @@ class TOCRelatedAdder(AbstractRelatedAdder):
 		"""
 
 		eclipseTOC = self.book.toc
-		toc_func = eclipseTOC.getPageForDocumentNode
+		etoc_func = eclipseTOC.getPageForDocumentNode
 		
 		def _error(node):
-			page = toc_func(node)
+			page = etoc_func(node)
 			attrs = getattr(page, 'attributes',None)
 			raise ValueError("No NTIID for entry %s doc node %s page %s attrs %s" % 
 							 (entry, node, page, attrs) )
 
-		pages = [self.book.pages[(toc_func(page).getAttribute('ntiid') or _error(page))]
-				 for page in entry.pages if toc_func(page) is not None]
+		pages = [self.book.pages[(etoc_func(page).getAttribute('ntiid') or _error(page))]
+				 for page in entry.pages if etoc_func(page) is not None]
 		pageIds = [page.ntiid for page in pages if page is not None]
 
 		related = [x for x in itertools.permutations(pageIds, 2) if x[0] != x[1]]
@@ -180,14 +180,16 @@ class ExistingTOCRelatedAdder(AbstractRelatedAdder):
 	Copies all related nodes from an existing TOC file.
 	"""
 	interface.classProvides(IStaticRelatedItemsAdder)
+
 	def __call__(self):
+
 		existing_toc_file = os.path.join(self.book.contentLocation, '..', 
 										 'related-items.xml' )
 		if not os.path.exists( existing_toc_file ):
-			logger.info( "No existing related items at %s", existing_toc_file )
+			logger.info("No existing related items at %s", existing_toc_file)
 			return
 
-		logger.info( "Merging existing related items at %s", existing_toc_file )
+		logger.info("Merging existing related items at %s", existing_toc_file)
 		existing_toc = EclipseTOC( existing_toc_file )
 		for _, page in self.book.pages.items():
 			ntiid = page.ntiid
@@ -206,7 +208,6 @@ class ExistingTOCRelatedAdder(AbstractRelatedAdder):
 					for related in c.childNodes:
 						if related.nodeType == related.ELEMENT_NODE:
 							related_container.appendChild( related )
-
 
 filere = re.compile('(?P<file>.*?\.html).*')
 
@@ -241,7 +242,8 @@ class LinkRelatedAdder(AbstractRelatedAdder):
 
 			if fileName and link:
 				tocNodes = self.book.toc.getPageNodeWithAttribute('href', fileName)
-				if not tocNodes: continue
+				if not tocNodes: 
+					continue
 				tocNode = tocNodes[0]
 				self._pageid_is_related_to_pageids( page.ntiid, 
 													tocNode.getAttribute('ntiid'),

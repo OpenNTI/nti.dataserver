@@ -8,6 +8,7 @@ to use them you must specifically request it.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,12 +19,12 @@ import functools
 
 from zope.deprecation import deprecate
 
+from plasTeX.ConfigManager import NoOptionError
+from plasTeX.ConfigManager import NoSectionError
+
 from nti.deprecated import hiding_warnings
 
 from nti.ntiids import ntiids
-
-from plasTeX.ConfigManager import NoOptionError
-from plasTeX.ConfigManager import NoSectionError
 
 def _make_ntiid( document, local, local_prefix='', nttype='HTML' ):
 	local = unicode(local)
@@ -52,8 +53,9 @@ def nextID(self, suffix=''):
 	setattr(self, 'NTIID', ntiid)
 	return _make_ntiid( self,  ntiid, suffix )
 
-# SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as document.
-# Unfortunately, it is hard to mixin a base class to that object
+# SectionUtils is the (a) parent of chapter, section, ..., paragraph, as well as 
+# document. Unfortunately, it is hard to mixin a base class to that object
+
 import plasTeX
 from plasTeX.Base.LaTeX.Sectioning import SectionUtils
 
@@ -81,7 +83,6 @@ def _ntiid_get_local_part_title(self):
 				title = title.textContent
 	if title:
 		return title.strip().lower()
-
 
 def _preferred_local_part(context):
 	"""
@@ -129,9 +130,11 @@ def _section_ntiid(self):
 		# Hmm. An untitled element that is also not
 		# labeled. This is most likely a paragraph. What can we do for a persistent
 		# name? Does it even matter?
-		logger.warn("Falling back to generated NTIID for %s (%s)", type(self), repr(self)[:50])
+		logger.warn("Falling back to generated NTIID for %s (%s)", type(self), 
+					repr(self)[:50])
 		with hiding_warnings():
-			setattr(self, "@NTIID", nextID(document, getattr( self, '_ntiid_suffix', '')))
+			setattr(self, "@NTIID", 
+					nextID(document, getattr( self, '_ntiid_suffix', '')))
 		return getattr(self, "@NTIID")
 
 	ntiid = _make_ntiid( document, local,
@@ -154,6 +157,7 @@ def _section_ntiid_filename(self):
 	# (This is duplicated from Renderers)
 	if self.level > level:
 		return
+
 	# It's confusing to have the filenames be valid
 	# URLs (tag:) themselves. See Filenames.py and Config.py
 	bad_chars = self.config['files']['bad-chars']
@@ -164,11 +168,8 @@ def _section_ntiid_filename(self):
 			ntiid = ntiid.replace( bad_char, bad_chars_replacement )
 		return ntiid
 
-
-
 def _set_section_ntiid_filename( self, value ):
 	setattr( self, '@filenameoverride', value )
-
 
 def _catching(f, computing='NTIID'):
 	@functools.wraps(f)
@@ -176,7 +177,8 @@ def _catching(f, computing='NTIID'):
 		try:
 			return f(*args)
 		except Exception:
-			logger.exception("Failed to compute %s for %s (%s)", computing, type(args[0]), repr(args[0])[:50] )
+			logger.exception("Failed to compute %s for %s (%s)", 
+							 computing, type(args[0]), repr(args[0])[:50] )
 			raise
 	return y
 
@@ -221,7 +223,9 @@ def _par_id_get(self):
 
 	document = self.ownerDocument
 	source = self.source
-	# A fairly common case is to have a label as a first child (maybe following some whitespace); in that case,
+	
+	# A fairly common case is to have a label as a first child 
+	# (maybe following some whitespace); in that case,
 	# for all intents and purposes (in rendering) we want our external id to be the same
 	# as the label value. However, we don't want to duplicate IDs in the DOM
 	first_non_blank_child = None
@@ -230,7 +234,9 @@ def _par_id_get(self):
 		if child.nodeType != child.TEXT_NODE or child.textContent.strip():
 			break
 
-	if first_non_blank_child is not None and first_non_blank_child.nodeName == 'label' and 'label' in first_non_blank_child.attributes:
+	if 	first_non_blank_child is not None and \
+		first_non_blank_child.nodeName == 'label' and \
+		'label' in first_non_blank_child.attributes:
 		setattr( self, "@id", None )
 		return None
 
@@ -282,9 +288,6 @@ def _embedded_node_cross_ref_url(self):
 	if ntiid:
 		return '%s#%s' % (ntiid, self.id)
 
-
-
-
 def patch_all():
 	"""
 	Performs all the patching.
@@ -292,13 +295,19 @@ def patch_all():
 	and sections to generate more appropriate filenames.
 	"""
 
-	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.par.id.fset)
-	plasTeX.Base.Array.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.Array.id.fset)
-	plasTeX.Base.footnote.id = property(_catching(_par_id_get, 'id'), plasTeX.Base.footnote.id.fset)
+	plasTeX.Base.par.id = property(_catching(_par_id_get, 'id'), 
+									plasTeX.Base.par.id.fset)
+	
+	plasTeX.Base.Array.id = property(_catching(_par_id_get, 'id'), 
+									 plasTeX.Base.Array.id.fset)
+	
+	plasTeX.Base.footnote.id = property(_catching(_par_id_get, 'id'), 
+										plasTeX.Base.footnote.id.fset)
 
 	# TODO: Different counters for this than _par_used_ids?
 	from nti.contentrendering.plastexpackages.graphicx import includegraphics
-	includegraphics.id = property(_catching(_par_id_get, 'id'), includegraphics.id.fset)
+	includegraphics.id = property(_catching(_par_id_get, 'id'),
+								  includegraphics.id.fset)
 
 	SectionUtils.ntiid = property(_catching(_section_ntiid))
 	SectionUtils.filenameoverride = property(_catching(_section_ntiid_filename),
@@ -306,14 +315,15 @@ def patch_all():
 	SectionUtils._ntiid_get_local_part = property(_catching(_ntiid_get_local_part_title))
 	SectionUtils.embedded_doc_cross_ref_url = property(_embedded_node_cross_ref_url)
 
-
 	# Math mode and floats. Only do this for environments that are auto-numbered,
 	# since those are the ones typically referenced. These
 	# MUST be labeled (or in the case of figures and tables, be given a caption
 	# that is labeled)
 	from plasTeX.Base.LaTeX.Math import equation
+	
 	# argh, stupid shadowing imports
 	from plasTeX.Base.LaTeX import Floats
+	
 	for i, name in ((equation, 'equation'),
 					(Floats.figure.caption, 'figure'),
 					(Floats.table.caption, 'table')):
@@ -329,6 +339,7 @@ def patch_all():
 
 	# Ensure we persist these things, if we have them, for
 	# better cross-document referencing
-	plasTeX.Macro.refAttributes += ('ntiid', 'filenameoverride', 'embedded_doc_cross_ref_url')
+	plasTeX.Macro.refAttributes += \
+		 ('ntiid', 'filenameoverride', 'embedded_doc_cross_ref_url')
 
 	plasTeX.TeXDocument.nextNTIID = nextID # Non-destructive patch
