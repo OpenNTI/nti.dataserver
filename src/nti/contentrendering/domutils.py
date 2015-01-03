@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -44,7 +45,7 @@ def findNodesStartsWith(node, startsWith):
 
 	return list(set(nodes))
 
-def getOrCreateNodeInDocumentBeneathWithName(parent, nodeName):
+def get_or_create_node_in_document_beneath_with_name(parent, nodeName):
 	"""
 	Return an existing or newly added node directly a child of `parent.`
 	:param parent: The node in the document to be the parent of the node.
@@ -57,8 +58,8 @@ def getOrCreateNodeInDocumentBeneathWithName(parent, nodeName):
 	else:
 		node = parent.ownerDocument.createElement(nodeName)
 		parent.appendChild(node)
-
 	return node
+getOrCreateNodeInDocumentBeneathWithName=get_or_create_node_in_document_beneath_with_name
 
 def node_has_attribute_with_value(node, attrname, attrval):
 	"""
