@@ -483,7 +483,7 @@ setup(
 		'git+https://github.com/NextThought/z3c.schema.git#egg=z3c.schema-1.0.1.dev0',
 		'git+https://github.com/NextThought/nti.geventwebsocket.git#egg=nti.geventwebsocket',
 		'git+https://github.com/NextThought/umysqldb.git#egg=umysqldb-1.0.4dev2',
-        'git+https://github.com/papachoco/nltk.git#egg=nltk-3.0.0dev'
+        'git+https://github.com/NextThought/nltk.git#egg=nltk-3.0.1.dev0'
 	],
 	zip_safe=False,
 	package_dir={'': 'src'},
