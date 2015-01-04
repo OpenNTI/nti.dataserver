@@ -1,36 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
-from hamcrest import is_
-from hamcrest import has_length
-from hamcrest import has_entry
-from hamcrest import has_property
 from hamcrest import contains
-
-from ...tests import ContentlibraryLayerTest
-
-from ..interfaces import IRelatedContentIndexedDataContainer
-from ..interfaces import IVideoIndexedDataContainer
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
 
 import os
-from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
 from zope import lifecycleevent
+
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+
+from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import ITimelineIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
+
+from nti.contentlibrary.tests import ContentlibraryLayerTest
 
 class TestSubscribers(ContentlibraryLayerTest):
 
@@ -68,3 +61,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 	def test_video(self):
 		self._do_test(IVideoIndexedDataContainer,
 					  entry_ntiid="tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1")
+		
+	def test_timeline(self):
+		self._do_test(ITimelineIndexedDataContainer,
+					  entry_ntiid="tag:nextthought.com,2011-10:OU-JSON:Timeline-CourseTestContent.timeline.heading_west")
