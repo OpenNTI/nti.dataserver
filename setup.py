@@ -9,7 +9,6 @@ entry_points = {
 		"nti_render = nti.contentrendering.nti_render:main",
 		"nti_create_book_archive = nti.contentrendering.archive:main",
 		"nti_content_indexer = nti.contentrendering.content_indexer:main",
-		"nti_content_extractors = nti.contentrendering.content_extractors:main",
 		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
