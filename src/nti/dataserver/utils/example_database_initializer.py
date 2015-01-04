@@ -5,13 +5,11 @@ Utility to initialize an environment
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
-
-import os
-import simplejson as json
 
 from zc import intid as zc_intid
 
@@ -24,14 +22,6 @@ from zope.generations import interfaces as gen_interfaces
 
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users import User, Community, FriendsList
-
-def load_jfile(jfile):
-	path = os.path.join(os.path.dirname(__file__), jfile)
-	with open(path, "r") as f:
-		return json.load(f)
-
-_DATA_QUIZ_0 = load_jfile('example_database_quiz0.json')
-_DATA_QUIZ_1 = load_jfile('example_database_quiz1.json')
 
 def exampleDatabaseInitializerSubscriber( event ):
 	"""
@@ -81,7 +71,7 @@ class ExampleDatabaseInitializer(object):
 					'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
 					'kaley.white', 'ken.parker',  'pacifique.mahoro', 'peggy.sabatini', 
 					'ray.hatfield', 'sean.jones', 'steve.johnson', 'trina.muehring',
-					'troy.daley', 'vitalik.buterin'):
+					'troy.daley', 'vitalik.buterin', 'mario.rosas'):
 			USERS.append( (uid + '@nextthought.com',
 						   uid.replace( '.', ' ').title(),
 						   uid + '@nextthought.com') )
@@ -105,8 +95,10 @@ class ExampleDatabaseInitializer(object):
 		for uid in ('luke.skywalker', 'amelia.earhart', 'charles.lindbergh',
 					('darth.vader', 'Lord Vader'), ('jeanluc.picard', 'Captain Picard'),
 					('obiwan.kenobi', 'General Kenobi') ):
-			uname = uid + '@nextthought.com' if isinstance(uid,basestring) else uid[0] + '@nextthought.com'
-			rname = uid.replace( '.', ' ' ).title() if isinstance(uid,basestring) else uid[1]
+			uname = uid + '@nextthought.com' \
+					if isinstance(uid,basestring) else uid[0] + '@nextthought.com'
+			rname = uid.replace( '.', ' ' ).title() \
+					if isinstance(uid,basestring) else uid[1]
 			USERS.append( (uname, rname) )
 
 		# Demo accounts
@@ -178,7 +170,8 @@ class ExampleDatabaseInitializer(object):
 		conn = context.connection
 		root = conn.root()['nti.dataserver']
 		# If we're in tests, we probably already have a site setup
-		if getSite() and getSite().getSiteManager() and getSite().getSiteManager().queryUtility( zc_intid.IIntIds ):
+		if 	getSite() and getSite().getSiteManager() and \
+			getSite().getSiteManager().queryUtility( zc_intid.IIntIds ):
 			self._install_in_site( context, conn, root )
 		else:
 			with site( root ):
@@ -215,7 +208,8 @@ class ExampleDatabaseInitializer(object):
 			#from IPython.core.debugger import Tracer;  Tracer()()
 			uname = user_tuple[0]
 			is_test_user =  uname.startswith('test.user.')
-			password = 'temp001' if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
+			password = 'temp001' \
+						if is_test_user else user_tuple[1].replace( ' ', '.' ).lower()
 			if self.skip_passwords:
 				# this can speed up creation a lot, the encrpytion is slow. This matters for test cases.
 				password = None
@@ -224,7 +218,8 @@ class ExampleDatabaseInitializer(object):
 			ext_value = {}
 			ext_value['realname'] = user_tuple[1]
 			ext_value['email'] = unicode(uname) if len(user_tuple) < 3 else user_tuple[2]
-			ext_value['alias'] = user_tuple[1].split()[0] if not is_test_user else user_tuple[1]
+			ext_value['alias'] = user_tuple[1].split()[0] \
+								 if not is_test_user else user_tuple[1]
 			args['external_value'] = ext_value
 			user = User.create_user( **args )
 			interface.alsoProvides(user, IRecreatableUser)
