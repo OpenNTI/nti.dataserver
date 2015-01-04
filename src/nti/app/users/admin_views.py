@@ -63,7 +63,9 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 	"""
 	def __call__(self):
 		values = self.readInput()
-		username = values.get( 'username' )
+		username = values.get( 'username' ) or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity("must specify a username")
 
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		did_remove = user_blacklist.remove_blacklist_for_user( username )
