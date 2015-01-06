@@ -34,6 +34,8 @@ def _update_index_when_content_changes(content_package, index_iface):
 		# nothing to do
 		return
 
+	logger.info("loading index data %s", sibling_key)
+	
 	# Yay, something to do!
 	root_index_container.updateLastMod(sibling_key.lastModified)
 	index_text = content_package.read_contents_of_sibling_entry(namespace)
