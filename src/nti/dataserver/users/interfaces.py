@@ -253,7 +253,7 @@ class IWillDeleteEntityEvent(zope.interface.interfaces.IObjectEvent):
 	an entity that is in the process of being deleted by the factories.
 	"""
 
-@interface.implementer(IWillUpdateNewEntityEvent)
+@interface.implementer(IWillDeleteEntityEvent)
 class WillDeleteEntityEvent(zope.interface.interfaces.ObjectEvent):
 
 	def __init__( self, obj):
