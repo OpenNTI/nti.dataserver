@@ -22,19 +22,19 @@ from ._utils import _render_children
 
 from ...interfaces import IRenderedBook
 from ...interfaces import ITimelineExtractor
-	
+
 @component.adapter(IRenderedBook)
 @interface.implementer(ITimelineExtractor)
 class _TimelineExtractor(object):
 
 	def __init__(self, *args, **kwargs):
 		pass
-		
+
 	def transform(self, book, savetoc=True, outpath=None):
 		dom = book.toc.dom
 		outpath = outpath or book.contentLocation
 		outpath = os.path.expanduser(outpath)
-		
+
 		timeline_els = book.document.getElementsByTagName('ntitimeline')
 		if timeline_els:
 			topic_map = self._get_topic_map(dom)
@@ -48,7 +48,7 @@ class _TimelineExtractor(object):
 			if ntiid:
 				result[ntiid] = topic_el
 		return result
-	
+
 	def _process_timelime(self, dom, elements, topic_map):
 		result = []
 		for el in elements or ():
@@ -72,23 +72,23 @@ class _TimelineExtractor(object):
 					break
 				else:
 					parent = parent.parentNode
-	
+
 			container = getattr(parent, 'ntiid', None) if parent else None
 			result.append((content, container))
 		return result
 
 	def _save_timeline_content(self, outpath, dom, content_items):
 		items = {}
-		filename = 'timelime_index.json'
+		filename = 'timeline_index.json'
 		containers = collections.defaultdict(set)
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
 		related_content_index = {'Items': items, 'Containers':containers}
-	
+
 		for data, container in content_items:
 			container = container or doc_ntiid
 			if not container:
 				continue
-	
+
 			items[data['ntiid']] = data
 			containers[container].add(data['ntiid'])
 
