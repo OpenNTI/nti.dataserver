@@ -984,7 +984,7 @@ class _RecursiveUGDView(_UGDView):
 		if ntiid == ntiids.ROOT:
 			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,stream_only=self._iter_ntiids_stream_only))
 		else:
-			library = self.request.registry.getUtility( lib_interfaces.IContentPackageLibrary )
+			library = component.getUtility( lib_interfaces.IContentPackageLibrary )
 			tocEntries = library.childrenOfNTIID( ntiid )
 
 			containers = {toc.ntiid for toc in tocEntries} # children
