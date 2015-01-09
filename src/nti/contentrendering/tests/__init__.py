@@ -214,7 +214,9 @@ class RenderContext(object):
 
 		import nti.contentrendering.plastexids
 		nti.contentrendering.plastexids.patch_all()
-		nti_render.setupChameleonCache(config=True)
+		
+		from nti.utils import setupChameleonCache
+		setupChameleonCache(config=True)
 
 		if self.dom is None:
 			work_dir = tempfile.mkdtemp()
