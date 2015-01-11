@@ -65,8 +65,9 @@ Principals, groups, and roles all share a flat namespace. Principals
 (and groups and communities) do not have a prefix. Roles have a prefix ending in ``role:``;
 sub-types of roles may have a prefix to that, such as ``content-role:``.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -88,15 +89,19 @@ from zope.annotation.interfaces import IAnnotations
 from zope.security.permission import Permission
 
 import nti.dataserver.interfaces as nti_interfaces
-from nti.utils.property import alias
 
 from nti.externalization.interfaces import IExternalObject
+
+from nti.utils.property import alias
+
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
 	Permission.__str__ = lambda x: x.id
+	
 if not '__repr__' in Permission.__dict__:
 	Permission.__repr__ = lambda x: "%s('%s','%s','%s')" % (x.__class__.__name__, x.id, x.title, x.description )
+
 if not '__eq__' in Permission.__dict__:
 	Permission.__eq__ = lambda x, y: x.id == getattr( y, 'id', Permission )
 
@@ -108,7 +113,8 @@ ACT_SEARCH   = Permission('nti.actions.search')
 ACT_MODERATE = Permission('nti.actions.moderate')
 ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
-ACT_READ     = Permission('zope.View')
+ACT_READ     	= Permission('zope.View')
+ACT_NTI_ADMIN 	= ACT_COPPA_ADMIN # alias
 
 @interface.implementer(nti_interfaces.IMutableGroupMember)
 @component.adapter(annotation.interfaces.IAttributeAnnotatable)
@@ -430,11 +436,9 @@ class _Participation(object):
 		self.interaction = None
 		self.principal = principal
 
-
 @interface.implementer(IParticipation)
 @component.adapter(nti_interfaces.IUser)
 def _participation_for_user(remote_user):
 	return _Participation(_UserGroupAwarePrincipal(remote_user))
-
 
 # IACLProvider implementations live in authorization_acl
