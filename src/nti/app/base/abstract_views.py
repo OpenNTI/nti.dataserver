@@ -20,6 +20,26 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.utils.property import Lazy
 
+def _check_creator( remote_user, obj ):
+	result = False
+	try:
+		if remote_user == obj.creator:
+			result = True
+	except AttributeError:
+		pass
+	return result
+
+def _check_dynamic_memberships( remote_user, obj ):
+	family = component.getUtility(IIntIds).family
+	my_ids = remote_user.xxx_intids_of_memberships_and_self
+	result = False
+	try:
+		if obj.xxx_isReadableByAnyIdOfUser(remote_user, my_ids, family):
+			result = True
+	except (AttributeError, TypeError):
+		pass
+	return result
+
 def make_sharing_security_check(request, remoteUser):
 	"""
 	Return a callable object of one argument that returns true if the
@@ -39,27 +59,20 @@ def make_sharing_security_check(request, remoteUser):
 	"""
 
 	remote_request = request
-	remote_user = remoteUser
-	family = component.getUtility(IIntIds).family
-	my_ids = remoteUser.xxx_intids_of_memberships_and_self
 
 	# XXX Deferred import to avoid a cycle. This will move to an nti.app
 	# package, and this entire method may move with it too.
 	from nti.appserver.pyramid_authorization import is_readable
 
 	def security_check(x):
-		try:
-			if remote_user == x.creator:
-				return True
-		except AttributeError:
-			pass
-		try:
-			return x.xxx_isReadableByAnyIdOfUser(remote_user, my_ids, family)
-		except (AttributeError, TypeError):
-			try:
-				return x.isSharedWith(remote_user) # TODO: Might need to OR this with is_readable?
-			except AttributeError:
-				return is_readable(x, remote_request)
+		# 1. Creator
+		# 2. Dynamic memberships
+		# 3. SharedWith
+		# 4. ACL
+		return 	_check_creator( remoteUser, x ) \
+			or	_check_dynamic_memberships( remoteUser, x ) \
+			or	x.isSharedWith(remoteUser) \
+			or 	is_readable(x, remote_request)
 	return security_check
 
 
