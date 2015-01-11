@@ -40,6 +40,15 @@ def _check_dynamic_memberships( remote_user, obj ):
 		pass
 	return result
 
+def _check_shared_with( remote_user, obj ):
+	result = False
+	try:
+		if obj.isSharedWith( remote_user ):
+			result = True
+	except (AttributeError, TypeError):
+		pass
+	return result
+
 def make_sharing_security_check(request, remoteUser):
 	"""
 	Return a callable object of one argument that returns true if the
@@ -71,7 +80,7 @@ def make_sharing_security_check(request, remoteUser):
 		# 4. ACL
 		return 	_check_creator( remoteUser, x ) \
 			or	_check_dynamic_memberships( remoteUser, x ) \
-			or	x.isSharedWith(remoteUser) \
+			or	_check_shared_with( remoteUser, x ) \
 			or 	is_readable(x, remote_request)
 	return security_check
 
