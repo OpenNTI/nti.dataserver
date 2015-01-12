@@ -139,29 +139,13 @@ setup(
 		# cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
 		'Acquisition >= 4.0' if not IS_PYPY else '',  # Extensions don't build on pypy
 		'Chameleon >= 2.14', # (preferred) template rendering. pulled in by pyramid, but ensure latest version
-		'ExtensionClass >= 4.1a1',
+		'ExtensionClass',
 		'Mako >= 0.9.0',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
-		# 'friendly' fork of PIL, developed by Zope/Plone.
-		# PIL is currently (as of 2012-07) at version 1.1.7 (from 2009), which
-		# is the version that Pillow forked from in 2010 as version 1.0. So
-		# Pillow is currently way ahead of PIL. Pillow 2 is Python 3 compatible (and partly pypy)
-		# includes transparent png support, and is much cleaned up, otherwise api compatible with pillow 1/PIL 1
-		'Pillow',
+		'Pillow' if not IS_PYPY else '', # not yet supported on pypy
 		'RestrictedPython >= 3.6.0',
-		'ZConfig >= 3.0.3',	 # 3.0.3 reqd for pypy/python3 support. requires zodb3 3.11.0a3+
-		 # NOTE: ZODB has a new release, 4.0.0b2 (Notice it's not ZODB3 anymore, so
-		 # there's no need to hard-pin the ZODB3 version.) For this version, we
-		 # will need to additionally include persistent >= 4.0.6 and BTrees >= 4.0.5, and ZEO >= 4.0.0, and zdaemon
-		 # which were pulled out of ZODB for better pypy and py3 support; ZODB3 is now a meta
-		 # release, which is falling behind the real versions.
-		 # It may require a tweak to our monkey patch if has not been fixed;
-		 # see https://github.com/zopefoundation/ZEO/pull/1
-		 # (Said patch is merged, but not yet released)
-		 # ZODB3 now has a 3.11.0a3 including a 4.x version of each above component.
-		 # This has been in testing for many months and is stable. It is needed
-		 # (even though alpha at the moment) to work with other updated deps.
+		'ZConfig',
 		 # Depending on the final release, we may need to explicitly list each component.
-		'ZODB3 >= 3.11.0a3', # Unfortunately, pulled in by zopyx.txng3.core, so do make sure we get the latest
+		'ZODB3 >= 3.11.0', 
 		'ZODB >= 4.0.0',
 		'BTrees >= 4.0.8',
 		'zdaemon >= 4.0.0',
@@ -195,7 +179,7 @@ setup(
 		'umysql == 2.61',
 		'umysqldb == 1.0.4dev2', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage >= 1.5.1',
-		'PyMySQL',  # current >= 0.6.1
+		'PyMySQL',
         'PyYAML',
 		'python-memcached >= 1.53',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		# See also http://pypi.python.org/pypi/neoppod/ for a completely different option
@@ -303,8 +287,6 @@ setup(
 		'simplejson',
 		'six',
 		'sympy',
-		'stripe',  # stripe payments
-		# 'slimit',
 		'supervisor >= 3.0',
 		'transaction >= 1.4.1',
 		# See http://pypi.python.org/pypi/user-agents/ for a high-level
@@ -338,7 +320,6 @@ setup(
 		'zc.queue >= 2.0.0a1',
 		'zc.zlibstorage >= 0.1.1',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc >= 0.6.1',
-		# 'zetalibrary',
 		'zodbpickle' if not IS_PYPY else '', # extensions fail to build
 		'zope.app.broken >= 3.6.0',	 # Improved broken objects
 		'zope.app.dependable', # simple dependency tracking; re-exported from zope.container
@@ -462,7 +443,7 @@ setup(
 			'virtualenvwrapper',
 			'zc.buildout >= 2.2.1',
 			'z3c.dependencychecker >= 1.11',  # unused/used imports; see also tl.eggdeps
-			#'zodbbrowser >= 0.11.0', leads to version conflicts due to its old deps
+			#'zodbbrowser >= 0.11.2', leads to version conflicts due to its old deps
 			'zodbupdate >= 0.5',
 			# Monitoring stats and instrumenting code
 			# See above for python-statsd
