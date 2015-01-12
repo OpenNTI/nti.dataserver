@@ -13,6 +13,12 @@ from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import greater_than
 
+import zope.intid
+
+from zope import component
+
+from nti.dataserver.tests import mock_dataserver
+
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -27,3 +33,15 @@ class TestViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('TotalBroken', is_(0)))
 		assert_that(res.json_body, has_entry('TotalMissing', is_(0)))
 		assert_that(res.json_body, has_entry('Total', is_(greater_than(0))))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	def test_intid_resolver(self):
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = self._get_user()
+			intids = component.getUtility(zope.intid.IIntIds)
+			uid = intids.getId(user)
+		path = '/dataserver2/@@intid_resolver/%s' % uid
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Class', 'User'))
+
