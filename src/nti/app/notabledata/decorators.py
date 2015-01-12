@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -23,7 +21,7 @@ from nti.dataserver.interfaces import get_notable_filter
 
 from nti.externalization.interfaces import IExternalObjectDecorator
 
-from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+from ..renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 @interface.implementer(IExternalObjectDecorator) # Because the stream externalizer doesn't call Mapping Decorator
 @component.adapter(IStreamChangeEvent,IRequest)
@@ -42,7 +40,6 @@ class _StreamChangeNotableDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		# it is about 100x faster than running our object through the algorithm.
 		result = False
 		intids = component.getUtility( IIntIds )
-
 		# Check if this object is persistent first
 		if intids.queryId( context ) or intids.queryId( context.object ):
 			# TODO We may have to pass the request to INotableFilter

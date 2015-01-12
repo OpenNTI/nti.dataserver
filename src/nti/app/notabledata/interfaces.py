@@ -12,7 +12,9 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from dolmen.builtins.interfaces import IIterable
+
 from nti.schema.field import Number
 
 # pylint:disable=I0011,E0213,E0211
@@ -121,7 +123,6 @@ class IUserNotableData(IIterable):
 						" by user action. 0 if never set.",
 						required=True,
 						default=0)
-
 
 class IUserPresentationPriorityCreators(interface.Interface):
 	"""
