@@ -3,7 +3,7 @@
 """
 Classes for indexing information related to users.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -13,26 +13,32 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.dataserver.users import interfaces as user_interfaces
 
-from zope.catalog.keyword import CaseInsensitiveKeywordIndex
+from zc.intid import IIntIds
+
 import zope.catalog.field
+from zope.catalog.interfaces import ICatalog
+from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
 from zope.index.topic.filter import FilteredSetBase
+
+# NOTE: In the past this was a standard zope.catalog.catalog.Catalog;
+# if we actually need the features of the new catalog, we will
+# need to migrate.
+from nti.zope_catalog.catalog import Catalog
+
+from nti.zope_catalog.topic import TopicIndex
+
+# Old name for BWC
+from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
 
 #: The name of the utility that the Zope Catalog
 #: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
-
-# Old name for BWC
-from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
-
-from nti.zope_catalog.topic import TopicIndex
-
 class AliasIndex(CaseInsensitiveFieldIndex):
 
 	default_field_name = 'alias'
 	default_interface = user_interfaces.IFriendlyNamed
-
 
 class RealnameIndex(CaseInsensitiveFieldIndex):
 
@@ -68,7 +74,6 @@ class ContactEmailRecoveryHashIndex(zope.catalog.field.FieldIndex):
 	default_field_name = 'contact_email_recovery_hash'
 	default_interface = user_interfaces.IContactEmailRecovery
 
-
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
 	def __init__( self, id, family=None ):
@@ -87,14 +92,6 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 			# The normal PythonFilteredSet seems to have a bug and never unindexes?
 			self.unindex_doc( docid )
 
-from zope.catalog.interfaces import ICatalog
-from zc.intid import IIntIds
-
-# NOTE: In the past this was a standard zope.catalog.catalog.Catalog;
-# if we actually need the features of the new catalog, we will
-# need to migrate.
-from nti.zope_catalog.catalog import Catalog
-
 def install_user_catalog( site_manager_container, intids=None ):
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
@@ -109,10 +106,10 @@ def install_user_catalog( site_manager_container, intids=None ):
 	for name, clazz in ( ('alias', AliasIndex),
 						 ('email', EmailIndex),
 						 ('contact_email', ContactEmailIndex),
-						 ('password_recovery_email_hash', PasswordRecoveryEmailHashIndex),
 						 ('realname', RealnameIndex),
 						 ('realname_parts', RealnamePartsIndex),
-						 ('contact_email_recovery_hash', ContactEmailRecoveryHashIndex)):
+						 ('contact_email_recovery_hash', ContactEmailRecoveryHashIndex),
+						 ('password_recovery_email_hash', PasswordRecoveryEmailHashIndex)):
 		index = clazz( family=intids.family )
 		intids.register( index )
 		# As a very minor optimization for unit tests, if we
@@ -121,13 +118,18 @@ def install_user_catalog( site_manager_container, intids=None ):
 		# when we add the index to the catalog.
 		# ObjectAdded/Removed events *must* fire during evolution,
 		# though.
-		index.__name__ = name; index.__parent__ = catalog; catalog[name] = index
+		index.__name__ = name
+		index.__parent__ = catalog
+		catalog[name] = index
 
 	opt_in_comm_index = TopicIndex( family=intids.family)
 	opt_in_comm_set = OptInEmailCommunicationFilteredSet( 'opt_in_email_communication',
 														  family=intids.family)
 	opt_in_comm_index.addFilter( opt_in_comm_set )
 	intids.register( opt_in_comm_index )
-	opt_in_comm_index.__name__ = 'topics'; opt_in_comm_index.__parent__ = catalog; catalog['topics'] = opt_in_comm_index
+	
+	opt_in_comm_index.__name__ = 'topics'
+	opt_in_comm_index.__parent__ = catalog
+	catalog['topics'] = opt_in_comm_index
 
 	return catalog
