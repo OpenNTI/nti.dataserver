@@ -27,9 +27,6 @@ from .interfaces import IUserPresentationPriorityCreators
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.utils.property import CachedProperty
-from nti.utils.property import annotation_alias
-
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_TAGGEDTO
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
@@ -40,12 +37,14 @@ from nti.dataserver.authentication import _dynamic_memberships_that_participate_
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.utils.property import CachedProperty
+from nti.utils.property import annotation_alias
 
-_BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
-_BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
+from ..base.abstract_views import AbstractAuthenticatedView
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
+_BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
+_BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
 
 _TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
 _TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
@@ -360,16 +359,18 @@ class _SafeResultSet(ResultSet):
 			if obj is not None:
 				yield obj
 
-from zope.annotation.factory import factory as an_factory
-from persistent import Persistent
-from nti.utils.property import Lazy
 from zope import lifecycleevent
-from persistent.list import PersistentList
 from zope.container.contained import Contained
+from zope.annotation.factory import factory as an_factory
+
+from persistent import Persistent
+from persistent.list import PersistentList
+
+from nti.utils.property import Lazy
 
 @interface.implementer(IUserNotableDataStorage)
 @component.adapter(IUser)
-class UserNotableDataStorage(Persistent,Contained):
+class UserNotableDataStorage(Persistent, Contained):
 
 	def __init__(self):
 		pass
