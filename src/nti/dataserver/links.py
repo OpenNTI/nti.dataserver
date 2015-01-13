@@ -3,26 +3,27 @@
 """
 Implementation of the link data type.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import functools
+from functools import total_ordering
 
 from zope import interface
 from zope import component
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.persistence import NoPickle
+from nti.externalization.interfaces import IExternalObject
 
-from . import interfaces
+from .interfaces import ILink
 
-@interface.implementer( interfaces.ILink )
-@functools.total_ordering
+@interface.implementer( ILink )
+@total_ordering
 @NoPickle
 class Link(object):
 	"""
@@ -119,7 +120,7 @@ class Link(object):
 		except AttributeError:
 			return NotImplemented
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(Link)
 class NoOpLinkExternalObjectAdapter(object):
 	"""

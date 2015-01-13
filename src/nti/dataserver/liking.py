@@ -9,8 +9,9 @@ for read-only requests (e.g., viewing the likes of an object). [TODO: An alterna
 approach is to create these objects when the object is created by adapting it
 directly.]
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,12 +20,16 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-import contentratings.interfaces
+from contentratings.interfaces import IUserRating
+from contentratings.interfaces import IRatingStorage
+from contentratings.interfaces import IObjectRatedEvent
 
-from nti.dataserver import interfaces
+from nti.dataserver.interfaces import ILikeable
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import IMemcacheClient
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from . import rating as ranking
 
@@ -166,8 +171,8 @@ def favorites_object(context, username, safe=False):
 	"""
 	return _rates_object(context, username, FAVR_CAT_NAME, safe=safe)
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(interfaces.ILikeable)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(ILikeable)
 class LikeDecorator(object):
 	"""
 	For :class:`~.ILikeable` objects, records the number of times they
@@ -187,8 +192,7 @@ from persistent import Persistent
 
 from contentratings.rating import NPRating
 
-@interface.implementer(contentratings.interfaces.IUserRating,
-					   contentratings.interfaces.IRatingStorage)
+@interface.implementer(IUserRating, IRatingStorage)
 class _BinaryUserRatings(Contained, Persistent):
 	"""
 	BTree-based storage for binary user ratings, where a user can either have rated
@@ -265,9 +269,9 @@ class _BinaryUserRatings(Contained, Persistent):
 		# But it is a validated part of the interface, so we can't raise
 		return None
 
-@component.adapter(interfaces.ILastModified, contentratings.interfaces.IObjectRatedEvent)
+@component.adapter(ILastModified, IObjectRatedEvent)
 def update_last_mod_on_rated( modified_object, event ):
-	cache = component.queryUtility(interfaces.IMemcacheClient)
+	cache = component.queryUtility(IMemcacheClient)
 	if cache:
 		try:
 			if event.category == LIKE_CAT_NAME:
