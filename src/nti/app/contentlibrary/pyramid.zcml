@@ -6,9 +6,9 @@
 
 	<include package="pyramid_zcml" />
 
-	<pyramid:scan package='.library_views' />
 	<pyramid:scan package='.card_views' />
 	<pyramid:scan package=".admin_views" />
-
+	<pyramid:scan package='.library_views' />
 	<pyramid:scan package=".content_unit_preferences.views" />
+	
 </configure>

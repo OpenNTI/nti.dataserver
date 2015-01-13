@@ -5,7 +5,7 @@ Atom workspace/collection related functionality for content package library.
 
 This also handles external permissioning of entries in the library.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -15,21 +15,26 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+from zope.proxy.decorator import ProxyBase
 from zope.container.interfaces import IContained
 
-from nti.appserver import interfaces as app_interfaces
-from nti.contentlibrary import interfaces as content_interfaces
-from nti.externalization import interfaces as ext_interfaces
-
 from pyramid.threadlocal import get_current_request
+
+from nti.appserver.interfaces import IWorkspace
+from nti.appserver.interfaces import ICollection
+from nti.appserver.interfaces import IUserService
+from nti.appserver.interfaces import ILibraryCollection
+
 from nti.appserver.pyramid_authorization import is_readable
 
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+
+from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import to_external_object
 
-from nti.utils.property import CachedProperty
 from nti.utils.property import alias
-
-from zope.proxy.decorator import ProxyBase
+from nti.utils.property import CachedProperty
 
 class _PermissionedContentPackageLibrary(ProxyBase):
 	"""
@@ -79,49 +84,42 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 # Ultimately, it is that proxy that goes in the workspace.
 ####
 
-
-@interface.implementer(content_interfaces.IContentPackageLibrary)
+@interface.implementer(IContentPackageLibrary)
 def _library_for_library(library, request):
 	result = _PermissionedContentPackageLibrary(library, request)
 	return result
 
-@interface.implementer(content_interfaces.IContentPackageLibrary)
+@interface.implementer(IContentPackageLibrary)
 def _library_for_user(user, request):
-	global_library = component.getUtility( content_interfaces.IContentPackageLibrary )
-	result = component.getMultiAdapter( (global_library, request),
-										content_interfaces.IContentPackageLibrary )
+	global_library = component.getUtility( IContentPackageLibrary )
+	result = component.getMultiAdapter( (global_library, request), IContentPackageLibrary )
 	return result
 
-@interface.implementer(app_interfaces.IWorkspace)
+@interface.implementer(IWorkspace)
 def _library_workspace_for_library( library, request ):
-	library = component.getMultiAdapter( (library, request),
-										 content_interfaces.IContentPackageLibrary )
+	library = component.getMultiAdapter( (library, request), IContentPackageLibrary )
 	ws = LibraryWorkspace(library)
 	return ws
 
-@interface.implementer(app_interfaces.IWorkspace)
+@interface.implementer(IWorkspace)
 def _library_workspace_for_user( user, request ):
-	library = component.getMultiAdapter( (user,request),
-										 content_interfaces.IContentPackageLibrary )
+	library = component.getMultiAdapter( (user,request), IContentPackageLibrary )
 	ws = LibraryWorkspace(library)
 	ws.__parent__ = user
 	return ws
 
-
-
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
+@interface.implementer(IWorkspace)
+@component.adapter(IUserService)
 def _library_workspace( user_service ):
 	request = get_current_request()
 	user = user_service.user
 	ws = component.getMultiAdapter( (user, request),
-									app_interfaces.IWorkspace,
+									IWorkspace,
 									name='Library' )
 	ws.__parent__ = user
 	return ws
 
-
-@interface.implementer(app_interfaces.IWorkspace,
+@interface.implementer(IWorkspace,
 					   IContained)
 class LibraryWorkspace(object):
 
@@ -135,7 +133,7 @@ class LibraryWorkspace(object):
 	@CachedProperty
 	def collections( self ):
 		# Right now, we're assuming one collection for the whole library
-		adapt = component.getAdapter( self._library, app_interfaces.ICollection )
+		adapt = component.getAdapter( self._library, ICollection )
 		adapt.__parent__ = self
 		return (adapt,)
 
@@ -152,8 +150,8 @@ class LibraryWorkspace(object):
 	def __len__(self):
 		return 1
 
-@interface.implementer(app_interfaces.ILibraryCollection)
-@component.adapter(content_interfaces.IContentPackageLibrary)
+@interface.implementer(ILibraryCollection)
+@component.adapter(IContentPackageLibrary)
 class LibraryCollection(object):
 
 	__parent__ = None
@@ -181,8 +179,8 @@ class LibraryCollection(object):
 
 from nti.externalization.interfaces import LocatedExternalDict
 
-@interface.implementer(ext_interfaces.IExternalObject)
-@component.adapter(app_interfaces.ILibraryCollection)
+@interface.implementer(IExternalObject)
+@component.adapter(ILibraryCollection)
 class LibraryCollectionDetailExternalizer(object):
 	"""
 	Externalizes a Library wrapped as a collection.
@@ -203,9 +201,8 @@ class LibraryCollectionDetailExternalizer(object):
 		result.__parent__ = self._collection.__parent__
 		return result
 
-
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
+@interface.implementer(IWorkspace)
+@component.adapter(IUserService)
 def _bundle_workspace( user_service, request=None ): # take request so we can fit the common multi-adapt pattern
 	#request = get_current_request()
 	user = getattr(user_service, 'user', user_service) # also for multi-adapt
@@ -226,7 +223,7 @@ def _bundle_workspace( user_service, request=None ): # take request so we can fi
 	# future as a contrast to "archived"
 	# For now we go with visible
 
-	bundle_library = component.queryUtility(content_interfaces.IContentPackageBundleLibrary)
+	bundle_library = component.queryUtility(IContentPackageBundleLibrary)
 	if bundle_library is not None:
 		ws =_BundleLibraryWorkspace(bundle_library)
 		ws.__parent__ = user
@@ -234,12 +231,11 @@ def _bundle_workspace( user_service, request=None ): # take request so we can fi
 
 _bundle_workspace_for_user = _bundle_workspace
 
-@interface.implementer(app_interfaces.ILibraryCollection)
-@component.adapter(content_interfaces.IContentPackageBundleLibrary)
+@interface.implementer(ILibraryCollection)
+@component.adapter(IContentPackageBundleLibrary)
 class _BundleLibraryCollection(LibraryCollection):
 
 	__name__ = 'VisibleContentBundles'
-
 
 	@property
 	def library_items(self):
