@@ -25,6 +25,7 @@ class HostSitesFolder(Folder):
 	"""
 	Simple container implementation for named host sites.
 	"""
+	lastSynchronized = 0
 
 @interface.implementer(IHostPolicyFolder)
 class HostPolicyFolder(Folder):
@@ -34,6 +35,7 @@ class HostPolicyFolder(Folder):
 
 	def __str__(self):
 		return 'HostPolicyFolder(%s)' % self.__name__
+	
 	def __repr__(self):
 		return 'HostPolicyFolder(%s,%s)' % (self.__name__,id(self))
 
