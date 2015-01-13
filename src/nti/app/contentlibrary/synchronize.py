@@ -10,10 +10,14 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import gc
+import time
+
 import gevent
 
 from zope import component
 from zope.event import notify
+
+from zope.traversing.interfaces import IEtcNamespace
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
@@ -59,8 +63,13 @@ def synchronize(sleep=None):
 	results = run_job_in_all_host_sites(sync_site_library)
 	gc.collect()
 	
+	# mark sync time
+	hostsites = component.getUtility(IEtcNamespace, name='hostsites')
+	hostsites.lastSynchronized = time.time()
+	
 	# notify
 	notify(AllContentPackageLibrariesDidSyncEvent())
 	
 	# return results
-	return [x[1] for x in results]
+	result = [x[1] for x in results]
+	return result
