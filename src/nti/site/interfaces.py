@@ -12,10 +12,14 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 import zope.site.interfaces
+
+from nti.schema.field import Number
 
 class InappropriateSiteError(LookupError):
 	pass
+
 class SiteNotInstalledError(AssertionError):
 	pass
 
@@ -29,14 +33,13 @@ class IMainApplicationFolder(zope.site.interfaces.IFolder):
 	note, though, this is typically beneath the root folder and called
 	"dataserver2".
 	"""
-
 class IHostPolicyFolder(zope.site.interfaces.IFolder):
 	"""
 	A folder that should always have a site manager, and thus is a
 	site, representing a policy for the host name. Persistent
 	configuration related to that host should reside in this folder.
 	"""
-
+	
 class IHostPolicySiteManager(zope.site.interfaces.ILocalSiteManager):
 	"""
 	A persistent local site manager that is tied to a site name. It should always
@@ -50,6 +53,10 @@ class IHostSitesFolder(zope.site.interfaces.IFolder):
 	A container for the sites, each of which should be an
 	:class:`IHostPolicyFolder`
 	"""
+	
+	lastSynchronized = Number(title=u"The timestamp at which this object was last synchronized .",
+						  	  default=0.0)
+	lastSynchronized.setTaggedValue('_ext_excluded_out', True)
 
 class ISiteTransactionRunner(interface.Interface):
 	"""
