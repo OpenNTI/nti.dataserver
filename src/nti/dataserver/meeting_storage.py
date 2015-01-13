@@ -3,25 +3,31 @@
 """
 Dataserver-specific storage for :mod:`nti.chatserver` :class:`nti.chatserver.meeting._Meeting`.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import zope.annotation
+
 from zope import interface
 from zope import component
+
 from zope.container.constraints import contains
 from zope.container.interfaces import IBTreeContainer
 
 from ZODB.interfaces import IConnection
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IMeeting
+from nti.chatserver.interfaces import IMessageInfo
+from nti.chatserver.interfaces import IMeetingStorage
+from nti.chatserver.interfaces import IMessageInfoStorage
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dataserver.datastructures import check_contained_object_for_storage
 
@@ -30,16 +36,16 @@ from nti.externalization import oids
 from nti.ntiids import ntiids
 
 class IMeetingContainer(IBTreeContainer):
-	contains(chat_interfaces.IMeeting)
+	contains(IMeeting)
 
 @interface.implementer(IMeetingContainer)
-@component.adapter(nti_interfaces.IEntity)
+@component.adapter(IEntity)
 class _MeetingContainer(CheckingLastModifiedBTreeContainer):
 	pass
 
 EntityMeetingContainerAnnotation = zope.annotation.factory(_MeetingContainer)
 
-@interface.implementer(chat_interfaces.IMeetingStorage)
+@interface.implementer(IMeetingStorage)
 class CreatorBasedAnnotationMeetingStorage(object):
 	"""
 	An implementation of :class:`chat_interfaces.IMeetingStorage` that
@@ -71,7 +77,7 @@ class CreatorBasedAnnotationMeetingStorage(object):
 
 	def get( self, room_id ):
 		result = ntiids.find_object_with_ntiid( room_id )
-		if chat_interfaces.IMeeting.providedBy( result ):
+		if IMeeting.providedBy( result ):
 			return result
 		if result is not None:
 			logger.debug( "Attempted to use chatserver to find non-meeting with id %s", room_id )
@@ -100,11 +106,11 @@ class CreatorBasedAnnotationMeetingStorage(object):
 
 		meeting_container[room.id] = room
 
-class IMessageInfoContainer(IBTreeContainer, chat_interfaces.IMessageInfoStorage):
-	contains(chat_interfaces.IMessageInfo)
+class IMessageInfoContainer(IBTreeContainer, IMessageInfoStorage):
+	contains(IMessageInfo)
 
 @interface.implementer(IMessageInfoContainer)
-@component.adapter(nti_interfaces.IEntity)
+@component.adapter(IEntity)
 class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Container constraints
 	"""
 	Messages have IDs that are UUIDs, so we use that as the key
@@ -121,8 +127,8 @@ class _MessageInfoContainer(CheckingLastModifiedBTreeContainer): # TODO: Contain
 
 EntityMessageInfoContainerAnnotation = zope.annotation.factory(_MessageInfoContainer)
 
-@interface.implementer(chat_interfaces.IMessageInfoStorage)
-@component.adapter(chat_interfaces.IMessageInfo)
+@interface.implementer(IMessageInfoStorage)
+@component.adapter(IMessageInfo)
 def CreatorBasedAnnotationMessageInfoStorage( msg_info ):
 	"""
 	A factory for finding message storages for the given message, based
@@ -138,5 +144,5 @@ def CreatorBasedAnnotationMessageInfoStorage( msg_info ):
 	creator = users.Entity.get_entity( creator_name )
 	__traceback_info__ = creator, creator_name, msg_info
 
-	message_container = chat_interfaces.IMessageInfoStorage( creator )
+	message_container = IMessageInfoStorage( creator )
 	return message_container

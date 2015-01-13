@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,17 +12,20 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import ACT_MODERATE
+from nti.chatserver.interfaces import IMeetingContainer
 
 from nti.dataserver import authorization
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as auth_acl
+
+from nti.dataserver.interfaces import IFriendsList
 
 from nti.ntiids import ntiids
 
-from nti.utils.property import alias, annotation_alias
+from nti.utils.property import alias
+from nti.utils.property import annotation_alias
 
-@interface.implementer( chat_interfaces.IMeetingContainer )
+@interface.implementer( IMeetingContainer )
 class _AbstractMeetingContainerAdapter(object):
 	"""
 	Common base class for persistent meeting container
@@ -47,13 +51,16 @@ class _AbstractMeetingContainerAdapter(object):
 		self.context = container
 
 	container = alias('context')
-	_active_meeting = annotation_alias( ACTIVE_ROOM_ATTR, annotation_property='context', delete=True )
+	_active_meeting = annotation_alias( ACTIVE_ROOM_ATTR, 
+										annotation_property='context',
+										delete=True )
 
 	def _has_active_meeting( self ):
 		"""
 		:return: An active meeting, or None.
 		"""
-		active_meeting = self._active_meeting #ant_interfaces.IAnnotations( self.context ).get( self.ACTIVE_ROOM_ATTR, None )
+		# ant_interfaces.IAnnotations( self.context ).get( self.ACTIVE_ROOM_ATTR, None )
+		active_meeting = self._active_meeting 
 		if active_meeting and active_meeting.Active:
 			return active_meeting
 		return None
@@ -110,11 +117,13 @@ class _AbstractMeetingContainerAdapter(object):
 		# We should probably implement this by making the object implement a new derived interface
 		# and registering a provider for that
 
-		aces = [auth_acl.ace_allowing( c, chat_interfaces.ACT_MODERATE, type(self)) for c in self._allowed_creators]
+		aces = [auth_acl.ace_allowing( c, ACT_MODERATE, type(self)) 
+				for c in self._allowed_creators]
 
 		# We cannot simply use the IACLProvider to get the rest of the permissions, because
 		# the object is not configured yet, so for now we simply match its policy
-		aces.extend( [auth_acl.ace_allowing( c, authorization.ACT_READ, type(self)) for c in self._allowed_creators.union( self._allowed_occupants )] )
+		aces.extend( [auth_acl.ace_allowing( c, authorization.ACT_READ, type(self)) 
+					 for c in self._allowed_creators.union( self._allowed_occupants )] )
 
 		result.__acl__ = auth_acl.acl_from_aces( aces )
 
@@ -138,7 +147,7 @@ class _AbstractMeetingContainerAdapter(object):
 	def meeting_became_empty( self, chatserver, meeting ):
 		del self._active_meeting
 
-@component.adapter( nti_interfaces.IFriendsList )
+@component.adapter( IFriendsList )
 class _FriendsListAdapter(_AbstractMeetingContainerAdapter):
 	"""
 	Implements the policy to allow a :class:`nti.dataserver.interfaces.IFriendsList` to
@@ -207,6 +216,6 @@ class MeetingContainerStorage(object):
 		provider = ntiids.get_provider( container_id )
 		if provider and ntiids.is_ntiid_of_type( container_id, ntiids.TYPE_MEETINGROOM ):
 			container = ntiids.find_object_with_ntiid( container_id )
-			result = component.queryAdapter( container, chat_interfaces.IMeetingContainer )
+			result = component.queryAdapter( container, IMeetingContainer )
 
 		return result or default

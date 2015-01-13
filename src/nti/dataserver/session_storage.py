@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Storage for sessions, providing an implementation of :class:`nti.dataserver.interfaces.ISessionServiceStorage`
+Storage for sessions, providing an implementation of
+:class:`nti.dataserver.interfaces.ISessionServiceStorage`
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,17 +14,21 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
-from zope.keyreference.interfaces import IKeyReference
+
 from zope.keyreference.interfaces import NotYet
-from ZODB.interfaces import IConnection
+from zope.keyreference.interfaces import IKeyReference
+
 from zope.lifecycleevent import IObjectRemovedEvent
+
+from ZODB.interfaces import IConnection
 
 import BTrees
 
 import persistent
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ISessionServiceStorage
 
 from nti.intid import utility as intid_utility
 
@@ -35,7 +41,6 @@ from nti.utils.property import Lazy
 # of what we're already doing in the intids `refs` btree
 # When we switched, we didn't delete annotations
 _OWNED_SESSIONS_KEY = __name__ + '.' + '_OwnerAnnotationBasedServiceStorage' + '.' + 'session_set'
-
 
 def _read_current(obj):
 	"""
@@ -63,6 +68,7 @@ def _u(o):
 	return getattr(o, 'username', o)
 
 class _OwnerSetMapping(persistent.Persistent):
+
 	__name__ = None
 	__parent__ = None
 
@@ -71,7 +77,6 @@ class _OwnerSetMapping(persistent.Persistent):
 	def __init__(self, family=None):
 		if family:
 			self.family = family
-
 		self._by_owner = self.family.OO.BTree()
 
 	def set_for_owner(self, username, create=True, current=True):
@@ -105,7 +110,6 @@ class _OwnerSetMapping(persistent.Persistent):
 			ref = IKeyReference(session)
 		for_owner.add(ref)
 
-
 	def drop_session(self, session):
 		for_owner = self.set_for_owner(session.owner)
 		try:
@@ -130,9 +134,7 @@ class _OwnerSetMapping(persistent.Persistent):
 		for ref in for_owner:
 			yield ref()
 
-
-
-@interface.implementer(nti_interfaces.ISessionServiceStorage)
+@interface.implementer(ISessionServiceStorage)
 class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 	"""
 	A global utility to keep track of sessions. Keeps an index
@@ -166,7 +168,6 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 		for session in self._intids_rc.refs.values():
 			by_owner.add_session(session)
-
 		return by_owner
 
 	@property
@@ -217,10 +218,10 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		self._by_owner.drop_all_sessions_for_owner(session_owner)
 		logger.info( "Unregistered all sessions for %s", session_owner )
 
-@component.adapter(nti_interfaces.IUser, IObjectRemovedEvent)
+@component.adapter(IUser, IObjectRemovedEvent)
 def _remove_sessions_for_removed_user( user, event ):
 
-	storage = component.queryUtility( nti_interfaces.ISessionServiceStorage )
+	storage = component.queryUtility(ISessionServiceStorage )
 	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
 	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
 		try:

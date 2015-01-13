@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,7 +17,7 @@ from zope import component
 from zope import interface
 from zope.location.interfaces import LocationError
 
-import zope.traversing.interfaces
+from zope.traversing.interfaces import TraversalError
 
 from nti.dataserver import traversal
 
@@ -34,7 +35,9 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import ILocatedExternalMapping
 from nti.externalization.interfaces import IInternalObjectExternalizer
 
-from nti.ntiids import ntiids
+from nti.ntiids.ntiids import TYPE_OID
+from nti.ntiids.ntiids import is_ntiid_of_type
+from nti.ntiids.ntiids import is_valid_ntiid_string
 
 def _root_for_ntiid_link( link, nearest_site ):
 	# Place the NTIID reference under the most specific place possible: the owner,
@@ -86,7 +89,7 @@ def render_link( link, nearest_site=None ):
 		or getattr( target, 'NTIID', None )
 	if ntiid:
 		ntiid_derived_from_target = True
-	elif isinstance(target,six.string_types) and ntiids.is_valid_ntiid_string(target):
+	elif isinstance(target,six.string_types) and is_valid_ntiid_string(target):
 		ntiid = target
 		ntiid_derived_from_target = False # it *is* the target
 
@@ -102,7 +105,7 @@ def render_link( link, nearest_site=None ):
 		# TODO: Somewhere in the site there should be an object that represents each of these,
 		# and we should be able to find it, get a traversal path for it, and use it here.
 		# That object should implement the lookup behaviour found currently in ntiids.
-		if ntiids.is_valid_ntiid_string( ntiid ):
+		if is_valid_ntiid_string( ntiid ):
 			# In the past, if the link was not ICreated, the root would become
 			# the nearest site. But not all site objects support the Objects and
 			# NTIIDs traversal. So the simplest thing to do is to use the root
@@ -116,7 +119,7 @@ def render_link( link, nearest_site=None ):
 				ds_root = nearest_site
 			root = _root_for_ntiid_link( link, ds_root )
 
-			if ntiids.is_ntiid_of_type( ntiid, ntiids.TYPE_OID ):
+			if is_ntiid_of_type( ntiid, TYPE_OID ):
 				href = root + '/Objects/' + urllib.quote( ntiid )
 			else:
 				href = root + '/NTIIDs/' + urllib.quote( ntiid )
@@ -149,26 +152,30 @@ def render_link( link, nearest_site=None ):
 		if link.method and link.target_mime_type:
 			result['type'] = content_type
 		elif not link.method:
-			if not link.ignore_properties_of_target and not content_type_derived_from_target:
+			if 	not link.ignore_properties_of_target and \
+				not content_type_derived_from_target:
 				result['type'] = content_type
-	if ntiids.is_valid_ntiid_string( ntiid ):
+
+	if is_valid_ntiid_string( ntiid ):
 		if not link.ignore_properties_of_target or not ntiid_derived_from_target:
 			result['ntiid'] = ntiid
+
 	if link.method:
 		result['method'] = link.method
+	
 	if link.title:
 		result['title'] = link.title
 
-	if not traversal.is_valid_resource_path( href ) and not ntiids.is_valid_ntiid_string( href ): # pragma: no cover
+	if 	not traversal.is_valid_resource_path( href ) and \
+		not is_valid_ntiid_string( href ): # pragma: no cover
 		# This shouldn't be possible anymore.
 		__traceback_info__ = href, link, target, nearest_site
-		raise zope.traversing.interfaces.TraversalError(href)
+		raise TraversalError(href)
 
 	if ILinkExternalHrefOnly_providedBy( link ):
 		# The marker that identifies the link should be replaced by just the href
 		# Because of the decorator, it's easiest to just do this here
 		result = result['href']
-
 
 	return result
 
