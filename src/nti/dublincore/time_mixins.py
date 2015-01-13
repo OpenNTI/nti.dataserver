@@ -11,21 +11,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-
+import time
+import numbers
+import collections
 from datetime import datetime as _datetime
 from calendar import timegm as _calendar_timegm
+
+from zope import interface
+
 from zope.dublincore.interfaces import IDCTimes
 
+import persistent
 
 from nti.zodb import minmax
 from nti.zodb.persistentproperty import PersistentPropertyHolder
-
-import numbers
-import persistent
-import time
-import collections
-
 
 from .interfaces import ILastModified
 
@@ -43,7 +42,6 @@ class TimeProperty(object):
 		self._write_name = write_name
 		if cached:
 			self._cached = str('_v_time_property_' + name)
-
 
 	def __get__(self, inst, klass):
 		if inst is None:
@@ -95,7 +93,6 @@ class TimeProperty(object):
 		else:
 			setattr(instance, self._name, value)
 
-
 @interface.implementer(IDCTimes)
 class DCTimesLastModifiedMixin(object):
 	"""
@@ -109,7 +106,6 @@ class DCTimesLastModifiedMixin(object):
 
 	created = TimeProperty('createdTime')
 	modified = TimeProperty('lastModified', write_name='updateLastModIfGreater')
-
 
 class CreatedTimeMixin(object):
 
@@ -141,7 +137,8 @@ class ModifiedTimeMixin(object):
 		super(ModifiedTimeMixin,self).__init__( *args, **kwargs )
 
 	def __setstate__(self, data):
-		if isinstance(data, collections.Mapping) and '_lastModified' in data and isinstance(data['_lastModified'], numbers.Number):
+		if 	isinstance(data, collections.Mapping) and \
+			'_lastModified' in data and isinstance(data['_lastModified'], numbers.Number):
 			# Are there actually any objects still around that have this condition?
 			# A migration to find them is probably difficult
 			data['_lastModified'] = minmax.NumericMaximum(data['_lastModified'])

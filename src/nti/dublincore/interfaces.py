@@ -25,7 +25,6 @@ class ICreatedTime(interface.Interface):
 						 description="Typically set automatically by the object.",
 						 default=0.0)
 
-
 class ILastModified(ICreatedTime):
 	"""
 	Something that tracks a modification timestamp.
