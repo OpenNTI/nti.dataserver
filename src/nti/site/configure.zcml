@@ -23,5 +23,4 @@
 	<!-- Database transactions -->
 	<utility component=".runner.run_job_in_site" />
 
-
 </configure>

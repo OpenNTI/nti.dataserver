@@ -10,12 +10,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import contextlib
 import warnings
+import contextlib
 
 from zope import interface
 from zope import component
-
 from zope.component.hooks import site as current_site
 
 from ZODB.interfaces import IDatabase
@@ -59,12 +58,12 @@ def _site_cm(conn, site_names=()):
 		if component.getSiteManager() != sitemanc.getSiteManager(): # pragma: no cover
 			raise SiteNotInstalledError( "Hooks not installed?" )
 		# XXX: Used to do this check...is it really needed?
-		#if component.getUtility( interfaces.IDataserver ) is None: # pragma: no cover
+		# if component.getUtility( interfaces.IDataserver ) is None: # pragma: no cover
 		#	raise InappropriateSiteError()
 		yield sitemanc
 
-
 from nti.utils.transactions import TransactionLoop
+
 class _RunJobInSite(TransactionLoop):
 
 	def __init__( self, *args, **kwargs ):
