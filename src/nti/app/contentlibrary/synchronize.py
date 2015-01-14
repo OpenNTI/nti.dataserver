@@ -71,5 +71,5 @@ def synchronize(sleep=None):
 	notify(AllContentPackageLibrariesDidSyncEvent())
 	
 	# return results
-	result = [x[1] for x in results if x is not None]
+	result = [x[1] for x in results]
 	return result
