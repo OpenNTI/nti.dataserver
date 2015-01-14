@@ -27,12 +27,13 @@ These are not necessarily persistent and part of the traversal tree.
 This there are two things to accomplish: make the dataserver site the current site, and
 also construct a site that descends from that site and contains any applicable policies.
 
-$Id$
+.. $Id$
 """
 
-# turn off warning for not calling superclass, calling indirect superclass and accessing protected methods.
-# we're deliberately doing both
+# turn off warning for not calling superclass, calling indirect superclass and 
+# accessing protected methods. we're deliberately doing both
 # pylint: disable=W0233,W0231,W0212
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -42,21 +43,22 @@ from zope import component
 
 from zope.component.hooks import getSite
 from zope.component.hooks import setSite
-
-from .interfaces import IMainApplicationFolder
-from .interfaces import IHostPolicyFolder
-
 from zope.component.interfaces import ISite
-from zope.site.interfaces import INewLocalSite
-from zope.site.interfaces import IRootFolder
-from zope.traversing.interfaces import IBeforeTraverseEvent
+
 from zope.location.interfaces import LocationError
 
-from zope.proxy import non_overridable
 from zope.proxy import ProxyBase
+from zope.proxy import non_overridable
+
+from zope.site.interfaces import IRootFolder
+from zope.site.interfaces import INewLocalSite
+
+from zope.traversing.interfaces import IBeforeTraverseEvent
 
 from .transient import BasedSiteManager
 
+from .interfaces import IHostPolicyFolder
+from .interfaces import IMainApplicationFolder
 
 class _ProxyTraversedSite(ProxyBase):
 	"""
@@ -120,7 +122,8 @@ def threadSiteSubscriber( new_site, event ):
 		#   /dataserver2/++etc++hostsites/janux.ou.edu/++etc++site/SOMEUTILITY/...
 		# with the current host being janux.ou.edu.
 		pass
-	elif IHostPolicyFolder.providedBy(current_site) and IHostPolicyFolder.providedBy(new_site):
+	elif IHostPolicyFolder.providedBy(current_site) and \
+		 IHostPolicyFolder.providedBy(new_site):
 		# This is typically the case when we traverse directly
 		# into utilities registered with the site, for example
 		#   /dataserver2/++etc++hostsites/janux.ou.edu/++etc++site/SOMEUTILITY/...
@@ -159,7 +162,6 @@ def threadSiteSubscriber( new_site, event ):
 		# Cancel traversal using a LocationError. This typically
 		# will get surfaced as a 404.
 		raise LocationError("Unknown kind of site", new_site, current_site)
-
 
 @component.adapter(INewLocalSite)
 def new_local_site_dispatcher(event):

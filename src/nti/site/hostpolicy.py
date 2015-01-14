@@ -3,7 +3,7 @@
 """
 Support for host policies.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -11,20 +11,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
-
+from zope.component.interfaces import IComponents
 from zope.component.hooks import site as current_site
 
-from zope.component.interfaces import IComponents
-from zope.traversing.interfaces import IEtcNamespace
-from .interfaces import IMainApplicationFolder
-
-
-from .folder import HostPolicySiteManager
-from .folder import HostPolicyFolder
-
 from zope.interface import ro
+
+from zope.traversing.interfaces import IEtcNamespace
+
+from .folder import HostPolicyFolder
+from .folder import HostPolicySiteManager
+
+from .interfaces import IMainApplicationFolder
 
 def synchronize_host_policies():
 	"""
@@ -50,12 +48,13 @@ def synchronize_host_policies():
 	#    \
 	#	  S2
 	# and in the database we have the nti.dataserver and root persistent site managers,
-	# then when we create the persistent sites for S1 and S2 (PS1 and PS2) we want the resolution order
-	# to be:
+	# then when we create the persistent sites for S1 and S2 (PS1 and PS2) we want 
+	# the resolution order to be:
 	#   PS2 -> S2 -> PS1 -> S1 -> DS -> Root -> GSM
 	# That is, we need to get the persistent components mixed in between the
 	# global components.
-	# Fortunately this is very easy to achieve. The code in zope.interface.ro handles this.
+	# Fortunately this is very easy to achieve. The code in zope.interface.ro handles
+	# this.
 	# We just need to ensure:
 	#   PS1.__bases__ = (S1, DS)
 	#   PS2.__bases__ = (S2, PS1)
@@ -67,7 +66,8 @@ def synchronize_host_policies():
 	ds_site_manager = ds_folder.getSiteManager()
 
 	# Ok, find everything that is globally registered
-	all_global_named_utilities = list(component.getGlobalSiteManager().getUtilitiesFor(IComponents))
+	global_sm = component.getGlobalSiteManager()
+	all_global_named_utilities = list(global_sm.getUtilitiesFor(IComponents))
 	for name, comp in all_global_named_utilities:
 		# The sites must be registered the same as their internal name
 		assert name == comp.__name__
@@ -112,7 +112,6 @@ def synchronize_host_policies():
 				site.setSiteManager(site_policy)
 				secondary_comps = site_policy
 
-
 def run_job_in_all_host_sites(func):
 	"""
 	While already operating inside of a transaction and the dataserver
@@ -138,7 +137,7 @@ def run_job_in_all_host_sites(func):
 
 	sites = component.getUtility(IEtcNamespace, name='hostsites')
 	sites = list(sites.values())
-	logger.debug("Asked to run job %s in sites %s", func, sites)
+	logger.debug("Asked to run job %s in ALL sites", func)
 
 	# The easyiest way to go top-down is to again use the resolution order;
 	# we just have to watch out for duplicates and non-persistent components
@@ -176,5 +175,4 @@ def run_job_in_all_host_sites(func):
 		with current_site(site):
 			result = func()
 			results.append( (site, result) )
-
 	return results

@@ -53,7 +53,6 @@ def install_utility_on_registration(utility, utility_name, provided, event):
 
 	install_utility(utility, utility_name, provided, local_site_manager)
 
-
 def uninstall_utility_on_unregistration(utility_name, provided, event):
 	"""
 	When a dependent object is unregistered, this undoes the
