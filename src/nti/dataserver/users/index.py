@@ -15,7 +15,7 @@ from nti.dataserver.users import interfaces as user_interfaces
 
 from zc.intid import IIntIds
 
-import zope.catalog.field
+from zope.catalog.field import FieldIndex
 from zope.catalog.interfaces import ICatalog
 from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
@@ -64,24 +64,46 @@ class ContactEmailIndex(CaseInsensitiveFieldIndex):
 	default_field_name = 'contact_email'
 	default_interface = user_interfaces.IUserProfile
 
-class PasswordRecoveryEmailHashIndex(zope.catalog.field.FieldIndex):
+class PasswordRecoveryEmailHashIndex(FieldIndex):
 
 	default_field_name = 'password_recovery_email_hash'
 	default_interface = user_interfaces.IRestrictedUserProfile
 
-class ContactEmailRecoveryHashIndex(zope.catalog.field.FieldIndex):
+class ContactEmailRecoveryHashIndex(FieldIndex):
 
 	default_field_name = 'contact_email_recovery_hash'
 	default_interface = user_interfaces.IContactEmailRecovery
 
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
+	EXPR = 'user_interfaces.IUserProfile(context).opt_in_email_communication'
+	
 	def __init__( self, id, family=None ):
-		super(OptInEmailCommunicationFilteredSet,self).__init__( id, 'user_interfaces.IUserProfile(context).opt_in_email_communication', family=family )
+		super(OptInEmailCommunicationFilteredSet,self).__init__( id, self.EXPR, family=family )
 
 	def index_doc( self, docid, context ):
 		try:
 			index = user_interfaces.IUserProfile(context).opt_in_email_communication
+		except (TypeError,AttributeError):
+			# Could not adapt, not in profile
+			index = False
+
+		if index:
+			self._ids.insert( docid )
+		else:
+			# The normal PythonFilteredSet seems to have a bug and never unindexes?
+			self.unindex_doc( docid )
+
+class EmailVerifiedFilteredSet(FilteredSetBase):
+
+	EXPR = 'user_interfaces.IUserProfile(context).email_verified'
+	
+	def __init__( self, id, family=None ):
+		super(EmailVerifiedFilteredSet,self).__init__( id, self.EXPR, family=family )
+
+	def index_doc( self, docid, context ):
+		try:
+			index = user_interfaces.IUserProfile(context).email_verified
 		except (TypeError,AttributeError):
 			# Could not adapt, not in profile
 			index = False
@@ -105,8 +127,8 @@ def install_user_catalog( site_manager_container, intids=None ):
 
 	for name, clazz in ( ('alias', AliasIndex),
 						 ('email', EmailIndex),
-						 ('contact_email', ContactEmailIndex),
 						 ('realname', RealnameIndex),
+						 ('contact_email', ContactEmailIndex),
 						 ('realname_parts', RealnamePartsIndex),
 						 ('contact_email_recovery_hash', ContactEmailRecoveryHashIndex),
 						 ('password_recovery_email_hash', PasswordRecoveryEmailHashIndex)):
@@ -122,14 +144,17 @@ def install_user_catalog( site_manager_container, intids=None ):
 		index.__parent__ = catalog
 		catalog[name] = index
 
-	opt_in_comm_index = TopicIndex( family=intids.family)
 	opt_in_comm_set = OptInEmailCommunicationFilteredSet( 'opt_in_email_communication',
 														  family=intids.family)
-	opt_in_comm_index.addFilter( opt_in_comm_set )
-	intids.register( opt_in_comm_index )
 	
-	opt_in_comm_index.__name__ = 'topics'
-	opt_in_comm_index.__parent__ = catalog
-	catalog['topics'] = opt_in_comm_index
-
+	email_verified_set = EmailVerifiedFilteredSet( 'email_verified', family=intids.family)
+	
+	topics_index = TopicIndex( family=intids.family)
+	topics_index.addFilter( opt_in_comm_set )
+	topics_index.addFilter( email_verified_set )
+	intids.register( topics_index )
+	
+	topics_index.__name__ = 'topics'
+	topics_index.__parent__ = catalog
+	catalog['topics'] = topics_index
 	return catalog
