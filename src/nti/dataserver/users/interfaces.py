@@ -6,7 +6,7 @@ User related interfaces.
 .. note:: Currently, the interfaces implemented in this package are spread across
 	this module, and :mod:`nti.dataserver.interfaces`.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -377,7 +377,13 @@ class IRestrictedUserProfile(IUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL )
-
+	
+	email_verified = Bool(
+		title="Has the email been verified?",
+		required=False,
+		default=False )
+	email_verified.setTaggedValue( TAG_HIDDEN_IN_UI, True )
+	email_verified.setTaggedValue( TAG_READONLY_IN_UI, True )
 
 class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	"""
@@ -403,8 +409,7 @@ class IContactEmailRecovery(interface.Interface):
 	contact_email_recovery_hash = interface.Attribute( "A string giving the hash of the contact email.")
 	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
 
-class ICompleteUserProfile(IRestrictedUserProfile,
-						   IEmailAddressable):
+class ICompleteUserProfile(IRestrictedUserProfile, IEmailAddressable):
 	"""
 	A complete user profile.
 	"""
@@ -420,7 +425,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		title="Can we contact you by email?",
 		required=False,
 		default=False )
-
+		
 	home_page = HTTPURL(
 		title='Home page',
 		description="The URL for your external home page, "
@@ -481,7 +486,6 @@ class IEmailRequiredUserProfile(ICompleteUserProfile):
 		constraint=checkEmailAddress)
 	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
 
-
 class IUserProfileSchemaProvider(Interface):
 	"""
 	Usually registered as an adapter from a IUser interface or sometimes an IEntity.
@@ -494,7 +498,6 @@ class IUserProfileSchemaProvider(Interface):
 	def getSchema():
 		"""
 		Return the interface that defines the profile data expected.
-
 		"""
 
 @interface.implementer(IUserProfileSchemaProvider)
