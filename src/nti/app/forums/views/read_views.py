@@ -5,20 +5,18 @@ Views and other functions related to forums and blogs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import re
-
 import datetime
 import operator
 
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
-
 
 from nti.appserver.traversal import find_interface
 
@@ -60,8 +58,6 @@ _r_view_defaults.update( permission=nauth.ACT_READ,
 _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update( permission=nauth.ACT_DELETE,
 						 request_method='DELETE' )
-
-
 
 
 @view_config(context=frm_interfaces.IHeadlineTopic)

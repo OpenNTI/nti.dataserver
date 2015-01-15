@@ -5,28 +5,25 @@ Views and other functions related to forums and blogs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
-from zope import lifecycleevent
 from zope.event import notify
-
+from zope import lifecycleevent
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
 
 from nti.utils._compat import aq_base
 
-
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth
-
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -35,8 +32,10 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
-
+from nti.dataserver.contenttypes.forums.interfaces import ICommentPost 
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum 
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry 
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 
 _view_defaults = dict(  route_name='objects.generic.traversal',
 						renderer='rest' )
@@ -49,7 +48,6 @@ _r_view_defaults.update( permission=nauth.ACT_READ,
 _d_view_defaults = _view_defaults.copy()
 _d_view_defaults.update( permission=nauth.ACT_DELETE,
 						 request_method='DELETE' )
-
 
 def _do_aq_delete(theObject):
 	"""
@@ -68,11 +66,13 @@ def _do_aq_delete(theObject):
 	theObject.__dict__['__parent__'] = base_parent
 	del base_parent[theObject.__name__]
 
-@view_config(context=frm_interfaces.IGeneralHeadlineTopic)
-@view_config(context=frm_interfaces.IPersonalBlogEntry)
+@view_config(context=IPersonalBlogEntry)
+@view_config(context=IGeneralHeadlineTopic)
 @view_defaults(**_d_view_defaults)
 class HeadlineTopicDeleteView(UGDDeleteView):
-	""" Deleting an existing topic """
+	""" 
+	Deleting an existing topic 
+	"""
 
 	## Deleting an IPersonalBlogEntry winds up in users.users.py:user_willRemoveIntIdForContainedObject,
 	## thus posting the usual activitystream DELETE notifications
@@ -82,10 +82,12 @@ class HeadlineTopicDeleteView(UGDDeleteView):
 		_do_aq_delete(theObject)
 		return theObject
 
-@view_config(context=frm_interfaces.IGeneralForum)
+@view_config(context=IGeneralForum)
 @view_defaults(**_d_view_defaults)
 class ForumDeleteView(UGDDeleteView):
-	""" Deleting an existing forum """
+	""" 
+	Deleting an existing forum 
+	"""
 
 	def _do_delete_object( self, theObject ):
 		# Standard delete from enclosing container. This
@@ -94,10 +96,11 @@ class ForumDeleteView(UGDDeleteView):
 		_do_aq_delete(theObject)
 		return theObject
 
-@view_config(context=frm_interfaces.ICommentPost)
+@view_config(context=ICommentPost)
 @view_defaults(**_d_view_defaults)
 class CommentDeleteView(UGDDeleteView):
-	""" Deleting an existing forum comment.
+	""" 
+	Deleting an existing forum comment.
 
 	This is somewhat unusual as we leave an object behind to mark
 	the object as deleted (in fact, we leave the original object
@@ -107,7 +110,7 @@ class CommentDeleteView(UGDDeleteView):
 
 	def _do_delete_object( self, theObject ):
 		deleting = aq_base(theObject)
-		interface.alsoProvides(deleting, nti_interfaces.IDeletedObjectPlaceholder)
+		interface.alsoProvides(deleting, IDeletedObjectPlaceholder)
 
 		# TODO: Events need to fire to unindex, once we figure
 		# out what those are?
