@@ -5,20 +5,19 @@ Views and other functions related to forums and blogs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.appserver.ugd_edit_views import UGDPutView
 
 from nti.dataserver import authorization as nauth
-
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -27,18 +26,27 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
 _view_defaults = dict(  route_name='objects.generic.traversal',
 						renderer='rest' )
 
-@view_config(context=frm_interfaces.IHeadlinePost)
-@view_config(context=frm_interfaces.IPersonalBlogEntry)
-@view_config(context=frm_interfaces.IPersonalBlogEntryPost)
-@view_config(context=frm_interfaces.IPersonalBlogComment)
-@view_config(context=frm_interfaces.IGeneralForumComment)
-@view_config(context=frm_interfaces.IGeneralHeadlinePost)
-@view_config(context=frm_interfaces.IGeneralForum)
+@view_config(context=IGeneralForum)
+@view_config(context=IHeadlinePost)
+@view_config(context=IPersonalBlogEntry)
+@view_config(context=IPersonalBlogComment)
+@view_config(context=IGeneralForumComment)
+@view_config(context=IGeneralHeadlinePost)
+@view_config(context=IPersonalBlogEntryPost)
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
@@ -48,15 +56,15 @@ class ForumObjectPutView(UGDPutView):
 	def readInput(self):
 		externalValue = super(ForumObjectPutView, self).readInput()
 		theObject = self._get_object_to_update()
-		if frm_interfaces.IForum.providedBy(theObject):
+		if IForum.providedBy(theObject):
 			# remove read only properties
 			for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
 				if name in externalValue:
 					del externalValue[name]
 		return externalValue
 
-@view_config(context=frm_interfaces.ICommunityHeadlineTopic) # Needed?
-@view_config(context=frm_interfaces.IGeneralHeadlineTopic)
+@view_config(context=IGeneralHeadlineTopic)
+@view_config(context=ICommunityHeadlineTopic) # Needed?
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)

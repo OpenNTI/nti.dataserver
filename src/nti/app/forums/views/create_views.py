@@ -5,18 +5,16 @@ Views and other functions related to forums and blogs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults  # NOTE: Only usable on classes
 
-
 from nti.dataserver import authorization as nauth
-
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -27,12 +25,10 @@ frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
-
 from .. import VIEW_CONTENTS
 
-
-from .view_mixins import _AbstractForumPostView
 from .view_mixins import AbstractBoardPostView
+from .view_mixins import _AbstractForumPostView
 from .view_mixins import _AbstractTopicPostView
 
 _view_defaults = dict(  route_name='objects.generic.traversal',
@@ -59,31 +55,34 @@ _d_view_defaults.update( permission=nauth.ACT_DELETE,
 @view_defaults( context=frm_interfaces.IBoard,
 				**_c_view_defaults)
 class BoardPostView(AbstractBoardPostView):
-	""" Given an incoming post, create a new forum. """
-
+	""" 
+	Given an incoming post, create a new forum.
+	"""
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
 @view_defaults( context=frm_interfaces.ICommunityBoard,
 				**_c_view_defaults)
 class CommunityBoardPostView(AbstractBoardPostView):
+	
 	# XXX: We can do better
 	def _get_topic_creator(self):
 		return self.request.context.creator # the community
-
-
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
 @view_defaults( context=frm_interfaces.IForum,
 				**_c_view_defaults)
 class ForumPostView(_AbstractForumPostView):
-	""" Given an incoming post, create a new topic. """
-
+	""" 
+	Given an incoming post, create a new topic. 
+	"""
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
 @view_defaults( context=frm_interfaces.ITopic,
 				**_c_view_defaults)
 class TopicPostView(_AbstractTopicPostView):
-	""" Given an incoming post, create a new comment. """
+	""" 
+	Given an incoming post, create a new comment. 
+	"""
