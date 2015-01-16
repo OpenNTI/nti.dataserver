@@ -5,6 +5,7 @@ Related to traversing into forum objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,17 +17,21 @@ from zope.container.traversal import ContainerTraversable
 
 from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
+
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 _FORUM_NAME = CommunityForum.__default_name__
 
-@component.adapter(frm_interfaces.IPost)
+@component.adapter(IPost)
 class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
-	"Disallow updates to the sharedWith field of blog posts/comments"
+	"""
+	Disallow updates to the sharedWith field of blog posts/comments
+	"""
 	_allowed_fields = tuple( set(GenericModeledContentExternalFieldTraverser._allowed_fields) - set( ('sharedWith',)) )
 
-@component.adapter(frm_interfaces.IDefaultForumBoard)
+@component.adapter(IDefaultForumBoard)
 class _DefaultForumBoardTraversable(ContainerTraversable):
 	"""
 	Allows traversing to the default forum, creating it on demand.
@@ -39,4 +44,5 @@ class _DefaultForumBoardTraversable(ContainerTraversable):
 			except (TypeError,AttributeError): # pragma: no cover
 				raise TraversalError( self._container, name ) # No adapter
 
-		return ContainerTraversable.traverse(self, name, furtherPath)
+		result = ContainerTraversable.traverse(self, name, furtherPath)
+		return result

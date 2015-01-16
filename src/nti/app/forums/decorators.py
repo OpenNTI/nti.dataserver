@@ -5,6 +5,7 @@ External decorators to provide access to the things exposed through this package
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -20,12 +21,20 @@ from nti.app.authentication import get_remote_user
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver.links import Link
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDefaultPublished
+from nti.dataserver.interfaces import IUnscopedGlobalCommunity
+from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalObjectDecorator
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.utils._compat import aq_base
 
@@ -33,7 +42,7 @@ from nti.appserver._util import link_belongs_to_user
 from nti.appserver.pyramid_authorization import is_readable, can_create
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
-LINKS = ext_interfaces.StandardExternalFields.LINKS
+LINKS = StandardExternalFields.LINKS
 
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 _BLOG_NAME = PersonalBlog.__default_name__
@@ -45,8 +54,8 @@ from nti.app.publishing import VIEW_PUBLISH
 from . import VIEW_CONTENTS
 from nti.app.publishing import VIEW_UNPUBLISH
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IUser)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IUser)
 class BlogLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -66,14 +75,14 @@ class BlogLinkDecorator(object):
 			link_belongs_to_user( link, context )
 			the_links.append( link )
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.ICommunity)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(ICommunity)
 class CommunityBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping( self, context, mapping ):
-		if nti_interfaces.IUnscopedGlobalCommunity.providedBy( context ):
+		if IUnscopedGlobalCommunity.providedBy( context ):
 			# The global communities that do not participate in security
 			# (e.g., Everyone) do not get a forum
 			return
@@ -90,7 +99,7 @@ class CommunityBoardLinkDecorator(object):
 			link_belongs_to_user( link, context )
 			the_links.append( link )
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Adds the appropriate publish or unpublish link for the owner
@@ -107,18 +116,19 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	true_view = VIEW_UNPUBLISH
 
 	def link_predicate( self, context, current_username ):
-		return nti_interfaces.IDefaultPublished.providedBy( context )
+		return IDefaultPublished.providedBy( context )
 
 	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
 		# The owner is the only one that gets the links
 		current_user = self.remoteUser
 		if current_user and current_user == context.creator:
-			super(PublishLinkDecorator,self)._do_decorate_external_link( context, mapping )
+			super(PublishLinkDecorator,self)._do_decorate_external_link(context, mapping)
 
 	def _do_decorate_external(self, context, mapping):
 		super(PublishLinkDecorator,self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
-		mapping['PublicationState'] = 'DefaultPublished' if nti_interfaces.IDefaultPublished.providedBy(context) else None
+		mapping['PublicationState'] = 'DefaultPublished' \
+									  if IDefaultPublished.providedBy(context) else None
 
 # Notice we do not declare what we adapt--we adapt too many things
 # that share no common ancestor. (We could be declared on IContainer,
@@ -126,7 +136,7 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 # the forum objects)
 from nti.app.renderers.caching import md5_etag
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 class ForumObjectContentsLinkProvider(object):
 	"""
 	Decorate forum object externalizations with a link pointing to their
@@ -139,7 +149,8 @@ class ForumObjectContentsLinkProvider(object):
 	def add_link(cls, rel, context, mapping, request, elements=None):
 		_links = mapping.setdefault(LINKS, [])
 		elements = elements or (VIEW_CONTENTS,
-								md5_etag(context.lastModified, request.authenticated_userid).replace('/', '_'))
+								md5_etag(context.lastModified, 
+										 request.authenticated_userid).replace('/', '_'))
 		link = Link(context, rel=rel, elements=elements)
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
@@ -180,11 +191,12 @@ class ForumObjectContentsLinkProvider(object):
 		# This works because everytime one of the context's children is modified,
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
-		elements = (VIEW_CONTENTS, md5_etag(context.lastModified, request.authenticated_userid).replace('/','_'))
+		elements = (VIEW_CONTENTS, md5_etag(context.lastModified,
+											request.authenticated_userid).replace('/','_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
 		current_user = get_remote_user(get_current_request())
-		is_coppa = nti_interfaces.ICoppaUserWithoutAgreement.providedBy(current_user)
+		is_coppa = ICoppaUserWithoutAgreement.providedBy(current_user)
 
 		# Check the create permission in the forum acl.
 		# FIXME: We shouldn't need to specifically check is_coppa like this.
@@ -194,7 +206,7 @@ class ForumObjectContentsLinkProvider(object):
 			link = self.add_link('add', context, mapping, request, elements)
 			link.method = 'POST'
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 @component.adapter(IForum)
 class SecurityAwareForumTopicCountDecorator(object):
 	"""
@@ -237,7 +249,8 @@ class SecurityAwareForumTopicCountDecorator(object):
 		# worrying about.
 		# (TODO: Do we need to aq wrap this?)
 		_newest_descendant = context.NewestDescendant
-		need_replacement_descendant = _newest_descendant is not None and not is_readable(_newest_descendant,request)
+		need_replacement_descendant = _newest_descendant is not None and \
+									  not is_readable(_newest_descendant,request)
 		for x in context.values():
 			if is_readable(x,request):
 				i += 1
@@ -252,7 +265,7 @@ class SecurityAwareForumTopicCountDecorator(object):
 				mapping['NewestDescendant'] = newest_topic
 				mapping['NewestDescendantCreatedTime'] = newest_topic.createdTime
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 @component.adapter(ICommunityBoard)
 class SecurityAwareBoardForumCountDecorator(object):
 	"""

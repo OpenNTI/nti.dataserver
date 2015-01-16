@@ -13,14 +13,15 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-from zope import interface
 from zope import component
-
-from pyramid.interfaces import IRequest
+from zope import interface
 
 from zope.publisher.browser import BrowserView
+
 from zc.displayname.adapters import convertName
 from zc.displayname.interfaces import IDisplayNameGenerator
+
+from pyramid.interfaces import IRequest
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
@@ -41,4 +42,5 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 		result = _("${username}'s Thoughts",
 				   mapping={'username': user_display_name} )
 
-		return convertName(result, self.request, None)
+		result = convertName(result, self.request, None)
+		return result
