@@ -14,14 +14,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.appserver.interfaces import IContainerCollection
 from nti.appserver.interfaces import IUserWorkspace
+from nti.appserver.interfaces import IContainerCollection
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.dataserver.contenttypes.forums.post import Post
 from nti.dataserver.contenttypes.forums.post import PersonalBlogEntryPost
-
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)

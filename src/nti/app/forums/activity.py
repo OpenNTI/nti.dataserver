@@ -5,17 +5,19 @@ Things related to recording and managing the activity of forums.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope import component
 
-from nti.appserver import interfaces as app_interfaces
+from nti.appserver.interfaces import IUserActivityStorage
+from nti.appserver.interfaces import IUserActivityProvider
 
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -27,32 +29,31 @@ from nti.externalization.interfaces import LocatedExternalList
 # These should be registered for (ICreated, IIntId[Added|Removed]Event)
 
 def store_created_object_in_global_activity( comment, event ):
-	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
+	storage = IUserActivityStorage( comment.creator, None )
 	# Put these in default storage
 	if storage is not None:
 		storage.addContainedObjectToContainer( comment, '' )
 
-
 def unstore_created_object_from_global_activity( comment, event ):
-	storage = app_interfaces.IUserActivityStorage( comment.creator, None )
+	storage = IUserActivityStorage( comment.creator, None )
 	# Put these in default storage
 	if storage is not None:
 		storage.deleteEqualContainedObjectFromContainer( comment, '' )
 
-
-@interface.implementer(app_interfaces.IUserActivityProvider)
+@interface.implementer(IUserActivityProvider)
 class NoCommentActivityProvider(object):
 
 	def __init__( self, user, request ):
 		self.user = user
 
 	def getActivity( self ):
-		activity = app_interfaces.IUserActivityStorage( self.user, None )
+		activity = IUserActivityStorage( self.user, None )
 		if activity is not None:
 			result = LocatedExternalList()
 			container = activity.getContainer( '', () )
 			result.lastModified = getattr(container, 'lastModified', 0)
 			for x in container:
-				if not frm_interfaces.IPersonalBlogComment.providedBy(x) and not frm_interfaces.IGeneralForumComment.providedBy(x):
+				if 	not IPersonalBlogComment.providedBy(x) and \
+					not IGeneralForumComment.providedBy(x):
 					result.append(x)
 			return result

@@ -11,22 +11,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
 
 from pyramid.traversal import find_interface
 
 from nti.dataserver.interfaces import IUser
-
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
-
-from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 
 from nti.dataserver.activitystream_change import Change
 
 ### Online notifications.
-
 
 @component.adapter(IPersonalBlogComment, IObjectAddedEvent)
 def notify_online_author_of_blog_comment( comment, event ):
@@ -72,21 +68,19 @@ def _notify_online_author_of_comment( comment, topic_author ):
 	if not comment.isSharedDirectlyWith(topic_author):
 		topic_author._noticeChange(change, force=True)
 
-	# (Except for being in the stream, the effect of the notification can be done with component.handle( blog_author, change ) )
+	# (Except for being in the stream, the effect of the notification can be done 
+	# with component.handle( blog_author, change ) )
 
 	# Also do the same for of the dynamic types it is shared with,
 	# thus sharing the same change object
 	#_send_stream_event_to_targets( change, comment.sharingTargets )
 
-
-
 ### Favoriting.
 ## TODO: Under heavy construction
 ###
 
-
-from nti.dataserver.liking import FAVR_CAT_NAME
 from nti.dataserver import users
+from nti.dataserver.liking import FAVR_CAT_NAME
 
 def temp_store_favorite_object( modified_object, event ):
 	if event.category != FAVR_CAT_NAME:
