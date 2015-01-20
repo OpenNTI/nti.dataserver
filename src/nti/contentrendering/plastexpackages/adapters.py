@@ -11,7 +11,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-from collections import Mapping
 
 from zope import interface
 
@@ -32,13 +31,6 @@ def _render_children(renderer, nodes, strip=True):
 	else:
 		result = nodes.decode("utf-8") if isinstance(nodes, bytes) else nodes
 	return result.strip() if result and strip else result
-
-def _item_sorter(entry):
-	if isinstance(entry, Mapping):
-		result = (entry.get(MIMETYPE) or '', entry.get(NTIID) or '')
-	else:
-		result = (u'', u'')
-	return result
 
 @interface.implementer(IJSONTransformer)
 class _CourseLessonJSONTransformer(object):
@@ -77,7 +69,6 @@ class _CourseOverviewGroupJSONTransformer(object):
 			trx = IJSONTransformer(child, None)
 			if trx is not None:
 				items.append(trx.transform())
-		items.sort(key=_item_sorter)
 		return output
 
 @interface.implementer(IJSONTransformer)
