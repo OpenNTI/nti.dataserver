@@ -11,12 +11,18 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
+from collections import Mapping
 
 from zope import interface
 
 from plasTeX.Renderers import render_children
 
+from nti.externalization.interfaces import StandardExternalFields
+
 from ..interfaces import IJSONTransformer
+
+NTIID = StandardExternalFields.NTIID
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 def _render_children(renderer, nodes, strip=True):
 	if not isinstance(nodes, six.string_types):
@@ -24,6 +30,13 @@ def _render_children(renderer, nodes, strip=True):
 	else:
 		result = nodes.decode("utf-8") if isinstance(nodes, bytes) else nodes
 	return result.strip() if result and strip else result
+
+def _item_sorter(entry):
+	if isinstance(entry, Mapping):
+		result = (entry.get(MIMETYPE) or '', entry.get(NTIID) or '')
+	else:
+		result = (u'', u'')
+	return result
 
 @interface.implementer(IJSONTransformer)
 class _CourseLessonJSONTransformer(object):
@@ -33,8 +46,8 @@ class _CourseLessonJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['NTIID'] = self.el.ntiid
-		output['MimeType'] = u"application/vnd.nextthought.ntilessonoverview"
+		output[NTIID] = self.el.ntiid
+		output[MIMETYPE] = u"application/vnd.nextthought.ntilessonoverview"
 		output['title'] = _render_children(self.el.renderer, self.el.title, False)
 		output['Items'] = items = []
 		group_els = self.el.getElementsByTagName('courseoverviewgroup')
@@ -52,7 +65,7 @@ class _CourseOverviewGroupJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['MimeType'] =  self.el.mime_type
+		output[MIMETYPE] =  self.el.mime_type
 		output['title'] = _render_children(self.el.renderer, self.el.title, False)
 		output['accentColor'] = _render_children(self.el.renderer,
 												 self.el.title_background_color, 
@@ -62,6 +75,7 @@ class _CourseOverviewGroupJSONTransformer(object):
 			trx = IJSONTransformer(child, None)
 			if trx is not None:
 				items.append(trx.transform())
+		items.sort(key=_item_sorter)
 		return output
 
 @interface.implementer(IJSONTransformer)
@@ -72,7 +86,7 @@ class _CourseOverviewSpacerJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['MimeType'] =  self.el.mime_type
+		output[MIMETYPE] =  self.el.mime_type
 		return output
 
 @interface.implementer(IJSONTransformer)
@@ -83,11 +97,11 @@ class _DiscussionRefJSONTransformer(object):
 
 	def transform(self):
 		output = {}
-		output['MimeType'] = self.el.discussion.targetMimeType
+		output[MIMETYPE] = self.el.discussion.targetMimeType
 		output['icon'] = self.el.discussion.iconResource.image.url
 		output['label'] = _render_children(self.el.discussion.renderer, 
 										   self.el.discussion.title)
-		output['NTIID'] = self.el.discussion.topic_ntiid
+		output[NTIID] = self.el.discussion.topic_ntiid
 		output['title'] = _render_children(self.el.discussion.renderer, 
 										   self.el.discussion.subtitle)
 		return output
@@ -102,8 +116,8 @@ class _NTIAudioRefJSONTransformer(object):
 	def transform(self):
 		output = {}
 		output['label'] = _render_children(self.el.media.renderer, self.el.media.title)
-		output['MimeType'] = self.el.media.mimeType
-		output['NTIID'] = self.el.media.ntiid
+		output[MIMETYPE] = self.el.media.mimeType
+		output[NTIID] = self.el.media.ntiid
 		output['visibility'] = self.el.visibility
 		return output
 
@@ -116,8 +130,8 @@ class _NTIVideoRefJSONTransformer(object):
 	def transform(self):
 		output = {}
 		output['label'] = _render_children(self.el.media.renderer, self.el.media.title)
-		output['MimeType'] = self.el.media.mimeType
-		output['NTIID'] = self.el.media.ntiid
+		output[MIMETYPE] = self.el.media.mimeType
+		output[NTIID] = self.el.media.ntiid
 		output['poster'] = self.el.media.poster
 		output['visibility'] = self.el.visibility
 		return output
@@ -135,12 +149,12 @@ class _RelatedWorkRefJSONTransformer(object):
 		output['desc'] = _render_children(self.el.relatedwork.renderer, 
 										  self.el.description)
 		output['href'] = self.el.uri
-		output['MimeType'] = self.el.mimeType
+		output[MIMETYPE] = self.el.mimeType
 		output['targetMimeType'] = self.el.targetMimeType
 		output['icon'] = self.el.relatedwork.iconResource.image.url
 		output['label'] = _render_children(self.el.relatedwork.renderer, 
 										   self.el.title)
-		output['NTIID'] = self.el.ntiid
+		output[NTIID] = self.el.ntiid
 		output['target-NTIID'] = self.el.target_ntiid
 		output['section'] = self.el.category
 		output['visibility'] = self.el.visibility
@@ -158,10 +172,10 @@ class _TimelineJSONTransformer(object):
 		output = {}
 		output['desc'] = _render_children( self.el.renderer, self.el.description)
 		output['href'] = self.el.uri
-		output['MimeType'] = self.el.mime_type
+		output[MIMETYPE] = self.el.mime_type
 		output['icon'] = self.el.icon.image.url
 		output['label'] = _render_children(self.el.renderer, self.el.title)
-		output['NTIID'] = self.el.ntiid
+		output[NTIID] = self.el.ntiid
 		output['suggested-inline'] = self.el.suggested_inline
 		if self.el.suggested_height:
 			output['suggested-height'] = self.el.suggested_height
