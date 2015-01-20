@@ -20,10 +20,10 @@ from nti.dataserver.users import User
 
 from nti.dataserver.tests import mock_dataserver
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
-class TestBlacklistViews(ApplicationLayerTest):
+class TestAdminViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_blacklist_views(self):
