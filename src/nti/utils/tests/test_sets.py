@@ -37,6 +37,8 @@ class TestSets(unittest.TestCase):
 		result.append('b')
 		assert_that(result, has_length(2))
 		
+		assert_that('b' in result, is_(True))
+		
 		result = (s - t)
 		assert_that(result, has_property('items', is_([u'r', u'c', u'd'])))
 
