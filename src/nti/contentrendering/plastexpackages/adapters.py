@@ -21,6 +21,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from ..interfaces import IJSONTransformer
 
+HREF = StandardExternalFields.HREF
+ITEMS = StandardExternalFields.ITEMS
 NTIID = StandardExternalFields.NTIID
 MIMETYPE = StandardExternalFields.MIMETYPE
 
@@ -49,7 +51,7 @@ class _CourseLessonJSONTransformer(object):
 		output[NTIID] = self.el.ntiid
 		output[MIMETYPE] = u"application/vnd.nextthought.ntilessonoverview"
 		output['title'] = _render_children(self.el.renderer, self.el.title, False)
-		output['Items'] = items = []
+		output[ITEMS] = items = []
 		group_els = self.el.getElementsByTagName('courseoverviewgroup')
 		for group_el in group_els:
 			trx = IJSONTransformer(group_el, None)
@@ -70,7 +72,7 @@ class _CourseOverviewGroupJSONTransformer(object):
 		output['accentColor'] = _render_children(self.el.renderer,
 												 self.el.title_background_color, 
 												 False)
-		output['Items'] = items = []
+		output[ITEMS] = items = []
 		for child in self.el.childNodes:
 			trx = IJSONTransformer(child, None)
 			if trx is not None:
@@ -148,7 +150,7 @@ class _RelatedWorkRefJSONTransformer(object):
 											 self.el.creator)
 		output['desc'] = _render_children(self.el.relatedwork.renderer, 
 										  self.el.description)
-		output['href'] = self.el.uri
+		output[HREF] = self.el.uri
 		output[MIMETYPE] = self.el.mimeType
 		output['targetMimeType'] = self.el.targetMimeType
 		output['icon'] = self.el.relatedwork.iconResource.image.url
@@ -171,7 +173,7 @@ class _TimelineJSONTransformer(object):
 	def transform(self):
 		output = {}
 		output['desc'] = _render_children( self.el.renderer, self.el.description)
-		output['href'] = self.el.uri
+		output[HREF] = self.el.uri
 		output[MIMETYPE] = self.el.mime_type
 		output['icon'] = self.el.icon.image.url
 		output['label'] = _render_children(self.el.renderer, self.el.title)
