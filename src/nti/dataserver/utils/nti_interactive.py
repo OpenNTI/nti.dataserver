@@ -100,7 +100,8 @@ def process_args(args=None):
 	features = args.features or ()
 
 	if plugins: 
-		features = packages = ()
+		features = ()
+		packages = "nti.appserver"
 		context = _create_context(env_dir, features)
 	else:
 		packages = set(args.packages or ())
