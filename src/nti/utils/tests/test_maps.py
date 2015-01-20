@@ -15,7 +15,7 @@ import unittest
 
 from nti.utils.maps import CaseInsensitiveDict
 
-class TestUtils(unittest.TestCase):
+class TestMaps(unittest.TestCase):
 
 	def test_case_insensitive_dict(self):
 		d1 = CaseInsensitiveDict(ONE=1, two=2)
