@@ -3,19 +3,23 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import collections
 import simplejson as json
+from collections import defaultdict
+from collections import OrderedDict
 
 from zope import component
 from zope import interface
 
 from plasTeX.Base.LaTeX import Document as LaTexDocument
+
+from nti.utils.sets import OrderedSet
 
 from ._utils import _render_children
 
@@ -60,16 +64,24 @@ class _NTIMediaExtractor(object):
 				result[ntiid] = topic_el
 		return result
 
+	def _add_2_od(self, od, key, value):
+		s = od.get(key)
+		if s is None:
+			s = od[key] = OrderedSet()
+		s.add(value)
+		
 	def _find_toc_media(self, topic_map):
-		result = collections.defaultdict(set)
+		result = OrderedDict()
+		inverted = OrderedDict()
 		for topic_ntiid, topic_el in topic_map.items():
 			for obj in topic_el.getElementsByTagName('object'):
 				if obj.getAttribute('mimeType') != self.media_mimeType:
 					continue
 				ntiid = obj.getAttribute('ntiid')
 				if ntiid and topic_ntiid:
-					result[ntiid].add(topic_ntiid)
-		return result
+					self._add_2_od(result, ntiid, topic_ntiid)
+					self._add_2_od(inverted, topic_ntiid, ntiid)
+		return result, inverted
 	
 	def _process_media(self, dom, media, topic_map):
 		entry = {'sources':[], 'transcripts':[]}
@@ -104,46 +116,52 @@ class _NTIMediaExtractor(object):
 		container = getattr(parent, 'ntiid', None) if parent else None
 		return entry, container
 
-	def _process_media_els(self, dom, els, outpath, topic_map):
-		items = {}
+	def _process_media_els(self, dom, elements, outpath, topic_map):
 		filename = self.index_file
-		# We'd like these things, especially Containers, to be
-		# ordered as they are in the source. We can preserve it here,
-		# if we try. The original list of elements must be in order
-		# of how they appear in the source, and it is more-or-less.
+		
+		## We'd like these things, especially Containers, to be
+		## ordered as they are in the source. We can preserve it here,
+		## if we try. The original list of elements must be in order
+		## of how they appear in the source, and it is more-or-less.
 
-		# In practice, it's not nearly that simple because of the
-		# "overrides". In practice, all ntivideo elements are children
-		# of the document for some reason, and ntivideoref elements
-		# are scattered about through the content to refer to these
-		# elements. In turn, these ntivideoref elements get added to
-		# the ToC dom (NOT the content dom) as "<object>" tags...we go
-		# through and "re-parent" ntivideo elements in the Containers
-		# collection based on where references appear to them
+		## In practice, it's not nearly that simple because of the
+		## "overrides". In practice, all ntivideo elements are children
+		## of the document for some reason, and ntivideoref elements
+		## are scattered about through the content to refer to these
+		## elements. In turn, these ntivideoref elements get added to
+		## the ToC dom (NOT the content dom) as "<object>" tags...we go
+		## through and "re-parent" ntivideo elements in the Containers
+		## collection based on where references appear to them
 
-		# Therefore, we maintain yet another parallel data structure
-		# recording the original iteration order of the elements,
-		# and at the very end, when we have assigned videos
-		# to containers, we sort that list by this original order.
-
-		inverted = collections.defaultdict(set)
-		containers = collections.defaultdict(set)
-		media_index = {'Items': items, 'Containers':containers}
+		## Therefore, we maintain yet another parallel data structure
+		## recording the original iteration order of the elements,
+		## and at the very end, when we have assigned videos
+		## to containers, we sort that list by this original order.
+		
+		items = {}
+		inverted = defaultdict(set)
+		containers = defaultdict(set)
 		original_media_iteration_order = []
+		
+		## parse all elements
+		for element in elements:
+			## build media elemenet
+			media, containerId = self._process_media(dom, element, topic_map)
+			ntiid = media['ntiid']
+			items[ntiid] = media
+			
+			## add to tracking maps
+			if containerId:
+				inverted[ntiid].add(containerId)
+				containers[containerId].add(ntiid)
 
-		for el in els:
-			media, container = self._process_media(dom, el, topic_map)
-			items[media['ntiid']] = media
-			original_media_iteration_order.append(media['ntiid'])
-			if container:
-				containers[container].add(media['ntiid'])
-				inverted[media['ntiid']].add(container)
-
-		# add video objects to toc and compute re-parent locations
-		# based on references
+			## keep sort order for default containers
+			original_media_iteration_order.append(ntiid)
+			
+		## add video objects to toc and compute re-parent locations based on references
+		overrides = defaultdict(set)
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
-		overrides = collections.defaultdict(set)
-		media_in_toc = self._find_toc_media(topic_map)
+		media_in_toc, inverted_media_in_toc = self._find_toc_media(topic_map)
 		for mid_ntiid, cnt_ids in inverted.items():
 			toc_entries = media_in_toc.get(mid_ntiid)
 			if toc_entries:
@@ -169,8 +187,7 @@ class _NTIMediaExtractor(object):
 					# add to parent
 					parent.childNodes.append(obj_el)
 
-		# apply overrides
-		# remove from all existing. TOC always win
+		## apply overrides, remove all existing. TOC always win
 		for mid_ntiid in overrides.keys():
 			for container in containers.values():
 				container.discard(mid_ntiid)
@@ -179,26 +196,26 @@ class _NTIMediaExtractor(object):
 			for container in cnt_ids:
 				containers[container].add(mid_ntiid)
 
-		# remove any empty elements
+		## remove any empty elements
 		for ntiid, mid_ids in list(containers.items()):
 			if not mid_ids:
 				containers.pop(ntiid)
 			else:
-				# Make JSON Serializable (a plain list object),
-				# and also sort according to original iteration order.
-				# This is easily done as a selection sort:
-				# iterate across the videos in the original order, and if
-				# it is included in our set, output it
+				sort_order = inverted_media_in_toc.get(ntiid) or \
+							 original_media_iteration_order
+				## Make JSON Serializable (a plain list object),
+				## and also sort according to original iteration order
+				## either from the TOC override or the default media order
 				containers[ntiid] = [orig_media_id
-									 for orig_media_id
-									 in original_media_iteration_order
+									 for orig_media_id in sort_order
 									 if orig_media_id in mid_ids]
 
-		# Write the normal version
+		## Write the normal version
+		media_index = {'Items': items, 'Containers':containers}
 		with open(os.path.join(outpath, filename), "wb") as fp:
 			json.dump(media_index, fp, indent=4)
 
-		# Write the JSONP version
+		## Write the JSONP version
 		with open(os.path.join(outpath, filename + 'p'), "wb") as fp:
 			fp.write('jsonpReceiveContent(')
 			json.dump({'ntiid': dom.childNodes[0].getAttribute('ntiid'),
@@ -218,7 +235,8 @@ class _NTIMediaExtractor(object):
 		for el in els:
 			if el.parentNode:
 				lesson_el = None
-				# Discover the nearest topic in the toc that is a 'course' node
+				
+				## Discover the nearest topic in the toc that is a 'course' node
 				parent_el = el.parentNode
 				if 	hasattr(parent_el, 'ntiid') and \
 					parent_el.tagName.startswith('course'):
