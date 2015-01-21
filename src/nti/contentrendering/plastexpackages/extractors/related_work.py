@@ -3,17 +3,20 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import collections
 import simplejson as json
+from collections import OrderedDict
 
 from zope import component
 from zope import interface
+
+from nti.utils.sets import OrderedSet
 
 from ._utils import _render_children
 
@@ -51,21 +54,20 @@ class _RelatedWorkExtractor(object):
 		
 		# save dom and files
 		self._save_related_content(outpath, dom, content)
-
 		if savetoc:
 			book.toc.save()
 
 	def _get_topic_map(self, dom):
-		result = {}
+		result = OrderedDict()
 		for topic_el in dom.getElementsByTagName('topic'):
 			ntiid = topic_el.getAttribute('ntiid')
 			if ntiid:
 				result[ntiid] = topic_el
 		return result
 
-	def _process_references(self, dom, els, topic_map):
+	def _process_references(self, dom, elements, topic_map):
 		result = []
-		for el in els or ():
+		for el in elements or ():
 			if el.parentNode:
 				# Discover the nearest topic in the toc that is a 'course' node
 				lesson_el = None
@@ -140,9 +142,9 @@ class _RelatedWorkExtractor(object):
 											el.description).replace('&amp;', '&')
 
 			content = {
+				'href': uri,
 				'label': title,
 				'creator': creator,
-				'href': uri,
 				'type': el.targetMimeType,
 				'icon': icon,
 				'desc': description,
@@ -153,10 +155,15 @@ class _RelatedWorkExtractor(object):
 			result.append((content, dom.childNodes[0]))
 		return result
 
+	def _add_2_od(self, od, key, value):
+		s = od.get(key)
+		if s is None:
+			s = od[key] = OrderedSet()
+		s.add(value)
+
 	def _save_related_content(self, outpath, dom, content_items):
 		items = {}
-		filename = 'related_content_index.json'
-		containers = collections.defaultdict(set)
+		containers = OrderedDict()
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
 		related_content_index = {'Items': items, 'Containers':containers}
 		
@@ -172,12 +179,13 @@ class _RelatedWorkExtractor(object):
 
 			items[d['ntiid']] = d
 			container = node.getAttribute('ntiid') or doc_ntiid
-			containers[container].add(d['ntiid'])
+			self._add_2_od(containers, container, d['ntiid'])
 
 		for ntiid, vid_ids in list(containers.items()):
 			containers[ntiid] = list(vid_ids)  # Make JSON Serializable
 
 		# Write the normal version
+		filename = 'related_content_index.json'
 		with open(os.path.join(outpath, filename), "wb") as fp:
 			json.dump(related_content_index, fp, indent=4)
 
