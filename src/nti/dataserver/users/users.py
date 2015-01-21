@@ -1289,8 +1289,9 @@ class UserBlacklistedStorage( Persistent ):
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _blacklist_username(user, event):
-	# See if our user has been marked as recreatable (probably by tests).
-	if not IRecreatableUser.providedBy(user):
+	username = user.username
+	if 	not IRecreatableUser.providedBy(user) and \
+		not username.lower().endswith('@nextthought.com'):
 		user_blacklist = component.getUtility( IUserBlacklistedStorage )
 		user_blacklist.blacklist_user(user)
-		logger.info("Black-listing username %s", user.username)
+		logger.info("Black-listing username %s", username)
