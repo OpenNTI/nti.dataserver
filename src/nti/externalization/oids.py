@@ -5,13 +5,14 @@ Functions for externalizing OIDs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from six import string_types
 import collections
+from six import string_types
 
 from zope import component
 from zope.security.management import system_user
@@ -159,8 +160,8 @@ def fromExternalOID(ext_oid):
 
 from_external_oid = fromExternalOID
 
-DEFAULT_EXTERNAL_CREATOR = system_user.id
 MASKED_EXTERNAL_CREATOR = 'unknown'
+DEFAULT_EXTERNAL_CREATOR = system_user.id
 
 def to_external_ntiid_oid(contained, default_oid=None,
 						  add_to_connection=False,

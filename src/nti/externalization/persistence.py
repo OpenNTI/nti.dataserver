@@ -5,6 +5,7 @@ Classes and functions for dealing with persistence in an external context.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -21,12 +22,12 @@ from persistent.mapping import PersistentMapping
 
 from nti.utils.proxy import removeAllProxies
 
-from . import datastructures
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
 from .oids import toExternalOID
 from .interfaces import IExternalObject
 from .externalization import toExternalObject
-
-from nti.zodb.persistentproperty import PersistentPropertyHolder
+from .datastructures import ExternalizableDictionaryMixin
 
 #disable: accessing protected members
 #pylint: disable=W0212
@@ -75,7 +76,6 @@ def getPersistentState( obj ):
 		except AttributeError:
 			return persistent.CHANGED
 
-
 def setPersistentStateChanged( obj ):
 	""" Explicitly marks a persistent object as changed. """
 	try:
@@ -103,7 +103,7 @@ PWeakRef.toExternalOID = _weakRef_toExternalOID
 
 class PersistentExternalizableDictionary(PersistentPropertyHolder,
 										 PersistentMapping,
-										 datastructures.ExternalizableDictionaryMixin):
+										 ExternalizableDictionaryMixin):
 	"""
 	Dictionary mixin that provides :meth:`toExternalDictionary` to return a new dictionary
 	with each value in the dict having been externalized with

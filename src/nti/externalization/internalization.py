@@ -6,6 +6,7 @@ model objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,27 +18,37 @@ import inspect
 import numbers
 import collections
 
-from zope.event import notify as _zope_event_notify
 from zope import component
 from zope import interface
+
 from zope.dottedname.resolve import resolve
-from zope.schema import interfaces as sch_interfaces
+
+from zope.event import notify as _zope_event_notify
+
 from zope.lifecycleevent import Attributes
+
+from zope.schema.interfaces import IField
+from zope.schema.interfaces import WrongType
+from zope.schema.interfaces import IFromUnicode
+from zope.schema.interfaces import ValidationError
+from zope.schema.interfaces import SchemaNotProvided
+from zope.schema.interfaces import WrongContainedType
 
 from persistent.interfaces import IPersistent
 
-from . import interfaces
+from .interfaces import IFactory
 from .interfaces import IMimeObjectFactory
 from .interfaces import IClassObjectFactory
-from .interfaces import IExternalizedObjectFactoryFinder
-from .interfaces import IExternalReferenceResolver
 from .interfaces import IInternalObjectUpdater
+from .interfaces import StandardExternalFields
+from .interfaces import IExternalReferenceResolver
 from .interfaces import ObjectModifiedFromExternalEvent
+from .interfaces import IExternalizedObjectFactoryFinder
 
 LEGACY_FACTORY_SEARCH_MODULES = set()
 
-StandardExternalFields_MIMETYPE = interfaces.StandardExternalFields.MIMETYPE
-StandardExternalFields_CLASS = interfaces.StandardExternalFields.CLASS
+StandardExternalFields_CLASS = StandardExternalFields.CLASS
+StandardExternalFields_MIMETYPE = StandardExternalFields.MIMETYPE
 
 def register_legacy_search_module( module_name ):
 	"""
@@ -89,7 +100,7 @@ def _search_for_external_factory( typeName, search_set=None ):
 
 	return result
 
-@interface.implementer(interfaces.IFactory)
+@interface.implementer(IFactory)
 def default_externalized_object_factory_finder( externalized_object ):
 	factory = None
 	# We use specialized interfaces instead of plain IFactory to make it clear
@@ -228,7 +239,11 @@ def update_from_external_object( containedObject, externalObject,
 	:return: `containedObject` after updates from `externalObject`
 	"""
 
-	kwargs = dict(registry=registry, context=context, require_updater=require_updater, notify=notify, object_hook=object_hook)
+	kwargs = dict(registry=registry, 
+				  context=context, 
+				  require_updater=require_updater, 
+				  notify=notify, 
+				  object_hook=object_hook)
 
 	# Parse any contained objects
 	# TODO: We're (deliberately?) not actually updating any contained
@@ -267,7 +282,8 @@ def update_from_external_object( containedObject, externalObject,
 
 
 	updater = None
-	if hasattr( containedObject, 'updateFromExternalObject' ) and not getattr( containedObject, '__ext_ignore_updateFromExternalObject__', False ):
+	if 	hasattr( containedObject, 'updateFromExternalObject' ) and \
+		not getattr( containedObject, '__ext_ignore_updateFromExternalObject__', False ):
 		# legacy support. The __ext_ignore_updateFromExternalObject__ allows a transitition to an adapter
 		# without changing existing callers and without triggering infinite recursion
 		updater = containedObject
@@ -281,7 +297,8 @@ def update_from_external_object( containedObject, externalObject,
 
 	if updater is not None:
 		# Let the updater resolve externals too
-		_resolve_externals( updater, containedObject, externalObject, registry=registry, context=context )
+		_resolve_externals( updater, containedObject, externalObject, 
+							registry=registry, context=context )
 
 		updated = None
 		# The signature may vary.
@@ -345,11 +362,11 @@ def validate_field_value( self, field_name, field, value ):
 	__traceback_info__ = field_name, value
 	field = field.bind( self )
 	try:
-		if isinstance(value, unicode) and sch_interfaces.IFromUnicode.providedBy( field ):
+		if isinstance(value, unicode) and IFromUnicode.providedBy( field ):
 			value = field.fromUnicode( value ) # implies validation
 		else:
 			field.validate( value )
-	except sch_interfaces.SchemaNotProvided as e:
+	except SchemaNotProvided as e:
 		# The object doesn't implement the required interface.
 		# Can we adapt the provided object to the desired interface?
 		# First, capture the details so we can reraise if needed
@@ -360,12 +377,12 @@ def validate_field_value( self, field_name, field, value ):
 		try:
 			value = field.schema( value )
 			field.validate( value )
-		except (LookupError,TypeError,sch_interfaces.ValidationError):
+		except (LookupError,TypeError, ValidationError):
 			# Nope. TypeError means we couldn't adapt, and a
 			# validation error means we could adapt, but it still wasn't
 			# right. Raise the original SchemaValidationError.
 			raise exc_info[0], exc_info[1], exc_info[2]
-	except sch_interfaces.WrongType as e:
+	except WrongType as e:
 		# Like SchemaNotProvided, but for a primitive type,
 		# most commonly a date
 		# Can we adapt?
@@ -383,7 +400,7 @@ def validate_field_value( self, field_name, field, value ):
 		except (LookupError,TypeError):
 			# No registered adapter, darn
 			raise exc_info[0], exc_info[1], exc_info[2]
-		except sch_interfaces.ValidationError as e:
+		except ValidationError as e:
 			# Found an adapter, but it does its own validation,
 			# and that validation failed (eg, IDate below)
 			# This is still a more useful error than WrongType,
@@ -394,14 +411,14 @@ def validate_field_value( self, field_name, field, value ):
 		# Lets try again with the adapted value
 		return validate_field_value( self, field_name, field, value )
 
-	except sch_interfaces.WrongContainedType as e:
+	except WrongContainedType as e:
 		# We failed to set a sequence. This would be of simple (non externalized)
 		# types.
 		# Try to adapt each value to what the sequence wants, just as above,
 		# if the error is one that may be solved via simple adaptation
 		# TODO: This is also thrown from IObject fields when validating the fields of the object
 		exc_info = sys.exc_info()
-		if not e.args or not all( (isinstance(x,sch_interfaces.SchemaNotProvided) for x in e.args[0] ) ):
+		if not e.args or not all( (isinstance(x, SchemaNotProvided) for x in e.args[0] ) ):
 			raise
 
 		# IObject provides `schema`, which is an interface, so we can adapt
@@ -431,7 +448,7 @@ def validate_field_value( self, field_name, field, value ):
 		# Now try to set the converted value
 		try:
 			field.validate( value )
-		except sch_interfaces.ValidationError:
+		except ValidationError:
 			# Nope. TypeError means we couldn't adapt, and a
 			# validation error means we could adapt, but it still wasn't
 			# right. Raise the original SchemaValidationError.
@@ -469,6 +486,6 @@ def validate_named_field_value( self, iface, field_name, value ):
 	:return: A callable of no arguments to call to actually set the value.
 	"""
 	field = iface[field_name]
-	if sch_interfaces.IField.providedBy( field ):
+	if IField.providedBy( field ):
 		return validate_field_value( self, field_name, field, value )
 	return lambda: setattr( self, field_name, value )

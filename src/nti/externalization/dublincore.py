@@ -10,26 +10,28 @@ of :mod:`zope.dublincore.interfaces`.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
-from zope.dublincore import interfaces as dub_interfaces
+from zope.dublincore.interfaces import IDCExtended
+from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 # Note that its fairly common for things to claim to implement these interfaces,
 # but only provide a subset of the properties. (mostly due to programming errors).
 # Hence the use of getattr below, to protect against this.
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(dub_interfaces.IDCExtended)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IDCExtended)
 class DCExtendedExternalMappingDecorator(object):
 	"""
 	Adds the extended properties of dublincore to external objects
@@ -51,9 +53,8 @@ class DCExtendedExternalMappingDecorator(object):
 		if StandardExternalFields.CREATOR not in external and creators:
 			external[StandardExternalFields.CREATOR] = creators[0]
 
-
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(dub_interfaces.IDCDescriptiveProperties)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IDCDescriptiveProperties)
 class DCDescriptivePropertiesExternalMappingDecorator(object):
 	"""
 	Supports the 'DCTitle' and 'DCDescription' fields, as defined in
