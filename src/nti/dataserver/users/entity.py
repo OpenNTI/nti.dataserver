@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import string
 import functools
 
-import string
-
-import transaction
 from zope import interface
 from zope import component
 from zope.event import notify
@@ -20,34 +19,48 @@ from zope.event import notify
 from zope import lifecycleevent
 from zope.keyreference.interfaces import IKeyReference
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zc import intid as zc_intid
 
-import ZODB.POSException
+import transaction
+
 from ZODB.interfaces import IConnection
+from ZODB.POSException import ConnectionStateError
+
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import INewUserPlacer
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
+
+from nti.dataserver.users.interfaces import IRequireProfileUpdate
+from nti.dataserver.users.interfaces import UsernameCannotBeBlank
+from nti.dataserver.users.interfaces import WillDeleteEntityEvent
+from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
+from nti.dataserver.users.interfaces import WillCreateNewEntityEvent
+from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
+
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.ntiids import ntiids
 
-import nti.externalization.internalization
-
-from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces
-
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.internalization import update_from_external_object
 
 from nti.utils.property import CachedProperty
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
-		return component.queryUtility(nti_interfaces.IDataserver, context=context, default=default)
-	return component.getUtility( nti_interfaces.IDataserver, context=context )
-
+		return component.queryUtility(IDataserver, context=context, default=default)
+	return component.getUtility(IDataserver, context=context )
 
 @functools.total_ordering
-@interface.implementer( nti_interfaces.IEntity, nti_interfaces.ILastModified, an_interfaces.IAttributeAnnotatable)
-class Entity(datastructures.PersistentCreatedModDateTrackingObject):
+@interface.implementer( IEntity, ILastModified, IAttributeAnnotatable)
+class Entity(PersistentCreatedModDateTrackingObject):
 	"""
 	The root for things that represent human-like objects.
 	"""
@@ -98,8 +111,8 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 
 		This method fires :class:`nti.dataserver.users.interfaces.IWillUpdateNewEntityEvent`,
 		:class:`nti.dataserver.users.interfaces.IWillCreateNewEntityEvent`,
-		:class:`zope.lifecycleevent.IObjectCreatedEvent` and :class:`zope.lifecycleevent.IObjectAddedEvent`,
-		in that order.
+		:class:`zope.lifecycleevent.IObjectCreatedEvent` and 
+		:class:`zope.lifecycleevent.IObjectAddedEvent`, in that order.
 
 		:keyword dict external_value: Optional dictionary used to update the object
 			through the user externalization mechanisms. This is done
@@ -107,9 +120,10 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 			fired. No notifications are emitted during this process.
 		:keyword bool preflight_only: If ``False`` (the default), the user is created
 			as normal. If set to ``True``, then the process stops before the
-			:class:`zope.lifecycleevent.IObjectCreated` and :class:`zope.lifecycleevent.IObjectAdded`
-			events are fired, and the user object is not actually added to the database. When
-			``True``, the preflight object is returned (assuming validation went as planned),
+			:class:`zope.lifecycleevent.IObjectCreated` and 
+			:class:`zope.lifecycleevent.IObjectAdded` events are fired, and the user 
+			object is not actually added to the database. When ``True``, the preflight 
+			object is returned (assuming validation went as planned),
 			but it will not have a valid ``__parent__``
 		"""
 
@@ -121,6 +135,7 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
 		__traceback_info__ = kwargs
+		
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
@@ -130,13 +145,14 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		# First we create the skeleton object
 		user = cls.__new__( cls )
 		user.username = kwargs['username']
+		
 		# Then we place it in a database. It's important to do this before any code
 		# runs so that subobjects which might go looking through their parents
 		# to find a IConnection find the user's IConnection *first*, before they find
 		# the `root_users` connection
 		if not preflight_only:
-			placer = component.queryUtility(nti_interfaces.INewUserPlacer) or \
-					 component.getUtility(nti_interfaces.INewUserPlacer, name='default')
+			placer = component.queryUtility(INewUserPlacer) or \
+					 component.getUtility(INewUserPlacer, name='default')
 			placer.placeNewUser( user, root_users, dataserver.shards )
 
 			IKeyReference( user ) # Ensure it gets added to the database
@@ -152,31 +168,35 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 
 		# Finally, we init the user
 		user.__init__( **kwargs )
-		assert preflight_only or getattr( user, '_p_jar', None ), "User should still have a connection"
+		assert preflight_only or getattr(user, '_p_jar', None), "User should still have a connection"
 
 		# Notify we're about to update
-		notify(interfaces.WillUpdateNewEntityEvent(user, ext_value, meta_data))
+		notify(WillUpdateNewEntityEvent(user, ext_value, meta_data))
 
 		# Update from the external value, if provided
 		if ext_value:
-			nti.externalization.internalization.update_from_external_object(user, ext_value, context=dataserver, notify=False)
+			update_from_external_object(user, ext_value, context=dataserver, notify=False)
 
 		# Register an intid for this user that we are creating so that the events that fire before
 		# ObjectAdded (which is usually when intids get assigned) can use it.
 		component.getUtility(zc_intid.IIntIds).register(user)
-		notify(interfaces.WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
+		notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
+		
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
 			user.__parent__ = None
+			
 			# Be sure we didn't add this guy anywhere. If we did, then things are
 			# wacked and we need this transaction to fail.
 			assert getattr( user, '_p_jar', None ) is None, "User should NOT have a connection"
+			
 			# Must NOT try to commit the transaction since the object has been added to the intid registry
 			transaction.doom()
 			return user
 
 		lifecycleevent.created( user ) # Fire created event
+		
 		# Must manually fire added event if parent was given
 		if kwargs['parent'] is not None:
 			lifecycleevent.added( user, kwargs['parent'], user.username )
@@ -185,7 +205,6 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		# this will fire ObjectAdded. If parent was given and is different than root_users,
 		# this will fire ObjectMoved. If the user already exists, raises a KeyError
 		root_users[user.username] = user
-
 		return user
 
 	@classmethod
@@ -200,17 +219,17 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		root_users = dataserver.root[cls._ds_namespace]
 		user = root_users[username]
 
-		notify( interfaces.WillDeleteEntityEvent( user ) )
+		notify(WillDeleteEntityEvent( user ) )
 
 		del root_users[username]
 
 		# Also clean it up from whatever shard it happened to come from
-		home_shard = nti_interfaces.IShardLayout( IConnection( user ) )
+		home_shard = IShardLayout( IConnection( user ) )
 		if username in home_shard.users_folder:
 			del home_shard.users_folder[username]
 		return user
 
-	creator = nti_interfaces.SYSTEM_USER_NAME # TODO: This is probably wrong. creator is generally an entity, this breaks many expectations
+	creator = SYSTEM_USER_NAME # TODO: This is probably wrong. creator is generally an entity, this breaks many expectations
 	__parent__ = None
 
 	# % is illegal because we sometimes have to
@@ -218,7 +237,8 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 	# : and - are used in NTIIDs.
 	# NOTE: This is prohibiting Unicode characters
 	# NOTE: This has bad effects on FriendsLists since right now they are entities
-	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_' # prohibit whitespace and punctuation not needed/allowed in emails
+	# prohibit whitespace and punctuation not needed/allowed in emails
+	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_' 
 
 	def __init__(self, username,
 				 parent=None):
@@ -226,17 +246,18 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		__traceback_info__ = username, parent
 		if not username or not username.strip():
 			# Throw a three-arg version, similar to what a Field would do
-			raise interfaces.UsernameCannotBeBlank( username )
+			raise UsernameCannotBeBlank( username )
+
 		username = unicode(username)
 		for c in username:
 			if c not in self.ALLOWED_USERNAME_CHARS:
-				raise interfaces.UsernameContainsIllegalChar( username, self.ALLOWED_USERNAME_CHARS )
+				raise UsernameContainsIllegalChar( username, self.ALLOWED_USERNAME_CHARS )
 
 		# NOTE: Although we could look for the most derived IEntity self implements
 		# and validate against that schema we don't necessarily want to do so
 		# at this time since there are so many extent types of IEntity and
 		# we haven't enforced constraints like this before. This needs to be cleaned up
-		nti_interfaces.IEntity['username'].bind( self ).validate( username )
+		IEntity['username'].bind( self ).validate( username )
 		self.username = username
 
 		# Entities, and in particular Principals, have a created time,
@@ -247,9 +268,9 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 
 		if parent is not None:
 			# If we pre-set this, then the ObjectAdded event doesn't
-			# fire (the ObjectCreatedEvent does). On the other hand, we can't add anything to friendsLists
-			# if an intid utility is installed if we don't have a parent (and thus
-			# cannot be adapted to IKeyReference).
+			# fire (the ObjectCreatedEvent does). On the other hand, we can't 
+			# add anything to friendsLists if an intid utility is installed 
+			# if we don't have a parent (and thus cannot be adapted to IKeyReference).
 			self.__parent__ = parent
 
 	def _get__name__(self):
@@ -261,11 +282,10 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 			self.username = new_name
 	__name__ = property(_get__name__, _set__name__ )
 
-
 	def __repr__(self):
 		try:
 			return '%s(%s)' % (self.__class__.__name__,self.username)
-		except (ZODB.POSException.ConnectionStateError,AttributeError):
+		except (ConnectionStateError, AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
 			# be other log messages about trying to load state when connection is closed,
@@ -275,7 +295,7 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 	def __str__(self):
 		try:
 			return self.username
-		except ZODB.POSException.ConnectionStateError:
+		except ConnectionStateError:
 			return object.__str__(self)
 
 	__unicode__ = __str__
@@ -289,19 +309,20 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Profile info
-		profile_iface = interfaces.IUserProfileSchemaProvider( self ).getSchema()
+		profile_iface = IUserProfileSchemaProvider( self ).getSchema()
 		profile = profile_iface( self )
 		# Cause certain fields to be effectively read-only once they are
 		# set. At this time, we cannot update the alias or realname fields once created; we assume
 		# them to be immutable. There are some few, one-time-only scenarios where we allow updates,
 		# usually when our interface has changed
-		immutably_named = interfaces.IImmutableFriendlyNamed.providedBy( self )
-		profile_update = interfaces.IRequireProfileUpdate.providedBy( self )
+		immutably_named = IImmutableFriendlyNamed.providedBy( self )
+		profile_update = IRequireProfileUpdate.providedBy( self )
 		if immutably_named:
 			if profile.alias and parsed.get( 'alias' ):
 				parsed.pop( 'alias' )
 			if profile.realname and parsed.get( 'realname' ) and not profile_update:
 				parsed.pop( 'realname' )
+
 		# Only validate it though, if we are not saved and not forcing a profile update.
 		# Once we are saved, presumably with a
 		# valid profile, then if the profile changes and we are missing (new) fields,
@@ -309,12 +330,13 @@ class Entity(datastructures.PersistentCreatedModDateTrackingObject):
 		# TODO: I think this make is impossible to just change a password while the profile needs updated
 		validate = profile_update or not self._p_mtime
 		__traceback_info__ = profile_iface, profile_update, validate
-		InterfaceObjectIO( profile, profile_iface, validate_after_update=validate ).updateFromExternalObject( parsed, *args, **kwargs )
-
+		
+		io = InterfaceObjectIO( profile, profile_iface, validate_after_update=validate )
+		io.updateFromExternalObject( parsed, *args, **kwargs )
 		if profile_update:
 			# If we got here, then we got the data to validly update our profile,
 			# so we can stop providing the update interface
-			interface.noLongerProvides( self, interfaces.IRequireProfileUpdate )
+			interface.noLongerProvides( self, IRequireProfileUpdate )
 
 	### Comparisons and Hashing ###
 

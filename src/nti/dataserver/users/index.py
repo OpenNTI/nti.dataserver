@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.dataserver.users import interfaces as user_interfaces
-
 from zc.intid import IIntIds
 
 from zope.catalog.field import FieldIndex
@@ -31,6 +29,11 @@ from nti.zope_catalog.topic import TopicIndex
 # Old name for BWC
 from nti.zope_catalog.index import CaseInsensitiveAttributeFieldIndex as CaseInsensitiveFieldIndex
 
+from .interfaces import IUserProfile
+from .interfaces import IFriendlyNamed
+from .interfaces import IContactEmailRecovery
+from .interfaces import IRestrictedUserProfile
+
 #: The name of the utility that the Zope Catalog
 #: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
@@ -38,17 +41,17 @@ CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 class AliasIndex(CaseInsensitiveFieldIndex):
 
 	default_field_name = 'alias'
-	default_interface = user_interfaces.IFriendlyNamed
+	default_interface = IFriendlyNamed
 
 class RealnameIndex(CaseInsensitiveFieldIndex):
 
 	default_field_name = 'realname'
-	default_interface = user_interfaces.IFriendlyNamed
+	default_interface = IFriendlyNamed
 
 class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
 
 	default_field_name = 'get_searchable_realname_parts'
-	default_interface = user_interfaces.IFriendlyNamed
+	default_interface = IFriendlyNamed
 
 	def __init__( self, *args, **kwargs ):
 		super(RealnamePartsIndex,self).__init__( *args, **kwargs )
@@ -57,33 +60,33 @@ class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
 class EmailIndex(CaseInsensitiveFieldIndex):
 
 	default_field_name = 'email'
-	default_interface = user_interfaces.IUserProfile
+	default_interface = IUserProfile
 
 class ContactEmailIndex(CaseInsensitiveFieldIndex):
 
 	default_field_name = 'contact_email'
-	default_interface = user_interfaces.IUserProfile
+	default_interface = IUserProfile
 
 class PasswordRecoveryEmailHashIndex(FieldIndex):
 
 	default_field_name = 'password_recovery_email_hash'
-	default_interface = user_interfaces.IRestrictedUserProfile
+	default_interface = IRestrictedUserProfile
 
 class ContactEmailRecoveryHashIndex(FieldIndex):
 
 	default_field_name = 'contact_email_recovery_hash'
-	default_interface = user_interfaces.IContactEmailRecovery
+	default_interface = IContactEmailRecovery
 
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
-	EXPR = 'user_interfaces.IUserProfile(context).opt_in_email_communication'
+	EXPR = 'IUserProfile(context).opt_in_email_communication'
 	
-	def __init__( self, id, family=None ):
-		super(OptInEmailCommunicationFilteredSet,self).__init__( id, self.EXPR, family=family )
+	def __init__( self, iden, family=None ):
+		super(OptInEmailCommunicationFilteredSet,self).__init__( iden, self.EXPR, family=family )
 
 	def index_doc( self, docid, context ):
 		try:
-			index = user_interfaces.IUserProfile(context).opt_in_email_communication
+			index = IUserProfile(context).opt_in_email_communication
 		except (TypeError,AttributeError):
 			# Could not adapt, not in profile
 			index = False
@@ -96,14 +99,14 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
 class EmailVerifiedFilteredSet(FilteredSetBase):
 
-	EXPR = 'user_interfaces.IUserProfile(context).email_verified'
+	EXPR = 'IUserProfile(context).email_verified'
 	
-	def __init__( self, id, family=None ):
-		super(EmailVerifiedFilteredSet,self).__init__( id, self.EXPR, family=family )
+	def __init__( self, iden, family=None ):
+		super(EmailVerifiedFilteredSet,self).__init__(iden, self.EXPR, family=family )
 
 	def index_doc( self, docid, context ):
 		try:
-			index = user_interfaces.IUserProfile(context).email_verified
+			index = IUserProfile(context).email_verified
 		except (TypeError,AttributeError):
 			# Could not adapt, not in profile
 			index = False
