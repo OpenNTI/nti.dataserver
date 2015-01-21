@@ -3,15 +3,16 @@
 """
 Dataserver interfaces
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from zope import interface
-from zope import component
-
 import six
+
+from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
@@ -166,10 +167,11 @@ class IShardLayout(interface.Interface):
 	users_folder = Object(zope.site.interfaces.IFolder,
 						  title="The folder containing users that live in this shard.")
 
-	shards = Object(IContainerContained,
+	shards = Object( IContainerContained,
 					 title="The root shard will contain a shards folder.",
 					 required=False)
-	root_folder = Object(zope.site.interfaces.IRootFolder,
+	
+	root_folder = Object( zope.site.interfaces.IRootFolder,
 						  title="The root shard will contain the root folder",
 						  required=False)
 
@@ -331,7 +333,6 @@ class ICreated(interface.Interface):
 	Something created by an identified entity.
 	"""
 	creator = interface.Attribute("The creator of this object.")
-
 
 class IContained(IZContained):
 	"""
@@ -503,6 +504,7 @@ class IRole(IGroup):
 	"""
 
 from zope.security.management import system_user
+
 SYSTEM_USER_ID = system_user.id
 SYSTEM_USER_NAME = system_user.title.lower()
 
@@ -538,6 +540,7 @@ ACE_DENY_ALL = _psec.DENY_ALL
 ACE_ALLOW_ALL = (ACE_ACT_ALLOW, EVERYONE_USER_NAME, ALL_PERMISSIONS)
 
 from nti.externalization import oids
+
 oids.DEFAULT_EXTERNAL_CREATOR = SYSTEM_USER_NAME
 
 class IImpersonatedAuthenticationPolicy(IAuthenticationPolicy):
@@ -704,6 +707,14 @@ class IUser(IEntity, IContainerIterable):
 	# when we're sure what it does and that validation works out
 	password = interface.Attribute("The password")
 
+class IUsernameSubstitutionPolicy(interface.Interface):
+	"""
+	Marker interface to register an utility that replaces
+	the username value for another
+	"""
+
+	def replace(username):
+		pass
 
 class IUserEvent(interface.interfaces.IObjectEvent):
 	"""
@@ -913,7 +924,6 @@ class IOpenIdUser(IUser):
 
 	identity_url = DecodingValidTextLine(title=u"The user's claimed identity URL")
 
-
 class IFacebookUser(IUser):
 	"""
 	A user of the system with a known Facebook identity URL.
@@ -1086,6 +1096,7 @@ class ITitledContent(interface.Interface):
 	title = Title()  # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
+
 class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 	"""
 	Extend this class to add the ``title`` and ``description`` properties.
@@ -1190,11 +1201,6 @@ class IThreadable(interface.Interface):
 								description="This property will be automatically maintained.",
 								value_type=Object(interface.Interface, title="A in/direct reply") )
 	referents.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
-
-#IThreadable['inReplyTo'].schema = IThreadable
-#IThreadable['replies'].value_type.schema = IThreadable
-#IThreadable['referents'].value_type.schema = IThreadable
-#IThreadable['references'].value_type.schema = IThreadable
 
 class IWeakThreadable(IThreadable):
 	"""
@@ -1599,7 +1605,6 @@ class INote(IHighlight, IThreadable, ITitledContent):
 
 	body = CompoundModeledContentBody()
 
-
 class IDeletedObjectPlaceholder(interface.Interface):
 	"""
 	Marker interface to be applied to things that have actually
@@ -1717,7 +1722,8 @@ class UserNotificationEvent(object):
 		self.args = args
 
 	def __repr__( self ):
-		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__, self.name, self.targets, self.args)
+		return "<%s.%s %s %s %s>" % (type(self).__module__, type(self).__name__,
+									 self.name, self.targets, self.args)
 
 class DataChangedUserNotificationEvent(UserNotificationEvent):
 	"""
