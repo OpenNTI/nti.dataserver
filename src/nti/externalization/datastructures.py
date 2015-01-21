@@ -5,6 +5,7 @@ Datastructures to help externalization.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,9 +15,9 @@ import six
 import sys
 import numbers
 
-from zope import interface
 from zope import schema
-from zope.schema import interfaces as sch_interfaces
+from zope import interface
+from zope.schema.interfaces import SchemaNotProvided
 
 import ZODB
 
@@ -66,11 +67,17 @@ class ExternalizableDictionaryMixin(object):
 
 	def _ext_standard_external_dictionary( self, replacement, mergeFrom=None, **kwargs ):
 		if self.__external_use_minimal_base__:
-			return to_minimal_standard_external_dictionary( replacement, mergeFrom=mergeFrom, **kwargs )
-		return to_standard_external_dictionary( replacement, mergeFrom=mergeFrom, **kwargs )
+			return to_minimal_standard_external_dictionary( replacement, 
+															mergeFrom=mergeFrom,
+															**kwargs )
+		return to_standard_external_dictionary( replacement, 
+												mergeFrom=mergeFrom,
+												**kwargs )
 
 	def toExternalDictionary( self, mergeFrom=None, **kwargs ):
-		return self._ext_standard_external_dictionary( self._ext_replacement(), mergeFrom=mergeFrom, **kwargs )
+		return self._ext_standard_external_dictionary( self._ext_replacement(), 
+													   mergeFrom=mergeFrom,
+													   **kwargs )
 
 	def stripSyntheticKeysFromExternalDictionary( self, external ):
 		""" Given a mutable dictionary, removes all the external keys
@@ -95,20 +102,26 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 	# probably a meta class.
 
 	# Avoid things super handles
-	_excluded_out_ivars_ = {StandardInternalFields.ID, StandardExternalFields.ID, StandardInternalFields.CREATOR,
-							StandardExternalFields.CREATOR, StandardInternalFields.CONTAINER_ID,
-							'lastModified', StandardInternalFields.LAST_MODIFIEDU, StandardInternalFields.CREATED_TIME,
+	_excluded_out_ivars_ = {StandardInternalFields.ID, 
+							StandardExternalFields.ID, 
+							StandardInternalFields.CREATOR,
+							StandardExternalFields.CREATOR,
+							StandardInternalFields.CONTAINER_ID,
+							'lastModified',
+							StandardInternalFields.LAST_MODIFIEDU,
+							StandardInternalFields.CREATED_TIME,
 							'links'}
-	_excluded_in_ivars_ = {StandardInternalFields.ID, StandardExternalFields.ID,
-						   StandardExternalFields.OID,
-						   StandardInternalFields.CREATOR,
-						   StandardExternalFields.CREATOR,
-						   StandardInternalFields.LAST_MODIFIED,
-						   StandardInternalFields.LAST_MODIFIEDU,
-						   # Also the IDCTimes created/modified values
-						   'created', 'modified',
-						   StandardExternalFields.CLASS,
-						   StandardInternalFields.CONTAINER_ID}
+	_excluded_in_ivars_ = {	StandardInternalFields.ID, 
+							StandardExternalFields.ID,
+						   	StandardExternalFields.OID,
+						   	StandardInternalFields.CREATOR,
+						   	StandardExternalFields.CREATOR,
+						   	StandardInternalFields.LAST_MODIFIED,
+						   	StandardInternalFields.LAST_MODIFIEDU,
+						   	# Also the IDCTimes created/modified values
+						   	'created', 'modified',
+						   	StandardExternalFields.CLASS,
+						   	StandardInternalFields.CONTAINER_ID}
 	_ext_primitive_out_ivars_ = set()
 	_prefer_oid_ = False
 
@@ -212,10 +225,14 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 			self._ext_setattr( ext_self, k, parsed[k] )
 			updated = True
 
-		if StandardExternalFields.CONTAINER_ID in parsed and getattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed ) is None:
-			setattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed[StandardExternalFields.CONTAINER_ID] )
-		if StandardExternalFields.CREATOR in parsed and getattr( ext_self, StandardExternalFields.CREATOR, parsed ) is None:
-			setattr( ext_self, StandardExternalFields.CREATOR, parsed[StandardExternalFields.CREATOR] )
+		if 	StandardExternalFields.CONTAINER_ID in parsed and \
+			getattr( ext_self, StandardInternalFields.CONTAINER_ID, parsed ) is None:
+			setattr( ext_self, StandardInternalFields.CONTAINER_ID, 
+					parsed[StandardExternalFields.CONTAINER_ID] )
+		if 	StandardExternalFields.CREATOR in parsed and \
+			getattr( ext_self, StandardExternalFields.CREATOR, parsed ) is None:
+			setattr( ext_self, StandardExternalFields.CREATOR, 
+					 parsed[StandardExternalFields.CREATOR] )
 		if (StandardExternalFields.ID in parsed
 			and getattr( ext_self, StandardInternalFields.ID, parsed ) is None
 			and self._ext_accept_external_id(ext_self, parsed)):
@@ -288,7 +305,6 @@ class _InterfaceCache(object):
 			cache = cls()
 			attrs[key] = cache
 		return cache
-
 
 @interface.implementer(IInternalObjectIO)
 class InterfaceObjectIO(AbstractDynamicObjectIO):
@@ -416,7 +432,7 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 			__traceback_info__ = errors
 			try:
 				raise errors[0][1]
-			except sch_interfaces.SchemaNotProvided as e:
+			except SchemaNotProvided as e:
 				exc_info = sys.exc_info()
 				if not e.args: # zope.schema doesn't fill in the details, which sucks
 					e.args = (errors[0][0],)
@@ -439,7 +455,6 @@ class InterfaceObjectIO(AbstractDynamicObjectIO):
 
 		result = super(InterfaceObjectIO,self).toExternalObject( mergeFrom=mergeFrom, **kwargs )
 		return result
-
 
 class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 	"""
@@ -480,7 +495,9 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 			if not most_derived.isOrExtends( iface ):
 				raise TypeError( "Most derived interface %s does not extend %s; non-tree interface structure. "
 								 "Searching module %s and considered %s on object %s of class %s and type %s"
-								 % ( most_derived, iface, self._ext_search_module, list(self._ext_schemas_to_consider( ext_self ) ), ext_self, ext_self.__class__, type(ext_self) ) )
+								 % ( most_derived, iface, self._ext_search_module,
+									 list(self._ext_schemas_to_consider( ext_self ) ), 
+									 ext_self, ext_self.__class__, type(ext_self) ) )
 
 		return most_derived
 

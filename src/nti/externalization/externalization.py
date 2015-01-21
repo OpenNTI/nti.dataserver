@@ -4,6 +4,7 @@ Functions related to actually externalizing objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -15,12 +16,13 @@ import collections
 from collections import defaultdict
 
 import ZODB
+
 import persistent
+
 import BTrees.OOBTree
 
-
-from zope import interface
 from zope import component
+from zope import interface
 from zope import deprecation
 from zope.interface.common import sequence
 from zope.dublincore import interfaces as dub_interfaces
@@ -28,30 +30,35 @@ from zope.dublincore import interfaces as dub_interfaces
 from nti.ntiids import ntiids
 
 from .oids import to_external_ntiid_oid
-from .interfaces import IExternalObject, IExternalObjectDecorator
-from .interfaces import IExternalMappingDecorator, StandardExternalFields, StandardInternalFields
-from .interfaces import INonExternalizableReplacer, INonExternalizableReplacement
-from .interfaces import ILocatedExternalSequence
+
+from .interfaces import IExternalObject
 from .interfaces import LocatedExternalDict
+from .interfaces import StandardExternalFields
+from .interfaces import StandardInternalFields
+from .interfaces import IExternalObjectDecorator
+from .interfaces import ILocatedExternalSequence
+from .interfaces import IExternalMappingDecorator
+from .interfaces import INonExternalizableReplacer
+from .interfaces import INonExternalizableReplacement 
 
 # Local for speed
+StandardExternalFields_ID = StandardExternalFields.ID
+StandardExternalFields_OID = StandardExternalFields.OID
 StandardExternalFields_CLASS = StandardExternalFields.CLASS
+StandardExternalFields_NTIID = StandardExternalFields.NTIID
+StandardExternalFields_CREATOR = StandardExternalFields.CREATOR
+StandardExternalFields_MIMETYPE = StandardExternalFields.MIMETYPE
 StandardExternalFields_CONTAINER_ID = StandardExternalFields.CONTAINER_ID
 StandardExternalFields_CREATED_TIME = StandardExternalFields.CREATED_TIME
-StandardExternalFields_CREATOR = StandardExternalFields.CREATOR
-StandardExternalFields_ID = StandardExternalFields.ID
 StandardExternalFields_LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
-StandardExternalFields_MIMETYPE = StandardExternalFields.MIMETYPE
-StandardExternalFields_NTIID = StandardExternalFields.NTIID
-StandardExternalFields_OID = StandardExternalFields.OID
 
+StandardInternalFields_ID = StandardInternalFields.ID
+StandardInternalFields_NTIID = StandardInternalFields.NTIID
+StandardInternalFields_CREATOR = StandardInternalFields.CREATOR
 StandardInternalFields_CONTAINER_ID = StandardInternalFields.CONTAINER_ID
 StandardInternalFields_CREATED_TIME = StandardInternalFields.CREATED_TIME
-StandardInternalFields_CREATOR = StandardInternalFields.CREATOR
-StandardInternalFields_ID = StandardInternalFields.ID
 StandardInternalFields_LAST_MODIFIED = StandardInternalFields.LAST_MODIFIED
 StandardInternalFields_LAST_MODIFIEDU = StandardInternalFields.LAST_MODIFIEDU
-StandardInternalFields_NTIID = StandardInternalFields.NTIID
 
 # It turns out that the name we use for externalization (and really the registry, too)
 # we must keep thread-local. We call into objects without any context,
@@ -60,6 +67,7 @@ StandardInternalFields_NTIID = StandardInternalFields.NTIID
 _NotGiven = object()
 
 from pyramid.threadlocal import ThreadLocalManager
+
 _manager = ThreadLocalManager(default=lambda: {'name': _NotGiven,
 											   'memos': None})
 
@@ -72,13 +80,14 @@ def catch_replace_action( obj, exc ):
 	"""
 	return { "Class": "BrokenExceptionObject" }
 
-
 @interface.implementer(INonExternalizableReplacement)
 class _NonExternalizableObject(dict): pass
 
 def DefaultNonExternalizableReplacer( obj ):
-	logger.debug( "Asked to externalize non-externalizable object %s, %s", type(obj), obj )
-	result = _NonExternalizableObject( Class='NonExternalizableObject', InternalType=str(type(obj)) )
+	logger.debug("Asked to externalize non-externalizable object %s, %s", 
+				 type(obj), obj )
+	result = _NonExternalizableObject( 	Class='NonExternalizableObject', 
+										InternalType=str(type(obj)) )
 	return result
 
 class NonExternalizableObjectError(TypeError): pass
@@ -87,7 +96,7 @@ def DevmodeNonExternalizableObjectReplacer( obj ):
 	"""
 	When devmode is active, non-externalizable objects raise an exception.
 	"""
-	raise NonExternalizableObjectError( "Asked to externalize non-externalizable object %s, %s" % (type(obj), obj ) )
+	raise NonExternalizableObjectError("Asked to externalize non-externalizable object %s, %s" % (type(obj), obj ) )
 
 @interface.implementer(INonExternalizableReplacer)
 def _DevmodeNonExternalizableObjectReplacer( obj ):
@@ -98,11 +107,16 @@ def _DevmodeNonExternalizableObjectReplacer( obj ):
 #: In addition, we also support :class:`~zope.interface.common.sequence.IFiniteSequence`
 #: by iterating it and mapping onto a list. This allows :class:`~z3c.batching.interfaces.IBatch`
 #: to be directly externalized.
-SEQUENCE_TYPES = (persistent.list.PersistentList, collections.Set, list, tuple)
+SEQUENCE_TYPES = (persistent.list.PersistentList,
+				  collections.Set, 
+				  list,
+				  tuple)
 
 #: The types that we will treat as mappings for externalization purposes. These
 #: all map onto a dict.
-MAPPING_TYPES  = (persistent.mapping.PersistentMapping,BTrees.OOBTree.OOBTree,collections.Mapping)
+MAPPING_TYPES  = (persistent.mapping.PersistentMapping,
+				  BTrees.OOBTree.OOBTree,
+				  collections.Mapping)
 
 from zope.cachedescriptors.property import CachedProperty
 
@@ -140,7 +154,8 @@ def _to_external_object_state(obj, state, top_level=False):
 
 		# This is for legacy code support, to allow existing methods to move to adapters
 		# and call us without infinite recursion
-		obj_has_usable_external_object = hasattr(obj, 'toExternalObject') and not getattr( obj, '__ext_ignore_toExternalObject__', False )
+		obj_has_usable_external_object = hasattr(obj, 'toExternalObject') and \
+										 not getattr( obj, '__ext_ignore_toExternalObject__', False )
 
 		if not obj_has_usable_external_object and not IExternalObject.providedBy( obj ):
 			adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name=state.name )
@@ -475,7 +490,6 @@ def to_minimal_standard_external_dictionary( self, mergeFrom=None, **kwargs ):
 		result[StandardExternalFields_MIMETYPE] = mime_type
 	return result
 
-
 # Things that have moved
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -483,7 +497,6 @@ zope.deferredimport.deprecatedFrom(
 	"Import from .persistence",
 	"nti.externalization.persistence",
 	"NoPickle" )
-
 
 EXT_FORMAT_JSON = 'json' #: Constant requesting JSON format data
 EXT_FORMAT_PLIST = 'plist' #: Constant requesting PList (XML) format data
