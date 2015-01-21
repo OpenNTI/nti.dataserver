@@ -10,13 +10,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import os
-import collections
 import simplejson as json
+from collections import OrderedDict
 
 from plasTeX.Base.LaTeX import Document as LaTexDocument
 
 from zope import component
 from zope import interface
+
+from nti.utils.sets import OrderedSet
 
 from ._utils import _render_children
 
@@ -42,7 +44,7 @@ class _TimelineExtractor(object):
 			self._save_timeline_content(outpath, dom, content)
 
 	def _get_topic_map(self, dom):
-		result = {}
+		result = OrderedDict()
 		for topic_el in dom.getElementsByTagName('topic'):
 			ntiid = topic_el.getAttribute('ntiid')
 			if ntiid:
@@ -76,11 +78,16 @@ class _TimelineExtractor(object):
 			container = getattr(parent, 'ntiid', None) if parent else None
 			result.append((content, container))
 		return result
-
+	
+	def _add_2_od(self, od, key, value):
+		s = od.get(key)
+		if s is None:
+			s = od[key] = OrderedSet()
+		s.add(value)
+		
 	def _save_timeline_content(self, outpath, dom, content_items):
 		items = {}
-		filename = 'timeline_index.json'
-		containers = collections.defaultdict(set)
+		containers = OrderedDict()
 		doc_ntiid = dom.documentElement.getAttribute('ntiid')
 		related_content_index = {'Items': items, 'Containers':containers}
 
@@ -90,12 +97,13 @@ class _TimelineExtractor(object):
 				continue
 
 			items[data['ntiid']] = data
-			containers[container].add(data['ntiid'])
+			self._add_2_od(containers, container, data['ntiid'])
 
 		for ntiid, tid_ids in list(containers.items()):
 			containers[ntiid] = list(tid_ids)  # Make JSON Serializable
 
 		# Write the normal version
+		filename = 'timeline_index.json'
 		with open(os.path.join(outpath, filename), "wb") as fp:
 			json.dump(related_content_index, fp, indent=4)
 
