@@ -235,12 +235,17 @@ class IRenderedBookExtractor(IRenderedBookTransformer):
 	def transform(book, savetoc=True, outpath=None):
 		pass
 
-class INTIVideoExtractor(IRenderedBookExtractor):
+class INTIMediaExtractor(IRenderedBookExtractor):
+	"""
+	marker interface for NTI media elements
+	"""
+	
+class INTIVideoExtractor(INTIMediaExtractor):
 	"""
 	Looks through the rendered book and extracts NTIVideos.
 	"""
 
-class INTIAudioExtractor(IRenderedBookExtractor):
+class INTIAudioExtractor(INTIMediaExtractor):
 	"""
 	Looks through the rendered book and extracts NTIAudios.
 	"""
