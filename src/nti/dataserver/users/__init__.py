@@ -3,6 +3,7 @@
 """
 $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,14 +14,15 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 # BWC re-exports
 from .friends_lists import FriendsList, DynamicFriendsList, _FriendsListUsernameIterable
-from .users import Entity, Principal, _Password
-from .users import Community, Everyone, Device
-from .users import _FriendsListMap, _DevicesMap, _TranscriptsMap
 
 from .users import User, FacebookUser, OpenIdUser
 
-from .users import user_devicefeedback
+from .users import Community, Everyone, Device
+from .users import Entity, Principal, _Password
+from .users import _FriendsListMap, _DevicesMap, _TranscriptsMap
+
 from .users import onChange
+from .users import user_devicefeedback
 from .users import _get_shared_dataserver
 
 from nti.dataserver.activitystream_change import Change

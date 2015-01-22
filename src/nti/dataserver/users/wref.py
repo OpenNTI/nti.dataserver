@@ -7,7 +7,7 @@ to entity objects, and do not keep the entity alive or accessible once
 the entity is deleted (whereas weak refs do until such time as the database is
 GC'd).
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -15,26 +15,31 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
+
 import six
 import sys
+import functools
+
+from zc import intid as zc_intid
 
 from zope import component
 from zope import interface
-from zope.keyreference.interfaces import NotYet
-from zc import intid as zc_intid
 
-from nti.wref import interfaces as wref_interfaces
-from nti.dataserver import interfaces as nti_interfaces
+from zope.keyreference.interfaces import NotYet
+
 from nti.dataserver.users import missing_user
+from nti.dataserver.interfaces import IEntity
+
+from nti.schema.schema import EqHash
 
 from nti.utils.property import read_alias
-from nti.schema.schema import EqHash
+
+from nti.wref.interfaces import ICachingWeakRef
 
 @functools.total_ordering
 @EqHash('username', '_entity_id')
-@interface.implementer(wref_interfaces.ICachingWeakRef)
-@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(ICachingWeakRef)
+@component.adapter(IEntity)
 class WeakRef(object):
 	"""
 	A weak reference to an entity object (generally, anything
@@ -150,15 +155,13 @@ class WeakRef(object):
 			return NotImplemented
 
 	def __repr__(self):
-		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, self.username, self._entity_id)
+		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, 
+								  self.username, self._entity_id)
 
 	# TODO: Consider making this object act like a proxy for the entity if its found.
 
-
-
-
-@interface.implementer(wref_interfaces.ICachingWeakRef)
-@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(ICachingWeakRef)
+@component.adapter(IEntity)
 def WeakRefFactory(entity):
 	try:
 		return WeakRef(entity)
