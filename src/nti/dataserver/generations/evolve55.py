@@ -17,8 +17,10 @@ from zope.component.hooks import site, setHooks
 
 import BTrees
 
-from nti.dataserver.users.index import CATALOG_NAME
-from nti.dataserver.users.index import EmailVerifiedFilteredSet
+from ..users.index import IX_TOPICS
+from ..users.index import CATALOG_NAME
+from ..users.index import IX_EMAIL_VERIFIED
+from ..users.index import EmailVerifiedFilteredSet
 
 def do_evolve(context):
 	setHooks()
@@ -32,11 +34,11 @@ def do_evolve(context):
 				"Hooks not installed?"
 
 		ent_catalog = lsm.getUtility(provided=ICatalog, name=CATALOG_NAME)
-		topics = ent_catalog['topics']
+		topics = ent_catalog[IX_TOPICS]
 		try:
-			email_verified_set = topics['email_verified']
+			email_verified_set = topics[IX_EMAIL_VERIFIED]
 		except KeyError:
-			email_verified_set = EmailVerifiedFilteredSet('email_verified',
+			email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED,
 														 family=BTrees.family64)
 			topics.addFilter( email_verified_set )
 		

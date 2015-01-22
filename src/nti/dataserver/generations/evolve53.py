@@ -53,5 +53,7 @@ def do_evolve(context):
 		logger.info('Dataserver evolution %s done', generation)
 
 def evolve(context):
+	"""
+	Evolve to generation 53 by removing knwon broken objects
+	"""
 	do_evolve(context)
-
