@@ -13,7 +13,7 @@ from hamcrest import assert_that
 import unittest
 
 from nti.dataserver.users import User
-from nti.dataserver.users.utils import is_email_verfied
+from nti.dataserver.users.utils import is_email_verified
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
@@ -34,8 +34,8 @@ class TestUtils(unittest.TestCase):
 		User.create_user(username='foo@bleach.org',
 						 external_value={ u'email':u"foo@bleach.org"})
 			
-		assert_that(is_email_verfied('ichigo@bleach.org'), is_(True))
-		assert_that(is_email_verfied('ICHIGO@bleach.ORG'), is_(True))
-		assert_that(is_email_verfied('rukia@bleach.org'), is_(True))
-		assert_that(is_email_verfied('foo@bleach.org'), is_(False))
-		assert_that(is_email_verfied('aizen@bleach.org'), is_(False))
+		assert_that(is_email_verified('ichigo@bleach.org'), is_(True))
+		assert_that(is_email_verified('ICHIGO@bleach.ORG'), is_(True))
+		assert_that(is_email_verified('rukia@bleach.org'), is_(True))
+		assert_that(is_email_verified('foo@bleach.org'), is_(False))
+		assert_that(is_email_verified('aizen@bleach.org'), is_(False))

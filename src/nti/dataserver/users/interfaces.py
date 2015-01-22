@@ -519,6 +519,12 @@ class BlacklistedUsernameError(InvalidValue):
 	"""
 	pass
 
+class EmailAlreadyVerifiedError(InvalidValue):
+	"""
+	Indicates the given email has been verified by another user.
+	"""
+	pass
+
 class IRecreatableUser(Interface):
 	"""
 	Apply this as a marker to a context object (user) that can be

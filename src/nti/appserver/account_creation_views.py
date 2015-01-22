@@ -9,6 +9,7 @@ process, where there are page redirects happening frequently.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -64,6 +65,7 @@ from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
+from nti.dataserver.users.interfaces import EmailAlreadyVerifiedError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
@@ -168,6 +170,16 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						  {'field': 'Username',
 						   'fields': ['Username', 'email'],
 						   'message': str(e),
+						   'code': e.__class__.__name__},
+						exc_info[2] )
+		handle_validation_error( request, e )
+	except EmailAlreadyVerifiedError as e:
+		exc_info = sys.exc_info()
+		if e.value == desired_userid:
+			_raise_error( request, hexc.HTTPUnprocessableEntity,
+						  {'field': 'Username',
+						   'fields': ['Username', 'email'],
+						   'message': _('That email has been verified by another user.'),
 						   'code': e.__class__.__name__},
 						exc_info[2] )
 		handle_validation_error( request, e )
