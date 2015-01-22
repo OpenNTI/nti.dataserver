@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -136,7 +137,7 @@ def get_user_objects(user, mime_types=()):
 			 name='export_user_objects',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class ExportUserObjectsView(AbstractAuthenticatedView):
 	
 	def __call__(self):
@@ -172,7 +173,7 @@ class ExportUserObjectsView(AbstractAuthenticatedView):
 			 name='export_objects_sharedwith',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 	
 	def __call__(self):
@@ -222,7 +223,7 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 			 name='object_resolver',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class ObjectResolverView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -241,7 +242,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
 			 renderer='rest',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class ExportUsersView(AbstractAuthenticatedView):
 	
 	def __call__(self):

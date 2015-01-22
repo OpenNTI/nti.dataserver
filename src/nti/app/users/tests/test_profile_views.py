@@ -52,7 +52,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		app_iter = res.app_iter[0].split('\n')[:-1]
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
-			assert_that(t.split(','), has_length(7))
+			assert_that(t.split(','), has_length(6))
 
 	@WithSharedApplicationMockDS
 	def test_opt_in_comm(self):
@@ -86,6 +86,37 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 			assert_that(split, has_length(6))
 			if idx > 0:
 				assert_that(split[-1].strip(), is_('True'))
+
+	@WithSharedApplicationMockDS
+	def test_emailed_verfied(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			u = self._create_user(external_value={u'email':u"nti@nt.com",
+												  u'email_verified':True})
+			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
+
+			u = self._create_user(username='rukia@nt.com',
+								  external_value={u'email':u'rukia@nt.com',
+												  u'email_verified':True})
+			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
+
+			u = self._create_user(username='ichigo@nt.com',
+								  external_value={u'email':u'ichigo@nt.com', 
+												  u'email_verified':True})
+			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
+
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@user_email_verified'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+
+		res = testapp.get(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		app_iter = res.app_iter[0].split('\n')[:-1]
+		assert_that(app_iter, has_length(4))
+		for t in app_iter:
+			split = t.split(',')
+			assert_that(split, has_length(6))
 
 	@WithSharedApplicationMockDS
 	def test_profile_info(self):
