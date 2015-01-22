@@ -26,6 +26,8 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.externalization.interfaces import LocatedExternalDict
 
+from nti.utils.maps import CaseInsensitiveDict
+
 @view_config(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   permission=nauth.ACT_NTI_ADMIN,
@@ -62,7 +64,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 	Remove username from blacklist.
 	"""
 	def __call__(self):
-		values = self.readInput()
+		values = CaseInsensitiveDict(self.readInput())
 		username = values.get( 'username' ) or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity("must specify a username")
