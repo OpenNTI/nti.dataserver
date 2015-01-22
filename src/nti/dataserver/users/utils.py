@@ -17,7 +17,7 @@ from .index import IX_TOPICS
 from .index import CATALOG_NAME
 from .index import IX_EMAIL_VERIFIED
 
-def verifed_email_ids(email):
+def verified_email_ids(email):
     catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
     email = email.lower() # normalize
       
@@ -35,6 +35,6 @@ def verifed_email_ids(email):
     result = catalog.family.IF.intersection(intids_emails, intids_verified)
     return result
 
-def is_email_verfied(email):
-    result = verifed_email_ids(email)
+def is_email_verified(email):
+    result = verified_email_ids(email)
     return bool(result)
