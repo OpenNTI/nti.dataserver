@@ -154,10 +154,13 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 			  'lastLoginTime', 'is_copaWithAgg']
 	yield header
 
+	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	users = ent_catalog.searchResults(topics=topics_key)
-	intids = component.getUtility(zope.intid.IIntIds)
-	for user in users:
+	for user in users or ():
+		if not IUser.providedBy(user):
+			continue
+		
 		if coppaOnly and not ICoppaUser.providedBy(user):
 			continue
 
