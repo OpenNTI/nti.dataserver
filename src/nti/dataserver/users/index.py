@@ -38,14 +38,26 @@ from .interfaces import IRestrictedUserProfile
 #: for users should be registered under
 CATALOG_NAME = 'nti.dataserver.++etc++entity-catalog'
 
+IX_ALIAS = 'alias'
+IX_EMAIL = 'email'
+IX_TOPICS = 'topics'
+IX_REALNAME = 'realname'
+IX_CONTACT_EMAIL = 'contact_email'
+IX_REALNAME_PARTS = 'realname_parts'
+IX_CONTACT_EMAIL_RECOVERY_HASH = 'contact_email_recovery_hash'
+IX_PASSWORD_RECOVERY_EMAIL_HASH = 'password_recovery_email_hash'
+
+IX_EMAIL_VERIFIED = 'email_verified'
+IX_OPT_IN_EMAIL_COMMUNICATION = 'opt_in_email_communication'
+
 class AliasIndex(CaseInsensitiveFieldIndex):
 
-	default_field_name = 'alias'
+	default_field_name = IX_ALIAS
 	default_interface = IFriendlyNamed
 
 class RealnameIndex(CaseInsensitiveFieldIndex):
 
-	default_field_name = 'realname'
+	default_field_name = IX_REALNAME
 	default_interface = IFriendlyNamed
 
 class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
@@ -59,22 +71,22 @@ class RealnamePartsIndex(CaseInsensitiveKeywordIndex):
 
 class EmailIndex(CaseInsensitiveFieldIndex):
 
-	default_field_name = 'email'
+	default_field_name = IX_EMAIL
 	default_interface = IUserProfile
 
 class ContactEmailIndex(CaseInsensitiveFieldIndex):
 
-	default_field_name = 'contact_email'
+	default_field_name = IX_CONTACT_EMAIL
 	default_interface = IUserProfile
 
 class PasswordRecoveryEmailHashIndex(FieldIndex):
 
-	default_field_name = 'password_recovery_email_hash'
+	default_field_name = IX_PASSWORD_RECOVERY_EMAIL_HASH
 	default_interface = IRestrictedUserProfile
 
 class ContactEmailRecoveryHashIndex(FieldIndex):
 
-	default_field_name = 'contact_email_recovery_hash'
+	default_field_name = IX_CONTACT_EMAIL_RECOVERY_HASH
 	default_interface = IContactEmailRecovery
 
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
@@ -128,13 +140,13 @@ def install_user_catalog( site_manager_container, intids=None ):
 	intids.register( catalog )
 	lsm.registerUtility( catalog, provided=ICatalog, name=CATALOG_NAME )
 
-	for name, clazz in ( ('alias', AliasIndex),
-						 ('email', EmailIndex),
-						 ('realname', RealnameIndex),
-						 ('contact_email', ContactEmailIndex),
-						 ('realname_parts', RealnamePartsIndex),
-						 ('contact_email_recovery_hash', ContactEmailRecoveryHashIndex),
-						 ('password_recovery_email_hash', PasswordRecoveryEmailHashIndex)):
+	for name, clazz in ( (IX_ALIAS, AliasIndex),
+						 (IX_EMAIL, EmailIndex),
+						 (IX_REALNAME, RealnameIndex),
+						 (IX_CONTACT_EMAIL, ContactEmailIndex),
+						 (IX_REALNAME_PARTS, RealnamePartsIndex),
+						 (IX_CONTACT_EMAIL_RECOVERY_HASH, ContactEmailRecoveryHashIndex),
+						 (IX_PASSWORD_RECOVERY_EMAIL_HASH, PasswordRecoveryEmailHashIndex)):
 		index = clazz( family=intids.family )
 		intids.register( index )
 		# As a very minor optimization for unit tests, if we
@@ -147,17 +159,17 @@ def install_user_catalog( site_manager_container, intids=None ):
 		index.__parent__ = catalog
 		catalog[name] = index
 
-	opt_in_comm_set = OptInEmailCommunicationFilteredSet( 'opt_in_email_communication',
+	opt_in_comm_set = OptInEmailCommunicationFilteredSet( IX_OPT_IN_EMAIL_COMMUNICATION,
 														  family=intids.family)
 	
-	email_verified_set = EmailVerifiedFilteredSet( 'email_verified', family=intids.family)
+	email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED, family=intids.family)
 	
 	topics_index = TopicIndex( family=intids.family)
 	topics_index.addFilter( opt_in_comm_set )
 	topics_index.addFilter( email_verified_set )
 	intids.register( topics_index )
 	
-	topics_index.__name__ = 'topics'
+	topics_index.__name__ = IX_TOPICS
 	topics_index.__parent__ = catalog
-	catalog['topics'] = topics_index
+	catalog[IX_TOPICS] = topics_index
 	return catalog
