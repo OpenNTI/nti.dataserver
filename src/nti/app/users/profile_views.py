@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -39,7 +40,6 @@ from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users import User
 from nti.dataserver.users.index import CATALOG_NAME
-from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 
@@ -58,7 +58,7 @@ from . import safestr
 # user_info_extract
 
 def _tx_string(s):
-	if s and isinstance(s, unicode):
+	if s is not None and isinstance(s, unicode):
 		s = s.encode('utf-8')
 	return s
 
@@ -100,26 +100,26 @@ def _get_user_info_extract():
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	userids = _get_index_userids(ent_catalog)
 
-	yield ['username', 'realname', 'alias', 'email', 'createdTime', 
-		   'lastLoginTime', 'birthdate']
+	# header
+	yield ['username', 'realname', 'alias', 'email', 'createdTime', 'lastLoginTime']
 
-	for iid in userids:
+	for iid in userids or ():
 		u = intids.queryObject(iid, None)
-		if u is not None and IUser.providedBy(u):
-			alias = _get_index_field_value(iid, ent_catalog, 'alias')
-			email = _get_index_field_value(iid, ent_catalog, 'email')
-			createdTime = _format_time(getattr(u, 'createdTime', 0))
-			realname = _get_index_field_value(iid, ent_catalog, 'realname')
-			lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
-			birthdate = _format_date(getattr(IUserProfile(u), 'birthdate', None))
-			yield [u.username, realname, alias, email, createdTime, 
-				   lastLoginTime, birthdate]
+		if not IUser.providedBy(u):
+			continue
+		
+		alias = _get_index_field_value(iid, ent_catalog, 'alias')
+		email = _get_index_field_value(iid, ent_catalog, 'email')
+		createdTime = _format_time(getattr(u, 'createdTime', 0))
+		realname = _get_index_field_value(iid, ent_catalog, 'realname')
+		lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
+		yield [u.username, realname, alias, email, createdTime, lastLoginTime]
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class UserInfoExtractView(AbstractAuthenticatedView):
 	
 	def __call__(self):
@@ -146,37 +146,40 @@ def _get_user_info(user):
 	lastModified = _parse_time(getattr(user, 'lastModified', 0))
 	lastLoginTime = _parse_time(getattr(user, 'lastLoginTime', None))
 	is_copaWithAgg = str(ICoppaUserWithAgreementUpgraded.providedBy(user))
-	return [createdTime, lastModified, lastLoginTime, is_copaWithAgg]
+	result = [createdTime, lastModified, lastLoginTime, is_copaWithAgg]
+	return result
 
-def _get_opt_in_comm(coppaOnly=False):
+def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 	header = ['username', 'email', 'createdTime', 'lastModified',
 			  'lastLoginTime', 'is_copaWithAgg']
 	yield header
 
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-	users = ent_catalog.searchResults(topics='opt_in_email_communication')
+	users = ent_catalog.searchResults(topics=topics_key)
 	intids = component.getUtility(zope.intid.IIntIds)
 	for user in users:
 		if coppaOnly and not ICoppaUser.providedBy(user):
 			continue
 
 		iid = intids.queryId(user, None)
-		if iid is not None:
-			email = _get_index_field_value(iid, ent_catalog, 'email')
-			info = [user.username, email] + _get_user_info(user)
-			yield info
+		if iid is None:
+			continue
+
+		email = _get_index_field_value(iid, ent_catalog, 'email')
+		info = [user.username, email] + _get_user_info(user)
+		yield info
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_opt_in_comm',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
 	
 	def __call__(self):
 		values = CaseInsensitiveDict(**self.request.params)
-		coppaOnly = is_true(values.get('coppaOnly', 'F'))
-		generator = partial(_get_opt_in_comm, coppaOnly=coppaOnly)	
+		coppaOnly = is_true(values.get('coppaOnly') or values.get('onlyCoppa') or 'F')
+		generator = partial(_get_topics_info, coppaOnly=coppaOnly)	
 		
 		stream = BytesIO()
 		writer = csv.writer( stream )
@@ -184,6 +187,29 @@ class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
 		response.content_encoding = str('identity' )
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="opt_in.csv"')
+		response.body_file = _write_generator(generator, writer, stream)
+		return response
+
+@view_config(route_name='objects.generic.traversal',
+			 name='user_email_verified',
+			 request_method='GET',
+			 context=IDataserverFolder,
+			 permission=nauth.ACT_NTI_ADMIN)
+class UserEmailVerifiedView(AbstractAuthenticatedView):
+	
+	def __call__(self):
+		values = CaseInsensitiveDict(**self.request.params)
+		coppaOnly = is_true(values.get('coppaOnly') or values.get('onlyCoppa') or 'F')
+		generator = partial(_get_topics_info, 
+							topics_key='email_verified',
+							coppaOnly=coppaOnly)	
+		
+		stream = BytesIO()
+		writer = csv.writer( stream )
+		response = self.request.response
+		response.content_encoding = str('identity' )
+		response.content_type = str('text/csv; charset=UTF-8')
+		response.content_disposition = str('attachment; filename="verified_email.csv"')
 		response.body_file = _write_generator(generator, writer, stream)
 		return response
 
@@ -217,7 +243,7 @@ def _get_profile_info(coppaOnly=False):
 			 name='user_profile_info',
 			 request_method='GET',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class UserProfileInfoView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -256,7 +282,7 @@ def allowed_fields(user):
 			 request_method='POST',
 			 renderer='rest',
 			 context=IDataserverFolder,
-			 permission=nauth.ACT_MODERATE)
+			 permission=nauth.ACT_NTI_ADMIN)
 class UserProfileUpdateView(AbstractAuthenticatedView, 
 							ModeledContentUploadRequestUtilsMixin):
 	

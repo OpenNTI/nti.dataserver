@@ -28,7 +28,7 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 @view_config(route_name='objects.generic.traversal',
 			   renderer='rest',
-			   permission=nauth.ACT_MODERATE,
+			   permission=nauth.ACT_NTI_ADMIN,
 			   request_method='GET',
 			   context=IDataserverFolder,
 			   name='GetUserBlacklist')
@@ -51,7 +51,7 @@ class GetUserBlacklistView(AbstractAuthenticatedView):
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
-			 permission=nauth.ACT_MODERATE,
+			 permission=nauth.ACT_NTI_ADMIN,
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 name='RemoveFromUserBlacklist')
@@ -79,7 +79,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 	
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
-			 permission=nauth.ACT_MODERATE,
+			 permission=nauth.ACT_NTI_ADMIN,
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 name='RemoveUser')
