@@ -13,6 +13,7 @@ import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 VERIFY_USER_EMAIL_VIEW = "verify_user_email"
+REQUEST_EMAIL_VERFICATION_VIEW = "request_email_verification"
 SEND_USER_EMAIL_VERFICATION_VIEW = "send_user_email_verification"
 VERIFY_USER_EMAIL_WITH_TOKEN_VIEW = "verify_user_email_with_token"
 
