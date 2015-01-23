@@ -9,9 +9,11 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.security" />
 
-	<!-- Events -->
+	<!-- Subscribers -->
 	<subscriber handler=".subscribers.new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers.new_user_with_not_email_verified"
 				zcml:condition="have devmode" />
+	
+	<subscriber handler=".subscribers._purchase_attempt_email_notification" />
 	
 </configure>

@@ -13,9 +13,9 @@ from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_string
 
-from nti.app.users.mail_views import generate_mail_verification_pair
-from nti.app.users.mail_views import get_verification_signature_data
-from nti.app.users.mail_views import generate_verification_email_url
+from nti.app.users.utils import generate_mail_verification_pair
+from nti.app.users.utils import get_verification_signature_data
+from nti.app.users.utils import generate_verification_email_url
 
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
