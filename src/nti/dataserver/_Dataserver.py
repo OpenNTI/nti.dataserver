@@ -3,6 +3,7 @@
 """
 $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,8 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 # Patch for relstorage.
 # This MUST be done by the higher level, sometimes we want
 # to get MySQLdb
-#import nti.monkey.relstorage_umysqldb_patch_on_import
-#nti.monkey.relstorage_umysqldb_patch_on_import.patch()
+# import nti.monkey.relstorage_umysqldb_patch_on_import
+# nti.monkey.relstorage_umysqldb_patch_on_import.patch()
 
 import os
 import redis

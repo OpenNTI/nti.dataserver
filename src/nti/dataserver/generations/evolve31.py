@@ -3,7 +3,7 @@
 """
 Generation 31 evolver
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import

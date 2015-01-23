@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -11,15 +9,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
+from zope.event import notify
 from zope.component.hooks import site, setHooks
 
-from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import StartDynamicMembershipEvent
-
-from zope.event import notify
 
 def evolve( context ):
 	"""

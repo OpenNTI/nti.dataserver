@@ -2,11 +2,13 @@
 """
 zope.generations generation 26 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 generation = 26
 
@@ -23,7 +25,6 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	with site( ds_folder ):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
-
 		users = ds_folder['users']
 		for user in users.values():
 			# Note that this is missing DFLs which is the only non-user place these could be

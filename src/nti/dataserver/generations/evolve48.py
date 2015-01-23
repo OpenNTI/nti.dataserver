@@ -3,7 +3,7 @@
 """
 Generation 48 evolver
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -13,21 +13,18 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 48
 
-
 from zope import component
-
-from zope.component.hooks import site, setHooks
-
-
-from nti.dataserver.metadata_index import CATALOG_NAME
 from zope.catalog.interfaces import ICatalog
-
-from .evolve45 import MockDataserver
+from zope.component.hooks import site, setHooks
 
 import BTrees
 
+from nti.dataserver.metadata_index import CATALOG_NAME
+
 from ..metadata_index import TP_DELETED_PLACEHOLDER
 from ..metadata_index import DeletedObjectPlaceholderExtentFilteredSet
+
+from .evolve45 import MockDataserver
 
 def evolve( context ):
 	"""
@@ -50,10 +47,10 @@ def evolve( context ):
 			deleted_set = DeletedObjectPlaceholderExtentFilteredSet(TP_DELETED_PLACEHOLDER)
 			assert deleted_set.family is BTrees.family64
 			index.addFilter(deleted_set)
+			
 			# Slightly faster to just re-index in this one filter
 			for uid, obj in catalog._visitSublocations():
 				deleted_set.index_doc(uid, obj)
-
 
 			logger.info( "Done updating placeholders")
 	finally:

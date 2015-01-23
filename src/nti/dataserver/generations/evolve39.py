@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -11,18 +9,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
 from zope.component.hooks import site, setHooks
 
 from zope.intid.interfaces import IIntIds
-from nti.dataserver.contenttypes.threadable import _threadable_added
-from nti.dataserver.contenttypes.threadable import ThreadableMixin
+
 from ZODB.POSException import POSKeyError
+
+from nti.dataserver.contenttypes.threadable import ThreadableMixin
+from nti.dataserver.contenttypes.threadable import _threadable_added
 
 def evolve( context ):
 	"""
-	Evolve generation 38 to generation 39 by building the reference counts for threadable objects.
+	Evolve generation 38 to generation 39 by building the reference counts 
+	for threadable objects.
 	"""
 	setHooks()
 	ds_folder = context.connection.root()['nti.dataserver']
@@ -52,4 +52,6 @@ def evolve( context ):
 				# Broken object, usually a test condition
 				broken += 1
 
-		logger.debug( "Updated %s objects out of %s total/%s broken", updated, total, broken )
+		logger.debug( "Updated %s objects out of %s total/%s broken", 
+					  updated, total, broken )
+
