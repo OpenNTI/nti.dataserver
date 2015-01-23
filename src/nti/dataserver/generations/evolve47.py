@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Generation 31 evolver
+Generation 47 evolver
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -13,11 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 47
 
-
 from zope.component.hooks import site, setHooks
 
-from .install import install_sites_folder
 from nti.site.hostpolicy import synchronize_host_policies
+
+from .install import install_sites_folder
 
 def evolve( context ):
 	"""

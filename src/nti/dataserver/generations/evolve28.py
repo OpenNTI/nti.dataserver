@@ -2,25 +2,28 @@
 """
 zope.generations generation 28 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 generation = 28
+
+import six
 
 from zope import component
 from zope.component.hooks import site, setHooks
 
-from nti.dataserver.users import Entity
-from nti.dataserver.users import users as users_mod
-from nti.dataserver.users.wref import WeakRef
+from BTrees.OOBTree import OOTreeSet
+
 import persistent.wref
 
-import six
-
-from BTrees.OOBTree import OOTreeSet
+from nti.dataserver.users import Entity
+from nti.dataserver.users.wref import WeakRef
+from nti.dataserver.users import users as users_mod
 
 def _fake_missing_weak_ref():
 	return None

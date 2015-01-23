@@ -2,27 +2,30 @@
 """
 zope.generations generation 25 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 generation = 25
+
+import base64
+from collections import Iterable
 
 from zope.generations.utility import findObjectsMatching
 
 from zope import component
 from zope.component.hooks import site, setHooks
-from persistent.list import PersistentList
-from collections import Iterable
-import base64
 
-from . import evolve24
+from persistent.list import PersistentList
+
 from nti.dataserver.contenttypes import Canvas
 from nti.dataserver.contenttypes.canvas import _CanvasUrlShape
 
-
+from . import evolve24
 
 def migrate( note ):
 	evolve24.migrate( note ) # Be sure they are non-persistent

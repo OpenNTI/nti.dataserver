@@ -2,30 +2,34 @@
 """
 zope.generations generation 35 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
-
-generation = 35
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+generation = 35
 
 from zope import component
 from zope import interface
 from zope.component.hooks import site, setHooks
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IOIDResolver
+
 from nti.externalization.oids import to_external_oid
 
-@interface.implementer(nti_interfaces.IDataserver)
+from nti.wref.interfaces import IWeakRef
+
+@interface.implementer(IDataserver)
 class MockDataserver(object):
 
 	root = None
 	def get_by_oid( self, oid_string, ignore_creator=False ):
-		resolver = component.queryUtility( nti_interfaces.IOIDResolver )
+		resolver = component.queryUtility(IOIDResolver )
 		if resolver is None:
 			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
 		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
@@ -65,7 +69,7 @@ def migrate(userish, dataserver):
 					entity = None
 
 			if entity:
-				new_value.add( nti_interfaces.IWeakRef( entity ) )
+				new_value.add( IWeakRef( entity ) )
 			else:
 				logger.debug( "Unable to find %s for %s in %s", username, userish, old_key )
 
@@ -85,7 +89,7 @@ def evolve( context ):
 	ds_folder = context.connection.root()['nti.dataserver']
 	mock_ds = MockDataserver()
 	mock_ds.root = ds_folder
-	component.provideUtility( mock_ds, nti_interfaces.IDataserver )
+	component.provideUtility( mock_ds, IDataserver )
 
 	with site( ds_folder ):
 		assert component.getSiteManager() == ds_folder.getSiteManager(), "Hooks not installed?"
@@ -98,7 +102,8 @@ def evolve( context ):
 			try:
 				user._p_activate()
 			except KeyError:
-				logger.warn( "Invalid user %s/%s. Shard not mounted? Refs may be lost", username, to_external_oid( user ) )
+				logger.warn( "Invalid user %s/%s. Shard not mounted? Refs may be lost", 
+							username, to_external_oid( user ) )
 				bad_usernames.append( (username, to_external_oid(user) ) )
 				continue
 
@@ -108,7 +113,8 @@ def evolve( context ):
 				for fl in user.friendsLists.values():
 					migrate( fl, mock_ds )
 
-		logger.debug( "Found %s good users and %s bad users", good_usernames, bad_usernames )
+		logger.debug("Found %s good users and %s bad users", 
+					 good_usernames, bad_usernames )
 		# Unfortunately, we won't be able to delete them without dropping down to private
 		# data structures.
 		#for username, _ in bad_usernames:

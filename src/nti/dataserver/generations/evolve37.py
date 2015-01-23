@@ -2,21 +2,24 @@
 """
 zope.generations generation 37 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 generation = 37
 
-logger = __import__('logging').getLogger(__name__)
 import logging
+
 from zope import component
 from zope import interface
 from zope.component.hooks import site, setHooks
 
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.oids import to_external_oid
 
 @interface.implementer(nti_interfaces.IDataserver)

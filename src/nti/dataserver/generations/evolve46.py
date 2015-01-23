@@ -3,7 +3,7 @@
 """
 Generation 46 evolver
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -15,16 +15,15 @@ generation = 46
 
 from zope import interface
 from zope import component
+from zope.catalog.interfaces import ICatalog
 from zope.component.hooks import site, setHooks
 
+import BTrees
 
 from nti.dataserver.interfaces import IDataserver
-
 from nti.dataserver.metadata_index import CATALOG_NAME
-from zope.catalog.interfaces import ICatalog
 
 from ..metadata_index import LastModifiedIndex
-import BTrees
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):

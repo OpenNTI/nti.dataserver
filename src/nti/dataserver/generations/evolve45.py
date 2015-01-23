@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Generation 45 evolver
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -25,10 +23,10 @@ from zope.dottedname import resolve as dottedname
 
 from zc import intid as zc_intid
 
-from .install import install_metadata_catalog
-
-from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+
+from .install import install_metadata_catalog
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):

@@ -2,20 +2,24 @@
 """
 zope.generations generation 24 evolver for nti.dataserver
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals
 
-__docformat__ = 'restructuredtext'
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
 
 generation = 24
+
+from collections import Iterable
 
 from zope.generations.utility import findObjectsMatching
 
 from zope import component
 from zope.component.hooks import site, setHooks
+
 from persistent import Persistent
-from collections import Iterable
 
 from nti.dataserver import contenttypes
 from nti.dataserver.contenttypes import Canvas

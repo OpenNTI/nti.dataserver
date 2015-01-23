@@ -3,7 +3,7 @@
 """
 Generation 30 evolver, which adds the user catalog.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
