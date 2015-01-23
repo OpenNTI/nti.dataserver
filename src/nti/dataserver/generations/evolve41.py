@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+generation = 41
+
 from zope.site.site import SiteManagementFolder
 
 def evolve(context):
