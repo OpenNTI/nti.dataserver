@@ -30,8 +30,10 @@ from z3c.schema.email import isValidMailAddress
 
 import zope.interface.interfaces
 
-from z3c.password import interfaces as pwd_interfaces
-from plone.i18n.locales import interfaces as locale_interfaces
+from z3c.password.interfaces import NoPassword
+from z3c.password.interfaces import InvalidPassword	
+
+from plone.i18n.locales.interfaces import ICcTLDInformation
 
 from nti.mailer.interfaces import IEmailAddressable
 
@@ -42,7 +44,8 @@ from nti.schema.field import TextLine
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
 from nti.schema.interfaces import InvalidValue
-from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE, TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
+from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
+from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
 class _InvalidData(InvalidValue):
 	"""Invalid Value"""
@@ -95,7 +98,8 @@ class UsernameContainsIllegalChar(_InvalidData):
 			'Username contains an illegal character. Only letters, digits, and ${allowed_chars} are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
-		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', username, value=username )
+		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', 
+														  username, value=username )
 
 	def new_instance_restricting_chars( self, restricted_chars ):
 		allowed_chars = set(self.allowed_chars) - set(restricted_chars)
@@ -123,13 +127,13 @@ class BlankHumanNameError(RealnameInvalid):
 		super(BlankHumanNameError,self).__init__(name)
 
 
-class OldPasswordDoesNotMatchCurrentPassword(pwd_interfaces.InvalidPassword):
+class OldPasswordDoesNotMatchCurrentPassword(InvalidPassword):
 	i18n_message = _("The password you supplied does not match the current password.")
 
-class PasswordCannotConsistOfOnlyWhitespace(pwd_interfaces.NoPassword):
+class PasswordCannotConsistOfOnlyWhitespace(NoPassword):
 	i18n_message = _("Your pasword cannot contain only whitespace. Please try again.")
 
-class InsecurePasswordIsForbidden(pwd_interfaces.InvalidPassword):
+class InsecurePasswordIsForbidden(InvalidPassword):
 	i18n_message = _("The password you supplied has been identified by security researchers as commonly used and insecure. Please try again.")
 
 	def __init__( self, value=None ):
@@ -165,7 +169,7 @@ def _checkEmailAddress(address):
 	if not isValidMailAddress(address):
 		raise EmailAddressInvalid(address)
 
-	cctlds = component.getUtility(locale_interfaces.ICcTLDInformation)
+	cctlds = component.getUtility(ICcTLDInformation)
 	domain = address.rsplit( '.', 1 )[-1]
 	if domain.lower() not in cctlds.getAvailableTLDs():
 		raise EmailAddressInvalid(address)
@@ -532,6 +536,25 @@ class IRecreatableUser(Interface):
 	that create and destroy users.
 	"""
 
+class ISendEmailConfirmationEvent(zope.interface.interfaces.IObjectEvent):
+	"""
+	A event to send a email confirmation email
+	"""
+
+	user = interface.Attribute("User to send the confirmation email to.")
+	request = interface.Attribute("A request object")
+	
+@interface.implementer(ISendEmailConfirmationEvent)
+class SendEmailConfirmationEvent(zope.interface.interfaces.ObjectEvent):
+
+	def __init__(self, obj, request=None):
+		super(SendEmailConfirmationEvent, self).__init__(obj)
+		self.request = request
+
+	@property
+	def user(self):
+		return self.object
+	
 def validateAccept(value):
 	if not value == True:
 		return False
