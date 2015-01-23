@@ -36,7 +36,8 @@ class StandardExternalFields(object):
 	HREF = 'href'
 	ITEMS = 'Items'
 
-StandardExternalFields.ALL = (lambda : [ v for k,v in StandardExternalFields.__dict__.iteritems() if not k.startswith( '_' ) ])()
+StandardExternalFields.ALL = (lambda : [ v for k,v in StandardExternalFields.__dict__.iteritems() 
+										if not k.startswith( '_' ) ])()
 
 class StandardInternalFields(object):
 	"""
@@ -242,7 +243,6 @@ class IExternalObjectIO(IExternalObjectRepresenter,
 	Something that can read and write external values.
 	"""
 
-
 #: Constant requesting JSON format data
 EXT_REPR_JSON = 'json'
 #: Constant requesting PList (XML) format data
@@ -324,8 +324,8 @@ class IInternalObjectIO(IInternalObjectExternalizer,IInternalObjectUpdater):
 	in external forms.
 	"""
 
-from zope.lifecycleevent import IObjectModifiedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent import IObjectModifiedEvent
 
 class IObjectModifiedFromExternalEvent(IObjectModifiedEvent):
 	"""
@@ -334,5 +334,7 @@ class IObjectModifiedFromExternalEvent(IObjectModifiedEvent):
 
 	external_value = interface.Attribute("The external value")
 
+@interface.implementer( IObjectModifiedFromExternalEvent )
 class ObjectModifiedFromExternalEvent(ObjectModifiedEvent):
 	external_value = None
+

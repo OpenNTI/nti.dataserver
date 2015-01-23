@@ -13,6 +13,7 @@
 		provides=".interfaces.IExternalMappingDecorator"
 		for="zope.dublincore.interfaces.IDCExtended"
 		factory=".dublincore.DCExtendedExternalMappingDecorator" />
+		
 	<subscriber
 		provides=".interfaces.IExternalMappingDecorator"
 		for="zope.dublincore.interfaces.IDCDescriptiveProperties"
@@ -30,26 +31,27 @@
 			 provides=".interfaces.ILocatedExternalSequence"
 			 factory=".interfaces.LocatedExternalList" />
 
-	<utility factory=".representation.PlistRepresenter" />
 	<utility factory=".representation.JsonRepresenter" />
 	<utility factory=".representation.YamlRepresenter" />
-
+	<utility factory=".representation.PlistRepresenter" />
+	
 	<!-- Offer to adapt strings to dates -->
 	<!-- TODO: This is a bit ad-hoc. Surely there's a more formal set
 	of transforms somewhere? -->
 	<adapter factory=".datetime._date_from_string" />
 	<adapter factory=".datetime.datetime_from_string" />
+	
 	<!-- Do the reverse as well.-->
 	<adapter factory=".datetime._date_to_string" />
 	<adapter factory=".datetime._datetime_to_string" />
 	<adapter factory=".datetime._duration_to_string" />
-
 
 	<!-- The "*" matches things that implement some interface -->
 	<!-- It translates into passing None to the registry method -->
 	<adapter for="*"
 			 factory=".internalization.default_externalized_object_factory_finder_factory"
 			 provides=".interfaces.IExternalizedObjectFactoryFinder" />
+			 
 	<!-- The empty string matches things that don't implement any interface -->
 	<adapter for=""
 			 factory=".internalization.default_externalized_object_factory_finder_factory"
