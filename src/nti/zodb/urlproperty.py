@@ -13,16 +13,17 @@ logger = __import__('logging').getLogger(__name__)
 
 import urlparse
 
-import zope.contenttype.parse
-import zope.schema.interfaces
+from zope.schema.interfaces import InvalidURI
+from zope.contenttype import parse as ct_parse
 
-from zope.file import interfaces as file_interfaces
 from zope.file import file as zfile
+from zope.file.interfaces import IFile
 
 from nti.utils import dataurl
 
 def _dict_setattr( instance, name, value ):
 	instance.__dict__[name] = value
+	
 def _dict_getattr( instance, name, default=_dict_setattr ):
 	if default is _dict_setattr:
 		try:
@@ -30,6 +31,7 @@ def _dict_getattr( instance, name, default=_dict_setattr ):
 		except KeyError: #pragma: no cover
 			raise AttributeError( name )
 	return instance.__dict__.get( name, default )
+
 def _dict_delattr( instance, name ): # pragma: no cover
 	instance.__dict__.pop( name, None )
 
@@ -62,7 +64,8 @@ class UrlProperty(object):
 	_setattr = staticmethod(setattr)
 	_delattr = staticmethod(delattr)
 
-	def __init__( self, data_name=None, url_attr_name=None, file_attr_name=None, use_dict=False ):
+	def __init__(self, data_name=None, url_attr_name=None, 
+				 file_attr_name=None, use_dict=False):
 		"""
 		:keyword bool use_dict: If set to `True`, then the instance dictionary will be used
 			explicitly for access to the url and file data. This is necessary if this property
@@ -70,8 +73,10 @@ class UrlProperty(object):
 		"""
 		if url_attr_name:
 			self.url_attr_name = url_attr_name
+
 		if file_attr_name:
 			self.file_attr_name = file_attr_name
+
 		if data_name:
 			self.data_name = data_name
 
@@ -94,10 +99,11 @@ class UrlProperty(object):
 
 	def get_file( self, instance ):
 		"""
-		Return the :class:`zope.file.interfaces.IFile` for the instance if there is one, otherwise None.
+		Return the :class:`zope.file.interfaces.IFile` for the instance 
+		if there is one, otherwise None.
 		"""
 		the_file = self._getattr( instance, self.file_attr_name, None )
-		if file_interfaces.IFile.providedBy( the_file ):
+		if IFile.providedBy( the_file ):
 			return the_file
 
 	def __get__( self, instance, owner ):
@@ -124,7 +130,7 @@ class UrlProperty(object):
 
 		if value.startswith( b'data:' ):
 			raw_bytes, mime_type = dataurl.decode( value )
-			major, minor, parms = zope.contenttype.parse.parse(  mime_type )
+			major, minor, parms = ct_parse(  mime_type )
 			the_file = zfile.File( mimeType=major + '/' + minor, parameters=parms )
 			fp = the_file.open( 'w' )
 			fp.write( raw_bytes )
@@ -141,13 +147,12 @@ class UrlProperty(object):
 			parsed = urlparse.urlparse( value )
 			if not parsed.netloc:
 				if self.reject_url_with_missing_host:
-					raise zope.schema.interfaces.InvalidURI( value )
+					raise InvalidURI( value )
 				if self.ignore_url_with_missing_host:
 					return
 
 			self._setattr( instance, self.file_attr_name, None )
 			self._setattr( instance, self.url_attr_name, value )
-
 
 	def __delete__( self, instance ):
 		if instance is None:

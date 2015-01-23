@@ -64,7 +64,6 @@ class PersistentPropertyHolder(Persistent):
 		the instance modified) but otherwise still behave correctly. Replacing one with a
 		different type of property or deleting the property altogether may not function
 		correctly.
-
 	"""
 
 	def __new__( cls, *args, **kwargs ):

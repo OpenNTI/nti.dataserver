@@ -76,4 +76,5 @@ def register_subscriber( event ):
 	# IDatabaseOpened fires for each database, so if we sub to that we'd do this many times.
 	# WithRoot fires only once.
 	for database in event.database.databases.values():
-		database.setActivityMonitor( StatsdActivityMonitor( LogActivityMonitor( database.getActivityMonitor() ) ) )
+		dam = database.getActivityMonitor()
+		database.setActivityMonitor( StatsdActivityMonitor(LogActivityMonitor(dam)))

@@ -5,12 +5,13 @@ Things related to using ZODB
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-#pylint:disable=W0212
+# pylint:disable=W0212
 
 def readCurrent(obj):
 	"""

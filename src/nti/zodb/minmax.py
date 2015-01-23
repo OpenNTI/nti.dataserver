@@ -5,6 +5,7 @@ Conflict resolving value/counter implementations
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -15,7 +16,8 @@ import functools
 from zope import interface
 from zope.minmax._minmax import Maximum, Minimum, AbstractValue
 
-from . import interfaces
+from .interfaces import INumericValue
+from .interfaces import INumericCounter
 
 # Give all these things a 'set' method, a point for subclasses
 # to potentially override
@@ -25,7 +27,7 @@ assert 'set' not in AbstractValue.__dict__ or AbstractValue.set is _set # catch 
 AbstractValue.set = _set
 
 @functools.total_ordering
-@interface.implementer(interfaces.INumericValue)
+@interface.implementer(INumericValue)
 class AbstractNumericValue(AbstractValue):
 	"""
 	A numeric value that provides ordering operations.
@@ -125,7 +127,7 @@ class NumericMinimum(AbstractNumericValue,Minimum):
 	Minimizes the number during conflicts.
 	"""
 
-@interface.implementer(interfaces.INumericCounter)
+@interface.implementer(INumericCounter)
 class MergingCounter(AbstractNumericValue):
 	"""
 	A :mod:`zope.minmax` item that resolves conflicts by
@@ -152,7 +154,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 	use this to hold a merging counter or numeric minimum or maximum.
 	"""
 
-	@interface.implementer(interfaces.INumericCounter)
+	@interface.implementer(INumericCounter)
 	class IncrementingZeroValue(_ConstantZeroValue):
 
 		def __init__( self, name, holder, prop ):
@@ -224,7 +226,7 @@ class NumericPropertyDefaultingToZero(PropertyHoldingPersistent):
 			value = inst.__dict__[self.__name__]
 			return value.value if self.as_number else value
 
-		return 0 if self.as_number else  self.IncrementingZeroValue( self.__name__, inst, self )
+		return 0 if self.as_number else self.IncrementingZeroValue( self.__name__, inst, self )
 
 	def __set__( self, inst, value ):
 		self.__activate( inst )

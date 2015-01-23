@@ -5,16 +5,17 @@ Utilities for weak references to persistent objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import persistent.wref
+from persistent.wref import WeakRef
 
 from zope import copy
 
-class CopyingWeakRef(persistent.wref.WeakRef):
+class CopyingWeakRef(WeakRef):
 	"""
 	A weak ref that also stores a one-shot copy of its
 	reference, as a fallback to return from :meth:`__call__`
@@ -28,11 +29,11 @@ class CopyingWeakRef(persistent.wref.WeakRef):
 
 	"""
 	def __init__( self, ob ):
-		super(CopyingWeakRef,self).__init__( ob )
+		super(CopyingWeakRef, self).__init__( ob )
 		self._copy = copy.copy( ob )
 
 	def __call__( self ):
-		result = super(CopyingWeakRef,self).__call__( )
+		result = super(CopyingWeakRef, self).__call__( )
 		if result is None:
 			result = self._copy
 		return result

@@ -38,7 +38,6 @@ def time_to_64bit_int( value ):
 
 	return _double_bits_to_long( _float_to_double_bits( value ) )[0]
 
-
 ZERO_64BIT_INT = time_to_64bit_int( 0.0 )
 
 def bit64_int_to_time( value ):
