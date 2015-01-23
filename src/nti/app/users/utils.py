@@ -133,12 +133,13 @@ def generate_verification_email_url(user, request=None, host_url=None,
 	href = '%s/%s?%s' % (ds2, '@@'+VERIFY_USER_EMAIL_VIEW, params)
 	result = urljoin(host_url, href) if host_url else href
 	return result, token
-def _get_email_verification_time_key(user):
+
+def get_email_verification_time(user):
 	annotes = IAnnotations(user)
 	result = annotes.get(_EMAIL_VERIFICATION_TIME_KEY)
 	return result
 
-def _set_email_verification_time_key(user, now=None):
+def set_email_verification_time(user, now=None):
 	now = now or time.time()
 	annotes = IAnnotations(user)
 	annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
@@ -199,7 +200,7 @@ def send_email_verification(user, profile, email, request=None):
 				package=package)
 
 	# record time
-	_set_email_verification_time_key(user)
+	set_email_verification_time(user)
 	
 def safe_send_email_verification(user, profile, email, request=None):
 	try:

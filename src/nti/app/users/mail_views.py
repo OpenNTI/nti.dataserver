@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import six
-
+import time
 import gevent
 
 from zope import lifecycleevent
@@ -27,18 +27,23 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import checkEmailAddress
+from nti.dataserver.users.interfaces import EmailAddressInvalid
 
 from nti.utils.maps import CaseInsensitiveDict
 
 from . import VERIFY_USER_EMAIL_VIEW
+from . import REQUEST_EMAIL_VERFICATION_VIEW
 from . import SEND_USER_EMAIL_VERFICATION_VIEW
 from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
 from .utils import get_user
+from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
@@ -109,6 +114,37 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 		lifecycleevent.modified(self.remoteUser)  # make sure we update the index
 		return hexc.HTTPNoContent()
 
+@view_config(route_name='objects.generic.traversal',
+			 name=REQUEST_EMAIL_VERFICATION_VIEW,
+			 request_method='POST',
+			 context=IUser,
+			 renderer='rest',
+			 permission=nauth.ACT_UPDATE)
+class RequestEmailVerificationView(	AbstractAuthenticatedView, 
+									ModeledContentUploadRequestUtilsMixin):
+		
+	def __call__(self):
+		user = self.remoteUser
+		profile = IUserProfile(user)
+		email = CaseInsensitiveDict(self.readInput()).get('email')
+		if email:
+			try:
+				checkEmailAddress(email)
+				profile.email = email
+				profile.email_verified = False
+				lifecycleevent.modified(user)
+			except (EmailAddressInvalid):
+				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
+		else:
+			email = profile.email
+			
+		if profile.email_verified:
+			now  = time.time()
+			last_time = get_email_verification_time(user) or 0
+			if now - last_time > 3600: # wait an hour
+				safe_send_email_verification(user, profile, email, self.request)
+		return hexc.HTTPNoContent()
+	
 @view_config(route_name='objects.generic.traversal',
 			 name=SEND_USER_EMAIL_VERFICATION_VIEW,
 			 request_method='POST',
