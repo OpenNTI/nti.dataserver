@@ -40,7 +40,8 @@ def new_user_with_not_email_verified(user, event):
 	ext_value = getattr(event, 'ext_value', None) or {}
 	meta_data = getattr(event, 'meta_data', None) or {}
 	email = ext_value.get('email')
-	if 	email and meta_data.get('check_verify_email', True) and \
+	if 	email and not email.lower().endswith('@nextthought.com') and \
+		meta_data.get('check_verify_email', True) and \
 		is_email_verified(email):
 		raise EmailAlreadyVerifiedError( email )
 
