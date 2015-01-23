@@ -17,6 +17,7 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.dataserver.users.utils import is_email_verified
+from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
@@ -24,10 +25,12 @@ from nti.dataserver.users.interfaces import EmailAlreadyVerifiedError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
 
+from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
+
 from .utils import safe_send_email_verification
 
 @component.adapter( IUser, IWillCreateNewEntityEvent )
-def new_user_is_not_blacklisted(user, event):
+def _new_user_is_not_blacklisted(user, event):
 	"""
 	Verify that this new user does not exist in our blacklist of former users.
 	"""
@@ -36,7 +39,7 @@ def new_user_is_not_blacklisted(user, event):
 		raise BlacklistedUsernameError( user.username )
 
 @component.adapter( IUser, IWillCreateNewEntityEvent )
-def new_user_with_not_email_verified(user, event):
+def _new_user_with_not_email_verified(user, event):
 	ext_value = getattr(event, 'ext_value', None) or {}
 	meta_data = getattr(event, 'meta_data', None) or {}
 	email = ext_value.get('email')
@@ -46,10 +49,17 @@ def new_user_with_not_email_verified(user, event):
 		raise EmailAlreadyVerifiedError( email )
 
 @component.adapter(IUser, ISendEmailConfirmationEvent)
-def _send_email_confirmation(record, event):
-	user = event.user
+def _send_email_confirmation(user, event):
 	profile = IUserProfile(user, None)
 	email = getattr(profile, 'email', None)
 	request = event.request or get_current_request()	
-	if profile is None:
+	if profile is not None and email:
 		safe_send_email_verification(user, profile, email, request)
+
+@component.adapter(IUser, IObjectModifiedFromExternalEvent)
+def _user_modified_from_external_event(user, event):
+	profile = IUserProfile(user, None)
+	ext = event.external_value or {}
+	if profile and ext.get('email'):
+		profile.email_verified = False
+		reindex_email_verification(user)

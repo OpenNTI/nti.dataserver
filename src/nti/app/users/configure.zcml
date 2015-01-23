@@ -11,8 +11,9 @@
 
 	<!-- Subscribers -->
 	<subscriber handler=".subscribers._send_email_confirmation" />
-	<subscriber handler=".subscribers.new_user_is_not_blacklisted" />
-	<subscriber handler=".subscribers.new_user_with_not_email_verified" />
+	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
+	<subscriber handler=".subscribers._new_user_with_not_email_verified" />
+	<subscriber handler=".subscribers._user_modified_from_external_event" />
 	
 	<!-- Decorators -->
 	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
