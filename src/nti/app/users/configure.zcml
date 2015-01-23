@@ -10,10 +10,9 @@
 	<include package="zope.security" />
 
 	<!-- Subscribers -->
+	<subscriber handler=".subscribers._send_email_confirmation" />
 	<subscriber handler=".subscribers.new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers.new_user_with_not_email_verified"
 				zcml:condition="have devmode" />
-	
-	<subscriber handler=".subscribers._purchase_attempt_email_notification" />
 	
 </configure>
