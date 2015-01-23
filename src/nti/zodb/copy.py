@@ -13,12 +13,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
-from zope.copy import interfaces as copy_interfaces
+from zope.copy.interfaces import ICopyHook
 
-import persistent.wref
+from persistent.wref import WeakRef
 
-@component.adapter(persistent.wref.WeakRef)
-@interface.implementer(copy_interfaces.ICopyHook)
+@component.adapter(WeakRef)
+@interface.implementer(ICopyHook)
 def wref_copy_factory(ref):
 	"""
 	Weak references cannot typically be copied due to the presence
@@ -31,5 +31,5 @@ def wref_copy_factory(ref):
 	def factory(toplevel, register):
 		# We do need a new object, presumably we're moving
 		# databases
-		return persistent.wref.WeakRef( ref() )
+		return WeakRef( ref() )
 	return factory

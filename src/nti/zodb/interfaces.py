@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 from zope import schema
 from zope import interface
-from zope.minmax import interfaces as minmax_interfaces
+from zope.minmax.interfaces import IAbstractValue
 
 from nti.schema.field import Number
 
@@ -51,7 +51,7 @@ class ITokenBucket(interface.Interface):
 		if need be. This is not meant to be used from multiple threads.
 		"""
 
-class INumericValue(minmax_interfaces.IAbstractValue):
+class INumericValue(IAbstractValue):
 	"""
 	A persistent numeric value with conflict resolution.
 	"""

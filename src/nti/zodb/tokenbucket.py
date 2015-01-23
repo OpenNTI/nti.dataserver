@@ -15,19 +15,21 @@ from time import time
 
 from zope import interface
 
-from . import interfaces
-from . import minmax
-
 from nti.utils._compat import sleep
 
-@interface.implementer(interfaces.ITokenBucket)
+from .minmax import NumericMaximum
+from .minmax import NumericMinimum
+from .interfaces import ITokenBucket
+
+@interface.implementer(ITokenBucket)
 class PersistentTokenBucket(object):
 	"""
 	Persistent implementation of the token bucket algorithm.
 	If the ZODB is used from multiple machines, relies on their
 	clocks being relatively synchronized to be effective.
 
-	Initially based on `an ActiveState recipe <http://code.activestate.com/recipes/511490-implementation-of-the-token-bucket-algorithm/>`_
+	Initially based on `an ActiveState recipe 
+	<http://code.activestate.com/recipes/511490-implementation-of-the-token-bucket-algorithm/>`_
 	"""
 
 	def __init__(self, capacity, fill_rate=1.0):
@@ -46,12 +48,14 @@ class PersistentTokenBucket(object):
 		# Conflict resolution: the tokens in the bucket is always
 		# taken as the smallest. Time, of course, marches ever upwards
 		# TODO: This could probably be better
-		self._tokens = minmax.NumericMinimum( self.capacity )
-		self._timestamp = minmax.NumericMaximum( time() )
+		self._timestamp = NumericMaximum( time() )
+		self._tokens = NumericMinimum( self.capacity )
 
 	def consume(self, tokens=1):
-		"""Consume one or more tokens from the bucket. Returns True if there were
-		sufficient tokens otherwise False."""
+		"""
+		Consume one or more tokens from the bucket. Returns True if there were
+		sufficient tokens otherwise False.
+		"""
 		if tokens <= self.tokens:
 			self._tokens -= tokens
 			return True
@@ -73,7 +77,9 @@ class PersistentTokenBucket(object):
 
 	@property
 	def tokens(self):
-		"""The fractional number of tokens currently in the bucket."""
+		"""
+		The fractional number of tokens currently in the bucket.
+		"""
 		now = time()
 		if self._tokens.value < self.capacity:
 			delta = self.fill_rate * (now - self._timestamp)

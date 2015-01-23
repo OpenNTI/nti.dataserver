@@ -5,6 +5,7 @@ Utilities for working with zc.zlibstorage.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -23,8 +24,8 @@ from nti.utils import make_cache_dir
 
 class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 	"""
-	Wraps :class:`ZEO.ClientStorage.ClientStorage` with zc.zlibstorage when using the ``zlibzeo``
-	URI scheme.
+	Wraps :class:`ZEO.ClientStorage.ClientStorage` 
+	with zc.zlibstorage when using the ``zlibzeo`` URI scheme.
 	"""
 
 	def __call__(self,uri):
