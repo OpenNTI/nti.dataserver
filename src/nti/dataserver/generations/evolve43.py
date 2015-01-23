@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+generation = 43
+
 from zope.intid import IIntIds
 
 from zope import component

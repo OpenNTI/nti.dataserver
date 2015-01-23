@@ -32,8 +32,6 @@ class MockDataserver(object):
 			logger.warn( "Using dataserver without a proper ISiteManager configuration." )
 		return resolver.get_object_by_oid( oid_string, ignore_creator=ignore_creator ) if resolver else None
 
-
-
 def migrate(userish, dataserver):
 
 	if 'Everyone' in userish.friendsLists:

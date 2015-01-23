@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+generation = 44
+
 from zope import component
 from zope.event import notify
 from zope.component.hooks import site, setHooks
