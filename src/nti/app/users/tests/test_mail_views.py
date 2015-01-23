@@ -8,8 +8,10 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import contains_string
 
@@ -78,3 +80,16 @@ class TestMailViews(ApplicationLayerTest):
 			user = User.get_user(username)
 			assert_that(IUserProfile(user), has_property('email_verified', is_(True)))
 			assert_that(is_email_verified(username), is_(True))
+			
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_email_verification_link(self):
+		username = 'ichigo'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			User.create_user(username=username, password='temp001',
+						 	 external_value={ u'email':u"ichigo@bleach.org"})
+					
+		extra_environ = self._make_extra_environ(user=username)
+		path = '/dataserver2/users/ichigo'
+		res = self.testapp.get(path, extra_environ=extra_environ, status=200)
+		assert_that( res.json_body,
+					 has_entries( 'Links', has_item( has_entry('rel', 'RequestEmailVerification' ) ) ))

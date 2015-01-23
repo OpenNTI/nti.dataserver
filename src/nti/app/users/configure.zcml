@@ -15,4 +15,10 @@
 	<subscriber handler=".subscribers.new_user_with_not_email_verified"
 				zcml:condition="have devmode" />
 	
+	<!-- Decorators -->
+	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest" />
+
 </configure>
