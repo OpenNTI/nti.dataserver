@@ -69,7 +69,7 @@ class TestMailViews(ApplicationLayerTest):
 			user = User.create_user(username=username, password='temp001',
 						 	 		external_value={ u'email':u"ichigo@bleach.org"})
 			
-			href, _, _ = generate_verification_email_url(user)		
+			href, _, = generate_verification_email_url(user)		
 				
 		extra_environ = self._make_extra_environ(user=username)
 		self.testapp.get(href, extra_environ=extra_environ, status=204)
