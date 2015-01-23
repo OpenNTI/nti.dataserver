@@ -13,7 +13,7 @@ octets outside that range. If ``<MIME-type>`` is omitted, it defaults
 to ``text/plain;charset=US-ASCII``. (As a shorthand, the type can be
 omitted but the charset parameter supplied.)
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -79,6 +79,7 @@ class DataURL(str): # native string on both py2 and py3
 
 _def_charset = b'US-ASCII',
 _marker = object()
+
 def encode(raw_bytes,
 		   mime_type=b'text/plain',
 		   charset=_marker,
