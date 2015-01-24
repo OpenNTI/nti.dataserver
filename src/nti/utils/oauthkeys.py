@@ -3,14 +3,13 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-
-from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
@@ -23,7 +22,6 @@ from .cypher import get_plaintext
 from .interfaces import IOAuthKeys
 
 @interface.implementer(IOAuthKeys)
-@WithRepr
 @EqHash('APIKey', 'SecretKey')
 class OAuthKeys(SchemaConfigured):
 	createDirectFieldProperties(IOAuthKeys)

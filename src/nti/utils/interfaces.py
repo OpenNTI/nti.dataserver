@@ -5,6 +5,7 @@ util interfaces
 
 .. $Id: interfaces.py 22564 2013-08-12 11:13:26Z carlos.sanchez $
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 

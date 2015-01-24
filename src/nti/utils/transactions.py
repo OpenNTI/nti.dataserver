@@ -9,6 +9,7 @@ call this if you need such functionality.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -22,9 +23,10 @@ from ZODB.loglevels import TRACE
 
 import transaction
 from transaction.interfaces import TransactionError
+
 try:
-	from gevent.queue import Full as QFull
 	from gevent import sleep as _sleep
+	from gevent.queue import Full as QFull
 except ImportError: # pragma: no cover # pypy
 	from Queue import Full as QFull
 	from time import sleep as _sleep
@@ -66,7 +68,8 @@ class ObjectDataManager(object):
 
 	_EMPTY_KWARGS = {}
 
-	def __init__(self, target=None, method_name=None, call=None, vote=None, args=(), kwargs=None):
+	def __init__(self, target=None, method_name=None, call=None, 
+				 vote=None, args=(), kwargs=None):
 		"""
 		Construct a data manager. You must pass either the `target` and `method_name` arguments
 		or the `call` argument. (You may always pass the `target` argument, which will
@@ -195,7 +198,6 @@ class _QueuePutDataManager(ObjectDataManager):
 			# So retry logic kicks in?
 			raise QFull()
 
-
 def put_nowait( queue, obj ):
 	"""
 	Transactionally puts `obj` in `queue`. The `obj` will only be visible
@@ -219,6 +221,7 @@ def do( *args, **kwargs ):
 		ObjectDataManager( *args, **kwargs ) )
 
 from ZODB.POSException import StorageError
+
 def _do_commit( tx, description, long_commit_duration ):
 	exc_info = sys.exc_info()
 	try:
@@ -245,6 +248,7 @@ def _do_commit( tx, description, long_commit_duration ):
 		raise
 
 from perfmetrics import Metric
+
 def _timing( operation, name):
 	"""
 	Run the `operation` callable, returning the number of seconds it took.
@@ -285,7 +289,8 @@ class TransactionLoop(object):
 	#: as an instance variable.
 	side_effect_free = False
 
-	def __init__( self, handler, retries=None, sleep=None, long_commit_duration=None ):
+	def __init__( self, handler, retries=None, sleep=None, 
+				 long_commit_duration=None ):
 		self.handler = handler
 		if retries is not None:
 			self.attempts = retries + 1
@@ -293,7 +298,6 @@ class TransactionLoop(object):
 			self.long_commit_duration = long_commit_duration
 		if sleep is not None:
 			self.sleep = sleep
-
 
 	def prep_for_retry( self, number, *args, **kwargs ):
 		"""

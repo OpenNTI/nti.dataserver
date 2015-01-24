@@ -3,7 +3,7 @@
 """
 Various python3/pypy compatibility shims.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -48,8 +48,8 @@ def patch_acquisition():
 		sys.modules[Acquisition.__name__] = Acquisition
 
 try:
-	from gevent import Greenlet
 	from gevent import sleep
+	from gevent import Greenlet
 	from gevent.queue import Queue
 except ImportError:
 	from Queue import Queue

@@ -3,16 +3,17 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.schema.interfaces import InvalidURI
+
 from nti.schema.field import ValidURI as _ValidURI
 
 from . import dataurl
-
-from zope.schema import interfaces as sch_interfaces
 
 class DataURI(_ValidURI):
 	"""
@@ -23,7 +24,7 @@ class DataURI(_ValidURI):
 	def _validate(self, value):
 		super(DataURI,self)._validate(value)
 		if not value.startswith(b'data:'):
-			self._reraise_validation_error( sch_interfaces.InvalidURI(value),
+			self._reraise_validation_error( InvalidURI(value),
 											value,
 											_raise=True )
 

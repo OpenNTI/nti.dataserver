@@ -3,8 +3,9 @@
 """
 Utilities having to do with property definitions and access.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -69,7 +70,8 @@ def dict_read_alias(key_name, doc=None):
 					 doc=doc )
 
 
-def annotation_alias(annotation_name, annotation_property=None, default=None, delete=False, delete_quiet=True, doc=None):
+def annotation_alias(annotation_name, annotation_property=None, default=None, 
+					 delete=False, delete_quiet=True, doc=None):
 	"""
 	Returns a property that is a read/write alias for
 	a value stored as a :class:`zope.annotation.interface.IAnnotations`.
@@ -108,11 +110,13 @@ def annotation_alias(annotation_name, annotation_property=None, default=None, de
 	return property( fget, fset, fdel,
 					 doc=doc )
 
+from functools import update_wrapper
+
 from zope.cachedescriptors.property import readproperty
 readproperty = readproperty # export
-from zope.cachedescriptors.property import CachedProperty as _CachedProperty
+
 from zope.cachedescriptors.property import Lazy as _Lazy
-from functools import update_wrapper
+from zope.cachedescriptors.property import CachedProperty as _CachedProperty
 
 class Lazy(_Lazy):
 	"""
