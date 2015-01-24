@@ -155,9 +155,7 @@ class OrderedSet(collections.MutableSet):
 		return self.map[key]
 
 	def discard(self, key):
-		raise NotImplementedError(
-			"Cannot remove items from an existing OrderedSet"
-		)
+		raise NotImplementedError("Cannot remove items from an existing OrderedSet")
 
 	def __iter__(self):
 		return iter(self.items)

@@ -17,9 +17,9 @@ logger = __import__('logging').getLogger(__name__)
 # we lose access to lingua's possibility of handling
 # plurals, but we weren't doing that yet anyway
 
+from lingua.extractors.xml import ZopeExtractor
 from lingua.extractors.zcml import ZCMLExtractor
 from lingua.extractors.python import PythonExtractor
-from lingua.extractors.xml import ZopeExtractor
 
 class _FakeOptions(object):
 
@@ -35,7 +35,6 @@ def _extract_from(extractor,fileobj, keywords, comment_tags, options):
 	for message in messages:
 		#lineno, funcname, messages, comments
 		yield message.location[1], None, message.msgid, message.comment
-
 
 def extract_python(fileobj, keywords, comment_tags, options):
 	return _extract_from(PythonExtractor, fileobj, keywords, comment_tags, options)

@@ -14,7 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import urlparse
 
 from zope.schema.interfaces import InvalidURI
-from zope.contenttype import parse as ct_parse
+from zope.contenttype.parse import parse as ct_parse
 
 from zope.file import file as zfile
 from zope.file.interfaces import IFile
@@ -23,7 +23,7 @@ from nti.utils import dataurl
 
 def _dict_setattr( instance, name, value ):
 	instance.__dict__[name] = value
-	
+
 def _dict_getattr( instance, name, default=_dict_setattr ):
 	if default is _dict_setattr:
 		try:
@@ -64,8 +64,8 @@ class UrlProperty(object):
 	_setattr = staticmethod(setattr)
 	_delattr = staticmethod(delattr)
 
-	def __init__(self, data_name=None, url_attr_name=None, 
-				 file_attr_name=None, use_dict=False):
+	def __init__( self, data_name=None, url_attr_name=None, 
+				  file_attr_name=None, use_dict=False ):
 		"""
 		:keyword bool use_dict: If set to `True`, then the instance dictionary will be used
 			explicitly for access to the url and file data. This is necessary if this property

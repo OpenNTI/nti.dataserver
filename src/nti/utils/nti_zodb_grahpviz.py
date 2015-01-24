@@ -24,7 +24,8 @@ def get_reference_dumper(refs, multi_refs, name_predicate):
 	filtered_oids = set()
 	def dump_reference(oid, oiddbname, roid, rdbname, rclass):
 		if name_predicate(rclass) and (oiddbname,oid) not in filtered_oids:
-			refs.append( b'%s -> %s\n' % ( _node_name(oid, oiddbname), _node_name( roid, rdbname ) ) )
+			refs.append( b'%s -> %s\n' % ( _node_name(oid, oiddbname), 
+										  _node_name( roid, rdbname ) ) )
 		else:
 			filtered_oids.add( (rdbname, roid) )
 		multi_refs[rdbname].add(roid)
@@ -33,7 +34,8 @@ def get_reference_dumper(refs, multi_refs, name_predicate):
 
 def export_databases(context, name_predicate=None):
 	"""
-	Walks a ZODB databases for everything reachable from ``context`` and dumps the object graph in graphviz .dot format.
+	Walks a ZODB databases for everything reachable from ``context`` and 
+	dumps the object graph in graphviz .dot format.
 	"""
 	f = open('plone.dot', 'w')
 	f.write(b'digraph plone {\n')
@@ -46,6 +48,7 @@ def export_databases(context, name_predicate=None):
 	# database-name => oids referenced
 	multi_refs = collections.defaultdict(set)
 	done_oids = set()
+	
 	# First, the things from this database itself
 	if name_predicate is None:
 		name_predicate = id
@@ -65,13 +68,13 @@ def export_databases(context, name_predicate=None):
 			continue
 		new_conn = conn.get_connection(db_name)
 		for oid in list(oids):
-			_export_database(f, new_conn, oid, reference_callback, name_predicate, done_oids)
+			_export_database(f, new_conn, oid, reference_callback, 
+							 name_predicate, done_oids)
 
 	_refs()
 	f.close()
 
 def _export_database(f, conn, base_oid, reference_callback, name_predicate, done_oids):
-
 
 	for conn_name, oid, p in _walk_database(conn,
 											base_oid,
@@ -131,8 +134,8 @@ def _walk_database(conn, root_oid, reference_callback=None, name_predicate=None,
 			# yield the oid and pickle
 			yield conn_name, oid, p
 
-from ZODB.serialize import Unpickler
 from ZODB.serialize import BytesIO
+from ZODB.serialize import Unpickler
 
 def referencesf(p, oids=None, pickle_db_name="", name_predicate=None):
 	"""
@@ -155,7 +158,8 @@ def referencesf(p, oids=None, pickle_db_name="", name_predicate=None):
 	try:
 		klass = u.load()
 		u.load()
-		if name_predicate and klass and not name_predicate(klass.__module__ + '.' + klass.__name__):
+		if 	name_predicate and klass and \
+			not name_predicate(klass.__module__ + '.' + klass.__name__):
 			return ()
 		# TODO: We would like to filter out __parent__, usually,
 		# so we only go down the tree. Without actually persistently
@@ -165,7 +169,6 @@ def referencesf(p, oids=None, pickle_db_name="", name_predicate=None):
 		u.persistent_load = refs.append
 		u.noload()
 		u.noload()
-
 
 	# Now we have a list of referencs.	Need to convert to list of
 	# oids:
@@ -180,7 +183,8 @@ def referencesf(p, oids=None, pickle_db_name="", name_predicate=None):
 
 		if isinstance(reference, tuple):
 			oid = reference[0]
-			ref_class_name = reference[1].__class__.__module__ + '.' + reference[1].__class__.__name__
+			ref_class_name = reference[1].__class__.__module__ + '.' + \
+							 reference[1].__class__.__name__
 		elif isinstance(reference, (bytes, str)):
 			oid = reference
 		else:

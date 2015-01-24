@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -50,7 +51,8 @@ def make_cache_dir(cache_name, env_var=None):
 							"~/.cache" ): # Linux
 			system_loc = os.path.expanduser( system_loc )
 			if os.path.isdir( system_loc ):
-				result = os.path.join( system_loc, "com.nextthought", "nti.dataserver", cache_name )
+				result = os.path.join( system_loc, "com.nextthought", 
+									   "nti.dataserver", cache_name )
 				break
 
 	if result is None:
@@ -62,7 +64,8 @@ def make_cache_dir(cache_name, env_var=None):
 		pass
 
 	if not os.path.isdir( result ):
-		raise ValueError( "Unable to find cache location for " + cache_name + " using " + result )
+		raise ValueError( "Unable to find cache location for " + cache_name + 
+						  " using " + result )
 	return os.path.abspath( os.path.expanduser( result ) )
 
 def setup_chameleon_cache(config=False):
@@ -78,7 +81,8 @@ def setup_chameleon_cache(config=False):
 	# Set up a cache for these things to make subsequent renders faster
 
 	cache_dir = None
-	if not 'CHAMELEON_CACHE' in os.environ or not os.path.isdir( os.path.expanduser( os.environ['CHAMELEON_CACHE'] ) ):
+	if 	not 'CHAMELEON_CACHE' in os.environ or \
+		not os.path.isdir( os.path.expanduser( os.environ['CHAMELEON_CACHE'] ) ):
 		os.environ['CHAMELEON_CACHE'] = cache_dir = make_cache_dir('chameleon_cache')
 	else:
 		cache_dir = os.environ['CHAMELEON_CACHE']
@@ -97,8 +101,8 @@ def setup_chameleon_cache(config=False):
 				temp_mod.CACHE_DIRECTORY = conf_mod.CACHE_DIRECTORY
 				temp_mod.BaseTemplate.loader = temp_mod._make_module_loader()
 
-			# Creating these guys with debug or autoreload, as Pyramid does when its debug flags are set,
-			# will override this setting
+			# Creating these guys with debug or autoreload, as Pyramid does when its
+			# debug flags are set, will override this setting
 
 	return cache_dir
 setupChameleonCache = setup_chameleon_cache
