@@ -93,3 +93,5 @@ class TestMailViews(ApplicationLayerTest):
 		res = self.testapp.get(path, extra_environ=extra_environ, status=200)
 		assert_that( res.json_body,
 					 has_entries( 'Links', has_item( has_entry('rel', 'RequestEmailVerification' ) ) ))
+		assert_that( res.json_body,
+					 has_entries( 'Links', has_item( has_entry('rel', 'VerifyEmailWithToken' ) ) ))
