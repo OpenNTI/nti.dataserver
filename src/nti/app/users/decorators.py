@@ -46,5 +46,5 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 		
 		ds2 = find_interface(context, IDataserverFolder)
 		link = Link(ds2, rel="VerifyEmailWithToken", method='POST',
-					elements=(VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,))
+					elements=('@@' + VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,))
 		_links.append(link)
