@@ -16,10 +16,10 @@ logger = __import__('logging').getLogger(__name__)
 DCMETA_FILENAME = 'dc_metadata.xml'
 
 from zope.dublincore import xmlmetadata
+from zope.dublincore.interfaces import IWriteZopeDublinCore
 from zope.dublincore.annotatableadapter import partialAnnotatableAdapterFactory
 
 from .interfaces import IDelimitedHierarchyKey
-from zope.dublincore.interfaces import IWriteZopeDublinCore
 
 # For weird reasons I don't understand, Creator and Subject are supposed
 # to be callable objects that are singleton, whereas Contributors is kept
@@ -32,7 +32,6 @@ _xml_to_attr = { 'Creator': 'creators',
 				 'Title': 'title',
 				 'Description': 'description'}
 _scalars = {'Title', 'Description'}
-
 
 def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENAME):
 	dublin_key = bucket.getChildNamed(DCMETA_FILENAME)
@@ -83,7 +82,6 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 
 	return dublin_properties
 
-
 #: A standard adapter for the content packages and bundles
 #: defined in this package (things that implement IDisplayableContent)
 #: and thus have their own attributes
@@ -124,8 +122,6 @@ class _SequenceDirectProperty(object):
 for x in map(str, ['creators', 'subjects', 'contributors']):
 	prop = _SequenceDirectProperty(x, x)
 	setattr( DisplayableContentZopeDublinCoreAdapter, x, prop )
-
-
 
 #: A standard adapter for things that are just descriptive properties
 #: but also annotatable

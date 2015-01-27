@@ -10,6 +10,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	<include package="zope.location" />
+
 	<!-- for IComponentLookup(context) and queryNextUtility to work -->
 	<include package="zope.site" />
 
@@ -20,6 +21,7 @@
 	-->
 	<include package="nti.wref" />
 	<adapter factory=".wref.ContentUnitWeakRef" />
+	
 	<!-- also override for persistent units, which we want to
 		 be referenced by NTIID and looked up in the library. -->
 	<adapter factory=".wref.ContentUnitWeakRef"
@@ -34,6 +36,7 @@
 	<!-- annotations -->
 	<!-- single argument -->
 	<adapter factory=".annotation.annotations" />
+	
 	<!-- context argument -->
 	<adapter factory=".annotation.annotations"
 			 for=".interfaces.IContentUnit *" />
@@ -86,7 +89,6 @@
 
 	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3KeyHrefMapper" />
-
 
 	<include package=".indexed_data" />
 

@@ -31,5 +31,4 @@ def enumeration_from_library(library):
 
 	e = library._enumeration # pylint: disable=I0011,W0212
 	assert IDelimitedHierarchyContentPackageEnumeration.providedBy(e)
-
 	return e

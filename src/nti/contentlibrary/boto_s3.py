@@ -5,6 +5,7 @@ Generic implementations of IContentUnit functions
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,38 +13,41 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 import gzip
+import time
+import rfc822
+import numbers
 import datetime
 from cStringIO import StringIO
+
+import webob.datetime_utils
 
 from zope import interface
 from zope.cachedescriptors.property import Lazy
 
 import repoze.lru
 
-from nti.utils.property import alias
-
-from .interfaces import IS3ContentUnit
-from .interfaces import IS3ContentPackage
-from .interfaces import IS3Bucket
-from .interfaces import IS3Key
-from .contentunit import ContentUnit, ContentPackage
-from . import library
-from . import eclipse
-
-import rfc822
-import time
-import numbers
-import webob.datetime_utils
-
 # We mark all of the classes declared here as
 # non-pickalable, because we don't have their persistence
 # worked out yet.
 from nti.externalization.persistence import NoPickle
 
+from nti.utils.property import alias
+
+from . import eclipse
+from . import library
+
+from .interfaces import IS3Key
+from .interfaces import IS3Bucket
+from .interfaces import IS3ContentUnit
+from .interfaces import IS3ContentPackage
+
+from .contentunit import ContentUnit, ContentPackage
+
 # Make the boto classes fit better with Zope, including making them
 # ILocation like and giving them interfaces
-import boto.s3.bucket
 import boto.s3.key
+import boto.s3.bucket
+import boto.exception
 
 interface.classImplements( boto.s3.bucket.Bucket, IS3Bucket )
 interface.classImplements( boto.s3.key.Key, IS3Key )
@@ -55,8 +59,6 @@ boto.s3.bucket.Bucket.__parent__ = alias( 'connection' )
 
 boto.s3.key.Key.__bases__ += _WithName,
 boto.s3.key.Key.__parent__ = alias( 'bucket' )
-
-import boto.exception
 
 class NameEqualityKey(boto.s3.key.Key):
 	"""
@@ -251,7 +253,6 @@ class _BotoS3BucketContentLibraryEnumeration(library.AbstractContentPackageEnume
 
 	def _possible_content_packages(self):
 		return list(self._bucket.list(delimiter='/'))
-
 
 @NoPickle
 class BotoS3BucketContentLibrary(library.GlobalContentPackageLibrary):

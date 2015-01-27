@@ -5,6 +5,7 @@ Objects for creating IContentLibrary objects based on the filesystem.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -154,7 +155,6 @@ class _FilesystemTimesMixin(object):
 from lxml import etree
 
 from nti.schema.schema import EqHash
-
 
 @interface.implementer(IFilesystemKey,
 					   ILastModified)
@@ -400,7 +400,6 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 	def __repr__(self):
 		return "<%s.%s '%s' '%s'>" % (self.__class__.__module__, self.__class__.__name__,
 									  self.__name__, self.filename)
-
 
 	def __eq__(self, other):
 		try:

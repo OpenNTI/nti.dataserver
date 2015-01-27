@@ -3,19 +3,23 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
+from zope.interface.interfaces import IObjectEvent
+from zope.interface.interfaces import ObjectEvent
+
 from zope.annotation.interfaces import IAnnotatable
+
 from zope.dublincore import interfaces as dub_interfaces
 
-from zope.location.interfaces import IContained as IZContained
 from zope.container.interfaces import IContentContainer
 from zope.container.constraints import contains # If passing strings, they require bytes, NOT unicode, or they fail
 
-from zope.interface.interfaces import IObjectEvent
-from zope.interface.interfaces import ObjectEvent
+from zope.location.interfaces import IContained as IZContained
+
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -24,13 +28,13 @@ from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from persistent.interfaces import IPersistent
 
-from nti.schema.field import Bool
-from nti.schema.field import IndexedIterable
 from nti.schema.field import Int
-from nti.schema.field import Iterable
+from nti.schema.field import Bool
 from nti.schema.field import Number
 from nti.schema.field import Object
+from nti.schema.field import Iterable
 from nti.schema.field import UniqueIterable
+from nti.schema.field import IndexedIterable
 from nti.schema.field import ValidTextLine as TextLine
 
 from nti.ntiids.schema import ValidNTIID
@@ -133,7 +137,6 @@ class IDelimitedHierarchyKey(IDelimitedHierarchyItem):
 		also efficiently support object graphs that reference the same
 		(identical) object multiple times.
 		"""
-
 
 class IContentPackageEnumeration(interface.Interface):
 	"""
@@ -664,7 +667,6 @@ class IFilesystemBucket(IEnumerableDelimitedHierarchyBucket):
 	"""
 
 	absolute_path = TextLine(title="The absolute path on disk of the directory")
-
 
 class IFilesystemKey(IDelimitedHierarchyKey):
 	"""

@@ -17,30 +17,32 @@ from zope import lifecycleevent
 from zope.event import notify
 from zope.container.contained import Contained
 
-from nti.utils.property import alias
-
-from nti.schema.schema import SchemaConfigured
-from nti.schema.fieldproperty import createFieldProperties
-from nti.schema.fieldproperty import createDirectFieldProperties
-from nti.schema.schema import EqHash
-
-from nti.externalization.persistence import NoPickle
-from nti.externalization.representation import WithRepr
-
 # Because we only expect to store persistent versions
 # of these things, and we expect to update them directly
 # in place, we make them attribute annotatable.
 from zope.annotation.interfaces import IAttributeAnnotatable
 
-from .interfaces import IContentPackageBundle
-from .interfaces import IContentPackageBundleLibrary
-from .interfaces import IDisplayableContent
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
+
+from nti.externalization.persistence import NoPickle
+from nti.externalization.representation import WithRepr
+
+from nti.utils.property import alias
+
+from nti.schema.schema import EqHash
+from nti.schema.schema import SchemaConfigured
+from nti.schema.fieldproperty import createFieldProperties
+from nti.schema.fieldproperty import createDirectFieldProperties
 
 from nti.wref.interfaces import IWeakRef
 
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
-from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 from nti.zodb.persistentproperty import PersistentPropertyHolder
+
+from .interfaces import IDisplayableContent
+from .interfaces import IContentPackageBundle
+from .interfaces import IContentPackageBundleLibrary
 
 from .presentationresource import DisplayableContentMixin
 
@@ -189,15 +191,17 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 _BUNDLE_META_NAME = "bundle_meta_info.json"
 BUNDLE_META_NAME = _BUNDLE_META_NAME # export
 
-from .interfaces import ISyncableContentPackageBundleLibrary
-from .interfaces import IEnumerableDelimitedHierarchyBucket
-from .interfaces import IDelimitedHierarchyKey
-from .interfaces import IContentPackageLibrary
-from .interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
+from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import IndexedIterable
-from nti.ntiids.schema import ValidNTIID
+
 from zope.schema.fieldproperty import FieldProperty
+
+from .interfaces import IContentPackageLibrary
+from .interfaces import IDelimitedHierarchyKey
+from .interfaces import IEnumerableDelimitedHierarchyBucket
+from .interfaces import ISyncableContentPackageBundleLibrary
+from .interfaces import ContentPackageBundleLibraryModifiedOnSyncEvent
 
 from .wref import contentunit_wref_to_missing_ntiid
 
@@ -266,9 +270,10 @@ class _ContentBundleMetaInfo(object):
 
 		return tuple(cps)
 
+from nti.externalization.internalization import validate_named_field_value
+
 from nti.zodb import readCurrent as _readCurrent
 
-from nti.externalization.internalization import validate_named_field_value
 from .dublincore import DCMETA_FILENAME
 from .dublincore import read_dublincore_from_named_key
 

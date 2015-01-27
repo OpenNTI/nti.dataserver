@@ -12,17 +12,18 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import functools
-from nti.schema.schema import EqHash
 
 from zope import component
 from zope import interface
 
-from .interfaces import IContentUnit
-from .interfaces import IContentPackageLibrary
+from nti.schema.schema import EqHash
+
+from nti.ntiids.ntiids import validate_ntiid_string
 
 from nti.wref.interfaces import IWeakRef
 
-from nti.ntiids.ntiids import validate_ntiid_string
+from .interfaces import IContentUnit
+from .interfaces import IContentPackageLibrary
 
 @component.adapter(IContentUnit)
 @interface.implementer(IWeakRef)
@@ -53,7 +54,6 @@ class ContentUnitWeakRef(object):
 		assert state[0] == 1
 		self._ntiid = state[1]
 
-
 def contentunit_wref_to_missing_ntiid(ntiid):
 	"""
 	If you have an NTIID, and have no library to look it up
@@ -67,5 +67,4 @@ def contentunit_wref_to_missing_ntiid(ntiid):
 	validate_ntiid_string(ntiid)
 	wref = ContentUnitWeakRef.__new__(ContentUnitWeakRef)
 	wref._ntiid = ntiid #pylint:disable=I0011,W0212
-
 	return wref

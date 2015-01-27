@@ -5,24 +5,26 @@ Objects for working with Eclipse index representations of content packages.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # This module is badly named now
 
 logger = __import__('logging').getLogger(__name__)
-from ZODB.loglevels import TRACE
+
+from urllib import unquote
+from urlparse import urlparse
 
 from lxml import etree
-from urlparse import urlparse
-from urllib import unquote
 
 from zope import interface
-from .dublincore import read_dublincore_from_named_key
-
-from . import interfaces as lib_interfaces
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
+
+from .dublincore import read_dublincore_from_named_key
+
+from .interfaces import ILegacyCourseConflatedContentPackage
 
 ###
 ## Constants for file names we know and care about
@@ -30,16 +32,20 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 #: The main XML file found inside the content package, giving the
 #: layout of the topics and sections.
 TOC_FILENAME = 'eclipse-toc.xml'
+
 #: A possibly-missing ZIP file containing the downloadable content.
 ARCHIVE_FILENAME = 'archive.zip'
+
 #: A glossary file applicable to the entire content.
 #: .. todo:: In the future, if we need to, we can add a node property
 #: for sub-glossaries specific to just portions of the content
 MAIN_CSV_CONTENT_GLOSSARY_FILENAME = 'nti_content_glossary.csv'
+
 #: Assessment items for this entire content
 ASSESSMENT_INDEX_FILENAME = 'assessment_index.json'
 
 _toc_item_attrs = ('NTIRelativeScrollHeight','label', 'ntiid', 'href')
+
 # Note that we preserve href as a string, and manually
 # set a 'key' property for BWC
 _toc_item_key_attrs = ('icon','thumbnail')
@@ -163,7 +169,7 @@ def EclipseContentPackage( toc_entry,
 
 	try:
 		root = toc_entry.key.readContentsAsETree()
-	except (IOError,etree.Error):
+	except (IOError, etree.Error):
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
 
@@ -186,7 +192,7 @@ def EclipseContentPackage( toc_entry,
 	if isCourse is not None:
 		isCourse = False if not isCourse else str(isCourse).lower() in ('1', 'true', 'yes', 'y', 't')
 	if isCourse:
-		interface.alsoProvides(content_package, lib_interfaces.ILegacyCourseConflatedContentPackage)
+		interface.alsoProvides(content_package, ILegacyCourseConflatedContentPackage)
 		content_package.isCourse = isCourse
 		courses = root.xpath('/toc/course')
 		if not courses or len(courses) != 1:
@@ -220,5 +226,4 @@ def EclipseContentPackage( toc_entry,
 
 
 	read_dublincore_from_named_key(content_package, content_package.root)
-
 	return content_package
