@@ -5,31 +5,43 @@ Support for externalizing portions of the library.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from urlparse import urljoin
-import anyjson as json
-import collections
 import six
 import urllib
+import collections
+from urlparse import urljoin
+
+import anyjson as json
 
 from zope import interface
 from zope import component
 
 from nti.externalization.interfaces import IExternalObject
-from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.datastructures import InterfaceObjectIO
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import to_standard_external_dictionary
 
-from . import interfaces
+from .interfaces import IS3Key
+from .interfaces import IFilesystemKey
+from .interfaces import IS3ContentUnit
+from .interfaces import IContentPackage
+from .interfaces import IFilesystemBucket
+from .interfaces import IContentPackageBundle
+from .interfaces import IContentPackageLibrary
 from .interfaces import IContentUnitHrefMapper
+from .interfaces import IFilesystemContentUnit
+from .interfaces import IAbsoluteContentUnitHrefMapper
+from .interfaces import ILegacyCourseConflatedContentPackage
+from .interfaces import IDisplayablePlatformPresentationResources
 
 @interface.implementer(IExternalObject)
-@component.adapter(interfaces.IContentPackageLibrary)
+@component.adapter(IContentPackageLibrary)
 class _ContentPackageLibraryExternal(object):
 	def __init__( self, library ):
 		self.library = library
@@ -88,7 +100,7 @@ root_url_of_unit = _root_url_of_unit
 DEFAULT_PRESENTATION_PROPERTIES_FILE = 'nti_default_presentation_properties.json'
 
 @interface.implementer(IExternalObject)
-@component.adapter(interfaces.IContentPackage)
+@component.adapter(IContentPackage)
 class _ContentPackageExternal(object):
 
 	def __init__( self, package ):
@@ -123,7 +135,6 @@ class _ContentPackageExternal(object):
 			result['archive'] = IContentUnitHrefMapper( self.package.archive_unit ).href
 			result['Archive Last Modified'] = self.package.archive_unit.lastModified
 
-
 		# Attach presentation properties. This is here for several reasons:
 		# - This information is not normative, not used by the server,
 		#    and thus not part of the IContentPackage interface;
@@ -152,12 +163,10 @@ class _ContentPackageExternal(object):
 			setattr( self.package, presentation_properties_cache_name, presentation_properties )
 
 		result['PresentationProperties'] = presentation_properties
-
 		result['PlatformPresentationResources'] = toExternalObject(self.package.PlatformPresentationResources)
 		return result
 
-
-@component.adapter(interfaces.ILegacyCourseConflatedContentPackage)
+@component.adapter(ILegacyCourseConflatedContentPackage)
 class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 
 	def toExternalObject( self, **kwargs ):
@@ -168,10 +177,10 @@ class _LegacyCourseConflatedContentPackageExternal(_ContentPackageExternal):
 		result['courseTitle'] = self.package.courseTitle
 		return result
 
-@component.adapter(interfaces.IContentPackageBundle)
+@component.adapter(IContentPackageBundle)
 class _ContentBundleIO(InterfaceObjectIO):
 
-	_ext_iface_upper_bound = interfaces.IContentPackageBundle
+	_ext_iface_upper_bound = IContentPackageBundle
 
 	def toExternalObject(self, *args, **kwargs):
 		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
@@ -182,14 +191,13 @@ class _ContentBundleIO(InterfaceObjectIO):
 
 		return result
 
-
 	def updateFromExternalObject(self, *args, **kwargs):
 		raise NotImplementedError()
 
-@component.adapter(interfaces.IDisplayablePlatformPresentationResources)
+@component.adapter(IDisplayablePlatformPresentationResources)
 class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
 
-	_ext_iface_upper_bound = interfaces.IDisplayablePlatformPresentationResources
+	_ext_iface_upper_bound = IDisplayablePlatformPresentationResources
 
 	def toExternalObject(self, *args, **kwargs):
 		result = InterfaceObjectIO.toExternalObject(self, *args, **kwargs)
@@ -200,14 +208,13 @@ class _DisplayablePlatformPresentationResourcesIO(InterfaceObjectIO):
 
 		return result
 
-
 	def updateFromExternalObject(self, *args, **kwargs):
 		raise NotImplementedError()
 
 ### key/path-to-URL-mapping
 
 @interface.implementer(IContentUnitHrefMapper)
-@component.adapter(interfaces.IFilesystemContentUnit)
+@component.adapter(IFilesystemContentUnit)
 class _FilesystemContentUnitHrefMapper(object):
 	href = None
 
@@ -223,22 +230,21 @@ class _FilesystemContentUnitHrefMapper(object):
 			self.href = IContentUnitHrefMapper( key ).href
 
 from zope.traversing.api import joinPath
-from zope.location.location import LocationIterator
 from zope.location.interfaces import IRoot
+from zope.location.location import LocationIterator
 
 @interface.implementer(IContentUnitHrefMapper)
-@component.adapter(interfaces.IFilesystemKey)
+@component.adapter(IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
+	
 	href = None
 
 	def __init__(self, key):
 		parent_path = IContentUnitHrefMapper(key.bucket).href
 		self.href = _path_join( parent_path, key.name )
 
-
-
 @interface.implementer(IContentUnitHrefMapper)
-@component.adapter(interfaces.IFilesystemBucket)
+@component.adapter(IFilesystemBucket)
 class _FilesystemBucketHrefMapper(object):
 
 	href = None
@@ -255,7 +261,6 @@ class _FilesystemBucketHrefMapper(object):
 				if name.endswith('/'):
 					name = name[:-1]
 				return name
-
 
 	def __init__(self, bucket):
 		parents = []
@@ -300,17 +305,17 @@ class _FilesystemBucketHrefMapper(object):
 		if not self.href.endswith('/'):
 			self.href += '/'
 
-
-@interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
-@component.adapter(interfaces.IS3ContentUnit)
+@interface.implementer(IAbsoluteContentUnitHrefMapper)
+@component.adapter(IS3ContentUnit)
 class _S3ContentUnitHrefMapper(object):
+	
 	href = None
 
 	def __init__(self, unit):
 		self.href = IContentUnitHrefMapper( unit.key ).href
 
-@interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
-@component.adapter(interfaces.IS3Key)
+@interface.implementer(IAbsoluteContentUnitHrefMapper)
+@component.adapter(IS3Key)
 class _S3KeyHrefMapper(object):
 	"""
 	Produces HTTP URLs for keys in buckets.
@@ -323,7 +328,7 @@ class _S3KeyHrefMapper(object):
 		# don't match for bucket.name host
 		self.href = 'http://' + key.bucket.name + '/' + _path_maybe_quote(key.key)
 
-@interface.implementer(interfaces.IAbsoluteContentUnitHrefMapper)
+@interface.implementer(IAbsoluteContentUnitHrefMapper)
 class CDNS3KeyHrefMapper(object):
 	"""
 	Produces protocol-relative URLs for keys in S3 buckets.
@@ -365,10 +370,10 @@ def map_all_buckets_to( cdn_name, _global=True ):
 		site_man = component.getSiteManager()
 
 	# manually clear any previous registration
-	site_man.unregisterAdapter( required=(interfaces.IS3Key,),
-								provided=interfaces.IAbsoluteContentUnitHrefMapper )
+	site_man.unregisterAdapter( required=(IS3Key,),
+								provided=IAbsoluteContentUnitHrefMapper )
 	# Note that we only need to register for the key, as the IS3ContentUnit mapper
 	# simply maps the unit's key
 	site_man.registerAdapter( CDNS3KeyHrefMapperFactory( cdn_name ),
-							  required=(interfaces.IS3Key,),
-							  provided=interfaces.IAbsoluteContentUnitHrefMapper )
+							  required=(IS3Key,),
+							  provided=IAbsoluteContentUnitHrefMapper )

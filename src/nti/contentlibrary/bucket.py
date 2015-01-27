@@ -13,12 +13,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from .interfaces import IDelimitedHierarchyBucket
-from .interfaces import IDelimitedHierarchyKey
-
 from nti.utils.property import alias
 
 from nti.schema.schema import EqHash
+
+from .interfaces import IDelimitedHierarchyKey
+from .interfaces import IDelimitedHierarchyBucket
 
 @EqHash('bucket', 'name')
 class _AbstractDelimitedHierarchyObject(object):
@@ -103,10 +103,13 @@ class _AbstractDelimitedHierarchyObject(object):
 class AbstractBucket(_AbstractDelimitedHierarchyObject):
 	pass
 
-from lxml import etree
-from yaml.scanner import ScannerError
-from nti.externalization.interfaces import IExternalRepresentationReader
 from zope import component
+
+from lxml import etree
+
+from yaml.scanner import ScannerError
+
+from nti.externalization.interfaces import IExternalRepresentationReader
 
 @interface.implementer(IDelimitedHierarchyKey)
 class AbstractKey(_AbstractDelimitedHierarchyObject):

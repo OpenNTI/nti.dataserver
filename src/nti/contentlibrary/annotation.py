@@ -26,27 +26,24 @@ logger = __import__('logging').getLogger(__name__)
 
 import functools
 
-
 from zope import interface
 from zope import component
 
-from .interfaces import IContentUnitAnnotationUtility
-from .interfaces import IContentUnit
-
-from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.annotation.interfaces import IAnnotations
-
-from nti.externalization.persistence import NoPickle
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 # Not only are we modeled on zope.principalannotation, we
 # can use its implementation directly, just changing
 # out how we get NTIIDs....
 # ...sadly, that's not quite true, because we have to customize
 # the interface we look for
-
-from zope.principalannotation.utility import PrincipalAnnotationUtility
 from zope.principalannotation.utility import Annotations
+from zope.principalannotation.utility import PrincipalAnnotationUtility
 
+from nti.externalization.persistence import NoPickle
+
+from .interfaces import IContentUnit
+from .interfaces import IContentUnitAnnotationUtility
 
 @NoPickle
 class _WithId(object):

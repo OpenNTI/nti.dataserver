@@ -12,18 +12,18 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.component.hooks import site
 
-from .interfaces import IContentPackageLibrary
-from .interfaces import ISiteLibraryFactory
-from .interfaces import IPersistentContentPackageLibrary
-from .interfaces import IContentUnitAnnotationUtility
+from nti.site.localutility import install_utility
+from nti.site.localutility import install_utility_on_registration
+from nti.site.localutility import uninstall_utility_on_unregistration
 
 from .annotation import ContentUnitAnnotationUtility
 
-from zope.component.hooks import site
-from nti.site.localutility import install_utility_on_registration
-from nti.site.localutility import uninstall_utility_on_unregistration
-from nti.site.localutility import install_utility
+from .interfaces import ISiteLibraryFactory
+from .interfaces import IContentPackageLibrary
+from .interfaces import IPersistentContentPackageLibrary
+from .interfaces import IContentUnitAnnotationUtility
 
 _LIBRARY_NAME = '++etc++library'
 
@@ -61,7 +61,6 @@ def install_site_content_library(local_site_manager, _=None):
 
 	local_site = local_site_manager.__parent__
 	assert bool(local_site.__name__), "sites must be named"
-
 
 	site_library_factory = ISiteLibraryFactory(global_library, None)
 	if site_library_factory is None:

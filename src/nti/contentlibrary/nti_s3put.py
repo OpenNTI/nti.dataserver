@@ -96,16 +96,19 @@ SYNOPSIS
 	 and python/emacs configs..
 """
 
-import getopt, sys, os
+import os
+import sys
+import gzip
+import getopt
+from cStringIO import StringIO
+
 import boto
 
 import mimetypes
+
 from zope.configuration import xmlconfig
 
 import nti.contentfragments
-
-import gzip
-from cStringIO import StringIO
 
 def usage():
 	print( usage_string )
@@ -129,6 +132,7 @@ def main():
 				)
 	except:
 		usage()
+
 	ignore_dirs = []
 	aws_access_key_id = None
 	aws_secret_access_key = None
@@ -183,7 +187,7 @@ def main():
 	if len(args) != 1:
 		print( usage() )
 
-	xmlconfig.file( package=nti.contentfragments, name="configure.zcml" )
+	xmlconfig.file(package=nti.contentfragments, name="configure.zcml" )
 
 	path = os.path.expanduser(args[0])
 	path = os.path.expandvars(path)
@@ -248,16 +252,19 @@ def main():
 		print( usage() )
 
 #: Content types we will gzip on upload
-GZIP_TYPES = ('text/csv', 'text/css', 'text/html', 'text/xml', 'application/xml', 'application/json', 'application/javascript')
+GZIP_TYPES = ('text/csv', 'text/css', 'text/html', 'text/xml', 'application/xml', 
+			  'application/json', 'application/javascript')
 
 #: Anything we explicitly want to exclude from gzipping, like .json
 #: data
 NOT_GZIP_EXT = ()
 
 #: Unix dotfiles we will always ignore
-IGNORED_DOTFILES = ( '.svn', '.git', '.DS_Store', '.coverage', '.noseids', '.dir_locals.el', '.installed.cfg' )
+IGNORED_DOTFILES = ('.svn', '.git', '.DS_Store', '.coverage', '.noseids', 
+					'.dir_locals.el', '.installed.cfg' )
 
-def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_redundancy=None, headers=None ):
+def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, 
+				  reduced_redundancy=None, headers=None ):
 	if headers is not None:
 		headers = dict(headers)
 	else:
@@ -285,7 +292,6 @@ def _upload_file( key, fullpath, cb=None, num_cb=None,  policy=None, reduced_red
 										headers=headers )
 
 	return headers
-
 
 if __name__ == "__main__":
 	main()

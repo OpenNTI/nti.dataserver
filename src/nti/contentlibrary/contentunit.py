@@ -5,6 +5,7 @@ Generic implementations of IContentUnit functions
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,13 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.container.contained import Contained
 
-from .interfaces import IContentUnit
-from .interfaces import IContentPackage
-from .interfaces import IPotentialLegacyCourseConflatedContentPackage
-from .interfaces import IDisplayableContent
-from .interfaces import ILegacyCourseConflatedContentPackage
-
-from .presentationresource import DisplayableContentMixin
+from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 from nti.utils.property import alias
 from nti.utils.property import read_alias
@@ -28,7 +23,13 @@ from nti.schema.schema import PermissiveSchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
+from .interfaces import IContentUnit
+from .interfaces import IContentPackage
+from .interfaces import IDisplayableContent
+from .interfaces import ILegacyCourseConflatedContentPackage
+from .interfaces import IPotentialLegacyCourseConflatedContentPackage
+
+from .presentationresource import DisplayableContentMixin
 
 @interface.implementer(IContentUnit)
 class ContentUnit(PermissiveSchemaConfigured,
@@ -80,7 +81,6 @@ class ContentUnit(PermissiveSchemaConfigured,
 			if not k.startswith('_v'):
 				self_dict[str(k)] = v
 
-
 @interface.implementer(IPotentialLegacyCourseConflatedContentPackage)
 class ContentPackage(ContentUnit,
 					 DisplayableContentMixin):
@@ -117,7 +117,6 @@ class ContentPackage(ContentUnit,
 	#: clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
-
 # TODO: We need to do caching of does_sibling_entry_exist and read_contents.
 # does_exist is used by appserver/censor_policies on every object creation/edit
 # which quickly adds up.
@@ -125,6 +124,7 @@ class ContentPackage(ContentUnit,
 # with all content units, caching questions for 10 minutes.
 # read_contents is not cached
 import repoze.lru
+
 _exist_cache = repoze.lru.ExpiringLRUCache(100000, default_timeout=600)  # this one is big because each entry is small
 _content_cache = repoze.lru.ExpiringLRUCache(1000, default_timeout=600)  # this one is smaller because each entry is bigger
 
