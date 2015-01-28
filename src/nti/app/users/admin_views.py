@@ -9,6 +9,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import isodate
+from datetime import datetime
+
 from zope import component
 
 from pyramid.view import view_config
@@ -25,8 +28,13 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.utils.maps import CaseInsensitiveDict
+
+from nti.zodb.containers import bit64_int_to_time
+
+ITEMS = StandardExternalFields.ITEMS
 
 @view_config(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -42,13 +50,14 @@ class GetUserBlacklistView(AbstractAuthenticatedView):
 		result = LocatedExternalDict()
 		result.__name__ = self.request.view_name
 		result.__parent__ = self.request.context
-		result['Items'] = vals = {}
+		result[ITEMS] = vals = {}
 
 		count = 0
 		for key, val in list(user_blacklist):
-			vals[key] = val
+			val = datetime.fromtimestamp(bit64_int_to_time(val))
+			vals[key] = isodate.datetime_isoformat(val)
 			count += 1
-		result['Count'] = count
+		result['Total'] = result['Count'] = count
 		return result
 
 @view_config(route_name='objects.generic.traversal',
