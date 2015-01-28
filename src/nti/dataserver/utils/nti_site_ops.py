@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -49,14 +50,15 @@ def list_sites():
 		for k,v in site.items():
 			print("\t", k, v)
 	
-def remove_site(name, verbose=True, library=True):
+def remove_sites(names=(), verbose=True, library=True):
 	if library:
 		pack_lib = component.queryUtility(IContentPackageLibrary)
 		getattr(pack_lib, 'contentPackages', None)		
 	sites_folder = component.getUtility(IEtcNamespace, name='hostsites')
-	del sites_folder[name]
-	if verbose:
-		print('Site ' + name + ' removed')
+	for name in names or ():
+		del sites_folder[name]
+		if verbose:
+			print('Site ' + name + ' removed')
 		
 def info_site(name):
 	
@@ -122,7 +124,8 @@ def main():
 
 	site_group.add_argument('--remove',
 							 dest='remove',
-							 help="remove a site")
+							 nargs="+",
+							 help="remove sites")
 
 	site_group.add_argument('--info',
 							 dest='info',
@@ -141,7 +144,7 @@ def main():
 							context=context,
 							minimal_ds=True,
 							verbose=args.verbose,
-							function=lambda: remove_site(args.remove, args.verbose))
+							function=lambda: remove_sites(args.remove, args.verbose))
 	elif args.info:
 		context = create_context(env_dir)
 		conf_packages = (conf_package,)
