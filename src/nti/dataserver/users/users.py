@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -27,18 +28,21 @@ from zope import interface
 from zope import component
 from zope import annotation
 from zope import lifecycleevent
+
 from zope.component.factory import Factory
-from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
 from zope.cachedescriptors.property import cachedIn
 
 from zope.deprecation import deprecated
+
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
 from zope.location.interfaces import ISublocations
 
 from zope.password.interfaces import IPasswordManager
 
 from ZODB.POSException import POSError
+
 from ZODB.interfaces import IConnection, IBroken
 
 from z3c.password import interfaces as pwd_interfaces
@@ -1045,10 +1049,8 @@ class User(Principal):
 				for v in self.containers.containers.itervalues()
 				if INamedContainer.providedBy( v ) )
 
-	def iter_intids(self, include_stream=True, stream_only=False,
-					include_shared=False, only_ntiid_containers=False):
-		seen = set()
-		intid = component.getUtility( zope.intid.IIntIds )
+	def iter_objects(self, include_stream=True, stream_only=False,
+					 include_shared=False, only_ntiid_containers=False):
 		
 		def _loop(container, unwrap=False):
 			if hasattr(container, 'values'):
@@ -1056,52 +1058,64 @@ class User(Principal):
 			else:
 				collection = container
 			for obj in collection:
-				uid = None
 				try:
 					obj = self.containers._v_unwrap(obj) if unwrap else obj
 					if IBroken.providedBy(obj):
 						logger.error("ignoring broken object %s", type(obj))
 					else:
-						uid = intid.queryId(obj)
-						if uid is not None and uid not in seen:
-							seen.add(uid)
-							yield uid
+						yield obj
 				except POSError:
 					logger.error("ignoring broken object %s", type(obj))
 
 		if not stream_only:
 			for name, container in self.containers.iteritems():
 				if not only_ntiid_containers or self._is_container_ntiid(name):
-					for uid in _loop(container, True):
-						yield uid
+					for obj in _loop(container, True):
+						yield obj
 				
 		if include_stream:
 			for name, container in self.streamCache.iteritems():
 				if not only_ntiid_containers or self._is_container_ntiid(name):
-					for uid in _loop(container, False):
-						yield uid
+					for obj in _loop(container, False):
+						yield obj
 
 		if include_shared:
 			fl_set = {x for x in self.friendsLists.values() 
-					  if IDynamicSharingTarget.providedBy(x)}
+					  if IDynamicSharingTarget.providedBy(x) }
+
 			interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
 			for com in interesting_dynamic_things:
 				if not stream_only and hasattr( com, 'containersOfShared' ):
 					for name, container in com.containersOfShared.items():
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
-							for uid in _loop(container, False):
-								yield uid
+							for obj in _loop(container, False):
+								yield obj
 							
 				if include_stream and hasattr( com, 'streamCache' ):
 					for name, container in com.streamCache.iteritems():
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
-							for uid in _loop(container, False):
-								yield uid
-	
-	#@deprecate("No replacement; not needed") # noisy if enabled; logic in flagging_views still needs its existence until rewritten
+							for obj in _loop(container, False):
+								yield obj
+
+	def iter_intids(self, include_stream=True, stream_only=False,
+					include_shared=False, only_ntiid_containers=False):
+		seen = set()
+		intid = component.getUtility( zope.intid.IIntIds )
+		for obj in self.iter_objects(include_stream=include_stream, 
+									 stream_only=stream_only,
+									 include_shared=include_shared,
+									 only_ntiid_containers=only_ntiid_containers):
+			
+				uid = intid.queryId(obj)
+				if uid is not None and uid not in seen:
+					seen.add(uid)
+					yield uid
+
 	def updates( self ):
 		"""
 		This is officially deprecated now.
+		
+		noisy if enabled; logic in flagging_views still needs its existence until rewritten
 		"""
 		return _NOOPCM
 
