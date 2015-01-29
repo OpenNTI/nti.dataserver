@@ -1757,14 +1757,9 @@ class IPrincipalMetadataObjects(IIntIdIterable):
 
 	These will typically be registered as subscription adapters
 	"""
+
 	def iter_objects():
 		pass
-
-class IPrincipalMetadataObjectsIntIds(IIntIdIterable):
-	"""
-	subscriber for object int ids that can be indexed in the metadata catalog for a principal
-	"""
-	pass
 
 class INotableFilter(interface.Interface):
 	"""
