@@ -13,20 +13,20 @@ from zope.interface.interfaces import ObjectEvent
 
 from zope.annotation.interfaces import IAnnotatable
 
+from zope.container.constraints import contains # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.container.interfaces import IContentContainer
+
 from zope.dublincore import interfaces as dub_interfaces
 
-from zope.container.interfaces import IContentContainer
-from zope.container.constraints import contains # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.location.interfaces import IContained as IZContained
 
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
-from zope.lifecycleevent import ObjectModifiedEvent
+from persistent.interfaces import IPersistent
 
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
-
-from persistent.interfaces import IPersistent
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
@@ -309,6 +309,17 @@ class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	Content package library synced event.
 	"""
 
+class IAllContentPackageLibrariesWillSyncEvent(interface.Interface):
+	"""
+	An event fired before all ContentPackage Libraries are synced
+	"""
+	
+@interface.implementer(IAllContentPackageLibrariesWillSyncEvent)
+class AllContentPackageLibrariesWillSyncEvent(object):
+	"""
+	Before all Content package libraries are synced event.
+	"""
+	
 class IAllContentPackageLibrariesDidSyncEvent(interface.Interface):
 	"""
 	An event fired when all ContentPackage Libraries have been synced

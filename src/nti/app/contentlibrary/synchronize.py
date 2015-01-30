@@ -22,6 +22,7 @@ from zope.traversing.interfaces import IEtcNamespace
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
+from nti.contentlibrary.interfaces import AllContentPackageLibrariesWillSyncEvent
 
 from nti.contentlibrary.subscribers import install_site_content_library
 
@@ -29,6 +30,9 @@ from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
 def synchronize(sleep=None):
+	# notify
+	notify(AllContentPackageLibrariesWillSyncEvent())
+	
 	# First, synchronize the policies, make sure everything is all nice and installed.
 	synchronize_host_policies()
 
