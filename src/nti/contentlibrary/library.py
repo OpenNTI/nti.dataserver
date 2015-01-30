@@ -193,7 +193,7 @@ class AbstractContentPackageLibrary(object):
 			# XXX CS/JZ, 1-29-15 We need this before event firings because some code
 			# (at least question_map.py used to) relies on getting the new content units
 			# via pathToNtiid.
-			# TODO Verify nothing else is doing so.
+			# TODO: Verify nothing else is doing so.
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -519,7 +519,6 @@ def EmptyLibrary(prefix=''):
 	A library that is perpetually empty.
 	"""
 	return GlobalContentPackageLibrary(_EmptyEnumeration(), prefix=prefix)
-
 
 class PersistentContentPackageLibrary(Persistent,
 									  AbstractContentPackageLibrary):
