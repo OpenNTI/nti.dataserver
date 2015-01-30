@@ -218,11 +218,9 @@ class AbstractContentPackageLibrary(object):
 				old.__parent__ = None
 
 			for new, old in changed:
-				# Note that this is the special event that shows
-				# both objects.
+				# Note that this is the special event that shows both objects.
 				new.__parent__ = self
-				if getattr( new, '_p_jar', None ) is None:
-					IConnection( self ).add( new )
+				IConnection( self ).add( new ) # new is a created object
 				notify(interfaces.ContentPackageReplacedEvent(new, old))
 
 			for new in added:
@@ -230,6 +228,10 @@ class AbstractContentPackageLibrary(object):
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
 
+			# after updating remove parent reference for old objects
+			for _, old in changed:
+				old.__parent__ = None # Do we call lifecycleevent.removed(old) ?
+				
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
 												   'contentPackages')
