@@ -17,6 +17,8 @@ import warnings
 
 from repoze.lru import LRUCache
 
+from ZODB.interfaces import IConnection
+
 from zope import interface
 from zope import lifecycleevent
 
@@ -188,6 +190,10 @@ class AbstractContentPackageLibrary(object):
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
 		if something_changed or never_synced:
+			# XXX CS/JZ, 1-29-15 We need this before event firings because some code
+			# (at least question_map.py used to) relies on getting the new content units
+			# via pathToNtiid.
+			# TODO Verify nothing else is doing so.
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -215,6 +221,8 @@ class AbstractContentPackageLibrary(object):
 				# Note that this is the special event that shows
 				# both objects.
 				new.__parent__ = self
+				if getattr( new, '_p_jar', None ) is None:
+					IConnection( self ).add( new )
 				notify(interfaces.ContentPackageReplacedEvent(new, old))
 
 			for new in added:
@@ -380,7 +388,8 @@ class AbstractContentPackageLibrary(object):
 
 	@property
 	def lastSynchronized(self):
-		return getattr(self._enumeration, 'lastSynchronized', 0)
+		result = getattr(self._enumeration, 'lastSynchronized', 0)
+		return result
 
 	@CachedProperty("lastSynchronized")
 	def _v_path_to_ntiid_cache(self):
