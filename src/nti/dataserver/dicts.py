@@ -3,9 +3,9 @@
 """
 Implementations of persistent dicts with various qualities.
 
-$Id$
+.. $Id$
 """
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -13,25 +13,27 @@ logger = __import__('logging').getLogger(__name__)
 import time
 import collections
 
-from zope import interface
-
 import zc.dict
 
-from . import interfaces
+from zope import interface
+
+from .interfaces import ILastModified
 from .containers import _tx_key_insen
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb.minmax import NumericMaximum, NumericPropertyDefaultingToZero
 
-@interface.implementer(interfaces.ILastModified)
-class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):
+@interface.implementer(ILastModified)
+class LastModifiedDict(PersistentPropertyHolder, zc.dict.Dict):
 	"""
 	A BTree-based persistent dictionary that maintains the
 	data required by :class:`interfaces.ILastModified`. Since this is not a
 	:class:`zope.container.interfaces.IContainer`, this is done when this object is modified.
 	"""
 
-	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'), NumericMaximum, as_number=True )
+	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'),
+												   NumericMaximum,
+												   as_number=True )
 
 	def __init__( self, *args, **kwargs ):
 		self.createdTime = time.time()
@@ -42,7 +44,9 @@ class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):
 		return self.lastModified
 
 	def updateLastModIfGreater( self, t ):
-		"Only if the given time is (not None and) greater than this object's is this object's time changed."
+		"""
+		Only if the given time is (not None and) greater than this object's is this object's time changed.
+		"""
 		if t is not None and t > self.lastModified:
 			self.lastModified = t
 		return self.lastModified
@@ -66,9 +70,12 @@ class LastModifiedDict(PersistentPropertyHolder,zc.dict.Dict):
 	def __setitem__( self, key, value ):
 		super(LastModifiedDict,self).__setitem__( key, value )
 		self.updateLastMod()
+		
+	def __delitem__( self, key ):
+		super(LastModifiedDict,self).__delitem__( key )
+		self.updateLastMod()
 
 collections.Mapping.register(zc.dict.Dict)
-
 
 class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 	"""
@@ -81,6 +88,9 @@ class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 
 	def __setitem__( self, key, value ):
 		LastModifiedDict.__setitem__( self, _tx_key_insen(key), value )
+		
+	def __delitem__( self, key ):
+		LastModifiedDict.__delitem__( self, key )
 
 	# Now the informational. Since these don't mutate, it's simplest
 	# to go directly to the data member
@@ -101,7 +111,6 @@ class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 	def items( self, key=None ):
 		if key is not None:
 			key = _tx_key_insen( key )
-
 		return ((k.key, v) for k, v in self._data.items(key))
 
 	def keys(self, key=None ):
@@ -114,7 +123,7 @@ class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 			key = _tx_key_insen( key )
 		return (v for v in self._data.values(key))
 
-	iteritems = items
 	iterkeys = keys
+	iteritems = items
 	itervalues = values
 	has_key = __contains__
