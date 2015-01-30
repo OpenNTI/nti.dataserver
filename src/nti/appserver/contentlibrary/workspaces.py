@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-See nti.app.contentlibrary.workspaces.
-
-$Id$
+.. $Id$
 """
 
-import nti.deprecated
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-nti.deprecated.moved('nti.app.contentlibrary.workspaces')
+logger = __import__('logging').getLogger(__name__)
+
+import zope.deprecation
+zope.deprecation.moved('nti.app.contentlibrary.workspaces')
