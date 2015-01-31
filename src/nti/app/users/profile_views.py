@@ -34,6 +34,7 @@ from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
 from nti.dataserver import authorization as nauth
@@ -61,6 +62,13 @@ def _tx_string(s):
 	if s is not None and isinstance(s, unicode):
 		s = s.encode('utf-8')
 	return s
+
+def _replace_username(username):
+	substituter = component.queryUtility(IUsernameSubstitutionPolicy)
+	if substituter is None:
+		return username
+	result = substituter.replace(username) or username
+	return result
 
 def _write_generator(generator, writer, stream):
 	for line in generator():
@@ -101,19 +109,22 @@ def _get_user_info_extract():
 	userids = _get_index_userids(ent_catalog)
 
 	# header
-	yield ['username', 'realname', 'alias', 'email', 'createdTime', 'lastLoginTime']
+	yield ['username', 'userid', 'realname', 'alias', 'email', 'createdTime',
+		   'lastLoginTime']
 
 	for iid in userids or ():
 		u = intids.queryObject(iid, None)
 		if not IUser.providedBy(u):
 			continue
 		
+		username = u.username
+		userid = _replace_username(username)
 		alias = _get_index_field_value(iid, ent_catalog, 'alias')
 		email = _get_index_field_value(iid, ent_catalog, 'email')
 		createdTime = _format_time(getattr(u, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
 		lastLoginTime = _format_time(getattr(u, 'lastLoginTime', None))
-		yield [u.username, realname, alias, email, createdTime, lastLoginTime]
+		yield [username, userid, realname, alias, email, createdTime, lastLoginTime]
 
 @view_config(route_name='objects.generic.traversal',
 			 name='user_info_extract',
@@ -150,7 +161,7 @@ def _get_user_info(user):
 	return result
 
 def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
-	header = ['username', 'email', 'createdTime', 'lastModified',
+	header = ['username', 'userid', 'email', 'createdTime', 'lastModified',
 			  'lastLoginTime', 'is_copaWithAgg']
 	yield header
 
@@ -168,8 +179,10 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 		if iid is None:
 			continue
 
+		username = user.username
+		userid = _replace_username(username)
 		email = _get_index_field_value(iid, ent_catalog, 'email')
-		info = [user.username, email] + _get_user_info(user)
+		info = [username, userid, email] + _get_user_info(user)
 		yield info
 
 @view_config(route_name='objects.generic.traversal',
@@ -181,7 +194,8 @@ class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
 	
 	def __call__(self):
 		values = CaseInsensitiveDict(**self.request.params)
-		coppaOnly = is_true(values.get('coppaOnly') or values.get('onlyCoppa') or 'F')
+		value = values.get('coppaOnly') or values.get('onlyCoppa') or values.get('coppa')
+		coppaOnly = is_true(value or 'F')
 		generator = partial(_get_topics_info, coppaOnly=coppaOnly)	
 		
 		stream = BytesIO()
@@ -202,7 +216,8 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
 	
 	def __call__(self):
 		values = CaseInsensitiveDict(**self.request.params)
-		coppaOnly = is_true(values.get('coppaOnly') or values.get('onlyCoppa') or 'F')
+		value = values.get('coppaOnly') or values.get('onlyCoppa') or values.get('coppa')
+		coppaOnly = is_true(value or 'F')
 		generator = partial(_get_topics_info, 
 							topics_key='email_verified',
 							coppaOnly=coppaOnly)	
@@ -219,8 +234,8 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
 # user profile
 
 def _get_profile_info(coppaOnly=False):
-	header = ['username', 'email', 'contact_email', 'createdTime', 'lastModified',
-			  'lastLoginTime', 'is_copaWithAgg']
+	header = ['username', 'userid', 'email', 'contact_email', 'createdTime',
+			  'lastModified', 'lastLoginTime', 'is_copaWithAgg']
 	yield header
 
 	dataserver = component.getUtility(IDataserver)
@@ -237,9 +252,11 @@ def _get_profile_info(coppaOnly=False):
 		if iid is None:
 			continue
 		
+		username = user.username
+		userid = _replace_username(username)
 		email = _get_index_field_value(iid, ent_catalog, 'email')
-		contact_email = _get_index_field_value(iid, ent_catalog, 'contact_email')
-		info = [user.username, email, contact_email] + _get_user_info(user)
+		contact_email = _get_index_field_value(iid, ent_catalog, 'contact_email') or email
+		info = [username, userid, email, contact_email] + _get_user_info(user)
 		yield info
 
 @view_config(route_name='objects.generic.traversal',
