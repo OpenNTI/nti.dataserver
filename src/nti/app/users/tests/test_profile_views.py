@@ -52,7 +52,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		app_iter = res.app_iter[0].split('\n')[:-1]
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
-			assert_that(t.split(','), has_length(6))
+			assert_that(t.split(','), has_length(7))
 
 	@WithSharedApplicationMockDS
 	def test_opt_in_comm(self):
@@ -83,7 +83,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		assert_that(app_iter, has_length(4))
 		for idx, t in enumerate(app_iter):
 			split = t.split(',')
-			assert_that(split, has_length(6))
+			assert_that(split, has_length(7))
 			if idx > 0:
 				assert_that(split[-1].strip(), is_('True'))
 
@@ -116,7 +116,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
 			split = t.split(',')
-			assert_that(split, has_length(6))
+			assert_that(split, has_length(7))
 
 	@WithSharedApplicationMockDS
 	def test_profile_info(self):
@@ -144,7 +144,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 	def test_update_profile(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user(username='ichigo@nt.com',
-							  external_value={u'email':u"ichigo@nt.com", u'alias':'foo'})
+							  	  external_value={u'email':u"ichigo@nt.com", u'alias':'foo'})
 
 			assert_that(IFriendlyNamed(u), has_property('alias', 'foo'))
 
