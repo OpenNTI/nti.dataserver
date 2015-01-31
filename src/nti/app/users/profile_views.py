@@ -281,6 +281,55 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 		response.body_file = _write_generator(generator, writer, stream)
 		return response
 
+# user profile
+
+def _get_inactive_accounts():
+	header = ['username', 'userid', 'realname', 'email', 'createdTime']
+	yield header
+
+	dataserver = component.getUtility(IDataserver)
+	_users = IShardLayout( dataserver ).users_folder
+	intids = component.getUtility(zope.intid.IIntIds)
+	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+	
+	for user in _users.values():
+		if not IUser.providedBy(user):
+			continue
+		
+		iid = intids.queryId(user, None)
+		if iid is None:
+			continue
+
+		lastLoginTime = getattr(user, 'lastLoginTime', None)
+		if lastLoginTime:
+			continue
+		
+		username = user.username
+		userid = _replace_username(username)
+		email = _get_index_field_value(iid, ent_catalog, 'email')
+		createdTime = _parse_time(getattr(user, 'createdTime', 0))
+		realname = _get_index_field_value(iid, ent_catalog, 'realname')
+		info = [username, userid, realname, email, createdTime]
+		yield info
+
+@view_config(route_name='objects.generic.traversal',
+			 name='inactive_accounts',
+			 request_method='GET',
+			 context=IDataserverFolder,
+			 permission=nauth.ACT_NTI_ADMIN)
+class InactiveAccountsView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		generator = _get_inactive_accounts
+		stream = BytesIO()
+		writer = csv.writer( stream )
+		response = self.request.response
+		response.content_encoding = str('identity' )
+		response.content_type = str('text/csv; charset=UTF-8')
+		response.content_disposition = str('attachment; filename="inactive.csv"')
+		response.body_file = _write_generator(generator, writer, stream)
+		return response
+
 def allowed_fields(user):
 	result = {}
 	profile_iface = IUserProfileSchemaProvider(user).getSchema()
@@ -317,7 +366,7 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 		username = values.get('username') or values.get('user') or authenticated_userid
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPNotFound('User not found')
+			raise hexc.HTTPUnprocessableEntity('User not found')
 	
 		external = {}
 		profile, fields = allowed_fields(user)

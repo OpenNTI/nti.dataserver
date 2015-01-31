@@ -53,6 +53,30 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
 			assert_that(t.split(','), has_length(7))
+			
+	@WithSharedApplicationMockDS
+	def test_inactive_accounts(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			self._create_user(external_value={u'email':u"nti@nt.com",
+											  u'realname':u'steve johnson'})
+			self._create_user(username='rukia@nt.com',
+							  external_value={u'email':u'rukia@nt.com',
+											  u'realname':u'rukia foo'})
+			self._create_user(username='ichigo@nt.com',
+							  external_value={u'email':u'ichigo@nt.com',
+											  u'realname':u'ichigo kurosaki'})
+		testapp = TestApp(self.app)
+
+		path = '/dataserver2/@@inactive_accounts'
+		environ = self._make_extra_environ()
+		environ[b'HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
+
+		res = testapp.get(path, extra_environ=environ)
+		assert_that(res.status_int, is_(200))
+		app_iter = res.app_iter[0].split('\n')[:-1]
+		assert_that(app_iter, has_length(4))
+		for t in app_iter:
+			assert_that(t.split(','), has_length(5))
 
 	@WithSharedApplicationMockDS
 	def test_opt_in_comm(self):
