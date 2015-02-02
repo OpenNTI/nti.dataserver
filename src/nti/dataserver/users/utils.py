@@ -48,6 +48,16 @@ def reindex_email_verification(user):
 		verifed_idx.index_doc(uid, user)
 		return True
 	return False
+
+def unindex_email_verification(user):
+	intids = component.getUtility(zope.intid.IIntIds)
+	uid = intids.queryId(user)
+	if uid is not None:
+		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
+		verifed_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
+		verifed_idx.unindex_doc(uid, user)
+		return True
+	return False
 	
 def force_email_verification(user, profile_iface=IUserProfile):
 	profile = profile_iface(user, None)   
