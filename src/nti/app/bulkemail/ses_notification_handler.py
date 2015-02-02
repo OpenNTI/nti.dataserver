@@ -53,16 +53,23 @@ import boto
 from boto.sqs.message import RawMessage
 
 from zope import component
-import zope.interface.exceptions
+from zope.interface.exceptions import Invalid
 
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.account_recovery_views import find_users_with_email
 
+from nti.dataserver.interfaces import IDataserver
+
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.utils import unindex_email_verification
+
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.mailer.interfaces import IVERP
+
+def _unverify_email(user):
+	IUserProfile( user ).email_verified = False
+	unindex_email_verification(user)
 
 def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 	"""
@@ -79,7 +86,7 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 	matched_pids = set()
 	all_pids = set()
 
-	dataserver = dataserver or component.getUtility( nti_interfaces.IDataserver )
+	dataserver = dataserver or component.getUtility( IDataserver )
 	for email_addr, possible_pid in email_addrs_and_pids:
 		if possible_pid:
 			all_pids.add(possible_pid)
@@ -103,18 +110,20 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 			if match_type == 'email':
 				# Clear it if we can; some types of profiles don't allow that
 				try:
-					user_interfaces.IUserProfile( user ).email = None
-					user_interfaces.IUserProfile( user ).email_verified = False
-				except zope.interface.exceptions.Invalid:
+		
+					IUserProfile( user ).email = None
+				except Invalid:
 					# TODO: Should we do something about zope.schema.interfaces.RequiredMissing, in
 					# particular? That means the profile doesn't allow None. But if we can't reset
 					# this address, then we can keep sending email to it, and bouncing,
 					# which tends to make SES angry. I don't know what we could do, though?
 					logger.debug( "Unable to clear invalid email address for %s", user, exc_info=True)
+				_unverify_email(user)
 				flag_link_provider.add_link( user, REL_INVALID_EMAIL )
 			elif match_type == 'password_recovery_email_hash':
 				# Hmm. Can't really clear it, but this will never get to them
 				# they probably can't logon
+				_unverify_email(user)
 				flag_link_provider.add_link( user, REL_INVALID_EMAIL )
 			else:
 				# all that's left is contact_email (which has two match types)
@@ -270,12 +279,19 @@ def process_sqs_messages():
 		VERP context.
 	"""
 	arg_parser = argparse.ArgumentParser( description="Read SES feedback messages from an SQS queue and mark users that need updates." )
-	arg_parser.add_argument( 'queue', help="The SQS queue to read from. Default: %(default)s", default='SESFeedback', nargs='?' )
-	arg_parser.add_argument( '--env_dir', help="Dataserver environment root directory" )
-	arg_parser.add_argument( '-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument( '--delete', help="After successful processing, delete messages that actually matched a user from SQS queue. Default: %(default)s",
-							 action='store', dest='delete', default=True)
-
+	arg_parser.add_argument( 'queue', 
+                             help="The SQS queue to read from. Default: %(default)s",
+                              default='SESFeedback', nargs='?' )
+	arg_parser.add_argument( '--env_dir', 
+                             help="Dataserver environment root directory" )
+	arg_parser.add_argument( '-v', '--verbose', 
+                             help="Be verbose", action='store_true',
+                             dest='verbose')
+	arg_parser.add_argument( '--delete',
+                             help="After successful processing, delete messages that actually matched a user from SQS queue. Default: %(default)s",
+							 action='store',
+                             dest='delete', 
+                             default=True)
 
 	args = arg_parser.parse_args()
 
@@ -314,5 +330,4 @@ def _get_env_dir(env_dir):
 		result = os.getenv( 'DATASERVER_DIR' )
 	if not result or not os.path.exists(result) and not os.path.isdir(result):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
-
 	return result
