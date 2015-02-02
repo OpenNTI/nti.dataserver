@@ -45,10 +45,9 @@ REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
 
 import os
 
-import anyjson as json
 import argparse
+import anyjson as json
 from collections import defaultdict
-from paste.deploy.converters import asbool
 
 import boto
 from boto.sqs.message import RawMessage
@@ -59,9 +58,9 @@ import zope.interface.exceptions
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.account_recovery_views import find_users_with_email
 
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.utils import run_with_dataserver
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.mailer.interfaces import IVERP
 
@@ -105,6 +104,7 @@ def _mark_accounts_with_bounces( email_addrs_and_pids, dataserver=None ):
 				# Clear it if we can; some types of profiles don't allow that
 				try:
 					user_interfaces.IUserProfile( user ).email = None
+					user_interfaces.IUserProfile( user ).email_verified = False
 				except zope.interface.exceptions.Invalid:
 					# TODO: Should we do something about zope.schema.interfaces.RequiredMissing, in
 					# particular? That means the profile doesn't allow None. But if we can't reset
@@ -196,8 +196,6 @@ def process_ses_feedback( messages, dataserver=None, mark_transient=True ):
 		for bounced in bounce['bouncedRecipients']:
 			errors.add( (bounced['emailAddress'], pid) )
 
-
-
 	logger.info( "Processed %d bounce notices", i )
 	logger.info( "The following email addresses experienced transient failures: %s", addr_transient_errors )
 	logger.info( "The following email addresses experienced permanent failures: %s", addr_permanent_errors )
@@ -263,8 +261,6 @@ def process_sqs_queue(queue_name, delete_matched=True):
 			logger.error("Failed to delete some messages")
 
 	return result
-
-
 
 def process_sqs_messages():
 	"""
