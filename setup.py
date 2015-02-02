@@ -133,6 +133,7 @@ setup(
 	install_requires=[
 		'nti.plasTeX',
 		'nti.geventwebsocket',
+        'nti.contentfragments',
 		'nti.schema',
 		'nti.utils',
 		'pywikipedia',
