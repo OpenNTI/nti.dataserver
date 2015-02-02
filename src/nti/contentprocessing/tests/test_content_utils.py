@@ -15,12 +15,19 @@ import unittest
 
 from zope import component
 
+from nti.contentfragments.interfaces import IPunctuationMarkPattern
+from nti.contentfragments.interfaces import IPunctuationMarkExpression
+from nti.contentfragments.interfaces import IPunctuationMarkPatternPlus
+from nti.contentfragments.interfaces import IPunctuationMarkExpressionPlus
+
 from nti.contentprocessing.content_utils import rank_words
 from nti.contentprocessing.content_utils import get_content
 from nti.contentprocessing.content_utils import tokenize_content
-from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing.content_utils import clean_special_characters
 from nti.contentprocessing.content_utils import get_content_translation_table
+
+from nti.contentprocessing.interfaces import IWordTokenizerPattern
+from nti.contentprocessing.interfaces import IWordTokenizerExpression
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
@@ -81,9 +88,9 @@ class TestContentUtils(unittest.TestCase):
 		assert_that(t, is_("COPTIC OLD NUBIAN VERSE DIVIDER is  deal with it"))
 
 	def test_utilities(self):
-		component.getUtility(cp_interfaces.IWordTokenizerPattern, name="en")
-		component.getUtility(cp_interfaces.IWordTokenizerExpression, name="en")
-		component.getUtility(cp_interfaces.IPunctuationCharPattern, name="en")
-		component.getUtility(cp_interfaces.IPunctuationCharExpression, name="en")
-		component.getUtility(cp_interfaces.IPunctuationCharPatternPlus, name="en")
-		component.getUtility(cp_interfaces.IPunctuationCharExpressionPlus, name="en")
+		component.getUtility(IWordTokenizerPattern, name="en")
+		component.getUtility(IWordTokenizerExpression, name="en")
+		component.getUtility(IPunctuationMarkPattern, name="en")
+		component.getUtility(IPunctuationMarkExpression, name="en")
+		component.getUtility(IPunctuationMarkPatternPlus, name="en")
+		component.getUtility(IPunctuationMarkExpressionPlus, name="en")

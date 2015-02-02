@@ -8,10 +8,10 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-
-	<include package="nti.contentfragments" file="configure.zcml" />
-	<include package="." file="meta.zcml" />
-
+	<include package="zope.security" />
+	
+	<include package="nti.contentfragments" />
+	
 	<utility name="text/html"
 			 factory=".metadata_extractors._HTMLExtractor" />
 
@@ -45,23 +45,6 @@
 	<utility factory=".content_utils._default_word_tokenizer_expression" name="en" />
 	<utility factory=".content_utils._default_word_tokenizer_expression" name="es" />
 	<utility factory=".content_utils._default_word_tokenizer_expression" name="ru" />
-	
-	<utility factory=".content_utils._default_punctuation_char_pattern" />
-	<utility factory=".content_utils._default_punctuation_char_pattern" name="en" />
-	<utility factory=".content_utils._default_punctuation_char_pattern" name="es" />
-	<utility factory=".content_utils._default_punctuation_char_pattern" name="ru" />
-	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="en" />
-	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="es" />
-	<utility factory=".content_utils._default_punctuation_char_pattern_plus" name="ru" />
-
-	<utility factory=".content_utils._default_punctuation_char_expression" />
-	<utility factory=".content_utils._default_punctuation_char_expression" name="en" />
-	<utility factory=".content_utils._default_punctuation_char_expression" name="es" />
-	<utility factory=".content_utils._default_punctuation_char_expression" name="ru" />
-	
-	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="en" />
-	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="es" />
-	<utility factory=".content_utils._default_punctuation_char_expression_plus" name="ru" />
 
 	<utility factory=".ngrams_utils._DefaultNgramComputer" />
 	<utility factory=".ngrams_utils._DefaultNgramComputer" name="en" />
@@ -72,6 +55,7 @@
 	<include package=".langdetection" file="configure.zcml" />
 	<include package=".concepttagging" file="configure.zcml" />
 
+	<include package="." file="meta.zcml" />
 	<alchemy:registerAlchemyAPIKey
 		name="NTI-TEST"
 		value="afe98c5b8fb8586e930d1b2128386d40c136e6d3"
