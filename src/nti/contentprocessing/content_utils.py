@@ -5,6 +5,7 @@ Content processing utilities
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -15,7 +16,7 @@ import difflib
 import unicodedata
 from six import string_types
 
-from pkg_resources import resource_filename
+resource_filename = __import__('pkg_resources').resource_filename
 
 from zope import component
 from zope import interface
@@ -34,42 +35,26 @@ from nti.contentfragments.interfaces import IPlainTextContentFragment
 from . import space_pattern
 from . import non_alpha_pattern
 from . import special_regexp_chars
-from . import default_punk_char_pattern
-from . import interfaces as cp_interfaces
-from .interfaces import IContentTokenizer
-from . import default_punk_char_expression
 from . import default_word_tokenizer_pattern
-from . import default_punk_char_pattern_plus
 from . import default_word_tokenizer_expression
-from . import default_punk_char_expression_plus
+
+from .interfaces import IWordSimilarity
+from .interfaces import IContentTokenizer
+from .interfaces import IWordTokenizerPattern
+from .interfaces import IContentTranslationTable
+from .interfaces import IWordTokenizerExpression
 
 def get_content_translation_table(lang='en'):
-	table = component.queryUtility(cp_interfaces.IContentTranslationTable, name=lang)
+	table = component.queryUtility(IContentTranslationTable, name=lang)
 	return table or _default_content_translation_table()
 
-@interface.implementer(cp_interfaces.IWordTokenizerExpression)
+@interface.implementer(IWordTokenizerExpression)
 def _default_word_tokenizer_expression():
 	return default_word_tokenizer_expression
 
-@interface.implementer(cp_interfaces.IWordTokenizerPattern)
+@interface.implementer(IWordTokenizerPattern)
 def _default_word_tokenizer_pattern():
 	return default_word_tokenizer_pattern
-
-@interface.implementer(cp_interfaces.IPunctuationCharExpression)
-def _default_punctuation_char_expression():
-	return default_punk_char_expression
-
-@interface.implementer(cp_interfaces.IPunctuationCharPattern)
-def _default_punctuation_char_pattern():
-	return default_punk_char_pattern
-
-@interface.implementer(cp_interfaces.IPunctuationCharExpressionPlus)
-def _default_punctuation_char_expression_plus():
-	return default_punk_char_expression_plus
-
-@interface.implementer(cp_interfaces.IPunctuationCharPatternPlus)
-def _default_punctuation_char_pattern_plus():
-	return default_punk_char_pattern_plus
 
 @repoze.lru.lru_cache(500)
 def tokenize_content(text, lang='en'):
@@ -100,7 +85,7 @@ def normalize(u, form='NFC'):
 	u = space_pattern.sub(' ', u)
 	return u
 
-@interface.implementer(cp_interfaces.IContentTokenizer)
+@interface.implementer(IContentTokenizer)
 class _ContentTokenizer(object):
 
 	__slots__ = ()
@@ -125,7 +110,7 @@ class _ContentTokenizer(object):
 		return text
 
 
-@interface.implementer(cp_interfaces.IWordSimilarity)
+@interface.implementer(IWordSimilarity)
 class _BaseWordSimilarity(object):
 
 	def compute(self, a, b):
@@ -148,13 +133,13 @@ class _LevenshteinWordSimilarity(_BaseWordSimilarity):
 		return result
 
 def rank_words(word, terms, reverse=True):
-	ws = component.getUtility(cp_interfaces.IWordSimilarity)
+	ws = component.getUtility(IWordSimilarity)
 	result = ws.rank(word, terms, reverse)
 	return result
 
 default_trans_table = None
 
-@interface.implementer(cp_interfaces.IContentTranslationTable)
+@interface.implementer(IContentTranslationTable)
 def _default_content_translation_table():
 
 	global default_trans_table
