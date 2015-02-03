@@ -26,21 +26,10 @@ from nti.schema.interfaces import find_most_derived_interface
 from .interfaces import IInternalObjectIO
 from .interfaces import StandardInternalFields
 from .interfaces import StandardExternalFields
+
 from .internalization import validate_named_field_value
 from .externalization import to_minimal_standard_external_dictionary
 from .externalization import to_standard_external_dictionary, toExternalObject
-
-import zope.deferredimport
-zope.deferredimport.initialize()
-
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.externalization.interfaces",
-	"nti.externalization.interfaces",
-	"IExternalObject",
-	"LocatedExternalDict",
-	"LocatedExternalList",
-	"ILocatedExternalMapping",
-	"ILocatedExternalSequence")
 
 def _syntheticKeys( ):
 	return ('OID', 'ID', 'Last Modified', 'Creator', 'ContainerId', 'Class')
@@ -505,3 +494,15 @@ class ModuleScopedInterfaceObjectIO(InterfaceObjectIO):
 		return (x for x in interface.providedBy( ext_self )
 				if x.__module__ == self._ext_search_module.__name__
 				and not x.queryTaggedValue('_ext_is_marker_interface'))
+
+# Things that have moved
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.externalization.interfaces",
+	"nti.externalization.interfaces",
+	"IExternalObject",
+	"LocatedExternalDict",
+	"LocatedExternalList",
+	"ILocatedExternalMapping",
+	"ILocatedExternalSequence")

@@ -15,7 +15,9 @@ logger = __import__('logging').getLogger(__name__)
 #import ExtensionClass
 
 from zope import interface
+
 from zope.dottedname import resolve as dottedname
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from ZODB.loglevels import TRACE

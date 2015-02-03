@@ -23,8 +23,8 @@ from .interfaces import EXT_REPR_YAML
 from .interfaces import IExternalObjectRepresenter
 from .interfaces import IExternalObjectIO
 
-from .externalization import toExternalObject
 from .externalization import _NotGiven
+from .externalization import toExternalObject
 
 ###
 # Driver functions

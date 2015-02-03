@@ -20,12 +20,14 @@ import time
 import isodate
 
 from zope import interface
-from zope import component
-import zope.interface.common.idatetime
+from zope import component 
+from zope.interface.common.idatetime import IDate
+from zope.interface.common.idatetime import IDateTime
+from zope.interface.common.idatetime import ITimeDelta
 
 from nti.schema.interfaces import InvalidValue
 
-from . import interfaces
+from .interfaces import IInternalObjectExternalizer
 
 def _parse_with(func, string):
 	try:
@@ -36,7 +38,7 @@ def _parse_with(func, string):
 		raise e, None, tb
 
 @component.adapter(basestring)
-@interface.implementer(zope.interface.common.idatetime.IDate)
+@interface.implementer(IDate)
 def _date_from_string( string ):
 	"""
 	This adapter allows any field which comes in as a string is
@@ -105,7 +107,7 @@ def _as_utc_naive(dt, assume_local=True, local_tzname=None):
 	return dt
 
 @component.adapter(basestring)
-@interface.implementer(zope.interface.common.idatetime.IDateTime)
+@interface.implementer(IDateTime)
 def datetime_from_string(string, assume_local=False, local_tzname=None):
 	"""
 	This adapter allows any field which comes in as a string is
@@ -139,8 +141,8 @@ def datetime_from_string(string, assume_local=False, local_tzname=None):
 	dt =_parse_with( isodate.parse_datetime, string )
 	return _as_utc_naive(dt, assume_local=assume_local, local_tzname=local_tzname)
 
-@component.adapter(zope.interface.common.idatetime.IDate)
-@interface.implementer(interfaces.IInternalObjectExternalizer)
+@component.adapter(IDate)
+@interface.implementer(IInternalObjectExternalizer)
 class _date_to_string(object):
 	"""
 	Produce an IOS8601 string from a date.
@@ -152,8 +154,8 @@ class _date_to_string(object):
 	def toExternalObject(self, **kwargs):
 		return isodate.date_isoformat(self.date)
 
-@component.adapter(zope.interface.common.idatetime.IDateTime)
-@interface.implementer(interfaces.IInternalObjectExternalizer)
+@component.adapter(IDateTime)
+@interface.implementer(IInternalObjectExternalizer)
 class _datetime_to_string(object):
 	"""
 	Produce an IOS8601 string from a datetime
@@ -168,8 +170,8 @@ class _datetime_to_string(object):
 		dt = _as_utc_naive(self.date, assume_local=False)
 		return isodate.datetime_isoformat(dt) + 'Z' # indicate it is UTC on the wire
 
-@component.adapter(zope.interface.common.idatetime.ITimeDelta)
-@interface.implementer(interfaces.IInternalObjectExternalizer)
+@component.adapter(ITimeDelta)
+@interface.implementer(IInternalObjectExternalizer)
 class _duration_to_string(object):
 	"""
 	Produce an IOS8601 format duration from a :class:`datetime.timedelta`
