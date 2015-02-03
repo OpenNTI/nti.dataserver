@@ -30,7 +30,7 @@ import zc.catalog.catalogindex
 
 import BTrees
 
-from nti.utils.property import alias
+from nti.common.property import alias
 
 from .interfaces import IKeywordIndex
 

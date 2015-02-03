@@ -57,8 +57,8 @@ class Catalog(_ZCatalog):
 				logger.error("Error indexing object %s(%s); %s", type(obj), uid, e)
 
 	def updateIndexes(self, ignore_persistence_exceptions=False):
-		to_catch = self._PERSISTENCE_EXCEPTIONS if ignore_persistence_exceptions else ()
 		indexes = list(self.values()) # avoid the btree iterator for each object
+		to_catch = self._PERSISTENCE_EXCEPTIONS if ignore_persistence_exceptions else ()
 		for uid, obj in self._visitSublocations():
 			for index in indexes:
 				try:

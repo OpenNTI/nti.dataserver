@@ -1,40 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
+from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 
-from nti.testing import base
-from nti.testing import matchers
-
-from ..datetime import TimestampTo64BitIntNormalizer
-from ..datetime import TimestampNormalizer
-from ..datetime import TimestampToNormalized64BitIntNormalizer
-from ..index import IntegerValueIndex
-from ..index import  NormalizationWrapper
-import datetime
 import time
+import datetime
+import unittest
 
 from nti.zodb.containers import time_to_64bit_int
 
+from nti.zope_catalog.index import IntegerValueIndex
+from nti.zope_catalog.index import NormalizationWrapper
+from nti.zope_catalog.datetime import TimestampNormalizer
+from nti.zope_catalog.datetime import TimestampTo64BitIntNormalizer
+from nti.zope_catalog.datetime import TimestampToNormalized64BitIntNormalizer
+
 class TestNormalizers(unittest.TestCase):
+	
 	field = 1
+	
 	def test_int_normalizer(self):
 		assert_that( TimestampTo64BitIntNormalizer().value(123456.78),
 					 is_(4683220298531686318) )
