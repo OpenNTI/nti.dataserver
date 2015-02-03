@@ -251,7 +251,7 @@ class _FilesystemLibraryEnumeration(library.AbstractDelimitedHiercharchyContentP
 	"""
 
 	lastSynchronized = 0
-	
+
 	#: Used during persistence and when making absolute paths,
 	#: this is the parent enumeration that birthed us.
 	parent_enumeration = None
@@ -406,6 +406,9 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 			return self.key == other.key and self.__parent__ == other.__parent__
 		except AttributeError:
 			return NotImplemented
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
 
 	def __hash__(self):
 		return hash(self.filename)
