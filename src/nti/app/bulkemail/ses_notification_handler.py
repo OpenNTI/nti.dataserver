@@ -26,7 +26,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 #: The link relationship type that
 #: indicates we know that the email recorded for this user is bad and
 #: has received permanent bounces. The user must be asked to enter a
@@ -44,7 +43,6 @@ REL_INVALID_EMAIL = 'state-bounced-email'
 REL_INVALID_CONTACT_EMAIL = 'state-bounced-contact-email'
 
 import os
-
 import argparse
 import anyjson as json
 from collections import defaultdict

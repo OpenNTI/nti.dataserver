@@ -27,6 +27,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -46,8 +48,6 @@ from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids.ntiids import find_object_with_ntiid
-
-from nti.utils.maps import CaseInsensitiveDict
 
 ITEMS = StandardExternalFields.ITEMS
 

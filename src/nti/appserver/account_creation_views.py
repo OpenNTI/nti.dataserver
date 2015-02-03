@@ -65,7 +65,6 @@ from nti.dataserver.users.interfaces import IRequireProfileUpdate
 from nti.dataserver.users.interfaces import UsernameCannotBeBlank
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
-from nti.dataserver.users.interfaces import EmailAlreadyVerifiedError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
@@ -173,13 +172,6 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						   'code': e.__class__.__name__},
 						exc_info[2] )
 		handle_validation_error( request, e )
-	except EmailAlreadyVerifiedError as e:
-		exc_info = sys.exc_info()
-		_raise_error( request, hexc.HTTPUnprocessableEntity,
-					  {'field': 'email',
-					   'message': _('That email has been used by another user.'),
-					   'code': e.__class__.__name__},
-					  exc_info[2] )
 	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error( request, e )
