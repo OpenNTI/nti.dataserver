@@ -1,33 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import contains
-from hamcrest import has_entry
+from hamcrest import assert_that
 
-from nti.testing import base
-from nti.testing import matchers
+import unittest
 
-from ..string import StringTokenNormalizer
-from ..index import NormalizationWrapper
+from nti.zope_catalog.index import NormalizationWrapper
+from nti.zope_catalog.string import StringTokenNormalizer
 
 class TestStringNormalizer(unittest.TestCase):
+	
 	field = 'ABC'
+	
 	def test_value(self):
 		assert_that( StringTokenNormalizer().value(b'ABC'),
 					 is_('abc'))

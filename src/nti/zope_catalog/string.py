@@ -23,7 +23,6 @@ class StringTokenNormalizer(_AbstractNormalizerMixin):
 	A normalizer for strings that are treated like tokens:
 	strings are lower-cased and guaranteed to be unicode
 	and leading and trailing spaces are removed.
-
 	"""
 
 	def value(self, value):

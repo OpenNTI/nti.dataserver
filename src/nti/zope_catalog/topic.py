@@ -11,14 +11,15 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import collections
+
 from zope import interface
 
 from zope.catalog.interfaces import ICatalogIndex
 
-import collections
+import zope.container.contained
 
 import zope.index.topic.filter
-import zope.container.contained
 
 import zc.catalog.extentcatalog
 

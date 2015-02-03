@@ -25,7 +25,7 @@ from persistent import Persistent
 from nti.zodb.containers import time_to_64bit_int
 from nti.zodb.containers import bit64_int_to_time
 
-from nti.utils.property import CachedProperty
+from nti.common.property import CachedProperty
 
 class _AbstractNormalizerMixin(object):
 

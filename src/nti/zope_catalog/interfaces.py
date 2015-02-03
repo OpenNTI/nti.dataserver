@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.catalog.keyword
+from zope.catalog.keyword import IKeywordIndex
 from zope.catalog.interfaces import INoAutoIndex
 from zope.catalog.interfaces import INoAutoReindex
 
@@ -22,7 +22,7 @@ class INoAutoIndexEver(INoAutoIndex, INoAutoReindex):
 	fire.
 	"""
 
-class IKeywordIndex(zope.catalog.keyword.IKeywordIndex):
+class IKeywordIndex(IKeywordIndex):
 	
 	def ids():
 		"""

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Support for working with :mod:`zope.catalog`
-
 .. $Id$
 """
 
