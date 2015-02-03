@@ -1,26 +1,36 @@
 #!/usr/bin/env python
-from __future__ import unicode_literals, print_function, absolute_import
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-import unittest
-from hamcrest import assert_that, is_, less_than, greater_than, less_than_or_equal_to
-from hamcrest import same_instance
-from hamcrest import has_property
+from hamcrest import is_
+from hamcrest import raises
 from hamcrest import has_key
 from hamcrest import calling
-from hamcrest import raises
+from hamcrest import less_than
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import greater_than
+from hamcrest import same_instance
+from hamcrest import less_than_or_equal_to
 
-from nti.testing.matchers import validly_provides
+import unittest
+import cPickle as pickle
 
 from nti.zodb import interfaces
-from nti.zodb.minmax import MergingCounter, NumericMinimum, NumericMaximum, ConstantZeroValue, NumericPropertyDefaultingToZero
-from nti.zodb.minmax import Minimum, Maximum
+from nti.zodb.minmax import Maximum
+from nti.zodb.minmax import Minimum
+from nti.zodb.minmax import MergingCounter
+from nti.zodb.minmax import NumericMaximum
+from nti.zodb.minmax import NumericMinimum
+from nti.zodb.minmax import ConstantZeroValue
+from nti.zodb.minmax import NumericPropertyDefaultingToZero
 
-
-import cPickle as pickle
+from nti.testing.matchers import validly_provides
 
 class TestMinMax(unittest.TestCase):
 
@@ -143,7 +153,6 @@ class TestProperty(unittest.TestCase):
 		assert_that( obj.__getstate__(), has_key( 'b' ) )
 		assert_that( obj.b, is_( MergingCounter ) )
 
-
 	def test_zero_property_set(self):
 		db = DB(None)
 		conn = db.open()
@@ -168,8 +177,6 @@ class TestProperty(unittest.TestCase):
 		assert_that( obj.b, is_( same_instance( obj.b ) ) )
 		assert_that( obj.__getstate__(), has_key( 'b' ) )
 		assert_that( obj.b.value, is_( 3 ) )
-
-
 
 	def test_zero_property_value(self):
 		db = DB(None)
