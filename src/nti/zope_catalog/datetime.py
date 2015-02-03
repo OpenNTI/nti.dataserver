@@ -22,8 +22,8 @@ from zc.catalog.index import DateTimeNormalizer
 
 from persistent import Persistent
 
-from nti.zodb.containers import time_to_64bit_int
-from nti.zodb.containers import bit64_int_to_time
+from nti.common.time import time_to_64bit_int
+from nti.common.time import bit64_int_to_time
 
 from nti.common.property import CachedProperty
 
