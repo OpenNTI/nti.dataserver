@@ -25,6 +25,8 @@ from itsdangerous import BadSignature
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.interfaces import IUser
@@ -34,8 +36,6 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from . import VERIFY_USER_EMAIL_VIEW
 from . import REQUEST_EMAIL_VERFICATION_VIEW

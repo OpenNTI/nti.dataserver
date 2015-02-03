@@ -22,7 +22,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
-from nti.dataserver.users.interfaces import EmailAlreadyVerifiedError
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
@@ -85,31 +84,3 @@ class TestUsers(ApplicationLayerTest):
 			dataserver = component.getUtility( IDataserver )
 			ds_folder = dataserver.dataserver_folder
 			user_one = User.create_user( username=username )
-			
-	@WithSharedApplicationMockDSWithChanges
-	def test_email_verified_error(self):
-
-		with mock_dataserver.mock_db_trans( self.ds ):
-		
-			User.create_user(username='ichigo@bleach.org',
-							 external_value={ u'email':u"ichigo@bleach.org",
-										 	  u'email_verified':True})
-		
-			User.create_user(username='rukia@bleach.org',
-							 external_value={ u'email':u"rukia@bleach.org",
-											  u'email_verified':True})
-		
-			User.create_user(username='aizen@bleach.org',
-						 	 external_value={ u'email':u"aizen@bleach.org"})
-			
-			User.create_user(username='kyokasuigetsu@bleach.org',
-						 	 external_value={ u'email':u"aizen@bleach.org"})
-
-			assert_that( calling( User.create_user ).with_args( username="zangetsu",
-																external_value={ u'email':u"ichigo@bleach.org",
-										 	  									 u'email_verified':True} ),
-						 raises( EmailAlreadyVerifiedError ))
-
-			assert_that( calling( User.create_user ).with_args( username="zangetsu",
-																external_value={ u'email':u"ichigo@bleach.org"} ),
-						 raises( EmailAlreadyVerifiedError ))

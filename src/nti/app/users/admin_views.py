@@ -20,6 +20,9 @@ from pyramid import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.common.time import bit64_int_to_time
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.users import User
 from nti.dataserver import authorization as nauth
 
@@ -29,10 +32,6 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-
-from nti.utils.maps import CaseInsensitiveDict
-
-from nti.zodb.containers import bit64_int_to_time
 
 ITEMS = StandardExternalFields.ITEMS
 

@@ -29,6 +29,8 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.appserver.utils import is_true
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
@@ -49,8 +51,6 @@ from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from nti.schema.interfaces import find_most_derived_interface
 
