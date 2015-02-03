@@ -5,33 +5,41 @@ Containers specialized to work with intids.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from ZODB import loglevels
+import time
+from UserDict import DictMixin
+from collections import Iterable, Container, Sized, Mapping
 
 from zope import interface
 from zope import component
 
-import BTrees
-from BTrees.Length import Length
-import persistent
-from nti.zodb.containers import time_to_64bit_int, bit64_int_to_time, ZERO_64BIT_INT
-from nti.externalization.representation import make_repr
-from zope.cachedescriptors.property import CachedProperty
 from zope.cachedescriptors.property import Lazy
+from zope.cachedescriptors.property import CachedProperty
 
 from zope.container.contained import Contained
 
 from zope.location import interfaces as loc_interfaces
-from zc import intid as zc_intid
-from nti.utils import sets
 
-from collections import Iterable, Container, Sized, Mapping
-from UserDict import DictMixin
-import time
+from ZODB import loglevels
+
+from zc import intid as zc_intid
+
+import BTrees
+from BTrees.Length import Length
+
+import persistent
+
+from nti.common import sets
+from nti.common.time import ZERO_64BIT_INT
+from nti.common.time import time_to_64bit_int
+from nti.common.time import bit64_int_to_time
+
+from nti.externalization.representation import make_repr
 
 # Make pylint not complain about "badly implemented container", "Abstract class not referenced"
 # pylint: disable=R0924,R0921
