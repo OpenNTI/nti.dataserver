@@ -185,7 +185,8 @@ def _to_external_object_state(obj, state, top_level=False):
 			for key, value in obj.items():
 				result[key] = _to_external_object_state( value, state ) if not isinstance(value, _primitives) else value
 		elif isinstance( obj, SEQUENCE_TYPES ) or sequence.IFiniteSequence.providedBy( obj ):
-			result = state.registry.getAdapter( [(_to_external_object_state(x, state) if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
+			result = state.registry.getAdapter( [(_to_external_object_state(x, state) \
+					 if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
 		# PList doesn't support None values, JSON does. The closest
 		# coersion I can think of is False.
 		elif obj is None:

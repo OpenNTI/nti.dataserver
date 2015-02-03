@@ -98,5 +98,4 @@ def to_external_string(integer):
 	while integer > 0:
 		integer, remainder = divmod( integer, _BASE )
 		result = _VOCABULARY[remainder] + result
-
 	return result

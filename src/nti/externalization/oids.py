@@ -21,8 +21,9 @@ from zc import intid as zc_intid
 
 from ZODB.interfaces import IConnection
 
+from nti.common.proxy import removeAllProxies
+
 from nti.ntiids import ntiids
-from nti.utils.proxy import removeAllProxies
 
 from . import integer_strings
 

@@ -30,8 +30,8 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 # but only provide a subset of the properties. (mostly due to programming errors).
 # Hence the use of getattr below, to protect against this.
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IDCExtended)
+@interface.implementer(IExternalMappingDecorator)
 class DCExtendedExternalMappingDecorator(object):
 	"""
 	Adds the extended properties of dublincore to external objects
@@ -53,8 +53,8 @@ class DCExtendedExternalMappingDecorator(object):
 		if StandardExternalFields.CREATOR not in external and creators:
 			external[StandardExternalFields.CREATOR] = creators[0]
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IDCDescriptiveProperties)
+@interface.implementer(IExternalMappingDecorator)
 class DCDescriptivePropertiesExternalMappingDecorator(object):
 	"""
 	Supports the 'DCTitle' and 'DCDescription' fields, as defined in

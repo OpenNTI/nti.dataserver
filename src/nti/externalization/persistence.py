@@ -20,13 +20,16 @@ from persistent.list import PersistentList
 from persistent.wref import WeakRef as PWeakRef
 from persistent.mapping import PersistentMapping
 
-from nti.utils.proxy import removeAllProxies
+from nti.common.proxy import removeAllProxies
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .oids import toExternalOID
+
 from .interfaces import IExternalObject
+
 from .externalization import toExternalObject
+
 from .datastructures import ExternalizableDictionaryMixin
 
 #disable: accessing protected members

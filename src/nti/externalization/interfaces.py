@@ -12,11 +12,12 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-
-from zope.location import ILocation
-from zope.component.interfaces import IFactory
 from zope.interface.common.sequence import ISequence
 from zope.interface.common.mapping import IFullMapping
+
+from zope.component.interfaces import IFactory
+
+from zope.location import ILocation
 
 class StandardExternalFields(object):
 	"""
@@ -337,4 +338,3 @@ class IObjectModifiedFromExternalEvent(IObjectModifiedEvent):
 @interface.implementer( IObjectModifiedFromExternalEvent )
 class ObjectModifiedFromExternalEvent(ObjectModifiedEvent):
 	external_value = None
-

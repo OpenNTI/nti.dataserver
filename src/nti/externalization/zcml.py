@@ -6,22 +6,28 @@ for mime types.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-import zope.configuration.fields
+
 from zope.component.factory import Factory
 from zope.component import zcml as component_zcml
 
-import ZODB.POSException
+from zope.configuration.fields import Tokens
+from zope.configuration.fields import GlobalObject
+from zope.configuration.fields import GlobalInterface
+
+from ZODB.POSException import POSError
+
 from ZODB import loglevels
 
-from . import interfaces
+from .interfaces import IMimeObjectFactory
 
-@interface.implementer(interfaces.IMimeObjectFactory)
+@interface.implementer(IMimeObjectFactory)
 class _MimeObjectFactory(Factory):
 	"""
 	A factory meant to be registered as a named utility.
@@ -45,7 +51,7 @@ class IRegisterInternalizationMimeFactoriesDirective(interface.Interface):
 	The arguments needed for registering factories.
 	"""
 
-	module = zope.configuration.fields.GlobalObject(
+	module = GlobalObject(
 		title="Module to scan for Mime factories to add",
 		required=True,
 		)
@@ -71,7 +77,7 @@ def registerMimeFactories( _context, module ):
 			mime_type = getattr( v, 'mimeType', getattr( v, 'mime_type', None) )
 			ext_create = getattr( v, '__external_can_create__', False )
 			v_mod_name = getattr( v, '__module__', None )
-		except ZODB.POSException.POSError:
+		except POSError:
 			# This is a problem in the module. Module objects shouldn't do this.
 			logger.warn( "Failed to inspect %s in %s", k, module )
 			continue
@@ -79,7 +85,7 @@ def registerMimeFactories( _context, module ):
 		if mime_type and ext_create and module.__name__ == v_mod_name:
 			logger.log( loglevels.TRACE, "Registered mime factory utility %s = %s (%s)", k, v, mime_type)
 			component_zcml.utility( _context,
-									provides=interfaces.IMimeObjectFactory,
+									provides=IMimeObjectFactory,
 									component=_MimeObjectFactory( v,
 																  title=k,
 																  interfaces=list(interface.implementedBy( v )) ),
@@ -97,22 +103,23 @@ class IAutoPackageExternalizationDirective(interface.Interface):
 	and module names.
 	"""
 
-	root_interfaces = zope.configuration.fields.Tokens(title="The root interfaces defined by the package.",
-													   value_type=zope.configuration.fields.GlobalInterface(),
-													   required=True)
-	modules = zope.configuration.fields.Tokens(title="Module names that contain the implementations of the root_interfaces.",
-													value_type=zope.configuration.fields.GlobalObject(),
-													required=True)
+	root_interfaces = Tokens(title="The root interfaces defined by the package.",
+							 value_type=GlobalInterface(),
+							 required=True)
+	modules = Tokens(title="Module names that contain the implementations of the root_interfaces.",
+					 value_type=GlobalObject(),
+					 required=True)
 
-	factory_modules = zope.configuration.fields.Tokens(title="If given, module names that should be searched for internalization factories",
-													   description="If not given, all modules will be examined.",
-													   value_type=zope.configuration.fields.GlobalObject(),
-													   required=False)
+	factory_modules = Tokens(title="If given, module names that should be searched for internalization factories",
+						     description="If not given, all modules will be examined.",
+							 value_type=GlobalObject(),
+							 required=False)
 
-	iobase = zope.configuration.fields.GlobalObject(title="If given, a base class that will be used. You can customize aspects of externalization that way.",
-													required=False)
+	iobase = GlobalObject(title="If given, a base class that will be used. You can customize aspects of externalization that way.",
+						  required=False)
 
 from .autopackage import AutoPackageSearchingScopedInterfaceObjectIO
+
 def autoPackageExternalization(_context, root_interfaces, modules, factory_modules=None, iobase=None ):
 
 	ext_module_name = root_interfaces[0].__module__
@@ -121,9 +128,11 @@ def autoPackageExternalization(_context, root_interfaces, modules, factory_modul
 	@classmethod
 	def _ap_enumerate_externalizable_root_interfaces( cls, ifaces ):
 		return root_interfaces
+
 	@classmethod
 	def _ap_enumerate_module_names( cls ):
 		return [m.__name__.split('.')[-1] for m in modules]
+
 	@classmethod
 	def _ap_find_package_name(cls):
 		return package_name

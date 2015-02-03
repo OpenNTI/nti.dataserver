@@ -94,7 +94,8 @@ def _search_for_external_factory( typeName, search_set=None ):
 				# This is a programming error, so that's why we log it
 				logger.exception( "Failed to resolve legacy factory search module %s", module_name )
 
-		result = _find_class_in_dict( className, getattr( module, '__dict__', _EMPTY_DICT ) if mod_dict is None else mod_dict )
+		result = _find_class_in_dict(className, 
+									 getattr( module, '__dict__', _EMPTY_DICT ) if mod_dict is None else mod_dict)
 		if result:
 			break
 
