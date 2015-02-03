@@ -19,7 +19,7 @@ from zope.contenttype.parse import parse as ct_parse
 from zope.file import file as zfile
 from zope.file.interfaces import IFile
 
-from nti.utils import dataurl
+from nti.common import dataurl
 
 def _dict_setattr( instance, name, value ):
 	instance.__dict__[name] = value
