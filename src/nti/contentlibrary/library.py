@@ -19,6 +19,8 @@ from repoze.lru import LRUCache
 
 from ZODB.interfaces import IConnection
 
+import zope.intid
+from zope import component
 from zope import interface
 from zope import lifecycleevent
 
@@ -105,6 +107,23 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 		if root is None:
 			return ()
 		return root.enumerateChildren()
+
+def _register_units( content_unit ):
+	"""
+	Recursively register content units.
+	"""
+	intids = component.queryUtility( zope.intid.IIntIds )
+
+	# May be none in unit tests
+	if intids is not None:
+		def _register( obj ):
+			intid = intids.queryId( obj )
+			if intid is None:
+				intids.register( obj )
+			for child in obj.children:
+				_register( child )
+
+		_register( content_unit )
 
 @interface.implementer(ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
@@ -227,22 +246,24 @@ class AbstractContentPackageLibrary(object):
 			for new, old in changed:
 				new.__parent__ = self
 				# new is a created object
-				IConnection( self ).add( new ) 
+				IConnection( self ).add( new )
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
 				# Note that this is the special event that shows both objects.
+				_register_units( new )
 				notify(ContentPackageReplacedEvent(new, old))
 
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
+				_register_units( new )
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
 				lifecycleevent.removed(old)
 				old.__parent__ = None
-				
+
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
 			event = ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
@@ -404,10 +425,6 @@ class AbstractContentPackageLibrary(object):
 
 	@CachedProperty("lastSynchronized")
 	def _v_path_to_ntiid_cache(self):
-		# We may want to use WRefs here to reduce memory usage.
-		# Doing so easily requires these objects to be registered
-		# in our intid utility.  If we do use wrefs, we can increase
-		# this cache substantially.
 		result = LRUCache(2000)
 		return result
 
@@ -419,16 +436,20 @@ class AbstractContentPackageLibrary(object):
 		 Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found.
 		"""
-		# We special case the root ntiid by only looking in
-		# the top level of content packages for our ID.  We should
-		# always return None unless there are root content prefs.
+		# We store as weak refs to avoid ConnectionStateErrors
+		# and to reduce memory usage.
+		# TODO We could increase this cache size if it's extremely small,
+		# as expected.
 		result = self._v_path_to_ntiid_cache.get(ntiid)
-		if result is not None:
-			return result
-		elif result:
+		if result:
+			return [x() for x in result]
+		elif result is not None:
 			# Empty list
 			return None
 
+		# We special case the root ntiid by only looking in
+		# the top level of content packages for our ID.  We should
+		# always return None unless there are root content prefs.
 		if ntiid == NTI_ROOT:
 			for title in self.contentPackages:
 				if getattr( title, 'ntiid', None ) == ntiid:
@@ -442,7 +463,8 @@ class AbstractContentPackageLibrary(object):
 					break
 
 		if result:
-			self._v_path_to_ntiid_cache.put( ntiid, result )
+			cache_val = [_PathCacheContentUnitWeakRef(x) for x in result]
+			self._v_path_to_ntiid_cache.put( ntiid, cache_val )
 		else:
 			# Make sure we don't lose these worst-cases.
 			self._v_path_to_ntiid_cache.put( ntiid, [] )
@@ -538,3 +560,40 @@ class PersistentContentPackageLibrary(Persistent,
 	generally does not need to be synchronized on
 	every startup, only when content on disk has changed.
 	"""
+
+from zope.interface.interfaces import ComponentLookupError
+from nti.intid.interfaces import IntIdMissingError
+from nti.schema.schema import EqHash
+
+@EqHash('_obj', '_intid')
+class _PathCacheContentUnitWeakRef(object):
+	"""
+	A specific wref designed just for pathToNtiid caching.
+	We cannot use the existing ContentUnitWeakRef because
+	at sync time, we rely on content packages changing
+	underneath bundles and via wref, being resolved through
+	the library.
+	"""
+
+	__slots__ = (b'_intid', b'_obj')
+
+	def __init__(self, contentunit):
+		self._obj = None
+		self._intid = None
+
+		try:
+			intids = component.getUtility( zope.intid.IIntIds )
+			self._intid = intids.getId( contentunit )
+		except (IntIdMissingError,ComponentLookupError):
+			# For non-persistant cases (or unit tests), store the object itself.
+			# These should be rare.
+			self._obj = contentunit
+
+	def __call__(self):
+		if self._obj is not None:
+			result = self._obj
+		else:
+			intids = component.getUtility( zope.intid.IIntIds )
+			result = intids.getObject( self._intid )
+
+		return result

@@ -236,7 +236,7 @@ from zope.location.location import LocationIterator
 @interface.implementer(IContentUnitHrefMapper)
 @component.adapter(IFilesystemKey)
 class _FilesystemKeyHrefMapper(object):
-	
+
 	href = None
 
 	def __init__(self, key):
@@ -308,7 +308,7 @@ class _FilesystemBucketHrefMapper(object):
 @interface.implementer(IAbsoluteContentUnitHrefMapper)
 @component.adapter(IS3ContentUnit)
 class _S3ContentUnitHrefMapper(object):
-	
+
 	href = None
 
 	def __init__(self, unit):

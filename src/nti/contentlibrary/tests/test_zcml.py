@@ -17,7 +17,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import none
 from hamcrest import is_not
 does_not = is_not
 from hamcrest import has_property

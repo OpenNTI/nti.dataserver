@@ -37,7 +37,6 @@ class ContentUnitWeakRef(object):
 		self._ntiid = contentunit.ntiid
 		validate_ntiid_string(self._ntiid)
 
-
 	def __call__(self):
 		# We're not a caching weak ref, we need to pick
 		# up on changes that happen in the library
