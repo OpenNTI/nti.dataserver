@@ -19,14 +19,14 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.users.users import User
 from nti.dataserver import authorization as nauth
 
-from nti.utils.maps import CaseInsensitiveDict
-
-K20_IDENTIFIER_NAME = 'token'
 K20_VIEW_NAME = 'k20_link'
 K20_LINK_PARAM_NAME = 'href'
+K20_IDENTIFIER_NAME = 'token'
 
 def _get_user_token( user ):
 	intids = component.getUtility( zope.intid.IIntIds )
@@ -58,6 +58,4 @@ class K20Link( AbstractAuthenticatedView ):
 			new_link = url + '&' + params
 		else:
 			new_link = url + '?' + params
-
 		return hexc.HTTPFound( location=new_link )
-
