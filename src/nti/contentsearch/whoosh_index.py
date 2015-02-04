@@ -5,14 +5,15 @@ Whoosh content index classes.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from nti.contentprocessing import rank_words
+from nti.common.property import Lazy
 
-from nti.utils.property import Lazy
+from nti.contentprocessing import rank_words
 
 from . import common
 from . import constants

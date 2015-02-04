@@ -5,6 +5,7 @@ Whoosh index storage.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -24,9 +25,9 @@ from whoosh.index import LockError
 from whoosh.index import _DEF_INDEX_NAME
 from whoosh.filedb.filestore import FileStorage as WhooshFileStorage
 
-from nti.externalization.representation import WithRepr
+from nti.common.property import CachedProperty
 
-from nti.utils.property import CachedProperty
+from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import EqHash
 

@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,9 +17,9 @@ from zope import interface
 
 import repoze.lru
 
-from nti.ntiids import ntiids
+from nti.common.property import Lazy
 
-from nti.utils.property import Lazy
+from nti.ntiids import ntiids
 
 from .common import get_sort_order
 

@@ -13,10 +13,10 @@ from zope import component
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.contentprocessing.interfaces import INgramComputer
+
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
-
-from nti.contentprocessing.interfaces import INgramComputer
 
 from .common import to_list
 

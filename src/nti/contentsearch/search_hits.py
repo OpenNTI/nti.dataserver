@@ -5,6 +5,7 @@ Defines adapters for search hits
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,6 +20,8 @@ from zope import interface
 from zope.location.interfaces import IContained
 
 from nti.chatserver.interfaces import IMessageInfo
+
+from nti.common.property import alias
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -35,8 +38,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 from nti.externalization.representation import WithRepr
 
 from nti.mimetype.mimetype import nti_mimetype_from_object
-
-from nti.utils.property import alias
 
 from .discriminators import get_uid
 

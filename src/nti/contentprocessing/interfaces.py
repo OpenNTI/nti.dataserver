@@ -59,26 +59,6 @@ class IWordTokenizerPattern(interface.Interface):
 	marker interface for word tokenizer regular expression pattern
 	"""
 
-class IPunctuationCharExpression(interface.Interface):
-	"""
-	marker interface for punctuation regular expression
-	"""
-
-class IPunctuationCharExpressionPlus(interface.Interface):
-	"""
-	marker interface for punctuation + space regular expression
-	"""
-
-class IPunctuationCharPattern(interface.Interface):
-	"""
-	marker interface for punctuation regular expression pattern
-	"""
-
-class IPunctuationCharPatternPlus(interface.Interface):
-	"""
-	marker interface for punctuation + space regular expression pattern
-	"""
-
 class IAlchemyAPIKey(interface.Interface):
 	name = interface.Attribute("Key name or alias")
 	value = interface.Attribute("The actual key value")

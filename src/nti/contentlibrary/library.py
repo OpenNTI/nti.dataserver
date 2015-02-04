@@ -113,8 +113,6 @@ def _register_units( content_unit ):
 	Recursively register content units.
 	"""
 	intids = component.queryUtility( zope.intid.IIntIds )
-
-	# May be none in unit tests
 	if intids is not None:
 		def _register( obj ):
 			intid = intids.queryId( obj )
@@ -122,7 +120,23 @@ def _register_units( content_unit ):
 				intids.register( obj )
 			for child in obj.children:
 				_register( child )
+		_register( content_unit )
 
+def _unregister_units( content_unit ):
+	"""
+	Recursively unregister content units.
+	"""
+	intids = component.queryUtility( zope.intid.IIntIds )
+	if intids is not None:
+		def _register( obj ):
+			intid = intids.queryId( obj )
+			if intid is None:
+				try:
+					intids.unregister( obj )
+				except KeyError:
+					pass
+			for child in obj.children:
+				_register( child )
 		_register( content_unit )
 
 @interface.implementer(ISyncableContentPackageLibrary)
@@ -241,6 +255,7 @@ class AbstractContentPackageLibrary(object):
 			# randomizing because we expect to be preloaded.
 			for old in removed:
 				lifecycleevent.removed(old)
+				_unregister_units(old)
 				old.__parent__ = None
 
 			for new, old in changed:
@@ -263,6 +278,7 @@ class AbstractContentPackageLibrary(object):
 			for _, old in changed:
 				lifecycleevent.removed(old)
 				old.__parent__ = None
+				_unregister_units(old)
 
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')

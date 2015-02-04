@@ -19,6 +19,8 @@ from dolmen.builtins import IDict
 
 from nti.chatserver.interfaces import IMessageInfo
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IHighlight
@@ -35,8 +37,6 @@ from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.externalization.oids import to_external_ntiid_oid
-
-from nti.utils.maps import CaseInsensitiveDict
 
 from .common import to_list
 from .common import get_type_name
