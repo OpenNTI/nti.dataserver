@@ -276,7 +276,6 @@ class AbstractContentPackageLibrary(object):
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
-				lifecycleevent.removed(old)
 				_unregister_units(old)
 				old.__parent__ = None
 
