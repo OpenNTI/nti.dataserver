@@ -14,7 +14,7 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 import simplejson
 import collections
 
-from nti.utils.maps import CaseInsensitiveDict
+from nti.common.maps import CaseInsensitiveDict
 
 class _JsonBodyView(object):
 

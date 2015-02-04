@@ -5,6 +5,7 @@ Coppa upgrade views
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -20,11 +21,6 @@ from pyramid.view import view_config
 from zope import component
 from zope import interface
 
-from nti.dataserver import users
-from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-
 from nti.appserver.utils import is_true
 from nti.appserver import MessageFactory as _
 from nti.appserver.utils import _JsonBodyView
@@ -36,7 +32,12 @@ from nti.appserver.link_providers import flag_link_provider
 from nti.app.externalization.error import raise_json_error as _raise_error
 from nti.app.externalization.internalization import read_body_as_external_object
 
-from nti.utils.maps import CaseInsensitiveDict
+from nti.common.maps import CaseInsensitiveDict
+
+from nti.dataserver import users
+from nti.dataserver import authorization as nauth
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.schema.field import Bool
 from nti.schema.field import Date
