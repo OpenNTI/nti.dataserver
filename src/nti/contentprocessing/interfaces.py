@@ -163,3 +163,13 @@ class IContentMetadataURLHandler(interface.Interface):
 
 		:return: An :class:`IContentMetadata`.
 		"""
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentfragments.interfaces",
+	"nti.contentfragments.interfaces",
+	"IPunctuationCharPattern",
+	"IPunctuationCharExpression",
+	"IPunctuationCharPatternPlus",
+	"IPunctuationCharExpressionPlus")
