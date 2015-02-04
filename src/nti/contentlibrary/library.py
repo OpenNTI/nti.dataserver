@@ -277,8 +277,8 @@ class AbstractContentPackageLibrary(object):
 			# after updating remove parent reference for old objects
 			for _, old in changed:
 				lifecycleevent.removed(old)
-				old.__parent__ = None
 				_unregister_units(old)
+				old.__parent__ = None
 
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
