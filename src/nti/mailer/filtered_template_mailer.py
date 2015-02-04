@@ -6,6 +6,7 @@ actually creating or queuing mail.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,13 +15,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from .interfaces import ITemplatedMailer
-from .interfaces import IEmailAddressable
-
-from pyramid.threadlocal import get_current_request
 from pyramid.compat import is_nonstr_iter
+from pyramid.threadlocal import get_current_request
 
 import rfc822
+
+from .interfaces import ITemplatedMailer
+from .interfaces import IEmailAddressable
 
 @interface.implementer(ITemplatedMailer)
 class _BaseFilteredMailer(object):
