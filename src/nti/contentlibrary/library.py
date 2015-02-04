@@ -356,6 +356,7 @@ class AbstractContentPackageLibrary(object):
 		# we do the delete?
 		for title in self._contentPackages:
 			lifecycleevent.removed(title)
+			_unregister_units(title)
 			title.__parent__ = None
 
 		# Must also take care to clear its dependents
