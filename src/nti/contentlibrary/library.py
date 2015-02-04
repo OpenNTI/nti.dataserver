@@ -112,7 +112,6 @@ def _register_units( content_unit ):
 	"""
 	Recursively register content units.
 	"""
-	return
 	intids = component.queryUtility( zope.intid.IIntIds )
 	if intids is not None:
 		def _register( obj ):
@@ -127,7 +126,6 @@ def _unregister_units( content_unit ):
 	"""
 	Recursively unregister content units.
 	"""
-	return
 	intids = component.queryUtility( zope.intid.IIntIds )
 	if intids is not None:
 		def _register( obj ):
