@@ -276,6 +276,9 @@ class AbstractContentPackageLibrary(object):
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
+				# XXX CS/JZ, 2-04-15  DO NOT call lifecycleevent.removed on this
+				# objects b/c this may unregister things we don't want to leaving
+				# the database in a invalid state
 				_unregister_units(old)
 				old.__parent__ = None
 
