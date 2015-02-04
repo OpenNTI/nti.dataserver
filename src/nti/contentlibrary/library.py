@@ -27,18 +27,25 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from persistent import Persistent
 
+from nti.common.property import alias
+from nti.common.property import CachedProperty
+
 from nti.externalization.persistence import NoPickle
 
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
 
 from nti.site.localutility import queryNextUtility
 
-from nti.utils.property import alias
-from nti.utils.property import CachedProperty
+from .interfaces import IContentPackageLibrary
+from .interfaces import IContentPackageEnumeration
+from .interfaces import ContentPackageReplacedEvent
+from .interfaces import ISyncableContentPackageLibrary
+from .interfaces import ContentPackageLibraryDidSyncEvent
+from .interfaces import ContentPackageLibraryWillSyncEvent
+from .interfaces import ContentPackageLibraryModifiedOnSyncEvent
+from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
-from . import interfaces
-
-@interface.implementer(interfaces.IContentPackageEnumeration)
+@interface.implementer(IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
 	"""
 	Base class providing some semantic helpers for enumeration.
@@ -79,7 +86,7 @@ class AbstractContentPackageEnumeration(object):
 				titles.append( title )
 		return titles
 
-@interface.implementer(interfaces.IDelimitedHierarchyContentPackageEnumeration)
+@interface.implementer(IDelimitedHierarchyContentPackageEnumeration)
 class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPackageEnumeration):
 	"""
 	An object that works with a root bucket to enumerate content paths.
@@ -99,7 +106,7 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 			return ()
 		return root.enumerateChildren()
 
-@interface.implementer(interfaces.ISyncableContentPackageLibrary)
+@interface.implementer(ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
 	"""
 	A library that uses an enumeration and cooperates with parent
@@ -145,7 +152,7 @@ class AbstractContentPackageLibrary(object):
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
-		notify(interfaces.ContentPackageLibraryWillSyncEvent(self))
+		notify(ContentPackageLibraryWillSyncEvent(self))
 
 		never_synced = self._contentPackages is None
 		old_content_packages = list(self._contentPackages or ())
@@ -218,10 +225,13 @@ class AbstractContentPackageLibrary(object):
 				old.__parent__ = None
 
 			for new, old in changed:
-				# Note that this is the special event that shows both objects.
 				new.__parent__ = self
-				IConnection( self ).add( new ) # new is a created object
-				notify(interfaces.ContentPackageReplacedEvent(new, old))
+				# new is a created object
+				IConnection( self ).add( new ) 
+				lifecycleevent.created(new)
+				lifecycleevent.added(new)
+				# Note that this is the special event that shows both objects.
+				notify(ContentPackageReplacedEvent(new, old))
 
 			for new in added:
 				new.__parent__ = self
@@ -230,17 +240,16 @@ class AbstractContentPackageLibrary(object):
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
+				lifecycleevent.removed(old)
 				old.__parent__ = None
 				
 			# Ok, new let people know that 'contentPackages' changed
-			attributes = lifecycleevent.Attributes(interfaces.IContentPackageLibrary,
-												   'contentPackages')
-
-			event = interfaces.ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
+			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
+			event = ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
 			notify(event)
 
 		# Finish up by saying that we sync'd, even if nothing changed
-		notify(interfaces.ContentPackageLibraryDidSyncEvent(self))
+		notify(ContentPackageLibraryDidSyncEvent(self))
 
 		self._enumeration.lastSynchronized = time.time()
 		if something_changed or never_synced:
@@ -264,7 +273,7 @@ class AbstractContentPackageLibrary(object):
 		# requires that this be indexable, for some reason.
 		# Note that our values always take precedence over anything
 		# we get from the parent
-		parent = queryNextUtility(self, interfaces.IContentPackageLibrary)
+		parent = queryNextUtility(self, IContentPackageLibrary)
 		if parent is None:
 			# We can directly return our tuple, yay
 			return self._contentPackages
@@ -360,7 +369,7 @@ class AbstractContentPackageLibrary(object):
 			return self._content_packages_by_ntiid[key]
 
 		# We no longer check titles
-		parent = queryNextUtility(self,interfaces.IContentPackageLibrary)
+		parent = queryNextUtility(self, IContentPackageLibrary)
 		if parent is None:
 			raise KeyError( key )
 
