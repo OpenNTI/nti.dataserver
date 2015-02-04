@@ -22,9 +22,9 @@ from zope import interface
 from zope.proxy import ProxyBase
 from zope.container.contained import Contained
 
-from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+from nti.common.property import CachedProperty
 
-from nti.utils.property import CachedProperty
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from .constants import content_
 from .constants import nticard_

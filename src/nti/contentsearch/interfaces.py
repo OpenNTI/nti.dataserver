@@ -5,18 +5,21 @@ Search interfaces.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import component
 from zope import interface
+
+from zope.container.interfaces import IContained
+
 from zope.deprecation import deprecated
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ILastModified
-
-from zope.container.interfaces import IContained
 
 from nti.schema.field import Int
 from nti.schema.field import Bool

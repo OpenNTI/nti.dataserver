@@ -5,6 +5,7 @@ Search results
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -21,10 +22,10 @@ from zope.container.contained import Contained
 from zope.location.interfaces import ISublocations
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
+from nti.common.iterables import isorted
+from nti.common.property import Lazy, alias
 
-from nti.utils.sort import isorted
-from nti.utils.property import Lazy, alias
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from .common import get_mimetype_from_type
 

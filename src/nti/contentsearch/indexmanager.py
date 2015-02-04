@@ -5,6 +5,7 @@ Index manager
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -21,6 +22,8 @@ from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IEntity
 
 from nti.externalization.persistence import NoPickle
+
+from nti.site.interfaces import IHostPolicySiteManager
 
 from .interfaces import ISearchQuery
 from .interfaces import IIndexManager
@@ -41,8 +44,6 @@ from .search_results import get_or_create_suggest_results
 from .search_results import empty_suggest_and_search_results
 from .search_results import merge_suggest_and_search_results
 from .search_results import get_or_create_suggest_and_search_results
-
-from nti.site.interfaces import IHostPolicySiteManager
 
 @interface.implementer(IIndexManager)
 @NoPickle

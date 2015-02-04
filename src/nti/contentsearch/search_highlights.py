@@ -5,6 +5,7 @@ Search highlight functionality
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -26,10 +27,11 @@ from whoosh.highlight import NullFormatter
 from whoosh.highlight import ContextFragmenter
 from whoosh.highlight import BasicFragmentScorer
 
+from nti.contentfragments.interfaces import IPunctuationMarkPatternPlus
+from nti.contentfragments.interfaces import IPunctuationMarkExpressionPlus
+
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing.interfaces import IWordTokenizerExpression
-from nti.contentprocessing.interfaces import IPunctuationCharPatternPlus
-from nti.contentprocessing.interfaces import IPunctuationCharExpressionPlus
 
 from .search_fragments import Range
 from .search_fragments import create_from_terms
@@ -201,7 +203,7 @@ def _set_matched_filter(tokens, termset):
 def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 							 order=FIRST, lang='en'):
 	# get lang. punkt char regex patter
-	punkt_pattern = component.getUtility(IPunctuationCharPatternPlus, name=lang)
+	punkt_pattern = component.getUtility(IPunctuationMarkPatternPlus, name=lang)
 
 	# get query terms
 	text = unicode(text)
@@ -250,7 +252,7 @@ def word_fragments_highlight(query, text, maxchars=300, surround=50, top=5,
 			total_fragments = len(frags)
 
 	if query.IsPhraseSearch:
-		punkt_exp = component.getUtility(IPunctuationCharExpressionPlus,name=lang)
+		punkt_exp = component.getUtility(IPunctuationMarkExpressionPlus,name=lang)
 		snippet, fragments = \
 			prune_phrase_terms_fragments(termset, snippet, fragments, punkt_exp)
 
