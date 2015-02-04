@@ -3,8 +3,9 @@
 """
 Views for :mod:`zope.file` objects, and likewise :class:`zope.browserresource.interfaces.IFileResource`
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -30,14 +31,14 @@ try:
 except ImportError: # pypy? Doesn't make sense
 	NamedImage = None
 
+from nti.app.renderers import interfaces as app_interfaces
 from nti.app.externalization.view_mixins import UploadRequestUtilsMixin
+
+from nti.common import dataurl
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils import dataurl
-
-from nti.app.renderers import interfaces as app_interfaces
 from . import httpexceptions as hexc
 
 def _do_view( request, view ):
@@ -118,7 +119,6 @@ def avatar_file_view(request):
 		raise hexc.HTTPForbidden()
 
 	return _do_view(request, download.Display)
-
 
 @view_config( route_name='objects.generic.traversal',
 			  context=zope.file.interfaces.IFile,

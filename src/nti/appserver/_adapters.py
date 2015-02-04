@@ -3,8 +3,9 @@
 """
 AppSever adpapters.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -23,14 +24,18 @@ import ZODB
 from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization import interfaces as ext_interfaces
+from nti.common.property import alias
+
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.externalization import to_external_object
+
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import IExternalObjectDecorator
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.schema.interfaces import find_most_derived_interface
-from nti.utils.property import alias
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(nti_interfaces.IEnclosedContent )
 class EnclosureExternalObject(object):
 
@@ -41,15 +46,16 @@ class EnclosureExternalObject(object):
 		# TODO: I have no idea how best to do this
 		return to_external_object( self.enclosed.data, **kwargs )
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(ZODB.interfaces.IBroken)
 class BrokenExternalObject(object):
 	"""
-	Renders broken object. This is mostly for (legacy) logging purposes, as the general NonExternalizableObject support
-	catches these now.
+	Renders broken object. This is mostly for (legacy) logging purposes, as the general 
+	NonExternalizableObject support catches these now.
 
-	TODO: Consider removing this. Is the logging worth it? Alternately, should the NonExternalizableObject
-	adapter be at the low level externization package or up here?
+	TODO: Consider removing this. Is the logging worth it? Alternately, should the
+	NonExternalizableObject adapter be at the low level externization package or
+	up here?
 	"""
 
 	def __init__( self, broken ):
@@ -95,11 +101,15 @@ class _AbstractExternalFieldTraverser(object):
 	def __getitem__( self, key ):
 		if key not in self._allowed_fields:
 			raise KeyError( key )
-		return _DefaultExternalFieldResource( key, self.context, wrap_value=(None if key not in self._unwrapped_fields else False) )
+		return _DefaultExternalFieldResource( key, self.context,
+											  wrap_value=(None if key not in self._unwrapped_fields else False) )
 
-	def __setitem__( self, key, val ): raise TypeError()
-	def __delitem__( self, key ): raise TypeError()
-	def __len__( self ): return len( self._allowed_fields )
+	def __setitem__( self, key, val ): 
+		raise TypeError()
+	def __delitem__( self, key ):
+		raise TypeError()
+	def __len__( self ): 
+		return len( self._allowed_fields )
 
 	def traverse( self, name, further_path ):
 		try:
@@ -120,22 +130,23 @@ class SharedWithExternalFieldTraverser(_AbstractExternalFieldTraverser):
 class TitledExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
 	_allowed_fields = ('title', )
-	#_unwrapped_fields = ('title', )
 
 @component.adapter(nti_interfaces.ITitledDescribedContent)
 class TitledDescribedExternalFieldTraverser(TitledExternalFieldTraverser):
 
 	_allowed_fields = TitledExternalFieldTraverser._allowed_fields + ('description',)
-	#_unwrapped_fields = TitledExternalFieldTraverser._unwrapped_fields + ('description',)
 
 # The inheritance tree for IShareable and ITitledDescribed is disjoint,
 # so a registration for one or the other of those conflicts.
 # This class is a general dispatcher and should be registered for IModeledContent
 @component.adapter(nti_interfaces.IModeledContent)
-class GenericModeledContentExternalFieldTraverser(TitledDescribedExternalFieldTraverser,SharedWithExternalFieldTraverser):
+class GenericModeledContentExternalFieldTraverser(TitledDescribedExternalFieldTraverser,
+												  SharedWithExternalFieldTraverser):
 
-	_allowed_fields = SharedWithExternalFieldTraverser._allowed_fields + TitledDescribedExternalFieldTraverser._allowed_fields + ('body',)
-	_unwrapped_fields = SharedWithExternalFieldTraverser._unwrapped_fields + TitledDescribedExternalFieldTraverser._unwrapped_fields
+	_allowed_fields = 	SharedWithExternalFieldTraverser._allowed_fields +  \
+						TitledDescribedExternalFieldTraverser._allowed_fields + ('body',)
+	_unwrapped_fields = SharedWithExternalFieldTraverser._unwrapped_fields + \
+						TitledDescribedExternalFieldTraverser._unwrapped_fields
 
 @interface.implementer(app_interfaces.IExternalFieldTraversable)
 @component.adapter(nti_interfaces.IUser)
@@ -147,9 +158,13 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 		super(UserExternalFieldTraverser,self).__init__( context, request=request )
 		profile_iface = user_interfaces.IUserProfileSchemaProvider( context ).getSchema()
 		profile = profile_iface( context )
-		profile_schema = find_most_derived_interface( profile, profile_iface, possibilities=interface.providedBy(profile) )
+		profile_schema = find_most_derived_interface( profile, 
+													  profile_iface, 
+													  possibilities=interface.providedBy(profile) )
 
-		allowed_fields = {'lastLoginTime', 'password', 'mute_conversation', 'unmute_conversation', 'ignoring', 'accepting', 'NotificationCount', 'avatarURL' }
+		allowed_fields = {'lastLoginTime', 'password', 'mute_conversation',
+						  'unmute_conversation', 'ignoring', 'accepting', 
+						  'NotificationCount', 'avatarURL' }
 
 		for k, v in profile_schema.namesAndDescriptions(all=True):
 			__traceback_info__ = k, v
@@ -169,7 +184,7 @@ from zope.i18n.interfaces import IUserPreferredLanguages
 
 _REALNAME_FIELDS = ('realname', 'NonI18NFirstName', 'NonI18NLastName')
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 @component.adapter(nti_interfaces.IUser)
 class _UserRealnameStripper(object):
 	"""
@@ -192,7 +207,7 @@ class _UserRealnameStripper(object):
 				external[k] = None
 
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)
 class _EnglishFirstAndLastNameDecorator(object):
 	"""
@@ -229,12 +244,12 @@ class _EnglishFirstAndLastNameDecorator(object):
 				external['NonI18NLastName'] = last
 
 
-
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver.users import index as user_index
-from nti.dataserver.users.entity import Entity
-from zope.catalog.interfaces import ICatalog
 from zope.intid.interfaces import IIntIds
+from zope.catalog.interfaces import ICatalog
+
+from nti.dataserver.users.entity import Entity
+from nti.dataserver.users import index as user_index
+from nti.dataserver.users import interfaces as user_interfaces
 
 def _make_min_max_btree_range( search_term ):
 	min_inclusive = search_term # start here
@@ -252,7 +267,6 @@ def _intids_to_provided( intids, provided, matches ):
 		if provided( match ):
 			matches.add( match )
 	return matches
-
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _UsernameSearchPolicy(object):
@@ -310,8 +324,6 @@ class _UsernameSearchPolicy(object):
 			except KeyError: # pragma: no cover
 				# Typically POSKeyError
 				logger.warning( "Failed to search entity %s", entity_name )
-
-
 		return result
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
@@ -352,7 +364,6 @@ class _AliasUserSearchPolicy(object):
 		"""
 		Returns a sequence of sets of intids.
 		"""
-
 		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
 		# We accumulate intermediate results in their intid format.
 		# Although each given object should show up in each index only
@@ -376,9 +387,7 @@ class _AliasUserSearchPolicy(object):
 				# Yes, we like the things for this key. Add the ids of the
 				# things mapped to it to our set of matches
 				matching_intid_sets.append( intids )
-
 		return matching_intid_sets
-
 
 	def query( self, search_term, provided=nti_interfaces.IEntity.providedBy, _result=None ):
 		matches = _result if _result is not None else set()
@@ -390,7 +399,6 @@ class _AliasUserSearchPolicy(object):
 			matching_intids = ent_catalog.family.IF.multiunion( matching_intid_sets )
 			matches = _intids_to_provided( matching_intids, provided, matches )
 		return matches
-
 
 @interface.implementer(app_interfaces.IUserSearchPolicy)
 class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
@@ -409,8 +417,9 @@ class _RealnameAliasUserSearchPolicy(_AliasUserSearchPolicy):
 		# to maintain it for us, which lets us take advantage of prefix
 		# ranges (though this is not directly supported in the index
 		# interface).
-		return index._fwd_index.iteritems( *_make_min_max_btree_range( search_term ), excludemax=True )
-
+		result = index._fwd_index.iteritems(*_make_min_max_btree_range( search_term ), 
+											excludemax=True )
+		return result
 
 @interface.implementer(app_interfaces.IIntIdUserSearchPolicy)
 class _ComprehensiveUserSearchPolicy(object):
@@ -465,9 +474,10 @@ class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy,_UserRealna
 		super(_NoOpUserSearchPolicyAndRealnameStripper,self).decorateExternalObject( original, external )
 
 from nti.externalization.interfaces import StandardExternalFields
+
 from .link_providers import provide_links
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IUser)
 class _AuthenticatedUserLinkAdder(object):
 	"""
@@ -492,7 +502,7 @@ class _AuthenticatedUserLinkAdder(object):
 
 		external[StandardExternalFields.LINKS] = links
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 @component.adapter(nti_interfaces.IDeletedObjectPlaceholder)
 class _DeletedObjectPlaceholderDecorator(object):
 	"""
