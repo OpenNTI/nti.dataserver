@@ -27,7 +27,6 @@ from .interfaces import TAG_NAMESPACE_FILE
 def indexed_data_adapter(content_unit,
 						 factory=container.IndexedDataContainer,
 						 iface=interfaces.IIndexedDataContainer):
-
 	key = _KEY
 	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE,'')
 	if namespace:

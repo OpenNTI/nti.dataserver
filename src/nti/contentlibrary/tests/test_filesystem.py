@@ -183,7 +183,7 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( found_path, has_length( 2 ) )
 
 		cache = library._v_path_to_ntiid_cache
-		assert_that( cache.get( path1 ), is_( found_path ) )
+		assert_that( [x() for x in cache.get( path1 )], is_( found_path ) )
 
 		# Path with no result cached
 		dne_path = 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.18-DoesNotExist'

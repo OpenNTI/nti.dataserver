@@ -92,7 +92,7 @@ def _update_related_content_index_when_content_changes(content_package, event):
 def _update_timeline_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
 											  ITimelineIndexedDataContainer)
-	
+
 def _clear_when_removed(content_package, index_iface):
 	"""
 	Because we don't know where the data is stored, when an

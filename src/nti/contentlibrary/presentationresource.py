@@ -59,7 +59,7 @@ def get_platform_resentation_resources(root=None):
 	data = list()
 	inherit = None
 	for platform_bucket in assets.enumerateChildren():
-		
+
 		if not IDelimitedHierarchyBucket.providedBy(platform_bucket):
 			continue
 
@@ -96,7 +96,7 @@ class DisplayableContentMixin(object):
 	def get_platform_resentation_resources(self, root=None):
 		result = get_platform_resentation_resources(root)
 		return result
-	
+
 	@property
 	def _v_root(self):
 		# If the root is not yet filled in (None), then
@@ -111,7 +111,7 @@ class DisplayableContentMixin(object):
 	def _v_rootLastModified(self):
 		result = getattr(self._v_root, 'lastModified', 0)
 		return result
-	
+
 	@CachedProperty('root', '_v_rootLastModified')
 	def _v_PlatformPresentationResources(self):
 		result = get_platform_resentation_resources(self._v_root)
