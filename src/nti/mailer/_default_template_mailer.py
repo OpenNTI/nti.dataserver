@@ -19,10 +19,10 @@ from zope.dottedname import resolve as dottedname
 from premailer import transform
 
 from pyramid.renderers import render
-from pyramid.renderers import get_renderer
 from pyramid.path import caller_package
-from pyramid.threadlocal import get_current_request
 from pyramid.compat import is_nonstr_iter
+from pyramid.renderers import get_renderer
+from pyramid.threadlocal import get_current_request
 
 from pyramid_mailer.message import Message
 

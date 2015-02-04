@@ -12,7 +12,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-import sys
 import collections
 
 from zope import interface
@@ -31,21 +30,10 @@ import zc.catalog.catalogindex
 import BTrees
 
 from nti.common.property import alias
+from nti.common.iterables import is_nonstr_iter
 
 from .interfaces import IKeywordIndex
 
-# True if we are running on Python 3.
-PY3 = sys.version_info[0] == 3
-
-if PY3: # pragma: no cover
-	def is_nonstr_iter(v):
-		if isinstance(v, str):
-			return False
-		return hasattr(v, '__iter__')
-else:
-	def is_nonstr_iter(v):
-		return hasattr(v, '__iter__')
-	
 def convertQuery(query):
 	# Convert zope.index style two-tuple (min/max)
 	# query to new-style
