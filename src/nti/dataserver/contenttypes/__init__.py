@@ -5,22 +5,23 @@ This package defines the "generic" objects that implement the IModeledContent in
 
 Most of the imports in this module itself are backward compatibility re-exports
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 # disable unused import warning
-#pylint: disable=W0611
+# pylint: disable=W0611
 
 # Legacy exports; be careful removing them, some may be in the database...
 # ... but not the mixins
-#from .threadable import ThreadableMixin
-#from .threadable import ThreadableExternalizableMixin
+# from .threadable import ThreadableMixin
+# from .threadable import ThreadableExternalizableMixin
 
-#from .base import UserContentRoot as _UserContentRoot
+# from .base import UserContentRoot as _UserContentRoot
 
 from .bookmark import Bookmark
 from .highlight import Highlight

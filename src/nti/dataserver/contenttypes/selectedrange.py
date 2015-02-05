@@ -3,8 +3,9 @@
 """
 Definitions of selected range objects.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,26 +13,28 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from ..interfaces import ISelectedRange
+from ..interfaces import IUserTaggedContent
+from ..interfaces import IAnchoredRepresentation
 
 from .base import UserContentRoot
 from .base import UserContentRootInternalObjectIO
 
-from nti.schema.fieldproperty import createDirectFieldProperties
-
-@interface.implementer(nti_interfaces.ISelectedRange)
+@interface.implementer(ISelectedRange)
 class SelectedRange(UserContentRoot):
 	"""
 	Base implementation of selected ranges in the DOM. Intended to be used
 	as a base class.
 	"""
 
-	createDirectFieldProperties(nti_interfaces.IAnchoredRepresentation)  # applicableRange
-	createDirectFieldProperties(nti_interfaces.ISelectedRange)  # selectedText
+	createDirectFieldProperties(IAnchoredRepresentation)  # applicableRange
+	createDirectFieldProperties(ISelectedRange)  # selectedText
 	# Tags. It may be better to use objects to represent
 	# the tags and have a single list. The two-field approach
 	# most directly matches what the externalization is.
-	createDirectFieldProperties(nti_interfaces.IUserTaggedContent)  # tags
+	createDirectFieldProperties(IUserTaggedContent)  # tags
 	AutoTags = ()  # not currently in any interface
 
 	def __init__(self):

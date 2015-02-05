@@ -2,20 +2,15 @@
 """
 Definition of the Note object.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import six
-
-from nti.dataserver import interfaces as nti_interfaces
-
-from nti.externalization.internalization import update_from_external_object
-
-from nti.ntiids.ntiids import find_object_with_ntiid
 
 from zope import component
 from zope import interface
@@ -25,9 +20,15 @@ from zope.annotation import interfaces as an_interfaces
 import zope.schema.interfaces
 from zope.schema.fieldproperty import FieldProperty
 
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.externalization.internalization import update_from_external_object
+
+from nti.ntiids.ntiids import find_object_with_ntiid
+
+from .base import _make_getitem
 from .highlight import Highlight
 from .threadable import ThreadableMixin
-from .base import _make_getitem
 
 class BodyFieldProperty(FieldProperty):
 	# This currently exists for legacy support (test cases)
@@ -157,9 +158,9 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 			note.updateSharingTargets( sharingTargets )
 
-
 			# Now some other things we want to inherit if possible
 			for copy in note._inheritable_properties_:
 				val = getattr( note.inReplyTo, copy, getattr( note, copy, None ) )
 				if val is not None:
 					setattr( note, copy, val )
+

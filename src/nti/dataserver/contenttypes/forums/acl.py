@@ -16,6 +16,7 @@ topic.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -83,7 +84,6 @@ def _do_get_perms_for_creator_by_kind(self):
 		return self._PERMS_FOR_CREATOR
 	return (nauth.ACT_READ,)
 
-
 class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	People that can see topics are allowed to create new objects (posts)
@@ -109,7 +109,6 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		return self._extend_with_admin_privs(acl)
-
 
 @component.adapter(frm_interfaces.IPost)
 class _PostACLProvider(AbstractCreatedAndSharedACLProvider):

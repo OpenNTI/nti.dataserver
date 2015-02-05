@@ -5,6 +5,7 @@ Definitions for topics.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,33 +15,38 @@ from zope import interface
 from zope import component
 from zope.event import notify
 from zope import lifecycleevent
-from zope.container.interfaces import INameChooser
-from zope.location.interfaces import ILocationInfo
-from zope.intid.interfaces import IIntIdAddedEvent
-from zope.schema.fieldproperty import FieldProperty
+
 from zope.annotation import interfaces as an_interfaces
+
+from zope.container.interfaces import INameChooser
 from zope.container.contained import ContainerSublocations
 from zope.container.contained import dispatchToSublocations
+
+from zope.intid.interfaces import IIntIdAddedEvent
+
+from zope.location.interfaces import ILocationInfo
+
+from zope.schema.fieldproperty import FieldProperty
+
+from nti.common.property import Lazy
+from nti.common.property import readproperty
+from nti.common.property import CachedProperty
 
 from nti.dataserver import users
 from nti.dataserver import sharing
 from nti.dataserver import containers
 from nti.dataserver import datastructures
+from nti.dataserver.traversal import find_interface
+
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
-from nti.dataserver.interfaces import ICommunity
 
 from nti.utils._compat import Implicit
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
-
-from nti.utils.property import Lazy
-from nti.utils.property import CachedProperty
-from nti.utils.property import readproperty
-
-from nti.dataserver.traversal import find_interface
 
 from nti.wref import interfaces as wref_interfaces
 
@@ -68,6 +74,7 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 		return 0.0
 
 	_newestPostWref = None
+
 	# TODO: We probably need something to resolve conflicts here;
 	# We always want the reference to the newest object to be what
 	# is stored.
@@ -242,7 +249,6 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# the dynamic memberships of the *creator* of this object, we
 		# restrict it to the community in which we are embedded
 		return [self._community] if self._community else ()
-
 
 @interface.implementer(for_interfaces.IPersonalBlogEntry)
 class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,

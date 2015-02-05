@@ -13,14 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.ntiids import interfaces as nid_interfaces
 from nti.dataserver import interfaces as nti_interfaces
-
-from nti.ntiids import ntiids
-from nti.ntiids.ntiids import get_specific
 from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
 from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
+
+from nti.ntiids import ntiids
+from nti.ntiids.ntiids import get_specific
+from nti.ntiids import interfaces as nid_interfaces
 
 from . import interfaces as frm_interfaces
 
@@ -58,7 +58,6 @@ class _CommunityBoardResolver(AbstractAdaptingUserBasedResolver):
 	required_iface = nti_interfaces.ICommunity
 	adapt_to = frm_interfaces.ICommunityBoard
 
-
 @interface.implementer(nid_interfaces.INTIIDResolver)
 class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
@@ -75,7 +74,6 @@ class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 		if forum is None and ntiids.get_specific(ntiid) == 'Forum': # Hmm, is it the default?
 			forum = frm_interfaces.ICommunityForum( community, None )
 		return forum
-
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
 class _CommunityTopicResolver(AbstractUserBasedResolver):

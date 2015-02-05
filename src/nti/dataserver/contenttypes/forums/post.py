@@ -13,16 +13,20 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-from zope.lifecycleevent import IObjectModifiedEvent
-from zope.schema.fieldproperty import FieldProperty
+
 from zope.annotation import interfaces as an_interfaces
+
+from zope.lifecycleevent import IObjectModifiedEvent
+
+from zope.schema.fieldproperty import FieldProperty
 
 from persistent import Persistent
 
-from nti.dataserver import datastructures
 from nti.dataserver import sharing
+from nti.dataserver import datastructures
 
 from nti.utils._compat import Implicit
+
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from ..note import BodyFieldProperty
@@ -83,7 +87,6 @@ def _update_forum_when_headline_modified( modified_object, event ):
 		modified_object.__parent__.__parent__.updateLastModIfGreater( modified_object.lastModified )
 	except AttributeError:
 		pass
-
 
 @interface.implementer(for_interfaces.IGeneralPost)
 class GeneralPost(Post):

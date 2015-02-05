@@ -5,14 +5,16 @@ Externalization for forum objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.dataserver.interfaces import IThreadable
+
 from ..threadable import ThreadableExternalizableMixin
 from ..base import UserContentRootInternalObjectIOMixin
-from nti.dataserver.interfaces import IThreadable
 
 class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,UserContentRootInternalObjectIOMixin):
 	"""

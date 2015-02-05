@@ -44,14 +44,18 @@ except ImportError:
 		def __set__( self, instance, value ):
 			return
 
-from nti.ntiids.ntiids import make_ntiid as _make_ntiid
+from nti.common.property import alias as _alias
+from nti.common.property import CachedProperty as _CachedProperty
+
 from nti.ntiids.ntiids import DATE as _NTIID_DATE
-from nti.utils.property import CachedProperty as _CachedProperty
-from nti.utils.property import alias as _alias
+from nti.ntiids.ntiids import make_ntiid as _make_ntiid
+
 from nti.dataserver.interfaces import IPrincipal
-from .interfaces import IUseOIDForNTIID
 from nti.dataserver.traversal import find_interface
+
 from nti.externalization.oids import to_external_ntiid_oid
+
+from .interfaces import IUseOIDForNTIID
 
 class _CreatedNamedNTIIDMixin(object):
 	"""
