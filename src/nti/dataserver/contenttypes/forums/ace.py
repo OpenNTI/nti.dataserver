@@ -5,27 +5,28 @@ Relating to ACE implementations for objects defined in this package.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.mimetype import interfaces as zmime_interfaces
+from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.dataserver import interfaces as nti_interfacess
+from nti.dataserver.interfaces import IACE
 
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces as frm_interfaces
+from .interfaces import IForumACE
 
-@interface.implementer(frm_interfaces.IForumACE,
-					   nti_interfacess.IACE,
-					   zmime_interfaces.IContentTypeAware)
+@interface.implementer(IForumACE, IACE, IContentTypeAware)
 class ForumACE(SchemaConfigured):
+	createDirectFieldProperties(IForumACE)
+
+	parameters = {}
 	mimeType = mime_type = u'application/vnd.nextthought.forums.ace'
-	createDirectFieldProperties(frm_interfaces.IForumACE)
 
 	def __iter__(self):
 		for perm in self.Permissions:

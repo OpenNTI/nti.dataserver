@@ -16,13 +16,15 @@ __docformat__ = "restructuredtext en"
 # disable: too many ancestors
 # pylint: disable=I0011,R0901
 
-
 from zope import schema
 from zope import interface
-from zope.schema import Int
-from zope.dublincore.interfaces import IDCTimes
+
 from zope.container.constraints import contains, containers # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.interfaces import IContentContainer, IContained
+
+from zope.dublincore.interfaces import IDCTimes
+
+from zope.schema import Int
 
 from nti.dataserver import interfaces as nti_interfaces
 

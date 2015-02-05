@@ -3,8 +3,9 @@
 """
 Implementations of canvas types.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,22 +18,23 @@ import six
 import numbers
 from urllib import quote as urlquote
 
+from zope import interface
+from zope import component
+import zope.schema.interfaces
+
+from nti.contentfragments import interfaces as frg_interfaces
+
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.datastructures import ExternalizableInstanceDict
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
-from nti.dataserver import interfaces as nti_interfaces
 
-from nti.contentfragments import interfaces as frg_interfaces
-
-from zope import interface
-from zope import component
-import zope.schema.interfaces
-
-from .base import UserContentRoot, _make_getitem
 from .threadable import ThreadableMixin
+from .base import UserContentRoot, _make_getitem
 
 #####
 # Whiteboard shapes
@@ -56,7 +58,6 @@ class Canvas(ThreadableMixin, UserContentRoot):
 		super(Canvas, self).__init__()
 		self.shapeList = PersistentList()
 
-
 	def append(self, shape):
 		if not isinstance(shape, _CanvasShape):
 			__traceback_info__ = shape
@@ -66,7 +67,6 @@ class Canvas(ThreadableMixin, UserContentRoot):
 		shape.__name__ = unicode(len(self.shapeList) - 1)
 
 	__getitem__ = _make_getitem('shapeList')
-
 
 	def __eq__(self, other):
 		# TODO: Super properties?
@@ -90,8 +90,8 @@ class Canvas(ThreadableMixin, UserContentRoot):
 		"""
 		return True
 
-from .threadable import ThreadableExternalizableMixin
 from .base import UserContentRootInternalObjectIO
+from .threadable import ThreadableExternalizableMixin
 
 @component.adapter(nti_interfaces.ICanvas)
 class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInternalObjectIO):

@@ -3,33 +3,38 @@
 """
 Defines the base behaviours for things that are threadable.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import collections
+
 from zope import interface
 from zope import component
+
 from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdAddedEvent
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-import collections
 from persistent.list import PersistentList
 
-from nti.utils import sets
+from nti.common import sets
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.dataserver import interfaces as nti_interfaces
-
 from nti.intid.containers import IntidResolvingIterable
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import IWeakRef
+from nti.wref.interfaces import IWeakRefToMissing
 
-@interface.implementer(nti_interfaces.IInspectableWeakThreadable)
+from ..interfaces import IThreadable
+from ..interfaces import IInspectableWeakThreadable
+
+@interface.implementer(IInspectableWeakThreadable)
 class ThreadableMixin(object):
 	"""
 	Defines an object that is client-side threadable. These objects are
@@ -77,7 +82,7 @@ class ThreadableMixin(object):
 			return self._inReplyTo()
 
 	def setInReplyTo( self, value ):
-		self._inReplyTo = wref_interfaces.IWeakRef(value) if value is not None else None
+		self._inReplyTo = IWeakRef(value) if value is not None else None
 
 	inReplyTo = property( getInReplyTo, setInReplyTo )
 
@@ -105,7 +110,7 @@ class ThreadableMixin(object):
 		if value is not None:
 			if self._references is ThreadableMixin._references:
 				self._references = PersistentList()
-			self._references.append(wref_interfaces.IWeakRef(value))
+			self._references.append(IWeakRef(value))
 
 	def clearReferences( self ):
 		try:
@@ -121,13 +126,13 @@ class ThreadableMixin(object):
 	def referents(self):
 		return IntidResolvingIterable( self._referents, allow_missing=True, parent=self, name='referents' ) if self._referents is not ThreadableMixin._referents else ()
 
-@component.adapter( nti_interfaces.IThreadable, IIntIdAddedEvent )
+@component.adapter( IThreadable, IIntIdAddedEvent )
 def threadable_added( threadable, event ):
 	"Update the replies and referents. NOTE: This assumes that IThreadable is actually a ThreadableMixin."
 	# Note that we don't trust the 'references' value of the client.
 	# we build the reference chain ourself based on inReplyTo.
 	inReplyTo = threadable.inReplyTo
-	if not nti_interfaces.IThreadable.providedBy( inReplyTo ): # None in the real world, test case stuff otherwise
+	if not IThreadable.providedBy( inReplyTo ): # None in the real world, test case stuff otherwise
 		return # nothing to do
 
 	intids = component.getUtility( IIntIds )
@@ -137,7 +142,7 @@ def threadable_added( threadable, event ):
 def _threadable_added( threadable, intids, intid ):
 	# This function is for migration support
 	inReplyTo = threadable.inReplyTo
-	if not nti_interfaces.IThreadable.providedBy( inReplyTo ):
+	if not IThreadable.providedBy( inReplyTo ):
 		return # nothing to do
 
 	# Only the direct parent gets added as a reply
@@ -147,20 +152,20 @@ def _threadable_added( threadable, intids, intid ):
 
 	# Now walk up the tree and record the indirect reference (including in the direct
 	# parent)
-	while nti_interfaces.IThreadable.providedBy( inReplyTo ):
+	while IThreadable.providedBy( inReplyTo ):
 		if inReplyTo._referents is ThreadableMixin._referents:
 			inReplyTo._referents = intids.family.II.TreeSet()
 		inReplyTo._referents.add( intid )
 
 		inReplyTo = inReplyTo.inReplyTo
 
-@component.adapter( nti_interfaces.IThreadable, IIntIdRemovedEvent )
+@component.adapter( IThreadable, IIntIdRemovedEvent )
 def threadable_removed(threadable, event):
 	"Update the replies and referents. NOTE: This assumes that IThreadable is actually a ThreadableMixin."
 	# Note that we don't trust the 'references' value of the client.
 	# we build the reference chain ourself based on inReplyTo.
 	inReplyTo = threadable.inReplyTo
-	if not nti_interfaces.IThreadable.providedBy( inReplyTo ):
+	if not IThreadable.providedBy( inReplyTo ):
 		return # nothing to do
 
 	intids = component.getUtility( IIntIds )
@@ -174,7 +179,7 @@ def threadable_removed(threadable, event):
 
 	# Now walk up the tree and record the indirect reference (including in the direct
 	# parent)
-	while nti_interfaces.IThreadable.providedBy( inReplyTo ):
+	while IThreadable.providedBy( inReplyTo ):
 		try:
 			sets.discard( inReplyTo._referents, intid )
 		except AttributeError:
@@ -227,7 +232,7 @@ class ThreadableExternalizableMixin(object):
 		# No object. Did we have a reference at one time?
 		if ref is not None and self._ext_write_missing_references:
 			# Yes. Can we write something out?
-			missing_ref = wref_interfaces.IWeakRefToMissing(ref, None)
+			missing_ref = IWeakRefToMissing(ref, None)
 			return missing_ref.make_missing_ntiid() if missing_ref is not None else None
 
 	def updateFromExternalObject( self, parsed, **kwargs ):

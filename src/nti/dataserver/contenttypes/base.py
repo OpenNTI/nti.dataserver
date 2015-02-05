@@ -2,8 +2,9 @@
 """
 Base functionality.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,29 +12,34 @@ logger = __import__('logging').getLogger(__name__)
 
 import collections
 
+from zope import interface
+from zope.deprecation import deprecate
+
+from nti.common.property import alias
+
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver import datastructures
-from nti.mimetype import mimetype
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
-from nti.ntiids import ntiids
 
-from nti.utils.property import alias
+from nti.mimetype import mimetype
+
+from nti.ntiids import ntiids
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-from zope import interface
-from zope.deprecation import deprecate
-
 def _get_entity( username, dataserver=None ):
-	return users.Entity.get_entity( username, dataserver=dataserver, _namespace=users.User._ds_namespace )
-
+	return users.Entity.get_entity( username, dataserver=dataserver, 
+									_namespace=users.User._ds_namespace )
 
 @interface.implementer(nti_interfaces.IModeledContent)
-class UserContentRoot(sharing.ShareableMixin, datastructures.ZContainedMixin, datastructures.CreatedModDateTrackingObject, PersistentPropertyHolder):
+class UserContentRoot(sharing.ShareableMixin, 
+					  datastructures.ZContainedMixin, 
+					  datastructures.CreatedModDateTrackingObject, 
+					  PersistentPropertyHolder):
 	"""
 	Base implementation of behaviours expected for contenttypes. Should be the primary
 	superclass for subclasses.
@@ -82,17 +88,18 @@ def _make_getitem( attr_name ):
 
 	return __getitem__
 
+from nti.common.proxy import removeAllProxies
+
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
-from nti.utils.proxy import removeAllProxies
-
 
 class UserContentRootInternalObjectIOMixin(object):
 
 	validate_after_update = True
 
 	# NOTE: inReplyTo and 'references' do not really belong here
-	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets',
+							 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 	context = alias('_ext_self')
 	_orig_sharingTargets = None # a cache for holding the targets before we update them

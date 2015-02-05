@@ -57,7 +57,6 @@ def _update_from_rgb_opacity(parsed, arr, colName, opacName):
 		# 0.0 fully transparent, 1.0 fully opaque
 		arr[3] = stroke_opacity
 
-
 def _update_from_rgba(arr, string, alpha=1.0):
 	"""
 	A missing alpha value is assumed to mean 1.0, matching what happens
@@ -78,7 +77,6 @@ def _update_from_rgba(arr, string, alpha=1.0):
 	arr[0], arr[1], arr[2] = r, g, b
 	assert 0.0 <= a <= 1.0
 	arr[3] = a
-
 
 def _write_rgba(val):
 	if val[3] == 1.0:  # Comparing with a constant
@@ -144,7 +142,6 @@ def createColorProperty(color_name, r=1.0, g=1.0, b=1.0, opacity=1.0):
 	frame.f_locals[prop_name] = prop
 	frame.f_locals[prop_rgba_name] = prop_rgba
 	frame.f_locals[prop_opac_name] = prop_opac
-
 
 def updateColorFromExternalValue(self, color_name, parsed):
 	"""
