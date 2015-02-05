@@ -32,6 +32,8 @@ from persistent import Persistent
 from nti.common.property import alias
 from nti.common.property import CachedProperty
 
+from nti.contentlibrary.interfaces import IPersistentContentUnit
+
 from nti.externalization.persistence import NoPickle
 
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
@@ -115,6 +117,8 @@ def _register_units( content_unit ):
 	intids = component.queryUtility( zope.intid.IIntIds )
 	if intids is not None:
 		def _register( obj ):
+			if not IPersistentContentUnit.providedBy( obj ):
+				return
 			intid = intids.queryId( obj )
 			if intid is None:
 				intids.register( obj )
@@ -264,8 +268,8 @@ class AbstractContentPackageLibrary(object):
 				IConnection( self ).add( new )
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
-				# Note that this is the special event that shows both objects.
 				_register_units( new )
+				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old))
 
 			for new in added:
