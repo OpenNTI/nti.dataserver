@@ -17,7 +17,8 @@ import warnings
 
 from repoze.lru import LRUCache
 
-from ZODB.interfaces import IConnection
+from ZODB.POSException import POSError
+from ZODB.interfaces import IConnection, IBroken
 
 import zope.intid
 from zope import component
@@ -114,33 +115,43 @@ def _register_units( content_unit ):
 	Recursively register content units.
 	"""
 	intids = component.queryUtility( zope.intid.IIntIds )
-	if intids is not None:
-		def _register( obj ):
-			if not IPersistentContentUnit.providedBy( obj ):
+	if intids is None:
+		return
+	
+	def _register( obj ):
+		try:
+			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
 				return
 			intid = intids.queryId( obj )
 			if intid is None:
 				intids.register( obj )
-			for child in obj.children:
-				_register( child )
-		_register( content_unit )
+		except (TypeError, POSError): # Broken object
+			return
+		for child in obj.children:
+			_register( child )
+	_register( content_unit )
 
 def _unregister_units( content_unit ):
 	"""
 	Recursively unregister content units.
 	"""
 	intids = component.queryUtility( zope.intid.IIntIds )
-	if intids is not None:
-		def _register( obj ):
+	if intids is None:
+		return
+	
+	def _unregister( obj ):
+		intid = None
+		try:
+			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
+				return
 			intid = intids.queryId( obj )
-			if intid is None:
-				try:
-					intids.unregister( obj )
-				except KeyError:
-					pass
-			for child in obj.children:
-				_register( child )
-		_register( content_unit )
+			if intid is not None:
+				intids.unregister( obj )
+		except (TypeError, POSError): # Broken object
+			pass
+		for child in obj.children:
+			_unregister( child )
+	_unregister( content_unit )
 
 @interface.implementer(ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
