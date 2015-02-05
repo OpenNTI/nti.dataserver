@@ -153,6 +153,7 @@ class _FilesystemTimesMixin(object):
 	created = TimeProperty('createdTime', writable=False, cached=True)
 
 from lxml import etree
+etree_parse = getattr(etree, 'parse')
 
 from nti.schema.schema import EqHash
 
@@ -184,7 +185,7 @@ class FilesystemKey(AbstractKey,
 
 	def readContentsAsETree(self):
 		# TODO: Pass the base_url?
-		root = etree.parse( self.absolute_path ).getroot()
+		root = etree_parse( self.absolute_path ).getroot()
 		return root
 
 	def readContentsAsYaml(self):
