@@ -14,10 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.container.contained import Contained
 
-from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
+from nti.common.property import alias
+from nti.common.property import read_alias
 
-from nti.utils.property import alias
-from nti.utils.property import read_alias
+from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 from nti.schema.schema import PermissiveSchemaConfigured
 from nti.schema.fieldproperty import createFieldProperties
