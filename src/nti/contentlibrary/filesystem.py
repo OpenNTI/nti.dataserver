@@ -18,8 +18,8 @@ from zope import interface
 from zope import component
 from zope.cachedescriptors.method import cachedIn
 
-from nti.utils.property import readproperty
-from nti.utils.property import CachedProperty
+from nti.common.property import readproperty
+from nti.common.property import CachedProperty
 
 from . import eclipse
 from . import library
