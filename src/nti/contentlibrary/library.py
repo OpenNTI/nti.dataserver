@@ -265,8 +265,9 @@ class AbstractContentPackageLibrary(object):
 				new.__parent__ = self
 				# new is a created object
 				IConnection( self ).add( new )
-				lifecycleevent.created(new)
-				lifecycleevent.added(new)
+				# XXX CS/JZ, 2-04-15 DO NOT call lifecycleevent.created nor
+				# lifecycleevent.added on this objects as modified events subscribers
+				# expected to handle any change
 				_register_units( new )
 				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old))
