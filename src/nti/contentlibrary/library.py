@@ -32,8 +32,6 @@ from persistent import Persistent
 from nti.common.property import alias
 from nti.common.property import CachedProperty
 
-from nti.contentlibrary.interfaces import IPersistentContentUnit
-
 from nti.externalization.persistence import NoPickle
 
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
@@ -41,6 +39,7 @@ from nti.ntiids.ntiids import ROOT as NTI_ROOT
 from nti.site.localutility import queryNextUtility
 
 from .interfaces import IContentPackageLibrary
+from .interfaces import IPersistentContentUnit
 from .interfaces import IContentPackageEnumeration
 from .interfaces import ContentPackageReplacedEvent
 from .interfaces import ISyncableContentPackageLibrary
