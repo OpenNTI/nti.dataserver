@@ -4,7 +4,7 @@
 Classes and utilities for working with users that have gone
 missing, presumably due to deletion.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -15,13 +15,14 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 from zope import interface
-
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 from zope.annotation import interfaces as an_interfaces
 
+from nti.common import create_gravatar_url
+
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import interfaces as user_interfaces
+
 from nti.zodb import minmax
-from nti.utils import create_gravatar_url
 
 @interface.implementer(nti_interfaces.IMissingEntity,
 					   user_interfaces.IUserProfile,

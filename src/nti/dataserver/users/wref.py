@@ -15,7 +15,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 import six
 import sys
 import functools
@@ -27,12 +26,12 @@ from zope import interface
 
 from zope.keyreference.interfaces import NotYet
 
+from nti.common.property import read_alias
+
 from nti.dataserver.users import missing_user
 from nti.dataserver.interfaces import IEntity
 
 from nti.schema.schema import EqHash
-
-from nti.utils.property import read_alias
 
 from nti.wref.interfaces import ICachingWeakRef
 
