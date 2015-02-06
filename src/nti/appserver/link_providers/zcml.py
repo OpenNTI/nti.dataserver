@@ -21,10 +21,10 @@ from zope.component.zcml import subscriber
 from zope.mimetype.interfaces import mimeTypeConstraint
 from zope.configuration.exceptions import ConfigurationError
 
+from pyramid.interfaces import IRequest
+
 from nti.dataserver.interfaces import IUser
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
-
-from pyramid.interfaces import IRequest
 
 from nti.schema.field import ValidTextLine
 

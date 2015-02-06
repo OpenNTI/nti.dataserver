@@ -11,22 +11,26 @@ from hamcrest import is_
 from hamcrest import has_item
 from hamcrest import assert_that
 
-import nti.testing.base
-
 from zope import interface
 from zope.component.hooks import site
-from nti.dataserver.site import _TrivialSite
+
+from pyramid.request import Request
+
+from nti.appserver.httpexceptions import HTTPNotFound, HTTPNoContent, HTTPSeeOther
+
+from nti.appserver.link_providers.views import named_link_get_view
+from nti.appserver.link_providers.views import named_link_delete_view
+
 from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
+from nti.site.transient import TrivialSite as  _TrivialSite
+
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
-from nti.appserver.httpexceptions import HTTPNotFound, HTTPNoContent, HTTPSeeOther
-from pyramid.request import Request
+from nti.dataserver.interfaces import ICoppaUser
 
 from .test_zcml import ZCML_STRING
 
-from ..views import named_link_get_view
-from ..views import named_link_delete_view
+import nti.testing.base
 
 class TestViews(nti.testing.base.ConfiguringTestBase):
 
@@ -56,7 +60,7 @@ class TestViews(nti.testing.base.ConfiguringTestBase):
 			self._test_common( named_link_get_view )
 
 			# finally the stars align
-			interface.alsoProvides( self.user, nti_interfaces.ICoppaUser )
+			interface.alsoProvides( self.user, ICoppaUser )
 			result = named_link_get_view( self.request )
 			assert_that( result, is_( HTTPSeeOther ) )
 			assert_that( result.location, is_( '/relative/path' ) )
@@ -70,7 +74,7 @@ class TestViews(nti.testing.base.ConfiguringTestBase):
 	def test_get_view_wrong_site(self):
 		self._test_common( named_link_get_view )
 
-		interface.alsoProvides( self.user, nti_interfaces.ICoppaUser )
+		interface.alsoProvides( self.user, ICoppaUser )
 		assert_that( named_link_get_view( self.request ), is_( HTTPNotFound ) )
 
 
@@ -79,7 +83,7 @@ class TestViews(nti.testing.base.ConfiguringTestBase):
 			self._test_common( named_link_delete_view )
 
 			# finally the stars align
-			interface.alsoProvides( self.user, nti_interfaces.ICoppaUser )
+			interface.alsoProvides( self.user, ICoppaUser )
 			assert_that( named_link_delete_view( self.request ), is_( HTTPNoContent ) )
 
 			# Doing it again is not found

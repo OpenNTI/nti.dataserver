@@ -26,21 +26,24 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+
 from zope.event import notify
 
+from zope.annotation.interfaces import IAnnotations
+
+from pyramid.interfaces import IRequest
 
 from BTrees.OOBTree import OOTreeSet
-from nti.utils import sets
 
-from nti.dataserver import interfaces as nti_interfaces
-from pyramid import interfaces as pyramid_interfaces
-from zope.annotation.interfaces import IAnnotations
-from .interfaces import IDeletableLinkProvider
+from nti.common import sets
+
+from nti.dataserver.interfaces import IUser
+
+from .link_provider import LinkProvider
 
 from .interfaces import FlagLinkAddedEvent
 from .interfaces import FlagLinkRemovedEvent
-from .link_provider import LinkProvider
-
+from .interfaces import IDeletableLinkProvider
 
 # We store links in an OOTreeSet annotation on the User object
 _LINK_ANNOTATION_KEY = 'nti.appserver.user_link_provider' + '.LinkAnnotation' # hardcoded name for BWC
@@ -52,7 +55,6 @@ def add_link( user, link_name ):
 	:param user: An annotatable user.
 	:param unicode link_name: The link name.
 	"""
-
 	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY )
 	if the_set is None:
 		the_set = OOTreeSet()
@@ -72,7 +74,6 @@ def has_link( user, link_name ):
 
 	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY, () )
 	return link_name in the_set
-
 
 def delete_link( user, link_name ):
 	"""
@@ -94,11 +95,10 @@ def delete_link( user, link_name ):
 		notify( FlagLinkRemovedEvent( user, link_name ) )
 	return result
 
-
 _delete_link = delete_link
 
 @interface.implementer(IDeletableLinkProvider)
-@component.adapter(nti_interfaces.IUser,pyramid_interfaces.IRequest)
+@component.adapter(IUser, IRequest)
 class FlagLinkProvider(LinkProvider):
 
 	def get_links( self ):

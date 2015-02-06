@@ -39,7 +39,6 @@ def find_providers_and_links(user, request, keeporder=True):
 	result = []
 	ignored = set()
 	providers = sorted(providers, key=lambda t: t[1], reverse=True)
-
 	for rels, _, provider, order in providers:
 		try:
 			provider_links = provider.get_links()
@@ -68,6 +67,7 @@ def unique_link_providers(user, request, with_links=False):
 	"""
 	seen_names = set()
 	providers = find_providers_and_links(user, request, True)
+	
 	# Subscribers are returned in REVERSE order, that is, from
 	# all the bases FIRST...so to let the lower levels win, we reverse again
 	# not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
@@ -82,7 +82,6 @@ def unique_link_providers(user, request, with_links=False):
 			yield (provider, prov_links)
 		else:
 			yield provider
-
 
 def provide_links(user, request):
 	"""
