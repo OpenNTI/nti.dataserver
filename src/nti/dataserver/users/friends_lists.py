@@ -3,8 +3,9 @@
 """
 Search pyramid views.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -24,13 +25,14 @@ from BTrees.OOBTree import OOTreeSet
 from BTrees.OOBTree import difference as OOBTree_difference
 from BTrees.OOBTree import intersection as OOBTree_intersection
 
-from nti.ntiids import ntiids
+from nti.common.property import CachedProperty
 
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import enclosures
+
 from nti.mimetype import mimetype
 
-from nti.utils.property import CachedProperty
+from nti.ntiids import ntiids
 
 from nti.wref import interfaces as wref_interfaces
 

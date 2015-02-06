@@ -49,6 +49,8 @@ from z3c.password import interfaces as pwd_interfaces
 
 from nti.apns import interfaces as apns_interfaces
 
+from nti.common.time import time_to_64bit_int
+
 from nti.dataserver import dicts
 from nti.dataserver import sharing
 from nti.dataserver import datastructures
@@ -100,7 +102,6 @@ from nti.ntiids import ntiids
 from nti.wref.interfaces import IWeakRef
 
 from nti.zodb import minmax
-from nti.zodb.containers import time_to_64bit_int
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -231,12 +232,11 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 	print( "users.py: WARN: Configuring with plain text passwords", file=sys.stderr )
 	Principal.password_manager_name = 'Plain Text'
 
+from nti.common.property import Lazy
 
 from nti.dataserver.sharing import _remove_entity_from_named_lazy_set_of_wrefs
 from nti.dataserver.sharing import _set_of_usernames_from_named_lazy_set_of_wrefs
 from nti.dataserver.sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
-
-from nti.utils.property import Lazy
 
 @interface.implementer(ICommunity, ISublocations)
 class Community(sharing.DynamicSharingTargetMixin,Entity):

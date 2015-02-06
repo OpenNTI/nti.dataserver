@@ -22,7 +22,7 @@ from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
 from persistent import Persistent
 
-from nti.utils.property import CachedProperty
+from nti.common.property import CachedProperty
 
 from nti.zodb import urlproperty
 

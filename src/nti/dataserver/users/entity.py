@@ -28,6 +28,8 @@ import transaction
 from ZODB.interfaces import IConnection
 from ZODB.POSException import ConnectionStateError
 
+from nti.common.property import CachedProperty
+
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
@@ -46,12 +48,10 @@ from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
 from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
 
-from nti.ntiids import ntiids
-
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.internalization import update_from_external_object
 
-from nti.utils.property import CachedProperty
+from nti.ntiids import ntiids
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:

@@ -3,8 +3,9 @@
 """
 Implementations for user externalization.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,11 +17,12 @@ import functools
 from zope import component
 from zope import interface
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
+
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import authorization_acl as auth
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import IExternalObject

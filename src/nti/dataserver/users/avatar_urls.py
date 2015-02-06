@@ -3,8 +3,9 @@
 """
 Adapters and utilities for working with avatar URLs.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,10 +18,10 @@ from zope import interface
 from zope import component
 
 from nti.dataserver import interfaces as nti_interfaces
-from . import interfaces
 
 from nti.utils import create_gravatar_url, GENERATED_GRAVATAR_TYPES
 
+from . import interfaces
 
 @component.adapter(nti_interfaces.IEntity)
 @interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
