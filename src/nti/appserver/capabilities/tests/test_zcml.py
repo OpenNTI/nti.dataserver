@@ -1,30 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
-from hamcrest import is_not
-does_not = is_not
-from hamcrest import has_property
 from hamcrest import is_in
-
-from nti.testing.base import ConfiguringTestBase
+from hamcrest import is_not
+from hamcrest import assert_that
+from hamcrest import has_property
+does_not = is_not
 
 from zope import component
 from zope.component.hooks import site
 from zope.schema import vocabulary
 
-from ..interfaces import ICapability, VOCAB_NAME
-from ..vocabulary import CapabilityNameTokenVocabulary, CapabilityUtilityVocabulary, CapabilityNameVocabulary
+from nti.appserver.capabilities.interfaces import VOCAB_NAME
+from nti.appserver.capabilities.interfaces import ICapability
+from nti.appserver.capabilities.vocabulary import CapabilityNameVocabulary
+from nti.appserver.capabilities.vocabulary import CapabilityUtilityVocabulary
+from nti.appserver.capabilities.vocabulary import CapabilityNameTokenVocabulary
+
+from nti.testing.base import ConfiguringTestBase
 
 class TestZcml(ConfiguringTestBase):
 
@@ -67,7 +68,7 @@ class TestZcml(ConfiguringTestBase):
 		"""
 		self.configure_string( zcml_string )
 		self._check_cap_present() # the defaults are there
-		from nti.dataserver.site import _TrivialSite
+		from nti.site.transient import TrivialSite 
 		from nti.appserver.policies.sites import BASECOPPA
 
 		# First, it's not present globally, in any utility
@@ -80,6 +81,6 @@ class TestZcml(ConfiguringTestBase):
 		assert_that( cap_name, is_not( is_in( vocabulary.getVocabularyRegistry().get( None, VOCAB_NAME ) ) ) )
 
 		# Now, in the sub site, they are bath present
-		with site( _TrivialSite( BASECOPPA ) ):
+		with site( TrivialSite( BASECOPPA ) ):
 			self._check_cap_present( )
 			self._check_cap_present( cap_name )

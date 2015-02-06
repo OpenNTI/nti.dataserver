@@ -11,9 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.security import interfaces as zsec_interfaces
+from zope.security.interfaces import IPermission
 
-class ICapability(zsec_interfaces.IPermission):
+class ICapability(IPermission):
 	"""
 	A capability is a type of umbrella permission. Although it is an
 	actual permission, it is not typically used directly in an ACL; rather,
@@ -22,7 +22,6 @@ class ICapability(zsec_interfaces.IPermission):
 
 	Capabilities and permissions share the same namespace, so be careful
 	to avoid collisions.
-
 	"""
 
 #: A :class:`zope.schema.interfaces.IVocabularyTokenized` vocabulary

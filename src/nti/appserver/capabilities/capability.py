@@ -15,9 +15,9 @@ from zope import interface
 
 from zope.security import permission
 
-from . import interfaces
+from .interfaces import ICapability
 
-@interface.implementer(interfaces.ICapability)
+@interface.implementer(ICapability)
 class Capability(permission.Permission):
 	"""
 	Basic implementation of a :class:`.ICapability`.

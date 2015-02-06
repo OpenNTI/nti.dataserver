@@ -5,10 +5,9 @@
 			xmlns:meta="http://namespaces.zope.org/meta">
 
 	<meta:directives namespace="http://nextthought.com/ntp/capabilities">
-		<meta:directive
-			name="capability"
-			schema=".zcml.IRegisterCapabilityDirective"
-			handler=".zcml.registerCapability" />
+		<meta:directive	name="capability"
+						schema=".zcml.IRegisterCapabilityDirective"
+						handler=".zcml.registerCapability" />
  	</meta:directives>
  	
 </configure>
