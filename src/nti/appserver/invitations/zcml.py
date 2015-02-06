@@ -5,6 +5,7 @@ Directives to be used in ZCML: registering static invitations with known codes.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,30 +13,32 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-import zope.configuration.fields
 
-from . import invitation
-from . import interfaces as invite_interfaces
+from zope.configuration.fields import Tokens
+from zope.configuration.fields import TextLine
+
+from .interfaces import IInvitations
+from .invitation import JoinCommunityInvitation
 
 class IRegisterJoinCommunityInvitationDirective(interface.Interface):
 	"""
 	The arguments needed for registering an invitation to join communities.
 	"""
 
-	code = zope.configuration.fields.TextLine(
+	code = TextLine(
 		title="The human readable/writable code the user types in. Should not have spaces.",
 		required=True,
 		)
 
-	entities = zope.configuration.fields.Tokens(
+	entities = Tokens(
 		title="The global username or NTIIDs of communities or DFLs to join",
 		required=True,
-		value_type = zope.configuration.fields.TextLine(title="The entity identifier."),
+		value_type = TextLine(title="The entity identifier."),
 		)
 
 def _register(code, entities):
-	invitations = component.getUtility(invite_interfaces.IInvitations)
-	invitations.registerInvitation(invitation.JoinCommunityInvitation(code, entities))
+	invitations = component.getUtility(IInvitations)
+	invitations.registerInvitation(JoinCommunityInvitation(code, entities))
 
 def registerJoinCommunityInvitation(_context, code, entities):
 	"""

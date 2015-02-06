@@ -9,7 +9,6 @@
 	<include package="zope.security" />
 
 	<!-- Externalization -->
-
 	<subscriber factory=".decorators.ForumObjectTopTopicsLinkProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.IBoard
 					 pyramid.interfaces.IRequest"

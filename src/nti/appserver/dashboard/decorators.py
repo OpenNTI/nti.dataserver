@@ -5,6 +5,7 @@ External decorators to provide access to the things exposed through this package
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -48,4 +49,3 @@ class ForumObjectTopTopicsLinkProvider(AbstractAuthenticatedRequestAwareDecorato
 		userid = self.authenticated_userid
 		elements = (TOP_TOPICS_VIEW, md5_etag(context.lastModified, userid).replace('/', '_'))
 		self.add_link(TOP_TOPICS_VIEW, context, mapping, self.request, elements)
-
