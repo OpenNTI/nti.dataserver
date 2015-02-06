@@ -5,6 +5,7 @@ Implementations of cache controllers, both generic and concrete.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,7 +20,6 @@ from zope import component
 
 from zope.file import interfaces as zf_interfaces
 
-
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import traversal
@@ -28,16 +28,15 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import flagging
 from nti.dataserver import interfaces as nti_interfaces
 
-from .interfaces import IETagCachedUGDExternalCollection
-from .interfaces import ILongerCachedUGDExternalCollection
-from .interfaces import IPreRenderResponseCacheController
-from .interfaces import IPrivateUncacheableInResponse
-from .interfaces import IResponseCacheController
-from .interfaces import IUGDExternalCollection
 from .interfaces import IUnModifiedInResponse
 from .interfaces import IUncacheableInResponse
+from .interfaces import IUGDExternalCollection
+from .interfaces import IResponseCacheController
+from .interfaces import IPrivateUncacheableInResponse
 from .interfaces import IUserActivityExternalCollection
-
+from .interfaces import IETagCachedUGDExternalCollection
+from .interfaces import IPreRenderResponseCacheController
+from .interfaces import ILongerCachedUGDExternalCollection
 
 def default_vary_on( request ):
 	vary_on = []
@@ -51,7 +50,7 @@ def default_vary_on( request ):
 	vary_on.append( b'Accept-Encoding' ) # we expect to be gzipped
 	vary_on.append( b'Origin' )
 
-	#vary_on.append( b'Host' ) # Host is always included
+	# vary_on.append( b'Host' ) # Host is always included
 	return vary_on
 
 @interface.provider(IResponseCacheController)
@@ -136,7 +135,6 @@ def default_cache_controller( data, system ):
 
 	elif not response.cache_control.no_cache and not response.cache_control.no_store:
 		_prep_cache( response )
-
 	return response
 
 @interface.implementer(IResponseCacheController)
@@ -157,7 +155,6 @@ def uncacheable_cache_controller( data, system ):
 
 	# Further, the age
 	response.cache_control.max_age = 0
-
 	return response
 
 @interface.implementer(IResponseCacheController)
@@ -190,7 +187,6 @@ def private_uncacheable_cache_controller(data, system):
 @component.adapter(IPrivateUncacheableInResponse)
 def private_uncacheable_factory( data ):
 	return private_uncacheable_cache_controller
-
 
 @interface.provider(IResponseCacheController)
 def unmodified_cache_controller( data, system ):
@@ -296,7 +292,6 @@ class _ZopeFileCacheController(_AbstractReliableLastModifiedCacheController):
 	@property
 	def _context_specific(self):
 		return self.context._p_oid, self.context._p_serial
-
 
 @interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(nti_interfaces.IEntity)
@@ -410,7 +405,6 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
 		return _UGDExternalCollectionCacheController.__call__( self, context, system )
 
-
 @interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)
 class _ContentUnitInfoCacheController(object):
@@ -433,8 +427,8 @@ class _ContentUnitInfoCacheController(object):
 	def __call__( self, context, system ):
 		return system['request'].response
 
-
 from zope.proxy.decorator import SpecificationDecoratorBase
+
 @interface.implementer(IUncacheableInResponse)
 class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 	"""
@@ -447,8 +441,6 @@ class _UncacheableInResponseProxy(SpecificationDecoratorBase):
 
 	# when/if these are pickled, they are pickled as their original type,
 	# not the proxy.
-
-
 
 def uncached_in_response( context ):
 	"""

@@ -14,16 +14,18 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.dataserver.interfaces import ITitledContent
-from nti.dataserver.interfaces import IUser
-from nti.contentfragments.interfaces import IPlainTextContentFragment
-from nti.dataserver.users.interfaces import IFriendlyNamed
-
 from pyramid.interfaces import IRequest
 
+from zc.displayname.adapters import convertName
 from zc.displayname.interfaces import IDisplayNameGenerator
 from zc.displayname.adapters import DefaultDisplayNameGenerator
-from zc.displayname.adapters import convertName
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ITitledContent
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
@@ -40,8 +42,7 @@ class UserDisplayNameGenerator(object):
 		names = IFriendlyNamed(self.context)
 		return names.alias or names.realname or self.context.username
 
-
-@component.adapter(ITitledContent,IRequest)
+@component.adapter(ITitledContent, IRequest)
 class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
 	"""
 	Our :class:`.ITitledDescribedContent` is an implementation of
@@ -53,7 +54,6 @@ class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
 	"""
 
 	def __call__(self, maxlength=None):
-
 		title = getattr(self.context, 'title', None)
 		if title:
 			return convertName(title, self.request, maxlength)
@@ -65,7 +65,6 @@ class TitledContentDisplayNameGenerator(DefaultDisplayNameGenerator):
 			text = IPlainTextContentFragment(body[0])
 			if text:
 				return convertName(text, self.request, bodylen)
-
 
 		default = DefaultDisplayNameGenerator.__call__(self, maxlength=maxlength)
 		if is_valid_ntiid_string(default):
