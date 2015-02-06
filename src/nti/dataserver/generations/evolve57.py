@@ -23,6 +23,7 @@ def _do_register_units():
 	library = component.queryUtility( IContentPackageLibrary )
 	if library is not None:
 		logger.info( 'Registering units for %s', library )
+		library.syncContentPackages()
 		for package in library.contentPackages:
 			_register_units( package )
 
