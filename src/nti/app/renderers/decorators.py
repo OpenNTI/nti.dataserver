@@ -6,6 +6,7 @@ used when externalizing for a remote client.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,9 +19,9 @@ from abc import abstractmethod
 
 from nti.app.authentication import get_remote_user
 
-from nti.utils.property import Lazy
-from nti.utils.property import alias
-from nti.utils.property import readproperty
+from nti.common.property import Lazy
+from nti.common.property import alias
+from nti.common.property import readproperty
 
 class AbstractRequestAwareDecorator(object):
 	"""

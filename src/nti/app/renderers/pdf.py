@@ -11,19 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
-
-from pyramid.interfaces import IRendererFactory
-from pyramid.interfaces import IRenderer
-
-from pyramid_chameleon.renderer import template_renderer_factory
-from nti.app.pyramid_zope.z3c_zpt import ZPTTemplateRenderer
-
-from .renderers import AbstractCachingRenderer
 
 from z3c.rml import rml2pdf
 
+from pyramid.interfaces import IRenderer
+from pyramid.interfaces import IRendererFactory
+from pyramid_chameleon.renderer import template_renderer_factory
+
+from nti.app.pyramid_zope.z3c_zpt import ZPTTemplateRenderer
+
+from .renderers import AbstractCachingRenderer
 
 @interface.provider(IRendererFactory)
 @interface.implementer(IRenderer)

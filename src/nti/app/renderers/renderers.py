@@ -5,6 +5,7 @@ Contains renderers for the REST api.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,10 +15,10 @@ from . import MessageFactory as _
 
 from zope import interface
 
-from repoze.who.interfaces import IRequestClassifier
-
 from pyramid.interfaces import IRendererFactory
 from pyramid.httpexceptions import HTTPForbidden
+
+from repoze.who.interfaces import IRequestClassifier
 
 from .interfaces import IResponseRenderer
 from .interfaces import IResponseCacheController
@@ -58,7 +59,6 @@ class AbstractCachingRenderer(object):
 		system['nti.rendered'] = body
 
 		IResponseCacheController( data )( data, system )
-
 		return body
 
 	def _render_to_browser(self, data, system):

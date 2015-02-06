@@ -17,10 +17,12 @@ from nti.externalization.externalization import toExternalObject
 
 from ZODB.broken import Broken
 
-from ..rest import find_content_type
+from nti.app.renderers.rest import find_content_type
 
 class TestContentType(NewRequestLayerTest):
+	
 	mimeType= 'application/vnd.nextthought.testcontenttype'
+	
 	def beginRequest( self, request_factory=Request.blank, request_args=('/') ):
 		return super(TestContentType,self).beginRequest(request_factory, request_args)
 
@@ -46,7 +48,6 @@ class TestContentType(NewRequestLayerTest):
 		assert_that( find_content_type( self.request, data={} ),
 					 is_( 'application/vnd.nextthought+json' ) )
 
-
 	def test_nti_type( self ):
 		self.request.accept = 'application/json'
 
@@ -59,7 +60,6 @@ class TestContentType(NewRequestLayerTest):
 					 is_( 'application/vnd.nextthought.testcontenttype+json' ) )
 
 class TestRender(NewRequestLayerTest):
-
 
 	def test_broken(self):
 		assert_that( toExternalObject( Broken() ),

@@ -3,14 +3,15 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from pyramid import interfaces as pyramid_interfaces
+from pyramid.interfaces import IRenderer
 
-class IResponseRenderer(pyramid_interfaces.IRenderer):
+class IResponseRenderer(IRenderer):
 	"""
 	An intermediate layer that exists to transform a content
 	object into data, and suitably mutate the IResponse object.
@@ -18,7 +19,7 @@ class IResponseRenderer(pyramid_interfaces.IRenderer):
 	specialized implementations will directly access and return data.
 	"""
 
-class IResponseCacheController(pyramid_interfaces.IRenderer):
+class IResponseCacheController(IRenderer):
 	"""
 	Called as a post-render step with the express intent
 	of altering the caching characteristics of the response.
@@ -26,12 +27,12 @@ class IResponseCacheController(pyramid_interfaces.IRenderer):
 	:class:`pyramid.httpexceptions.HTTPNotModified`.
 	"""
 
-	def __call__( data, system ):
+	def __call__(data, system):
 		"""
 		Optionally returns a new response or raises an HTTP exception.
 		"""
 
-class IPreRenderResponseCacheController(pyramid_interfaces.IRenderer):
+class IPreRenderResponseCacheController(IRenderer):
 	"""
 	Called as a PRE-render step with the express intent of altering
 	the caching characteristics. If rendering should not proceed,
@@ -55,7 +56,7 @@ class IUnModifiedInResponse(interface.Interface):
 	a Last-Modified date, but may provide etags.
 	"""
 
-class IUncacheableUnModifiedInResponse(IUncacheableInResponse,IUnModifiedInResponse):
+class IUncacheableUnModifiedInResponse(IUncacheableInResponse, IUnModifiedInResponse):
 	"""
 	Marker interface for things that not only should not be cached but should provide
 	no Last-Modified date at all.

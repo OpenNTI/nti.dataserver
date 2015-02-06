@@ -5,6 +5,7 @@ Rendering for a REST-based client.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -135,7 +136,6 @@ def render_externalizable(data, system):
 					body['href'] = render_link( link )['href']
 				except (KeyError,ValueError,AssertionError):
 					pass # Nope
-
 
 	# Search for a last modified value.
 	# We take the most recent one we can find
