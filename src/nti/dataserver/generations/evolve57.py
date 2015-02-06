@@ -23,7 +23,6 @@ def _do_register_units():
 	library = component.queryUtility( IContentPackageLibrary )
 	if library is not None:
 		logger.info( 'Registering units for %s', library )
-		library.syncContentPackages()
 		for package in library.contentPackages:
 			_register_units( package )
 
@@ -37,8 +36,17 @@ def do_evolve(context):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
+		# We need to sync the global library first, or we'll
+		# drop these top-level courses on the floor if
+		# we find them within the site.  Unfortunately,
+		# this errs out due to it not being able to find
+		# the IDataserver utility. Perhaps because we're not
+		# fully started at this point.
+
 		run_job_in_all_host_sites( _do_register_units )
 
+		# As a workaround, we could reset out top level library so
+		# that everything will be picked up fresh as the ds starts.
 		logger.info( 'Dataserver evolution %s done.', generation )
 
 def evolve( context ):
