@@ -57,7 +57,6 @@ class UnsubscribeFromEmailSummaryPush(AbstractAuthenticatedView):
 		# only to the path, not the implementation. (Is this better or
 		# worse than accessing the named utility?)
 
-
 		path = '/dataserver2/users/' + environ['REMOTE_USER'] + '/++preferences++/PushNotifications/Email'
 		data = {'email_a_summary_of_interesting_changes': False}
 		json = simplejson.dumps(data)

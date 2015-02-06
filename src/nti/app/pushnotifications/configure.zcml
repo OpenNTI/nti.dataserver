@@ -23,9 +23,7 @@
 	<include package="zope.viewlet" file="meta.zcml" /> <!-- zope:viewlet/Manager -->
 	<include package="zope.viewlet" />
 
-
 	<!-- The digest emailing process -->
-
 	<adapter factory="nti.app.bulkemail.process.SiteTransactedBulkEmailProcessLoop"
 			 for='pyramid.interfaces.IRequest'
 			 name="digest_email" />
@@ -65,7 +63,6 @@
 		view=".digest_email.DigestEmailNotableViewletBase"
 		layer="pyramid.interfaces.IRequest" />
 
-
 	<browser:viewlet
 		name="blog"
 		template="templates/digest_email_item_blog.pt"
@@ -74,7 +71,6 @@
 		permission="zope.Public"
 		manager=".interfaces.INotableDataEmailViewletManager"
 		class=".digest_email.DigestEmailNotableViewletBase"/>
-
 
 	<browser:viewlet
 		name="comment"
@@ -145,11 +141,12 @@
 
 	<!-- The classifiers for grouping objects for the templates -->
 	<adapter factory=".digest_email._NoteClassifier" />
+	<adapter factory=".digest_email._TopicClassifier" />
 	<adapter factory=".digest_email._CommentClassifier" />
 	<adapter factory=".digest_email._BlogEntryClassifier" />
 	<adapter factory=".digest_email._BlogEntryPostClassifier" />
-	<adapter factory=".digest_email._TopicClassifier" />
 	<adapter factory=".digest_email._StreamChangeEventDispatcher" />
+	
 	<!-- Note the coupling. This should be moved -->
 	<adapter factory=".digest_email._FeedbackClassifier"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemFeedback"

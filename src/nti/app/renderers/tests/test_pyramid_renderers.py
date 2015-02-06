@@ -7,17 +7,18 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_)
-
-from nti.app.testing.layers import NewRequestLayerTest
-
-from pyramid.request import Request
-
-from nti.externalization.externalization import toExternalObject
+from hamcrest import is_
+from hamcrest import assert_that
 
 from ZODB.broken import Broken
 
+from pyramid.request import Request
+
 from nti.app.renderers.rest import find_content_type
+
+from nti.externalization.externalization import toExternalObject
+
+from nti.app.testing.layers import NewRequestLayerTest
 
 class TestContentType(NewRequestLayerTest):
 	
