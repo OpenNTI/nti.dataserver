@@ -5,6 +5,7 @@ Implementations of the :class:`nti.appserver.invitations.interfaces.IInvitation`
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,17 +15,23 @@ import persistent
 
 from zope import interface
 from zope.event import notify
-from zope.container import contained
-from zope.annotation import interfaces as an_interfaces
+
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.container.contained import Contained
+
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
 from nti.dataserver import users
-from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.datastructures import CreatedModDateTrackingObject
 
-from . import interfaces as invite_interfaces
+from .interfaces import IInvitation
+from .interfaces import InvitationAcceptedEvent
 
-@interface.implementer(invite_interfaces.IInvitation, an_interfaces.IAttributeAnnotatable)
-class BaseInvitation(datastructures.CreatedModDateTrackingObject,contained.Contained):
+@interface.implementer(IInvitation, IAttributeAnnotatable)
+class BaseInvitation(CreatedModDateTrackingObject,Contained):
 	"""
 	Starting implementation for an interface that doesn't actually do anything.
 	"""
@@ -37,12 +44,10 @@ class BaseInvitation(datastructures.CreatedModDateTrackingObject,contained.Conta
 		"""
 		if not user:
 			raise ValueError()
-		notify(invite_interfaces.InvitationAcceptedEvent(self, user))
-
+		notify(InvitationAcceptedEvent(self, user))
 
 class PersistentInvitation(persistent.Persistent,BaseInvitation):
 	""" Invitation meant to be stored persistently. """
-
 
 class ZcmlInvitation(BaseInvitation):
 	"""
@@ -56,7 +61,7 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 	entities. Intended to be configured with ZCML and not stored persistently.
 	"""
 
-	creator = nti_interfaces.SYSTEM_USER_NAME
+	creator = SYSTEM_USER_NAME
 
 	def __init__(self, code, entities):
 		super(JoinEntitiesInvitation, self).__init__()
@@ -73,11 +78,11 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 
 	def accept(self, user):
 		for entity in self._iter_entities():
-			if nti_interfaces.ICommunity.providedBy( entity ):
+			if ICommunity.providedBy( entity ):
 				logger.info("Accepting invitation to join community %s", entity)
 				user.record_dynamic_membership(entity)
 				user.follow(entity)
-			elif nti_interfaces.IFriendsList.providedBy(entity):
+			elif IFriendsList.providedBy(entity):
 				logger.info("Accepting invitation to join DFL %s", entity)
 				entity.addFriend(user)
 			else:

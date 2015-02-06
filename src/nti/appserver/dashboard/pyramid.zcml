@@ -47,6 +47,5 @@
 				  request_method='GET'>
 	</pyramid:view>
 
-
 	<pyramid:scan package='.views' />
 </configure>

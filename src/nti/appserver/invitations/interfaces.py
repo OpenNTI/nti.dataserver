@@ -25,17 +25,23 @@ from . import MessageFactory as _
 
 from zope import schema
 from zope import interface
-from zope.schema import ValidationError
-from zope.annotation import interfaces as an_interfaces
-from zope.container import interfaces as cnt_interfaces
+
+from zope.container.interfaces import IContained
+
+from zope.annotation.interfaces import IAnnotatable
+
 from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
-from nti.dataserver import interfaces as nti_interfaces
+from zope.schema import ValidationError
 
-class IInvitation(cnt_interfaces.IContained,
-				  nti_interfaces.ICreated,
-				  nti_interfaces.ILastModified,
-				  an_interfaces.IAnnotatable):
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import ILastModified
+
+class IInvitation(IContained,
+				  ICreated,
+				  ILastModified,
+				  IAnnotatable):
 	"""
 	An invitation from one user of the system (or the system itself)
 	for another user to be able to do something.
@@ -74,8 +80,8 @@ class IObjectInvitation(IInvitation):
 	object_int_id = interface.Attribute('The global intid for the object the invitation refers to.')
 	object = interface.Attribute('Object')
 
-class IInvitations(cnt_interfaces.IContained,
-				   an_interfaces.IAnnotatable):
+class IInvitations(IContained,
+				   IAnnotatable):
 	"""
 	A central registry of invitations. Intended to be used as a utility registered
 	for the site.
@@ -99,22 +105,6 @@ class IInvitations(cnt_interfaces.IContained,
 		such invitation.
 		"""
 
-	# def removeObject(id):
-	# 	""" remove invitations for object """
-
-	# def getInvitationsByObject(object, type=None):
-	# 	""" invitations by object """
-
-	# def getInvitationsByOwner(owner, type=None):
-	# 	""" invitations by owner """
-
-	# def getInvitationsByPrincipal(principal, type=None):
-	# 	""" invitations by principal """
-
-	# def search(**kw):
-	# 	""" search invitations """
-
-
 class IInvitationEvent(IObjectEvent):
 	"""
 	An event specifically about an invitation.
@@ -126,7 +116,7 @@ class IInvitationAcceptedEvent(IInvitationEvent):
 	"""
 	An invitation has been accepted.
 	"""
-	user = schema.Object(nti_interfaces.IUser,
+	user = schema.Object(IUser,
 						 title="The user that accepted the invitation.")
 
 @interface.implementer(IInvitationAcceptedEvent)
