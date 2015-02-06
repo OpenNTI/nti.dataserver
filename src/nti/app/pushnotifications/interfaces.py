@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -14,7 +12,6 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from zope.viewlet.interfaces import IViewletManager
-
 
 class INotableDataEmailViewletManager(IViewletManager):
 	"""

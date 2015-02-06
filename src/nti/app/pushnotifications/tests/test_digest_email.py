@@ -1,67 +1,62 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from zope import interface
-from zope import component
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import same_instance
-from hamcrest import is_not as does_not
-from hamcrest import has_property
-from hamcrest import contains_string
-from hamcrest import not_none
 from hamcrest import none
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-
-
-from nti.dataserver import users
-from nti.dataserver import contenttypes
-from nti.contentrange import contentrange
-from nti.ntiids import ntiids
-from nti.externalization.oids import to_external_ntiid_oid
-
-
-from nti.contentfragments.interfaces import IPlainTextContentFragment
-
-from nti.dataserver.tests import mock_dataserver
-
-from nti.testing.time import time_monotonically_increases
-from nti.testing.matchers import is_true
-from nti.appserver.tests import ExLibraryApplicationTestLayer
-
-from nti.app.bulkemail import views as bulk_email_views
+from hamcrest import is_not
+from hamcrest import not_none
+from hamcrest import assert_that
+from hamcrest import same_instance
+from hamcrest import contains_string
+does_not = is_not
 
 import fudge
 import gevent
 import quopri
+
+from zope import interface
+from zope import component
+
+from nti.app.bulkemail import views as bulk_email_views
+
+from nti.dataserver import contenttypes
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.contentrange import contentrange
+
+from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.ntiids import ntiids
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.appserver.tests import ExLibraryApplicationTestLayer
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.testing.time import time_monotonically_increases
 
 SEND_QUOTA = {u'GetSendQuotaResponse': {u'GetSendQuotaResult': {u'Max24HourSend': u'50000.0',
 																u'MaxSendRate': u'14.0',
 																u'SentLast24Hours': u'195.0'},
 										u'ResponseMetadata': {u'RequestId': u'232fb429-b540-11e3-ac39-9575ac162f26'}}}
 
-from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 from zope.container.contained import Contained
-from nti.app.notabledata.interfaces import IUserNotableDataStorage
-from nti.app.notabledata.interfaces import IUserNotableData
+
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.app.notabledata.interfaces import IUserNotableData
+from nti.app.notabledata.interfaces import IUserNotableDataStorage
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 @interface.implementer(IContentTypeAware) # must have a mimetype to make it through!
 class FakeNotable(PersistentCreatedAndModifiedTimeObject, Contained):
@@ -82,8 +77,8 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_application_get(self, fake_connect):
 		(fake_connect.is_callable().returns_fake())
-		 #.expects( 'send_raw_email' ).returns( 'return' )
-		 #.expects('get_send_quota').returns( SEND_QUOTA ))
+		#.expects( 'send_raw_email' ).returns( 'return' )
+		#.expects('get_send_quota').returns( SEND_QUOTA ))
 		# Initial condition
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'Start' ) )
@@ -139,7 +134,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 			assert component.getMultiAdapter((jason,self.request),IUserNotableData).is_object_notable(extra_notable)
 
-
 			# make sure he has an email
 			from nti.dataserver.users import interfaces as user_interfaces
 			from zope.lifecycleevent import modified
@@ -149,7 +143,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 			user_interfaces.IUserProfile( user ).realname = 'Steve Johnson'
 			modified( jason )
 			modified( user )
-
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
@@ -170,14 +163,14 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))
 
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
-		assert_that( msg, contains_string('<strong>Steve Johnson</strong> added'))
-
+		assert_that( msg, contains_string('Steve Johnson added'))
+		assert_that( msg, contains_string('<span>jason.madden@nextthought.com (jason)</span>'))
+		
 		assert_that( msg, contains_string('See All Activity'))
 		assert_that( msg, contains_string('http://localhost/NextThoughtWebApp/#!profile/jason/Notifications'))
 
 		assert_that( msg, does_not(contains_string('replied to a note')))
 		assert_that( msg, does_not(contains_string('NO CONTENT')))
-
 
 		note_oid = self.note_oids[0]
 		note_oid = note_oid[0:note_oid.index('OID')]
@@ -186,10 +179,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 						 does_not( contains_string(self.extra_environ_default_user.lower()) ) )
 
 			assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!object/ntiid/' + oid ) )
-
-
-
-
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
@@ -212,8 +201,6 @@ class TestApplicationDigest(ApplicationLayerTest):
 			self._do_test_should_not_send_anything(fake_connect)
 		finally:
 			del DevmodeSitePolicyEventListener.COM_USERNAME
-
-
 
 	@WithSharedApplicationMockDS(users=('jason',), testapp=True, default_authenticate=True)
 	@time_monotonically_increases
@@ -253,12 +240,9 @@ class TestApplicationDigest(ApplicationLayerTest):
 		res = self.testapp.get( '/dataserver2/@@bulk_email_admin/digest_email' )
 		assert_that( res.body, contains_string( 'End Time' ) )
 
-
-
 def send_notable_email(testapp, before_send=None):
 	with fudge.patch('boto.ses.connect_to_region') as fake_connect:
 		return send_notable_email_connected(testapp, before_send=before_send, fake_connect=fake_connect)
-
 
 def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	msgs = []

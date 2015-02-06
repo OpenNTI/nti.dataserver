@@ -32,6 +32,8 @@ from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
 
+from nti.common.property import Lazy
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -56,7 +58,6 @@ from nti.mailer.interfaces import EmailAddresablePrincipal
 
 from nti.ntiids.ntiids import get_parts as parse_ntiid
 
-from nti.utils.property import Lazy
 from nti.utils.property import annotation_alias
 
 _ONE_WEEK = 7 * 24 * 60 * 60
@@ -419,10 +420,12 @@ class DigestEmailCollector(object):
 		return result
 
 from nti.externalization.singleton import SingletonDecorator
+
 from .interfaces import INotableDataEmailClassifier
 
 @interface.implementer(INotableDataEmailClassifier)
 class _AbstractClassifier(object):
+
 	__metaclass__ = SingletonDecorator
 
 	classification = None
@@ -443,7 +446,6 @@ class _CommentClassifier(_AbstractClassifier):
 		# Either this is a reply to us or this is a top-level comment in a thought or discussion.
 		if ICommentPost.providedBy(obj.__parent__):
 			return 'comment'
-
 		return 'top_level_comment'
 
 @component.adapter(IPersonalBlogEntry)
@@ -473,20 +475,24 @@ class _StreamChangeEventDispatcher(_AbstractClassifier):
 class _FeedbackClassifier(_AbstractClassifier):
 	classification = 'feedback'
 
+import datetime
+from nameparser import HumanName
 
-from nti.dataserver.interfaces import IDataserver
-from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
+from zope.i18n import translate
+
 from zope.publisher.interfaces.browser import IBrowserRequest
-from nti.dataserver.interfaces import IAuthenticationPolicy
-from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
+
+from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
+
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
 
-from nti.dataserver.users import Entity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IAuthenticationPolicy
+from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
+
 from nti.dataserver.users import User
-import datetime
-from zope.i18n import translate
-from nameparser import HumanName
+from nti.dataserver.users import Entity
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
@@ -571,7 +577,6 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		result['view'] = self
 		return result
 
-
 	def compute_subject_for_recipient(self, recipient):
 
 		subject = _(self._subject,
@@ -579,7 +584,6 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 							 'site_name': guess_site_display_name(self.request),
 							 })
 		return translate(subject, context=self.request)
-
 
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
