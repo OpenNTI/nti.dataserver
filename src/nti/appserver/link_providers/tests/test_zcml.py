@@ -7,30 +7,33 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
-does_not = is_not
 from hamcrest import has_length
+from hamcrest import assert_that
 from hamcrest import has_property
-from nose.tools import assert_raises
-
-import nti.testing.base
-from nti.testing.matchers import is_empty
+does_not = is_not
 
 from zope import component
 from zope import interface
 from zope.component.hooks import site
 from zope.configuration.exceptions import ConfigurationError
 
-from nti.dataserver.site import _TrivialSite
+from pyramid.request import Request
+
 from nti.appserver.policies.sites import BASECOPPA as MATHCOUNTS
 
-
+from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
-from nti.dataserver import users
-from pyramid.request import Request
+
+from nti.site.transient import TrivialSite as _TrivialSite
+
+import nti.testing.base
+
+from nti.testing.matchers import is_empty
+
+from nose.tools import assert_raises
 
 ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -82,8 +85,8 @@ _MYSITE = BaseComponents(MATHCOUNTS, name='test.components', bases=(MATHCOUNTS,)
 class IMarker(nti_interfaces.IUser):
 	pass
 
-from .. import provide_links
-from .. import unique_link_providers
+from nti.appserver.link_providers import provide_links
+from nti.appserver.link_providers import unique_link_providers
 
 class TestZcml(nti.testing.base.ConfiguringTestBase):
 
@@ -115,7 +118,7 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
 			assert_that( provider.get_links( ), is_empty() )
 
 	def test_raises(self):
-		from ..zcml import registerUserLink
+		from nti.appserver.link_providers.zcml import registerUserLink
 
 		context = object()
 		with assert_raises(ConfigurationError):

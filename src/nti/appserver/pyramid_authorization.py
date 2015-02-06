@@ -3,22 +3,24 @@
 """
 Supporting authorization implementations for pyramid.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.security.interfaces import NoInteraction
 from zope.security.management import checkPermission
 
 import pyramid.authorization
-from pyramid.authorization import ACLAuthorizationPolicy as _PyramidACLAuthorizationPolicy
 import pyramid.security as psec
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import lineage as _pyramid_lineage
+from pyramid.authorization import ACLAuthorizationPolicy as _PyramidACLAuthorizationPolicy
 
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.authorization_acl import acl_from_aces
@@ -130,9 +132,11 @@ import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp( _clear_caches )
 
 from ZODB.POSException import POSKeyError
-from nti.utils.proxy import removeAllProxies
+
+from nti.common.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
+	
 	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
 	for location in _pyramid_lineage(obj):
 		try:
@@ -183,7 +187,6 @@ def _lineage_that_ensures_acls(obj):
 			fake.__acl__ = acl_from_aces( ace_denying_all() )
 			fake.__parent__ = location.__parent__
 			yield fake
-
 
 def can_create(obj, request=None, skip_cache=False):
 	"""

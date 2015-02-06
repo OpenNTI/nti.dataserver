@@ -5,6 +5,7 @@ Link providers
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,9 +17,10 @@ from zope.annotation.interfaces import IAnnotations
 from nti.dataserver.links import Link
 from nti.dataserver.dicts import LastModifiedDict
 
-from .interfaces import IDeletableLinkProvider
 from nti.appserver._util import link_belongs_to_user
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+
+from .interfaces import IDeletableLinkProvider
 
 #: The name of a view. We will construct links to it, with the actual link name
 #: in the sub-path

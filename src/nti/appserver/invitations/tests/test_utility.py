@@ -18,20 +18,20 @@ from zope import interface
 from zope.keyreference.interfaces import IKeyReference
 from zope.intid import IIntIds
 
-from nti.testing.matchers import verifiably_provides
+from nti.appserver.invitations import utility
+from nti.appserver.invitations import interfaces
+from nti.appserver.invitations import invitation
 
-from .. import interfaces
-from .. import utility
-from .. import invitation
-
-
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.testing.matchers import verifiably_provides
 
 class TestUtility(DataserverLayerTest):
 
 	def test_valid_interface(self):
-		assert_that(utility.PersistentInvitations(), verifiably_provides(interfaces.IInvitations))
+		assert_that(utility.PersistentInvitations(), 
+					verifiably_provides(interfaces.IInvitations))
 
 	@WithMockDSTrans
 	def test_add_remove_invitation(self):
