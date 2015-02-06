@@ -20,6 +20,7 @@ from IPython.core.debugger import Tracer
 
 import zope.browserpage
 
+from zope.component import hooks
 from zope.container.contained import Contained
 from zope.configuration import xmlconfig, config
 from zope.dottedname import resolve as dottedname
@@ -27,6 +28,8 @@ from zope.dottedname import resolve as dottedname
 from z3c.autoinclude.zcml import includePluginsDirective
 
 from nti.dataserver.utils import interactive_setup
+
+from nti.site.site import get_site_for_site_names
 
 # package loader info
 
@@ -78,7 +81,9 @@ def process_args(args=None):
 							 help="The packages to set")
 	arg_parser.add_argument('-l', '--library', help="Load library", action='store_true',
 							dest='library')
-
+	arg_parser.add_argument('--site',
+							dest='site',
+							help="Application SITE.")
 	site_group = arg_parser.add_mutually_exclusive_group()
 	site_group.add_argument('-p', '--packages',
 							 dest='packages',
@@ -112,6 +117,15 @@ def process_args(args=None):
 					  					with_library=with_library,
 										root=os.path.expanduser(env_dir),
 					 					xmlconfig_packages=list(packages))
+	
+	
+	if args.site:
+		cur_site = hooks.getSite()
+		new_site = get_site_for_site_names( (args.site,), site=cur_site )
+		if new_site is cur_site:
+			raise ValueError("Unknown site name", args.site)
+		hooks.setSite(new_site)
+		
 	if args.verbose:
 		print(db, conn, root)
 
