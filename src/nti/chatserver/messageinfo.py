@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -22,6 +23,9 @@ from zope.dublincore import interfaces as dc_interfaces
 from persistent import Persistent
 from persistent.list import PersistentList
 
+from nti.common.proxy import removeAllProxies
+from nti.common.property import alias, read_alias
+
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
 from nti.dataserver.contenttypes import threadable
@@ -35,10 +39,9 @@ from nti.dataserver.contenttypes.threadable import ThreadableExternalizableMixin
 
 from nti.mimetype import mimetype
 
-from nti.utils.proxy import removeAllProxies
-from nti.utils.property import alias, read_alias
-
-from . import interfaces
+from .interfaces import IMessageInfo
+from .interfaces import STATUS_INITIAL
+from .interfaces import CHANNEL_DEFAULT
 
 class _BodyFieldProperty(FieldProperty):
 	# This currently exists for legacy support (test cases)
@@ -61,14 +64,14 @@ class _BodyFieldProperty(FieldProperty):
 			super(_BodyFieldProperty,self).__set__( inst, value )
 		except sch_interfaces.ValidationError:
 			# Hmm. try to adapt
-			#value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
+			# value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
 			value = self._field.fromObject( value )
 			super(_BodyFieldProperty, self).__set__( inst, value )
 
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
 # We manually re-implement IDCTimes (should extend CreatedModDateTrackingObject)
-@interface.implementer(interfaces.IMessageInfo, dc_interfaces.IDCTimes)
+@interface.implementer(IMessageInfo, dc_interfaces.IDCTimes)
 class MessageInfo( sharing.AbstractReadableSharedMixin,
 				   threadable.ThreadableMixin,
 				   Persistent ):
@@ -84,8 +87,8 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	# The usernames of occupants of the initial room, and others
 	# the transcript should go to. Set by policy.
 	sharedWith = ()
-	channel = interfaces.CHANNEL_DEFAULT
-	body = _BodyFieldProperty( interfaces.IMessageInfo['body'] )
+	channel = CHANNEL_DEFAULT
+	body = _BodyFieldProperty( IMessageInfo['body'] )
 	recipients = ()
 	Creator = None # aka Sender. Forcibly set by the handler
 	containerId = None
@@ -96,7 +99,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 		self._v_sender_sid = None # volatile. The session id of the sender.
 		self.LastModified = time.time()
 		self.CreatedTime = self.LastModified
-		self.Status = interfaces.STATUS_INITIAL
+		self.Status = STATUS_INITIAL
 		self.sharedWith = set()
 
 	Sender = alias('Creator')
@@ -188,7 +191,7 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 		return recip
 
 	def is_default_channel( self ):
-		return self.channel is None or self.channel == interfaces.CHANNEL_DEFAULT
+		return self.channel is None or self.channel == CHANNEL_DEFAULT
 
 	__getitem__ = _make_getitem( 'body' )
 
@@ -202,10 +205,10 @@ class MessageInfo( sharing.AbstractReadableSharedMixin,
 	def updateFromExternalObject( self, ext_object, context=None ):
 		return update_from_external_object( self, ext_object, context=context )
 
-@component.adapter(interfaces.IMessageInfo)
-class MessageInfoInternalObjectIO(ThreadableExternalizableMixin,InterfaceObjectIO):
+@component.adapter(IMessageInfo)
+class MessageInfoInternalObjectIO(ThreadableExternalizableMixin, InterfaceObjectIO):
 
-	_ext_iface_upper_bound = interfaces.IMessageInfo
+	_ext_iface_upper_bound = IMessageInfo
 
 	# NOTE: inReplyTo and 'references' do not really belong here
 	_excluded_out_ivars_ = {'MessageId', 'flattenedSharingTargetNames', 'flattenedSharingTargets',

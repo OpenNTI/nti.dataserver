@@ -3,8 +3,9 @@
 """
 Chatserver functionality.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -33,8 +34,13 @@ from nti.ntiids import ntiids
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.authentication import effective_principals
 
-from . import interfaces
 from .meeting import _Meeting
+
+from .interfaces import IMeeting
+from .interfaces import ACT_ENTER
+from .interfaces import IChatserver
+from .interfaces import IMeetingStorage
+from .interfaces import ACT_ADD_OCCUPANT
 
 ####
 # A note on the object model:
@@ -50,14 +56,12 @@ from .meeting import _Meeting
 # from that location, as is anything contained there.)
 ####
 
-
-EVT_ENTERED_ROOM = 'chat_enteredRoom'
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
+EVT_ENTERED_ROOM = 'chat_enteredRoom'
 
-
-@interface.implementer(interfaces.IMeetingStorage)
+@interface.implementer(IMeetingStorage)
 class TestingMappingMeetingStorage(object):
 	"""
 	An implementation of :class:`chat_interfaces.IMeetingStorage` suitable
@@ -74,7 +78,7 @@ class TestingMappingMeetingStorage(object):
 		return self.meetings[room_id]
 
 	def add_room( self, room ):
-		assert interfaces.IMeeting.providedBy( room )
+		assert IMeeting.providedBy( room )
 
 		room.id = ntiids.make_ntiid( provider=room.creator,
 									 nttype=ntiids.TYPE_UUID,
@@ -86,12 +90,12 @@ class TestingMappingMeetingStorage(object):
 
 	def get( self, room_id ):
 		obj = self.meetings.get( room_id )
-		if interfaces.IMeeting.providedBy( obj ):
+		if IMeeting.providedBy( obj ):
 			return obj
 
 _PRESENCE_TTL = datetime.timedelta(days=14)
 
-@interface.implementer( interfaces.IChatserver )
+@interface.implementer( IChatserver )
 class Chatserver(object):
 	""" Collection of all the state related to the chatserver, including active rooms, etc. """
 
@@ -122,7 +126,6 @@ class Chatserver(object):
 
 	def __reduce__(self):
 		raise TypeError()
-
 
 	### Sessions
 
@@ -200,7 +203,8 @@ class Chatserver(object):
 		container = self.meeting_container_storage.get( room_info_dict[XFields.CONTAINER_ID] )
 		if not hasattr( container, 'enter_active_meeting' ):
 			# The container didn't match any storage.
-			logger.info( "The requested container (%s) (info: %s) is not a persistent meeting room; not entering", container, room_info_dict )
+			logger.info( "The requested container (%s) (info: %s) is not a persistent meeting room; not entering",
+						 container, room_info_dict )
 			return None
 
 		# At this point, we know we have exactly one Occupant, the (sender,sid).
@@ -223,13 +227,15 @@ class Chatserver(object):
 		# We need to do something better with individual cleanups.
 
 		if room:
-			logger.debug( "%s entering existing persistent meeting %s", occupant_tuple, room )
+			logger.debug( "%s entering existing persistent meeting %s", 
+						  occupant_tuple, room )
 			# Yes, we got in. Announce this.
 			room.add_occupant_name( occupant_tuple[0] )
 		else:
 			# We didn't get in. We know we have a container, though,
 			# so see if we can start one.
-			logger.debug( "%s creating new persistent meeting %s", occupant_tuple, room_info_dict )
+			logger.debug( "%s creating new persistent meeting %s", 
+						  occupant_tuple, room_info_dict )
 			room = self.create_room_from_dict( room_info_dict )
 		return room
 
@@ -344,9 +350,11 @@ class Chatserver(object):
 
 		# TODO: We could centralize this type of checking with a convenience utility somewhere.
 		authorization_policy = component.queryUtility( nti_interfaces.IAuthorizationPolicy )
-		if authorization_policy is None or authorization_policy.permits( room, effective_principals(occupant_name), interfaces.ACT_ENTER ):
+		if	authorization_policy is None or \
+			authorization_policy.permits( room, effective_principals(occupant_name), ACT_ENTER ):
 			# Yes, we can enter
-			logger.debug( "%s re-entering room %s/%s due to auth policy %s", occupant_name, room, room_id, authorization_policy )
+			logger.debug( "%s re-entering room %s/%s due to auth policy %s",
+						 occupant_name, room, room_id, authorization_policy )
 			room.add_occupant_name( occupant_name ) # broadcast the enter room event
 			return room
 
@@ -361,12 +369,14 @@ class Chatserver(object):
 			# exclude missing rooms, inactive rooms, rooms already left
 			# by the occupant, and persistent rooms (that have their own
 			# occupancy rules)
-			logger.debug( "%s not re-entering inactive/gone/previously-exited/persistent room %s/%s", occupant_name, room, room_id )
+			logger.debug( "%s not re-entering inactive/gone/previously-exited/persistent room %s/%s", 
+						  occupant_name, room, room_id )
 			return None
 
 		# TODO: We could centralize this type of checking with a convenience utility somewhere.
 		authorization_policy = component.queryUtility( nti_interfaces.IAuthorizationPolicy )
-		if ((authorization_policy is None or authorization_policy.permits( room, effective_principals(actor_name), interfaces.ACT_ADD_OCCUPANT ))
+		if ((authorization_policy is None or \
+			 authorization_policy.permits(room, effective_principals(actor_name), ACT_ADD_OCCUPANT))
 			and self.get_session_for( occupant_name ) is not None):
 			logger.debug( "%s adding %s to room %s/%s", actor_name, occupant_name, room, room_id )
 			room.add_occupant_name( occupant_name ) # broadcast the enter room event
@@ -386,7 +396,8 @@ class Chatserver(object):
 		if room:
 			result = room.del_occupant_name( username )
 			if result:
-				logger.debug( "User, %s, exited room, %s, leaving %d occupants.", username, room_id, len(room.occupant_names))
+				logger.debug("User, %s, exited room, %s, leaving %d occupants.", 
+							 username, room_id, len(room.occupant_names))
 			if not room.occupant_names:
 				# Note that since chat session handlers are not
 				# tied to sessions, just names, and a name can have multiple

@@ -3,8 +3,9 @@
 """
 Implementations related to :class:`IContacts.`
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,10 +15,10 @@ from zope import interface
 from zope import component
 from zope.event import notify
 
+from nti.common.property import alias
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IFollowerAddedEvent
-
-from nti.utils.property import alias
 
 from .interfaces import IContacts
 from .interfaces import ContactISubscribeToAddedToContactsEvent
@@ -41,7 +42,8 @@ class DefaultComputedContacts(object):
 	@property
 	def contactNamesSubscribedToMyPresenceUpdates(self):
 		# TODO: Better algorithm. Who should this really go to?
-		has_me_in_buddy_list = {e.username for e in self.context.entities_followed} | set(self.context.accepting_shared_data_from)
+		has_me_in_buddy_list = {e.username for e in self.context.entities_followed} | \
+								set(self.context.accepting_shared_data_from)
 		return has_me_in_buddy_list
 
 	@property

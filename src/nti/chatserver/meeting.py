@@ -3,8 +3,9 @@
 """
 Chatserver functionality.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -20,19 +21,23 @@ from zope import component
 from zope.event import notify
 from zope.deprecation import deprecated
 
+from nti.common.property import alias
+from nti.common.property import read_alias
+
 # TODO: Break this dep
 from nti.dataserver.contenttypes import threadable
 
 from nti.externalization import datastructures
 from nti.externalization.representation import make_repr
 
-from nti.utils.property import alias
-from nti.utils.property import read_alias
-
 from nti.zodb.minmax import MergingCounter
 
-from . import interfaces
 from ._metaclass import _ChatObjectMeta
+
+from .interfaces import IMeeting
+from .interfaces import IChatserver
+from .interfaces import IMeetingPolicy
+from .interfaces import MeetingShouldChangeModerationStateEvent
 
 ####
 # A note on the object model:
@@ -71,19 +76,19 @@ def _discard( s, k ):
 # rather than use isinstance().
 # It also requires a small patch to work with relstorage, which
 # does not implement ZODB.interfaces.IStorageCurrentRecordIteration:
-		# if not hasattr( self.storage, '_index'):
-		# 	# Only FileStorage has _index (this is not an API defined attribute)
-		# 	if not hasattr( self.storage, 'record_iternext' ):
-		# 	# RelStorage is not IStorageCurrentRecordIteration
-		# 		for trec in self.storage.iterator():
-		# 			for rec in trec:
-		# 				yield rec.oid, rec.tid, cStringIO.StringIO(rec.data)
-		# 	return
-		# 	while True:
+# if not hasattr( self.storage, '_index'):
+# 	# Only FileStorage has _index (this is not an API defined attribute)
+# 	if not hasattr( self.storage, 'record_iternext' ):
+# 	# RelStorage is not IStorageCurrentRecordIteration
+# 		for trec in self.storage.iterator():
+# 			for rec in trec:
+# 				yield rec.oid, rec.tid, cStringIO.StringIO(rec.data)
+# 	return
+# 	while True:
 
 _bwc_renames = { 'nti.chatserver.meeting _ModeratedMeetingState': 'nti.chatserver._meeting_post_policy _ModeratedMeetingState' }
 
-@interface.implementer( interfaces.IMeeting )
+@interface.implementer( IMeeting )
 class _Meeting( threadable.ThreadableMixin,
 			    threadable.ThreadableExternalizableMixin,
 				Persistent,
@@ -122,9 +127,8 @@ class _Meeting( threadable.ThreadableMixin,
 		# shared publically and not specific users?
 		self._addl_transcripts_to = BTrees.OOBTree.Set()
 
-
 	def _get_chatserver(self):
-		return self._v_chatserver or component.queryUtility( interfaces.IChatserver )
+		return self._v_chatserver or component.queryUtility( IChatserver )
 	def _set_chatserver( self, cs ):
 		self._v_chatserver = cs
 	_chatserver = property(_get_chatserver, _set_chatserver )
@@ -149,10 +153,10 @@ class _Meeting( threadable.ThreadableMixin,
 
 	def _setModerated( self, flag ):
 		if flag and self._moderation_state is None:
-			notify( interfaces.MeetingShouldChangeModerationStateEvent( self, flag ) )
+			notify( MeetingShouldChangeModerationStateEvent( self, flag ) )
 			self.emit_roomModerationChanged( self._occupant_names, self )
 		elif not flag and self._moderation_state is not None:
-			notify( interfaces.MeetingShouldChangeModerationStateEvent( self, flag ) )
+			notify( MeetingShouldChangeModerationStateEvent( self, flag ) )
 			self.emit_roomModerationChanged( self._occupant_names, self )
 
 	Moderated = property( _Moderated, _setModerated )
@@ -178,7 +182,7 @@ class _Meeting( threadable.ThreadableMixin,
 		return set( self._historical_occupant_names )
 
 	def _policy(self):
-		return interfaces.IMeetingPolicy( self )
+		return IMeetingPolicy( self )
 
 	def post_message( self, msg_info ):
 		result = self._policy().post_message( msg_info )

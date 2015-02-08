@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -26,17 +27,22 @@ from nti.ntiids import ntiids
 
 from nti.socketio import interfaces as sio_interfaces
 
-from . import interfaces
 from ._metaclass import _ChatObjectMeta
-from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE, CHANNELS
+
+from .interfaces import IMeeting
+from .interfaces import IMeetingPolicy
+from .interfaces import IMessageInfoStorage
+from .interfaces import MessageInfoPostedToRoomEvent
+from .interfaces import IMeetingShouldChangeModerationStateEvent
 from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
+from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE, CHANNELS
 
 class MessageTooBig(sio_interfaces.SocketEventHandlerClientError):
 	"""
 	Raised when a policy is asked to post a message that exceeds the size limits.
 	"""
 
-@interface.implementer(interfaces.IMeetingPolicy)
+@interface.implementer(IMeetingPolicy)
 class _MeetingMessagePostPolicy(object):
 	"""Class that actually emits the messages"""
 
@@ -63,9 +69,8 @@ class _MeetingMessagePostPolicy(object):
 
 		:return: Undefined.
 		"""
-		storage = interfaces.IMessageInfoStorage( msg_info )
+		storage = IMessageInfoStorage( msg_info )
 		storage.add_message( msg_info )
-
 
 	def _treat_recipients_like_default_channel( self, msg_info ):
 		return (msg_info.is_default_channel() # Actually on the default channel
@@ -134,7 +139,6 @@ class _MeetingMessagePostPolicy(object):
 		body_len = sum((len( x ) for x in msg_info.body or ()))
 		return body_len <= self.MAX_BODY_SIZE
 
-
 	def post_message( self, msg_info ):
 		"""
 		Post the :class:`.IMessageInfo` to the room.
@@ -195,8 +199,10 @@ class _MeetingMessagePostPolicy(object):
 
 		# Emit events
 		# ObjectAdded ensures registered for intid, but we're actually doing that in _ensure_stored
-		#lifecycleevent.added( msg_info, msg_info.__parent__, msg_info.__name__ )
-		notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, transcript_owners | recipient_names, self._room ) )
+		# lifecycleevent.added( msg_info, msg_info.__parent__, msg_info.__name__ )
+		notify(MessageInfoPostedToRoomEvent( msg_info,
+											 transcript_owners | recipient_names, 
+											 self._room ) )
 
 		# Everyone who gets the transcript also
 		# is considered to be on the sharing list
@@ -338,7 +344,6 @@ def _always_true_for_moderator( f ):
 		return f( self, msg_info )
 	return bypassing
 
-
 class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 	"""A chat room that moderates messages."""
 
@@ -422,7 +427,9 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 			msg_info.Status = STATUS_SHADOWED
 			self._ensure_message_stored( msg_info )
 			self.emit_recvMessageForShadow( self.moderated_by_usernames, msg_info )
-			notify( interfaces.MessageInfoPostedToRoomEvent( msg_info, self.moderated_by_usernames, self._room ) )
+			notify(MessageInfoPostedToRoomEvent( msg_info, 
+												 self.moderated_by_usernames,
+												 self._room ) )
 
 	def _msg_handle_STATE( self, msg_info ):
 		"""
@@ -517,7 +524,6 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 		msg_info.recipients = self.moderated_by_usernames
 		return super(_ModeratedMeetingMessagePostPolicy,self).post_message( msg_info )
 
-
 	def add_moderator( self, mod_name ):
 		self.moderation_state.add_moderator( mod_name )
 		self.emit_roomModerationChanged( self._occupant_names, self._room )
@@ -530,16 +536,15 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 		if msg:
 			return super(_ModeratedMeetingMessagePostPolicy, self).post_message( msg )
 
-@component.adapter(interfaces.IMeeting, interfaces.IMeetingShouldChangeModerationStateEvent)
+@component.adapter(IMeeting, IMeetingShouldChangeModerationStateEvent)
 def meeting_should_change_moderation_state(self, evt):
 	if self._moderation_state is None:
 		self._moderation_state = _ModeratedMeetingState()
 	else:
 		self._moderation_state = None
 
-
-@component.adapter(interfaces.IMeeting)
-@interface.implementer(interfaces.IMeetingPolicy)
+@component.adapter(IMeeting)
+@interface.implementer(IMeetingPolicy)
 def MeetingPostPolicy(self):
 	"""
 	Adapter from a meeting to its policy.
