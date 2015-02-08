@@ -3,8 +3,9 @@
 """
 Implementation of the presence-related objects.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,22 +17,24 @@ from zope import interface
 from zope import component
 from zope.component.factory import Factory
 
+from nti.common.property import alias
+
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.datastructures import InterfaceObjectIO
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
-from nti.utils.property import alias
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import PermissiveSchemaConfigured as SchemaConfigured
 
-from . import interfaces as chat_interfaces
+from .interfaces import IPresenceInfo
+from .interfaces import IUnattachedPresenceInfo
 
-@interface.implementer(chat_interfaces.IPresenceInfo)
+@interface.implementer(IPresenceInfo)
 class PresenceInfo(SchemaConfigured): # NOT persistent
-	createDirectFieldProperties(chat_interfaces.IUnattachedPresenceInfo)
-	createDirectFieldProperties(chat_interfaces.IPresenceInfo)
+	createDirectFieldProperties(IUnattachedPresenceInfo)
+	createDirectFieldProperties(IPresenceInfo)
 	createDirectFieldProperties(nti_interfaces.ILastModified)
 	createdTime = alias('lastModified') # overwrite
 
@@ -50,13 +53,13 @@ class PresenceInfo(SchemaConfigured): # NOT persistent
 
 PresenceInfoFactory = Factory(PresenceInfo)
 
-@component.adapter(chat_interfaces.IPresenceInfo)
+@component.adapter(IPresenceInfo)
 class PresenceInfoInternalObjectIO(InterfaceObjectIO):
 	"""
 	We are different in that we allow setting Last Modified from the external object. This is because
 	we tend to store this object in its JSON form in redis and would like to maintain that info.
 	"""
-	_ext_iface_upper_bound = chat_interfaces.IPresenceInfo
+	_ext_iface_upper_bound = IPresenceInfo
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		super(PresenceInfoInternalObjectIO,self).updateFromExternalObject( parsed, *args, **kwargs )

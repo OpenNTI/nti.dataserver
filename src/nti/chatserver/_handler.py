@@ -3,8 +3,9 @@
 """
 Chatserver functionality.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -26,9 +27,7 @@ from zope.interface.common import mapping as imapping
 from persistent import Persistent
 from persistent.mapping import PersistentMapping
 
-from nti.chatserver import interfaces
-from nti.chatserver._metaclass import _ChatObjectMeta
-from nti.chatserver import interfaces as chat_interfaces
+from nti.common.sets import discard as _discard
 
 # FIXME: Break this dependency
 
@@ -38,17 +37,25 @@ from nti.dataserver import authorization_acl as auth_acl
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
-from nti.utils.sets import discard as _discard
-
 from nti.socketio import interfaces as sio_interfaces
 
 from nti.zodb import interfaces as zodb_interfaces
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
-EVT_ENTERED_ROOM = 'chat_enteredRoom'
+from . import interfaces
+from ._metaclass import _ChatObjectMeta
+
+from .interfaces import IContacts
+from .interfaces import IChatserver
+from .interfaces import IPresenceInfo
+from .interfaces import IChatEventHandler
+from .interfaces import UserExitRoomEvent
+from .interfaces import UserEnterRoomEvent
+
 EVT_EXITED_ROOM = 'chat_exitedRoom'
 EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
+EVT_ENTERED_ROOM = 'chat_enteredRoom'
 
 class MessageRateExceeded(sio_interfaces.SocketEventHandlerClientError):
 	"""
@@ -94,9 +101,8 @@ class _ChatHandlerSessionState(Persistent):
 from zope.annotation import factory as an_factory
 _ChatHandlerSessionStateFactory = an_factory(_ChatHandlerSessionState)
 
-
-@interface.implementer(chat_interfaces.IChatEventHandler)
-@component.adapter(nti_interfaces.IUser,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
+@interface.implementer(IChatEventHandler)
+@component.adapter(nti_interfaces.IUser,sio_interfaces.ISocketSession, IChatserver)
 class _ChatHandler(object):
 	"""
 	Class to handle each of the messages sent to or from a client in the ``chat`` prefix.
@@ -129,7 +135,6 @@ class _ChatHandler(object):
 			self.chatserver = args[2]
 		else:
 			assert len(args) == 2
-			#warnings.warn( "Use an adapter", DeprecationWarning, stacklevel=2 )
 			self.chatserver = args[0]
 			self.session = args[1]
 			self.session_user = users.User.get_user( self.session.owner )
@@ -206,24 +211,29 @@ class _ChatHandler(object):
 		if not room:
 			self.emit_failedToEnterRoom( self.session.owner, room_info )
 		else:
-			notify(chat_interfaces.UserEnterRoomEvent(self.session.owner, room.id))
+			notify(UserEnterRoomEvent(self.session.owner, room.id))
 		return room
 
 	def exitRoom( self, room_id ):
 		result = self._chatserver.exit_meeting( room_id, self.session.owner )
 		if result:
-			notify(chat_interfaces.UserExitRoomEvent(self.session.owner, room_id))
+			notify(UserExitRoomEvent(self.session.owner, room_id))
 		return result
 
 	def addOccupantToRoom( self, room_id, occupant_name ):
-		return self._chatserver.add_occupant_to_existing_meeting( room_id, self.session.owner, occupant_name )
+		return self._chatserver.add_occupant_to_existing_meeting(room_id, 
+																 self.session.owner,
+																 occupant_name )
 
 	def makeModerated( self, room_id, flag ):
 
 		room = self._chatserver.get_meeting( room_id )
-		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, room, self.session.owner )
+		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, 
+												room,
+												self.session.owner )
 		if not can_moderate:
-			logger.debug( "%s not allowed to moderate room %s: %s", self, room, can_moderate )
+			logger.debug( "%s not allowed to moderate room %s: %s", 
+						 self, room, can_moderate )
 			return room
 
 		if flag:
@@ -260,7 +270,9 @@ class _ChatHandler(object):
 
 	def shadowUsers( self, room_id, usernames ):
 		room = self._chatserver.get_meeting( room_id )
-		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, room, self.session.owner )
+		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, 
+												room,
+												self.session.owner )
 		if not can_moderate:
 			logger.debug( "%s not allowed to shadow in room %s: %s", self, room, can_moderate )
 			return False
@@ -273,7 +285,7 @@ class _ChatHandler(object):
 		return result
 
 	def setPresence( self, presenceinfo ):
-		if not chat_interfaces.IPresenceInfo.providedBy( presenceinfo ):
+		if not IPresenceInfo.providedBy( presenceinfo ):
 			return False
 
 		# canonicalize the presence username
@@ -287,7 +299,7 @@ class _ChatHandler(object):
 		chatserver.setPresence( presenceinfo )
 
 		# 2. Broadcast the presence to contacts
-		contacts = chat_interfaces.IContacts(self.session_user)
+		contacts = IContacts(self.session_user)
 		updates_to = contacts.contactNamesSubscribedToMyPresenceUpdates
 		args = {self.session_user.username: presenceinfo}
 		self.emit_setPresenceOfUsersTo(updates_to, args)
@@ -313,8 +325,10 @@ class _ChatHandler(object):
 			self.emit_setPresenceOfUsersTo( self.session, args )
 		return True
 
-@interface.implementer(chat_interfaces.IChatEventHandler)
-@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement,sio_interfaces.ISocketSession,chat_interfaces.IChatserver)
+@interface.implementer(IChatEventHandler)
+@component.adapter(	nti_interfaces.ICoppaUserWithoutAgreement,
+					sio_interfaces.ISocketSession, 
+					IChatserver)
 def ChatHandlerNotAvailable(*args):
 	"""
 	A factory that produces ``None``, effectively disabling chat.
@@ -328,7 +342,8 @@ def ChatHandlerFactory( socketio_protocol, chatserver=None ):
 		chatserver = component.queryUtility( interfaces.IChatserver ) if not chatserver else chatserver
 		user = users.User.get_user( session.owner )
 	if session and chatserver and user:
-		handler = component.queryMultiAdapter( (user, session, chatserver), chat_interfaces.IChatEventHandler )
+		handler = component.queryMultiAdapter( (user, session, chatserver), 
+											   IChatEventHandler )
 		return handler
 	logger.warning( "No session (%s) or chatserver (%s) or user (%r=%s); could not create event handler.",
 					session, chatserver, getattr( session, 'owner', None ), user )
