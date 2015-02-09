@@ -14,13 +14,14 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 from zope.authentication.interfaces import ILoginPassword
-from .interfaces import ILogonWhitelist
 
 from zope.pluggableauth.factories import PrincipalInfo
+from zope.pluggableauth.interfaces import IAuthenticatorPlugin
 
 from nti.dataserver.users import User
+
+from .interfaces import ILogonWhitelist
 
 @interface.implementer(IAuthenticatorPlugin)
 class DataserverUsersAuthenticatorPlugin(object):

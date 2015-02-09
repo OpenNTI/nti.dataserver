@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -13,9 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from repoze.who.interfaces import IAPIFactory
-
 from pyramid import httpexceptions as hexc
+
+from repoze.who.interfaces import IAPIFactory
 
 from nti.app.renderers.caching import default_vary_on
 

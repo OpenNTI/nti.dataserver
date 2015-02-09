@@ -10,12 +10,11 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from repoze.who.interfaces import IChallenger
-
 from repoze.who.plugins.redirector import RedirectorPlugin
 
-from .who_classifiers import CLASS_BROWSER
-
 from pyramid.httpexceptions import HTTPFound
+
+from .who_classifiers import CLASS_BROWSER
 
 class BrowserRedirectorPlugin(RedirectorPlugin):
 	"""
@@ -28,7 +27,6 @@ class BrowserRedirectorPlugin(RedirectorPlugin):
 	"""
 
 	classifications = {IChallenger: [CLASS_BROWSER]}
-
 
 	def challenge(self, environ, status, app_headers, forget_headers):
 		exc = super(BrowserRedirectorPlugin,self).challenge( environ, status, app_headers, forget_headers )

@@ -16,22 +16,25 @@ nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
 
 from zope import component
 
-from .interfaces import ILogonWhitelist
-from nti.appserver.interfaces import IApplicationSettings
-
-from .who_classifiers import application_request_classifier
-from .who_classifiers import forbidden_or_missing_challenge_decider
-from .who_authenticators import KnownUrlTokenBasedAuthenticator
-from .who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
-from .who_basicauth import ApplicationBasicAuthPlugin
-from .who_basicauth import BasicAuthPlugin
-from .who_redirector import BrowserRedirectorPlugin
-
 from repoze.who.api import APIFactory
 from repoze.who.plugins.auth_tkt import AuthTktCookiePlugin
 
+from nti.appserver.interfaces import IApplicationSettings
+
 from nti.dataserver.users import User
 
+from .who_authenticators import KnownUrlTokenBasedAuthenticator
+from .who_authenticators import DataserverGlobalUsersAuthenticatorPlugin
+
+from .who_classifiers import application_request_classifier
+from .who_classifiers import forbidden_or_missing_challenge_decider
+
+from .who_basicauth import BasicAuthPlugin
+from .who_basicauth import ApplicationBasicAuthPlugin
+
+from .who_redirector import BrowserRedirectorPlugin
+
+from .interfaces import ILogonWhitelist
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -121,7 +124,6 @@ def create_who_apifactory( secure_cookies=True,
 				   ('basicauth-interactive', basicauth_interactive),
 				   ('basicauth', basicauth), ]
 	mdproviders = []
-
 
 	api_factory = APIFactory(identifiers,
 							 authenticators,

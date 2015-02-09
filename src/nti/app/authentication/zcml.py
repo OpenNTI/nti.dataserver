@@ -3,16 +3,20 @@
 """
 Directives to be used in ZCML.
 
-$Id$
+..  $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-import zope.configuration.fields
+
 from zope.component.zcml import utility
+
+from zope.configuration.fields import Tokens
+from zope.configuration.fields import TextLine
 
 from .interfaces import ILogonWhitelist
 
@@ -21,10 +25,10 @@ class ILogonWhitelistDirective(interface.Interface):
 	A specific list of named users are allowed to login.
 	"""
 
-	entities = zope.configuration.fields.Tokens(
+	entities = Tokens(
 		title="The global usernames allowed to logon",
 		required=True,
-		value_type=zope.configuration.fields.TextLine(title="The entity identifier."),
+		value_type=TextLine(title="The entity identifier."),
 		)
 
 def registerLogonWhitelist(_context, entities):

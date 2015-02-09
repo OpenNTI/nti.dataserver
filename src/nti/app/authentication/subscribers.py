@@ -11,14 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
+import binascii
 
-from pyramid.interfaces import IRequest
+from zope import component
 from zope.lifecycleevent import IObjectCreatedEvent
 
-from pyramid.request import Request
+from pyramid.interfaces import IRequest
 
-import binascii
+from pyramid.request import Request
 
 @component.adapter(IRequest, IObjectCreatedEvent)
 def _decode_username_request_event( request, event ):
@@ -42,7 +42,6 @@ def _decode_username_request_event( request, event ):
 		# as a real request, so turn it into a real request. This works
 		# because all the state is in the environment
 		return _decode_username_request( Request( request.environ ) )
-
 
 def _decode_username_request(request):
 	authmeth, auth = request.authorization or ('','')
