@@ -170,12 +170,14 @@ class adapter_request(adapter):
 
 		return result
 
-from zope.traversing.interfaces import ITraversable
-from zope.traversing.adapters import DefaultTraversable as _DefaultTraversable
-from zope.container.traversal import ContainerTraversable as _ContainerTraversable
 from zope import interface
 
-from nti.utils.property import alias
+from zope.container.traversal import ContainerTraversable as _ContainerTraversable
+
+from zope.traversing.interfaces import ITraversable
+from zope.traversing.adapters import DefaultTraversable as _DefaultTraversable
+
+from nti.common.property import alias
 
 @interface.implementer(ITraversable)
 class ContainerAdapterTraversable(_ContainerTraversable):
@@ -201,7 +203,6 @@ class ContainerAdapterTraversable(_ContainerTraversable):
 		except KeyError:
 			# Is there a named path adapter?
 			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
-
 
 @interface.implementer(ITraversable)
 class DefaultAdapterTraversable(_DefaultTraversable):
