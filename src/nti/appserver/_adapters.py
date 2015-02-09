@@ -22,9 +22,10 @@ from zope.traversing import interfaces as trv_interfaces
 import ZODB
 
 from nti.appserver import interfaces as app_interfaces
-from nti.dataserver import interfaces as nti_interfaces
 
 from nti.common.property import alias
+
+from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import to_external_object

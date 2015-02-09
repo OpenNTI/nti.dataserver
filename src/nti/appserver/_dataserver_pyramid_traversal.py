@@ -5,8 +5,9 @@ Classes and functions having to do specifically with traversal in the context
 of Pyramid. Many of these exist for legacy purposes to cause the existing
 code to work with the newer physical resource tree.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,20 +19,22 @@ from zope.traversing import interfaces as trv_interfaces
 import pyramid.traversal
 import pyramid.interfaces
 from pyramid.threadlocal import get_current_request
-import pyramid.security as sec
+
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 
-from nti.ntiids import ntiids
+from pyramid.security import ALL_PERMISSIONS
+
+from nti.common.property import alias
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import authorization_acl as nacl
+from nti.dataserver import interfaces as nti_interfaces
 
-from nti.utils.property import alias
+from nti.ntiids import ntiids
 
-from nti.appserver import interfaces
+from . import interfaces
 
 def root_resource_factory( request ):
 	"""
@@ -147,8 +150,6 @@ class _AbstractPageContainerResource(_AbstractContainerResource):
 
 			return self
 
-
-
 @interface.implementer(interfaces.INewPageContainerResource)
 class _NewPageContainerResource(_AbstractPageContainerResource):
 	"""
@@ -169,6 +170,7 @@ class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
 from nti.utils._compat import aq_base, IAcquirer
+
 @interface.implementer(interfaces.IObjectsContainerResource)
 class _ObjectsContainerResource(_ContainerResource):
 
@@ -183,7 +185,8 @@ class _ObjectsContainerResource(_ContainerResource):
 
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
-		if getattr( result, '__parent__', None ) is not None and IAcquirer.providedBy( result ) and aq_base( result ) is result:
+		if 	getattr( result, '__parent__', None ) is not None and \
+			IAcquirer.providedBy( result ) and aq_base( result ) is result:
 			try:
 				result = result.__of__( result.__parent__ )
 			except TypeError:
@@ -240,7 +243,6 @@ class _PseudoTraversableMixin(object):
 
 		raise loc_interfaces.LocationError( key )
 
-
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
 class Dataserver2RootTraversable(_PseudoTraversableMixin):
@@ -272,7 +274,6 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 		except KeyError:
 			return adapter_request( self.context, self.request ).traverse( key, remaining_path )
 
-
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
 class _AbstractUserPseudoContainerResource(object):
 	"""
@@ -283,12 +284,11 @@ class _AbstractUserPseudoContainerResource(object):
 	def __init__( self, context, request ):
 		self.context = context
 		self.request = request
-		self.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( context, sec.ALL_PERMISSIONS, self ),
+		self.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( context, ALL_PERMISSIONS, self ),
 										   nacl.ace_denying_all( self ) )
 	__parent__ = alias('context')
 	user = alias('context')
 	resource = alias('context') # BWC. See GenericGetView
-
 
 @interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
 class _PagesResource(_AbstractUserPseudoContainerResource):
@@ -311,7 +311,8 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		# of the logic, so that needs to be cleaned up (for example, this side
 		# doesn't handle 'MeOnly'; should it? And we wind up building the shared
 		# container twice, once here, once in the view)
-		elif self.user.getContainer( key ) is not None or self.user.getSharedContainer( key, defaultValue=None ) is not None:
+		elif self.user.getContainer( key ) is not None or \
+			 self.user.getSharedContainer( key, defaultValue=None ) is not None:
 			resource = _PageContainerResource( self, self.request, name=key, parent=self.user )
 			# Note that the container itself doesn't matter
 			# much, the _PageContainerResource only supports a few child items
@@ -340,8 +341,6 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 				raise loc_interfaces.LocationError( key )
 
 			# OK, assume a new container. Sigh.
-
-
 
 		# These have the same ACL as the user itself (for now)
 		resource.__acl__ = nacl.ACL( self.user )
@@ -415,7 +414,7 @@ class UserTraversable(_PseudoTraversableMixin):
 		resource = _ContainerResource( cont, self.request )
 		# Allow the owner full permissions. These are the special
 		# containers, and no one else can have them.
-		resource.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( self.context, sec.ALL_PERMISSIONS, self ) )
+		resource.__acl__ = nacl.acl_from_aces( nacl.ace_allowing( self.context, ALL_PERMISSIONS, self ) )
 		if self._DENY_ALL:
 			resource.__acl__ = resource.__acl__ + nacl.ace_denying_all( self )
 
@@ -465,8 +464,6 @@ class _resource_adapter_request(adapter_request):
 
 	def __init__( self, context, request=None ):
 		super(_resource_adapter_request,self).__init__( context.resource, request=request )
-
-
 
 ## Attachments/Enclosures
 

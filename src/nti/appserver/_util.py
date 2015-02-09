@@ -3,8 +3,9 @@
 """
 Common utility classes and functions for the appserver.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -100,7 +101,6 @@ def dump_stacks():
 
 	# greenlets
 
-
 	# if greenlet is present, let's dump each greenlet stack
 	# Use the gc module to inspect all objects to find the greenlets
 	# since there isn't a global registry
@@ -122,9 +122,11 @@ def dump_stacks_view(request):
 	request.response.content_type = b'text/plain'
 	return request.response
 
-from ZODB.interfaces import IDatabase
-from zope import component
 import gc as GC
+
+from zope import component
+
+from ZODB.interfaces import IDatabase
 
 def dump_database_cache(gc=False):
 	"""
@@ -158,7 +160,6 @@ def dump_database_cache(gc=False):
 			GC.collect()
 
 	return lines
-
 
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.externalization.internalization",

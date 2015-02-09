@@ -9,44 +9,51 @@ classes.
 	are broken based on the arbitrary iteration order of dicts-of-dicts.
 	Alternately, you can override `orderColumns` in your table subclass.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import cgi
-from collections import Counter
 from abc import ABCMeta #, abstractmethod
-
-from zope import interface
-from zope import component
-from zc import intid as zc_intid
-
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
-from nti.chatserver import interfaces as chat_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
-import pyramid.interfaces
-import z3c.table.interfaces
-from zope.contentprovider import interfaces as cp_interfaces
-
-from z3c.table import column
-from zope.dublincore import interfaces as dc_interfaces
-from zope.proxy.decorator import SpecificationDecoratorBase
-
-from zope.traversing.browser.interfaces import IAbsoluteURL
-
-from nti.dataserver.links_external import render_link
-from nti.ntiids import ntiids
-from pyramid import traversal
-from zope.contentprovider.provider import ContentProviderBase
+from collections import Counter
 
 import html5lib
 from html5lib import treebuilders
 import lxml.etree
+
+from zope import interface
+from zope import component
+
+from zope.contentprovider import interfaces as cp_interfaces
+from zope.contentprovider.provider import ContentProviderBase
+
+from zope.dublincore import interfaces as dc_interfaces
+
+from zope.proxy.decorator import SpecificationDecoratorBase
+
+from zope.traversing.browser.interfaces import IAbsoluteURL
+
+from zc import intid as zc_intid
+
+import z3c.table.interfaces
+from z3c.table import column
+
+import pyramid.interfaces
+from pyramid import traversal
+
+from nti.chatserver import interfaces as chat_interfaces
+
+from nti.contentfragments import interfaces as frg_interfaces
+
+from nti.dataserver.links_external import render_link
+from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+
+from nti.ntiids import ntiids
 
 @interface.implementer(dc_interfaces.IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
@@ -256,7 +263,6 @@ class KindColumn(column.GetAttrColumn):
 	weight = 11
 	header = 'Kind'
 	attrName = 'mimeType'
-
 
 class ContainerColumn(column.GetAttrColumn):
 	"""

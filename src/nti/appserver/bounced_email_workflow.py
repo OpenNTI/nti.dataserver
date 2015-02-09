@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-# NOTE: The command line tools are deprecated. Leave the setup.py entry points
-# pointing to this package to get the deprecation notice
+logger = __import__('logging').getLogger(__name__)
 
 import zope.deprecation
 zope.deprecation.moved('nti.app.bulkemail.ses_notification_handler')
