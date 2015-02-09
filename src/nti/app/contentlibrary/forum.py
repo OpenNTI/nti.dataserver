@@ -18,13 +18,13 @@ from zope import interface
 from zope import component
 from zope.cachedescriptors.property import cachedIn
 
-from nti.externalization.oids import to_external_ntiid_oid
-
 ### Board
 
 from nti.dataserver.interfaces import system_user
 from nti.dataserver.contenttypes.forums.board import GeneralBoard
 from nti.dataserver.contenttypes.forums.board import AnnotatableBoardAdapter
+
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids.ntiids import TYPE_OID
 
@@ -200,8 +200,6 @@ class ContentBoardLinkDecorator(object):
 		board = IContentBoard( context, None )
 		if board is not None: # Not checking security. If the community is visible to you, the forum is too
 			the_links = mapping.setdefault( LINKS, [] )
-			link = Link( board,
-						 rel=board.__name__ )
-
-			#link_belongs_to_user( link, context )
+			link = Link( board, rel=board.__name__ )
+			# link_belongs_to_user( link, context )
 			the_links.append( link )

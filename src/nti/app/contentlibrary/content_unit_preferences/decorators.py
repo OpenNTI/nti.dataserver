@@ -5,23 +5,24 @@ Content-unit prefernce decorators.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
 from zope import component
 
-from nti.appserver.interfaces import IContentUnitInfo
-from nti.externalization.interfaces import IExternalMappingDecorator
 from pyramid.interfaces import IRequest
 
+from nti.appserver.interfaces import IContentUnitInfo
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from .prefs import find_prefs_for_content_and_user
+from nti.externalization.interfaces import IExternalMappingDecorator
+
 from .prefs import prefs_present
+from .prefs import find_prefs_for_content_and_user
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IContentUnitInfo, IRequest)

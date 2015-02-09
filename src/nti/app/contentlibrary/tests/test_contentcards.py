@@ -1,29 +1,32 @@
 #!/usr/bin/env python
-from __future__ import print_function, unicode_literals
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from hamcrest import assert_that
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 from hamcrest import is_
-from hamcrest import has_entry
-from hamcrest import has_item
-from hamcrest import has_entries
 from hamcrest import is_not
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_entries
 does_not = is_not
 
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
-from . import ContentLibraryApplicationTestLayer
+from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
 
 class TestApplicationContentCard(ApplicationLayerTest):
+	
 	layer = ContentLibraryApplicationTestLayer
+	
 	child_ntiid = b'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1'
 
 	card_ntiid = child_ntiid
-
 
 	@WithSharedApplicationMockDS(testapp=True, users=True)
 	def test_fetch_content_card_by_ntiid_accept_pageinfo(self):

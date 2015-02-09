@@ -3,26 +3,18 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-# disable: too many ancestors
-# pylint: disable=I0011,R0901
-
-from zope import schema
-
-from nti.schema.field import Object
-from nti.schema.field import List
-
-####
-# External client preferences
-####
-
 from zope.location.interfaces import ILocation
-from nti.dataserver.interfaces import ILastModified
 
 from dolmen.builtins import IUnicode
 
+from nti.dataserver.interfaces import ILastModified
+
+from nti.schema.field import List
+from nti.schema.field import Object
 
 class IContentUnitPreferences(ILocation,
 							  ILastModified):

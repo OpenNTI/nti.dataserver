@@ -25,13 +25,14 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPBadRequest
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
 from nti.appserver.ugd_query_views import _UGDView
 
 from nti.dataserver.authorization import ACT_READ
-from nti.mimetype.mimetype import nti_mimetype_with_class
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+from nti.mimetype.mimetype import nti_mimetype_with_class
 
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 

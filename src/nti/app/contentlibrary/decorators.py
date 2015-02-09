@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import repoze.lru
-
 from zope import component
 from zope import interface
 
@@ -26,7 +24,6 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
-@repoze.lru.lru_cache(500, timeout=18000)
 def get_content_package_ntiid(ntiid):
 	library = component.queryUtility(IContentPackageLibrary)
 	paths = library.pathToNTIID(ntiid) if library else ()
@@ -102,5 +99,4 @@ class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDec
 
 			if ntiid:
 				new_packages.append(ntiid)
-
 		result['ContentPackages'] = new_packages

@@ -5,8 +5,9 @@ Views for exposing the content library to clients.
 
 In addition to providing access to the content, this
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,20 +18,22 @@ import time
 
 from zope import component
 
-from pyramid import httpexceptions as hexc
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.dataserver import authorization as nauth
+
 from nti.ntiids import ntiids
 
-from .interfaces import IContentUnitPreferences
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from ..library_views import _RootLibraryTOCRedirectView
 from ..library_views import _LibraryTOCRedirectView
+
+from .interfaces import IContentUnitPreferences
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',

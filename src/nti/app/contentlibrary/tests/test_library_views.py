@@ -1,37 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
 
-from zope import interface
-
-from pyramid import traversal
-
-from nti.contentlibrary import interfaces as lib_interfaces
-
-from pyramid.request import Request
-from pyramid.router import Router
-from zope import component
-
-
-from ..library_views import find_page_info_view_helper
-from nti.appserver.httpexceptions import HTTPNotFound
-
 from hamcrest import is_
-from hamcrest import assert_that
-from hamcrest import has_property
+from hamcrest import raises
+from hamcrest import calling
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_entries
-from hamcrest import not_none
-from hamcrest import calling
-from hamcrest import raises
+from hamcrest import assert_that
+from hamcrest import has_property
 
+from zope import component
+from zope import interface
+
+from pyramid import traversal
+from pyramid.router import Router
+from pyramid.request import Request
+
+from nti.appserver.httpexceptions import HTTPNotFound
+
+from nti.contentlibrary import interfaces as lib_interfaces
+
+from nti.app.contentlibrary.library_views import find_page_info_view_helper
 
 @interface.implementer(lib_interfaces.IContentUnit)
 class ContentUnit(object):
@@ -61,15 +58,17 @@ class NIDMapper(object):
 		self.href = href
 
 
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from . import ContentLibraryApplicationTestLayer
-from nti.app.testing.decorators import WithSharedApplicationMockDS
-from nti.dataserver.tests import mock_dataserver
 from urllib import quote
 
-class TestApplication(ApplicationLayerTest):
+from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
 
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_library_main(self):
@@ -99,8 +98,8 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( calling(find_page_info_view_helper).with_args(request, unit),
 						 raises(HTTPNotFound))
 
-
 class TestApplicationContent(ApplicationLayerTest):
+	
 	layer = ContentLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
@@ -113,7 +112,6 @@ class TestApplicationContent(ApplicationLayerTest):
 
 		href = self.require_link_href_with_rel(res.json_body, 'content')
 		assert_that( href, is_('/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html#22') )
-
 
 from hamcrest import contains
 
@@ -140,7 +138,6 @@ class TestApplicationBundles(ApplicationLayerTest):
 		assert_that(package, has_entry('ContentPackages', contains(has_entry('Class', 'ContentPackage'))))
 		assert_that( self.require_link_href_with_rel(package, 'DiscussionBoard'),
 					 is_('/dataserver2/%2B%2Betc%2B%2Bbundles/bundles/tag%3Anextthought.com%2C2011-10%3ANTI-Bundle-ABundle/DiscussionBoard'))
-
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_ipad_hack(self):

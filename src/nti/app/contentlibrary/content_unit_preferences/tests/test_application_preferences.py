@@ -1,44 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
-from hamcrest import has_property
-
-from hamcrest import has_entry
 from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import assert_that
 from hamcrest import greater_than
-from nose.tools import assert_raises
-
-
-
-from nti.testing.matchers import verifiably_provides
-
-from nti.app.testing.layers import AppTestLayer
-
+from hamcrest import has_property
 
 from nti.contentlibrary import filesystem
 
 from nti.contentlibrary.tests import ContentlibraryLayerTest
 
-
-from ..interfaces import IContentUnitPreferences
+from nti.app.contentlibrary.content_unit_preferences.interfaces import IContentUnitPreferences
 IPrefs = IContentUnitPreferences
+
+from nti.testing.matchers import verifiably_provides
+
+from nti.app.testing.layers import AppTestLayer
 
 class TestAppFilesystem(ContentlibraryLayerTest):
 	layer = AppTestLayer
@@ -66,10 +52,10 @@ from zope import interface
 from zope.traversing.api import traverse
 
 from pyramid import traversal
+from pyramid.interfaces import IAuthorizationPolicy
+from pyramid.interfaces import IAuthenticationPolicy
 
 from nti.appserver import interfaces as app_interfaces
-
-
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -79,19 +65,14 @@ from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.ntiids import ntiids
 
-
-
-
-
-
-from ..views import _ContentUnitPreferencesPutView
-from ..decorators import _ContentUnitPreferencesDecorator
+from nti.app.contentlibrary.content_unit_preferences.views import _ContentUnitPreferencesPutView
+from nti.app.contentlibrary.content_unit_preferences.decorators import _ContentUnitPreferencesDecorator
 
 from nti.app.testing.layers import NewRequestLayerTest
 from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
-from pyramid.interfaces import IAuthorizationPolicy
-from pyramid.interfaces import IAuthenticationPolicy
+
 class _SecurityPolicyNewRequestSharedConfiguringTestLayer(NewRequestSharedConfiguringTestLayer):
+	
 	rem_username = 'foo@bar'
 
 	@classmethod
@@ -100,7 +81,6 @@ class _SecurityPolicyNewRequestSharedConfiguringTestLayer(NewRequestSharedConfig
 		cls.__old_author = config.registry.queryUtility(IAuthorizationPolicy)
 		cls.__old_authen = config.registry.queryUtility(IAuthenticationPolicy)
 		cls.__new_policy = config.testing_securitypolicy(cls.rem_username)
-
 
 	@classmethod
 	def tearDown(cls):
@@ -120,7 +100,6 @@ class _SecurityPolicyNewRequestSharedConfiguringTestLayer(NewRequestSharedConfig
 	def testTearDown(cls):
 		pass
 
-
 @interface.implementer(lib_interfaces.IContentUnit)
 class ContentUnit(object):
 	href = 'prealgebra'
@@ -135,7 +114,6 @@ class ContentUnit(object):
 		if iface == lib_interfaces.IContentUnitHrefMapper:
 			return NIDMapper( self )
 
-
 @interface.implementer(lib_interfaces.IContentUnitHrefMapper)
 class NIDMapper(object):
 	def __init__( self, context ):
@@ -149,7 +127,6 @@ class NIDMapper(object):
 
 		self.href = href
 
-
 class ContentUnitInfo(object):
 	contentUnit = None
 	lastModified = 0
@@ -157,12 +134,12 @@ class ContentUnitInfo(object):
 from pyramid.threadlocal import get_current_request
 
 class TestContainerPrefs(NewRequestLayerTest):
+	
 	layer = _SecurityPolicyNewRequestSharedConfiguringTestLayer
+	
 	rem_username = layer.rem_username
 
-
 	def _do_check_root_inherited(self, ntiid=None, sharedWith=None, state='inherited', provenance=ntiids.ROOT):
-
 		unit = ContentUnit()
 		unit.ntiid = ntiid
 		# Notice that the root is missing from the lineage
@@ -217,7 +194,6 @@ class TestContainerPrefs(NewRequestLayerTest):
 		cid_prefs.sharedWith = None
 		self._do_check_root_inherited( ntiid=cid, sharedWith=['a@b'] )
 
-
 	@WithMockDSTrans
 	def test_traverse_container_to_prefs(self):
 		user = users.User.create_user( username="foo@bar" )
@@ -255,7 +231,6 @@ class TestContainerPrefs(NewRequestLayerTest):
 		self.request.body = json.dumps( {"sharedWith": sharedWith } )
 		self.request.content_type = 'application/json'
 
-
 		class Accept(object):
 			def best_match( self, *args ): return 'application/json'
 
@@ -283,7 +258,6 @@ class TestContainerPrefs(NewRequestLayerTest):
 		cont_obj.containerId = "tag:nextthought.com:foo,bar"
 		user.addContainedObject( cont_obj )
 
-
 		content_unit = ContentUnit()
 		content_unit.ntiid = cont_obj.containerId
 
@@ -303,7 +277,6 @@ class TestContainerPrefs(NewRequestLayerTest):
 		# That's why the method must be 'PUT' before traversal
 		self._do_update_prefs( content_unit, sharedWith=['a','b'] )
 
-
 	@WithMockDSTrans
 	def test_update_shared_with_in_root_inherits(self):
 
@@ -317,7 +290,6 @@ class TestContainerPrefs(NewRequestLayerTest):
 		self._do_update_prefs( content_unit, sharedWith=['a','b'] )
 
 		self._do_check_root_inherited( ntiid=containerId, sharedWith=['a','b'] )
-
 
 	@WithMockDSTrans
 	def test_prefs_from_content_unit(self):

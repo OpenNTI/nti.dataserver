@@ -1,38 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
+import os
+import os.path
 
 from zope import component
 from zope import interface
 from zope.location.interfaces import IRoot
-from nti.contentlibrary.interfaces import IContentPackageLibrary
 from zope.traversing.interfaces import IEtcNamespace
-
 
 from zope.site.folder import Folder
 from zope.site.folder import rootFolder
 
-from nti.app.testing.application_webtest import ApplicationTestLayer
-import os
-import os.path
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+from nti.app.testing.application_webtest import ApplicationTestLayer
+
 from nti.contentlibrary.bundle import ContentPackageBundleLibrary
-from nti.contentlibrary.interfaces import ISyncableContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+from nti.contentlibrary.interfaces import ISyncableContentPackageBundleLibrary
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+
+from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.tests.mock_dataserver import mock_db_trans
-from nti.dataserver.interfaces import IDataserver
 
 class _SharedSetup(object):
 
@@ -59,9 +56,7 @@ class _SharedSetup(object):
 			bucket = cls.global_library._enumeration.root.getChildNamed('sites').getChildNamed('localsite').getChildNamed('ContentPackageBundles')
 			ISyncableContentPackageBundleLibrary(global_bundle_library).syncFromBucket(bucket)
 
-
 			ds.getSiteManager().registerUtility(site, provided=IEtcNamespace, name='bundles')
-
 
 	@staticmethod
 	def setUp(cls):
@@ -77,9 +72,8 @@ class _SharedSetup(object):
 		# Must implement!
 		component.provideUtility(cls.__old_library, IContentPackageLibrary)
 
-
-
 class CourseTestContentApplicationTestLayer(ApplicationTestLayer):
+
 	library_dir = os.path.join( os.path.dirname(__file__), 'library' )
 
 	@classmethod
@@ -134,6 +128,5 @@ class ContentLibraryApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def testTearDown(cls, test=None):
 		pass
-
 
 	# TODO: May need to recreate the application with this library?
