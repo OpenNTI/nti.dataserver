@@ -1,35 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import not_none
 
+from nti.app.contentlibrary.forum import ContentForum
+from nti.app.contentlibrary.forum import ContentBoard
+from nti.app.contentlibrary.forum import ContentHeadlineTopic
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from . import ContentLibraryApplicationTestLayer
+from  nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
 
 from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
 
-
-from ..forum import ContentForum
-from ..forum import ContentBoard
-from ..forum import ContentHeadlineTopic
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 _FORUM_NAME = ContentForum.__default_name__
 _BOARD_NAME = ContentBoard.__default_name__
-
 
 class TestApplicationBundlesForum(AbstractTestApplicationForumsBaseMixin,ApplicationLayerTest):
 	__test__ = True
@@ -39,9 +30,9 @@ class TestApplicationBundlesForum(AbstractTestApplicationForumsBaseMixin,Applica
 	extra_environ_default_user = AbstractTestApplicationForumsBaseMixin.default_username
 	default_community = 'TheCommunity'
 	default_entityname = default_community
-	#default_community = 'zope.security.management.system_user'
-	#default_entityname = default_community
-
+	
+	# default_community = 'zope.security.management.system_user'
+	# default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
 
 	board_ntiid = None
@@ -50,7 +41,6 @@ class TestApplicationBundlesForum(AbstractTestApplicationForumsBaseMixin,Applica
 
 	forum_ntiid = None
 	forum_topic_ntiid_base = None
-
 
 	forum_content_type = 'application/vnd.nextthought.forums.contentforum+json'
 	forum_headline_class_type = 'Post'

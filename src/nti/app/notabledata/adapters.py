@@ -20,9 +20,7 @@ from zope.catalog.interfaces import ICatalog
 
 from BTrees.OOBTree import Set
 
-from .interfaces import IUserNotableData
-from .interfaces import IUserNotableDataStorage
-from .interfaces import IUserPresentationPriorityCreators
+from nti.common.property import CachedProperty
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -37,8 +35,11 @@ from nti.dataserver.authentication import _dynamic_memberships_that_participate_
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-from nti.utils.property import CachedProperty
 from nti.utils.property import annotation_alias
+
+from .interfaces import IUserNotableData
+from .interfaces import IUserNotableDataStorage
+from .interfaces import IUserPresentationPriorityCreators
 
 from ..base.abstract_views import AbstractAuthenticatedView
 

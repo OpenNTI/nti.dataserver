@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -16,21 +14,20 @@ from zope import interface
 from zope.location.interfaces import LocationError
 
 from zope.traversing.interfaces import ITraversable
-from .interfaces import IContentUnitPreferences
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IUser
 
-from pyramid.threadlocal import get_current_request
 from pyramid import traversal
+from pyramid.threadlocal import get_current_request
+
+from nti.dataserver import users
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver import authorization_acl as nacl
+from nti.dataserver.interfaces import ALL_PERMISSIONS
+from nti.dataserver.interfaces import ACLLocationProxy
 
 from nti.ntiids import ntiids
 
-from nti.dataserver import users
-from nti.dataserver import authorization_acl as nacl
-
-from nti.dataserver.interfaces import ACLLocationProxy
-from nti.dataserver.interfaces import ALL_PERMISSIONS
-
+from .interfaces import IContentUnitPreferences
 
 def _with_acl( prefs ):
 	"""
@@ -47,7 +44,6 @@ def _with_acl( prefs ):
 					prefs.__name__,
 					nacl.acl_from_aces( nacl.ace_allowing( user.username,
 														   ALL_PERMISSIONS ) ) )
-
 
 @interface.implementer(ITraversable)
 class _ContainerFieldsTraversable(object):
@@ -73,8 +69,6 @@ class _ContainerFieldsTraversable(object):
 			raise LocationError( name )
 
 		return _with_acl( IContentUnitPreferences( self.context ) )
-
-
 
 @interface.implementer(ITraversable)
 class _ContentUnitFieldsTraversable(object):

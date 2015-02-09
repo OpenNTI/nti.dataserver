@@ -5,28 +5,28 @@ Views for exposing the content library to clients.
 
 In addition to providing access to the content, this
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 import time
-import persistent
 
 from zope import interface
 from zope import component
 
-
 from zope.annotation.factory import factory as an_factory
 
+from persistent import Persistent
+
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
+
+from nti.dataserver.containers import LastModifiedBTreeContainer
+
 from .interfaces import IContentUnitPreferences
-from nti.contentlibrary import interfaces as lib_interfaces
-
-
-from nti.dataserver import containers
 
 ###
 # We look for content container preferences. For actual containers, we
@@ -36,8 +36,8 @@ from nti.dataserver import containers
 ###
 
 @interface.implementer(IContentUnitPreferences)
-@component.adapter(containers.LastModifiedBTreeContainer) # see also the field namespace registration
-class _ContentUnitPreferences(persistent.Persistent):
+@component.adapter(LastModifiedBTreeContainer) # see also the field namespace registration
+class _ContentUnitPreferences(Persistent):
 
 	__parent__ = None
 	__name__ = None
@@ -60,7 +60,7 @@ _ContainerContentUnitPreferencesFactory = an_factory(_ContentUnitPreferences,
 # values for us.
 ###
 @interface.implementer(IContentUnitPreferences)
-@component.adapter(lib_interfaces.IDelimitedHierarchyContentUnit)
+@component.adapter(IDelimitedHierarchyContentUnit)
 def _DelimitedHierarchyContentUnitPreferencesFactory(content_unit):
 	sharedWith = getattr( content_unit, 'sharedWith', None )
 	if sharedWith is None:

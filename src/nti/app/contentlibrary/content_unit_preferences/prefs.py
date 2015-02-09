@@ -4,18 +4,19 @@
 Support functions for dealing with preferences.
 
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
-from .interfaces import IContentUnitPreferences
 from nti.contentlibrary.interfaces import IContentUnit
 
 from nti.ntiids import ntiids
+
+from .interfaces import IContentUnitPreferences
 
 def prefs_present( prefs ):
 	"""
@@ -25,7 +26,6 @@ def prefs_present( prefs ):
 	preference.
 	"""
 	return prefs and prefs.sharedWith is not None
-
 
 def find_prefs_for_content_and_user(starting_content_unit, remote_user):
 	"""

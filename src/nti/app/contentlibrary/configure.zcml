@@ -9,7 +9,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-
 	<!-- Content card resolution; temporary? -->
 	<utility factory=".card_views._ContentCardResolver" name="NTICard" />
 	<utility factory=".card_views._ContentCardResolver" name="nticard" />

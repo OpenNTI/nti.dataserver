@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,27 +14,28 @@ __docformat__ = "restructuredtext en"
 from zope.container.constraints import contains
 from zope.container.constraints import containers
 
-from nti.schema.field import Object
 from nti.schema.field import List
+from nti.schema.field import Object
 
-#### Content-specific boards and forums
+#### 
+# Content-specific boards and forums
 # We define these as a distinct set of classes/interfaces/mimetypes/ntiids
 # so that things like analytics and notable data can distinguish them.
 # They are otherwise expected to be modeled exactly the same as community boards.
 
-from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
-from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
+
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
+from nti.dataserver.contenttypes.forums.interfaces import IUseOIDForNTIID
+from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
+from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
-from nti.dataserver.contenttypes.forums.interfaces import IPublishableTopic
-import nti.dataserver.contenttypes.forums.interfaces as frm_interfaces
-
-from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 class IContentBoard(IDefaultForumBoard,
 					IShouldHaveTraversablePath,
-					frm_interfaces.IUseOIDForNTIID):
+					IUseOIDForNTIID):
 	"""
 	A board belonging to a particular piece of content.
 	"""
@@ -66,16 +68,15 @@ class IContentCommentPost(IGeneralForumComment):
 	containers(IContentHeadlineTopic) # Adds __parent__ as required
 	__parent__.required = False
 
-
 ####
 # External client preferences
 ####
 
 from zope.location.interfaces import ILocation
-from nti.dataserver.interfaces import ILastModified
 
 from dolmen.builtins import IUnicode
 
+from nti.dataserver.interfaces import ILastModified
 
 class IContentUnitPreferences(ILocation,
 							  ILastModified):

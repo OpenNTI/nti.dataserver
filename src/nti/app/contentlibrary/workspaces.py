@@ -27,14 +27,14 @@ from nti.appserver.interfaces import ILibraryCollection
 
 from nti.appserver.pyramid_authorization import is_readable
 
+from nti.common.property import alias
+from nti.common.property import CachedProperty
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import to_external_object
-
-from nti.utils.property import alias
-from nti.utils.property import CachedProperty
 
 class _PermissionedContentPackageLibrary(ProxyBase):
 	"""
