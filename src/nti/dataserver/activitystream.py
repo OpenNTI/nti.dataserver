@@ -3,22 +3,26 @@
 """
 Functions and architecture for general activity streams.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope.event import notify
 from zope.lifecycleevent import IObjectModifiedEvent
 
-import nti.intid.interfaces
+from nti.intid.interfaces import IIntIdAddedEvent
+from nti.intid.interfaces import IIntIdRemovedEvent
 
-from nti.dataserver import interfaces as nti_interfaces
-
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import TargetedStreamChangeEvent
-from zope.event import notify
+from nti.dataserver.interfaces import IObjectSharingModifiedEvent
+from nti.dataserver.interfaces import ISharingTargetEntityIterable
 
 from nti.intid.interfaces import IntIdMissingError
 
@@ -57,7 +61,7 @@ def _enqueue_change_to_target( target, change, accum=None ):
 	# we now have an implementation of that interface. However, that's
 	# different than what we were doing before, and probably inefficient,
 	# and probably needs some normalization.
-	for nested_entity in nti_interfaces.ISharingTargetEntityIterable(target, ()):
+	for nested_entity in ISharingTargetEntityIterable(target, ()):
 		# NOTE: Because of _get_dynamic_sharing_targets_for_read, there might actually
 		# be duplicate change objects that get eliminated at read time.
 		# But this ensures that the stream gets an object, bumps the notification
@@ -73,14 +77,14 @@ def _enqueue_change_to_target( target, change, accum=None ):
 # we fire) can make use of them.
 
 def _stream_preflight( contained ):
-	if not nti_interfaces.IEntity.providedBy( getattr( contained, 'creator', None ) ):
+	if not IEntity.providedBy( getattr( contained, 'creator', None ) ):
 		return None
 	try:
 		return getattr( contained, 'sharingTargets' )
 	except AttributeError:
 		return None
 
-@component.adapter(nti_interfaces.IContained, nti.intid.interfaces.IIntIdRemovedEvent)
+@component.adapter(IContained, IIntIdRemovedEvent)
 def stream_willRemoveIntIdForContainedObject(contained, event):
 	# Make the containing owner broadcast the stream DELETED event /now/,
 	# while we can still get an ID, to keep catalogs and whatnot
@@ -97,7 +101,7 @@ def stream_willRemoveIntIdForContainedObject(contained, event):
 	for target in deletion_targets or ():
 		_enqueue_change_to_target(target, event, accum)
 
-@component.adapter(nti_interfaces.IContained, nti.intid.interfaces.IIntIdAddedEvent)
+@component.adapter(IContained, IIntIdAddedEvent)
 def stream_didAddIntIdForContainedObject(contained, event):
 	creation_targets = _stream_preflight(contained)
 	if creation_targets is None:
@@ -114,7 +118,7 @@ def stream_didAddIntIdForContainedObject(contained, event):
 from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 from zope.container.interfaces import IContainerModifiedEvent
 
-@component.adapter(nti_interfaces.IContained, IObjectModifiedEvent)
+@component.adapter(IContained, IObjectModifiedEvent)
 def stream_didModifyObject( contained, event ):
 	if (IContainerModifiedEvent.providedBy(event)
 		and INotModifiedInStreamWhenContainerModified.providedBy(contained)):
@@ -125,7 +129,7 @@ def stream_didModifyObject( contained, event ):
 	if current_sharing_targets is None:
 		return
 
-	if nti_interfaces.IObjectSharingModifiedEvent.providedBy(event):
+	if IObjectSharingModifiedEvent.providedBy(event):
 		_stream_enqeue_modification(contained.creator,
 									Change.MODIFIED,
 									contained,
@@ -156,7 +160,6 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 		logger.error("Not sending any changes for deleted object %r", obj)
 		return
 	change.creator = self
-
 
 	newSharing = set(current_sharing_targets)
 	seenTargets = set()

@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -15,14 +16,16 @@ from zope import interface
 from zope import component
 from zope.cachedescriptors.property import Lazy
 
-from nti.externalization.representation import to_json_representation_externalized
 from nti.externalization.persistence import NoPickle
+from nti.externalization.representation import to_json_representation_externalized
 
 from nti.schema.schema import EqHash
 
-from . import interfaces
+from .interfaces import ISocketIOSocket
+from .interfaces import ISocketIOMessage
+from .interfaces import ISocketIOProtocolFormatter
 
-@interface.implementer(interfaces.ISocketIOSocket)
+@interface.implementer(ISocketIOSocket)
 @NoPickle
 @EqHash('channel', 'version')
 class SocketIOSocket(object):
@@ -41,7 +44,7 @@ class SocketIOSocket(object):
 
 	@Lazy
 	def protocol(self):
-		return component.getUtility( interfaces.ISocketIOProtocolFormatter,
+		return component.getUtility( ISocketIOProtocolFormatter,
 									 name=self.version )
 
 	def send(self, message):
@@ -59,7 +62,7 @@ class SocketIOSocket(object):
 	def ack(self, msg_id, params):
 		self.send( self.protocol.make_ack( msg_id, params ) )
 
-@interface.implementer(interfaces.ISocketIOMessage)
+@interface.implementer(ISocketIOMessage)
 class AbstractMessage(dict):
 	msg_type = -1
 
@@ -101,7 +104,7 @@ class ErrorMessage(AbstractMessage):
 class NoopMessage(AbstractMessage):
 	msg_type = 8
 
-@interface.implementer( interfaces.ISocketIOProtocolFormatter )
+@interface.implementer( ISocketIOProtocolFormatter )
 class SocketIOProtocolFormatter1(object):
 	"""Parsing functions for version 1 of the socketio protocol."""
 
@@ -135,7 +138,6 @@ class SocketIOProtocolFormatter1(object):
 
 		return self.encode( to_json_representation_externalized(message) )
 
-
 	def _frame( self, msg ):
 		"""
 		Given a byte string message, frame it and return the framed bytes.
@@ -165,7 +167,6 @@ class SocketIOProtocolFormatter1(object):
 		# Ok, we must frame them.
 		framed = [self._frame(msg) for msg in messages]
 		return b''.join( framed )
-
 
 	def _parse_data( self, data ):
 		data = data.lstrip()
@@ -200,7 +201,6 @@ class SocketIOProtocolFormatter1(object):
 		# 'ack'
 		# 'error' -- not handled
 		# 'noop'  -- not handled
-
 
 		if msg_type == b"0": # disconnect
 			return DisconnectMessage()

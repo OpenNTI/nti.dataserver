@@ -11,22 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import contextlib
+
 from zope import component
 from zope import interface
 
 from ZODB.loglevels import TRACE
 
 import pyramid.interfaces
-from .. import interfaces
+
 from nti.dataserver import interfaces as nti_interfaces
 
-from ._base import BaseTransport
-from ._base import SessionEventProxy
 from ._base import Empty
 from ._base import Greenlet
+from ._base import BaseTransport
+from ._base import SessionEventProxy
 from ._base import decode_packet_to_session
 
-import contextlib
+from .. import interfaces
 
 @contextlib.contextmanager
 def _using_session_proxy( service, sid  ):
@@ -41,7 +43,6 @@ def _using_session_proxy( service, sid  ):
 	else:
 		logger.warn( "Session %s already has proxy %s", sid, existing )
 		yield proxy
-
 
 @component.adapter( pyramid.interfaces.IRequest )
 @interface.implementer( interfaces.ISocketIOTransport )
@@ -121,7 +122,6 @@ class XHRPollingTransport(BaseTransport):
 
 	def _request_body(self):
 		return self.request.body
-
 
 	def post(self, session, response_message=None):
 		# The websocket transport has an optimization to detect

@@ -14,30 +14,42 @@ logger = __import__('logging').getLogger(__name__)
 import time
 
 from zope import interface
-from zope.annotation import IAttributeAnnotatable
 from zope.event import notify
+
+from zope.annotation import IAttributeAnnotatable
+
 from zope.cachedescriptors.property import cachedIn
 
-from nti.zodb.persistentproperty import PersistentPropertyHolder
-from nti.zodb import minmax
-from nti.utils.property import dict_read_alias, alias
+from ZODB.POSException import ConnectionStateError
 
-import nti.socketio.protocol
-from nti.socketio import interfaces as sio_interfaces
-from nti.socketio.interfaces import SocketSessionConnectedEvent, SocketSessionDisconnectedEvent
+from nti.common.property import dict_read_alias, alias
 
-import ZODB.POSException
-
-from nti.schema.schema import EqHash
 from nti.externalization.representation import WithRepr
 
-_state_progression = [sio_interfaces.SESSION_STATE_NEW,
-					  sio_interfaces.SESSION_STATE_CONNECTED,
-					  sio_interfaces.SESSION_STATE_DISCONNECTING,
-					  sio_interfaces.SESSION_STATE_DISCONNECTED]
+from nti.schema.schema import EqHash
+
+from nti.zodb import minmax
+from nti.zodb.persistentproperty import PersistentPropertyHolder
+
+from .protocol import SocketIOSocket
+
+from .interfaces import SESSION_STATE_NEW
+from .interfaces import SESSION_STATE_CONNECTED 
+from .interfaces import SESSION_STATE_DISCONNECTED 
+from .interfaces import SESSION_STATE_DISCONNECTING
+
+from .interfaces import ISocketSession
+from .interfaces import ISocketIOSocket
+from .interfaces import SocketSessionConnectedEvent
+from .interfaces import SocketSessionDisconnectedEvent
+
+_state_progression = [SESSION_STATE_NEW,
+					  SESSION_STATE_CONNECTED,
+					  SESSION_STATE_DISCONNECTING,
+					  SESSION_STATE_DISCONNECTED]
 _reversed_state_progression = reversed(_state_progression)
 
-@interface.implementer(sio_interfaces.ISocketSession,IAttributeAnnotatable) #pylint:disable=R0921
+@interface.implementer(ISocketSession, IAttributeAnnotatable) # pylint:disable=R0921
 @EqHash('session_id')
 @WithRepr
 class AbstractSession(PersistentPropertyHolder):
@@ -117,13 +129,13 @@ class AbstractSession(PersistentPropertyHolder):
 
 	@cachedIn('_v_socket')
 	def socket(self):
-		return nti.socketio.protocol.SocketIOSocket( self )
+		return SocketIOSocket( self )
 
 	def __conform__( self, iface ):
 		# Shortcut for using ISocketIOSocket(session) to return a socket;
 		# currently identical to session.socket, but useful in the future
 		# for flexibility
-		if sio_interfaces.ISocketIOSocket == iface:
+		if ISocketIOSocket == iface:
 			return self.socket
 		return None
 
@@ -136,7 +148,7 @@ class AbstractSession(PersistentPropertyHolder):
 			result.append( 'confirmed=%s' % self.connection_confirmed )
 			result.append( 'id=%s]'% id(self) )
 			return ' '.join(result)
-		except (ZODB.POSException.ConnectionStateError,AttributeError):
+		except (ConnectionStateError, AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
 			# be other log messages about trying to load state when connection is closed,
@@ -145,7 +157,7 @@ class AbstractSession(PersistentPropertyHolder):
 
 	@property
 	def connected(self):
-		return self.state == sio_interfaces.SESSION_STATE_CONNECTED
+		return self.state == SESSION_STATE_CONNECTED
 
 	def incr_hits(self):
 		# We don't really need to track this once
@@ -153,9 +165,10 @@ class AbstractSession(PersistentPropertyHolder):
 		# reduces chances of conflict.
 
 		if self._hits.value + 1 == 1:
-			self.state = sio_interfaces.SESSION_STATE_CONNECTED
+			self.state = SESSION_STATE_CONNECTED
 			self._hits.value = 1
-		if self.connected and self.connection_confirmed and self.owner and not self._broadcast_connect:
+		if 	self.connected and self.connection_confirmed and self.owner \
+			and not self._broadcast_connect:
 			self._broadcast_connect = True
 			notify( SocketSessionConnectedEvent( self ) )
 
@@ -167,7 +180,6 @@ class AbstractSession(PersistentPropertyHolder):
 		# Directly set the .value, avoiding the property, because
 		# the property still causes this object to be considered modified (?)
 		self.last_heartbeat_time = time.time()
-
 
 	def heartbeat(self):
 		self.clear_disconnect_timeout()
@@ -188,7 +200,7 @@ class AbstractSession(PersistentPropertyHolder):
 
 		# Mark us as disconnecting, and then send notifications
 		# (otherwise, it's too easy to recurse infinitely here)
-		self.state = sio_interfaces.SESSION_STATE_DISCONNECTING
+		self.state = SESSION_STATE_DISCONNECTING
 
 		if self.owner and send_event:
 			notify(SocketSessionDisconnectedEvent(self))
@@ -208,5 +220,5 @@ class AbstractSession(PersistentPropertyHolder):
 # for BWC, copy the vocab choices
 # as class attributes
 map(lambda x: setattr( AbstractSession, str('STATE_' + x), x ),
-	sio_interfaces.ISocketSession['state'].vocabulary.by_token )
-AbstractSession.state = sio_interfaces.SESSION_STATE_NEW
+	ISocketSession['state'].vocabulary.by_token )
+AbstractSession.state = SESSION_STATE_NEW

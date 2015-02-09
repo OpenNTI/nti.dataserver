@@ -10,29 +10,33 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 import itertools
 import simplejson as json
 from collections import defaultdict
 
+from zope import component
 from zope import interface
 from zope.interface.exceptions import Invalid
-from zope import component
-from zope.event import notify
-from zope.i18n import translate
+
 from zope.cachedescriptors.method import cachedIn
+
+from zope.event import notify
+
+from zope.i18n import translate
 
 import transaction
 
 from nti.externalization.persistence import NoPickle
 from nti.externalization.externalization import toExternalObject
 
-from nti.socketio import interfaces as sio_interfaces
+from .interfaces import ISocketEventHandler
+from .interfaces import ISocketEventHandlerClientError
+from .interfaces import ISocketSessionClientMessageConsumer
 
 class UnauthenticatedSessionError(ValueError):
 	"Raised when a session consumer is called but is not authenticated."
 
-@interface.implementer(sio_interfaces.ISocketSessionClientMessageConsumer)
+@interface.implementer(ISocketSessionClientMessageConsumer)
 @NoPickle
 class SessionConsumer(object):
 	"""
@@ -67,11 +71,10 @@ class SessionConsumer(object):
 		:return: A mapping from event prefix (empty string for no prefix) no list of possible
 			handlers for that prefix.
 		"""
-		subscribers = component.subscribers( (socket_obj,),
-											 sio_interfaces.ISocketEventHandler )
+		subscribers = component.subscribers( (socket_obj,), ISocketEventHandler )
 		if session is not None:
 			subscribers = itertools.chain( subscribers,
-										   component.subscribers( (session,), sio_interfaces.ISocketEventHandler ) )
+										   component.subscribers( (session,), ISocketEventHandler ) )
 		result = defaultdict(list)
 		for subscriber in subscribers:
 			if subscriber is None:
@@ -107,7 +110,6 @@ class SessionConsumer(object):
 					_l.append(handler)
 			handler_list = tuple(_l)
 		return handler_list
-
 
 	def _event_handlers_in_namespace(self, event_handlers, event, namespace):
 		# Ideally we'd cache these here, but event_handlers, as a dict,
@@ -199,7 +201,7 @@ class SessionConsumer(object):
 		except (StandardError, Invalid) as e: # schema validation extends Invalid, and NOT StandardError
 			savepoint.rollback() # could potentially raise InvalidSavepointRollbackError
 
-			if sio_interfaces.ISocketEventHandlerClientError.providedBy( e ):
+			if ISocketEventHandlerClientError.providedBy( e ):
 				error_type = 'client-error'
 			else:
 				error_type = 'server-error'
@@ -250,6 +252,7 @@ _registered_legacy_search_mods = set()
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
+
 from .interfaces import SocketSessionCreatedObjectEvent
 
 def _convert_message_args_to_objects( handler, session, message ):

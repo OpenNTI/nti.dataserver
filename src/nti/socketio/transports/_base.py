@@ -11,16 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
-
 import transaction
-from nti.utils import transactions
+
+from zope import component
 
 from ZODB.loglevels import TRACE
 
 from nti.externalization.persistence import NoPickle
 
 from nti.dataserver.interfaces import IDataserverTransactionRunner
+
+from nti.utils import transactions
 
 try:
 	from gevent import Greenlet
@@ -31,9 +32,9 @@ except ImportError:
 	from greenlet import greenlet as Greenlet
 	from time import sleep
 
-Greenlet = Greenlet
 sleep = sleep
 Queue = Queue
+Greenlet = Greenlet
 
 from Queue import Empty
 Empty = Empty
@@ -61,7 +62,6 @@ def catch_all(greenlet):
 			# specially.
 			logger.exception( "Failed to run greenlet %s", greenlet )
 	return f
-
 
 def decode_packet_to_session( session, sock, data, doom_transaction=True ):
 	try:
@@ -92,11 +92,9 @@ def safe_kill_session( session, reason='' ):
 	except:
 		logger.exception( "Failed to kill session %s", session )
 
-
 def run_job_in_site( *args, **kwargs ):
 	runner = component.getUtility( IDataserverTransactionRunner )
 	return runner( *args, **kwargs )
-
 
 @NoPickle
 class SessionEventProxy(object):

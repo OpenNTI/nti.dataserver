@@ -9,6 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+import types
+import socket
+
 from zope import component
 from zope import interface
 
@@ -16,26 +20,22 @@ from ZODB.loglevels import TRACE
 
 import pyramid.interfaces
 import transaction.interfaces
-from nti.socketio import interfaces
+
+import geventwebsocket.exceptions
+
 from nti.dataserver.interfaces import IDataserver
-
-from ._base import BaseTransport
-from ._base import catch_all
-from ._base import safe_kill_session
-from ._base import decode_packet_to_session
-from ._base import run_job_in_site
-
 from nti.dataserver.sessions import SessionService
 
-from ._base import Greenlet
+from nti.socketio import interfaces
+
 from ._base import sleep
-
+from ._base import Greenlet
+from ._base import catch_all
+from ._base import BaseTransport
+from ._base import run_job_in_site
+from ._base import safe_kill_session
 from ._base import SessionEventProxy
-
-import types
-import time
-import socket
-import geventwebsocket.exceptions
+from ._base import decode_packet_to_session
 
 # For ease of distinguishing in logs we subclass
 class _WebsocketSessionEventProxy(SessionEventProxy):
@@ -84,13 +84,13 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 			if not self.run_loop:
 				break
 			try:
-				self.run_loop &= run_job_in_site( self._do_send, retries=10, site_names=self.session_originating_site_names )
+				self.run_loop &= run_job_in_site( self._do_send, retries=10, 
+												  site_names=self.session_originating_site_names )
 			except transaction.interfaces.TransientError:
 				# A problem clearing the queue or getting the session.
 				# Generally, these can be ignored, since we'll just try again later
 				logger.debug( "Unable to clear session msgs, ignoring", exc_info=True )
 				self.run_loop = (self.message is not None)
-
 
 			if not self.run_loop:
 				# Don't send a message if the transactions failed
@@ -209,12 +209,12 @@ class _WebSocketGreenlet(Greenlet):
 		"""
 		self.ws_operator.run_loop = False
 
-
 @component.adapter( pyramid.interfaces.IRequest )
 @interface.implementer( interfaces.ISocketIOTransport )
 class WebsocketTransport(BaseTransport):
 
 	websocket = None
+	
 	def __init__( self, request ):
 		super(WebsocketTransport,self).__init__(request)
 
@@ -245,9 +245,21 @@ class WebsocketTransport(BaseTransport):
 		# that they all die together, and that they all do cleanup when they die
 		session_service.set_proxy_session( session_id, session_proxy )
 
-		send_into_ws = _WebSocketSender( session_id, session_proxy, session_service, session_originating_site_names, websocket )
-		read_from_ws = _WebSocketReader( session_id, session_proxy, session_service, session_originating_site_names, websocket )
-		ping = _WebSocketPinger( session_id, session_proxy, session_service, session_originating_site_names, websocket, ping_sleep=ping_sleep )
+		send_into_ws = _WebSocketSender( session_id, session_proxy, 
+										 session_service, 
+										 session_originating_site_names,
+										 websocket )
+		
+		read_from_ws = _WebSocketReader( session_id, session_proxy, 
+										session_service, 
+										session_originating_site_names,
+										websocket )
+		
+		ping = _WebSocketPinger( session_id, session_proxy,
+								 session_service, 
+								 session_originating_site_names, 
+								 websocket, 
+								 ping_sleep=ping_sleep )
 
 		session_owner = getattr( session, 'owner', '' )
 		if session_owner:

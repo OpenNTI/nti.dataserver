@@ -2,8 +2,9 @@
 """
 ACL providers for the various content types.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,10 +15,14 @@ import codecs
 
 from zope import interface
 from zope import component
+
 from zope.cachedescriptors.property import Lazy
+
 from zope.interface.interfaces import ComponentLookupError
 
 import pyramid.security
+
+from nti.common.property import alias
 
 from nti.contentlibrary import interfaces as content_interfaces
 
@@ -30,8 +35,6 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.ntiids import ntiids
-
-from nti.utils.property import alias
 
 @interface.implementer( nti_interfaces.IACE )
 class _ACE(object):
@@ -171,10 +174,9 @@ def _ace_allowing_all( provenance=None ):
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
-ace_from_string = _ACE.from_external_string
 ace_denying_all = _ace_denying_all
 ace_allowing_all = _ace_allowing_all
-
+ace_from_string = _ACE.from_external_string
 
 def acl_from_file( path_or_file ):
 	"""
@@ -292,8 +294,9 @@ def is_writable( context, username, **kwargs ):
 
 	return has_permission( authorization.ACT_UPDATE, context, username, **kwargs )
 
-from ZODB.POSException import POSKeyError
 import functools
+
+from ZODB.POSException import POSKeyError
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(object)
@@ -352,13 +355,12 @@ def acl_from_aces( *args ):
 
 	return _ACL( args )
 
-from nti.utils.property import LazyOnClass as _LazyOnClass
+from nti.common.property import LazyOnClass as _LazyOnClass
 
 def _add_admin_moderation( acl, provenance ):
 	acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance ) )
 	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance ) )
 	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance ) )
-
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.IEntity)
@@ -487,8 +489,6 @@ class _CreatedACLProvider(object):
 		acl = self._creator_acl( )
 		return self._handle_deny_all(acl)
 
-
-
 class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	"""
 	Abstract base class for providing the ACL in the common case of an object that has a creator
@@ -520,8 +520,6 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		except POSKeyError:
 			logger.warn( "POSKeyError getting sharing target names.")
 			return ()
-
-
 
 	def _extend_acl_after_creator_and_sharing( self, acl ):
 		"""
@@ -559,7 +557,6 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 			self._extend_for_sharing_target( name, result )
 		self._extend_acl_after_creator_and_sharing( result )
 		return self._handle_deny_all( result )
-
 
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
@@ -642,9 +639,9 @@ class _TestingLibraryTOCEntryACLProvider(object):
 
 	@_LazyOnClass
 	def __acl__(self):
-		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _TestingLibraryTOCEntryACLProvider ), )
-
-
+		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+							   nti_interfaces.ALL_PERMISSIONS,
+							   _TestingLibraryTOCEntryACLProvider ), )
 
 # TODO: This could be (and was) registered for a simple IDelimitedHierarchyEntry.
 # There is none of that separate from the contentpackage/unit though, so it shouldn't
@@ -691,7 +688,9 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 				logger.exception( "Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name )
 				__acl__ = _ACL( (_ace_denying_all( 'Default Deny Due to Parsing Error' ),) )
 		elif self._default_allow:
-			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.ALL_PERMISSIONS, _AbstractDelimitedHierarchyEntryACLProvider ), ) )
+			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+										   nti_interfaces.ALL_PERMISSIONS,
+										   _AbstractDelimitedHierarchyEntryACLProvider ), ) )
 		else:
 			__acl__ = () # Inherit from parent
 
@@ -773,7 +772,8 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		ordinals = []
 		ordinals.append( context.ordinal )
 		parent = context.__parent__
-		while parent is not None and content_interfaces.IContentUnit.providedBy( parent ) and not content_interfaces.IContentPackage.providedBy( parent ):
+		while parent is not None and content_interfaces.IContentUnit.providedBy( parent ) and \
+			  not content_interfaces.IContentPackage.providedBy( parent ):
 			ordinals.append( parent.ordinal )
 			parent = parent.__parent__
 
@@ -788,7 +788,6 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 	def _acl_from_string( self, context, acl_string, provenance=None ):
 		acl = super(_DelimitedHierarchyContentUnitACLProvider,self)._acl_from_string( context, acl_string, provenance=provenance )
 		return _supplement_acl_with_content_role( self, context, acl ) if self._acl_sibling_fallback_name else acl
-
 
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):
@@ -808,7 +807,6 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		result.append( ace_denying_all( _FriendsListACLProvider ) )
 		return result
 
-
 @interface.implementer( nti_interfaces.IACLProvider )
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
@@ -821,11 +819,17 @@ class _DataserverFolderACLProvider(object):
 		# Got to be here after the components are registered
 		acl = acl_from_aces(
 			# Everyone logged in has read and search access at the root
-			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _DataserverFolderACLProvider ),
-			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_SEARCH, _DataserverFolderACLProvider ),
+			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
+						  authorization.ACT_READ,
+						  _DataserverFolderACLProvider ),
+			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
+						  authorization.ACT_SEARCH,
+						  _DataserverFolderACLProvider ),
 			# Global admins also get impersonation rights globally
 			# TODO: We could easily site scope this, or otherwise
-			ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_IMPERSONATE, _DataserverFolderACLProvider )
+			ace_allowing( authorization.ROLE_ADMIN, 
+						  authorization.ACT_IMPERSONATE, 
+						  _DataserverFolderACLProvider )
 			)
 		_add_admin_moderation( acl, _DataserverFolderACLProvider )
 		return acl
@@ -843,7 +847,9 @@ class _ContentPackageLibraryACLProvider(object):
 	@_LazyOnClass
 	def __acl__( self ):
 		# Got to be here after the components are registered, not at the class
-		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
+		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
+									authorization.ACT_READ, 
+									_ContentPackageLibraryACLProvider ), ) )
 
 
 @interface.implementer( nti_interfaces.IACLProvider )
@@ -856,4 +862,7 @@ class _ContentPackageBundleLibraryACLProvider(object):
 	@_LazyOnClass
 	def __acl__( self ):
 		# Got to be here after the components are registered, not at the class
-		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, authorization.ACT_READ, _ContentPackageLibraryACLProvider ), ) )
+		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
+									authorization.ACT_READ, 
+									_ContentPackageLibraryACLProvider ), ) )
+
