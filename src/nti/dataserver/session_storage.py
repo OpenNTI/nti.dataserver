@@ -35,6 +35,8 @@ from nti.dataserver.interfaces import ISessionServiceStorage
 
 from nti.intid import utility as intid_utility
 
+from nti.zodb import readCurrent
+
 # Leaving this key around for historical purposes:
 # We used to use this as an annotation key on users that held
 # an LLTreeSet to hold session_ids. But that was a duplicate
@@ -42,27 +44,8 @@ from nti.intid import utility as intid_utility
 # When we switched, we didn't delete annotations
 _OWNED_SESSIONS_KEY = __name__ + '.' + '_OwnerAnnotationBasedServiceStorage' + '.' + 'session_set'
 
-def _read_current(obj):
-	"""
-	Invokes ZODB's readCurrent on the object's connection
-	(if it has one).
-	ReadCurrent ensures a higher level of consistency among
-	objects and should be used "when an object is read and the
-	information read is used to write a separate object."
-	"""
-	# For the *Tree* objects, does this actually have an effect?
-	# Because its the individual buckets that would be modified/read?
-	try:
-		# If we don't readCurrent on an activated object (i.e., we
-		# readCurrent on a ghost) we tend to get a _p_serial of 0,
-		# which will change as soon as it is activated, thus leading
-		# to lots of conflicts. The callers here are often passing us
-		# a freshly loaded ghost object.
-		obj._p_activate()
-		obj._p_jar.readCurrent(obj)
-	except (AttributeError,TypeError):
-		pass
-	return obj
+def _read_current(obj, container=False):
+	return readCurrent(obj, container=container)
 
 def _u(o):
 	return getattr(o, 'username', o)
@@ -220,7 +203,6 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 @component.adapter(IUser, IObjectRemovedEvent)
 def _remove_sessions_for_removed_user( user, event ):
-
 	storage = component.queryUtility(ISessionServiceStorage )
 	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
 	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
