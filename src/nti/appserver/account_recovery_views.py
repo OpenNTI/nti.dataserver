@@ -6,8 +6,9 @@ Views related to recovering information about accounts (lost username and/or pas
 For the general design, see `Everything you ever wanted to know about building a secure
 password reset feature <http://www.troyhunt.com/2012/05/everything-you-ever-wanted-to-know.html>`_
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,14 +17,17 @@ logger = __import__('logging').getLogger(__name__)
 from nti.appserver import MessageFactory as _
 
 import uuid
-import datetime
 import urllib
+import datetime
 import urlparse
 
 from zope import component
+
 from zope.annotation import interfaces as an_interfaces
 
 import zope.schema.interfaces
+
+from pyramid.view import view_config
 
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
@@ -37,8 +41,6 @@ from nti.app.externalization.error import handle_validation_error
 from nti.app.externalization.internalization import update_object_from_external_object
 
 from nti.appserver._email_utils import queue_simple_html_text_email
-
-from pyramid.view import view_config
 
 import nti.appserver.httpexceptions as hexc
 

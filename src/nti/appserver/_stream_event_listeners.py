@@ -3,7 +3,7 @@
 """
 Listeners that take action for a user's stream, typically emitting notifications.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -11,34 +11,41 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pyramid.threadlocal import get_current_request
-
-from nti.appserver._email_utils import queue_simple_html_text_email
-from nti.appserver.policies import site_policies
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
-from nti.contentfragments import interfaces as frg_interfaces
-from . import interfaces as app_interfaces
-
-from zope.event import notify
 from zope import component
 from zope import interface
-
-from z3c.table import table
+from zope.event import notify
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 from ZODB import loglevels
 
-@component.adapter( nti_interfaces.IUser, nti_interfaces.IStreamChangeEvent )
+from z3c.table import table
+
+from pyramid.threadlocal import get_current_request
+
+from nti.appserver.policies.site_policies import get_possible_site_names
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import SC_CREATED
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import DataChangedUserNotificationEvent
+
+from nti.dataserver.users.interfaces import IUserProfile
+
+from ._email_utils import queue_simple_html_text_email
+from .interfaces import IChangePresentationDetails
+
+@component.adapter( IUser, IStreamChangeEvent )
 def user_change_broadcaster( user, change ):
 	"""
 	Notifies the chat server of data change events so they can be
 	put on the user's socket.
 	"""
 	if change.send_change_notice:
-		logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', user.username, change.type)
-		notify( nti_interfaces.DataChangedUserNotificationEvent( (user.username,), change ) )
+		logger.log( loglevels.TRACE, 'Broadcasting incoming change to %s chg: %s', 
+					user.username, change.type)
+		notify( DataChangedUserNotificationEvent( (user.username,), change ) )
 
 class ITemporaryChangeEmailMarker(interface.Interface):
 	"Temporary marker interface, assigned using configuration to a user who wants to get change emails."
@@ -50,14 +57,14 @@ class TemporaryChangeEmailMarker(object):
 class NewNoteBodyTable(table.SequenceTable):
 	pass
 
-@component.adapter( nti_interfaces.IUser, nti_interfaces.IStreamChangeEvent )
+@component.adapter( IUser, IStreamChangeEvent )
 def user_change_new_note_emailer( user, change ):
 	"""
 	For incoming shared objects that are notes being freshly created,
 	attempts to email them
 	"""
 
-	if change.type != nti_interfaces.SC_CREATED:
+	if change.type != SC_CREATED:
 		return
 
 	change_object = change.object
@@ -70,11 +77,11 @@ def user_change_new_note_emailer( user, change ):
 	# So we drive this off whether we can get a
 	# presentation
 	change_presentation_details = component.queryMultiAdapter( (change_object, change),
-															   app_interfaces.IChangePresentationDetails )
+															   IChangePresentationDetails )
 	if change_presentation_details is None:
 		return
 
-	profile = user_interfaces.IUserProfile( user )
+	profile = IUserProfile( user )
 	email = getattr( profile, 'email', None )
 	opt_in = getattr( profile, 'opt_in_email_communication', True )
 
@@ -84,7 +91,6 @@ def user_change_new_note_emailer( user, change ):
 					user, email, opt_in )
 		return
 
-
 	# Ok, now here's the tricky part. Until we have preferences or something about who/how to send
 	# email, we're doing something a bit weird. We still want to be able to configure this, possibly
 	# in site.zcml. We think we only want to do this for a very small handful of users. So the easy
@@ -93,7 +99,7 @@ def user_change_new_note_emailer( user, change ):
 	# sites
 	# TODO: Convert this to z3c.baseregistry?
 	request = get_current_request()
-	names = [user.username] + list(site_policies.get_possible_site_names( request=request, include_default=True ))
+	names = [user.username] + list(get_possible_site_names( request=request, include_default=True ))
 	send = False
 	for name in names:
 		if component.queryUtility( ITemporaryChangeEmailMarker, name=name ):
@@ -108,6 +114,9 @@ def user_change_new_note_emailer( user, change ):
 
 		the_table.update()
 
+		note_text = [component.queryAdapter( x, IPlainTextContentFragment, name='text', default='' ) 
+					 for x in change_object.body]
+
 		queue_simple_html_text_email(
 			base_template,
 			subject=change_presentation_details.title,
@@ -116,6 +125,6 @@ def user_change_new_note_emailer( user, change ):
 						   'change': change,
 						   'user': user,
 						   'note_table': the_table,
-						   'note_text': '\n'.join( component.queryAdapter( x, frg_interfaces.IPlainTextContentFragment, name='text', default='' ) for x in change_object.body ),
+						   'note_text': '\n'.join( note_text ),
 						   'profile': profile},
 			request=request	)

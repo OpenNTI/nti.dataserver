@@ -3,8 +3,9 @@
 """
 Listeners for socket activity.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,12 +14,16 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope.event import notify
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IContacts
+from nti.chatserver.interfaces import PresenceChangedUserNotificationEvent
+from nti.chatserver.interfaces import IContactISubscribeToAddedToContactsEvent
 
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
 
-from nti.socketio import interfaces as sio_interfaces
+from nti.socketio.interfaces import ISocketSession
+from nti.socketio.interfaces import ISocketSessionDisconnectedEvent
 
 def _is_user_online(dataserver, username, ignoring_session=None):
 	"""
@@ -41,15 +46,16 @@ def _notify_friends_of_presence( session, presence, event=None ):
 		logger.error( "Unable to get owner of session %s; not sending presence notification", session )
 		return
 
-	has_me_in_buddy_list = chat_interfaces.IContacts(user).contactNamesSubscribedToMyPresenceUpdates
-	logger.debug( "Notifying %s of presence change of %s/%s to %s for %s", has_me_in_buddy_list, session.owner, session, presence, event )
-	notify( chat_interfaces.PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
+	has_me_in_buddy_list = IContacts(user).contactNamesSubscribedToMyPresenceUpdates
+	logger.debug("Notifying %s of presence change of %s/%s to %s for %s",
+				 has_me_in_buddy_list, session.owner, session, presence, event )
+	notify(PresenceChangedUserNotificationEvent( has_me_in_buddy_list, session.owner, presence ) )
 
-@component.adapter( sio_interfaces.ISocketSession, sio_interfaces.ISocketSessionDisconnectedEvent )
+@component.adapter(ISocketSession, ISocketSessionDisconnectedEvent )
 def session_disconnected_broadcaster( session, event ):
 	# TODO: Should this all move to a lower level? Or is the "application"
 	# level the right one for this?
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	dataserver = component.queryUtility( IDataserver )
 	if not (dataserver and dataserver.sessions):
 		logger.debug( "Unable to broadcast presence notification.")
 		return
@@ -82,11 +88,11 @@ def session_disconnected_broadcaster( session, event ):
 				need_notify = True
 
 		if need_notify:
-			_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_OFFLINE, event )
+			_notify_friends_of_presence(session, PresenceChangedUserNotificationEvent.P_OFFLINE, event )
 	else:
 		logger.debug( "A session (%s) died, but %s are still online", session, len(online) )
 
-@component.adapter(nti_interfaces.IUser, chat_interfaces.IContactISubscribeToAddedToContactsEvent)
+@component.adapter(IUser, IContactISubscribeToAddedToContactsEvent)
 def send_presence_when_contact_added( user_now_following, event ):
 	"""
 	When I add a contact that I want to subscribe to, send
@@ -97,7 +103,7 @@ def send_presence_when_contact_added( user_now_following, event ):
 	if user_being_followed is None or user_now_following is None: # pragma: no cover
 		return
 
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+	dataserver = component.queryUtility( IDataserver )
 	if not (dataserver and dataserver.sessions and dataserver.chatserver):
 		return
 
@@ -113,4 +119,4 @@ def send_presence_when_contact_added( user_now_following, event ):
 		# This will return an empty array if the user is "default" unavailable
 		if presences and presences[0].isAvailable():
 			# TODO: Losing 'status' information here
-			_notify_friends_of_presence( session, chat_interfaces.PresenceChangedUserNotificationEvent.P_ONLINE, event )
+			_notify_friends_of_presence( session, PresenceChangedUserNotificationEvent.P_ONLINE, event )
