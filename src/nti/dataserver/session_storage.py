@@ -26,14 +26,14 @@ import BTrees
 
 import persistent
 
+from nti.common.sets import discard
+from nti.common.property import Lazy
+
 from nti.dataserver import users
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ISessionServiceStorage
 
 from nti.intid import utility as intid_utility
-
-from nti.utils.sets import discard
-from nti.utils.property import Lazy
 
 # Leaving this key around for historical purposes:
 # We used to use this as an annotation key on users that held
