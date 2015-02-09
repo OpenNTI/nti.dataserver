@@ -13,16 +13,17 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.cachedescriptors.property import Lazy
+
+from zc.dict import Dict
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
+
 from .interfaces import IAudioIndexedDataContainer
 from .interfaces import IVideoIndexedDataContainer
 from .interfaces import IWritableIndexedDataContainer
 from .interfaces import ITimelineIndexedDataContainer
 from .interfaces import IRelatedContentIndexedDataContainer
-
-from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
-
-from zope.cachedescriptors.property import Lazy
-from zc.dict import Dict
 
 class _IndexedDataDict(Dict):
 	__parent__ = None

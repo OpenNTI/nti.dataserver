@@ -13,14 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.common.property import CachedProperty
+
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 from nti.schema.schema import EqHash
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
-
-from nti.utils.property import CachedProperty
 
 from .interfaces import IDelimitedHierarchyBucket
 from .interfaces import IDisplayablePlatformPresentationResources
