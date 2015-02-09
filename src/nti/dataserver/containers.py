@@ -7,8 +7,9 @@ Subclassing a BTree is not recommended (and leads to conflicts), so this takes a
 to tracking modification date information and implementing case
 insensitivity.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -414,7 +415,6 @@ def contain_nested_objects( sequence, parent, event ):
 			jar = IConnection( child, None ) # Use either its pre-existing jar, or the parents
 			if jar and not getattr( child, '_p_oid', None ):
 				jar.add( child )
-
 
 class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""

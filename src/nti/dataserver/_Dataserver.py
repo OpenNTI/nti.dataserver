@@ -21,14 +21,14 @@ import struct
 import logging
 from urlparse import urlparse
 
-import ZODB.interfaces
-from ZODB.interfaces import IConnection
-
-import zope.deprecation
 from zope import interface
 from zope import component
 from zope.event import notify
 from zope.processlifetime import DatabaseOpenedWithRoot
+
+import zope.deprecation as zope_deprecation
+
+from ZODB.interfaces import IConnection
 
 from zc import intid as zc_intid
 
@@ -234,7 +234,7 @@ class MinimalDataserver(object):
 		# zope.keyreference installs an IConnection adapter that
 		# can traverse the lineage. That's important if we're using a nested,
 		# transient site manager
-		conn = ZODB.interfaces.IConnection( lsm, None )
+		conn = IConnection( lsm, None )
 		if conn:
 			return conn.root()['nti.dataserver']
 
@@ -441,7 +441,7 @@ class Dataserver(MinimalDataserver):
 
 
 _SynchronousChangeDataserver = Dataserver
-zope.deprecation.deprecated('_SynchronousChangeDataserver',
+zope_deprecation.deprecated('_SynchronousChangeDataserver',
 							"Use plain Dataserver" )
 
 @interface.implementer( ext_interfaces.IExternalReferenceResolver )

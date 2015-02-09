@@ -5,21 +5,24 @@ Interfaces supporting socket.io
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope import schema
+from zope.interface.common import mapping
 from zope.interface.common.interfaces import IStandardError
 from zope.interface.interfaces import IObjectEvent, ObjectEvent
-from zope.interface.common import mapping
+
 from zope.annotation import interfaces as an_interfaces
+
+from zope import schema
 
 # pylint: disable=E0213,E0211
 
+_socket_base = None
 _writer_base = interface.Interface
 _reader_base = interface.Interface
-_socket_base = None
 
 class ISocketIOMessage(mapping.IFullMapping):
 	"""
@@ -108,8 +111,6 @@ class ISocketIOWriter(_writer_base):
 			Will be externalized to strings using the externalize_function.
 		"""
 
-
-
 class ISocketIOReader(_reader_base):
 	"""
 	The read-side of a socket to a connected client.
@@ -146,7 +147,6 @@ class ISocketIOTransport(interface.Interface):
 			response is the value to be immediately returned to the client, terminating the
 			WSGI request.
 		"""
-
 
 	def kill():
 		"""
@@ -210,8 +210,6 @@ class ISocketSession(ISocketIOChannel, an_interfaces.IAnnotatable):
 			actually marks the session as disconnected, and the session had a valid
 			owner, an :class:`SocketSessionDisconnectedEvent` will be sent.
 		"""
-
-
 
 class ISocketSessionEvent(IObjectEvent):
 	"""
@@ -287,7 +285,6 @@ class ISocketSessionClientMessageConsumer(interface.Interface):
 		:param message: An :class:`ISocketIOMessage`.
 		:return: Undefined.
 		"""
-
 
 class ISocketEventHandler(interface.Interface):
 	"""

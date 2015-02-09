@@ -8,8 +8,9 @@ arbitrary producers/consumers.
 This is deprecated now in favor of Redis Pub/Sub, but the entry
 point must remain for compatibility with existing configs.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import
 __docformat__ = "restructuredtext en"
 

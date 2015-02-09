@@ -75,6 +75,7 @@ probably a big win in unifying the indexes. Try an KeywordIndex.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -98,6 +99,10 @@ from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.chatserver.interfaces import IMessageInfoPostedToRoomEvent
 
+from nti.common.property import Lazy
+from nti.common.property import read_alias
+from nti.common.property import CachedProperty
+
 from nti.dataserver import links
 from nti.dataserver import users
 from nti.dataserver.interfaces import IUser
@@ -120,10 +125,6 @@ from nti.externalization.datastructures import InterfaceObjectIO
 from nti.ntiids import ntiids
 
 from nti.schema.field import Object
-
-from nti.utils.property import Lazy
-from nti.utils.property import read_alias
-from nti.utils.property import CachedProperty
 
 from nti.wref.interfaces import IWeakRef
 

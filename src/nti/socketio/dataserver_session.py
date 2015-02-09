@@ -16,9 +16,9 @@ from zope import component
 
 from zope.deprecation import deprecate
 
-from nti.dataserver.interfaces import IDataserver
+from nti.common.property import CachedProperty
 
-from nti.utils.property import CachedProperty
+from nti.dataserver.interfaces import IDataserver
 
 from .session_consumer import SessionConsumer
 from .persistent_session import AbstractSession
