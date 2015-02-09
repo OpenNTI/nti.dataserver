@@ -18,5 +18,4 @@
 	<subscriber handler=".subscribers.reset_indexes_when_modified" />
 	<subscriber handler=".subscribers.reset_indexes_when_removed" />
 
-
 </configure>

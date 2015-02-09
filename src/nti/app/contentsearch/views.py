@@ -5,6 +5,7 @@ Search pyramid views.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -28,6 +29,8 @@ from nti.app.externalization.internalization import update_object_from_external_
 
 from nti.app.renderers.interfaces import IUncacheableInResponse
 
+from nti.common.property import CachedProperty
+
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import SearchCompletedEvent
@@ -36,8 +39,6 @@ from nti.contentsearch.search_utils import construct_queryobject
 from nti.dataserver.users import Entity
 
 from nti.externalization.internalization import find_factory_for
-
-from nti.utils.property import CachedProperty
 
 class BaseView(AbstractAuthenticatedView):
 
