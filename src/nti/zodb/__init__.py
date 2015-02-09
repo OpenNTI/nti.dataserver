@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 # pylint:disable=W0212
 
-def readCurrent(obj):
+def readCurrent(obj, container=True):
 	"""
 	Persistence safe wrapper around zodb connection readCurrent;
 	also has some built in smarts about typical objects that need
@@ -27,15 +27,14 @@ def readCurrent(obj):
 	try:
 		obj._p_activate()
 		obj._p_jar.readCurrent(obj)
-	except AttributeError:
+	except (TypeError, AttributeError):
 		pass
 
-	# BTree containers
-	try:
-		data = obj._SampleContainer__data
-		data._p_activate()
-		data._p_jar.readCurrent(data)
-	except AttributeError:
-		pass
-
+	if container:  # BTree containers
+		try:
+			data = obj._SampleContainer__data
+			data._p_activate()
+			data._p_jar.readCurrent(data)
+		except AttributeError:
+			pass
 	return obj
