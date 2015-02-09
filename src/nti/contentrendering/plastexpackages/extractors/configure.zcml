@@ -5,8 +5,8 @@
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
-	<include package="zope.security" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 	
 	<adapter factory=".course._CourseExtractor"
 			 for="nti.contentrendering.interfaces.IRenderedBook"

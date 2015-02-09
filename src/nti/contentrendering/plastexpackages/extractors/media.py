@@ -19,7 +19,7 @@ from zope import interface
 
 from plasTeX.Base.LaTeX import Document as LaTexDocument
 
-from nti.utils.sets import OrderedSet
+from nti.common.sets import OrderedSet
 
 from ._utils import _render_children
 
