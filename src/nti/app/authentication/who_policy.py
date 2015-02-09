@@ -20,15 +20,13 @@ import time
 
 from zope import interface
 
-from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 from pyramid.interfaces import IAuthenticationPolicy
-
+from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.authentication import effective_principals
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
-
 
 class _GroupsCallback(object):
 	"""

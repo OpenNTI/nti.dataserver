@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -17,7 +15,6 @@ from repoze.who.interfaces import IChallenger
 from repoze.who.plugins.basicauth import BasicAuthPlugin
 
 from .who_classifiers import CLASS_BROWSER_APP
-
 
 class ApplicationBasicAuthPlugin(BasicAuthPlugin):
 	"""

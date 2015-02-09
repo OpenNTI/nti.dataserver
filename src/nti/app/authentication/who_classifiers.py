@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -14,13 +12,12 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from repoze.who.interfaces import IRequestClassifier
-from repoze.who.interfaces import IChallengeDecider
-
 from pyramid.interfaces import IRequest
-
-from repoze.who.classifiers import default_request_classifier
 from pyramid_who.classifiers import forbidden_challenger
+
+from repoze.who.interfaces import IChallengeDecider
+from repoze.who.interfaces import IRequestClassifier
+from repoze.who.classifiers import default_request_classifier
 
 #: A request classification that is meant to indicate a browser
 #: or browser-like environment being used programattically, i.e.,
@@ -105,8 +102,6 @@ def application_request_classifier( environ ):
 @component.adapter(IRequest)
 def application_request_classifier_for_request(request):
 	return application_request_classifier
-
-
 
 @interface.provider(IChallengeDecider)
 def forbidden_or_missing_challenge_decider( environ, status, headers ):

@@ -7,8 +7,9 @@ check and does not validate the claimed userid against the database;
 however, it does guarantee that the user was at least at one time
 allowed to log on to this site (assuming a secure cookie secret).
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,8 +17,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from .interfaces import ILogonWhitelist
 from repoze.who.interfaces import IAPIFactory
+
+from .interfaces import ILogonWhitelist
 
 class IdentifyHandler(object):
 	"""

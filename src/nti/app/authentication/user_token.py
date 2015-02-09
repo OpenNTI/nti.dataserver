@@ -57,7 +57,6 @@ class DefaultIdentifiedUserTokenAuthenticator(object):
 		"""
 		self.secret = secret
 
-
 	def getIdentityFromToken(self, token):
 		if not token:
 			return None

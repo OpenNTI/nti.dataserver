@@ -14,12 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from .interfaces import IIdentifiedUserTokenAuthenticator
-
-from repoze.who.interfaces import IAuthenticator
-from repoze.who.interfaces import IIdentifier
-
 from zope.pluggableauth.interfaces import IAuthenticatorPlugin
+
+from repoze.who.interfaces import IIdentifier
+from repoze.who.interfaces import IAuthenticator
+
+from .interfaces import IIdentifiedUserTokenAuthenticator
 
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
@@ -95,7 +95,6 @@ class KnownUrlTokenBasedAuthenticator(object):
 
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
-
 
 @interface.implementer(IAuthenticator,IIdentifier)
 class FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
