@@ -26,8 +26,9 @@ content, class or personal glossaries, the clarity is a net win (since it's one 
 would have to be crammed into a ``Vary`` header, and we can probably set longer expiration
 times).
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -38,13 +39,17 @@ from cStringIO import StringIO
 
 from zope import interface
 from zope import component
-from zope.location.interfaces import LocationError
-from zope.traversing.interfaces import ITraversable
+
 from zope.container.contained import Contained
+
+from zope.location.interfaces import LocationError
+
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent
 
-from pyramid import httpexceptions as hexc
+from zope.traversing.interfaces import ITraversable
+
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 import nti.appserver.interfaces as app_interfaces
 

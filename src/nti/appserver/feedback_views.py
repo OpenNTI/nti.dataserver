@@ -3,8 +3,9 @@
 """
 Views relating to sending feedback.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,6 +18,7 @@ from cStringIO import StringIO
 from cgi import escape as html_escape
 
 from zope import component
+
 from pyramid.view import view_config
 
 from nti.app.externalization.internalization import read_body_as_external_object
@@ -151,7 +153,6 @@ def send_feedback_view( request ):
 						  'Feedback',
 						  'Feedback From %s on %s',
 						  'support@nextthought.com' )
-
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
