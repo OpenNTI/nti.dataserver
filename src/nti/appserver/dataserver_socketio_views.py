@@ -4,8 +4,9 @@ Views to incorporate socket.io into a pyramid application.
 
 Only XHRPolling and WebSocket transports are supported. JSONP is not supported.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -185,7 +186,6 @@ def _connect_view( request ):
 
 	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
 		return jobs_or_response
-
 
 	# If we have connection jobs (websockets)
 	# we need to stay in this call stack so that the

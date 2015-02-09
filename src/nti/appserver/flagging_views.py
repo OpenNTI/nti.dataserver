@@ -3,8 +3,9 @@
 """
 Views relating to flagging and moderating flagged objects.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,12 +18,14 @@ from zope import component
 
 from zc import intid as zc_intid
 
+import pyramid.interfaces
 from pyramid.request import Request
 from pyramid.view import view_config
-import pyramid.interfaces
 import pyramid.httpexceptions  as hexc
 
 from nti.app.renderers import interfaces as app_interfaces
+from nti.app.renderers.caching import uncached_in_response
+from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.dataserver import flagging
 from nti.dataserver import authorization as nauth
@@ -33,9 +36,6 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.internalization import update_from_external_object
 
 from .interfaces import IModeratorDealtWithFlag  # BWC export
-
-from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
-from nti.app.renderers.caching import uncached_in_response
 
 FLAG_VIEW = 'flag'
 UNFLAG_VIEW = 'unflag'
@@ -62,10 +62,11 @@ class FlagLinkDecorator(AbstractTwoStateViewLinkDecorator):
 
 def _do_flag(f, request):
 	try:
-		f( request.context, request.authenticated_userid )
+		f(request.context, request.authenticated_userid )
 		return uncached_in_response( request.context )
 	except KeyError: # pragma: no cover
-		logger.warn( "Attempting to un/flag something not found. Was it deleted and the link is stale? %s", request.context, exc_info=True )
+		logger.warn("Attempting to un/flag something not found. Was it deleted and the link is stale? %s", 
+					request.context, exc_info=True )
 		raise hexc.HTTPNotFound()
 
 @view_config( route_name='objects.generic.traversal',
@@ -117,9 +118,12 @@ def _UnFlagView(request):
 ## and 'unflag' to unflag the object. The view code will accept the POST of that
 ## form and take the appropriate actions.
 
-from z3c.table import table
 from zope.publisher.interfaces.browser import IBrowserRequest
+
+from z3c.table import table
+
 from .ugd_query_views import lists_and_dicts_to_ext_collection
+
 def _moderation_table( request ):
 	intids = component.getUtility(zc_intid.IIntIds)
 	content = component.getUtility( nti_interfaces.IGlobalFlagStorage ).iterflagged()

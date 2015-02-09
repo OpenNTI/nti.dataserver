@@ -164,6 +164,7 @@ class EmailReportingExceptionView(AbstractRateLimitedExceptionView):
 
 # TODO: Best place for this?
 from pyramid.view import view_config
+
 from ZODB.POSException import StorageError
 
 @view_config(context=StorageError)

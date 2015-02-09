@@ -3,7 +3,7 @@
 """
 Pyramid WSGI application
 
-$Id$
+.. $Id$
 """
 
 import logging
@@ -15,35 +15,29 @@ import sys
 if 'nti.monkey.gevent_patch_on_import' in sys.modules: # DON'T import this; it should already be imported if needed
 	sys.modules['nti.monkey.gevent_patch_on_import'].check_threadlocal_status()
 
+from nti.monkey import webob_cookie_escaping_patch_on_import
+webob_cookie_escaping_patch_on_import.patch()
+
 import os
-import warnings
 import time
-
-import nti.dictserver.storage
-from ZODB.interfaces import IDatabase
-from nti.contentlibrary import interfaces as lib_interfaces
-
-import nti.dataserver.users
-from nti.dataserver import authorization as nauth
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver import interfaces as nti_interfaces
+import warnings
 
 from zope import component
 from zope.event import notify
 from zope.configuration import xmlconfig
 from zope.component.hooks import setHooks, site
 
-from zope.processlifetime import ProcessStarting, DatabaseOpenedWithRoot, IDatabaseOpenedWithRoot
-from nti.processlifetime import IApplicationTransactionOpenedEvent, ApplicationTransactionOpenedEvent
-
-from nti.monkey import webob_cookie_escaping_patch_on_import
-webob_cookie_escaping_patch_on_import.patch()
+from zope.processlifetime import ProcessStarting
+from zope.processlifetime import DatabaseOpenedWithRoot
+from zope.processlifetime import IDatabaseOpenedWithRoot
 
 import pyramid.config
 import pyramid.registry
 from pyramid.threadlocal import get_current_registry
 
 from paste.deploy.converters import asbool
+
+from ZODB.interfaces import IDatabase
 
 import nti.appserver
 from nti.appserver import pyramid_auth
@@ -52,12 +46,24 @@ from nti.appserver import dataserver_socketio_views
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.traversal import ZopeResourceTreeTraverser
 
-from nti.utils import setupChameleonCache
+from nti.contentlibrary import interfaces as lib_interfaces
 
-# Make the zope interface extend the pyramid interface
-# Although this seems backward, it isn't. The zope location
-# proxy implements the zope interface, and we want
-# that to match with pyramid
+import nti.dataserver.users
+from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver import interfaces as nti_interfaces
+
+import nti.dictserver.storage
+
+from nti.processlifetime import ApplicationTransactionOpenedEvent
+from nti.processlifetime import IApplicationTransactionOpenedEvent
+
+from nti.common import setupChameleonCache
+
+## Make the zope interface extend the pyramid interface
+## Although this seems backward, it isn't. The zope location
+## proxy implements the zope interface, and we want
+## that to match with pyramid
 from pyramid.interfaces import ILocation
 from zope.location.interfaces import ILocation as IZLocation
 IZLocation.__bases__ = (ILocation,)
@@ -742,7 +748,6 @@ def sharing_listener_main():
 
 def index_listener_main():
 	pass
-
 
 ####
 # z3c.autoinclude plugin points:
