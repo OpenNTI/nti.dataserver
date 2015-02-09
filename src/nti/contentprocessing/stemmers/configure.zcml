@@ -8,11 +8,18 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-
-	<utility factory=".nltk._PorterStemmer" provides=".interfaces.IStemmer" name="porter" />
+	<include package="zope.security" />
 	
-	<utility factory=".whoosh._WhooshStemmer" provides=".interfaces.IStemmer"/>
-	<utility factory=".whoosh._WhooshStemmer" provides=".interfaces.IStemmer" name="whoosh" />
+	<utility factory=".nltk._PorterStemmer" 
+			 provides=".interfaces.IStemmer" 
+			 name="porter" />
+	
+	<utility factory=".whoosh._WhooshStemmer" 
+			 provides=".interfaces.IStemmer" />
+			 
+	<utility factory=".whoosh._WhooshStemmer"
+			 provides=".interfaces.IStemmer" 
+			 name="whoosh" />
 	
 	<utility factory=".zopyx._ZopyYXStemmer" name="zopyx"
 			 zcml:condition="installed zopyx.txng3.ext" />

@@ -13,7 +13,7 @@ from hamcrest import assert_that
 import os
 import unittest
 
-from .. import extract_key_words
+from nti.contentprocessing.keyword import extract_key_words
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 

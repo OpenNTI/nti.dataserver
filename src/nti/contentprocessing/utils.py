@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,7 +14,7 @@ from zope.component.interfaces import ComponentLookupError
 
 from pyramid.threadlocal import get_current_request
 
-from . import interfaces as ld_interfaces
+from .interfaces import IAlchemyAPIKey
 
 def get_possible_site_names(request=None, include_default=True):
 	request = request or get_current_request()
@@ -30,11 +31,11 @@ def getAlchemyAPIKey(name=None, request=None, error=True):
 	if name is not None:
 		names = (name,)
 	else:
-		names = get_possible_site_names(request)
+		names = (name,) # get_possible_site_names(request)
 	for name in names:
-		result = component.queryUtility(ld_interfaces.IAlchemyAPIKey, name=name)
+		result = component.queryUtility(IAlchemyAPIKey, name=name)
 		if result is not None:
 			break
 	if error and result is None:
-		raise ComponentLookupError(ld_interfaces.IAlchemyAPIKey, name)
+		raise ComponentLookupError(IAlchemyAPIKey, name)
 	return result

@@ -5,6 +5,7 @@ OpenXerox lang detector
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -15,9 +16,10 @@ import requests
 from zope import interface
 
 from . import Language
-from . import interfaces as ld_interfaces
 
-@interface.implementer(ld_interfaces.ILanguageDetector)
+from .interfaces import ILanguageDetector
+
+@interface.implementer(ILanguageDetector)
 class _OpenXeroxLanguageDetector(object):
 
 	url = u'https://services.open.xerox.com/RestOp/LanguageIdentifier/GetLanguageForString'

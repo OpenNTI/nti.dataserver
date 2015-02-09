@@ -5,6 +5,7 @@ Whoosh based stemmers
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,9 +15,9 @@ from zope import interface
 
 from whoosh import lang as whoosh_lang
 
-from . import interfaces as stemmer_interfaces
+from .interfaces import IStemmer
 
-@interface.implementer(stemmer_interfaces.IStemmer)
+@interface.implementer(IStemmer)
 class _WhooshStemmer(object):
 
     __slots__ = ()

@@ -5,6 +5,7 @@ Alchemy keyword extractor
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,8 +18,10 @@ from cStringIO import StringIO
 from zope import interface
 
 from .. import utils
+
 from . import ContentKeyWord
-from . import interfaces as cpkw_interfaces
+
+from .interfaces import IKeyWordExtractor
 
 ALCHEMYAPI_LIMIT_KB = 150
 ALCHEMYAPI_URL = u'http://access.alchemyapi.com/calls/text/TextGetRankedKeywords'
@@ -47,7 +50,7 @@ def get_keywords(content, name=None, **kwargs):
 
 	return result
 
-@interface.implementer(cpkw_interfaces.IKeyWordExtractor)
+@interface.implementer(IKeyWordExtractor)
 class _AlchemyAPIKeyWorExtractor(object):
 
 	__slots__ = ()

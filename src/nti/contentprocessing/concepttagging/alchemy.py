@@ -5,6 +5,7 @@ Alchemy concept tagging
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,16 +17,18 @@ from cStringIO import StringIO
 
 from zope import interface
 
-from .. import utils
+from ..utils import getAlchemyAPIKey
 
-from . import concept
-from . import interfaces as cp_interfaces
+from .concept import Concept
+from .concept import ConceptSource
+
+from .interfaces import IConceptTagger
 
 ALCHEMYAPI_LIMIT_KB = 150
 ALCHEMYAPI_URL = u'http://access.alchemyapi.com/calls/text/TextGetRankedConcepts'
 
 def get_ranked_concepts(content, name=None, **kwargs):
-	apikey = utils.getAlchemyAPIKey(name=name)
+	apikey = getAlchemyAPIKey(name=name)
 	headers = {u'content-type': u'application/x-www-form-urlencoded'}
 	params = {u'text':unicode(content), u'apikey':apikey.value, u'outputMode':u'json'}
 	params.update(kwargs)
@@ -40,12 +43,12 @@ def get_ranked_concepts(content, name=None, **kwargs):
 			text = relevance = None
 			for k, v in entry.items():
 				if k not in ('text', 'relevance'):
-					sources.append(concept.ConceptSource(k, v))
+					sources.append(ConceptSource(k, v))
 				elif k == 'text':
 					text = v
 				elif v is not None:
 					relevance = float(v)
-			result.append(concept.Concept(text, relevance, sources))
+			result.append(Concept(text, relevance, sources))
 	else:
 		result = ()
 		logger.error('Invalid request status while getting ranked concepts; %s',
@@ -53,7 +56,7 @@ def get_ranked_concepts(content, name=None, **kwargs):
 		
 	return result
 
-@interface.implementer(cp_interfaces.IConceptTagger)
+@interface.implementer(IConceptTagger)
 class _AlchemyAPIKConceptTaggger(object):
 
 	__slots__ = ()

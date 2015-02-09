@@ -8,6 +8,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 	
 	<utility factory=".tika._TikaLanguageDetector"/>
 	<utility factory=".tika._TikaLanguageDetector" name="tika" />

@@ -17,7 +17,7 @@ import os
 import codecs
 import unittest
 
-from ..tika import _TikaLanguageDetector
+from nti.contentprocessing.langdetection.tika import _TikaLanguageDetector
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
