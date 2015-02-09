@@ -3,8 +3,9 @@
 """
 Objects relating to database sharding.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,11 +17,14 @@ from zope.site.site import SiteManagerContainer
 
 from ZODB.interfaces import IConnection
 
-from nti.dataserver import datastructures as ds
-from nti.dataserver import interfaces as nti_interfaces
+from .interfaces import IShardInfo
+from .interfaces import IShardLayout
+from .interfaces import INewUserPlacer
 
-@interface.implementer(nti_interfaces.IShardInfo)
-class ShardInfo(ds.PersistentCreatedModDateTrackingObject,SiteManagerContainer):
+from .datastructures import PersistentCreatedModDateTrackingObject
+
+@interface.implementer(IShardInfo)
+class ShardInfo(PersistentCreatedModDateTrackingObject, SiteManagerContainer):
 	"""
 	Something giving information about a database shard.
 
@@ -32,7 +36,7 @@ class ShardInfo(ds.PersistentCreatedModDateTrackingObject,SiteManagerContainer):
 		avoid putting new users in them; that state would need to be tracked here.
 	"""
 
-@interface.implementer(nti_interfaces.IShardLayout)
+@interface.implementer(IShardLayout)
 @component.adapter(IConnection)
 class ShardLayout(object):
 	"""
@@ -61,7 +65,7 @@ class ShardLayout(object):
 	def root_folder(self):
 		return self.root.get( 'nti.dataserver_root' )
 
-@interface.implementer(nti_interfaces.INewUserPlacer)
+@interface.implementer(INewUserPlacer)
 class TrivialShardPlacer(object):
 	"""
 	A user placement policy that puts the user directly in the root database.
@@ -97,11 +101,11 @@ class AbstractShardPlacer(object):
 
 			# Also put it in the root directory of this shard, so that this shard
 			# can get GC'd without fear of losing users
-			nti_interfaces.IShardLayout(shard_conn).users_folder[user.username] = user
+			IShardLayout(shard_conn).users_folder[user.username] = user
 			return True
 
-@interface.implementer(nti_interfaces.INewUserPlacer)
-class HashedShardPlacer(TrivialShardPlacer,AbstractShardPlacer):
+@interface.implementer(INewUserPlacer)
+class HashedShardPlacer(TrivialShardPlacer, AbstractShardPlacer):
 	"""
 	A user placement policy that maps the user into an existing shard
 	based on the hash of the username. The root shard will never be used

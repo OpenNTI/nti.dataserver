@@ -39,6 +39,8 @@ from zope.schema import Iterable
 
 from contentratings.interfaces import IUserRatable
 
+from nti.common.property import alias
+
 from nti.contentfragments.schema import PlainText
 from nti.contentfragments.schema import PlainTextLine
 from nti.contentfragments.schema import SanitizedHTMLContentFragment
@@ -59,8 +61,6 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ListOrTupleFromObject
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
-
-from nti.utils.property import alias
 
 class ACLLocationProxy(LocationProxy):
 	"""
