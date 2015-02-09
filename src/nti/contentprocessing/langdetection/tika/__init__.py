@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -11,9 +12,11 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from .. import Language
-from .. import interfaces as ld_interfaces
+
+from ..interfaces import ILanguageDetector
 
 from .profile import LanguageProfile
+
 from .identifier import initProfiles
 from .identifier import LanguageIdentifier
 
@@ -24,7 +27,7 @@ def loadProfiles():
         initProfiles()
         _profiles_loaded = True
 
-@interface.implementer(ld_interfaces.ILanguageDetector)
+@interface.implementer(ILanguageDetector)
 class _TikaLanguageDetector(object):
 
     __slots__ = ()

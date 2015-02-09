@@ -3,8 +3,9 @@
 """
 NLTK based POS taggers
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -25,7 +26,11 @@ from zope import interface
 
 from nltk.tag import DefaultTagger, NgramTagger
 
-from . import interfaces as tagger_interfaces
+from .interfaces import ITagger
+from .interfaces import ITaggedCorpus
+from .interfaces import INLTKTaggedSents
+from .interfaces import INLTKBackoffNgramTagger
+from .interfaces import INLTKBackoffNgramTaggerFactory
 
 def nltk_tagged_corpora():
 	result = {}
@@ -36,7 +41,7 @@ def nltk_tagged_corpora():
 			if isinstance(v, (LazyCorpusLoader, CorpusReader)) and \
 			  hasattr(v,"tagged_sents") and hasattr(v,"tagged_words"):
 				result[k] = v
-				interface.alsoProvides(v, tagger_interfaces.ITaggedCorpus)
+				interface.alsoProvides(v, ITaggedCorpus)
 	except Exception:
 		logger.error("Error importing nltk corpora")
 	return result
@@ -44,7 +49,7 @@ def nltk_tagged_corpora():
 def get_nltk_tagged_corpus(corpus="brown"):
 	return nltk_tagged_corpora().get(corpus)
 
-@interface.implementer(tagger_interfaces.INLTKTaggedSents)
+@interface.implementer(INLTKTaggedSents)
 class _NLTKTaggedSents(object):
 
 	def __init__(self):
@@ -59,11 +64,11 @@ class _NLTKTaggedSents(object):
 		return sents[:limit] if limit >= 0 else sents
 
 def get_training_sents(corpus="brown", limit=-1):
-	util = component.queryUtility(tagger_interfaces.INLTKTaggedSents)
+	util = component.queryUtility(INLTKTaggedSents)
 	util = util or _NLTKTaggedSents()
 	return util(corpus, limit)
 
-@interface.implementer(tagger_interfaces.ITagger)
+@interface.implementer(ITagger)
 def load_tagger_pickle(name_or_stream):
 	result = None
 	stream = None
@@ -99,10 +104,10 @@ def get_backoff_ngram_tagger(ngrams=3, corpus="brown", limit=-1, train_sents=Non
 		for n in range(1, ngrams+1):
 			tagger = NgramTagger(n, train=train_sents, backoff=tagger)
 
-	interface.alsoProvides(tagger, tagger_interfaces.INLTKBackoffNgramTagger)
+	interface.alsoProvides(tagger, INLTKBackoffNgramTagger)
 	return tagger
 
-@interface.implementer(tagger_interfaces.INLTKBackoffNgramTaggerFactory)
+@interface.implementer(INLTKBackoffNgramTaggerFactory)
 class _NLTKBackoffNgramTaggerFactory(object):
 
 	def __call__(self, ngrams=3, corpus="brown", limit=-1, train_sents=None):
@@ -110,7 +115,7 @@ class _NLTKBackoffNgramTaggerFactory(object):
 
 _the_default_nltk_tagger = None
 
-@interface.implementer(tagger_interfaces.ITagger)
+@interface.implementer(ITagger)
 def default_nltk_tagger():
 	global _the_default_nltk_tagger
 	if _the_default_nltk_tagger is not None:

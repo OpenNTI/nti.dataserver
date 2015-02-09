@@ -5,6 +5,7 @@ TermExtract keyword extractor
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,12 +18,19 @@ from collections import defaultdict
 from zope import interface
 from zope import component
 
+from nti.externalization.representation import WithRepr
+
+from nti.schema.schema import EqHash
+
 from .. import taggers
 from .. import stemmers
 from .. import tokenize_content
-from . import interfaces as cpkw_interfaces
 
-@interface.implementer(cpkw_interfaces.ITermExtractFilter)
+from .interfaces import ITermExtractFilter
+from .interfaces import ITermExtractKeyWord
+from .interfaces import ITermExtractKeyWordExtractor
+
+@interface.implementer(ITermExtractFilter)
 class DefaultFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, no_limit_strength=2):
@@ -40,13 +48,13 @@ class DefaultFilter(object):
 	__str__ = __repr__
 
 def term_extract_filter(name=u''):
-	result = component.queryUtility(cpkw_interfaces.ITermExtractFilter, name=name)
+	result = component.queryUtility(ITermExtractFilter, name=name)
 	return result or DefaultFilter()
 
-@interface.implementer(cpkw_interfaces.ITermExtractKeyWord)
+@WithRepr
+@EqHash('norm','terms','strength','frequency')
+@interface.implementer(ITermExtractKeyWord)
 class NormRecord(object):
-
-	__slots__ = ('norm', 'strength', 'frequency', 'terms')
 
 	def __init__(self, norm, frequency, strength, terms=()):
 		self.norm = norm
@@ -65,31 +73,6 @@ class NormRecord(object):
 	@property
 	def occur(self):
 		return self.frequency
-
-	def __eq__(self, other):
-		try:
-			return self is other or (self.norm == other.norm and
-									 self.terms == other.terms and
-									 self.strength == other.strength and
-									 self.frequency == other.frequency)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.norm)
-		xhash ^= hash(self.terms)
-		xhash ^= hash(self.strength)
-		xhash ^= hash(self.frequency)
-		return xhash
-
-	def __repr__(self):
-		return "NormRecord(%s, %s, %s, %s)" % (self.norm,
-											   self.relevance,
-											   self.strength,
-											   self.terms)
-
-	__str__ = __repr__
 
 class TermExtractor(object):
 
@@ -138,7 +121,7 @@ class TermExtractor(object):
 
 		return result
 
-@interface.implementer(cpkw_interfaces.ITermExtractKeyWordExtractor)
+@interface.implementer(ITermExtractKeyWordExtractor)
 class _DefaultKeyWorExtractor():
 
 	def __call__(self, content, lang='en', filtername=u'', *args, **kwargs):

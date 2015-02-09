@@ -5,8 +5,9 @@ Objects for extracting metadata from different content formats. This
 includes support for local and remote PDF files and HTML using
 OpenGraph metadata or Twitter card metadata.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -27,10 +28,12 @@ from zope import component
 from zope import interface
 
 from zope.location import interfaces as loc_interfaces
+
 from zope.mimetype import interfaces as mime_interfaces
 
 from zope.cachedescriptors.property import Lazy
-from nti.utils.property import alias
+
+from nti.common.property import alias
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 from nti.schema.schema import PermissiveSchemaConfigured
@@ -314,7 +317,6 @@ class _HTMLExtractor(object):
 			if text:
 				result.title = text
 		return result
-
 
 @interface.implementer(interfaces.IContentMetadataExtractor)
 class _PDFExtractor(object):

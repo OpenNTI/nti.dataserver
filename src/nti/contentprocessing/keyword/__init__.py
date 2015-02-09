@@ -5,6 +5,7 @@ Keyword extractor module
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,10 +17,18 @@ from collections import namedtuple
 from zope import component
 from zope import interface
 
-from . import interfaces as cpkw_interfaces
-	
+from nti.externalization.representation import WithRepr
+
+from nti.schema.schema import EqHash
+
+from .interfaces import IContentKeyWord
+from .interfaces import IKeyWordExtractor
+from .interfaces import ITermExtractKeyWordExtractor
+
+@WithRepr
+@EqHash('token',)
 @functools.total_ordering
-@interface.implementer(cpkw_interfaces.IContentKeyWord)
+@interface.implementer(IContentKeyWord)
 class ContentKeyWord(object):
 
 	__slots__ = ('token', 'relevance')
@@ -28,23 +37,6 @@ class ContentKeyWord(object):
 		self.token = token
 		self.relevance = relevance
 
-	def __eq__(self, other):
-		try:
-			return self is other or self.token == other.token
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		xhash = 47
-		xhash ^= hash(self.token)
-		return xhash
-
-	def __str__(self):
-		return self.token
-
-	def __repr__(self):
-		return '%s(%s,%s)' % (self.__class__.__name__, self.token, self.relevance)
-	
 	def __lt__(self, other):
 		try:
 			return self.relevance < other.relevance
@@ -58,11 +50,11 @@ class ContentKeyWord(object):
 			return NotImplemented
 
 def term_extract_key_words(content, lang='en', filtername=u''):
-	extractor = component.getUtility(cpkw_interfaces.ITermExtractKeyWordExtractor)
+	extractor = component.getUtility(ITermExtractKeyWordExtractor)
 	result = extractor(content, lang=lang, filtername=filtername)
 	return result
 
 def extract_key_words(content):
-	extractor = component.getUtility(cpkw_interfaces.IKeyWordExtractor)
+	extractor = component.getUtility(IKeyWordExtractor)
 	result = extractor(content)
 	return result

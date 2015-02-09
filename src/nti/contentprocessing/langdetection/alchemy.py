@@ -5,6 +5,7 @@ Alchemy lang detector
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,27 +17,32 @@ from cStringIO import StringIO
 
 from zope import interface
 
-from nti.utils.property import alias
+from nti.common.property import alias
+
+from nti.externalization.representation import WithRepr
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .. import utils
+from ..utils import getAlchemyAPIKey
+
 from . import Language
-from . import interfaces as ld_interfaces
+
+from .interfaces import IAlchemyLanguage
+from .interfaces import ILanguageDetector
 
 ALCHEMYAPI_LIMIT_KB = 150
 ALCHEMYAPI_URL = u'http://access.alchemyapi.com/calls/text/TextGetLanguage'
 
-@interface.implementer(ld_interfaces.IAlchemyLanguage)
+@WithRepr
+@interface.implementer(IAlchemyLanguage)
 class _AlchemyLanguage(Language):
-	createDirectFieldProperties(ld_interfaces.IAlchemyLanguage)
+	createDirectFieldProperties(IAlchemyLanguage)
 	code = alias('ISO_639_1')
 
-	def __repr__(self):
-		return "%s(%s,%s,%s,%s)" % (self.__class__.__name__, self.name,
-									self.ISO_639_1, self.ISO_639_2, self.ISO_639_3)
+	def __str__(self):
+		return self.code
 
-@interface.implementer(ld_interfaces.ILanguageDetector)
+@interface.implementer(ILanguageDetector)
 class _AlchemyTextLanguageDetector(object):
 
 	__slots__ = ()
@@ -61,7 +67,7 @@ class _AlchemyTextLanguageDetector(object):
 		return result
 
 def get_language(content, name=None, **kwargs):
-	apikey = utils.getAlchemyAPIKey(name=name)
+	apikey = getAlchemyAPIKey(name=name)
 	headers = {u'content-type': u'application/x-www-form-urlencoded'}
 	params = {u'text':unicode(content), u'apikey':apikey.value,
 			  u'outputMode':u'json'}

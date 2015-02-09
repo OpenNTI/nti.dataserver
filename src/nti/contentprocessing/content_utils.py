@@ -64,7 +64,6 @@ def tokenize_content(text, lang='en'):
 	tokenizer = component.getUtility(IContentTokenizer, name=lang)
 	result = tokenizer.tokenize(text)
 	return result
-
 split_content = tokenize_content
 
 def get_content(text=None, lang="en"):

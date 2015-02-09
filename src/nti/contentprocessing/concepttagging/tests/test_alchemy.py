@@ -17,7 +17,7 @@ from hamcrest import assert_that
 import os
 import unittest
 
-from .. import alchemy
+from nti.contentprocessing.concepttagging import alchemy
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 

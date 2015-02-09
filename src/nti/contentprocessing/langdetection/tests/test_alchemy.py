@@ -16,8 +16,8 @@ from hamcrest import has_property
 import os
 import unittest
 
-from ..alchemy import _AlchemyLanguage
-from ..alchemy import _AlchemyTextLanguageDetector
+from nti.contentprocessing.langdetection.alchemy import _AlchemyLanguage
+from nti.contentprocessing.langdetection.alchemy import _AlchemyTextLanguageDetector
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 
@@ -45,4 +45,4 @@ class TestAlchemyLangDetector(unittest.TestCase):
 		assert_that(a, is_(b))
 		assert_that(hash(a), is_(hash(b) ) )
 		assert_that(str(a), is_('en'))
-		assert_that(repr(a), is_('_AlchemyLanguage(enlgish,en,a,a)'))
+

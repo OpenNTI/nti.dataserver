@@ -16,7 +16,7 @@ from hamcrest import has_property
 import os
 import unittest
 
-from ..openxerox import _OpenXeroxLanguageDetector
+from nti.contentprocessing.langdetection.openxerox import _OpenXeroxLanguageDetector
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
 

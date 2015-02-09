@@ -5,6 +5,7 @@ ZOPYX based stemmers
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,7 +18,7 @@ try:
 except ImportError:
 	stemmer = None
 
-from . import interfaces as stemmer_interfaces
+from .interfaces import IStemmer
 
 lang_translation = {'en':'english', 'es':'spansih', 'ru':'russian',
 					'fr':'french', 'de':'german', 'da':'danish',
@@ -25,7 +26,7 @@ lang_translation = {'en':'english', 'es':'spansih', 'ru':'russian',
 					'pt':'portuguese', 'sv':'swedish', 'fi':'finnish',
 					'tr':'turkish', 'hu':'hungarian', 'ro':'romanian'}
 
-@interface.implementer(stemmer_interfaces.IStemmer)
+@interface.implementer(IStemmer)
 class _ZopyYXStemmer(object):
 
 	__slots__ = ('stemmers')

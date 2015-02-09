@@ -5,21 +5,25 @@ NGRAM processing utilities
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import repoze.lru
 from six import string_types
+
+import repoze.lru
 
 from zope import component
 from zope import interface
 
 from .content_utils import tokenize_content
+
+from .interfaces import INgramComputer
+
 from . import default_ngram_minsize
 from . import default_ngram_maxsize
-from .interfaces import INgramComputer
 
 @repoze.lru.lru_cache(5000)
 def _ngram_cache(text, minsize=3, maxsize=None, unique=True, lower=True):
