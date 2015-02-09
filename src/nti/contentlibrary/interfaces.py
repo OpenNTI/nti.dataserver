@@ -25,8 +25,12 @@ from zope.location.interfaces import IContained as IZContained
 
 from persistent.interfaces import IPersistent
 
+from nti.common.property import alias
+
 from nti.dublincore.interfaces import ILastModified
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
+
+from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
@@ -36,10 +40,6 @@ from nti.schema.field import Iterable
 from nti.schema.field import UniqueIterable
 from nti.schema.field import IndexedIterable
 from nti.schema.field import ValidTextLine as TextLine
-
-from nti.ntiids.schema import ValidNTIID
-
-from nti.utils.property import alias
 
 # pylint: disable=I0011,E0213,E0211
 

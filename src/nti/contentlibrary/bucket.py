@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.utils.property import alias
+from nti.common.property import alias
 
 from nti.schema.schema import EqHash
 

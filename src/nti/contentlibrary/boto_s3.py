@@ -26,12 +26,12 @@ from zope.cachedescriptors.property import Lazy
 
 import repoze.lru
 
+from nti.common.property import alias
+
 # We mark all of the classes declared here as
 # non-pickalable, because we don't have their persistence
 # worked out yet.
 from nti.externalization.persistence import NoPickle
-
-from nti.utils.property import alias
 
 from . import eclipse
 from . import library

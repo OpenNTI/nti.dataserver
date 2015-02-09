@@ -596,7 +596,9 @@ class PersistentContentPackageLibrary(Persistent,
 	"""
 
 from zope.interface.interfaces import ComponentLookupError
+
 from nti.intid.interfaces import IntIdMissingError
+
 from nti.schema.schema import EqHash
 
 @EqHash('_obj', '_intid')
