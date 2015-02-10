@@ -292,6 +292,7 @@ def _get_inactive_accounts():
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	
+	now = datetime.utcnow()
 	for user in _users.values():
 		if not IUser.providedBy(user):
 			continue
@@ -300,8 +301,9 @@ def _get_inactive_accounts():
 		if iid is None:
 			continue
 
-		lastLoginTime = getattr(user, 'lastLoginTime', None)
-		if lastLoginTime:
+		lastLoginTime = getattr(user, 'lastLoginTime', None) or 0
+		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime)
+		if (now - lastLoginTime).days < 365:
 			continue
 		
 		username = user.username
