@@ -12,13 +12,14 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.intid.interfaces import IIntIds
 
 from nti.app.authentication import get_remote_user as _get_remote_user
 
-from nti.dataserver.interfaces import IDataserver
+from nti.common.property import Lazy
 
-from nti.utils.property import Lazy
+from nti.dataserver.interfaces import IDataserver
 
 def _check_creator( remote_user, obj ):
 	result = False
@@ -84,7 +85,6 @@ def make_sharing_security_check(request, remoteUser):
 			or 	is_readable(x, remote_request)
 	return security_check
 
-
 class AbstractView(object):
 	"""
 	Base class for views. Defines the ``request``, ``context`` and ``dataserver``
@@ -101,7 +101,6 @@ class AbstractView(object):
 	@Lazy
 	def dataserver(self):
 		return component.getUtility(IDataserver)
-
 
 class AuthenticatedViewMixin(object):
 	"""
