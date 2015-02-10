@@ -93,3 +93,11 @@ class ITimelineIndexedDataContainer(IWritableIndexedDataContainer):
 
 ITimelineIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 									  		'timeline_index.json')
+
+class ISlideDeckIndexedDataContainer(IWritableIndexedDataContainer):
+	"""
+	Special adapter, pre-namespaced for slidedeck data.
+	"""
+
+ISlideDeckIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
+									  		 'slidedeck_index.json')

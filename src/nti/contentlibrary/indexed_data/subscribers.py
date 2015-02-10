@@ -17,6 +17,7 @@ from .interfaces import TAG_NAMESPACE_FILE
 from .interfaces import IAudioIndexedDataContainer
 from .interfaces import IVideoIndexedDataContainer
 from .interfaces import ITimelineIndexedDataContainer
+from .interfaces import ISlideDeckIndexedDataContainer
 from .interfaces import IRelatedContentIndexedDataContainer
 
 def _update_index_when_content_changes(content_package, index_iface):
@@ -93,6 +94,10 @@ def _update_timeline_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
 											  ITimelineIndexedDataContainer)
 
+def _update_slidedeck_index_when_content_changes(content_package, event):
+	return _update_index_when_content_changes(content_package,
+											  ISlideDeckIndexedDataContainer)
+	
 def _clear_when_removed(content_package, index_iface):
 	"""
 	Because we don't know where the data is stored, when an
@@ -121,3 +126,6 @@ def _clear_related_index_when_content_removed(content_package, event):
 
 def _clear_timeline_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package, ITimelineIndexedDataContainer)
+
+def _clear_slidedeck_index_when_content_removed(content_package, event):
+	return _clear_when_removed(content_package, ISlideDeckIndexedDataContainer)
