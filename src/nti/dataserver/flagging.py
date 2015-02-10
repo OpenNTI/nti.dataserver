@@ -5,6 +5,7 @@ Support for flagging modeled content.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,20 +14,23 @@ logger = __import__('logging').getLogger(__name__)
 from zope import intid
 from zope import component
 from zope import interface
+
 from zope.event import notify
-from zope.intid.interfaces import IIntIdRemovedEvent
+
 from zope.cachedescriptors.property import CachedProperty
+
+from zope.intid.interfaces import IIntIdRemovedEvent
 
 import BTrees
 
 from persistent import Persistent
 
+from nti.common import sets
+
 from .interfaces import IFlaggable
 from .interfaces import IGlobalFlagStorage
 from .interfaces import ObjectFlaggedEvent
 from .interfaces import ObjectUnflaggedEvent
-
-from nti.utils import sets
 
 def flag_object(context, username):
 	"""

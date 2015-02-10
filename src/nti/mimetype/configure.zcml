@@ -6,14 +6,14 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
-
+	<include package="zope.security" />
+	
 	<subscriber factory=".externalization.MimeTypeDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 				
 	<adapter factory=".mimetype.ContentTypeMarkerTypeAwareAdapter" />
 
 	<!-- Finding objects by mimetype -->
-	
 	<adapter factory=".mimetype.ModeledContentTypeMimeFactory"
 			 provides="nti.externalization.interfaces.IMimeObjectFactory"
 			 for="dolmen.builtins.IDict" />
