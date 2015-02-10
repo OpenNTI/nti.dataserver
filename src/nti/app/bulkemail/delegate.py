@@ -14,9 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.mailer.interfaces import IVERP
+from nti.common.property import Lazy
 
-from nti.utils.property import Lazy
+from nti.mailer.interfaces import IVERP
 
 class AbstractBulkEmailProcessDelegate(object):
 	"""
