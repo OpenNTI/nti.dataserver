@@ -15,11 +15,13 @@ import weakref
 import warnings
 
 from zope import interface, component
-from zope.mimetype.interfaces import IContentTypeAware, mimeTypeConstraint
 
-from nti.mimetype.interfaces import IContentTypeMarker
+from zope.mimetype.interfaces import IContentTypeAware
+from zope.mimetype.interfaces import mimeTypeConstraint
 
-from nti.utils.property import alias
+from nti.common.property import alias
+
+from .interfaces import IContentTypeMarker
 
 # The base mimetype for items in this package.
 # NOTE: Mimetypes should be bytes, not unicode
@@ -96,10 +98,13 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 		if '__eq__' in cls_dict and '__hash__' not in cls_dict:
 			# This is a deprecated scenario; but the built-in DeprecationWarning includes
 			# no useful information (it points to the metaclass)
-			# (Because we are almost always used in a class that is being decorated by zope.interface
-			# or zope.component, we issue a warning for stacklevel two and three to get the expected behaviour)
-			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=2 )
-			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x", DeprecationWarning, stacklevel=3 )
+			# (Because we are almost always used in a class that is being decorated by 
+			# zope.interface or zope.component, we issue a warning for stacklevel two and
+			# three to get the expected behaviour)
+			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x",
+						   DeprecationWarning, stacklevel=2 )
+			warnings.warn( "Overriding __eq__ blocks inheritance of __hash__ in 3.x",
+						   DeprecationWarning, stacklevel=3 )
 
 		new_type = type.__new__(cls, name, bases, cls_dict)
 		# elide internal classes. (In the future, we may want
@@ -115,11 +120,12 @@ class ModeledContentTypeAwareRegistryMetaclass(type):
 			_mm_types.add( new_type )
 		return new_type
 
-import nti.externalization.interfaces
-import dolmen.builtins
+from dolmen.builtins import IDict
 
-@interface.implementer(nti.externalization.interfaces.IMimeObjectFactory)
-@component.adapter(dolmen.builtins.IDict)
+from nti.externalization.interfaces import IMimeObjectFactory
+
+@interface.implementer(IMimeObjectFactory)
+@component.adapter(IDict)
 def ModeledContentTypeMimeFactory( externalized_object ):
 	"""
 	A generic adapter factory to find specific factories (types)
@@ -193,9 +199,10 @@ def nti_mimetype_from_object( obj, use_class=True ):
 	"""
 	# IContentTypeAware uses mimeType; much of our legacy code has a mime_type
 	for an in 'mimeType', 'mime_type':
-		mt = getattr( obj, an, None )
-		if mt:
-			return mt
+		mimeType = getattr( obj, an, None )
+		if mimeType:
+			return mimeType
+		
 	content_type_aware = IContentTypeAware( obj, None )
 	if content_type_aware:
 		return content_type_aware.mimeType
@@ -212,14 +219,14 @@ def nti_mimetype_from_object( obj, use_class=True ):
 	# If we call it on an instance that happens to be callable, zope.interface
 	# will happily assign to the instance's __dict__ and then we won't be able to
 	# unpickle it if the instance ever becomes non-callable:
-	#   zope.interface-4.0.1-py2.7-macosx-10.7-x86_64.egg/zope/interface/declarations.py", line 189, in implementedByFallback
+	#   zope.interface-4.0.1-py2.7-macosx-10.7-x86_64.egg/zope/interface/declarations.py", 
+	# 	line 189, in implementedByFallback
 	#		raise TypeError("ImplementedBy called for non-factory", cls)
 	obj_is_type = isinstance( obj, type )
 	if obj_is_type and _safe_by( IContentTypeMarker.implementedBy, obj ):
 		for iface in interface.implementedBy( obj ):
 			if iface.extends( IContentTypeMarker ):
 				return nti_mimetype_with_class( iface.__name__[1:] )
-
 
 	clazz = obj if obj_is_type else obj.__class__ # NOT type(obj), to play well with proxies
 	if use_class and clazz.__module__.startswith( 'nti.' ):
@@ -228,7 +235,8 @@ def nti_mimetype_from_object( obj, use_class=True ):
 		# representation, which wants the mimetype, which gets to this function.
 		# Infinite recursion.
 		# But do log the __class__ value in case the type has been proxied
-		logger.debug( "Falling back to class to get MIME for %s/%s", clazz, getattr(obj, '__class__', clazz ) )
+		logger.debug( "Falling back to class to get MIME for %s/%s",
+					 clazz, getattr(obj, '__class__', clazz ) )
 		return nti_mimetype_with_class( clazz.__name__ )
 
 	if isinstance( obj, basestring ) and mimeTypeConstraint( obj ):

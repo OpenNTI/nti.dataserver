@@ -13,15 +13,15 @@ import os
 import re
 import argparse
 import simplejson
-import collections
+from collections import defaultdict
 
 from zope import interface
 
-from nti.contentrendering.interfaces import ISlideDeckExtractor
-interface.moduleProvides(ISlideDeckExtractor)
-
 from nti.contentrendering.utils import EmptyMockDocument
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
+
+from nti.contentrendering.interfaces import ISlideDeckExtractor
+interface.moduleProvides(ISlideDeckExtractor)
 
 def get_attribute(node, name):
 	attributes = node.attrib if node is not None else {}
@@ -41,42 +41,50 @@ def _store_param(p, data, exclude=()):
 		if name and value and name not in exclude:
 			data[name.lower()] = value
 
-def process_ntislidedecks(topic, result):
+def process_ntislidedecks(topic, result, containers):
+	topic_ntiid = getattr(topic, 'ntiid', None) or u''
 	for node in topic.dom(b'object').filter(b'.ntislidedeck'):
 		d = {u'class': u'ntislidedeck', 
 			 u'MimeType':u'application/vnd.nextthought.ntislidedeck'}
 		for p in node.iterchildren():
 			_store_param(p, d, ('type',))
 
-		_id = d.get('slidedeckid', d.get('ntiid'))
-		if _id and _id not in result:
-			result[_id] = d
+		iden = d.get('slidedeckid') or d.get('ntiid')
+		if iden and iden not in result:
+			result[iden] = d
+			containers[topic_ntiid].append(d)
 	return result
 
-def process_elements(topic, result, mimeType):
+def process_elements(topic, result, mimeType, containers):
+	topic_ntiid = getattr(topic, 'ntiid', None) or u''
 	for node in find_objects(topic, mimeType):
-		d = {u'class': mimeType.split('.')[-1], u'MimeType':mimeType}
-		ntiid = get_attribute(node, 'data-ntiid')
+		clazz_name = mimeType.split('.')[-1]
+		d = {u'class': clazz_name, u'MimeType':mimeType}
+		ntiid = get_attribute(node, 'data-ntiid') 
 		if ntiid:
 			d[u'ntiid'] = ntiid
 		for p in node.iterchildren():
 			_store_param(p, d)
 
-		_id = d.get(u'slidedeckid', d.get(u'ntiid'))
+		iden = d.get(u'slidedeckid') or d.get(u'ntiid')
 		if ntiid and ntiid not in result:
-			result[_id].append(d)
+			result[iden].append(d)
+			containers[topic_ntiid].append(d)
 	return result
 
-def process_book(book):
+def process_book(book, containers):
 	decks = {}
-	slides = collections.defaultdict(list)
-	videos = collections.defaultdict(list)
+	slides = defaultdict(list)
+	videos = defaultdict(list)
 
 	def _loop(topic):
-		process_ntislidedecks(topic, decks)
-		process_elements(topic, slides, u'application/vnd.nextthought.slide')
-		process_elements(topic, slides, u'application/vnd.nextthought.ntislide')
-		process_elements(topic, videos, u'application/vnd.nextthought.ntislidevideo')
+		process_ntislidedecks(topic, decks, containers)
+		process_elements(topic, slides,
+						 u'application/vnd.nextthought.slide', containers)
+		process_elements(topic, slides,
+						 u'application/vnd.nextthought.ntislide', containers)
+		process_elements(topic, videos, 
+						 u'application/vnd.nextthought.ntislidevideo', containers)
 		for t in topic.childTopics:
 			_loop(t)
 	_loop(book.toc.root_topic)
@@ -92,10 +100,39 @@ def process_book(book):
 	result = list(decks.values())
 	return result
 
+def save_index_file(outpath, data, dom_ntiid):
+	items = {}
+	containers = {}
+	for topic_ntiid, iterable in data.items():
+		containers.setdefault(topic_ntiid, [])
+		for item in iterable:
+			ntiid = item.get(u'ntiid') or item.get(u'slidedeckid')
+			if not ntiid:
+				continue
+			items[ntiid] = item
+			containers[topic_ntiid].append(ntiid)
+
+	slide_content_index = {'Items': items, 'Containers':containers}
+	filename = 'slide_content_index.json'
+	with open(os.path.join(outpath, filename), "wb") as fp:
+		simplejson.dump(slide_content_index, fp, indent=4)
+
+	# Write the JSONP version
+	with open(os.path.join(outpath, filename + 'p'), "wb") as fp:
+		fp.write('jsonpReceiveContent(')
+		simplejson.dump({'ntiid': dom_ntiid,
+					     'Content-Type': 'application/json',
+					     'Content-Encoding': 'json',
+					     'content': slide_content_index,
+					     'version': '1'}, fp, indent=4)
+		fp.write(');')
+	
+_EMPTY_TEXT = u' '*4
 def transform(book, savetoc=True, outpath=None):
 	result = []
 	dom = book.toc.dom
-	decks = process_book(book)
+	containers = defaultdict(list)
+	decks = process_book(book, containers)
 	
 	outpath = outpath or book.contentLocation
 	outpath = os.path.expanduser(outpath)
@@ -111,16 +148,21 @@ def transform(book, savetoc=True, outpath=None):
 			result.append(outfile)
 			simplejson.dump(deck, fp, indent=2)
 	
-		node = dom.createTextNode(u'    ')
+		# separator text node
+		node = dom.createTextNode(_EMPTY_TEXT)
 		dom.childNodes[0].appendChild(node)
+		# create a reference node
 		node = dom.createElement('reference')
 		node.setAttribute('type', deck.get('MimeType') )
 		node.setAttribute('ntiid', deck.get('ntiid') )
 		node.setAttribute('href', '%s.json' % ntiid )
 		dom.childNodes[0].appendChild(node)
+		# separator text node
 		node = dom.createTextNode(u'\n')
 		dom.childNodes[0].appendChild(node)
 
+	ntiid = dom.childNodes[0].getAttribute('ntiid')
+	save_index_file(outpath, containers, ntiid)
 	if savetoc:
 		book.toc.save()
 	return result

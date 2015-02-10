@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Utilities and interfaces having to do with mimetypes.
-
 .. $Id$
 """
 

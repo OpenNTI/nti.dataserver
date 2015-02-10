@@ -13,9 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-# TODO: Where exactly should this live? there's zope.app.content.interfaces.IContentType, which
-# might be what we want? Except it's an IInterface
-
 class IContentTypeMarker(interface.Interface):
 	"""
 	Marker interface for deriving mimetypes from class names.
