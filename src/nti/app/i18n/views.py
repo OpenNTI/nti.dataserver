@@ -15,11 +15,11 @@ from zope import component
 from zope.i18n.interfaces import INegotiator
 from zope.i18n.interfaces import ITranslationDomain
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
-
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.httpexceptions import HTTPFound # 302, non-cacheable redirect
+
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 @view_config(route_name='webapp.i18n.strings_js',
 			 request_method='GET')

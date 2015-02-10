@@ -55,7 +55,7 @@ def unindex_email_verification(user):
 	if uid is not None:
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 		verifed_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
-		verifed_idx.unindex_doc(uid, user)
+		verifed_idx.unindex_doc(uid)
 		return True
 	return False
 	

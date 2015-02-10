@@ -15,6 +15,7 @@ import unittest
 from nti.dataserver.users import User
 from nti.dataserver.users.utils import is_email_verified
 from nti.dataserver.users.utils import force_email_verification
+from nti.dataserver.users.utils import unindex_email_verification
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
@@ -49,3 +50,8 @@ class TestUtils(unittest.TestCase):
 		assert_that(is_email_verified('ichigo@bleach.org'), is_(False))
 		force_email_verification(user)
 		assert_that(is_email_verified('ichigo@bleach.org'), is_(True))
+
+		unindex_email_verification(user)
+		assert_that(is_email_verified('ichigo@bleach.org'), is_(False))
+
+		

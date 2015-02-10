@@ -367,7 +367,7 @@ from zope.annotation.factory import factory as an_factory
 from persistent import Persistent
 from persistent.list import PersistentList
 
-from nti.utils.property import Lazy
+from nti.common.property import Lazy
 
 @interface.implementer(IUserNotableDataStorage)
 @component.adapter(IUser)

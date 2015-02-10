@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -19,28 +17,29 @@ except ImportError:
 	import pickle
 
 import boto.ses
-from boto.ses.exceptions import SESDailyQuotaExceededError
-from boto.ses.exceptions import SESMaxSendingRateExceededError
-from boto.ses.exceptions import SESAddressBlacklistedError
 from boto.ses.exceptions import SESError
+from boto.ses.exceptions import SESDailyQuotaExceededError
+from boto.ses.exceptions import SESAddressBlacklistedError
+from boto.ses.exceptions import SESMaxSendingRateExceededError
 
 from zope import interface
 from zope import component
+from zope.publisher.interfaces.browser import IBrowserRequest
 
-from .interfaces import IBulkEmailProcessLoop
-from .interfaces import IBulkEmailProcessMetadata
-from .interfaces import IBulkEmailProcessDelegate
-from .interfaces import PreflightError
+from nti.common.property import Lazy
+
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.utils._compat import sleep
-from nti.utils.property import Lazy
-
-from nti.zodb.tokenbucket import PersistentTokenBucket
 
 from nti.mailer.interfaces import ITemplatedMailer
 
-from zope.publisher.interfaces.browser import IBrowserRequest
+from nti.zodb.tokenbucket import PersistentTokenBucket
+
+from .interfaces import PreflightError
+from .interfaces import IBulkEmailProcessLoop
+from .interfaces import IBulkEmailProcessMetadata
+from .interfaces import IBulkEmailProcessDelegate
 
 #: The redis lifetime of the objects used during the sending
 #: process. Should be long enough for the process to complete,
@@ -338,7 +337,6 @@ class DefaultBulkEmailProcessLoop(object):
 		self.metadata.save()
 
 		logger.info( "Completed sending %s to %s recipients", self.__name__, num_sent )
-
 
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 

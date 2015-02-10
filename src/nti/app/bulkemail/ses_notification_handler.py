@@ -57,7 +57,6 @@ from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.account_recovery_views import find_users_with_email
 
 from nti.dataserver.interfaces import IDataserver
-
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.utils import unindex_email_verification
 
