@@ -21,6 +21,7 @@ from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as File
 
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import ITimelineIndexedDataContainer
+from nti.contentlibrary.indexed_data.interfaces import ISlideDeckIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
 
 from nti.contentlibrary.tests import ContentlibraryLayerTest
@@ -65,3 +66,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 	def test_timeline(self):
 		self._do_test(ITimelineIndexedDataContainer,
 					  entry_ntiid="tag:nextthought.com,2011-10:OU-JSON:Timeline-CourseTestContent.timeline.heading_west")
+		
+	def test_slidedeck(self):
+		self._do_test(ISlideDeckIndexedDataContainer,
+					  entry_ntiid="tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionals")

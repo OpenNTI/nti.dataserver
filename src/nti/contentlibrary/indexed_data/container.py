@@ -23,6 +23,7 @@ from .interfaces import IAudioIndexedDataContainer
 from .interfaces import IVideoIndexedDataContainer
 from .interfaces import IWritableIndexedDataContainer
 from .interfaces import ITimelineIndexedDataContainer
+from .interfaces import ISlideDeckIndexedDataContainer
 from .interfaces import IRelatedContentIndexedDataContainer
 
 class _IndexedDataDict(Dict):
@@ -89,4 +90,8 @@ class RelatedContentIndexedDataContainer(IndexedDataContainer):
 
 @interface.implementer(ITimelineIndexedDataContainer)
 class TimelineIndexedDataContainer(IndexedDataContainer):
+	pass
+
+@interface.implementer(ISlideDeckIndexedDataContainer)
+class SlideDeckIndexedDataContainer(IndexedDataContainer):
 	pass

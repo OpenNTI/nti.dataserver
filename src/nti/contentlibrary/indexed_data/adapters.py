@@ -42,14 +42,13 @@ def indexed_data_adapter(content_unit,
 		# to be the content unit. This is because we don't want to
 		# hold a reference to it because the annotations may be
 		# on a different utility
-
 	return result
 
 def _make_adapters():
 	frame = sys._getframe(1)
 	__module__ = frame.f_globals['__name__']
 
-	types = ('audio', 'video', 'related_content', 'timeline')
+	types = ('audio', 'video', 'related_content', 'timeline', 'slide_deck')
 
 	def make_func(iface, factory):
 		@interface.implementer(iface)
