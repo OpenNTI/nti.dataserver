@@ -113,7 +113,7 @@ def save_index_file(outpath, data, dom_ntiid):
 			containers[topic_ntiid].append(ntiid)
 
 	slide_content_index = {'Items': items, 'Containers':containers}
-	filename = 'slide_content_index.json'
+	filename = 'slidedeck_index.json'
 	with open(os.path.join(outpath, filename), "wb") as fp:
 		simplejson.dump(slide_content_index, fp, indent=4)
 
