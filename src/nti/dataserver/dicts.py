@@ -5,6 +5,7 @@ Implementations of persistent dicts with various qualities.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,6 +19,7 @@ import zc.dict
 from zope import interface
 
 from .interfaces import ILastModified
+
 from .containers import _tx_key_insen
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
