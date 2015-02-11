@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,17 +14,20 @@ from datetime import datetime
 
 from zope import component
 
+from nti.common.property import alias
+
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
 
-from nti.utils.property import alias
+from . _utils import get_attribute
 
-from . import _utils
-from . import _extract
-from . import content_utils
-from . import common_indexer
+from ._extract import extract_key_words
+
+from .content_utils import sanitize_content
+
+from .common_indexer import BasicWhooshIndexer
 
 _media_transcript_types = (u'application/vnd.nextthought.mediatranscript',)
 
@@ -76,9 +80,9 @@ def _prepare_entry(entry, lang):
 	content = entry.transcript
 	if content:
 		table = get_content_translation_table(lang)
-		entry.content = unicode(content_utils.sanitize_content(content, table=table))
+		entry.content = unicode(sanitize_content(content, table=table))
 		tokenized_words = tokenize_content(entry.content, lang)
-		entry.keywords = _extract.extract_key_words(tokenized_words, lang=lang)
+		entry.keywords = extract_key_words(tokenized_words, lang=lang)
 		entry.processed = True
 	else:
 		entry.processed = False
@@ -92,7 +96,7 @@ def _parse_and_prepare(interface, media):
 		result.append((media, entry))
 	return result
 
-class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
+class WhooshMediaTranscriptIndexer(BasicWhooshIndexer):
 
 	media_cls = _Media
 	media_prefix = None
@@ -145,16 +149,16 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 
 	def _capture_param(self, p, params):
 		if p.tag == 'param':
-			name = _utils.get_attribute(p, 'name')
-			value = _utils.get_attribute(p, 'value')
+			name = get_attribute(p, 'name')
+			value = get_attribute(p, 'value')
 			if name and value:
 				params[name] = value
 
 	def _process_transcript(self, node):
 		params = {}
-		type_ = _utils.get_attribute(node, 'type')
+		type_ = get_attribute(node, 'type')
 		if type_ in _media_transcript_types:
-			data_lang = _utils.get_attribute(node, 'data-lang') or 'en'
+			data_lang = get_attribute(node, 'data-lang') or 'en'
 			for p in node.iterchildren():
 				self._capture_param(p, params)
 
@@ -165,21 +169,21 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 
 	def _process_mediaource(self, node):
 		params = {}
-		type_ = _utils.get_attribute(node, 'type')
+		type_ = get_attribute(node, 'type')
 		if type_ in self.media_source_types:
 			for p in node.iterchildren():
 				self._capture_param(p, params)
 		return params if params else None
 
 	def _process_ntimedia(self, topic, node):
-		type_ = _utils.get_attribute(node, 'type')
+		type_ = get_attribute(node, 'type')
 		if type_ != self.media_mimeType:
 			return ()
 
 		params = {}
 		transcripts = []
 		media_sources = []
-		media_ntiid = _utils.get_attribute(node, 'data-ntiid')
+		media_ntiid = get_attribute(node, 'data-ntiid')
 		for p in node.iterchildren():
 			if p.tag == 'object':
 				# check for transcript
@@ -206,7 +210,7 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 		result = ()
 		if not transcripts and media_sources:
 			# process legacy spec
-			language = _utils.get_attribute(node, 'data-lang') or \
+			language = get_attribute(node, 'data-lang') or \
 					   params.get('data-lang', params.get('lang')) or 'en'
 
 			for midsrc in media_sources:
@@ -277,7 +281,7 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 			raise
 
 	def get_index_name(self, book, indexname=None):
-		cls = _WhooshMediaTranscriptIndexer
+		cls = WhooshMediaTranscriptIndexer
 		indexname = super(cls, self).get_index_name(book, indexname)
 		indexname = self.media_prefix + indexname
 		return indexname
@@ -341,3 +345,4 @@ class _WhooshMediaTranscriptIndexer(common_indexer._BasicWhooshIndexer):
 		count = self._parse_and_index_media(result, writer)
 		return count
 
+_WhooshMediaTranscriptIndexer = WhooshMediaTranscriptIndexer #BWC

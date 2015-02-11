@@ -5,6 +5,7 @@ Indexing content utilities.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -14,7 +15,7 @@ from zope import component
 
 from nti.contentprocessing import tokenize_content
 
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 def sanitize_content(text, table=None, tokens=False, lang='en'):
 	"""
@@ -38,7 +39,7 @@ def sanitize_content(text, table=None, tokens=False, lang='en'):
 	# Since we're using a named adapter, we need to be careful
 	# not to re-adapt multiple times
 	raw = text
-	text = component.getAdapter(text, frg_interfaces.IPlainTextContentFragment, name='text')
+	text = component.getAdapter(text, IPlainTextContentFragment, name='text')
 	__traceback_info__ = raw, text, type(text)
 
 	# translate and tokenize words

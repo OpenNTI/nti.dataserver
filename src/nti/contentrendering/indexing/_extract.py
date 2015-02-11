@@ -5,6 +5,7 @@ TermExtract key word extractor.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,9 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from nti.contentprocessing.keyword import term_extract_key_words
-from nti.contentprocessing.keyword import interfaces as cp_interfaces
+from nti.contentprocessing.keyword.interfaces import ITermExtractFilter
 
-@interface.implementer( cp_interfaces.ITermExtractFilter)
+@interface.implementer(ITermExtractFilter)
 class _DefaultKeyWordFilter(object):
 
 	def __init__(self, single_strength_min_occur=3, max_limit_strength=2):
