@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope.event import notify
+
 from zope.lifecycleevent import IObjectModifiedEvent
 
 from nti.intid.interfaces import IIntIdAddedEvent
