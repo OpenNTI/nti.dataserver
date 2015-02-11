@@ -5,6 +5,7 @@ Whoosh book indexers.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -26,21 +27,29 @@ from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
 
-from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.interfaces import IWhooshBookSchemaCreator
 
-from . import _utils
-from . import _extract
-from . import content_utils
-from . import common_indexer
-from . import interfaces as cridxr_interfaces
+from ._utils import get_related
+from ._utils import get_attribute
+from ._utils import get_node_content
+
+from ._extract import extract_key_words
+
+from .interfaces import IWhooshBookIndexer
+
+from .content_utils import sanitize_content
+
+from .common_indexer import BasicWhooshIndexer
 
 # global helper functions
+
+etree_Comment = getattr(etree, '_Comment')
 
 def _get_last_modified(node):
 	last_modified = None
 	for n in node.dom(b'meta'):
-		if _utils.get_attribute(n, 'http-equiv') == "last-modified":
-			last_modified = _utils.get_attribute(n, 'content')
+		if get_attribute(n, 'http-equiv') == "last-modified":
+			last_modified = get_attribute(n, 'content')
 			break
 
 	if last_modified is not None:
@@ -64,8 +73,8 @@ class _DataNode(object):
 		self.content = self.keywords = None
 		self.title = unicode(node.title) or u''
 		self.ntiid = unicode(node.ntiid) or u''
+		self.related = get_related(node.topic)
 		self.last_modified = _get_last_modified(node)
-		self.related = _utils.get_related(node.topic)
 
 	def is_processed(self):
 		return self.content or self.keywords
@@ -75,12 +84,12 @@ class _DataNode(object):
 
 # Base whoosh indexer
 
-@interface.implementer(cridxr_interfaces.IWhooshBookIndexer)
-class _WhooshBookIndexer(common_indexer._BasicWhooshIndexer):
+@interface.implementer(IWhooshBookIndexer)
+class WhooshBookIndexer(BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
 		creator = \
-			component.getUtility(search_interfaces.IWhooshBookSchemaCreator, name=name)
+			component.getUtility(IWhooshBookSchemaCreator, name=name)
 		return creator.create()
 
 	def add_document(self, writer, docid, ntiid, title, content,
@@ -101,9 +110,11 @@ class _WhooshBookIndexer(common_indexer._BasicWhooshIndexer):
 			writer.cancel()
 			raise
 
+_WhooshBookIndexer = WhooshBookIndexer #BWC
+
 # Indexing topic children nodes that either have an id or data_ntiid attribute
 
-class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
+class IdentifiableNodeWhooshIndexer(WhooshBookIndexer):
 
 	def process_topic(self, idxspec, node, writer, lang='en'):
 		data = _DataNode(node)
@@ -113,8 +124,8 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 		documents = []
 
 		def _collector(n, data):
-			if not isinstance(n, etree._Comment):
-				content = _utils.get_node_content(n)
+			if not isinstance(n, etree_Comment):
+				content = get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenize_content(content, lang)
@@ -124,15 +135,15 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 					_collector(c, data)
 
 		def _traveler(n):
-			n_id = _utils.get_attribute(n, "id")
-			data_ntiid = _utils.get_attribute(n, "data_ntiid")
+			n_id = get_attribute(n, "id")
+			data_ntiid = get_attribute(n, "data_ntiid")
 			if n_id or (data_ntiid and data_ntiid != "none"):
 				data = []
 				_collector(n, data)
 				_id = data_ntiid or n_id
 				documents.append((_id, data))
 			else:
-				content = _utils.get_node_content(n)
+				content = get_node_content(n)
 				content = content.translate(table) if content else None
 				if content:
 					tokenized_words = tokenize_content(content, lang)
@@ -150,7 +161,7 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 		all_words = []
 		for tokenized_words in documents:
 			all_words.extend(tokenized_words[1])
-		data.keywords = _extract.extract_key_words(all_words, lang=lang)
+		data.keywords = extract_key_words(all_words, lang=lang)
 
 		count = 0
 		for docid, tokenized_words in documents:
@@ -160,6 +171,8 @@ class _IdentifiableNodeWhooshIndexer(_WhooshBookIndexer):
 			count += 1
 		logger.info("%s document(s) produced" % count)
 		return count
+
+_IdentifiableNodeWhooshIndexer = IdentifiableNodeWhooshIndexer #BWC
 
 # Index each topic (file) as a whole. 1 index document per topic
 
@@ -182,14 +195,14 @@ def _process_datanode(node, lang='en'):
 
 		table = get_content_translation_table(lang)
 		raw_content = _get_page_content(raw_content)
-		tokenized_words = content_utils.sanitize_content(raw_content, table=table,
-														 tokens=True, lang=lang)
+		tokenized_words = sanitize_content(raw_content, table=table,
+										   tokens=True, lang=lang)
 		if tokenized_words:
 			node.content = ' '.join(tokenized_words)
-			node.keywords = _extract.extract_key_words(tokenized_words, lang=lang)
+			node.keywords = extract_key_words(tokenized_words, lang=lang)
 	return node
 
-class _BookFileWhooshIndexer(_WhooshBookIndexer):
+class BookFileWhooshIndexer(WhooshBookIndexer):
 
 	def _index_datanode(self, node, writer, lang='en'):
 		result = 0
@@ -228,4 +241,4 @@ class _BookFileWhooshIndexer(_WhooshBookIndexer):
 				docs += self._index_datanode(node, writer, lang)
 		return docs
 
-_DefaultWhooshBookIndexer = _BookFileWhooshIndexer
+_BookFileWhooshIndexer = _DefaultWhooshBookIndexer = BookFileWhooshIndexer

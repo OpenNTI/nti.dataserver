@@ -5,6 +5,7 @@ Basic whoosh indexer.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,7 +19,7 @@ from whoosh import index
 
 WhooshIndexSpec = namedtuple('WhooshIndexSpec', ['book', 'indexname', 'indexdir'])
 
-class _BasicWhooshIndexer(object):
+class BasicWhooshIndexer(object):
 
 	def get_schema(self, name=u''):
 		raise NotImplementedError()
@@ -92,3 +93,5 @@ class _BasicWhooshIndexer(object):
 			idx.optimize()
 		logger.info('Indexing %s completed' % indexname)
 		return idx, docs
+
+_BasicWhooshIndexer = BasicWhooshIndexer #BWC

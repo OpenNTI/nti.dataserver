@@ -5,6 +5,7 @@ Whoosh NTI card indexer.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,30 +20,33 @@ from zope import interface
 from nti.contentprocessing import get_content_translation_table
 
 from nti.contentsearch.constants import nticard_prefix
-from nti.contentsearch import interfaces as search_interfaces
+from nti.contentsearch.interfaces import IWhooshNTICardSchemaCreator
 
-from . import _utils
-from . import content_utils
-from . import common_indexer
-from . import interfaces as cridxr_interfaces
+from ._utils import get_attribute
+from ._utils import get_node_content
 
-@interface.implementer(cridxr_interfaces.IWhooshNTICardIndexer)
-class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
+from .content_utils import sanitize_content
+
+from .common_indexer import BasicWhooshIndexer
+
+from .interfaces import IWhooshNTICardIndexer
+
+@interface.implementer(IWhooshNTICardIndexer)
+class WhooshNTICardIndexer(BasicWhooshIndexer):
 
 	def get_schema(self, name='en'):
-		creator = component.getUtility(search_interfaces.IWhooshNTICardSchemaCreator,
-									   name=name)
+		creator = component.getUtility(IWhooshNTICardSchemaCreator, name=name)
 		return creator.create()
 
 	def _get_attribute(self, node, attr):
-		result = _utils.get_attribute(node, attr)
+		result = get_attribute(node, attr)
 		return result or u''
 
 	def _get_nticard_info(self, topic, node):
-		type_ = _utils.get_attribute(node, 'type')
+		type_ = get_attribute(node, 'type')
 		if type_ == u'application/vnd.nextthought.nticard':
 			result = {}
-			content = _utils.get_node_content(node)
+			content = get_node_content(node)
 			result['type'] = self._get_attribute(node, 'data-type')
 			result['href'] = self._get_attribute(node, 'data-href')
 			result['title'] = self._get_attribute(node, 'data-title')
@@ -50,11 +54,11 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 			result['creator'] = self._get_attribute(node, 'data-creator')
 			for obj in node.iterchildren():
 				if 	obj.tag == 'span' and \
-					_utils.get_attribute(obj, 'class') == 'description':
-					content = _utils.get_node_content(obj)
+					get_attribute(obj, 'class') == 'description':
+					content = get_node_content(obj)
 				elif obj.tag == 'param':
-					name = _utils.get_attribute(obj, 'name')
-					value = _utils.get_attribute(obj, 'value')
+					name = get_attribute(obj, 'name')
+					value = get_attribute(obj, 'value')
 					if name and not result.get(name, None) and value:
 						result[name] = value
 			result['content'] = unicode(content) if content else u''
@@ -78,8 +82,8 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 			target_ntiid = info.get('target_ntiid', u'')
 			type_ = self._sanitize(table, info.get('type', u''))
 			creator = self._sanitize(table, info.get('creator', u''))
-			title = content_utils.sanitize_content(title, table=table)
-			content = content_utils.sanitize_content(content, table=table)
+			title = sanitize_content(title, table=table)
+			content = sanitize_content(content, table=table)
 			last_modified = datetime.fromtimestamp(time.time())
 			writer.add_document(containerId=containerId,
 								type=type_,
@@ -97,7 +101,7 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 			raise
 
 	def get_index_name(self, book, indexname=None):
-		indexname = super(_WhooshNTICardIndexer, self).get_index_name(book, indexname)
+		indexname = super(WhooshNTICardIndexer, self).get_index_name(book, indexname)
 		indexname = nticard_prefix + indexname
 		return indexname
 
@@ -133,4 +137,4 @@ class _WhooshNTICardIndexer(common_indexer._BasicWhooshIndexer):
 		result = self._index_cards(cards, writer, lang)
 		return result
 
-_DefaultWhooshNTICardIndexer = _WhooshNTICardIndexer
+_DefaultWhooshNTICardIndexer = _WhooshNTICardIndexer = WhooshNTICardIndexer
