@@ -3,27 +3,35 @@
 """
 Relating to enclosures.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.container.interfaces import INameChooser
+
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.dataserver import containers
-from nti.dataserver import interfaces
-from nti.dataserver import datastructures
+from nti.common.property import alias
 
-from nti.utils.property import alias
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import IEnclosedContent
 
-@interface.implementer( interfaces.IEnclosedContent,
+from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
+
+from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.externalization.oids import to_external_ntiid_oid
+
+@interface.implementer( IEnclosedContent,
 						IContentTypeAware,
-						interfaces.IZContained )
-class SimplePersistentEnclosure(datastructures.PersistentCreatedModDateTrackingObject):
+						IZContained )
+class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
 	"""
 	A trivial implementation of a persistent enclosure.
 	Real production usage needs much more thought and should
@@ -66,7 +74,7 @@ class SimplePersistentEnclosure(datastructures.PersistentCreatedModDateTrackingO
 		# If we wrap something with an NTIID, we want to be treated like it
 		result = getattr(self.data, 'NTIID', None)
 		if not result:
-			result = datastructures.to_external_ntiid_oid( self )
+			result = to_external_ntiid_oid( self )
 		return result
 
 from zope.location import locate
@@ -89,7 +97,7 @@ class SimpleEnclosureMixin(object):
 	# on demand
 
 	def _new_enclosure_container(self):
-		return containers.CaseInsensitiveLastModifiedBTreeContainer()
+		return CaseInsensitiveLastModifiedBTreeContainer()
 
 	def iterenclosures( self ):
 		enc = self._enclosures or {} # In case of None
@@ -124,7 +132,6 @@ class SimpleEnclosureMixin(object):
 			content.name = name_chooser.chooseName( content.name, content )
 		enclosures[content.name] = content
 		return content
-
 
 	def get_enclosure( self, name ):
 		"""
