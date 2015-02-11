@@ -37,7 +37,7 @@ PP_APP = PluginPoint('nti.app')
 PP_APP_SITES = PluginPoint('nti.app.sites')
 PP_APP_PRODUCTS = PluginPoint('nti.app.products')
 
-def create_context(env_dir=None, context=None, with_library=True):
+def create_context(env_dir=None, with_library=False, context=None):
 	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
 	etc = os.path.expanduser(etc)
 
