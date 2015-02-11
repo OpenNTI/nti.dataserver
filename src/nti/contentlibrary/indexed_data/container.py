@@ -53,7 +53,10 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 		return data
 
 	def get_data_items(self):
-		return self._data.values()
+		self._p_activate()
+		if '_data' in self.__dict__:
+			return self._data.values()
+		return ()
 
 	def contains_data_item_with_ntiid(self, ntiid):
 		self._p_activate()
@@ -61,14 +64,18 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 
 	def set_data_items(self, data_items):
 		self._p_activate()
+
 		if '_data' in self.__dict__:
 			self._data.clear()
+			
 		if not data_items:
 			return
 
 		data = self._data
 		for item in data_items:
-			data[item['ntiid']] = item
+			ntiid = item.get('ntiid')
+			if ntiid:
+				data[ntiid] = item
 
 	def __len__(self):
 		self._p_activate()
