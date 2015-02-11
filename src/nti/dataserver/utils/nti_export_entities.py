@@ -5,11 +5,9 @@ Export entity information
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -21,16 +19,9 @@ import argparse
 from datetime import datetime
 
 import zope.intid
-import zope.browserpage
 
 from zope import component
-from zope.component import hooks
 from zope.catalog.interfaces import ICatalog
-from zope.container.contained import Contained
-from zope.configuration import xmlconfig, config
-from zope.dottedname import resolve as dottedname
-
-from z3c.autoinclude.zcml import includePluginsDirective
 
 from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
@@ -42,16 +33,8 @@ from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.externalization import to_external_object
 
-from nti.site.site import get_site_for_site_names
-
-class PluginPoint(Contained):
-
-	def __init__(self, name):
-		self.__name__ = name
-
-PP_APP = PluginPoint('nti.app')
-PP_APP_SITES = PluginPoint('nti.app.sites')
-PP_APP_PRODUCTS = PluginPoint('nti.app.products')
+from .base_script import set_site
+from .base_script import create_context
 
 def _tx_string(s):
 	if s and isinstance(s, unicode):
@@ -134,37 +117,6 @@ def export_entities(entities, full=False, as_csv=False,
 	if verbose:
 		print(len(objects), " entities outputed to ", outname)
 
-def _create_context(env_dir):
-	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
-	etc = os.path.expanduser(etc)
-
-	context = config.ConfigurationMachine()
-	xmlconfig.registerCommonDirectives(context)
-		
-	slugs = os.path.join(etc, 'package-includes')
-	if os.path.exists(slugs) and os.path.isdir(slugs):
-		package = dottedname.resolve('nti.dataserver')
-		context = xmlconfig.file('configure.zcml', package=package, context=context)
-		xmlconfig.include(context, files=os.path.join(slugs, '*.zcml'),
-						  package='nti.appserver')
-
-	library_zcml = os.path.join(etc, 'library.zcml')
-	if os.path.exists(library_zcml):
-		xmlconfig.include(context, file=library_zcml)
-	else:
-		logger.warn("Library not loaded")
-	
-	# Include zope.browserpage.meta.zcm for tales:expressiontype
-	# before including the products
-	xmlconfig.include(context, file="meta.zcml", package=zope.browserpage)
-
-	# include plugins
-	includePluginsDirective(context, PP_APP)
-	includePluginsDirective(context, PP_APP_SITES)
-	includePluginsDirective(context, PP_APP_PRODUCTS)
-	
-	return context
-
 def _process_args(args):
 	full = args.full
 	as_csv = args.as_csv
@@ -179,12 +131,7 @@ def _process_args(args):
 		entities = set(args.entities or ())
 
 	if args.site:
-		cur_site = hooks.getSite()
-		new_site = get_site_for_site_names( (args.site,), site=cur_site )
-		if new_site is cur_site:
-			print("Unknown site name", args.site)
-			sys.exit(2)
-		hooks.setSite(new_site)
+		set_site(args.site)
 
 	entities = sorted(entities)
 	export_entities(entities, full, as_csv, export_dir, verbose)
@@ -220,7 +167,7 @@ def main():
 		print("Invalid dataserver environment root directory", env_dir)
 		sys.exit(2)
 	
-	context = _create_context(env_dir)
+	context = create_context(env_dir)
 	conf_packages = ('nti.appserver',)
 	
 	# run export

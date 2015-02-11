@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -25,7 +26,7 @@ from zope import component
 
 import webob.datetime_utils
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.users.interfaces import IAvatarURL
 
 from . import run_with_dataserver
@@ -56,7 +57,7 @@ def main():
 
 
 def _downloadAvatarIcons( targetDir ):
-	ds = component.getUtility( nti_interfaces.IDataserver )
+	ds = component.getUtility( IDataserver )
 	_users = (x for x in ds.root['users'].values()
 			  if hasattr( x, 'username'))
 	seen = set()

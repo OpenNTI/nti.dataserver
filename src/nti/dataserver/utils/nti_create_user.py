@@ -5,11 +5,9 @@ Creates an entity
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -20,20 +18,22 @@ import argparse
 
 from zope import interface
 from zope import component
-from zope.component import hooks
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Entity
 from nti.dataserver.users import Community
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import INewUserPlacer
-from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver.shards import AbstractShardPlacer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
+from nti.dataserver.utils import run_with_dataserver
+
+from nti.dataserver.shards import AbstractShardPlacer
 
 from nti.externalization.externalization import to_external_object
 
-from nti.site.site import get_site_for_site_names
+from .base_script import set_site
 
 _type_map = { 'user': User.create_user,
 			  'community': Community.create_community }
@@ -48,13 +48,8 @@ def _create_user(factory, username, password, realname, communities=(), options=
 				self.place_user_in_shard_named(user, user_directory, options.shard)
 		component.provideUtility(FixedShardPlacer(), provides=INewUserPlacer)
 	elif options.site:
-		cur_site = hooks.getSite()
-		new_site = get_site_for_site_names( (options.site,), site=cur_site )
-		if new_site is cur_site:
-			print("Unknown site name", options.site)
-			sys.exit(2)
-		hooks.setSite(new_site)
-	
+		set_site(options.site)
+
 	user = factory.im_self.get_entity(username)
 	if user:
 		print("Not overwriting existing entity", repr(user), file=sys.stderr)

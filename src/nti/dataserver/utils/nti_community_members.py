@@ -3,11 +3,9 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -19,16 +17,17 @@ import argparse
 import zope.intid
 
 from zope import component
-from zope.component import hooks
 from zope.catalog.interfaces import ICatalog
 
-from nti.dataserver.users import Community
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+
+from nti.dataserver.users import Community
 from nti.dataserver.users.index import CATALOG_NAME
+
 from nti.dataserver.utils import run_with_dataserver
 
-from nti.site.site import get_site_for_site_names
+from .base_script import set_site
 
 def safestr(s):
 	s = s.decode("utf-8") if isinstance(s, bytes) else s
@@ -57,12 +56,7 @@ def _output_members(username, tabs=False, output=None, site=None, verbose=False)
 
 	sep = '\t' if tabs else ','
 	if site:
-		cur_site = hooks.getSite()
-		new_site = get_site_for_site_names( (site,), site=cur_site )
-		if new_site is cur_site:
-			print("Unknown site name", site)
-			sys.exit(2)
-		hooks.setSite(new_site)
+		set_site(site)
 	
 	community = Community.get_community(username)
 	if community is None or not ICommunity.providedBy(community):

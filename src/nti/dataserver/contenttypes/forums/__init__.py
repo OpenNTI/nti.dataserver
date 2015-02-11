@@ -112,14 +112,12 @@ class _CreatedNamedNTIIDMixin(object):
 								nttype=self._ntiid_type,
 								specific=self._ntiid_specific_part )
 
-
 def _containerIds_from_parent():
 	"Returns a tuple of properties to assign to id and containerId"
 
 	# BWC: Some few objects will have this is their __dict__, but that's OK, it should
 	# match what we get anyway (and if it doesn't, its wrong)
 
-	# TODO: Cache this?
 	def _get_containerId(self):
 		if self.__parent__ is not None:
 			try:
