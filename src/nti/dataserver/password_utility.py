@@ -4,8 +4,9 @@
 Contains a :mod:`z3c.password.password` utility
 designed for persistence and storing in ZODB.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,14 +14,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-import persistent
+from persistent import Persistent
 
-import z3c.password.password
+from z3c.password.password import HighSecurityPasswordUtility
 
-from nti.dataserver import interfaces as nti_interfaces
+from .interfaces import IZContained
 
-@interface.implementer(nti_interfaces.IZContained)
-class HighSecurityPasswordUtility(persistent.Persistent,z3c.password.password.HighSecurityPasswordUtility):
+@interface.implementer(IZContained)
+class HighSecurityPasswordUtility(Persistent, HighSecurityPasswordUtility):
 	"""
 	A password policy that is designed for persistent storage in the ZODB.
 	"""
