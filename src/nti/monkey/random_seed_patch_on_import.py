@@ -53,7 +53,6 @@ def _do_patch():
 	import random
 	random.seed = inst_seed
 
-
 def _patch():
 	if sys.version_info < (2,7,7):
 		_do_patch()

@@ -12,7 +12,7 @@ allowed. However, webob leaves this on its list.
 Importing this module (and calling patch) adjusts the webob cookie
 functions to not escape these values.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import

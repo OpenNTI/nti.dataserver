@@ -12,7 +12,7 @@ is needed to get conflict resolution to work correctly; without
 this call, the ConflictResolution class doesn't know to uncompress the
 pickled data. This same modification has to be carried through to `new_instance`.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import

@@ -10,9 +10,9 @@ reference count may never go to zero, leaving behind a stale, useless open conne
 
 This patch causes the `release` method to explicitly disconnect the cache connection.
 
-.. todo:: This same approach can be used for memcache client pooling.
+.. Todo:: This same approach can be used for memcache client pooling.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division

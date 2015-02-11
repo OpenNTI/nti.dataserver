@@ -3,7 +3,7 @@
 """
 Monkey-patch for RelStorage 1.5.1 to work correctly wth persistent 4.0.X.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -30,7 +30,6 @@ def _patch_relstorage_for_newer_persistent():
 	# ZC.zodbdgc has the same issue
 	import zc.zodbdgc
 	zc.zodbdgc.repr = _repr
-
 
 _patch_relstorage_for_newer_persistent()
 
