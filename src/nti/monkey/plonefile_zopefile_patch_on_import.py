@@ -5,9 +5,7 @@ Adjusts :mod:`plone.namedfile` files, which have a more full-featured
 implementation than :mod:`zope.file` but lack its nice declared interfaces,
 to be compatible with :mod:`zope.file`.
 
-
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -15,22 +13,25 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.interface import interfaces
-import plone.namedfile.interfaces as nfile_interfaces
+from cStringIO import StringIO
+
+from zope.file.upload import nameFinder
 import zope.file.interfaces as zfile_interfaces
 
 import zope.file.file as zfile
+zfile = zfile
+
 import plone.namedfile.file as nfile
 import plone.namedfile.utils as nutils
+import plone.namedfile.interfaces as nfile_interfaces
 
 from zope import component
+
+from zope.interface import interfaces
+
 from zope.mimetype.interfaces import IMimeTypeGetter
-from zope.file.upload import nameFinder
 
-
-from cStringIO import StringIO
-
-from nti.utils.property import alias
+from nti.common.property import alias
 
 def _patch():
 
@@ -105,9 +106,6 @@ def _get_contenttype(file=None, filename=None, default='application/octet-stream
 							  content_type=None,
 							  name=nameFinder(filename))
 	return mimeType or default
-
-
-
 
 def patch():
 	pass

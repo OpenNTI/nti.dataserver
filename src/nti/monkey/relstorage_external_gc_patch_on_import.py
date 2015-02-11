@@ -7,7 +7,7 @@ set of the databases configurations supported by) RelStorage.
 Currently, this supports history-free storages (and is tested under mysql)
 but other storages shouldn't be difficult.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -51,6 +51,7 @@ def _storage_deleteObject(self, oid, oldserial, transaction):
 	return
 
 from ZODB.utils import u64
+
 def _make_stmt(base,oid):
 	return base % str(u64(oid))
 

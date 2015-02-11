@@ -7,7 +7,7 @@ non-blocking.
 Also, while we're monkeying with database drivers, adjusts the set of
 retriable exceptions that zope.sqlalchemy knows about.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import

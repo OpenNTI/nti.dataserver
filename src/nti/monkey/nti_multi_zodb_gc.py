@@ -14,7 +14,7 @@ which seems to be found only in cPython2 implementations. Even using the new
 :mod:`zodbpickle` package as we do still has problems, noload being implemented
 only in the C extension (which may or may not compile).
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -26,7 +26,6 @@ relstorage_patch_all_except_gevent_on_import.patch()
 
 from . import python_persistent_bugs_patch_on_import
 python_persistent_bugs_patch_on_import.patch()
-
 
 logger = __import__('logging').getLogger(__name__)
 

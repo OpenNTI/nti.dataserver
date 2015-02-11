@@ -11,13 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 # The current version of invalidate does not correctly
 # move forward during invalidation if the value is not
 # the first item in the ring
 # https://github.com/zopefoundation/persistent/pull/4
+
 from persistent.interfaces import GHOST
 from persistent.picklecache import PickleCache
+
 def _invalidate(self, oid):
 	value = self.data.get(oid)
 	if value is not None and value._p_state != GHOST:
@@ -32,7 +33,6 @@ def _invalidate(self, oid):
 		del self.persistent_classes[oid]
 
 PickleCache._invalidate = _invalidate
-
 
 # There is a bad interaction with _p_accessed setting
 # the MRU time in the picklecache during initial
@@ -68,8 +68,11 @@ Persistent.__setstate__ = __setstate__
 # persistent ids.
 # https://github.com/zopefoundation/ZODB/pull/17
 import cPickle
-from nti.utils.property import alias
-if hasattr(cPickle.Pickler, 'persistent_id') and not hasattr(cPickle.Pickler, 'inst_persistent_id'):
+
+from nti.common.property import alias
+
+if 	hasattr(cPickle.Pickler, 'persistent_id') and \
+	not hasattr(cPickle.Pickler, 'inst_persistent_id'):
 	cPickle.Pickler.inst_persistent_id = alias('persistent_id')
 
 def patch():
