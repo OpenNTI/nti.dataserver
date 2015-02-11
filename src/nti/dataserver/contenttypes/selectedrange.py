@@ -15,12 +15,12 @@ from zope import interface
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+from .base import UserContentRoot
+from .base import UserContentRootInternalObjectIO
+
 from ..interfaces import ISelectedRange
 from ..interfaces import IUserTaggedContent
 from ..interfaces import IAnchoredRepresentation
-
-from .base import UserContentRoot
-from .base import UserContentRootInternalObjectIO
 
 @interface.implementer(ISelectedRange)
 class SelectedRange(UserContentRoot):

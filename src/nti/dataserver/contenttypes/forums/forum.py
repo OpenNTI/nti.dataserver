@@ -180,7 +180,6 @@ def _topic_added_to_forum(topic, event):
 	if frm_interfaces.IForum.providedBy( topic.__parent__ ):
 		topic.__parent__._set_NewestDescendant( topic )
 
-
 @interface.implementer(frm_interfaces.IPersonalBlog)
 class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
 
@@ -189,7 +188,6 @@ class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
 	creator = None
 	__name__ = __blog_name__ = __default_name__ = 'Blog'
 	_ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
-
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
 @component.adapter(nti_interfaces.IUser)

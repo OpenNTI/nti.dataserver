@@ -17,14 +17,20 @@ import urlparse
 from zope import interface
 from zope import component
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.common import create_gravatar_url
+from nti.common import GENERATED_GRAVATAR_TYPES
 
-from nti.utils import create_gravatar_url, GENERATED_GRAVATAR_TYPES
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICoppaUser
 
-from . import interfaces
+from .interfaces import IAvatarURL
+from .interfaces import IAvatarChoices
+from .interfaces import IAvatarURLProvider
+from .interfaces import ICompleteUserProfile
 
-@component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
+@component.adapter(IEntity)
+@interface.implementer(IAvatarURLProvider, IAvatarURL)
 def AvatarURLFactory(entity):
 	"""
 	For legacy reasons, this factory first checks for the presence of an avatar URL
@@ -33,9 +39,9 @@ def AvatarURLFactory(entity):
 	if getattr( entity, '_avatarURL', None ):
 		return _FixedAvatarWrapper( entity )
 
-	return component.queryAdapter( entity, interfaces.IAvatarURLProvider, name="generated" )
+	return component.queryAdapter(entity, IAvatarURLProvider, name="generated" )
 
-@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
+@interface.implementer(IAvatarURLProvider, IAvatarURL)
 class _FixedAvatarWrapper(object):
 
 	def __init__( self, context ):
@@ -64,8 +70,8 @@ def _username_as_email( username ):
 		email = email + '@alias.nextthought.com'
 	return email
 
-@component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
+@component.adapter(IEntity)
+@interface.implementer(IAvatarURLProvider, IAvatarURL)
 class GravatarComputedAvatarURL(object):
 
 	defaultGravatarType = 'identicon'
@@ -74,7 +80,7 @@ class GravatarComputedAvatarURL(object):
 		email = _username_as_email( context.username )
 		from_real_email = False
 		try:
-			profile = interfaces.ICompleteUserProfile( context, None )
+			profile = ICompleteUserProfile( context, None )
 		except TypeError:
 			profile = None
 		else:
@@ -89,8 +95,8 @@ class GravatarComputedAvatarURL(object):
 			fragment = 'using_provided_email_address'
 			self.avatarURL = urlparse.urlunparse( (scheme, netloc, url, params, query, fragment ) )
 
-@component.adapter(nti_interfaces.ICoppaUser)
-@interface.implementer(interfaces.IAvatarURLProvider,interfaces.IAvatarURL)
+@component.adapter(ICoppaUser)
+@interface.implementer(IAvatarURLProvider, IAvatarURL)
 class GravatarComputedCoppaAvatarURL(object):
 	"""
 	Coppa users aren't expected to have a valid email. Instead, they are
@@ -102,10 +108,11 @@ class GravatarComputedCoppaAvatarURL(object):
 
 	def __init__( self, context ):
 		gravatar_type = _find_default_gravatar_type( context, self )
-		self.avatarURL = create_gravatar_url( _username_as_email( context.username ), gravatar_type, secure=True )
+		self.avatarURL = create_gravatar_url(_username_as_email( context.username ), 
+											 gravatar_type, secure=True )
 
 @component.adapter(basestring)
-@interface.implementer(interfaces.IAvatarChoices)
+@interface.implementer(IAvatarChoices)
 class StringComputedAvatarURLChoices(object):
 	"""
 	Computes a set of choices based of the given string. The assumption is that
@@ -152,15 +159,15 @@ class StringComputedAvatarURLChoices(object):
 		choices = tail
 		return choices
 
-@component.adapter(nti_interfaces.ICoppaUser)
-@interface.implementer(interfaces.IAvatarChoices)
+@component.adapter(ICoppaUser)
+@interface.implementer(IAvatarChoices)
 class GravatarComputedCoppaAvatarURLChoices(StringComputedAvatarURLChoices):
 
 	def __init__( self, context ):
 		super(GravatarComputedCoppaAvatarURLChoices,self).__init__( context.username )
 
-@component.adapter(nti_interfaces.IEntity)
-@interface.implementer(interfaces.IAvatarChoices)
+@component.adapter(IEntity)
+@interface.implementer(IAvatarChoices)
 class EntityGravatarComputedAvatarURLChoices(object):
 	"""
 	Arbitrary entities just get their assigned URL.
@@ -168,7 +175,7 @@ class EntityGravatarComputedAvatarURLChoices(object):
 
 	def __init__( self, context ):
 		try:
-			self.avatarURL = interfaces.IAvatarURL(context).avatarURL
+			self.avatarURL = IAvatarURL(context).avatarURL
 		except KeyError:  # pragma: no cover
 			# Typically POSKeyError blob not found?
 			logger.exception('Could not resolve avatar URL')
@@ -177,9 +184,8 @@ class EntityGravatarComputedAvatarURLChoices(object):
 	def get_choices( self ):
 		return (self.avatarURL,) if self.avatarURL else ()
 
-
-@component.adapter(nti_interfaces.IUser)
-@interface.implementer(interfaces.IAvatarChoices)
+@component.adapter(IUser)
+@interface.implementer(IAvatarChoices)
 class GravatarComputedAvatarURLChoices(object):
 	"""
 	Normal users get their "real" avatar URL, plus some based on creating
@@ -187,7 +193,7 @@ class GravatarComputedAvatarURLChoices(object):
 	"""
 
 	def __init__( self, context ):
-		self.avatarURL = interfaces.IAvatarURL( context ).avatarURL
+		self.avatarURL = IAvatarURL( context ).avatarURL
 		self.context = context
 
 	def get_choices( self ):

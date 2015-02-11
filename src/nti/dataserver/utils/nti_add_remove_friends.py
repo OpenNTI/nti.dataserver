@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -16,10 +17,10 @@ import sys
 import pprint
 import argparse
 
-from nti.dataserver import users
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
@@ -28,10 +29,10 @@ def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	thelist = None
 	flname = name.lower()
 	for fl in getattr(owner, 'getFriendsLists', lambda s: ())(owner):
-		if not nti_interfaces.IEntity.providedBy(fl):
+		if not IEntity.providedBy(fl):
 			continue
 		username = fl.username.lower()
-		realname = user_interfaces.IFriendlyNamed( fl ).realname or u''
+		realname = IFriendlyNamed( fl ).realname or u''
 		if flname == realname.lower() or flname == username:
 			thelist = fl
 			break
@@ -53,7 +54,7 @@ def add_remove_friends( owner, name, add_members=(), remove_members=()):
 	return result
 
 def process_params(args):
-	owner = users.User.get_user( args.owner )
+	owner = User.get_user( args.owner )
 	if not owner:
 		print("No owner found", args, file=sys.stderr )
 		sys.exit( 2 )

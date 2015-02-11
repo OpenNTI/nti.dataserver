@@ -17,8 +17,8 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import re
-import string
 import codecs
+import string
 import pkg_resources
 
 from zope import interface

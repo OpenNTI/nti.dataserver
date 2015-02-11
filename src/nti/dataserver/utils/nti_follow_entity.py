@@ -5,6 +5,7 @@ Follow/Unfollow entities.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -13,6 +14,7 @@ relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import sys
 import argparse
 from pprint import pprint
@@ -54,7 +56,8 @@ def follow_entities(user, to_follow=()):
 		if hasattr( entity, 'addFriend' ):
 			entity.addFriend( user )
 
-	return _follow_entities( user, to_follow=to_follow, follow=follow, record=record, addFriend=add )
+	return _follow_entities( user, to_follow=to_follow, follow=follow,
+							 record=record, addFriend=add )
 
 def unfollow_entities(user, to_follow=()):
 
@@ -68,7 +71,8 @@ def unfollow_entities(user, to_follow=()):
 		if hasattr( entity, 'removeFriend' ):
 			entity.removeFriend( user )
 
-	return _follow_entities( user, to_follow=to_follow, follow=follow, record=record, addFriend=add )
+	return _follow_entities( user, to_follow=to_follow, follow=follow, 
+							 record=record, addFriend=add )
 
 def _action( args ):
 	user = users.User.get_user( args.username )
@@ -100,10 +104,12 @@ def _action( args ):
 		pprint( to_external_object( user ) )
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Make a user (un)follow an existing entity; if a DynamicSharingTarget, they also join it." )
+	arg_parser = argparse.ArgumentParser(description="Make a user (un)follow an existing entity; if a DynamicSharingTarget, they also join it." )
 	arg_parser.add_argument('username', help="The username to edit")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('-x', '--unfollow', help="Unfollow instead of follow", action='store_true', dest='unfollow')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+							action='store_true', dest='verbose')
+	arg_parser.add_argument('-x', '--unfollow', help="Unfollow instead of follow",
+							action='store_true', dest='unfollow')
 	arg_parser.add_argument('-f', '--follow',
 							dest='follow',
 							nargs="+",
@@ -112,11 +118,7 @@ def main():
 	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
-	import os
-	
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv( 'DATASERVER_DIR' )
+	env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise ValueError( "Invalid dataserver environment root directory", env_dir )
 	

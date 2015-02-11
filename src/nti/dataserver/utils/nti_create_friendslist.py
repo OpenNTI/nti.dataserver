@@ -3,11 +3,9 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
-
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -15,18 +13,18 @@ import sys
 import pprint
 import argparse
 
-from zope.component import hooks
-
 from nti.dataserver.users import User
-from nti.dataserver.interfaces import IUser
 from nti.dataserver.users import FriendsList
 from nti.dataserver.users import DynamicFriendsList
-from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
+from nti.dataserver.interfaces import IUser
+
+from nti.dataserver.utils import run_with_dataserver
 
 from nti.externalization.externalization import to_external_object
 
-from nti.site.site import get_site_for_site_names
+from .base_script import set_site
 
 def create_friends_list(owner, username, realname=None, members=(), 
 						dynamic=False, locked=False):
@@ -58,11 +56,7 @@ def _process_args(args):
 
 	site = args.site
 	if site:
-		cur_site = hooks.getSite()
-		new_site = get_site_for_site_names( (site,), site=cur_site )
-		if new_site is cur_site:
-			raise ValueError("Unknown site name", site)
-		hooks.setSite(new_site)
+		set_site(site)
 
 	result = create_friends_list(owner, args.username, args.name, args.members,
 								 args.dynamic, args.locked)

@@ -19,11 +19,7 @@ from zope.catalog.keyword import CaseInsensitiveKeywordIndex
 
 from zope.index.topic.filter import FilteredSetBase
 
-# NOTE: In the past this was a standard zope.catalog.catalog.Catalog;
-# if we actually need the features of the new catalog, we will
-# need to migrate.
 from nti.zope_catalog.catalog import Catalog
-
 from nti.zope_catalog.topic import TopicIndex
 
 # Old name for BWC

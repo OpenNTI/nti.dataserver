@@ -7,6 +7,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 	<include package="zope.location" />
 
 	<include package="nti.externalization" file="meta.zcml" />
@@ -73,10 +74,9 @@
 	<adapter provides="nti.dataserver.interfaces.ILengthEnumerableEntityContainer"
 			 factory=".users.CommunityEntityContainer" />
 
-
-
 	<!-- WeakRefs to entity objects -->
 	<adapter factory=".wref.WeakRefFactory" />
+
 	<!-- Due to a mistake in inheritance
 	(IFriendsList extends IModeledContent,IEntity in that order)
 	to be sure we get the right behaviour where it is involved
@@ -84,20 +84,24 @@
 	-->
 	<adapter factory=".wref.WeakRef"
 			 for="nti.dataserver.interfaces.IFriendsList" />
+
 	<!-- Avatar URLs -->
 	<!-- Default -->
 	<adapter factory=".avatar_urls.AvatarURLFactory"
 			 provides=".interfaces.IAvatarURLProvider" />
 	<adapter factory=".avatar_urls.AvatarURLFactory"
 			 provides=".interfaces.IAvatarURL" />
+
 	<!-- Named fallback -->
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 name="generated" />
+
 	<!-- Default for Koppa Kids -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser" />
+
 	<!-- Fallback for KK, just in case -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
@@ -108,10 +112,12 @@
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.ICoppaUser" />
+
 	<!-- And everyone -->
 	<adapter factory=".avatar_urls.EntityGravatarComputedAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.IEntity" />
+
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.IUser" />
@@ -123,6 +129,7 @@
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile._profile_to_principal" />
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
+	
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
 			 zcml:condition="have devmode" />

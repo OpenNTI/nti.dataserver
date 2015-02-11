@@ -17,7 +17,6 @@ import functools
 from zope import component
 from zope import interface
 
-
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import authorization_acl as auth
@@ -27,7 +26,8 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
-from nti.externalization.externalization import to_standard_external_dictionary, decorate_external_mapping
+from nti.externalization.externalization import decorate_external_mapping
+from nti.externalization.externalization import to_standard_external_dictionary
 
 from nti.schema.interfaces import find_most_derived_interface
 
@@ -40,7 +40,6 @@ def _avatar_url( entity ):
 	Takes into account file storage and generates Link objects
 	instead of data: urls. Tightly coupled to user_profile.
 	"""
-
 	with_url = interfaces.IAvatarURL( entity )
 	url_property = getattr( type(with_url), 'avatarURL', None )
 	if isinstance( url_property, urlproperty.UrlProperty ):
@@ -52,12 +51,14 @@ def _avatar_url( entity ):
 			# so we go directly to the file address
 			target = to_external_ntiid_oid( the_file, add_to_connection=True )
 			if target:
-				link = links.Link( target=target, target_mime_type=the_file.mimeType, elements=('@@avatar_view',), rel="data" )
+				link = links.Link( target=target, 
+								   target_mime_type=the_file.mimeType,
+								   elements=('@@avatar_view',),
+								   rel="data" )
 				interface.alsoProvides( link, nti_interfaces.ILinkExternalHrefOnly )
 				return link
 			logger.warn( "Unable to produce avatarURL for %s", entity )
 	return with_url.avatarURL
-
 
 @interface.implementer( IExternalObject )
 class _AbstractEntitySummaryExternalObject(object):

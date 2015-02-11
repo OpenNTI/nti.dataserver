@@ -16,10 +16,10 @@ from zope import component
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from ..interfaces import IRedaction
-
 from .selectedrange import SelectedRange
 from .selectedrange import SelectedRangeInternalObjectIO
+
+from ..interfaces import IRedaction
 
 @interface.implementer(IRedaction)
 class Redaction(SelectedRange):

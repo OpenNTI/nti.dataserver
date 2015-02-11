@@ -120,11 +120,13 @@ class ThreadableMixin(object):
 
 	@property
 	def replies(self):
-		return IntidResolvingIterable( self._replies, allow_missing=True, parent=self, name='replies' ) if self._replies is not ThreadableMixin._replies else ()
+		return 	IntidResolvingIterable( self._replies, allow_missing=True, parent=self, name='replies' ) \
+				if self._replies is not ThreadableMixin._replies else ()
 
 	@property
 	def referents(self):
-		return IntidResolvingIterable( self._referents, allow_missing=True, parent=self, name='referents' ) if self._referents is not ThreadableMixin._referents else ()
+		return 	IntidResolvingIterable( self._referents, allow_missing=True, parent=self, name='referents' ) \
+				if self._referents is not ThreadableMixin._referents else ()
 
 @component.adapter( IThreadable, IIntIdAddedEvent )
 def threadable_added( threadable, event ):
