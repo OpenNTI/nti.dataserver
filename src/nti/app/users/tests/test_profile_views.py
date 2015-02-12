@@ -76,7 +76,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		app_iter = res.app_iter[0].split('\n')[:-1]
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
-			assert_that(t.split(','), has_length(5))
+			assert_that(t.split(','), has_length(6))
 
 	@WithSharedApplicationMockDS
 	def test_opt_in_comm(self):

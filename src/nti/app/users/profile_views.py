@@ -284,7 +284,7 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 # user profile
 
 def _get_inactive_accounts():
-	header = ['username', 'userid', 'realname', 'email', 'createdTime']
+	header = ['username', 'userid', 'realname', 'email', 'createdTime', 'lastLoginTime']
 	yield header
 
 	dataserver = component.getUtility(IDataserver)
@@ -311,7 +311,8 @@ def _get_inactive_accounts():
 		email = _get_index_field_value(iid, ent_catalog, 'email')
 		createdTime = _parse_time(getattr(user, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
-		info = [username, userid, realname, email, createdTime]
+		lastLoginTime = _parse_time(lastLoginTime) if lastLoginTime else None
+		info = [username, userid, realname, email, createdTime,lastLoginTime]
 		yield info
 
 @view_config(route_name='objects.generic.traversal',
