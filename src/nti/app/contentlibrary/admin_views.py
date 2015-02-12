@@ -19,15 +19,15 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.authorization import ACT_COPPA_ADMIN
+from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from .synchronize import synchronize
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=IDataserverFolder,
-			  permission=ACT_COPPA_ADMIN,
-			  name='SyncAllLibraries') # XXX better permission
+			  permission=ACT_NTI_ADMIN,
+			  name='SyncAllLibraries')
 class _SyncAllLibrariesView(AbstractAuthenticatedView):
 	"""
 	A view that synchronizes all of the in-database libraries
