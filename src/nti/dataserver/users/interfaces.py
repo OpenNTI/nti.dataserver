@@ -23,23 +23,29 @@ import pkg_resources
 
 from zope import interface
 from zope import component
-from zope.schema import URI
-from zope.i18n import translate
 from zope.interface import Interface
-from z3c.schema.email import isValidMailAddress
+from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
 
-import zope.interface.interfaces
+from zope.i18n import translate
+
+from zope.schema import URI
 
 from z3c.password.interfaces import NoPassword
 from z3c.password.interfaces import InvalidPassword	
+
+from z3c.schema.email import isValidMailAddress
 
 from plone.i18n.locales.interfaces import ICcTLDInformation
 
 from nti.mailer.interfaces import IEmailAddressable
 
+from nti.schema.field import Int
 from nti.schema.field import Bool
 from nti.schema.field import Date
+from nti.schema.field import Object
 from nti.schema.field import HTTPURL
+from nti.schema.field import Variant
 from nti.schema.field import TextLine
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
@@ -204,7 +210,7 @@ def checkRealname(value):
 		#for x in value.split():
 	return True
 
-class IWillUpdateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
+class IWillUpdateNewEntityEvent(IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` with
 	an entity that is in the process of being created by the factories. At this
@@ -221,14 +227,14 @@ class IWillUpdateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
 _marker = object()
 
 @interface.implementer(IWillUpdateNewEntityEvent)
-class WillUpdateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
+class WillUpdateNewEntityEvent(ObjectEvent):
 
 	def __init__(self, obj, ext_value=_marker, meta_data=_marker):
 		super(WillUpdateNewEntityEvent, self).__init__(obj)
 		self.ext_value = ext_value if ext_value is not _marker else {}
 		self.meta_data = meta_data if ext_value is not _marker else {}
 
-class IWillCreateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
+class IWillCreateNewEntityEvent(IObjectEvent):
 	"""
 	Fired before an
 	:class:`zope.lifecycleevent.interfaces.IObjectCreatedEvent` and
@@ -243,7 +249,7 @@ class IWillCreateNewEntityEvent(zope.interface.interfaces.IObjectEvent):
 	preflight_only = interface.Attribute("A boolean, set to true if this is a preflight-only event.")
 
 @interface.implementer(IWillCreateNewEntityEvent)
-class WillCreateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
+class WillCreateNewEntityEvent(ObjectEvent):
 
 	def __init__(self, obj, ext_value=None, preflight_only=False, meta_data=None):
 		super(WillCreateNewEntityEvent, self).__init__(obj)
@@ -251,14 +257,14 @@ class WillCreateNewEntityEvent(zope.interface.interfaces.ObjectEvent):
 		self.meta_data = meta_data
 		self.preflight_only = preflight_only
 
-class IWillDeleteEntityEvent(zope.interface.interfaces.IObjectEvent):
+class IWillDeleteEntityEvent(IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectRemovedEvent` with
 	an entity that is in the process of being deleted by the factories.
 	"""
 
 @interface.implementer(IWillDeleteEntityEvent)
-class WillDeleteEntityEvent(zope.interface.interfaces.ObjectEvent):
+class WillDeleteEntityEvent(ObjectEvent):
 
 	def __init__( self, obj):
 		super(WillDeleteEntityEvent,self).__init__( obj )
@@ -536,7 +542,7 @@ class IRecreatableUser(Interface):
 	that create and destroy users.
 	"""
 
-class ISendEmailConfirmationEvent(zope.interface.interfaces.IObjectEvent):
+class ISendEmailConfirmationEvent(IObjectEvent):
 	"""
 	A event to send a email confirmation email
 	"""
@@ -545,7 +551,7 @@ class ISendEmailConfirmationEvent(zope.interface.interfaces.IObjectEvent):
 	request = interface.Attribute("A request object")
 	
 @interface.implementer(ISendEmailConfirmationEvent)
-class SendEmailConfirmationEvent(zope.interface.interfaces.ObjectEvent):
+class SendEmailConfirmationEvent(ObjectEvent):
 
 	def __init__(self, obj, request=None):
 		super(SendEmailConfirmationEvent, self).__init__(obj)
@@ -559,3 +565,30 @@ def validateAccept(value):
 	if not value == True:
 		return False
 	return True
+
+class ISuggestedContactRankingPolicy(Interface):
+	"""
+	Defines a user ranking policy for a provider. This policy 
+	defines the order in which the suggestions are returned
+	"""
+
+class ISuggestedContactsContext(Interface):
+	"""
+	Defines a context for the a provider
+	"""
+	
+class ISuggestedContactsProvider(Interface):
+	
+	"""
+	Defines a utility that allows to return contact suggestions for a user
+	"""
+	
+	priority = Int(title="Provider prority", required=False, default=1)
+	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy", required=False)
+	context = Variant(( Object(Interface),
+						Object(ISuggestedContactsContext)), title="Provider context", required=False)
+	
+	def suggestions(user):
+		"""
+		return a iterator with suggested contacts ordered by the ranking policy
+		"""
