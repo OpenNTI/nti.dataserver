@@ -56,7 +56,7 @@ class _Status(object):
 
 @view_defaults( route_name='objects.generic.traversal',
 				name='bulk_email_admin',
-				permission=nauth.ACT_MODERATE,
+				permission=nauth.ACT_NTI_ADMIN,
 			  )
 class _BulkEmailView(object):
 
@@ -147,7 +147,7 @@ from .ses_notification_handler import process_sqs_queue
 
 @view_defaults( route_name='objects.generic.traversal',
 				name='bounced_email_admin',
-				permission=nauth.ACT_MODERATE,
+				permission=nauth.ACT_NTI_ADMIN,
 			  )
 class _BouncedEmailView(object):
 
