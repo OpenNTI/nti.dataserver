@@ -601,3 +601,12 @@ class ISuggestedContactsProvider(Interface):
 class ISuggestedContact(Interface):
 	username = ValidTextLine(title="username", required=True)
 	rank = Int(title="contact rank", required=False, default=1)
+
+def get_all_suggested_contacts(user):
+	"""
+	Scan all registered ISuggestedContactsProvider and return their suggestions
+	"""
+	for _, provider in list(component.getUtilitiesFor(ISuggestedContactsProvider)):
+		for suggestion in provider.suggestions(user):
+			suggestion.provider = provider
+			yield suggestion
