@@ -21,7 +21,6 @@ from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISuggestedContact
-from .interfaces import ISuggestedContactsContext
 from .interfaces import ISuggestedContactsProvider
 from .interfaces import ISuggestedContactRankingPolicy
 
@@ -54,18 +53,14 @@ class SuggestedContact(SchemaConfigured, Contained):
 			return NotImplemented
 
 @interface.implementer(ISuggestedContactRankingPolicy)
-class DefaultSuggestedContactRankingPolicy(object):
+class SuggestedContactRankingPolicy(SchemaConfigured, Contained):
+	createDirectFieldProperties(ISuggestedContactRankingPolicy)
 	
 	@classmethod
 	def sort(cls, contacts):
 		contacts = contacts or ()
 		return sorted(contacts, reverse=True)
-SuggestedContactRankingPolicy = DefaultSuggestedContactRankingPolicy 
-
-@interface.implementer(ISuggestedContactsContext)
-class DefaultSuggestedContactsContext(object):
-	priority = 1
-SuggestedContactsContext = DefaultSuggestedContactsContext 
+DefaultSuggestedContactRankingPolicy = SuggestedContactRankingPolicy 
 
 @interface.implementer(ISuggestedContactsProvider)
 class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
@@ -73,7 +68,7 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	
 	@property
 	def priority(self):
-		result = getattr(self.context, 'priority', None) or 1
+		result = getattr(self.ranking, 'priority', None) or 1
 		return result
 	
 	def suggestions(self, user):
