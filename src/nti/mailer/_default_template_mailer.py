@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from six import string_types
+
 from zope import component
 from zope import interface
 
@@ -30,8 +32,6 @@ from .interfaces import IMailer
 from .interfaces import IMailDelivery
 from .interfaces import ITemplatedMailer
 from .interfaces import IEmailAddressable
-
-from six import string_types
 
 def _get_renderer_spec_and_package(base_template,
 								   extension,
@@ -59,7 +59,6 @@ def _get_renderer_spec_and_package(base_template,
 		base_template = package.__name__ + ':' + base_template
 
 	return base_template + extension, package
-
 
 def _get_renderer(base_template,
 				  extension,
@@ -273,6 +272,7 @@ def _send_pyramid_mailer_mail( message, recipients=None, request=None ):
 from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 
 from .interfaces import IVERP
+
 def _compute_from(*args, **kwargs):
 	verp = component.queryUtility(IVERP)
 	if verp is None:
@@ -321,7 +321,6 @@ def _pyramid_message_to_message( pyramid_mail_message, recipients, request ):
 	#pyramid_mail_message.extra_headers['Return-Path'] = fromaddr
 	message = pyramid_mail_message.to_message()
 	return message
-
 
 def _send_mail( pyramid_mail_message=None, recipients=(), request=None ):
 	"""

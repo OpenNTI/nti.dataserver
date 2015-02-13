@@ -11,17 +11,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import rfc822
+
+import itsdangerous
+
 from zope import interface
 from zope import component
 
-from .interfaces import IEmailAddressable
-from .interfaces import IVERP
 from zope.security.interfaces import IPrincipal
 
-import rfc822
-import itsdangerous
-
+# TODO: break this dep
 from nti.appserver.policies.site_policies import find_site_policy
+
+from .interfaces import IVERP
+from .interfaces import IEmailAddressable
 
 def _get_signer_secret(default_secret="$Id$"):
 
