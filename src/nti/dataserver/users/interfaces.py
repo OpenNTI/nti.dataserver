@@ -573,18 +573,14 @@ class ISuggestedContactRankingPolicy(Interface):
 	Defines a user ranking policy for a provider. This policy 
 	defines the order in which the suggestions are returned
 	"""
-
+		
+	priority = Int(title="Provider prority", required=False, default=1)
+	
 	def sort(contacts):
 		"""
 		sort the specified suggested contacts
 		"""
-		
-class ISuggestedContactsContext(Interface):
-	"""
-	Defines a context for the a provider
-	"""
-	priority = Int(title="Provider prority", required=False, default=1)
-	
+
 class ISuggestedContactsProvider(Interface):
 	
 	"""
@@ -594,7 +590,7 @@ class ISuggestedContactsProvider(Interface):
 	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy", 
 					 required=False)
 
-	context = Object(ISuggestedContactsContext, title="Provider context",
+	context = Object(Interface, title="Provider context",
 					 required=False)
 	
 	def suggestions(user):
@@ -605,5 +601,3 @@ class ISuggestedContactsProvider(Interface):
 class ISuggestedContact(Interface):
 	username = ValidTextLine(title="username", required=True)
 	rank = Int(title="contact rank", required=False, default=1)
-	provider = Object(ISuggestedContactsProvider, title="provider", required=False)
-	provider.setTaggedValue('_ext_excluded_out', False)
