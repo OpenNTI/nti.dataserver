@@ -19,13 +19,12 @@ from zope import component
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
 
-from zope.mimetype import interfaces as mime_interfaces
-
-from zope.schema import interfaces as sch_interfaces
-
 from zope.container.constraints import IContainerTypesConstraint
 
+from zope.mimetype import interfaces as mime_interfaces
+
 from zope.schema import vocabulary
+from zope.schema import interfaces as sch_interfaces
 
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
@@ -35,33 +34,31 @@ from nti.app.renderers import rest
 
 from nti.common.property import alias
 
-from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
-
-from nti.externalization.interfaces import IExternalObject
-from nti.externalization.singleton import SingletonDecorator
-from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.interfaces import IExternalMappingDecorator
-from nti.externalization.externalization import to_standard_external_dictionary
-from nti.externalization.externalization import toExternalObject, isSyntheticKey
-
 from nti.dataserver import users
 from nti.dataserver import links
+from nti.dataserver import datastructures
 from nti.dataserver import traversal as nti_traversal
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from .pyramid_authorization import is_writable
+from .._util import link_belongs_to_user
 
-from ._util import link_belongs_to_user
+from ..pyramid_authorization import is_writable
 
-from .capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
+from ..capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
 
-from . import traversal
-from . import interfaces as app_interfaces
+from .. import traversal
+from .. import interfaces as app_interfaces
+
+from .interfaces import IWorkspace
+from .interfaces import ICollection
+from .interfaces import IUserService
+from .interfaces import IContainerCollection
 
 def _find_name( obj ):
 	return getattr( obj, 'name', None ) \
@@ -102,14 +99,13 @@ def _collections( self, containers ):
 		# TODO: Verify that only the first part is needed, because
 		# the site manager hooks are properly installed at runtime.
 		# See the test package for info.
-		adapt = app_interfaces.ICollection(x,None) or \
-				component.queryAdapter( x, app_interfaces.ICollection )
+		adapt = ICollection(x,None) or component.queryAdapter( x, ICollection )
 		if not adapt: 
 			continue
 		adapt.__parent__ = self # Right?
 		yield adapt
 
-@interface.implementer(app_interfaces.IWorkspace)
+@interface.implementer(IWorkspace)
 @component.adapter(nti_interfaces.IContainerIterable)
 class ContainerEnumerationWorkspace(_ContainerWrapper):
 	"""
@@ -127,7 +123,7 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 	def collections( self ):
 		return _collections( self, self._container.itercontainers() )
 
-@interface.implementer(app_interfaces.IContainerCollection)
+@interface.implementer(IContainerCollection)
 @component.adapter(nti_interfaces.IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
 
@@ -159,7 +155,7 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 		# this kind of thing or not
 		# TODO: This can probably be generalized up
 		user = None
-		user_service = traversal.find_interface( self, app_interfaces.IUserService )
+		user_service = traversal.find_interface( self, IUserService )
 		if user_service:
 			user = user_service.user
 		if user:
@@ -201,7 +197,7 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 		return fake_container
 
 @interface.implementer(mime_interfaces.IContentTypeAware)
-@component.adapter(app_interfaces.ICollection)
+@component.adapter(ICollection)
 class CollectionContentTypeAware(object):
 
 	mimeType = mimetype.nti_mimetype_with_class( 'collection' )
@@ -288,7 +284,7 @@ def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
 		_links.append( link )
 	return _links
 
-@interface.implementer(app_interfaces.IWorkspace)
+@interface.implementer(IWorkspace)
 @component.adapter(nti_interfaces.IDataserverFolder)
 class GlobalWorkspace(object):
 	"""
@@ -336,164 +332,6 @@ class GlobalCollection(object):
 	@property
 	def accepts(self):
 		return ()
-
-@interface.implementer(IExternalObject)
-@component.adapter(app_interfaces.ICollection)
-class CollectionSummaryExternalizer(object):
-
-	def __init__( self, collection ):
-		self._collection = collection
-
-	def toExternalObject( self, **kwargs ):
-		collection = self._collection
-		ext_collection = LocatedExternalDict()
-		ext_collection.__name__ = collection.__name__
-		ext_collection.__parent__ = collection.__parent__
-		ext_collection[StandardExternalFields.CLASS] = 'Collection'
-		ext_collection['Title'] = collection.name
-		ext_collection['href'] = nti_traversal.normal_resource_path( collection )
-		accepts = collection.accepts
-		if accepts is not None:
-			ext_collection['accepts'] = [mimetype.nti_mimetype_from_object( x ) for x in accepts]
-			if nti_interfaces.ISimpleEnclosureContainer.providedBy( collection ):
-				ext_collection['accepts'].extend( ('image/*',) )
-				ext_collection['accepts'].extend( ('application/pdf',) )
-			ext_collection['accepts'].sort() # For the convenience of tests
-
-		_links = datastructures.find_links( self._collection )
-		if _links:
-			ext_collection[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
-
-		return ext_collection
-
-@interface.implementer(IExternalObject)
-@component.adapter(app_interfaces.IContainerCollection)
-class ContainerCollectionDetailExternalizer(object):
-
-	def __init__(self, collection ):
-		self._collection = collection
-
-	def toExternalObject( self, **kwargs ):
-		collection = self._collection
-		container = collection.container
-		# Feeds can include collections, as a signal of places that
-		# can be posted to in order to add items to the feed.
-		# Since these things are useful to have at the top level, we do
-		# that as well
-		kwargs.pop('name', None)
-		summary_collection = toExternalObject( collection, name='summary', **kwargs )
-		# Copy the basic attributes
-		ext_collection = to_standard_external_dictionary( collection, **kwargs )
-		# Then add the summary info as top-level...
-		ext_collection.update( summary_collection )
-		# ... and nested
-		ext_collection['Collection'] = summary_collection
-		ext_collection[StandardExternalFields.LAST_MODIFIED] = container.lastModified
-		# Feeds contain 'entries' which can be internal (inline)
-		# or external. Right now we're always inlining.
-		# We use our old 'items' convention. It could be either
-		# a dictionary or an array
-
-		# TODO: Think about this. We should probably
-		# introduce an 'Entry' wrapper for each item so we can add
-		# properties to it and not pollute the namespace of each item.
-		# This might also facilitate a level of indirection, allowing
-		# external out-of-line entries a bit easier.
-		# The downside is backward compatibility.
-		# TODO: We need to be putting mimetype info on each of these
-		# if not already present. Who should be responsible for that?
-		def fixup( v_, item ):
-			# FIXME: This is similar to the renderer. See comments in the renderer.
-			if StandardExternalFields.LINKS in item:
-				item[StandardExternalFields.LINKS] = [rest.render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
-													  for link
-													  in item[StandardExternalFields.LINKS]]
-			# TODO: The externalization process and/or the renderer should be handling
-			# this entirely. But right now we're the only place with all the relevant info,
-			# so we're doing it. But that violates some layers and make us depend on a request.
-
-			# FIXME: These inner nested objects aren't going through the process of getting ACLs
-			# applied to them or their lineage. We really want them to be returning ACLLocationProxy
-			# objects. Because they have no ACL, then our editing information is incorrect.
-			# We have made a first pass at this below with acl_wrapped which is nearly correct
-			request = get_current_request()
-
-			if request and is_writable( v_, request ):
-				item.setdefault( StandardExternalFields.LINKS, [] )
-				if not any( [l['rel'] == 'edit' for l in item[StandardExternalFields.LINKS]]):
-					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
-					if valid_traversal_path and not valid_traversal_path.startswith( '/' ):
-						valid_traversal_path = None
-					if valid_traversal_path:
-						item[StandardExternalFields.LINKS].append( links.Link( valid_traversal_path,
-																			   rel='edit' ) )
-			if 'href' not in item and getattr( v_, '__parent__', None ) is not None:
-				# Let this thing try to produce its
-				# own href
-				# TODO: This if test is probably not needed anymore, with zope.location.traversing
-				# it will either work or raise
-				try:
-					valid_traversal_path = nti_traversal.normal_resource_path( v_ )
-					if valid_traversal_path and valid_traversal_path.startswith( '/' ):
-						item['href'] = valid_traversal_path
-				except TypeError:
-					# Usually "Not enough context information to get all parents"
-					pass
-			return item
-
-		if 	isinstance( container, collections.Mapping ) and \
-			not getattr(container, '_v_container_ext_as_list', False):
-			ext_collection['Items'] = { k: fixup(v,toExternalObject(v,**kwargs)) for k,v in container.iteritems()
-										if not isSyntheticKey( k )}
-		else:
-			ext_collection['Items'] = [fixup(v,toExternalObject(v, **kwargs)) for v in container]
-
-		# Need to add hrefs to each item.
-		# In the near future, this will be taken care of automatically.
-		temp_res = location.Location()
-		temp_res.__parent__ = collection
-		for item in (ext_collection['Items'].itervalues()
-					 if isinstance(ext_collection['Items'], collections.Mapping)
-					 else ext_collection['Items']):
-			if 'href' not in item and 'ID' in item:
-				temp_res.__name__ = item['ID']
-				item['href'] = nti_traversal.normal_resource_path( temp_res )
-
-		return ext_collection
-
-def _magic_link_externalizer(_links):
-	# Note that we are handling link traversal for
-	# links that are string based here. Somewhere up the line
-	# we're losing context and failing to render if we don't.
-	# We only do this for things that are set up specially in
-	# this module.
-	for l in _links:
-		if l.target == getattr(l, '__name__', None):
-			# We know the ntiid gets used as the href
-			l.ntiid = nti_traversal.normal_resource_path(l)
-			l.target = l
-	return _links
-
-@interface.implementer(IExternalObject)
-@component.adapter(app_interfaces.IWorkspace)
-class WorkspaceExternalizer(object):
-
-	def __init__( self, workspace ):
-		self._workspace = workspace
-
-	def toExternalObject( self, **kwargs ):
-		kwargs.pop('name', None)
-		result = LocatedExternalDict()
-		result[StandardExternalFields.CLASS] = 'Workspace'
-		result['Title'] = self._workspace.name or getattr( self._workspace, '__name__', None )
-		items = [toExternalObject( collection, name='summary', **kwargs )
-				 for collection
-				 in self._workspace.collections]
-		result['Items'] = items
-		_links = datastructures.find_links( self._workspace )
-		if _links:
-			result[StandardExternalFields.LINKS] = _magic_link_externalizer( _links )
-		return result
 
 def _create_search_links( parent ):
 	# Note that we are providing a complete link with a target
@@ -612,49 +450,6 @@ class _NTIIDEntry(object):
 									  type(self).__name__, 
 									  self.ntiid, hex(id(self)) )
 
-@interface.implementer(IExternalObject)
-@component.adapter(app_interfaces.IContentUnitInfo)
-class _NTIIDEntryExternalizer(object):
-
-	def __init__( self, context ):
-		self.context = context
-
-	def toExternalObject(self, **kwargs):
-		result = to_standard_external_dictionary( self.context, **kwargs )
-		return result
-
-from nti.dataserver.links_external import render_link
-
-@interface.implementer(IExternalMappingDecorator)
-@component.adapter(app_interfaces.IContentUnitInfo) # TODO: IModeledContent?
-class ContentUnitInfoHrefDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping( self, context, mapping ):
-		if 'href' in mapping:
-			return
-
-		try:
-			# Some objects are not in the traversal tree. Specifically,
-			# chatserver.IMeeting (which is IModeledContent and IPersistent)
-			# Our options are to either catch that here, or introduce an
-			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = nti_traversal.find_nearest_site( context )
-		except TypeError:
-			nearest_site = None
-
-		if nearest_site is None:
-			logger.debug("Not providing href links for %s, could not find site", 
-						 type(context) )
-			return
-
-		link = links.Link( nearest_site, elements=('Objects', context.ntiid) )
-		link.__parent__ = getattr(nearest_site, '__parent__', None) # Nearest site may be IRoot, which has no __parent__
-		link.__name__ = ''
-		interface.alsoProvides( link, loc_interfaces.ILocation )
-	
-		mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
 
 class _RootNTIIDEntry(_NTIIDEntry):
 	"""
@@ -735,7 +530,7 @@ class _UserPagesCollection(location.Location):
 			else:
 				yield term.token
 
-@interface.implementer(app_interfaces.IContainerCollection)
+@interface.implementer(IContainerCollection)
 @component.adapter(nti_interfaces.IUser)
 def _UserPagesCollectionFactory( user ):
 	"""
@@ -743,8 +538,8 @@ def _UserPagesCollectionFactory( user ):
 	"""
 	return _UserPagesCollection( UserEnumerationWorkspace( user ) )
 
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
+@interface.implementer(IWorkspace)
+@component.adapter(IUserService)
 def _user_workspace( user_service ):
 	# The main user workspace lives at /users/ME/
 	user_workspace = UserEnumerationWorkspace( user_service.user )
@@ -752,14 +547,14 @@ def _user_workspace( user_service ):
 	user_workspace.__parent__ = user_service
 	return user_workspace
 
-@interface.implementer(app_interfaces.IWorkspace)
-@component.adapter(app_interfaces.IUserService)
+@interface.implementer(IWorkspace)
+@component.adapter(IUserService)
 def _global_workspace( user_service ):
 	global_ws = GlobalWorkspace(parent=user_service.__parent__)
 	assert global_ws.__parent__
 	return global_ws
 
-@interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
+@interface.implementer(IUserService, mime_interfaces.IContentTypeAware)
 @component.adapter(nti_interfaces.IUser)
 class UserService(location.Location):
 
@@ -788,45 +583,6 @@ class UserService(location.Location):
 		"""
 		return sorted( [workspace
 						for workspace
-						in component.subscribers( (self,), app_interfaces.IWorkspace )
+						in component.subscribers( (self,), IWorkspace )
 						if workspace],
 					   key=lambda w: w.name )
-
-@interface.implementer(IExternalObject)
-@component.adapter(app_interfaces.IService)
-class ServiceExternalizer(object):
-
-	def __init__( self, service ):
-		self.context = service
-
-	def toExternalObject( self, **kwargs ):
-		result = LocatedExternalDict()
-		result.__parent__ = self.context.__parent__
-		result.__name__ = self.context.__name__
-		result[StandardExternalFields.CLASS] = 'Service'
-		result[StandardExternalFields.MIMETYPE] = mimetype.nti_mimetype_with_class( 'Service' )
-		result['Items'] = [toExternalObject(ws, **kwargs) for ws in self.context.workspaces]
-		return result
-
-@component.adapter(app_interfaces.IUserService)
-class UserServiceExternalizer(ServiceExternalizer):
-
-	def toExternalObject(self, **kwargs):
-		result = super(UserServiceExternalizer,self).toExternalObject(**kwargs)
-		# TODO: This is almost hardcoded. Needs replaced with something dynamic.
-		# Querying the utilities for the user, which would be registered for specific
-		# IUser types or something...
-
-		registry = vocabulary.getVocabularyRegistry()
-		cap_vocab = registry.get(self.context.user, CAPABILITY_VOCAB_NAME)
-		capabilities = {term.value for term in cap_vocab}
-
-		# TODO: This should probably be subscriber, not adapter, so that
-		# the logic doesn't have to be centralized in one place and can be additive (actually subtractive)
-		# Or vice-versa, when this becomes dynamic
-
-		cap_filter = component.queryAdapter( self.context.user, app_interfaces.IUserCapabilityFilter )
-		if cap_filter:
-			capabilities = cap_filter.filterCapabilities( capabilities )
-		result['CapabilityList'] = list( capabilities )
-		return result
