@@ -16,6 +16,7 @@ from nti.dataserver.contenttypes.forums import MessageFactory as _
 from zope import schema
 from zope import interface
 from zope import component
+
 from zope.cachedescriptors.property import cachedIn
 
 ### Board

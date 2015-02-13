@@ -15,6 +15,7 @@ from urllib import quote as UQ
 
 from zope import component
 from zope import interface
+
 from zope.location.interfaces import ILocationInfo
 
 from pyramid import traversal
@@ -25,8 +26,9 @@ from nti.app.authentication import get_remote_user
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
-from nti.appserver.interfaces import IService
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+
+from nti.appserver.workspaces.interfaces import IService
 
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage

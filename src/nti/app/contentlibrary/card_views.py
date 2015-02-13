@@ -68,7 +68,6 @@ def pageinfo_from_content_card_view(request):
 	assert request.accept
 	return find_page_info_view_helper( request, request.context.path[-1] )
 
-
 @view_config(accept=b'application/vnd.nextthought.link+json', **_view_defaults)
 def get_card_view_link( request ):
 	# Not supported.

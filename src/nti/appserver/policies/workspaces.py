@@ -12,8 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.appserver.interfaces import IUserWorkspace
-from nti.appserver.interfaces import IContainerCollection
+from nti.appserver.workspaces.interfaces import IUserWorkspace
+from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 
