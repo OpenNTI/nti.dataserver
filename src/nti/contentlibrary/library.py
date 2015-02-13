@@ -117,7 +117,7 @@ def _register_units( content_unit ):
 	intids = component.queryUtility( zope.intid.IIntIds )
 	if intids is None:
 		return
-	
+
 	def _register( obj ):
 		try:
 			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
@@ -138,7 +138,7 @@ def _unregister_units( content_unit ):
 	intids = component.queryUtility( zope.intid.IIntIds )
 	if intids is None:
 		return
-	
+
 	def _unregister( obj ):
 		intid = None
 		try:
@@ -465,21 +465,24 @@ class AbstractContentPackageLibrary(object):
 	def _clear_caches(self):
 		self._v_path_to_ntiid_cache.clear()
 
-	def pathToNTIID(self, ntiid):
+	def pathToNTIID(self, ntiid, skip_cache=False):
 		"""
-		 Returns a list of TOCEntry objects in order until
+		Returns a list of TOCEntry objects in order until
 		the given ntiid is encountered, or None of the id cannot be found.
 		"""
 		# We store as weak refs to avoid ConnectionStateErrors
 		# and to reduce memory usage.
 		# TODO We could increase this cache size if it's extremely small,
 		# as expected.
-		result = self._v_path_to_ntiid_cache.get(ntiid)
-		if result:
-			return [x() for x in result]
-		elif result is not None:
-			# Empty list
-			return None
+		result = None
+
+		if not skip_cache:
+			result = self._v_path_to_ntiid_cache.get(ntiid)
+			if result:
+				return [x() for x in result]
+			elif result is not None:
+				# Empty list
+				return None
 
 		# We special case the root ntiid by only looking in
 		# the top level of content packages for our ID.  We should
@@ -496,12 +499,13 @@ class AbstractContentPackageLibrary(object):
 					result = vals
 					break
 
-		if result:
-			cache_val = [_PathCacheContentUnitWeakRef(x) for x in result]
-			self._v_path_to_ntiid_cache.put( ntiid, cache_val )
-		else:
-			# Make sure we don't lose these worst-cases.
-			self._v_path_to_ntiid_cache.put( ntiid, [] )
+		if not skip_cache:
+			if result:
+				cache_val = [_PathCacheContentUnitWeakRef(x) for x in result]
+				self._v_path_to_ntiid_cache.put( ntiid, cache_val )
+			else:
+				# Make sure we don't lose these worst-cases.
+				self._v_path_to_ntiid_cache.put( ntiid, [] )
 		return result
 
 	def childrenOfNTIID( self, ntiid ):
