@@ -52,10 +52,12 @@ class DefaultSuggestedContactRankingPolicy(object):
 	def sort(cls, contacts):
 		contacts = contacts or ()
 		return sorted(contacts, reverse=True)
+SuggestedContactRankingPolicy = DefaultSuggestedContactRankingPolicy 
 
 @interface.implementer(ISuggestedContactsContext)
 class DefaultSuggestedContactsContext(object):
 	priority = 1
+SuggestedContactsContext = DefaultSuggestedContactsContext 
 
 @interface.implementer(ISuggestedContactsProvider)
 class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
@@ -65,3 +67,4 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	def priority(self):
 		result = getattr(self.context, 'priority', None) or 1
 		return result
+SuggestedContactsProvider = DefaultSuggestedContactsProvider 
