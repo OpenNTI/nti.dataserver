@@ -15,12 +15,13 @@ import warnings
 
 from zope import interface
 from zope import component
-from zope.location import location
-from zope.location import interfaces as loc_interfaces
+
+from zope.location.location import Location
+from zope.location.interfaces import ILocation
 
 from zope.container.constraints import IContainerTypesConstraint
 
-from zope.mimetype import interfaces as mime_interfaces
+from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.schema import interfaces as sch_interfaces
 
@@ -33,15 +34,21 @@ from nti.common.property import alias
 from nti.dataserver import links
 from nti.dataserver.users import User
 from nti.dataserver import datastructures
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IFriendsList
+from nti.dataserver.interfaces import INamedContainer
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import IContainerIterable
+from nti.dataserver.interfaces import IFriendsListContainer
+from nti.dataserver.interfaces import IHomogeneousTypeContainer
 
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
-
-from .._util import link_belongs_to_user
 
 from ..traversal import find_interface
 
@@ -60,6 +67,7 @@ from .interfaces import IUserWorkspace
 from .interfaces import IContainerCollection
 from .interfaces import IUserWorkspaceLinkProvider
 
+# pylint
 itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
 
 def _find_name( obj ):
@@ -73,7 +81,7 @@ class _ContainerWrapper(object):
 
 	If the container is location aware, we will default to using its
 	parent and its name. If the container happens to be a 
-	:class:`nti_interfaces.INamedContainer` we will use that name as a 
+	:class:`INamedContainer` we will use that name as a 
 	last resort. This can be overridden.
 	"""
 
@@ -108,13 +116,13 @@ def _collections( self, containers ):
 		yield adapt
 
 @interface.implementer(IWorkspace)
-@component.adapter(nti_interfaces.IContainerIterable)
+@component.adapter(IContainerIterable)
 class ContainerEnumerationWorkspace(_ContainerWrapper):
 	"""
 	A workspace wrapping a container. Location aware.
 
 	If the container is location aware, we will default to using its
-	parent and its name. If the container happens to be a :class:`nti_interfaces.INamedContainer`
+	parent and its name. If the container happens to be a :class:`INamedContainer`
 	we will use that name as a last resort. This can be overridden.
 	"""
 
@@ -126,7 +134,7 @@ class ContainerEnumerationWorkspace(_ContainerWrapper):
 		return _collections( self, self._container.itercontainers() )
 
 @interface.implementer(IContainerCollection)
-@component.adapter(nti_interfaces.IHomogeneousTypeContainer)
+@component.adapter(IHomogeneousTypeContainer)
 class HomogeneousTypedContainerCollection(_ContainerWrapper):
 
 	def __init__( self, container ):
@@ -140,7 +148,7 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 	def container(self):
 		return self._container
 
-@component.adapter(nti_interfaces.IFriendsListContainer)
+@component.adapter(IFriendsListContainer)
 class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 	"""
 	Magically adds the dynamic sharing communities that a user is a member of
@@ -186,7 +194,7 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 						the_logger=logger )
 
 		for x in entity_dynamic_memberships:
-			if nti_interfaces.IFriendsList.providedBy( x ):
+			if IFriendsList.providedBy( x ):
 				dfl_memberships.append( x )
 
 		if not dfl_memberships:
@@ -202,8 +210,8 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 		fake_container.lastModified = self._container.lastModified
 		return fake_container
 
-@interface.implementer(mime_interfaces.IContentTypeAware)
 @component.adapter(ICollection)
+@interface.implementer(IContentTypeAware)
 class CollectionContentTypeAware(object):
 
 	mimeType = mimetype.nti_mimetype_with_class( 'collection' )
@@ -279,19 +287,19 @@ def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
 	for name in names:
 		target = name
 		if pseudo_target: # Hmm...
-			target = location.Location()
+			target = Location()
 			target.__name__ = name
 			target.__parent__ = parent
 
 		link = links.Link( target, rel=name )
 		link.__name__ = link.target
 		link.__parent__ = parent
-		interface.alsoProvides( link, loc_interfaces.ILocation )
+		interface.alsoProvides( link, ILocation )
 		_links.append( link )
 	return _links
 
 @interface.implementer(IWorkspace)
-@component.adapter(nti_interfaces.IDataserverFolder)
+@component.adapter(IDataserverFolder)
 class GlobalWorkspace(object):
 	"""
 	Represents things that are global resolvers. Typically, these
@@ -419,7 +427,7 @@ class _NTIIDEntry(object):
 			if token_creator and remote_user:
 				token = token_creator.getTokenForUserId( remote_user.username )
 				if token:
-					target = location.Location()
+					target = Location()
 					target.__name__ = 'RecursiveStream'
 					target.__parent__ = self.__parent__
 					link = links.Link( target,
@@ -451,7 +459,7 @@ class _RootNTIIDEntry(_NTIIDEntry):
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
-class _UserPagesCollection(location.Location):
+class _UserPagesCollection(Location):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
 	"""
@@ -479,7 +487,7 @@ class _UserPagesCollection(location.Location):
 		return result
 
 	def _make_parent(self, ntiid):
-		ent_parent = location.Location()
+		ent_parent = Location()
 		ent_parent.__name__ = "%s(%s)" % (self.name, ntiid)
 		ent_parent.__parent__ = self.__parent__
 		return ent_parent
@@ -521,8 +529,8 @@ class _UserPagesCollection(location.Location):
 			else:
 				yield term.token
 
+@component.adapter(IUser)
 @interface.implementer(IContainerCollection)
-@component.adapter(nti_interfaces.IUser)
 def _UserPagesCollectionFactory( user ):
 	"""
 	Used as a shortcut from the user to the pages class sections. Deprecated.
@@ -545,9 +553,9 @@ def _global_workspace( user_service ):
 	assert global_ws.__parent__
 	return global_ws
 
-@interface.implementer(IUserService, mime_interfaces.IContentTypeAware)
-@component.adapter(nti_interfaces.IUser)
-class UserService(location.Location):
+@component.adapter(IUser)
+@interface.implementer(IUserService, IContentTypeAware)
+class UserService(Location):
 
 	mimeType = mimetype.nti_mimetype_with_class( 'workspace' )
 
@@ -556,7 +564,7 @@ class UserService(location.Location):
 	def __init__( self, user ):
 		self.user = user
 		self.__name__ = 'users'
-		self.__parent__ = component.getUtility( nti_interfaces.IDataserver ).root
+		self.__parent__ = component.getUtility(IDataserver).root
 
 	@property
 	def user_workspace(self):
