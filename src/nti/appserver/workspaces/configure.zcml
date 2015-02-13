@@ -53,6 +53,12 @@
 
 	<adapter factory=".CollectionContentTypeAware" />
 	
+	<subscriber	factory=".providers._SearchLinksProvider"
+				provides=".interfaces.IUserWorkspaceLinkProvider"/>
+			
+	<subscriber	factory=".providers._ResolveMeLinkProvider"
+				provides=".interfaces.IUserWorkspaceLinkProvider"/>
+					
 	<!-- Externalization -->
 	<adapter factory=".externalization.ServiceExternalizer" />
 	

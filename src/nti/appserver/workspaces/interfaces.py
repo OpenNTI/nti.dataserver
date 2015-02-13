@@ -90,7 +90,7 @@ class IUserWorkspace(IWorkspace):
 
 class IUserWorkspaceLinkProvider(interface.Interface):
 	
-	def links():
+	def links(workspace):
 		"""
 		return an interable of user links
 		"""
