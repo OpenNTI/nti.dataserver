@@ -8,6 +8,7 @@ and only write the minimal base and avoid interface-based decoration.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,49 +20,55 @@ from zope import component
 from nti.externalization.interfaces import IInternalObjectIO
 from nti.externalization.datastructures import InterfaceObjectIO
 
-from . import interfaces
-
 from nti.externalization.internalization import register_legacy_search_module
 register_legacy_search_module('nti.contentrange.contentrange')
 
+from .interfaces import ITextContext
+from .interfaces import IDomContentPointer
+from .interfaces import ITimeContentPointer
+from .interfaces import ITimeRangeDescription
+from .interfaces import IContentRangeDescription
+from .interfaces import ITranscriptContentPointer
+from .interfaces import ITranscriptRangeDescription
+
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.IDomContentPointer)
+@component.adapter(IDomContentPointer)
 class DomContentPointerExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.IDomContentPointer
+	_ext_iface_upper_bound = IDomContentPointer
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.ITextContext)
+@component.adapter(ITextContext)
 class TextContextExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.ITextContext
+	_ext_iface_upper_bound = ITextContext
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.IContentRangeDescription)
+@component.adapter(IContentRangeDescription)
 class ContentRangeDescriptionExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.IContentRangeDescription
+	_ext_iface_upper_bound = IContentRangeDescription
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.ITimeContentPointer)
+@component.adapter(ITimeContentPointer)
 class TimeContentPointerExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.ITimeContentPointer
+	_ext_iface_upper_bound = ITimeContentPointer
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.ITimeRangeDescription)
+@component.adapter(ITimeRangeDescription)
 class TimeRangeDescriptionExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.ITimeRangeDescription
+	_ext_iface_upper_bound = ITimeRangeDescription
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.ITranscriptContentPointer)
+@component.adapter(ITranscriptContentPointer)
 class TranscriptContentPointerExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.ITranscriptContentPointer
+	_ext_iface_upper_bound = ITranscriptContentPointer
 	__external_use_minimal_base__ = True
 
 @interface.implementer(IInternalObjectIO)
-@component.adapter(interfaces.ITranscriptRangeDescription)
+@component.adapter(ITranscriptRangeDescription)
 class TranscriptRangeDescriptionExternal(InterfaceObjectIO):
-	_ext_iface_upper_bound = interfaces.ITranscriptRangeDescription
+	_ext_iface_upper_bound = ITranscriptRangeDescription
 	__external_use_minimal_base__ = True

@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,75 +13,43 @@ from zope import interface
 
 from nti.externalization.representation import WithRepr
 
+from nti.schema.schema import EqHash
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from . import interfaces
-from . import contentrange
+from .interfaces import ITimeContentPointer
+from .interfaces import ITimeRangeDescription
+from .interfaces import ITranscriptContentPointer
+from .interfaces import ITranscriptRangeDescription
 
-@interface.implementer(interfaces.ITimeContentPointer)
+from .contentrange import ContentPointer
+from .contentrange import ContentRangeDescription
+
+@interface.implementer(ITimeContentPointer)
 @WithRepr
-class TimeContentPointer(contentrange.ContentPointer):
+@EqHash("role", "seconds")
+class TimeContentPointer(ContentPointer):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.timecontentpointer'
-	createDirectFieldProperties(interfaces.ITimeContentPointer)
+	createDirectFieldProperties(ITimeContentPointer)
 
-	def __eq__(self, other):
-		try:
-			return self is other or (self.role == other.role
-									 and self.seconds == other.seconds)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return hash((self.role, self.seconds))
-
-@interface.implementer(interfaces.ITimeRangeDescription)
+@interface.implementer(ITimeRangeDescription)
 @WithRepr
-class TimeRangeDescription(contentrange.ContentRangeDescription):
+@EqHash("seriesId", "start", "end")
+class TimeRangeDescription(ContentRangeDescription):
 	__external_can_create__ = True
 	mime_type = 'application/vnd.nextthought.contentrange.timerangedescription'
-	createDirectFieldProperties(interfaces.ITimeRangeDescription)
+	createDirectFieldProperties(ITimeRangeDescription)
 
-	def __eq__(self, other):
-		try:
-			return self is other or (self.seriesId == other.seriesId
-									 and self.start == other.start
-									 and self.end == other.end)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return hash((self.seriesId, self.start, self.end))
-
-@interface.implementer(interfaces.ITranscriptContentPointer)
+@interface.implementer(ITranscriptContentPointer)
 @WithRepr
+@EqHash("pointer", "cueid")
 class TranscriptContentPointer(TimeContentPointer):
 	mime_type = 'application/vnd.nextthought.contentrange.transcriptcontentpointer'
-	createDirectFieldProperties(interfaces.ITranscriptContentPointer)
+	createDirectFieldProperties(ITranscriptContentPointer)
 
-	def __eq__(self, other):
-		try:
-			return super(TranscriptContentPointer, self).__eq__(other) and (self.pointer == other.pointer
-									 									and self.cueid == other.cueid)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return hash((self.pointer, self.cueid))
-
-@interface.implementer(interfaces.ITranscriptRangeDescription)
+@interface.implementer(ITranscriptRangeDescription)
 @WithRepr
+@EqHash("start", "end")
 class TranscriptRangeDescription(TimeRangeDescription):
 	mime_type = 'application/vnd.nextthought.contentrange.transcriptrangedescription'
-	createDirectFieldProperties(interfaces.ITranscriptRangeDescription)
-
-	def __eq__(self, other):
-		try:
-			return super(TranscriptRangeDescription, self).__eq__(other) and (self.start == other.start
-									 										  and self.end == other.end)
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return hash((self.start, self.end))
-
+	createDirectFieldProperties(ITranscriptRangeDescription)
