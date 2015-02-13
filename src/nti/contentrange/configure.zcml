@@ -8,12 +8,12 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 	<include package="zope.location" />
 	
 	<include package="nti.externalization" />
 
 	<!-- Externalization -->
-
 	<adapter factory=".externalization.TextContextExternal" />
 	<adapter factory=".externalization.DomContentPointerExternal" />
 	<adapter factory=".externalization.ContentRangeDescriptionExternal" />
