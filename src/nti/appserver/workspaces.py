@@ -11,29 +11,40 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import collections
 import warnings
+import collections
 
 from zope import interface
 from zope import component
 from zope.location import location
 from zope.location import interfaces as loc_interfaces
+
 from zope.mimetype import interfaces as mime_interfaces
+
 from zope.schema import interfaces as sch_interfaces
 
 from zope.container.constraints import IContainerTypesConstraint
 
 from zope.schema import vocabulary
 
+from pyramid.interfaces import IView
+from pyramid.interfaces import IViewClassifier
+from pyramid.threadlocal import get_current_request
+
+from nti.app.renderers import rest
+
+from nti.common.property import alias
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
+from nti.externalization.interfaces import IExternalObject
+from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.externalization import toExternalObject, isSyntheticKey
-from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.singleton import SingletonDecorator
-import nti.externalization.interfaces as ext_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import links
@@ -43,37 +54,28 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from nti.utils.property import alias
-
-from nti.app.renderers import rest
-
-import nti.appserver.interfaces as app_interfaces
-from nti.appserver.capabilities import interfaces as cap_interfaces
-
-from . import traversal
-
 from .pyramid_authorization import is_writable
-
-from pyramid.interfaces import IView
-from pyramid.interfaces import IViewClassifier
 
 from ._util import link_belongs_to_user
 
-from pyramid.threadlocal import get_current_request
+from .capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
+
+from . import traversal
+from . import interfaces as app_interfaces
 
 def _find_name( obj ):
 	return getattr( obj, 'name', None ) \
 		   or getattr( obj, '__name__', None ) \
 		   or getattr( obj, 'container_name', None )
 
-
 class _ContainerWrapper(object):
 	"""
 	An object wrapping a container. Location aware.
 
 	If the container is location aware, we will default to using its
-	parent and its name. If the container happens to be a :class:`nti_interfaces.INamedContainer`
-	we will use that name as a last resort. This can be overridden.
+	parent and its name. If the container happens to be a 
+	:class:`nti_interfaces.INamedContainer` we will use that name as a 
+	last resort. This can be overridden.
 	"""
 
 	_name_override = None
@@ -100,8 +102,10 @@ def _collections( self, containers ):
 		# TODO: Verify that only the first part is needed, because
 		# the site manager hooks are properly installed at runtime.
 		# See the test package for info.
-		adapt = app_interfaces.ICollection(x,None) or component.queryAdapter( x, app_interfaces.ICollection )
-		if not adapt: continue
+		adapt = app_interfaces.ICollection(x,None) or \
+				component.queryAdapter( x, app_interfaces.ICollection )
+		if not adapt: 
+			continue
 		adapt.__parent__ = self # Right?
 		yield adapt
 
@@ -159,14 +163,15 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 		if user_service:
 			user = user_service.user
 		if user:
-			vocab = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( user )
+			factory = component.getUtility(sch_interfaces.IVocabularyFactory,
+										   "Creatable External Object Types" )
+			vocab = factory( user )
 			try:
-				vocab.getTermByToken( mimetype.nti_mimetype_from_object( self._container.contained_type ) )
+				vocab.getTermByToken(mimetype.nti_mimetype_from_object(self._container.contained_type))
 			except LookupError:
 				# We can prove that we cannot create it, it's not in our vocabulary.
 				return ()
 		return (self._container.contained_type,)
-
 
 	@property
 	def container(self):
@@ -204,7 +209,6 @@ class CollectionContentTypeAware(object):
 	def __init__( self, collection ):
 		pass
 
-
 def _find_named_link_views(parent, provided=None):
 	"""
 	Introspect the component registry to find the things that
@@ -218,8 +222,6 @@ def _find_named_link_views(parent, provided=None):
 	"""
 
 	request = get_current_request() or app_interfaces.MissingRequest()
-
-
 
 	# Pyramid's request_iface property is a dynamically generated
 	# interface class that incorporates the name of the route.
@@ -247,7 +249,8 @@ def _find_named_link_views(parent, provided=None):
 			# View Functions will directly provide the interface;
 			# view classes, OTOH, will tend to implement it (because using
 			# the @implementer() decorator is easy)
-			if app_interfaces.INamedLinkView.providedBy( v ) or app_interfaces.INamedLinkView.implementedBy( v ):
+			if 	app_interfaces.INamedLinkView.providedBy( v ) or \
+				app_interfaces.INamedLinkView.implementedBy( v ):
 				return True
 
 	adapters = component.getSiteManager().adapters
@@ -284,7 +287,6 @@ def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
 		interface.alsoProvides( link, loc_interfaces.ILocation )
 		_links.append( link )
 	return _links
-
 
 @interface.implementer(app_interfaces.IWorkspace)
 @component.adapter(nti_interfaces.IDataserverFolder)
@@ -335,7 +337,7 @@ class GlobalCollection(object):
 	def accepts(self):
 		return ()
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(app_interfaces.ICollection)
 class CollectionSummaryExternalizer(object):
 
@@ -364,7 +366,7 @@ class CollectionSummaryExternalizer(object):
 
 		return ext_collection
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(app_interfaces.IContainerCollection)
 class ContainerCollectionDetailExternalizer(object):
 
@@ -425,7 +427,6 @@ class ContainerCollectionDetailExternalizer(object):
 					if valid_traversal_path:
 						item[StandardExternalFields.LINKS].append( links.Link( valid_traversal_path,
 																			   rel='edit' ) )
-
 			if 'href' not in item and getattr( v_, '__parent__', None ) is not None:
 				# Let this thing try to produce its
 				# own href
@@ -440,7 +441,8 @@ class ContainerCollectionDetailExternalizer(object):
 					pass
 			return item
 
-		if isinstance( container, collections.Mapping ) and not getattr(container, '_v_container_ext_as_list', False):
+		if 	isinstance( container, collections.Mapping ) and \
+			not getattr(container, '_v_container_ext_as_list', False):
 			ext_collection['Items'] = { k: fixup(v,toExternalObject(v,**kwargs)) for k,v in container.iteritems()
 										if not isSyntheticKey( k )}
 		else:
@@ -472,7 +474,7 @@ def _magic_link_externalizer(_links):
 			l.target = l
 	return _links
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(app_interfaces.IWorkspace)
 class WorkspaceExternalizer(object):
 
@@ -552,6 +554,7 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		return sorted( result, key=lambda x: x.name )
 
 from nti.app.authentication import get_remote_user
+
 @interface.implementer(app_interfaces.IContentUnitInfo)
 class _NTIIDEntry(object):
 
@@ -601,16 +604,15 @@ class _NTIIDEntry(object):
 					# TODO: Token
 					result.append( link )
 
-
-
 		result.extend( self.extra_links )
 		return result
 
 	def __repr__( self ):
-		return "<%s.%s %s at %s>" % ( type(self).__module__, type(self).__name__, self.ntiid, hex(id(self)) )
+		return "<%s.%s %s at %s>" % ( type(self).__module__, 
+									  type(self).__name__, 
+									  self.ntiid, hex(id(self)) )
 
-
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(app_interfaces.IContentUnitInfo)
 class _NTIIDEntryExternalizer(object):
 
@@ -623,7 +625,7 @@ class _NTIIDEntryExternalizer(object):
 
 from nti.dataserver.links_external import render_link
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 @component.adapter(app_interfaces.IContentUnitInfo) # TODO: IModeledContent?
 class ContentUnitInfoHrefDecorator(object):
 
@@ -643,15 +645,15 @@ class ContentUnitInfoHrefDecorator(object):
 			nearest_site = None
 
 		if nearest_site is None:
-			logger.debug( "Not providing href links for %s, could not find site", type(context) )
+			logger.debug("Not providing href links for %s, could not find site", 
+						 type(context) )
 			return
 
 		link = links.Link( nearest_site, elements=('Objects', context.ntiid) )
 		link.__parent__ = getattr(nearest_site, '__parent__', None) # Nearest site may be IRoot, which has no __parent__
 		link.__name__ = ''
 		interface.alsoProvides( link, loc_interfaces.ILocation )
-
-
+	
 		mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
 
 class _RootNTIIDEntry(_NTIIDEntry):
@@ -715,13 +717,15 @@ class _UserPagesCollection(location.Location):
 		# devices and friendslists are sneaking in here where they
 		# don't belong...even though they can be posted here (?)
 		# The fix is to add the right constraints
-		util_callable = component.getUtility(sch_interfaces.IVocabularyFactory, "Creatable External Object Types")
+		util_callable = component.getUtility(sch_interfaces.IVocabularyFactory,
+											 "Creatable External Object Types")
 		vocab = util_callable(self._user)
 		for term in vocab:
 			factory = term.value
 			implementing = factory.getInterfaces()
 			parent = implementing.get( '__parent__')
-			if parent and getattr( parent, 'constraint', None ) and IContainerTypesConstraint.providedBy( parent.constraint ):
+			if 	parent and getattr( parent, 'constraint', None ) and \
+				IContainerTypesConstraint.providedBy( parent.constraint ):
 				parent_types = parent.constraint.types
 				# Hmm. Ok, right now we don't have constraints correct everywhere.
 				# But when we do have constraints, they are not a general object
@@ -734,9 +738,10 @@ class _UserPagesCollection(location.Location):
 @interface.implementer(app_interfaces.IContainerCollection)
 @component.adapter(nti_interfaces.IUser)
 def _UserPagesCollectionFactory( user ):
-	"Used as a shortcut from the user to the pages class sections. Deprecated."
+	"""
+	Used as a shortcut from the user to the pages class sections. Deprecated.
+	"""
 	return _UserPagesCollection( UserEnumerationWorkspace( user ) )
-
 
 @interface.implementer(app_interfaces.IWorkspace)
 @component.adapter(app_interfaces.IUserService)
@@ -753,7 +758,6 @@ def _global_workspace( user_service ):
 	global_ws = GlobalWorkspace(parent=user_service.__parent__)
 	assert global_ws.__parent__
 	return global_ws
-
 
 @interface.implementer(app_interfaces.IUserService, mime_interfaces.IContentTypeAware)
 @component.adapter(nti_interfaces.IUser)
@@ -788,7 +792,7 @@ class UserService(location.Location):
 						if workspace],
 					   key=lambda w: w.name )
 
-@interface.implementer(ext_interfaces.IExternalObject)
+@interface.implementer(IExternalObject)
 @component.adapter(app_interfaces.IService)
 class ServiceExternalizer(object):
 
@@ -813,7 +817,8 @@ class UserServiceExternalizer(ServiceExternalizer):
 		# Querying the utilities for the user, which would be registered for specific
 		# IUser types or something...
 
-		cap_vocab = vocabulary.getVocabularyRegistry().get( self.context.user, cap_interfaces.VOCAB_NAME )
+		registry = vocabulary.getVocabularyRegistry()
+		cap_vocab = registry.get(self.context.user, CAPABILITY_VOCAB_NAME)
 		capabilities = {term.value for term in cap_vocab}
 
 		# TODO: This should probably be subscriber, not adapter, so that
@@ -823,6 +828,5 @@ class UserServiceExternalizer(ServiceExternalizer):
 		cap_filter = component.queryAdapter( self.context.user, app_interfaces.IUserCapabilityFilter )
 		if cap_filter:
 			capabilities = cap_filter.filterCapabilities( capabilities )
-
 		result['CapabilityList'] = list( capabilities )
 		return result
