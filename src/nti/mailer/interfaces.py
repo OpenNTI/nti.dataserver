@@ -21,7 +21,7 @@ IMailer = IMailer # re-export, primarily for testing
 from repoze.sendmail.interfaces import IMailDelivery
 IMailDelivery = IMailDelivery # re-export, primarily for testing
 
-#pylint:disable=I0011,E0213
+# pylint:disable=I0011,E0213
 
 class IEmailAddressable(interface.Interface):
 	"""

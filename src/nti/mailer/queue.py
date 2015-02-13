@@ -16,11 +16,11 @@ from zope import interface
 
 import smtplib
 from email.message import Message
-import boto.ses
 
+import boto.ses
 from boto.ses.exceptions import SESAddressBlacklistedError
 
-from nti.utils.property import Lazy
+from nti.common.property import Lazy
 
 from repoze.sendmail.interfaces import IMailer
 from repoze.sendmail.encoding import encode_message
