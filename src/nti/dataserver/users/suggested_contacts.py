@@ -33,6 +33,14 @@ class SuggestedContact(SchemaConfigured, Contained):
 	
 	createDirectFieldProperties(ISuggestedContact)
 
+	@property
+	def provider(self):
+		return self.__dict__.get('_v_provider')
+	
+	@provider.setter
+	def provider(self, nv):
+		self.__dict__['_v_provider'] = nv
+
 	def __lt__(self, other):
 		try:
 			return (self.rank, self.username) < (other.rank, other.username)
@@ -67,4 +75,7 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	def priority(self):
 		result = getattr(self.context, 'priority', None) or 1
 		return result
+	
+	def suggestions(self, user):
+		raise NotImplementedError()
 SuggestedContactsProvider = DefaultSuggestedContactsProvider 
