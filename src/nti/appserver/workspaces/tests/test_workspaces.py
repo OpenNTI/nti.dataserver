@@ -1,47 +1,60 @@
 #!/usr/bin/env python
-# unittests have too many methods for pylint. pylint can suck it.
-#pylint: disable=R0904
+# -*- coding: utf-8 -*-
 
-from hamcrest import assert_that
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 from hamcrest import is_
 from hamcrest import none
-from hamcrest import has_entry
-from hamcrest import has_length
-from hamcrest import has_item
-from hamcrest import greater_than_or_equal_to
+from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import all_of
-from hamcrest import is_in
-
-from hamcrest import has_property
+from hamcrest import has_item
+from hamcrest import has_entry
 from hamcrest import has_value
+
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
 does_not = is_not
 
-from nti.appserver.workspaces import ContainerEnumerationWorkspace as CEW
-from nti.appserver.workspaces import UserEnumerationWorkspace as UEW
-from nti.appserver.workspaces import HomogeneousTypedContainerCollection as HTCW
-from nti.appserver.workspaces import UserService, _UserPagesCollection as UserPagesCollection
-from nti.appserver.workspaces import FriendsListContainerCollection
+from zope import component
+from zope import interface
 
-from nti.appserver import tests
-from nti.appserver import interfaces as app_interfaces
+from zope.location import location
+from zope.location import interfaces as loc_interfaces
+
+from zope.schema import interfaces as sch_interfaces
+
+from zc import intid as zc_intid
+
+from persistent import Persistent
+
+import transaction
 
 from nti.ntiids import ntiids
 from nti.dataserver import  users
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization import interfaces as ext_interfaces
-from nti.externalization.externalization import toExternalObject, to_external_object
+from nti.externalization.externalization import toExternalObject
+
+from .. import FriendsListContainerCollection
+from .. import UserEnumerationWorkspace as UEW
+from .. import ContainerEnumerationWorkspace as CEW
+from .. import HomogeneousTypedContainerCollection as HTCW
+from .. import UserService, _UserPagesCollection as UserPagesCollection
+
+from ..interfaces import IWorkspace
+from ..interfaces import ICollection
+
+from nti.appserver import tests
+
 from nti.dataserver.tests import mock_dataserver
-
-from zope import interface
-from zope.location import location
-from zope.location import interfaces as loc_interfaces
-from zope import component
-from zope.schema import interfaces as sch_interfaces
-from zc import intid as zc_intid
-from persistent import Persistent
-import transaction
-
 
 # Must create the application so that the views
 # are registered, since we depend on those
@@ -49,9 +62,7 @@ import transaction
 # TODO: Break this dep.
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-
 class TestContainerEnumerationWorkspace(ApplicationLayerTest):
-
 
 	def test_parent(self):
 		loc = location.Location()
@@ -59,7 +70,6 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 		assert_that( CEW(loc).__parent__, is_(self) )
 		loc.__parent__ = None
 		assert_that( CEW(loc).__parent__, is_( none() ) )
-
 
 	def test_name( self ):
 		loc = location.Location()
@@ -75,7 +85,6 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 		cew.__name__ = 'NewName'
 		assert_that( cew.name, is_( 'NewName' ) )
 		assert_that( cew.__name__, is_( 'NewName' ) )
-
 
 	def test_collections(self):
 		class Iter(object):
@@ -96,20 +105,21 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 		cew = CEW( icontainer )
 		assert_that( list( cew.collections ), is_([]) )
 		# itself a collection
-		interface.alsoProvides( container, app_interfaces.ICollection )
-		assert_that( app_interfaces.ICollection( container ), is_(container) )
+		interface.alsoProvides( container, ICollection )
+		assert_that( ICollection( container ), is_(container) )
 		assert_that( list( cew.collections ), is_([container]) )
 
 		# adaptable to a collection
 		container = C()
 		icontainer.conts = (container,)
+		
 		class Adapter(object):
-			interface.implements(app_interfaces.ICollection)
+			interface.implements(ICollection)
 			component.adapts(ITestI)
 			def __init__(self, obj ):
 				self.obj = obj
 
-		assert_that( app_interfaces.ICollection( container, None ), is_(none()) )
+		assert_that(ICollection( container, None ), is_(none()) )
 		component.provideAdapter( Adapter )
 
 		# We discovered that pyramid setup hooking ZCA fails to set the
@@ -117,8 +127,8 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 		# doesn't happen then the following test fails. We cause this connection
 		# to be true in our test base, but that means that we don't really
 		# test both branches of the or condition.
-		assert_that( app_interfaces.ICollection( container, None ), is_(Adapter) )
-		assert_that( component.getAdapter( container, app_interfaces.ICollection ), is_(Adapter) )
+		assert_that( ICollection( container, None ), is_(Adapter) )
+		assert_that( component.getAdapter( container, ICollection ), is_(Adapter) )
 
 		assert_that( list( cew.collections )[0], is_( Adapter ) )
 
@@ -148,11 +158,10 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 		# which in turn has one container
 		assert_that( uew.pages_collection.container, has_length( 1 ) )
 		root = uew.pages_collection.container[0]
-		ext_obj = to_external_object( root )
+		ext_obj = toExternalObject( root )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
-
 
 	@mock_dataserver.WithMockDSTrans
 	def test_shared_container(self):
@@ -175,17 +184,16 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 		assert_that( uew.pages_collection.container, has_length( greater_than_or_equal_to(  2 ) ) )
 		# These come in sorted
 		root = uew.pages_collection.container[0]
-		ext_obj = to_external_object( root, request=self.beginRequest() )
+		ext_obj = toExternalObject( root, request=self.beginRequest() )
 		__traceback_info__ = ext_obj
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		assert_that( ext_obj, has_entry( 'Class', 'PageInfo' ) )
 		assert_that( ext_obj, has_entry( 'MimeType', 'application/vnd.nextthought.pageinfo' ) )
 		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
 
-
 		[shared] = [c for c in uew.pages_collection.container if c.ntiid == PersistentContained.containerId]
 
-		ext_obj = to_external_object( shared, request=self.beginRequest() )
+		ext_obj = toExternalObject( shared, request=self.beginRequest() )
 		assert_that( ext_obj, has_entry( 'ID', PersistentContained.containerId ) )
 		for rel in ('UserGeneratedData', 'RecursiveUserGeneratedData',
 					'Stream', 'RecursiveStream',
@@ -197,10 +205,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
 		transaction.doom()
 
-
-
 class TestHomogeneousTypedContainerCollection(ApplicationLayerTest):
-
 
 	def test_parent(self):
 		loc = location.Location()
@@ -208,7 +213,6 @@ class TestHomogeneousTypedContainerCollection(ApplicationLayerTest):
 		assert_that( HTCW(loc).__parent__, is_(self) )
 		loc.__parent__ = None
 		assert_that( HTCW(loc).__parent__, is_( none() ) )
-
 
 	def test_name( self ):
 		loc = location.Location()
@@ -239,7 +243,6 @@ class TestUserService(ApplicationLayerTest):
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.communityforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.customization.can_change_password')))
 
-
 	@mock_dataserver.WithMockDSTrans
 	def test_external(self):
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
@@ -268,7 +271,6 @@ class TestUserService(ApplicationLayerTest):
 
 		assert_that( user_ws['Items'], has_item( has_entry( 'Title', 'Boards' ) ) )
 
-
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
 		#"A user's Pages collection only claims to accept things that are externally creatable."
@@ -287,7 +289,7 @@ class TestUserService(ApplicationLayerTest):
 		user = users.User.create_user( dataserver=self.ds, username='sjohnson@nextthought.com' )
 		ws = UEW(user)
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_in( list(UserPagesCollection(ws).accepts) ) )
-		uew_ext = to_external_object( ws )
+		uew_ext = toExternalObject( ws )
 		# And the blog, even though it's never been used
 		assert_that( uew_ext['Items'], has_item( has_entry( 'Title', 'Blog' ) ) )
 
@@ -302,20 +304,19 @@ class TestUserService(ApplicationLayerTest):
 		assert_that( 'application/vnd.nextthought.canvasurlshape', is_not( is_in( terms ) ) )
 
 
-import tempfile
-import shutil
 import os
-
-from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
+import shutil
+import tempfile
 
 import pyramid.interfaces
 
-from nti.app.testing.layers import NewRequestLayerTest
 from nti.appserver import pyramid_authorization
 
+from nti.contentlibrary.filesystem import DynamicFilesystemLibrary as DynamicLibrary
+
+from nti.app.testing.layers import NewRequestLayerTest
 
 class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
-
 
 	def setUp(self):
 		super(TestLibraryCollectionDetailExternalizer,self).setUp()
@@ -341,16 +342,17 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
-				return [nti_interfaces.IPrincipal(x) for x in [self.authenticated_userid(request), nti_interfaces.AUTHENTICATED_GROUP_NAME, nti_interfaces.EVERYONE_GROUP_NAME]]
+				return [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request), 
+																nti_interfaces.AUTHENTICATED_GROUP_NAME,
+																nti_interfaces.EVERYONE_GROUP_NAME]]
 
 		self.policy = Policy()
 		component.provideUtility( self.policy )
 		self.acl_policy = pyramid_authorization.ZopeACLAuthorizationPolicy()
 		component.provideUtility( self.acl_policy )
 
-		self.library_workspace = component.getMultiAdapter( (self.library, self.request), app_interfaces.IWorkspace )
+		self.library_workspace = component.getMultiAdapter( (self.library, self.request), IWorkspace )
 		self.library_collection = self.library_workspace.collections[0]
-
 
 	def tearDown(self):
 		shutil.rmtree( self.temp_dir )
@@ -373,14 +375,13 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		external = ext_interfaces.IExternalObject( self.library_collection ).toExternalObject()
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
-
 	def test_specific_acl_file_forbids(self):
 		acl_file = os.path.join( self.entry_dir, '.nti_acl' )
 		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:User:[nti.actions.create]\n" )
 			f.write( 'Deny:system.Everyone:All\n' )
 
-		external = to_external_object( self.library_collection )
+		external = toExternalObject( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 0 ) ) )
 
 	def test_specific_acl_to_user(self):
@@ -390,7 +391,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		with open( acl_file, 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
-		external = to_external_object( self.library_collection )
+		external = toExternalObject( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
 	def test_specific_acl_to_user_chapter(self):
@@ -405,14 +406,14 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 		with open( acl_file + '.1', 'w' ) as f:
 			f.write( "Allow:jason.madden@nextthought.com:[zope.View]\n" )
 
-		external = to_external_object( self.library_collection )
+		external = toExternalObject( self.library_collection )
 		assert_that( external, has_entry( 'titles', has_length( 1 ) ) )
 
-
-from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-class TestFriendsListContainerCollection(DataserverLayerTest,tests.TestBaseMixin):
+from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
+
+class TestFriendsListContainerCollection(DataserverLayerTest, tests.TestBaseMixin):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_container_with_dfl_memberships(self):

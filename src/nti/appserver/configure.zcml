@@ -98,8 +98,7 @@
 	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
-
-	<include package="." file="configure_workspaces.zcml" />
+	<include package=".workspaces" />
 
 	<include package="nti.app.renderers" />
 
