@@ -34,8 +34,8 @@ from nti.app.renderers import rest
 
 from nti.common.property import alias
 
-from nti.dataserver import users
 from nti.dataserver import links
+from nti.dataserver.users import User
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -361,7 +361,7 @@ def _create_search_links( parent ):
 	return result
 
 @interface.implementer(IUserWorkspace)
-@component.adapter(users.User)
+@component.adapter(User)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
 	Extends the user's typed collections with one
@@ -458,7 +458,6 @@ class _NTIIDEntry(object):
 		return "<%s.%s %s at %s>" % ( type(self).__module__, 
 									  type(self).__name__, 
 									  self.ntiid, hex(id(self)) )
-
 
 class _RootNTIIDEntry(_NTIIDEntry):
 	"""
