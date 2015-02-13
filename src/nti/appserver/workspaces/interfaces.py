@@ -88,6 +88,13 @@ class IUserWorkspace(IWorkspace):
 	"""
 	user = Object(IUser, title="The user" )
 
+class IUserWorkspaceLinkProvider(interface.Interface):
+	
+	def links():
+		"""
+		return an interable of user links
+		"""
+
 class IUserService(IService):
 	"""
 	A service for a particular user.
