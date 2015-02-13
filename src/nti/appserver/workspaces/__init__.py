@@ -12,7 +12,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import warnings
-import collections
 
 from zope import interface
 from zope import component
@@ -23,14 +22,11 @@ from zope.container.constraints import IContainerTypesConstraint
 
 from zope.mimetype import interfaces as mime_interfaces
 
-from zope.schema import vocabulary
 from zope.schema import interfaces as sch_interfaces
 
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 from pyramid.threadlocal import get_current_request
-
-from nti.app.renderers import rest
 
 from nti.common.property import alias
 
@@ -62,6 +58,7 @@ from .interfaces import ICollection
 from .interfaces import IUserService
 from .interfaces import IUserWorkspace
 from .interfaces import IContainerCollection
+from .interfaces import IUserWorkspaceLinkProvider
 
 itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
 
@@ -342,24 +339,6 @@ class GlobalCollection(object):
 	def accepts(self):
 		return ()
 
-def _create_search_links( parent ):
-	# Note that we are providing a complete link with a target
-	# that is a string and also the name of the link. This is
-	# a bit wonky and cooperates with how the CollectionSummaryExternalizer
-	# wants to deal with links
-	# TODO: Hardcoding both things
-	search_parent = location.Location()
-	search_parent.__name__ = 'Search'
-	search_parent.__parent__ = parent
-	ugd_link = links.Link( 'RecursiveUserGeneratedData', rel='UGDSearch' )
-	unified_link = links.Link( 'UnifiedSearch', rel='UnifiedSearch' )
-	result = (ugd_link, unified_link)
-	for lnk in result:
-		lnk.__parent__ = search_parent
-		lnk.__name__ = lnk.target
-		interface.alsoProvides( lnk, loc_interfaces.ILocation )
-	return result
-
 @interface.implementer(IUserWorkspace)
 @component.adapter(User)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
@@ -385,10 +364,11 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 
 	@property
 	def links(self):
-		search_links = _create_search_links( self )
-		resolve_me_link = links.Link( self.user, rel="ResolveSelf", method='GET' )
-		link_belongs_to_user( resolve_me_link, self.user )
-		return search_links + (resolve_me_link,)
+		result = []
+		for provider in component.subscribers( (self.user,), IUserWorkspaceLinkProvider):
+			links = provider.links(self)
+			result.extend(links or ())
+		return result
 
 	@property
 	def collections(self):
@@ -492,7 +472,11 @@ class _UserPagesCollection(location.Location):
 	def links(self):
 		# TODO: These are deprecated here, as the entire pages collection is
 		# deprecated. They are moved to the user's workspace
-		return _create_search_links( self.__parent__ )
+		result = []
+		for provider in component.subscribers( (self._user,), IUserWorkspaceLinkProvider):
+			links = provider.links(self._workspace )
+			result.extend(links or ())
+		return result
 
 	def _make_parent(self, ntiid):
 		ent_parent = location.Location()
@@ -512,7 +496,6 @@ class _UserPagesCollection(location.Location):
 			result.append( self.make_info_for( ntiid ) )
 
 		return result
-
 
 	@property
 	def accepts(self):
