@@ -37,7 +37,6 @@ from nti.common.property import alias
 from nti.dataserver import users
 from nti.dataserver import links
 from nti.dataserver import datastructures
-from nti.dataserver import traversal as nti_traversal
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -48,17 +47,23 @@ from nti.ntiids import ntiids
 
 from .._util import link_belongs_to_user
 
-from ..pyramid_authorization import is_writable
+from ..traversal import find_interface
 
-from ..capabilities.interfaces import VOCAB_NAME as CAPABILITY_VOCAB_NAME
-
-from .. import traversal
-from .. import interfaces as app_interfaces
+from ..interfaces import MissingRequest
+from ..interfaces import INamedLinkView
+from ..interfaces import IContentUnitInfo
+from ..interfaces import INamedLinkPathAdapter
+from ..interfaces import IUserViewTokenCreator
+from ..interfaces import IPageContainerResource
+from ..interfaces import IRootPageContainerResource
 
 from .interfaces import IWorkspace
 from .interfaces import ICollection
 from .interfaces import IUserService
+from .interfaces import IUserWorkspace
 from .interfaces import IContainerCollection
+
+itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
 
 def _find_name( obj ):
 	return getattr( obj, 'name', None ) \
@@ -155,7 +160,7 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 		# this kind of thing or not
 		# TODO: This can probably be generalized up
 		user = None
-		user_service = traversal.find_interface( self, IUserService )
+		user_service = find_interface( self, IUserService )
 		if user_service:
 			user = user_service.user
 		if user:
@@ -177,9 +182,13 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 			return self._container
 
 		dfl_memberships = []
-		for x in entity.xxx_hack_filter_non_memberships( entity.dynamic_memberships,
-														 log_msg="Relationship trouble: User %s is no longer a member of %s. Ignoring for FL container",
-														 the_logger=logger ):
+		entity_dynamic_memberships =  \
+				entity.xxx_hack_filter_non_memberships( 
+						entity.dynamic_memberships,
+						log_msg="Relationship trouble: User %s is no longer a member of %s. Ignoring for FL container",
+						the_logger=logger )
+
+		for x in entity_dynamic_memberships:
 			if nti_interfaces.IFriendsList.providedBy( x ):
 				dfl_memberships.append( x )
 
@@ -217,7 +226,7 @@ def _find_named_link_views(parent, provided=None):
 	Returns a set of names.
 	"""
 
-	request = get_current_request() or app_interfaces.MissingRequest()
+	request = get_current_request() or MissingRequest()
 
 	# Pyramid's request_iface property is a dynamically generated
 	# interface class that incorporates the name of the route.
@@ -245,8 +254,8 @@ def _find_named_link_views(parent, provided=None):
 			# View Functions will directly provide the interface;
 			# view classes, OTOH, will tend to implement it (because using
 			# the @implementer() decorator is easy)
-			if 	app_interfaces.INamedLinkView.providedBy( v ) or \
-				app_interfaces.INamedLinkView.implementedBy( v ):
+			if 	INamedLinkView.providedBy( v ) or \
+				INamedLinkView.implementedBy( v ):
 				return True
 
 	adapters = component.getSiteManager().adapters
@@ -256,10 +265,10 @@ def _find_named_link_views(parent, provided=None):
 										  IView)
 				   if name and _test( name, view )]
 	names.extend( (name for name, _ in component.getAdapters( (parent, request ),
-															  app_interfaces.INamedLinkPathAdapter )) )
+															  INamedLinkPathAdapter )) )
 
 	names.extend( (name for name, _ in adapters.lookupAll( (provided, interface.providedBy(request)),
-														   app_interfaces.INamedLinkPathAdapter)) )
+														   INamedLinkPathAdapter)) )
 	return set(names)
 
 def _make_named_view_links( parent, pseudo_target=False, **kwargs ):
@@ -314,7 +323,7 @@ class GlobalWorkspace(object):
 		return [GlobalCollection(self.__parent__, 'Objects'),
 				GlobalCollection(self.__parent__, 'NTIIDs' )]
 
-@interface.implementer(app_interfaces.ICollection)
+@interface.implementer(ICollection)
 class GlobalCollection(object):
 	"""
 	A non-writable collection in the global namespace.
@@ -351,7 +360,7 @@ def _create_search_links( parent ):
 		interface.alsoProvides( lnk, loc_interfaces.ILocation )
 	return result
 
-@interface.implementer(app_interfaces.IUserWorkspace)
+@interface.implementer(IUserWorkspace)
 @component.adapter(users.User)
 class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 	"""
@@ -386,20 +395,20 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 		"The returned collections are sorted by name."
 		result = list(super(UserEnumerationWorkspace,self).collections)
 		result.extend( [c
-						for c in component.subscribers( (self,), app_interfaces.ICollection )
+						for c in component.subscribers( (self,), ICollection )
 						if c] )
 
 		return sorted( result, key=lambda x: x.name )
 
 from nti.app.authentication import get_remote_user
 
-@interface.implementer(app_interfaces.IContentUnitInfo)
+@interface.implementer(IContentUnitInfo)
 class _NTIIDEntry(object):
 
 	__external_class_name__ = 'PageInfo'
 	mimeType = mimetype.nti_mimetype_with_class( __external_class_name__ )
 
-	link_provided = app_interfaces.IPageContainerResource
+	link_provided = IPageContainerResource
 	recursive_stream_supports_feeds = True
 	extra_links = ()
 	contentUnit = None
@@ -423,9 +432,9 @@ class _NTIIDEntry(object):
 		# too many assumptions. And we're also duplicating some
 		# stuff that's being done for IForum and ITopic (though those
 		# are less important).
-		if self.recursive_stream_supports_feeds and [x for x in result if x.rel == 'RecursiveStream']:
-			token_creator = component.queryUtility( app_interfaces.IUserViewTokenCreator,
-													name='feed.atom' )
+		if 	self.recursive_stream_supports_feeds and \
+			[x for x in result if x.rel == 'RecursiveStream']:
+			token_creator = component.queryUtility(IUserViewTokenCreator, name='feed.atom' )
 			remote_user = get_remote_user()
 			if token_creator and remote_user:
 				token = token_creator.getTokenForUserId( remote_user.username )
@@ -456,13 +465,13 @@ class _RootNTIIDEntry(_NTIIDEntry):
 	Defines the collection entry for the root pseudo-NTIID, which
 	is only meant for the use of the global stream.
 	"""
-	link_provided = app_interfaces.IRootPageContainerResource
+	link_provided = IRootPageContainerResource
 
 	def __init__( self, parent, _ ):
 		super(_RootNTIIDEntry,self).__init__( parent, ntiids.ROOT )
 
-@interface.implementer(app_interfaces.IContainerCollection)
-@component.adapter(app_interfaces.IUserWorkspace)
+@interface.implementer(IContainerCollection)
+@component.adapter(IUserWorkspace)
 class _UserPagesCollection(location.Location):
 	"""
 	Turns a User into a ICollection of data for their pages (individual containers).
@@ -520,7 +529,7 @@ class _UserPagesCollection(location.Location):
 			implementing = factory.getInterfaces()
 			parent = implementing.get( '__parent__')
 			if 	parent and getattr( parent, 'constraint', None ) and \
-				IContainerTypesConstraint.providedBy( parent.constraint ):
+				itc_providedBy( parent.constraint ):
 				parent_types = parent.constraint.types
 				# Hmm. Ok, right now we don't have constraints correct everywhere.
 				# But when we do have constraints, they are not a general object
