@@ -566,29 +566,44 @@ def validateAccept(value):
 		return False
 	return True
 
+# Suggested contacts. 
+
 class ISuggestedContactRankingPolicy(Interface):
 	"""
 	Defines a user ranking policy for a provider. This policy 
 	defines the order in which the suggestions are returned
 	"""
 
+	def sort(contacts):
+		"""
+		sort the specified suggested contacts
+		"""
+		
 class ISuggestedContactsContext(Interface):
 	"""
 	Defines a context for the a provider
 	"""
+	priority = Int(title="Provider prority", required=False, default=1)
 	
 class ISuggestedContactsProvider(Interface):
 	
 	"""
 	Defines a utility that allows to return contact suggestions for a user
 	"""
-	
-	priority = Int(title="Provider prority", required=False, default=1)
-	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy", required=False)
-	context = Variant(( Object(Interface),
-						Object(ISuggestedContactsContext)), title="Provider context", required=False)
+
+	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy", 
+					 required=False)
+
+	context = Object(ISuggestedContactsContext, title="Provider context",
+					 required=False)
 	
 	def suggestions(user):
 		"""
 		return a iterator with suggested contacts ordered by the ranking policy
 		"""
+
+class ISuggestedContact(Interface):
+	username = ValidTextLine(title="username", required=True)
+	rank = Int(title="contact rank", required=False, default=1)
+	provider = Object(ISuggestedContactsProvider, title="provider", required=False)
+	provider.setTaggedValue('_ext_excluded_out', False)
