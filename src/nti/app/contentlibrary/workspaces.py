@@ -15,17 +15,19 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
-from zope.proxy.decorator import ProxyBase
+
 from zope.container.interfaces import IContained
+
+from zope.proxy.decorator import ProxyBase
 
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver.interfaces import IWorkspace
-from nti.appserver.interfaces import ICollection
-from nti.appserver.interfaces import IUserService
-from nti.appserver.interfaces import ILibraryCollection
-
 from nti.appserver.pyramid_authorization import is_readable
+
+from nti.appserver.workspaces.interfaces import IWorkspace
+from nti.appserver.workspaces.interfaces import ICollection
+from nti.appserver.workspaces.interfaces import IUserService
+from nti.appserver.workspaces.interfaces import ILibraryCollection
 
 from nti.common.property import alias
 from nti.common.property import CachedProperty

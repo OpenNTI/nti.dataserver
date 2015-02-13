@@ -29,6 +29,8 @@ from zope.schema import interfaces as sch_interfaces
 
 from z3c.rml import rml2pdf
 
+from pyramid.threadlocal import get_current_request
+
 from nti.appserver import _email_utils
 from nti.appserver import MessageFactory as _
 from nti.appserver import httpexceptions as hexc
@@ -48,7 +50,6 @@ from . import site_policies
 def dispatch_content_created_to_user_policies( content, event ):
 	component.handle( content, content.creator, event )
 
-from pyramid.threadlocal import get_current_request
 from nti.dataserver import users
 from nti.dataserver.users import user_profile
 

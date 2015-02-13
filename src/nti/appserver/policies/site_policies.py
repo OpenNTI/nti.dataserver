@@ -11,26 +11,32 @@ to preserve the names of existing persistent classes as well as the annotation f
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.appserver import MessageFactory as _
+
 import urllib
 import datetime
 import nameparser
 
-from nti.appserver import MessageFactory as _
-
 from zope import component
 from zope import interface
-from zope.event import notify
-from zope.interface.common.idatetime import IDate
 from zope.component.interfaces import IComponents
-from zope.schema import interfaces as sch_interfaces
-from zope.lifecycleevent.interfaces import IObjectCreatedEvent
-from zope.security.interfaces import IPrincipal
+from zope.interface.common.idatetime import IDate
+
 from zope.dottedname import resolve as dottedname
+
+from zope.event import notify
+
+from zope.schema import interfaces as sch_interfaces
+
+from zope.lifecycleevent.interfaces import IObjectCreatedEvent
+
+from zope.security.interfaces import IPrincipal
 
 from ZODB.loglevels import TRACE
 
@@ -239,7 +245,6 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 		if not placed:
 			component.getUtility(nti_interfaces.INewUserPlacer, name='default').placeNewUser(user, users_directory, shards)
 
-
 ####
 # # Handling events within particular sites
 #
@@ -306,7 +311,6 @@ class SiteBasedExternalObjectDecorator(object):
 		adapter = component.queryMultiAdapter((orig_obj, request), ext_interfaces.IExternalObjectDecorator)
 		if adapter:
 			adapter.decorateExternalObject(orig_obj, ext_obj)
-
 
 @interface.implementer(ext_interfaces.IExternalObjectDecorator)
 class LogonLinksCreationStripper(object):
@@ -381,7 +385,6 @@ def _dispatch_to_policy(user, event, func_name):
 		return True
 
 	logger.log(TRACE, "No site in %s wanted to handle user event %s for %s", site_name, func_name, user)
-
 
 @component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
 def dispatch_user_created_to_site_policy(user, event):
@@ -628,8 +631,6 @@ class AbstractSitePolicyEventListener(object):
 			if t:
 				raise t( v, 'birthdate', birthdate.isoformat(), value=birthdate )
 
-
-
 	def map_validation_exception(self, incoming_data, exception):
 		return exception
 
@@ -651,13 +652,11 @@ class AbstractSitePolicyEventListener(object):
 	def user_will_create(self, user, event):
 		pass
 
-
 class DevmodeSitePolicyEventListener(AbstractSitePolicyEventListener):
 
 	def user_will_create(self, user, event):
 		self._check_realname( user, required=False )
 		self._check_age_makes_sense( user )
-
 
 class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 	"""
@@ -692,9 +691,7 @@ class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 		# we are also never returning the realname value to any site,
 		# nor are we searching on it.
 		self._check_realname(user)
-
 		self._check_age_makes_sense(user)
-
 
 class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
@@ -815,7 +812,6 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 			return exception.new_instance_restricting_chars('@')
 		return exception
 
-
 class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 	"""
 	Implements a generic policy for adult sites.
@@ -858,7 +854,6 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 				elif user.username != email:
 					raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
 
-
 # Profiles for MC
 
 zope.deferredimport.deprecatedFrom(
@@ -867,7 +862,6 @@ zope.deferredimport.deprecatedFrom(
 	'nti.app.sites.mathcounts.profile',
 	"MathcountsCoppaUserWithoutAgreementUserProfile",
 	"MathcountsCoppaUserWithAgreementUserProfile" )
-
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
@@ -927,7 +921,6 @@ class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener)
 		"""
 		super(AdultCommunitySitePolicyEventListener, self).user_created(user, event)
 		self._join_community_user_created(user, event)
-
 
 # BWC import for objects in the database
 zope.deferredimport.deprecatedFrom(
