@@ -197,11 +197,13 @@ class IContentPackageLibrary(ILastModified,
 
 	"""
 
-	def pathToNTIID(ntiid):
+	def pathToNTIID(ntiid, skip_cache=False):
 		"""
 		Returns a list of :class:`IContentUnit` objects in order until
 		the given NTIID is encountered, or :obj:`None` if the ``ntiid`` cannot be found.
 
+		:param bool skip_cache Skip cache flag. 
+		
 		.. attention:: This does not include the
 			:const:`nti.ntiids.ntiids.ROOT` NTIID. That is an implicit
 			element before the first element in the returned sequence.
@@ -390,7 +392,6 @@ class IDisplayableContent(IZContained,
 											 default=(),
 											 required=False)
 
-
 class IDelimitedHierarchyEntry(interface.Interface, dub_interfaces.IDCTimes):
 	"""
 	Similar to an :class:`IFilesystemEntry`, but not tied to the local (or mounted)
@@ -546,7 +547,6 @@ class IContentPackage(IContentUnit,
 							   default=1,
 						min=1)
 
-
 class IContentPackageReplacedEvent(IObjectModifiedEvent):
 	"""
 	A special type of modification event sent when a content package
@@ -577,7 +577,6 @@ class ContentPackageReplacedEvent(ObjectModifiedEvent):
 	def __init__(self, replacement, original, *descriptions):
 		ObjectModifiedEvent.__init__(self, replacement, *descriptions)
 		self.original = original
-
 
 class IPersistentContentUnit(IPersistent, IContentUnit):
 	"""
@@ -704,7 +703,6 @@ class IFilesystemEntry(interface.Interface, dub_interfaces.IDCTimes, IDelimitedH
 	lastModified = Number(title="Time since the epoch this unit was last modified.",
 						  readonly=True)
 
-
 class IFilesystemContentUnit(IDelimitedHierarchyContentUnit, IFilesystemEntry):
 	"""
 	A content unit backed by a file on disk.
@@ -830,7 +828,6 @@ class ISyncableContentPackageBundleLibrary(interface.Interface):
 			missing bucket, as that is likely to be a temporary condition and
 			would result in much churn.
 		"""
-
 
 class IContentPackageBundleLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	"""
