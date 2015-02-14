@@ -9,6 +9,7 @@ the object is removed from the intid catalog
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,6 +20,7 @@ import functools
 
 from zope import component
 from zope import interface
+
 from zc import intid as zc_intid
 
 from nti.externalization import integer_strings
@@ -159,7 +161,6 @@ class ArbitraryOrderableWeakRef(WeakRef):
 			return (self._entity_id, self._entity_oid) < (other._entity_id, other._entity_oid)
 		except AttributeError:
 			return NotImplemented
-
 
 	def __gt__(self,other):
 		try:

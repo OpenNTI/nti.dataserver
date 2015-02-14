@@ -54,33 +54,34 @@ We do, however, keep a few things in common:
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-
-from zope.component import getAllUtilitiesRegisteredFor
 from zope.component import handle
+from zope.component import getAllUtilitiesRegisteredFor
+
 from zope.event import notify
-from zope.keyreference.interfaces import IKeyReference
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
 from zope.location.interfaces import ILocation
 
+from zope.keyreference.interfaces import IKeyReference
 
-import zope.intid.interfaces as zope_intid_interfaces
+from zope.intid import interfaces as zope_intid_interfaces
+
 from zc import intid as zc_intid_interfaces
+
 from . import interfaces as nti_intid_interfaces
 
 def _utilities_and_key(ob):
 	utilities = tuple(getAllUtilitiesRegisteredFor(zc_intid_interfaces.IIntIds))
-
 	return utilities, IKeyReference(ob,None) if utilities else None # Don't even bother trying to adapt if no utilities
-
 
 @component.adapter(ILocation, IObjectRemovedEvent)
 def removeIntIdSubscriber(ob, event):
@@ -101,7 +102,6 @@ def removeIntIdSubscriber(ob, event):
 	utilities, key = _utilities_and_key( ob )
 	if not utilities or key is None:
 		return
-
 
 	# Notify the catalogs that this object is about to be removed,
 	# if we actually find something to remove
