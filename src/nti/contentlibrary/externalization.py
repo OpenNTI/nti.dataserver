@@ -297,7 +297,6 @@ class _FilesystemBucketHrefMapper(object):
 			if p.__name__:
 				parents.append(p.__name__)
 
-
 		self.href = joinPath('/', *reversed(parents))
 
 		# since it's a bucket, we should end with a '/'
