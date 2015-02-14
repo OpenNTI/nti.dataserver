@@ -74,7 +74,6 @@ class _AbstractIntidResolvingFacade(object):
 	def __reduce__( self ):
 		raise TypeError( "Transient object; should not be pickled" )
 
-
 class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container, Sized):
 	"""
 	An iterable that wraps another iterable, resolving intids as it
@@ -93,11 +92,13 @@ class IntidResolvingIterable(_AbstractIntidResolvingFacade, Iterable, Container,
 				# have an IISet. This is a sign of an object missed during migration
 				if not allow_missing:
 					raise
-				logger.log( loglevels.TRACE, "Incorrect key '%s' in %r of %r", iid, self.__name__, self.__parent__ )
+				logger.log( loglevels.TRACE, "Incorrect key '%s' in %r of %r", 
+							iid, self.__name__, self.__parent__ )
 			except KeyError:
 				if not allow_missing:
 					raise
-				logger.log( loglevels.TRACE, "Failed to resolve key '%s' in %r of %r", iid, self.__name__, self.__parent__ )
+				logger.log( loglevels.TRACE, "Failed to resolve key '%s' in %r of %r", 
+							iid, self.__name__, self.__parent__ )
 
 	def __len__( self ):
 		"""This is only guaranteed to be accurate with `allow_missing` is ``False``."""
@@ -119,7 +120,8 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 	"""
 
 	def _wrap( self, key, val ):
-		return IntidResolvingIterable( val, allow_missing=self._allow_missing, parent=self, name=key, intids=self._intids )
+		return IntidResolvingIterable( val, allow_missing=self._allow_missing,
+									   parent=self, name=key, intids=self._intids )
 
 	def __getitem__( self, key ):
 		return  self._wrap( key, self.context[key] )
@@ -142,7 +144,9 @@ class IntidResolvingMappingFacade(_AbstractIntidResolvingFacade,DictMixin,Mappin
 	def __len__(self):
 		return len(self.context)
 
-	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__))
+	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__,
+													 self.__parent__, 
+													 self.__name__))
 
 	def __setitem__( self, key, val ):
 		raise TypeError('Immutable Object')
@@ -208,7 +212,10 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 
 	@Lazy
 	def _IntidContainedStorage__moddates(self):
-		"OF map from containerId to (int) date of last modification, since we cannot store them on the TreeSet itself"
+		"""
+		OF map from containerId to (int) date of last modification, 
+		since we cannot store them on the TreeSet itself
+		"""
 		result = self.family.OI.BTree()
 		self._p_changed = True
 		return result
@@ -233,8 +240,11 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 			status (empty or not) and to get the length of the overall returned
 			object.
 		"""
-		return _LengthIntidResolvingMappingFacade( self._containers, allow_missing=True, parent=self, name='SharedContainedObjectStorage',
-												   _len=self.__len)
+		return _LengthIntidResolvingMappingFacade( 	self._containers, 
+													allow_missing=True, 
+													parent=self, 
+													name='SharedContainedObjectStorage',
+												    _len=self.__len)
 
 	def _check_contained_object_for_storage( self, contained ):
 		pass
@@ -272,7 +282,8 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 	def deleteEqualContainedObjectFromContainer( self, contained, containerId='' ):
 		"Defaults to the unnamed container"
 		self._check_contained_object_for_storage( contained )
-		if self.deleteContainedObjectIdFromContainer( self._get_intid_for_object( contained ), containerId ):
+		if self.deleteContainedObjectIdFromContainer( self._get_intid_for_object( contained ),
+													  containerId ):
 			return contained
 
 	def addContainedObject( self, contained ):
@@ -298,7 +309,9 @@ class IntidContainedStorage(persistent.Persistent, Contained, Iterable, Containe
 				return default
 			raise
 
-	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__, self.__parent__, self.__name__))
+	__repr__ = make_repr(lambda self:'<%s %s/%s>' % (self.__class__.__name__, 
+													 self.__parent__, 
+													 self.__name__))
 
 	## Some dict-like conveniences
 	__getitem__ = getContainer

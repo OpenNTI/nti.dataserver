@@ -1,40 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import is_not
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import not_none
+from hamcrest import assert_that
 from hamcrest import has_property
 
+import cPickle
+import BTrees.OOBTree
 
-from nti.testing.matchers import validly_provides as verifiably_provides
+from nti.dataserver import users
 
+from nti.wref import interfaces as nti_interfaces
+
+from .. import wref
+
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans # Code smell, refactor
 
 from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestBase
 
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans # Code smell, refactor
-from nti.dataserver import users
-
-from .. import wref
-from nti.wref import interfaces as nti_interfaces
-
-import BTrees.OOBTree
-import cPickle
+from nti.testing.matchers import validly_provides as verifiably_provides
 
 class TestIntidWref(SharedConfiguringTestBase):
 
@@ -56,11 +49,9 @@ class TestIntidWref(SharedConfiguringTestBase):
 		assert_that( repr(copy), is_( repr( ref ) ) )
 		assert_that( hash(copy), is_( hash( ref ) ) )
 
-
 		assert_that( ref, verifiably_provides( nti_interfaces.IWeakRef ) )
 		assert_that( ref, verifiably_provides( nti_interfaces.ICachingWeakRef ) )
 		assert_that( ref, verifiably_provides( nti_interfaces.IWeakRefToMissing ) )
-
 
 	@WithMockDSTrans
 	def test_missing( self ):
@@ -94,7 +85,6 @@ class TestIntidWref(SharedConfiguringTestBase):
 
 		assert_that( ref(allow_cached=False), is_( none() ) ) # not from cache
 
-
 	@WithMockDSTrans
 	def test_in_btree(self):
 		user = users.User.create_user( username='sjohnson@nextthought.com' )
@@ -120,7 +110,6 @@ class TestIntidWref(SharedConfiguringTestBase):
 
 		ref = wref.ArbitraryOrderableWeakRef( user )
 		ref2 = wref.ArbitraryOrderableWeakRef( user2 )
-
 
 		assert_that( ref, is_(ref) )
 		assert_that( ref2, is_not(ref) )

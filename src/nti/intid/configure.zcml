@@ -4,7 +4,6 @@
 			xmlns:zcml="http://namespaces.zope.org/zcml"
 			i18n_domain="nti.dataserver">
 	<!--
-
 	If we load zope.intid, we get subscribers for the Object events
 	that ensure all ILocation objects are registered/unregistered when
 	they are added/removed, plus another set of events when they
@@ -20,7 +19,6 @@
 	-->
 	<exclude package="zope.intid" file="subscribers.zcml" />
 	<include package="zope.intid" />
-
 
 	<include package="zope.keyreference" />
 
@@ -40,6 +38,5 @@
 	<class class="zc.intid.utility.IntIds">
 		<implements interface="zope.intid.interfaces.IIntIds"/>
 	</class>
-
 
 </configure>

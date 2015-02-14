@@ -7,9 +7,9 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.component" />
 
-	<subscriber handler=".subscribers.removeIntIdSubscriber" />
-	<subscriber handler=".subscribers.addIntIdSubscriber" />
 	<subscriber handler=".subscribers.intIdEventNotify" />
+	<subscriber handler=".subscribers.addIntIdSubscriber" />
 	<subscriber handler=".subscribers.nti_intIdEventNotify" />
-
+	<subscriber handler=".subscribers.removeIntIdSubscriber" />
+		
 </configure>

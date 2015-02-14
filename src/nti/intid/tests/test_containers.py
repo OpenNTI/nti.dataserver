@@ -1,34 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_in
 from hamcrest import is_not
-does_not = is_not
 from hamcrest import has_key
 from hamcrest import has_length
-
-import nti.testing.base
+from hamcrest import assert_that
+does_not = is_not
 
 import BTrees
 
 from ..containers import IntidResolvingMappingFacade
 from ..containers import IntidContainedStorage
+
+import nti.testing.base
+
+family64 = BTrees.family64
 
 class TestMappingFacade(nti.testing.base.AbstractTestBase):
 
@@ -44,12 +38,12 @@ class TestMappingFacade(nti.testing.base.AbstractTestBase):
 		self.utility = self.MockUtility()
 		self.utility.data = {i: object() for i in range(10)}
 
-		btree = BTrees.family64.OO.BTree()
-		btree['a'] = BTrees.family64.II.TreeSet()
+		btree = family64.OO.BTree()
+		btree['a'] = family64.II.TreeSet()
 		btree['a'].add( 1 )
 		btree['a'].add( 2 )
 		btree['a'].add( 3 )
-		btree['b'] = BTrees.family64.II.TreeSet()
+		btree['b'] = family64.II.TreeSet()
 		btree['b'].add( 4 )
 		self.btree = btree
 

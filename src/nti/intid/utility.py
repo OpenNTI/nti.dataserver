@@ -8,6 +8,7 @@ of behaviour.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,7 +18,9 @@ import BTrees
 
 from zope import interface
 from zope import event as zope_event
+
 from zope.container.interfaces import IContained
+
 from zope.security.proxy import removeSecurityProxy
 
 from zc.intid.utility import RemovedEvent
