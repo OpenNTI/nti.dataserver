@@ -6,6 +6,7 @@
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
+	<include package="zope.security" />
 
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
@@ -21,7 +22,6 @@
 
 	<include package="." file="configure_site_policy_adult_base.zcml" />
 	<include package="." file="configure_site_policy_coppa_base.zcml" />
-
 
 	<!-- Entry in service doc -->
 	<subscriber factory=".workspaces._UserBoardCollectionFactory"
