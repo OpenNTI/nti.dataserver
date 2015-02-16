@@ -40,7 +40,7 @@
 	<!-- Entry in service doc -->
 	<subscriber factory=".workspaces._UserBlogCollectionFactory"
 				provides="nti.appserver.interfaces.ICollection"
-				for="nti.appserver.interfaces.IUserWorkspace" />
+				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
 
 	<!-- Object updating -->
 	<subscriber handler=".views.match_title_of_post_to_blog" />

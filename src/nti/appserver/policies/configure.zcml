@@ -26,6 +26,6 @@
 	<!-- Entry in service doc -->
 	<subscriber factory=".workspaces._UserBoardCollectionFactory"
 				provides="nti.appserver.interfaces.ICollection"
-				for="nti.appserver.interfaces.IUserWorkspace" />
+				for="nti.appserver.workspaces.interfaces.IUserWorkspace" />
 
 </configure>

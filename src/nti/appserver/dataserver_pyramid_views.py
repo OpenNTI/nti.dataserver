@@ -15,13 +15,15 @@ from zope.location.location import LocationProxy
 
 from pyramid.view import view_defaults
 
-from nti.appserver import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractView
-from nti.appserver import interfaces as app_interfaces
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.appserver import httpexceptions as hexc
+from nti.appserver.workspaces.interfaces import IService
+from nti.appserver.workspaces.interfaces import ICollection
+
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 class _ServiceGetView(AbstractAuthenticatedView):
 
@@ -29,7 +31,7 @@ class _ServiceGetView(AbstractAuthenticatedView):
 		# JAM: We should make this a multi-adapter on the request
 		# so that the request can be threaded down through workspaces,
 		# collections, etc.
-		service = app_interfaces.IService(self.remoteUser)
+		service = IService(self.remoteUser)
 		#service.__parent__ = self.request.context
 		return service
 
@@ -54,15 +56,15 @@ class _GenericGetView(AbstractView):
 		# in this module, or the object itself
 		resource = getattr( self.request.context, 'resource', self.request.context )
 
-		if nti_interfaces.IDeletedObjectPlaceholder.providedBy(resource):
+		if IDeletedObjectPlaceholder.providedBy(resource):
 			raise hexc.HTTPNotFound()
 
 		result = component.queryAdapter( resource,
-										 app_interfaces.ICollection,
+										 ICollection,
 										 name=self.request.traversed[-1] )
 		if not result:
 			result = component.queryAdapter( resource,
-											 app_interfaces.ICollection,
+											 ICollection,
 											 default=resource )
 		if hasattr( result, '__parent__' ):
 			# FIXME: Choosing which parent to set is also borked up.
@@ -72,18 +74,24 @@ class _GenericGetView(AbstractView):
 			# TODO: This can probably mostly go away now?
 			if result is resource:
 				# Must be careful not to modify the persistent object
-				result = LocationProxy( result, getattr( result, '__parent__', None), getattr( result, '__name__', None ) )
+				result = LocationProxy( result, 
+										getattr( result, '__parent__', None),
+										getattr( result, '__name__', None ) )
+				
 			if getattr( resource, '__parent__', None ) is not None:
 				result.__parent__ = resource.__parent__
 				# FIXME: Another hack at getting the right parent relationship in.
 				# The actual parent relationship is to the Provider object,
 				# but it has no way back to the root resource. This hack is deliberately
 				# kept very specific for now.
-				if self.request.traversed[-1] == 'Classes' and self.request.traversed[0] == 'providers':
+				if 	self.request.traversed[-1] == 'Classes' and \
+					self.request.traversed[0] == 'providers':
 					result.__parent__ = self.request.context.__parent__
-				elif self.request.traversed[-1] == 'Pages' and self.request.traversed[0] == 'users':
+				elif self.request.traversed[-1] == 'Pages' and \
+					 self.request.traversed[0] == 'users':
 					result.__parent__ = self.request.context.__parent__
-			elif resource is not self.request.context and hasattr( self.request.context, '__parent__' ):
+			elif resource is not self.request.context and \
+				 hasattr( self.request.context, '__parent__' ):
 				result.__parent__ = self.request.context.__parent__
 		return result
 
