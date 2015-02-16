@@ -102,10 +102,6 @@
 
 	<include package="nti.app.renderers" />
 
-	<adapter factory="nti.app.renderers.caching.UseTheRequestContextCacheController"
-			 for=".interfaces.ILibraryCollection" />
-
-
 	<subscriber factory=".dfl_views.DFLGetMembershipLinkProvider"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
