@@ -3,7 +3,7 @@
 """
 Support functions for reading objects.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -13,18 +13,21 @@ from . import MessageFactory as _
 
 logger = __import__('logging').getLogger(__name__)
 
-import collections
 import sys
+import collections
 
 from zope import component
 
 from pyramid import httpexceptions as hexc
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.mimetype.mimetype import nti_mimetype_class
-from nti.externalization.interfaces import IExternalRepresentationReader
-from nti.externalization.internalization import update_from_external_object
+from nti.dataserver.interfaces import IDataserver
+
 from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
+
+from nti.externalization.interfaces import IExternalRepresentationReader
+
+from nti.mimetype.mimetype import nti_mimetype_class
 
 from .error import handle_possible_validation_error
 
@@ -49,7 +52,6 @@ def create_modeled_content_object( dataserver, owner, datatype, externalValue, c
 
 	return result
 
-
 def class_name_from_content_type( request ):
 	"""
 	:return: The class name portion of one of our content-types, or None
@@ -59,7 +61,8 @@ def class_name_from_content_type( request ):
 	content_type = content_type or ''
 	return nti_mimetype_class( content_type )
 
-def read_body_as_external_object( request, input_data=None, expected_type=collections.Mapping ):
+def read_body_as_external_object( request, input_data=None, 
+								  expected_type=collections.Mapping ):
 	"""
 	Returns the object specified by the external data. The request input stream is
 	input stream is parsed, and the return value is verified to be of `expected_type`
@@ -127,11 +130,12 @@ def read_body_as_external_object( request, input_data=None, expected_type=collec
 		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input") )
 		raise ex, None, tb
 
-
-def update_object_from_external_object( contentObject, externalValue, notify=True, request=None ):
-	dataserver = component.queryUtility( nti_interfaces.IDataserver )
+def update_object_from_external_object( contentObject, externalValue, 
+										notify=True, request=None ):
+	dataserver = component.queryUtility( IDataserver )
 	try:
 		__traceback_info__ = contentObject, externalValue
-		return update_from_external_object( contentObject, externalValue, context=dataserver, notify=notify )
+		return update_from_external_object( contentObject, externalValue, 
+											context=dataserver, notify=notify )
 	except Exception as e:
 		handle_possible_validation_error( request, e )

@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 A layer on top of :mod:`nti.externalization`, supporting the
-standard patterns for reading and writing objects at the
-application layer.
+standard patterns for reading and writing objects at the application layer.
 
 .. $Id$
 """
