@@ -24,15 +24,16 @@ from boto.ses.exceptions import SESMaxSendingRateExceededError
 
 from zope import interface
 from zope import component
+
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 from nti.common.property import Lazy
 
-from nti.dataserver import interfaces as nti_interfaces
-
-from nti.utils._compat import sleep
+from nti.dataserver.interfaces import IRedisClient
 
 from nti.mailer.interfaces import ITemplatedMailer
+
+from nti.utils._compat import sleep
 
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
@@ -58,7 +59,6 @@ class _ProcessNames(object):
 		self.metadata_name = base + '/MetaData'
 		self.source_name = base + '/SourceSet'
 		self.dest_name = base + '/ResultSet'
-
 		self.names = list(self.__dict__.values())
 
 @interface.implementer(IBulkEmailProcessMetadata)
@@ -96,7 +96,6 @@ class DefaultBulkEmailProcessLoop(object):
 	#: instances and being sure that we can finish the processing
 	lock_timeout = 60 * 10 # ten minutes
 
-
 	#: If set to true, then we will include the current site name (if any)
 	#: in the process names in redis. This is useful if the process
 	#: needs to run for each site hosted in the same database.
@@ -111,7 +110,7 @@ class DefaultBulkEmailProcessLoop(object):
 		# For purposes of templates and translation, proxy the
 		# pyramid request to a zope request
 		self.request = IBrowserRequest(request)
-		self.redis = component.getUtility( nti_interfaces.IRedisClient )
+		self.redis = component.getUtility( IRedisClient )
 
 	@Lazy
 	def names(self):
@@ -274,7 +273,8 @@ class DefaultBulkEmailProcessLoop(object):
 				# The one exception is if the address is blacklisted, that still counts as
 				# success and we need to take him off the source list
 				try:
-					result = self.sesconn.send_raw_email( msg_string, sender, pmail_msg.recipients[0] )
+					result = self.sesconn.send_raw_email( msg_string, sender,
+														  pmail_msg.recipients[0] )
 				except SESAddressBlacklistedError as e: #pragma: no cover
 					logger.warn("Blacklisted address: %s", e )
 					result = {'SendEmailResult': 'BlacklistedAddress'}
@@ -286,7 +286,8 @@ class DefaultBulkEmailProcessLoop(object):
 			self.redis.srem( self.names.source_name, member )
 			recipient_data.pop('template_args', None) # no need to repickle this
 			recipient_data['boto.ses.result'] = result
-			self.redis.sadd( self.names.dest_name, pickle.dumps( recipient_data, pickle.HIGHEST_PROTOCOL ) )
+			self.redis.sadd( self.names.dest_name, pickle.dumps( recipient_data, 
+																 pickle.HIGHEST_PROTOCOL ) )
 			self.redis.expire( self.names.dest_name, _TTL )
 
 			return result
@@ -358,7 +359,6 @@ class SiteTransactedBulkEmailProcessLoop(DefaultBulkEmailProcessLoop):
 	@Lazy
 	def _runner(self):
 		return component.getUtility(IDataserverTransactionRunner)
-
 
 	def process_one_recipient(self):
 		return self._runner(self._super_process_one_recipient,

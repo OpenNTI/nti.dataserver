@@ -13,14 +13,16 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.schema.field import Object
 from nti.schema.field import Number
+from nti.schema.field import Object
 from nti.schema.field import ValidTextLine as TextLine
 
 class PreflightError(Exception):
-	"Raised when an email process cannot be created."
+	"""
+	Raised when an email process cannot be created.
+	"""
 
-#pylint:disable=I0011,E0213,E0211
+# pylint:disable=I0011,E0213,E0211
 
 class IBulkEmailProcessMetadata(interface.Interface):
 	"""
@@ -31,9 +33,11 @@ class IBulkEmailProcessMetadata(interface.Interface):
 					   description="Timestamp of when the process last started;"
 					   " 0 if there is no record",
 					   default=0)
+
 	endTime = Number(title="When the process last completed",
 					 description="0 if the process has never run or is in progress",
 					 default=0)
+
 	status = TextLine(title="Human readable description of the process state")
 
 	def save():
@@ -101,6 +105,7 @@ class IBulkEmailProcessDelegate(interface.Interface):
 	"""
 
 	template_name = TextLine(title="A template asset spec")
+
 	text_template_extension = TextLine(title="The extension for text templates",
 									   default=".txt")
 
