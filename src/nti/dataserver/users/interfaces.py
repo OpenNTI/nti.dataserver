@@ -45,7 +45,6 @@ from nti.schema.field import Bool
 from nti.schema.field import Date
 from nti.schema.field import Object
 from nti.schema.field import HTTPURL
-from nti.schema.field import Variant
 from nti.schema.field import TextLine
 from nti.schema.field import ValidText
 from nti.schema.field import ValidTextLine
