@@ -35,7 +35,6 @@ import nti.monkey.relstorage_patch_all_except_gevent_on_import
 nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
 
 def _configure(self=None, set_up_packages=(), features=(), context=None, execute=True):
-
 	# zope.component.globalregistry conveniently adds
 	# a zope.testing.cleanup.CleanUp to reset the globalSiteManager
 	if set_up_packages:
@@ -72,7 +71,8 @@ def run_with_dataserver( environment_dir=None,
 						 xmlconfig_packages=(),
 						 context=None,
 						 minimal_ds=False,
-						 use_transaction_runner=True):
+						 use_transaction_runner=True,
+						 logging_verbose_level=logging.INFO):
 	"""
 	Execute the `function` in the (already running) dataserver
 	environment configured at `environment_dir`.
@@ -154,10 +154,11 @@ def run_with_dataserver( environment_dir=None,
 	return run( function=run_user_fun_transaction_wrapper, as_main=as_main,
 				verbose=verbose, config_features=config_features,
 				xmlconfig_packages=xmlconfig_packages, context=context,
-				_print_exc=False,)
+				_print_exc=False, logging_verbose_level=logging_verbose_level)
 
 def run(function=None, as_main=True, verbose=False, config_features=(), 
-		xmlconfig_packages=(),  context=None, _print_exc=True):
+		xmlconfig_packages=(),  context=None, _print_exc=True, 
+		logging_verbose_level=logging.INFO):
 	"""
 	Execute the `function`, taking care to print exceptions and handle configuration.
 
@@ -186,7 +187,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 
 	if as_main:
 		log_format = '[%(name)s] %(levelname)s: %(message)s'
-		logging.basicConfig(level=logging.WARN if not verbose else logging.INFO)
+		logging.basicConfig(level=logging.WARN if not verbose else logging_verbose_level)
 		logging.root.handlers[0].setFormatter(zope.exceptions.log.Formatter(log_format))
 
 		setHooks()
