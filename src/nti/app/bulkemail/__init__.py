@@ -22,7 +22,8 @@ scores applied to our entire domain. These steps include:
 * Being sure that DKIM is used for the domain sending email (easily done with
   `SES and Route 53 <http://docs.aws.amazon.com/ses/latest/DeveloperGuide/dkim.html>`_);
 * Setting up `SPF <http://openspf.org>`_ for the domain sending email
-  (also easily done with `SES and Route 53 <http://docs.aws.amazon.com/ses/latest/DeveloperGuide/spf.html>`_
+  (also easily done with 
+  `SES and Route 53 <http://docs.aws.amazon.com/ses/latest/DeveloperGuide/spf.html>`_
   --- note that the ``Return-Path`` header is set by SES, no matter if using the SMTP
   or HTTP interface, to an ``amazonses.com`` address, and it is this
   domain that is verified for SPF);

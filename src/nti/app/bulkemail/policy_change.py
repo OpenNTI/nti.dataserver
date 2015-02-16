@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-
 .. $Id$
 """
 
@@ -11,16 +9,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import component
 from zope import interface
 
-from .interfaces import IBulkEmailProcessDelegate
 from zope.catalog.interfaces import ICatalog
 
-from nti.dataserver.users import index as user_index
+from nti.dataserver.users.index import CATALOG_NAME
 
 from .delegate import AbstractBulkEmailProcessDelegate
+
+from .interfaces import IBulkEmailProcessDelegate
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class _PolicyChangeProcessDelegate(AbstractBulkEmailProcessDelegate):
@@ -31,7 +29,7 @@ class _PolicyChangeProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 
 	def collect_recipients(self):
-		ent_catalog = component.getUtility(ICatalog, name=user_index.CATALOG_NAME)
+		ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
 		email_ix = ent_catalog.get( 'email' )
 		contact_email_ix = ent_catalog.get( 'contact_email' )
