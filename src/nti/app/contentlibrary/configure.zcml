@@ -17,10 +17,10 @@
 
 	<!-- Workspaces/collections -->
 	<subscriber factory=".workspaces._library_workspace"
-				provides="nti.appserver.interfaces.IWorkspace" />
+				provides="nti.appserver.workspaces.interfaces.IWorkspace" />
 
 	<subscriber factory=".workspaces._bundle_workspace"
-				provides="nti.appserver.interfaces.IWorkspace" />
+				provides="nti.appserver.workspaces.interfaces.IWorkspace" />
 
 	<adapter factory=".workspaces.LibraryCollection" />
 	<adapter factory=".workspaces._BundleLibraryCollection" />
