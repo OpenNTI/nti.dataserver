@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -21,15 +22,16 @@ HTTPForbidden = _hexc.HTTPForbidden
 HTTPBadRequest = _hexc.HTTPBadRequest
 HTTPNotModified = _hexc.HTTPNotModified
 HTTPMethodNotAllowed = _hexc.HTTPMethodNotAllowed
-HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
-HTTPInsufficientStorage = _hexc.HTTPInsufficientStorage
 HTTPPreconditionFailed = _hexc.HTTPPreconditionFailed
+HTTPInsufficientStorage = _hexc.HTTPInsufficientStorage
+HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 
 # Dynamically import the rest
 def _copy_pyramid_exceptions():
 	frame = sys._getframe(1)
 	for k,v in _hexc.__dict__.items():
-		if isinstance( v, type) and issubclass(v,Exception) and v.__module__ == _hexc.__name__:
+		if 	isinstance( v, type) and issubclass(v,Exception) and \
+			v.__module__ == _hexc.__name__:
 			frame.f_globals[k] = v
 _copy_pyramid_exceptions()
 
