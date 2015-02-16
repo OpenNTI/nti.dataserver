@@ -17,21 +17,21 @@ import sys
 import collections
 import simplejson as json
 
-from pyramid import httpexceptions as hexc
-from pyramid.threadlocal import get_current_request
+from zope.interface import Invalid
+
+from zope.container.interfaces import InvalidItemType
+from zope.container.interfaces import InvalidContainerType
 
 from zope.i18n import translate
-
-from z3c.password.interfaces import InvalidPassword
-
-from zope.container.interfaces import InvalidContainerType
-from zope.container.interfaces import InvalidItemType
-
-from zope.interface import Invalid
 
 from zope.schema.interfaces import RequiredMissing
 from zope.schema.interfaces import ValidationError
 from zope.schema.interfaces import ConstraintNotSatisfied
+
+from z3c.password.interfaces import InvalidPassword
+
+from pyramid import httpexceptions as hexc
+from pyramid.threadlocal import get_current_request
 
 def _json_error_map(o):
 	if isinstance(o, set):
@@ -80,7 +80,6 @@ def raise_json_error( request,
 	result.content_type = accept_type
 	raise result, None, tb
 
-
 def _validation_error_to_dict( request, validation_error ):
 	__traceback_info__ = type(validation_error), validation_error
 	# Validation error may be many things, including invalid password by the policy (see above)
@@ -104,10 +103,12 @@ def _validation_error_to_dict( request, validation_error ):
 	if not field_name and isinstance( validation_error, InvalidPassword ):
 		field_name = 'password'
 
-	if not field_name and isinstance( validation_error, RequiredMissing ) and validation_error.args:
+	if 	not field_name and isinstance( validation_error, RequiredMissing ) and \
+		validation_error.args:
 		field_name = validation_error.args[0]
 
-	if not field_name and isinstance( validation_error, ConstraintNotSatisfied ) and validation_error.args:
+	if 	not field_name and isinstance( validation_error, ConstraintNotSatisfied ) and \
+		validation_error.args:
 		value =  validation_error.args[0]
 		field_name = validation_error.args[1]
 
@@ -120,7 +121,8 @@ def _validation_error_to_dict( request, validation_error ):
 		msg = translate( validation_error.i18n_message, context=request )
 	else:
 		if validation_error.args:
-			msg = (validation_error.args[0] if not isinstance(validation_error.args[0],list) else '') or msg
+			msg = (validation_error.args[0] \
+				  if not isinstance(validation_error.args[0],list) else '') or msg
 		try:
 			msg = translate(msg, context=request)
 		except (UnicodeError,KeyError):
@@ -153,12 +155,10 @@ def _validation_error_to_dict( request, validation_error ):
 
 	return result
 
-
 def _no_request_validation_error():
 	logger.exception( "Failed to update content object, bad input" )
 	exc_info = sys.exc_info()
 	raise hexc.HTTPUnprocessableEntity, exc_info[1], exc_info[2]
-
 
 def handle_validation_error( request, validation_error ):
 	"""

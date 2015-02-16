@@ -3,8 +3,9 @@
 """
 Utilities relating to views.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -24,24 +25,24 @@ except ImportError: #PyPy?
 
 from zope import interface
 
-from zope.schema import interfaces as sch_interfaces
-
-from pyramid import traversal
-
-import webob.datetime_utils
-
-from pyramid import httpexceptions as hexc
-
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder
-from nti.dataserver.interfaces import IUser
-
-from nti.externalization.interfaces import StandardInternalFields, StandardExternalFields
-from nti.externalization.externalization import to_standard_external_last_modified_time
-from nti.mimetype import mimetype
+from zope.schema.interfaces import ValidationError
 
 from z3c.batching.batch import Batch
 
+from pyramid import traversal
+from pyramid import httpexceptions as hexc
+
+import webob.datetime_utils
+
 from nti.dataserver.links import Link
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import StandardInternalFields
+from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.mimetype import mimetype
 
 from .error import handle_validation_error
 from .error import handle_possible_validation_error
@@ -84,7 +85,6 @@ class BatchingUtilsMixin(object):
 			return batch_size, batch_start
 
 		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
-
 
 	#: A sequence of names of query params that will be dropped from
 	#: links we generate for batch-next and batch-prev, typically
@@ -347,7 +347,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		"""
 		try:
 			return self._do_call()
-		except sch_interfaces.ValidationError as e:
+		except ValidationError as e:
 			transaction.doom()
 			handle_validation_error( self.request, e )
 		except interface.Invalid as e:
@@ -359,7 +359,6 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			transaction.doom()
 			logger.warn("Failed to accept input. Client or server problem?", exc_info=True)
 			raise hexc.HTTPUnprocessableEntity( _("Unexpected internal error; see logs"))
-
 
 	def readInput(self, value=None):
 		"""
@@ -436,7 +435,10 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
-		containedObject = update_object_from_external_object( aq_base(contentObject), externalValue, notify=notify, request=self.request )
+		containedObject = update_object_from_external_object( aq_base(contentObject), 
+															  externalValue, 
+															  notify=notify, 
+															  request=self.request )
 
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
@@ -500,7 +502,6 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
 
 		return (containedObject, owner) if search_owner else containedObject
-
 
 class ModeledContentEditRequestUtilsMixin(object):
 	"""

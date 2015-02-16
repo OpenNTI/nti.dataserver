@@ -9,31 +9,33 @@ __docformat__ = "restructuredtext en"
 
 from .. import MessageFactory as _
 
-from zope import interface
-from zope.schema.interfaces import ValidationError
-
-from hamcrest import assert_that
-from hamcrest import has_entry
-from hamcrest import contains
-from hamcrest import has_entries
-from hamcrest import calling
 from hamcrest import raises
+from hamcrest import calling
+from hamcrest import contains
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import contains_string
 from nose.tools import assert_raises
 
-from nti.app.testing.layers import AppLayerTest
-from nti.app.testing.request_response import DummyRequest
+from zope import interface
+from zope.schema.interfaces import ValidationError
 
-from .. import error
-from .. import internalization as obj_io
 from pyramid import httpexceptions as hexc
 
 from nti.contentrange import contentrange
+
 from nti.dataserver import contenttypes
 
-from nti.schema.field import UniqueIterable
 from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
+from nti.schema.field import UniqueIterable
+
+from .. import error
+from .. import internalization as obj_io
+
+from nti.app.testing.layers import AppLayerTest
+from nti.app.testing.request_response import DummyRequest
 
 class TestIO(AppLayerTest):
 
