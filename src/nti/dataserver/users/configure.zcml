@@ -17,12 +17,12 @@
 	<ext:registerMimeFactories module=".friends_lists" />
 
 	<!-- Events -->
+	<subscriber handler=".users.onChange" />
+	<subscriber handler=".users._blacklist_username" />
 	<subscriber handler=".users.user_devicefeedback" />
 	<subscriber handler=".users._add_member_to_community" />
 	<subscriber handler=".users._remove_member_from_community" />
 	<subscriber handler=".users._remove_all_members_when_community_deleted" />
-	<subscriber handler=".users.onChange" />
-	<subscriber handler=".users._blacklist_username" />
 
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"
@@ -50,6 +50,10 @@
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.ISuggestedContact"
+		modules=".suggested_contacts" />
+
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->
 	<class class=".users.Entity">
@@ -63,7 +67,6 @@
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._FriendsListUsernameIterable" />
 	<adapter factory=".friends_lists._FriendsListEntityIterable" />
-
 
 	<!-- DFLs do so specially -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
