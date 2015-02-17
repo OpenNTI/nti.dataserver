@@ -5,6 +5,7 @@ Change a user password.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -17,13 +18,13 @@ import sys
 import getpass
 import argparse
 
-from nti.dataserver import users
+from nti.dataserver.users import User
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
 
 def _set_pass(username, password):
-	user = users.User.get_user(username)
-	if not user or not nti_interfaces.IUser.providedBy(user):
+	user = User.get_user(username)
+	if not user or not IUser.providedBy(user):
 		print("User not found", username, file=sys.stderr)
 		sys.exit(2)
 

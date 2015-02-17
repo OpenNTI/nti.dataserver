@@ -7,9 +7,6 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from nti.monkey import relstorage_patch_all_except_gevent_on_import
-relstorage_patch_all_except_gevent_on_import.patch()
-
 logger = __import__('logging').getLogger(__name__)
 
 import os
@@ -17,29 +14,15 @@ import sys
 import argparse
 from collections import Mapping
 
-import zope.browserpage
-
 from zope import component
-from zope.container.contained import Contained
-from zope.configuration import xmlconfig, config
-from zope.dottedname import resolve as dottedname
-from zope.traversing.interfaces import IEtcNamespace
 from zope.component.hooks import site as current_site
 
-from z3c.autoinclude.zcml import includePluginsDirective
+from zope.traversing.interfaces import IEtcNamespace
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver.utils import run_with_dataserver
-
-class PluginPoint(Contained):
-
-	def __init__(self, name):
-		self.__name__ = name
-
-PP_APP = PluginPoint('nti.app')
-PP_APP_SITES = PluginPoint('nti.app.sites')
-PP_APP_PRODUCTS = PluginPoint('nti.app.products')
+from nti.dataserver.utils.base_script import create_context
 
 conf_package = 'nti.appserver'
 
@@ -77,37 +60,6 @@ def info_site(name):
 		print("\tManager:", manager.__name__, manager)
 		for key, value in manager.items():
 			_print(key, value, 2)
-		
-def create_context(env_dir):
-	etc = os.getenv('DATASERVER_ETC_DIR') or os.path.join(env_dir, 'etc')
-	etc = os.path.expanduser(etc)
-
-	context = config.ConfigurationMachine()
-	xmlconfig.registerCommonDirectives(context)
-
-	slugs = os.path.join(etc, 'package-includes')
-	if os.path.exists(slugs) and os.path.isdir(slugs):
-		package = dottedname.resolve('nti.dataserver')
-		context = xmlconfig.file('configure.zcml', package=package, context=context)
-		xmlconfig.include(context, files=os.path.join(slugs, '*.zcml'),
-						  package=conf_package)
-
-	library_zcml = os.path.join(etc, 'library.zcml')
-	if not os.path.exists(library_zcml):
-		raise Exception("Could not locate library zcml file %s", library_zcml)
-
-	xmlconfig.include(context, file=library_zcml, package=conf_package)
-
-	# Include zope.browserpage.meta.zcm for tales:expressiontype
-	# before including the products
-	xmlconfig.include(context, file="meta.zcml", package=zope.browserpage)
-	
-	# include plugins
-	includePluginsDirective(context, PP_APP)
-	includePluginsDirective(context, PP_APP_SITES)
-	includePluginsDirective(context, PP_APP_PRODUCTS)
-	
-	return context
 					
 def main():
 	arg_parser = argparse.ArgumentParser( description="Site operations" )
@@ -137,7 +89,7 @@ def main():
 		run_with_dataserver(environment_dir=env_dir,
 							function=lambda: list_sites())
 	elif args.remove:
-		context = create_context(env_dir)
+		context = create_context(env_dir, with_library=True)
 		conf_packages = (conf_package,)
 		run_with_dataserver(environment_dir=env_dir,
 							xmlconfig_packages=conf_packages,
@@ -146,7 +98,7 @@ def main():
 							verbose=args.verbose,
 							function=lambda: remove_sites(args.remove, args.verbose))
 	elif args.info:
-		context = create_context(env_dir)
+		context = create_context(env_dir, with_library=True)
 		conf_packages = (conf_package,)
 		run_with_dataserver(environment_dir=env_dir,
 							xmlconfig_packages=conf_packages,
