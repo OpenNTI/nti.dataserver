@@ -20,7 +20,7 @@ except ImportError: # pypy?
 		ClientStorageURIResolver = object
 		RESOLVERS = {}
 
-from nti.utils import make_cache_dir
+from nti.common import make_cache_dir
 
 class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 	"""
@@ -31,10 +31,9 @@ class ZlibStorageClientStorageURIResolver(resolvers.ClientStorageURIResolver):
 	def __call__(self,uri):
 		# Defer these imports until we are actually used
 		from ZODB import DB
+		from zc.zlibstorage import ZlibStorage
 		from ZODB.DemoStorage import DemoStorage
 		from ZEO.ClientStorage import ClientStorage
-		from zc.zlibstorage import ZlibStorage
-
 
 		# It expect to find 'zeo' so make that happen
 		uri = uri.replace( b'zlibzeo://', b'zeo://' )
@@ -82,7 +81,6 @@ class ZlibStorageFileStorageURIResolver(resolvers.FileStorageURIResolver):
 
 		return key, args, storage_kw, zlibfactory
 
-
 def install_zlib_client_resolver():
 	"""
 	Makes it possible for :func:`repoze.zodbconn.uri.db_from_uri` to connect
@@ -90,5 +88,5 @@ def install_zlib_client_resolver():
 	use of the ``zlibzeo`` URI scheme, and likewise for zlibfile://
 	"""
 	# The alternative to all this is to use a ZConfig file and ZConfig URI.
-	resolvers.RESOLVERS['zlibzeo'] = ZlibStorageClientStorageURIResolver()
 	resolvers.RESOLVERS['zlibfile'] = ZlibStorageFileStorageURIResolver()
+	resolvers.RESOLVERS['zlibzeo'] = ZlibStorageClientStorageURIResolver()
