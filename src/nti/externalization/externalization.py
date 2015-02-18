@@ -140,8 +140,9 @@ class _ExternalizationState(object):
 		# and thus ensure no overlapping ids
 		return {}
 
-def _to_external_object_state(obj, state, top_level=False):
+def _to_external_object_state(obj, state, top_level=False, decorate=True):
 	__traceback_info__ = obj
+	
 	orig_obj = obj
 	orig_obj_id = id(obj)
 	if orig_obj_id in state.memo:
@@ -158,10 +159,12 @@ def _to_external_object_state(obj, state, top_level=False):
 										 not getattr( obj, '__ext_ignore_toExternalObject__', False )
 
 		if not obj_has_usable_external_object and not IExternalObject.providedBy( obj ):
-			adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name=state.name )
+			adapter = state.registry.queryAdapter(obj, IExternalObject, default=None, 
+												  name=state.name )
 			if not adapter and state.name != '':
 				# try for the default, but allow passing name of None to disable (?)
-				adapter = state.registry.queryAdapter( obj, IExternalObject, default=None, name='' )
+				adapter = state.registry.queryAdapter(obj, IExternalObject,
+													  default=None, name='' )
 			if adapter:
 				obj = adapter
 				obj_has_usable_external_object = True
@@ -175,7 +178,10 @@ def _to_external_object_state(obj, state, top_level=False):
 		elif hasattr( obj, "toExternalList" ):
 			result = obj.toExternalList()
 		elif isinstance(obj, MAPPING_TYPES ):
-			result = to_standard_external_dictionary( obj, name=state.name, registry=state.registry, request=state.request )
+			result = to_standard_external_dictionary(obj, name=state.name,
+													 registry=state.registry, 
+													 request=state.request,
+													 decorate=decorate )
 			if obj.__class__ is dict:
 				result.pop( 'Class', None )
 			# Note that we recurse on the original items, not the things newly
@@ -183,27 +189,33 @@ def _to_external_object_state(obj, state, top_level=False):
 			# NOTE: This means that Links added here will not be externalized. There
 			# is an IExternalObjectDecorator that does that
 			for key, value in obj.items():
-				result[key] = _to_external_object_state( value, state ) if not isinstance(value, _primitives) else value
-		elif isinstance( obj, SEQUENCE_TYPES ) or sequence.IFiniteSequence.providedBy( obj ):
-			result = state.registry.getAdapter( [(_to_external_object_state(x, state) \
-					 if not isinstance(x, _primitives) else x) for x in obj], ILocatedExternalSequence )
+				result[key] = _to_external_object_state( value, state, decorate=decorate) \
+							  if not isinstance(value, _primitives) else value
+		elif isinstance( obj, SEQUENCE_TYPES ) or \
+			 sequence.IFiniteSequence.providedBy( obj ):
+			result = [ (_to_external_object_state(x, state, decorate=decorate) \
+					    if not isinstance(x, _primitives) else x) for x in obj ]
+			result = state.registry.getAdapter(result, ILocatedExternalSequence)
 		# PList doesn't support None values, JSON does. The closest
 		# coersion I can think of is False.
 		elif obj is None:
 			if state.coerceNone:
 				result = False
 		else:
-			# Otherwise, we probably won't be able to
-			# JSON-ify it.
-			# TODO: Should this live here, or at a higher level where the ultimate external target/use-case is known?
-			result = state.registry.queryAdapter( obj, INonExternalizableReplacer, default=state.default_non_externalizable_replacer )(obj)
+			# Otherwise, we probably won't be able to JSON-ify it.
+			# TODO: Should this live here, or at a higher level where the ultimate
+			# external target/use-case is known?
+			replacer = state.default_non_externalizable_replacer
+			result = state.registry.queryAdapter(obj, INonExternalizableReplacer, 
+												 default=replacer)(obj)
 
-		for decorator in state.registry.subscribers( (orig_obj,), IExternalObjectDecorator ):
-			decorator.decorateExternalObject( orig_obj, result )
+		if decorate:
+			for decorator in state.registry.subscribers((orig_obj,), IExternalObjectDecorator):
+				decorator.decorateExternalObject( orig_obj, result )
 
 		# Request specific decorating, if given, is more specific than plain object
 		# decorating, so it gets to go last.
-		if state.request is not None and state.request is not _NotGiven:
+		if decorate and state.request is not None and state.request is not _NotGiven:
 			for decorator in state.registry.subscribers( (orig_obj, state.request), IExternalObjectDecorator):
 				decorator.decorateExternalObject( orig_obj, result )
 
@@ -224,7 +236,8 @@ def _to_external_object_state(obj, state, top_level=False):
 def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 					  catch_components=(), catch_component_action=None,
 					  default_non_externalizable_replacer=DefaultNonExternalizableReplacer,
-					  request=_NotGiven):
+					  request=_NotGiven,
+					  decorate=True):
 	""" Translates the object into a form suitable for
 	external distribution, through some data formatting process. See :const:`SEQUENCE_TYPES`
 	and :const:`MAPPING_TYPES` for details on what we can handle by default.
@@ -277,10 +290,9 @@ def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 	state.request = request
 
 	try:
-		return _to_external_object_state( obj, state, True )
+		return _to_external_object_state( obj, state, top_level=True, decorate=decorate)
 	finally:
 		_manager.pop()
-
 
 to_external_object = toExternalObject
 
