@@ -48,7 +48,10 @@ class LogActivityMonitor(_AbstractActivityMonitor):
 		logger.debug( "closedConnection={'loads': %5d, 'stores': %5d, 'database': %s}",
 					  loads, stores, db_name )
 
-from perfmetrics import statsd_client
+try:
+	from perfmetrics import statsd_client
+except ImportError:
+	statsd_client = lambda *args, **kwargs:None
 
 class StatsdActivityMonitor(_AbstractActivityMonitor):
 	"""

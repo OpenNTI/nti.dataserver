@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import functools
 
 from zope import interface
+
 from zope.minmax._minmax import Maximum, Minimum, AbstractValue
 
 from .interfaces import INumericValue
@@ -120,7 +121,6 @@ class NumericMaximum(AbstractNumericValue,Maximum):
 	"""
 	Maximizes the number during conflicts.
 	"""
-
 
 class NumericMinimum(AbstractNumericValue,Minimum):
 	"""

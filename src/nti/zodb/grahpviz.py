@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -93,7 +93,6 @@ def _export_database(f, conn, base_oid, reference_callback, name_predicate, done
 		full_name = module + '.' + klass
 		if name_predicate(full_name):
 			f.write(b'%s [label="%s.%s"]\n' % (_node_name(oid, conn_name), module, klass))
-
 
 def _walk_database(conn, root_oid, reference_callback=None, name_predicate=None, done_oids=None):
 	conn_name = conn.db().database_name
