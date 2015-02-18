@@ -18,8 +18,10 @@ import argparse
 
 from nti.dataserver import users
 from nti.dataserver.interfaces import IShardLayout
-from nti.dataserver.utils import run_with_dataserver
+
 from nti.dataserver.generations.install import install_shard
+
+from . import run_with_dataserver
 
 def _init_shard( shard_name ):
 	dataserver = users._get_shared_dataserver()

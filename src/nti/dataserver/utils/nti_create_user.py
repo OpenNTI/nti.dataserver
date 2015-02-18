@@ -27,13 +27,13 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
-from nti.dataserver.utils import run_with_dataserver
-
 from nti.dataserver.shards import AbstractShardPlacer
 
 from nti.externalization.externalization import to_external_object
 
 from .base_script import set_site
+
+from . import run_with_dataserver
 
 _type_map = { 'user': User.create_user,
 			  'community': Community.create_community }

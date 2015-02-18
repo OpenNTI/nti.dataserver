@@ -19,15 +19,18 @@ import pprint
 import argparse
 
 from nti.dataserver import users
-from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+
 from nti.externalization.externalization import to_external_object
+
+from . import run_with_dataserver
 
 def join_communities(user, communities=(), follow=False, exitOnError=False):
 	not_found = set()
 	for com_name in communities:
 		comm = users.Entity.get_entity(com_name)
-		if not comm or not nti_interfaces.ICommunity.providedBy(comm):
+		if not comm or not ICommunity.providedBy(comm):
 			not_found.add(com_name)
 			if exitOnError:
 				break
@@ -40,7 +43,7 @@ def join_communities(user, communities=(), follow=False, exitOnError=False):
 
 def _process_args(args):
 	user = users.User.get_user(args.username)
-	if not user or not nti_interfaces.IUser.providedBy(user):
+	if not user or not IUser.providedBy(user):
 		print("No user found", args, file=sys.stderr)
 		sys.exit(2)
 
@@ -55,22 +58,22 @@ def _process_args(args):
 def main():
 	arg_parser = argparse.ArgumentParser( description="Join one or more existing communities" )
 	arg_parser.add_argument('username', help="The username that should join communities")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
-	arg_parser.add_argument('-f', '--follow', help="Also follow the communities", action='store_true', dest='follow')
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+							action='store_true', dest='verbose')
+	arg_parser.add_argument('-f', '--follow', help="Also follow the communities", 
+							action='store_true', dest='follow')
 	arg_parser.add_argument('-c', '--communities',
 							dest='communities',
 							nargs="+",
 							help="The usernames of the communities to join")
-	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 	
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv('DATASERVER_DIR')
+	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError("Invalid dataserver environment root directory", env_dir)
+		raise IOError("Invalid dataserver environment root directory", env_dir)
 	
-	run_with_dataserver(environment_dir=env_dir, function=lambda: _process_args(args))
+	run_with_dataserver(environment_dir=env_dir, 
+						function=lambda: _process_args(args))
 
 if __name__ == '__main__':
 	main()

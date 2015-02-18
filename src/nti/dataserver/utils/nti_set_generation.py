@@ -16,8 +16,9 @@ from zope import component
 
 from nti.dataserver.interfaces import IDataserver
 
-from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver.utils.base_script import create_context
+from .base_script import create_context
+
+from . import run_with_dataserver
 				
 def _set_generation(args):
 	ds = component.getUtility(IDataserver)
