@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Various python3/pypy compatibility shims.
-
 .. $Id$
 """
 
