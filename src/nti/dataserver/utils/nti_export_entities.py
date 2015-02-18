@@ -23,18 +23,20 @@ import zope.intid
 from zope import component
 from zope.catalog.interfaces import ICatalog
 
-from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
+
+from nti.dataserver.users import Entity
 from nti.dataserver.users.index import CATALOG_NAME
-from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.externalization import to_external_object
 
 from .base_script import set_site
 from .base_script import create_context
+
+from . import run_with_dataserver
 
 def _tx_string(s):
 	if s and isinstance(s, unicode):

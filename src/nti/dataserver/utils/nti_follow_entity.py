@@ -20,10 +20,11 @@ import argparse
 from pprint import pprint
 
 from nti.dataserver import users
-from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDynamicSharingTarget
 
 from nti.externalization.externalization import to_external_object
+
+from . import run_with_dataserver
 
 def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=None):
 	found = set()
@@ -35,7 +36,7 @@ def _follow_entities(user, to_follow=(), follow=None, record=None, addFriend=Non
 			found.add(username)
 			follow(user, entity)
 
-			if nti_interfaces.IDynamicSharingTarget(entity):
+			if IDynamicSharingTarget(entity):
 				record(user, entity)
 				addFriend(entity, user)
 				member_of.add(username)
@@ -115,14 +116,14 @@ def main():
 							nargs="+",
 							required=True,
 							help="The usernames of the entities to (un)follow")
-	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	args = arg_parser.parse_args()
 
 	env_dir = os.getenv( 'DATASERVER_DIR' )
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError( "Invalid dataserver environment root directory", env_dir )
+		raise IOError( "Invalid dataserver environment root directory", env_dir )
 	
-	run_with_dataserver( environment_dir=env_dir, function=lambda: _action(args) )
+	run_with_dataserver(environment_dir=env_dir, 
+						function=lambda: _action(args) )
 
 if __name__ == '__main__':
 	main()

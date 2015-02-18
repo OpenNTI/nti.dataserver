@@ -5,6 +5,7 @@ Update a community
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,11 +20,12 @@ import pprint
 import argparse
 
 from nti.dataserver import users
-from nti.dataserver.utils import run_with_dataserver
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import ICommunity
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+
+from . import run_with_dataserver
 
 def update_community(username, name=None, alias=None, verbose=False):
 	__traceback_info__ = locals().items()
@@ -39,7 +41,7 @@ def update_community(username, name=None, alias=None, verbose=False):
 		print("community does not exists", file=sys.stderr)
 		sys.exit(2)
 
-	if not nti_interfaces.ICommunity.providedBy(community):
+	if not ICommunity.providedBy(community):
 		print("Invalid community", repr(community), file=sys.stderr)
 		sys.exit(3)
 
@@ -65,7 +67,7 @@ def process_args(args=None):
 	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
-
+	
 	arg_parser.add_argument('-n', '--name',
 							 dest='name',
 							 help="The realname of the community")
@@ -80,11 +82,9 @@ def process_args(args=None):
 
 	args = arg_parser.parse_args(args=args)
 
-	env_dir = args.env_dir
-	if not env_dir:
-		env_dir = os.getenv('DATASERVER_DIR')
+	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
-		raise ValueError("Invalid dataserver environment root directory", env_dir)
+		raise IOError("Invalid dataserver environment root directory", env_dir)
 	
 	username = args.username
 	conf_packages = () if not args.site else ('nti.appserver',)
