@@ -47,9 +47,13 @@ from nti.mimetype import mimetype
 from .error import handle_validation_error
 from .error import handle_possible_validation_error
 
+from .internalization import read_body_as_external_object
 from .internalization import create_modeled_content_object
 from .internalization import update_object_from_external_object
-from .internalization import read_body_as_external_object
+
+CLASS = StandardExternalFields.CLASS
+ITEMS = StandardExternalFields.ITEMS
+MIMETYPE = StandardExternalFields.MIMETYPE
 
 _marker = object()
 _tuple_selector = operator.itemgetter(1)
@@ -135,7 +139,8 @@ class BatchingUtilsMixin(object):
 					batch_params.pop( n, None )
 
 				batch_params['batchStart'] = batch
-				link_next_href = self.request.current_route_path( _query=sorted(batch_params.items()) ) # sort for reliable testing
+				query = sorted(batch_params.items()) # sort for reliable testing
+				link_next_href = self.request.current_route_path(_query=query) 
 				link_next = Link( link_next_href, rel=rel )
 				result.setdefault( 'Links', [] ).append( link_next )
 
@@ -166,7 +171,6 @@ class BatchingUtilsMixin(object):
 			result['Items'] = result_list
 			return result
 
-
 		# Ok, reify up to batch_size + batch_start + 2 items from merged
 		if number_items_needed is _marker or number_items_needed is None:
 			number_items_needed = batch_size + batch_start + 2
@@ -179,9 +183,9 @@ class BatchingUtilsMixin(object):
 			if count > number_items_needed:
 				break
 
-		result['Items'] = self.__batch_result_list(result, result_list,
-												   batch_start, batch_size,
-												   number_items_needed)
+		result[ITEMS] = self.__batch_result_list(result, result_list,
+												 batch_start, batch_size,
+												 number_items_needed)
 		return result
 
 	def _batch_tuple_iterable(self, *args, **kwargs):
@@ -297,7 +301,6 @@ class UploadRequestUtilsMixin(object):
 			in_file = field.file
 			in_file.seek( 0 )
 			return in_file.read()
-
 		return self.request.body
 
 	def _get_body_type(self):
@@ -369,7 +372,9 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
 			client request.
 		"""
-		result = read_body_as_external_object( self.request, input_data=value, expected_type=self.inputClass )
+		result = read_body_as_external_object( 	self.request, 
+												input_data=value,
+												expected_type=self.inputClass )
 		try:
 			return self._transformInput( result )
 		except hexc.HTTPException:
@@ -404,27 +409,32 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		string.
 		"""
 
-		if externalValue.get( 'MimeType' ):
-			return externalValue['MimeType']
+		if externalValue.get( MIMETYPE ):
+			return externalValue[MIMETYPE]
 
-		if self.request.content_type and self.request.content_type.startswith( mimetype.MIME_BASE ):
+		if 	self.request.content_type and \
+			self.request.content_type.startswith( mimetype.MIME_BASE ):
 			datatype = self.request.content_type
 			if datatype.endswith( '+json' ):
 				datatype = datatype[:-5] # strip +json
 			if datatype and datatype != mimetype.MIME_BASE: # prevent taking just the base type
 				return datatype
 
-		if externalValue.get( 'Class' ):
-			return externalValue['Class'] + 's'
-
+		if externalValue.get( CLASS ):
+			return externalValue[CLASS] + 's'
 
 	def createContentObject( self, user, datatype, externalValue, creator ):
-		return create_modeled_content_object( self.dataserver, user, datatype, externalValue, creator )
+		return create_modeled_content_object( self.dataserver, 
+											  user, 
+											  datatype,
+											  externalValue,
+											  creator )
 
 	def createAndCheckContentObject( self, owner, datatype, externalValue, creator, predicate=None ):
 		if predicate is None:
 			predicate = self.content_predicate
-		containedObject = self.createContentObject( owner, datatype, externalValue, creator )
+		containedObject = self.createContentObject( owner, datatype, 
+													externalValue, creator )
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
@@ -529,6 +539,6 @@ class ModeledContentEditRequestUtilsMixin(object):
 
 		if self.request.if_unmodified_since is not None:
 			obj_last_mod = to_standard_external_last_modified_time( obj )
-			if obj_last_mod is not None \
+			if 	obj_last_mod is not None \
 				and datetime.datetime.fromtimestamp( obj_last_mod, webob.datetime_utils.UTC ) > self.request.if_unmodified_since:
 				raise hexc.HTTPPreconditionFailed()
