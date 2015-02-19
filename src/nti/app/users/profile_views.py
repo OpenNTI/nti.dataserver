@@ -301,8 +301,14 @@ def _get_inactive_accounts():
 		if iid is None:
 			continue
 
-		lastLoginTime = getattr(user, 'lastLoginTime', None)
-		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime) if lastLoginTime else None
+		try:
+			lastLoginTime = getattr(user, 'lastLoginTime', None)
+			lastLoginTime = datetime.utcfromtimestamp(lastLoginTime) \
+							if lastLoginTime else None
+		except ValueError:
+			logger.error("Cannot parse %s for user %s", lastLoginTime, user)
+			lastLoginTime = None
+
 		if lastLoginTime and (now - lastLoginTime).days < 365:
 			continue
 		
