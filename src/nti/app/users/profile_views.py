@@ -308,10 +308,10 @@ def _get_inactive_accounts():
 		
 		username = user.username
 		userid = _replace_username(username)
+		lastLoginTime = lastLoginTime.isoformat()
 		email = _get_index_field_value(iid, ent_catalog, 'email')
 		createdTime = _parse_time(getattr(user, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
-		lastLoginTime = _parse_time(lastLoginTime) if lastLoginTime else None
 		info = [username, userid, realname, email, createdTime,lastLoginTime]
 		yield info
 
