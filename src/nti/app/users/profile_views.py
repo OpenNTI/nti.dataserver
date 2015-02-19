@@ -287,6 +287,8 @@ def _get_inactive_accounts():
 	header = ['username', 'userid', 'realname', 'email', 'createdTime', 'lastLoginTime']
 	yield header
 
+	ZERO_DATETIME = datetime.utcfromtimestamp(0)
+	
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout( dataserver ).users_folder
 	intids = component.getUtility(zope.intid.IIntIds)
@@ -301,17 +303,19 @@ def _get_inactive_accounts():
 		if iid is None:
 			continue
 
-		lastLoginTime = getattr(user, 'lastLoginTime', None) or 0
-		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime)
+		lastLoginTime = getattr(user, 'lastLoginTime', None)
+		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime) \
+						if lastLoginTime else ZERO_DATETIME 
 		if (now - lastLoginTime).days < 365:
 			continue
 		
 		username = user.username
 		userid = _replace_username(username)
-		lastLoginTime = lastLoginTime.isoformat()
 		email = _get_index_field_value(iid, ent_catalog, 'email')
 		createdTime = _parse_time(getattr(user, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
+		lastLoginTime = lastLoginTime.isoformat() \
+						if lastLoginTime != ZERO_DATETIME else None
 		info = [username, userid, realname, email, createdTime,lastLoginTime]
 		yield info
 
