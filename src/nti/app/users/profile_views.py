@@ -307,7 +307,7 @@ def _get_inactive_accounts():
 							if lastLoginTime else None
 		except ValueError:
 			logger.error("Cannot parse %s for user %s", lastLoginTime, user)
-			lastLoginTime = None
+			continue
 
 		if lastLoginTime and (now - lastLoginTime).days < 365:
 			continue
