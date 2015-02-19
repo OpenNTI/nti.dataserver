@@ -137,6 +137,7 @@ setup(
         'nti.common',
 		'nti.schema',
 		'nti.utils',
+		'nti.zodb',
 		'pywikipedia',
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
