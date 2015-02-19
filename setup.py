@@ -134,6 +134,7 @@ setup(
 		'nti.plasTeX',
 		'nti.geventwebsocket',
         'nti.contentfragments',
+        'nti.common',
 		'nti.schema',
 		'nti.utils',
 		'pywikipedia',
@@ -276,7 +277,7 @@ setup(
 		'repoze.lru',  # LRU caching. Dep of Pyramid
 		'repoze.sendmail',  # trunk has some good binary changes
 		'repoze.who',  #
-		'repoze.zodbconn',
+		'repoze.zodbconn' if not IS_PYPY else '',
 		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
 		 # We use just the generic part of the API and work back to 0.14.
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
