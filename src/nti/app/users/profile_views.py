@@ -286,8 +286,6 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 def _get_inactive_accounts():
 	header = ['username', 'userid', 'realname', 'email', 'createdTime', 'lastLoginTime']
 	yield header
-
-	ZERO_DATETIME = datetime.utcfromtimestamp(0)
 	
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout( dataserver ).users_folder
@@ -304,9 +302,8 @@ def _get_inactive_accounts():
 			continue
 
 		lastLoginTime = getattr(user, 'lastLoginTime', None)
-		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime) \
-						if lastLoginTime else ZERO_DATETIME 
-		if (now - lastLoginTime).days < 365:
+		lastLoginTime = datetime.utcfromtimestamp(lastLoginTime) if lastLoginTime else None
+		if lastLoginTime and (now - lastLoginTime).days < 365:
 			continue
 		
 		username = user.username
@@ -314,8 +311,7 @@ def _get_inactive_accounts():
 		email = _get_index_field_value(iid, ent_catalog, 'email')
 		createdTime = _parse_time(getattr(user, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
-		lastLoginTime = lastLoginTime.isoformat() \
-						if lastLoginTime != ZERO_DATETIME else None
+		lastLoginTime = lastLoginTime.isoformat() if lastLoginTime else None
 		info = [username, userid, realname, email, createdTime,lastLoginTime]
 		yield info
 
