@@ -35,6 +35,8 @@ from nti.common.property import CachedProperty
 
 from nti.externalization.persistence import NoPickle
 
+from nti.intid.interfaces import ObjectMissingError
+
 from nti.ntiids.ntiids import ROOT as NTI_ROOT
 
 from nti.site.localutility import queryNextUtility
@@ -465,6 +467,24 @@ class AbstractContentPackageLibrary(object):
 	def _clear_caches(self):
 		self._v_path_to_ntiid_cache.clear()
 
+	def _do_path_to_ntiid(self, ntiid):
+		# We special case the root ntiid by only looking in
+		# the top level of content packages for our ID.  We should
+		# always return None unless there are root content prefs.
+		result = None
+		if ntiid == NTI_ROOT:
+			for title in self.contentPackages:
+				if getattr( title, 'ntiid', None ) == ntiid:
+					result = [title]
+					break
+		else:
+			for title in self.contentPackages:
+				vals = _pathToPropertyValue( title, 'ntiid', ntiid )
+				if vals:
+					result = vals
+					break
+		return result
+
 	def pathToNTIID(self, ntiid, skip_cache=False):
 		"""
 		Returns a list of TOCEntry objects in order until
@@ -479,25 +499,19 @@ class AbstractContentPackageLibrary(object):
 		if not skip_cache:
 			result = self._v_path_to_ntiid_cache.get(ntiid)
 			if result:
-				return [x() for x in result]
+				try:
+					result = [x() for x in result]
+					return result
+				except ObjectMissingError:
+					# This should only occur during sync,
+					# before the cache is invalidated.
+					# Fall back to our algorithm.
+					pass
 			elif result is not None:
-				# Empty list
+				# Empty list cached
 				return None
 
-		# We special case the root ntiid by only looking in
-		# the top level of content packages for our ID.  We should
-		# always return None unless there are root content prefs.
-		if ntiid == NTI_ROOT:
-			for title in self.contentPackages:
-				if getattr( title, 'ntiid', None ) == ntiid:
-					result = [title]
-					break
-		else:
-			for title in self.contentPackages:
-				vals = _pathToPropertyValue( title, 'ntiid', ntiid )
-				if vals:
-					result = vals
-					break
+		result = self._do_path_to_ntiid( ntiid )
 
 		if not skip_cache:
 			if result:
