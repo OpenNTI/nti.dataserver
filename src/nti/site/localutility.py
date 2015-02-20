@@ -129,5 +129,4 @@ def queryNextUtility(context, interface, default=None):
 		if result is context:
 			# in the GSM, we're querying for the GSM utility?
 			result = default
-
 	return result

@@ -11,11 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope.interface import ro
+
 from zope import component
 from zope.component.interfaces import IComponents
 from zope.component.hooks import site as current_site
-
-from zope.interface import ro
 
 from zope.traversing.interfaces import IEtcNamespace
 

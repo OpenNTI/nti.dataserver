@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -10,12 +9,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope import interface
+
+from zope.site.folder import Folder
 
 from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 
-from zope.site.folder import Folder
 from .interfaces import IHostSitesFolder
 from .interfaces import IHostPolicyFolder
 from .interfaces import IHostPolicySiteManager

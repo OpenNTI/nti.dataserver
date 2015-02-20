@@ -1,48 +1,43 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-$Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from hamcrest import is_
+from hamcrest import any_of
+from hamcrest import is_not
+from hamcrest import raises
+from hamcrest import calling
+from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import not_none
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import same_instance
+does_not = is_not
 
 import unittest
-from hamcrest import assert_that
-from hamcrest import contains
-from hamcrest import any_of
-from hamcrest import has_property
-from hamcrest import has_key
-from hamcrest import has_length
-from hamcrest import is_not as does_not
-from hamcrest import not_none
-from hamcrest import is_
-from hamcrest import same_instance
-from hamcrest import calling
-from hamcrest import raises
 
-from nti.testing.matchers import validly_provides
+from zope import interface
+from zope.interface import ro
+from zope.interface import Interface
+
 from zope import component
 from zope.component.hooks import getSite, setSite, site as currentSite
 from zope.location.interfaces import LocationError
 
 # XXX: These tests aren't really separated
-from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests.mock_dataserver import mock_db_trans
 from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import mock_db_trans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.mock_dataserver import SharedConfiguringTestLayer
 
-
-from zope.interface import Interface
-from zope import interface
-from zope.interface import ro
+from nti.testing.matchers import validly_provides
 
 class IMock(Interface):
 	pass
@@ -58,13 +53,15 @@ class MockSite(object):
 	def getSiteManager(self):
 		return self.site_man
 
+from zope.component import globalSiteManager as BASE
+
+from z3c.baseregistry.baseregistry import BaseComponents
+
 from ..subscribers import threadSiteSubscriber
+
 from ..transient import HostSiteManager as HSM
 
 from ..interfaces import IHostPolicyFolder
-
-from z3c.baseregistry.baseregistry import BaseComponents
-from zope.component import globalSiteManager as BASE
 
 class IFoo(Interface):
 	pass
@@ -72,7 +69,6 @@ class IFoo(Interface):
 class TestSiteSubscriber(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
-
 
 	def testProxyHostComps(self):
 		pers_comps = BaseComponents(BASE, 'persistent', (BASE,) )
@@ -165,18 +161,20 @@ DEMOALPHA = BaseComponents(DEMO,
 
 _SITES = (EVAL, EVALALPHA, DEMO, DEMOALPHA)
 
-
+from zope.component.interfaces import ISite
 from zope.component.interfaces import IComponents
 
-from nti.testing.matchers import verifiably_provides
-from zope.component.interfaces import ISite
 from zope.site.interfaces import INewLocalSite
+
 from ..interfaces import IHostPolicySiteManager
 
-from ..site import get_site_for_site_names
 from ..hostpolicy import synchronize_host_policies
-from ..site import _find_site_components
 from ..hostpolicy import run_job_in_all_host_sites
+
+from ..site import _find_site_components
+from ..site import get_site_for_site_names
+
+from nti.testing.matchers import verifiably_provides
 
 class ITestSiteSync(interface.Interface):
 	pass
@@ -188,7 +186,6 @@ class ASync(object):
 @interface.implementer(ITestSiteSync)
 class OtherSync(object):
 	pass
-
 
 class TestSiteSync(DataserverLayerTest):
 

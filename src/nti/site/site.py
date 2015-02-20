@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -97,7 +96,6 @@ def get_site_for_site_names( site_names, site=None ):
 			site.__name__ = site_name
 
 	return site
-
 
 ## Legacy notes:
 # Opening the connection registered it with the transaction manager as an ISynchronizer.
