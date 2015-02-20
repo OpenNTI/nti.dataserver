@@ -5,6 +5,7 @@ Constants and types for dealing with our unique IDs.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -22,9 +23,10 @@ import collections
 
 from zope import interface
 from zope import component
-from zope.schema import interfaces as sch_interfaces
+from zope.schema.interfaces import ValidationError
 
-from nti.ntiids import interfaces
+from .interfaces import INTIID
+from .interfaces import INTIIDResolver
 
 # Well-known IDs
 DATE = "2011-10"
@@ -88,7 +90,6 @@ TYPE_MEETINGROOM_SECT  = TYPE_ROOM + ':ClassSection'
 TYPE_TRANSCRIPT = 'Transcript'
 TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 
-
 # Validation
 # This is a minimal set, required to make parsing wark;
 # space is technically legal, but we escape it away anyway (?)
@@ -97,8 +98,7 @@ TYPE_TRANSCRIPT_SUMMARY = 'TranscriptSummary'
 # wind up as filenames, and that would break many filename uses
 _illegal_chars_ = r"/\";=?<>#%'{}|^[]"
 
-
-class InvalidNTIIDError(sch_interfaces.ValidationError):
+class InvalidNTIIDError(ValidationError):
 	"""Raised if the NTIID value (or some part of it) is invalid."""
 
 class ImpossibleToMakeSpecificPartSafe(InvalidNTIIDError):
@@ -122,7 +122,6 @@ def validate_ntiid_string( string ):
 
 	if not string or not string.startswith( 'tag:nextthought.com,20' ):
 		raise InvalidNTIIDError( 'Missing correct start value: ' + repr(string) )
-
 
 	parts = string.split( ':', 2 ) # Split twice. Allow for : in the specific part
 	if len( parts ) != 3:
@@ -246,8 +245,6 @@ def make_specific_safe( specific, strict=True ):
 	# back to unicode, coming from ascii
 	return specific.decode( 'ascii' )
 
-
-
 def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None ):
 	"""
 	Create a new NTIID.
@@ -268,7 +265,6 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 
 	if not nttype and not base:
 		raise ValueError( 'Must supply type' )
-
 
 	date_string = None
 	if date is DATE and base is not None:
@@ -302,7 +298,7 @@ def make_ntiid( date=DATE, provider=None, nttype=None, specific=None, base=None 
 
 NTIID = collections.namedtuple( 'NTIID',
 								map(str, ['provider', 'nttype', 'specific','date']) )
-interface.classImplements( NTIID, interfaces.INTIID )
+interface.classImplements( NTIID, INTIID )
 
 def _parse( ntiid ):
 	"""
@@ -368,7 +364,7 @@ def find_object_with_ntiid(key, **kwargs):
 		warnings.warn( "Function currently takes no kwargs" )
 
 	ntiid = _parse( key )
-	resolver = component.queryUtility( interfaces.INTIIDResolver, name=ntiid.nttype )
+	resolver = component.queryUtility(INTIIDResolver, name=ntiid.nttype )
 	if not resolver:
 		logger.warn( "No ntiid resolver for '%s' in '%s'", ntiid.nttype, key )
 		return None
