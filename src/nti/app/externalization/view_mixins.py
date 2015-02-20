@@ -27,6 +27,9 @@ from zope import interface
 
 from zope.schema.interfaces import ValidationError
 
+from ZODB.interfaces import IBroken
+from ZODB.POSException import POSError
+
 from z3c.batching.batch import Batch
 
 from pyramid import traversal
@@ -146,11 +149,23 @@ class BatchingUtilsMixin(object):
 
 		return result_list
 
+	def _is_valid(self, x):
+		result = (x is not None)
+		if result:
+			try:
+				if hasattr(x, '_p_activate'):
+					x._p_activate()
+				result = not IBroken.providedBy(x)
+			except POSError:
+				result = False
+		return result
+
 	def _batch_items_iterable(self, result, items,
 							  number_items_needed=_marker,
 							  batch_size=_marker,
 							  batch_start=_marker,
-							  selector=lambda x: x):
+							  selector=lambda x: x,
+							  ignore_invalid=False):
 		"""
 		Handle batching in a flexible way.
 
@@ -161,13 +176,28 @@ class BatchingUtilsMixin(object):
 			and not need to get its length.
 		:keyword selector: This callable is applied to each element of the items sequence
 			to produce the final item in the batch.
+		:param ignore_invalid: Flag to ignore missing or broken objects.
 		"""
+		
+		def _trax(item):
+			try:
+				x = selector(item)
+				x = x if not ignore_invalid or _is_valid(x) else None
+				return x
+			except (KeyError, POSError):
+				if not ignore_invalid:
+					raise
+				
 		if batch_size is _marker and batch_start is _marker:
 			batch_size, batch_start = self._get_batch_size_start()
 
 		if batch_size is None or batch_start is None:
 			# Not batching.
-			result_list = [selector(x) for x in items]
+			result_list = []
+			for x in items:
+				x = _trax(x)
+				if x is not None:
+					result_list.append( x )
 			result['Items'] = result_list
 			return result
 
@@ -175,13 +205,15 @@ class BatchingUtilsMixin(object):
 		if number_items_needed is _marker or number_items_needed is None:
 			number_items_needed = batch_size + batch_start + 2
 
-		result_list = []
 		count = 0
+		result_list = []
 		for x in items:
-			result_list.append( selector(x) )
-			count += 1
-			if count > number_items_needed:
-				break
+			x = _trax(x)
+			if x is not None:
+				count += 1
+				result_list.append( x )
+				if count > number_items_needed:
+					break
 
 		result[ITEMS] = self.__batch_result_list(result, result_list,
 												 batch_start, batch_size,
