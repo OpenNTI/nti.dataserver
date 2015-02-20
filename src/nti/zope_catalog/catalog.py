@@ -38,17 +38,18 @@ class ResultSet(object):
 				try:
 					if obj is None:
 						logger.warn("Ignoring missing object %s", uid)
-						continue
 					else:
-						obj._p_activate()
+						if hasattr(obj, '_p_activate'):
+							obj._p_activate()
 						if IBroken.providedBy(obj):
-							continue
-				except POSError:
-					logger.error("Ignoring broken object %s", uid)
-					continue
+							obj = None
+				except POSError:	
+					logger.error("Ignoring broken object %s, %s", type(obj), uid)
+					obj = None
 			else:
 				obj = self.uidutil.getObject(uid)
-			yield obj
+			if obj is not None:
+				yield obj
 			
 class Catalog(_ZCatalog):
 	"""
