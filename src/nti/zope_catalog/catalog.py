@@ -13,10 +13,43 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope.catalog.catalog import Catalog as _ZCatalog
 
+from ZODB.interfaces import IBroken
+from ZODB.POSException import POSError
 from ZODB.POSException import POSKeyError
 
 from .interfaces import INoAutoIndex
 
+class ResultSet(object):
+	"""
+	Lazily accessed set of objects.
+	"""
+
+	def __init__(self, uids, uidutil, ignore_invalid=False):
+		self.uids = uids
+		self.uidutil = uidutil
+
+	def __len__(self):
+		return len(self.uids)
+
+	def __iter__(self):
+		for uid in self.uids:
+			if self.ignore_invalid:
+				obj = self.uidutil.queryObject(uid)
+				try:
+					if obj is None:
+						logger.warn("Ignoring missing object %s", uid)
+						continue
+					else:
+						obj._p_activate()
+						if IBroken.providedBy(obj):
+							continue
+				except POSError:
+					logger.error("Ignoring broken object %s", uid)
+					continue
+			else:
+				obj = self.uidutil.getObject(uid)
+			yield obj
+			
 class Catalog(_ZCatalog):
 	"""
 	An extended catalog. Features include:
