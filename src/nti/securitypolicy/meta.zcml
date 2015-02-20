@@ -1,5 +1,8 @@
-<configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:meta="http://namespaces.zope.org/meta" >
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:meta="http://namespaces.zope.org/meta">
 
 	<meta:directive
 		namespace="http://nextthought.com/ntp/securitypolicy"
@@ -24,6 +27,5 @@
         name="principal"
         schema=".zcml.IDefinePrincipalDirective"
         handler="zope.principalregistry.metaconfigure.principal" />
-
 
 </configure>
