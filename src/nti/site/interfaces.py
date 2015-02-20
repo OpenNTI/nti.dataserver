@@ -13,7 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-import zope.site.interfaces
+from zope.site.interfaces import IFolder
+from zope.site.interfaces import ILocalSiteManager
 
 from nti.schema.field import Number
 
@@ -23,7 +24,7 @@ class InappropriateSiteError(LookupError):
 class SiteNotInstalledError(AssertionError):
 	pass
 
-class IMainApplicationFolder(zope.site.interfaces.IFolder):
+class IMainApplicationFolder(IFolder):
 	"""
 	The folder representing the application. The set of persistent
 	components will be installed beneath this folder, and this
@@ -33,14 +34,14 @@ class IMainApplicationFolder(zope.site.interfaces.IFolder):
 	note, though, this is typically beneath the root folder and called
 	"dataserver2".
 	"""
-class IHostPolicyFolder(zope.site.interfaces.IFolder):
+class IHostPolicyFolder(IFolder):
 	"""
 	A folder that should always have a site manager, and thus is a
 	site, representing a policy for the host name. Persistent
 	configuration related to that host should reside in this folder.
 	"""
 	
-class IHostPolicySiteManager(zope.site.interfaces.ILocalSiteManager):
+class IHostPolicySiteManager(ILocalSiteManager):
 	"""
 	A persistent local site manager that is tied to a site name. It should always
 	have two bases, a non-persistent global IComponents configured through
@@ -48,7 +49,7 @@ class IHostPolicySiteManager(zope.site.interfaces.ILocalSiteManager):
 	in that order. This should be the site manager for an :class:`IHostPolicyFolder`
 	"""
 
-class IHostSitesFolder(zope.site.interfaces.IFolder):
+class IHostSitesFolder(IFolder):
 	"""
 	A container for the sites, each of which should be an
 	:class:`IHostPolicyFolder`
