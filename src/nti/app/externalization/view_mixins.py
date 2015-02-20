@@ -182,7 +182,7 @@ class BatchingUtilsMixin(object):
 		def _trax(item):
 			try:
 				x = selector(item)
-				x = x if not ignore_invalid or _is_valid(x) else None
+				x = x if not ignore_invalid or self._is_valid(x) else None
 				return x
 			except (KeyError, POSError):
 				if not ignore_invalid:
@@ -198,7 +198,7 @@ class BatchingUtilsMixin(object):
 				x = _trax(x)
 				if x is not None:
 					result_list.append( x )
-			result['Items'] = result_list
+			result[ITEMS] = result_list
 			return result
 
 		# Ok, reify up to batch_size + batch_start + 2 items from merged
