@@ -32,7 +32,6 @@ class ValidNTIID(ValidURI):
 		self.validate(value)
 		return value
 
-
 	def _validate(self, value):
 		super(ValidNTIID,self)._validate(value)
 		validate_ntiid_string( value )

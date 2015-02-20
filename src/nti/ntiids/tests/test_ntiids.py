@@ -8,10 +8,10 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import raises
+from hamcrest import calling
 from hamcrest import assert_that
 from hamcrest import has_property
-from hamcrest import calling
-from hamcrest import raises
 
 import time
 import datetime
@@ -51,8 +51,6 @@ class TestNTIIDS(unittest.TestCase):
 		assert_that( ntiid, has_property('nttype', 'Bar'))
 		assert_that( ntiid, has_property('specific', 'With:Many:Colons'))
 
-
-
 	def test_utc_date( self ):
 		#"A timestamp should always be interpreted UTC."
 		# This date is 2012-01-05 in UTC, but 2012-01-04 in CST
@@ -76,5 +74,6 @@ class TestNTIIDS(unittest.TestCase):
 		# only invalid characters
 		assert_that( calling(ntiids.make_specific_safe).with_args('     '),
 					 raises(ntiids.ImpossibleToMakeSpecificPartSafe))
+
 		assert_that( calling(ntiids.make_specific_safe).with_args('Алибра школа'),
 					 raises(ntiids.ImpossibleToMakeSpecificPartSafe))

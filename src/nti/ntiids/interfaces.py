@@ -5,6 +5,7 @@ NTIID related interfaces.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -34,7 +35,6 @@ class INTIIDResolver(interface.Interface):
 	to which it refers.
 
 	These should be registered as components named for the ntiid type (e.g, OID).
-
 	"""
 
 	def resolve( ntiid_string ):
