@@ -19,12 +19,15 @@ from zope.processlifetime import IProcessStarting, ProcessStarting
 from zope.processlifetime import IDatabaseOpenedWithRoot, DatabaseOpenedWithRoot
 
 # Assign to them to keep pylint from complaining
-IDatabaseOpenedWithRoot = IDatabaseOpenedWithRoot
-DatabaseOpenedWithRoot = DatabaseOpenedWithRoot
-IDatabaseOpened = IDatabaseOpened
+
 DatabaseOpened = DatabaseOpened
-IProcessStarting = IProcessStarting
+IDatabaseOpened = IDatabaseOpened
+
 ProcessStarting = ProcessStarting
+IProcessStarting = IProcessStarting
+
+DatabaseOpenedWithRoot = DatabaseOpenedWithRoot
+IDatabaseOpenedWithRoot = IDatabaseOpenedWithRoot
 
 class IAfterDatabaseOpenedEvent(interface.Interface):
 	"""
@@ -62,7 +65,6 @@ class IProcessDidFork(interface.Interface):
 class ProcessDidFork(object):
 	pass
 
-
 class IApplicationTransactionOpenedEvent(interface.Interface):
 	"""
 	An event fired during application startup, after :class:`IDatabaseOpenedWithRoot`
@@ -81,7 +83,6 @@ class IApplicationTransactionOpenedEvent(interface.Interface):
 		lifetime (such as after a fork, where the database must be re-opened)
 		this event is only fired once during a particular application lifetime.
 	"""
-
 
 @interface.implementer(IApplicationTransactionOpenedEvent)
 class ApplicationTransactionOpenedEvent(object):
