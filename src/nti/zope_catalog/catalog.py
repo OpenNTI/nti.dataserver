@@ -27,6 +27,7 @@ class ResultSet(object):
 	def __init__(self, uids, uidutil, ignore_invalid=False):
 		self.uids = uids
 		self.uidutil = uidutil
+		self.ignore_invalid = ignore_invalid
 
 	def __len__(self):
 		return len(self.uids)
