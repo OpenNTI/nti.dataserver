@@ -20,7 +20,6 @@ from zope import interface
 from zope import component
 from zope.intid.interfaces import IIntIds
 
-from zope.catalog.catalog import ResultSet
 from zope.catalog.interfaces import ICatalog
 
 from pyramid.view import view_config
@@ -56,6 +55,8 @@ from nti.externalization.externalization import to_standard_external_created_tim
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
 from nti.ntiids import ntiids
+
+from nti.zope_catalog.catalog import ResultSet
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
@@ -957,7 +958,7 @@ class _RecursiveUGDView(_UGDView):
 														 limit=number_items_needed,
 														 reverse=sort_order != 'ascending')
 
-		items = ResultSet(intids_created_by_me, uidutil)
+		items = ResultSet(intids_created_by_me, uidutil, ignore_invalid=True)
 		self._batch_items_iterable(result, items,
 								   number_items_needed=number_items_needed,
 								   batch_size=batch_size,
