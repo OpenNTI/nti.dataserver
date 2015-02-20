@@ -14,11 +14,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-
 from zope.interface import Interface
-from zope.schema import TextLine
-from zope.security.zcml import Permission, IPermissionDirective
+
 from zope.principalregistry.metadirectives import IDefinePrincipalDirective as _IDefinePrincipalDirective
+
+from zope.security.zcml import Permission
+from zope.security.zcml import IPermissionDirective
+
+from zope.schema import TextLine
 
 class IGrantAllDirective(Interface):
 	"""Grant Permissions to roles and principals and roles to principals."""
@@ -33,7 +36,6 @@ class IGrantAllDirective(Interface):
 		description=u"Specifies the Role to be mapped.",
 		required=False)
 
-
 class IGrantDirective(IGrantAllDirective):
 	"""Grant Permissions to roles and principals and roles to principals."""
 
@@ -41,7 +43,6 @@ class IGrantDirective(IGrantAllDirective):
 		title=u"Permission",
 		description=u"Specifies the Permission to be mapped.",
 		required=False)
-
 
 class IDefineRoleDirective(IPermissionDirective):
 	"""Define a new role."""
