@@ -137,7 +137,6 @@ default_externalized_object_factory_finder.find_factory = default_externalized_o
 def default_externalized_object_factory_finder_factory( externalized_object ):
 	return default_externalized_object_factory_finder
 
-
 def find_factory_for_class_name( class_name ):
 	factory = component.queryUtility( IClassObjectFactory,
 									  name=class_name )
@@ -157,8 +156,8 @@ def find_factory_for( externalized_object, registry=component ):
 
 	return factory_finder.find_factory(externalized_object)
 
-
-def _resolve_externals(object_io, updating_object, externalObject, registry=component, context=None ):
+def _resolve_externals(object_io, updating_object, externalObject,
+					   registry=component, context=None ):
 	# Run the resolution steps on the external object
 
 	for keyPath in getattr( object_io, '__external_oids__', () ):
@@ -280,7 +279,6 @@ def update_from_external_object( containedObject, externalObject,
 		else:
 			factory = find_factory_for( v, registry=registry )
 			externalObject[k] = _recall( k, factory(), v, kwargs ) if factory else v
-
 
 	updater = None
 	if 	hasattr( containedObject, 'updateFromExternalObject' ) and \
@@ -470,7 +468,6 @@ def validate_field_value( self, field_name, field, value ):
 	else:
 		def _do_set():
 			return field.set(self, value)
-
 
 	return _do_set
 

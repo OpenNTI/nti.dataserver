@@ -86,7 +86,6 @@ def setPersistentStateChanged( obj ):
 	except AttributeError:
 		pass
 
-
 def _weakRef_toExternalObject(self):
 	val = self()
 	if val is None:
@@ -143,7 +142,6 @@ class PersistentExternalizableList(PersistentPropertyHolder, PersistentList):
 		makes these objects transparent and suitable for migrations.
 		"""
 		return self
-
 
 class PersistentExternalizableWeakList(PersistentExternalizableList):
 	"""

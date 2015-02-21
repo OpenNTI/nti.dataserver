@@ -12,7 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 # If we extend ExtensionClass.Base, __class_init__ is called automatically
 # for each subclass. But we also start participating in acquisition, which
 # is probably not what we want
-#import ExtensionClass
+# import ExtensionClass
 
 from zope import interface
 
@@ -22,8 +22,8 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from ZODB.loglevels import TRACE
 
-from nti.externalization.datastructures import ModuleScopedInterfaceObjectIO
-from nti.externalization.internalization import register_legacy_search_module
+from .datastructures import ModuleScopedInterfaceObjectIO
+from .internalization import register_legacy_search_module
 
 class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO):
 	"""
@@ -67,7 +67,6 @@ class AutoPackageSearchingScopedInterfaceObjectIO(ModuleScopedInterfaceObjectIO)
 	@classmethod
 	def _ap_enumerate_module_names( cls ):
 		raise NotImplementedError()
-
 
 	@classmethod
 	def _ap_find_factories( cls, package_name ):

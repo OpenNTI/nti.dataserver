@@ -37,7 +37,8 @@ import string
 _VERSION = b'$'
 
 # First, our vocabulary.
-# Remove the letter values o and O, Q (confused with O if you're sloppy), l and L, and i and I, leaving the digits 1 and 0
+# Remove the letter values o and O, Q (confused with O if you're sloppy), l and L, 
+# and i and I, leaving the digits 1 and 0
 _REMOVED = b'oOQlLiI'
 _REPLACE = b'0001111'
 _VOCABULARY = b''.join( reversed(sorted(list(set(string.ascii_letters + string.digits) - set( _REMOVED ))) ))

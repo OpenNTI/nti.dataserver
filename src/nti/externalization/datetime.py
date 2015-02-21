@@ -138,7 +138,7 @@ def datetime_from_string(string, assume_local=False, local_tzname=None):
 		or a two-tuple as given from :const:`time.timezone`. If not given,
 		local timezone will be determined automatically.
 	"""
-	dt =_parse_with( isodate.parse_datetime, string )
+	dt =_parse_with(isodate.parse_datetime, string)
 	return _as_utc_naive(dt, assume_local=assume_local, local_tzname=local_tzname)
 
 @component.adapter(IDate)
