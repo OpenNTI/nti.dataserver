@@ -3,6 +3,7 @@
 """
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,14 +20,15 @@ def deprecated(replacement=None): # annotation factory
 	def outer(oldfun):
 		im_class = getattr( oldfun, 'im_class', None )
 		if im_class:
-			n = '%s.%s.%s' % (im_class.__module__, im_class.__name__, oldfun.__name__)
+			n = '%s.%s.%s' % (im_class.__module__,
+							  im_class.__name__, 
+							  oldfun.__name__)
 		else:
 			n = oldfun.__name__
 
 		msg = "%s is deprecated" % n
 		if replacement is not None:
 			msg += "; use %s instead" % (replacement.__name__)
-		#return zope.deprecation.deprecated( oldfun, msg )
 		return zope.deprecation.deprecate( msg )(oldfun)
 	return outer
 
@@ -51,8 +53,8 @@ zope.deprecation.deprecation.__dict__['warnings'] = _warnings()
 moved = zope.deprecation.moved # encourage importing from here so we're sure our patch is applied
 
 # deferred import has the same problems
-zope.deferredimport.deferredmodule.__dict__['DeprecationWarning'] = FutureWarning
 zope.deferredimport.deferredmodule.__dict__['warnings'] = _warnings()
+zope.deferredimport.deferredmodule.__dict__['DeprecationWarning'] = FutureWarning
 
 # NOTE: There is a substantial problem with zope.deferredimport.deferredmodule/deprecatedFrom
 # and the like: it loses access to the module __doc__, which makes Sphinx and the like useless
