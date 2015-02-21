@@ -136,6 +136,7 @@ setup(
         'nti.contentfragments',
         'nti.common',
 		'nti.schema',
+        'nti.mimetype',
 		'nti.utils',
 		'nti.zodb',
 		'pywikipedia',
