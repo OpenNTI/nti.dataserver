@@ -137,6 +137,7 @@ setup(
         'nti.common',
 		'nti.schema',
         'nti.mimetype',
+        'nti.ntiids',
 		'nti.utils',
 		'nti.zodb',
 		'pywikipedia',
