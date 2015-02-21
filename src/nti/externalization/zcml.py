@@ -95,7 +95,6 @@ def registerMimeFactories( _context, module ):
 			# Only complain if it looks like they tried and got it half right
 			logger.log( loglevels.TRACE, "Nothing to register on %s (mt: %s ext: %s mod: %s)", k, mime_type, ext_create, v_mod_name)
 
-
 class IAutoPackageExternalizationDirective(interface.Interface):
 	"""
 	This directive combines the effects of :class:`.IRegisterInternalizationMimeFactoriesDirective`

@@ -34,7 +34,6 @@ class SingletonDecorator(type):
 
 		The original constructor is also cached to allow subclasses to access it
 		and have their own instance.
-
 	"""
 
 	def __new__(cls, name, bases, cls_dict):

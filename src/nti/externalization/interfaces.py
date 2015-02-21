@@ -202,7 +202,6 @@ class LocatedExternalList(list):
 	__acl__ = ()
 	mimeType = None
 
-
 ###
 # Representations as strings
 ###

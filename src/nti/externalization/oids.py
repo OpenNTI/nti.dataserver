@@ -74,7 +74,6 @@ def toExternalOID(self, default=None, add_to_connection=False, add_to_intids=Fal
 		else:
 			return default
 
-
 	# The object ID is defined to be 8 charecters long. It gets
 	# padded with null chars to get to that length; we strip
 	# those out. Finally, it probably has chars that

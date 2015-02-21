@@ -11,10 +11,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import collections
+
 from zope import interface
 from zope import component
-
-import collections
 
 from .interfaces import EXT_REPR_JSON
 from .interfaces import EXT_REPR_PLIST
@@ -52,8 +52,6 @@ def to_json_representation( obj ):
 	:func:`to_external_representation` with :data:`EXT_REPR_JSON`.
 	"""
 	return to_external_representation( obj, EXT_REPR_JSON )
-
-
 
 ###
 # Plist
@@ -95,7 +93,6 @@ def _second_pass_to_external_object( obj ):
 	if result is obj:
 		raise TypeError(repr(obj) + " is not JSON serializable")
 	return result
-
 
 @interface.implementer(IExternalObjectIO)
 @interface.named(EXT_REPR_JSON)
@@ -169,7 +166,6 @@ _ExtDumper.add_multi_representer(list, _ExtDumper.represent_list)
 _ExtDumper.add_multi_representer(dict, _ExtDumper.represent_dict)
 _ExtDumper.add_multi_representer(unicode, _ExtDumper.represent_unicode)
 
-
 class _UnicodeLoader(yaml.SafeLoader):  #pylint:disable=R0904
 
 	def construct_yaml_str(self, node):
@@ -181,7 +177,6 @@ class _UnicodeLoader(yaml.SafeLoader):  #pylint:disable=R0904
 
 _UnicodeLoader.add_constructor('tag:yaml.org,2002:str',
 							   _UnicodeLoader.construct_yaml_str)
-
 
 @interface.implementer(IExternalObjectIO)
 @interface.named(EXT_REPR_YAML)

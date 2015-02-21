@@ -66,7 +66,7 @@ StandardInternalFields_LAST_MODIFIEDU = StandardInternalFields.LAST_MODIFIEDU
 # the name that was established at the top level.
 _NotGiven = object()
 
-from pyramid.threadlocal import ThreadLocalManager
+from .threadlocal import ThreadLocalManager
 
 _manager = ThreadLocalManager(default=lambda: {'name': _NotGiven,
 											   'memos': None})
@@ -229,9 +229,9 @@ def _to_external_object_state(obj, state, top_level=False, decorate=True):
 		# NOTE: we cannot try to to-string the object, it may try to call back to us
 		# NOTE2: In case we encounter a proxy (zope.container.contained.ContainedProxy)
 		# the type(o) is not reliable. Only the __class__ is.
-		logger.exception("Exception externalizing component object %s/%s", type(obj), obj.__class__ )
+		logger.exception("Exception externalizing component object %s/%s", 
+						 type(obj), obj.__class__ )
 		return state.catch_component_action( obj, t )
-
 
 def toExternalObject( obj, coerceNone=False, name=_NotGiven, registry=component,
 					  catch_components=(), catch_component_action=None,

@@ -229,7 +229,6 @@ class AbstractDynamicObjectIO(ExternalizableDictionaryMixin):
 
 		return updated
 
-
 @interface.implementer(IInternalObjectIO)
 class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 	"""
