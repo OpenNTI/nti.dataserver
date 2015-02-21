@@ -16,8 +16,8 @@ from zope.i18n.interfaces import INegotiator
 from zope.i18n.interfaces import ITranslationDomain
 
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNotFound
 from pyramid.httpexceptions import HTTPFound # 302, non-cacheable redirect
+from pyramid.httpexceptions import HTTPNotFound
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 

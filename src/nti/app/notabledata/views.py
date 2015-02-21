@@ -14,16 +14,12 @@ import time
 from zope import interface
 from zope import component
 
-from .adapters import IUserNotableData
-
-from nti.appserver.interfaces import INamedLinkView
-from nti.app.renderers.interfaces import IUGDExternalCollection
-
-from nti.externalization.interfaces import LocatedExternalDict
-
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPBadRequest
+
+from nti.appserver.interfaces import INamedLinkView
+from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -32,7 +28,11 @@ from nti.appserver.ugd_query_views import _UGDView
 
 from nti.dataserver.authorization import ACT_READ
 
+from nti.externalization.interfaces import LocatedExternalDict
+
 from nti.mimetype.mimetype import nti_mimetype_with_class
+
+from .adapters import IUserNotableData
 
 _NOTABLE_NAME = 'RUGDByOthersThatIMightBeInterestedIn'
 
@@ -135,10 +135,11 @@ class _NotableRecursiveUGDView(_UGDView):
 		_NotableUGDLastViewed.write_last_viewed(request, user_notable_data, result)
 		return result
 
-from nti.dataserver.links import Link
 from numbers import Number
-from nti.externalization import interfaces as ext_interfaces
 
+from nti.dataserver.links import Link
+
+from nti.externalization.interfaces import StandardExternalFields
 
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
@@ -158,7 +159,7 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 		last_viewed = user_notable_data.lastViewed
 
 		result['lastViewed'] = last_viewed
-		links = result.setdefault(ext_interfaces.StandardExternalFields.LINKS, [])
+		links = result.setdefault(StandardExternalFields.LINKS, [])
 		# If we use request.context to base the link on, which is really the Right Thing,
 		# we break because when that externalizes, we get the canonical location
 		# beneath NTIIDs instead of beneath Pages(NTIID)...which doesn't have
@@ -183,8 +184,6 @@ class _NotableUGDLastViewed(AbstractAuthenticatedView,
 	@view_config(request_method='PUT')
 	def __call__(self):
 		return super(_NotableUGDLastViewed,self).__call__()
-
-
 
 	def _do_call(self):
 		user_notable_data = self._notable_data

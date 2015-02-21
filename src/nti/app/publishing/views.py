@@ -35,7 +35,9 @@ class _AbstractPublishingView(object):
 
 	@abstractmethod
 	def _do_provide(self, topic):
-		"""This method is responsible for firing any ObjectSharingModifiedEvents needed."""
+		"""
+		This method is responsible for firing any ObjectSharingModifiedEvents needed.
+		"""
 		# Which is done by the topic object's publish/unpublish method
 		raise NotImplementedError() # pragma: no cover
 
