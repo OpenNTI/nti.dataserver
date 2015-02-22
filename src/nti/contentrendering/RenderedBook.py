@@ -19,12 +19,12 @@ from zope import interface
 from BTrees.OOBTree import OOBTree
 from zope.deprecation import deprecate
 
+from nti.common.minidom import minidom_writexml
+
 from nti.contentrendering import interfaces
 from nti.contentrendering import javascript_path
 from nti.contentrendering import ConcurrentExecutor
 from nti.contentrendering import run_phantom_on_page
-
-from nti.utils.minidom import minidom_writexml
 
 _runPhantomOnPage = run_phantom_on_page
 
