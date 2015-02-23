@@ -13,6 +13,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.common.property import Lazy
 
+from nti.contentindexing.utils import video_date_to_millis
+from nti.contentindexing.whoosh.schemas import create_book_schema
+from nti.contentindexing.whoosh.schemas import create_nti_card_schema
+from nti.contentindexing.whoosh.schemas import create_audio_transcript_schema
+from nti.contentindexing.whoosh.schemas import create_video_transcript_schema
+
 from nti.contentprocessing import rank_words
 
 from . import common
@@ -20,14 +26,11 @@ from . import constants
 from . import whoosh_query
 from . import content_types
 from . import search_results
-from . import whoosh_schemas as schemas
 from . import interfaces as search_interfaces
 
 from .constants import (content_, ntiid_, last_modified_, videoId_, creator_,
 						containerId_, title_, end_timestamp_, start_timestamp_,
 					 	href_, target_ntiid_)
-
-video_date_to_millis = common.video_date_to_millis  # BWC
 
 class _SearchableContent(object):
 
@@ -103,7 +106,7 @@ class Book(_SearchableContent):
 
 	@Lazy
 	def schema(self):
-		return self._schema or schemas.create_book_schema()
+		return self._schema or create_book_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		for hit in search_hits:
@@ -128,7 +131,7 @@ class VideoTranscript(_SearchableContent):
 
 	@Lazy
 	def schema(self):
-		return self._schema or schemas.create_video_transcript_schema()
+		return self._schema or create_video_transcript_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		for hit in search_hits:
@@ -156,7 +159,7 @@ class AudioTranscript(_SearchableContent):
 
 	@Lazy
 	def schema(self):
-		return self._schema or schemas.create_video_transcript_schema()
+		return self._schema or create_audio_transcript_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		for hit in search_hits:
@@ -184,7 +187,7 @@ class NTICard(_SearchableContent):
 
 	@Lazy
 	def schema(self):
-		return self._schema or schemas.create_nti_card_schema()
+		return self._schema or create_nti_card_schema()
 
 	def get_objects_from_whoosh_hits(self, search_hits, docids=None):
 		for hit in search_hits:
