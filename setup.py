@@ -133,11 +133,11 @@ setup(
 	install_requires=[
 		'nti.plasTeX',
 		'nti.geventwebsocket',
-        'nti.contentfragments',
-        'nti.common',
+		'nti.contentfragments',
+		'nti.common',
 		'nti.schema',
-        'nti.mimetype',
-        'nti.ntiids',
+		'nti.mimetype',
+		'nti.ntiids',
 		'nti.utils',
 		'nti.zodb',
 		'pywikipedia',
@@ -186,7 +186,7 @@ setup(
 		'umysqldb == 1.0.4dev2', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage',
 		'PyMySQL',
-        'PyYAML',
+		'PyYAML',
 		'python-memcached',	 # pure-python cache for relstorage. Must set cache-module-name. Needed for gevent
 		 # See also http://pypi.python.org/pypi/neoppod/ for a completely different option
 		'anyjson',
