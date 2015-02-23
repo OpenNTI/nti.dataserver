@@ -611,17 +611,7 @@ class IModeledContentResolver(IPostContentResolver,
 							  IHighlightContentResolver,
 							  INoteContentResolver):
 	pass
-
-# content processing
-
-class IStopWords(interface.Interface):
-
-	def stopwords(language):
-		"""return stop word for the specified language"""
-
-	def available_languages():
-		"available languages"
-
+	
 # highlights
 
 class ISearchFragment(interface.Interface):
@@ -874,3 +864,11 @@ class SearchCompletedEvent(component.interfaces.ObjectEvent):
 	@property
 	def metadata(self):
 		return getattr(self.results, 'HitMetaData', None)
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentprocessing.interfaces",
+	"nti.contentprocessing.interfaces",
+	"IStopWords"
+)

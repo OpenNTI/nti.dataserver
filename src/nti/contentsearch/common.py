@@ -13,13 +13,15 @@ logger = __import__('logging').getLogger(__name__)
 
 import re
 import six
-import math
-import time
 from time import mktime
-from datetime import datetime
 from collections import Iterable
 
 from zope import component
+
+from nti.contentindexing.utils import get_datetime
+from nti.contentindexing.utils import video_date_to_millis
+from nti.contentindexing.utils import date_to_videotimestamp
+from nti.contentindexing.utils import videotimestamp_to_datetime
 
 from .interfaces import ISearchTypeMetaData
 
@@ -59,44 +61,10 @@ def epoch_time(dt):
 		return seconds
 	return 0
 
-def get_datetime(x=None):
-	x = x or time.time()
-	return datetime.fromtimestamp(float(x))
-
-def date_to_videotimestamp(dt):
-	dt = float(dt) if isinstance(dt, six.string_types) else dt
-	dt = get_datetime(dt) if isinstance(dt, (float, long)) else dt
-	if isinstance(dt, datetime):
-		milli = math.floor(dt.microsecond / 1000.0)
-		result = u"%02d:%02d:%02d.%03d" % (dt.hour, dt.minute, dt.second, milli)
-		return result
-	return u''
-
-def video_date_to_millis(dt):
-	start = datetime(year=1, month=1, day=1)
-	diff = dt - start
-	return diff.total_seconds() * 1000.0
+# BWC
+get_datetime = get_datetime
 media_date_to_millis = video_date_to_millis
-
-def videotimestamp_to_datetime(qstring):
-	# this method parses a timestamp of the form hh:mm::ss.uuu
-	qstring = qstring.replace(" ", "")
-	year = month = day = 1
-	hour = minute = second = microsecond = 0
-	if len(qstring) >= 2:
-		hour = int(qstring[0:2])
-	if len(qstring) >= 5:
-		minute = int(qstring[3:5])
-	if len(qstring) >= 8:
-		second = int(qstring[6:8])
-	if len(qstring) == 12:
-		microsecond = int(qstring[9:12]) * 1000
-	if len(qstring) == 13:
-		microsecond = int(qstring[9:13])
-
-	result = datetime(year=year, month=month, day=day, hour=hour,
-			 		  minute=minute, second=second, microsecond=microsecond)
-	return result
+date_to_videotimestamp = date_to_videotimestamp
 mediatimestamp_to_datetime = videotimestamp_to_datetime
 
 def normalize_type_name(x):

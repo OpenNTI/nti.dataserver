@@ -44,7 +44,7 @@ def create_ngram_field(lang='en', at='start'):
 	return fields.TEXT(analyzer=analyzer, phrase=False)
 
 def create_content_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords)
+	sw_util = component.queryUtility(cp_interfaces.IStopWords)
 	stopwords = sw_util.stopwords(lang) if sw_util is not None else ()
 	expression = \
 		component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or \

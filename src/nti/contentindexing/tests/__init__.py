@@ -19,7 +19,7 @@ from nti.testing.layers import ConfiguringLayerMixin
 class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  ConfiguringLayerMixin):
 
-    set_up_packages = ('nti.contentindex',)
+    set_up_packages = ('nti.contentindexing',)
 
     @classmethod
     def setUp(cls):
