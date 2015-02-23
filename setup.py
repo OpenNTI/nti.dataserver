@@ -130,14 +130,15 @@ setup(
 		# in setup.cfg
 		# 'setuptools_subversion >= 3.1'
 	],
-	install_requires=[
-		'nti.plasTeX',
-		'nti.geventwebsocket',
-		'nti.contentfragments',
+	install_requires=[		
 		'nti.common',
-		'nti.schema',
+		'nti.contentfragments',
+		'nti.externalization',
+		'nti.geventwebsocket',
 		'nti.mimetype',
 		'nti.ntiids',
+		'nti.plasTeX',
+		'nti.schema',
 		'nti.utils',
 		'nti.zodb',
 		'pywikipedia',
