@@ -11,24 +11,26 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import nltk
-
 from zope import interface
 
+try:
+	from nltk import PorterStemmer
+except ImportError:
+	class PorterStemmer(object):
+		def stem(self, x): return x
+	
 from .interfaces import IStemmer
 
 @interface.implementer(IStemmer)
 class _PorterStemmer(object):
 
-	__slots__ = ()
-
-	def __init__(self):
+	def __init__(self, *args, **kwargs):
 		pass
 
 	def stem(self, token, lang='en'):
 		token = unicode(token)
 		# The underlying stemmer object is NOT thread safe,
 		# it must not be used concurrently
-		stemmer = nltk.PorterStemmer()
+		stemmer = PorterStemmer()
 		result = stemmer.stem(token)
 		return result if result else token

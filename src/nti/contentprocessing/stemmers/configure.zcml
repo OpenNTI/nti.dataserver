@@ -12,14 +12,17 @@
 	
 	<utility factory=".nltk._PorterStemmer" 
 			 provides=".interfaces.IStemmer" 
-			 name="porter" />
+			 name="porter" 
+			 zcml:condition="installed nltk" />
 	
 	<utility factory=".whoosh._WhooshStemmer" 
-			 provides=".interfaces.IStemmer" />
+			 provides=".interfaces.IStemmer"
+			 zcml:condition="installed whoosh" />
 			 
 	<utility factory=".whoosh._WhooshStemmer"
 			 provides=".interfaces.IStemmer" 
-			 name="whoosh" />
+			 name="whoosh" 
+			 zcml:condition="installed whoosh" />
 	
 	<utility factory=".zopyx._ZopyYXStemmer" name="zopyx"
 			 zcml:condition="installed zopyx.txng3.ext" />

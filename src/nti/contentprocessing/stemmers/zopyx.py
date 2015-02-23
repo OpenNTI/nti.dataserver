@@ -29,9 +29,7 @@ lang_translation = {'en':'english', 'es':'spansih', 'ru':'russian',
 @interface.implementer(IStemmer)
 class _ZopyYXStemmer(object):
 
-	__slots__ = ('stemmers')
-
-	def __init__(self):
+	def __init__(self, *args, **kwargs):
 		self.stemmers = {}
 
 	def _stemmer(self, lang='en'):
