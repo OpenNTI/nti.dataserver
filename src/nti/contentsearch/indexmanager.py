@@ -25,15 +25,15 @@ from nti.externalization.persistence import NoPickle
 
 from nti.site.interfaces import IHostPolicySiteManager
 
+from .search_query import QueryObject
+
+from .search_utils import gevent_spawn
+
 from .interfaces import ISearchQuery
 from .interfaces import IIndexManager
 from .interfaces import IContentSearcher
 from .interfaces import IEntityIndexController
 from .interfaces import IContentSearcherFactory
-
-from .search_query import QueryObject
-
-from .search_utils import gevent_spawn
 
 from .search_results import empty_search_results
 from .search_results import merge_search_results
