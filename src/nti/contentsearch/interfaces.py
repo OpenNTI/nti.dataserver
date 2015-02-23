@@ -434,36 +434,6 @@ class IWhooshNTICardContent(INTICardContent, IWhooshContent):
 	docnum = Int(title="Document number", required=False)
 	score = Number(title="Search score", required=False, default=1.0)
 
-class IContentSchemaCreator(interface.Interface):
-
-	def create():
-		"""
-	 	create a content index schema
-		"""
-
-class IBookSchemaCreator(IContentSchemaCreator):
-	pass
-
-class IWhooshBookSchemaCreator(IBookSchemaCreator):
-	pass
-
-class IVideoTranscriptSchemaCreator(IContentSchemaCreator):
-	pass
-
-class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
-	pass
-
-class IAudioTranscriptSchemaCreator(IContentSchemaCreator):
-	pass
-
-class IWhooshAudioTranscriptSchemaCreator(IAudioTranscriptSchemaCreator):
-	pass
-
-class INTICardSchemaCreator(IContentSchemaCreator):
-	pass
-
-class IWhooshNTICardSchemaCreator(INTICardSchemaCreator):
-	pass
 
 class IWhooshQueryParser(ISearchQueryParser):
 
@@ -871,4 +841,23 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.contentprocessing.interfaces",
 	"nti.contentprocessing.interfaces",
 	"IStopWords"
+)
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentindexing.interfaces",
+	"nti.contentindexing.interfaces",
+	"IContentSchemaCreator",
+	"IBookSchemaCreator",
+	"INTICardSchemaCreator",
+	"IAudioTranscriptSchemaCreator",
+	"IVideoTranscriptSchemaCreator"
+)
+
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentindexing.whoosh.interfaces",
+	"nti.contentindexing.whoosh.interfaces",
+	"IWhooshBookSchemaCreator",
+	"IWhooshNTICardSchemaCreator",
+	"IWhooshAudioTranscriptSchemaCreator",
+	"IWhooshVideoTranscriptSchemaCreator",
 )
