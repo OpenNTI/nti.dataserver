@@ -157,6 +157,7 @@ class IStaticYouTubeEmbedVideoAdder(IStaticVideoAdder):
 ####
 # Embedded subcontainers
 ####
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 class IEmbeddedContainer(IContentTypeAware):
@@ -173,58 +174,6 @@ class IEmbeddedContainer(IContentTypeAware):
 	"""
 
 	ntiid = schema.TextLine(title="The NTIID of the embedded container itself.")
-
-####
-# Indexing
-####
-
-class IRenderedBookIndexer(IRenderedBookTransformer):
-
-	def transform(book, name):
-		"""
-		Perform the book index operation.
-
-		:param book: The :class:`IRenderedBook`.
-		:param name: indexer name
-		"""
-
-class IContentIndexer(interface.Interface):
-	"""
-	Creates an index using the contents in a given book
-	"""
-
-	def index(book, indexdir=None):
-		"""
-		The book to index
-
-		:param book: The :class:`IRenderedBook`.
-		:param indexdir: Output directory
-		"""
-
-class IBookIndexer(IContentIndexer):
-	"""
-	Creates an index of the content inside a given book
-	"""
-
-class IMediaTranscriptIndexer(IContentIndexer):
-	"""
-	Creates an index for the media transcripts associated with a given book
-	"""
-
-class IAudioTranscriptIndexer(IMediaTranscriptIndexer):
-	"""
-	Creates an index for the audio transcripts associated with a given book
-	"""
-
-class IVideoTranscriptIndexer(IMediaTranscriptIndexer):
-	"""
-	Creates an index for the video transcripts associated with a given book
-	"""
-
-class INTICardIndexer(IContentIndexer):
-	"""
-	Creates an index for the nti cards associated with a given book
-	"""
 
 ####
 # Extractors
@@ -302,7 +251,8 @@ class JobComponents(registry.Components):
 		if not self.__bases__:
 			self.__bases__ = (getGlobalSiteManager(),)
 
-	# TODO: Could probably do some meta programming and avoid duplicating the similar patterns
+	# TODO: Could probably do some meta programming and avoid duplicating the 
+	# similar patterns
 	def queryUtility(self, provided, name='', default=None):
 		result = default
 		if name == '':
@@ -343,3 +293,30 @@ class JobComponents(registry.Components):
 															interface,
 															name=name,
 															default=default)
+
+####
+# Indexing
+####
+
+class IRenderedBookIndexer(IRenderedBookTransformer):
+
+	def transform(book, name):
+		"""
+		Perform the book index operation.
+
+		:param book: The :class:`IRenderedBook`.
+		:param name: indexer name
+		"""
+
+import zope.deferredimport
+zope.deferredimport.initialize()
+zope.deferredimport.deprecatedFrom(
+	"Moved to nti.contentindexing.interfaces",
+	"nti.contentindexing.interfaces",
+	"IContentIndexer",
+	"IBookIndexer",
+	"INTICardIndexer",
+	"IMediaTranscriptIndexer",
+	"IAudioTranscriptIndexer",
+	"IVideoTranscriptIndexer"
+)

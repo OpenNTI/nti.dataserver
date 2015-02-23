@@ -13,11 +13,10 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import glob
-from collections import namedtuple
 
 from whoosh import index
 
-WhooshIndexSpec = namedtuple('WhooshIndexSpec', ['book', 'indexname', 'indexdir'])
+from nti.contentindexing.whoosh.spec import WhooshIndexSpec
 
 class BasicWhooshIndexer(object):
 
@@ -75,7 +74,9 @@ class BasicWhooshIndexer(object):
 		indexname = self.get_index_name(book, indexname)
 		indexdir = self.get_index_dir(book, indexdir)
 		self.remove_index_files(indexdir, indexname)
-		idxspec = WhooshIndexSpec(book, indexname, indexdir)
+		idxspec = WhooshIndexSpec(content=book, 
+								  indexname=indexname, 
+								  indexdir=indexdir)
 
 		logger.info('Indexing %s' % indexname)
 
