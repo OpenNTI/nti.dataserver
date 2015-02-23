@@ -9,3 +9,5 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+quick = quick_ = QUICK = u'quick'
+content = content_ = CONTENT = u'content'
