@@ -19,16 +19,23 @@ from whoosh import analysis
 
 from nti.contentprocessing import default_ngram_maxsize
 from nti.contentprocessing import default_ngram_minsize
-from nti.contentprocessing import interfaces as cp_interfaces
 from nti.contentprocessing import default_word_tokenizer_pattern
 
-from . import common
-from . import interfaces as search_interfaces
+from nti.contentprocessing.interfaces import IStopWords
+from nti.contentprocessing.interfaces import INgramComputer
+from nti.contentprocessing.interfaces import IWordTokenizerExpression
+
+from ..utils import videotimestamp_to_datetime
+
+from .interfaces import IWhooshBookSchemaCreator
+from .interfaces import IWhooshNTICardSchemaCreator
+from .interfaces import IWhooshAudioTranscriptSchemaCreator
+from .interfaces import IWhooshVideoTranscriptSchemaCreator
 
 # content analyzer
 
 def _ngram_min_max(lang='en'):
-	ngc_util = component.queryUtility(cp_interfaces.INgramComputer, name=lang)
+	ngc_util = component.queryUtility(INgramComputer, name=lang)
 	minsize = ngc_util.minsize if ngc_util else default_ngram_minsize
 	maxsize = ngc_util.maxsize if ngc_util else default_ngram_maxsize
 	return (minsize, maxsize)
@@ -36,7 +43,7 @@ def _ngram_min_max(lang='en'):
 def create_ngram_field(lang='en', at='start'):
 	minsize, maxsize = _ngram_min_max()
 	expression = \
-		component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or \
+		component.queryUtility(IWordTokenizerExpression, name=lang) or \
 		default_word_tokenizer_pattern
 	tokenizer = analysis.RegexTokenizer(expression=expression)
 	analyzer = analysis.NgramWordAnalyzer(minsize=minsize, maxsize=maxsize,
@@ -44,10 +51,10 @@ def create_ngram_field(lang='en', at='start'):
 	return fields.TEXT(analyzer=analyzer, phrase=False)
 
 def create_content_analyzer(lang='en'):
-	sw_util = component.queryUtility(search_interfaces.IStopWords)
+	sw_util = component.queryUtility(IStopWords)
 	stopwords = sw_util.stopwords(lang) if sw_util is not None else ()
 	expression = \
-		component.queryUtility(cp_interfaces.IWordTokenizerExpression, name=lang) or \
+		component.queryUtility(IWordTokenizerExpression, name=lang) or \
 		default_word_tokenizer_pattern
 	analyzer = 	analysis.StandardAnalyzer(expression=expression, stoplist=stopwords)
 	return analyzer
@@ -82,7 +89,7 @@ def create_default_book_schema():
 					 	content=create_content_field(stored=True))
 	return sch
 
-@interface.implementer(search_interfaces.IWhooshBookSchemaCreator)
+@interface.implementer(IWhooshBookSchemaCreator)
 class _DefaultBookSchemaCreator(object):
 
 	singleton = None
@@ -98,14 +105,14 @@ class _DefaultBookSchemaCreator(object):
 		return schema
 
 def create_book_schema(name='en'):
-	to_call = component.queryUtility(search_interfaces.IWhooshBookSchemaCreator,
+	to_call = component.queryUtility(IWhooshBookSchemaCreator,
 									 name=name) or _DefaultBookSchemaCreator()
 	return to_call.create()
 
 class VIDEO_TIMESTAMP(fields.DATETIME):
 
 	def _parse_datestring(self, qstring):
-		result = common.videotimestamp_to_datetime(qstring)
+		result = videotimestamp_to_datetime(qstring)
 		return result
 
 	def __setstate__(self, d):
@@ -138,7 +145,7 @@ def create_video_transcript_schema():
 					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
-@interface.implementer(search_interfaces.IWhooshVideoTranscriptSchemaCreator)
+@interface.implementer(IWhooshVideoTranscriptSchemaCreator)
 class _DefaultVideoTranscriptSchemaCreator(object):
 
 	singleton = None
@@ -178,7 +185,7 @@ def create_audio_transcript_schema():
 					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
-@interface.implementer(search_interfaces.IWhooshAudioTranscriptSchemaCreator)
+@interface.implementer(IWhooshAudioTranscriptSchemaCreator)
 class _DefaultAudioTranscriptSchemaCreator(object):
 
 	singleton = None
@@ -217,7 +224,7 @@ def create_nti_card_schema():
 					 	last_modified=fields.DATETIME(stored=True))
 	return sch
 
-@interface.implementer(search_interfaces.IWhooshNTICardSchemaCreator)
+@interface.implementer(IWhooshNTICardSchemaCreator)
 class _DefaultNTICardSchemaCreator(object):
 
 	singleton = None

@@ -9,26 +9,14 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<include package="nti.contentprocessing" file="configure.zcml" />
+	<include package="nti.contentprocessing" />
 
 	<!-- Database creation and migration -->
-
 	<utility factory=".generations.install._ContentSearchSchemaManager"
 			 name="nti.dataserver-contentsearch"
 			 provides="zope.generations.interfaces.IInstallableSchemaManager"/>
 
-	<!-- Index manager
-	<utility factory=".indexmanager.create_index_manager"  />
-	-->
-
-	<!-- Content processing -->
-
-	<!-- make sure stop words are registered before evertything else -->
-
-	<utility factory=".search_stopwords._DefaultStopWords" />
-
 	<!-- Adapters -->
-
 	<adapter factory=".search_hits.SearchHit"
 			 for="dict"
 			 provides=".interfaces.ISearchHit" />
@@ -82,7 +70,6 @@
 			 provides=".interfaces.IWhooshNTICardSearchHit" />
 
 	<!-- Externalization -->
-
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
@@ -110,7 +97,6 @@
 			 for=".interfaces.ISuggestAndSearchResults" />
 
 	<!-- Decorators -->
-
 	<subscriber factory=".decorators._SearchHitHighlightDecorator"
 				for=".interfaces.IWhooshBookSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
@@ -164,7 +150,6 @@
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
 	<!-- Internalization -->
-
 	<adapter factory=".internalization._QueryObjectUpdater"
 			 for=".interfaces.ISearchQuery"
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
@@ -186,7 +171,6 @@
 			 provides="nti.externalization.interfaces.IInternalObjectUpdater" />
 
 	<!-- Search hit comparators -->
-
 	<utility factory=".search_comparators._TypeSearchHitComparatorFactory" name="type" />
 	<utility factory=".search_comparators._DecaySearchHitComparatorFactory" name="decay" />
 	<utility factory=".search_comparators._ScoreSearchHitComparatorFactory" name="score" />
@@ -195,14 +179,12 @@
 	<utility factory=".search_comparators._LastModifiedSearchHitComparatorFactory" name="lastModified" />
 
 	<!-- Search hit subscribers -->
-
 	<subscriber factory=".subscribers._DefaultSearchHitPredicate"
 				provides=".interfaces.ISearchHitPredicate"
 				for="*"
 				zcml:condition="have devmode" />
 
 	<!-- Content Resolvers -->
-
 	<adapter factory=".adapters._StringContentResolver"
 			 provides=".interfaces.IContentResolver"
 			 for="basestring" />
@@ -276,7 +258,6 @@
 				provides=".interfaces.IKeywordsResolver"/>
 
 	<!-- Type metadata -->
-
 	<utility factory=".search_metadata._note_metadata" name="note" />
 	<utility factory=".search_metadata._post_metadata" name="post" />
 	<utility factory=".search_metadata._book_metadata" name="content" />
@@ -299,20 +280,17 @@
 	<utility factory=".search_metadata._legacycontent_metadata" name="legacycontent" />
 
 	<!-- Search highlights -->
-
 	<utility factory=".search_highlights.create_default_analyzer" />
 	<utility factory=".search_highlights.create_default_analyzer" name="en" />
 	<utility factory=".search_highlights.create_default_analyzer" name="es" />
 	<utility factory=".search_highlights.create_default_analyzer" name="ru" />
 
 	<!-- Search results -->
-
 	<utility factory=".search_results._SearchResultCreator"  />
 	<utility factory=".search_results._SuggestResultsCreator"  />
 	<utility factory=".search_results._SuggestAndSearchResultsCreator"  />
 
 	<!-- Search query -->
-
 	<adapter factory=".search_query._default_query_adapter"
 			 provides=".interfaces.ISearchQuery"
 			 for="basestring" />
@@ -320,7 +298,6 @@
 	<include file="configure_whoosh.zcml" />
 
 	<!-- Mime factories -->
-
 	<ext:registerMimeFactories module=".search_hits" />
 	<ext:registerMimeFactories module=".search_results" />
 </configure>
