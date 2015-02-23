@@ -75,7 +75,8 @@ setup(
 		'zope.security',
 		'nti.common',
 		'nti.ntiids',
-		'nti.nose_traceback_info'
+		'nti.nose_traceback_info',
+		'nti.zodb'
 	],
 	extras_require={
 		'test': TESTS_REQUIRE,
