@@ -14,26 +14,30 @@ from hamcrest import assert_that
 from hamcrest import contains_inanyorder
 from hamcrest import has_property, has_properties
 
+import fudge
 import os.path
 import unittest
 
 from rdflib import Graph
 
-from nti.contentprocessing import metadata_extractors, interfaces
+from nti.contentprocessing.metadata_extractors import _file_args
+from nti.contentprocessing.metadata_extractors import _HTMLExtractor
+from nti.contentprocessing.metadata_extractors import ContentMetadata
+from nti.contentprocessing.metadata_extractors import get_metadata_from_content_location
 
-import fudge
-
-from nti.testing.matchers import validly_provides
+from nti.contentprocessing.interfaces import IContentMetadata
 
 from nti.contentprocessing.tests import SharedConfiguringTestLayer
+
+from nti.testing.matchers import validly_provides
 
 class TestMetadataExtractors(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
 	def test_metadata_provides(self):
-		metadata = metadata_extractors.ContentMetadata()
-		assert_that(metadata, validly_provides(interfaces.IContentMetadata))
+		metadata = ContentMetadata()
+		assert_that(metadata, validly_provides(IContentMetadata))
 
 	def test_opengraph_extraction_from_file(self):
 		# Originally from NewYorker
@@ -43,19 +47,19 @@ class TestMetadataExtractors(unittest.TestCase):
 		graph = Graph()
 		graph.parse(the_file, format='rdfa')
 
-		args = metadata_extractors._file_args(the_file)
+		args = _file_args(the_file)
 
 		def _check(result):
 			assert_that(result, has_property('title', 'Adam Green: The Spectacular Thefts of Apollo Robbins, Pickpocket'))
 			assert_that(result, has_property('href', 'http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green'))
 			assert_that(result, has_property('images', contains(has_property('url', 
 																			 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg'))))
-			assert_that(result, validly_provides(interfaces.IContentMetadata))
+			assert_that(result, validly_provides(IContentMetadata))
 
-		result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args)
+		result = _HTMLExtractor()._extract_opengraph(ContentMetadata(), args)
 		_check(result)
 
-		result = metadata_extractors.get_metadata_from_content_location(the_file)
+		result = get_metadata_from_content_location(the_file)
 		_check(result)
 
 	def test_twitter_extraction_from_file(self):
@@ -67,15 +71,15 @@ class TestMetadataExtractors(unittest.TestCase):
 		graph = Graph()
 		graph.parse(the_file, format='rdfa')
 
-		args = metadata_extractors._file_args(the_file)
+		args = _file_args(the_file)
 
 		def _check(result):
 			assert_that(result, has_property('title', 'Exercise Class, Obedience Not Required'))
 			assert_that(result, has_property('href', 'http://www.nytimes.com/2013/05/17/health/exercise-class-obedience-not-required.html'))
 			assert_that(result, has_property('images', contains(has_property('url', 'http://graphics8.nytimes.com/images/2013/05/17/arts/17URBAN_SPAN/17URBAN_SPAN-thumbLarge-v2.jpg'))))
-			assert_that(result, validly_provides(interfaces.IContentMetadata))
+			assert_that(result, validly_provides(IContentMetadata))
 
-		result = metadata_extractors._HTMLExtractor()._extract_twitter(metadata_extractors.ContentMetadata(), args)
+		result = _HTMLExtractor()._extract_twitter(ContentMetadata(), args)
 		_check(result)
 
 
@@ -110,7 +114,7 @@ class TestMetadataExtractors(unittest.TestCase):
 			args.__name__ = 'http://example.com'
 			args.text = html
 
-			result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args)
+			result = _HTMLExtractor()._extract_opengraph(ContentMetadata(), args)
 
 			assert_that(result, has_property('title', 'The Rock'))
 			assert_that(result, has_property('href', 'http://www.imdb.com/title/tt0117500/'))
@@ -119,7 +123,7 @@ class TestMetadataExtractors(unittest.TestCase):
 				'url', 'http://ia.media-imdb.com/images/rock.jpg',
 				'width', 300,
 				'height', 400))))
-			assert_that(result, validly_provides(interfaces.IContentMetadata))
+			assert_that(result, validly_provides(IContentMetadata))
 
 	def test_opengraph_extraction_multiple_images(self):
 		template = """
@@ -150,7 +154,7 @@ class TestMetadataExtractors(unittest.TestCase):
 			args.__name__ = 'http://example.com'
 			args.text = html
 
-			result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args)
+			result = _HTMLExtractor()._extract_opengraph(ContentMetadata(), args)
 
 			assert_that(result, has_property('title', 'The Rock'))
 			assert_that(result, has_property('href', 'http://www.imdb.com/title/tt0117500/'))
@@ -176,7 +180,7 @@ class TestMetadataExtractors(unittest.TestCase):
 		else:
 			href = 'http://support.pokemon.com/FileManagement/Download/f6029520f8ea43f08790ec4975944bb3'
 
-		result = metadata_extractors.get_metadata_from_content_location(href)
+		result = get_metadata_from_content_location(href)
 
 		# Values from the PDF
 		assert_that(result, has_property('creator', 'Jason Madden'))
