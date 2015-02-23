@@ -48,7 +48,8 @@ class TestMetadataExtractors(unittest.TestCase):
 		def _check(result):
 			assert_that(result, has_property('title', 'Adam Green: The Spectacular Thefts of Apollo Robbins, Pickpocket'))
 			assert_that(result, has_property('href', 'http://www.newyorker.com/reporting/2013/01/07/130107fa_fact_green'))
-			assert_that(result, has_property('images', contains(has_property('url', 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg'))))
+			assert_that(result, has_property('images', contains(has_property('url', 
+																			 'http://www.newyorker.com/images/2013/01/07/g120/130107_r23011_g120_cropth.jpg'))))
 			assert_that(result, validly_provides(interfaces.IContentMetadata))
 
 		result = metadata_extractors._HTMLExtractor()._extract_opengraph(metadata_extractors.ContentMetadata(), args)
