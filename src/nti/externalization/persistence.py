@@ -32,8 +32,8 @@ from .externalization import toExternalObject
 
 from .datastructures import ExternalizableDictionaryMixin
 
-#disable: accessing protected members
-#pylint: disable=W0212
+# disable: accessing protected members
+# pylint: disable=W0212
 
 def getPersistentState( obj ):
 	"""
@@ -111,8 +111,8 @@ class PersistentExternalizableDictionary(PersistentPropertyHolder,
 	with each value in the dict having been externalized with
 	:func:`toExternalObject`.
 	"""
-	def __init__(self, dict=None, **kwargs ):
-		super(PersistentExternalizableDictionary, self).__init__( dict, **kwargs )
+	def __init__(self, data=None, **kwargs ):
+		super(PersistentExternalizableDictionary, self).__init__( data, **kwargs )
 
 	def toExternalDictionary( self, mergeFrom=None):
 		result = super(PersistentExternalizableDictionary,self).toExternalDictionary( self )

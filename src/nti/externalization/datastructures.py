@@ -19,7 +19,7 @@ from zope import schema
 from zope import interface
 from zope.schema.interfaces import SchemaNotProvided
 
-import ZODB
+from ZODB.POSException import POSError
 
 from nti.schema.interfaces import find_most_derived_interface
 
@@ -260,11 +260,11 @@ class ExternalizableInstanceDict(AbstractDynamicObjectIO):
 	def __repr__( self ):
 		try:
 			return "<%s.%s %s>" % (self.__class__.__module__, self.__class__.__name__, getattr(self,'creator', '') )
-		except ZODB.POSException.ConnectionStateError as cse:
+		except POSError, cse:
 			return '<%s(Ghost, %s)>' % (self.__class__.__name__, cse)
-		except (ValueError,LookupError) as e: # Things like invalid NTIID, missing registrations
+		except (ValueError,LookupError), e: # Things like invalid NTIID, missing registrations
 			return '<%s(%s)>' % (self.__class__.__name__, e)
-		except (AttributeError) as e: # Another weird database-related issue
+		except (AttributeError), e: # Another weird database-related issue
 			return '<%s(%s)>' % (self.__class__.__name__, e)
 
 _primitives = six.string_types + (numbers.Number,bool)

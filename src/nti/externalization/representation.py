@@ -17,11 +17,11 @@ from zope import interface
 from zope import component
 
 from .interfaces import EXT_REPR_JSON
-from .interfaces import EXT_REPR_PLIST
 from .interfaces import EXT_REPR_YAML
+from .interfaces import EXT_REPR_PLIST
 
-from .interfaces import IExternalObjectRepresenter
 from .interfaces import IExternalObjectIO
+from .interfaces import IExternalObjectRepresenter
 
 from .externalization import _NotGiven
 from .externalization import toExternalObject

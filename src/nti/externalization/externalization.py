@@ -15,7 +15,7 @@ import numbers
 import collections
 from collections import defaultdict
 
-import ZODB
+from ZODB.POSException import POSKeyError
 
 import persistent
 
@@ -328,7 +328,7 @@ def _choose_field(result, self, ext_name,
 			value = getattr(self, x)
 		except AttributeError:
 			continue
-		except ZODB.POSException.POSKeyError:
+		except POSKeyError:
 			logger.exception("Could not get attribute %s for object %s", x, self)
 			continue
 
