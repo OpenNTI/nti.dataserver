@@ -7,6 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+import unittest
+
 from nti.testing.layers import GCLayerMixin
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
@@ -20,7 +22,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 								 ConfiguringLayerMixin,
 								 DSInjectorMixin):
 
-	set_up_packages = ('nti.dataserver', 'nti.contentprocessing')
+	set_up_packages = ('nti.contentprocessing',)
 
 	@classmethod
 	def setUp(cls):
@@ -38,3 +40,6 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def testTearDown(cls):
 		pass
+
+class ContentProcessingLayerTest(unittest.TestCase):
+	layer = SharedConfiguringTestLayer

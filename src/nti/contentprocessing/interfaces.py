@@ -165,6 +165,14 @@ class IContentMetadataURLHandler(interface.Interface):
 		:return: An :class:`IContentMetadata`.
 		"""
 
+class IStopWords(interface.Interface):
+
+	def stopwords(language):
+		"""return stop word for the specified language"""
+
+	def available_languages():
+		"available languages"
+
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
