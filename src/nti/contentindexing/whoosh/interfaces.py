@@ -7,10 +7,8 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from zope import schema
 from zope import interface
-
-from nti.schema.field import Object
-from nti.schema.field import ValidTextLine
 
 from ..interfaces import IBookIndexer
 from ..interfaces import IContentIndexer
@@ -36,9 +34,9 @@ class IWhooshVideoTranscriptSchemaCreator(IVideoTranscriptSchemaCreator):
 	pass
 
 class IWhooshIndexSpec(interface.Interface):
-	content = Object(interface.Interface, required=True, title="Content object")
-	indexname = ValidTextLine(title="Index name", required=False)
-	indexdir = ValidTextLine(title="Output directory", required=False)
+	content = schema.Object(interface.Interface, required=True, title="Content object")
+	indexname = schema.TextLine(title="Index name", required=False)
+	indexdir = schema.TextLine(title="Output directory", required=False)
 
 class IWhooshContentIndexer(IContentIndexer):
 
