@@ -8,4 +8,4 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 import zope.deprecation
-zope.deprecation.moved('nti.contentindexing.whoosh.interfaces')
+zope.deprecation.moved('nti.contentindexing.whooshidx.interfaces')

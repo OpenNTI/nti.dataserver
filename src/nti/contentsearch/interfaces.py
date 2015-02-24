@@ -855,7 +855,7 @@ zope.deferredimport.deprecatedFrom(
 
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.contentindexing.whoosh.interfaces",
-	"nti.contentindexing.whoosh.interfaces",
+	"nti.contentindexing.whooshidx.interfaces",
 	"IWhooshBookSchemaCreator",
 	"IWhooshNTICardSchemaCreator",
 	"IWhooshAudioTranscriptSchemaCreator",

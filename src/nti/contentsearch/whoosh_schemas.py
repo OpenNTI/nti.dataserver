@@ -10,4 +10,4 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import zope.deprecation
-zope.deprecation.moved('nti.contentindexing.whoosh.schemas')
+zope.deprecation.moved('nti.contentindexing.whooshidx.schemas')

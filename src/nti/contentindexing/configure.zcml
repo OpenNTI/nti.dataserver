@@ -11,5 +11,6 @@
 	<include package="nti.contentprocessing" />
 	
 	<include package=".media" />
+	<include package=".whooshidx" zcml:condition="installed whoosh" />
 
 </configure>

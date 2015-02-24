@@ -27,15 +27,14 @@ from nti.contentprocessing import get_content_translation_table
 
 from nti.contentrendering import ConcurrentExecutor
 
-from nti.contentsearch.interfaces import IWhooshBookSchemaCreator
+from nti.contentindexing.whooshidx.interfaces import IWhooshBookIndexer
+from nti.contentindexing.whooshidx.interfaces import IWhooshBookSchemaCreator
 
 from ._utils import get_related
 from ._utils import get_attribute
 from ._utils import get_node_content
 
 from ._extract import extract_key_words
-
-from .interfaces import IWhooshBookIndexer
 
 from .content_utils import sanitize_content
 

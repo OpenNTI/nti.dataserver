@@ -16,7 +16,7 @@ import glob
 
 from whoosh import index
 
-from nti.contentindexing.whoosh.spec import WhooshIndexSpec
+from nti.contentindexing.whooshidx.spec import WhooshIndexSpec
 
 class BasicWhooshIndexer(object):
 

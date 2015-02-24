@@ -13,13 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.contentsearch.constants import atrans_prefix
-from nti.contentsearch.common import videotimestamp_to_datetime
-from nti.contentsearch.interfaces import IWhooshAudioTranscriptSchemaCreator
+from nti.contentindexing.utils import videotimestamp_to_datetime
 
-from ..media.interfaces import IAudioTranscriptParser
+from nti.contentindexing.media.interfaces import IAudioTranscriptParser
 
-from .interfaces import IWhooshAudioTranscriptIndexer
+from nti.contentindexing.whooshidx import AUDIO_TRANSCRIPT_IDXNAME_PREDIX
+from nti.contentindexing.whooshidx.interfaces import IWhooshAudioTranscriptIndexer
+from nti.contentindexing.whooshidx.interfaces import IWhooshAudioTranscriptSchemaCreator
 
 from .media_transcript_indexer import _Media
 from .media_transcript_indexer import _WhooshMediaTranscriptIndexer
@@ -31,7 +31,7 @@ class _Audio(_Media):
 class _WhooshAudioTranscriptIndexer(_WhooshMediaTranscriptIndexer):
 
 	media_cls = _Audio
-	media_prefix = atrans_prefix
+	media_prefix = AUDIO_TRANSCRIPT_IDXNAME_PREDIX
 	media_mimeType = u'application/vnd.nextthought.ntiaudio'
 	media_source_types = (u'application/vnd.nextthought.audiosource',)
 	media_transcript_parser_interface = IAudioTranscriptParser

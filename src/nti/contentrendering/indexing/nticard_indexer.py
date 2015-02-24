@@ -17,10 +17,11 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
-from nti.contentprocessing import get_content_translation_table
+from nti.contentindexing.whooshidx import NTICARD_IDXNAME_PREDIX
+from nti.contentindexing.whooshidx.interfaces import IWhooshNTICardIndexer
+from nti.contentindexing.whooshidx.interfaces import IWhooshNTICardSchemaCreator
 
-from nti.contentsearch.constants import nticard_prefix
-from nti.contentsearch.interfaces import IWhooshNTICardSchemaCreator
+from nti.contentprocessing import get_content_translation_table
 
 from ._utils import get_attribute
 from ._utils import get_node_content
@@ -28,8 +29,6 @@ from ._utils import get_node_content
 from .content_utils import sanitize_content
 
 from .common_indexer import BasicWhooshIndexer
-
-from .interfaces import IWhooshNTICardIndexer
 
 @interface.implementer(IWhooshNTICardIndexer)
 class WhooshNTICardIndexer(BasicWhooshIndexer):
@@ -102,7 +101,7 @@ class WhooshNTICardIndexer(BasicWhooshIndexer):
 
 	def get_index_name(self, book, indexname=None):
 		indexname = super(WhooshNTICardIndexer, self).get_index_name(book, indexname)
-		indexname = nticard_prefix + indexname
+		indexname = NTICARD_IDXNAME_PREDIX + indexname
 		return indexname
 
 	def process_topic(self, idxspec, topic, writer, language='en'):

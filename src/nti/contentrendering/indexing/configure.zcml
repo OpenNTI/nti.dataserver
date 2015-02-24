@@ -8,11 +8,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	
-	<include package="nti.contentsearch" file="configure_whoosh_content.zcml" />
-	
-	<class class=".common_indexer.WhooshIndexSpec">
-		<implements interface=".interfaces.IWhooshIndexSpec" />
-	</class>
+	<include package="nti.contentindexing" />
 	
 	<utility factory=".book_indexer._DefaultWhooshBookIndexer" />
 	<utility factory=".book_indexer._BookFileWhooshIndexer" name="whoosh.file" />
