@@ -130,10 +130,11 @@ setup(
 		# in setup.cfg
 		# 'setuptools_subversion >= 3.1'
 	],
-	install_requires=[		
+	install_requires=[
 		'nti.common',
 		'nti.contentfragments',
 		'nti.contentprocessing',
+		'nti.dublincore',
 		'nti.externalization',
 		'nti.geventwebsocket',
 		'nti.mimetype',
@@ -153,7 +154,7 @@ setup(
 		'RestrictedPython',
 		'ZConfig',
 		 # Depending on the final release, we may need to explicitly list each component.
-		'ZODB3', 
+		'ZODB3',
 		'ZODB',
 		'BTrees',
 		'zdaemon',
