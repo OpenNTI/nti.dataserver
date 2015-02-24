@@ -15,12 +15,12 @@ import zope.intid
 from zope import component
 
 from nti.contentprocessing import compute_ngrams
+from nti.contentprocessing.interfaces import IStopWords
 
 from nti.externalization.oids import to_external_ntiid_oid
 
 from .content_utils import tokenize_content
 
-from .interfaces import IStopWords
 from .interfaces import IACLResolver
 from .interfaces import ITagsResolver
 from .interfaces import ITypeResolver
