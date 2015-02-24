@@ -133,6 +133,7 @@ setup(
 	install_requires=[		
 		'nti.common',
 		'nti.contentfragments',
+		'nti.contentprocessing',
 		'nti.externalization',
 		'nti.geventwebsocket',
 		'nti.mimetype',
@@ -478,3 +479,4 @@ setup(
 	entry_points=entry_points,
 	test_suite='nose2.compat.unittest.collector'
 )
+
