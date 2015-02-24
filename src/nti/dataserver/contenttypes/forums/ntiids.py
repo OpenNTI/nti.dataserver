@@ -92,6 +92,15 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 			return None
 		return resolve_ntiid_in_board(ntiid, board)
 
+def resolve_forum_ntiid_in_board(ntiid, board):
+	"""
+	Finds a specific forum in a board,
+	given an NTIID. Handles the naming conventions within the board.
+	"""
+
+	forum_name = get_specific(ntiid)
+	return board.get( forum_name, {} )
+
 def resolve_ntiid_in_board(ntiid, board):
 	"""
 	Finds a specific topic inside a specific forum in a board,

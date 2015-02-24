@@ -14,7 +14,6 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
-
 from hamcrest import assert_that
 from hamcrest import has_key
 from hamcrest import all_of
@@ -27,6 +26,7 @@ from nose.tools import assert_raises
 
 from zope import interface
 from zope import component
+from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from nti.testing.matchers import is_empty
 from nti.utils._compat import Implicit
@@ -34,18 +34,17 @@ from nti.testing.matchers import aq_inContextOf
 from nti.testing.matchers import verifiably_provides, validly_provides
 
 from nti.externalization.tests import externalizes
-from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dataserver.users import Community
 
+from nti.wref.interfaces import IWeakRef
 
 from ..interfaces import IForum, ITopic, IPersonalBlog, IGeneralForum, ICommunityForum
 from ..interfaces import ICommunityBoard
 from ..forum import Forum, PersonalBlog, GeneralForum, CommunityForum
 from ..topic import PersonalBlogEntry
 
-from nti.wref.interfaces import IWeakRef
 from . import ForumLayerTest
 
 class TestForum(ForumLayerTest):
@@ -159,3 +158,4 @@ class TestForum(ForumLayerTest):
 					 externalizes( has_entries( 'TopicCount', 1,
 												'NewestDescendantCreatedTime', 24,
 												'NewestDescendant', has_entry('Class', 'PersonalBlogEntry') ) ) )
+
