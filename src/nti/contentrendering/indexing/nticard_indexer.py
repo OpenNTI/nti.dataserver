@@ -17,6 +17,7 @@ from datetime import datetime
 from zope import component
 from zope import interface
 
+from nti.contentindexing.utils import sanitize_content
 from nti.contentindexing.whooshidx import NTICARD_IDXNAME_PREDIX
 from nti.contentindexing.whooshidx.interfaces import IWhooshNTICardIndexer
 from nti.contentindexing.whooshidx.interfaces import IWhooshNTICardSchemaCreator
@@ -25,8 +26,6 @@ from nti.contentprocessing import get_content_translation_table
 
 from ._utils import get_attribute
 from ._utils import get_node_content
-
-from .content_utils import sanitize_content
 
 from .common_indexer import BasicWhooshIndexer
 

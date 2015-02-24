@@ -16,6 +16,8 @@ from zope import component
 
 from nti.common.property import alias
 
+from nti.contentindexing.utils import sanitize_content
+
 from nti.contentprocessing import tokenize_content
 from nti.contentprocessing import get_content_translation_table
 
@@ -24,8 +26,6 @@ from nti.contentrendering import ConcurrentExecutor
 from . _utils import get_attribute
 
 from ._extract import extract_key_words
-
-from .content_utils import sanitize_content
 
 from .common_indexer import BasicWhooshIndexer
 
