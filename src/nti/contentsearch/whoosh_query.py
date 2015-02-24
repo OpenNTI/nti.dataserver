@@ -25,8 +25,8 @@ from whoosh.scoring import WeightScorer
 from whoosh.scoring import WeightingModel
 from whoosh.scoring import WeightLengthScorer
 
-from nti.contentindexing.whoosh import QUICK
-from nti.contentindexing.whoosh import CONTENT
+from nti.contentindexing.whooshidx import QUICK
+from nti.contentindexing.whooshidx import CONTENT
 
 from .interfaces import IWhooshQueryParser
 
