@@ -8,10 +8,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	
-	<utility factory=".whoosh_query._DefaultWhooshQueryParser" />
-	
+	<utility factory=".whoosh_query._DefaultWhooshQueryParser" />	
 	<utility component=".whoosh_searcher._ContentSearcherFactory" />
-
-	<include file="configure_whoosh_content.zcml" />
 
 </configure>
