@@ -13,13 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.contentsearch.constants import vtrans_prefix
-from nti.contentsearch.common import videotimestamp_to_datetime
-from nti.contentsearch.interfaces import IWhooshVideoTranscriptSchemaCreator
+from nti.contentindexing.utils import videotimestamp_to_datetime
 
-from ..media.interfaces import IVideoTranscriptParser
+from nti.contentindexing.media.interfaces import IVideoTranscriptParser
 
-from .interfaces import IWhooshVideoTranscriptIndexer
+from nti.contentindexing.whooshidx import VIDEO_TRANSCRIPT_IDXNAME_PREDIX
+from nti.contentindexing.whooshidx.interfaces import IWhooshVideoTranscriptIndexer
+from nti.contentindexing.whooshidx.interfaces import IWhooshVideoTranscriptSchemaCreator
 
 from .media_transcript_indexer import _Media
 from .media_transcript_indexer import WhooshMediaTranscriptIndexer
@@ -38,7 +38,7 @@ class _Video(_Media):
 class WhooshVideoTranscriptIndexer(WhooshMediaTranscriptIndexer):
 
 	media_cls = _Video
-	media_prefix = vtrans_prefix
+	media_prefix = VIDEO_TRANSCRIPT_IDXNAME_PREDIX
 	media_mimeType = u'application/vnd.nextthought.ntivideo'
 	media_source_types = (u'application/vnd.nextthought.videosource',)
 	media_transcript_parser_interface = IVideoTranscriptParser

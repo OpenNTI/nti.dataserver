@@ -5,6 +5,7 @@ Content indexer.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,13 +19,14 @@ from zope import interface
 from zope import component
 from zope.configuration import xmlconfig, config
 
-from nti.contentrendering.interfaces import IBookIndexer
-from nti.contentrendering.interfaces import INTICardIndexer
-from nti.contentrendering.interfaces import IRenderedBookIndexer
-from nti.contentrendering.interfaces import IAudioTranscriptIndexer
-from nti.contentrendering.interfaces import IVideoTranscriptIndexer
+from nti.contentindexing.interfaces import IBookIndexer
+from nti.contentindexing.interfaces import INTICardIndexer
+from nti.contentindexing.interfaces import IAudioTranscriptIndexer
+from nti.contentindexing.interfaces import IVideoTranscriptIndexer
 
 import nti.contentrendering
+from nti.contentrendering.interfaces import IRenderedBookIndexer
+
 from nti.contentrendering.utils import EmptyMockDocument
 from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
 

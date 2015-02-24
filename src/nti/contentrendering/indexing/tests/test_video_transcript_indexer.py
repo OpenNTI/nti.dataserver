@@ -19,9 +19,8 @@ import tempfile
 
 from whoosh.query import Term
 
-from nti.contentrendering.indexing.video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
-
 from nti.contentrendering.RenderedBook import _EclipseTOCMiniDomTopic
+from nti.contentrendering.indexing.video_transcript_indexer import _DefaultWhooshVideoTranscriptIndexer
 
 from nti.contentrendering.tests import NonDevmodeContentrenderingLayerTest
 

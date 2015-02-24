@@ -13,6 +13,9 @@
 	<include package="zope.traversing" /> 
 	<include package="z3c.autoinclude" file="meta.zcml" />
 
+	<!-- Content fragments and conversion, mime types -->
+	<include package="nti.contentfragments" />
+	
 	<!--
 	Loading it (non-dev mode) slows script startup way down.
 	We should really break this dependency.
@@ -45,34 +48,28 @@
 
 	<utility component=".slidedeckextractor"
 			 provides=".interfaces.ISlideDeckExtractor"
-			 name="060.SlideDeckExtractor"/>
+			 name="060.SlideDeckExtractor" />
 
 	<utility factory=".content_indexer.NTICardIndexer"
 			 provides=".interfaces.IRenderedBookIndexer"
-			 name="nticard"/>
+			 name="nticard" />
 
 	<utility factory=".content_indexer.BookIndexer"
 			 provides=".interfaces.IRenderedBookIndexer"
-			 name="book"/>
+			 name="book" />
 
 	<utility factory=".content_indexer.AudioTrancriptIndexer"
 			 provides=".interfaces.IRenderedBookIndexer"
-			 name="audio"/>
+			 name="audio" />
 			 
 	<utility factory=".content_indexer.VideoTrancriptIndexer"
 			 provides=".interfaces.IRenderedBookIndexer"
-			 name="video"/>
-
-	<!-- Content fragments and conversion, mime types -->
-
-	<include package="nti.contentfragments" />
+			 name="video" />
 
 	<!-- icon and image finders for testing book -->
-
 	<adapter factory=".tociconsetter.SimpleConventionIconFinder" name="testing" />
 	<adapter factory=".tociconsetter.SimpleConventionBackgroundImageFinder" name="testing" />
 
-	<include package=".media" />
 	<include package=".indexing" />
 	<include package=".resources" />
 	<include package=".transforms" />
