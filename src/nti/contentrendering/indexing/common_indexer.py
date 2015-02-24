@@ -53,7 +53,7 @@ class BasicWhooshIndexer(object):
 
 	def get_index_name(self, book, indexname=None):
 		indexname = indexname or book.jobname
-		return indexname
+		return unicode(indexname)
 
 	def get_content_path(self, book):
 		result = os.path.expanduser(book.contentLocation)
@@ -62,7 +62,7 @@ class BasicWhooshIndexer(object):
 	def get_index_dir(self, book, indexdir=None):
 		content_path = self.get_content_path(book)
 		indexdir = indexdir or os.path.join(content_path, "indexdir")
-		return indexdir
+		return unicode(indexdir)
 
 	def get_index_writer(self, index):
 		return index.writer(optimize=False, merge=False)

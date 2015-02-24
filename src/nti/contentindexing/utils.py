@@ -14,6 +14,45 @@ import math
 import time
 from datetime import datetime
 
+from zope import component
+
+from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.contentprocessing import tokenize_content
+
+def sanitize_content(text, table=None, tokens=False, lang='en'):
+    """
+    clean any html from the specified text and then tokenize it
+
+    :param text: context to sanitize
+    :param tokens: boolean to return a list of tokens
+    :param table: translation table
+    """
+    if not text:
+        return text
+
+    # turn incoming into plain text.
+    # NOTE: If the HTML included entities like like &lt,
+    # this may still have things in it that sort of look like
+    # tags:
+    #    &lt;link text&gt; => <link text>
+    # But of course we CANNOT and MUST NOT attempt to run an additional
+    # parsing pass on it, as that's likely to wind up with gibberish results
+    # since its nothing actually close to HTML
+    # Since we're using a named adapter, we need to be careful
+    # not to re-adapt multiple times
+    raw = text
+    text = component.getAdapter(text, IPlainTextContentFragment, name='text')
+    __traceback_info__ = raw, text, type(text)
+
+    # translate and tokenize words
+    text = text.translate(table) if table else text
+    tokenized_words = tokenize_content(text, lang)
+    result = tokenized_words if tokens else ' '.join(tokenized_words)
+    return result
+
+## date/time functions
+
 def get_datetime(x=None):
     x = x or time.time()
     return datetime.fromtimestamp(float(x))
@@ -52,4 +91,3 @@ def video_date_to_millis(dt):
     start = datetime(year=1, month=1, day=1)
     diff = dt - start
     return diff.total_seconds() * 1000.0
-
