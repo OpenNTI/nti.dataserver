@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+#TODO: Break this layer violation
 from pyramid.threadlocal import get_current_request
 
 from nti.externalization.singleton import SingletonDecorator
