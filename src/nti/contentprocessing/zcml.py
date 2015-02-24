@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Directives to be used in ZCML: registering static keys.
-
 .. $Id$
 """
 
@@ -11,14 +9,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
+from functools import partial
 
 from zope import interface
 from zope.configuration import fields
 from zope.component.zcml import utility
 
-from . import alchemy_key
-from . import interfaces as cp_interfaces
+from .alchemy import create_api_key
+from .interfaces import IAlchemyAPIKey
 
 class IRegisterAlchemyAPIKeyDirective(interface.Interface):
 	"""
@@ -31,5 +29,5 @@ def registerAlchemyAPIKey(_context, value, name=u''):
 	"""
 	Register an alchemy key with the given alias
 	"""
-	factory = functools.partial(alchemy_key.create_api_key, name=name, value=value)
-	utility(_context, provides=cp_interfaces.IAlchemyAPIKey, factory=factory, name=name)
+	factory = partial(create_api_key, name=name, value=value)
+	utility(_context, provides=IAlchemyAPIKey, factory=factory, name=name)
