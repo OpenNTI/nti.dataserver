@@ -10,6 +10,7 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 import six
+import sys
 
 from zope import component
 from zope import interface
@@ -408,8 +409,6 @@ IStreamChangeCircledEvent = None
 IStreamChangeCreatedEvent = None
 IStreamChangeDeletedEvent = None
 IStreamChangeModifiedEvent = None
-
-import sys
 
 def make_stream_change_event_interface(event_name,
 									   bases=(),
@@ -1822,7 +1821,6 @@ zope.deferredimport.deprecatedFrom(
 # This is mostly an optimization, right?
 def __setup_interfaces():
 	from nti.mimetype.mimetype import nti_mimetype_with_class
-	import sys
 	for x in sys.modules['nti.dataserver.interfaces'].__dict__.itervalues():
 		if interface.interfaces.IInterface.providedBy( x ):
 			if x.extends( IModeledContent ) and not IContentTypeAware.providedBy( x ):
