@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id$
-"""
 
-from __future__ import print_function, unicode_literals
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from hamcrest import assert_that, is_, greater_than
-from nose.tools import assert_raises
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-
-from nti.testing.matchers import is_true, is_false
-import nti.dataserver
-
-from nti.dataserver import dicts
-
+from hamcrest import is_
+from hamcrest import assert_that
+from hamcrest import greater_than
 
 from zope.container import contained
 
+from nti.dataserver import dicts
+
+from nti.testing.matchers import is_true, is_false
 
 from .mock_dataserver import DataserverLayerTest
+
+from nose.tools import assert_raises
 
 class TestDict(DataserverLayerTest):
 	def test_lastModified_dict(self):
