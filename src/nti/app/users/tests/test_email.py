@@ -30,7 +30,7 @@ class TestEmailVerificationTemplate( ApplicationLayerTest ):
 				'user': 'josh zuech',
 				'href': 'href://link_to_verification',
 				'support_email': 'test@test.com',
-				'informal_username': 'Jay Z',
+				'informal_username': 'Josh',
 				'today': isodate.date_isoformat(datetime.datetime.now()) }
 
 		package = dottedname.resolve( 'nti.app.users.templates' )

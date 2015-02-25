@@ -1,4 +1,12 @@
-Dear ${informal_username},
+Hi ${informal_username},
+
+In order to support your account, please verify your email address. Doing so will
+enable you to receive notifications for your account.
+
+To verify your email address, either click on the following link:
+${href} or enter your verification token, ${token}.
+
+Thank you for helping us maintain the security of your account.
 
 If you feel this email was sent in error, or this account was created
 without your consent, you may email ${support_email}.

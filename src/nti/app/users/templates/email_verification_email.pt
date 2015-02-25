@@ -13,11 +13,25 @@
 		<div metal:use-macro="macro:header">
 		</div>
 
-		<p>Dear <span tal:content="options/informal_username" class="realname tterm">John</span>,</p>
+		<p>
+			Hi <span tal:content="options/informal_username" class="realname tterm">John</span>,
+		</p>
 
-		<div id="logo-bar nti">
-			<img src="http://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25" alt="NextThought Logo" />
-		</div>
+
+		<p>
+			In order to support your account, please verify your email address. Doing so will
+			enable you to receive email notifications for your account.
+		</p>
+
+		<p>
+			To verify your email address, either click on the following link:
+			<a href="" attributes="href options/href" tal:content="options/href" /> or
+			enter your verification token, <span tal:content="options/token" />.
+		</p>
+
+		<p>
+			Thank you for helping us maintain the security of your account.
+		</p>
 
 		<p class="footer" style="font-size: smaller">
 			If you feel this email was sent in error, or this account was created
