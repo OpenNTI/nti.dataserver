@@ -133,10 +133,6 @@
 				for=".interfaces.IForumSearchHit"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
-	<subscriber factory=".decorators._SearchResultsLinkDecorator"
-				for=".interfaces.ISearchResults"
-				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-
 	<subscriber factory=".decorators._SearchResultsDecorator"
 				for=".interfaces.ISearchResults"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>

@@ -10,12 +10,21 @@
 
 	<include package="nti.contentsearch" />
 
+	<!-- Utils -->
+
 	<utility factory="nti.contentsearch.indexmanager.create_index_manager"
 			 provides="nti.contentsearch.interfaces.IIndexManager" />
 
-	<subscriber handler=".subscribers.add_filesystem_index" />
+	<!-- Events -->
 	<subscriber handler=".subscribers.add_s3_index" />
-	<subscriber handler=".subscribers.reset_indexes_when_modified" />
+	<subscriber handler=".subscribers.add_filesystem_index" />
 	<subscriber handler=".subscribers.reset_indexes_when_removed" />
+	<subscriber handler=".subscribers.reset_indexes_when_modified" />
+
+	<!-- Decorators -->
+	<subscriber factory=".decorators._SearchResultsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.contentsearch.interfaces.ISearchResults
+					 pyramid.interfaces.IRequest" />
 
 </configure>
