@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search externalization
-
 ... $Id$
 """
 
@@ -14,15 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-#TODO: Break this layer violation
-from pyramid.threadlocal import get_current_request
-
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
-
-from nti.dataserver.links import Link
 
 from .search_highlights import empty_hi_marker
 from .search_highlights import word_fragments_highlight
@@ -138,31 +131,6 @@ class _NTICardSearchHitHighlightDecorator(_SearchHitHighlightDecorator):
 
 	def sources(self, query, hit, external):
 		return ((content_, external.get(SNIPPET)), (title_, hit.Title))
-
-@component.adapter(ISearchResults)
-@interface.implementer(IExternalObjectDecorator)
-class _SearchResultsLinkDecorator(object):
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		query = original.Query
-		request = get_current_request()
-		batch_hits = getattr(original, 'Batch', None)
-		if request is None or not query.IsBatching or batch_hits is None:
-			return
-
-		next_batch, prev_batch = batch_hits.next, batch_hits.previous
-		for batch, rel in ((next_batch, 'batch-next'), (prev_batch, 'batch-prev')):
-			if batch is not None and batch != batch_hits:
-				batch_params = request.params.copy()
-				batch_params['batchStart'] = batch.start
-				_query = sorted(batch_params.items())
-				link_next_href = request.current_route_path(_query=_query)
-				link_next = Link(link_next_href, rel=rel)
-				external.setdefault('Links', []).append(link_next)
-		# clean
-		original.Batch = None
 
 @interface.implementer(IExternalObjectDecorator)
 class _ResultsDecorator(object):
