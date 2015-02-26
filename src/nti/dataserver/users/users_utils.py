@@ -21,6 +21,8 @@ from ZODB.POSException import POSError
 from nti.dataserver.interfaces import IStreamChangeEvent
 from nti.dataserver.interfaces import IDynamicSharingTarget
 
+from nti.externalization.interfaces import LocatedExternalDict
+
 from nti.zodb import readCurrent
 
 def is_broken(obj):
@@ -50,9 +52,12 @@ def remove_broken_objects(user, include_ontainers=True, include_stream=True,
 		intids = component.queryUtility( zc_intid.IIntIds )
 		attribute = intids.attribute
 		
+		result = LocatedExternalDict()
+				
 		def _remove(key, obj, container=None):
 			if container is not None:
 				del container[key]
+				result[key] = str(type(obj)) # record
 						
 			uid = key
 			if not isinstance(uid, int):
@@ -62,7 +67,6 @@ def remove_broken_objects(user, include_ontainers=True, include_stream=True,
 				intids.forceUnregister(uid, notify=True, removeAttribute=False)
 	
 		def _loop_and_remove(container, unwrap=True):
-			result = 0
 			if isinstance(container, Mapping):
 				readCurrent(container, False)
 				f_unwrap = getattr(container, '_v_unwrap', lambda x:x)
@@ -71,14 +75,9 @@ def remove_broken_objects(user, include_ontainers=True, include_stream=True,
 					value = f_unwrap(value) if unwrap else value
 					if is_broken(value):
 						_remove(key, value, container)
-						result += 1
 					elif IStreamChangeEvent.providedBy(value) and is_broken(value.object):
 						_remove(key, value, container)
-						result += 1
-			return result
-		
-		result = 0
-		
+				
 		if include_ontainers:
 			for name, container in user.containers.iteritems():
 				if not only_ntiid_containers or user._is_container_ntiid(name):
