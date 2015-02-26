@@ -130,10 +130,14 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 				   values.get('include_dynamic_friends')
 		dynamic = is_true(dynamic)
 		
-		result = remove_broken_objects(	user, include_containers=containers,
-										include_stream=stream,
-										include_shared=shared,
-										include_dynamic_friends=dynamic)
+		data = remove_broken_objects(user, include_containers=containers,
+									 include_stream=stream,
+									 include_shared=shared,
+									 include_dynamic_friends=dynamic)
+		
+		result = LocatedExternalDict()
+		result[ITEMS] = data
+		result['Total'] = result['Count'] = len(data)
 		return result
 
 @view_config(route_name='objects.generic.traversal',
