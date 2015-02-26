@@ -81,18 +81,18 @@ def remove_broken_objects(user, include_containers=True, include_stream=True,
 		if include_containers:
 			for name, container in user.containers.iteritems():
 				if not only_ntiid_containers or user._is_container_ntiid(name):
-					result += _loop_and_remove(container, True)
+					_loop_and_remove(container, True)
 
 		if include_stream:
 			for name, container in user.streamCache.iteritems():
 				if not only_ntiid_containers or user._is_container_ntiid(name):
-					result += _loop_and_remove(container, False)
+					_loop_and_remove(container, False)
 
 		if include_shared:
 			
 			for name, container in user.containersOfShared.items():
 				if not only_ntiid_containers or user._is_container_ntiid(name):
-					result += _loop_and_remove(container, False)
+					_loop_and_remove(container, False)
 								
 			if include_dynamic_friends:
 				
@@ -104,10 +104,10 @@ def remove_broken_objects(user, include_containers=True, include_stream=True,
 					if include_shared and hasattr( dynamic, 'containersOfShared' ):
 						for name, container in dynamic.containersOfShared.items():
 							if not only_ntiid_containers or user._is_container_ntiid(name):
-								result += _loop_and_remove(container, False)
+								_loop_and_remove(container, False)
 								
 					if include_stream and hasattr( dynamic, 'streamCache' ):
 						for name, container in dynamic.streamCache.iteritems():
 							if not only_ntiid_containers or user._is_container_ntiid(name):
-								result += _loop_and_remove(container, False)
+								_loop_and_remove(container, False)
 		return result
