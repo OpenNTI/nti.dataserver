@@ -42,7 +42,7 @@ def _getId(obj, attribute='_ds_intid'):
 	except Exception:
 		return None
 
-def remove_broken_objects(user, include_ontainers=True, include_stream=True, 
+def remove_broken_objects(user, include_containers=True, include_stream=True, 
 						  include_shared=True, include_dynamic_friends=False,
 						  only_ntiid_containers=True):
 		"""
@@ -78,7 +78,7 @@ def remove_broken_objects(user, include_ontainers=True, include_stream=True,
 					elif IStreamChangeEvent.providedBy(value) and is_broken(value.object):
 						_remove(key, value, container)
 				
-		if include_ontainers:
+		if include_containers:
 			for name, container in user.containers.iteritems():
 				if not only_ntiid_containers or user._is_container_ntiid(name):
 					result += _loop_and_remove(container, True)

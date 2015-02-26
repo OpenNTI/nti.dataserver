@@ -9,8 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-
 import zope.intid
 
 from zope import component
@@ -49,14 +47,12 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from . import is_true
+
 ITEMS = StandardExternalFields.ITEMS
 
 transcript_mime_type = u'application/vnd.nextthought.transcript'
 messageinfo_mime_type =  u'application/vnd.nextthought.messageinfo'
-
-def is_true(value):
-	value = value if isinstance(value, six.string_types) else str(value)
-	return value.lower() in  ('1', 'y', 'yes', 't', 'true')
 
 def parse_mime_types(value):
 	mime_types = set(value.split(',')) if value else ()
