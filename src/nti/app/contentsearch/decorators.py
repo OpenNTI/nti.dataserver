@@ -38,8 +38,8 @@ class _SearchResultsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			if batch is not None and batch != batch_hits:
 				batch_params = self.request.params.copy()
 				batch_params['batchStart'] = batch.start
-				params_query = sorted(batch_params.items()) # for testing
-				link_next_href = self.request.current_route_path(_query=params_query)
+				query_params = sorted(batch_params.items()) # for testing
+				link_next_href = self.request.current_route_path(_query=query_params)
 				link_next = Link(link_next_href, rel=rel)
 				external.setdefault('Links', []).append(link_next)
 		# clean
