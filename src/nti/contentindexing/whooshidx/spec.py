@@ -12,8 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 
 from nti.common.property import alias
-
-from nti.externalization.representation import WithRepr
+from nti.common.representation import WithRepr
 
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
