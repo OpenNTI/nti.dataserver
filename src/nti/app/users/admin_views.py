@@ -23,15 +23,19 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 from nti.common.time import bit64_int_to_time
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.dataserver.users import User
-from nti.dataserver import authorization as nauth
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
+from nti.dataserver import authorization as nauth
+
+from nti.dataserver.users import User
+from nti.dataserver.users.users_utils import remove_broken_objects
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+
+from . import is_true
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -87,6 +91,51 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 		result['did_remove'] = did_remove
 		return result
 	
+	
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 permission=nauth.ACT_NTI_ADMIN,
+			 request_method='POST',
+			 context=IDataserverFolder,
+			 name='RemoveUserBrokenObjects')
+class RemoveUserBrokenObjects(AbstractAuthenticatedView, 
+							  ModeledContentUploadRequestUtilsMixin):
+
+	"""
+	Remove user broken objects
+	"""
+
+	def __call__(self):
+		values = CaseInsensitiveDict(self.readInput())
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity("must specify a username")
+		
+		user = User.get_user(username)
+		if user is None or not IUser.providedBy(user):
+			raise hexc.HTTPUnprocessableEntity("user not found")
+		
+		containers = values.get('containers') or values.get('include_containers')
+		containers = bool(not containers or is_true(containers))
+		
+		stream = values.get('stream') or values.get('include_stream')
+		stream = is_true(stream)
+		
+		shared = values.get('shared') or values.get('include_shared')
+		shared = is_true(shared)
+		
+		dynamic =  values.get('dynamic') or \
+				   values.get('dynamic_friends') or \
+				   values.get('include_dynamic') or \
+				   values.get('include_dynamic_friends')
+		dynamic = is_true(dynamic)
+		
+		result = remove_broken_objects(	user, include_containers=containers,
+										include_stream=stream,
+										include_shared=shared,
+										include_dynamic_friends=dynamic)
+		return result
+
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 permission=nauth.ACT_NTI_ADMIN,
@@ -100,7 +149,7 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 	"""
 
 	def __call__(self):
-		values = self.readInput()
+		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity("must specify a username")
