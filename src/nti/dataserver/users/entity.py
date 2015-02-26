@@ -46,7 +46,7 @@ from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
-from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.internalization import update_from_external_object

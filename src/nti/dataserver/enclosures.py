@@ -24,7 +24,7 @@ from nti.dataserver.interfaces import IEnclosedContent
 
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
-from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
 

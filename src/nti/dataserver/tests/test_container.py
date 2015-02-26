@@ -19,6 +19,8 @@ import nti.dataserver
 
 from nti.dataserver import containers as container, interfaces, datastructures
 
+from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
 from zope import interface
 from zope.container import contained
 from zope.container.interfaces import INameChooser
@@ -26,7 +28,7 @@ from zope.container.interfaces import INameChooser
 from zope import lifecycleevent
 
 @interface.implementer(interfaces.ILastModified)
-class Contained(datastructures.CreatedModDateTrackingObject,contained.Contained):
+class Contained(CreatedModDateTrackingObject, contained.Contained):
 	pass
 
 from .mock_dataserver import DataserverLayerTest

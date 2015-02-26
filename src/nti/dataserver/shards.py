@@ -17,11 +17,11 @@ from zope.site.site import SiteManagerContainer
 
 from ZODB.interfaces import IConnection
 
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
 from .interfaces import IShardInfo
 from .interfaces import IShardLayout
 from .interfaces import INewUserPlacer
-
-from .datastructures import PersistentCreatedModDateTrackingObject
 
 @interface.implementer(IShardInfo)
 class ShardInfo(PersistentCreatedModDateTrackingObject, SiteManagerContainer):

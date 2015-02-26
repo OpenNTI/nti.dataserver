@@ -20,18 +20,18 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.contained import Contained
 
+from nti.dataserver import users
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
-from nti.dataserver import users
-from nti.dataserver.datastructures import CreatedModDateTrackingObject
+from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from .interfaces import IInvitation
 from .interfaces import InvitationAcceptedEvent
 
 @interface.implementer(IInvitation, IAttributeAnnotatable)
-class BaseInvitation(CreatedModDateTrackingObject,Contained):
+class BaseInvitation(CreatedModDateTrackingObject, Contained):
 	"""
 	Starting implementation for an interface that doesn't actually do anything.
 	"""
