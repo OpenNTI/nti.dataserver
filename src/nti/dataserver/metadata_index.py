@@ -260,9 +260,9 @@ class TopLevelContentExtentFilteredSet(ExtentFilteredSet):
 	"""
 	A filter for a topic index that collects top-level objects.
 	"""
-	def __init__(self, id, family=None):
+	def __init__(self, fid, family=None):
 		super(TopLevelContentExtentFilteredSet,self).__init__(
-			  id,
+			  fid,
 			  isTopLevelContentObjectFilter,
 			  family=family)
 
@@ -274,9 +274,9 @@ class DeletedObjectPlaceholderExtentFilteredSet(ExtentFilteredSet):
 	"""
 	A filter for a topic index that collects deleted placeholders.
 	"""
-	def __init__(self, id, family=None):
+	def __init__(self, fid, family=None):
 		super(DeletedObjectPlaceholderExtentFilteredSet,self).__init__(
-			id,
+			fid,
 			isDeletedObjectPlaceholder,
 			family=family)
 
@@ -342,12 +342,12 @@ class MetadataCatalog(Catalog):
 
 	super_index_doc = Catalog.index_doc
 
-	def index_doc(self, id, ob):
+	def index_doc(self, docid, ob):
 		# We do not want to index here. We'll index via our catalog processor.
 		pass
 
-	def force_index_doc(self, id, ob):
-		self.super_index_doc( id, ob )
+	def force_index_doc(self, docid, ob):
+		self.super_index_doc( docid, ob )
 
 def install_metadata_catalog( site_manager_container, intids=None ):
 	"""
