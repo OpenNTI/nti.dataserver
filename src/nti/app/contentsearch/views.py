@@ -80,10 +80,10 @@ class BaseSearchView(BaseView,
 		new_results = results.clone(hits=False)
 		if batch_start < len(results):
 			batch_hits = Batch(results.Hits, batch_start, batch_size)
-			new_results.Hits = batch_hits  # Set hits this iterates
-			# this is a bit hackish, but it avoids building a new
-			# batch object plus the link decorator needs the orignal
-			# batch object
+			new_results.Hits = batch_hits  # Set hits
+			## CS: this is a bit hackish, but it avoids building a new
+			## batch object plus the link decorator needs the orignal
+			## batch object. Consider using _batch_items_iterable
 			new_results.Batch = batch_hits  # save for decorator
 		return new_results, results
 
