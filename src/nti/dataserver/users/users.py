@@ -92,6 +92,8 @@ from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPasswo
 
 from nti.dataserver.activitystream_change import Change
 
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.datastructures import ExternalizableDictionaryMixin
 
@@ -430,7 +432,7 @@ deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 
 @functools.total_ordering
 @interface.implementer(IDevice, IZContained)
-class Device(datastructures.PersistentCreatedModDateTrackingObject,
+class Device(PersistentCreatedModDateTrackingObject,
 			 ExternalizableDictionaryMixin):
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass

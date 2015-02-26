@@ -22,7 +22,8 @@ from zope.security.interfaces import IPrincipal
 from ZODB.POSException import POSError
 
 from nti.dataserver.authorization_acl import ACL
-from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 

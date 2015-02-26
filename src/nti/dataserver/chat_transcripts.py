@@ -114,7 +114,8 @@ from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import ITranscriptSummary
 from nti.dataserver.activitystream_change import Change
 from nti.dataserver.datastructures import ZContainedMixin
-from nti.dataserver.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 

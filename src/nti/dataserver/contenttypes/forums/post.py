@@ -25,6 +25,8 @@ from persistent import Persistent
 from nti.dataserver import sharing
 from nti.dataserver import datastructures
 
+from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
 from nti.utils._compat import Implicit
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
@@ -39,7 +41,7 @@ from . import interfaces as for_interfaces
 class Post(
 		   Persistent,
 		   datastructures.ZContainedMixin,
-		   datastructures.CreatedModDateTrackingObject,
+		   CreatedModDateTrackingObject,
 		   sharing.AbstractReadableSharedWithMixin,
 		   Implicit):
 

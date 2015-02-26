@@ -25,6 +25,8 @@ from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import users
 
+from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
 from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
@@ -38,7 +40,7 @@ def _get_entity( username, dataserver=None ):
 @interface.implementer(nti_interfaces.IModeledContent)
 class UserContentRoot(sharing.ShareableMixin, 
 					  datastructures.ZContainedMixin, 
-					  datastructures.CreatedModDateTrackingObject, 
+					  CreatedModDateTrackingObject, 
 					  PersistentPropertyHolder):
 	"""
 	Base implementation of behaviours expected for contenttypes. Should be the primary
