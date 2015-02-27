@@ -19,16 +19,12 @@ from zope.annotation.interfaces import IAnnotatable
 
 from zope.catalog.interfaces import ICatalog
 
-from zope.container.interfaces import IContainer as IZContainer
-from zope.container.interfaces import IContainerNamesContainer as IZContainerNamesContainer
-
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.location.location import LocationProxy
 from zope.location.interfaces import IContained as IZContained
 
-from zope.mimetype import interfaces as mime_interfaces
 from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.proxy import ProxyBase
@@ -50,7 +46,6 @@ from nti.contentrange import interfaces as rng_interfaces
 from nti.contentrange.contentrange import ContentRangeDescription
 
 from nti.schema.field import Dict
-from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Variant
 from nti.schema.field import ValidText
@@ -94,8 +89,12 @@ class ACLProxy(ProxyBase):
 
 # pylint: disable=E0213,E0211
 
-class IDataserver(interface.Interface):
-	pass
+# BWC exports
+from nti.dataserver.core.interfaces import IIdentity
+from nti.dataserver.core.interfaces import IDataserver
+
+IIdentity = IIdentity
+IDataserver = IDataserver
 
 class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
 	"Fired when a dataserver is closed"
@@ -133,13 +132,13 @@ class IMemcacheClient(interface.Interface):
 	def delete(key):
 		"Remove the key from the cache."
 
+# BWC exports
 from nti.site.interfaces import IHostSitesFolder
 from nti.site.interfaces import IHostPolicyFolder
 from nti.site.interfaces import SiteNotInstalledError
 from nti.site.interfaces import InappropriateSiteError
 from nti.site.interfaces import IMainApplicationFolder
 
-# bwc exports
 IHostSitesFolder = IHostSitesFolder
 IHostPolicyFolder = IHostPolicyFolder
 IDataserverFolder = IMainApplicationFolder
@@ -191,9 +190,8 @@ class INewUserPlacer(interface.Interface):
 		:return: Undefined.
 		"""
 
+# BWC exports
 from nti.site.interfaces import ISiteTransactionRunner
-
-# BWC export
 IDataserverTransactionRunner = ISiteTransactionRunner
 
 class IOIDResolver(interface.Interface):
@@ -207,71 +205,25 @@ class IOIDResolver(interface.Interface):
 			bypassed.
 		"""
 
-class IEnvironmentSettings(interface.Interface):
-	pass
+# BWC exports
+from nti.dataserver.core.interfaces import IEnvironmentSettings
+IEnvironmentSettings = IEnvironmentSettings
 
-class ILink(interface.Interface):
-	"""
-	A relationship between the containing entity and
-	some other entity.
-	"""
+from nti.dataserver.core.interfaces import ILink
+from nti.dataserver.core.interfaces import ILinked
+from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
 
-	rel = Choice(
-		title=u'The type of relationship',
-		values=('related', 'alternate', 'self', 'enclosure', 'edit', 'like',
-				'unlike', 'content'))
+ILink = ILink
+ILined = ILinked
+ILinkExternalHrefOnly = ILinkExternalHrefOnly
 
-	target = interface.Attribute(
-		"""
-		The target of the relationship.
+from nti.dataserver.core.interfaces import IContainer
+from nti.dataserver.core.interfaces import IContainerNamesContainer
+from nti.dataserver.core.interfaces import IZContainerNamesContainer
 
-		May be an actual object of some type or may be a string. If a string,
-		will be interpreted as an absolute or relative URI.
-		""")
-
-	elements = Iterable(
-		title="Additional path segments to put after the `target`",
-		description="""Each element must be a string and will be a new URL segment.
-
-		This is useful for things like view names or namespace traversals.""")
-
-	target_mime_type = DecodingValidTextLine(
-		title='Target Mime Type',
-		description="The mime type explicitly specified for the target object, if any",
-		constraint=mime_interfaces.mimeTypeConstraint,
-		required=False)
-
-	method = DecodingValidTextLine(
-		title='HTTP Method',
-		description="The HTTP method most suited for this link relation",
-		required=False)
-
-	title = ValidTextLine(
-		title="Human readable title",
-		required=False)
-
-class ILinkExternalHrefOnly(ILink):
-	"""
-	A marker interface intended to be used when a link
-	object should be externalized as its 'href' value only and
-	not the wrapping object.
-	"""
-
-class ILinked(interface.Interface):
-	"""
-	Something that possess links to other objects.
-	"""
-	links = Iterable(
-		title=u'Iterator over the ILinks this object contains.')
-
-# ## Containers
-# TODO: Very much of our home-grown container
-# stuff can be replaced by zope.container
-IContainer = IZContainer
-
-# Recall that IContainer is an IReadContainer and IWriteContainer, providing:
-# __setitem__, __delitem__, __getitem__, keys()/values()/items()
-IContainerNamesContainer = IZContainerNamesContainer
+IContainer = IContainer
+IContainerNamesContainer = IContainerNamesContainer
+IZContainerNamesContainer = IZContainerNamesContainer
 
 class IHomogeneousTypeContainer(IContainer):
 	"""
@@ -290,63 +242,34 @@ class IHomogeneousTypeContainer(IContainer):
 
 IHTC_NEW_FACTORY = 'nti.dataserver.interfaces.IHTCNewFactory'
 
-class INamedContainer(IContainer):
-	"""
-	A container with a name.
-	"""
-	container_name = interface.Attribute(
-		"""
-		The human-readable nome of this container.
-		""")
+# BWC exports
+from nti.dataserver.core.interfaces import IContained
+from nti.dataserver.core.interfaces import INamedContainer
+
+IContained = IContained
+INamedContainer = INamedContainer
 
 # BWC exports
-from nti.dublincore.interfaces import ICreatedTime
-from nti.dublincore.interfaces import ILastModified
-from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
+from nti.dataserver.core.interfaces import ICreatedTime
+from nti.dataserver.core.interfaces import ILastModified
 
-# prevent warning
 ICreatedTime = ICreatedTime
+ILastModified = ILastModified
+
+# BWC exports
+from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
 
-class ILastViewed(ILastModified):
-	"""
-	In addition to tracking modification and creation times, this
-	object tracks viewing (or access) times.
+# BWC exports
+from nti.dataserver.core.interfaces import ICreated
+from nti.dataserver.core.interfaces import ILastViewed
 
-	For security sensitive objects, this may be set automatically in
-	an audit-log type fashion. The most typical use, however, will be
-	to allow clients to track whether or not the item has been
-	displayed to the end user since its last modification; in that
-	case, the client will be responsible for updating the value seen
-	here explicitly (we can not assume that requesting an object for
-	externalization, for example, results in viewing).
+ICreated = ICreated
+ILastViewed = ILastViewed
 
-	In some cases it may be necessary to supplement this object with
-	additional information such as a counter to get the desired
-	behaviour.
-	"""
-	# There is no zope.dublincore analoge for this.
-	lastViewed = Number(title="The timestamp at which this object was last viewed.",
-						default=0.0)
-
-class ICreated(interface.Interface):
-	"""
-	Something created by an identified entity.
-	"""
-	creator = interface.Attribute("The creator of this object.")
-
-class IContained(IZContained):
-	"""
-	Something logically contained inside exactly one (named) :class:`IContainer`.
-	Most uses of this should now use :class:`zope.container.interfaces.IContained`.
-	(This class previously did not extend that interface; it does now.)
-	"""
-
-	# For BWC, these are not required
-	containerId = DecodingValidTextLine(title="The ID (name) of the container to which this object belongs. Should match the __parent__.__name__",
-										 required=False)
-	id = DecodingValidTextLine(title="The locally unique ID (name) of this object in the container it belongs. Should match the __name__",
-							   required=False)
+# BWC exports
+from nti.dataserver.core.interfaces import IContained
+IContained = IContained
 
 class IAnchoredRepresentation(IContained):
 	"""
