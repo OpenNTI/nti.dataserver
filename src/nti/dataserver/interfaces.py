@@ -572,7 +572,7 @@ class IShouldHaveTraversablePath(interface.Interface):
 	exclusively.
 	"""
 
-class IEntity(IZContained, IAnnotatable, IShouldHaveTraversablePath,
+class IEntity(IIdentity, IZContained, IAnnotatable, IShouldHaveTraversablePath,
 			  INeverStoredInSharedStream):
 	
 	username = DecodingValidTextLine(
