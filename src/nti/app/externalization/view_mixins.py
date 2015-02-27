@@ -77,7 +77,6 @@ class BatchingUtilsMixin(object):
 		invalid, raises an HTTP exception. If either is missing, returns
 		the defaults for both.
 		"""
-
 		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
 		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
 		if batch_size is not None and batch_start is not None:
@@ -110,7 +109,6 @@ class BatchingUtilsMixin(object):
 		if batch_start >= len(result_list):
 			# Batch raises IndexError in this case, avoid that
 			return []
-
 		result_list = Batch( result_list, batch_start, batch_size )
 		# Insert links to the next and previous batch
 		# NOTE: If our batch_start is not a multiple of the batch_size,
@@ -143,7 +141,7 @@ class BatchingUtilsMixin(object):
 
 				batch_params['batchStart'] = batch
 				query = sorted(batch_params.items()) # sort for reliable testing
-				link_next_href = self.request.current_route_path(_query=query) 
+				link_next_href = self.request.current_route_path(_query=query)
 				link_next = Link( link_next_href, rel=rel )
 				result.setdefault( 'Links', [] ).append( link_next )
 
@@ -178,7 +176,7 @@ class BatchingUtilsMixin(object):
 			to produce the final item in the batch.
 		:param ignore_invalid: Flag to ignore missing or broken objects.
 		"""
-		
+
 		def _trax(item):
 			try:
 				x = selector(item)
@@ -187,7 +185,7 @@ class BatchingUtilsMixin(object):
 			except (KeyError, POSError):
 				if not ignore_invalid:
 					raise
-				
+
 		if batch_size is _marker and batch_start is _marker:
 			batch_size, batch_start = self._get_batch_size_start()
 
@@ -215,6 +213,7 @@ class BatchingUtilsMixin(object):
 				if count > number_items_needed:
 					break
 
+		result['BatchPage'] = batch_start // batch_size + 1
 		result[ITEMS] = self.__batch_result_list(result, result_list,
 												 batch_start, batch_size,
 												 number_items_needed)
@@ -404,7 +403,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
 			client request.
 		"""
-		result = read_body_as_external_object( 	self.request, 
+		result = read_body_as_external_object( 	self.request,
 												input_data=value,
 												expected_type=self.inputClass )
 		try:
@@ -456,8 +455,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			return externalValue[CLASS] + 's'
 
 	def createContentObject( self, user, datatype, externalValue, creator ):
-		return create_modeled_content_object( self.dataserver, 
-											  user, 
+		return create_modeled_content_object( self.dataserver,
+											  user,
 											  datatype,
 											  externalValue,
 											  creator )
@@ -465,7 +464,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	def createAndCheckContentObject( self, owner, datatype, externalValue, creator, predicate=None ):
 		if predicate is None:
 			predicate = self.content_predicate
-		containedObject = self.createContentObject( owner, datatype, 
+		containedObject = self.createContentObject( owner, datatype,
 													externalValue, creator )
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
@@ -477,9 +476,9 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
-		containedObject = update_object_from_external_object( aq_base(contentObject), 
-															  externalValue, 
-															  notify=notify, 
+		containedObject = update_object_from_external_object( aq_base(contentObject),
+															  externalValue,
+															  notify=notify,
 															  request=self.request )
 
 		# If they provided an ID, use it if we can and we need to
@@ -503,7 +502,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			look for a user along our context's lineage; the user
 			will be used by default. It will be returned. If False,
 			the return will only be the contained object.
-			
+
 		:keyword dict externalValue: External value use to create the content object
 
 		"""
