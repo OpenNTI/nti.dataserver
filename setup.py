@@ -133,6 +133,7 @@ setup(
 	install_requires=[
 		'nti.common',
 		'nti.contentfragments',
+		'nti.contentindexing',
 		'nti.contentprocessing',
 		'nti.dublincore',
 		'nti.externalization',
