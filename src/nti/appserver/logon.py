@@ -65,6 +65,7 @@ from nti.dataserver import users
 from nti.dataserver import authorization as nauth
 
 from nti.appserver.interfaces import ILogonPong
+from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.link_providers import unique_link_providers
 
 from nti.appserver._util import logon_userid_with_request
@@ -1081,6 +1082,9 @@ def _openidcallback( context, request, success_dict ):
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
 def _user_did_logon( user, event ):
+	if not user.lastLoginTime:
+		# First time logon, notify the client
+		flag_link_provider.add_link( user, 'first_time_logon' )
 	user.update_last_login_time()
 
 
