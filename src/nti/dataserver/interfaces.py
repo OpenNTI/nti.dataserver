@@ -563,14 +563,9 @@ class DefaultCreatedUsername(object):
 		except (AttributeError,TypeError):
 			return None
 
-class IShouldHaveTraversablePath(interface.Interface):
-	"""
-	A marker interface for things that should have a resource
-	path that can be traversed. This is a temporary measure (everything
-	*should* eventually have a resource path) and a non-disruptive
-	way to start requiring ILink externalization to use resource paths
-	exclusively.
-	"""
+# BWC exports
+from nti.dataserver.core.interfaces import IShouldHaveTraversablePath
+IShouldHaveTraversablePath = IShouldHaveTraversablePath
 
 class IEntity(IIdentity, IZContained, IAnnotatable, IShouldHaveTraversablePath,
 			  INeverStoredInSharedStream):
