@@ -436,6 +436,7 @@ setup(
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
 			'jsonschema', 
+            'mistune',
 			'ipython',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip',
