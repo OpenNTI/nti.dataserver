@@ -17,10 +17,11 @@ from zope import interface
 
 from zope.annotation import interfaces as an_interfaces
 
-import zope.schema.interfaces
 from zope.schema.fieldproperty import FieldProperty
 
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.core.schema import BodyFieldProperty
 
 from nti.externalization.internalization import update_from_external_object
 
@@ -30,25 +31,9 @@ from .base import _make_getitem
 from .highlight import Highlight
 from .threadable import ThreadableMixin
 
-class BodyFieldProperty(FieldProperty):
-	# This currently exists for legacy support (test cases)
-
-	def __init__( self, field, name=None ):
-		super(BodyFieldProperty,self).__init__( field, name=name )
-		self._field = field
-
-	def __set__( self, inst, value ):
-		if value and isinstance( value, list ):
-			value = tuple(value)
-		try:
-			super(BodyFieldProperty,self).__set__( inst, value )
-		except zope.schema.interfaces.ValidationError:
-			# Hmm. try to adapt
-			value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
-			super(BodyFieldProperty, self).__set__( inst, tuple( (self._field.value_type.fromObject(x) for x in value ) ) )
-
-		# Ownership (containment) and censoring are already taken care of by the
-		# event listeners on IBeforeSequenceAssignedEvent
+# Ownership (containment) and censoring are already taken care of by the
+# event listeners on IBeforeSequenceAssignedEvent
+BodyFieldProperty = BodyFieldProperty # BWC alias
 
 _style_field = nti_interfaces.INote['style'].bind(None)
 _style_field.default = 'suppressed'
@@ -60,7 +45,7 @@ _style_field.default = 'suppressed'
 					   nti_interfaces.IRatable,
 					   # provides annotations
 					   an_interfaces.IAttributeAnnotatable )
-class Note(ThreadableMixin,Highlight):
+class Note(ThreadableMixin, Highlight):
 	"""
 	Implementation of a note.
 	"""
@@ -126,7 +111,6 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 	__external_resolvers__ = { 'body': _resolve_external_body }
 
-
 	def toExternalObject( self, mergeFrom=None, **kwargs ):
 		ext = super(NoteInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
 		if ext['body'] in ( Note.body, [''], None ): # don't write out the base state, it confuses updating and isn't valid
@@ -163,4 +147,3 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 				val = getattr( note.inReplyTo, copy, getattr( note, copy, None ) )
 				if val is not None:
 					setattr( note, copy, val )
-

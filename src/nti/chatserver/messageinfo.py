@@ -15,9 +15,9 @@ import datetime
 
 from zope import interface
 from zope import component
+
 from zope.deprecation import deprecate
-from zope.schema import interfaces as sch_interfaces
-from zope.schema.fieldproperty import FieldProperty
+
 from zope.dublincore import interfaces as dc_interfaces
 
 from persistent import Persistent
@@ -28,8 +28,11 @@ from nti.common.property import alias, read_alias
 
 from nti.dataserver import sharing
 from nti.dataserver.users import entity
+
 from nti.dataserver.contenttypes import threadable
 from nti.dataserver.contenttypes.base import _make_getitem
+
+from nti.dataserver.core.schema import MessageInfoBodyFieldProperty
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.externalization import to_external_object
@@ -43,30 +46,7 @@ from .interfaces import IMessageInfo
 from .interfaces import STATUS_INITIAL
 from .interfaces import CHANNEL_DEFAULT
 
-class _BodyFieldProperty(FieldProperty):
-	# This currently exists for legacy support (test cases)
-
-	def __init__( self, field, name=None ):
-		super(_BodyFieldProperty,self).__init__( field, name=name )
-		self._field = field
-
-	def __set__( self, inst, value ):
-		# Turn bytes into text
-		if isinstance( value, str ):
-			value = value.decode( 'utf-8' )
-		# Wrap single strings automatically
-		if isinstance( value, unicode ):
-			value = (value,)
-		# Make immutable
-		if value and isinstance( value, list ):
-			value = tuple(value)
-		try:
-			super(_BodyFieldProperty,self).__set__( inst, value )
-		except sch_interfaces.ValidationError:
-			# Hmm. try to adapt
-			# value = [x.decode('utf-8') if isinstance(x, str) else x for x in value] # allow ascii strings for old app tests
-			value = self._field.fromObject( value )
-			super(_BodyFieldProperty, self).__set__( inst, value )
+_BodyFieldProperty = MessageInfoBodyFieldProperty
 
 # TODO: MessageInfo is a mess. Unify better with IContent
 # and the other content types.
