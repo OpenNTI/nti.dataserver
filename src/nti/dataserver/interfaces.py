@@ -39,7 +39,6 @@ from contentratings.interfaces import IUserRatable
 from nti.common.property import alias
 
 from nti.contentfragments.schema import PlainText
-from nti.contentfragments.schema import PlainTextLine
 from nti.contentfragments.schema import SanitizedHTMLContentFragment
 
 from nti.contentrange import interfaces as rng_interfaces
@@ -382,28 +381,16 @@ class TargetedStreamChangeEvent(ObjectEvent):
 		ObjectEvent.__init__(self, change)
 		self.entity = target
 
-class INeverStoredInSharedStream(interface.Interface):
-	"""
-	A marker interface used when distributing changes to show that this
-	object should not be stored in shared streams.
-	"""
+# BWC exports
+from nti.dataserver.core.interfaces import IMutedInStream
+from nti.dataserver.core.interfaces import INeverStoredInSharedStream
+from nti.dataserver.core.interfaces import INotModifiedInStreamWhenContainerModified
 
-class IMutedInStream(interface.Interface):
-	"""
-	A marker interface used when distributed changes to keep this
-	object out of the local stream cache.
-	"""
+IMutedInStream = IMutedInStream
+INeverStoredInSharedStream = INeverStoredInSharedStream
+INotModifiedInStreamWhenContainerModified = INotModifiedInStreamWhenContainerModified
 
-class INotModifiedInStreamWhenContainerModified(interface.Interface):
-	"""
-	When applied to :class:`IContainer` instances, this is a marker
-	interface that says when a :class:`IContainerModifiedEvent` is fired,
-	as is done when children are added or removed from the container,
-	the stream is not updated. This prevents spurious changing of
-	shared/created events into (newer) modified events.
-	"""
-
-# ## Groups/Roles/ACLs
+### Groups/Roles/ACLs
 
 # some aliases
 
@@ -969,18 +956,7 @@ class IContent(ILastModified, ICreated):
 	It's All Content.
 	"""
 
-def Title():
-	"""
-	Return a :class:`zope.schema.interfaces.IField` representing
-	the standard title of some object. This should be stored in the `title`
-	field.
-	"""
-	return PlainTextLine(
-					# min_length=5,
-					max_length=140,  # twitter
-					required=False,
-					title="The human-readable title of this object",
-					__name__='title')
+from nti.contentfragments.schema import Title
 
 def CompoundModeledContentBody():
 	"""
@@ -1020,16 +996,7 @@ class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 
 	description = PlainText(title="The human-readable description of this object.")
 
-class Tag(PlainTextLine):
-	"""
-	Requires its content to be only one plain text word that is lowercased.
-	"""
-
-	def fromUnicode(self, value):
-		return super(Tag, self).fromUnicode(value.lower())
-
-	def constraint(self, value):
-		return super(Tag, self).constraint(value) and ' ' not in value
+from nti.contentfragments.schema import Tag
 
 class IUserTaggedContent(interface.Interface):
 	"""
