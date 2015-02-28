@@ -487,7 +487,6 @@ class IGroupMember(interface.Interface):
 
 	See :func:`nti.dataserver.authentication.effective_principals` for
 	details on how groups and memberships are used to determine permissions.
-
 	"""
 
 	groups = Iterable(title=u'Iterate across the IGroups belonged to.')
@@ -880,7 +879,7 @@ class IStudent(IUser):
 	A marker interface to denote a student
 	"""
 
-# ## ACLs
+### ACLs
 
 class IACE(interface.Interface):
 	"""
@@ -949,14 +948,14 @@ class IPublishable(interface.Interface):
 	def unpublish():
 		"Cause this object to no longer provide :class:`IDefaultPublished`"
 
-# ## Content
+### Content
 
-class IContent(ILastModified, ICreated):
-	"""
-	It's All Content.
-	"""
+# BWC exports
+from nti.contentfragments.schema import ITitled
 
-from nti.contentfragments.schema import Title
+# BWC exports
+from nti.dataserver.core.interfaces import IContent
+IContent = IContent
 
 def CompoundModeledContentBody():
 	"""
@@ -978,12 +977,11 @@ def CompoundModeledContentBody():
 								  required=False,
 								  __name__='body')
 
-class ITitledContent(interface.Interface):
+class ITitledContent(ITitled):
 	"""
 	A piece of content with a title, either human created or potentially
 	automatically generated. (This differs from, say, a person's honorrific title.)
 	"""
-	title = Title()  # TODO: Use zope.dublincore.IDCDecscriptiveProperties?
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
@@ -1009,24 +1007,11 @@ class IUserTaggedContent(interface.Interface):
 							unique=True,
 							default=())
 
-from nti.mimetype import interfaces as ds_mime_interfaces
+# BWC exports
+from nti.dataserver.core.interfaces import IModeledContent
+from nti.dataserver.core.interfaces import IEnclosedContent
 
-class IModeledContent(IContent, IContained, ds_mime_interfaces.IContentTypeMarker):
-	"""
-	Content accessible as objects.
-	Interfaces that extend this MUST directly provide IContentTypeAware.
-	"""
-
-class IEnclosedContent(IContent, IContained, IContentTypeAware, IShouldHaveTraversablePath):
-	"""
-	Content accessible logically within another object.
-	This typically serves as a wrapper around another object, whether
-	modeled content or unmodeled content. In the case of modeled content,
-	its `__parent__` should be this object, and the `creator` should be the same
-	as this object's creator.
-	"""
-	name = interface.Attribute("The human-readable name of this content.")
-	data = interface.Attribute("The actual enclosed content.")
+IEnclosedContent = IEnclosedContent
 
 class ISimpleEnclosureContainer(interface.Interface):
 
@@ -1056,138 +1041,23 @@ class ISimpleEnclosureContainer(interface.Interface):
  			within this object.
  		"""
 
-# ## Particular content types
+### Particular content types
 
-class IThreadable(interface.Interface):
-	"""
-	Something which can be used in an email-like threaded fashion.
+# BWC exports
+from nti.dataserver.core.interfaces import IThreadable
+from nti.dataserver.core.interfaces import IWeakThreadable
+from nti.dataserver.core.interfaces import IInspectableWeakThreadable
 
-	.. note:: All the objects should be IThreadable, but it is not possible
-		to put that in a constraint without having infinite recursion
-		problems.
-	"""
+IWeakThreadable = IWeakThreadable
+IInspectableWeakThreadable = IInspectableWeakThreadable
 
-	inReplyTo = Object( interface.Interface,
-						title="""The object to which this object is directly a reply.""",
-						required=False)
-	references = ListOrTuple( title="""A sequence of objects this object transiently references, in order up to the root""",
-							  value_type=Object(interface.Interface, title="A reference"),
-							  default=())
+# BWC exports
+from nti.dataserver.core.interfaces import IReadableShared
+from nti.dataserver.core.interfaces import IWritableShared
+from nti.dataserver.core.interfaces import IInspectableWeakThreadable
 
-	replies = UniqueIterable( title="All the direct replies of this object",
-							  description="This property will be automatically maintained.",
-							  value_type=Object(interface.Interface, title="A reply") )
-	replies.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
-	referents = UniqueIterable( title="All the direct and indirect replies to this object",
-								description="This property will be automatically maintained.",
-								value_type=Object(interface.Interface, title="A in/direct reply") )
-	referents.setTaggedValue( '_ext_excluded_out', True ) # Internal use only
-
-class IWeakThreadable(IThreadable):
-	"""
-	Just like :class:`IThreadable`, except with the expectation that
-	the items in the reply chain are only weakly referenced and that
-	they are automatically cleaned up (after some time) when deleted. Thus,
-	it is not necessarily clear when a ``None`` value for ``inReplyTo``
-	means the item has never had a reply, or the reply has been deleted.
-	"""
-
-class IInspectableWeakThreadable(IWeakThreadable):
-	"""
-	A weakly threaded object that provides information about its
-	historical participation in a thread.
-	"""
-
-	def isOrWasChildInThread():
-		"""
-		Return a boolean object indicating if this object is or was
-		ever part of a thread chain. If this returns a true value, it
-		implies that at some point ``inRelpyTo`` was non-None.
-		"""
-
-class IReadableShared(interface.Interface):
-	"""
-	Something that can be shared with others (made visible to
-	others than its creator. This interface exposes the read side of sharing.
-	"""
-
-	def isSharedWith(principal):
-		"""
-		Is this object directly or indirectly shared with the given principal?
-		"""
-
-	def isSharedDirectlyWith(principal):
-		"Is this object directly shared with the given target?"
-
-	def isSharedIndirectlyWith(principal):
-		"Is this object indirectly shared with the given target?"
-
-	sharingTargets = UniqueIterable(
-		title="A set of entities this object is directly shared with (non-recursive, non-flattened)",
-		value_type=Object(IEntity, title="An entity shared with"),
-		required=False,
-		default=(),
-		readonly=True)
-
-	flattenedSharingTargets = UniqueIterable(
-		title="A set of entities this object is directly or indirectly shared with (recursive, flattened)",
-		value_type=Object(IEntity, title="An entity shared with"),
-		required=False,
-		default=(),
-		readonly=True)
-
-	# TODO: How to deprecate this property?
-# 	@deprecate("These names are not properly global")
-	flattenedSharingTargetNames = UniqueIterable(
-		title="The usernames of all the users (including communities, etc) this obj is shared with.",
-		description=" This is a convenience property for reporting the usernames of all "
-			" entities this object is shared with, directly or indirectly. Note that the usernames reported "
-			" here are not necessarily globally unique and may not be resolvable as such.",
-		value_type=DecodingValidTextLine(title="The username"),
-		required=False,
-		default=frozenset(),
-		readonly=True)
-
-# 	@deprecate("Use the attribute") # The deprecation screws up validation because it adds parameters
-	def getFlattenedSharingTargetNames():
-		"""
-		This is a convenience method for reporting the usernames of all
-		entities this object is shared with. Note that the usernames reported
-		here are not necessarily globally unique and may not be resolvable as such.
-
-		This method is deprecated in favor of the property.
-
-		:return: Set of usernames this object is shared with.
-		"""
-
-class IWritableShared(IReadableShared):
-	"""
-	The writable part of sharing. All mutations are expected to go through
-	this interface, not by adjusting the properties directly.
-	"""
-
-	def addSharingTarget(target):
-		"""
-		Allow `target` to see this object. This does not actually make that so,
-		simply records the fact that the target should be able to see this
-		object.
-
-		:param target: Iterable of usernames/users, or a single username/user.
-		"""
-
-	def clearSharingTargets():
-		"""
-		Mark this object as being shared with no one (visible only to the creator).
-		Does not actually change any visibilities. Causes `flattenedSharingTargetNames`
-		to be empty.
-		"""
-
-	def updateSharingTargets(replacement_targets):
-		"""
-		Mark this object as being shared with exactly the entities provided in ``replacement_targets``.
-		Does not actually change any visibilities. Causes `sharingTargets` and `flattenedSharingTargets`
-		to reflect these changes.
-		"""
+IReadableShared = IReadableShared
+IWritableShared = IWritableShared
 
 class IObjectSharingModifiedEvent(IObjectModifiedEvent):
 	"""
@@ -1208,21 +1078,10 @@ class ObjectSharingModifiedEvent(ObjectModifiedEvent):
 		super(ObjectSharingModifiedEvent,self).__init__( object, *descriptions )
 		self.oldSharingTargets = kwargs.pop( 'oldSharingTargets', () )
 
-IShareable = IWritableShared  # bwc alias
+# BWC exports
+from nti.dataserver.core.interfaces import IShareableModeledContent
 
-class IShareableModeledContent(IShareable, IModeledContent):
-	"""
-	Modeled content that can be shared.
-	"""
-
-	# This is the name of the property we accept externally and update from. If
-	# its not defined in an interface, we can't associate an ObjectModifiedEvent
-	# with the correct interface. See nti.externalization.internalization.update_from_external_object
-	sharedWith = UniqueIterable(
-		title="The names of the entities we are shared directly with, taking externalization of local usernames into account",
-		value_type=DecodingValidTextLine(title="The username or NTIID"),
-		required=False,
-		default=frozenset())
+IShareable = IWritableShared # bwc alias
 
 class IFriendsList(IModeledContent, IEntity,
 				   INotModifiedInStreamWhenContainerModified):
@@ -1302,38 +1161,16 @@ class ITranscript(ITranscriptSummary):
 class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
-class ICanvas(IShareableModeledContent, IThreadable):
-	"""
-	A drawing or whiteboard that maintains a Z-ordered list of figures/shapes.
-	"""
+# BWC exports
+from nti.dataserver.core.interfaces import IMedia
+from nti.dataserver.core.interfaces import ICanvas
+from nti.dataserver.core.interfaces import IEmbeddedAudio
+from nti.dataserver.core.interfaces import IEmbeddedMedia
+from nti.dataserver.core.interfaces import IEmbeddedVideo
 
-	def __getitem__(i):
-		"""
-		Retrieve the figure/shape at index `i`.
-		"""
-	def append(shape):
-		"""
-		Adds the shape to the top of the list of shapes.
-		"""
-
-class IMedia(IShareableModeledContent, IThreadable):
-	"""
-	A media object
-	"""
-
-class IEmbeddedMedia(IMedia):
-	embedURL = ValidTextLine(title=u'media URL', required=True)
-	type = ValidTextLine(title=u'media type', required=False)
-
-class IEmbeddedVideo(IEmbeddedMedia):
-	"""
-	A video source object
-	"""
-
-class IEmbeddedAudio(IEmbeddedMedia):
-	"""
-	A video source object
-	"""
+IEmbeddedAudio = IEmbeddedAudio
+IEmbeddedMedia = IEmbeddedMedia
+IEmbeddedVideo = IEmbeddedVideo
 
 class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation,
 					 IUserTaggedContent):
@@ -1386,7 +1223,7 @@ class IHighlight(IPresentationPropertyHolder,
 		values=('plain', 'suppressed'),
 		default="plain")
 
-from nti.contentfragments import schema as frg_schema
+from nti.contentfragments.schema import TextUnicodeContentFragment
 
 class IRedaction(ISelectedRange):
 	"""
@@ -1395,7 +1232,7 @@ class IRedaction(ISelectedRange):
 	and/or on (out-of-line) :attr:`redactionExplanation`.
 	"""
 
-	replacementContent = frg_schema.TextUnicodeContentFragment(
+	replacementContent = TextUnicodeContentFragment(
 		title="""The replacement content.""",
 		description="Content to render in place of the redacted content.\
 			This may be fully styled (e.g,\
@@ -1404,7 +1241,7 @@ class IRedaction(ISelectedRange):
 		default="",
 		required=False)
 
-	redactionExplanation = frg_schema.TextUnicodeContentFragment(
+	redactionExplanation = TextUnicodeContentFragment(
 		title="""An explanation or summary of the redacted content.""",
 		description="Content to render out-of-line of the original content, explaining \
 			the reason for the redaction and/or summarizing the redacted material in more \
