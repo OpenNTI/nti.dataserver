@@ -977,11 +977,10 @@ def CompoundModeledContentBody():
 								  required=False,
 								  __name__='body')
 
-class ITitledContent(ITitled):
-	"""
-	A piece of content with a title, either human created or potentially
-	automatically generated. (This differs from, say, a person's honorrific title.)
-	"""
+
+# A piece of content with a title, either human created or potentially
+# automatically generated. (This differs from, say, a person's honorrific title.)
+ITitledContent = ITitled # BWC
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
