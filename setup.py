@@ -435,6 +435,7 @@ setup(
 			 #'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
+			'jsonschema', 
 			'ipython',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip',
