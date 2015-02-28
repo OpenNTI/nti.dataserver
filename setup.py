@@ -135,6 +135,7 @@ setup(
 		'nti.contentindexing',
 		'nti.contentprocessing',
 		'nti.dataserver.core',
+		'nti.dataserver.fragments',
 		'nti.dublincore',
 		'nti.externalization',
 		'nti.geventwebsocket',
