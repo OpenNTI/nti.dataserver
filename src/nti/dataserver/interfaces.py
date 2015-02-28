@@ -951,36 +951,14 @@ class IPublishable(interface.Interface):
 ### Content
 
 # BWC exports
-from nti.contentfragments.schema import ITitled
+from nti.dataserver.fragments.interfaces import ITitledContent
+from nti.dataserver.fragments.schema import CompoundModeledContentBody
+
+ITitledContent = ITitledContent
 
 # BWC exports
 from nti.dataserver.core.interfaces import IContent
 IContent = IContent
-
-def CompoundModeledContentBody():
-	"""
-	Returns a :class:`zope.schema.interfaces.IField` representing
-	the way that a compound body of user-generated content is modeled.
-	"""
-
-	return ListOrTupleFromObject(title="The body of this object",
-								  description="""An ordered sequence of body parts (:class:`nti.contentfragments.interfaces.IUnicodeContentFragment` or some kinds
-									of :class:`.IModeledContent` such as :class:`.ICanvas`.)
-									""",
-								  value_type=Variant((SanitizedHTMLContentFragment(min_length=1, description="HTML content that is sanitized and non-empty"),
-													   PlainText(min_length=1, description="Plain text that is sanitized and non-empty"),
-													   Object(ICanvas, description="A :class:`.ICanvas`"),
-													   Object(IMedia, description="A :class:`.IMedia`")),
-													 title="A body part of a note",
-													 __name__='body'),
-								  min_length=1,
-								  required=False,
-								  __name__='body')
-
-
-# A piece of content with a title, either human created or potentially
-# automatically generated. (This differs from, say, a person's honorrific title.)
-ITitledContent = ITitled # BWC
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
@@ -993,18 +971,9 @@ class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 
 	description = PlainText(title="The human-readable description of this object.")
 
-from nti.contentfragments.schema import Tag
-
-class IUserTaggedContent(interface.Interface):
-	"""
-	Something that can contain tags.
-	"""
-
-	tags = TupleFromObject(title="Tags applied by the user.",
-							value_type=Tag(min_length=1, title="A single tag",
-										   description=Tag.__doc__, __name__='tags'),
-							unique=True,
-							default=())
+# BWC exports
+from nti.dataserver.fragments.interfaces import ITaggedContent
+IUserTaggedContent = ITaggedContent
 
 # BWC exports
 from nti.dataserver.core.interfaces import IModeledContent
