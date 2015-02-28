@@ -112,8 +112,7 @@ setup(
 		"Internet :: WWW/HTTP",
 		"Natural Language :: English",
 		"Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
-		],
-
+	],
 	# Support unit tests of package
 	tests_require=TESTS_REQUIRE,  # Needed for e.g., tox
 	setup_requires=[
@@ -420,7 +419,7 @@ setup(
 		 # pandas,
 		 # scikit-learn,
 		 # rpy2, -- Requires R installed.
-		],
+	],
 	extras_require={
 		'test': TESTS_REQUIRE,
 		'tools': [
@@ -436,7 +435,7 @@ setup(
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
 			'jsonschema', 
-            'mistune',
+			'mistune',
 			'ipython',  # the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip',
@@ -468,7 +467,7 @@ setup(
 			 # Managing translations
 			'Babel >= 1.3',
 			'lingua',
-			]
+		]
 	},
 	dependency_links=[
 		'git+https://github.com/NextThought/nti.nose_traceback_info.git#egg=nti.nose_traceback_info',
@@ -485,4 +484,3 @@ setup(
 	entry_points=entry_points,
 	test_suite='nose2.compat.unittest.collector'
 )
-
