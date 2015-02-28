@@ -142,6 +142,7 @@ setup(
 		'nti.mimetype',
 		'nti.ntiids',
 		'nti.plasTeX',
+		'nti.traversal',
 		'nti.schema',
 		'nti.utils',
 		'nti.zodb',
