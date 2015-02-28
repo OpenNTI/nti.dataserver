@@ -243,10 +243,7 @@ class IHomogeneousTypeContainer(IContainer):
 IHTC_NEW_FACTORY = 'nti.dataserver.interfaces.IHTCNewFactory'
 
 # BWC exports
-from nti.dataserver.core.interfaces import IContained
 from nti.dataserver.core.interfaces import INamedContainer
-
-IContained = IContained
 INamedContainer = INamedContainer
 
 # BWC exports
