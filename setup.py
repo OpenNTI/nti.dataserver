@@ -139,6 +139,7 @@ setup(
 		'nti.dublincore',
 		'nti.externalization',
 		'nti.geventwebsocket',
+		'nti.links',
 		'nti.mimetype',
 		'nti.ntiids',
 		'nti.plasTeX',
