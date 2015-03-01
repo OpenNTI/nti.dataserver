@@ -9,7 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from pkg_resources import resource_exists, resource_filename
+resource_exists = __import__('pkg_resources').resource_exists
+resource_filename = __import__('pkg_resources').resource_filename
 
 def javascript_path( js_name ):
 	"""
@@ -127,5 +128,5 @@ def run_phantom_on_page( htmlFile, scriptName, args=(), key=_none_key, expect_no
 
 	return (key, result)
 
-from nti.utils.futures import ConcurrentExecutor
+from nti.futures.futures import ConcurrentExecutor
 ConcurrentExecutor = ConcurrentExecutor # BWC re-export
