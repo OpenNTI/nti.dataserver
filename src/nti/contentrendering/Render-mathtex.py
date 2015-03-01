@@ -1,12 +1,17 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 
 from __future__ import print_function, unicode_literals
+__docformat__ = "restructuredtext en"
 
 import urllib
 import BaseHTTPServer
 
-from mathtex.mathtex_main import Mathtex
 from mathtex.fonts import UnicodeFonts
+from mathtex.mathtex_main import Mathtex
 
 the_unicode = UnicodeFonts( rm='Symbola', default='Symbola' )
 

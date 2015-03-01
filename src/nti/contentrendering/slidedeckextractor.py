@@ -17,10 +17,10 @@ from collections import defaultdict
 
 from zope import interface
 
-from nti.contentrendering.utils import EmptyMockDocument
-from nti.contentrendering.utils import NoConcurrentPhantomRenderedBook
+from .utils import EmptyMockDocument
+from .utils import NoConcurrentPhantomRenderedBook
 
-from nti.contentrendering.interfaces import ISlideDeckExtractor
+from .interfaces import ISlideDeckExtractor
 interface.moduleProvides(ISlideDeckExtractor)
 
 def get_attribute(node, name):
