@@ -4,15 +4,17 @@
 Adapters and utilities used for traversing objects used during the
 content rendering process.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope.traversing import adapters
 from zope.location.interfaces import LocationError
+
+from zope.traversing import adapters
 
 class PlastexTraverser(adapters.DefaultTraversable):
 	"""

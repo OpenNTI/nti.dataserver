@@ -22,7 +22,7 @@ from zope.deprecation import deprecate
 from plasTeX.ConfigManager import NoOptionError
 from plasTeX.ConfigManager import NoSectionError
 
-from nti.deprecated import hiding_warnings
+from nti.common.deprecated import hiding_warnings
 
 from nti.ntiids import ntiids
 

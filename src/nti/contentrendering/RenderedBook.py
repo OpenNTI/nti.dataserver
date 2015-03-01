@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import
@@ -11,13 +11,17 @@ import os
 import codecs
 import urllib
 import html5lib
-from pyquery import PyQuery
 from xml.dom.minidom import parse
+
+from pyquery import PyQuery
+
 from html5lib import treewalkers, treebuilders
 
 from zope import interface
-from BTrees.OOBTree import OOBTree
+
 from zope.deprecation import deprecate
+
+from BTrees.OOBTree import OOBTree
 
 from nti.common.minidom import minidom_writexml
 

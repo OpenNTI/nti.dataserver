@@ -13,6 +13,8 @@ import glob
 import string
 import datetime
 
+import isodate
+
 resource_filename = __import__('pkg_resources').resource_filename
 
 from plasTeX import Base
@@ -22,8 +24,9 @@ from plasTeX.Logging import getLogger
 
 logger = getLogger(__name__)
 
-import isodate
 from zope.configuration import xmlconfig
+
+from nti.common import setupChameleonCache
 
 from nti.ntiids.ntiids import escape_provider
 
@@ -31,8 +34,6 @@ import nti.contentrendering
 from nti.contentrendering.plastexids import patch_all
 from nti.contentrendering.interfaces import JobComponents
 from nti.contentrendering.transforms import performTransforms
-
-from nti.utils import setupChameleonCache
 
 out_format_to_render_name = {'xhtml': 'XHTML', 'text': 'Text'}
 	
