@@ -21,8 +21,10 @@ from lxml import etree
 import nti.contentrendering
 from nti.contentfragments import interfaces as frg_interfaces
 
+etree_tostring = getattr(etree, 'tostring')
+
 def _text_of( p ):
-	return etree.tostring( p, encoding=unicode, method='text' )
+	return etree_tostring( p, encoding=unicode, method='text' )
 
 class _ElementPlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
 	children = ()

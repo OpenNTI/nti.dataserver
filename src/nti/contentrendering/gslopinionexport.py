@@ -24,8 +24,10 @@ except ImportError:
 import nti.contentrendering
 from nti.contentfragments import interfaces as frg_interfaces
 
+etree_tostring = getattr(etree, 'tostring')
+
 def _text_of( p ):
-	return etree.tostring( p, encoding=unicode, method='text' )
+	return etree_tostring( p, encoding=unicode, method='text' )
 
 class _TreePlainTextContentFragment(frg_interfaces.PlainTextContentFragment):
 	__slots__ = frg_interfaces.PlainTextContentFragment.__slots__ + ('children','__parent__')
@@ -45,7 +47,6 @@ class _ElementPlainTextContentFragment(_TreePlainTextContentFragment):
 		if element is not None:
 			self.element = element
 
-
 class _Container(frg_interfaces.LatexContentFragment):
 	__slots__ = frg_interfaces.LatexContentFragment.__slots__ + ('children','__parent__')
 	children = ()
@@ -56,7 +57,6 @@ class _Container(frg_interfaces.LatexContentFragment):
 			self.children = []
 		self.children.append( child )
 		child.__parent__ = self
-
 
 class _WrappedElement(_Container):
 	wrapper = None

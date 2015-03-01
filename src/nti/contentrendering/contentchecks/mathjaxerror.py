@@ -15,12 +15,14 @@ from zope import interface
 from .. import interfaces
 interface.moduleProvides(interfaces.IRenderedBookValidator)
 
+etree_tostring = getattr(etree, 'tostring')
+
 def check(book):
 
 	def _report_errors( errors, page, text='xml' ):
 		all_errors = len(errors)
 		if all_errors:
-			errors = set([etree.tostring(error,method=text) for error in errors])
+			errors = set([etree_tostring(error, method=text) for error in errors])
 			logger.warn( "Mathjax errors for page %s: %s", page.filename, errors )
 		return all_errors
 
