@@ -43,6 +43,8 @@ from ZODB.loglevels import TRACE
 from pyramid.threadlocal import get_current_request
 from pyramid.path import package_of
 
+from nti.app.users.utils import generate_verification_email_url
+
 from nti.appserver import interfaces as app_interfaces
 from nti.mailer.interfaces import ITemplatedMailer
 
@@ -561,8 +563,10 @@ class AbstractSitePolicyEventListener(object):
 
 		user_ext = to_external_object(user)
 		informal_username = user_ext.get('NonI18NFirstName', profile.realname) or user.username
+		email_verification_href, _ = generate_verification_email_url(user, request=event.request)
 
 		args = {'user': user,
+				'href' : email_verification_href,
 				'profile': profile,
 				'email': email,
 				'informal_username': informal_username,
@@ -842,7 +846,7 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 			try:
 				user_interfaces.checkEmailAddress(user.username)
 			except user_interfaces.EmailAddressInvalid:
-				# If the username is not a valid email address,
+				# If the username is not a valid email addres2
 				# nothing further is required.
 				pass
 			else:

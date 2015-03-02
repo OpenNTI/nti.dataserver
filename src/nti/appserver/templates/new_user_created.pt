@@ -71,6 +71,12 @@
 		</p>
 
 		<p>
+			Please verify your email address. Doing so will
+			enable you to receive email notifications for your account.
+			Verify your email address with this <a tal:attributes="href options/href">link</a>.
+		</p>
+
+		<p>
 			<span i18n:translate="">Sincerely,</span><br />
 			NextThought
 		</p>
