@@ -1,2 +1,0 @@
-name: -url email path
-<a rel="external" tal:attributes="href self" tal:content="self">url text</a>

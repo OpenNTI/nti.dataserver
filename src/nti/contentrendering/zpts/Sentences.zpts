@@ -1,6 +1,0 @@
-name: emph em alert
-<em tal:content="self">emphasized text</em>
-
-name: active::&
-&
-

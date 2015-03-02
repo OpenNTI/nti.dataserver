@@ -1,3 +1,0 @@
-\[
-2\underset{\;\text{\raisebox{0.2in}{\includegraphics{../Images/decimals_arrow.pdf}}}}{.59} \quad\rightarrow\quad 259.
-\]

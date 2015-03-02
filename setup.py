@@ -5,10 +5,6 @@ entry_points = {
 	'console_scripts': [
 		# library
 		"nti_sync_all_libraries = nti.app.contentlibrary.utils.synchronizer:main",
-		# rendering
-		"nti_render = nti.contentrendering.nti_render:main",
-		"nti_create_book_archive = nti.contentrendering.archive:main",
-		"nti_content_indexer = nti.contentrendering.content_indexer:main",
 		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
@@ -30,9 +26,6 @@ entry_points = {
 		"nti_sharing_listener = nti.appserver.application:sharing_listener_main",
 		"nti_index_listener = nti.appserver.application:index_listener_main",
 		"nti_s3put = nti.contentlibrary.nti_s3put:main",
-		"nti_gslopinionexport = nti.contentrendering.gslopinionexport:main",
-		"nti_jsonpbuilder = nti.contentrendering.jsonpbuilder:main",
-		"nti_default_root_sharing_setter = nti.contentrendering.default_root_sharing_setter:main",
 		# NOTE: The command line tools are deprecated. Leave the setup.py entry points
 		# pointing to this package to get the deprecation notice
 		'nti_bounced_email_batch = nti.appserver.bounced_email_workflow:process_sqs_messages',
@@ -134,6 +127,7 @@ setup(
 		'nti.contentfragments',
 		'nti.contentindexing',
 		'nti.contentprocessing',
+		'nti.contentrendering',
 		'nti.dataserver.core',
 		'nti.dataserver.fragments',
 		'nti.dublincore',
