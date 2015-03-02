@@ -1132,6 +1132,8 @@ from nti.dataserver.core.interfaces import IEmbeddedAudio
 from nti.dataserver.core.interfaces import IEmbeddedMedia
 from nti.dataserver.core.interfaces import IEmbeddedVideo
 
+IMedia = IMedia
+ICanvas = ICanvas
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
