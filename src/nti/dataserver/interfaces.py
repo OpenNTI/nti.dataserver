@@ -85,6 +85,13 @@ class ACLProxy(ProxyBase):
 # pylint: disable=E0213,E0211
 
 # BWC exports
+from nti.coremetadata.interfaces import ICreatedTime
+from nti.coremetadata.interfaces import ILastModified
+
+ICreatedTime = ICreatedTime
+ILastModified = ILastModified
+
+# BWC exports
 from nti.dataserver.core.interfaces import IIdentity
 from nti.dataserver.core.interfaces import IDataserver
 
@@ -242,19 +249,12 @@ from nti.dataserver.core.interfaces import INamedContainer
 INamedContainer = INamedContainer
 
 # BWC exports
-from nti.dataserver.core.interfaces import ICreatedTime
-from nti.dataserver.core.interfaces import ILastModified
-
-ICreatedTime = ICreatedTime
-ILastModified = ILastModified
-
-# BWC exports
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 DCTimesLastModifiedMixin = DCTimesLastModifiedMixin
 
 # BWC exports
-from nti.dataserver.core.interfaces import ICreated
-from nti.dataserver.core.interfaces import ILastViewed
+from nti.coremetadata.interfaces import ICreated
+from nti.coremetadata.interfaces import ILastViewed
 
 ICreated = ICreated
 ILastViewed = ILastViewed

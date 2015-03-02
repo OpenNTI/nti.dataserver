@@ -128,6 +128,7 @@ setup(
 		'nti.contentindexing',
 		'nti.contentprocessing',
 		'nti.contentrendering',
+		'nti.coremetadata',
 		'nti.dataserver.core',
 		'nti.dataserver.fragments',
 		'nti.dublincore',
@@ -358,7 +359,7 @@ setup(
 		'zope.copypastemove[zcml]' if HAVE_ZCONT else '',  # zope.container dep
 		'zope.datetime',
 		'zope.deprecation',
-		'zope.deferredimport',	 # useful with zope.deprecation. Req'd by contentratings
+		'zope.deferredimport',
 		'zope.dottedname',
 		'zope.dublincore',
 		'zope.error',
