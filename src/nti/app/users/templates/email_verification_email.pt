@@ -24,9 +24,7 @@
 		</p>
 
 		<p>
-			To verify your email address, either click on the following link:
-			<a href="" attributes="href options/href" tal:content="options/href" /> or
-			enter your verification token, <span tal:content="options/token" />.
+			Verify your email address with this <a tal:attributes="href options/href">link</a>.
 		</p>
 
 		<p>
