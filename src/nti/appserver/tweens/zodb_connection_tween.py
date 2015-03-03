@@ -20,10 +20,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from cStringIO import StringIO
+import gc
 import os
 from pprint import pprint
-import gc
+from cStringIO import StringIO
 
 class zodb_connection_tween(object):
 	"""

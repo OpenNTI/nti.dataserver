@@ -26,6 +26,8 @@ from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zc.lockfile import LockFile, LockError
 
+from nti.common import make_cache_dir
+
 from nti.contentlibrary.boto_s3 import key_last_modified
 from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IS3ContentPackage
@@ -33,8 +35,6 @@ from nti.contentlibrary.interfaces import IFilesystemContentPackage
 
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.search_utils import register_content
-
-from nti.utils import make_cache_dir
 
 @component.adapter(IFilesystemContentPackage, IObjectCreatedEvent)
 def add_filesystem_index(package, event):

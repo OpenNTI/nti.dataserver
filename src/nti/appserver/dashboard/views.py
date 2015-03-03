@@ -43,7 +43,6 @@ from nti.assessment.interfaces import IQAssessmentItemContainer
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
@@ -52,6 +51,8 @@ from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.links.links import Link
 
 from nti.ntiids import ntiids
 

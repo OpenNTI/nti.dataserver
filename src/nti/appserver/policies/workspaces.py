@@ -17,11 +17,12 @@ from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from nti.appserver.policies.interfaces import ICommunitySitePolicyUserEventListener
 
-from nti.dataserver.links import Link
 from nti.dataserver.users.entity import Entity
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.externalization import externalization
+
+from nti.links.links import Link
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)

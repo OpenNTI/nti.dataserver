@@ -25,7 +25,7 @@ After this tween runs, the request has been modified in the following ways.
 * It has a method called ``nti_gevent_spawn`` for replacing :func:`gevent.spawn`
   while maintaining the current request.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -35,12 +35,16 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import platform
-import transaction
+
 import gevent
+
+import transaction
 
 from zope import interface
 from zope import component
+
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
+
 from zope.lifecycleevent import created
 
 from pyramid.threadlocal import manager
@@ -201,8 +205,10 @@ class site_tween(object):
 			except AssertionError:
 				logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
 
-from .interfaces import IMissingSitePolicy
 from nti.site.site import get_site_for_site_names
+
+from .interfaces import IMissingSitePolicy
+
 def _get_site_for_request( request, parent_site ):
 	"""
 	In the context of a request, looks up the named site for the request.
@@ -227,7 +233,6 @@ def _get_site_for_request( request, parent_site ):
 		# is invoked so we'd have to be careful.
 	return found_site
 
-
 def _DevmodeMissingSitePolicy(request, parent_site):
 	return parent_site
 interface.directlyProvides(_DevmodeMissingSitePolicy,IMissingSitePolicy)
@@ -246,6 +251,5 @@ def site_tween_factory(handler, registry):
 	# If we wanted to, we could be setting sites up as we traverse as well;
 	# traverse hooks are installed to do this
 	setHooks()
-
 
 	return site_tween( handler )

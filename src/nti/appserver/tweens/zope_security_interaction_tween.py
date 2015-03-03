@@ -38,8 +38,8 @@ from zope.security.interfaces import IParticipation
 
 from zope.security.management import newInteraction, endInteraction
 
-from nti.dataserver.interfaces import IDataserver
 from nti.dataserver import users
+from nti.dataserver.interfaces import IDataserver
 
 class _interaction_tween(object):
 

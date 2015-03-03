@@ -35,9 +35,10 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
-from nti.dataserver.links import Link
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
+
+from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 

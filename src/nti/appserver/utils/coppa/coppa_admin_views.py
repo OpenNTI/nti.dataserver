@@ -23,8 +23,8 @@ from z3c.table import table
 from z3c.table import column
 from z3c.table import batch
 
-import pyramid.httpexceptions  as hexc
 from pyramid.view import view_config
+from pyramid import httpexceptions  as hexc
 
 from nti.appserver import _table_utils
 from nti.appserver import MessageFactory as _

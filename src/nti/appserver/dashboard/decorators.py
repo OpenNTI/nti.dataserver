@@ -14,12 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope.container.interfaces import ILocation
 
-from nti.dataserver.links import Link
-
 from nti.app.renderers.caching import md5_etag
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.externalization import interfaces as ext_interfaces
+
+from nti.links.links import Link
 
 from nti.utils._compat import aq_base
 

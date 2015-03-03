@@ -18,7 +18,7 @@ from nti.contentsearch.interfaces import ISearchResults
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.dataserver.links import Link
+from nti.links.links import Link
 
 @component.adapter(ISearchResults)
 @interface.implementer(IExternalMappingDecorator)

@@ -37,13 +37,14 @@ from pyramid import httpexceptions as hexc
 
 import webob.datetime_utils
 
-from nti.dataserver.links import Link
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.links.links import Link
 
 from nti.mimetype import mimetype
 

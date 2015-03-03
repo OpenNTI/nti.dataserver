@@ -18,9 +18,14 @@ from zope.container.interfaces import ILocation
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
+
+from nti.app.publishing import VIEW_PUBLISH
+from nti.app.publishing import VIEW_UNPUBLISH
+
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
-from nti.dataserver.links import Link
+from nti.appserver._util import link_belongs_to_user
+from nti.appserver.pyramid_authorization import is_readable, can_create
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -36,10 +41,9 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.utils._compat import aq_base
+from nti.links.links import Link
 
-from nti.appserver._util import link_belongs_to_user
-from nti.appserver.pyramid_authorization import is_readable, can_create
+from nti.utils._compat import aq_base
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = StandardExternalFields.LINKS
@@ -50,9 +54,7 @@ _BLOG_NAME = PersonalBlog.__default_name__
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
 _BOARD_NAME = CommunityBoard.__default_name__
 
-from nti.app.publishing import VIEW_PUBLISH
 from . import VIEW_CONTENTS
-from nti.app.publishing import VIEW_UNPUBLISH
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IUser)

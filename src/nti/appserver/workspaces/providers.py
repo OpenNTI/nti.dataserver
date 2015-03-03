@@ -14,8 +14,9 @@ from zope import component
 from zope.location.location import Location
 from zope.location.interfaces import ILocation
 
-from nti.dataserver.links import Link
 from nti.dataserver.interfaces import IUser
+
+from nti.links.links import Link
 
 from .._util import link_belongs_to_user
 
