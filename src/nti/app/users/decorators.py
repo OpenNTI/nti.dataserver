@@ -17,12 +17,14 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 
-from nti.dataserver.links import Link
-from nti.dataserver.traversal import find_interface
 from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.links.links import Link
+
+from nti.traversal.traversal import find_interface
 
 from .import REQUEST_EMAIL_VERFICATION_VIEW
 from .import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW

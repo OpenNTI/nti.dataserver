@@ -83,10 +83,10 @@
 
 
 	<!-- Traversal to the forum objects -->
-	<adapter factory="nti.dataserver.traversal.DefaultAdapterTraversable"
+	<adapter factory="nti.traversal.traversal.DefaultAdapterTraversable"
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle pyramid.interfaces.IRequest" />
 
-	<adapter factory="nti.dataserver.traversal.DefaultAdapterTraversable"
+	<adapter factory="nti.traversal.traversal.DefaultAdapterTraversable"
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle" />
 
 	<adapter factory=".forum.ContentBoardAdapter"
@@ -98,7 +98,7 @@
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle"
 			 provides="zope.security.interfaces.IPrincipal" />
 			 
-	<!-- externalization -->
+	<!-- Externalization -->
 	<!-- Note that we want to use the externalization already present, we just need the
 	correct factories registered -->
 	<include package="nti.externalization" file="meta.zcml" />
