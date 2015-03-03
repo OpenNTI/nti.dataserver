@@ -139,7 +139,9 @@ class MockRoot(object):
 
 class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
+	@mock_dataserver.WithMockDSTrans
 	def test_root_ntiid(self):
+		
 		class MockUser(object):
 			interface.implements(nti_interfaces.IUser)
 			__name__ = 'user@place'
@@ -155,11 +157,14 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
 		# Expecting the pages collection at least
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 1 ) ) )
+		
 		# which in turn has one container
 		assert_that( uew.pages_collection.container, has_length( 1 ) )
 		root = uew.pages_collection.container[0]
 		ext_obj = toExternalObject( root )
+		
 		__traceback_info__ = ext_obj
+		
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
 

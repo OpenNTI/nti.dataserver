@@ -25,6 +25,9 @@ from nti.app.renderers import rest
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
+# make sure we use nti.dataserver.traversal to find the root site
+from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
+
 from nti.externalization.singleton import SingletonDecorator
 
 from nti.externalization.interfaces import IExternalObject
@@ -257,7 +260,7 @@ class ContentUnitInfoHrefDecorator(object):
 			# chatserver.IMeeting (which is IModeledContent and IPersistent)
 			# Our options are to either catch that here, or introduce an
 			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = nti_traversal.find_nearest_site( context )
+			nearest_site = ds_find_nearest_site( context )
 		except TypeError:
 			nearest_site = None
 
