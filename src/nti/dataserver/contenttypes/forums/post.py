@@ -23,7 +23,8 @@ from zope.schema.fieldproperty import FieldProperty
 from persistent import Persistent
 
 from nti.dataserver import sharing
-from nti.dataserver import datastructures
+
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
@@ -40,7 +41,7 @@ from . import interfaces as for_interfaces
 @interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
 class Post(
 		   Persistent,
-		   datastructures.ZContainedMixin,
+		   ZContainedMixin,
 		   CreatedModDateTrackingObject,
 		   sharing.AbstractReadableSharedWithMixin,
 		   Implicit):

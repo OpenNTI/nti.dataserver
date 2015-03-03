@@ -26,9 +26,10 @@ from zope.intid.interfaces import IIntIdAddedEvent
 from ZODB.interfaces import IConnection
 
 from nti.dataserver import sharing
-from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import containers as nti_containers
+
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
@@ -66,7 +67,7 @@ def query_object(uid, intids=None):
 class Forum(Implicit,
 			nti_containers.AcquireObjectsOnReadMixin,
 			nti_containers.CheckingLastModifiedBTreeContainer,
-			datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
+			ZContainedMixin,
 			sharing.AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False

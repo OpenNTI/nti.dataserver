@@ -15,7 +15,7 @@ from zope import interface
 
 from zope.container.interfaces import ILocation
 
-from nti.dublincore.interfaces import ILastModified
+from nti.coremetadata.interfaces import ILastModified
 
 class IIndexedDataContainer(ILocation, ILastModified):
 	"""

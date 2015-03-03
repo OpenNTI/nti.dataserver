@@ -128,7 +128,8 @@ from .bucket import AbstractBucket
 
 from zope.dublincore.interfaces import IDCTimes
 
-from nti.dublincore.interfaces import ILastModified
+from nti.coremetadata.interfaces import ILastModified
+
 from nti.dublincore.time_mixins import TimeProperty
 
 class _AbsolutePathMixin(object):

@@ -15,7 +15,8 @@ from zope import interface
 
 from nti.common.property import CachedProperty
 
-from nti.dublincore.interfaces import ILastModified
+from nti.coremetadata.interfaces import ILastModified
+
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
 from nti.schema.schema import EqHash
