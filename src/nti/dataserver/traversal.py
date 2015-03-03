@@ -9,6 +9,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nti.traversal import monkey as traversing_patch_on_import
+traversing_patch_on_import.patch()
+del traversing_patch_on_import
+
 from zope import component
 
 from nti.dataserver.core.interfaces import ILink
