@@ -24,7 +24,7 @@ def find_nearest_site(context):
 	"""
 	Find the nearest :class:`loc_interfaces.ISite` in the lineage of `context`.
 	:param context: The object whose lineage to search. If this object happens to be an
-		:class:`nti_interfaces.ILink`, then this attempts to take into account
+		:class:`ILink`, then this attempts to take into account
 		the target as well.
 	:return: The nearest site. Possibly the root site.
 	"""

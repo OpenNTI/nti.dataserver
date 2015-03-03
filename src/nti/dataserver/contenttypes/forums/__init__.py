@@ -51,9 +51,10 @@ from nti.ntiids.ntiids import DATE as _NTIID_DATE
 from nti.ntiids.ntiids import make_ntiid as _make_ntiid
 
 from nti.dataserver.interfaces import IPrincipal
-from nti.dataserver.traversal import find_interface
 
 from nti.externalization.oids import to_external_ntiid_oid
+
+from nti.traversal.traversal import find_interface
 
 from .interfaces import IUseOIDForNTIID
 

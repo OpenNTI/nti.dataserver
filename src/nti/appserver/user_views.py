@@ -17,7 +17,8 @@ import time
 from pyramid.view import view_config
 
 from nti.dataserver.users.users_external import _avatar_url
-from nti.dataserver.links_external import render_link
+
+from nti.links.externalization import render_link
 
 from .httpexceptions import HTTPFound
 

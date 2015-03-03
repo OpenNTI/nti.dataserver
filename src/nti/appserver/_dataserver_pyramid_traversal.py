@@ -13,7 +13,9 @@ __docformat__ = "restructuredtext en"
 
 from zope import component
 from zope import interface
+
 from zope.location import interfaces as loc_interfaces
+
 from zope.traversing import interfaces as trv_interfaces
 
 import pyramid.traversal
@@ -99,7 +101,6 @@ class _AbstractContainerResource(object):
 	@property
 	def user(self):
 		return pyramid.traversal.find_interface( self, nti_interfaces.IUser )
-
 
 @interface.implementer(interfaces.IContainerResource)
 class _ContainerResource(_AbstractContainerResource):
@@ -454,7 +455,7 @@ class LibraryTraversable(object):
 		except KeyError:
 			raise loc_interfaces.LocationError( key )
 
-from nti.dataserver.traversal import adapter_request # BWC export
+from nti.traversal.traversal import adapter_request # BWC export
 
 class _resource_adapter_request(adapter_request):
 	"""

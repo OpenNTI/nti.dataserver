@@ -36,12 +36,10 @@ from nti.app.testing.decorators import WithSharedApplicationMockDS
 
 from nti.appserver.account_creation_views import REL_ACCOUNT_PROFILE_SCHEMA as REL_ACCOUNT_PROFILE
 
-
 class TestApplicationUserSearch(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_user_search_has_dfl(self):
-
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = self._create_user()
@@ -245,7 +243,8 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 			user_interfaces.IFriendlyNamed( u1 ).realname = u"sjo"
 			modified( u1 )
 			u2 = self._create_user( username='sjo2@nextthought.com' )
-			u3 = self._create_user( username='sjo3@nextthought.com' )
+			
+			self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
 			user_interfaces.IFriendlyNamed( community ).alias = 'General People'
 			u1.record_dynamic_membership( community )
@@ -289,7 +288,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		# The user that's not in the community cannot find by username
 		path = '/dataserver2/UserSearch/TheComm'
-		res = testapp.get( path, extra_environ=self._make_extra_environ(username=u3.username))
+		res = testapp.get( path, extra_environ=self._make_extra_environ(username='sjo3@nextthought.com'))
 		assert_that( res.json_body['Items'], has_length( 0 ) )
 
 	@WithSharedApplicationMockDS

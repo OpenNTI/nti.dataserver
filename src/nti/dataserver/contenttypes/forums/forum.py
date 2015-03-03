@@ -27,13 +27,15 @@ from ZODB.interfaces import IConnection
 
 from nti.dataserver import sharing
 from nti.dataserver import datastructures
-from nti.dataserver.traversal import find_interface
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import containers as nti_containers
 
+from nti.schema.fieldproperty import AdaptingFieldProperty
+
+from nti.traversal.traversal import find_interface
+
 from nti.utils import transactions
 from nti.utils._compat import Implicit
-from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from . import _containerIds_from_parent
 from . import interfaces as frm_interfaces
