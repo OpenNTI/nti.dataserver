@@ -45,16 +45,17 @@ class _ResetGenerationLink(_JsonBodyView):
 
 	def __call__(self):
 		values = self.readInput()
-		username = values.get('username') or self.request.authenticated_userid
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(detail=_('Must specify a username'))
 		user = users.User.get_user(username)
 		if not user:
-			raise hexc.HTTPNotFound(detail=_('User not found'))
+			raise hexc.HTTPUnprocessableEntity(detail=_('User not found'))
 
 		link_dict = IAnnotations(user).get(link_provider._GENERATION_LINK_KEY, None)
 		if link_dict is not None:
 			link_dict[self.link_id] = ''
 			logger.info("Resetting %s for user %s" % (self.link_name, user))
-
 		return hexc.HTTPNoContent()
 
 @view_config(name="reset_initial_tos_page", **_admin_view_defaults)
