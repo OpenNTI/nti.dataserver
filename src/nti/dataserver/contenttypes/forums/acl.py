@@ -26,12 +26,14 @@ from zope import component
 from zope import interface
 
 from nti.dataserver.users import Entity
-from nti.dataserver import authorization as nauth
-from nti.dataserver.traversal import find_interface
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver import authorization as nauth
 from nti.dataserver.authorization_acl import ace_denying
 from nti.dataserver.authorization_acl import ace_allowing
 from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
+
+from nti.traversal.traversal import find_interface
 
 from . import interfaces as frm_interfaces
 

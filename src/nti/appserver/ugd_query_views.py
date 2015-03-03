@@ -216,7 +216,6 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_
 	result['Last Modified'] = result.lastModified
 	return result
 
-
 def _reference_list_length( x ):
 	try:
 		return len(x.referents)
@@ -258,7 +257,6 @@ def _creator_based_predicate_factory(accepted_usernames):
 		creator_username = getattr(creator, 'username', creator)
 		return creator_username in accepted_usernames
 	return _filter
-
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
@@ -380,7 +378,8 @@ QAssessedQuestionSet.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyI
 from nti.dataserver.chat_transcripts import _AbstractMeetingTranscriptStorage
 _AbstractMeetingTranscriptStorage.xxx_isReadableByAnyIdOfUser = _created_xxx_isReadableByAnyIdOfUser
 
-from nti.dataserver.traversal import find_interface
+from nti.traversal.traversal import find_interface
+
 def _personalblogcomment_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 	# XXX Duplicates much of the ACL logic
 	if user == self.creator:
@@ -500,7 +499,6 @@ class _UGDView(AbstractAuthenticatedView,
 				# TODO: Should there be an access check here?
 				entities.append( ent )
 		return entities
-
 
 	@classmethod
 	def do_getObjects( cls, owner, containerId, remote_user,
@@ -1220,16 +1218,14 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += stream_data
 		return all_data
 
-
-
-
 #: The link relationship type that can be used
 #: to get all the visible replies to a Note
 REL_REPLIES = 'replies'
 
+import pyramid.interfaces
+
 from nti.app.renderers.caching import md5_etag
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
-import pyramid.interfaces
 
 @interface.implementer(ext_interfaces.IExternalMappingDecorator)
 @component.adapter(nti_interfaces.IThreadable,pyramid.interfaces.IRequest)

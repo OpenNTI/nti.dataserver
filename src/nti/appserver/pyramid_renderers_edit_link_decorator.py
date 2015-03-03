@@ -12,23 +12,25 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
-from nti.externalization import interfaces as ext_interfaces
+from zope.location.interfaces import ILocation
 
-from nti.externalization.interfaces import StandardExternalFields
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
-from zope.location.interfaces import ILocation
 
-from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.links import Link
-from nti.dataserver.links_external import render_link
-from nti.dataserver.traversal import find_nearest_site
-from nti.externalization.oids import to_external_ntiid_oid
+from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
 
-from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+# make sure we use nti.dataserver.traversal to find the root site
+from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
+
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
+from nti.links.externalization import render_link
 
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
@@ -90,7 +92,8 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _preflight_context(self, context):
 		""" We must either have a persistent object, or one with a traversable path """
-		return getattr( context, '_p_jar', None ) or (self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
+		return 	getattr( context, '_p_jar', None ) or \
+				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
 		return is_writable(context, request=self.request)
@@ -123,7 +126,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			# chatserver.IMeeting (which is IModeledContent and IPersistent)
 			# Our options are to either catch that here, or introduce an
 			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = find_nearest_site( context )
+			nearest_site = ds_find_nearest_site( context )
 		except TypeError:
 			nearest_site = None
 

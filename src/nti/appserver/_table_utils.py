@@ -21,9 +21,10 @@ import cgi
 from abc import ABCMeta #, abstractmethod
 from collections import Counter
 
+import lxml.etree
+
 import html5lib
 from html5lib import treebuilders
-import lxml.etree
 
 from zope import interface
 from zope import component
@@ -49,9 +50,10 @@ from nti.chatserver import interfaces as chat_interfaces
 
 from nti.contentfragments import interfaces as frg_interfaces
 
-from nti.dataserver.links_external import render_link
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+
+from nti.links.externalization import render_link
 
 from nti.ntiids import ntiids
 

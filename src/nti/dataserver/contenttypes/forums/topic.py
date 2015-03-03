@@ -35,18 +35,20 @@ from nti.common.property import CachedProperty
 from nti.dataserver import users
 from nti.dataserver import sharing
 from nti.dataserver import containers
-from nti.dataserver import datastructures
-from nti.dataserver.traversal import find_interface
 
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
 
-from nti.utils._compat import Implicit
+from nti.dataserver.core.mixins import ContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
+
+from nti.traversal.traversal import find_interface
+
+from nti.utils._compat import Implicit
 
 from nti.wref import interfaces as wref_interfaces
 
@@ -56,7 +58,7 @@ from . import interfaces as for_interfaces
 
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
-							 datastructures.ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
+							 ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
 							 Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
