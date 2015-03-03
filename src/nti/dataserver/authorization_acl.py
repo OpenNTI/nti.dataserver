@@ -26,7 +26,6 @@ from nti.common.property import alias
 
 from nti.contentlibrary import interfaces as content_interfaces
 
-from nti.dataserver import traversal
 from nti.dataserver import authorization
 from nti.dataserver import authentication
 from nti.dataserver import interfaces as nti_interfaces
@@ -35,6 +34,8 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization import interfaces as ext_interfaces
 
 from nti.ntiids import ntiids
+
+from nti.traversal import traversal
 
 @interface.implementer( nti_interfaces.IACE )
 class _ACE(object):

@@ -41,7 +41,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
 
-from nti.dataserver.core.mixins import ContainedMixin
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty
@@ -58,7 +58,7 @@ from . import interfaces as for_interfaces
 
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
-							 ContainedMixin, # Pulls in nti_interfaces.IContained, containerId, id
+							 ZContainedMixin, 
 							 Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
