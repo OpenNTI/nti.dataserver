@@ -16,7 +16,8 @@ from zope.location.interfaces import ILocation
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.dataserver.traversal import find_nearest_site
+# make sure we use nti.dataserver.traversal to find the root site
+from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
 
 from nti.links import links
 from nti.links.externalization import render_link
@@ -38,7 +39,7 @@ class ContentUnitInfoHrefDecorator(object):
 			# chatserver.IMeeting (which is IModeledContent and IPersistent)
 			# Our options are to either catch that here, or introduce an
 			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = find_nearest_site( context )
+			nearest_site = ds_find_nearest_site( context )
 		except TypeError:
 			nearest_site = None
 
