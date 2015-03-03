@@ -142,6 +142,7 @@ setup(
 		'nti.traversal',
 		'nti.schema',
 		'nti.utils',
+		'nti.wref',
 		'nti.zodb',
 		'pywikipedia',
 		 # Zope Acquisition; used by contentratings implicitly
