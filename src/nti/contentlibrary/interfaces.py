@@ -27,7 +27,8 @@ from persistent.interfaces import IPersistent
 
 from nti.common.property import alias
 
-from nti.dublincore.interfaces import ILastModified
+from nti.coremetadata.interfaces import ILastModified
+
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from nti.ntiids.schema import ValidNTIID

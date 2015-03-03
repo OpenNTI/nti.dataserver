@@ -1,27 +1,29 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from hamcrest import assert_that
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 from hamcrest import is_
-from hamcrest import starts_with
 from hamcrest import ends_with
+from hamcrest import assert_that
+from hamcrest import starts_with
 from hamcrest import has_property
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 
-from nti.utils import dataurl
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.common import dataurl
 
+from nti.dataserver.users import interfaces as user_interfaces
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 PNG_DATAURL = b'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAACbmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS4xLjIiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPgogICAgICAgICA8eG1wOkNyZWF0b3JUb29sPkFjb3JuIHZlcnNpb24gMi42LjU8L3htcDpDcmVhdG9yVG9vbD4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICAgICAgICAgIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj4KICAgICAgICAgPHRpZmY6Q29tcHJlc3Npb24+NTwvdGlmZjpDb21wcmVzc2lvbj4KICAgICAgICAgPHRpZmY6WVJlc29sdXRpb24+NzI8L3RpZmY6WVJlc29sdXRpb24+CiAgICAgICAgIDx0aWZmOlhSZXNvbHV0aW9uPjcyPC90aWZmOlhSZXNvbHV0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KO/MupgAAAA1JREFUCB1j+P//PwMACPwC/uYM/6sAAAAASUVORK5CYII='
 
 class TestApplicationZopeFileViews(ApplicationLayerTest):
-
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_image_to_dataurl_bad_data(self):
@@ -30,7 +32,6 @@ class TestApplicationZopeFileViews(ApplicationLayerTest):
 		testapp.post( path,
 							upload_files=[('field', 'foo.gif', 'bad gif data')],
 							status=400)
-
 
 	def _do_test_echo( self, url ):
 		testapp = self.testapp
@@ -55,11 +56,9 @@ class TestApplicationZopeFileViews(ApplicationLayerTest):
 
 		return res, ext_res
 
-
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_image_to_dataurl_GIF(self):
 		self._do_test_echo( GIF_DATAURL )
-
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_image_to_dataurl_PNG(self):
