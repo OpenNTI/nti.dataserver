@@ -13,7 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
-from nti.common import deprecated
+from nti.common.deprecated import deprecated
 
 from nti.mailer.interfaces import ITemplatedMailer
 
