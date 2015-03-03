@@ -34,10 +34,11 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_standard_external_dictionary
 from nti.externalization.externalization import toExternalObject, isSyntheticKey
 
-from nti.dataserver import links
-from nti.dataserver import traversal as nti_traversal
+from nti.links import links
 
 from nti.mimetype import mimetype
+
+from nti.traversal import traversal as nti_traversal
 
 from ..interfaces import IContentUnitInfo
 from ..interfaces import IUserCapabilityFilter
@@ -239,7 +240,7 @@ class _NTIIDEntryExternalizer(object):
 		result = to_standard_external_dictionary( self.context, **kwargs )
 		return result
 
-from nti.dataserver.links_external import render_link
+from nti.links.externalization import render_link
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IContentUnitInfo) # TODO: IModeledContent?

@@ -16,9 +16,10 @@ from zope.location.interfaces import ILocation
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
 
-from nti.dataserver import links
-from nti.dataserver.links_external import render_link
 from nti.dataserver.traversal import find_nearest_site
+
+from nti.links import links
+from nti.links.externalization import render_link
 
 from ..interfaces import IContentUnitInfo
 

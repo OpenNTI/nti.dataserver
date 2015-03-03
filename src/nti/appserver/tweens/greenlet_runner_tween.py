@@ -26,13 +26,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
-from pyramid.httpexceptions import HTTPException
-from pyramid.httpexceptions import HTTPOk
-
 import gc
 
 import gevent
+
+from zope import interface
+
+from pyramid.httpexceptions import HTTPOk
+from pyramid.httpexceptions import HTTPException
 
 class IGreenletsToRun(interface.Interface):
 
@@ -44,7 +45,6 @@ class HTTPOkGreenletsToRun(HTTPOk):
 
 	greenlets = ()
 	response = None
-
 
 class greenlet_runner_tween(object):
 	"""

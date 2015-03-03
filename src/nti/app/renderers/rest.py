@@ -20,17 +20,19 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from perfmetrics import metric
 
-from nti.dataserver.links import Link
-from nti.dataserver import traversal as nti_traversal
-from nti.dataserver.links_external import render_link
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.representation import to_json_representation_externalized
 from nti.externalization.externalization import toExternalObject,  catch_replace_action
 
+from nti.links.links import Link
+from nti.links.externalization import render_link
+
 from nti.mimetype.mimetype import nti_mimetype_from_object
 from nti.mimetype.mimetype import MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE
+
+from nti.traversal import traversal as nti_traversal
 
 from .interfaces import IResponseRenderer
 from .interfaces import IExternalizationCatchComponentAction

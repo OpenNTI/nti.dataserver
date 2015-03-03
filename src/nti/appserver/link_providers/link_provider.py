@@ -12,13 +12,15 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
-from zope.annotation.interfaces import IAnnotations
 
-from nti.dataserver.links import Link
-from nti.dataserver.dicts import LastModifiedDict
+from zope.annotation.interfaces import IAnnotations
 
 from nti.appserver._util import link_belongs_to_user
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+
+from nti.dataserver.dicts import LastModifiedDict
+
+from nti.links.links import Link
 
 from .interfaces import IDeletableLinkProvider
 

@@ -13,8 +13,7 @@ very similar to :mod:`pyramid_tm`, but with the following changes:
 
 * Logging is added to account for the time spent in aborts and commits.
 
-$Id$
-
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -24,8 +23,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from ZODB.loglevels import TRACE
 
-from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.httpexceptions import HTTPException
+from pyramid.httpexceptions import HTTPBadRequest
+
 from nti.utils.transactions import TransactionLoop
 
 def _commit_veto(request, response):
@@ -77,7 +77,8 @@ class _transaction_tween(TransactionLoop):
 			# (though it could also be a tempfile issue if we spool to
 			# disk?) at any rate,
 			# this is non-recoverable
-			logger.log( TRACE, "Failed to make request body seekable", exc_info=True )
+			logger.log( TRACE, "Failed to make request body seekable",
+						exc_info=True )
 			# TODO: Should we do anything with the request.response? Set an error
 			# code? It won't make it anywhere...
 
@@ -85,7 +86,8 @@ class _transaction_tween(TransactionLoop):
 			# object, even if it is an exception response, so that
 			# Pyramid doesn't blow up
 
-			raise self.AbortException( HTTPBadRequest(str(e)), "IOError on reading body" )
+			raise self.AbortException( HTTPBadRequest(str(e)),
+									   "IOError on reading body" )
 
 		# XXX: HACK
 
@@ -114,10 +116,12 @@ class _transaction_tween(TransactionLoop):
 				request.content_type = b'application/json'
 
 	def should_abort_due_to_no_side_effects( self, request ):
-		return _is_side_effect_free( request ) and not request.environ.get('nti.request_had_transaction_side_effects')
+		return	_is_side_effect_free( request ) and \
+				not request.environ.get('nti.request_had_transaction_side_effects')
 
 	def should_veto_commit( self, response, request ):
-		return _commit_veto( request, response ) or request.environ.get( 'nti.early_teardown_happened' ) # see zope_site_tween
+		return  _commit_veto( request, response ) or \
+				request.environ.get( 'nti.early_teardown_happened' ) # see zope_site_tween
 
 	def describe_transaction( self, request ):
 		return request.url
@@ -149,11 +153,10 @@ class _transaction_tween(TransactionLoop):
 
 	def __call__(self, request):
 		result = TransactionLoop.__call__(self,request) # not super() for speed
-		if isinstance(result,HTTPException) and getattr(request, '_nti_raised_exception', False):
+		if  isinstance(result,HTTPException) and \
+			getattr(request, '_nti_raised_exception', False):
 			raise result
 		return result
-
-
 
 def transaction_tween_factory(handler, registry):
 	return _transaction_tween( handler )
