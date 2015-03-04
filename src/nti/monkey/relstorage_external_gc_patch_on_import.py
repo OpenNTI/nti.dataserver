@@ -17,8 +17,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from ZODB.interfaces import IExternalGC
+
 from relstorage.storage import RelStorage
 from relstorage.adapters.packundo import HistoryFreePackUndo
+
 from ZODB.POSException import ReadOnlyError
 from ZODB.POSException import StorageTransactionError
 

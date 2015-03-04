@@ -61,7 +61,7 @@ def _site_cm(conn, site_names=()):
 		#	raise InappropriateSiteError()
 		yield sitemanc
 
-from nti.utils.transactions import TransactionLoop
+from nti.transactions.transactions import TransactionLoop
 
 class _RunJobInSite(TransactionLoop):
 

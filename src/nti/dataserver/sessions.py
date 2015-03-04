@@ -47,7 +47,7 @@ from nti.socketio.interfaces import ISocketSessionDisconnectedEvent
 from nti.socketio.interfaces import SocketSessionDisconnectedEvent
 from nti.socketio.persistent_session import AbstractSession as Session
 
-from nti.utils import transactions
+from nti.transactions import transactions
 
 class _AlwaysIn(object):
 	"""
