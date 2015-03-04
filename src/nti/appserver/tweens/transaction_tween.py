@@ -26,7 +26,7 @@ from ZODB.loglevels import TRACE
 from pyramid.httpexceptions import HTTPException
 from pyramid.httpexceptions import HTTPBadRequest
 
-from nti.utils.transactions import TransactionLoop
+from nti.transactions.transactions import TransactionLoop
 
 def _commit_veto(request, response):
 	"""

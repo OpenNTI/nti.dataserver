@@ -21,7 +21,7 @@ from nti.externalization.persistence import NoPickle
 
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
-from nti.utils import transactions
+from nti.transactions import transactions
 
 try:
 	from gevent import Greenlet

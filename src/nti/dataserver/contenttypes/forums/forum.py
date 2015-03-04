@@ -33,9 +33,10 @@ from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
+from nti.transactions import transactions
+
 from nti.traversal.traversal import find_interface
 
-from nti.utils import transactions
 from nti.utils._compat import Implicit
 
 from . import _containerIds_from_parent

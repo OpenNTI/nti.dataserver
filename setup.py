@@ -139,6 +139,7 @@ setup(
 		'nti.mimetype',
 		'nti.ntiids',
 		'nti.plasTeX',
+		'nti.transactions',
 		'nti.traversal',
 		'nti.schema',
 		'nti.utils',

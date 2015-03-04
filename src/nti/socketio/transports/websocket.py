@@ -43,6 +43,7 @@ class _WebsocketSessionEventProxy(SessionEventProxy):
 
 class _AbstractWebSocketOperator(object):
 	session_owner = ''
+
 	def __init__(self, session_id, session_proxy, session_service, session_originating_site_names, websocket ):
 		self.session_id = session_id
 		self.session_proxy = session_proxy
@@ -97,7 +98,8 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 				# and we're going to break this loop
 				break
 
-			try:					#logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
+			try:					
+				# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
 				self.websocket.send(self.message)
 			except geventwebsocket.exceptions.FrameTooLargeException:
 				logger.warn( "Failed to send message to websocket, %s is too large. Head: %s",
