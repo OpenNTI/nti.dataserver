@@ -123,11 +123,13 @@ setup(
 		# 'setuptools_subversion >= 3.1'
 	],
 	install_requires=[
+		'nti.assessment',
+		'nti.assessment.contentrendering', # legacy
 		'nti.common',
 		'nti.contentfragments',
 		'nti.contentindexing',
 		'nti.contentprocessing',
-		'nti.contentrendering',
+		'nti.contentrendering', # legacy
 		'nti.coremetadata',
 		'nti.dataserver.core',
 		'nti.dataserver.fragments',
