@@ -155,7 +155,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 		
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
-		usernames = values.get('usernames') or values.get('usernane')
+		usernames = values.get('usernames') or values.get('username')
 		if not usernames:
 			raise hexc.HTTPUnprocessableEntity(_("No must specify a username."))
 		if isinstance(usernames, six.string_types):
