@@ -168,7 +168,11 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 			# send email
 			profile = IUserProfile(user, None)
 			email = getattr(profile, 'email', None)
-			safe_send_email_verification(user, profile, email, self.request)
+			email_verified =  getattr(profile, 'email_verified', False)
+			if not email_verified:
+				safe_send_email_verification(user, profile, email, self.request)
+			else:
+				logger.debug("Not sending email verification to %s", user)
 			# wait a bit
 			gevent.sleep(0.5)
 		return hexc.HTTPNoContent()
