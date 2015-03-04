@@ -56,21 +56,21 @@ class VerifyUserEmailView(object):
 
 	def __init__(self, request):
 		self.request = request
-		
+
 	def __call__(self):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
 		signature = values.get('signature') or values.get('token')
 		if not signature:
 			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
-		
+
 		username = values.get('username')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
 		user = get_user(username)
 		if user is None:
 			raise hexc.HTTPUnprocessableEntity(_("User not found."))
-		
+
 		try:
 			get_verification_signature_data(user, signature, params=values)
 		except BadSignature:
@@ -78,38 +78,44 @@ class VerifyUserEmailView(object):
 		except ValueError as e:
 			msg = _(str(e))
 			raise hexc.HTTPUnprocessableEntity(msg)
-		
+
 		self.request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
 		IUserProfile(user).email_verified = True
 		lifecycleevent.modified(user) # make sure we update the index
-		
+
+		# We expect this view to only be used via emailed
+		# links; therefore, we prefer to redirect them to
+		# some application context upon success.
 		return_url = values.get('return_url')
 		if return_url:
 			return hexc.HTTPFound(location=return_url)
+		elif request.application_url:
+			return hexc.HTTPFound(location=request.application_url)
+
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
 			 request_method='POST',
 			 context=IDataserverFolder)
-class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView, 
+class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 									ModeledContentUploadRequestUtilsMixin):
-		
+
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
 		token = values.get('hash') or values.get('token')
 		if not token:
 			raise hexc.HTTPUnprocessableEntity(_("No token specified."))
-		
+
 		try:
 			token = int(token)
 		except (TypeError, ValueError):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid token."))
-		
+
 		_, computed = generate_mail_verification_pair(self.remoteUser)
 		if token != computed:
 			raise hexc.HTTPUnprocessableEntity(_("Wrong token."))
-		
+
 		IUserProfile(self.remoteUser).email_verified = True
 		lifecycleevent.modified(self.remoteUser)  # make sure we update the index
 		return hexc.HTTPNoContent()
@@ -120,9 +126,9 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 			 context=IUser,
 			 renderer='rest',
 			 permission=nauth.ACT_UPDATE)
-class RequestEmailVerificationView(	AbstractAuthenticatedView, 
+class RequestEmailVerificationView(	AbstractAuthenticatedView,
 									ModeledContentUploadRequestUtilsMixin):
-		
+
 	def __call__(self):
 		user = self.remoteUser
 		profile = IUserProfile(user)
@@ -137,22 +143,22 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
 		else:
 			email = profile.email
-			
+
 		if profile.email_verified:
 			now  = time.time()
 			last_time = get_email_verification_time(user) or 0
 			if now - last_time > 3600: # wait an hour
 				safe_send_email_verification(user, profile, email, self.request)
 		return hexc.HTTPNoContent()
-	
+
 @view_config(route_name='objects.generic.traversal',
 			 name=SEND_USER_EMAIL_VERFICATION_VIEW,
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_NTI_ADMIN)
-class SendUserEmailVerificationView(AbstractAuthenticatedView, 
+class SendUserEmailVerificationView(AbstractAuthenticatedView,
 									ModeledContentUploadRequestUtilsMixin):
-		
+
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
 		usernames = values.get('usernames') or values.get('username')
@@ -160,7 +166,7 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("No must specify a username."))
 		if isinstance(usernames, six.string_types):
 			usernames = usernames.split(',')
-			
+
 		for username in usernames:
 			user = User.get_user(username)
 			if not user:
