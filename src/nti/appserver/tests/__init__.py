@@ -4,8 +4,8 @@ import zope.deferredimport
 zope.deferredimport.initialize()
 
 
-import nti.deprecated # Increase warning verbosity
-assert nti.deprecated
+import nti.common.deprecated # Increase warning verbosity
+assert nti.common.deprecated
 from nti.app.testing.request_response import DummyRequest
 from nti.app.testing.testing import TestMailDelivery
 from nti.app.testing.testing import ITestMailDelivery
