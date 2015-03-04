@@ -257,6 +257,12 @@ class IUserLogonEvent(IUserEvent):
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
 
+class IUserLogoutEvent(IUserLogonEvent):
+	"""
+	Fired when a user has logged out. This may also occur
+	rarely due to cookies.
+	"""
+
 class _UserEventWithRequest(nti_interfaces.UserEvent):
 
 	request = None
@@ -269,6 +275,10 @@ class _UserEventWithRequest(nti_interfaces.UserEvent):
 
 @interface.implementer(IUserLogonEvent)
 class UserLogonEvent(_UserEventWithRequest):
+	pass
+
+@interface.implementer(IUserLogoutEvent)
+class UserLogoutEvent(_UserEventWithRequest):
 	pass
 
 class IUserCreatedWithRequestEvent(IUserEvent):

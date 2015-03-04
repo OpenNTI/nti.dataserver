@@ -63,6 +63,7 @@ from nti.dataserver.links import Link
 from nti.mimetype import mimetype
 from nti.dataserver import users
 from nti.dataserver import authorization as nauth
+from nti.dataserver.users import User
 
 from nti.appserver.interfaces import ILogonPong
 from nti.appserver.link_providers import flag_link_provider
@@ -274,7 +275,11 @@ def logout(request):
 	# TODO: We need to associate the socket.io session somehow
 	# so we can terminate just that one session (we cannot terminate all,
 	# multiple logins are allowed )
-	return _forgetting( request, 'success', hexc.HTTPNoContent )
+	response = _forgetting( request, 'success', hexc.HTTPNoContent )
+	username = request.authenticated_userid
+	user = User.get_user( username )
+	notify( app_interfaces.UserLogoutEvent( user, request ))
+	return response
 
 @view_config(route_name=REL_PING, request_method='GET', renderer='rest')
 def ping( request ):
