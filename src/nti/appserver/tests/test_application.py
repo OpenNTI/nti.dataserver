@@ -51,12 +51,12 @@ import time
 import urllib
 from nti.dataserver import users
 from nti.ntiids import ntiids
-from nti.dataserver.datastructures import ZContainedMixin
+from nti.dataserver.core.mixins import ZContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange
 from nti.dataserver import contenttypes
-from nti.dataserver import links
+from nti.links import links
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.dataserver.tests import mock_dataserver

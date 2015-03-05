@@ -366,8 +366,9 @@ class _CanvasTextShape(_CanvasShape):
 		if self.text != tbf:
 			self.text = component.getAdapter(self.text, frg_interfaces.IUnicodeContentFragment, name='text')
 
+from nti.links import links
+
 from nti.zodb import urlproperty
-from nti.dataserver import links
 
 class _CanvasUrlShape(_CanvasShape):
 

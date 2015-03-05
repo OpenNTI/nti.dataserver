@@ -103,7 +103,6 @@ from nti.common.property import Lazy
 from nti.common.property import read_alias
 from nti.common.property import CachedProperty
 
-from nti.dataserver import links
 from nti.dataserver import users
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ILinked
@@ -113,9 +112,12 @@ from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import ITranscriptSummary
 from nti.dataserver.activitystream_change import Change
-from nti.dataserver.datastructures import ZContainedMixin
+
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
+
+from nti.links import links
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 

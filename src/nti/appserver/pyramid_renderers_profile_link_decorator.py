@@ -18,8 +18,9 @@ from pyramid.threadlocal import get_current_request
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.singleton import SingletonDecorator
 
-from nti.dataserver.links import Link
 from nti.dataserver import interfaces as nti_interfaces
+
+from nti.links.links import Link
 
 from ._util import link_belongs_to_user
 from .user_activity_views import REL_USER_ACTIVITY

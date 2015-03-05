@@ -18,7 +18,6 @@ from zope import component
 from zope import interface
 
 from nti.dataserver import users
-from nti.dataserver import links
 from nti.dataserver import authorization_acl as auth
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
@@ -28,6 +27,8 @@ from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.externalization import decorate_external_mapping
 from nti.externalization.externalization import to_standard_external_dictionary
+
+from nti.links import links
 
 from nti.schema.interfaces import find_most_derived_interface
 

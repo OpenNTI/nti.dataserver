@@ -1,34 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import has_item
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 from hamcrest import contains_string
-from hamcrest import has_length
-from hamcrest import is_
-from hamcrest import has_item
 from hamcrest import greater_than_or_equal_to
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.testing.matchers import verifiably_provides
-
-
 from zope import interface
+
 from zope.annotation import interfaces as an_interfaces
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import links
+
 from nti.dataserver import users
-from nti.dataserver.users import interfaces
 from nti.dataserver.users import Everyone
+from nti.dataserver.users import interfaces
 from nti.dataserver.users import users_external
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.links import links
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+from nti.testing.matchers import verifiably_provides
 
 class TestAvatarURLs(DataserverLayerTest):
 

@@ -20,10 +20,11 @@ from nti.common.property import alias
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-from nti.dataserver import datastructures
+from nti.dataserver import users
 from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import users
+
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
@@ -39,7 +40,7 @@ def _get_entity( username, dataserver=None ):
 
 @interface.implementer(nti_interfaces.IModeledContent)
 class UserContentRoot(sharing.ShareableMixin, 
-					  datastructures.ZContainedMixin, 
+					  ZContainedMixin, 
 					  CreatedModDateTrackingObject, 
 					  PersistentPropertyHolder):
 	"""
