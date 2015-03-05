@@ -1089,6 +1089,8 @@ def _openidcallback( context, request, success_dict ):
 
 @component.adapter(nti_interfaces.IUser,app_interfaces.IUserLogonEvent)
 def _user_did_logon( user, event ):
+	request = event.request
+	request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
 	if not user.lastLoginTime:
 		# First time logon, notify the client
 		flag_link_provider.add_link( user, 'first_time_logon' )
