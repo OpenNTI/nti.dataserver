@@ -150,7 +150,7 @@ class TestCanvas(DataserverLayerTest):
 		with mock_dataserver.mock_db_trans(ds):
 			shape3.__parent__ = self.ds.root
 			ext_shape = shape3.toExternalObject()
-			from nti.dataserver.links import Link
+			from nti.links.links import Link
 			assert_that( ext_shape, has_entry( 'url', is_( Link ) ) )
 			ext_shape['url'] = shape3.url # as string
 

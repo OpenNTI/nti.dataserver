@@ -74,7 +74,7 @@ class TestMailViews(ApplicationLayerTest):
 			href, _, = generate_verification_email_url(user)		
 				
 		extra_environ = self._make_extra_environ(user=username)
-		self.testapp.get(href, extra_environ=extra_environ, status=204)
+		self.testapp.get(href, extra_environ=extra_environ, status=302)
 		
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)

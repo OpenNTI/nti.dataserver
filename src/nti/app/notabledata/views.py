@@ -137,9 +137,9 @@ class _NotableRecursiveUGDView(_UGDView):
 
 from numbers import Number
 
-from nti.dataserver.links import Link
-
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
 
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',

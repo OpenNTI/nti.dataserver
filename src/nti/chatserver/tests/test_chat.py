@@ -41,8 +41,9 @@ from nti.appserver.pyramid_authorization import ACLAuthorizationPolicy
 from nti.dataserver.contenttypes import Note, Canvas
 
 from nti.externalization.oids import toExternalOID, to_external_ntiid_oid
-from nti.externalization.externalization import to_external_representation, toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
-from nti.externalization.externalization import to_json_representation_externalized
+from nti.externalization.representation import to_external_representation
+from nti.externalization.externalization import toExternalObject, EXT_FORMAT_JSON, EXT_FORMAT_PLIST
+from nti.externalization.representation import to_json_representation_externalized
 from nti.externalization.internalization import update_from_external_object
 from nti.externalization import externalization
 from nti.ntiids import ntiids
@@ -50,7 +51,6 @@ from nti.ntiids import ntiids
 import nti.dataserver.users as users
 import nti.dataserver.interfaces as interfaces
 from nti.dataserver import chat_transcripts
-from nti.dataserver import links
 from nti.dataserver import authorization as auth
 from nti.dataserver import authentication as nti_authentication
 nti_interfaces = interfaces
@@ -63,6 +63,9 @@ from nti.chatserver import interfaces as chat_interfaces
 from nti.chatserver.presenceinfo import PresenceInfo
 from nti.socketio import interfaces as sio_interfaces
 from nti.contentfragments.interfaces import IPlainTextContentFragment
+
+from nti.links import links
+
 from zope.annotation import interfaces as an_interfaces
 
 class chat(object):

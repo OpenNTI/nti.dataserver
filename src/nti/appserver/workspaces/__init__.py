@@ -31,7 +31,6 @@ from pyramid.threadlocal import get_current_request
 
 from nti.common.property import alias
 
-from nti.dataserver import links
 from nti.dataserver.users import User
 from nti.dataserver import datastructures
 
@@ -45,6 +44,8 @@ from nti.dataserver.interfaces import IFriendsListContainer
 from nti.dataserver.interfaces import IHomogeneousTypeContainer
 
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.links import links
 
 from nti.mimetype import mimetype
 

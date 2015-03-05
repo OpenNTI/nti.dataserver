@@ -59,11 +59,13 @@ from nti.appserver import interfaces as app_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
-from nti.dataserver.links import Link
-from nti.mimetype import mimetype
 from nti.dataserver import users
-from nti.dataserver import authorization as nauth
 from nti.dataserver.users import User
+from nti.dataserver import authorization as nauth
+
+from nti.links.links import Link
+
+from nti.mimetype import mimetype
 
 from nti.appserver.interfaces import ILogonPong
 from nti.appserver.link_providers import flag_link_provider

@@ -179,11 +179,11 @@ class _ContentForumACLProvider(_CommunityForumACLProvider):
 
 ### Forum decorators
 
-from nti.dataserver.links import Link
-
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
+
+from nti.links.links import Link
 
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = StandardExternalFields.LINKS

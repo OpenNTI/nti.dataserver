@@ -87,10 +87,10 @@ class AbstractAuthenticatedRequestAwareDecorator(AbstractRequestAwareDecorator):
 
 from zope.location.interfaces import ILocation
 
-from nti.dataserver.links import Link
-
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
 
 StandardExternalFields_LINKS = StandardExternalFields.LINKS
 
