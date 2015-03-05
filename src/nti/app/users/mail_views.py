@@ -15,6 +15,9 @@ import six
 import time
 import gevent
 
+from urlparse import urljoin
+
+from zope import component
 from zope import lifecycleevent
 
 from pyramid.view import view_config
@@ -24,6 +27,8 @@ from itsdangerous import BadSignature
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.appserver.interfaces import IApplicationSettings
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -47,6 +52,11 @@ from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
+
+def _web_root():
+	settings = component.getUtility(IApplicationSettings)
+	web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
+	return web_root
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_VIEW,
@@ -90,7 +100,8 @@ class VerifyUserEmailView(object):
 		if return_url:
 			return hexc.HTTPFound(location=return_url)
 		elif request.application_url:
-			return hexc.HTTPFound(location=request.application_url)
+			app_url = urljoin( request.application_url, _web_root() )
+			return hexc.HTTPFound(location=app_url)
 
 		return hexc.HTTPNoContent()
 
