@@ -144,6 +144,7 @@ setup(
 		'nti.transactions',
 		'nti.traversal',
 		'nti.schema',
+		'nti.site',
 		'nti.utils',
 		'nti.wref',
 		'nti.zodb',
