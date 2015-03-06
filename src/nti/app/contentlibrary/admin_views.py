@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
@@ -19,10 +21,14 @@ from pyramid.view import view_config
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.dataserver.interfaces import IDataserverFolder
-
 from nti.dataserver.authorization import ACT_NTI_ADMIN
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+
 from .synchronize import synchronize
+
+ITEMS = StandardExternalFields.ITEMS
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -64,8 +70,12 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 		# (which works so long as zope.securitypolicy doesn't get involved...)
 
 		# This is somewhat difficult to test the side-effects of, sadly.
+		now = time.time()
 		endInteraction()
 		try:
-			return synchronize(sleep=self._SLEEP)
+			result = LocatedExternalDict()
+			result[ITEMS] = synchronize(sleep=self._SLEEP)
+			result['Elapsed'] = time.time() - now
+			return result
 		finally:
 			restoreInteraction()
