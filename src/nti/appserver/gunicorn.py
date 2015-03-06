@@ -30,69 +30,28 @@ import gunicorn.http.wsgi
 import gunicorn.workers.ggevent as ggevent
 from gunicorn.app.pasterapp import PasterServerApplication
 
-if gunicorn.version_info != (18,0):
+if gunicorn.version_info != (19,3,0):
 	raise ImportError("Unknown gunicorn version")
 
 from gevent import getcurrent
 
-# Gunicorn 18.0 and below have a bug formatting times:
-# (see https://github.com/benoitc/gunicorn/issues/621)
-# which causes our logging to be VERY misleading
-# a fix is committed that we replicate below,
-# so when the version changes, review
-# this patch.
 
-# NOTE: We also have a change to make the 'u' variable actually do something,
-# plus a custom atom to get the greenlet id and pid into the message, just like
-# in normal log messages
+# Monkey patch the Gunicorn logger: Make the 'u' variable actually do
+# something, plus a custom atom (G) to get the greenlet id and pid
+# into the message, just like in normal log messages.
+#
+# Loggers are instantiated earlier, so we need to do this by swizzling
+# the class rather than subclassing it, unfortunately.
 from gunicorn import glogging
-
+glogging_Logger_atoms = glogging.Logger.atoms
 def _glogging_atoms(self, resp, req, environ, request_time):
-	"""
-	Gets atoms for log formating.
-	"""
-	mypid = os.getpid()
-	status = resp.status.split(None, 1)[0]
-	atoms = {
-		'h': environ.get('REMOTE_ADDR', '-'),
-		'l': '-',
-		'u': environ.get('REMOTE_USER', '-'),
-		't': self.now(),
-		'r': "%s %s %s" % (environ['REQUEST_METHOD'],
-						   environ['RAW_URI'], environ["SERVER_PROTOCOL"]),
-		's': status,
-		'b': resp.response_length and str(resp.response_length) or '-',
-		'f': environ.get('HTTP_REFERER', '-'),
-		'a': environ.get('HTTP_USER_AGENT', '-'),
-		'T': request_time.seconds,
-		'D': request_time.microseconds,
-		'p': "<%s>" % mypid,
-		'G': "[%d:%d]" % (id(getcurrent()), mypid),
-	}
+	atoms = glogging_Logger_atoms(self,resp,req,environ,request_time)
 
-	# add request headers
-	if hasattr(req, 'headers'):
-		req_headers = req.headers
-	else:
-		req_headers = req
-
-	atoms.update(dict([("{%s}i" % k.lower(), v) for k, v in req_headers]))
-
-	# add response headers
-	atoms.update(dict([("{%s}o" % k.lower(), v) for k, v in resp.headers]))
-
+	atoms['u'] = environ.get('REMOTE_USER', '-')
+	atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
 	return atoms
 
-def SafeAtoms__init__(self, atoms):
-	dict.__init__(self)
-	for key, value in atoms.items():
-		if isinstance(value, basestring):
-			self[key] = value.replace(b'"', b'\\"')
-		else:
-			self[key] = value
-
 glogging.Logger.atoms = _glogging_atoms
-glogging.SafeAtoms.__init__ = SafeAtoms__init__
 
 import gevent
 import gevent.socket
@@ -182,9 +141,6 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		if environ.get('SERVER_PROTOCOL') == 'HTTP/1.1':
 			request.version = (1,1)
 
-		cfg = self.server.worker.cfg
-		cfg_x_forwarded_for_header = cfg.x_forwarded_for_header
-
 		for header in self.headers.headers:
 			# If we're not careful to split with a byte string here, we can
 			# run into UnicodeDecodeErrors: True, all the headers are supposed to be sent
@@ -196,32 +152,14 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 			k = k.upper()
 			v = v.strip()
 
-			# In gunicorn .18, the x-forwarded-for value is parsed incorrectly.
-			# It takes only the last value instead of the first value,
-			# which means that if we're behind multiple proxies we get
-			# the wrong ip...a second issue is that if there are two headers (something legal)
-			# only the value of the last one is used (even though the environ is correctly
-			# update to have only one concatenated header)
-			# I haven't submitted an issue/pull request because the implementation
-			# is changing in .19 (https://github.com/benoitc/gunicorn/pull/633)
-			# It looks like one way around this would be with the PROXY protocol
-			# (see the proxy_protocol configuration) that haproxy and stunnel support.
-			# The logic to accept and parse these values is somewhat complex, so rather
-			# than duplicate it, we reverse the value, which works for the simple
-			# one-header case.
-			if cfg_x_forwarded_for_header and k == cfg_x_forwarded_for_header:
-				if b',' in v:
-					parts = v.split(b',')
-					v = b','.join( reversed(parts) )
-
 			request.headers.append( (k, v) )
 		# The request arrived on self.socket, which is also environ['gunicorn.sock']. This
 		# is the "listener" argument as well that's needed for deriving the "HOST" value, if not present
 		_, gunicorn_env = gunicorn.http.wsgi.create(request,
-													self.socket, 
-													self.client_address, 
-													self.socket.getsockname(), 
-													cfg)
+													self.socket,
+													self.client_address,
+													self.socket.getsockname(),
+													self.server.worker.cfg)
 		gunicorn_env.update( gunicorn.http.wsgi.proxy_environ(self.__request) )
 		environ.update( gunicorn_env )
 
@@ -263,20 +201,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		super(GeventApplicationWorker,self).__init__( *args, **kwargs )
 		# Now we have access to self.cfg and the rest
 
-	def _load_legacy_app( self ):
-		try:
-			if not isinstance( self.app, _PasterServerApplication ):
-				logger.warn("Deprecated code path, please update your .ini:\n" +
-							"[server:main]\nuse = egg:nti.dataserver#gunicorn" )
-				dummy_app = self.app.app
-				wsgi_app = loadwsgi.loadapp('config:' + dummy_app.global_conf['__file__'], 
-											name='dataserver_gunicorn' )
-				self.app.app = wsgi_app
-				self.app.callable = wsgi_app
-		except Exception:
-			logger.exception( "Failed to load app" )
-			raise
-
 	def init_process(self, _call_super=True):
 		"""
 		We must create the appserver only once, and only after the
@@ -312,7 +236,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 
 		# The Dataserver reloads itself automatically in the preload scenario
 		# based on the post_fork and IProcessDidFork listener
-		self._load_legacy_app()
 
 		# Tweak the max connections per process if it is at the default (1000)
 		# Large numbers of HTTP connections means large numbers of
@@ -320,8 +243,8 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# of machines, and we quickly run out. We probably can't really handle
 		# 1000 simultaneous connections anyway, even though we are non-blocking
 		worker_connections = self.cfg.settings['worker_connections']
-		if	worker_connections.value == worker_connections.default and \
-			worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS:
+		if (worker_connections.value == worker_connections.default
+			and worker_connections.value >= self.PREFERRED_MAX_CONNECTIONS):
 			worker_connections.set( self.PREFERRED_MAX_CONNECTIONS )
 			self.worker_connections = self.PREFERRED_MAX_CONNECTIONS
 
@@ -333,7 +256,7 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 		# Other options include using a different key with a fake % char, like ^,
 		# (Note: microseconds and seconds are not /total/, they are each fractions;
 		# they come from a `datetime.timedelta` object, which guarantees that the
-		# microsecond value is between 0 and one whole second; we need to properly set 
+		# microsecond value is between 0 and one whole second; we need to properly set
 		# formatting field width to account for this)
 		# (Note: See below for why this must be sure to be a byte string: Frickin IE in short)
 		self.cfg.settings['access_log_format'].set( str(self.cfg.access_log_format) + b" %(G)s %(T)s.%(D)06ds" )
@@ -375,11 +298,17 @@ class _ServerFactory(object):
 		self.worker = worker
 
 
-	def __call__( self,  listen_on_socket, application=None, spawn=None, log=None, handler_class=None):
-		app_server = WebSocketServer(
-				listen_on_socket,
-				application,
-				handler_class=handler_class or GeventApplicationWorker.wsgi_handler)
+	def __call__( self,
+				  listen_on_socket,
+				  application=None,
+				  spawn=None,
+				  log=None,
+				  handler_class=None,
+				  environ=None):
+		app_server = WebSocketServer( listen_on_socket,
+									  application,
+									  handler_class=handler_class or GeventApplicationWorker.wsgi_handler,
+									  environ=environ)
 		app_server.worker = self.worker # See _PyWSGIWebSocketHandler.get_environ # FIXME: Eliminate this
 
 		# The worker will provide a Pool based on the
@@ -434,7 +363,9 @@ class _ServerFactory(object):
 		# the handler class with one that sets up the required values in the
 		# environment, as per ggevent.
 		assert app_server.handler_class is _PyWSGIWebSocketHandler
-		app_server.base_env = ggevent.PyWSGIServer.base_env
+		# One of our base classes likes to use base_env directly, even though
+		# things have been merged into it, so provide a copy of that merge
+		app_server.base_env = app_server.get_environ()
 		return app_server
 
 # Manage the forking events
@@ -562,7 +493,7 @@ from zope.processlifetime import IDatabaseOpened
 def _replace_storage_on_open(event):
 
 	if event.database.database_name in _master_storages:
-		logger.info("Installing cached storage in pid %s: %s", 
+		logger.info("Installing cached storage in pid %s: %s",
 					os.getpid(), _master_storages)
 		event.database.storage = _master_storages[event.database.database_name]
 
@@ -572,7 +503,7 @@ def _cache_conn_objects(event):
 
 	if event.database.database_name in _master_storages:
 		logger.info("Caching objects in pid %s: %s", os.getpid(), _master_storages)
-		glts = [gevent.spawn(_cache_objects, event.database) \
+		glts = [gevent.spawn(_cache_objects, event.database)
 				for _ in range(event.database.pool.getSize())]
 		gevent.joinall(glts)
 		logger.info("Done caching objects in pid %s", os.getpid())
@@ -704,7 +635,7 @@ class _PasterServerApplication(PasterServerApplication):
 
 	def load(self):
 		if self.app is None:
-			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn', 
+			self.app = loadwsgi.loadapp(self.cfgurl, name='dataserver_gunicorn',
 										relative_to=self.relpath)
 		return self.app
 
