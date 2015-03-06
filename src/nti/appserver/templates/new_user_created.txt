@@ -11,7 +11,7 @@ in your Library to get started and learn more about the exciting
 interactive features NextThought has to offer.
 
 Please verify your email address. Doing so will
-enable you to receive email notifications for your account.
+help us maintain the security of your account.
 To verify your email address, use the following link: ${href}
 
 Sincerely,
