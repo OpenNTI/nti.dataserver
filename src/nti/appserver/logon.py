@@ -566,6 +566,9 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 				# Timeout or invalid network connection, no resolution, nothing to cache
 				logger.info( "Timeout checking Google apps account for %s", domain )
 				return None
+			except TypeError:
+				logger.exception("Mismatch in SSL libraries/python version")
+				return None
 			else:
 				allow = google_rsp.status_code == 200
 				self.KNOWN_DOMAIN_CACHE[domain] = allow

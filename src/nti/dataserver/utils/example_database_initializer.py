@@ -66,10 +66,10 @@ class ExampleDatabaseInitializer(object):
 				  ('ethan.berman@nextthought.com', 'Ethan Berman')]
 
 		# Add the ok people
-		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez', 'chris.hansen', 
-					'chris.utz', 'greg.higgins', 'grey.allman', 'jason.madden', 
+		for uid in ('aaron.eskam', 'andrew.ligon', 'carlos.sanchez', 'chris.hansen',
+					'chris.utz', 'greg.higgins', 'grey.allman', 'jason.madden',
 					'jeff.muehring', 'jonathan.grimes', 'josh.zuech', 'julie.zhu',
-					'kaley.white', 'ken.parker',  'pacifique.mahoro', 'peggy.sabatini', 
+					'kaley.white', 'ken.parker',  'pacifique.mahoro', 'peggy.sabatini',
 					'ray.hatfield', 'sean.jones', 'steve.johnson', 'trina.muehring',
 					'troy.daley', 'vitalik.buterin', 'mario.rosas'):
 			USERS.append( (uid + '@nextthought.com',

@@ -36,7 +36,7 @@ import fudge
 
 class MockConfig(object):
 	is_ssl = False # added 0.17.1
-	max_requests = None
+	max_requests = 1000
 	limit_request_line = 1024
 	limit_request_fields = 1024
 	limit_request_field_size = 1024
@@ -52,9 +52,16 @@ class MockConfig(object):
 		"X-FORWARDED-PROTO": "https",
 		"X-FORWARDED-SSL": "on"
 	}
-	x_forwarded_for_header = 'X-FORWARDED-FOR'
+	# As of 19.x, X-Forwarded-For is REMOVED in gunicorn; the PROXY
+	# protocol obviates the need for it, however (access logs and
+	# REMOTE_ADDR will still be correct). If you do not have the proxy
+	# protocol, you'll have to do some logging changes; see
+	# https://github.com/benoitc/gunicorn/pull/633
+	#x_forwarded_for_header = 'X-FORWARDED-FOR'
 	forwarded_allow_ips = '127.0.0.1'
 	bind = ()
+	max_requests_jitter = 0 # 19.2.1; 0 is default
+	errorlog = "-" # 19.2; - is default
 
 	def __init__( self ):
 		self.settings = {}
@@ -68,7 +75,10 @@ class MockConfig(object):
 class MockSocket(object):
 
 	def getsockname(self):
-		return None
+		# as of 19.x, the SERVER_NAME and SERVER_PORT
+		# are derived from this value; before, we could get away
+		# with None, now it must be a valid string
+		return 'localhost:8081'
 
 	def setblocking(self, arg):
 		return None
@@ -98,23 +108,6 @@ class TestGeventApplicationWorker(AppLayerTest):
 		gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
-	def test_load_legacy_app(self, fudge_tmp, fudge_loadwsgi):
-		fudge_tmp.is_a_stub()
-		fudge_loadwsgi.is_a_stub()
-		global_conf = {}
-		#  age, ppid, socket, app, timeout, cfg, log
-		dummy_app = gunicorn.dummy_app_factory( global_conf )
-		dummy_app.app = dummy_app
-		global_conf['__file__'] = ''
-		global_conf['http_port'] = '1'
-		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
-		worker._load_legacy_app()
-
-		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], None, None, MockConfig, logger)
-		with assert_raises(Exception):
-			worker._load_legacy_app()
-
-	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
 	def test_environ_parse_in_handler(self, fudge_tmp, fudge_loadwsgi):
 		fudge_tmp.is_a_stub()
 		fudge_loadwsgi.is_a_stub()
@@ -132,7 +125,6 @@ class TestGeventApplicationWorker(AppLayerTest):
 		# First, generate a request to read
 		rqst = Request.blank( '/pages?format=json', environ={b'REQUEST_METHOD': b'DELETE'} )
 		rqst.headers['X-FORWARDED-PROTOCOL'] = 'ssl'
-		rqst.headers['X-FORWARDED-FOR'] = '41.74.174.50,10.50.0.102'
 		rfile = StringIO(rqst.as_bytes() + b'\r\n\r\n')
 
 		# Now create a local handler, as if it was accepting a local connection (as in a proxy environment)
@@ -145,10 +137,13 @@ class TestGeventApplicationWorker(AppLayerTest):
 		environ = handler.get_environ()
 
 		assert_that( environ, has_entry( 'wsgi.url_scheme', 'https' ) )
-		assert_that( environ, has_entry( 'REMOTE_ADDR', '41.74.174.50' ) )
+
 		assert_that( environ, has_entry( 'REQUEST_METHOD', 'DELETE' ) )
 		assert_that( environ, has_entry( 'PATH_INFO', '/pages' ) )
 
+		# x-forwarded-for is removed in gunicorn 19.x; see MockConfig
+		#rqst.headers['X-FORWARDED-FOR'] = '41.74.174.50,10.50.0.102'
+		#assert_that( environ, has_entry( 'REMOTE_ADDR', '41.74.174.50' ) )
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi','gevent.socket.socket', 'nti.appserver.gunicorn.get_current_request')
 	def test_init_process(self, fudge_tmp, fudge_loadwsgi, fudge_socket, fudge_get_current_request):
