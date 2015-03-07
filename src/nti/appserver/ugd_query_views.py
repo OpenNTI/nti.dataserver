@@ -749,7 +749,7 @@ class _UGDView(AbstractAuthenticatedView,
 			such as 1).
 
 		filterOperator
-			A string parameter with to indiciate what operator (union, intersection) is to
+			A string parameter with to indicate what operator (union, intersection) is to
 			be used when combining the filters. The values are ('0', 'union') for union operator or
 			('1','intersection') for intersection. The default is intersection
 
