@@ -215,9 +215,11 @@ class BatchingUtilsMixin(object):
 					break
 
 		result['BatchPage'] = batch_start // batch_size + 1
-		result[ITEMS] = self.__batch_result_list(result, result_list,
+		batched_results = self.__batch_result_list(result, result_list,
 												 batch_start, batch_size,
 												 number_items_needed)
+		result[ITEMS] = batched_results
+		result['ItemCount'] = len( batched_results )
 		return result
 
 	def _batch_tuple_iterable(self, *args, **kwargs):
