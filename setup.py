@@ -130,6 +130,7 @@ setup(
 		'nti.contentindexing',
 		'nti.contentprocessing',
 		'nti.contentrendering', # legacy
+		'nti.contenttypes.presentation',  # legacy
 		'nti.coremetadata',
 		'nti.dataserver.core',
 		'nti.dataserver.fragments',
