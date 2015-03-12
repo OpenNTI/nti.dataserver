@@ -25,14 +25,14 @@ from nti.ntiids.ntiids import make_ntiid
 
 from nti.externalization.externalization import toExternalObject
 
+from nti.contentindexing.whooshidx.schemas import create_book_schema
+from nti.contentindexing.whooshidx.schemas import create_nti_card_schema
+from nti.contentindexing.whooshidx.schemas import create_video_transcript_schema
+
 from nti.contentsearch import constants
 from nti.contentsearch.common import videotimestamp_to_datetime
-from nti.contentsearch.whoosh_schemas import create_book_schema
-from nti.contentsearch.whoosh_schemas import create_nti_card_schema
-from nti.contentsearch.whoosh_storage import create_directory_index
 from nti.contentsearch.whoosh_searcher import WhooshContentSearcher
-from nti.contentsearch.whoosh_schemas import create_video_transcript_schema
-
+from nti.contentsearch.whoosh_storage import create_directory_index
 from nti.contentsearch.constants import (HIT, HIT_COUNT, ITEMS, SUGGESTIONS)
 
 from nti.contentsearch.tests import find_test
@@ -206,7 +206,7 @@ class TestWhooshContentSearcher(unittest.TestCase):
 		items = hits[ITEMS]
 		assert_that(items, has_length(3))
 		for item in items:
-			assert_that(item, has_entry('Score', is_(1.0)))
+			assert_that(item, has_entry('Score', is_(2.0)))
 
 	def test_partial_search_start(self):
 		hits = toExternalObject(self.bim.search("bl"))

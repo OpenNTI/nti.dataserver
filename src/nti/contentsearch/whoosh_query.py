@@ -25,6 +25,7 @@ from whoosh.scoring import WeightScorer
 from whoosh.scoring import WeightingModel
 from whoosh.scoring import WeightLengthScorer
 
+from nti.contentindexing.whooshidx import TITLE
 from nti.contentindexing.whooshidx import QUICK
 from nti.contentindexing.whooshidx import CONTENT
 
@@ -70,15 +71,18 @@ class _DefaultWhooshQueryParser(object):
 
 	def get_search_fields(self, qo):
 		if qo.is_phrase_search or qo.is_prefix_search:
-			result = (CONTENT,)
+			result = (CONTENT, TITLE)
 		else:
-			result = (QUICK, CONTENT)
+			result = (QUICK, CONTENT, TITLE)
 		return result
 
 	def get_whoosh_query(self, fieldname, term, schema):
 		try:
-			parser = create_query_parser(fieldname, schema=schema)
-			return parser.parse(term)
+			if schema is not None and fieldname not in schema:
+				return None
+			else:
+				parser = create_query_parser(fieldname, schema=schema)
+				return parser.parse(term)
 		except Exception:
 			return Term(fieldname, term)
 
@@ -88,7 +92,11 @@ class _DefaultWhooshQueryParser(object):
 		search_fields = self.get_search_fields(qo)
 		for fieldname in search_fields:
 			query = self.get_whoosh_query(fieldname, query_term, schema)
-			parsed_query = query | parsed_query if parsed_query else query
+			if query is not None:
+				parsed_query = query | parsed_query if parsed_query else query
+		if parsed_query is None:
+			__traceback_info__ = qo, schema
+			raise AssertionError("Could not parse query")
 		return parsed_query
 
 def parse_query(qo, schema, *args):
