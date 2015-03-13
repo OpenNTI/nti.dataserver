@@ -100,3 +100,9 @@ class ISlideDeckIndexedDataContainer(IWritableIndexedDataContainer):
 
 ISlideDeckIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 									  		 'slidedeck_index.json')
+
+CONTAINER_IFACES = (IRelatedContentIndexedDataContainer,
+					ISlideDeckIndexedDataContainer,
+					ITimelineIndexedDataContainer,
+					IVideoIndexedDataContainer,
+					IAudioIndexedDataContainer)
