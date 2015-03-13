@@ -124,7 +124,6 @@ setup(
 	],
 	install_requires=[
 		'nti.assessment',
-		'nti.assessment.contentrendering', # legacy
 		'nti.common',
 		'nti.contentfragments',
 		'nti.contentindexing',
@@ -142,6 +141,7 @@ setup(
 		'nti.mimetype',
 		'nti.ntiids',
 		'nti.plasTeX',
+		'nti.rendering.assessment', # legacy
 		'nti.transactions',
 		'nti.traversal',
 		'nti.schema',
