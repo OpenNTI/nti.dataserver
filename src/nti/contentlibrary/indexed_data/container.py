@@ -51,31 +51,58 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 		data.__parent__ = self
 		self._p_changed = True
 		return data
-
-	def get_data_items(self):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return self._data.values()
-		return ()
-
-	def contains_data_item_with_ntiid(self, ntiid):
-		self._p_activate()
-		return '_data' in self.__dict__ and ntiid in self._data
-
+	
 	def set_data_items(self, data_items):
 		self._p_activate()
 
 		if '_data' in self.__dict__:
 			self._data.clear()
-			
-		if not data_items:
-			return
-
+		
 		data = self._data
-		for item in data_items:
-			ntiid = item.get('ntiid')
+		for item in data_items or ():
+			ntiid = item.get('ntiid') or item.get('NTIID')
 			if ntiid:
 				data[ntiid] = item
+
+	def __getitem__(self, key):
+		self._p_activate()
+		if '_data' in self.__dict__:
+			return self._data[key]
+		else:
+			raise KeyError(key)
+	
+	def get(self, key, default=None):
+		try:
+			return self[key]
+		except KeyError:
+			return default
+		
+	def __contains__(self, ntiid):
+		self._p_activate()
+		return '_data' in self.__dict__ and ntiid in self._data
+	contains_data_item_with_ntiid = __contains__
+	
+	def keys(self):
+		self._p_activate()
+		if '_data' in self.__dict__:
+			return self._data.keys()
+		return ()
+	
+	def __iter__(self):
+		return iter(self.keys())
+	
+	def values(self):
+		self._p_activate()
+		if '_data' in self.__dict__:
+			return self._data.values()
+		return ()
+	get_data_items = values
+	
+	def items(self):
+		self._p_activate()
+		if '_data' in self.__dict__:
+			return self._data.items()
+		return ()
 
 	def __len__(self):
 		self._p_activate()
