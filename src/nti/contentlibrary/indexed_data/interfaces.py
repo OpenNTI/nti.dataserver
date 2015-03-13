@@ -12,12 +12,13 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+from zope.interface.common.mapping import IEnumerableMapping
 
 from zope.container.interfaces import ILocation
 
 from nti.coremetadata.interfaces import ILastModified
 
-class IIndexedDataContainer(ILocation, ILastModified):
+class IIndexedDataContainer(ILocation, ILastModified, IEnumerableMapping):
 	"""
 	The indexed data for a content unit. Because content units
 	are not always persistent, this should not hold a direct reference
@@ -46,8 +47,6 @@ class IIndexedDataContainer(ILocation, ILastModified):
 		Does this container (content unit) have data for the given
 		ntiid?
 		"""
-		### XXX: JAM: Do these NTIIDs show up in the embeddedContainerNTIIDs
-		# property of the content unit? They probably should...
 
 class IWritableIndexedDataContainer(IIndexedDataContainer):
 	"""
