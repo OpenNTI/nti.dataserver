@@ -63,11 +63,15 @@ class TestEmail(AppLayerTest):
 		request = Request()
 		request.context = user
 
+		token_url = 'url_to_verify_email'
 		msg = create_simple_html_text_email('new_user_created',
 											subject='Hi there',
 											recipients=['jason.madden@nextthought.com'],
 											bcc='foo@bar.com',
-											template_args={'user': user, 'profile': profile, 'context': user },
+											template_args={'user': user,
+														'profile': profile,
+														'context': user,
+														'href': token_url },
 											package='nti.appserver',
 											request=request)
 		assert_that( msg, is_( not_none() ))
@@ -100,10 +104,14 @@ class TestEmail(AppLayerTest):
 		request = Request()
 		request.context = user
 
+		token_url = 'url_to_verify_email'
 		msg = create_simple_html_text_email('new_user_created',
 											subject='Hi there',
 											recipients=[EmailAddresablePrincipal(user)],
-											template_args={'user': user, 'profile': profile, 'context': user },
+											template_args={'user': user,
+														'profile': profile,
+														'context': user,
+														'href': token_url },
 											package='nti.appserver',
 											request=request)
 		assert_that( msg, is_( not_none() ))

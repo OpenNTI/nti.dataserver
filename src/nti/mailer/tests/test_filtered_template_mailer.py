@@ -63,12 +63,15 @@ class _BaseMixin(object):
 			# Don't assign if not present, test we can deal
 			# with no attribute
 			request.environ = extra_environ
-
+		token_url = 'url_to_verify_email'
 		msg = self.mailer().create_simple_html_text_email('new_user_created',
 													 subject='Hi there',
 													 recipients=[recipient],
 													 bcc=bcc,
-													 template_args={'user': user, 'profile': profile, 'context': user },
+													 template_args={'user': user,
+																'profile': profile,
+																'context': user,
+																'href': token_url },
 													 package='nti.appserver',
 													 request=request)
 
