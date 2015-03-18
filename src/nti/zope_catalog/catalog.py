@@ -14,10 +14,26 @@ logger = __import__('logging').getLogger(__name__)
 from zope.catalog.catalog import Catalog as _ZCatalog
 
 from ZODB.interfaces import IBroken
+
 from ZODB.POSException import POSError
 from ZODB.POSException import POSKeyError
 
 from .interfaces import INoAutoIndex
+
+def is_broken(obj, uid=None):
+	result = False
+	try:
+		if obj is None:
+			logger.warn("Ignoring missing object %s", uid)
+			result = (uid is not None)
+		else:
+			if hasattr(obj, '_p_activate'):
+				obj._p_activate()
+			result = IBroken.providedBy(obj)
+	except POSError:	
+		logger.error("Ignoring broken object %s, %s", type(obj), uid)
+		result = True
+	return result
 
 class ResultSet(object):
 	"""
@@ -36,16 +52,7 @@ class ResultSet(object):
 		for uid in self.uids:
 			if self.ignore_invalid:
 				obj = self.uidutil.queryObject(uid)
-				try:
-					if obj is None:
-						logger.warn("Ignoring missing object %s", uid)
-					else:
-						if hasattr(obj, '_p_activate'):
-							obj._p_activate()
-						if IBroken.providedBy(obj):
-							obj = None
-				except POSError:	
-					logger.error("Ignoring broken object %s, %s", type(obj), uid)
+				if is_broken(obj, uid):
 					obj = None
 			else:
 				obj = self.uidutil.getObject(uid)
