@@ -14,6 +14,12 @@ from hamcrest import has_property
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
+from nti.app.pushnotifications.utils import generate_unsubscribe_url
+
+from nti.dataserver.users.users import User
+
+from nti.dataserver.tests import mock_dataserver
+
 class TestUnsubscribe(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
@@ -45,6 +51,19 @@ class TestUnsubscribe(ApplicationLayerTest):
 
 		# Supply authentication now
 		self.testapp.get('/dataserver2/@@unsubscribe_digest_email', status=200, extra_environ=self._make_extra_environ())
+
+		# Our pref is now false.
+		res = self._fetch_user_url( '/++preferences++', status=200, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body['PushNotifications']['Email'],
+					 has_entry('email_a_summary_of_interesting_changes', False) )
+
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=False)
+	def test_unsubscribe_unauthenticated_with_token(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user( self.default_username )
+			unsub_url = generate_unsubscribe_url( user )
+		self.testapp.get( unsub_url )
 
 		# Our pref is now false.
 		res = self._fetch_user_url( '/++preferences++', status=200, extra_environ=self._make_extra_environ() )

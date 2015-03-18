@@ -31,6 +31,7 @@ from nti.appserver.interfaces import IApplicationSettings
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
+from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
 from nti.common.property import Lazy
 
@@ -320,7 +321,7 @@ class DigestEmailCollector(object):
 		except IntIdMissingError:
 			logger.error("Ignoring removed/unregistered user %s", self.remoteUser)
 			return
-		
+
 		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
 												  IUserNotableData)
 
@@ -408,9 +409,7 @@ class DigestEmailCollector(object):
 				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
 				result[name] = _TemplateArgs(objs, request, self.remoteUser)
 
-		# If we really wanted to, we could stick a user authentication token
-		# on this view, but it's a lot safer not to.
-		result['unsubscribe_link'] = request.resource_url(self.remoteUser, '@@unsubscribe_digest_email')
+		result['unsubscribe_link'] = generate_unsubscribe_url(self.remoteUser)
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
 		# We may want to exclude 'circled' and others from this count?

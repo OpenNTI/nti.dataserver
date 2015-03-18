@@ -20,12 +20,12 @@ import fudge
 import gevent
 import quopri
 
+from unittest import TestCase
+
 from zope import interface
 from zope import component
 
 from nti.app.bulkemail import views as bulk_email_views
-
-from nti.dataserver import contenttypes
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -35,7 +35,9 @@ from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.ntiids import ntiids
 
+from nti.dataserver import contenttypes
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.users.users import User
 
 from nti.appserver.tests import ExLibraryApplicationTestLayer
 
@@ -55,6 +57,9 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.notabledata.interfaces import IUserNotableDataStorage
+
+from nti.app.pushnotifications.utils import validate_signature
+from nti.app.pushnotifications.utils import generate_signature
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
@@ -165,7 +170,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
 		assert_that( msg, contains_string('Steve Johnson added'))
 		assert_that( msg, contains_string('<span>jason.madden@nextthought.com (jason)</span>'))
-		
+
 		assert_that( msg, contains_string('See All Activity'))
 		assert_that( msg, contains_string('http://localhost/NextThoughtWebApp/#!profile/jason/Notifications'))
 
@@ -274,3 +279,14 @@ def send_notable_email_connected(testapp, before_send=None, fake_connect=None):
 	assert_that( res.body, contains_string( 'End Time' ) )
 
 	return msgs
+
+class TestUnsubscribeToken( ApplicationLayerTest ):
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_unsubscribe_signature(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user( self.default_username )
+			secret_key = "IMASECRETKEY"
+			signature = generate_signature(user, secret_key)
+			assert_that( signature, not_none())
+			validate_signature(user, signature, secret_key)
