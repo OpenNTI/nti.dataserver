@@ -13,13 +13,79 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
-import simplejson
+from itsdangerous import BadSignature
 
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
+
+from zope import component
+from zope.security.interfaces import IParticipation
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import restoreInteraction
+from zope.preference.interfaces import IPreferenceGroup
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.pushnotifications.utils import validate_signature
+
+from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.users.users import User
+
+def _do_unsubscribe( request, user ):
+	prefs = component.getUtility(IPreferenceGroup, name='PushNotifications.Email')
+	endInteraction()
+	try:
+		newInteraction( IParticipation( user ) )
+		prefs.email_a_summary_of_interesting_changes = False
+	finally:
+		restoreInteraction()
+
+	request.environ['nti.request_had_transaction_side_effects'] = True # must commit the change
+
+	# TODO We should probably redirect to a prettier URL?
+	request.response.text = _('Thank you. You have been unsubscribed.') # This is not actually translated
+	return request.response
+
+@view_config(route_name='objects.generic.traversal',
+			 request_method='GET',
+			 context=IDataserverFolder,
+			 name='unsubscribe_digest_email_with_token')
+class UnsubscribeWithTokenFromEmailSummaryPush( object ):
+	"""
+	Our unathenticated token view to unsubscribe from email
+	verification.  See ``UnsubscribeFromEmailSummaryPush``.
+	"""
+
+	def __init__(self, request):
+		self.request = request
+
+	def __call__(self):
+		request = self.request
+		values = CaseInsensitiveDict(**request.params)
+		signature = values.get('signature')
+
+		username = values.get('username')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
+		user = User.get_user(username)
+		# TODO Danger of too much info, fishing?
+		# Maybe we need a generic invalid signature message.
+		if user is None:
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
+
+		try:
+			validate_signature(user, signature)
+		except BadSignature:
+			raise hexc.HTTPUnprocessableEntity(_("Invalid signature."))
+		except ValueError as e:
+			msg = _(str(e))
+			raise hexc.HTTPUnprocessableEntity(msg)
+
+		result = _do_unsubscribe( request, user=user )
+		return result
 
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
@@ -52,27 +118,7 @@ class UnsubscribeFromEmailSummaryPush(AbstractAuthenticatedView):
 			# Hmm, entirely unauthenticated. Did we have an entirely
 			# public resource?
 			return request.response
-
-		# Make a sub-request to set the preference, thus coupling us
-		# only to the path, not the implementation. (Is this better or
-		# worse than accessing the named utility?)
-
-		path = '/dataserver2/users/' + environ['REMOTE_USER'] + '/++preferences++/PushNotifications/Email'
-		data = {'email_a_summary_of_interesting_changes': False}
-		json = simplejson.dumps(data)
-
-		subrequest = request.blank(path)
-		subrequest.method = b'PUT'
-		subrequest.environ[b'REMOTE_USER'] = environ['REMOTE_USER']
-		subrequest.environ[b'repoze.who.identity'] = environ['repoze.who.identity'].copy()
-		subrequest.body = json # NOTE: this will be a pain point under py3, body vs text
-		# Make sure we look like a programatic request
-		subrequest.environ[b'HTTP_X_REQUESTED_WITH'] = b'xmlhttprequest'
-		subrequest.possible_site_names = request.possible_site_names
-		self.request.invoke_subrequest( subrequest )
-
-		request.environ['nti.request_had_transaction_side_effects'] = True # must commit the change
-
-		# We should probably redirect to a prettier URL?
-		request.response.text = _('Thank you. You have been unsubscribed.') # This is not actually translated
-		return request.response
+		username = environ['REMOTE_USER']
+		user = User.get_user( username )
+		result = _do_unsubscribe( request, user )
+		return result
