@@ -71,10 +71,9 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
 		user = User.get_user(username)
-		# TODO Danger of too much info, fishing?
-		# Maybe we need a generic invalid signature message.
 		if user is None:
-			raise hexc.HTTPUnprocessableEntity(_("User not found."))
+			# Do not allow fishing for usernames
+			raise hexc.HTTPUnprocessableEntity(_("Invalid signature."))
 
 		try:
 			validate_signature(user, signature)
