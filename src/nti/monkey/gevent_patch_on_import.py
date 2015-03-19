@@ -138,7 +138,6 @@ def _patch_memcache():
 	try:
 		threading.local = object
 		import memcache
-		assert memcache.local is object
 		assert memcache.Client.__bases__ == (object,)
 	finally:
 		threading.local = local
@@ -275,7 +274,6 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 
 	del threading
 	del _threading_local
-
 
 	logger.info( "Monkey-patching the MySQL driver for RelStorage to work with gevent" )
 
