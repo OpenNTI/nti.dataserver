@@ -21,6 +21,7 @@ from zope.keyreference.interfaces import IKeyReference
 from zope.lifecycleevent import IObjectRemovedEvent
 
 from ZODB.interfaces import IConnection
+from ZODB.POSException import POSKeyError
 
 import BTrees
 
@@ -115,7 +116,18 @@ class _OwnerSetMapping(persistent.Persistent):
 									   create=False,
 									   current=False)
 		for ref in for_owner:
-			yield ref()
+			result = ref()
+			try:
+				_read_current( result )
+			except POSKeyError:
+				# We've seen cases (alpha, prod) where
+				# sessions are in our structure, but not in the db.
+				# This may have something to do with partial (?)
+				# commits that occur during ds shutdown.
+				# We clean those up here.
+				discard(for_owner, ref)
+				continue
+			yield result
 
 @interface.implementer(ISessionServiceStorage)
 class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
