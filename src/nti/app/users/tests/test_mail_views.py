@@ -74,13 +74,39 @@ class TestMailViews(ApplicationLayerTest):
 			href, _, = generate_verification_email_url(user)		
 				
 		extra_environ = self._make_extra_environ(user=username)
-		self.testapp.get(href, extra_environ=extra_environ, status=302)
+		result = self.testapp.get(href, extra_environ=extra_environ, status=200)
+		
+		assert_that(result.body, contains_string('html'))
+		assert_that(result.body, contains_string('Thank you!'))
 		
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)
 			assert_that(IUserProfile(user), has_property('email_verified', is_(True)))
 			assert_that(is_email_verified(username), is_(True))
+	
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_verify_user_email_invalid_view(self):
+		username = 'ichigo@bleach.org'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.create_user(username=username, password='temp001',
+						 	 		external_value={ u'email':u"ichigo@bleach.org"})
 			
+			href, _, = generate_verification_email_url(user)		
+		
+		#munge the signature such that the verification fails
+		href += 'baddata'
+				
+		extra_environ = self._make_extra_environ(user=username)
+		result = self.testapp.get(href, extra_environ=extra_environ, status=200)
+		
+		assert_that(result.body, contains_string('html'))
+		assert_that(result.body, contains_string('We\'re Sorry.'))
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user(username)
+			assert_that(IUserProfile(user), has_property('email_verified', is_(False)))
+			assert_that(is_email_verified(username), is_(False))
+	
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_email_verification_link(self):
 		username = 'ichigo'
