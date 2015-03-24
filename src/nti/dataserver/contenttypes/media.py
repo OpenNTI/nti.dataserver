@@ -38,7 +38,7 @@ class Media(ThreadableMixin, UserContentRoot, Contained, SchemaConfigured):
 
 @interface.implementer(IEmbeddedMedia)
 class EmbeddedMedia(Media):
-	pass
+	createDirectFieldProperties(IEmbeddedMedia)
 
 @interface.implementer(IEmbeddedVideo)
 class EmbeddedVideo(EmbeddedMedia):
