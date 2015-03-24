@@ -30,6 +30,10 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.appserver.interfaces import IApplicationSettings
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.appserver.policies.site_policies import guess_site_display_name
+
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver import authorization as nauth
@@ -53,30 +57,22 @@ from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
 
-def _web_root():
+def _login_root():
 	settings = component.getUtility(IApplicationSettings)
-	web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
-	return web_root
+	login_root = settings.get('login_app_root', '/login/')
+	return login_root
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_VIEW,
 			 request_method='GET',
+			 renderer='templates/email_verification_completion_page.pt',
 			 context=IDataserverFolder)
 class VerifyUserEmailView(object):
 
 	def __init__(self, request):
 		self.request = request
-
-	def __call__(self):
-		request = self.request
-		values = CaseInsensitiveDict(**request.params)
-		signature = values.get('signature') or values.get('token')
-		if not signature:
-			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
-
-		username = values.get('username')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
+		
+	def process_verification(self, username, signature, values):
 		user = get_user(username)
 		if user is None:
 			raise hexc.HTTPUnprocessableEntity(_("User not found."))
@@ -93,17 +89,33 @@ class VerifyUserEmailView(object):
 		IUserProfile(user).email_verified = True
 		lifecycleevent.modified(user) # make sure we update the index
 
-		# We expect this view to only be used via emailed
-		# links; therefore, we prefer to redirect them to
-		# some application context upon success.
-		return_url = values.get('return_url')
-		if return_url:
-			return hexc.HTTPFound(location=return_url)
-		elif request.application_url:
-			app_url = urljoin( request.application_url, _web_root() )
-			return hexc.HTTPFound(location=app_url)
+	def __call__(self):
+		request = self.request
+		values = CaseInsensitiveDict(**request.params)
+		signature = values.get('signature') or values.get('token')
+		if not signature:
+			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
 
-		return hexc.HTTPNoContent()
+		username = values.get('username')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
+		
+		destination_url = urljoin( self.request.application_url, _login_root() )
+		template_args = {'href': destination_url}
+		
+		policy = component.getUtility(ISitePolicyUserEventListener)
+		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
+		template_args['support_email'] = support_email
+		template_args['error_message'] = None
+		template_args['site_name'] = guess_site_display_name(self.request)
+		try:
+			self.process_verification(username, signature, values)
+		except hexc.HTTPError as e:
+			logger.info('Account verification for username "%s" failed. %s', username, getattr(e, 'detail', ''))
+			template_args['error_message'] = _("Unable to verify account.")
+			
+		return template_args
+			
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
