@@ -115,7 +115,8 @@ class _OwnerSetMapping(persistent.Persistent):
 		for_owner = self.set_for_owner(session_owner,
 									   create=False,
 									   current=False)
-		for ref in for_owner:
+
+		for ref in tuple(for_owner):
 			result = ref()
 			try:
 				_read_current( result )
