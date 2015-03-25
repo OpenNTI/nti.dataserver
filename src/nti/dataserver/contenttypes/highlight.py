@@ -13,7 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IHighlight
+from nti.dataserver.interfaces import IPresentationPropertyHolder
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -22,20 +23,20 @@ UserContentRoot = UserContentRoot # BWC top-level import
 
 from .selectedrange import SelectedRange # BWC top-level import
 
-@interface.implementer(nti_interfaces.IHighlight)
+@interface.implementer(IHighlight)
 class Highlight(SelectedRange): #, _HighlightBWC):
 	"""
 	Implementation of a highlight.
 	"""
-	createDirectFieldProperties(nti_interfaces.IPresentationPropertyHolder)
-	createDirectFieldProperties(nti_interfaces.IHighlight)
+	createDirectFieldProperties(IPresentationPropertyHolder)
+	createDirectFieldProperties(IHighlight)
 
 	def __init__( self ):
 		super(Highlight,self).__init__()
 
 from .selectedrange import SelectedRangeInternalObjectIO
 
-@component.adapter(nti_interfaces.IHighlight)
+@component.adapter(IHighlight)
 class HighlightInternalObjectIO(SelectedRangeInternalObjectIO):
 
 	_ext_primitive_out_ivars_ = { 'style' } | SelectedRangeInternalObjectIO._ext_primitive_out_ivars_

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Definition of the Note object.
 
@@ -15,11 +16,18 @@ import six
 from zope import component
 from zope import interface
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.schema.fieldproperty import FieldProperty
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IMedia
+from nti.dataserver.interfaces import ICanvas
+from nti.dataserver.interfaces import IRatable
+from nti.dataserver.interfaces import ILikeable
+from nti.dataserver.interfaces import IFlaggable
+from nti.dataserver.interfaces import INamedFile
+from nti.dataserver.interfaces import IFavoritable
 
 from nti.dataserver.core.schema import BodyFieldProperty
 
@@ -28,23 +36,25 @@ from nti.externalization.internalization import update_from_external_object
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from .base import _make_getitem
+
 from .highlight import Highlight
+
 from .threadable import ThreadableMixin
 
 # Ownership (containment) and censoring are already taken care of by the
 # event listeners on IBeforeSequenceAssignedEvent
 BodyFieldProperty = BodyFieldProperty # BWC alias
 
-_style_field = nti_interfaces.INote['style'].bind(None)
+_style_field = INote['style'].bind(None)
 _style_field.default = 'suppressed'
-@interface.implementer(nti_interfaces.INote,
-					    # requires annotations
-					   nti_interfaces.ILikeable,
-					   nti_interfaces.IFavoritable,
-					   nti_interfaces.IFlaggable,
-					   nti_interfaces.IRatable,
+@interface.implementer(INote,
+					   # requires annotations
+					   ILikeable,
+					   IFavoritable,
+					   IFlaggable,
+					   IRatable,
 					   # provides annotations
-					   an_interfaces.IAttributeAnnotatable )
+					   IAttributeAnnotatable )
 class Note(ThreadableMixin, Highlight):
 	"""
 	Implementation of a note.
@@ -59,9 +69,9 @@ class Note(ThreadableMixin, Highlight):
 	#: We override the default highlight style to suppress it.
 	style = FieldProperty(_style_field)
 
-	body = BodyFieldProperty(nti_interfaces.INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
+	body = BodyFieldProperty(INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
 
-	title = FieldProperty(nti_interfaces.INote['title'])
+	title = FieldProperty(INote['title'])
 
 	def __init__(self):
 		super(Note,self).__init__()
@@ -71,7 +81,7 @@ class Note(ThreadableMixin, Highlight):
 from .highlight import HighlightInternalObjectIO
 from .threadable import ThreadableExternalizableMixin
 
-@component.adapter(nti_interfaces.INote)
+@component.adapter(INote)
 class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObjectIO):
 
 	def _resolve_external_body( self, context, parsed, body ):
@@ -90,15 +100,18 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			body = [body]
 
 		for i, item in enumerate(body):
-			if not (nti_interfaces.ICanvas.providedBy(item) or nti_interfaces.IMedia.providedBy(item)):
+			if not (ICanvas.providedBy(item) or IMedia.providedBy(item) or \
+					INamedFile.providedBy(item)):
 				continue
 
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
 			if 'NTIID' not in ext_val:
 				continue
+	
 			existing_object = find_object_with_ntiid(ext_val['NTIID'])
 			if getattr(existing_object, '__parent__', None) is not note:
 				continue
+
 			# Ok, so we found one of my children. Update it in place. Don't notify for it,
 			# so that it doesn't falsely get in a stream or whatever
 			__traceback_info__ = i, item, ext_val, existing_object, note

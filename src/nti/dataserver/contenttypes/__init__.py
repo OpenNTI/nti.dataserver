@@ -20,12 +20,14 @@ logger = __import__('logging').getLogger(__name__)
 # ... but not the mixins
 # from .threadable import ThreadableMixin
 # from .threadable import ThreadableExternalizableMixin
-
 # from .base import UserContentRoot as _UserContentRoot
 
 from .bookmark import Bookmark
+
 from .highlight import Highlight
+
 from .note import Note
+
 from .redaction import Redaction
 
 from .media import Media

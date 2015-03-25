@@ -1128,12 +1128,14 @@ class ITranscriptContainer(INamedContainer):
 # BWC exports
 from nti.dataserver.core.interfaces import IMedia
 from nti.dataserver.core.interfaces import ICanvas
+from nti.dataserver.core.interfaces import INamedFile
 from nti.dataserver.core.interfaces import IEmbeddedAudio
 from nti.dataserver.core.interfaces import IEmbeddedMedia
 from nti.dataserver.core.interfaces import IEmbeddedVideo
 
 IMedia = IMedia
 ICanvas = ICanvas
+INamedFile = INamedFile
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo

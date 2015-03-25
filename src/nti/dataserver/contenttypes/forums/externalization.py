@@ -14,9 +14,11 @@ logger = __import__('logging').getLogger(__name__)
 from nti.dataserver.interfaces import IThreadable
 
 from ..threadable import ThreadableExternalizableMixin
+
 from ..base import UserContentRootInternalObjectIOMixin
 
-class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,UserContentRootInternalObjectIOMixin):
+class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
+												  UserContentRootInternalObjectIOMixin):
 	"""
 	Some of our objects are threadable, some are not, so
 	we distinguish here. This was easier than registering custom
@@ -27,7 +29,7 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 	"""
 
 	def _ext_can_write_threads(self):
-		return IThreadable.providedBy(self._ext_replacement() )
+		return IThreadable.providedBy(self._ext_replacement())
 
 	def _ext_can_update_threads(self):
 		return (super(_MaybeThreadableForumObjectInternalObjectIO,self)._ext_can_update_threads()
