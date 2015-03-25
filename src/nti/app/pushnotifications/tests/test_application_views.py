@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import contains_string
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -63,9 +64,27 @@ class TestUnsubscribe(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.get_user( self.default_username )
 			unsub_url = generate_unsubscribe_url( user )
-		self.testapp.get( unsub_url )
+		unsubscribeResult = self.testapp.get( unsub_url )
+		
+		assert_that(unsubscribeResult.body, contains_string('html'))
+		assert_that(unsubscribeResult.body, contains_string('You have been unsubscribed.'))
 
 		# Our pref is now false.
 		res = self._fetch_user_url( '/++preferences++', status=200, extra_environ=self._make_extra_environ() )
 		assert_that( res.json_body['PushNotifications']['Email'],
 					 has_entry('email_a_summary_of_interesting_changes', False) )
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=False)
+	def test_unsubscribe_unauthenticated_with_token_fails(self):
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user( self.default_username )
+			unsub_url = generate_unsubscribe_url( user )+'baddata'
+		unsubscribeResult = self.testapp.get( unsub_url )
+		
+		assert_that(unsubscribeResult.body, contains_string('html'))
+		assert_that(unsubscribeResult.body, contains_string('We\'re sorry.'))
+
+		# Our pref is now false.
+		res = self._fetch_user_url( '/++preferences++', status=200, extra_environ=self._make_extra_environ() )
+		assert_that( res.json_body['PushNotifications']['Email'],
+					 has_entry('email_a_summary_of_interesting_changes', True) )
