@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Base functionality.
 
@@ -20,9 +21,15 @@ from nti.common.property import alias
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
-from nti.dataserver import users
-from nti.dataserver import sharing
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import User
+from nti.dataserver.users import Entity
+
+from nti.dataserver.sharing import ShareableMixin
+
+from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import IWritableShared
+from nti.dataserver.interfaces import IUsernameIterable
+from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 
 from nti.dataserver.core.mixins import ZContainedMixin
 
@@ -35,11 +42,11 @@ from nti.ntiids import ntiids
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 def _get_entity( username, dataserver=None ):
-	return users.Entity.get_entity( username, dataserver=dataserver, 
-									_namespace=users.User._ds_namespace )
+	return Entity.get_entity( username, dataserver=dataserver, 
+							  _namespace=User._ds_namespace )
 
-@interface.implementer(nti_interfaces.IModeledContent)
-class UserContentRoot(sharing.ShareableMixin, 
+@interface.implementer(IModeledContent)
+class UserContentRoot(ShareableMixin, 
 					  ZContainedMixin, 
 					  CreatedModDateTrackingObject, 
 					  PersistentPropertyHolder):
@@ -139,7 +146,7 @@ class UserContentRootInternalObjectIOMixin(object):
 				# This last clause is our nod to security; need to be firmer
 
 				obj = ntiids.find_object_with_ntiid( s )
-				iterable = nti_interfaces.IUsernameIterable( obj, None )
+				iterable = IUsernameIterable( obj, None )
 				if iterable is not None:
 					ents = set()
 					for uname in iterable:
@@ -149,7 +156,6 @@ class UserContentRootInternalObjectIOMixin(object):
 					if self.context.creator in ents:
 						ents.discard( self.context.creator ) # don't let the creator slip in there
 						target = tuple(ents)
-
 
 			# We only add target, and only if it is non-none and
 			# resolver. Otherwise we are falsely implying sharing
@@ -170,23 +176,24 @@ class UserContentRootInternalObjectIOMixin(object):
 			pass
 		super(UserContentRootInternalObjectIOMixin,self).updateFromExternalObject( parsed, *args, **kwargs )
 
-		if nti_interfaces.IWritableShared.providedBy( self.context ) and sharedWith is not self:
+		if IWritableShared.providedBy( self.context ) and sharedWith is not self:
 			self._orig_sharingTargets = set(self.context.sharingTargets)
 			self._update_sharing_targets( sharedWith )
 
 	def _ext_adjust_modified_event( self, event ):
 		if self._orig_sharingTargets is not None:
 			# Yes, we attempted to change the sharing settings.
-			interface.alsoProvides( event, nti_interfaces.IObjectSharingModifiedEvent )
+			interface.alsoProvides( event, IObjectSharingModifiedEvent )
 			event.oldSharingTargets = self._orig_sharingTargets
 		return event
 
 @interface.implementer(IInternalObjectIO)
 class UserContentRootInternalObjectIO(UserContentRootInternalObjectIOMixin,InterfaceObjectIO):
 
-	_ext_iface_upper_bound = nti_interfaces.IModeledContent
+	_ext_iface_upper_bound = IModeledContent
 
-#	_excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
+	# _excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 
+	#						   'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 	def __init__( self, context ):
 		super(UserContentRootInternalObjectIO,self).__init__(context)

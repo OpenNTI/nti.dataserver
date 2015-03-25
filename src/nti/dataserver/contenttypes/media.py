@@ -18,16 +18,16 @@ from zope.container.contained import Contained
 from nti.schema.schema import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .base import UserContentRoot
-from .base import UserContentRootInternalObjectIO
-
-from .threadable import ThreadableMixin
-
 from ..interfaces import IMedia
 from ..interfaces import IZContained
 from ..interfaces import IEmbeddedMedia
 from ..interfaces import IEmbeddedAudio
 from ..interfaces import IEmbeddedVideo
+
+from .base import UserContentRoot
+from .base import UserContentRootInternalObjectIO
+
+from .threadable import ThreadableMixin
 
 @interface.implementer(IMedia, IZContained)
 class Media(ThreadableMixin, UserContentRoot, Contained, SchemaConfigured):

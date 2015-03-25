@@ -9,11 +9,11 @@ This can be stored as a sequence of four floats between 0.0 and 1.0: [R, G, B, A
 This can be represented for external clients as both a string of those
 four floating point numbers::
 
-    1.0, 1.0, 0.9, 0.5
+	1.0, 1.0, 0.9, 0.5
 
 Or in CSS syntax::
 
-    rgb(255, 255, 230)
+	rgb(255, 255, 230)
 
 
 Note that the CSS value is missing the opacity, so a secondary property is required
@@ -69,13 +69,18 @@ def _update_from_rgba(arr, string, alpha=1.0):
 		string = string.strip()[5:-1].split(',')
 		string = ' '.join(string)
 	rgba = string.split(' ')
-	if len(rgba) == 3: rgba = list(rgba); rgba.append(alpha)
+	if len(rgba) == 3: 
+		rgba = list(rgba)
+		rgba.append(alpha)
+		
 	r, g, b, a = map(float, rgba)
 	assert 0.0 <= r <= 1.0
 	assert 0.0 <= g <= 1.0
 	assert 0.0 <= b <= 1.0
+	
 	arr[0], arr[1], arr[2] = r, g, b
 	assert 0.0 <= a <= 1.0
+
 	arr[3] = a
 
 def _write_rgba(val):
@@ -109,13 +114,13 @@ def createColorProperty(color_name, r=1.0, g=1.0, b=1.0, opacity=1.0):
 	properties. For example, given the name ``fill``,
 	you will get::
 
-	    _fill_rgba = (1.0, 1.0, 1.0, 1.0)
-	    @property
-	    def fillRGBAColor(self): ...
-	    @property
-	    def fillColor(self): ...
-	    @property
-	    def fillOpacity(self): ...
+		_fill_rgba = (1.0, 1.0, 1.0, 1.0)
+		@property
+		def fillRGBAColor(self): ...
+		@property
+		def fillColor(self): ...
+		@property
+		def fillOpacity(self): ...
 
 	"""
 	frame = sys._getframe(1)

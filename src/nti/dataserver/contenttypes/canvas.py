@@ -11,24 +11,29 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import persistent
-from persistent.list import PersistentList
-
 import six
 import numbers
 from urllib import quote as urlquote
 
 from zope import interface
 from zope import component
-import zope.schema.interfaces
+from zope.schema.interfaces import WrongType
+from zope.schema.interfaces import WrongContainedType
 
-from nti.contentfragments import interfaces as frg_interfaces
+from persistent import Persistent
+from persistent.list import PersistentList
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.contentfragments.interfaces import IUnicodeContentFragment
+
+from nti.dataserver.interfaces import ICanvas
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
+
 from nti.externalization.datastructures import ExternalizableInstanceDict
+
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
@@ -39,7 +44,8 @@ from .base import UserContentRoot, _make_getitem
 #####
 # Whiteboard shapes
 #####
-@interface.implementer(nti_interfaces.ICanvas, nti_interfaces.IZContained)
+
+@interface.implementer(ICanvas, IZContained)
 class Canvas(ThreadableMixin, UserContentRoot):
 
 	# TODO: We're not trying to resolve any incoming external
@@ -61,7 +67,7 @@ class Canvas(ThreadableMixin, UserContentRoot):
 	def append(self, shape):
 		if not isinstance(shape, _CanvasShape):
 			__traceback_info__ = shape
-			raise zope.schema.interfaces.WrongContainedType()
+			raise WrongContainedType()
 		self.shapeList.append(shape)
 		shape.__parent__ = self
 		shape.__name__ = unicode(len(self.shapeList) - 1)
@@ -93,7 +99,7 @@ class Canvas(ThreadableMixin, UserContentRoot):
 from .base import UserContentRootInternalObjectIO
 from .threadable import ThreadableExternalizableMixin
 
-@component.adapter(nti_interfaces.ICanvas)
+@component.adapter(ICanvas)
 class CanvasInternalObjectIO(ThreadableExternalizableMixin, UserContentRootInternalObjectIO):
 
 	# TODO: We're not trying to resolve any incoming external
@@ -187,8 +193,7 @@ class CanvasAffineTransform(object):
 				__traceback_info__ = k, val
 				if not isinstance(val, numbers.Number):
 					# match the schema-driven updates
-					raise zope.schema.interfaces.WrongType(val, numbers.Number, k)
-
+					raise WrongType(val, numbers.Number, k)
 				setattr(self, k, val)
 
 	def toExternalDictionary(self, mergeFrom=None):
@@ -218,7 +223,7 @@ class CanvasAffineTransform(object):
 from .color import createColorProperty
 from .color import updateColorFromExternalValue
 
-@interface.implementer(IExternalObject, nti_interfaces.IZContained)
+@interface.implementer(IExternalObject, IZContained)
 class _CanvasShape(ExternalizableInstanceDict):
 
 	__parent__ = None
@@ -261,7 +266,6 @@ class _CanvasShape(ExternalizableInstanceDict):
 	def strokeWidth(self):
 		return "{:.3%}".format(self._stroke_width / 100)
 
-
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		super(_CanvasShape, self).updateFromExternalObject(parsed, *args, **kwargs)
 		# The matrix, if given, convert to our points
@@ -294,7 +298,8 @@ class _CanvasShape(ExternalizableInstanceDict):
 		# Avoid the creation of a temporary object and externalize directly
 		mergeFrom['transform'] = LocatedExternalDict(a=self._a, b=self._b, c=self._c, d=self._d,
 													 tx=self._tx, ty=self._ty,
-													 Class=CanvasAffineTransform.__name__, MimeType=CanvasAffineTransform.mime_type)
+													 Class=CanvasAffineTransform.__name__,
+													 MimeType=CanvasAffineTransform.mime_type)
 		# self.transform.toExternalDictionary()
 
 		mergeFrom['strokeRGBAColor'] = self.strokeRGBAColor
@@ -332,7 +337,6 @@ class _CanvasPolygonShape(_CanvasShape):
 
 	_ext_primitive_out_ivars_ = _CanvasShape._ext_primitive_out_ivars_.union({'sides'})
 
-
 	def __init__(self, sides=4):
 		super(_CanvasPolygonShape, self).__init__()
 		self.sides = sides
@@ -364,7 +368,7 @@ class _CanvasTextShape(_CanvasShape):
 		super(_CanvasTextShape, self).updateFromExternalObject(*args, **kwargs)
 		assert isinstance(self.text, six.string_types)
 		if self.text != tbf:
-			self.text = component.getAdapter(self.text, frg_interfaces.IUnicodeContentFragment, name='text')
+			self.text = component.getAdapter(self.text, IUnicodeContentFragment, name='text')
 
 from nti.links import links
 
@@ -406,8 +410,10 @@ class _CanvasUrlShape(_CanvasShape):
 			# for canvas-in-chat-message)
 			target = to_external_ntiid_oid(self._file, add_to_connection=True)
 			if target:
-				link = links.Link(target=target, target_mime_type=self._file.mimeType, elements=('@@view',), rel="data")
-				interface.alsoProvides(link, nti_interfaces.ILinkExternalHrefOnly)
+				link = links.Link(target=target, 
+								  target_mime_type=self._file.mimeType,
+								  elements=('@@view',), rel="data")
+				interface.alsoProvides(link, ILinkExternalHrefOnly)
 				result['url'] = link
 			else:
 				logger.warn("Unable to produce URL for file data in %s", self)
@@ -441,7 +447,6 @@ class _CanvasUrlShape(_CanvasShape):
 			self._file.__parent__ = self.__parent__
 			self.__dict__['url'] = None
 			return True
-
 
 	def __repr__(self):
 		return '<%s>' % self.__class__.__name__
@@ -494,12 +499,12 @@ class _CanvasPathShape(_CanvasShape):
 # A migration has moved all old objects to the new version;
 # now we need to deprecate the old version and be sure that they don't
 # get loaded anymore, then we can delete the class
-class CanvasShape(_CanvasShape, persistent.Persistent): pass
-class CanvasCircleShape(_CanvasCircleShape, persistent.Persistent): pass
-class CanvasPolygonShape(_CanvasPolygonShape, persistent.Persistent): pass
-class CanvasTextShape(_CanvasTextShape, persistent.Persistent): pass
-class CanvasUrlShape(_CanvasUrlShape, persistent.Persistent): pass
-class CanvasPathShape(_CanvasPathShape, persistent.Persistent): pass
+class CanvasShape(_CanvasShape, Persistent): pass
+class CanvasUrlShape(_CanvasUrlShape, Persistent): pass
+class CanvasPathShape(_CanvasPathShape, Persistent): pass
+class CanvasTextShape(_CanvasTextShape, Persistent): pass
+class CanvasCircleShape(_CanvasCircleShape, Persistent): pass
+class CanvasPolygonShape(_CanvasPolygonShape, Persistent): pass
 
 class NonpersistentCanvasShape(_CanvasShape):
 	__external_can_create__ = True
