@@ -28,6 +28,10 @@ from zope.preference.interfaces import IPreferenceGroup
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.pushnotifications.utils import validate_signature
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
+from nti.appserver.policies.site_policies import guess_site_display_name
+
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
@@ -52,6 +56,7 @@ def _do_unsubscribe( request, user ):
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
 			 context=IDataserverFolder,
+			 renderer='templates/unsubscribe_response.pt',
 			 name='unsubscribe_digest_email_with_token')
 class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 	"""
@@ -61,19 +66,11 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 
 	def __init__(self, request):
 		self.request = request
-
-	def __call__(self):
-		request = self.request
-		values = CaseInsensitiveDict(**request.params)
-		signature = values.get('signature')
-
-		username = values.get('username')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
+		
+	def processUnsubscribe(self, username, signature, values):
 		user = User.get_user(username)
 		if user is None:
-			# Do not allow fishing for usernames
-			raise hexc.HTTPUnprocessableEntity(_("Invalid signature."))
+			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
 		try:
 			validate_signature(user, signature)
@@ -82,9 +79,39 @@ class UnsubscribeWithTokenFromEmailSummaryPush( object ):
 		except ValueError as e:
 			msg = _(str(e))
 			raise hexc.HTTPUnprocessableEntity(msg)
+		
+		return _do_unsubscribe( self.request, user=user )
 
-		result = _do_unsubscribe( request, user=user )
-		return result
+	def __call__(self):
+		request = self.request
+		values = CaseInsensitiveDict(**request.params)
+		
+		signature = values.get('signature')
+		if not signature:
+			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
+		
+		username = values.get('username')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
+		
+		policy = component.getUtility(ISitePolicyUserEventListener)
+		
+		template_args = {}
+		template_args['support_email'] = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
+		template_args['error_message'] = None
+		template_args['site_name'] = guess_site_display_name(self.request)
+		
+		try:
+			self.processUnsubscribe(username, signature, values)
+		except hexc.HTTPError as e:
+			logger.info('Unable to unsubscribe "%s" from email notifications. %s', username, getattr(e, 'detail', ''))
+			
+			#we don't want to expose the ability to fish for active usernames so just return a generic error message here
+			template_args['error_message'] = _("Unable to unsubscribe from email notifications.")
+		
+		template_args['error_message'] = None
+		
+		return template_args
 
 @view_config(route_name='objects.generic.traversal',
 			 request_method='GET',
