@@ -101,13 +101,10 @@ class UnsubscribeFromEmailSummaryPush(AbstractAuthenticatedView):
 	it's best for logging purposes to generate links that include the user
 	in the path.
 
-	We may register this view as a ``token`` based view so that
-	authentication is automatic, but it is safer to require explicit
-	authentication (in my experience it seems to be about 50/50 for
-	what sites do, and in general the more likely the email is
-	valuable to you and not marketing spam the more likely they are to
-	require authentication); we'll go with that to start with and see
-	if we get complaints.
+	20150325 - JZ
+	Deprecating this view in favor of the unauth-token view above. Once
+	users have ample time to use this link from legacy emails, this view
+	can be removed.
 	"""
 
 	def __call__(self):

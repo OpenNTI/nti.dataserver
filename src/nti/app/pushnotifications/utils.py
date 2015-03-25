@@ -26,6 +26,10 @@ def _signature(username, secret_key):
 	return signature
 
 def validate_signature( user, signature, secret_key=None ):
+	"""
+	Validate the given signature for the given user, raising
+	an exception if the data does not match.
+	"""
 	username = user.username.lower()
 	intids = component.getUtility(zope.intid.IIntIds)
 
