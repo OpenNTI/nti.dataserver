@@ -16,7 +16,6 @@ from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
-from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.catalog.interfaces import ICatalog
 
@@ -1184,17 +1183,11 @@ class IPresentationPropertyHolder(interface.Interface):
 								  required=False,
 								  default=None)
 
-class IContainerContext(interface.Interface):
-	"""
-	An object that represents the context of the given container.
-	"""
-	context_id = ValidText(title="The ntiid of the context.", default='')
+# BWC exports
+from nti.dataserver.core.interfaces import IContainerContext
+from nti.dataserver.core.interfaces import IContextAnnotatable
 
-class IContextAnnotatable(IAttributeAnnotatable):
-	"""
-	Marker interface that the given object may have a root
-	'context' object, represented by ``IContainerContext``.
-	"""
+IContainerContext = IContainerContext
 
 class IHighlight(IPresentationPropertyHolder,
 				 ISelectedRange,
