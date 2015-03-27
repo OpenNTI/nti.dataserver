@@ -9,7 +9,7 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-	
+
 	<!-- Events for keeping replies and referents updated. -->
 	<subscriber handler=".threadable.threadable_added" />
 	<subscriber handler=".threadable.threadable_removed" />
@@ -31,6 +31,7 @@
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<adapter factory=".highlight.HighlightInternalObjectIO"/>
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
+	<adapter factory=".adapters._ContainerContext" />
 
 	<!-- Blob file URL storage for canvas images -->
 

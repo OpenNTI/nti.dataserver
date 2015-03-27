@@ -438,7 +438,7 @@
 
 	<include package="." file="configure_invitations.zcml" />
 	<include package=".policies" file="configure.zcml" />
-	
+
 	<include package=".dashboard" />
 	<include package="nti.app.forums" />
 	<include package="nti.app.contentlibrary" />
@@ -463,7 +463,11 @@
 	<subscriber factory=".decorators._SiteNameAdder"
 				for=".interfaces.ILogonPong"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
-				
+
+	<subscriber factory=".decorators._ContainerContextDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IContextAnnotatable" />
+
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.users" />

@@ -16,6 +16,7 @@ from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.catalog.interfaces import ICatalog
 
@@ -172,7 +173,7 @@ class IShardLayout(interface.Interface):
 	shards = Object( IContainerContained,
 					 title="The root shard will contain a shards folder.",
 					 required=False)
-	
+
 	root_folder = Object( zope.site.interfaces.IRootFolder,
 						  title="The root shard will contain the root folder",
 						  required=False)
@@ -197,7 +198,7 @@ from nti.site.interfaces import ISiteTransactionRunner
 IDataserverTransactionRunner = ISiteTransactionRunner
 
 class IOIDResolver(interface.Interface):
-	
+
 	def get_object_by_oid(oid_string, ignore_creator=False):
 		"""
 		Given an object id string as found in an OID value
@@ -548,7 +549,7 @@ IShouldHaveTraversablePath = IShouldHaveTraversablePath
 
 class IEntity(IIdentity, IZContained, IAnnotatable, IShouldHaveTraversablePath,
 			  INeverStoredInSharedStream):
-	
+
 	username = DecodingValidTextLine(
 		title=u'The username',
 		constraint=valid_entity_username
@@ -1183,8 +1184,21 @@ class IPresentationPropertyHolder(interface.Interface):
 								  required=False,
 								  default=None)
 
+class IContainerContext(interface.Interface):
+	"""
+	An object that represents the context of the given container.
+	"""
+	context_id = ValidText(title="The ntiid of the context.", default='')
+
+class IContextAnnotatable(IAttributeAnnotatable):
+	"""
+	Marker interface that the given object may have a root
+	'context' object, represented by ``IContainerContext``.
+	"""
+
 class IHighlight(IPresentationPropertyHolder,
-				 ISelectedRange):
+				 ISelectedRange,
+				 IContextAnnotatable):
 	"""
 	A highlighted portion of content the user wishes to remember.
 	"""
@@ -1195,7 +1209,7 @@ class IHighlight(IPresentationPropertyHolder,
 
 from nti.contentfragments.schema import TextUnicodeContentFragment
 
-class IRedaction(ISelectedRange):
+class IRedaction(ISelectedRange, IContextAnnotatable):
 	"""
 	A portion of the content the user wishes to ignore or 'un-publish'.
 	It may optionally be provided with an (inline) :attr:`replacementContent`
@@ -1440,7 +1454,7 @@ class IMetadataCatalog(ICatalog):
 
 class IPrincipalMetadataObjects(IIntIdIterable):
 	"""
-	A predicate to return objects can be indexed in the metadata catalog 
+	A predicate to return objects can be indexed in the metadata catalog
 	for a principal
 
 	These will typically be registered as subscription adapters
