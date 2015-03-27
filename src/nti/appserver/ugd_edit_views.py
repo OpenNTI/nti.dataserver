@@ -127,6 +127,24 @@ class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixi
 		# We used to ACL proxy here
 		return containedObject
 
+class ContainerContextUGDPostView( UGDPostView ):
+	"""
+	A subclass of ``UGDPostView`` that injects a context_id on
+	the inbound object, if applicable. Useful for determining
+	where the object was created contextually.
+
+	Reading/Editing/Deleting will remain the same.
+	"""
+
+	def _transform_incoming_object(self, containedObject):
+		obj = super( ContainerContextUGDPostView, self )._transform_incoming_object( containedObject )
+		container_context = nti_interfaces.IContainerContext( obj, None )
+
+		if container_context:
+			container_context.context_id = toExternalOID( self.context )
+		return obj
+
+
 class UGDDeleteView(AbstractAuthenticatedView,
 					ModeledContentEditRequestUtilsMixin):
 	"""
