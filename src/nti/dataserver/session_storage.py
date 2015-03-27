@@ -84,6 +84,7 @@ class _OwnerSetMapping(persistent.Persistent):
 			ref = IKeyReference(session)
 		except NotYet:
 			# ok, can we find an owner user? Fallback is us
+			# TODO Why are we doing this?
 			user = users.User.get_user(session.owner)
 			for o in user, self:
 				try:
@@ -124,8 +125,8 @@ class _OwnerSetMapping(persistent.Persistent):
 				# We've seen cases (alpha, prod) where
 				# sessions are in our structure, but not in the db.
 				# This may have something to do with partial (?)
-				# commits that occur during ds shutdown.
-				# We clean those up here.
+				# commits between multiple dbs that may occur
+				# during ds shutdown. We clean those up here.
 				discard(for_owner, ref)
 				continue
 			yield result
