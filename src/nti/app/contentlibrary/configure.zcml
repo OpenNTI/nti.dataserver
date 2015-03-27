@@ -97,7 +97,7 @@
 	<adapter factory=".adapters.bundle_to_principal"
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle"
 			 provides="zope.security.interfaces.IPrincipal" />
-			 
+
 	<!-- Externalization -->
 	<!-- Note that we want to use the externalization already present, we just need the
 	correct factories registered -->
@@ -111,11 +111,14 @@
 				for="nti.appserver.interfaces.IContentUnitInfo
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._ContentBundlePagesLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle
 					 pyramid.interfaces.IRequest"/>
-					 
+
 	<!-- this thing is not a real IBundle -->
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
