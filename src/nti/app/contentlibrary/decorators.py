@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
+from zope.location.interfaces import ILocation
 
 from pyramid.interfaces import IRequest
 
@@ -18,11 +19,18 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.interfaces import IContentUnitInfo
 
+from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.externalization.interfaces import IExternalMappingDecorator
+from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.links.links import Link
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
+
+LINKS = StandardExternalFields.LINKS
 
 def get_content_package_ntiid(ntiid):
 	library = component.queryUtility(IContentPackageLibrary)
@@ -46,11 +54,29 @@ class _ContentUnitInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			except AttributeError:
 				result = False
 		return result
-	
+
 	def _do_decorate_external(self, context, result):
 		ntiid = get_content_package_ntiid(context.contentUnit.ntiid)
 		if ntiid is not None:
 			result['ContentPackageNTIID'] = ntiid
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IContentPackageBundle)
+class _ContentBundlePagesLinkDecorator(object):
+	"""
+	Places a link to the pages view of a content bundle.
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping( self, context, result ):
+		_links = result.setdefault(LINKS, [])
+
+		link = Link(context, rel='Pages', elements=('Pages',))
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
 
 class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDecorator):
 	"""
