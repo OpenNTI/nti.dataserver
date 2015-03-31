@@ -115,7 +115,6 @@ class VerifyUserEmailView(object):
 			template_args['error_message'] = _("Unable to verify account.")
 			
 		return template_args
-			
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
@@ -167,10 +166,10 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 		else:
 			email = profile.email
 
-		if profile.email_verified:
+		if not profile.email_verified:
 			now  = time.time()
 			last_time = get_email_verification_time(user) or 0
-			if now - last_time > 3600: # wait an hour
+			if now - last_time > 1800: # wait half hour
 				safe_send_email_verification(user, profile, email, self.request)
 		return hexc.HTTPNoContent()
 
