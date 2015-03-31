@@ -146,10 +146,18 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 class RequestEmailVerificationView(	AbstractAuthenticatedView,
 									ModeledContentUploadRequestUtilsMixin):
 
+	def readInput(self, value=None):
+		if self.request.body:
+			values = self.read_body_as_external_object( self.request )
+		else:
+			values = self.request.params
+		result = CaseInsensitiveDict( values )
+		return result
+
 	def __call__(self):
 		user = self.remoteUser
 		profile = IUserProfile(user)
-		email = CaseInsensitiveDict(self.readInput()).get('email')
+		email = self.readInput().get('email')
 		if email:
 			try:
 				checkEmailAddress(email)
@@ -161,7 +169,7 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 		else:
 			email = profile.email
 
-		if not profile.email_verified:
+		if email and not profile.email_verified:
 			now  = time.time()
 			last_time = get_email_verification_time(user) or 0
 			if now - last_time > 1800: # wait half hour
