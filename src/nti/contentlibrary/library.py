@@ -271,7 +271,7 @@ class AbstractContentPackageLibrary(object):
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
 		## updated pacakges
-		packages = tuple(_content_packages_by_ntiid.keys()) if not packages else packages
+		packages = set(_content_packages_by_ntiid.keys()) if not packages else packages
 		if something_changed or never_synced:
 			## CS/JZ, 1-29-15 We need this before event firings because some code
 			## (at least question_map.py used to) relies on getting the new content units
@@ -332,7 +332,7 @@ class AbstractContentPackageLibrary(object):
 			notify(event)
 
 		## Finish up by saying that we sync'd, even if nothing changed
-		notify(ContentPackageLibraryDidSyncEvent(self))
+		notify(ContentPackageLibraryDidSyncEvent(self, packages))
 
 		self._enumeration.lastSynchronized = time.time()
 		if something_changed or never_synced:

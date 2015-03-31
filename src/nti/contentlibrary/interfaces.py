@@ -294,9 +294,17 @@ class IContentPackageLibraryDidSyncEvent(IObjectEvent):
 	A library completed synchronization, with or without changes.
 	"""
 
+	packages = IndexedIterable(	title="An iterable of NTIIDs of updated pacakges",
+								value_type=TextLine(title="The NTIID"),
+								unique=True,
+								default=())
+
 @interface.implementer(IContentPackageLibraryDidSyncEvent)
 class ContentPackageLibraryDidSyncEvent(ObjectEvent):
-	pass
+	
+	 def __init__(self, object, packages=()):
+	 	super(ContentPackageLibraryDidSyncEvent, self).__init__(object)
+	 	self.packages = packages or ()
 
 class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	"""
@@ -321,7 +329,7 @@ class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	
 	def __init__(self, object, packages=(), *descriptions):
 	 	super(ContentPackageLibraryModifiedOnSyncEvent, self).__init__(object, *descriptions)
-	 	self.packages = packages
+	 	self.packages = packages or ()
 
 class IAllContentPackageLibrariesWillSyncEvent(interface.Interface):
 	"""
