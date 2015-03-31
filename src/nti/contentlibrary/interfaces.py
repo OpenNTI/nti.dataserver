@@ -42,6 +42,7 @@ from nti.schema.field import UniqueIterable
 from nti.schema.field import IndexedIterable
 from nti.schema.field import ValidTextLine as TextLine
 
+
 # pylint: disable=I0011,E0213,E0211
 
 # Disable pylint warnings about undefined variables, because it catches
@@ -254,7 +255,7 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	value.
 	"""
 
-	def syncContentPackages():
+	def syncContentPackages(packages=None):
 		"""
 		Do whatever is necessary to sync content packages.
 
@@ -262,6 +263,8 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 		should fire an :class:`IContentPackageLibrarySynchedEvent`.
 		By the time this event is fired, any added/removed/modified
 		events for individual content packages will have been fired.
+		
+		:param packages: A list of pacakge NTIIDs to sync. Empty or none syncs all 
 		"""
 
 class IContentPackageLibraryWillSyncEvent(IObjectEvent):
@@ -301,6 +304,10 @@ class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	a synchronization that resulted in changes. This is fired
 	after events for individual content package changes.
 	"""
+	packages = IndexedIterable(	title="An iterable of NTIIDs of updated pacakges",
+								value_type=TextLine(title="The NTIID"),
+								unique=True,
+								default=())
 	# JAM: Should this be a plain ObjectEvent, not
 	# ObjectModifiedEvent (that way none of the indexing logic or
 	# similar gets invoked)? But the `attributes` property
@@ -311,6 +318,10 @@ class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	"""
 	Content package library synced event.
 	"""
+	
+	def __init__(self, object, packages=(), *descriptions):
+	 	super(ContentPackageLibraryModifiedOnSyncEvent, self).__init__(object, *descriptions)
+	 	self.packages = packages
 
 class IAllContentPackageLibrariesWillSyncEvent(interface.Interface):
 	"""
