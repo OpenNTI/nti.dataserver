@@ -11,7 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+
 import time
+from six import string_types
 
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
@@ -19,6 +21,10 @@ from zope.security.management import restoreInteraction
 from pyramid.view import view_config
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.internalization import read_body_as_external_object
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_NTI_ADMIN
@@ -35,7 +41,8 @@ ITEMS = StandardExternalFields.ITEMS
 			  context=IDataserverFolder,
 			  permission=ACT_NTI_ADMIN,
 			  name='SyncAllLibraries')
-class _SyncAllLibrariesView(AbstractAuthenticatedView):
+class _SyncAllLibrariesView(AbstractAuthenticatedView,
+							ModeledContentUploadRequestUtilsMixin):
 	"""
 	A view that synchronizes all of the in-database libraries
 	(and sites) with their on-disk and site configurations.
@@ -58,23 +65,37 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView):
 	#: disabling it.
 	_SLEEP = True
 
+	def readInput(self, value=None):
+		if self.request.body:
+			values = read_body_as_external_object(self.request)
+		else:
+			values = self.request.params
+		result = CaseInsensitiveDict(values)
+		return result
+	
 	def __call__(self):
-		# Unfortunately, zope.dublincore includes a global subscriber registration
-		# (zope.dublincore.creatorannotator.CreatorAnnotator)
-		# that will update the `creators` property of IZopeDublinCore to include
-		# the current principal when any ObjectCreated /or/ ObjectModified event
-		# is fired, if there is a current interaction. Normally we want this,
-		# but here we care specifically about getting the dublincore metadata
-		# we specifically defined in the libraries, and not the requesting principal.
-		# Our simple-minded approach is to simply void the interaction during this process
-		# (which works so long as zope.securitypolicy doesn't get involved...)
+		values = self.readInput()
+		site = values.get('site')
+		packages = values.get('packages') or values.get('package') or ()
+		packages = set(packages.split()) if isinstance(packages, string_types) else packages
 
-		# This is somewhat difficult to test the side-effects of, sadly.
+		## Unfortunately, zope.dublincore includes a global subscriber registration
+		## (zope.dublincore.creatorannotator.CreatorAnnotator)
+		## that will update the `creators` property of IZopeDublinCore to include
+		## the current principal when any ObjectCreated /or/ ObjectModified event
+		## is fired, if there is a current interaction. Normally we want this,
+		## but here we care specifically about getting the dublincore metadata
+		## we specifically defined in the libraries, and not the requesting principal.
+		## Our simple-minded approach is to simply void the interaction during this process
+		## (which works so long as zope.securitypolicy doesn't get involved...)
+		## This is somewhat difficult to test the side-effects of, sadly.
 		now = time.time()
 		endInteraction()
 		try:
 			result = LocatedExternalDict()
-			result[ITEMS] = synchronize(sleep=self._SLEEP)
+			result[ITEMS] = synchronize(sleep=self._SLEEP, 
+										site=site,
+										packages=packages)
 			result['Elapsed'] = time.time() - now
 			return result
 		finally:

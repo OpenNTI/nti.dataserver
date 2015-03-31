@@ -29,7 +29,7 @@ from nti.contentlibrary.subscribers import install_site_content_library
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
-def synchronize(sleep=None):
+def synchronize(sleep=None, site=None, packages=()):
 	# notify
 	notify(AllContentPackageLibrariesWillSyncEvent())
 	
@@ -51,17 +51,23 @@ def synchronize(sleep=None):
 		# Mostly for testing, if we started up with a different library
 		# that could not provide valid site libraries, install
 		# one if we can get there now.
-		site_lib = install_site_content_library(component.getSiteManager())
+		site_manager = component.getSiteManager()
+		site_name = site_manager.__parent__.__name__
+		site_lib = install_site_content_library(site_manager)
 		if site_lib in seen:
 			return
+		
 		seen.add(site_lib)
+		if site and site_name != site:
+			return
+		
 		if sleep:
 			gevent.sleep()
 
 		syncer = ISyncableContentPackageLibrary(site_lib, None)
 		if syncer is not None:
 			logger.info("Sync library %s", site_lib)
-			return site_lib.syncContentPackages()
+			return site_lib.syncContentPackages(packages)
 
 	# sync
 	results = run_job_in_all_host_sites(sync_site_library)

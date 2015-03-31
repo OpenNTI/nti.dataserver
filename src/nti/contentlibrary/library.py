@@ -196,36 +196,61 @@ class AbstractContentPackageLibrary(object):
 		if prefix:
 			self.url_prefix = prefix
 
-	def syncContentPackages(self):
+	def _content_packages_tuple(self, contentPackages=(), packages=None):
+		if not packages:
+			by_list = list(contentPackages or ())
+			by_ntiid = {x.ntiid: x for x in by_list}
+		else:
+			by_list = []
+			by_ntiid = {}
+			for content_package in contentPackages or ():
+				if content_package.ntiid in packages:
+					by_list.append(content_package)
+					by_ntiid[content_package.ntiid] = content_package
+			if not by_list:
+				raise Exception("No package to update was found")
+
+		return by_list, by_ntiid
+		
+	def syncContentPackages(self, packages=None):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
 		notify(ContentPackageLibraryWillSyncEvent(self))
 
+		## filter packages if specified
 		never_synced = self._contentPackages is None
-		old_content_packages = list(self._contentPackages or ())
-		old_content_packages_by_ntiid = {x.ntiid: x for x in old_content_packages}
-
-		new_content_packages = list(self._enumeration.enumerateContentPackages())
-
-		new_content_packages_by_ntiid = {x.ntiid: x for x in new_content_packages}
-		assert len(new_content_packages) == len(new_content_packages_by_ntiid), "Invalid library"
+		old_content_packages, old_content_packages_by_ntiid = \
+					self._content_packages_tuple(self._contentPackages, packages)
+		
+		## make sure we get ALL packages
+		contentPackages = self._enumeration.enumerateContentPackages()
+		new_content_packages, new_content_packages_by_ntiid = \
+					self._content_packages_tuple(contentPackages)
+		assert 	len(new_content_packages) == len(new_content_packages_by_ntiid), \
+				"Invalid library"
 		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
 
-		# Before we fire any events, compute all the work so that
-		# we can present a consistent view to any listeners that
-		# will be watching
+		## Before we fire any events, compute all the work so that
+		## we can present a consistent view to any listeners that
+		## will be watching
 		removed = []
 		changed = []
-		unmodified = []
-		added = [package
-				 for ntiid, package in new_content_packages_by_ntiid.items()
-				 if ntiid not in old_content_packages_by_ntiid]
+		if not packages:
+			unmodified = []
+			added = [package
+				 		for ntiid, package in new_content_packages_by_ntiid.items()
+				 		if ntiid not in old_content_packages_by_ntiid]
+		else:
+			## chosing this path WILL NOT add any new package
+			added = ()
+			unmodified = [package
+				 			for ntiid, package in new_content_packages_by_ntiid.items()
+				 			if ntiid not in old_content_packages_by_ntiid]
 
 		for old in old_content_packages:
 			new = new_content_packages_by_ntiid.get(old.ntiid)
-
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
@@ -235,7 +260,7 @@ class AbstractContentPackageLibrary(object):
 
 		something_changed = removed or added or changed
 
-		# now set up our view of the world
+		## now set up our view of the world
 		_contentPackages = []
 		_contentPackages.extend(added)
 		_contentPackages.extend(unmodified)
@@ -245,11 +270,13 @@ class AbstractContentPackageLibrary(object):
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
+		## updated pacakges
+		packages = tuple(_content_packages_by_ntiid.keys()) if not packages else packages
 		if something_changed or never_synced:
-			# XXX CS/JZ, 1-29-15 We need this before event firings because some code
-			# (at least question_map.py used to) relies on getting the new content units
-			# via pathToNtiid.
-			# TODO: Verify nothing else is doing so.
+			## CS/JZ, 1-29-15 We need this before event firings because some code
+			## (at least question_map.py used to) relies on getting the new content units
+			## via pathToNtiid.
+			## TODO: Verify nothing else is doing so.
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -259,16 +286,16 @@ class AbstractContentPackageLibrary(object):
 				logger.info("Library %s removing packages %s", self, removed)
 				logger.info("Library %s changing packages %s", self, changed)
 
-			# Now fire the events letting listeners (e.g., index and question adders)
-			# know that we have content. Randomize the order of this across worker
-			# processes so that we don't collide too badly on downloading indexes if need be
-			# (only matters if we are not preloading).
-			# Do this in greenlets/parallel. This can radically speed up
-			# S3 loading when we need the network.
-			# XXX: Does order matter?
-			# XXX: Note that we are not doing it in parallel, because if we need
-			# ZODB site access, we can have issues. Also not we're not
-			# randomizing because we expect to be preloaded.
+			## Now fire the events letting listeners (e.g., index and question adders)
+			## know that we have content. Randomize the order of this across worker
+			## processes so that we don't collide too badly on downloading indexes if need be
+			## (only matters if we are not preloading).
+			## Do this in greenlets/parallel. This can radically speed up
+			## S3 loading when we need the network.
+			## XXX: Does order matter?
+			## XXX: Note that we are not doing it in parallel, because if we need
+			## ZODB site access, we can have issues. Also not we're not
+			## randomizing because we expect to be preloaded.
 			for old in removed:
 				lifecycleevent.removed(old)
 				_unregister_units(old)
@@ -276,13 +303,13 @@ class AbstractContentPackageLibrary(object):
 
 			for new, old in changed:
 				new.__parent__ = self
-				# new is a created object
+				## new is a created object
 				IConnection( self ).add( new )
-				# XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
-				# lifecycleevent.added on 'new' objects as modified events subscribers
-				# are expected to handle any change
+				## XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
+				## lifecycleevent.added on 'new' objects as modified events subscribers
+				## are expected to handle any change
 				_register_units( new )
-				# Note that this is the special event that shows both objects.
+				## Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old))
 
 			for new in added:
@@ -291,20 +318,20 @@ class AbstractContentPackageLibrary(object):
 				lifecycleevent.added(new)
 				_register_units( new )
 
-			# after updating remove parent reference for old objects
+			## after updating remove parent reference for old objects
 			for _, old in changed:
-				# XXX CS/JZ, 2-04-15  DO NOT call lifecycleevent.removed on this
-				# objects b/c this may unregister things we don't want to leaving
-				# the database in a invalid state
+				## CS/JZ, 2-04-15  DO NOT call lifecycleevent.removed on this
+				## objects b/c this may unregister things we don't want to leaving
+				## the database in a invalid state
 				_unregister_units(old)
 				old.__parent__ = None
 
-			# Ok, new let people know that 'contentPackages' changed
+			## Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
-			event = ContentPackageLibraryModifiedOnSyncEvent(self, attributes)
+			event = ContentPackageLibraryModifiedOnSyncEvent(self, packages, attributes)
 			notify(event)
 
-		# Finish up by saying that we sync'd, even if nothing changed
+		## Finish up by saying that we sync'd, even if nothing changed
 		notify(ContentPackageLibraryDidSyncEvent(self))
 
 		self._enumeration.lastSynchronized = time.time()
