@@ -51,7 +51,6 @@ from . import REQUEST_EMAIL_VERFICATION_VIEW
 from . import SEND_USER_EMAIL_VERFICATION_VIEW
 from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
-from .utils import get_user
 from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
@@ -67,13 +66,9 @@ def _login_root():
 			 request_method='GET',
 			 renderer='templates/email_verification_completion_page.pt',
 			 context=IDataserverFolder)
-class VerifyUserEmailView(object):
+class VerifyUserEmailView( AbstractAuthenticatedView ):
 
-	def __init__(self, request):
-		self.request = request
-		
-	def process_verification(self, username, signature, values):
-		user = get_user(username)
+	def process_verification(self, user, signature, values):
 		if user is None:
 			raise hexc.HTTPUnprocessableEntity(_("User not found."))
 
@@ -91,30 +86,30 @@ class VerifyUserEmailView(object):
 
 	def __call__(self):
 		request = self.request
+		user = self.remoteUser
 		values = CaseInsensitiveDict(**request.params)
 		signature = values.get('signature') or values.get('token')
 		if not signature:
 			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
 
-		username = values.get('username')
-		if not username:
-			raise hexc.HTTPUnprocessableEntity(_("No username specified."))
-		
 		destination_url = urljoin( self.request.application_url, _login_root() )
 		template_args = {'href': destination_url}
-		
+
 		policy = component.getUtility(ISitePolicyUserEventListener)
 		support_email = getattr( policy, 'SUPPORT_EMAIL', 'support@nextthought.com' )
 		template_args['support_email'] = support_email
 		template_args['error_message'] = None
 		template_args['site_name'] = guess_site_display_name(self.request)
 		try:
-			self.process_verification(username, signature, values)
+			self.process_verification(user, signature, values)
 		except hexc.HTTPError as e:
-			logger.info('Account verification for username "%s" failed. %s', username, getattr(e, 'detail', ''))
+			logger.info('Account verification for user "%s" failed. %s',
+					user,
+					getattr(e, 'detail', ''))
 			template_args['error_message'] = _("Unable to verify account.")
-			
+
 		return template_args
+
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
