@@ -78,7 +78,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		site = values.get('site')
 		packages = values.get('packages') or values.get('package') or ()
 		packages = set(packages.split()) if isinstance(packages, string_types) else packages
-
+		
 		## Unfortunately, zope.dublincore includes a global subscriber registration
 		## (zope.dublincore.creatorannotator.CreatorAnnotator)
 		## that will update the `creators` property of IZopeDublinCore to include

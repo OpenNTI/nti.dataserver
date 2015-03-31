@@ -56,7 +56,7 @@ def synchronize(sleep=None, site=None, packages=()):
 		site_lib = install_site_content_library(site_manager)
 		if site_lib in seen:
 			return
-		
+
 		seen.add(site_lib)
 		if site and site_name != site:
 			return
@@ -67,7 +67,8 @@ def synchronize(sleep=None, site=None, packages=()):
 		syncer = ISyncableContentPackageLibrary(site_lib, None)
 		if syncer is not None:
 			logger.info("Sync library %s", site_lib)
-			return site_lib.syncContentPackages(packages)
+			result = site_lib.syncContentPackages(packages)
+			return True if result is None else result
 
 	# sync
 	results = run_job_in_all_host_sites(sync_site_library)
@@ -81,5 +82,5 @@ def synchronize(sleep=None, site=None, packages=()):
 	notify(AllContentPackageLibrariesDidSyncEvent())
 	
 	# return results
-	result =[x[0].__name__ for x in results if x is not None]
+	result =[x[0].__name__ for x in results if x is not None and x[1] != None]
 	return result
