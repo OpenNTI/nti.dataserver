@@ -66,11 +66,13 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	_SLEEP = True
 
 	def readInput(self, value=None):
-		if self.request.body:
-			values = read_body_as_external_object(self.request)
-		else:
-			values = self.request.params
-		result = CaseInsensitiveDict(values)
+		result = CaseInsensitiveDict()
+		if self.request:
+			if self.request.body:
+				values = read_body_as_external_object(self.request)
+			else:
+				values = self.request.params
+			result.update(values)
 		return result
 	
 	def __call__(self):
