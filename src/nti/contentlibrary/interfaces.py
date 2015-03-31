@@ -29,6 +29,8 @@ from nti.common.property import alias
 
 from nti.coremetadata.interfaces import ILastModified
 
+from nti.dataserver.core.interfaces import IShouldHaveTraversablePath
+
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 
 from nti.ntiids.schema import ValidNTIID
@@ -204,8 +206,8 @@ class IContentPackageLibrary(ILastModified,
 		Returns a list of :class:`IContentUnit` objects in order until
 		the given NTIID is encountered, or :obj:`None` if the ``ntiid`` cannot be found.
 
-		:param bool skip_cache Skip cache flag. 
-		
+		:param bool skip_cache Skip cache flag.
+
 		.. attention:: This does not include the
 			:const:`nti.ntiids.ntiids.ROOT` NTIID. That is an implicit
 			element before the first element in the returned sequence.
@@ -335,24 +337,24 @@ class IAllContentPackageLibrariesWillSyncEvent(interface.Interface):
 	"""
 	An event fired before all ContentPackage Libraries are synced
 	"""
-	
+
 @interface.implementer(IAllContentPackageLibrariesWillSyncEvent)
 class AllContentPackageLibrariesWillSyncEvent(object):
 	"""
 	Before all Content package libraries are synced event.
 	"""
-	
+
 class IAllContentPackageLibrariesDidSyncEvent(interface.Interface):
 	"""
 	An event fired when all ContentPackage Libraries have been synced
 	"""
-	
+
 @interface.implementer(IAllContentPackageLibrariesDidSyncEvent)
 class AllContentPackageLibrariesDidSyncEvent(object):
 	"""
 	All Content package libraries synced event.
 	"""
-	
+
 class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
 	"""
 	A non-persistent content library that needs to be synchronized
@@ -765,6 +767,7 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 ###
 class IContentPackageBundle(IDisplayableContent,
 							ILastModified,
+							IShouldHaveTraversablePath,
 							dub_interfaces.IDCTimes,
 							IAnnotatable):
 	"""
