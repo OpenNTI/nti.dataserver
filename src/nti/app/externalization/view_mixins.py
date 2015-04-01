@@ -232,12 +232,16 @@ class BatchingUtilsMixin(object):
 			kwargs['selector'] = _tuple_selector
 		return self._batch_items_iterable(*args, **kwargs)
 
-	def _batch_around(self, iterator, test):
+	def _batch_around(self, iterator, test, batch_containing=False):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired
 		batch-around item is found, handle the batching. The request params for
 		`batch_start` will be updated, so any value cached for it should be
 		discarded. We only do this if batch_size is given.
+
+		:batch_containing: (Optional) If true, do not batch the found item in the center
+			of a given page. Instead, return the natural page (given by batchSize) that
+			the given element would be found in.
 
 		:return: A sequence of the items consumed from the iterator to find the
 			object to center the batch on. Note that this may be every object
@@ -261,7 +265,11 @@ class BatchingUtilsMixin(object):
 			# Only keep testing until we find what we need
 			if batch_start is None:
 				if test(key_value):
-					batch_start = max( 0, i - (batch_size // 2) - 1 )
+					if batch_containing:
+						# Find our natural page
+						batch_start = ( i // batch_size ) * batch_size
+					else:
+						batch_start = max( 0, i - (batch_size // 2) - 1 )
 					match_index = i
 					number_items_needed = batch_start + batch_size + 2
 			else:
