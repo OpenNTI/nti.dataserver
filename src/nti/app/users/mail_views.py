@@ -169,7 +169,10 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 		else:
 			email = profile.email
 
-		if email and not profile.email_verified:
+		if email is None:
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
+
+		if not profile.email_verified:
 			now  = time.time()
 			last_time = get_email_verification_time(user) or 0
 			if now - last_time > 1800: # wait half hour
