@@ -748,6 +748,10 @@ class _UGDView(AbstractAuthenticatedView,
 			(Even if you supply this value, you should still supply a value for ``batchStart``
 			such as 1).
 
+		batchContaining
+			Like batchAround, except the natural page (or batch) is returned for the
+			given object.
+
 		filterOperator
 			A string parameter with to indicate what operator (union, intersection) is to
 			be used when combining the filters. The values are ('0', 'union') for union operator or
@@ -855,10 +859,17 @@ class _UGDView(AbstractAuthenticatedView,
 			merged = ()
 
 		batch_size, batch_start = self._get_batch_size_start()
-		if self.request.params.get( 'batchAround', '' ) and batch_size is not None:
-			batchAround = self.request.params.get( 'batchAround' )
+		if ( 		self.request.params.get( 'batchAround', '' )
+				or 	self.request.params.get( 'batchContaining', '' ) ) \
+			and batch_size is not None:
+
+			batchAround = self.request.params.get( 'batchAround' ) \
+					or self.request.params.get( 'batchContaining', '' )
 			test = lambda key_value: to_external_ntiid_oid( key_value[1] ) == batchAround
-			merged = self._batch_around(merged, test)
+
+			# This will return a natural batch based on batchSize
+			batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
+			merged = self._batch_around(merged, test, batch_containing=batch_containing)
 			batch_size, batch_start = self._get_batch_size_start()
 			number_items_needed = None
 
