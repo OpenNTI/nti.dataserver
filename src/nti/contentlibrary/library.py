@@ -221,7 +221,7 @@ class AbstractContentPackageLibrary(object):
 
 		## filter packages if specified
 		never_synced = self._contentPackages is None
-		old_content_packages, old_content_packages_by_ntiid = \
+		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
 					self._content_packages_tuple(self._contentPackages, packages)
 		
 		## make sure we get ALL packages
@@ -237,19 +237,23 @@ class AbstractContentPackageLibrary(object):
 		## will be watching
 		removed = []
 		changed = []
-		if not packages:
+		if not packages: ## no filter
 			unmodified = []
 			added = [package
 				 		for ntiid, package in new_content_packages_by_ntiid.items()
-				 		if ntiid not in old_content_packages_by_ntiid]
+				 		if ntiid not in filtered_old_content_packages_by_ntiid]
 		else:
 			## chosing this path WILL NOT add any new package
 			added = ()
+			unfiltered_content_packages, _ = \
+						self._content_packages_tuple(self._contentPackages)
+						
+			## make sure we get old references
 			unmodified = [package
-				 			for ntiid, package in new_content_packages_by_ntiid.items()
-				 			if ntiid not in old_content_packages_by_ntiid]
+				 			for package in unfiltered_content_packages
+				 			if package.ntiid not in filtered_old_content_packages_by_ntiid]
 
-		for old in old_content_packages:
+		for old in filtered_old_content_packages:
 			new = new_content_packages_by_ntiid.get(old.ntiid)
 			if new is None:
 				removed.append(old)
