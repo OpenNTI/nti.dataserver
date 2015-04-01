@@ -46,6 +46,8 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 
+from nti.app.externalization.internalization import read_body_as_external_object
+
 from . import VERIFY_USER_EMAIL_VIEW
 from . import REQUEST_EMAIL_VERFICATION_VIEW
 from . import SEND_USER_EMAIL_VERFICATION_VIEW
@@ -148,7 +150,7 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 
 	def readInput(self, value=None):
 		if self.request.body:
-			values = self.read_body_as_external_object( self.request )
+			values = read_body_as_external_object( self.request )
 		else:
 			values = self.request.params
 		result = CaseInsensitiveDict( values )
