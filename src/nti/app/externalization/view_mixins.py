@@ -282,7 +282,7 @@ class BatchingUtilsMixin(object):
 			# Well, we got here without finding the matching value.
 			# So return an empty page.
 			batch_start = len(result_list)
-		elif match_index <= batch_start:
+		elif not batch_containing and match_index <= batch_start:
 			# For very small batches, when the match is at
 			# the beginning of the list (typically),
 			# we could wind up returning a list that doesn't include
