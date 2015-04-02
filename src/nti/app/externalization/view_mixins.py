@@ -295,7 +295,10 @@ class BatchingUtilsMixin(object):
 		if match_index is not None and match_index >= batch_size + batch_start:
 			batch_start = match_index
 
-		if batch_start is not None and batch_size == 3 and match_index is not None:
+		if 		not batch_containing \
+			and batch_start is not None \
+			and batch_size == 3 \
+			and match_index is not None:
 			# For non-even batch sizes, it's hard to evenly center
 			# with generic math, or at least I'm stupid and missing what
 			# the right algorithm is in all cases. Special case this
