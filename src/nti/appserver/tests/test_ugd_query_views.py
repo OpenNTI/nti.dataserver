@@ -1216,6 +1216,77 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				# of next batch)
 				assert_that( batch_next, contains_string('batchStart=' + str((i+2)) ))
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_batch_containing(self):
+		"""
+		Test batchContaining, the object being queried is returned on whatever
+		batchPage it should.  Unlike batchAround, we do not try to put the
+		obj in the middle of the returned batch.
+		"""
+
+		ntiids = []
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.extra_environ_default_user)
+
+			for i in range(20):
+				top_n = contenttypes.Note()
+				top_n.applicableRange = contentrange.ContentRangeDescription()
+				top_n.containerId = u'tag:nti:foo'
+				top_n.body = ("Top" + str(i),)
+				user.addContainedObject( top_n )
+				top_n.lastModified = i
+				ntiids.append( top_n.id )
+			top_n_containerid = top_n.containerId
+
+		# Now, ask for a batch around the tenth item. Match the sort-order (lastMod, descending)
+		ntiids.reverse()
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchContaining': ntiids[10], 'batchSize': 10, 'batchStart': 10} )
+		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Intuitively, there should not be a batch-next link, but
+		# I think we always force another link (not sure why).
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20' ) )
+
+		# Prev is the first ten
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
+
+		expected_ntiids = ntiids[10:]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# If we ask for something that doesn't match, we get nothing
+		no_res = self.fetch_user_ugd( top_n_containerid, params={'batchContaining': 'foobar', 'batchSize': 10, 'batchStart': 1} )
+		assert_that( no_res.json_body['Items'], has_length( 0 ) )
+		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# We can ask for a very small page and the first item and get it
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchContaining': ntiids[0],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[0:3]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# Page forward one manually; the page does not change.
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchContaining': ntiids[1],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# One more forward shifts the range; still contains the same page.
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={'batchContaining': ntiids[2],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
 from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
