@@ -96,7 +96,7 @@ class BatchingUtilsMixin(object):
 	#: A sequence of names of query params that will be dropped from
 	#: links we generate for batch-next and batch-prev, typically
 	#: because they do not have relevance in a next/prev query.
-	_BATCH_LINK_DROP_PARAMS = ('batchAround','batchBefore')
+	_BATCH_LINK_DROP_PARAMS = ('batchAround', 'batchContaining', 'batchBefore')
 
 	def __batch_result_list(self, result, result_list,
 							batch_start, batch_size,
