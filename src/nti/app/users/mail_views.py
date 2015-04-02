@@ -131,7 +131,7 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 		except (TypeError, ValueError):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid token."))
 
-		_, computed = generate_mail_verification_pair(self.remoteUser)
+		sig, computed = generate_mail_verification_pair(self.remoteUser)
 		if token != computed:
 			raise hexc.HTTPUnprocessableEntity(_("Wrong token."))
 
