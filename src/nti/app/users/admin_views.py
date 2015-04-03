@@ -163,17 +163,14 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity("User not found")
 		
 		profile = IUserProfile(user)
-		email = values.get('email')
-		if email:
+		email = values.get('email') or profile.email
+		if not email:
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided"))
+		else:
 			try:
 				checkEmailAddress(email)
 			except (EmailAddressInvalid):
 				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
-		else:
-			email = profile.email
-
-		if email is None:
-			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
 
 		profile.email = email
 		profile.email_verified = True
