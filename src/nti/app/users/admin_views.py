@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
 import isodate
 from datetime import datetime
 
@@ -83,7 +85,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get( 'username' ) or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("Must specify a username")
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
 
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		did_remove = user_blacklist.remove_blacklist_for_user( username )
@@ -112,11 +114,11 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("Must specify a username")
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
 		
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity("User not found")
+			raise hexc.HTTPUnprocessableEntity(_("User not found"))
 		
 		containers = values.get('containers') or values.get('include_containers')
 		containers = bool(not containers or is_true(containers))
@@ -156,11 +158,11 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("Must specify a username")
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
 		
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity("User not found")
+			raise hexc.HTTPUnprocessableEntity(_("User not found"))
 		
 		profile = IUserProfile(user)
 		email = values.get('email') or profile.email
@@ -190,11 +192,11 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("must specify a username")
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
 		
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity("user not found")
+			raise hexc.HTTPUnprocessableEntity(_("User not found"))
 		
 		User.delete_user(username)
 		return hexc.HTTPNoContent()
