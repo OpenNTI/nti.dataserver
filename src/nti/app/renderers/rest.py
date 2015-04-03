@@ -20,11 +20,14 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from perfmetrics import metric
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IContent
+from nti.dataserver.interfaces import IEnclosedContent
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import catch_replace_action
 from nti.externalization.representation import to_json_representation_externalized
-from nti.externalization.externalization import toExternalObject,  catch_replace_action
 
 from nti.links.links import Link
 from nti.links.externalization import render_link
@@ -34,6 +37,7 @@ from nti.mimetype.mimetype import MIME_BASE_JSON, MIME_EXT_JSON, MIME_BASE
 
 from nti.traversal import traversal as nti_traversal
 
+from .interfaces import INoHrefInResponse
 from .interfaces import IResponseRenderer
 from .interfaces import IExternalizationCatchComponentAction
 
@@ -115,7 +119,9 @@ def render_externalizable(data, system):
 	# Everything possible should have an href on the way out. If we have no other
 	# preference, and the request did not mutate any state that could invalidate it,
 	# use the URL that was requested.
-	if isinstance( body, collections.MutableMapping ):
+	if 	isinstance( body, collections.MutableMapping ) and \
+		not INoHrefInResponse.providedBy(body):
+		
 		if 'href' not in body or not nti_traversal.is_valid_resource_path( body['href'] ):
 			if request.method == 'GET':
 				# safe assumption, send back what we had
@@ -134,7 +140,10 @@ def render_externalizable(data, system):
 				# was manipulated, so go with the lesser of two evils
 				# that mostly works.
 				try:
-					link = Link(to_external_ntiid_oid( data ) if not nti_interfaces.IShouldHaveTraversablePath.providedBy( data ) else data)
+					context = (to_external_ntiid_oid( data ) 
+								if not IShouldHaveTraversablePath.providedBy( data ) 
+								else data)
+					link = Link(context)
 					body['href'] = render_link( link )['href']
 				except (KeyError,ValueError,AssertionError):
 					pass # Nope
@@ -165,14 +174,14 @@ def render_externalizable_factory(d):
 	return render_externalizable
 
 @interface.implementer(IResponseRenderer)
-@component.adapter(nti_interfaces.IEnclosedContent)
+@component.adapter(IEnclosedContent)
 def render_enclosure_factory( data ):
 	"""
 	If the enclosure is pure binary data, not modeled content,
 	we want to simply output it without trying to introspect
 	or perform transformations.
 	"""
-	if not nti_interfaces.IContent.providedBy( data.data ):
+	if not IContent.providedBy( data.data ):
 		return render_enclosure
 
 @interface.provider(IResponseRenderer)
