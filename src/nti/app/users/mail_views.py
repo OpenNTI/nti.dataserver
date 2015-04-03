@@ -112,7 +112,6 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 
 		return template_args
 
-
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
 			 request_method='POST',
@@ -131,7 +130,7 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 		except (TypeError, ValueError):
 			raise hexc.HTTPUnprocessableEntity(_("Invalid token."))
 
-		sig, computed = generate_mail_verification_pair(self.remoteUser)
+		_, computed = generate_mail_verification_pair(self.remoteUser)
 		if token != computed:
 			raise hexc.HTTPUnprocessableEntity(_("Wrong token."))
 

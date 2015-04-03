@@ -13,6 +13,7 @@ import isodate
 from datetime import datetime
 
 from zope import component
+from zope import lifecycleevent
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -30,6 +31,9 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver import authorization as nauth
 
 from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import checkEmailAddress
+from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.users_utils import remove_broken_objects
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -79,7 +83,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get( 'username' ) or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("must specify a username")
+			raise hexc.HTTPUnprocessableEntity("Must specify a username")
 
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
 		did_remove = user_blacklist.remove_blacklist_for_user( username )
@@ -90,8 +94,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 		result['username'] = username
 		result['did_remove'] = did_remove
 		return result
-	
-	
+
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 permission=nauth.ACT_NTI_ADMIN,
@@ -109,11 +112,11 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		values = CaseInsensitiveDict(self.readInput())
 		username = values.get('username') or values.get('user')
 		if not username:
-			raise hexc.HTTPUnprocessableEntity("must specify a username")
+			raise hexc.HTTPUnprocessableEntity("Must specify a username")
 		
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
-			raise hexc.HTTPUnprocessableEntity("user not found")
+			raise hexc.HTTPUnprocessableEntity("User not found")
 		
 		containers = values.get('containers') or values.get('include_containers')
 		containers = bool(not containers or is_true(containers))
@@ -141,16 +144,50 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		return result
 
 @view_config(route_name='objects.generic.traversal',
+			 name="ForceUserEmailVerification",
+			 request_method='POST',
+			 context=IDataserverFolder,
+			 renderer='rest',
+			 permission=nauth.ACT_NTI_ADMIN)
+class ForceEmailVerificationView(AbstractAuthenticatedView,
+								 ModeledContentUploadRequestUtilsMixin):
+
+	def __call__(self):
+		values = CaseInsensitiveDict(self.readInput())
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity("Must specify a username")
+		
+		user = User.get_user(username)
+		if user is None or not IUser.providedBy(user):
+			raise hexc.HTTPUnprocessableEntity("User not found")
+		
+		profile = IUserProfile(user)
+		email = values.get('email')
+		if email:
+			try:
+				checkEmailAddress(email)
+			except (EmailAddressInvalid):
+				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
+		else:
+			email = profile.email
+
+		if email is None:
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
+
+		profile.email = email
+		profile.email_verified = True
+		lifecycleevent.modified(user)
+				
+		return hexc.HTTPNoContent()
+
+@view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 permission=nauth.ACT_NTI_ADMIN,
 			 request_method='POST',
 			 context=IDataserverFolder,
 			 name='RemoveUser')
 class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
-
-	"""
-	Remove a user
-	"""
 
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
