@@ -120,10 +120,12 @@ class _NotableRecursiveUGDView(_UGDView):
 		if batch_before is not None:
 			safely_viewable_intids = user_notable_data.get_notable_intids(max_created_time=batch_before)
 
-		sorted_intids = user_notable_data.sort_notable_intids( safely_viewable_intids,
-															   limit=limit,
-															   reverse=request.params.get('sortOrder') != 'ascending')
+		descending_sort = request.params.get('sortOrder') != 'ascending'
 
+		sorted_intids = user_notable_data.sort_notable_intids( 	safely_viewable_intids,
+															   	field_name='lastModified',
+															   	limit=limit,
+															   	reverse=descending_sort )
 		items = user_notable_data.iter_notable_intids(sorted_intids)
 		self._batch_items_iterable(result, items,
 								   number_items_needed=limit,
