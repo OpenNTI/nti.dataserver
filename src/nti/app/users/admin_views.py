@@ -15,7 +15,6 @@ import isodate
 from datetime import datetime
 
 from zope import component
-from zope import lifecycleevent
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -36,6 +35,7 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
+from nti.dataserver.users.utils import reindex_email_verification
 from nti.dataserver.users.users_utils import remove_broken_objects
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -176,7 +176,7 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 
 		profile.email = email
 		profile.email_verified = True
-		lifecycleevent.modified(user)
+		reindex_email_verification(user)
 				
 		return hexc.HTTPNoContent()
 
