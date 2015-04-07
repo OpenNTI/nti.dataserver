@@ -12,6 +12,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import os
+import math
 import time
 import hashlib
 import isodate
@@ -140,7 +141,7 @@ def get_email_verification_time(user):
 	return result
 
 def set_email_verification_time(user, now=None):
-	now = now or time.time()
+	now = time.time() if now is None else math.fabs(now)
 	annotes = IAnnotations(user)
 	annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
 

@@ -25,6 +25,7 @@ from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
 
 from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
+from .utils import set_email_verification_time
 from .utils import safe_send_email_verification
 
 @component.adapter( IUser, IWillCreateNewEntityEvent )
@@ -51,3 +52,4 @@ def _user_modified_from_external_event(user, event):
 	if profile and ext.get('email'):
 		profile.email_verified = False
 		reindex_email_verification(user)
+		set_email_verification_time(user, 0)

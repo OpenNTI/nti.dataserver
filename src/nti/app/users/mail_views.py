@@ -18,7 +18,6 @@ import gevent
 from urlparse import urljoin
 
 from zope import component
-from zope import lifecycleevent
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -26,6 +25,7 @@ from pyramid import httpexceptions as hexc
 from itsdangerous import BadSignature
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.interfaces import IApplicationSettings
@@ -45,8 +45,7 @@ from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
-
-from nti.app.externalization.internalization import read_body_as_external_object
+from nti.dataserver.users.utils import reindex_email_verification
 
 from . import VERIFY_USER_EMAIL_VIEW
 from . import REQUEST_EMAIL_VERFICATION_VIEW
@@ -84,7 +83,7 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 
 		self.request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
 		IUserProfile(user).email_verified = True
-		lifecycleevent.modified(user) # make sure we update the index
+		reindex_email_verification(user)
 
 	def __call__(self):
 		request = self.request
@@ -136,7 +135,7 @@ class VerifyUserEmailWithTokenView(	AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("Wrong token."))
 
 		IUserProfile(self.remoteUser).email_verified = True
-		lifecycleevent.modified(self.remoteUser)  # make sure we update the index
+		reindex_email_verification(self.remoteUser)
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
@@ -165,7 +164,7 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 				checkEmailAddress(email)
 				profile.email = email
 				profile.email_verified = False
-				lifecycleevent.modified(user)
+				reindex_email_verification(user)
 			except (EmailAddressInvalid):
 				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
 		else:
