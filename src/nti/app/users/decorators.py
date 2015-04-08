@@ -37,7 +37,9 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 
 	def _predicate(self, context, result):
 		profile = IUserProfile(context, None)
-		result = self._is_authenticated and profile and not profile.email_verified
+		result = bool(	self._is_authenticated and \
+						profile is not None and \
+						not profile.email_verified )
 		return result
 
 	def _do_decorate_external(self, context, result):
