@@ -48,8 +48,8 @@ def _send_email_confirmation(user, event):
 @component.adapter(IUser, IObjectModifiedFromExternalEvent)
 def _user_modified_from_external_event(user, event):
 	profile = IUserProfile(user, None)
-	ext = event.external_value or {}
-	if profile and ext.get('email'):
+	email = (event.external_value or {}).get('email')
+	if profile is not None and email and profile.email != email:
 		profile.email_verified = False
 		reindex_email_verification(user)
 		set_email_verification_time(user, 0)
