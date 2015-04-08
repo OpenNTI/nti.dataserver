@@ -37,21 +37,22 @@ from nti.dataserver.interfaces import ILastModified
 from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
-from nti.dataserver.users.interfaces import IRequireProfileUpdate
-from nti.dataserver.users.interfaces import UsernameCannotBeBlank
-from nti.dataserver.users.interfaces import WillDeleteEntityEvent
-from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
-from nti.dataserver.users.interfaces import WillCreateNewEntityEvent
-from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
-from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
-from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
-
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids import ntiids
+
+from .interfaces import IRequireProfileUpdate
+from .interfaces import UsernameCannotBeBlank
+from .interfaces import WillDeleteEntityEvent
+from .interfaces import WillUpdateEntityEvent
+from .interfaces import IImmutableFriendlyNamed
+from .interfaces import WillCreateNewEntityEvent
+from .interfaces import WillUpdateNewEntityEvent
+from .interfaces import IUserProfileSchemaProvider
+from .interfaces import UsernameContainsIllegalChar
 
 def _get_shared_dataserver(context=None,default=None):
 	if default != None:
@@ -308,6 +309,9 @@ class Entity(PersistentCreatedModDateTrackingObject):
 	### Externalization ###
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+		# Notify we're about to update
+		notify(WillUpdateEntityEvent(self, parsed))
+		
 		# Profile info
 		profile_iface = IUserProfileSchemaProvider( self ).getSchema()
 		profile = profile_iface( self )

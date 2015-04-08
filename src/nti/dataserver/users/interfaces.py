@@ -256,6 +256,19 @@ class WillCreateNewEntityEvent(ObjectEvent):
 		self.meta_data = meta_data
 		self.preflight_only = preflight_only
 
+class IWillUpdateEntityEvent(IObjectEvent):
+	"""
+	Fired before an updated is updated
+	"""
+	ext_value = interface.Attribute("External update data")
+
+@interface.implementer(IWillUpdateEntityEvent)
+class WillUpdateEntityEvent(ObjectEvent):
+
+	def __init__(self, obj, ext_value=None):
+		super(WillUpdateEntityEvent, self).__init__(obj)
+		self.ext_value = ext_value
+
 class IWillDeleteEntityEvent(IObjectEvent):
 	"""
 	Fired before an :class:`zope.lifecycleevent.interfaces.IObjectRemovedEvent` with
