@@ -19,11 +19,10 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.users.utils import reindex_email_verification
 
 from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.interfaces import IWillUpdateEntityEvent
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import ISendEmailConfirmationEvent
-
-from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
 from .utils import set_email_verification_time
 from .utils import safe_send_email_verification
@@ -45,10 +44,10 @@ def _send_email_confirmation(user, event):
 	if profile is not None and email:
 		safe_send_email_verification(user, profile, email, request)
 
-@component.adapter(IUser, IObjectModifiedFromExternalEvent)
+@component.adapter(IUser, IWillUpdateEntityEvent)
 def _user_modified_from_external_event(user, event):
 	profile = IUserProfile(user, None)
-	email = (event.external_value or {}).get('email')
+	email = (event.ext_value or {}).get('email')
 	if profile is not None and email and profile.email != email:
 		profile.email_verified = False
 		reindex_email_verification(user)
