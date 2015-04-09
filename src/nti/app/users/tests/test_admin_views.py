@@ -9,14 +9,17 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
-from hamcrest import has_item
 from hamcrest import assert_that
+from hamcrest import has_property
 
 from zope import lifecycleevent
 
 from nti.dataserver.users import User
+from nti.dataserver.users.interfaces import IUserProfile
+from nti.dataserver.users.utils import is_email_verified
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -59,6 +62,41 @@ class TestAdminViews(ApplicationLayerTest):
 		body = res.json_body
 		assert_that( body, has_entry( 'Items', has_length( 0 )) )
 		assert_that( body, has_entry( 'Count', is_( 0 )))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_force_email_verification(self):
+		username = 'user_one'
+		email = 'user.one@foo.com'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.create_user( username=username,
+									 external_value={ u'email': email})
+			assert_that(IUserProfile(user), has_property('email_verified', is_(False)))
+			assert_that(is_email_verified(username), is_(False))
+
+		self.testapp.post_json( '/dataserver2/@@ForceUserEmailVerification',
+								{'username':username},
+								status=204 )
+
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = User.get_user( username=username )
+			assert_that(IUserProfile(user), has_property('email', is_(email)))
+			assert_that(IUserProfile(user), has_property('email_verified', is_(True)))
+			assert_that(is_email_verified(email), is_(True))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_get_email_verification_token(self):
+		username = 'user_one'
+		email = 'user.one@foo.com'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			User.create_user(username=username,
+							 external_value={ u'email': email})
+
+		res = self.testapp.get(	'/dataserver2/@@GetEmailVerificationToken',
+						 		{'username':username},
+						 		status=200 )
+
+		assert_that( res.json_body, has_entry( 'Signature', has_length( 132 )) )
+		assert_that( res.json_body, has_entry( 'Token', is_( int )))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_remove_user(self):
