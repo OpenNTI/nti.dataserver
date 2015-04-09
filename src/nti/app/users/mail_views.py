@@ -25,6 +25,8 @@ from pyramid import httpexceptions as hexc
 from itsdangerous import BadSignature
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.externalization.error import raise_json_error as raise_error
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
@@ -56,6 +58,8 @@ from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
+
+MAX_WAIT_TIME_EMAILS = 300
 
 def _login_root():
 	settings = component.getUtility(IApplicationSettings)
@@ -176,8 +180,14 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 		if not profile.email_verified:
 			now  = time.time()
 			last_time = get_email_verification_time(user) or 0
-			if now - last_time > 1800: # wait half hour
+			diff_time = now - last_time
+			if diff_time > MAX_WAIT_TIME_EMAILS:
 				safe_send_email_verification(user, profile, email, self.request)
+			else:
+				raise_error(  self.request,
+							  hexc.HTTPUnprocessableEntity,
+							  {'message': _("A current request is been processed." ),
+							   'seconds': MAX_WAIT_TIME_EMAILS - diff_time } )
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
