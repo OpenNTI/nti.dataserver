@@ -17,6 +17,7 @@ from datetime import datetime
 from zope import component
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -41,16 +42,19 @@ from nti.dataserver.users.users_utils import remove_broken_objects
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from .utils import generate_mail_verification_pair
+
 from . import is_true
 
 ITEMS = StandardExternalFields.ITEMS
 
-@view_config(route_name='objects.generic.traversal',
-			   renderer='rest',
-			   permission=nauth.ACT_NTI_ADMIN,
-			   request_method='GET',
-			   context=IDataserverFolder,
-			   name='GetUserBlacklist')
+@view_config(name='GetUserBlacklist')
+@view_config(name='get_user_black_list')
+@view_defaults(	route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN,
+				request_method='GET',
+				context=IDataserverFolder)
 class GetUserBlacklistView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -69,12 +73,13 @@ class GetUserBlacklistView(AbstractAuthenticatedView):
 		result['Total'] = result['Count'] = count
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 permission=nauth.ACT_NTI_ADMIN,
-			 request_method='POST',
-			 context=IDataserverFolder,
-			 name='RemoveFromUserBlacklist')
+@view_config(name='RemoveFromUserBlacklist')
+@view_config(name='remove_from_user_black_list')
+@view_defaults(	route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN,
+				request_method='POST',
+				context=IDataserverFolder)
 class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 							   	  ModeledContentUploadRequestUtilsMixin):
 
@@ -97,12 +102,13 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 		result['did_remove'] = did_remove
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 permission=nauth.ACT_NTI_ADMIN,
-			 request_method='POST',
-			 context=IDataserverFolder,
-			 name='RemoveUserBrokenObjects')
+@view_config(name='RemoveUserBrokenObjects')
+@view_config(name='remove_user_broken_objects')
+@view_defaults(	route_name='objects.generic.traversal',
+				renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN,
+				request_method='POST',
+				context=IDataserverFolder)
 class RemoveUserBrokenObjects(AbstractAuthenticatedView, 
 							  ModeledContentUploadRequestUtilsMixin):
 
@@ -145,12 +151,45 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		result['Total'] = result['Count'] = len(data)
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 name="ForceUserEmailVerification",
-			 request_method='POST',
-			 context=IDataserverFolder,
-			 renderer='rest',
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='GetEmailVerificationToken')
+@view_config(name='get_email_verification_token')
+@view_defaults(	route_name='objects.generic.traversal',
+				request_method='GET',
+				context=IDataserverFolder,
+				renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN)
+class GetEmailVerificationTokenView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		values = CaseInsensitiveDict(self.request.params)
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
+		
+		user = User.get_user(username)
+		if user is None or not IUser.providedBy(user):
+			raise hexc.HTTPUnprocessableEntity(_("User not found"))
+		
+		profile = IUserProfile(user)
+		email = values.get('email') or profile.email
+		if not email:
+			raise hexc.HTTPUnprocessableEntity(_("Email address not provided"))
+		
+		signature, token = generate_mail_verification_pair(user, email)
+		result = LocatedExternalDict()
+		result.__name__ = self.request.view_name
+		result.__parent__ = self.request.context
+		result['Signature'] = signature
+		result['Token'] = token
+		return result
+
+@view_config(name='ForceUserEmailVerification')
+@view_config(name='force_user_email_verification')
+@view_defaults(	route_name='objects.generic.traversal',
+				request_method='POST',
+				context=IDataserverFolder,
+				renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN)
 class ForceEmailVerificationView(AbstractAuthenticatedView,
 								 ModeledContentUploadRequestUtilsMixin):
 
@@ -180,12 +219,13 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 				
 		return hexc.HTTPNoContent()
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 permission=nauth.ACT_NTI_ADMIN,
-			 request_method='POST',
-			 context=IDataserverFolder,
-			 name='RemoveUser')
+@view_config(name='RemoveUser')
+@view_config(name='remove_user')
+@view_defaults(	route_name='objects.generic.traversal',
+			 	renderer='rest',
+				permission=nauth.ACT_NTI_ADMIN,
+				request_method='POST',
+				context=IDataserverFolder)
 class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	def __call__(self):

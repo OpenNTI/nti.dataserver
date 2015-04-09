@@ -47,10 +47,10 @@ class TestMailViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_with_token(self):
-		username = 'ichigo@bleach.org'
+		email = username = u'ichigo@bleach.org'
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.create_user(username=username, password='temp001',
-						 	 		external_value={ u'email':u"ichigo@bleach.org"})
+						 	 		external_value={ u'email':email})
 
 			_, token = generate_mail_verification_pair(user)
 
@@ -62,14 +62,14 @@ class TestMailViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)
 			assert_that(IUserProfile(user), has_property('email_verified', is_(True)))
-			assert_that(is_email_verified(username), is_(True))
+			assert_that(is_email_verified(email), is_(True))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_view(self):
-		username = 'ichigo@bleach.org'
+		email = username = u'ichigo@bleach.org'
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.create_user(username=username, password='temp001',
-						 	 		external_value={ u'email':u"ichigo@bleach.org"})
+						 	 		external_value={ u'email':email})
 
 			href, _, = generate_verification_email_url(user)
 
@@ -82,14 +82,14 @@ class TestMailViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)
 			assert_that(IUserProfile(user), has_property('email_verified', is_(True)))
-			assert_that(is_email_verified(username), is_(True))
+			assert_that(is_email_verified(email), is_(True))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_invalid_view(self):
-		username = 'ichigo@bleach.org'
+		email = username = u'ichigo@bleach.org'
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.create_user(username=username, password='temp001',
-						 	 		external_value={ u'email':u"ichigo@bleach.org"})
+						 	 		external_value={ u'email': email})
 
 			href, _, = generate_verification_email_url(user)
 
@@ -110,7 +110,7 @@ class TestMailViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.get_user(username)
 			assert_that(IUserProfile(user), has_property('email_verified', is_(False)))
-			assert_that(is_email_verified(username), is_(False))
+			assert_that(is_email_verified(email), is_(False))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_email_verification_link(self):

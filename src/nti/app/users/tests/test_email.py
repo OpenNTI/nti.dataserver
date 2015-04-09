@@ -13,9 +13,9 @@ from hamcrest import assert_that
 import isodate
 import datetime
 
-from pyramid.renderers import render
-
 from zope.dottedname import resolve as dottedname
+
+from pyramid.renderers import render
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
@@ -41,4 +41,3 @@ class TestEmailVerificationTemplate( ApplicationLayerTest ):
 						 package=package )
 		_write_to_file( 'email_verification.html', result )
 		assert_that( result, not_none() )
-
