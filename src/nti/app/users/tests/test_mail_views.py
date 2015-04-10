@@ -126,3 +126,15 @@ class TestMailViews(ApplicationLayerTest):
 					 has_entries( 'Links', has_item( has_entry('rel', 'RequestEmailVerification' ) ) ))
 		assert_that( res.json_body,
 					 has_entries( 'Links', has_item( has_entry('rel', 'VerifyEmailWithToken' ) ) ))
+	
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_request_email_verification(self):
+		username = 'ichigo'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			User.create_user(username=username, password='temp001',
+						 	 external_value={ u'email':u"ichigo@bleach.org"})
+		
+		extra_environ = self._make_extra_environ(user=username)
+		href = '/dataserver2/users/ichigo/@@request_email_verification'
+		self.testapp.post(href, extra_environ=extra_environ, status=204)
+		self.testapp.post(href, extra_environ=extra_environ, status=422)
