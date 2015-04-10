@@ -184,10 +184,11 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 			if diff_time > MAX_WAIT_TIME_EMAILS:
 				safe_send_email_verification(user, profile, email, self.request)
 			else:
-				raise_error(  self.request,
-							  hexc.HTTPUnprocessableEntity,
-							  {'message': _("A current request is been processed." ),
-							   'seconds': MAX_WAIT_TIME_EMAILS - diff_time } )
+				raise_error(self.request,
+							hexc.HTTPUnprocessableEntity,
+							{ 'message': _("A current request is been processed." ),
+							  'seconds': MAX_WAIT_TIME_EMAILS - diff_time },
+							None )
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
