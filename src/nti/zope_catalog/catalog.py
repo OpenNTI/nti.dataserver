@@ -48,7 +48,7 @@ class ResultSet(object):
 	def __len__(self):
 		return len(self.uids)
 
-	def __iter__(self):
+	def iter_pairs(self):
 		for uid in self.uids:
 			if self.ignore_invalid:
 				obj = self.uidutil.queryObject(uid)
@@ -57,7 +57,11 @@ class ResultSet(object):
 			else:
 				obj = self.uidutil.getObject(uid)
 			if obj is not None:
-				yield obj
+				yield uid, obj
+
+	def __iter__(self):
+		for _, obj in self.iter_pairs():
+			yield obj
 			
 class Catalog(_ZCatalog):
 	"""
