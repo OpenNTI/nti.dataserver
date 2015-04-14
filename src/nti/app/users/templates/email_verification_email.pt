@@ -25,7 +25,7 @@
 
 		<p>
 			Verify your email address <a tal:attributes="href options/href">here</a>
-			or by entering this token, <span tal:content="options/token">token</span> in your
+			or by entering this token, <span style="color:#3fb3f6" tal:content="options/token">token</span>, on your
 			profile page.
 		</p>
 

@@ -4,7 +4,7 @@ In order to support your account, please verify your email address. Doing so wil
 unlock features for your account.
 
 To verify your email address, either click on the following link:
-${href} or enter your verification token, ${token}.
+${href} or enter this verification token, ${token}, on your profile page.
 
 Thank you for helping us maintain the security of your account.
 
