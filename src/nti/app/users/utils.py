@@ -157,7 +157,7 @@ def _get_package(policy, template='email_verification_email'):
 			package = base_package
 	return package
 
-def send_email_verification(user, profile, email, request=None):
+def send_email_verification(user, profile, email, request=None, check=True):
 	if not request or not email:
 		logger.warn("Not sending email to %s because of no email or request", user)
 		return
@@ -165,8 +165,9 @@ def send_email_verification(user, profile, email, request=None):
 	username = user.username
 	policy = component.getUtility(ISitePolicyUserEventListener)
 
-	assert getattr(IPrincipal(profile, None), 'id', None) == user.username
-	assert getattr(IEmailAddressable(profile, None), 'email', None) == email
+	if check:
+		assert getattr(IPrincipal(profile, None), 'id', None) == user.username
+		assert getattr(IEmailAddressable(profile, None), 'email', None) == email
 
 	user_ext = to_external_object(user)
 	informal_username = user_ext.get('NonI18NFirstName', profile.realname) or username
@@ -203,11 +204,13 @@ def send_email_verification(user, profile, email, request=None):
 	# record time
 	set_email_verification_time(user)
 	
-def safe_send_email_verification(user, profile, email, request=None):
+def safe_send_email_verification(user, profile, email, request=None, check=True):
 	try:
-		send_email_verification(user, profile, email, request)
-	except (StandardError, Exception):
-		logger.error("Cannot send email confirmation to %s", user)
+		send_email_verification(user, profile, email, request=request, check=check)
+		return True
+	except (StandardError, Exception) as e:
+		logger.error("Cannot send email confirmation to %s. %s", user, e)
+		return False
 
 @component.adapter(IUser, ISendEmailConfirmationEvent)
 def _send_email_confirmation(record, event):
@@ -216,4 +219,5 @@ def _send_email_confirmation(record, event):
 	email = getattr(profile, 'email', None)
 	request = event.request or get_current_request()	
 	if profile is None:
-		safe_send_email_verification(user, profile, email, request)
+		safe_send_email_verification(user, profile, email,
+									 request=request, check=False)

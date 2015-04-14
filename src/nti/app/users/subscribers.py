@@ -55,4 +55,6 @@ def _user_modified_from_external_event(user, event):
 		set_email_verification_time(user, 0)
 		request = getattr(event,'request', None) or get_current_request()	
 		if was_email_verified and request:
-			safe_send_email_verification(user, profile, email, request)
+			safe_send_email_verification(user, profile, email, 
+										request=request,
+										check=False)
