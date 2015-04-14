@@ -14,12 +14,14 @@ from . import MessageFactory as _
 import six
 import time
 import gevent
+import urllib
 
 from urlparse import urljoin
 
 from zope import component
 
 from pyramid.view import view_config
+from pyramid.renderers import render
 from pyramid import httpexceptions as hexc
 
 from itsdangerous import BadSignature
@@ -69,14 +71,10 @@ def _login_root():
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_VIEW,
 			 request_method='GET',
-			 renderer='templates/email_verification_completion_page.pt',
 			 context=IDataserverFolder)
 class VerifyUserEmailView( AbstractAuthenticatedView ):
 
 	def process_verification(self, user, signature, values):
-		if user is None:
-			raise hexc.HTTPUnprocessableEntity(_("User not found."))
-
 		try:
 			get_verification_signature_data(user, signature, params=values)
 		except BadSignature:
@@ -92,9 +90,22 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 	def __call__(self):
 		request = self.request
 		user = self.remoteUser
+
+		if user is None:
+			# If unauthenticated, redirect to login with redirect to this view.
+			# This seems generic enough that we would want to do
+			# this for all authenticated views (or the BrowserRedirectorPlugin).
+			login_root = _login_root()
+
+			current_path = request.current_route_path()
+			current_path = urllib.quote( current_path )
+			return_url = "%s?return=%s" % (login_root, current_path)
+			return hexc.HTTPFound( location=return_url )
+
 		values = CaseInsensitiveDict(**request.params)
 		signature = values.get('signature') or values.get('token')
 		if not signature:
+			# TODO We should move this below to our template handling
 			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
 
 		destination_url = urljoin( self.request.application_url, _login_root() )
@@ -113,7 +124,19 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 					getattr(e, 'detail', ''))
 			template_args['error_message'] = _("Unable to verify account.")
 
-		return template_args
+		# TODO Should make this conditional
+		self.request.environ[ 'HTTP_X_REQUESTED_WITH' ] = str( 'xmlhttprequest' )
+
+		result = render( "templates/email_verification_completion_page.pt",
+						 template_args,
+						 request=self.request )
+
+		response = self.request.response
+		response.content_type = str( 'text/html' )
+		response.content_encoding = str('identity' )
+		response.text = result
+
+		return response
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
