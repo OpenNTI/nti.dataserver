@@ -74,7 +74,11 @@ def _login_root():
 			 context=IDataserverFolder)
 class VerifyUserEmailView( AbstractAuthenticatedView ):
 
-	def process_verification(self, user, signature, values):
+	def process_verification(self, user, values):
+		signature = values.get('signature') or values.get('token')
+		if not signature:
+			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
+
 		try:
 			get_verification_signature_data(user, signature, params=values)
 		except BadSignature:
@@ -102,12 +106,6 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 			return_url = "%s?return=%s" % (login_root, current_path)
 			return hexc.HTTPFound( location=return_url )
 
-		values = CaseInsensitiveDict(**request.params)
-		signature = values.get('signature') or values.get('token')
-		if not signature:
-			# TODO We should move this below to our template handling
-			raise hexc.HTTPUnprocessableEntity(_("No signature specified."))
-
 		destination_url = urljoin( self.request.application_url, _login_root() )
 		template_args = {'href': destination_url}
 
@@ -116,20 +114,19 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 		template_args['support_email'] = support_email
 		template_args['error_message'] = None
 		template_args['site_name'] = guess_site_display_name(self.request)
+
 		try:
-			self.process_verification(user, signature, values)
+			values = CaseInsensitiveDict(**request.params)
+			self.process_verification(user, values)
 		except hexc.HTTPError as e:
 			logger.info('Account verification for user "%s" failed. %s',
 					user,
 					getattr(e, 'detail', ''))
 			template_args['error_message'] = _("Unable to verify account.")
 
-		# TODO Should make this conditional
-		self.request.environ[ 'HTTP_X_REQUESTED_WITH' ] = str( 'xmlhttprequest' )
-
 		result = render( "templates/email_verification_completion_page.pt",
 						 template_args,
-						 request=self.request )
+						 request=request )
 
 		response = self.request.response
 		response.content_type = str( 'text/html' )
