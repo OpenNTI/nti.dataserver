@@ -20,11 +20,13 @@
 
 		<p>
 			In order to support your account, please verify your email address. Doing so will
-			enable you to receive email notifications for your account.
+			unlock features for your account.
 		</p>
 
 		<p>
-			Verify your email address with this <a tal:attributes="href options/href">link</a>.
+			Verify your email address <a tal:attributes="href options/href">here</a>
+			or by entering this token, <span tal:content="options/token">token</span> in your
+			profile page.
 		</p>
 
 		<p>
