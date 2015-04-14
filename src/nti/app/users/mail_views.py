@@ -91,6 +91,17 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 		IUserProfile(user).email_verified = True
 		reindex_email_verification(user)
 
+	def _do_render(self, template_args):
+		result = render( "templates/email_verification_completion_page.pt",
+						 template_args,
+						 request=self.request )
+
+		response = self.request.response
+		response.content_type = str( 'text/html' )
+		response.content_encoding = str('identity' )
+		response.text = result
+		return response
+
 	def __call__(self):
 		request = self.request
 		user = self.remoteUser
@@ -124,16 +135,7 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 					getattr(e, 'detail', ''))
 			template_args['error_message'] = _("Unable to verify account.")
 
-		result = render( "templates/email_verification_completion_page.pt",
-						 template_args,
-						 request=request )
-
-		response = self.request.response
-		response.content_type = str( 'text/html' )
-		response.content_encoding = str('identity' )
-		response.text = result
-
-		return response
+		return self._do_render( template_args )
 
 @view_config(route_name='objects.generic.traversal',
 			 name=VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,
