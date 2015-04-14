@@ -1,7 +1,7 @@
 Hi ${informal_username},
 
 In order to support your account, please verify your email address. Doing so will
-enable you to receive notifications for your account.
+unlock features for your account.
 
 To verify your email address, either click on the following link:
 ${href} or enter your verification token, ${token}.
