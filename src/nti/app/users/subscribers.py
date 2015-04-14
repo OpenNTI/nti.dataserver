@@ -49,15 +49,13 @@ def _user_modified_from_external_event(user, event):
 	profile = IUserProfile(user, None)
 	email = (event.ext_value or {}).get('email')
 	if profile is not None and email and profile.email != email:
-		## save verification state
-		was_email_verified = profile.email_verified
 		## change state of emaol verification
 		profile.email_verified = False
 		reindex_email_verification(user)
 		set_email_verification_time(user, 0)
 		## send email
 		request = getattr(event,'request', None) or get_current_request()	
-		if was_email_verified and request:
+		if request:
 			profile.email = email # update email so send-email can do its work
 			safe_send_email_verification(user, profile, email, 
 										 request=request,
