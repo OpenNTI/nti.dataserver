@@ -57,7 +57,9 @@ class _GenericGetView(AbstractView):
 		resource = getattr( self.request.context, 'resource', self.request.context )
 
 		if IDeletedObjectPlaceholder.providedBy(resource):
-			raise hexc.HTTPNotFound()
+			# For deleted objects, we want to return a 404 with our
+			# deleted object placeholder in the payload.
+			self.request.response.status = 404
 
 		result = component.queryAdapter( resource,
 										 ICollection,
@@ -74,10 +76,10 @@ class _GenericGetView(AbstractView):
 			# TODO: This can probably mostly go away now?
 			if result is resource:
 				# Must be careful not to modify the persistent object
-				result = LocationProxy( result, 
+				result = LocationProxy( result,
 										getattr( result, '__parent__', None),
 										getattr( result, '__name__', None ) )
-				
+
 			if getattr( resource, '__parent__', None ) is not None:
 				result.__parent__ = resource.__parent__
 				# FIXME: Another hack at getting the right parent relationship in.
