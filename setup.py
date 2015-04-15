@@ -257,8 +257,9 @@ setup(
 		'plone.scale',	 # image scaling/storage based on PIL
 		'plone.namedfile',	 # much like zope.file, but some image-specific goodness.
 		'premailer', # inline css for html emails
-		'pympler', # A development tool to measure, monitor and analyze the memory behavior of Python objects.
-		'pyparsing',	# used by matplotlib, rdflib, experimental zopyx.txng3.core
+         # A development tool to measure, monitor and analyze the memory behavior of Python objects.
+		'pympler' if not IS_PYPY else '',
+		'pyparsing', # used by rdflib
 		 # Pure python PDF reading and manipulation library.
 		'pyPDF2',
 		 # See also z3c.rml for a complete PDF layout and rendering environment, which should
