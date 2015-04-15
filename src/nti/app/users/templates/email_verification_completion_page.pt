@@ -11,7 +11,7 @@
 		</style>
 		<script tal:condition="not: options/error_message">
 		var timeRemaining = 5, cinterval;
-		
+
 		function updateTimeLeft(timeLeft){
 			document.getElementById('seconds-remaining').innerHTML = timeLeft;
 		}
@@ -30,12 +30,12 @@
 	<body>
 		<div metal:use-macro="macro:header">
 		</div>
-		
+
 		<h1 tal:condition="not: options/error_message">
-		Thank You.
+		Thank You <span tal:content="options/username">user</span>.
 		</h1>
 		<h1 tal:condition="options/error_message">
-		We're sorry.
+		We're sorry <span tal:content="options/username">user</span>.
 		</h1>
 
 		<p tal:condition="not: options/error_message">

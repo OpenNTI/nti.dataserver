@@ -105,19 +105,18 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 	def __call__(self):
 		request = self.request
 		user = self.remoteUser
+		login_root = _login_root()
 
 		if user is None:
 			# If unauthenticated, redirect to login with redirect to this view.
 			# This seems generic enough that we would want to do
 			# this for all authenticated views (or the BrowserRedirectorPlugin).
-			login_root = _login_root()
-
 			current_path = request.current_route_path()
 			current_path = urllib.quote( current_path )
 			return_url = "%s?return=%s" % (login_root, current_path)
 			return hexc.HTTPFound( location=return_url )
 
-		destination_url = urljoin( self.request.application_url, _login_root() )
+		destination_url = urljoin( self.request.application_url, login_root )
 		template_args = {'href': destination_url}
 
 		policy = component.getUtility(ISitePolicyUserEventListener)
@@ -125,6 +124,7 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 		template_args['support_email'] = support_email
 		template_args['error_message'] = None
 		template_args['site_name'] = guess_site_display_name(self.request)
+		template_args['username'] = getattr( user, 'username', '' )
 
 		try:
 			values = CaseInsensitiveDict(**request.params)
