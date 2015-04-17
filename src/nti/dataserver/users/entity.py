@@ -310,7 +310,8 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Notify we're about to update
-		notify(WillUpdateEntityEvent(self, parsed))
+		if getattr( self, '_p_jar', None ):
+			notify(WillUpdateEntityEvent(self, parsed))
 		
 		# Profile info
 		profile_iface = IUserProfileSchemaProvider( self ).getSchema()
