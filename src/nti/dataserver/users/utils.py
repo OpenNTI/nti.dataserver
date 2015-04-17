@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.intid
+from zope.intid import IIntIds
 
 from zope import component
 from zope.catalog.interfaces import ICatalog
@@ -20,6 +20,9 @@ from .index import CATALOG_NAME
 from .index import IX_EMAIL_VERIFIED
 
 from .interfaces import IUserProfile
+
+def get_catalog():
+	return component.getUtility(ICatalog, name=CATALOG_NAME)
 
 def verified_email_ids(email):
 	email = email.lower() # normalize
@@ -39,8 +42,9 @@ def verified_email_ids(email):
 	result = catalog.family.IF.intersection(intids_emails, intids_verified)
 	return result
 
-def reindex_email_verification(user):
-	intids = component.getUtility(zope.intid.IIntIds)
+def reindex_email_verification(user, catalog=None, intids=None):
+	catalog = catalog if catalog is not None else get_catalog()
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	uid = intids.queryId(user)
 	if uid is not None:
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
@@ -49,8 +53,9 @@ def reindex_email_verification(user):
 		return True
 	return False
 
-def unindex_email_verification(user):
-	intids = component.getUtility(zope.intid.IIntIds)
+def unindex_email_verification(user, catalog=None, intids=None):
+	catalog = catalog if catalog is not None else get_catalog()
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	uid = intids.queryId(user)
 	if uid is not None:
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
@@ -59,11 +64,11 @@ def unindex_email_verification(user):
 		return True
 	return False
 	
-def force_email_verification(user, profile_iface=IUserProfile):
-	profile = profile_iface(user, None)   
+def force_email_verification(user, profile=IUserProfile, catalog=None, intids=None):
+	profile = profile(user, None)   
 	if profile is not None:   
 		profile.email_verified = True
-		return reindex_email_verification(user)
+		return reindex_email_verification(user, catalog=catalog, intids=intids)
 	return False
 	
 def is_email_verified(email):
