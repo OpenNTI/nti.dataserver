@@ -29,7 +29,7 @@
 		</p>
 
 		<p>
-			Verification Code: <strong tal:content="options/token">token</span>
+			Verification Code: <strong tal:content="options/token">token</strong>
 		</p>
 
 		<p>
