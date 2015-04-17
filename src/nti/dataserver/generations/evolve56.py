@@ -44,13 +44,6 @@ def do_evolve(context):
 	except ImportError:
 		pass
 	
-	try:
-		from nti.app.products.ou.interfaces import IOUUser
-		from nti.app.products.ou.interfaces import IOUUserProfile
-		interfaces.append((IOUUser, IOUUserProfile))
-	except ImportError:
-		pass
-	
 	count = 0
 	with site(ds_folder):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
