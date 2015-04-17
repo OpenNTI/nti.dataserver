@@ -19,14 +19,17 @@
 
 
 		<p>
-			In order to support your account, please verify your email address. Doing so will
-			unlock features for your account.
+			In order to support your account, please verify your email address. Verifying your
+			email helps keep your account secure and ensures timely delivery of email notifications.
 		</p>
 
 		<p>
-			Verify your email address <a tal:attributes="href options/href">here</a>
-			or by entering this token, <span style="color:#3fb3f6" tal:content="options/token">token</span>, on your
-			profile page.
+			Verify your email address <a tal:attributes="href options/href">here</a>.  Alternatively,
+			you can enter this verification code on your profile page.
+		</p>
+
+		<p>
+			Verification Code: <strong tal:content="options/token">token</span>
 		</p>
 
 		<p>
