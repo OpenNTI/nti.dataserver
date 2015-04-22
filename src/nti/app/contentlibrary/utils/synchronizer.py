@@ -33,9 +33,9 @@ def main():
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise IOError("Invalid dataserver environment root directory")
 	
-	sites = (args.site,) if args.site else ()
+	site = args.site
 	packages = tuple(args.packages) if args.packages else ()	
-	if not sites and packages:
+	if not site and packages:
 		raise IOError("Must specify a site")
 
 	conf_packages = ('nti.appserver',)
@@ -44,7 +44,7 @@ def main():
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 context=context,
-						 function=lambda: synchronize(sites=sites, packages=packages))
+						 function=lambda: synchronize(site=site, packages=packages))
 	
 	sys.exit( 0 )
 

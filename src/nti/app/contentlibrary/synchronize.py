@@ -72,15 +72,15 @@ def synchronize(sleep=None, site=None, packages=()):
 
 	# sync
 	results = run_job_in_all_host_sites(sync_site_library)
-	gc.collect()
+	result =[x[0].__name__ for x in results if x is not None and x[1] != None]
 	
 	# mark sync time
 	hostsites = component.getUtility(IEtcNamespace, name='hostsites')
 	hostsites.lastSynchronized = time.time()
 	
+	# clean up
+	gc.collect()
+	
 	# notify
 	notify(AllContentPackageLibrariesDidSyncEvent())
-	
-	# return results
-	result =[x[0].__name__ for x in results if x is not None and x[1] != None]
 	return result
