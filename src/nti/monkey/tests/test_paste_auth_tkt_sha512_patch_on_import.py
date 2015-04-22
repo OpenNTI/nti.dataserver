@@ -1,38 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import has_key
-from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_property
+
 import unittest
+from hashlib import sha512
 
 from nose.tools import assert_raises
 
-import nti.testing.base
-
-from hashlib import sha512
-
 def _do_test_parse(AuthTicket, parse_ticket, BadTicket):
 
-	secret = b'secret'
 	time = 1234
-	user = b'foo@bar'
 	ip = b'0.0.0.0'
-
+	secret = b'secret'
+	user = b'foo@bar'
+	
 	tkt = AuthTicket( secret, user, ip, time=time )
 	cookie_value = tkt.cookie_value()
 	assert_that( parse_ticket( secret, cookie_value, ip ),
@@ -47,10 +37,12 @@ def test_patch():
 	import nti.monkey.paste_auth_tkt_sha512_patch_on_import
 	nti.monkey.paste_auth_tkt_sha512_patch_on_import.patch()
 
-	assert_that( paste.auth.auth_tkt.md5, is_( sha512 ) )
+	assert_that( paste.auth.auth_tkt, has_property('md5', is_( sha512 ) ))
 
 	from paste.auth.auth_tkt import AuthTicket, parse_ticket
 
+	assert_that( paste.auth.auth_tkt, has_property('DEFAULT_DIGEST', is_( sha512 ) ))
+	
 	_do_test_parse( paste.auth.auth_tkt.AuthTicket,
 					paste.auth.auth_tkt.parse_ticket,
 					paste.auth.auth_tkt.BadTicket )
