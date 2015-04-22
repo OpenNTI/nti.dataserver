@@ -18,6 +18,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import functools
 
+import hashlib
 from hashlib import md5
 from hashlib import sha512
 
@@ -30,17 +31,27 @@ from pyramid.authentication import parse_ticket as _pyramid_parse, BadTicket as 
 @functools.wraps(_pyramid_parse)
 def _parse_ticket( s, t, ip ):
 	try:
-		# The size of the digest changes from md5 to sha512. Pyramid
-		# deals with this, paste does not
+		## The size of the digest changes from md5 to sha512. 
+		## Pyramid deals with this, paste does not
 		return _pyramid_parse( s, t, ip, 'sha512' )
 	except _pyramid_BadTicket as e:
 		raise paste.auth.auth_tkt.BadTicket( e.args[0], e.expected )
 
 def patch():
 	def _patch( mod ):
-		if mod.md5 == md5:
-			mod.md5 = sha512
-			mod.parse_ticket = _parse_ticket
+		if getattr(mod, 'hashlib', None) == hashlib: ## Paste 2.0
+			org_init = mod.AuthTicket.__init__
+			def new_init(self, *args, **kwargs):
+				digest_algo = kwargs.pop('digest_algo', None)
+				if not digest_algo or digest_algo == md5:
+					digest_algo = sha512
+				kwargs['digest_algo'] = digest_algo
+				org_init(self, *args, **kwargs)
+			mod.AuthTicket.__init__ = new_init
+		## Paste 1.7.5.x and 2.0.x
+		mod.md5 = sha512
+		mod.DEFAULT_DIGEST = sha512
+		mod.parse_ticket = _parse_ticket
 
 	try:
 		from repoze.who import _auth_tkt as who_auth_tkt
