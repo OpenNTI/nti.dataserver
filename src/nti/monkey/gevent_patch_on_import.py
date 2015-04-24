@@ -16,7 +16,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 # All the patching uses private things so turn that warning off
-#pylint: disable=W0212
+# pylint: disable=W0212
 import sys
 
 import gevent
@@ -25,10 +25,14 @@ TRACE_GREENLETS = False
 
 def _patch_process_pool_executor():
 
-	import concurrent.futures
 	import multiprocessing
+	import concurrent.futures
+	
 	# Stash the original
-	setattr( concurrent.futures, '_ProcessPoolExecutor', concurrent.futures.ProcessPoolExecutor )
+	setattr(concurrent.futures,
+			'_ProcessPoolExecutor', 
+			concurrent.futures.ProcessPoolExecutor )
+	
 	def ProcessPoolExecutor( max_workers=None ):
 		if max_workers is None:
 			max_workers = multiprocessing.cpu_count()
@@ -72,7 +76,6 @@ def _patch_thread_stop():
 		else:
 			setattr( self, '_Thread__stopped', True )
 
-
 	setattr( threading.Thread, '_Thread__stop', __stop )
 
 def _patch_logging():
@@ -91,8 +94,10 @@ def _patch_logging():
 	# thread/threadName, process (aka pid) and processName attributes.
 
 	class _LogRecord(LogRecord):
+		
 		def __init__( self, *args, **kwargs ):
 			LogRecord.__init__( self, *args, **kwargs )
+			
 			if not self.threadName:
 				# logger.logThreads was set to False probably
 				return
@@ -142,7 +147,10 @@ def _patch_memcache():
 	finally:
 		threading.local = local
 
-def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zope.component.hooks.siteinfo', 'pyramid.threadlocal.ThreadLocalManager', 'pyramid.threadlocal.manager')):
+def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 
+									'zope.component.hooks.siteinfo',
+									'pyramid.threadlocal.ThreadLocalManager', 
+									'pyramid.threadlocal.manager')):
 	# depending on the order of imports, we may need to patch
 	# some things up manually.
 	# NOTE: This list is not complete.
@@ -150,6 +158,7 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zop
 	# so if they aren't patched due to a bad import order, we
 	# bail
 	import zope.dottedname.resolve as dottedname
+	
 	for name in names:
 		try:
 			obj = dottedname.resolve(name)
@@ -171,7 +180,62 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 'zop
 		raise TypeError("ZODB.DB/threading.RLock not monkey patched")
 
 
-if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules: # Don't do this when we are loaded for conflict resolution into somebody else's space
+def new_ssl_init():
+	
+	from gevent.ssl import CERT_NONE
+	from gevent.ssl import PROTOCOL_SSLv23
+
+	def sslsock_init(self, sock, keyfile=None, certfile=None,
+					 server_side=False, cert_reqs=CERT_NONE,
+					 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+					 do_handshake_on_connect=True,
+					 suppress_ragged_eofs=True,
+					 ciphers=None):
+		socket.__init__(self, _sock=sock)
+	
+		if certfile and not keyfile:
+			keyfile = certfile
+		# see if it's connected
+		try:
+			socket.getpeername(self)
+		except socket_error, e:
+			if e[0] != errno.ENOTCONN:
+				raise
+			# no, no connection yet
+			self._sslobj = None
+		else:
+			from ssl import SSLContext
+			# yes, create the SSL object
+			ctx = SSLContext(ssl_version)
+			if keyfile or certfile:
+				ctx.load_cert_chain(certfile, keyfile)
+			if ca_certs:
+				ctx.load_verify_locations(ca_certs)
+			if ciphers:
+				ctx.set_ciphers(ciphers)
+			self._sslobj = ctx._wrap_socket(self._sock, server_side=server_side)
+			if do_handshake_on_connect:
+				self.do_handshake()
+		self.keyfile = keyfile
+		self.certfile = certfile
+		self.cert_reqs = cert_reqs
+		self.ssl_version = ssl_version
+		self.ca_certs = ca_certs
+		self.ciphers = ciphers
+		self.do_handshake_on_connect = do_handshake_on_connect
+		self.suppress_ragged_eofs = suppress_ragged_eofs
+		self._makefile_refs = 0
+	
+	return sslsock_init
+
+version_info = getattr( gevent, 'version_info', (0, 0, 0, 'final', 0))
+if version_info[0:3] == (1, 0, 1) and sys.version_info[0:3] >= (2,7,9):
+	logger.info( "Monkey-patching the SSLSocket" )
+	from gevent.ssl import SSLSocket
+	SSLSocket.__init__ = new_ssl_init()
+	
+# Don't do this when we are loaded for conflict resolution into somebody else's space
+if version_info[0] >= 1 and 'ZEO' not in sys.modules: 
 
 	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
 	# is undone. Comments below left for historical interest
@@ -195,7 +259,8 @@ if getattr( gevent, 'version_info', (0,) )[0] >= 1 and 'ZEO' not in sys.modules:
 	# 	logger.exception( "Failed to remove os.read/write patch. Gevent outdated?")
 	# 	raise
 
-	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false (this is marked experimental in 1.0rc1)
+	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false 
+	# (this is marked experimental in 1.0rc1)
 	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False)
 
 	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
