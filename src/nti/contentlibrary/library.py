@@ -45,6 +45,7 @@ from .interfaces import IContentPackageLibrary
 from .interfaces import IPersistentContentUnit
 from .interfaces import IContentPackageEnumeration
 from .interfaces import ContentPackageReplacedEvent
+from .interfaces import ContentPackageUnmodifiedEvent
 from .interfaces import ISyncableContentPackageLibrary
 from .interfaces import ContentPackageLibraryDidSyncEvent
 from .interfaces import ContentPackageLibraryWillSyncEvent
@@ -334,6 +335,10 @@ class AbstractContentPackageLibrary(object):
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
 			event = ContentPackageLibraryModifiedOnSyncEvent(self, packages, attributes)
 			notify(event)
+
+		## Signal what pacakges WERE NOT modified
+		for pacakge in unmodified or ():
+			notify(ContentPackageUnmodifiedEvent(pacakge))
 
 		## Finish up by saying that we sync'd, even if nothing changed
 		notify(ContentPackageLibraryDidSyncEvent(self, packages))

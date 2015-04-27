@@ -8,8 +8,8 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.interface.interfaces import IObjectEvent
 from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
 
 from zope.annotation.interfaces import IAnnotatable
 
@@ -43,7 +43,6 @@ from nti.schema.field import Iterable
 from nti.schema.field import UniqueIterable
 from nti.schema.field import IndexedIterable
 from nti.schema.field import ValidTextLine as TextLine
-
 
 # pylint: disable=I0011,E0213,E0211
 
@@ -569,6 +568,16 @@ class IContentPackage(IContentUnit,
 							   default=1,
 						min=1)
 
+class IContentPackageUnmodifiedEvent(IObjectEvent):
+	"""
+	A special type of event to signal a content package
+	was not modififed
+	"""
+
+@interface.implementer(IContentPackageUnmodifiedEvent)
+class ContentPackageUnmodifiedEvent(ObjectEvent):
+	pacakge = alias('object')
+		
 class IContentPackageReplacedEvent(IObjectModifiedEvent):
 	"""
 	A special type of modification event sent when a content package
