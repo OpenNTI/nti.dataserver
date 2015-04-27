@@ -183,55 +183,109 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 def new_ssl_init():
 	
 	import errno
-	from ssl import CERT_OPTIONAL
+	
+	from ssl import SSLContext
+	from ssl import SOL_SOCKET, SO_TYPE
+	from ssl import AF_INET, SOCK_STREAM
+	
 	from gevent.ssl import CERT_NONE
 	from gevent.ssl import PROTOCOL_SSLv23
 	from gevent.socket import socket, error as socket_error
 	
-	def sslsock_init(self, sock, keyfile=None, certfile=None,
-					 server_side=False, cert_reqs=CERT_NONE,
-					 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
-					 do_handshake_on_connect=True,
-					 suppress_ragged_eofs=True,
-					 ciphers=None,
-					 server_hostname=None,
-					 _context=None):
-		socket.__init__(self, _sock=sock)
-		self.server_hostname = server_hostname
-		if certfile and not keyfile:
-			keyfile = certfile
-		# see if it's connected
-		try:
-			socket.getpeername(self)
-		except socket_error, e:
-			if e[0] != errno.ENOTCONN:
-				raise
-			# no, no connection yet
-			self._sslobj = None
+	_delegate_methods = ('recv', 'recvfrom', 'recv_into', 'recvfrom_into', 'send', 'sendto')
+
+	def sslsock_init(self, sock=None, keyfile=None, certfile=None,
+				 server_side=False, cert_reqs=CERT_NONE,
+				 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
+				 do_handshake_on_connect=True,
+				 family=AF_INET, type=SOCK_STREAM, proto=0, fileno=None,
+				 suppress_ragged_eofs=True, npn_protocols=None, ciphers=None,
+				 server_hostname=None,
+				 _context=None):
+
+		if _context:
+			self._context = _context
 		else:
-			from ssl import SSLContext
-			# yes, create the SSL object
-			ctx = SSLContext(ssl_version)
-			ctx.verify_mode = CERT_OPTIONAL
-			if keyfile or certfile:
-				ctx.load_cert_chain(certfile, keyfile)
+			if server_side and not certfile:
+				raise ValueError("certfile must be specified for server-side "
+								 "operations")
+			if keyfile and not certfile:
+				raise ValueError("certfile must be specified")
+			if certfile and not keyfile:
+				keyfile = certfile
+			self._context = SSLContext(ssl_version)
+			self._context.verify_mode = cert_reqs
 			if ca_certs:
-				ctx.load_verify_locations(ca_certs)
+				self._context.load_verify_locations(ca_certs)
+			if certfile:
+				self._context.load_cert_chain(certfile, keyfile)
+			if npn_protocols:
+				self._context.set_npn_protocols(npn_protocols)
 			if ciphers:
-				ctx.set_ciphers(ciphers)
-			self._sslobj = ctx._wrap_socket(self._sock, server_side=server_side)
-			if do_handshake_on_connect:
-				self.do_handshake()
-		self.keyfile = keyfile
-		self.certfile = certfile
-		self.cert_reqs = cert_reqs
-		self.ssl_version = ssl_version
-		self.ca_certs = ca_certs
-		self.ciphers = ciphers
+				self._context.set_ciphers(ciphers)
+			self.keyfile = keyfile
+			self.certfile = certfile
+			self.cert_reqs = cert_reqs
+			self.ssl_version = ssl_version
+			self.ca_certs = ca_certs
+			self.ciphers = ciphers
+		# Can't use sock.type as other flags (such as SOCK_NONBLOCK) get
+		# mixed in.
+		if sock.getsockopt(SOL_SOCKET, SO_TYPE) != SOCK_STREAM:
+			raise NotImplementedError("only stream sockets are supported")
+
+		# CPython: XXX: Must pass the underlying socket, not our
+		# potential wrapper; test___example_servers fails the SSL test
+		# with a client-side EOF error. (Why?)
+		socket.__init__(self, _sock=sock._sock)
+
+		# The initializer for socket overrides the methods send(), recv(), etc.
+		# in the instancce, which we don't need -- but we want to provide the
+		# methods defined in SSLSocket.
+		for attr in _delegate_methods:
+			try:
+				delattr(self, attr)
+			except AttributeError:
+				pass
+		if server_side and server_hostname:
+			raise ValueError("server_hostname can only be specified "
+							 "in client mode")
+		self.server_side = server_side
+		self.server_hostname = server_hostname
 		self.do_handshake_on_connect = do_handshake_on_connect
 		self.suppress_ragged_eofs = suppress_ragged_eofs
+		self.settimeout(sock.gettimeout())
+
+		# See if we are connected
+		try:
+			self.getpeername()
+		except socket_error as e:
+			if e.errno != errno.ENOTCONN:
+				raise
+			connected = False
+		else:
+			connected = True
+
 		self._makefile_refs = 0
-	
+		self._closed = False
+		self._sslobj = None
+		self._connected = connected
+		if connected:
+			# create the SSL object
+			try:
+				self._sslobj = self._context._wrap_socket(self._sock, server_side,
+														  server_hostname, ssl_sock=self)
+				if do_handshake_on_connect:
+					timeout = self.gettimeout()
+					if timeout == 0.0:
+						# non-blocking
+						raise ValueError("do_handshake_on_connect should not be specified for non-blocking sockets")
+					self.do_handshake()
+
+			except socket_error as x:
+				self.close()
+				raise x
+
 	return sslsock_init
 
 version_info = getattr( gevent, 'version_info', (0, 0, 0, 'final', 0))
