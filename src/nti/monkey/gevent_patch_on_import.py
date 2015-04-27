@@ -182,17 +182,22 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 
 def new_ssl_init():
 	
+	import errno
+	from ssl import CERT_OPTIONAL
 	from gevent.ssl import CERT_NONE
 	from gevent.ssl import PROTOCOL_SSLv23
-
+	from gevent.socket import socket, error as socket_error
+	
 	def sslsock_init(self, sock, keyfile=None, certfile=None,
 					 server_side=False, cert_reqs=CERT_NONE,
 					 ssl_version=PROTOCOL_SSLv23, ca_certs=None,
 					 do_handshake_on_connect=True,
 					 suppress_ragged_eofs=True,
-					 ciphers=None):
+					 ciphers=None,
+					 server_hostname=None,
+					 _context=None):
 		socket.__init__(self, _sock=sock)
-	
+		self.server_hostname = server_hostname
 		if certfile and not keyfile:
 			keyfile = certfile
 		# see if it's connected
@@ -207,6 +212,7 @@ def new_ssl_init():
 			from ssl import SSLContext
 			# yes, create the SSL object
 			ctx = SSLContext(ssl_version)
+			ctx.verify_mode = CERT_OPTIONAL
 			if keyfile or certfile:
 				ctx.load_cert_chain(certfile, keyfile)
 			if ca_certs:
