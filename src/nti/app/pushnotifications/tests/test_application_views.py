@@ -82,7 +82,7 @@ class TestUnsubscribe(ApplicationLayerTest):
 		unsubscribeResult = self.testapp.get( unsub_url )
 		
 		assert_that(unsubscribeResult.body, contains_string('html'))
-		assert_that(unsubscribeResult.body, contains_string('We\'re sorry.'))
+		assert_that(unsubscribeResult.body, contains_string('You have been unsubscribed'))
 
 		# Our pref is now false.
 		res = self._fetch_user_url( '/++preferences++', status=200, extra_environ=self._make_extra_environ() )
