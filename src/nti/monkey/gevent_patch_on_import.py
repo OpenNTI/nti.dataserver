@@ -107,7 +107,7 @@ def _patch_logging():
 
 				current = getcurrent()
 				# We define __thread_name__ in our custom greenlet worker
-				# subclass (see nti.appserver.gunicorn); _formatinfo is
+				# subclass (see nti.appserver.nti_gunicorn); _formatinfo is
 				# an internal debugging method from gevent
 				thread_info = (getattr(current, '__thread_name__', None)
 							   or getattr(current, '_formatinfo', None))

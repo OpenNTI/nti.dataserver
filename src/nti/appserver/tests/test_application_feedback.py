@@ -24,7 +24,6 @@ from nti.appserver.feedback_views import REL_SEND_FEEDBACK
 from nti.dataserver.tests import mock_dataserver
 from nti.testing.matchers import is_empty
 
-
 from . import ITestMailDelivery
 from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
@@ -113,7 +112,7 @@ class TestApplicationFeedback(ApplicationLayerTest):
 		assert_that( msg_string,
 					 contains_string( b"collectedLog          ['an',\n"))
 		assert_that( msg_string,
-					 contains_string( b"<td>[&lt;class 'greenlet.GreenletExit'&gt;,<br /> &lt;type"))
+					 contains_string( b"greenlet.GreenletExit"))
 		assert_that( msg_string,
 					 does_not( contains_string(b'HTTP_COOKIE')))
 
