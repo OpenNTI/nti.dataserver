@@ -139,7 +139,6 @@ class _AbstractValidationViewBase(TestBaseMixin):
 		assert_that( exc.exception.json_body, has_entry( 'code', 'InsecurePasswordIsForbidden' ) )
 
 
-
 	@WithMockDSTrans
 	def test_create_invalid_email( self ):
 		self.request.content_type = b'application/vnd.nextthought+json'
