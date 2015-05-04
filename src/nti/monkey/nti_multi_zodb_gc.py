@@ -73,6 +73,9 @@ logger = __import__('logging').getLogger(__name__)
 # [oid]
 # 	A persistent weak reference
 
+# XXX: This is fixed in https://github.com/zopefoundation/zc.zodbdgc/pull/1.
+# We should just switch to that branch everywhere.
+
 try:
 	from zodbpickle.fastpickle import Unpickler
 except ImportError: # PyPy?
