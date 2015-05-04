@@ -31,10 +31,8 @@ relstorage_zlibstorage_patch_on_import.patch()
 relstorage_timestamp_repr_patch_on_import.patch()
 relstorage_explicitly_close_memcache_patch_on_import.patch()
 
-from . import python_persistent_bugs_patch_on_import
-python_persistent_bugs_patch_on_import.patch()
-
 # NOTE: Not importing patch_all, don't want gevent
+# (XXX: Except we probably do, definitely under pypy.)
 
 import sys
 from pkg_resources import load_entry_point, get_distribution

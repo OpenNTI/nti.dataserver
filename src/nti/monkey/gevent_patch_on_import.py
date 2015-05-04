@@ -13,7 +13,9 @@ If this is imported too late and we know that things will not work, we raise an 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# DO NOT create a logger at the top of this file;
+# it allocates locks
+#logger = __import__('logging').getLogger(__name__)
 
 # All the patching uses private things so turn that warning off
 # pylint: disable=W0212
@@ -27,12 +29,12 @@ def _patch_process_pool_executor():
 
 	import multiprocessing
 	import concurrent.futures
-	
+
 	# Stash the original
 	setattr(concurrent.futures,
-			'_ProcessPoolExecutor', 
+			'_ProcessPoolExecutor',
 			concurrent.futures.ProcessPoolExecutor )
-	
+
 	def ProcessPoolExecutor( max_workers=None ):
 		if max_workers is None:
 			max_workers = multiprocessing.cpu_count()
@@ -94,10 +96,10 @@ def _patch_logging():
 	# thread/threadName, process (aka pid) and processName attributes.
 
 	class _LogRecord(LogRecord):
-		
+
 		def __init__( self, *args, **kwargs ):
 			LogRecord.__init__( self, *args, **kwargs )
-			
+
 			if not self.threadName:
 				# logger.logThreads was set to False probably
 				return
@@ -147,9 +149,9 @@ def _patch_memcache():
 	finally:
 		threading.local = local
 
-def check_threadlocal_status(names=('transaction.ThreadTransactionManager', 
+def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 									'zope.component.hooks.siteinfo',
-									'pyramid.threadlocal.ThreadLocalManager', 
+									'pyramid.threadlocal.ThreadLocalManager',
 									'pyramid.threadlocal.manager')):
 	# depending on the order of imports, we may need to patch
 	# some things up manually.
@@ -158,7 +160,7 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 	# so if they aren't patched due to a bad import order, we
 	# bail
 	import zope.dottedname.resolve as dottedname
-	
+
 	for name in names:
 		try:
 			obj = dottedname.resolve(name)
@@ -179,19 +181,21 @@ def check_threadlocal_status(names=('transaction.ThreadTransactionManager',
 	if db.threading.RLock is not gevent.lock.RLock:
 		raise TypeError("ZODB.DB/threading.RLock not monkey patched")
 
-
+# XXX: This is fixed in https://github.com/gevent/gevent/pull/546,
+# https://github.com/gevent/gevent/pull/551 and 552. We should switch
+# to one of those branches (552 is required for pypy.)
 def new_ssl_init():
-	
+
 	import errno
-	
+
 	from ssl import SSLContext
 	from ssl import SOL_SOCKET, SO_TYPE
 	from ssl import AF_INET, SOCK_STREAM
-	
+
 	from gevent.ssl import CERT_NONE
 	from gevent.ssl import PROTOCOL_SSLv23
 	from gevent.socket import socket, error as socket_error
-	
+
 	_delegate_methods = ('recv', 'recvfrom', 'recv_into', 'recvfrom_into', 'send', 'sendto')
 
 	def sslsock_init(self, sock=None, keyfile=None, certfile=None,
@@ -289,13 +293,22 @@ def new_ssl_init():
 	return sslsock_init
 
 version_info = getattr( gevent, 'version_info', (0, 0, 0, 'final', 0))
-if version_info[0:3] == (1, 0, 1) and sys.version_info[0:3] >= (2,7,9):
-	logger.info( "Monkey-patching the SSLSocket" )
-	from gevent.ssl import SSLSocket
-	SSLSocket.__init__ = new_ssl_init()
-	
+
+def _patch_ssl():
+	import platform
+	is_pypy = platform.python_implementation() == 'PyPy'
+	if is_pypy:
+		# If we're running this on pypy, we have a fixed branch
+		# anyway
+		return
+
+	if version_info[0:3] == (1, 0, 1) and sys.version_info[0:3] >= (2,7,9):
+		logger.info( "Monkey-patching the SSLSocket" )
+		from gevent.ssl import SSLSocket
+		SSLSocket.__init__ = new_ssl_init()
+
 # Don't do this when we are loaded for conflict resolution into somebody else's space
-if version_info[0] >= 1 and 'ZEO' not in sys.modules: 
+if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 
 	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
 	# is undone. Comments below left for historical interest
@@ -319,7 +332,7 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 	# 	logger.exception( "Failed to remove os.read/write patch. Gevent outdated?")
 	# 	raise
 
-	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false 
+	# As of 2012-10-06, patching sys/std[out/err/in] hangs gunicorn, so be sure it's false
 	# (this is marked experimental in 1.0rc1)
 	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False)
 
@@ -382,6 +395,8 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 
 	_patch_memcache()
 
+	_patch_ssl()
+
 	if TRACE_GREENLETS:
 		import greenlet
 		def greenlet_trace( event, origin ):
@@ -405,9 +420,6 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 	# Monkey-patch for RelStorage to use pure-python drivers that are non-blocking
 	from . import relstorage_umysqldb_patch_on_import
 	relstorage_umysqldb_patch_on_import.patch()
-
-	from . import python_persistent_bugs_patch_on_import
-	python_persistent_bugs_patch_on_import.patch()
 
 else:
 	logger = __import__('logging').getLogger(__name__)
