@@ -66,7 +66,6 @@ import platform
 py_impl = getattr(platform, 'python_implementation', lambda: None)
 IS_PYPY = py_impl() == 'PyPy'
 
-HAVE_ZCONT = True
 
 TESTS_REQUIRE = [
 	'WebTest', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
@@ -83,6 +82,7 @@ TESTS_REQUIRE = [
 	'pyhamcrest >= 1.8.0',
 	'tempstorage >= 2.12.2',  # ZODB in-memory conflict-resolving storage; like MappingStorage, but handles changes
 	'zope.testing >= 4.1.2',
+	'zope.testrunner',
 	'nti.nose_traceback_info',
 	'nti.testing',
 	'nti.app.testing',
@@ -135,7 +135,7 @@ setup(
 		'nti.dataserver.fragments',
 		'nti.dublincore',
 		'nti.externalization',
-        'nti.futures',
+		'nti.futures',
 		'nti.geventwebsocket',
 		'nti.links',
 		'nti.mimetype',
@@ -153,11 +153,11 @@ setup(
 		'pywikipedia',
 		 # Zope Acquisition; used by contentratings implicitly
 		 # cool concept. Pulls in ExtensionClass (which should only be used for acquisition)
-		'Acquisition' if not IS_PYPY else '',  # Extensions don't build on pypy
+		'Acquisition',
 		'Chameleon', # (preferred) template rendering. pulled in by pyramid, but ensure latest version
 		'ExtensionClass',
-		'Mako',  # fallback plain-text template render. pulled in by pyramid, but ensure latest version
-		'Pillow' if not IS_PYPY else '', # not yet supported on pypy
+		'Mako',	 # fallback plain-text template render. pulled in by pyramid, but ensure latest version
+		'Pillow',
 		'RestrictedPython',
 		'ZConfig',
 		 # Depending on the final release, we may need to explicitly list each component.
@@ -167,33 +167,37 @@ setup(
 		'zdaemon',
 		'persistent',
 		'ZEO',
-		 # ZODB RelStorage:
-		 # 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
-		 # 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
-		 # See also umysqldb for a mysql adapter that should be gevent compat, with same API
-		 # It depends on umysql, which has been released as 2.5 on pypi.
-		 # NOTE: This does not support unix socket connections
-		 # MySQL-python is mostly in C. umysql is entirely in C.
-		 # umysqldb uses (very small) parts of PyMySQL (which is entirely in python),
-		 # As of 2010-09-15, PyMySQL at github/petehunt is not being maintained,
-		 # but the original it was forked from, at github/lecram seems to be; both
-		 # have commits not in the released 0.5 that we need.
-		 # As of 2013-10-04 it looks like releases are being made to PyPI again,
-		 # and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/.
-		 # However, pymysql 0.6 is incompatible with relstorage. The cursors.Cursor
-		 # class changed from storing self.connection as weakref.proxy to a plain
-		 # weakref (requiring a call to dereference) which naturally breaks all users
-		 # of cursors:
-		 #  Module relstorage.storage:925 in f
-		 #  >>  return list(self._adapter.oidallocator.new_oids(cursor))
-		 #  Module relstorage.adapters.oidallocator:58 in new_oids
-		 #  >>  n = cursor.connection.insert_id()
-		 #  AttributeError: 'weakref' object has no attribute 'insert_id'
-		 # See https://github.com/PyMySQL/PyMySQL/issues/180.
-		 # This is fixed in 0.6.1, but umysqldb 1.0.3 already had a pin <0.6
-		 # MySQL-python (aka MySQLdb) has been renamed to moist (https://github.com/farcepest/moist)
-		'umysql == 2.61',
-		'umysqldb == 1.0.4dev2', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
+		# ZODB RelStorage:
+		# 'pylibmc', # for memcached support (has third-party dep on memcache-devel)
+		# 'MySQL-python', # mysql adapter--NOT needed, loaded from umysqldb
+		# See also umysqldb for a mysql adapter that should be gevent compat, with same API
+		# It depends on umysql, which has been released as 2.5 on pypi.
+		# NOTE: This does not support unix socket connections
+		# MySQL-python is mostly in C. umysql is entirely in C.
+		# umysqldb uses (very small) parts of PyMySQL (which is entirely in python),
+		# As of 2010-09-15, PyMySQL at github/petehunt is not being maintained,
+		# but the original it was forked from, at github/lecram seems to be; both
+		# have commits not in the released 0.5 that we need.
+		# As of 2013-10-04 it looks like releases are being made to PyPI again,
+		# and lecram is now maintaining the master copy at https://github.com/PyMySQL/PyMySQL/.
+		# However, pymysql 0.6 is incompatible with relstorage. The cursors.Cursor
+		# class changed from storing self.connection as weakref.proxy to a plain
+		# weakref (requiring a call to dereference) which naturally breaks all users
+		# of cursors:
+		#	Module relstorage.storage:925 in f
+		#	>>	return list(self._adapter.oidallocator.new_oids(cursor))
+		#	Module relstorage.adapters.oidallocator:58 in new_oids
+		#	>>	n = cursor.connection.insert_id()
+		#	AttributeError: 'weakref' object has no attribute 'insert_id'
+		# See https://github.com/PyMySQL/PyMySQL/issues/180.
+		# This is fixed in 0.6.1, but umysqldb 1.0.3 already had a pin <0.6
+		# MySQL-python (aka MySQLdb) has been renamed to moist but seems stalled (https://github.com/farcepest/moist)
+		# On PyPy, we want pure PyMySQL, it's fastest.
+		# Benchmarking, however, shows that MySQL-python is by far the fastest under CPython,
+		# and MAY even be gevent friendly. It also seems like PyMySQL is also probably faster
+		# than umysql under CPython, despite umysql's claims (have to finish confirming that).
+		'umysql == 2.61' if not IS_PYPY else '',
+		'umysqldb == 1.0.4dev2' if not IS_PYPY else '', # requires PyMySQL < 0.6, but we want 0.6.1; hence our patch
 		'RelStorage',
 		'PyMySQL',
 		'PyYAML',
@@ -205,7 +209,7 @@ setup(
 		 # URL-safe "slugs" from arbitrary titles. Automatically
 		 # deals with several non-ASCII scripts
 		'awesome-slugify',
-		'boto',  # amazon
+		'boto',	 # amazon
 		'brownie',	 # Common utilities
 		 # rating content objects (1.0-rc3 > 1.0 sadly, so specific)
 		 # See also collective.subscribe for a different take, useful when we need
@@ -221,15 +225,15 @@ setup(
 		 # pulls in dm.reuse
 		'dm.zope.schema',
 		'dolmen.builtins',	 # interfaces for common python types
-		'filechunkio',  # Req'd for multi-put in boto == 2.5.2
+		'filechunkio',	# Req'd for multi-put in boto == 2.5.2
 		 # A very simple (one module, no deps) RSS and Atom feed generator.
 		 # 1.7 is a modern rewrite with much better unicode and Py3k support
 		'feedgenerator',
 		'futures',
-		'gevent' if not IS_PYPY else '',
+		'gevent' if not IS_PYPY else '', # We have a branch for this, installed in buildout.cfg
 		'greenlet' if not IS_PYPY else '', # pypy has its own greenlet implementation
 		'gunicorn',
-		'hiredis',	 # Redis C parser
+		'hiredis' if not IS_PYPY else '', # Redis C parser (almost certainly an anti-optimization on PyPy)
 		 # HTML5 parsing library
 		 # Note that the 1.0 series is a much improved parser over 0.95;
 		 # this may result in some differences. (0.99 is actually newer
@@ -249,16 +253,14 @@ setup(
 		 # install numpy manually with pip: pip install numpy
 		 # or have it in requirements.txt (which we do).
 		 # It also works to install it with buildout, which is the currently
-		 # supported mechanism.
+		 # supported mechanism. This is how we do it with pypy too.
 		'numpy' if not IS_PYPY else '',
 		'paste',
-		'perfmetrics',  # easy statsd metrics.
+		'perfmetrics',	# easy statsd metrics.
 		'plone.i18n',	# provides ISO3166 country/codes and flag images
 		'plone.scale',	 # image scaling/storage based on PIL
 		'plone.namedfile',	 # much like zope.file, but some image-specific goodness.
 		'premailer', # inline css for html emails
-         # A development tool to measure, monitor and analyze the memory behavior of Python objects.
-		'pympler' if not IS_PYPY else '',
 		'pyparsing', # used by rdflib
 		 # Pure python PDF reading and manipulation library.
 		'pyPDF2',
@@ -289,16 +291,16 @@ setup(
 		 # There is a nice complete mock for it at fakeredis, installed for tests
 		'repoze.catalog',
 		'repoze.lru',  # LRU caching. Dep of Pyramid
-		'repoze.sendmail',  # trunk has some good binary changes
+		'repoze.sendmail',	# trunk has some good binary changes
 		'repoze.who',  #
-		'repoze.zodbconn' if not IS_PYPY else '',
+		'repoze.zodbconn',
 		 # Requests: http for humans. Requests >= 1.0.x is depended on by httpie 0.4.
 		 # We use just the generic part of the API and work back to 0.14.
 		 # stripe also depends on just the minimal part of the api (their setup.py doesn't
 		 # give a version) (?). grequests 0.1.0 is not compatible with this.
 		 # If something used hooks, a change from 1.1 to 1.2 might break it; no initial issues seen
 		'requests',
-		'setproctitle',  # used by gunicorn
+		'setproctitle',	 # used by gunicorn
 		'setuptools',
 		'simplejson',
 		'six',
@@ -311,8 +313,8 @@ setup(
 		'whoosh',
 		'z3c.appconfig',
 		'z3c.autoinclude',
-		'z3c.baseregistry',  # ZCML configurable local component registries
-		'z3c.batching',  # result paging. Pulled in by z3c.table
+		'z3c.baseregistry',	 # ZCML configurable local component registries
+		'z3c.batching',	 # result paging. Pulled in by z3c.table
 		 # bcrypt/pbkdf2 for zope.password
 		 # adds cryptacular and pbkdf2
 		'z3c.bcrypt',
@@ -327,7 +329,7 @@ setup(
 		'z3c.rml',
 		'z3c.schema',
 		'z3c.table',	 # Flexible table rendering
-		'zc.blist',  # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
+		'zc.blist',	 # ZODB-friendly BTree-based list implementation. compare to plain 'blist'
 		'zc.catalog',
 		'zc.dict',	 # BTree based dicts that are subclassable
 		'zc.displayname', # Simple pluggable display name support
@@ -336,10 +338,10 @@ setup(
 		'zc.queue',
 		'zc.zlibstorage',	# compressed records. Will be built-in to newer ZODB
 		'zc.zodbdgc',
-		'zodbpickle' if not IS_PYPY else '', # extensions fail to build
+		'zodbpickle',
 		'zope.app.broken',	 # Improved broken objects
 		'zope.app.dependable', # simple dependency tracking; re-exported from zope.container
-		'zope.applicationcontrol',  # Info about the app. currently unused
+		'zope.applicationcontrol',	# Info about the app. currently unused
 		'zope.annotation',
 		'zope.authentication',
 		'zope.broken',	 # This is actually deprecated, use the ZODB import
@@ -347,7 +349,7 @@ setup(
 		'zope.browserpage',
 		'zope.browsermenu',	# Browser menu implementation for Zope.
 		'zope.browserresource',
-		'zope.catalog' if HAVE_ZCONT else '',  # zope.container dependency
+		'zope.catalog',
 		'zope.cachedescriptors',
 		'zope.component[persistentregistry]',
 		 # Schema vocabularies based on querying ZCA; useful
@@ -362,9 +364,9 @@ setup(
 		 # We have a branch of it that supports pypy
 		'zope.container[zcml,zodb]',	# 4.0.0a3 or greater is required in the 4 series
 		'zope.contentprovider',
-		'zope.contenttype',  # A utility module for content-type handling.
+		'zope.contenttype',	 # A utility module for content-type handling.
 		'zope.copy',
-		'zope.copypastemove[zcml]' if HAVE_ZCONT else '',  # zope.container dep
+		'zope.copypastemove[zcml]',  # zope.container dep
 		'zope.datetime',
 		'zope.deprecation',
 		'zope.deferredimport',
@@ -374,7 +376,7 @@ setup(
 		'zope.event',
 		'zope.exceptions',
 		'zope.filerepresentation',
-		'zope.file' if HAVE_ZCONT else '',	 # zope.container dep
+		'zope.file',	 # zope.container dep
 		'zope.formlib',	# Req'd by zope.mimetype among others,
 		'zope.generations',
 		'zope.hookable',  # explicitly list this to ensure we get the fast C version. Used by ZCA.
@@ -382,7 +384,7 @@ setup(
 		'zope.i18nmessageid',
 		'zope.index',
 		'zope.interface',
-		'zope.intid' if HAVE_ZCONT else '',
+		'zope.intid',
 		'zope.keyreference',
 		'zope.lifecycleevent',	 # Object Added/Removed/etc events
 		'zope.login',  # Providers of Zope3 authentication.ILoginPassword for Zope3 publisher interfaces; pulled in by zope.file[test] and indirectly zope.app.component[test]
@@ -391,10 +393,10 @@ setup(
 		'zope.minmax',
 		'zope.pagetemplate',
 		'zope.password',  # encrypted password management
-		'zope.pluggableauth' if HAVE_ZCONT else '',	# pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
+		'zope.pluggableauth',	# pluggable authentication for zope.auth; see also repoze.who; zope.container dependency
 		 # Persistent, schema-based preferences with
 		 # site- and local defaults
-		'zope.preference' if HAVE_ZCONT else '',
+		'zope.preference',
 		'zope.ptresource',
 		'zope.publisher',
 		'zope.principalannotation',	# Annotating principals in Zope3's global reg; pulled in indirectly by zope.app.component[test]
@@ -407,7 +409,7 @@ setup(
 		'zope.security[zcml,untrustedpython]',	 # >= 4.0.0b1 gets PyPy support!
 		'zope.securitypolicy',
 		'zope.session',	# 4.0.0a2 is out, should be fine
-		'zope.site' if HAVE_ZCONT else '',  # local, persistent ZCA sites. zope.container dep
+		'zope.site',	# local, persistent ZCA sites. zope.container dep
 		'zope.size',
 		 # parser and renderers for the classic Zope "structured text" markup dialect (STX).
 		 # STX is a plain text markup in which document structure is signalled primarily by identation.
@@ -420,7 +422,7 @@ setup(
 		 # Plug to make zope.schema's vocabulary registry ZCA
 		 # based and thus actually useful
 		'zope.vocabularyregistry',
-		'zopyx.txng3.ext' if not IS_PYPY else '',  # extensions don't build
+		'zopyx.txng3.ext' if not IS_PYPY else '',  # extensions don't build, but we have a branch
 		 # Data analysis
 		 # pandas,
 		 # scikit-learn,
@@ -435,21 +437,23 @@ setup(
 			 # Depends on the system graphviz installation; an alternative is repoze.profile which has
 			 # fewer dependencies, but less helpful output and doesn't work with multiple workers (?)
 			 # Moved to buildout to reduce dep
-			 # 'linesman >= 0.3.1',  # less that 0.3.0 conflicts with pillow (wanted PIL)
+			 # 'linesman >= 0.3.1',	 # less that 0.3.0 conflicts with pillow (wanted PIL)
 			 # 'Pymacs >= 0.25', # checkout from git+https://github.com/pinard/Pymacs, run make. idiot thing uses a preprocessor, can't be directly installed
 			 #'dblatex >= 0.3.4',  # content rendering, convert docbook to tex. disabled due to sandbox violation
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
-			'jsonschema', 
+			'jsonschema',
+			# A development tool to measure, monitor and analyze the memory behavior of Python objects.
+			'pympler' if not IS_PYPY else '',
 			'mistune',
-			'ipython',  # the extra notebook is web based, pulls in tornado
+			'ipython',	# the extra notebook is web based, pulls in tornado
 			'logilab_astng >= 0.24.3',
 			'pip',
-			 #'pip-tools >= 0.3.4',  # command pip-review, pip-dump -- replaced by bin/checkversions
+			 #'pip-tools >= 0.3.4',	 # command pip-review, pip-dump -- replaced by bin/checkversions
 			'pudb >= 2013.5.1', # Python full screen console debugger. Beats ipython's: import pudb; pdb.set_trace()
-			'pylint' if not IS_PYPY else '',  # install astroid
+			'pylint',  # install astroid
 			'pyramid_debugtoolbar >= 1.0.9',
-			'readline >= 6.2.4.1' if not IS_PYPY else '',
+			'readline >= 6.2.4.1' if not IS_PYPY else '', # built-in to pypy
 			'repoze.sphinx.autointerface >= 0.7.1',
 			'rope >= 0.9.4',  # refactoring library. c.f. ropemacs
 			'ropemode >= 0.2',	# IDE helper for rope
