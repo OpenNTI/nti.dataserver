@@ -9,7 +9,7 @@ You must use our worker (:class:`GeventApplicationWorker`), configured with past
 	use = egg:nti.dataserver#gunicorn
 	host =
 	port = %(http_port)s
-	worker_class =  nti.appserver.gunicorn.GeventApplicationWorker
+	worker_class =  nti.appserver.nti_gunicorn.GeventApplicationWorker
 	workers = 1
 
 .. $Id$

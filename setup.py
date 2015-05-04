@@ -45,7 +45,7 @@ entry_points = {
 	],
 	"paste.app_factory": [
 		"main = nti.appserver.standalone:configure_app",
-		"gunicorn = nti.appserver.gunicorn:dummy_app_factory"
+		"gunicorn = nti.appserver.nti_gunicorn:dummy_app_factory"
 	],
 	"paste.filter_app_factory": [
 		"cors = nti.wsgi.cors:cors_filter_factory", # BWC
@@ -55,7 +55,7 @@ entry_points = {
 	],
 	"paste.server_runner": [
 		"http = nti.appserver.standalone:server_runner",
-		"gunicorn = nti.appserver.gunicorn:paste_server_runner"
+		"gunicorn = nti.appserver.nti_gunicorn:paste_server_runner"
 	],
 	"zodbupdate" : [  # Migrating class names through zodbupdate >= 0.5
 		"chatserver_meetings = nti.chatserver.meeting:_bwc_renames"

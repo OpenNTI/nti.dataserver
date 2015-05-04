@@ -1,38 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 logger = __import__('logging').getLogger(__name__)
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
 
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import same_instance
 from hamcrest import has_entry
+from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import same_instance
 
-#from pyramid.testing import DummyRequest
-from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
-from pyramid.request import Request
+import fudge
+
 from cStringIO import StringIO
 
 import gevent.pool
-from nose.tools import assert_raises
-
-from nti.appserver import gunicorn
 from gunicorn import config as gconfig
 
+from pyramid.request import Request
 
-import fudge
+from nti.appserver import nti_gunicorn
+
+from nti.app.testing.request_response import ByteHeadersDummyRequest as DummyRequest
 
 class MockConfig(object):
 	is_ssl = False # added 0.17.1
@@ -95,30 +89,31 @@ from nti.app.testing.layers import AppLayerTest
 class TestGeventApplicationWorker(AppLayerTest):
 
 	def test_prefork(self):
-		gunicorn._pre_fork( 1, 2 )
+		nti_gunicorn._pre_fork( 1, 2 )
 
 	def test_postfork( self ):
-		gunicorn._post_fork( 1, 2 )
+		nti_gunicorn._post_fork( 1, 2 )
 
 	@fudge.patch('gunicorn.workers.base.WorkerTmp')
 	def test_init(self, fudge_tmp):
 		fudge_tmp.is_a_stub()
 		# 8 frickin arguments!
 		#  age, ppid, socket, app, timeout, cfg, log
-		gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
+		nti_gunicorn.GeventApplicationWorker( None, None, MockSocket(), None, None, MockConfig, logger)
 
-	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi')
+	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.nti_gunicorn.loadwsgi')
 	def test_environ_parse_in_handler(self, fudge_tmp, fudge_loadwsgi):
 		fudge_tmp.is_a_stub()
 		fudge_loadwsgi.is_a_stub()
 		global_conf = {}
 		#  age, ppid, socket, app, timeout, cfg, log
-		dummy_app = gunicorn.dummy_app_factory( global_conf )
+		dummy_app = nti_gunicorn.dummy_app_factory( global_conf )
 		dummy_app.app = dummy_app
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
-		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
-		server = gunicorn.WebSocketServer( MockSocket(), dummy_app, handler_class=gunicorn.GeventApplicationWorker.wsgi_handler )
+		worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, MockConfig, logger)
+		server = nti_gunicorn.WebSocketServer( MockSocket(), dummy_app,
+											   handler_class=nti_gunicorn.GeventApplicationWorker.wsgi_handler )
 		server.worker = worker
 
 		# Be sure that everything (e.g., ssl header parsing) is set up so that the environment comes out as expected
@@ -152,7 +147,7 @@ class TestGeventApplicationWorker(AppLayerTest):
 		fudge_socket.is_a_stub()
 		global_conf = {}
 		#  age, ppid, socket, app, timeout, cfg, log
-		dummy_app = gunicorn.dummy_app_factory( global_conf )
+		dummy_app = nti_gunicorn.dummy_app_factory( global_conf )
 		dummy_app.app = dummy_app
 		global_conf['__file__'] = ''
 		global_conf['http_port'] = '1'
@@ -160,20 +155,21 @@ class TestGeventApplicationWorker(AppLayerTest):
 		cfg = gconfig.Config()
 
 		# Default worker_connections config
-		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
+		worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
-		assert_that( worker, has_property( 'worker_connections', gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
+		assert_that( worker, has_property( 'worker_connections', 
+											nti_gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
 
 		# Changed config
 		dummy_app.app = dummy_app
 		cfg.settings['worker_connections'].set( 300 )
-		worker = gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
+		worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
 		assert_that( worker, has_property( 'worker_connections', 300 ) )
 
 
 		factory = worker.server_class
-		assert_that( factory, is_( gunicorn._ServerFactory ) )
+		assert_that( factory, is_( nti_gunicorn._ServerFactory ) )
 
 		spawn = gevent.pool.Pool()
 		server = factory( MockSocket(), spawn=spawn )

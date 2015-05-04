@@ -24,13 +24,14 @@ from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 
 
-
 from nti.dataserver import users
-from nti.ntiids import ntiids
-from nti.dataserver.datastructures import ZContainedMixin
+
+from nti.dataserver.core.mixins import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.externalization.representation import to_external_representation
+
+from nti.ntiids import ntiids
 
 from zope import interface
 import nti.dataserver.interfaces as nti_interfaces
@@ -148,7 +149,7 @@ class TestUGDModifyViews(NewRequestLayerTest):
 		# One event, for the object we modified
 		assert_that( eventtesting.getEvents(  ), has_length( 2 ) )
 		assert_that( eventtesting.getEvents( IObjectModifiedEvent ), has_length( 1 ) )
-		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[1]
+		mod_event = eventtesting.getEvents( IObjectModifiedEvent )[0]
 		assert_that( mod_event, has_property( 'descriptions',
 											  has_item(
 												  all_of(
