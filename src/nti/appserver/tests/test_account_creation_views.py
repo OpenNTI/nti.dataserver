@@ -12,45 +12,41 @@ logger = __import__('logging').getLogger(__name__)
 import unittest
 from hamcrest import is_
 from hamcrest import is_not
-from hamcrest import assert_that
+from hamcrest import has_key
+from hamcrest import has_item
 from hamcrest import has_entry
 from hamcrest import has_length
-from hamcrest import has_key
+from hamcrest import assert_that
+from hamcrest import greater_than
+from hamcrest import has_property
 from hamcrest import contains_string
 does_not = is_not
-from hamcrest import has_property
-from hamcrest import greater_than
-from hamcrest import has_item
 
-from nose.tools import assert_raises
+import datetime
 import itertools
 
+from zope import component
+from zope.component import eventtesting
+from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
+
+import pyramid.httpexceptions as hexc
 
 from nti.appserver import interfaces as app_interfaces
 from nti.appserver.account_creation_views import account_create_view, account_preflight_view
 
-
-from nti.app.testing.testing import ITestMailDelivery
-from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
-from nti.app.testing.base import TestBaseMixin
-
-import pyramid.httpexceptions as hexc
-
-from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
 from nti.dataserver import users
-
 from nti.dataserver import shards
+from nti.dataserver.users import interfaces as user_interfaces
+from nti.dataserver.interfaces import IShardLayout, INewUserPlacer
+
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.externalization.representation import to_json_representation
 
-from nti.dataserver.users import interfaces as user_interfaces
+from nti.app.testing.base import TestBaseMixin
+from nti.app.testing.testing import ITestMailDelivery
+from nti.app.testing.layers import NewRequestSharedConfiguringTestLayer
 
-from zope.component import eventtesting
-from zope import component
-from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
-
-import datetime
-
+from nose.tools import assert_raises
 
 class _AbstractValidationViewBase(TestBaseMixin):
 	""" Base for the things where validation should fail """
@@ -103,7 +99,6 @@ class _AbstractValidationViewBase(TestBaseMixin):
 													 'invitation_codes': ['MATHCOUNTS'] } )
 
 		self.the_view( self.request )
-
 
 	@WithMockDSTrans
 	def test_create_short_invalid_password(self):
@@ -374,9 +369,9 @@ class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 		assert_that( e.exception.json_body, has_entry( 'code', 'EmailAddressInvalid' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', 'The email address you have entered is not valid.' ) )
 
-
 class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 	layer = NonDevmodeNewRequestSharedConfiguringTestLayer
+
 	def setUp( self ):
 		super(TestCreateViewNotDevmode,self).setUp()
 		self.the_view = account_create_view
@@ -554,7 +549,7 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 		assert_that( res.json_body, has_entry( 'Username', 'jason@test.nextthought.com' ) )
 		return res
 
-from .test_application import NonDevmodeButAnySiteApplicationTestLayer
+from nti.appserver.tests.test_application import NonDevmodeButAnySiteApplicationTestLayer
 
 class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, NonDevmodeApplicationLayerTest):
 	layer = NonDevmodeButAnySiteApplicationTestLayer
@@ -577,7 +572,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 	@WithSharedApplicationMockDS
 	def test_create_user_email_site_policy(self):
 		from nti.appserver.policies.site_policies import GenericSitePolicyEventListener
-		from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
 		from zope import interface
 		policy = GenericSitePolicyEventListener()
 		policy.DEFAULT_EMAIL_SENDER = '\"Hello\" <test@nextthought.com>'
@@ -599,8 +593,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 
 		assert_that( mailer.queue, has_item( has_entry('From', contains_string('"Hello" <test+') ) ) )
 
-
-
 	@WithSharedApplicationMockDS
 	def test_create_user_logged_in( self ):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -615,7 +607,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 		_ = app.post_json( path, data, extra_environ=self._make_extra_environ(), status=403 )
 
 class TestApplicationPreflightUser(_AbstractApplicationCreateUserTest, ApplicationLayerTest):
-
 
 	@WithSharedApplicationMockDS
 	def test_preflight_user( self ):
@@ -681,7 +672,6 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
 		me = self.resolve_user(extra_environ=extra_environ)
 		assert_that( me, has_entry( 'email', 'jason.madden@nextthought.com' ) )
 		assert_that( me, has_entry( 'birthCountry', 'us' ) )
-
 
 def main(email=None, uname=None, cname=None):
 	"""

@@ -171,7 +171,13 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						   'message': str(e),
 						   'code': e.__class__.__name__},
 						exc_info[2] )
-		handle_validation_error( request, e )
+			
+		else:
+			_raise_error( request, hexc.HTTPUnprocessableEntity,
+						  {'field': 'email',
+						   'message': str(e),
+						   'code': e.__class__.__name__},
+						exc_info[2] )
 	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error( request, e )
