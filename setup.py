@@ -66,7 +66,6 @@ import platform
 py_impl = getattr(platform, 'python_implementation', lambda: None)
 IS_PYPY = py_impl() == 'PyPy'
 
-
 TESTS_REQUIRE = [
 	'WebTest', # 2.0 is incompatible in a minor way with 1.4. It also pulls in six, waitress, beautifulsoup4
 	'blessings >= 1.5.1',  # A thin, practical wrapper around terminal coloring, styling, and positioning. Pulled in by nose-progressive(?)
