@@ -46,7 +46,7 @@ class TestEvolve48(mock_dataserver.DataserverLayerTest):
 
 	@hides_warnings
 	@WithMockDS
-	def test_evolve45(self):
+	def test_evolve48(self):
 
 		with mock_db_trans( ) as conn:
 			context = fudge.Fake().has_attr( connection=conn )

@@ -26,7 +26,7 @@ from nti.dataserver import sharing
 
 from nti.dataserver.core.mixins import ZContainedMixin
 
-from nti.dublincore.datastructures import CreatedModDateTrackingObject
+from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.utils._compat import Implicit
 
@@ -39,10 +39,8 @@ from . import _containerIds_from_parent
 from . import interfaces as for_interfaces
 
 @interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
-class Post(
-		   Persistent,
-		   ZContainedMixin,
-		   CreatedModDateTrackingObject,
+class Post(ZContainedMixin,
+		   PersistentCreatedModDateTrackingObject,
 		   sharing.AbstractReadableSharedWithMixin,
 		   Implicit):
 

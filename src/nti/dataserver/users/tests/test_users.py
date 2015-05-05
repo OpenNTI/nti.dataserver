@@ -459,50 +459,51 @@ class TestUser(DataserverLayerTest):
 				user2_changes.append( copy.copy( change ) )
 				User._noticeChange( user2, change )
 			user2._noticeChange = _noticeChange
+			try:
+				note = Note()
+				note.body = ['text']
+				note.containerId = 'c1'
+				note.creator = user1.username
+				user2.notificationCount.value = 0
+				with user1.updates():
+					note.addSharingTarget( community ) # indirect sharing
+					note.addSharingTarget( user2 ) # direct sharing
+					user1.addContainedObject( note )
+				assert_that( note.id, is_not( none() ) )
 
-			note = Note()
-			note.body = ['text']
-			note.containerId = 'c1'
-			note.creator = user1.username
-			user2.notificationCount.value = 0
-			with user1.updates():
-				note.addSharingTarget( community ) # indirect sharing
-				note.addSharingTarget( user2 ) # direct sharing
-				user1.addContainedObject( note )
-			assert_that( note.id, is_not( none() ) )
+				assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+				assert_that( user2, is_in( note.sharingTargets ) )
+				assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
+				stream = user2.getContainedStream( 'c1' )
+				assert_that( stream, has_length( 1 ) )
+				assert_that( stream[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
 
-			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
-			assert_that( user2, is_in( note.sharingTargets ) )
-			assert_that( user2.notificationCount, has_property( 'value', 1 ) ) # original
-			stream = user2.getContainedStream( 'c1' )
-			assert_that( stream, has_length( 1 ) )
-			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+				with user1.updates():
+					note = user1.getContainedObject( 'c1', note.id )
+					note.updateSharingTargets( (community,), notify=True ) # Now, only indirectly shared
 
-			with user1.updates():
-				note = user1.getContainedObject( 'c1', note.id )
-				note.updateSharingTargets( (community,), notify=True ) # Now, only indirectly shared
+				# Nothing changed for the recipient, they just got a modified event
+				assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
+				assert_that( user2.notificationCount, has_property( 'value', 1 ) )
+				stream = user2.getContainedStream( 'c1' )
+				assert_that( stream, has_length( 1 ) )
+				assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
 
-			# Nothing changed for the recipient, they just got a modified event
-			assert_that( note, is_in( user2.getSharedContainer( 'c1' ) ) )
-			assert_that( user2.notificationCount, has_property( 'value', 1 ) )
-			stream = user2.getContainedStream( 'c1' )
-			assert_that( stream, has_length( 1 ) )
-			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
+				assert_that( user2_changes, has_length( 2 ) )
+				assert_that( user2_changes[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
+				assert_that( user2_changes[1], has_property( 'type', nti_interfaces.SC_DELETED ) )
+				assert_that( user2_changes[1], has_property( 'send_change_notice', is_false() ) )
 
-			assert_that( user2_changes, has_length( 2 ) )
-			assert_that( user2_changes[0], has_property( 'type', nti_interfaces.SC_CREATED ) )
-			assert_that( user2_changes[1], has_property( 'type', nti_interfaces.SC_DELETED ) )
-			assert_that( user2_changes[1], has_property( 'send_change_notice', is_false() ) )
+				# Now at this point, deleting the object really does remove it
+				with user1.updates():
+					user1.deleteContainedObject( note.containerId, note.id )
 
-			# Now at this point, deleting the object really does remove it
-			with user1.updates():
-				user1.deleteContainedObject( note.containerId, note.id )
-
-			assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
-			stream = user2.getContainedStream( 'c1' )
-			assert_that( stream, has_length( 0 ) )
-
-			del user2._noticeChange
+				assert_that( note, is_not( is_in( user2.getSharedContainer( 'c1' ) ) ) )
+				stream = user2.getContainedStream( 'c1' )
+				assert_that( stream, has_length( 0 ) )
+			finally:
+				# Must not try to commit this
+				del user2._noticeChange
 
 
 	@WithMockDS
@@ -690,7 +691,7 @@ class TestUser(DataserverLayerTest):
 		component.getUtility( zc.intid.IIntIds ).register( reply )
 		change = Change( Change.SHARED, reply )
 		user._noticeChange( change )
-	
+
 		assert_that( list(user.getSharedContainer( 'foo', 42 )), has_length( 0 ) )
 		assert_that( user.getContainedStream( 'foo' ), has_length( 0 ) )
 
@@ -752,7 +753,7 @@ class TestUser(DataserverLayerTest):
 
 		intids = list(user2.iter_intids())
 		assert_that(intids, has_length(1))
-		
+
 	@WithMockDSTrans
 	def test_getContainedStream_more_items_in_comm_cache_than_cap_returns_newest(self):
 		#"""If a community we follow has a larger stream cache than our cap parameter, we get only the newest from the cache."""
@@ -849,7 +850,7 @@ class TestUser(DataserverLayerTest):
 
 		assert_that( sublocs, has_item( user1.getContainer( note.containerId ) ) )
 		assert_that( sublocs, has_item( user1.friendsLists ) )
-		
+
 		intids = list(user1.iter_intids())
 		assert_that(intids, has_length(1))
 

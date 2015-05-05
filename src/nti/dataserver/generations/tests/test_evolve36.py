@@ -16,23 +16,17 @@ from hamcrest import is_not as does_not
 from hamcrest import has_item
 
 
-from nti.dataserver.generations.install import evolve as install
-from nti.dataserver.utils.example_database_initializer import ExampleDatabaseInitializer
 from nti.dataserver.generations.evolve36 import evolve
-
-from BTrees.OOBTree import OOTreeSet
-
 
 import nti.testing.base
 import nti.dataserver
-from nti.dataserver import users
 
 import nti.dataserver.tests.mock_dataserver
 from nti.dataserver.tests.mock_dataserver import  mock_db_trans, WithMockDS
 
 import fudge
 
-from nti.deprecated import hides_warnings
+from nti.common.deprecated import hides_warnings
 from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 
 
