@@ -124,7 +124,7 @@ def evolve( context ):
 				good_usernames.append( username )
 				migrate( user, mock_ds )
 
-		logger.debug( "Found %s good users and %s bad users", 
+		logger.debug( "Found %s good users and %s bad users",
 					 good_usernames, bad_usernames )
 
 		# Unfortunately, we won't be able to delete them without dropping down to private
