@@ -30,6 +30,7 @@ from zope import interface
 from zc import intid as zc_intid
 import persistent
 import cPickle as pickle
+from zodbpickle import pickle as zodbpickle
 
 
 import unittest
@@ -66,7 +67,7 @@ class TestChatTranscript(unittest.TestCase):
 
 	@WithMockDS
 	def test_store_non_picklable(self):
-		with assert_raises(pickle.PicklingError):
+		with assert_raises((pickle.PicklingError,zodbpickle.PicklingError)):
 			with mock_db_trans():
 				user = users.User.create_user( username="sjohnson@nextthought.com" )
 				storage = chat_transcripts._UserTranscriptStorageAdapter( user )
