@@ -37,7 +37,6 @@ random_seed_patch_on_import.patch()
 import sys
 from pkg_resources import load_entry_point, get_distribution
 
-
 def main():
 	# We used to monkey patch some things in 1.3. We no longer
 	# do now that we expect to be on 1.5. Check this.
