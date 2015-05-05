@@ -489,7 +489,7 @@ setup(
 	package_dir={'': 'src'},
 	packages=find_packages('src'),
 	include_package_data=True,
-	namespace_packages=['nti', ],
+	namespace_packages=['nti', 'nti.dataserver'],
 	entry_points=entry_points,
 	test_suite='nose2.compat.unittest.collector'
 )
