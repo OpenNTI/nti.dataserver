@@ -105,18 +105,18 @@ class Change(PersistentCreatedModDateTrackingObject):
 	#: that if you assign to this property it must be a valid persistent
 	#: object, such as a module global.
 	externalObjectTransformationHook = None
-	
+
 	# JAM: I'm not quite happy with the above. it's convenient, but is it
 	# the best abstraction?
 
 	object_is_shareable = \
 		property(lambda self: self.__dict__.get('_v_object_is_shareable', None),
-				 lambda self, val: setitem( self.__dict__, '_v_object_is_shareable', val ) )
-		
+				 lambda self, val: setitem( self.__dict__, str('_v_object_is_shareable'), val ) )
+
 	# FIXME: So badly wrong at this level
 	send_change_notice = \
 		property(lambda self: self.__dict__.get('_v_send_change_notice', True), # default to true
-				 lambda self, val: setitem( self.__dict__, '_v_send_change_notice', val ) )
+				 lambda self, val: setitem( self.__dict__, str('_v_send_change_notice'), val ) )
 
 	__name__ = None
 	__parent__ = None
@@ -148,6 +148,16 @@ class Change(PersistentCreatedModDateTrackingObject):
 		# We don't copy the object's modification date,
 		# we have our own
 		self.updateLastMod()
+
+	def __copy__(self):
+		# The default copy.copy mechanism, which uses the same mechanism
+		# as pickle (__reduce__ex__, etc) is not guaranteed to preserve
+		# our volatile attributes because we are Persistent and those get
+		# dropped from the pickle
+		copy = self.__class__.__new__(self.__class__)
+		for k, v in self.__dict__.items():
+			copy.__dict__[k] = v
+		return copy
 
 	def _get_creator( self ):
 		creator = self.__dict__.get('creator')
@@ -194,7 +204,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 		if sharedWith:
 			self.__dict__[str('sharedWith')] = sharedWith
 	sharedWith = property(_get_sharedWith,_set_sharedWith)
-	
+
 	def hasSharedWith(self):
 		return 'sharedWith' in self.__dict__
 
@@ -205,15 +215,15 @@ class Change(PersistentCreatedModDateTrackingObject):
 		principal = IPrincipal(principal)
 		sharedWith = self.__dict__.get('sharedWith') or ()
 		return principal.id in sharedWith
-		
+
 	def isSharedIndirectlyWith(self, principal):
 		"""
 		Test if the principal is in the underlying's object sharedWith attribute
 		"""
 		principal = IPrincipal(principal)
-		sharedWith = getattr(self.object, 'sharedWith', None) or ()			
+		sharedWith = getattr(self.object, 'sharedWith', None) or ()
 		return principal.id in sharedWith
-		
+
 	def is_object_shareable(self):
 		"""
 		Returns true if the object is supposed to be copied into local shared data.
@@ -228,7 +238,7 @@ class Change(PersistentCreatedModDateTrackingObject):
 
 	def __repr__(self):
 		try:
-			return "%s('%s',%s)" % (self.__class__.__name__, self.type, 
+			return "%s('%s',%s)" % (self.__class__.__name__, self.type,
 									self.object.__class__.__name__)
 		except (POSError, AttributeError):
 			return object.__repr__( self )
