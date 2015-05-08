@@ -19,6 +19,7 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+import unittest
 
 import nti.testing.base
 from nti.testing.matchers import verifiably_provides, validly_provides
@@ -26,10 +27,11 @@ from nti.testing.matchers import verifiably_provides, validly_provides
 from ..interfaces import INotificationPayload
 from ..payload import APNSPayload
 
-def test_payload_provides():
+class TestPayload(unittest.TestCase):
+	def test_payload_provides(self):
 
-	payload = APNSPayload()
-	assert_that( payload, verifiably_provides( INotificationPayload ) )
+		payload = APNSPayload()
+		assert_that( payload, verifiably_provides( INotificationPayload ) )
 
-	payload.alert = "alert"
-	assert_that( payload, validly_provides( INotificationPayload ) )
+		payload.alert = "alert"
+		assert_that( payload, validly_provides( INotificationPayload ) )
