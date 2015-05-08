@@ -22,30 +22,32 @@ from hamcrest import contains_string
 from nose.tools import assert_raises
 
 from zope import interface
-
+import unittest
 
 from ..payload import APNSPayload
 from ..connection import to_packet_bytes
 
-def test_to_packet_bytes():
-	payload = APNSPayload(alert='alert')
-	# Real-world example of a token
-	deviceid = b'\x90\xc7\xb1\xd5\nA\xc3\xf5\x81\xb4h|\xe1!:\xc7\xd6k\xeaFe\xf4\x04fq\xb3\x08\x04\x17^ ^'
+class TestConnection(unittest.TestCase):
 
-	# We refuse to send invalid payloads or device ids
-	with assert_raises(interface.Invalid):
-		to_packet_bytes( APNSPayload(), deviceid )
+	def test_to_packet_bytes(self):
+		payload = APNSPayload(alert='alert')
+		# Real-world example of a token
+		deviceid = b'\x90\xc7\xb1\xd5\nA\xc3\xf5\x81\xb4h|\xe1!:\xc7\xd6k\xeaFe\xf4\x04fq\xb3\x08\x04\x17^ ^'
 
-	with assert_raises(interface.Invalid) as ex:
-		to_packet_bytes( payload, b'tooshort' )
+		# We refuse to send invalid payloads or device ids
+		with assert_raises(interface.Invalid):
+			to_packet_bytes( APNSPayload(), deviceid )
 
-	assert_that( ex.exception, has_property( 'field', has_property( '__name__', 'deviceId' ) ) )
+		with assert_raises(interface.Invalid) as ex:
+			to_packet_bytes( payload, b'tooshort' )
 
-	packet, _ = to_packet_bytes( payload, deviceid )
-	assert_that( packet, is_( bytes ) )
-	assert_that( packet[0], is_( b'\x01' ) )
+		assert_that( ex.exception, has_property( 'field', has_property( '__name__', 'deviceId' ) ) )
 
-	payload.userInfo = {'foo': 'bar'}
-	packet, _ = to_packet_bytes( payload, deviceid )
+		packet, _ = to_packet_bytes( payload, deviceid )
+		assert_that( packet, is_( bytes ) )
+		assert_that( packet[0], is_( b'\x01' ) )
 
-	assert_that( packet, contains_string( b'foo' ) )
+		payload.userInfo = {'foo': 'bar'}
+		packet, _ = to_packet_bytes( payload, deviceid )
+
+		assert_that( packet, contains_string( b'foo' ) )

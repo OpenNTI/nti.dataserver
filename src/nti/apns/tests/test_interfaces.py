@@ -19,15 +19,18 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import has_key
 from hamcrest import has_entry
+import unittest
 
 import nti.testing.base
 from nti.testing.matchers import verifiably_provides, validly_provides
 
 from nti.apns import interfaces
 
-def test_feedback_event():
-	event = interfaces.APNSDeviceFeedback(0, b'b' * 32)
-	assert_that( event, validly_provides(interfaces.IDeviceFeedbackEvent) )
-	assert_that( event, verifiably_provides(interfaces.IDeviceFeedbackEvent) )
+class TestInterfaces(unittest.TestCase):
+	
+	def test_feedback_event(self):
+		event = interfaces.APNSDeviceFeedback(0, b'b' * 32)
+		assert_that( event, validly_provides(interfaces.IDeviceFeedbackEvent) )
+		assert_that( event, verifiably_provides(interfaces.IDeviceFeedbackEvent) )
 
-	repr(event)
+		repr(event)
