@@ -40,6 +40,7 @@ import webob.datetime_utils
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
+from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
@@ -232,16 +233,19 @@ class BatchingUtilsMixin(object):
 			kwargs['selector'] = _tuple_selector
 		return self._batch_items_iterable(*args, **kwargs)
 
-	def _batch_around(self, iterator, test, batch_containing=False):
+	def _batch_on_item(self, iterator, test, batch_containing=False, batch_after=False):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired
 		batch-around item is found, handle the batching. The request params for
 		`batch_start` will be updated, so any value cached for it should be
-		discarded. We only do this if batch_size is given.
+		discarded. We only do this if batch_size is given. If not found, we return an empty
+		list.
 
 		:batch_containing: (Optional) If true, do not batch the found item in the center
 			of a given page. Instead, return the natural page (given by batchSize) that
 			the given element would be found in.
+
+		:batch_after: (Optional) If true, batch after the found item.
 
 		:return: A sequence of the items consumed from the iterator to find the
 			object to center the batch on. Note that this may be every object
@@ -268,6 +272,8 @@ class BatchingUtilsMixin(object):
 					if batch_containing:
 						# Find our natural page
 						batch_start = ( i // batch_size ) * batch_size
+					elif batch_after:
+						batch_start = i + 1
 					else:
 						batch_start = max( 0, i - (batch_size // 2) - 1 )
 					match_index = i
@@ -282,7 +288,9 @@ class BatchingUtilsMixin(object):
 			# Well, we got here without finding the matching value.
 			# So return an empty page.
 			batch_start = len(result_list)
-		elif not batch_containing and match_index <= batch_start:
+		elif 	not batch_containing \
+			and not batch_after \
+			and match_index <= batch_start:
 			# For very small batches, when the match is at
 			# the beginning of the list (typically),
 			# we could wind up returning a list that doesn't include
@@ -296,6 +304,7 @@ class BatchingUtilsMixin(object):
 			batch_start = match_index
 
 		if 		not batch_containing \
+			and not batch_after \
 			and batch_start is not None \
 			and batch_size == 3 \
 			and match_index is not None:

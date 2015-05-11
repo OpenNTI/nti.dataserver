@@ -68,7 +68,7 @@ class TestBatching( TestCase ):
 	@fudge.patch( 'pyramid.url.URLMethodsMixin.current_route_path' )
 	def test_batch_around(self, mock_route):
 		mock_route.is_callable().returns( '/path/' )
-		do_batch = self.batching._batch_around
+		do_batch = self.batching._batch_on_item
 
 		result_list = range(50)
 		target_number = 30
@@ -87,6 +87,11 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '30' ))
 
+		# Batch around (after)
+		do_batch( result_list, test_func, batch_after=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '31' ))
+
 		# Front boundary condition
 		target_number = 0
 
@@ -99,6 +104,11 @@ class TestBatching( TestCase ):
 		do_batch( result_list, test_func, batch_containing=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '0' ))
+
+		# Batch around (after)
+		do_batch( result_list, test_func, batch_after=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '1' ))
 
 		# Back boundary condition
 		target_number = 49
@@ -113,6 +123,11 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '40' ))
 
+		# Batch around (after)
+		do_batch( result_list, test_func, batch_after=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '50' ))
+
 		# Non-existent
 		target_number = 50
 
@@ -126,3 +141,7 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '50' ))
 
+		# Batch around (after)
+		do_batch( result_list, test_func, batch_after=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '50' ))
