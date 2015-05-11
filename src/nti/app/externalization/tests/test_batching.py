@@ -77,7 +77,7 @@ class TestBatching( TestCase ):
 		batch_size = 10
 		self._set_batch_start_params(batch_size, batch_start)
 
-		# Batch around
+		### Batch around
 		do_batch( result_list, test_func )
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '24' ))
@@ -92,7 +92,12 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '31' ))
 
-		# Front boundary condition
+		# Batch around (before)
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '21' ))
+
+		### Front boundary condition
 		target_number = 0
 
 		# Batch around
@@ -110,7 +115,12 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '1' ))
 
-		# Back boundary condition
+		# Batch around (before)
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '0' ))
+
+		### Back boundary condition
 		target_number = 49
 
 		# Batch around
@@ -128,7 +138,12 @@ class TestBatching( TestCase ):
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '50' ))
 
-		# Non-existent
+		# Batch around (before)
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '40' ))
+
+		### Non-existent
 		target_number = 50
 
 		# Batch around
@@ -143,5 +158,10 @@ class TestBatching( TestCase ):
 
 		# Batch around (after)
 		do_batch( result_list, test_func, batch_after=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		assert_that( calc_batch_start, is_( '50' ))
+
+		# Batch around (before)
+		do_batch( result_list, test_func, batch_before=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '50' ))
