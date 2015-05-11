@@ -1363,7 +1363,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Now, ask for a batch before the tenth item. Match the sort-order (lastMod, descending)
 		ntiids.reverse()
-		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[9], 'batchSize': 10, 'batchStart': 10} )
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10], 'batchSize': 10, 'batchStart': 10} )
 		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 
@@ -1384,13 +1384,21 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 
-		# Batching before the first object returns a batch of the first items
+		# Batching before the first object returns nothing
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
 																  'batchSize': 3,
 																  'batchStart': 0} )
-		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( no_res.json_body['Items'], has_length( 0 ) )
+		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Second index gives us just the first element
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[1],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+
+		assert_that( ugd_res.json_body['Items'], has_length( 1 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
-		expected_ntiids = ntiids[0:3]
+		expected_ntiids = ntiids[:1]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
@@ -1400,7 +1408,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 																  'batchStart': 0} )
 		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
-		expected_ntiids = ntiids[17:]
+		expected_ntiids = ntiids[16:19]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 

@@ -237,8 +237,8 @@ class BatchingUtilsMixin(object):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired
 		batch-around item is found, handle the batching. The request params for
-		`batch_start` will be updated, so any value cached for it should be
-		discarded. We only do this if batch_size is given. If not found, we return an empty
+		`batchStart` and `batchSize` will be updated, so any cached values should be
+		discarded. We only do this if `batchSize` is given. If not found, we return an empty
 		list. By default, we will return the batch `around` a given item.  Optionally, we
 		can return the batch after an item, or the natural batch (or page) containing
 		the item.
@@ -249,7 +249,7 @@ class BatchingUtilsMixin(object):
 
 		:batch_after: (Optional) If true, batch after the found item.
 
-		:batch_before: (Optional) If true, batch before the found item, inclusively.
+		:batch_before: (Optional) If true, batch before the found item.
 
 		:return: A sequence of the items consumed from the iterator to find the
 			object to center the batch on. Note that this may be every object
@@ -279,11 +279,21 @@ class BatchingUtilsMixin(object):
 					elif batch_after:
 						batch_start = i + 1
 					elif batch_before:
-						batch_start = max( 0, i - batch_size + 1 )
+						if i == 0:
+							# For the first element, return an empty page.
+							pass
+						elif i <= batch_size:
+							# Need to reduce our batch size to capture
+							# everything before our item.
+							self.request.GET['batchSize'] = str( i )
+							batch_start = 0
+						else:
+							batch_start = i - batch_size
 					else:
 						batch_start = max( 0, i - (batch_size // 2) - 1 )
 					match_index = i
-					number_items_needed = batch_start + batch_size + 2
+					if batch_start is not None:
+						number_items_needed = batch_start + batch_size + 2
 			else:
 				# we found our match, it's in the list
 				if i > number_items_needed:
@@ -309,7 +319,9 @@ class BatchingUtilsMixin(object):
 
 		# Likewise, if the batch_size is very small and the match is at the end
 		# typically with batch_size == 1
-		if match_index is not None and match_index >= batch_size + batch_start:
+		if 		match_index is not None \
+			and not batch_before \
+			and match_index >= batch_size + batch_start:
 			batch_start = match_index
 
 		if 		is_batch_around \
