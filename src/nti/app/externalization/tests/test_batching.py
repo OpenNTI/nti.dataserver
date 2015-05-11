@@ -95,7 +95,7 @@ class TestBatching( TestCase ):
 		# Batch around (before)
 		do_batch( result_list, test_func, batch_before=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
-		assert_that( calc_batch_start, is_( '21' ))
+		assert_that( calc_batch_start, is_( '20' ))
 
 		### Front boundary condition
 		target_number = 0
@@ -118,7 +118,7 @@ class TestBatching( TestCase ):
 		# Batch around (before)
 		do_batch( result_list, test_func, batch_before=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
-		assert_that( calc_batch_start, is_( '0' ))
+		assert_that( calc_batch_start, is_( '50' ))
 
 		### Back boundary condition
 		target_number = 49
@@ -141,7 +141,7 @@ class TestBatching( TestCase ):
 		# Batch around (before)
 		do_batch( result_list, test_func, batch_before=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
-		assert_that( calc_batch_start, is_( '40' ))
+		assert_that( calc_batch_start, is_( '39' ))
 
 		### Non-existent
 		target_number = 50
@@ -165,3 +165,28 @@ class TestBatching( TestCase ):
 		do_batch( result_list, test_func, batch_before=True )
 		calc_batch_start = self.request.params.get( 'batchStart' )
 		assert_that( calc_batch_start, is_( '50' ))
+
+		### Small batch before; reset since batchSize toggles
+		self._set_batch_start_params(batch_size, batch_start)
+		target_number = 1
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		calc_batch_size = self.request.params.get( 'batchSize' )
+		assert_that( calc_batch_start, is_( '0' ))
+		assert_that( calc_batch_size, is_( '1' ))
+
+		self._set_batch_start_params(batch_size, batch_start)
+		target_number = 9
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		calc_batch_size = self.request.params.get( 'batchSize' )
+		assert_that( calc_batch_start, is_( '0' ))
+		assert_that( calc_batch_size, is_( '9' ))
+
+		self._set_batch_start_params(batch_size, batch_start)
+		target_number = 10
+		do_batch( result_list, test_func, batch_before=True )
+		calc_batch_start = self.request.params.get( 'batchStart' )
+		calc_batch_size = self.request.params.get( 'batchSize' )
+		assert_that( calc_batch_start, is_( '0' ))
+		assert_that( calc_batch_size, is_( '10' ))
