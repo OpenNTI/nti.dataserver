@@ -752,8 +752,11 @@ class _UGDView(AbstractAuthenticatedView,
 			Like batchAround, except the natural page (or batch) is returned for the
 			given object.
 
-		batchAfter
+		batchAfterOID
 			Like batchAround, except the batch after the given object is returned.
+
+		batchBeforeOID
+			Like batchAround, except the batch before the given object is returned, inclusively.
 
 		filterOperator
 			A string parameter with to indicate what operator (union, intersection) is to
@@ -864,7 +867,8 @@ class _UGDView(AbstractAuthenticatedView,
 		batch_size, batch_start = self._get_batch_size_start()
 		batch_object = 	self.request.params.get( 'batchAround', '' ) \
 					or 	self.request.params.get( 'batchContaining', '' ) \
-					or 	self.request.params.get( 'batchAfter', '' )
+					or 	self.request.params.get( 'batchAfterOID', '' ) \
+					or 	self.request.params.get( 'batchBeforeOID', '' )
 
 		if 		batch_object \
 			and batch_size is not None:
@@ -873,9 +877,13 @@ class _UGDView(AbstractAuthenticatedView,
 
 			# This will return a natural batch based on batchSize.
 			batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
-			# Or, they are asking for the batch after a given item.
-			batch_after = bool( self.request.params.get( 'batchAfter', '' ) )
-			merged = self._batch_on_item(merged, test, batch_containing=batch_containing, batch_after=batch_after)
+			# Or, they are asking for the batch after (or before) a given item.
+			batch_after = bool( self.request.params.get( 'batchAfterOID', '' ) )
+			batch_before = bool( self.request.params.get( 'batchBeforeOID', '' ) )
+			merged = self._batch_on_item(merged, test,
+										 batch_containing=batch_containing,
+										 batch_after=batch_after,
+										 batch_before=batch_before)
 			batch_size, batch_start = self._get_batch_size_start()
 			number_items_needed = None
 

@@ -233,19 +233,23 @@ class BatchingUtilsMixin(object):
 			kwargs['selector'] = _tuple_selector
 		return self._batch_items_iterable(*args, **kwargs)
 
-	def _batch_on_item(self, iterator, test, batch_containing=False, batch_after=False):
+	def _batch_on_item(self, iterator, test, batch_containing=False, batch_after=False, batch_before=False):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired
 		batch-around item is found, handle the batching. The request params for
 		`batch_start` will be updated, so any value cached for it should be
 		discarded. We only do this if batch_size is given. If not found, we return an empty
-		list.
+		list. By default, we will return the batch `around` a given item.  Optionally, we
+		can return the batch after an item, or the natural batch (or page) containing
+		the item.
 
 		:batch_containing: (Optional) If true, do not batch the found item in the center
 			of a given page. Instead, return the natural page (given by batchSize) that
 			the given element would be found in.
 
 		:batch_after: (Optional) If true, batch after the found item.
+
+		:batch_before: (Optional) If true, batch before the found item, inclusively.
 
 		:return: A sequence of the items consumed from the iterator to find the
 			object to center the batch on. Note that this may be every object
@@ -274,6 +278,8 @@ class BatchingUtilsMixin(object):
 						batch_start = ( i // batch_size ) * batch_size
 					elif batch_after:
 						batch_start = i + 1
+					elif batch_before:
+						batch_start = max( 0, i - batch_size + 1 )
 					else:
 						batch_start = max( 0, i - (batch_size // 2) - 1 )
 					match_index = i
@@ -284,12 +290,15 @@ class BatchingUtilsMixin(object):
 					# We can stop materializing now
 					break
 
+		is_batch_around = 	not batch_containing \
+						and not batch_after \
+						and not batch_before
+
 		if batch_start is None:
 			# Well, we got here without finding the matching value.
 			# So return an empty page.
 			batch_start = len(result_list)
-		elif 	not batch_containing \
-			and not batch_after \
+		elif 	is_batch_around \
 			and match_index <= batch_start:
 			# For very small batches, when the match is at
 			# the beginning of the list (typically),
@@ -303,8 +312,7 @@ class BatchingUtilsMixin(object):
 		if match_index is not None and match_index >= batch_size + batch_start:
 			batch_start = match_index
 
-		if 		not batch_containing \
-			and not batch_after \
+		if 		is_batch_around \
 			and batch_start is not None \
 			and batch_size == 3 \
 			and match_index is not None:
