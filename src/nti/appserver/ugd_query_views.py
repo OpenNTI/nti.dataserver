@@ -873,7 +873,8 @@ class _UGDView(AbstractAuthenticatedView,
 		if 		batch_object \
 			and batch_size is not None:
 
-			test = lambda key_value: to_external_ntiid_oid( key_value[1] ) == batch_object
+			get_key = lambda key_value: to_external_ntiid_oid( key_value[1] )
+			test = lambda key_value: get_key( key_value ) == batch_object
 
 			# This will return a natural batch based on batchSize.
 			batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
