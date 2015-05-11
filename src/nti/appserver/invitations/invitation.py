@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import persistent
-
 from zope import interface
 from zope.event import notify
 
@@ -26,6 +24,7 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .interfaces import IInvitation
 from .interfaces import InvitationAcceptedEvent
@@ -46,7 +45,7 @@ class BaseInvitation(CreatedModDateTrackingObject, Contained):
 			raise ValueError()
 		notify(InvitationAcceptedEvent(self, user))
 
-class PersistentInvitation(persistent.Persistent,BaseInvitation):
+class PersistentInvitation(BaseInvitation, PersistentPropertyHolder):
 	""" Invitation meant to be stored persistently. """
 
 class ZcmlInvitation(BaseInvitation):
