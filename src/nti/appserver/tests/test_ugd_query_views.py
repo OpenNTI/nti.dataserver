@@ -5,8 +5,11 @@ from __future__ import print_function, absolute_import
 
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
-
+import fudge
 import unittest
+
+from datetime import datetime
+
 from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
@@ -18,7 +21,6 @@ from hamcrest import contains
 from hamcrest import has_items
 from hamcrest import contains_string
 from hamcrest import has_property
-import fudge
 
 from pyramid.testing import DummySecurityPolicy
 
@@ -40,8 +42,6 @@ from pyramid.threadlocal import get_current_request
 import pyramid.httpexceptions as hexc
 import persistent
 import UserList
-from datetime import datetime
-
 
 from nti.assessment.assessed import QAssessedQuestion
 from nti.dataserver import users
@@ -424,7 +424,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 
 from nti.contentrange import contentrange
 from nti.dataserver import liking
-from .test_application import TestApp
+from nti.appserver.tests.test_application import TestApp
 contenttypes = nti.dataserver.contenttypes
 
 class TestApplicationUGDQueryViews(ApplicationLayerTest):
@@ -1286,6 +1286,122 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 																  'batchStart': 0} )
 		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_batch_after_oid(self):
+		"""
+		Test batchAfterOID, we batch after the given object OID.
+		"""
+		batch_param_name = 'batchAfterOID'
+		ntiids = []
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.extra_environ_default_user)
+
+			for i in range(20):
+				top_n = contenttypes.Note()
+				top_n.applicableRange = contentrange.ContentRangeDescription()
+				top_n.containerId = u'tag:nti:foo'
+				top_n.body = ("Top" + str(i),)
+				user.addContainedObject( top_n )
+				top_n.lastModified = i
+				ntiids.append( top_n.id )
+			top_n_containerid = top_n.containerId
+
+		# Now, ask for a batch ater the tenth item. Match the sort-order (lastMod, descending)
+		ntiids.reverse()
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10], 'batchSize': 10, 'batchStart': 10} )
+		assert_that( ugd_res.json_body['Items'], has_length( 9 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Links
+# 		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+# 		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20' ) )
+#
+# 		# Prev is the first ten
+# 		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+# 		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
+
+		expected_ntiids = ntiids[11:]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# If we ask for something that doesn't match, we get nothing
+		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar', 'batchSize': 10, 'batchStart': 1} )
+		assert_that( no_res.json_body['Items'], has_length( 0 ) )
+		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Batching after the first object
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[1:4]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+	@WithSharedApplicationMockDS(users=True,testapp=True)
+	def test_batch_before_oid(self):
+		"""
+		Test batchBeforeOID, we batch before the given object OID.
+		"""
+		batch_param_name = 'batchBeforeOID'
+		ntiids = []
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = users.User.get_user(self.extra_environ_default_user)
+
+			for i in range(20):
+				top_n = contenttypes.Note()
+				top_n.applicableRange = contentrange.ContentRangeDescription()
+				top_n.containerId = u'tag:nti:foo'
+				top_n.body = ("Top" + str(i),)
+				user.addContainedObject( top_n )
+				top_n.lastModified = i
+				ntiids.append( top_n.id )
+			top_n_containerid = top_n.containerId
+
+		# Now, ask for a batch before the tenth item. Match the sort-order (lastMod, descending)
+		ntiids.reverse()
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[9], 'batchSize': 10, 'batchStart': 10} )
+		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Links
+# 		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+# 		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20' ) )
+#
+# 		# Prev is the first ten
+# 		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+# 		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
+
+		expected_ntiids = ntiids[:10]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# If we ask for something that doesn't match, we get nothing
+		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar', 'batchSize': 10, 'batchStart': 1} )
+		assert_that( no_res.json_body['Items'], has_length( 0 ) )
+		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		# Batching before the first object returns a batch of the first items
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[0:3]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
+		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		# Batch before last object
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[-1],
+																  'batchSize': 3,
+																  'batchStart': 0} )
+		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+		expected_ntiids = ntiids[17:]
+		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
 from nti.testing.matchers import is_true, is_false
