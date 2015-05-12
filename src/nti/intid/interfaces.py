@@ -18,7 +18,22 @@ from zope.interface import implementer
 from zope.container.interfaces import IContained
 
 class IIntIds(zc.intid.IIntIds, zc.intid.IIntIdsSubclass, IContained):
-	pass
+	
+	def register(ob, event=True):
+		"""
+		Register an object and returns a unique id generated for it.
+
+		:param event. Flag to trigger a ``IIdAddedEvent`` for successful 
+		registrations.
+		"""
+
+	def unregister(ob, event=True):
+		"""
+		Remove the object from the indexes.
+
+		:param event. Flag to trigger an ``IIdRemovedEvent`` for successful
+		unregistrations.
+		"""
 
 ## The reason for the __str__ override bypassing KeyError
 ## is to get usable exceptions printed from unit tests
