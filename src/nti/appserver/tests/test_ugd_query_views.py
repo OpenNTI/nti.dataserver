@@ -7,6 +7,7 @@ from __future__ import print_function, absolute_import
 #pylint: disable=W0212,R0904
 import fudge
 import unittest
+import urllib2
 
 from datetime import datetime
 
@@ -1295,6 +1296,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		"""
 		batch_param_name = 'batchAfterOID'
 		ntiids = []
+		external_oids = []
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = users.User.get_user(self.extra_environ_default_user)
 
@@ -1306,30 +1308,63 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				user.addContainedObject( top_n )
 				top_n.lastModified = i
 				ntiids.append( top_n.id )
+				quoted_ntiid = urllib2.quote( to_external_ntiid_oid( top_n ))
+				external_oids.append( quoted_ntiid )
 			top_n_containerid = top_n.containerId
 
-		# Now, ask for a batch ater the tenth item. Match the sort-order (lastMod, descending)
 		ntiids.reverse()
-		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10], 'batchSize': 10, 'batchStart': 10} )
+		external_oids.reverse()
+
+		# batchAfter None, which will just return our batch with appropriate links
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={ batch_param_name: '',
+																'batchSize': 5,
+																'batchStart': 10} )
+		assert_that( ugd_res.json_body['Items'], has_length( 5 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		## Links
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[14]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		## Prev
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		batch_prev_oid = external_oids[10]
+		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+						.format( 'batchBeforeOID', batch_prev_oid )
+		assert_that( batch_prev, is_( batch_prev_href ) )
+
+		# Now, ask for a batch after the tenth item. Match the sort-order (lastMod, descending)
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={ batch_param_name: ntiids[10],
+																'batchSize': 10,
+																'batchStart': 10} )
 		assert_that( ugd_res.json_body['Items'], has_length( 9 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 
-		# Links
-# 		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
-# 		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20' ) )
-#
-# 		# Prev is the first ten
-# 		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
-# 		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
+		## Links
+		# Even though we're at the end of our list, we have a batch_next link for
+		# possibly newly created items.
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[-1]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
 
-		expected_ntiids = ntiids[11:]
-		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
-		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+		## Prev
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		batch_prev_oid = external_oids[11]
+		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+						.format( 'batchBeforeOID', batch_prev_oid )
+		assert_that( batch_prev, is_( batch_prev_href ) )
 
 		# If we ask for something that doesn't match, we get nothing
 		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar', 'batchSize': 10, 'batchStart': 1} )
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-prev' )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-next' )
 
 		# Batching after the first object
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
@@ -1341,6 +1376,21 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
+		## Links
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[3]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		## Prev
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		batch_prev_oid = external_oids[1]
+		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+						.format( 'batchBeforeOID', batch_prev_oid )
+
+		assert_that( batch_prev, is_( batch_prev_href ) )
+
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_batch_before_oid(self):
 		"""
@@ -1348,6 +1398,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		"""
 		batch_param_name = 'batchBeforeOID'
 		ntiids = []
+		external_oids = []
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = users.User.get_user(self.extra_environ_default_user)
 
@@ -1359,21 +1410,46 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 				user.addContainedObject( top_n )
 				top_n.lastModified = i
 				ntiids.append( top_n.id )
+				quoted_ntiid = urllib2.quote( to_external_ntiid_oid( top_n ))
+				external_oids.append( quoted_ntiid )
 			top_n_containerid = top_n.containerId
 
-		# Now, ask for a batch before the tenth item. Match the sort-order (lastMod, descending)
 		ntiids.reverse()
+		external_oids.reverse()
+
+		# Query with null batchBeforeOID
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: '', 'batchSize': 5, 'batchStart': 10} )
+		assert_that( ugd_res.json_body['Items'], has_length( 5 ) )
+		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
+
+		## Links
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[14]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		## Prev
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		batch_prev_oid = external_oids[10]
+		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=5' \
+						.format( 'batchBeforeOID', batch_prev_oid )
+		assert_that( batch_prev, is_( batch_prev_href ) )
+
+		# Now, ask for a batch before the tenth item. Match the sort-order (lastMod, descending)
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10], 'batchSize': 10, 'batchStart': 10} )
 		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 
 		# Links
-# 		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
-# 		assert_that( batch_next, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=20' ) )
-#
-# 		# Prev is the first ten
-# 		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
-# 		assert_that( batch_prev, is_( '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?batchSize=10&batchStart=0' ) )
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[9]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=10' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		# Prev is non-existant
+		self.forbid_link_with_rel( ugd_res.json_body, 'batch-prev' )
 
 		expected_ntiids = ntiids[:10]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
@@ -1383,6 +1459,8 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar', 'batchSize': 10, 'batchStart': 1} )
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-prev' )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-next' )
 
 		# Batching before the first object returns nothing
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
@@ -1390,6 +1468,8 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 																  'batchStart': 0} )
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-prev' )
+		self.forbid_link_with_rel( no_res.json_body, 'batch-next' )
 
 		# Second index gives us just the first element
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[1],
@@ -1402,6 +1482,16 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
+		## Links
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[0]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		## Prev is non-existant
+		self.forbid_link_with_rel( ugd_res.json_body, 'batch-prev' )
+
 		# Batch before last object
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[-1],
 																  'batchSize': 3,
@@ -1411,6 +1501,20 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		expected_ntiids = ntiids[16:19]
 		matchers = [has_entry('OID', expected_ntiid) for expected_ntiid in expected_ntiids]
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
+
+		## Links
+		batch_next = self.require_link_href_with_rel( ugd_res.json_body, 'batch-next' )
+		batch_next_oid = external_oids[-2]
+		batch_next_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+						.format( 'batchAfterOID', batch_next_oid )
+		assert_that( batch_next, is_( batch_next_href ) )
+
+		## Prev
+		batch_prev = self.require_link_href_with_rel( ugd_res.json_body, 'batch-prev' )
+		batch_prev_oid = external_oids[16]
+		batch_prev_href = '/dataserver2/users/sjohnson%40nextthought.COM/Pages%28tag%3Anti%3Afoo%29/UserGeneratedData?{0}={1}&batchSize=3' \
+						.format( 'batchBeforeOID', batch_prev_oid )
+		assert_that( batch_prev, is_( batch_prev_href ) )
 
 from nti.testing.matchers import is_true, is_false
 from nti.appserver.ugd_query_views import _MimeFilter, _ChangeMimeFilter
