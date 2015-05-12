@@ -19,8 +19,6 @@ import BTrees
 from zope import interface
 from zope import event as zope_event
 
-from zope.container.interfaces import IContained
-
 from zope.security.proxy import removeSecurityProxy
 
 from zc.intid.utility import AddedEvent
@@ -29,6 +27,7 @@ from zc.intid.utility import IntIds as _ZCIntIds
 
 from nti.utils._compat import aq_base
 
+from .interfaces import IIntIds
 from .interfaces import IntIdMissingError
 from .interfaces import ObjectMissingError
 from .interfaces import IntIdAlreadyInUseError
@@ -38,7 +37,7 @@ unwrap = removeSecurityProxy
 # Make pylint not complain about "badly implemented container"
 # pylint: disable=R0924
 
-@interface.implementer(IContained)
+@interface.implementer(IIntIds)
 class IntIds(_ZCIntIds):
 
 	__name__ = None
