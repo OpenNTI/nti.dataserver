@@ -40,7 +40,6 @@ import webob.datetime_utils
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
-from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.externalization import to_standard_external_last_modified_time
@@ -99,6 +98,23 @@ class BatchingUtilsMixin(object):
 	#: because they do not have relevance in a next/prev query.
 	_BATCH_LINK_DROP_PARAMS = ('batchAround', 'batchContaining', 'batchBefore')
 
+	def _set_batch_links(self, result, result_list, next_batch_start,
+						prev_batch_start):
+		for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
+			if batch is not None:
+				batch_params = self.request.GET.copy()
+				# Pop some things that don't work
+				for n in self._BATCH_LINK_DROP_PARAMS:
+					batch_params.pop( n, None )
+
+				batch_params['batchStart'] = batch
+				query = sorted(batch_params.items()) # sort for reliable testing
+				link_next_href = self.request.current_route_path(_query=query)
+				link_next = Link( link_next_href, rel=rel )
+				result.setdefault( 'Links', [] ).append( link_next )
+
+		return result_list
+
 	def __batch_result_list(self, result, result_list,
 							batch_start, batch_size,
 							number_items_needed):
@@ -111,7 +127,7 @@ class BatchingUtilsMixin(object):
 		if batch_start >= len(result_list):
 			# Batch raises IndexError in this case, avoid that
 			return []
-		result_list = Batch( result_list, batch_start, batch_size )
+		batch_result = Batch( result_list, batch_start, batch_size )
 		# Insert links to the next and previous batch
 		# NOTE: If our batch_start is not a multiple of the batch_size,
 		# then using IBatch.next and IBatch.previous fails as it expects
@@ -134,20 +150,9 @@ class BatchingUtilsMixin(object):
 		else:
 			next_batch_start = None
 
-		for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
-			if batch is not None:
-				batch_params = self.request.GET.copy()
-				# Pop some things that don't work
-				for n in self._BATCH_LINK_DROP_PARAMS:
-					batch_params.pop( n, None )
+		self._set_batch_links( result, batch_result, next_batch_start, prev_batch_start)
 
-				batch_params['batchStart'] = batch
-				query = sorted(batch_params.items()) # sort for reliable testing
-				link_next_href = self.request.current_route_path(_query=query)
-				link_next = Link( link_next_href, rel=rel )
-				result.setdefault( 'Links', [] ).append( link_next )
-
-		return result_list
+		return batch_result
 
 	def _is_valid(self, x):
 		result = (x is not None)

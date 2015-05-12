@@ -41,6 +41,7 @@ class TestBatching( TestCase ):
 		batch_start = 0
 		batch_size = 10
 		# Don't remember what this is for...
+		# -> A buffer to ensure we have a batch_next link
 		number_items_needed = batch_size + batch_start + 2
 		batched_results = do_batch( result, result_list,
 									batch_start, batch_size,
