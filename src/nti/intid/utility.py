@@ -23,6 +23,7 @@ from zope.container.interfaces import IContained
 
 from zope.security.proxy import removeSecurityProxy
 
+from zc.intid.utility import AddedEvent
 from zc.intid.utility import RemovedEvent
 from zc.intid.utility import IntIds as _ZCIntIds
 
@@ -49,9 +50,9 @@ class IntIds(_ZCIntIds):
 	# it is important to be sure that the ID is not acquired
 	# from a parent. Hence, all the methods use aq_base to unwrap
 	# the object.
-	# Removing all proxies in general is more tricky; sometimes a zope.container.contained.ContainedProxy
-	# is really what we want to register. Fortunately, most
-	# proxies pass attributes on through to the underlying
+	# Removing all proxies in general is more tricky; sometimes a 
+	# zope.container.contained.ContainedProxy is really what we want to register.
+	# Fortunately, most proxies pass attributes on through to the underlying
 	# object, in which case queryId will take either the proxy or the wrapped object;
 	# alternatively, they define __slots__ and forbid new attributes
 
@@ -67,8 +68,29 @@ class IntIds(_ZCIntIds):
 		"""
 		return _ZCIntIds.queryId(self, aq_base(ob), default=default)
 
-	def register(self, ob):
-		return _ZCIntIds.register(self, aq_base(ob))
+	def register(self, ob, event=True):
+		ob = aq_base(ob)
+		ob = unwrap(ob)
+		uid = self.queryId(ob)
+		if uid is None:
+			uid = self.generateId(ob)
+			if uid in self.refs:
+				raise ValueError("id generator returned used id")
+		self.refs[uid] = ob
+		setattr(ob, self.attribute, uid)
+		if event:
+			zope_event.notify(AddedEvent(ob, self, uid))
+		return uid
+
+	def unregister(self, ob, event=True):
+		ob = unwrap(ob)
+		uid = self.queryId(ob)
+		if uid is None:
+			return
+		del self.refs[uid]
+		setattr(ob, self.attribute, None)
+		if event:
+			zope_event.notify(RemovedEvent(ob, self, uid))
 
 	def getId(self, ob):
 		ob = aq_base(ob)
