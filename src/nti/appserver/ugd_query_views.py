@@ -51,14 +51,20 @@ liking_like_count = liking.like_count  # minor optimization
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
+
+from nti.links.links import Link
 
 from nti.ntiids import ntiids
 
 from nti.zope_catalog.catalog import ResultSet
 
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+
+LINKS = StandardExternalFields.LINKS
+ITEMS = StandardExternalFields.ITEMS
 
 class Operator(object):
 	union = 0
@@ -454,8 +460,8 @@ class _UGDView(AbstractAuthenticatedView,
 
 	def __call__( self ):
 		self.check_cross_user()
-		# pre-flight the batch
-		self._get_batch_size_start()
+		# Pre-flight the batch; save in case we mutate later.
+		self.user_batch_size, self.user_batch_start = self._get_batch_size_start()
 
 		user, ntiid = self.user, self.ntiid
 		the_objects = self.getObjectsForId( user, ntiid )
@@ -640,6 +646,45 @@ class _UGDView(AbstractAuthenticatedView,
 			predicate = self.make_sharing_security_check()
 		return needs_security, predicate
 
+	def __get_key(self, obj):
+		return to_external_ntiid_oid( obj )
+
+	def _set_batch_links( self, result, result_list, next_batch_start, prev_batch_start ):
+		"""
+		Override and update our batch-next/prev links with appropriate batchAfterOID
+		or batchBeforeOID params, if necessary.
+		"""
+		if 		'batchAfterOID' in self.request.params \
+			or 	'batchBeforeOID' in self.request.params:
+
+			batch_params = self.request.GET.copy()
+
+			# Drop params we don't need or old params
+			for n in itertools.chain( self._BATCH_LINK_DROP_PARAMS,
+									( 'batchStart', 'batchAfterOID', 'batchBeforeOID' ) ):
+				batch_params.pop( n, None )
+
+			if 'batchSize' in batch_params:
+				# Set this to whatever the user gave us
+				batch_params['batchSize'] = str(self.user_batch_size)
+
+			items = list( result_list )
+			if items:
+				# Use the oids of the objs at the beginning and end of
+				# our result list for our links.
+				for obj, rel, param_name, batch in ((items[-1], 'batch-next', 'batchAfterOID', next_batch_start),
+													(items[0], 'batch-prev', 'batchBeforeOID', prev_batch_start)):
+					if batch is not None:
+						query_params = batch_params.copy()
+						query_params[ param_name ] = self.__get_key( obj )
+						query = sorted(query_params.items())
+						link_next_href = self.request.current_route_path(_query=query)
+						link_next = Link( link_next_href, rel=rel )
+						result.setdefault( LINKS, [] ).append( link_next )
+		else:
+			# Otherwise, fall back to batchStart links
+			super( _UGDView, self )._set_batch_links( result, result_list, next_batch_start, prev_batch_start )
+
 	def _sort_filter_batch_objects( self, objects ):
 		"""
 		Sort, filter, and batch (page) the objects collections,
@@ -756,7 +801,7 @@ class _UGDView(AbstractAuthenticatedView,
 			Like batchAround, except the batch after the given object is returned.
 
 		batchBeforeOID
-			Like batchAround, except the batch before the given object is returned, inclusively.
+			Like batchAround, except the batch before the given object is returned.
 
 		filterOperator
 			A string parameter with to indicate what operator (union, intersection) is to
@@ -873,8 +918,7 @@ class _UGDView(AbstractAuthenticatedView,
 		if 		batch_object \
 			and batch_size is not None:
 
-			get_key = lambda key_value: to_external_ntiid_oid( key_value[1] )
-			test = lambda key_value: get_key( key_value ) == batch_object
+			test = lambda key_value: self.__get_key( key_value[1] ) == batch_object
 
 			# This will return a natural batch based on batchSize.
 			batch_containing = bool( self.request.params.get( 'batchContaining', '' ) )
@@ -884,7 +928,7 @@ class _UGDView(AbstractAuthenticatedView,
 			merged = self._batch_on_item(merged, test,
 										 batch_containing=batch_containing,
 										 batch_after=batch_after,
-										 batch_before=batch_before)
+										 batch_before=batch_before )
 			batch_size, batch_start = self._get_batch_size_start()
 			number_items_needed = None
 
