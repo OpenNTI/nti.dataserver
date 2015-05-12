@@ -18,7 +18,6 @@ does_not = is_not
 
 import struct
 
-from zc.intid import IIntIds
 from zc.intid import IIdAddedEvent
 from zc.intid import IIdRemovedEvent
 
@@ -31,6 +30,7 @@ from zope.location.interfaces import ILocation
 from persistent import Persistent
 
 from nti.intid.utility import IntIds
+from nti.intid.interfaces import IIntIds
 
 from nti.testing.base import AbstractTestBase
 from nti.testing.matchers import verifiably_provides

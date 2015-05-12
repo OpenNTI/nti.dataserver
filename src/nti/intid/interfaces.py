@@ -9,13 +9,20 @@ Intid intefaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+import zc.intid
+
 from zope.interface import Interface
 from zope.interface import Attribute
 from zope.interface import implementer
 
-# The reason for the __str__ override bypassing KeyError
-# is to get usable exceptions printed from unit tests
-# See https://github.com/nose-devs/nose/issues/511
+from zope.container.interfaces import IContained
+
+class IIntIds(zc.intid.IIntIds, zc.intid.IIntIdsSubclass, IContained):
+	pass
+
+## The reason for the __str__ override bypassing KeyError
+## is to get usable exceptions printed from unit tests
+## See https://github.com/nose-devs/nose/issues/511
 class IntIdMissingError(KeyError):
 	"""
 	Raised by the utility when ``getId`` fails.
@@ -44,14 +51,17 @@ class ObjectMissingError(KeyError):
 ###
 
 class IIntIdEvent(Interface):
-	"""Generic base interface for IntId-related events"""
+	"""
+	Generic base interface for IntId-related events
+	"""
 
 	object = Attribute("The object related to this event")
 
 	original_event = Attribute("The ObjectEvent related to this event")
 
 class IIntIdRemovedEvent(IIntIdEvent):
-	"""A unique id will be removed
+	"""
+	A unique id will be removed
 
 	The event is published before the unique id is removed
 	from the utility so that the indexing objects can unindex the object.
@@ -59,7 +69,8 @@ class IIntIdRemovedEvent(IIntIdEvent):
 
 @implementer(IIntIdRemovedEvent)
 class IntIdRemovedEvent(object):
-	"""The event which is published before the unique id is removed
+	"""T
+	he event which is published before the unique id is removed
 	from the utility so that the catalogs can unindex the object.
 	"""
 
@@ -68,7 +79,8 @@ class IntIdRemovedEvent(object):
 		self.original_event = event
 
 class IIntIdAddedEvent(IIntIdEvent):
-	"""A unique id has been added
+	"""
+	A unique id has been added
 
 	The event gets sent when an object is registered in a
 	unique id utility.
@@ -78,7 +90,8 @@ class IIntIdAddedEvent(IIntIdEvent):
 
 @implementer(IIntIdAddedEvent)
 class IntIdAddedEvent(object):
-	"""The event which gets sent when an object is registered in a
+	"""
+	The event which gets sent when an object is registered in a
 	unique id utility.
 	"""
 
