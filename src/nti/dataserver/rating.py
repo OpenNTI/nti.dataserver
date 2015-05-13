@@ -97,12 +97,15 @@ def rate_object(context, username, rating, cat_name=RATING_CAT_NAME):
 def unrate_object(context, username, cat_name=RATING_CAT_NAME):
 	old_rating = None
 	storage = lookup_rating_for_read(context, cat_name)
-	if storage and storage.userRating(username) is not None:
-		old_rating = storage.remove_rating(username)
-		# NOTE: The default implementation of a category does not
-		# fire an event on unrating, so we do.
-		# Must include the rating so that the listeners can know who did it
-		notify(ObjectUnratedEvent(context, old_rating, cat_name))
+	if storage:
+		old_rating = storage.userRating(username)
+		if old_rating is not None:
+			storage.remove_rating(username)
+
+			# NOTE: The default implementation of a category does not
+			# fire an event on unrating, so we do.
+			# Must include the rating so that the listeners can know who did it
+			notify(ObjectUnratedEvent(context, old_rating, cat_name))
 	return storage, old_rating
 
 def get_object_rating(context, username, cat_name, safe=False, default=None):
