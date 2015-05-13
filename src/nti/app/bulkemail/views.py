@@ -109,8 +109,19 @@ class _BulkEmailView(object):
 	@view_config(request_method='POST',
 				 renderer='templates/bulk_email_admin.pt')
 	def post(self):
-		process = self._preflight()
 		request = self.request
+		# We pass the request off to the process object we create
+		# in _preflight. If we wind up spawning a greenlet for that process,
+		# the request will leave the scope of this transaction. If the `context` object
+		# we were found at (often /dataserver2) was persistent (usually is)
+		# then it is invalid to access that context object from that different transaction,
+		# and you can see ConnectionStateErrors when you try to do things like
+		# render templates. We reset it to prevent that from happening.
+		# This is most noticeable under PyPy, where the ghostification of objects is
+		# a little different than under CPython; we were getting away with this under
+		# CPython.
+		request.context = None
+		process = self._preflight()
 		if 'subFormTable.buttons.resume' in self.request.POST:
 			process.metadata.status = 'Resumed'
 			process.metadata.save()
