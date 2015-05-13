@@ -33,11 +33,11 @@ def verified_email_ids(email):
 	intids_emails = catalog.family.IF.Set(email_idx._fwd_index.get(email) or ())
 	if not intids_emails:
 		return catalog.family.IF.Set()
-	
-	# all verified emails 
-	verifed_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]	
-	intids_verified = catalog.family.IF.Set(verifed_idx.getIds())
-	
+
+	# all verified emails
+	verified_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
+	intids_verified = catalog.family.IF.Set(verified_idx.getIds())
+
 	# intersect
 	result = catalog.family.IF.intersection(intids_emails, intids_verified)
 	return result
@@ -48,8 +48,8 @@ def reindex_email_verification(user, catalog=None, intids=None):
 	uid = intids.queryId(user)
 	if uid is not None:
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-		verifed_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
-		verifed_idx.index_doc(uid, user)
+		verified_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
+		verified_idx.index_doc(uid, user)
 		return True
 	return False
 
@@ -59,18 +59,18 @@ def unindex_email_verification(user, catalog=None, intids=None):
 	uid = intids.queryId(user)
 	if uid is not None:
 		catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-		verifed_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
-		verifed_idx.unindex_doc(uid)
+		verified_idx = catalog[IX_TOPICS][IX_EMAIL_VERIFIED]
+		verified_idx.unindex_doc(uid)
 		return True
 	return False
-	
+
 def force_email_verification(user, profile=IUserProfile, catalog=None, intids=None):
-	profile = profile(user, None)   
-	if profile is not None:   
+	profile = profile(user, None)
+	if profile is not None:
 		profile.email_verified = True
 		return reindex_email_verification(user, catalog=catalog, intids=intids)
 	return False
-	
+
 def is_email_verified(email):
 	result = verified_email_ids(email)
 	return bool(result)
