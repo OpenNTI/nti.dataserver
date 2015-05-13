@@ -140,7 +140,7 @@ class TestGeventApplicationWorker(AppLayerTest):
 		#rqst.headers['X-FORWARDED-FOR'] = '41.74.174.50,10.50.0.102'
 		#assert_that( environ, has_entry( 'REMOTE_ADDR', '41.74.174.50' ) )
 
-	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.gunicorn.loadwsgi','gevent.socket.socket', 'nti.appserver.gunicorn.get_current_request')
+	@fudge.patch('gunicorn.workers.base.WorkerTmp','nti.appserver.nti_gunicorn.loadwsgi','gevent.socket.socket', 'nti.appserver.nti_gunicorn.get_current_request')
 	def test_init_process(self, fudge_tmp, fudge_loadwsgi, fudge_socket, fudge_get_current_request):
 		fudge_tmp.is_a_stub()
 		fudge_loadwsgi.is_a_stub()
@@ -157,7 +157,7 @@ class TestGeventApplicationWorker(AppLayerTest):
 		# Default worker_connections config
 		worker = nti_gunicorn.GeventApplicationWorker( None, None, [MockSocket()], dummy_app, None, cfg, logger)
 		worker.init_process(_call_super=False)
-		assert_that( worker, has_property( 'worker_connections', 
+		assert_that( worker, has_property( 'worker_connections',
 											nti_gunicorn.GeventApplicationWorker.PREFERRED_MAX_CONNECTIONS ) )
 
 		# Changed config
