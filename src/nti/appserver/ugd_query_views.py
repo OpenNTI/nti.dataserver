@@ -555,7 +555,7 @@ class _UGDView(AbstractAuthenticatedView,
 
 	_DEFAULT_SORT_ON = 'lastModified'
 	_DEFAULT_BATCH_SIZE = None
-	_DEFAULT_BATCH_START = None
+	_DEFAULT_BATCH_START = 0
 	_MIME_FILTER_FACTORY = _MimeFilter
 
 	def _make_accept_predicate( self ):

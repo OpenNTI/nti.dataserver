@@ -1338,8 +1338,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Now, ask for a batch after the tenth item. Match the sort-order (lastMod, descending)
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={ batch_param_name: ntiids[10],
-																'batchSize': 10,
-																'batchStart': 10} )
+																'batchSize': 10 } )
 		assert_that( ugd_res.json_body['Items'], has_length( 9 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 
@@ -1368,8 +1367,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Batching after the first object
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
-																  'batchSize': 3,
-																  'batchStart': 0} )
+																  'batchSize': 3 } )
 		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 		expected_ntiids = ntiids[1:4]
@@ -1437,7 +1435,8 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( batch_prev, is_( batch_prev_href ) )
 
 		# Now, ask for a batch before the tenth item. Match the sort-order (lastMod, descending)
-		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10], 'batchSize': 10, 'batchStart': 10} )
+		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[10],
+																'batchSize': 10} )
 		assert_that( ugd_res.json_body['Items'], has_length( 10 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 
@@ -1456,7 +1455,8 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 		assert_that( ugd_res.json_body['Items'], contains( *matchers ) )
 
 		# If we ask for something that doesn't match, we get nothing
-		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar', 'batchSize': 10, 'batchStart': 1} )
+		no_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: 'foobar',
+																'batchSize': 10, 'batchStart': 1} )
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 		self.forbid_link_with_rel( no_res.json_body, 'batch-prev' )
@@ -1464,8 +1464,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Batching before the first object returns nothing
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[0],
-																  'batchSize': 3,
-																  'batchStart': 0} )
+																  'batchSize': 3} )
 		assert_that( no_res.json_body['Items'], has_length( 0 ) )
 		assert_that( no_res.json_body['TotalItemCount'], is_( 20 ) )
 		self.forbid_link_with_rel( no_res.json_body, 'batch-prev' )
@@ -1473,8 +1472,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Second index gives us just the first element
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[1],
-																  'batchSize': 3,
-																  'batchStart': 0} )
+																  'batchSize': 3} )
 
 		assert_that( ugd_res.json_body['Items'], has_length( 1 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
@@ -1494,8 +1492,7 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# Batch before last object
 		ugd_res = self.fetch_user_ugd( top_n_containerid, params={batch_param_name: ntiids[-1],
-																  'batchSize': 3,
-																  'batchStart': 0} )
+																  'batchSize': 3} )
 		assert_that( ugd_res.json_body['Items'], has_length( 3 ) )
 		assert_that( ugd_res.json_body['TotalItemCount'], is_( 20 ) )
 		expected_ntiids = ntiids[16:19]
