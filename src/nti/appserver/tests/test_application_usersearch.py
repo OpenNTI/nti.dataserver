@@ -243,7 +243,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 			user_interfaces.IFriendlyNamed( u1 ).realname = u"sjo"
 			modified( u1 )
 			u2 = self._create_user( username='sjo2@nextthought.com' )
-			
+
 			self._create_user( username='sjo3@nextthought.com' )
 			community = users.Community.create_community( username='TheCommunity' )
 			user_interfaces.IFriendlyNamed( community ).alias = 'General People'
@@ -296,6 +296,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		#"On the mathcounts site, we cannot search for realname or alias"
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
+			u1_usernam = u1.username
 			interface.alsoProvides( u1, nti_interfaces.ICoppaUser )
 			modified( u1 ) # update catalog
 			u2 = self._create_user( username='sj2@nextthought.com' )
@@ -342,7 +343,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 
 		# But if the hit was us, we get back some special links to the privacy policy
 		environ['HTTP_ORIGIN'] = b'http://mathcounts.nextthought.com'
-		res = testapp.get( b'/dataserver2/UserSearch/' + str(u1.username), extra_environ=environ )
+		res = testapp.get( b'/dataserver2/UserSearch/' + str(u1_username), extra_environ=environ )
 		assert_that( res.json_body['Items'], has_length( 1 ) )
 		found = res.json_body['Items'][0]
 		self.require_link_href_with_rel( found, 'childrens-privacy' )
