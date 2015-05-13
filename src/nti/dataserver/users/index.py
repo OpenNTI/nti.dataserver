@@ -88,7 +88,7 @@ class ContactEmailRecoveryHashIndex(FieldIndex):
 class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 
 	EXPR = 'IUserProfile(context).opt_in_email_communication'
-	
+
 	def __init__( self, iden, family=None ):
 		super(OptInEmailCommunicationFilteredSet,self).__init__( iden, self.EXPR, family=family )
 
@@ -108,7 +108,7 @@ class OptInEmailCommunicationFilteredSet(FilteredSetBase):
 class EmailVerifiedFilteredSet(FilteredSetBase):
 
 	EXPR = 'IUserProfile(context).email_verified'
-	
+
 	def __init__( self, iden, family=None ):
 		super(EmailVerifiedFilteredSet,self).__init__(iden, self.EXPR, family=family )
 
@@ -157,14 +157,14 @@ def install_user_catalog( site_manager_container, intids=None ):
 
 	opt_in_comm_set = OptInEmailCommunicationFilteredSet( IX_OPT_IN_EMAIL_COMMUNICATION,
 														  family=intids.family)
-	
+
 	email_verified_set = EmailVerifiedFilteredSet(IX_EMAIL_VERIFIED, family=intids.family)
-	
+
 	topics_index = TopicIndex( family=intids.family)
 	topics_index.addFilter( opt_in_comm_set )
 	topics_index.addFilter( email_verified_set )
 	intids.register( topics_index )
-	
+
 	topics_index.__name__ = IX_TOPICS
 	topics_index.__parent__ = catalog
 	catalog[IX_TOPICS] = topics_index

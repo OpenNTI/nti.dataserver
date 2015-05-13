@@ -109,7 +109,7 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 				permission=nauth.ACT_NTI_ADMIN,
 				request_method='POST',
 				context=IDataserverFolder)
-class RemoveUserBrokenObjects(AbstractAuthenticatedView, 
+class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 							  ModeledContentUploadRequestUtilsMixin):
 
 	"""
@@ -121,31 +121,31 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-		
+
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
 			raise hexc.HTTPUnprocessableEntity(_("User not found"))
-		
+
 		containers = values.get('containers') or values.get('include_containers')
 		containers = bool(not containers or is_true(containers))
-		
+
 		stream = values.get('stream') or values.get('include_stream')
 		stream = is_true(stream)
-		
+
 		shared = values.get('shared') or values.get('include_shared')
 		shared = is_true(shared)
-		
+
 		dynamic =  values.get('dynamic') or \
 				   values.get('dynamic_friends') or \
 				   values.get('include_dynamic') or \
 				   values.get('include_dynamic_friends')
 		dynamic = is_true(dynamic)
-		
+
 		data = remove_broken_objects(user, include_containers=containers,
 									 include_stream=stream,
 									 include_shared=shared,
 									 include_dynamic_friends=dynamic)
-		
+
 		result = LocatedExternalDict()
 		result[ITEMS] = data
 		result['Total'] = result['Count'] = len(data)
@@ -165,16 +165,16 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
 		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-		
+
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
 			raise hexc.HTTPUnprocessableEntity(_("User not found"))
-		
+
 		profile = IUserProfile(user)
 		email = values.get('email') or profile.email
 		if not email:
 			raise hexc.HTTPUnprocessableEntity(_("Email address not provided"))
-		
+
 		signature, token = generate_mail_verification_pair(user, email)
 		result = LocatedExternalDict()
 		result.__name__ = self.request.view_name
@@ -198,11 +198,11 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-		
+
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
 			raise hexc.HTTPUnprocessableEntity(_("User not found"))
-		
+
 		profile = IUserProfile(user)
 		email = values.get('email') or profile.email
 		if not email:
@@ -210,13 +210,14 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 		else:
 			try:
 				checkEmailAddress(email)
-			except (EmailAddressInvalid):
+			except EmailAddressInvalid:
 				raise hexc.HTTPUnprocessableEntity(_("Invalid email address."))
 
 		profile.email = email
 		profile.email_verified = True
-		reindex_email_verification(user)
-				
+		verified = reindex_email_verification(user) # XXX: This should use events
+		assert verified
+
 		return hexc.HTTPNoContent()
 
 @view_config(name='RemoveUser')
@@ -233,10 +234,10 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
-		
+
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
 			raise hexc.HTTPUnprocessableEntity(_("User not found"))
-		
+
 		User.delete_user(username)
 		return hexc.HTTPNoContent()

@@ -40,7 +40,7 @@ def _new_user_is_not_blacklisted(user, event):
 def _send_email_confirmation(user, event):
 	profile = IUserProfile(user, None)
 	email = getattr(profile, 'email', None)
-	request = event.request or get_current_request()	
+	request = event.request or get_current_request()
 	if profile is not None and email:
 		safe_send_email_verification(user, profile, email, request)
 
@@ -54,9 +54,9 @@ def _user_modified_from_external_event(user, event):
 		reindex_email_verification(user)
 		set_email_verification_time(user, 0)
 		## send email
-		request = getattr(event,'request', None) or get_current_request()	
+		request = getattr(event,'request', None) or get_current_request()
 		if request:
 			profile.email = email # update email so send-email can do its work
-			safe_send_email_verification(user, profile, email, 
+			safe_send_email_verification(user, profile, email,
 										 request=request,
 										 check=False)

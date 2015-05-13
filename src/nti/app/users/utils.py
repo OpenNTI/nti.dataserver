@@ -71,45 +71,45 @@ def generate_mail_verification_pair(user, email=None, secret_key=None):
 	if user is None:
 		raise ValueError("User not found")
 	username = user.username.lower()
-	
+
 	intids = component.getUtility(zope.intid.IIntIds)
 	profile = IUserProfile(user, None)
 	email = email or getattr(profile, 'email', None)
 	if not email:
 		raise ValueError("User does not have an mail")
 	email = email.lower()
-	
+
 	if not secret_key:
 		uid = intids.getId(user)
-		secret_key = unicode(uid) 
-		
+		secret_key = unicode(uid)
+
 	result = _signature_and_token(username, email, secret_key)
 	return result
-	
-def get_verification_signature_data(user, signature, params=None, 
+
+def get_verification_signature_data(user, signature, params=None,
 									email=None, secret_key=None):
 	user = get_user(user)
 	if user is None:
 		raise ValueError("User not found")
 	username = user.username.lower()
-	
+
 	intids = component.getUtility(zope.intid.IIntIds)
 	profile = IUserProfile(user)
 	email = email or getattr(profile, 'email', None)
 	if not email:
 		raise ValueError("User does not have an email")
 	email = email.lower()
-	
+
 	if not secret_key:
 		uid = intids.getId(user)
-		secret_key = unicode(uid) 
-		
+		secret_key = unicode(uid)
+
 	s = SignatureSerializer(secret_key)
 	data = s.loads(signature)
-	
+
 	if data['username'] != username:
 		raise ValueError("Invalid token user")
-	
+
 	if data['email'] != email:
 		raise ValueError("Invalid token email")
 	return data
@@ -120,17 +120,17 @@ def generate_verification_email_url(user, request=None, host_url=None,
 		ds2 = request.path_info_peek() if request else "/dataserver2"
 	except AttributeError:
 		ds2 = "/dataserver2"
-		
+
 	try:
 		host_url = request.host_url if not host_url else None
 	except AttributeError:
 		host_url = None
-		
+
 	signature, token = generate_mail_verification_pair(	user=user, email=email,
 														secret_key=secret_key)
-	params = urlencode({'username': user.username.lower(), 
+	params = urlencode({'username': user.username.lower(),
 						'signature': signature})
-	
+
 	href = '%s/%s?%s' % (ds2, '@@'+VERIFY_USER_EMAIL_VIEW, params)
 	result = urljoin(host_url, href) if host_url else href
 	return result, token
@@ -146,7 +146,7 @@ def set_email_verification_time(user, now=None):
 	annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
 
 def _get_package(policy, template='email_verification_email'):
-	base_package = 'nti.app.users' 
+	base_package = 'nti.app.users'
 	package = getattr(policy, 'PACKAGE', None)
 	if not package:
 		package = base_package
@@ -161,7 +161,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
 	if not request or not email:
 		logger.warn("Not sending email to %s because of no email or request", user)
 		return
-	
+
 	username = user.username
 	policy = component.getUtility(ISitePolicyUserEventListener)
 
@@ -175,7 +175,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
 	site_alias = getattr(policy, 'COM_ALIAS', '')
 	support_email = getattr(policy, 'SUPPORT_EMAIL', 'support@nextthought.com')
 	href, token = generate_verification_email_url(user, request=request)
-	
+
 	args = {'user': user,
 			'href' : href,
 			'token': token,
@@ -189,9 +189,9 @@ def send_email_verification(user, profile, email, request=None, check=True):
 
 	template = 'email_verification_email'
 	package = _get_package(policy, template=template)
-	
+
 	logger.info("Sending email verification to %s", user)
-	
+
 	mailer = component.getUtility(ITemplatedMailer)
 	mailer.queue_simple_html_text_email(
 				template,
@@ -203,13 +203,18 @@ def send_email_verification(user, profile, email, request=None, check=True):
 
 	# record time
 	set_email_verification_time(user)
-	
+
 def safe_send_email_verification(user, profile, email, request=None, check=True):
+	iids = component.getUtility(zope.intid.IIntIds)
+	if iids.queryId(user) is None:
+		logger.debug("Not sending email verification during account creation of %s", user)
+		return
+
 	try:
 		send_email_verification(user, profile, email, request=request, check=check)
 		return True
-	except (StandardError, Exception) as e:
-		logger.error("Cannot send email confirmation to %s. %s", user, e)
+	except Exception as e:
+		logger.exception("Cannot send email confirmation to %s.", user)
 		return False
 
 @component.adapter(IUser, ISendEmailConfirmationEvent)
@@ -217,7 +222,7 @@ def _send_email_confirmation(record, event):
 	user = event.user
 	profile = IUserProfile(user, None)
 	email = getattr(profile, 'email', None)
-	request = event.request or get_current_request()	
+	request = event.request or get_current_request()
 	if profile is None:
 		safe_send_email_verification(user, profile, email,
 									 request=request, check=False)

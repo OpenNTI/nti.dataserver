@@ -101,11 +101,11 @@ class TestAdminViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_remove_user(self):
 		username = 'user_one'
-		
+
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.get_user(username=username )
 			assert_that(user, is_(none()))
-	
+
 		with mock_dataserver.mock_db_trans( self.ds ):
 			User.create_user( username=username )
 
@@ -116,7 +116,7 @@ class TestAdminViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			user = User.get_user(username=username )
 			assert_that(user, is_(none()))
-			
+
 		self.testapp.post_json( '/dataserver2/@@RemoveUser',
 								{'username':username},
 								status=422 )
