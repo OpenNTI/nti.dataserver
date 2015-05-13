@@ -30,8 +30,8 @@ class TestApplicationZopeFileViews(ApplicationLayerTest):
 		path = '/dataserver2/@@image_to_dataurl'
 		testapp = self.testapp
 		testapp.post( path,
-							upload_files=[('field', 'foo.gif', 'bad gif data')],
-							status=400)
+					  upload_files=[('field', 'foo.gif', b'bad gif data')],
+					  status=400)
 
 	def _do_test_echo( self, url ):
 		testapp = self.testapp
