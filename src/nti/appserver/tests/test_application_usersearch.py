@@ -296,7 +296,7 @@ class TestApplicationUserSearch(ApplicationLayerTest):
 		#"On the mathcounts site, we cannot search for realname or alias"
 		with mock_dataserver.mock_db_trans(self.ds):
 			u1 = self._create_user()
-			u1_usernam = u1.username
+			u1_username = u1.username
 			interface.alsoProvides( u1, nti_interfaces.ICoppaUser )
 			modified( u1 ) # update catalog
 			u2 = self._create_user( username='sj2@nextthought.com' )
