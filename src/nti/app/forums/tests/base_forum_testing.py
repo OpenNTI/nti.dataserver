@@ -956,7 +956,10 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 
 		# Can be cycled
 		testapp2.post( unfav_href )
-		self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'}, status=404)
+		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'})
+		assert_that( res.json_body, has_entry('FilteredTotalItemCount', 0) )
+		assert_that( res.json_body['Items'], is_empty() )
+
 
 		testapp2.post( fav_href )
 		res = self.fetch_user_root_rugd( testapp2, fixture.user2_username, params={'filter': 'Favorite'})

@@ -545,7 +545,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', 'My New Blog' ) ) )
 			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
-		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
+		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 200)):
 			app.post( unfav_href )
 			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'}, status=status )
 			if status == 200:
@@ -558,7 +558,7 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 			assert_that( res.json_body['Items'], contains( has_entry( 'title', comment2_title ) ) )
 			unfav_href = self.require_link_href_with_rel( res.json_body['Items'][0], 'unfavorite' )
 
-		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 404)):
+		for uname, app, status in ((user_username, testapp, 200), (user2_username, testapp2, 200)):
 			app.post( unfav_href )
 			res = self.fetch_user_root_rugd( app, uname, params={'filter': 'Favorite'}, status=status )
 			if status == 200:
