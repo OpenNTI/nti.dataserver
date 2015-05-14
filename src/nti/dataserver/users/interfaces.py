@@ -32,7 +32,7 @@ from zope.i18n import translate
 from zope.schema import URI
 
 from z3c.password.interfaces import NoPassword
-from z3c.password.interfaces import InvalidPassword	
+from z3c.password.interfaces import InvalidPassword
 
 from z3c.schema.email import isValidMailAddress
 
@@ -103,7 +103,7 @@ class UsernameContainsIllegalChar(_InvalidData):
 			'Username contains an illegal character. Only letters, digits, and ${allowed_chars} are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
-		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username', 
+		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username',
 														  username, value=username )
 
 	def new_instance_restricting_chars( self, restricted_chars ):
@@ -399,7 +399,7 @@ class IRestrictedUserProfile(IUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL )
-	
+
 	email_verified = Bool(
 		title="Has the email been verified?",
 		required=False,
@@ -447,7 +447,7 @@ class ICompleteUserProfile(IRestrictedUserProfile, IEmailAddressable):
 		title="Can we contact you by email?",
 		required=False,
 		default=False )
-		
+
 	home_page = HTTPURL(
 		title='Home page',
 		description="The URL for your external home page, "
@@ -561,7 +561,7 @@ class ISendEmailConfirmationEvent(IObjectEvent):
 
 	user = interface.Attribute("User to send the confirmation email to.")
 	request = interface.Attribute("A request object")
-	
+
 @interface.implementer(ISendEmailConfirmationEvent)
 class SendEmailConfirmationEvent(ObjectEvent):
 
@@ -572,39 +572,39 @@ class SendEmailConfirmationEvent(ObjectEvent):
 	@property
 	def user(self):
 		return self.object
-	
+
 def validateAccept(value):
 	if not value == True:
 		return False
 	return True
 
-# Suggested contacts. 
+# Suggested contacts.
 
 class ISuggestedContactRankingPolicy(Interface):
 	"""
-	Defines a user ranking policy for a provider. This policy 
+	Defines a user ranking policy for a provider. This policy
 	defines the order in which the suggestions are returned
 	"""
-		
+
 	priority = Int(title="Provider prority", required=False, default=1)
-	
+
 	def sort(contacts):
 		"""
 		sort the specified suggested contacts
 		"""
 
 class ISuggestedContactsProvider(Interface):
-	
+
 	"""
 	Defines a utility that allows to return contact suggestions for a user
 	"""
 
-	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy", 
+	ranking = Object(ISuggestedContactRankingPolicy, title="Ranking policy",
 					 required=False)
 
 	context = Object(Interface, title="Provider context",
 					 required=False)
-	
+
 	def suggestions(user):
 		"""
 		return a iterator with suggested contacts ordered by the ranking policy

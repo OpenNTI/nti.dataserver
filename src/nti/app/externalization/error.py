@@ -91,7 +91,8 @@ def _validation_error_to_dict( request, validation_error ):
 	declared = None
 
 	if field:
-		field_name = getattr( field, '__name__', field )
+		fixed_field_name = getattr(field, '__fixup_name__', None) # handle FieldPropertyStoredThroughField via FieldValidationMixin
+		field_name = fixed_field_name or getattr( field, '__name__', field )
 		declared = getattr( getattr( field, 'interface', None ), '__name__', None )
 
 	if len(validation_error.args) == 3:

@@ -47,14 +47,14 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 	"""
 
 	_existing_name = None
-	
+
 	def __init__( self, field, name=None, exist_name=None ):
 		super(_ExistingDictReadFieldPropertyStoredThroughField,self).__init__( field, name=name )
 		if exist_name:
 			self._existing_name = exist_name
 
 	def getValue( self, inst, field):
-		ex_val = getattr(inst.context, 
+		ex_val = getattr(inst.context,
 						 self._existing_name or 'This Value Cannot Be an Attr', None )
 		if ex_val:
 			return ex_val
@@ -79,7 +79,7 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 
 def get_searchable_realname_parts(realname):
 	nameparser_config = getattr(nameparser, 'config')
-	
+
 	# This implementation is fairly naive, returning
 	# first, middle, and last if they are not blank. How does
 	# this handle more complex naming scenarios?
@@ -168,10 +168,10 @@ class UserProfile(FriendlyNamed):
 	"""
 	### NOTE: See users_external, this is fairly tightly coupled to that
 	_avatarURL = None
-	avatarURL = _AvatarUrlProperty( data_name="avatarURL", 
+	avatarURL = _AvatarUrlProperty( data_name="avatarURL",
 									url_attr_name='_avatarURL',
 									file_attr_name='_avatarURL' )
-	
+
 	__getitem__ = avatarURL.make_getitem()
 
 	username = property( lambda self: self.context.username )
@@ -191,10 +191,10 @@ def make_password_recovery_email_hash( email ):
 @interface.implementer(IRestrictedUserProfile)
 class RestrictedUserProfile(UserProfile):
 	email_verified = False
-	
+
 	# If anyone tries to set an email on us, we turn it into the recovery hash
 	email = property( lambda self: None,
-					  lambda self, nv: setattr( self, 'password_recovery_email_hash', 
+					  lambda self, nv: setattr( self, 'password_recovery_email_hash',
 												make_password_recovery_email_hash( nv ) ),
 					  doc="This type of profile cannot store an actual email address."
 					  	  "If anyone tries, it becomes the recovery hash")
@@ -277,9 +277,9 @@ RestrictedUserProfileFactory = afactory( RestrictedUserProfile )
 RestrictedUserProfileWithContactEmailFactory = afactory( RestrictedUserProfileWithContactEmail )
 
 COMPLETE_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.CompleteUserProfile'
-CompleteUserProfileFactory = afactory( 	CompleteUserProfile, 
+CompleteUserProfileFactory = afactory( 	CompleteUserProfile,
 										key=COMPLETE_USER_PROFILE_KEY )
 
 EMAIL_REQUIRED_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.EmailRequiredUserProfile'
-EmailRequiredUserProfileFactory = afactory( EmailRequiredUserProfile, 
+EmailRequiredUserProfileFactory = afactory( EmailRequiredUserProfile,
 											key=EMAIL_REQUIRED_USER_PROFILE_KEY )
