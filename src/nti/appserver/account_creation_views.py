@@ -171,13 +171,7 @@ def _create_user(request, externalValue, preflight_only=False, require_password=
 						   'message': str(e),
 						   'code': e.__class__.__name__},
 						exc_info[2] )
-			
-		else:
-			_raise_error( request, hexc.HTTPUnprocessableEntity,
-						  {'field': 'email',
-						   'message': str(e),
-						   'code': e.__class__.__name__},
-						exc_info[2] )
+		handle_validation_error( request, e )
 	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error( request, e )
@@ -500,7 +494,7 @@ class _AccountProfileSchemafier(JsonSchemafier):
 		self.user = user
 		profile_iface = IUserProfileSchemaProvider( user ).getSchema()
 		profile = profile_iface( user )
-		profile_schema = find_most_derived_interface( 
+		profile_schema = find_most_derived_interface(
 									profile, profile_iface,
 									possibilities=interface.providedBy(profile) )
 		super(_AccountProfileSchemafier,self).__init__( profile_schema,
