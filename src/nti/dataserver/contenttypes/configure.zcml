@@ -10,6 +10,9 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<!-- Adapters -->
+	<adapter factory=".adapters._ContainerContext" />
+	
 	<!-- Events for keeping replies and referents updated. -->
 	<subscriber handler=".threadable.threadable_added" />
 	<subscriber handler=".threadable.threadable_removed" />
@@ -31,10 +34,8 @@
 	<adapter factory=".bookmark.BookmarkInternalObjectIO" />
 	<adapter factory=".highlight.HighlightInternalObjectIO"/>
 	<adapter factory=".redaction.RedactionInternalObjectIO" />
-	<adapter factory=".adapters._ContainerContext" />
 
 	<!-- Blob file URL storage for canvas images -->
-
 	<exclude package="zope.file" file="browser.zcml" />
 	<include package="zope.file" />
 
@@ -46,14 +47,5 @@
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="." />
-
-	<!-- File uploads -->
-	<adapter factory=".file._NamedFileFactory"
-			 for="dolmen.builtins.IDict"
-			 provides="nti.externalization.interfaces.IMimeObjectFactory"
-			 name="application/vnd.nextthought.namedfile" />
-
-	<adapter factory=".file._NamedFileObjectIO"
-			 for="..interfaces.INamedFile"  />
 
 </configure>
