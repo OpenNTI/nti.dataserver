@@ -72,7 +72,7 @@ def _rate_object(context, username, cat_name):
 def _unrate_object(context, username, cat_name):
 	storage, old_rating = ranking.unrate_object(context, username, cat_name)
 	if old_rating is not None:
-		assert int(old_rating) is 0
+		assert int(old_rating) is 1, old_rating
 		return storage
 
 def like_object( context, username ):
