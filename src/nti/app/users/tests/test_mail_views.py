@@ -28,22 +28,24 @@ from nti.dataserver.tests import mock_dataserver
 from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.application_webtest import ApplicationLayerTest
 
-class TestMailViews(ApplicationLayerTest):
+class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 
-	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	@mock_dataserver.WithMockDSTrans
 	def test_generate_mail_verification_token(self):
+		user = User.create_user( self.ds, username='ichigo', password='temp001')
 
-		with mock_dataserver.mock_db_trans( self.ds ):
-			user = self._create_user(username="ichigo" )
-			IUserProfile(user).email = "ichigo@bleach.org"
+		IUserProfile(user).email = "ichigo@bleach.org"
 
-			signature, token = generate_mail_verification_pair(user, secret_key='zangetsu')
-			assert_that( token, is_(49114861L))
-			assert_that( signature, contains_string('2mDfJ4TTqRAsSGcjhNiea13Q0GHPqC6yB_AZV8Jt__c'))
+		signature, token = generate_mail_verification_pair(user, secret_key='zangetsu')
+		assert_that( token, is_(49114861L))
+		assert_that( signature, contains_string('2mDfJ4TTqRAsSGcjhNiea13Q0GHPqC6yB_AZV8Jt__c'))
 
-			data = get_verification_signature_data(user, signature, secret_key='zangetsu')
-			assert_that(data, has_entry('username', is_('ichigo')))
-			assert_that(data, has_entry('email', is_('ichigo@bleach.org')))
+		data = get_verification_signature_data(user, signature, secret_key='zangetsu')
+		assert_that(data, has_entry('username', is_('ichigo')))
+		assert_that(data, has_entry('email', is_('ichigo@bleach.org')))
+
+
+class TestMailViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_with_token(self):
@@ -126,14 +128,14 @@ class TestMailViews(ApplicationLayerTest):
 					 has_entries( 'Links', has_item( has_entry('rel', 'RequestEmailVerification' ) ) ))
 		assert_that( res.json_body,
 					 has_entries( 'Links', has_item( has_entry('rel', 'VerifyEmailWithToken' ) ) ))
-	
+
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_request_email_verification(self):
 		username = 'ichigo'
 		with mock_dataserver.mock_db_trans( self.ds ):
 			User.create_user(username=username, password='temp001',
 						 	 external_value={ u'email':u"ichigo@bleach.org"})
-		
+
 		extra_environ = self._make_extra_environ(user=username)
 		href = '/dataserver2/users/ichigo/@@request_email_verification'
 		self.testapp.post(href, extra_environ=extra_environ, status=204)
