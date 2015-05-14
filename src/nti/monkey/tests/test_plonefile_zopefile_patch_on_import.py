@@ -10,17 +10,16 @@ __docformat__ = "restructuredtext en"
 from hamcrest import assert_that
 from hamcrest import has_property
 
+import plone.namedfile.file as nfile
+import plone.namedfile.interfaces as nfile_interfaces
+
+from nti.monkey.plonefile_zopefile_patch_on_import import patch
+
 from nti.testing import base
 from nti.testing.matchers import validly_provides
 
-import plone.namedfile.interfaces as nfile_interfaces
-
-import plone.namedfile.file as nfile
-
-from .. plonefile_zopefile_patch_on_import import patch
-
 # so that storages work, plone.namedfile reg must be set up
-setUpModule = lambda: base.module_setup( set_up_packages=('nti.dataserver.contenttypes',) )
+setUpModule = lambda: base.module_setup(set_up_packages=('nti.dataserver.contenttypes',))
 tearDownModule = base.module_teardown
 
 def test_patch():
@@ -30,12 +29,11 @@ def test_patch():
 	nbf = nfile.NamedBlobFile(data='data', contentType=b'text/plain', filename='foo.txt')
 	nif = nfile.NamedBlobFile(data='data', contentType=b'image/gif', filename='foo.txt')
 	for f in nf, nbf, nif:
-		assert_that( f,
-					 validly_provides(nfile_interfaces.IFile ) )
-		assert_that( f, has_property( '__name__', 'foo.txt' ) )
+		assert_that(f, validly_provides(nfile_interfaces.IFile))
+		assert_that(f, has_property('__name__', 'foo.txt'))
 
 	# Check that we sniff the data using zope.mimetype.
-	nf = nfile.NamedFile( data="<?xml?><config />" )
-	nf.mimeType = nfile.get_contenttype( file=nf )
-	assert_that( nf,
-				 has_property( 'contentType', 'text/xml' ) )
+	nf = nfile.NamedFile(data="<?xml?><config />")
+	nf.mimeType = nfile.get_contenttype(file=nf)
+	assert_that(nf,
+				 has_property('contentType', 'text/xml'))
