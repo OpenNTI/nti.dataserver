@@ -18,7 +18,8 @@ from zope.location.interfaces import IContained
 
 from plone.namedfile.file import NamedBlobFile
 
-from nti.dataserver.core.schema import DataURI
+from nti.coremetadata.schema import DataURI
+
 from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
