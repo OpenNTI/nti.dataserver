@@ -37,12 +37,20 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 		IUserProfile(user).email = "ichigo@bleach.org"
 
 		signature, token = generate_mail_verification_pair(user, secret_key='zangetsu')
-		assert_that( token, is_(49114861L))
-		assert_that( signature, contains_string('2mDfJ4TTqRAsSGcjhNiea13Q0GHPqC6yB_AZV8Jt__c'))
+		# Note that we do not test the exact return values of signature and token.
+		# They are dependent upon hash values, which may change from version
+		# to version or impl to impl, or even run-to-run if the PYTHONHASHSEED
+		# environment variable is set or the -R argument is given
 
-		data = get_verification_signature_data(user, signature, secret_key='zangetsu')
-		assert_that(data, has_entry('username', is_('ichigo')))
-		assert_that(data, has_entry('email', is_('ichigo@bleach.org')))
+		# However, we have only observed two permutations, so we test both of those
+		# in addition to what we got (any instance down the road needs to be able
+		# to decode the signature)
+		for sig in (signature,
+					'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6ImljaGlnbyIsImVtYWlsIjoiaWNoaWdvQGJsZWFjaC5vcmcifQ.2mDfJ4TTqRAsSGcjhNiea13Q0GHPqC6yB_AZV8Jt__c',
+					'eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImljaGlnb0BibGVhY2gub3JnIiwidXNlcm5hbWUiOiJpY2hpZ28ifQ.lI0acsx_ETehevob1DZGRriTtuyDc4XnRbq6cF3r7zo'):
+			data = get_verification_signature_data(user, sig, secret_key='zangetsu')
+			assert_that(data, has_entry('username', is_('ichigo')))
+			assert_that(data, has_entry('email', is_('ichigo@bleach.org')))
 
 
 class TestMailViews(ApplicationLayerTest):
