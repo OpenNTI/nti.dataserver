@@ -405,8 +405,11 @@ class TestApplication(ApplicationLayerTest):
 		other_res = self.fetch_user_ugd( containerId, testapp=otherapp, username=otherapp.username )
 		assert_that( other_res.json_body['Items'][0], has_entry( 'selectedText', data['selectedText'] ) )
 		# Which has the same timestamp, but not etag
-		# its actually slightly behind  due to the order of update events (constant is very fragile)
-		assert_that(_lm(other_res.last_modified), is_(greater_than_or_equal_to(_lm(owner_res.last_modified) - 6)))
+		# its actually slightly behind  due to the order of update events
+		# (constant is very fragile and depends on the internal implementation of several
+		# modules; CPython 2.7.9 once required 6 while PyPy 2.5.1 required 20)
+		assert_that(_lm(other_res.last_modified),
+					is_(greater_than_or_equal_to(_lm(owner_res.last_modified) - 20)))
 		assert_that( other_res.etag, is_not( owner_res.etag ) )
 
 
