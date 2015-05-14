@@ -31,8 +31,8 @@ from nti.externalization.persistence import NoPickle
 # We are often, but not always, called from main,
 # so we need to be sure the relevant non-gevent
 # patches are applied
-import nti.monkey.relstorage_patch_all_except_gevent_on_import
-nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
+#import nti.monkey.relstorage_patch_all_except_gevent_on_import
+#nti.monkey.relstorage_patch_all_except_gevent_on_import.patch()
 
 def _configure(self=None, set_up_packages=(), features=(), context=None, execute=True):
 	# zope.component.globalregistry conveniently adds
@@ -63,9 +63,9 @@ def _configure(self=None, set_up_packages=(), features=(), context=None, execute
 _user_function_failed = object() # sentinel
 class _DataserverCreationFailed(Exception): pass
 
-def run_with_dataserver( environment_dir=None, 
+def run_with_dataserver( environment_dir=None,
 						 function=None,
-						 as_main=True, 
+						 as_main=True,
 						 verbose=False,
 						 config_features=(),
 						 xmlconfig_packages=(),
@@ -82,7 +82,7 @@ def run_with_dataserver( environment_dir=None,
 	:keyword bool as_main: If ``True`` (the default) assumes this is the main portion
 		of a script and configures the complete environment appropriately, including
 		setting up logging.
-	:keyword bool verbose: If ``True`` (*not* the default), then logging to the console 
+	:keyword bool verbose: If ``True`` (*not* the default), then logging to the console
 		will be at a slightly higher level.
 
 	:keyword xmlconfig_packages: A sequence of package objects or
@@ -114,11 +114,11 @@ def run_with_dataserver( environment_dir=None,
 	def run_user_fun_transaction_wrapper():
 		try:
 			if not minimal_ds:
-				ds = Dataserver(environment_dir) 
+				ds = Dataserver(environment_dir)
 			else:
 				ds = MinimalDataserver(environment_dir)
 		except Exception:
-			# Reraise something we can deal with (in collusion with run), but with the 
+			# Reraise something we can deal with (in collusion with run), but with the
 			# original traceback. This traceback should be safe.
 			exc_info = sys.exc_info()
 			raise _DataserverCreationFailed( exc_info[1] ), None, exc_info[2]
@@ -156,8 +156,8 @@ def run_with_dataserver( environment_dir=None,
 				xmlconfig_packages=xmlconfig_packages, context=context,
 				_print_exc=False, logging_verbose_level=logging_verbose_level)
 
-def run(function=None, as_main=True, verbose=False, config_features=(), 
-		xmlconfig_packages=(),  context=None, _print_exc=True, 
+def run(function=None, as_main=True, verbose=False, config_features=(),
+		xmlconfig_packages=(),  context=None, _print_exc=True,
 		logging_verbose_level=logging.INFO):
 	"""
 	Execute the `function`, taking care to print exceptions and handle configuration.
@@ -223,8 +223,8 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 	except _DataserverCreationFailed:
 		raise
 	except Exception as _user_ex:
-		# If we get here, we are unlikely to be able to print details from the 
-		# exception; the transaction will have already terminated, and 
+		# If we get here, we are unlikely to be able to print details from the
+		# exception; the transaction will have already terminated, and
 		# any __traceback_info__ objects or even the arguments to the
 		# exception are possible invalid Persistent objects. Hence the need to
 		# print it up there.
@@ -237,7 +237,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 
 	if result is _user_function_failed:
 		if as_main:
-			print("Failed to execute", getattr(fun, '__name__', fun), type(_user_ex), 
+			print("Failed to execute", getattr(fun, '__name__', fun), type(_user_ex),
 				  _user_ex_str, _user_ex_repr)
 			sys.exit( 6 )
 		# returning none in this case is backwards compatibile behaviour. we'd really
@@ -268,7 +268,7 @@ def open_all_databases(db, close_children=False):
 						_safe_close(child)
 	finally:
 		_safe_close(conn)
-			
+
 @interface.implementer(IDataserver)
 @NoPickle
 class _MockDataserver(object):
@@ -314,7 +314,7 @@ def interactive_setup(root=".",
 
 	"""
 
-	log_format =  '[%(name)s] %(levelname)s: %(message)s' 
+	log_format =  '[%(name)s] %(levelname)s: %(message)s'
 	logging.basicConfig(level=logging.INFO)
 	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter(log_format))
 
@@ -323,8 +323,8 @@ def interactive_setup(root=".",
 		packages = ['nti.dataserver']
 		if xmlconfig_packages:
 			packages = set(xmlconfig_packages)
-		context = _configure(set_up_packages=packages, 
-							 features=config_features, 
+		context = _configure(set_up_packages=packages,
+							 features=config_features,
 							 execute=False)
 	if with_library:
 		# XXX: Very similar to nti.appserver.application.
