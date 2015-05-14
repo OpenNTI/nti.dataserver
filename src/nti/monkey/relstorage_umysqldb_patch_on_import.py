@@ -18,26 +18,43 @@ def _patch():
 		import umysqldb
 		import umysql
 		assert umysql # not used here, but must be importable for this to work
-		import pymysql.err
-
-		import umysqldb.connections
-		import umysqldb.cursors
-		from greenlet import GreenletExit
 		umysqldb.install_as_MySQLdb()
 	except ImportError:
 		import platform
 		py_impl = getattr(platform, 'python_implementation', lambda: None)
 		if py_impl() == 'PyPy':
-			import warnings
-			warnings.warn( "Unable to use umysqldb" ) # PyPy?
-			return
-		raise
+			import pymysql
+			pymysql.install_as_MySQLdb()
+			umysqldb = pymysql
+		else:
+			raise
 
-	import sys
+
+	_patch_connection()
+	_patch_relstorage_error(umysqldb)
+	_patch_transaction_retry()
+
+	from . import relstorage_timestamp_repr_patch_on_import
+	relstorage_timestamp_repr_patch_on_import.patch()
+	from . import relstorage_zlibstorage_patch_on_import
+	relstorage_zlibstorage_patch_on_import.patch()
+	from . import relstorage_explicitly_close_memcache_patch_on_import
+	relstorage_explicitly_close_memcache_patch_on_import.patch()
+	from . import relstorage_locker_patch_on_import
+	relstorage_locker_patch_on_import.patch()
+
+def _patch_connection():
+
 	# The underlying umysql driver doesn't handle dicts as arguments
 	# to queries (as of 2012-09-13). Until it does, we need to do that
 	# because RelStorage uses that in a few places
-	from umysqldb.connections import encoders, notouch
+	try:
+		from umysqldb.connections import encoders, notouch
+		import umysqldb.connections
+		import umysql
+		import sys
+	except ImportError:
+		return
 
 	# Error handling used to work like this:
 	#
@@ -70,7 +87,7 @@ def _patch():
 	# (previously, we mapped everything to Error, which may have been
 	# hiding some issues)
 
-	from pymysql.err import InternalError
+	from pymysql.err import InternalError, InterfaceError
 	class Connection(umysqldb.connections.Connection):
 
 		def __debug_lock(self, sql, ex=False):
@@ -158,7 +175,9 @@ def _patch():
 	umysqldb.Connect = Connection
 
 
-	from pymysql.err import InterfaceError, DatabaseError
+def _patch_relstorage_error(umysqldb):
+	import pymysql.err
+	from pymysql.err import DatabaseError
 
 
 	# Now got to patch relstorage to recognize some exceptions. If these
@@ -166,6 +185,8 @@ def _patch():
 	# to recognize that the connection is already closed
 	import relstorage.adapters.mysql
 	assert relstorage.adapters.mysql.MySQLdb is umysqldb
+
+	# XXX: The PyPy branch of relstorage takes care of most of this
 
 	for attr in (relstorage.adapters.mysql,
 				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
@@ -187,9 +208,12 @@ def _patch():
 										 DatabaseError,
 										 )
 
+def _patch_transaction_retry():
 	# We've seen OperationalError "database has gone away (32, broken pipe)", which is a
 	# subclass of DatabaseError. RelStorage is told to ignore DatabaseError,
 	# so we do too.
+
+	from pymysql.err import DatabaseError
 
 	# As a reminder, the TransactionLoop calls transaction.manager._retryable,
 	# which calls each joined resource's `should_retry` method. The
@@ -207,15 +231,6 @@ def _patch():
 	sql_should_retry = functools.partial( sdm.SessionDataManager.should_retry.im_func, None)
 	from sqlalchemy.exc import SQLAlchemyError
 	nti.transactions.transactions.TransactionLoop._retryable_errors += ((SQLAlchemyError, sql_should_retry),)
-
-	from . import relstorage_timestamp_repr_patch_on_import
-	relstorage_timestamp_repr_patch_on_import.patch()
-	from . import relstorage_zlibstorage_patch_on_import
-	relstorage_zlibstorage_patch_on_import.patch()
-	from . import relstorage_explicitly_close_memcache_patch_on_import
-	relstorage_explicitly_close_memcache_patch_on_import.patch()
-	from . import relstorage_locker_patch_on_import
-	relstorage_locker_patch_on_import.patch()
 
 _patch()
 

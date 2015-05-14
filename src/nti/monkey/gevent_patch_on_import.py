@@ -308,7 +308,7 @@ def _patch_ssl():
 		SSLSocket.__init__ = new_ssl_init()
 
 # Don't do this when we are loaded for conflict resolution into somebody else's space
-if version_info[0] >= 1 and 'ZEO' not in sys.modules:
+if version_info[0] >= 1 and 'ZEO' not in sys.modules and False:
 
 	# As of 2012-10-30 and gevent 1.0rc1, the change in 1.0b4 to patch os.read and os.write
 	# is undone. Comments below left for historical interest
