@@ -34,8 +34,8 @@ from nti.zodb.persistentproperty import PersistentPropertyHolder
 from .protocol import SocketIOSocket
 
 from .interfaces import SESSION_STATE_NEW
-from .interfaces import SESSION_STATE_CONNECTED 
-from .interfaces import SESSION_STATE_DISCONNECTED 
+from .interfaces import SESSION_STATE_CONNECTED
+from .interfaces import SESSION_STATE_DISCONNECTED
 from .interfaces import SESSION_STATE_DISCONNECTING
 
 from .interfaces import ISocketSession
@@ -78,7 +78,7 @@ class AbstractSession(PersistentPropertyHolder):
 																  minmax.NumericMaximum,
 																  as_number=True )
 
-	owner = dict_read_alias('owner')
+	owner = dict_read_alias('owner') # XXX: JAM: What was I thinking here? What does this save?
 	id = alias('session_id')
 
 	creation_time = None
@@ -148,11 +148,13 @@ class AbstractSession(PersistentPropertyHolder):
 			result.append( 'confirmed=%s' % self.connection_confirmed )
 			result.append( 'id=%s]'% id(self) )
 			return ' '.join(result)
-		except (ConnectionStateError, AttributeError):
-			# This most commonly (only?) comes up in unit tests when nose defers logging of an
-			# error until after the transaction has exited. There will
-			# be other log messages about trying to load state when connection is closed,
-			# so we don't need to try to log it as well
+		except (ConnectionStateError, AttributeError, KeyError):
+			# This most commonly (only?) comes up in unit/functional
+			# tests when nose (or pyramid_debugtoolbar) defers logging
+			# of an error until after the transaction has exited.
+			# There will be other log messages about trying to load
+			# state when connection is closed, so we don't need to try
+			# to log it as well.
 			return object.__str__(self)
 
 	@property
