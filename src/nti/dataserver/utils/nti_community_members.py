@@ -19,6 +19,8 @@ import zope.intid
 from zope import component
 from zope.catalog.interfaces import ICatalog
 
+from nti.common.string import safestr
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 
@@ -28,10 +30,6 @@ from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.utils import run_with_dataserver
 
 from .base_script import set_site
-
-def safestr(s):
-	s = s.decode("utf-8") if isinstance(s, bytes) else s
-	return unicode(s) if s is not None else None
 
 def _get_field_value(userid, ent_catalog, indexname):
 	idx = ent_catalog.get(indexname, None)

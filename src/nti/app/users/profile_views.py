@@ -29,6 +29,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.appserver.utils import is_true
 
+from nti.common.string import safestr
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IUser
@@ -53,8 +54,6 @@ from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 
 from nti.schema.interfaces import find_most_derived_interface
-
-from . import safestr
 
 # user_info_extract
 
