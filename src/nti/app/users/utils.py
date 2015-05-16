@@ -213,7 +213,7 @@ def safe_send_email_verification(user, profile, email, request=None, check=True)
 	try:
 		send_email_verification(user, profile, email, request=request, check=check)
 		return True
-	except Exception as e:
+	except Exception:
 		logger.exception("Cannot send email confirmation to %s.", user)
 		return False
 
