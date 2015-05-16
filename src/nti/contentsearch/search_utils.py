@@ -21,6 +21,8 @@ from zope import component
 from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 
+from nti.common.string import safestr
+
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
 from nti.dataserver.interfaces import IDataserverTransactionRunner
@@ -176,10 +178,6 @@ def _resolve_package_ntiids(ntiid):
 		else:
 			result = [ntiid]
 	return result
-
-def safestr(s):
-	s = s.decode("utf-8") if isinstance(s, bytes) else s
-	return unicode(s) if s is not None else None
 
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = get_indexable_types()
