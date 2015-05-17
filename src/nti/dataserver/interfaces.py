@@ -1128,19 +1128,17 @@ class ITranscriptContainer(INamedContainer):
 # BWC exports
 from nti.dataserver.core.interfaces import IMedia
 from nti.dataserver.core.interfaces import ICanvas
-from nti.dataserver.core.interfaces import INamedFile
+from nti.dataserver.core.interfaces import IContentFile
 from nti.dataserver.core.interfaces import IEmbeddedAudio
 from nti.dataserver.core.interfaces import IEmbeddedMedia
 from nti.dataserver.core.interfaces import IEmbeddedVideo
-from nti.dataserver.core.interfaces import IInternalFileRef
 
 IMedia = IMedia
 ICanvas = ICanvas
-INamedFile = INamedFile
+IContentFile = IContentFile
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
-IInternalFileRef = IInternalFileRef
 
 class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation,
 					 IUserTaggedContent):
