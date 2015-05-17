@@ -26,7 +26,7 @@ from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
-from nti.dataserver.interfaces import INamedFile
+from nti.dataserver.interfaces import IContentFile
 from nti.dataserver.interfaces import IFavoritable
 
 from nti.dataserver.core.schema import BodyFieldProperty
@@ -101,7 +101,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 		for i, item in enumerate(body):
 			if not (ICanvas.providedBy(item) or IMedia.providedBy(item) or \
-					INamedFile.providedBy(item)):
+					IContentFile.providedBy(item)):
 				continue
 
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
