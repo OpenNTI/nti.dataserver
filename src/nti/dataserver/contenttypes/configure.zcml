@@ -48,4 +48,13 @@
 	<include package="z3c.autoinclude" file="meta.zcml" />
 	<includePlugins package="." />
 
+	<!-- File uploads -->
+	<adapter factory=".file._ContentFileFactory"
+			 for="dolmen.builtins.IDict"
+			 provides="nti.externalization.interfaces.IMimeObjectFactory"
+			 name="application/vnd.nextthought.contentfile" />
+
+	<adapter factory=".file._ContentFileObjectIO"
+			 for="..interfaces.IContentFile"  />
+			 
 </configure>
