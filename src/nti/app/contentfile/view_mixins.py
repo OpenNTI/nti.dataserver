@@ -64,21 +64,19 @@ def get_source(request, *keys):
 def read_multipart_sources(request, *sources):
 	result = []
 	for data in sources:
-		if not INamedFile.providedBy(data) and not INamedImage.providedBy(data):
-			continue
-	
-		name = data.name or u''
-		source = get_source(request, name)
-		if source is None:
-			msg = 'Could not find data for file %s' % data.name
-			raise hexc.HTTPUnprocessableEntity(msg)
-				
-		data.data = source.read()
-		if not data.contentType and source.contentType:
-			data.contentType = source.contentType
-		if not data.filename and source.filename:
-			data.filename = nameFinder(source)
-		result[name] = data
+		if INamedFile.providedBy(data) or INamedImage.providedBy(data):
+			name = data.name or u''
+			source = get_source(request, name)
+			if source is None:
+				msg = 'Could not find data for file %s' % data.name
+				raise hexc.HTTPUnprocessableEntity(msg)
+					
+			data.data = source.read()
+			if not data.contentType and source.contentType:
+				data.contentType = source.contentType
+			if not data.filename and source.filename:
+				data.filename = nameFinder(source)
+			result[name] = data
 	return result
 
 class ContentFileUploadMixin(object):
