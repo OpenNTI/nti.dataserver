@@ -408,7 +408,7 @@ class IRole(IGroup):
 from zope.security.management import system_user
 
 SYSTEM_USER_ID = system_user.id
-SYSTEM_USER_NAME = system_user.title.lower()
+SYSTEM_USER_NAME = getattr(system_user,'title').lower()
 
 ME_USER_ID = 'me'
 EVERYONE_GROUP_NAME = 'system.Everyone'
@@ -1139,6 +1139,10 @@ IContentFile = IContentFile
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
+
+# BWC exports
+from nti.namedfile.interfaces import IInternalFileRef
+IInternalFileRef = IInternalFileRef
 
 class ISelectedRange(IShareableModeledContent, IAnchoredRepresentation,
 					 IUserTaggedContent):
