@@ -22,6 +22,7 @@ from pyramid import httpexceptions as hexc
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.namedfile.interfaces import INamedFile
+from nti.namedfile.interfaces import INamedImage
 
 class SourceProxy(ProxyBase):
 	
@@ -63,7 +64,7 @@ def get_source(request, *keys):
 def read_multipart_sources(request, *sources):
 	result = []
 	for data in sources:
-		if not INamedFile.providedBy(data):
+		if not (INamedFile.providedBy(data) or INamedImage.providedBy(data)) :
 			continue
 	
 		name = data.name or u''
