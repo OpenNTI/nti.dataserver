@@ -37,10 +37,28 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 def _id(x): return x
 
-class UGDPostView(AbstractAuthenticatedView,ModeledContentUploadRequestUtilsMixin):
-	""" HTTP says POST creates a NEW entity under the Request-URI """
+class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+	""" 
+	HTTP says POST creates a NEW entity under the Request-URI 
+	"""
+	
 	# Therefore our context is a container, and we should respond created.
 
+	def readCreateUpdateContentObject(self, creator, search_owner=True, externalValue=None):
+		if not self.request.POST:
+			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(self, creator,
+																				 search_owner=search_owner,
+																				 externalValue=externalValue)
+		else:
+			externalValue = self.get_source(self.request, 'json', 'input', 'content')
+			if not externalValue:
+				raise hexc.HTTPUnprocessableEntity("No source was specified")
+			externalValue = self.readInput(value=externalValue.read())
+			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(self, creator,
+																				 search_owner=search_owner,
+																				 externalValue=externalValue)
+		return note, owner
+	
 	def _transform_incoming_object(self, containedObject):
 		try:
 			transformer = component.queryMultiAdapter( (self.request, containedObject),

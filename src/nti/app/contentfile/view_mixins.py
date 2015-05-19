@@ -9,60 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-
-from cStringIO import StringIO
-
-from zope.proxy import ProxyBase
-
 from zope.file.upload import nameFinder
 
 from zope.schema.interfaces import ConstraintNotSatisfied
 
 from pyramid import httpexceptions as hexc
 
-from nti.common.maps import CaseInsensitiveDict
+from nti.app.base.abstract_views import get_source
 
 from nti.namedfile.interfaces import INamedFile
 from nti.namedfile.interfaces import INamedImage
 from nti.namedfile.interfaces import IFileConstraints
-
-class SourceProxy(ProxyBase):
-	
-	contentType = property(
-					lambda s: s.__dict__.get('_v_content_type'),
-					lambda s, v: s.__dict__.__setitem__('_v_content_type', v))
-		
-	filename  = property(
-					lambda s: s.__dict__.get('_v_filename'),
-					lambda s, v: s.__dict__.__setitem__('_v_filename', v))
-
-	def __new__(cls, base, *args, **kwargs):
-		return ProxyBase.__new__(cls, base)
-
-	def __init__(self, base, filename=None, content_type=None):
-		ProxyBase.__init__(self, base)
-		self.filename = filename
-		self.contentType = content_type
-		
-def get_source(request, *keys):
-	values = CaseInsensitiveDict(request.POST)
-	source = None
-	for key in keys:
-		source = values.get(key)
-		if source is not None:
-			break
-	if isinstance(source, six.string_types):
-		source = StringIO(source)
-		source.seek(0)
-		source = SourceProxy(source, content_type='application/json')
-	elif source is not None:
-		filename = getattr(source, 'filename', None)
-		content_type = getattr(source, 'type', None)
-		source = source.file
-		source.seek(0)
-		source = SourceProxy(source, filename, content_type)
-	return source
 
 def validate_sources(context=None, sources=()):
 	for source in sources:
@@ -106,6 +63,9 @@ def read_multipart_sources(request, *sources):
 
 class ContentFileUploadMixin(object):
 	
+	def get_source(self, request, *args):
+		return get_source(request, *args)
+
 	def read_multipart_sources(self, request, *sources):
 		result = read_multipart_sources(request, *sources)
 		return result
