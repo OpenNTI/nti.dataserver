@@ -7,22 +7,23 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import has_length
 from hamcrest import is_
 from hamcrest import is_not
-from hamcrest import contains_string
 from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import contains_string
 does_not = is_not
 
 import anyjson as json
 
 from zope import interface
+
 from zope.keyreference.interfaces import IKeyReference
 
 from persistent import Persistent
 
-from nti.dataserver.datastructures import ZContainedMixin
+from nti.dataserver.core.mixins import ZContainedMixin
 
 from nti.externalization.oids import to_external_ntiid_oid
 
@@ -84,7 +85,6 @@ class TestApplicationSearch(ApplicationLayerTest):
 				testapp.get( path, extra_environ=self._make_extra_environ(user=user2_username), status=403)
 				# Nor one that doesn't exist
 				testapp.get( path, extra_environ=self._make_extra_environ(user='user_dne@biz'), status=401)
-
 
 	@WithSharedApplicationMockDSWithChanges
 	def test_post_share_delete_highlight(self):
