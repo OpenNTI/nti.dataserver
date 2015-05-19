@@ -3,23 +3,28 @@
 """
 User-generated data CRUD functions.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from . import MessageFactory as _
 
-logger = __import__('logging').getLogger(__name__)
+import time
 
 import transaction
 
 from zope import interface
 from zope import component
 from zope import lifecycleevent
+
 from zope.container.interfaces import InvalidContainerType
 
-import time
+from nti.app.base.abstract_views import get_source
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -31,9 +36,9 @@ from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
-from nti.appserver import httpexceptions as hexc
 from .interfaces import INewObjectTransformer
-from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from . import httpexceptions as hexc
 
 def _id(x): return x
 
@@ -46,15 +51,15 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 
 	def readCreateUpdateContentObject(self, creator, search_owner=True, externalValue=None):
 		if not self.request.POST:
-			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(self, creator,
+			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(creator,
 																				 search_owner=search_owner,
 																				 externalValue=externalValue)
 		else:
-			externalValue = self.get_source(self.request, 'json', 'input', 'content')
+			externalValue = get_source(self.request, 'json', 'input', 'source', 'content')
 			if not externalValue:
 				raise hexc.HTTPUnprocessableEntity("No source was specified")
 			externalValue = self.readInput(value=externalValue.read())
-			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(self, creator,
+			note, owner = super(UGDPostView, self).readCreateUpdateContentObject(creator,
 																				 search_owner=search_owner,
 																				 externalValue=externalValue)
 		return note, owner
@@ -99,7 +104,8 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 		if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
-			e = InvalidContainerType( "Unsupported/missing ContainerId", StandardExternalFields.CONTAINER_ID, None )
+			e = InvalidContainerType("Unsupported/missing ContainerId", 
+									 StandardExternalFields.CONTAINER_ID, None )
 			e.field = nti_interfaces.IContained['containerId']
 			raise e
 
@@ -136,7 +142,9 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 
 		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
 		# I think this log message should be info not debug.  It exists to provide statistics not to debug.
-		logger.info("User '%s' created object '%s'/'%s' for container '%s'", creator, containedObject.id, type(containedObject).__name__, containerId)
+		logger.info("User '%s' created object '%s'/'%s' for container '%s'", 
+					creator, containedObject.id,
+					type(containedObject).__name__, containerId)
 
 		__traceback_info__ = containedObject
 		assert containedObject.__parent__
@@ -157,11 +165,9 @@ class ContainerContextUGDPostView( UGDPostView ):
 	def _transform_incoming_object(self, containedObject):
 		obj = super( ContainerContextUGDPostView, self )._transform_incoming_object( containedObject )
 		container_context = nti_interfaces.IContainerContext( obj, None )
-
 		if container_context:
 			container_context.context_id = toExternalOID( self.context )
 		return obj
-
 
 class UGDDeleteView(AbstractAuthenticatedView,
 					ModeledContentEditRequestUtilsMixin):
@@ -185,7 +191,8 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
 		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'",
 					getattr(theObject, 'creator', None),
-					getattr(theObject, 'id', None), getattr(theObject,'__class__', type(theObject)).__name__,
+					getattr(theObject, 'id', None), 
+					getattr(theObject, '__class__', type(theObject)).__name__,
 					getattr(theObject, 'containerId', getattr(theObject, '__parent__', None) ) )
 
 		result = hexc.HTTPNoContent()
