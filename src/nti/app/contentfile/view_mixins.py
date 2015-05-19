@@ -43,9 +43,9 @@ def validate_sources(context=None, sources=()):
 		if filename and not validator.is_filename_allowed(filename):
 			raise ConstraintNotSatisfied(filename, 'filename')
 
-def read_multipart_sources(request, *sources):
+def read_multipart_sources(request, sources=()):
 	result = []
-	for data in sources:
+	for data in sources or ():
 		if INamedFile.providedBy(data) or INamedImage.providedBy(data):
 			name = data.name or u''
 			source = get_source(request, name)
@@ -66,8 +66,8 @@ class ContentFileUploadMixin(object):
 	def get_source(self, request, *args):
 		return get_source(request, *args)
 
-	def read_multipart_sources(self, request, *sources):
-		result = read_multipart_sources(request, *sources)
+	def read_multipart_sources(self, request, sources=()):
+		result = read_multipart_sources(request, sources)
 		return result
 	
 	def validate_sources(self, context=None, sources=()):

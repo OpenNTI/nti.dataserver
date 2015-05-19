@@ -470,6 +470,7 @@
 
 	<!-- Additional -->
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
+	<include package="nti.app.types" />
 	<include package="nti.app.users" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.notabledata" />
