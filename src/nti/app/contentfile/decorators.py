@@ -9,10 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
-from nti.dataserver.core.interfaces import IContentFile
 from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.singleton import SingletonDecorator
@@ -23,9 +21,8 @@ from nti.externalization.externalization import to_external_ntiid_oid
 
 from nti.links.links import Link
 
-@component.adapter(IContentFile)
 @interface.implementer(IExternalMappingDecorator)
-class _ContentFileFileDecorator(object):
+class _ContentFileDecorator(object):
 
     __metaclass__ = SingletonDecorator
 
