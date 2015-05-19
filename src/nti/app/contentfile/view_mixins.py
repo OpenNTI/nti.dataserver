@@ -17,11 +17,13 @@ from zope.proxy import ProxyBase
 
 from zope.file.upload import nameFinder
 
+from zope.schema.interfaces import ConstraintNotSatisfied
+
 from pyramid import httpexceptions as hexc
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.namedfile.interfaces import INamedFile
+from nti.namedfile.interfaces import INamedFile, IFileConstraints
 from nti.namedfile.interfaces import INamedImage
 
 class SourceProxy(ProxyBase):
@@ -61,6 +63,25 @@ def get_source(request, *keys):
 		source = SourceProxy(source, filename, content_type)
 	return source
 
+def validate_sources(context=None, sources=()):
+	for source in sources:
+		ctx = context if context is not None else source
+		validator = IFileConstraints(ctx, None)
+		if validator is None:
+			continue
+	
+		size = source.getSize()
+		if not validator.is_file_size_allowed(size):
+			raise ConstraintNotSatisfied(size, 'max_file_size')
+		
+		contentType = source.contentType
+		if not validator.is_mime_type_allowed(contentType):
+			raise ConstraintNotSatisfied(contentType, 'mime_type')
+		
+		filename = source.filename
+		if not validator.is_filename_allowed(filename):
+			raise ConstraintNotSatisfied(filename, 'filename')
+
 def read_multipart_sources(request, *sources):
 	result = []
 	for data in sources:
@@ -83,4 +104,8 @@ class ContentFileUploadMixin(object):
 	
 	def read_multipart_sources(self, request, *sources):
 		result = read_multipart_sources(request, *sources)
+		return result
+	
+	def validate_sources(self, context=None, sources=()):
+		result = validate_sources(context, *sources)
 		return result
