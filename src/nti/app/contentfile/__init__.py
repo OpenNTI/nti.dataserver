@@ -9,4 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from .view_mixins import validate_sources
+from .view_mixins import read_multipart_sources
 from .view_mixins import ContentFileUploadMixin
