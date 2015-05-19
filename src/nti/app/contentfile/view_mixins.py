@@ -23,8 +23,9 @@ from pyramid import httpexceptions as hexc
 
 from nti.common.maps import CaseInsensitiveDict
 
-from nti.namedfile.interfaces import INamedFile, IFileConstraints
+from nti.namedfile.interfaces import INamedFile
 from nti.namedfile.interfaces import INamedImage
+from nti.namedfile.interfaces import IFileConstraints
 
 class SourceProxy(ProxyBase):
 	
@@ -70,16 +71,19 @@ def validate_sources(context=None, sources=()):
 		if validator is None:
 			continue
 	
-		size = source.getSize()
-		if not validator.is_file_size_allowed(size):
-			raise ConstraintNotSatisfied(size, 'max_file_size')
-		
-		contentType = source.contentType
-		if not validator.is_mime_type_allowed(contentType):
+		try:
+			size = getattr(source, 'size', None) or source.getSize()
+			if size is not None and not validator.is_file_size_allowed(size):
+				raise ConstraintNotSatisfied(size, 'max_file_size')
+		except AttributeError:
+			pass
+
+		contentType = getattr(source, 'contentType', None)
+		if contentType and not validator.is_mime_type_allowed(contentType):
 			raise ConstraintNotSatisfied(contentType, 'mime_type')
 		
-		filename = source.filename
-		if not validator.is_filename_allowed(filename):
+		filename = getattr(source, 'filename', None)
+		if filename and not validator.is_filename_allowed(filename):
 			raise ConstraintNotSatisfied(filename, 'filename')
 
 def read_multipart_sources(request, *sources):
