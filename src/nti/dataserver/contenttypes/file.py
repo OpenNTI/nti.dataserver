@@ -43,9 +43,11 @@ class _ContentFileObjectIO(NamedFileObjectIO):
 	def _ext_mimeType(self, obj):
 		return u'application/vnd.nextthought.contentfile'
 
-	def toExternalObject(self, mergeFrom=None, **kwargs):
-		ext_dict = super(_ContentFileObjectIO, self).toExternalObject(**kwargs)
-		return ext_dict
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		result = super(_ContentFileObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
+		ext_self = self._ext_replacement()
+		assert ext_self.name, 'must provide a content file name'
+		return result
 
 def _ContentFileFactory(ext_obj):
 	factory = ContentFile
