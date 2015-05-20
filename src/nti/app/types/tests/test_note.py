@@ -9,14 +9,20 @@ __docformat__ = "restructuredtext en"
 
 import urllib
 
-# from hamcrest import is_
-# from hamcrest import is_not
-# from hamcrest import has_key
-# from hamcrest import has_item
-# from hamcrest import has_entry
-# from hamcrest import assert_that
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_entries
+from hamcrest import has_property
+
+from nti.dataserver.contenttypes.file import ContentFile
 
 from nti.externalization.representation import to_json_representation
+
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -26,7 +32,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 GIF_DATAURL = b'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
 
-class TestApplicationRating(ApplicationLayerTest):
+class TestNote(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_create_note(self):
@@ -50,7 +56,23 @@ class TestApplicationRating(ApplicationLayerTest):
 		data = to_json_representation(ext_obj)
 		testapp = TestApp(self.app)
 		path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/'
-		testapp.post(urllib.quote(path), data,
-					 extra_environ=self._make_extra_environ(update_request=True),
-					 headers={u"Content-Type": b"application/json" },
-					 status=201)
+		res = testapp.post(	urllib.quote(path), data,
+					 		extra_environ=self._make_extra_environ(update_request=True),
+							headers={u"Content-Type": b"application/json" },
+					 		status=201)
+		assert_that(res.json_body, has_entry('body', has_item(has_entries('Class', 'ContentFile',
+																		  'download_url', is_not(none())))))
+		assert_that(res.json_body, has_entry('OID', is_not(none())))
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			note = find_object_with_ntiid(res.json_body['OID'])
+			assert_that(note, is_not(none()))
+			assert_that(note, has_property('body', has_item(is_(ContentFile))))
+			assert_that(note.body[1], has_property('__parent__', is_(note)))
+			assert_that(note.body[1], has_property('data', is_not(none())))
+			
+		durl = res.json_body['body'][1]['download_url']
+		res = testapp.get( durl,
+						   extra_environ=self._make_extra_environ(),
+						   status=200 )
+		
