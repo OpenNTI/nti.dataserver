@@ -14,9 +14,11 @@ from functools import partial
 from zope import component
 from zope import interface
 
+from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
 
+from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.dataserver.interfaces import INote
@@ -56,3 +58,13 @@ def _submission_transformer(request, context):
 	if sources:
 		validate_sources(context, sources)
 	return context
+
+_view_defaults = dict(  route_name='objects.generic.traversal',
+                        renderer='rest' )
+_u_view_defaults = _view_defaults.copy()
+_u_view_defaults.update( permission=nauth.ACT_UPDATE,
+                         request_method='PUT' )
+
+@view_config( context=INote, **_u_view_defaults)
+class NotePutView(UGDPutView):
+	pass
