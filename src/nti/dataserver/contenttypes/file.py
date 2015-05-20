@@ -12,20 +12,27 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
-from zope.location.interfaces import IContained
-
-from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
-
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.datastructures import NamedFileObjectIO
 
+from ..interfaces import IZContained
 from ..interfaces import IContentFile
 
-@interface.implementer(IContentFile, IContained)
-class ContentFile(PersistentCreatedModDateTrackingObject,  # Order matters
+from .base import UserContentRoot
+
+from .threadable import ThreadableMixin
+
+@interface.implementer(IContentFile, IZContained)
+class ContentFile(ThreadableMixin,
+				  UserContentRoot,
 				  NamedBlobFile):
 
 	__parent__ = __name__ = None
+
+	def __init__(self, *args, **kwargs):
+		ThreadableMixin.__init__(self)
+		NamedBlobFile.__init__(self, *args, **kwargs)
+		self.parameters = {}  # required for schema validation
 
 @component.adapter(IContentFile)
 class _ContentFileObjectIO(NamedFileObjectIO):
