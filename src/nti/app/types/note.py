@@ -14,12 +14,15 @@ from functools import partial
 from zope import component
 from zope import interface
 
+from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
 
+from nti.appserver.ugd_edit_views import UGDPutView
 from nti.appserver.interfaces import INewObjectTransformer
 
 from nti.dataserver.interfaces import INote
+from nti.dataserver import authorization as nauth
 
 from ..contentfile import validate_sources
 from ..contentfile import get_content_files
@@ -40,3 +43,20 @@ def _submission_transformer(request, context):
 	if sources:
 		validate_sources(context, sources.values())
 	return context
+
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 permission=nauth.ACT_UPDATE,
+			 context=INote,
+			 request_method='PUT')
+class NotePutView(UGDPutView):
+
+	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
+		result = UGDPutView.updateContentObject(self, contentObject,
+												externalValue=externalValue,
+												set_id=set_id,
+												notify=notify)
+		sources = get_content_files(contentObject)
+		if sources:
+			validate_sources(contentObject, sources.values())
+		return result
