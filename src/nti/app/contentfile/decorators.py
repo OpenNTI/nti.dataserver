@@ -14,12 +14,16 @@ from zope import interface
 from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_external_ntiid_oid
 
 from nti.links.links import Link
+
+OID = StandardExternalFields.OID
+NTIID = StandardExternalFields.NTIID
 
 @interface.implementer(IExternalMappingDecorator)
 class _ContentFileDecorator(object):
@@ -36,6 +40,10 @@ class _ContentFileDecorator(object):
                             rel="data")
                 interface.alsoProvides(link, ILinkExternalHrefOnly)
                 ext_dict[key] = to_external_object(link)
+            if OID not in ext_dict:
+                ext_dict[OID] = target
+            if NTIID not in ext_dict:
+                ext_dict[NTIID] = target
         else:
             ext_dict['url'] = None
             ext_dict['download_url'] = None
