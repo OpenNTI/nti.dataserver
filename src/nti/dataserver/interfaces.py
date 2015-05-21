@@ -949,8 +949,10 @@ class IPublishable(interface.Interface):
 # BWC exports
 from nti.dataserver.fragments.interfaces import ITitledContent
 from nti.dataserver.fragments.schema import CompoundModeledContentBody
+from nti.dataserver.fragments.schema import ExtendedCompoundModeledContentBody
 
 ITitledContent = ITitledContent
+CompoundModeledContentBody = CompoundModeledContentBody
 
 # BWC exports
 from nti.dataserver.core.interfaces import IContent
@@ -1300,7 +1302,7 @@ class INote(IHighlight, IThreadable, ITitledContent):
 	A user-created note attached to other content.
 	"""
 
-	body = CompoundModeledContentBody()
+	body = ExtendedCompoundModeledContentBody()
 
 class IDeletedObjectPlaceholder(interface.Interface):
 	"""
