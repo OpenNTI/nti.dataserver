@@ -41,6 +41,8 @@ from nti.contentsearch.interfaces import ITitleResolver
 from nti.contentsearch.interfaces import IContentResolver
 
 from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IACLProvider
+
 from nti.dataserver import authorization as nauth
 
 # TODO: FIXME: This solves an order-of-imports issue, where
@@ -160,7 +162,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
 	def _is_readable(self, x):
 		result = True
-		if getattr(x, '__acl__', None) or frm_interfaces.IACLEnabled.providedBy(x):
+		if IACLProvider.providedBy(x) or frm_interfaces.IACLEnabled.providedBy(x):
 			result = is_readable(x, self.request)
 		return result
 
