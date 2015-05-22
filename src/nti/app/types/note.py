@@ -24,6 +24,9 @@ from nti.appserver.interfaces import INewObjectTransformer
 from nti.dataserver.interfaces import INote
 from nti.dataserver import authorization as nauth
 
+from nti.namedfile.file import FileConstraints
+from nti.namedfile.interfaces import IFileConstraints
+
 from ..contentfile import validate_sources
 from ..contentfile import get_content_files
 from ..contentfile import read_multipart_sources
@@ -60,3 +63,8 @@ class NotePutView(UGDPutView):
 		if sources:
 			validate_sources(contentObject, sources.values())
 		return result
+
+@component.adapter(INote)
+@interface.implementer(IFileConstraints)
+class _NoteFileConstraints(FileConstraints):
+	pass

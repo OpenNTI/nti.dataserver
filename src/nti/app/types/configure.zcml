@@ -8,6 +8,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<adapter factory=".note._NoteFileConstraints" />
 	<adapter factory=".note._submission_transformer" />
 	<adapter factory=".note._submission_transformer_factory" />
 
