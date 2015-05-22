@@ -16,7 +16,16 @@ import datetime
 import operator
 
 from pyramid.view import view_config
-from pyramid.view import view_defaults  # NOTE: Only usable on classes
+from pyramid.view import view_defaults
+
+from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
+from nti.app.renderers.interfaces import IPreRenderResponseCacheController
+from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
+from nti.app.renderers.interfaces import IUseTheRequestContextUGDExternalCollection
+		
+from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+
+from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.traversal import find_interface
 
@@ -24,15 +33,15 @@ from nti.appserver.ugd_query_views import Operator
 from nti.appserver.ugd_feed_views import AbstractFeedView
 from nti.appserver.ugd_query_views import _combine_predicate
 from nti.appserver.ugd_query_views import _UGDView as UGDQueryView
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
+from nti.contentprocessing.content_utils import clean_special_characters
+
+from nti.contentsearch.interfaces import ITagsResolver
+from nti.contentsearch.interfaces import ITitleResolver
+from nti.contentsearch.interfaces import IContentResolver
+
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver import authorization as nauth
-
-from nti.dataserver import interfaces as nti_interfaces
-from nti.app.renderers import interfaces as app_renderers_interfaces
-
-from nti.contentprocessing import content_utils
-from nti.contentsearch import interfaces as search_interfaces
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -44,8 +53,6 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
 
 from .. import VIEW_CONTENTS
-from nti.appserver.pyramid_authorization import is_readable
-
 
 _view_defaults = dict(  route_name='objects.generic.traversal',
 						renderer='rest' )
@@ -85,7 +92,7 @@ class ForumGetView(GenericGetView):
 			# This is completely bypassing the ACL model
 			# which *ALREADY* takes the parents into account.
 			# JAM: Commenting out, this breaks any generalization.
-			#while readable and current is not None and not nti_interfaces.IEntity.providedBy(current):
+			#while readable and current is not None and not IEntity.providedBy(current):
 			#	readable = is_readable(current)
 			#	current = getattr(current, '__parent__', None)
 			#if not readable:
@@ -108,13 +115,15 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
 	def __init__( self, request ):
 		self.request = request
-		super(ForumsContainerContentsGetView,self).__init__( request, the_user=self, the_ntiid=self.request.context.__name__ )
+		super(ForumsContainerContentsGetView,self).__init__(request, 
+															the_user=self,
+															the_ntiid=self.request.context.__name__ )
 
 		# The user/community is really the 'owner' of the data
-		self.user = find_interface(  self.request.context, nti_interfaces.IEntity )
+		self.user = find_interface(  self.request.context, IEntity )
 
 		if frm_interfaces.IBoard.providedBy( self.request.context ):
-			self.result_iface = app_renderers_interfaces.ILongerCachedUGDExternalCollection
+			self.result_iface = ILongerCachedUGDExternalCollection
 
 		# If we were invoked with a subpath, then it must be the tokenized
 		# version so we can allow for good caching, as we will change the token
@@ -132,7 +141,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 		# that the application never sees the updated contents URLs, making it impossible
 		# to HTTP cache them.
 		if False and frm_interfaces.IHeadlineTopic.providedBy( request.context ) and self.request.subpath:
-			self.result_iface = app_renderers_interfaces.IETagCachedUGDExternalCollection
+			self.result_iface = IETagCachedUGDExternalCollection
 
 	def __call__( self ):
 		try:
@@ -141,8 +150,9 @@ class ForumsContainerContentsGetView(UGDQueryView):
 			# (only ITopic is registered for this). If so, then we want to use
 			# this fact when we create the ultimate return ETag.
 			# We also want to bail now with 304 Not Modified if we can
-			app_renderers_interfaces.IPreRenderResponseCacheController(self.request.context)(self.request.context, {'request': self.request})
-			self.result_iface = app_renderers_interfaces.IUseTheRequestContextUGDExternalCollection
+			controller = IPreRenderResponseCacheController(self.request.context)
+			controller(self.request.context, {'request': self.request})
+			self.result_iface = IUseTheRequestContextUGDExternalCollection
 		except TypeError:
 			pass
 
@@ -150,7 +160,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
 	def _is_readable(self, x):
 		result = True
-		if frm_interfaces.IACLEnabled.providedBy(x):
+		if getattr(x, '__acl__', None) or frm_interfaces.IACLEnabled.providedBy(x):
 			result = is_readable(x, self.request)
 		return result
 
@@ -185,7 +195,6 @@ class DefaultForumBoardContentsGetView(ForumsContainerContentsGetView):
 		result.lastModified = lastMod
 		super(DefaultForumBoardContentsGetView,self)._update_last_modified_after_sort( objects, result )
 
-
 @view_config(context=frm_interfaces.IForum)
 @view_config(context=frm_interfaces.IGeneralForum)
 @view_config(context=frm_interfaces.IPersonalBlog)
@@ -217,7 +226,6 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 		def _negate_tuples(x):
 			tpl = plain_key(x)
 			return (-tpl[0],-tpl[1])
-
 		return _negate_tuples
 	_make_heapq_PostCount_descending_key = _make_heapq_NewestDescendantCreatedTime_descending_key
 
@@ -225,12 +233,14 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 		# process the post
 		x = topic.headline
 		# get content
-		resolver = search_interfaces.IContentResolver(x, None)
-		content = [(getattr(resolver, 'content', None) or u'')]
-		resolver = search_interfaces.ITitleResolver(x, None)
-		content.append(getattr(resolver, 'title', None) or u'')
-		resolver = search_interfaces.ITagsResolver(x, None)
-		content.extend(getattr(resolver, 'tags', None) or ())
+		content = []
+		for iface, name, default, method in ( (ITagsResolver, 'tags', (), content.extend),
+											  (ITitleResolver, 'title', u'', content.append),
+											  (IContentResolver, 'content', u'', content.append) ):
+			resolver = iface(x, None)
+			value = getattr(resolver, name, None) or default
+			method(value)
+		# join as one
 		content = u' '.join(content)
 		return content
 
@@ -246,7 +256,7 @@ class ForumContentsGetView(ForumsContainerContentsGetView):
 				if not frm_interfaces.ITopic.providedBy(x):
 					return True
 				content = self._get_topic_content(x)
-				term = content_utils.clean_special_characters(searchTerm.lower())
+				term = clean_special_characters(searchTerm.lower())
 				match = re.match(".*%s.*" % term, content,
 								 re.MULTILINE | re.DOTALL | re.UNICODE | re.IGNORECASE)
 				return match is not None
