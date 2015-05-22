@@ -67,4 +67,4 @@ class NotePutView(UGDPutView):
 @component.adapter(INote)
 @interface.implementer(IFileConstraints)
 class _NoteFileConstraints(FileConstraints):
-	pass
+	max_file_size = 10000000 # 10 MB
