@@ -40,6 +40,8 @@ class _ContentFileDecorator(object):
                             rel="data")
                 interface.alsoProvides(link, ILinkExternalHrefOnly)
                 ext_dict[key] = to_external_object(link)
+            # make sure we add OID/NTIID fields to signal this file
+            # can mark as an internal ref if it's going to be updated
             if OID not in ext_dict:
                 ext_dict[OID] = target
             if NTIID not in ext_dict:
