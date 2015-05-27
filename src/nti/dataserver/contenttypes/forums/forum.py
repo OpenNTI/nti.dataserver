@@ -15,12 +15,14 @@ from . import MessageFactory as _
 
 import datetime
 
+import zope.intid
+
 from zope import schema
 from zope import interface
 from zope import component
+
 from zope.annotation import interfaces as an_interfaces
 
-import zope.intid
 from zope.intid.interfaces import IIntIdAddedEvent
 
 from ZODB.interfaces import IConnection
@@ -43,7 +45,7 @@ from . import _containerIds_from_parent
 from . import interfaces as frm_interfaces
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
-_NEWEST_TTL = datetime.timedelta( days=7 )
+_NEWEST_TTL = datetime.timedelta(days=7)
 
 def query_uid(obj, intids=None):
 	intids = intids or component.getUtility(zope.intid.IIntIds)
@@ -59,7 +61,7 @@ def query_object(uid, intids=None):
 			result._p_activate()
 	except (TypeError, ValueError):
 		result = None
-	except KeyError: # POSKeyError
+	except KeyError:  # POSKeyError
 		logger.exception("Failed to activate object stored at %s", uid)
 		result = None
 	return result
@@ -100,7 +102,7 @@ class Forum(Implicit,
 			return 'forums/' + self.containerId + '/' + self.id + '/newestDescendant'
 		except TypeError:
 			# This should only happen in tests
-			logger.warn( "No stable key for newestDescendant of %s", self )
+			logger.warn("No stable key for newestDescendant of %s", self)
 			return 'broken/' + unicode(id(self)) + '/newestDescendant'
 
 	def _get_NewestDescendant(self):
@@ -110,7 +112,7 @@ class Forum(Implicit,
 
 		# 2. Remote cache
 		if newest_object is None:
-			redis = component.getUtility( nti_interfaces.IRedisClient )
+			redis = component.getUtility(nti_interfaces.IRedisClient)
 			data = redis.get(self._descendent_key())
 			newest_object = query_object(data) if data else None
 
@@ -155,7 +157,7 @@ class Forum(Implicit,
 
 	NewestDescendant = property(_get_NewestDescendant)
 
-@component.adapter(frm_interfaces.IPost,IIntIdAddedEvent)
+@component.adapter(frm_interfaces.IPost, IIntIdAddedEvent)
 def _post_added_to_topic(post, event):
 	"""
 	Watch for a post to be added to a topic and keep track of the
@@ -168,7 +170,7 @@ def _post_added_to_topic(post, event):
 	if forum is not None:
 		forum._set_NewestDescendant(post)
 
-@component.adapter(frm_interfaces.ITopic,IIntIdAddedEvent)
+@component.adapter(frm_interfaces.ITopic, IIntIdAddedEvent)
 def _topic_added_to_forum(topic, event):
 	"""
 	Watch for a topic to be added to a forum and keep track of the
@@ -181,11 +183,11 @@ def _topic_added_to_forum(topic, event):
 	# for this. It's extremely unlikely that a topic will be
 	# removed while it is still the newest in the forum, and
 	# if that is the case, it's no big loss
-	if frm_interfaces.IForum.providedBy( topic.__parent__ ):
-		topic.__parent__._set_NewestDescendant( topic )
+	if frm_interfaces.IForum.providedBy(topic.__parent__):
+		topic.__parent__._set_NewestDescendant(topic)
 
 @interface.implementer(frm_interfaces.IPersonalBlog)
-class PersonalBlog(Forum,_SingleInstanceNTIIDMixin):
+class PersonalBlog(Forum, _SingleInstanceNTIIDMixin):
 
 	__external_can_create__ = False
 
@@ -205,27 +207,27 @@ def PersonalBlogAdapter(user):
 	# The right key is critical. 'Blog' is the pretty external name
 	# (see dataserver_pyramid_traversal)
 
-	containers = getattr( user, 'containers', None ) # some types of users (test users usually) have no containers
+	containers = getattr(user, 'containers', None)  # some types of users (test users usually) have no containers
 	if containers is None:
 		return None
 
 	# For convenience, we register the container with
 	# both its NTIID and its short name
-	forum = containers.getContainer( PersonalBlog.__blog_name__ )
+	forum = containers.getContainer(PersonalBlog.__blog_name__)
 	if forum is None:
 		forum = PersonalBlog()
 		forum.__parent__ = user
 		forum.creator = user
-		assert forum.__name__ == PersonalBlog.__blog_name__ # in the past we set it explicitly
+		assert forum.__name__ == PersonalBlog.__blog_name__  # in the past we set it explicitly
 		forum.title = user.username
 		# TODO: Events?
-		containers.addContainer( forum.__name__, forum, locate=False )
-		containers.addContainer( forum.NTIID, forum, locate=False )
+		containers.addContainer(forum.__name__, forum, locate=False)
+		containers.addContainer(forum.NTIID, forum, locate=False)
 
-		jar = IConnection( user, None )
+		jar = IConnection(user, None)
 		if jar:
-			jar.add( forum ) # ensure we store with the user
-		errors = schema.getValidationErrors( frm_interfaces.IPersonalBlog, forum )
+			jar.add(forum)  # ensure we store with the user
+		errors = schema.getValidationErrors(frm_interfaces.IPersonalBlog, forum)
 		if errors:
 			__traceback_info__ = errors
 			raise errors[0][1]
@@ -241,7 +243,7 @@ def NoBlogAdapter(user):
 	return None
 
 @interface.implementer(frm_interfaces.IGeneralForum)
-class GeneralForum(Forum,_SingleInstanceNTIIDMixin):
+class GeneralForum(Forum, _SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 	creator = None
 	__name__ = __default_name__ = 'Forum'
@@ -262,14 +264,14 @@ def GeneralForumCommunityAdapter(community):
 	"""
 	board = frm_interfaces.ICommunityBoard(community, None)
 	if board is None:
-		return None # No board is allowed
+		return None  # No board is allowed
 
-	if board: # contains some forums, yay!
+	if board:  # contains some forums, yay!
 		if len(board) == 1:
 			# Whatever the single forum is
 			return board.values()[0]
 
-		forum = board.get( CommunityForum.__default_name__ )
+		forum = board.get(CommunityForum.__default_name__)
 		if forum is not None:
 			return forum
 

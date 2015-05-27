@@ -35,7 +35,7 @@ class _BlogResolver(AbstractAdaptingUserBasedResolver):
 	required_iface = nti_interfaces.IUser
 	adapt_to = frm_interfaces.IPersonalBlog
 
-@interface.implementer( nid_interfaces.INTIIDResolver )
+@interface.implementer(nid_interfaces.INTIIDResolver)
 class _BlogEntryResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
 	Resolves a single blog entry within a user.
@@ -67,12 +67,12 @@ class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
 
 	required_iface = nti_interfaces.ICommunity
-	adapt_to = frm_interfaces.ICommunityBoard # adapt to a board, look inside for a named forum
+	adapt_to = frm_interfaces.ICommunityBoard  # adapt to a board, look inside for a named forum
 
-	def _resolve( self, ntiid, community ):
-		forum = super(_CommunityForumResolver,self)._resolve( ntiid, community )
-		if forum is None and ntiids.get_specific(ntiid) == 'Forum': # Hmm, is it the default?
-			forum = frm_interfaces.ICommunityForum( community, None )
+	def _resolve(self, ntiid, community):
+		forum = super(_CommunityForumResolver, self)._resolve(ntiid, community)
+		if forum is None and ntiids.get_specific(ntiid) == 'Forum':  # Hmm, is it the default?
+			forum = frm_interfaces.ICommunityForum(community, None)
 		return forum
 
 @interface.implementer(nid_interfaces.INTIIDResolver)
@@ -86,8 +86,8 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 	required_iface = nti_interfaces.ICommunity
 	adapt_to = frm_interfaces.ICommunityForum
 
-	def _resolve( self, ntiid, community ):
-		board = frm_interfaces.ICommunityBoard( community, None )
+	def _resolve(self, ntiid, community):
+		board = frm_interfaces.ICommunityBoard(community, None)
 		if board is None:
 			return None
 		return resolve_ntiid_in_board(ntiid, board)
@@ -99,7 +99,7 @@ def resolve_forum_ntiid_in_board(ntiid, board):
 	"""
 
 	forum_name = get_specific(ntiid)
-	return board.get( forum_name, {} )
+	return board.get(forum_name, {})
 
 def resolve_ntiid_in_board(ntiid, board):
 	"""
@@ -112,7 +112,7 @@ def resolve_ntiid_in_board(ntiid, board):
 	if '.' not in specific:
 		forum_name, topic_name = specific, u''
 		logger.warn("unexpected nttid specific part '%s' while resolving topic " % specific)
-		return board.get( forum_name, {} ).get( topic_name )
+		return board.get(forum_name, {}).get(topic_name)
 
 	# Unfortunately, we use the . as both the NameChooser-unique
 	# portion separator and the parent/child separator (we can't
@@ -140,4 +140,4 @@ def resolve_ntiid_in_board(ntiid, board):
 		forum_name = names[0] + '.' + names[1]
 		topic_name = names[2] + '.' + names[3]
 
-	return board.get( forum_name, {} ).get( topic_name )
+	return board.get(forum_name, {}).get(topic_name)

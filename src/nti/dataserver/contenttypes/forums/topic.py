@@ -58,7 +58,7 @@ from . import interfaces as for_interfaces
 
 class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 							 containers.CheckingLastModifiedBTreeContainer,
-							 ZContainedMixin, 
+							 ZContainedMixin,
 							 Implicit):
 	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
 	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
@@ -102,7 +102,7 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 				self.NewestDescendant = newest_post
 
 		return self._newestPostWref() if self._newestPostWref is not None else None
-	def _set_NewestPost(self,post):
+	def _set_NewestPost(self, post):
 		self._newestPostWref = wref_interfaces.IWeakRef(post)
 	NewestDescendant = property(_get_NewestPost, _set_NewestPost)
 
@@ -111,8 +111,8 @@ class Topic(_AbstractUnsharedTopic,
 			sharing.AbstractReadableSharedWithMixin):
 	pass
 
-@component.adapter(for_interfaces.IPost,IIntIdAddedEvent)
-def _post_added_to_topic( post, event ):
+@component.adapter(for_interfaces.IPost, IIntIdAddedEvent)
+def _post_added_to_topic(post, event):
 	"""
 	Watch for a post to be added to a topic and keep track of the
 	creation time of the latest post.
@@ -136,30 +136,30 @@ class HeadlineTopic(Topic):
 			# No actual modification happened
 			return
 
-		provides = interface.providedBy( self )
+		provides = interface.providedBy(self)
 		attributes = []
 		for attr_name in 'sharedWith', 'sharingTargets':
-			attr = provides.get( attr_name )
+			attr = provides.get(attr_name)
 			if attr:
 				iface_providing = attr.interface
-				attributes.append( lifecycleevent.Attributes( iface_providing, attr_name ) )
+				attributes.append(lifecycleevent.Attributes(iface_providing, attr_name))
 
-		event = ObjectSharingModifiedEvent( self, *attributes, oldSharingTargets=oldSharingTargets )
-		notify( event )
+		event = ObjectSharingModifiedEvent(self, *attributes, oldSharingTargets=oldSharingTargets)
+		notify(event)
 
 		# Ordinarily, we don't need to dispatch to sublocations a change
 		# in the parent (hence why it is not a registered listener).
 		# But here we know that the sharing is propagated automatically
 		# down, so we do.
-		dispatchToSublocations( self, event )
+		dispatchToSublocations(self, event)
 
 	def publish(self):
 		"""Causes an ObjectSharingModifiedEvent to be fired if sharing changes."""
-		if IDefaultPublished.providedBy( self ):
+		if IDefaultPublished.providedBy(self):
 			return
 
 		oldSharingTargets = set(self.sharingTargets)
-		interface.alsoProvides( self, IDefaultPublished )
+		interface.alsoProvides(self, IDefaultPublished)
 
 		self._did_modify_publication_status(oldSharingTargets)
 
@@ -169,7 +169,7 @@ class HeadlineTopic(Topic):
 			return
 
 		oldSharingTargets = set(self.sharingTargets)
-		interface.noLongerProvides( self, IDefaultPublished )
+		interface.noLongerProvides(self, IDefaultPublished)
 		self._did_modify_publication_status(oldSharingTargets)
 
 @interface.implementer(for_interfaces.IGeneralTopic)
@@ -235,7 +235,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# This ACL must be static.
 		# TODO: Remove hack
 		_forum = self.__parent__
-		#TODO: REMOVE IACL
+		# TODO: REMOVE IACL
 		if for_interfaces.IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
 			result = set()
@@ -262,15 +262,15 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	_ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
-	def __init__( self, *args, **kwargs ):
-		super(PersonalBlogEntry,self).__init__( *args, **kwargs )
-		interface.alsoProvides( self, IWritableShared ) # JAM: Why didn't I put this at the class level?
+	def __init__(self, *args, **kwargs):
+		super(PersonalBlogEntry, self).__init__(*args, **kwargs)
+		interface.alsoProvides(self, IWritableShared)  # JAM: Why didn't I put this at the class level?
 
-	def __setstate__( self, state ):
+	def __setstate__(self, state):
 		# TODO: A migration
-		super(PersonalBlogEntry,self).__setstate__( state )
-		if not IDefaultPublished.providedBy( self ) and not IWritableShared.providedBy( self ):
-			interface.alsoProvides( self, IWritableShared )
+		super(PersonalBlogEntry, self).__setstate__(state)
+		if not IDefaultPublished.providedBy(self) and not IWritableShared.providedBy(self):
+			interface.alsoProvides(self, IWritableShared)
 
 	# We use this object to implement sharing storage when we are not published
 	@Lazy
@@ -283,10 +283,10 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 		# By also matching the state of IWritableShared, our
 		# external updater automatically does the right thing and
 		# doesn't even call us
-		if IWritableShared.providedBy( self ):
-			interface.noLongerProvides( self, IWritableShared )
+		if IWritableShared.providedBy(self):
+			interface.noLongerProvides(self, IWritableShared)
 
-		super(PersonalBlogEntry,self).publish()
+		super(PersonalBlogEntry, self).publish()
 		# NOTE: The order of this is weird. We need to capture
 		# and broadcast the ObjectSharingModifiedEvent with the current
 		# sharing targets /before/ we clear out anything set specifically
@@ -300,8 +300,8 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 
 	def unpublish(self):
 		# See notes in publish() for why we do this first
-		interface.alsoProvides( self, IWritableShared )
-		super(PersonalBlogEntry,self).unpublish()
+		interface.alsoProvides(self, IWritableShared)
+		super(PersonalBlogEntry, self).unpublish()
 
 	def _forward_not_published(name):
 		def f(self, *args, **kwargs):
@@ -310,17 +310,17 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 			getattr(self._sharing_storage, name)(*args, **kwargs)
 		return f
 
-	updateSharingTargets = _forward_not_published( 'updateSharingTargets' )
-	clearSharingTargets = _forward_not_published( 'clearSharingTargets' )
-	addSharingTarget = _forward_not_published( 'addSharingTarget' )
+	updateSharingTargets = _forward_not_published('updateSharingTargets')
+	clearSharingTargets = _forward_not_published('clearSharingTargets')
+	addSharingTarget = _forward_not_published('addSharingTarget')
 
 	del _forward_not_published
 
-	def _may_have_sharing_targets( self ):
-		if not IDefaultPublished.providedBy( self ):
+	def _may_have_sharing_targets(self):
+		if not IDefaultPublished.providedBy(self):
 			self._p_activate()
 			return '_sharing_storage' in self.__dict__ and self._sharing_storage._may_have_sharing_targets()
-		return super(PersonalBlogEntry,self)._may_have_sharing_targets()
+		return super(PersonalBlogEntry, self)._may_have_sharing_targets()
 
 	@property
 	def _non_published_sharing_targets(self):
@@ -335,8 +335,8 @@ class HeadlineTopicSublocations(ContainerSublocations):
 	Headline topics contain their children and also their story.
 	"""
 
-	def sublocations( self ):
-		for x in super(HeadlineTopicSublocations,self).sublocations():
+	def sublocations(self):
+		for x in super(HeadlineTopicSublocations, self).sublocations():
 			yield x
 		story = self.container.headline
 		if story is not None:

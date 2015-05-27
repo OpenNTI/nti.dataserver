@@ -20,8 +20,6 @@ from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.schema.fieldproperty import FieldProperty
 
-from persistent import Persistent
-
 from nti.dataserver import sharing
 
 from nti.dataserver.core.mixins import ZContainedMixin
@@ -33,6 +31,7 @@ from nti.utils._compat import Implicit
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
 from ..note import BodyFieldProperty
+
 from ..threadable import ThreadableMixin
 
 from . import _containerIds_from_parent
