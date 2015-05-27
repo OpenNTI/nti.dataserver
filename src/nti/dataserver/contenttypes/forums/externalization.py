@@ -32,5 +32,5 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 		return IThreadable.providedBy(self._ext_replacement())
 
 	def _ext_can_update_threads(self):
-		return (super(_MaybeThreadableForumObjectInternalObjectIO,self)._ext_can_update_threads()
+		return (super(_MaybeThreadableForumObjectInternalObjectIO, self)._ext_can_update_threads()
 				and IThreadable.providedBy(self._ext_replacement()))

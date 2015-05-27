@@ -16,8 +16,10 @@ from . import MessageFactory as _
 from zope import schema
 from zope import interface
 from zope import component
-from zope.container.interfaces import INameChooser
+
 from zope.annotation.interfaces import IAnnotations
+
+from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
@@ -25,9 +27,9 @@ from nti.dataserver import sharing
 from nti.dataserver import containers
 from nti.dataserver.interfaces import ICommunity
 
-from nti.utils._compat import Base
-
 from nti.schema.fieldproperty import AdaptingFieldProperty
+
+from nti.utils._compat import Base
 
 from .interfaces import IBoard
 from .interfaces import IGeneralBoard
@@ -45,7 +47,7 @@ class Board(Base,
 
 	__external_can_create__ = False
 	__name__ = __default_name__ = 'DiscussionBoard'
-	mimeType = None # for static analysis; real value filled in by externalization
+	mimeType = None  # for static analysis; real value filled in by externalization
 
 	title = AdaptingFieldProperty(IBoard['title'])
 	description = AdaptingFieldProperty(IBoard['description'])
@@ -65,7 +67,7 @@ class CommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 	_ntiid_type = NTIID_TYPE_COMMUNITY_BOARD
 
 	def createDefaultForum(self):
-		return ICommunityForum( self.creator ) # Ask the ICommunity
+		return ICommunityForum(self.creator)  # Ask the ICommunity
 
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()

@@ -47,7 +47,7 @@ class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_DENY_ALL = False
 
-	def _get_sharing_target_names( self ):
+	def _get_sharing_target_names(self):
 		return ()
 
 class _CommunityForumACLProvider(_ForumACLProvider):
@@ -57,10 +57,10 @@ class _CommunityForumACLProvider(_ForumACLProvider):
 	"""
 
 	_PERMS_FOR_CREATOR = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
-	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
+	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
 
-	def _get_sharing_target_names( self ):
-		return (self.context.creator,) # the ICommunity
+	def _get_sharing_target_names(self):
+		return (self.context.creator,)  # the ICommunity
 
 class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
@@ -69,14 +69,14 @@ class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 
 	_PERMS_FOR_CREATOR = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
-	_DENY_ALL = True # don't inherit the acl from our parent, entity, which would give the creator full control
+	_DENY_ALL = True  # don't inherit the acl from our parent, entity, which would give the creator full control
 	_REQUIRE_CREATOR = True
 
 	def _get_sharing_target_names(self):
 		return ()
 
-	def _extend_acl_after_creator_and_sharing( self, acl ):
-		self._extend_with_admin_privs( acl )
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		self._extend_with_admin_privs(acl)
 
 # Sometimes we have topics and headline posts that are owned by
 # non-user entities like communities; in that case, we want the permissions to only
@@ -95,11 +95,11 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	_DENY_ALL = True
 	_REQUIRE_CREATOR = True
 
-	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ,nauth.ACT_CREATE)
+	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
 
 	_do_get_perms_for_creator = _do_get_perms_for_creator_by_kind
 
-	def _get_sharing_target_names( self ):
+	def _get_sharing_target_names(self):
 		# The context is usually an IPublishable. In the simple case,
 		# we could directly return `self.context.sharingTargets`, saving a lookup step, because
 		# IPublishable will either have nothing there, or only ICommunity objects
@@ -131,18 +131,18 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_do_get_perms_for_creator = _do_get_perms_for_creator_by_kind
 
-	def _get_sharing_target_names( self ):
+	def _get_sharing_target_names(self):
 		try:
 			return self.context.__parent__.flattenedSharingTargetNames
 		except AttributeError:
-			return () # Must not have a parent
+			return ()  # Must not have a parent
 
-	def _extend_acl_after_creator_and_sharing( self, acl ):
+	def _extend_acl_after_creator_and_sharing(self, acl):
 		# Ok, now the topic creator can delete, but not update
-		topic_creator = find_interface( self.context, nti_interfaces.IUser, strict=False )
+		topic_creator = find_interface(self.context, nti_interfaces.IUser, strict=False)
 		if topic_creator:
-			acl.append( ace_allowing( topic_creator, nauth.ACT_DELETE, self ) )
-			acl.append( ace_allowing( topic_creator, nauth.ACT_READ, self ) )
+			acl.append(ace_allowing(topic_creator, nauth.ACT_DELETE, self))
+			acl.append(ace_allowing(topic_creator, nauth.ACT_READ, self))
 
 @component.adapter(frm_interfaces.IHeadlinePost)
 @interface.implementer(nti_interfaces.IACLProvider)

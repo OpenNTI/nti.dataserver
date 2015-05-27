@@ -19,29 +19,29 @@ try:
 
 	class _AcquiredSharingTargetsProperty(object):
 
-		def __get__( self, instance, klass ):
+		def __get__(self, instance, klass):
 			if instance is None:
 				return self
 			# NOTE: This only works if __parent__ is already set. It fails
 			# otherwise
-			return getattr( aq_parent( instance ), 'sharingTargets', () )
+			return getattr(aq_parent(instance), 'sharingTargets', ())
 
-		def __set__( self, instance, value ):
-			return # Ignored
+		def __set__(self, instance, value):
+			return  # Ignored
 except ImportError:
 	# Acquisition not available
 	class _AcquiredSharingTargetsProperty(object):
-		def __get__( self, instance, klass ):
+		def __get__(self, instance, klass):
 			if instance is None:
 				return self
-			p = getattr( instance, '__parent__', None )
+			p = getattr(instance, '__parent__', None)
 			while p is not None:
-				targets = getattr( p, 'sharingTargets', None )
+				targets = getattr(p, 'sharingTargets', None)
 				if targets is not None:
 					return targets
-				p = getattr( instance, '__parent__', None )
+				p = getattr(instance, '__parent__', None)
 			return ()
-		def __set__( self, instance, value ):
+		def __set__(self, instance, value):
 			return
 
 from nti.common.property import alias as _alias
@@ -96,7 +96,7 @@ class _CreatedNamedNTIIDMixin(object):
 		except AttributeError:  # Not ready yet
 			return None
 
-	@_CachedProperty('_ntiid_creator_username','_ntiid_specific_part')
+	@_CachedProperty('_ntiid_creator_username', '_ntiid_specific_part')
 	def NTIID(self):
 		"""
 		NTIID is defined only after the _ntiid_creator_username is
@@ -108,10 +108,10 @@ class _CreatedNamedNTIIDMixin(object):
 
 		creator_name = self._ntiid_creator_username
 		if creator_name:
-			return _make_ntiid( date=_NTIID_DATE,
+			return _make_ntiid(date=_NTIID_DATE,
 								provider=creator_name,
 								nttype=self._ntiid_type,
-								specific=self._ntiid_specific_part )
+								specific=self._ntiid_specific_part)
 
 def _containerIds_from_parent():
 	"Returns a tuple of properties to assign to id and containerId"
@@ -131,10 +131,10 @@ def _containerIds_from_parent():
 					return self.__dict__['containerId']
 				raise
 
-	def _set_containerId(self, cid ):
-		pass # ignored
+	def _set_containerId(self, cid):
+		pass  # ignored
 
 	# Unlike the superclass, we define the nti_interfaces.IContained properties
 	# as aliases for the zope.container.IContained values
 
-	return _alias('__name__'),  property(_get_containerId, _set_containerId)
+	return _alias('__name__'), property(_get_containerId, _set_containerId)
