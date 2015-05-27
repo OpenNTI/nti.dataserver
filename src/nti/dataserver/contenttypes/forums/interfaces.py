@@ -113,7 +113,7 @@ class IPost(IContained,
 	containers(b'.ITopic') # Adds __parent__ as required
 	__parent__.required = False
 
-	body = nti_interfaces.CompoundModeledContentBody()
+	body = nti_interfaces.ExtendedCompoundModeledContentBody()
 
 class ICommentPost(IPost,
 				   nti_interfaces.IThreadable):
