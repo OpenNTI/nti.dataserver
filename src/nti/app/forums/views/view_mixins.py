@@ -14,14 +14,22 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 from zope import lifecycleevent
+
 from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
-
+from nti.app.base.abstract_views import get_source
 from nti.app.base.abstract_views import AuthenticatedViewMixin
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
+from nti.app.contentfile import validate_sources
+from nti.app.contentfile import get_content_files
+from nti.app.contentfile import read_multipart_sources
+
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.appserver import httpexceptions as hexc
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -40,7 +48,7 @@ class PostUploadMixin(AuthenticatedViewMixin,
 	Support for uploading of IPost objects.
 	"""
 
-	def _read_incoming_post( self, datatype, constraint ):
+	def _read_incoming_post(self, datatype, constraint):
 
 		# Note the similarity to ugd_edit_views
 		creator = self.getRemoteUser()
@@ -51,36 +59,35 @@ class PostUploadMixin(AuthenticatedViewMixin,
 		else:
 			externalValue[StandardExternalFields.CLASS] = datatype
 
-		containedObject = self.createAndCheckContentObject( creator, datatype,
+		containedObject = self.createAndCheckContentObject(creator, datatype,
 															externalValue, creator,
-															constraint )
+															constraint)
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
 		# so we need to have a jar. We don't have a parent to inherit from just yet
 		# (If we try to set the wrong one, it messes with some events and some
 		# KeyError detection in the containers)
-		#containedObject.__parent__ = owner
-		owner_jar = IConnection( self.request.context )
-		if owner_jar and getattr( containedObject, '_p_jar', self) is None:
-			owner_jar.add( containedObject )
+		# containedObject.__parent__ = owner
+		owner_jar = IConnection(self.request.context)
+		if owner_jar and getattr(containedObject, '_p_jar', self) is None:
+			owner_jar.add(containedObject)
 
 		# Update the object, but don't fire any modified events. We don't know
 		# if we'll keep this object yet, and we haven't fired a created event
 		self.updateContentObject(containedObject, externalValue, set_id=False,
-								 notify=False )
+								 notify=False)
 		# Which just verified the validity of the title.
-
 		return containedObject, externalValue
 
 	def _find_factory_from_precondition(self, forum):
 		provided_by_forum = interface.providedBy(forum)
 		forum_container_precondition = provided_by_forum.get('__setitem__').getTaggedValue('precondition')
-		
+
 		topic_types = forum_container_precondition.types
 		assert len(topic_types) == 1
 		topic_type = topic_types[0]
-		
+
 		topic_factories = list(component.getFactoriesFor(topic_type))
 		if len(topic_factories) == 1:
 			topic_factory_name, topic_factory = topic_factories[0]
@@ -99,14 +106,33 @@ class PostUploadMixin(AuthenticatedViewMixin,
 
 class _AbstractForumPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
-	""" 
-	Given an incoming IPost, creates a new container in the context. 
+	"""
+	Given an incoming IPost, creates a new container in the context.
 	"""
 
-	def _get_topic_creator( self ):
+	def _get_topic_creator(self):
 		return self.getRemoteUser()
 
-	def _do_call( self ):
+	def readInput(self, value=None):
+		if not self.request.POST:
+			externalValue = super(_AbstractForumPostView, self).readInput(value=value)
+		else:
+			externalValue = get_source(self.request, 'json', 'input', 'source', 'content')
+			if not externalValue:
+				raise hexc.HTTPUnprocessableEntity("No source was specified")
+			externalValue = super(_AbstractForumPostView, self).readInput(value=externalValue.read())
+		return externalValue
+
+	def _read_incoming_post(self, datatype, constraint):
+		context, externalValue = super(_AbstractForumPostView, self)._read_incoming_post(datatype, constraint)
+		sources = get_content_files(context)
+		if sources and self.request and self.request.POST:
+			read_multipart_sources(self.request, sources.values())
+		if sources:
+			validate_sources(context, sources.values())
+		return context, externalValue
+
+	def _do_call(self):
 		forum = self.request.context
 		_, topic_factory, _ = self._find_factory_from_precondition(forum)
 		topic_type = topic_factory.getInterfaces()
@@ -131,7 +157,7 @@ class _AbstractForumPostView(PostUploadMixin,
 
 		# Business rule: titles of the personal blog entry match the post
 		topic.title = topic_post.title
-		topic.description = external_value.get( 'description', topic.title )
+		topic.description = external_value.get('description', topic.title)
 
 		# For these, the name matters. We want it to be as pretty as we can get
 		# TODO: We probably need to register an IReservedNames that forbids
@@ -139,16 +165,16 @@ class _AbstractForumPostView(PostUploadMixin,
 
 		name = INameChooser(forum).chooseName(topic.title, topic)
 
-		lifecycleevent.created( topic )
-		forum[name] = topic # Now store the topic and fire lifecycleevent.added
+		lifecycleevent.created(topic)
+		forum[name] = topic  # Now store the topic and fire lifecycleevent.added
 		assert topic.id == name
 		assert topic.__parent__ == forum
 		assert topic.containerId == forum.NTIID
-		
+
 		if headline_field:
 			# not all containers have headlines; those that don't simply use
 			# the incoming post as a template
-			topic_post.__parent__ = topic # must set __parent__ first for acquisition to work
+			topic_post.__parent__ = topic  # must set __parent__ first for acquisition to work
 			topic_post.creator = topic.creator
 
 			# In order to meet the validity requirements, we must work from the root down,
@@ -159,15 +185,15 @@ class _AbstractForumPostView(PostUploadMixin,
 			# ...this means, however, that the initial ObjectAddedEvent did not get fired
 			# for the headline post (since it just now became a sublocation) so we must do
 			# it manually
-			lifecycleevent.created( topic_post )
-			lifecycleevent.added( topic_post )
-			
+			lifecycleevent.created(topic_post)
+			lifecycleevent.added(topic_post)
+
 			# fail hard if no parent is set
 			assert topic_post.__parent__ == topic
-		
+
 		# Respond with the pretty location of the object, within the blog
-		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_path( topic )
+		self.request.response.status_int = 201  # created
+		self.request.response.location = self.request.resource_path(topic)
 		return topic
 
 # We allow POSTing comments/topics/forums to the actual objects, and also
@@ -178,14 +204,14 @@ class _AbstractForumPostView(PostUploadMixin,
 # a cache of the topic object itself...)
 
 class AbstractBoardPostView(_AbstractForumPostView):
-	""" 
-	Given an incoming IPost, creates a new forum in the board 
+	"""
+	Given an incoming IPost, creates a new forum in the board
 	"""
 
 class _AbstractTopicPostView(PostUploadMixin,
 							 AbstractAuthenticatedView):
 
-	def _do_call( self ):
+	def _do_call(self):
 		topic = self.request.context
 		comment_factory_name, _, comment_iface = \
 						self._find_factory_from_precondition(topic)
@@ -194,19 +220,19 @@ class _AbstractTopicPostView(PostUploadMixin,
 													comment_iface.providedBy)
 
 		# The actual name of these isn't tremendously important
-		name = topic.generateId( prefix='comment' )
+		name = topic.generateId(prefix='comment')
 
-		lifecycleevent.created( incoming_post )
+		lifecycleevent.created(incoming_post)
 		# incoming_post.id and containerId are set automatically when it is added
 		# to the container (but note that the created event did not have them)
 		# Now store the topic and fire IObjectAddedEvent (subtype of IObjectModifiedEvent)
-		topic[name] = incoming_post 
-	
+		topic[name] = incoming_post
+
 		# fail hard if no parent is set
 		assert incoming_post.__parent__ == topic
-		
+
 		# Respond with the pretty location of the object
-		self.request.response.status_int = 201 # created
-		self.request.response.location = self.request.resource_path( incoming_post )
+		self.request.response.status_int = 201  # created
+		self.request.response.location = self.request.resource_path(incoming_post)
 
 		return incoming_post
