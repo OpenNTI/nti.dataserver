@@ -74,6 +74,8 @@
 	<adapter factory=".forum.ContentBoardAdapter"
 			 for="nti.contentlibrary.interfaces.IContentPackageBundle" />
 
+	<subscriber handler=".subscribers._on_content_pacakge_library_synced" />
+
 	<subscriber factory=".forum.ContentBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.contentlibrary.interfaces.IContentPackageBundle" />
