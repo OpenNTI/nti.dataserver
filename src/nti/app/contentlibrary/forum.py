@@ -55,7 +55,6 @@ class ContentBoard(GeneralBoard):
 
 		forum = ContentForum()
 		forum.creator = self.creator
-		forum._mask_creator = (self.creator != system_user)
 		self[forum.__default_name__] = forum
 		forum.title = _('Forum')
 
@@ -82,6 +81,10 @@ from .interfaces import IContentForum
 class ContentForum(GeneralForum):
 	__external_can_create__ = True
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforum'
+
+	@property
+	def _mask_creator(self):
+		return (self.creator != system_user)
 
 	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
 		# if we get here, we're authenticated

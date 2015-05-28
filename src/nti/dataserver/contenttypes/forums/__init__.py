@@ -77,10 +77,12 @@ class _CreatedNamedNTIIDMixin(object):
 	creator = None
 	__name__ = None
 
-	_ntiid_include_parent_name = False
 	_ntiid_type = None
+	_ntiid_include_parent_name = False
 
-	_mask_creator = True
+	@property
+	def _ntiid_mask_creator(self):
+		return True
 	
 	@property
 	def _ntiid_creator_username(self):
@@ -106,7 +108,7 @@ class _CreatedNamedNTIIDMixin(object):
 		our specific part (which includes our __name__)
 		"""
 		if find_interface(self, IUseOIDForNTIID, strict=False) is not None:
-			return to_external_ntiid_oid(self, mask_creator=self._mask_creator)
+			return to_external_ntiid_oid(self, mask_creator=self._ntiid_mask_creator)
 
 		creator_name = self._ntiid_creator_username
 		if creator_name:
