@@ -83,7 +83,7 @@ class ContentForum(GeneralForum):
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentforum'
 
 	@property
-	def _mask_creator(self):
+	def _ntiid_mask_creator(self):
 		return (self.creator != system_user)
 
 	def xxx_isReadableByAnyIdOfUser(self, remote_user, my_ids, family):
