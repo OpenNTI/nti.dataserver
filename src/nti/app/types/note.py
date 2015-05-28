@@ -14,6 +14,8 @@ from functools import partial
 from zope import component
 from zope import interface
 
+from zope.schema.interfaces import ConstraintNotSatisfied
+
 from pyramid.view import view_config
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IExceptionResponse
@@ -25,11 +27,12 @@ from nti.dataserver.interfaces import INote
 from nti.dataserver import authorization as nauth
 
 from nti.namedfile.file import FileConstraints
-from nti.namedfile.interfaces import IFileConstraints
 
 from ..contentfile import validate_sources
 from ..contentfile import get_content_files
 from ..contentfile import read_multipart_sources
+
+from .interfaces import INoteFileConstraints
 
 @component.adapter(IRequest, INote)
 @interface.implementer(INewObjectTransformer)
@@ -44,7 +47,7 @@ def _submission_transformer(request, context):
 	if sources and request and request.POST:
 		read_multipart_sources(request, sources.values())
 	if sources:
-		validate_sources(context, sources.values())
+		validate_attachments(context, sources.values())
 	return context
 
 @view_config(route_name='objects.generic.traversal',
@@ -61,10 +64,18 @@ class NotePutView(UGDPutView):
 												notify=notify)
 		sources = get_content_files(contentObject)
 		if sources:
-			validate_sources(contentObject, sources.values())
+			validate_attachments(contentObject, sources.values())
 		return result
 
+def validate_attachments(context=None, sources=()):
+	sources = sources or ()
+	validate_sources(context, sources)
+	constraints = INoteFileConstraints(context, None)
+	if constraints is not None and len(sources) > constraints.max_files:
+		raise ConstraintNotSatisfied(len(sources), 'max_files')
+
 @component.adapter(INote)
-@interface.implementer(IFileConstraints)
+@interface.implementer(INoteFileConstraints)
 class _NoteFileConstraints(FileConstraints):
+	max_files = 5
 	max_file_size = 10000000 # 10 MB
