@@ -13,8 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 
 from nti.dataserver.contenttypes.forums import MessageFactory as _
 
-from functools import partial
-
 from zope import schema
 from zope import interface
 from zope import component
@@ -35,9 +33,6 @@ from nti.ntiids.ntiids import TYPE_OID
 
 from .interfaces import IContentBoard
 
-def _safe_to_external_ntiid_oid():
-	return partial(to_external_ntiid_oid, add_to_connection=True)
-
 @interface.implementer(IContentBoard)
 class ContentBoard(GeneralBoard):
 	mime_type = mimeType = 'application/vnd.nextthought.forums.contentboard'
@@ -47,7 +42,7 @@ class ContentBoard(GeneralBoard):
 	# by OID. We are also IUseOIDForNTIID so our children
 	# inherit this.
 	NTIID_TYPE = _ntiid_type = TYPE_OID
-	NTIID = cachedIn('_v_ntiid')(_safe_to_external_ntiid_oid())
+	NTIID = cachedIn('_v_ntiid')(to_external_ntiid_oid)
 
 	# Who owns this? Who created it?
 	# Right now, we're saying "system" did it...
@@ -60,6 +55,7 @@ class ContentBoard(GeneralBoard):
 
 		forum = ContentForum()
 		forum.creator = self.creator
+		forum._mask_creator = (self.creator != system_user)
 		self[forum.__default_name__] = forum
 		forum.title = _('Forum')
 
