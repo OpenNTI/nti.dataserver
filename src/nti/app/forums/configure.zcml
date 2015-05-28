@@ -239,6 +239,11 @@
 			 for="nti.dataserver.contenttypes.forums.interfaces.IPost
 				 *
 				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
+	
+	<!-- Adapters -->
+	<adapter factory=".adapters._TopicFileConstraints"
+			 provides=".interfaces.ITopicFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
 
 	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />
 

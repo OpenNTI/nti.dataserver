@@ -17,6 +17,8 @@ from zope import lifecycleevent
 
 from zope.container.interfaces import INameChooser
 
+from zope.schema.interfaces import ConstraintNotSatisfied
+
 from ZODB.interfaces import IConnection
 
 from nti.app.base.abstract_views import get_source
@@ -41,6 +43,8 @@ frm_ext = frm_ext
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 
 from nti.externalization.interfaces import StandardExternalFields
+
+from ..interfaces import ITopicFileConstraints
 
 class PostUploadMixin(AuthenticatedViewMixin,
 					  ModeledContentUploadRequestUtilsMixin):
@@ -123,13 +127,20 @@ class _AbstractForumPostView(PostUploadMixin,
 			externalValue = super(_AbstractForumPostView, self).readInput(value=externalValue.read())
 		return externalValue
 
+	def validate_attachments(self, context=None, sources=()):
+		sources = sources or ()
+		validate_sources(context, sources)
+		constraints = ITopicFileConstraints(context, None)
+		if constraints is not None and len(sources) > constraints.max_files:
+			raise ConstraintNotSatisfied(len(sources), 'max_files')
+	
 	def _read_incoming_post(self, datatype, constraint):
 		context, externalValue = super(_AbstractForumPostView, self)._read_incoming_post(datatype, constraint)
 		sources = get_content_files(context)
 		if sources and self.request and self.request.POST:
 			read_multipart_sources(self.request, sources.values())
 		if sources:
-			validate_sources(context, sources.values())
+			self.validate_attachments(context, sources.values())
 		return context, externalValue
 
 	def _do_call(self):
