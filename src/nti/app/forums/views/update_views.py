@@ -36,6 +36,10 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
+from ...contentfile import get_content_files
+
+from .view_mixins import validate_attachments
+
 _view_defaults = dict(route_name='objects.generic.traversal', renderer='rest' )
 
 @view_config(context=IGeneralForum)
@@ -72,6 +76,16 @@ class PostObjectPutView(UGDPutView):
 		externalValue = super(PostObjectPutView, self).readInput()
 		return externalValue
 
+	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
+		result = UGDPutView.updateContentObject(self, contentObject,
+												externalValue=externalValue,
+												set_id=set_id,
+												notify=notify)
+		sources = get_content_files(contentObject)
+		if sources:
+			validate_attachments(contentObject, sources.values())
+		return result
+	
 @view_config(context=IGeneralHeadlineTopic)
 @view_config(context=ICommunityHeadlineTopic) # Needed?
 @view_defaults( permission=nauth.ACT_UPDATE,
