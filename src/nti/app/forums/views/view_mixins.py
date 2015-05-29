@@ -44,7 +44,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPost
 
 from nti.externalization.interfaces import StandardExternalFields
 
-from ..interfaces import ITopicFileConstraints
+from ..interfaces import IPostFileConstraints
 
 class PostUploadMixin(AuthenticatedViewMixin,
 					  ModeledContentUploadRequestUtilsMixin):
@@ -130,7 +130,7 @@ class _AbstractForumPostView(PostUploadMixin,
 	def validate_attachments(self, context=None, sources=()):
 		sources = sources or ()
 		validate_sources(context, sources)
-		constraints = ITopicFileConstraints(context, None)
+		constraints = IPostFileConstraints(context, None)
 		if constraints is not None and len(sources) > constraints.max_files:
 			raise ConstraintNotSatisfied(len(sources), 'max_files')
 	

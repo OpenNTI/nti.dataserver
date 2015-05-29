@@ -23,12 +23,11 @@ from zc.displayname.interfaces import IDisplayNameGenerator
 
 from pyramid.interfaces import IRequest
 
-from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.namedfile.file import FileConstraints
 
-from .interfaces import ITopicFileConstraints
+from .interfaces import IPostFileConstraints
 
 @interface.implementer_only(IDisplayNameGenerator)
 @component.adapter(IPersonalBlog, IRequest)
@@ -50,8 +49,7 @@ class _PersonalBlogDisplayNameGenerator(BrowserView):
 		result = convertName(result, self.request, None)
 		return result
 
-@component.adapter(ITopic)
-@interface.implementer(ITopicFileConstraints)
-class _TopicFileConstraints(FileConstraints):
+@interface.implementer(IPostFileConstraints)
+class _PostFileConstraints(FileConstraints):
 	max_files = 1
 	max_file_size = 20000000 # 20 MB

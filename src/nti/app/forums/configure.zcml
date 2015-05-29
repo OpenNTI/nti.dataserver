@@ -241,9 +241,13 @@
 				 nti.appserver.ugd_feed_views.AbstractFeedView"/>
 	
 	<!-- Adapters -->
-	<adapter factory=".adapters._TopicFileConstraints"
-			 provides=".interfaces.ITopicFileConstraints"
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides=".interfaces.IPostFileConstraints"
 			 for="nti.dataserver.contenttypes.forums.interfaces.ITopic" />
+
+	<adapter factory=".adapters._PostFileConstraints"
+			 provides=".interfaces.IPostFileConstraints"
+			 for="nti.dataserver.contenttypes.forums.interfaces.IPost" />
 
 	<adapter factory=".adapters._PersonalBlogDisplayNameGenerator" />
 
