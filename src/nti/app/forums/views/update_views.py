@@ -26,7 +26,6 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
-from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
@@ -37,10 +36,24 @@ from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
 
-_view_defaults = dict(  route_name='objects.generic.traversal',
-						renderer='rest' )
+_view_defaults = dict(route_name='objects.generic.traversal', renderer='rest' )
 
 @view_config(context=IGeneralForum)
+@view_defaults( permission=nauth.ACT_UPDATE,
+				request_method='PUT',
+				**_view_defaults)
+class ForumObjectPutView(UGDPutView):
+	""" 
+	Editing an existing forum etc
+	"""
+
+	def readInput(self):
+		externalValue = super(ForumObjectPutView, self).readInput()
+		# remove read only properties
+		for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
+			externalValue.pop(name, None)
+		return externalValue
+
 @view_config(context=IHeadlinePost)
 @view_config(context=IPersonalBlogEntry)
 @view_config(context=IPersonalBlogComment)
@@ -50,17 +63,13 @@ _view_defaults = dict(  route_name='objects.generic.traversal',
 @view_defaults( permission=nauth.ACT_UPDATE,
 				request_method='PUT',
 				**_view_defaults)
-class ForumObjectPutView(UGDPutView):
-	""" Editing an existing forum post, etc """
+class PostObjectPutView(UGDPutView):
+	""" 
+	Editing an existing post, comments etc
+	"""
 
 	def readInput(self):
-		externalValue = super(ForumObjectPutView, self).readInput()
-		theObject = self._get_object_to_update()
-		if IForum.providedBy(theObject):
-			# remove read only properties
-			for name in ('TopicCount', 'NewestDescendantCreatedTime', 'NewestDescendant'):
-				if name in externalValue:
-					del externalValue[name]
+		externalValue = super(PostObjectPutView, self).readInput()
 		return externalValue
 
 @view_config(context=IGeneralHeadlineTopic)
@@ -69,9 +78,11 @@ class ForumObjectPutView(UGDPutView):
 				request_method='PUT',
 				**_view_defaults)
 class CommunityTopicPutDisabled(object):
-	"""Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise
+	"""
+	Restricts PUT on topics to return 403. In pyramid 1.5 this otherwise
 	would find the PUT for the superclass of the object, but we don't want to
-	allow it. (In pyramid 1.4 it resulted in a 404)"""
+	allow it. (In pyramid 1.4 it resulted in a 404)
+	"""
 
 	def __init__(self, request):
 		pass
