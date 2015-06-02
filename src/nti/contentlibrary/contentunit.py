@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.container.contained import Contained
 
 from nti.common.property import alias
@@ -56,7 +57,7 @@ class ContentUnit(PermissiveSchemaConfigured,
 	# to be a field property; those should be changed to title...
 	# __name__ is commented out because the one test failure we saw has
 	# been fixed
-	#__name__ = alias('title')
+	# __name__ = alias('title')
 	# Now we should be able to match ntiid to name, which is distinct
 	__name__ = read_alias('ntiid')
 	label = alias('title')
@@ -107,14 +108,13 @@ class ContentPackage(ContentUnit,
 	contributors = ()
 	publisher = ''
 
-
 	# Legacy course support,
 	# ALL DEPRECATED
 	createDirectFieldProperties(ILegacyCourseConflatedContentPackage)
 
-	#: A tuple of things thrown by the implementation's
-	#: IO methods that represent transient states that may
-	#: clear up by themself
+	# : A tuple of things thrown by the implementation's
+	# : IO methods that represent transient states that may
+	# : clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
 # TODO: We need to do caching of does_sibling_entry_exist and read_contents.
