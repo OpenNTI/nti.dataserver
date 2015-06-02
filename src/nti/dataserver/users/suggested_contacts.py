@@ -29,13 +29,13 @@ from .interfaces import ISuggestedContactRankingPolicy
 @EqHash("username", "rank")
 @interface.implementer(ISuggestedContact)
 class SuggestedContact(SchemaConfigured, Contained):
-	
+
 	createDirectFieldProperties(ISuggestedContact)
 
 	@property
 	def provider(self):
 		return self.__dict__.get('_v_provider')
-	
+
 	@provider.setter
 	def provider(self, nv):
 		self.__dict__['_v_provider'] = nv
@@ -55,22 +55,22 @@ class SuggestedContact(SchemaConfigured, Contained):
 @interface.implementer(ISuggestedContactRankingPolicy)
 class SuggestedContactRankingPolicy(SchemaConfigured, Contained):
 	createDirectFieldProperties(ISuggestedContactRankingPolicy)
-	
+
 	@classmethod
 	def sort(cls, contacts):
 		contacts = contacts or ()
 		return sorted(contacts, reverse=True)
-DefaultSuggestedContactRankingPolicy = SuggestedContactRankingPolicy 
+DefaultSuggestedContactRankingPolicy = SuggestedContactRankingPolicy
 
 @interface.implementer(ISuggestedContactsProvider)
 class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	createDirectFieldProperties(ISuggestedContactsProvider)
-	
+
 	@property
 	def priority(self):
 		result = getattr(self.ranking, 'priority', None) or 1
 		return result
-	
+
 	def suggestions(self, user):
 		raise NotImplementedError()
-SuggestedContactsProvider = DefaultSuggestedContactsProvider 
+SuggestedContactsProvider = DefaultSuggestedContactsProvider
