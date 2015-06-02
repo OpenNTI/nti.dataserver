@@ -16,13 +16,13 @@ from os.path import join as path_join
 
 from zope import interface
 from zope import component
+
 from zope.cachedescriptors.method import cachedIn
+
+from ZODB.POSException import ConnectionStateError
 
 from nti.common.property import readproperty
 from nti.common.property import CachedProperty
-
-from . import eclipse
-from . import library
 
 from .contentunit import ContentUnit
 from .contentunit import ContentPackage
@@ -40,6 +40,9 @@ from .interfaces import IPersistentFilesystemContentPackage
 from .interfaces import IGlobalFilesystemContentPackageLibrary
 from .interfaces import IPersistentFilesystemContentPackageLibrary
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
+
+from . import eclipse
+from . import library
 
 def _TOCPath(path):
 	return os.path.abspath(path_join(path, eclipse.TOC_FILENAME))
@@ -423,7 +426,6 @@ class FilesystemContentPackage(ContentPackage, FilesystemContentUnit):
 
 	TRANSIENT_EXCEPTIONS = (IOError,)
 
-
 	_directory_last_modified = _FilesystemTime('_directory_last_modified',
 											   os.path.stat.ST_MTIME,
 											   'dirname')
@@ -449,6 +451,12 @@ class PersistentFilesystemContentUnit(Persistent,
 	"""
 	A persistent version of a content unit.
 	"""
+	
+	def __repr__(self):
+		try:
+			return super(PersistentFilesystemContentUnit, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
 
 @interface.implementer(IPersistentFilesystemContentPackage)
 class PersistentFilesystemContentPackage(Persistent,
@@ -457,6 +465,12 @@ class PersistentFilesystemContentPackage(Persistent,
 	A persistent content package.
 	"""
 
+	def __repr__(self):
+		try:
+			return super(PersistentFilesystemContentPackage, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
+		
 class _PersistentFilesystemLibraryEnumeration(Persistent,
 											  _FilesystemLibraryEnumeration):
 
@@ -466,10 +480,15 @@ class _PersistentFilesystemLibraryEnumeration(Persistent,
 											   root,
 											   PersistentFilesystemContentPackage,
 											   PersistentFilesystemContentUnit)
+		
+	def __repr__(self):
+		try:
+			return super(_PersistentFilesystemLibraryEnumeration, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
 
 def _GlobalFilesystemLibraryEnumerationUnpickle(parent):
 	return getattr(parent, '_enumeration')
-
 
 class _GlobalFilesystemLibraryEnumeration(_FilesystemLibraryEnumeration):
 	"""
@@ -518,7 +537,6 @@ class GlobalFilesystemContentPackageLibrary(library.GlobalContentPackageLibrary,
 	def _create_enumeration(cls, root):
 		return _GlobalFilesystemLibraryEnumeration(root)
 
-
 	def __reduce__(self, *args):
 		return _GlobalFilesystemUnpickle, (self.__name__,)
 	__reduce_ex__ = __reduce__
@@ -547,13 +565,19 @@ class PersistentFilesystemLibrary(AbstractFilesystemLibrary,
 		assert isinstance(root, _PersistentFilesystemLibraryEnumeration)
 		return root
 
+	def __repr__(self):
+		try:
+			return super(PersistentFilesystemLibrary, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
+		
 from nti.externalization.persistence import NoPickle
 
 from .interfaces import ISiteLibraryFactory
 
+@NoPickle
 @component.adapter(IGlobalFilesystemContentPackageLibrary)
 @interface.implementer(ISiteLibraryFactory)
-@NoPickle
 class GlobalFilesystemSiteLibraryFactory(object):
 
 	def __init__(self, context):
