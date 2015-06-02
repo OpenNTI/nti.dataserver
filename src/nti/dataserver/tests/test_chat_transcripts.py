@@ -25,6 +25,11 @@ from zc import intid as zc_intid
 
 from zodbpickle import pickle as zodbpickle
 
+try:
+	from zodbpickle.fastpickle import PicklingError as FastPicklingError
+except ImportError:
+	FastPicklingError = zodbpickle.PicklingError
+
 import persistent
 from persistent.list import PersistentList
 
@@ -70,7 +75,7 @@ class TestChatTranscript(unittest.TestCase):
 
 	@WithMockDS
 	def test_store_non_picklable(self):
-		with assert_raises( (pickle.PicklingError, zodbpickle.PicklingError) ):
+		with assert_raises( (pickle.PicklingError, zodbpickle.PicklingError, FastPicklingError) ):
 			with mock_db_trans():
 				user = users.User.create_user(username="sjohnson@nextthought.com")
 				storage = chat_transcripts._UserTranscriptStorageAdapter(user)
