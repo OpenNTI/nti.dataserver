@@ -7,9 +7,11 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 import sys
 
-import pyramid.httpexceptions as _hexc
+from pyramid import httpexceptions as _hexc
 
 # Import some common things for the sake of static analysis
 HTTPFound = _hexc.HTTPFound
@@ -29,8 +31,8 @@ HTTPUnsupportedMediaType = _hexc.HTTPUnsupportedMediaType
 # Dynamically import the rest
 def _copy_pyramid_exceptions():
 	frame = sys._getframe(1)
-	for k,v in _hexc.__dict__.items():
-		if 	isinstance( v, type) and issubclass(v,Exception) and \
+	for k, v in _hexc.__dict__.items():
+		if 	isinstance(v, type) and issubclass(v, Exception) and \
 			v.__module__ == _hexc.__name__:
 			frame.f_globals[k] = v
 _copy_pyramid_exceptions()
@@ -58,10 +60,10 @@ class HTTPUnprocessableEntity(_HTTPUnprocessableEntity):
 	code: 422, title: Unprocessable Entity
 	"""
 
-	def __str__( self ):
+	def __str__(self):
 		# The super-class simply echoes back self.detail, which
 		# if not a string, causes str() to raise TypeError
-		return str(super(HTTPUnprocessableEntity,self).__str__())
+		return str(super(HTTPUnprocessableEntity, self).__str__())
 
 _hexc.HTTPUnprocessableEntity = HTTPUnprocessableEntity
 
