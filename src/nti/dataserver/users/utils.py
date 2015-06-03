@@ -36,6 +36,8 @@ from .index import IX_EMAIL_VERIFIED
 from .interfaces import IUserProfile
 from .interfaces import IAvatarURLProvider
 
+# email
+
 def get_catalog():
 	return component.getUtility(ICatalog, name=CATALOG_NAME)
 
@@ -89,6 +91,8 @@ def force_email_verification(user, profile=IUserProfile, catalog=None, intids=No
 def is_email_verified(email):
 	result = verified_email_ids(email)
 	return bool(result)
+
+# broken objects
 
 def _getId(obj, attribute='_ds_intid'):
 	try:
