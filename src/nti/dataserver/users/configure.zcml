@@ -1,28 +1,31 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-	   xmlns:ext="http://nextthought.com/ntp/ext"
-	   xmlns:zcml="http://namespaces.zope.org/zcml"
-	   i18n_domain="zope">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="zope">
 
 	<include package="zope.component" file="meta.zcml" />
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
+	
 	<include package="zope.location" />
 
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
 	<ext:registerMimeFactories module=".users" />
+	<ext:registerMimeFactories module=".communities" />
 	<ext:registerMimeFactories module=".friends_lists" />
 
 	<!-- Events -->
 	<subscriber handler=".users.onChange" />
 	<subscriber handler=".users._blacklist_username" />
 	<subscriber handler=".users.user_devicefeedback" />
-	<subscriber handler=".users._add_member_to_community" />
-	<subscriber handler=".users._remove_member_from_community" />
-	<subscriber handler=".users._remove_all_members_when_community_deleted" />
+	
+	<subscriber handler=".communities._add_member_to_community" />
+	<subscriber handler=".communities._remove_member_from_community" />
+	<subscriber handler=".communities._remove_all_members_when_community_deleted" />
 
 	<!-- Externalization -->
 	<adapter factory=".users_external._EntitySummaryExternalObject"
@@ -45,8 +48,10 @@
 			 name="personal-summary" />
 
 	<adapter factory=".users_external._CoppaUserExternalObject" />
+	
 	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
 			 name="summary" />
+	
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 
@@ -56,10 +61,10 @@
 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->
-	<class class=".users.Entity">
+	<class class=".entity.Entity">
 		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
 	</class>
-	<class class=".users.FriendsList">
+	<class class=".friends_lists.FriendsList">
 		<implements interface="zope.annotation.interfaces.IAttributeAnnotatable" />
 	</class>
 
@@ -75,7 +80,7 @@
 
 	<!-- Communities can report memberships, iterate them, report length, iterate intids -->
 	<adapter provides="nti.dataserver.interfaces.ILengthEnumerableEntityContainer"
-			 factory=".users.CommunityEntityContainer" />
+			 factory=".communities.CommunityEntityContainer" />
 
 	<!-- WeakRefs to entity objects -->
 	<adapter factory=".wref.WeakRefFactory" />
@@ -92,6 +97,7 @@
 	<!-- Default -->
 	<adapter factory=".avatar_urls.AvatarURLFactory"
 			 provides=".interfaces.IAvatarURLProvider" />
+
 	<adapter factory=".avatar_urls.AvatarURLFactory"
 			 provides=".interfaces.IAvatarURL" />
 
@@ -129,6 +135,7 @@
 	<!-- Default -->
 	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
 			 for="nti.dataserver.interfaces.IEntity" />
+
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile._profile_to_principal" />
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
@@ -136,6 +143,7 @@
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
 			 zcml:condition="have devmode" />
+
 	<adapter factory=".user_profile.EmailRequiredUserProfileFactory"
 			 zcml:condition="not-have devmode" />
 

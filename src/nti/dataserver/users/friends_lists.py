@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search pyramid views.
-
 .. $Id$
 """
 
@@ -13,9 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 import operator
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.component.factory import Factory
+
 from zc import intid as zc_intid
 
 from zope.container.contained import ContainerModifiedEvent
@@ -36,7 +36,7 @@ from nti.ntiids import ntiids
 
 from nti.wref import interfaces as wref_interfaces
 
-from nti.dataserver.users.entity import Entity
+from .entity import Entity
 
 @interface.implementer(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
 class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matters for __setstate__
