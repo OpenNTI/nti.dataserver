@@ -241,8 +241,10 @@ class Everyone(Community):
 				del state[k]
 		super(Everyone,self).__setstate__( state )
 
-from nti.dataserver.users.friends_lists import FriendsList
-from nti.dataserver.users.friends_lists import _FriendsListMap # bwc
+from .entity import NOOPCM as _NOOPCM
+
+from .friends_lists import FriendsList
+from .friends_lists import _FriendsListMap # BWC
 
 import zope.deferredimport
 zope.deferredimport.initialize()
@@ -266,7 +268,6 @@ class Device(PersistentCreatedModDateTrackingObject,
 
 	__name__ = None
 	__parent__ = None
-
 
 	def __init__(self, deviceId):
 		"""
@@ -1047,8 +1048,6 @@ class FacebookUser(User):
 		super(FacebookUser,self).__init__(username,**kwargs)
 		if id_url:
 			self.facebook_url = id_url
-
-from .entity import NOOPCM as _NOOPCM
 
 @component.adapter(apns_interfaces.IDeviceFeedbackEvent)
 def user_devicefeedback( msg ):
