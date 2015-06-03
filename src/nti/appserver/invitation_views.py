@@ -3,39 +3,47 @@
 """
 Views relating to working with invitations.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zc import intid as zc_intid
 
-import pyramid.interfaces
 from pyramid.view import view_config
+from pyramid.interfaces import IRequest
 
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
+
 from nti.appserver.pyramid_authorization import is_writable
-from nti.appserver.invitations import interfaces as invite_interfaces
+
+from nti.appserver.invitations.interfaces import IInvitations
+from nti.appserver.invitations.interfaces import InvitationValidationError
+
 from nti.appserver.invitations.invitation import JoinEntitiesInvitation
-from nti.appserver.invitations.utility import accept_invitations, ZcmlInvitations
+
+from nti.appserver.invitations.utility import ZcmlInvitations
+from nti.appserver.invitations.utility import accept_invitations
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization import integer_strings
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from . import httpexceptions as hexc
 
 from nti.app.externalization.error import handle_validation_error
 from nti.app.externalization.error import handle_possible_validation_error
 from nti.app.externalization import internalization as obj_io
-
 
 # : The link relationship type to which an authenticated
 # : user can ``POST`` data to accept outstanding invitations. Also the name of a
@@ -56,7 +64,7 @@ REL_TRIVIAL_DEFAULT_INVITATION_CODE = 'default-trivial-invitation-code'
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
-			 context=nti_interfaces.IUser,
+			 context=IUser,
 			 permission=nauth.ACT_UPDATE,
 			 request_method='POST',
 			 name=REL_ACCEPT_INVITATIONS)
@@ -73,8 +81,7 @@ def accept_invitations_view(request):
 		invite_codes = json_body['invitation_codes']
 		if invite_codes:
 			accept_invitations(request.context, invite_codes)
-
-	except invite_interfaces.InvitationValidationError as e:
+	except InvitationValidationError as e:
 		e.field = 'invitation_codes'
 		handle_validation_error(request, e)
 	except Exception as e:  # pragma: no cover
@@ -89,7 +96,8 @@ def accept_invitations_view(request):
 # as we go persistent, these codes will probably be invalidated.
 # We only generate invitations to IDynamicSharingTargetFriendsList objects, even
 # though in theory this could work for Communities and regular FL too; this is
-# alright because the accept view and the link provider are also tied to the IDynamicSharingTargetFriendsList
+# alright because the accept view and the link provider are also tied to the
+# IDynamicSharingTargetFriendsList
 
 class _DefaultJoinEntityInvitation(JoinEntitiesInvitation):
 
@@ -113,7 +121,7 @@ class _TrivialDefaultInvitations(ZcmlInvitations):
 		if invite is None:
 			try:
 				dfl = self._getObjectByCode(code)
-				if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(dfl):
+				if IDynamicSharingTargetFriendsList.providedBy(dfl):
 					invite = _DefaultJoinEntityInvitation(code, dfl)
 					invite.creator = dfl.creator
 			except (KeyError, ValueError, AttributeError):
@@ -122,16 +130,17 @@ class _TrivialDefaultInvitations(ZcmlInvitations):
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
-			 context=nti_interfaces.IDynamicSharingTargetFriendsList,
-			 permission=nauth.ACT_UPDATE,  # The creator only, not members who have read access
+			 context=IDynamicSharingTargetFriendsList,
+			 permission=nauth.ACT_UPDATE, # The creator only, not members who have read access
 			 request_method='GET',
 			 name=REL_TRIVIAL_DEFAULT_INVITATION_CODE)
 def get_default_trivial_invitation_code(request):
-	code = component.getUtility(invite_interfaces.IInvitations)._getDefaultInvitationCode(request.context)
+	invitations = component.getUtility(IInvitations)
+	code = invitations._getDefaultInvitationCode(request.context)
 	return {'invitation_code': code}
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList,pyramid.interfaces.IRequest)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IDynamicSharingTargetFriendsList, IRequest)
 class DFLGetInvitationLinkProvider(AbstractTwoStateViewLinkDecorator):
 
 	true_view = REL_TRIVIAL_DEFAULT_INVITATION_CODE
