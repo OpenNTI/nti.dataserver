@@ -198,3 +198,24 @@ class CommunityEntityContainer(object):
             return entity in self.context
         except AttributeError:
             return False
+
+@interface.implementer(IUnscopedGlobalCommunity)
+class Everyone(Community):
+    """
+    A community that represents the entire world.
+     """
+    __external_class_name__ = 'Community'
+
+    # 'everyone@nextthought.com' hash
+    _avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
+    _realname = 'Everyone'
+    _alias = 'Public'
+
+    def __init__(self):
+        super(Everyone,self).__init__( self._realname )
+
+    def __setstate__(self,state):
+        for k in ('_avatarURL', '_realname', 'alias'):
+            if k in state:
+                del state[k]
+        super(Everyone,self).__setstate__( state )

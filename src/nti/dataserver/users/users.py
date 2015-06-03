@@ -70,7 +70,6 @@ from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import ITranscriptContainer
 from nti.dataserver.interfaces import IDynamicSharingTarget
 from nti.dataserver.interfaces import IUserBlacklistedStorage
-from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ITargetedStreamChangeEvent
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -218,28 +217,9 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 
 from nti.common.property import Lazy
 
+from .communities import Everyone
 from .communities import Community
-
-@interface.implementer(IUnscopedGlobalCommunity)
-class Everyone(Community):
-	"""
-	A community that represents the entire world.
-	 """
-	__external_class_name__ = 'Community'
-
-	# 'everyone@nextthought.com' hash
-	_avatarURL = 'http://www.gravatar.com/avatar/bb798c65a45658a80281bd3ba26c4ff8?s=128&d=mm'
-	_realname = 'Everyone'
-	_alias = 'Public'
-
-	def __init__(self):
-		super(Everyone,self).__init__( self._realname )
-
-	def __setstate__(self,state):
-		for k in ('_avatarURL', '_realname', 'alias'):
-			if k in state:
-				del state[k]
-		super(Everyone,self).__setstate__( state )
+Community = Community # BWC
 
 from .entity import NOOPCM as _NOOPCM
 
