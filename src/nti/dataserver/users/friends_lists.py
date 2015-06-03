@@ -11,14 +11,15 @@ logger = __import__('logging').getLogger(__name__)
 
 import operator
 
+from zc import intid as zc_intid
+
 from zope import component
 from zope import interface
 
 from zope.component.factory import Factory
 
-from zc import intid as zc_intid
-
 from zope.container.contained import ContainerModifiedEvent
+
 from zope.event import notify
 
 from BTrees.OOBTree import OOTreeSet
@@ -27,19 +28,30 @@ from BTrees.OOBTree import intersection as OOBTree_intersection
 
 from nti.common.property import CachedProperty
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import enclosures
+from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
 
-from nti.mimetype import mimetype
+from nti.ntiids.ntiids import DATE
+from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids.ntiids import escape_provider
+from nti.ntiids.ntiids import TYPE_MEETINGROOM_GROUP
 
-from nti.ntiids import ntiids
+from nti.wref.interfaces import IWeakRef
 
-from nti.wref import interfaces as wref_interfaces
+from ..interfaces import IHTC_NEW_FACTORY
+
+from ..interfaces import IFriendsList
+from ..interfaces import IUsernameIterable
+from ..interfaces import IFriendsListContainer
+from ..interfaces import ISimpleEnclosureContainer
+from ..interfaces import IDynamicSharingTargetFriendsList
+from ..interfaces import ISharingTargetEnumerableIntIdEntityContainer
+
+from ..enclosures import SimpleEnclosureMixin
 
 from .entity import Entity
 
-@interface.implementer(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
-class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matters for __setstate__
+@interface.implementer(IFriendsList, ISimpleEnclosureContainer)
+class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __setstate__
 	"""
 	A FriendsList or Circle belongs to a user and
 	contains references (strings or weakrefs to principals) to other
@@ -48,36 +60,36 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 	All mutations to the list must go through the APIs of this class.
 	"""
 
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
+	__metaclass__ = ModeledContentTypeAwareRegistryMetaclass
+
 	defaultGravatarType = 'wavatar'
 	__external_can_create__ = True
 
-	creator = None # Override poor choice from Entity
+	creator = None  # Override poor choice from Entity
 
 	def __init__(self, username=None, avatarURL=None):
-		super(FriendsList,self).__init__(username, avatarURL)
+		super(FriendsList, self).__init__(username, avatarURL)
 		# We store our friends in a sorted set of weak references
 		# It's unlikely to have many empty friendslist objects, so it makes sense
 		# to create it now
 		self._friends_wref_set = OOTreeSet()
 
-
-	def _on_added_friend( self, friend ):
+	def _on_added_friend(self, friend):
 		"""
 		Called with an Entity object when a new friend is added
 		"""
-		if callable( getattr( friend, 'accept_shared_data_from', None ) ):
-			friend.accept_shared_data_from( self.creator )
-			self.creator.follow( friend ) # TODO: used to be an instance check on SharingSource
+		if callable(getattr(friend, 'accept_shared_data_from', None)):
+			friend.accept_shared_data_from(self.creator)
+			self.creator.follow(friend)  # TODO: used to be an instance check on SharingSource
 
-	def __len__( self ):
+	def __len__(self):
 		i = 0
 		for _ in self:
 			i += 1
 		return i
 
-	def __nonzero__( self ):
-		return True # despite what we contain
+	def __nonzero__(self):
+		return True  # despite what we contain
 	__bool__ = __nonzero__
 
 	def __iter__(self):
@@ -92,11 +104,11 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 			if ent:
 				yield ent
 
-	def __contains__( self, entity ):
+	def __contains__(self, entity):
 		# We can very efficiently check the containment
 		# of the entity using the sorted set/wref
 		try:
-			return wref_interfaces.IWeakRef(entity, None) in self._friends_wref_set
+			return IWeakRef(entity, None) in self._friends_wref_set
 		except TypeError:
 			# "Object has default comparison"
 			return False
@@ -105,7 +117,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 		for wref in self._friends_wref_set:
 			yield wref.intid
 
-	def addFriend( self, friend ):
+	def addFriend(self, friend):
 		"""
 		Adding friends causes our creator to follow them.
 
@@ -125,20 +137,19 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 		if friend is None or friend is self or friend is self.creator:
 			return 0
 
-		if not isinstance( friend, Entity ):
+		if not isinstance(friend, Entity):
 			try:
-				friend = self.get_entity( friend, default=friend )
+				friend = self.get_entity(friend, default=friend)
 			except TypeError:
 				pass
 
 		result = False
-		if isinstance( friend, Entity ):
-			wref = wref_interfaces.IWeakRef(friend)
+		if isinstance(friend, Entity):
+			wref = IWeakRef(friend)
 			__traceback_info__ = friend, wref
-			result = self._friends_wref_set.add( wref )
+			result = self._friends_wref_set.add(wref)
 			if result:
-				self._on_added_friend( friend )
-
+				self._on_added_friend(friend)
 		return result
 
 	def _do_remove_friends(self, *friends):
@@ -159,7 +170,7 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 			return result
 		return 0
 
-	def removeFriend( self, friend ):
+	def removeFriend(self, friend):
 		"""
 		Remove the `friend` from this object.
 
@@ -183,18 +194,17 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 
 	@property
 	def _creator_username(self):
-		return self.creator.username if self.creator else 'Unknown' # for purposes of caching NTIID
+		return self.creator.username if self.creator else 'Unknown'  # for purposes of caching NTIID
 
-	@CachedProperty('_creator_username', 'username') # Actually those really shouldn't change, right?
+	@CachedProperty('_creator_username', 'username')  # Actually those really shouldn't change, right?
 	def NTIID(self):
-		return ntiids.make_ntiid( date=ntiids.DATE,
-								  provider=self._creator_username,
-								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
-								  specific=ntiids.escape_provider(self.username.lower()))
+		return make_ntiid(date=DATE,
+						  provider=self._creator_username,
+						  nttype=TYPE_MEETINGROOM_GROUP,
+						  specific=escape_provider(self.username.lower()))
 
-	containerId = property( lambda self: 'FriendsLists',
-							lambda self, nv: None ) # Ignore attempts to set
-
+	containerId = property(lambda self: 'FriendsLists',
+							lambda self, nv: None)  # Ignore attempts to set
 
 	def _update_friends_from_external(self, newFriends):
 		new_entities = []
@@ -202,35 +212,34 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 		for newFriend in newFriends:
 			# For the sake of unit tests, we need to do resolution here. but only of string
 			# names
-			if not isinstance( newFriend, Entity ):
+			if not isinstance(newFriend, Entity):
 				try:
-					newFriend = self.get_entity( newFriend, default=newFriend )
+					newFriend = self.get_entity(newFriend, default=newFriend)
 				except TypeError:
 					pass
 
 			# Add the Entity, if it is not our owner or ourself
 			# TODO: This is allowing nesting of FriendsLists, esp. DynamicFLs.
 			# Is that right? Does it work everywhere?
-			if isinstance( newFriend, Entity ) and newFriend != self.creator and newFriend is not self:
-				new_entities.append( newFriend )
+			if isinstance(newFriend, Entity) and newFriend != self.creator and newFriend is not self:
+				new_entities.append(newFriend)
 
 		result = 0
-		incoming_entities = OOTreeSet( new_entities )
+		incoming_entities = OOTreeSet(new_entities)
 		current_entities = OOTreeSet()
 		for x in self._friends_wref_set:
 			ent = x(allow_cached=False)
 			if ent is not None:
-				current_entities.add( ent )
+				current_entities.add(ent)
 			else:
 				# broken ref. So we are effectively mutating this entity
 				result += 1
 
-
 		# What's incoming that I don't have
-		missing_entities = OOBTree_difference( incoming_entities, current_entities )
+		missing_entities = OOBTree_difference(incoming_entities, current_entities)
 
 		# What's incoming that I /do/ have
-		overlap_entities = OOBTree_intersection( incoming_entities, current_entities )
+		overlap_entities = OOBTree_intersection(incoming_entities, current_entities)
 
 		# The weak refs we keep are non-persistent, so when we write out the tree set
 		# we're going to write out all of the data anyway for every bucket that we touch.
@@ -239,29 +248,28 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 		# if comparisons of the keys change over time.
 		self._friends_wref_set.clear()
 		for x in overlap_entities:
-			self._friends_wref_set.add(wref_interfaces.IWeakRef(x))
+			self._friends_wref_set.add(IWeakRef(x))
 
 		# Now actually Add the new ones so that we can fire the right events
 		for x in missing_entities:
-			result += self.addFriend( x )
+			result += self.addFriend(x)
 
 		# Any extras that we used to have but tossed count towards our total
-		result += len( OOBTree_difference( current_entities, incoming_entities ) )
+		result += len(OOBTree_difference(current_entities, incoming_entities))
 
 		if __debug__:
 			# Since we allow nesting of (D)FLs, we need a consistent
 			# comparison across all the types
 			key = operator.attrgetter('username')
-			in_sorted = list( sorted( incoming_entities, key=key ) )
-			me_sorted = list( sorted( self, key=key ) )
+			in_sorted = list(sorted(incoming_entities, key=key))
+			me_sorted = list(sorted(self, key=key))
 
 			__traceback_info__ = in_sorted, me_sorted
 			assert in_sorted == me_sorted
-
 		return result
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
-		super(FriendsList,self).updateFromExternalObject( parsed, *args, **kwargs )
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		super(FriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
 		updated = None
 		newFriends = parsed.pop('friends', None)
 		# Update, as usual, starts from scratch.
@@ -269,69 +277,67 @@ class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matter
 		# the realname, alias, etc
 		if newFriends is not None:
 			__traceback_info__ = newFriends
-			update_count = self._update_friends_from_external( newFriends )
+			update_count = self._update_friends_from_external(newFriends)
 			updated = update_count > 0
 			if updated:
 				notify(ContainerModifiedEvent(self))
 			else:
-				self.updateLastMod() # Sigh. Some general_purpose tests depend on this, regardless of whether any update got done.
-
+				self.updateLastMod()  # Sigh. Some general_purpose tests depend on this, regardless of whether any update got done.
 		if self.username is None:
-			self.username = parsed.get( 'Username' )
+			self.username = parsed.get('Username')
 		if self.username is None:
-			self.username = parsed.get( 'ID' )
+			self.username = parsed.get('ID')
 		return updated
 
 	@classmethod
-	def _resolve_friends( cls, dataserver, parsed, externalFriends ):
+	def _resolve_friends(cls, dataserver, parsed, externalFriends):
 		result = []
 		for externalFriend in externalFriends:
-			result.append( cls.get_entity( externalFriend, dataserver=dataserver, default=externalFriend ) )
+			result.append(cls.get_entity(externalFriend, dataserver=dataserver, default=externalFriend))
 		return result
 
 	__external_resolvers__ = {'friends': _resolve_friends }
 
-
-	def __eq__(self,other):
-		result = super(FriendsList,self).__eq__(other)
+	def __eq__(self, other):
+		result = super(FriendsList, self).__eq__(other)
 		if result is True:
 			try:
 				result = self.creator == other.creator and set(self) == set(other)
-			except (AttributeError,TypeError):
+			except (AttributeError, TypeError):
 				result = NotImplemented
 		return result
 
-	def __lt__(self,other):
-		result = super(FriendsList,self).__lt__(other)
+	def __lt__(self, other):
+		result = super(FriendsList, self).__lt__(other)
 		if result is True:
 			try:
 				result = self.creator < other.creator and sorted(self) < sorted(other)
-			except (AttributeError,TypeError):
+			except (AttributeError, TypeError):
 				result = NotImplemented
 		return result
 
-	def __hash__( self ):
-		return super(FriendsList,self).__hash__()
+	def __hash__(self):
+		return super(FriendsList, self).__hash__()
 
-@interface.implementer(nti_interfaces.IUsernameIterable)
-@component.adapter(nti_interfaces.IFriendsList)
+@interface.implementer(IUsernameIterable)
+@component.adapter(IFriendsList)
 class _FriendsListUsernameIterable(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	def __iter__(self):
 		return (x.username for x in self.context)
 
-@interface.implementer(nti_interfaces.ISharingTargetEnumerableIntIdEntityContainer)
-@component.adapter(nti_interfaces.IFriendsList)
+@interface.implementer(ISharingTargetEnumerableIntIdEntityContainer)
+@component.adapter(IFriendsList)
 class _FriendsListEntityIterable(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	def __iter__(self):
-		return self.context #(x for x in self.context)
+		return self.context  # (x for x in self.context)
 
 	def iter_usernames(self):
 		return (x.username for x in self.context)
@@ -345,10 +351,10 @@ class _FriendsListEntityIterable(object):
 	def iter_intids(self):
 		return self.context.iter_intids()
 
-from nti.dataserver.sharing import DynamicSharingTargetMixin
+from ..sharing import DynamicSharingTargetMixin
 
-@interface.implementer(nti_interfaces.IDynamicSharingTargetFriendsList)
-class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
+@interface.implementer(IDynamicSharingTargetFriendsList)
+class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matters
 	"""
 	Something of a hack to introduce a dynamic, but iterable
 	user-managed group/list.
@@ -373,8 +379,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	defaultGravatarType = 'retro'
 
 	__external_class_name__ = 'FriendsList'
-	#: Although this class itself cannot be directly created externally,
-	#: the factory may change this. See :meth:`_FriendsListMap.external_factory`
+	# : Although this class itself cannot be directly created externally,
+	# : the factory may change this. See :meth:`_FriendsListMap.external_factory`
 	__external_can_create__ = False
 
 	mime_type = 'application/vnd.nextthought.friendslist'
@@ -383,48 +389,48 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 	# An event (see sharing.py) handles when this object is deleted.
 	# If 'Communities' becomes editable, then a new event would need to be
 	# done to handle removing the friend in that case
-	def _on_added_friend( self, new_friend ):
+	def _on_added_friend(self, new_friend):
 		assert self.creator, "Must have creator"
-		super(DynamicFriendsList,self)._on_added_friend( new_friend )
-		new_friend.record_dynamic_membership( self )
-		new_friend.follow( self )
+		super(DynamicFriendsList, self)._on_added_friend(new_friend)
+		new_friend.record_dynamic_membership(self)
+		new_friend.follow(self)
 
-	def _update_friends_from_external( self, new_friends ):
-		old_friends = set( self )
-		result = super(DynamicFriendsList,self)._update_friends_from_external( new_friends )
-		new_friends = set( self )
+	def _update_friends_from_external(self, new_friends):
+		old_friends = set(self)
+		result = super(DynamicFriendsList, self)._update_friends_from_external(new_friends)
+		new_friends = set(self)
 
 		# New additions would have been added, we only have to take care of
 		# removals.
 		ex_friends = old_friends - new_friends
 		for ex_friend in ex_friends:
-			ex_friend.record_no_longer_dynamic_member( self )
-			ex_friend.stop_following( self )
+			ex_friend.record_no_longer_dynamic_member(self)
+			ex_friend.stop_following(self)
 		return result
 
 	def is_locked(self):
 		return self.Locked
 
-	def accept_shared_data_from( self, source ):
+	def accept_shared_data_from(self, source):
 		"""
 		Override to save space. Only the membership matters.
 		"""
 		return True
 
-	def ignore_shared_data_from( self, source ):
+	def ignore_shared_data_from(self, source):
 		"""
 		Override to save space. Only the membership matters.
 		"""
 		return False
 
-	def is_accepting_shared_data_from( self, source ):
+	def is_accepting_shared_data_from(self, source):
 		"""
 		In contrast to expectations, *anyone* can share with
 		a DFL whether or not they are a member. In this way, it
 		is just like a Community object.
 		"""
 		return True
-		#return source is self.creator or source in list(self)
+		# return source is self.creator or source in list(self)
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		locked = parsed.pop('Locked', None)
@@ -435,8 +441,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin,FriendsList): #order matters
 			self.updateLastMod()
 		return updated
 
-@interface.implementer(nti_interfaces.IUsernameIterable)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+@interface.implementer(IUsernameIterable)
+@component.adapter(IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 	"""
 	Iterates the contained friends, but also includes the creator
@@ -445,14 +451,14 @@ class _DynamicFriendsListUsernameIterable(_FriendsListUsernameIterable):
 	that the creator gets notices.
 	"""
 
-	def __iter__( self ):
+	def __iter__(self):
 		names = {x.username for x in self.context}
-		names.add( self.context.creator.username )
+		names.add(self.context.creator.username)
 		return iter(names)
 
 from zope.intid.interfaces import IIntIds
 
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+@component.adapter(IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	"""
 	Iterates the contained friends, but also includes the creator
@@ -464,20 +470,20 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 	# Note that our __len__, inherited from super,
 	# is inconsistent with what we iterate over.
 
-	def __iter__( self ):
+	def __iter__(self):
 		# Creators are not supposed to be a member of their own
 		# friends lists, so we can iterate directly without
 		# an intermediate set
-		for x in super(_DynamicFriendsListEntityIterable,self).__iter__():
+		for x in super(_DynamicFriendsListEntityIterable, self).__iter__():
 			yield x
 		if self.context.creator:
 			yield self.context.creator
 
 	def __contains__(self, other):
-		return super(_DynamicFriendsListEntityIterable,self).__contains__(other) or other == self.context.creator
+		return super(_DynamicFriendsListEntityIterable, self).__contains__(other) or other == self.context.creator
 
 	def iter_intids(self):
-		for x in super(_DynamicFriendsListEntityIterable,self).iter_intids():
+		for x in super(_DynamicFriendsListEntityIterable, self).iter_intids():
 			yield x
 		if self.context.creator:
 			cid = component.getUtility(IIntIds).queryId(self.context.creator)
@@ -485,25 +491,25 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 				yield cid
 
 	def iter_usernames(self):
-		for x in super(_DynamicFriendsListEntityIterable,self).iter_usernames():
+		for x in super(_DynamicFriendsListEntityIterable, self).iter_usernames():
 			yield x
 		if self.context.creator:
 			yield self.context.creator.username
 
-from nti.dataserver import datastructures
+from ..datastructures import AbstractCaseInsensitiveNamedLastModifiedBTreeContainer
 
-@interface.implementer(nti_interfaces.IFriendsListContainer)
-class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
+@interface.implementer(IFriendsListContainer)
+class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 	"""
 	Container class for :class:`FriendsList` objects.
 	"""
 
-	contained_type = nti_interfaces.IFriendsList
+	contained_type = IFriendsList
 	container_name = 'FriendsLists'
 	__name__ = container_name
 
 	@classmethod
-	def external_factory( cls, extDict ):
+	def external_factory(cls, extDict):
 		"""
 		Creates a new friends list.
 
@@ -517,16 +523,16 @@ class _FriendsListMap(datastructures.AbstractCaseInsensitiveNamedLastModifiedBTr
 			fashion. This would be easier if the UI wanted to/was able to distinguish the two
 			types of FLs.
 		"""
-		factory = FriendsList if not extDict.get( 'IsDynamicSharing' ) else DynamicFriendsList
-		result = factory( extDict['Username'] if 'Username' in extDict else extDict['ID'] )
+		factory = FriendsList if not extDict.get('IsDynamicSharing') else DynamicFriendsList
+		result = factory(extDict['Username'] if 'Username' in extDict else extDict['ID'])
 		# To allow these to be updated and add members during creation, they must be able
 		# to be weak ref'd, which means they must have intid
 		try:
-			component.getUtility( zc_intid.IIntIds ).register( result )
+			component.getUtility(zc_intid.IIntIds).register(result)
 		except component.ComponentLookupError:
-			pass # unittest cases
+			pass  # unittest cases
 		return result
 
-nti_interfaces.IFriendsList.setTaggedValue( nti_interfaces.IHTC_NEW_FACTORY,
-											Factory( _FriendsListMap.external_factory,
-													 interfaces=(nti_interfaces.IFriendsList,)) )
+IFriendsList.setTaggedValue(IHTC_NEW_FACTORY,
+							Factory(_FriendsListMap.external_factory,
+									interfaces=(IFriendsList,)))
