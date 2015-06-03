@@ -36,20 +36,17 @@ from nti.ntiids import ntiids
 
 from nti.wref import interfaces as wref_interfaces
 
-from .entity import Entity
-
-def _get_shared_dataserver(context=None,default=None):
-	if default != None:
-		return component.queryUtility( nti_interfaces.IDataserver, context=context, default=default )
-	return component.getUtility( nti_interfaces.IDataserver, context=context )
+from nti.dataserver.users.entity import Entity
 
 @interface.implementer(nti_interfaces.IFriendsList,nti_interfaces.ISimpleEnclosureContainer)
-class FriendsList(enclosures.SimpleEnclosureMixin,Entity): # Mixin order matters for __setstate__
-	""" A FriendsList or Circle belongs to a user and
+class FriendsList(enclosures.SimpleEnclosureMixin, Entity): # Mixin order matters for __setstate__
+	"""
+	A FriendsList or Circle belongs to a user and
 	contains references (strings or weakrefs to principals) to other
 	users. It has a name and ID, possibly a custom image.
 
-	All mutations to the list must go through the APIs of this class. """
+	All mutations to the list must go through the APIs of this class.
+	"""
 
 	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
 	defaultGravatarType = 'wavatar'

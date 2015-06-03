@@ -12,16 +12,17 @@ logger = __import__('logging').getLogger(__name__)
 import string
 import functools
 
+from zc import intid as zc_intid
+
 from zope import interface
 from zope import component
-from zope.event import notify
-
 from zope import lifecycleevent
-from zope.keyreference.interfaces import IKeyReference
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
-from zc import intid as zc_intid
+from zope.event import notify
+
+from zope.keyreference.interfaces import IKeyReference
 
 import transaction
 
@@ -44,20 +45,26 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.ntiids import ntiids
 
-from .interfaces import IRequireProfileUpdate
-from .interfaces import UsernameCannotBeBlank
-from .interfaces import WillDeleteEntityEvent
-from .interfaces import WillUpdateEntityEvent
-from .interfaces import IImmutableFriendlyNamed
-from .interfaces import WillCreateNewEntityEvent
-from .interfaces import WillUpdateNewEntityEvent
-from .interfaces import IUserProfileSchemaProvider
-from .interfaces import UsernameContainsIllegalChar
+from nti.dataserver.users.interfaces import IRequireProfileUpdate
+from nti.dataserver.users.interfaces import UsernameCannotBeBlank
+from nti.dataserver.users.interfaces import WillDeleteEntityEvent
+from nti.dataserver.users.interfaces import WillUpdateEntityEvent
+from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
+from nti.dataserver.users.interfaces import WillCreateNewEntityEvent
+from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
+from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
+from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
 
-def _get_shared_dataserver(context=None,default=None):
+def get_shared_dataserver(context=None, default=None):
 	if default != None:
 		return component.queryUtility(IDataserver, context=context, default=default)
 	return component.getUtility(IDataserver, context=context )
+
+def named_entity_ntiid(entity):
+	return ntiids.make_ntiid( date=ntiids.DATE,
+							  provider=SYSTEM_USER_NAME,
+							  nttype=entity.NTIID_TYPE,
+							  specific=ntiids.escape_provider(entity.username.lower()))
 
 @functools.total_ordering
 @interface.implementer( IEntity, ILastModified, IAttributeAnnotatable)
@@ -89,7 +96,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 					result = None
 				return result or default
 
-		dataserver = dataserver or _get_shared_dataserver(default=default)
+		dataserver = dataserver or get_shared_dataserver(default=default)
 		if dataserver is not default:
 			# Sometimes we get a dict sneaking in here when updating from external objects.
 			# The CaseInsensitiveLastModifiedBTreeFolder turns out to throw a TypeError
@@ -128,7 +135,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			but it will not have a valid ``__parent__``
 		"""
 
-		dataserver = dataserver or _get_shared_dataserver()
+		dataserver = dataserver or get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
 
 		preflight_only = kwargs.pop( 'preflight_only', False )
@@ -216,7 +223,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		:return: The user that was deleted.
 		"""
 
-		dataserver = dataserver or _get_shared_dataserver()
+		dataserver = dataserver or get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
 		user = root_users[username]
 
@@ -363,3 +370,12 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 	def __hash__(self):
 		return self._lower_username.__hash__()
+
+class _NoOpCm(object):
+
+	def __enter__( self ):
+		pass
+
+	def __exit__( self, t, v, tb ):
+		pass
+NOOPCM = _NoOpCm()
