@@ -65,13 +65,13 @@ def get_shared_dataserver(context=None, default=None):
 	return component.getUtility(IDataserver, context=context )
 
 def named_entity_ntiid(entity):
-	return make_ntiid(	date=DATE,
-						provider=SYSTEM_USER_NAME,
-						nttype=entity.NTIID_TYPE,
-						specific=escape_provider(entity.username.lower()))
+	return make_ntiid(date=DATE,
+					  provider=SYSTEM_USER_NAME,
+					  nttype=entity.NTIID_TYPE,
+					  specific=escape_provider(entity.username.lower()))
 
 @functools.total_ordering
-@interface.implementer( IEntity, ILastModified, IAttributeAnnotatable)
+@interface.implementer(IEntity, ILastModified, IAttributeAnnotatable)
 class Entity(PersistentCreatedModDateTrackingObject):
 	"""
 	The root for things that represent human-like objects.
@@ -317,7 +317,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		""" Our ID is a synonym for our username"""
 		return self.username
 
-	### Externalization ###
+	# Externalization 
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Notify we're about to update

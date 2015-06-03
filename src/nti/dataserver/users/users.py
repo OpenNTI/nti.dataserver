@@ -19,9 +19,6 @@ import warnings
 import functools
 import collections
 
-from persistent.list import PersistentList
-from persistent.persistence import Persistent
-
 import zope.intid
 
 from zope import interface
@@ -41,10 +38,12 @@ from zope.location.interfaces import ISublocations
 from zope.password.interfaces import IPasswordManager
 
 from ZODB.POSException import POSError
-
 from ZODB.interfaces import IConnection, IBroken
 
 from z3c.password import interfaces as pwd_interfaces
+
+from persistent.list import PersistentList
+from persistent.persistence import Persistent
 
 from nti.apns import interfaces as apns_interfaces
 
@@ -75,6 +74,8 @@ from nti.dataserver.interfaces import IDataserverTransactionRunner
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.entity import Entity
+from nti.dataserver.users.entity import get_shared_dataserver
+
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import _VERBOTEN_PASSWORDS
 from nti.dataserver.users.interfaces import InsecurePasswordIsForbidden
@@ -94,9 +95,7 @@ from nti.ntiids import ntiids
 
 from nti.zodb import minmax
 
-from .entity import get_shared_dataserver as _get_shared_dataserver
-
-# Starts as none, which matches what _get_shared_dataserver takes as its
+# Starts as none, which matches what get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use
 # query during evolutions.
 BROADCAST_DEFAULT_DS = None
@@ -1037,7 +1036,7 @@ def user_devicefeedback( msg ):
 		# TODO: Very inefficient
 		# Switch this to ZCatalog/repoze.catalog
 		if msg.timestamp < 0: return
-		datasvr = _get_shared_dataserver()
+		datasvr = get_shared_dataserver()
 		logger.debug( 'Searching for device %s', hexDeviceId )
 		for user in (u for u in datasvr.root['users'].itervalues() if isinstance(u,User)):
 			if hexDeviceId in user.devices:
