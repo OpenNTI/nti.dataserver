@@ -23,7 +23,6 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.location.location import LocationProxy
-from zope.location.interfaces import IContained as IZContained
 
 from zope.mimetype.interfaces import IContentTypeAware
 
@@ -261,6 +260,7 @@ ILastViewed = ILastViewed
 
 # BWC exports
 from nti.dataserver.core.interfaces import IContained
+
 IContained = IContained
 
 class IAnchoredRepresentation(IContained):
@@ -274,17 +274,9 @@ class IAnchoredRepresentation(IContained):
 							 title="The range of content to which this representation applies or is anchored.",
 							 description="The default is an empty, unplaced anchor.")
 
-class IContainerIterable(interface.Interface):
-	"""
-	Something that can enumerate the containers (collections)
-	it contains.
-	"""
-	# FIXME: This is ill-defined. One would expect it to be all containers,
-	# but the only implementation (users.User) actually limits it to named containers
-	def itercontainers():
-		"""
-		:return: An iteration across the containers held in this object.
-		"""
+# BWC exports
+from nti.dataserver.core.interfaces import IContainerIterable
+IContainerIterable = IContainerIterable
 
 # ## Changes related to content objects/users
 SC_SHARED = "Shared"
@@ -405,22 +397,31 @@ class IRole(IGroup):
 	Marker for a type of group intended to be used to grant permissions.
 	"""
 
+# BWC exports
+from zope.location.interfaces import IContained as IZContained
+IZContained = IZContained
+
 from zope.security.management import system_user
+system_user = system_user
 
-SYSTEM_USER_ID = system_user.id
-SYSTEM_USER_NAME = getattr(system_user,'title').lower()
+# BWC exports
+from nti.dataserver.core.interfaces import ME_USER_ID
+from nti.dataserver.core.interfaces import SYSTEM_USER_ID
+from nti.dataserver.core.interfaces import SYSTEM_USER_NAME
+from nti.dataserver.core.interfaces import RESERVED_USER_IDS
+from nti.dataserver.core.interfaces import EVERYONE_GROUP_NAME
+from nti.dataserver.core.interfaces import LOWER_RESERVED_USER_IDS
+from nti.dataserver.core.interfaces import AUTHENTICATED_GROUP_NAME
 
-ME_USER_ID = 'me'
-EVERYONE_GROUP_NAME = 'system.Everyone'
-AUTHENTICATED_GROUP_NAME = 'system.Authenticated'
+ME_USER_ID = ME_USER_ID
+SYSTEM_USER_ID = SYSTEM_USER_ID
+RESERVED_USER_IDS = RESERVED_USER_IDS
+EVERYONE_GROUP_NAME = EVERYONE_GROUP_NAME
+AUTHENTICATED_GROUP_NAME = AUTHENTICATED_GROUP_NAME
+LOWER_RESERVED_USER_IDS = _LOWER_RESERVED_USER_IDS = LOWER_RESERVED_USER_IDS
 
-RESERVED_USER_IDS = (SYSTEM_USER_ID, SYSTEM_USER_NAME, EVERYONE_GROUP_NAME,
-					 AUTHENTICATED_GROUP_NAME, ME_USER_ID)
-
-_LOWER_RESERVED_USER_IDS = tuple((x.lower() for x in RESERVED_USER_IDS))
-def username_is_reserved(username):
-	return username and (username.lower() in _LOWER_RESERVED_USER_IDS or \
-						 username.lower().startswith('system.'))
+from nti.dataserver.core.interfaces import username_is_reserved
+username_is_reserved = username_is_reserved
 
 # Exported policies
 from pyramid.interfaces import IAuthorizationPolicy
@@ -511,8 +512,8 @@ class IMutableGroupMember(IGroupMember):
 			to which the member now belongs.
 		"""
 
-def valid_entity_username(entity_name):
-	return not username_is_reserved(entity_name)
+# BWC exports
+from nti.dataserver.core.interfaces import valid_entity_username
 
 class ICreatedUsername(interface.Interface):
 	"""
@@ -543,74 +544,23 @@ class DefaultCreatedUsername(object):
 			return None
 
 # BWC exports
+from nti.dataserver.core.interfaces import IUser
+from nti.dataserver.core.interfaces import IEntity
+from nti.dataserver.core.interfaces import ICommunity
+from nti.dataserver.core.interfaces import IMissingEntity
+from nti.dataserver.core.interfaces import IDynamicSharingTarget
+from nti.dataserver.core.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.core.interfaces import IShouldHaveTraversablePath
+from nti.dataserver.core.interfaces import IUsernameSubstitutionPolicy
+
+IUser = IUser
+IEntity = IEntity
+ICommunity = ICommunity
+IMissingEntity = IMissingEntity
+IDynamicSharingTarget = IDynamicSharingTarget
+IUnscopedGlobalCommunity = IUnscopedGlobalCommunity
 IShouldHaveTraversablePath = IShouldHaveTraversablePath
-
-class IEntity(IIdentity, IZContained, IAnnotatable, IShouldHaveTraversablePath,
-			  INeverStoredInSharedStream):
-
-	username = DecodingValidTextLine(
-		title=u'The username',
-		constraint=valid_entity_username
-		)
-
-class IMissingEntity(IEntity):
-	"""
-	A proxy object for a missing, unresolved or unresolvable
-	entity.
-	"""
-
-class IDynamicSharingTarget(IEntity):
-	"""
-	These objects reverse the normal sharing; instead of being
-	pushed at sharing time to all the named targets, shared data
-	is instead *pulled* at read time by an individual member of this
-	entity. As such, these objects represent collections of members,
-	but not necessarily enumerable collections (e.g., communities
-	are not enumerable).
-	"""
-
-class ICommunity(IDynamicSharingTarget):
-
-	def iter_members():
-		"""
-		Return an iterable of the entity objects that are a member
-		of this community.
-		"""
-
-	def iter_member_usernames():
-		"""
-		Return an iterable of the usernames of members of this community.
-		"""
-
-class IUnscopedGlobalCommunity(ICommunity):
-	"""
-	A community that is visible across the entire "world". One special case of this
-	is the ``Everyone`` or :const:`EVERYONE_USER_NAME` community. These
-	are generally not considered when computing relationships or visibility between users.
-	"""
-
-class IUser(IEntity, IContainerIterable):
-	"""
-	A user of the system. Notice this is not an IPrincipal.
-	This interface needs finished and fleshed out.
-	"""
-	username = DecodingValidTextLine(
-		title=u'The username',
-		min_length=5)
-
-	# Note: z3c.password provides a PasswordField we could use here
-	# when we're sure what it does and that validation works out
-	password = interface.Attribute("The password")
-
-class IUsernameSubstitutionPolicy(interface.Interface):
-	"""
-	Marker interface to register an utility that replaces
-	the username value for another
-	"""
-
-	def replace(username):
-		pass
+IUsernameSubstitutionPolicy = IUsernameSubstitutionPolicy
 
 class IUserEvent(interface.interfaces.IObjectEvent):
 	"""
