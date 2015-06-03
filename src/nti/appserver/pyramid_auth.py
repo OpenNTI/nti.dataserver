@@ -47,9 +47,9 @@ from nti.app.authentication.who_apifactory import create_who_apifactory
 DEFAULT_COKIE_SECRET = '$Id$'
 
 def configure_authentication_policy(pyramid_config,
-									 secure_cookies=True,
-									 cookie_secret=DEFAULT_COKIE_SECRET,
-									 cookie_timeout=ONE_WEEK):
+									secure_cookies=True,
+									cookie_secret=DEFAULT_COKIE_SECRET,
+									cookie_timeout=ONE_WEEK):
 	"""
 	Create and configure the authentication policy and the things that go with it.
 
@@ -78,8 +78,8 @@ def configure_authentication_policy(pyramid_config,
 	user_token_creator = _UserViewTokenCreator(cookie_secret)
 	for view_name in token_allowed_views:
 		pyramid_config.registry.registerUtility(user_token_creator,
-												 IUserViewTokenCreator,
-												 name=view_name)
+												IUserViewTokenCreator,
+												name=view_name)
 	pyramid_config.registry.registerUtility(api_factory)
 
 @component.adapter(IUser)

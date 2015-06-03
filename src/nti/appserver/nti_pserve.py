@@ -9,7 +9,7 @@ thread locks. These are not compatible with gevent and eventually
 lead to a hang if we re-enter a greenlet that wants to acquire one
 of these locks while a previous greenlet already has it.
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -40,9 +40,9 @@ from pkg_resources import load_entry_point, get_distribution
 def main():
 	# We used to monkey patch some things in 1.3. We no longer
 	# do now that we expect to be on 1.5. Check this.
-	pyramid_dist = get_distribution( 'pyramid' )
+	pyramid_dist = get_distribution('pyramid')
 	if pyramid_dist and pyramid_dist.has_version():
-		assert pyramid_dist.version.startswith( '1.5' )
+		assert pyramid_dist.version.startswith('1.5')
 
 	sys.exit(
 		load_entry_point('pyramid', 'console_scripts', 'pserve')()

@@ -35,7 +35,6 @@ if gunicorn.version_info != (19,3,0):
 
 from gevent import getcurrent
 
-
 # Monkey patch the Gunicorn logger: Make the 'u' variable actually do
 # something, plus a custom atom (G) to get the greenlet id and pid
 # into the message, just like in normal log messages.
@@ -46,19 +45,17 @@ from gunicorn import glogging
 glogging_Logger_atoms = glogging.Logger.atoms
 def _glogging_atoms(self, resp, req, environ, request_time):
 	atoms = glogging_Logger_atoms(self,resp,req,environ,request_time)
-
 	atoms['u'] = environ.get('REMOTE_USER', '-')
 	atoms['G'] = "[%d:%d]" % (id(getcurrent()), os.getpid())
 	return atoms
-
 glogging.Logger.atoms = _glogging_atoms
 
 import gevent
 import gevent.socket
 
-from .application_server import WebSocketServer
-
 from paste.deploy import loadwsgi
+
+from .application_server import WebSocketServer
 
 class _DummyApp(object):
 	global_conf = None
@@ -123,7 +120,6 @@ class _PyWSGIWebSocketHandler(WebSocketServer.handler_class,ggevent.PyWSGIHandle
 		self.requestline = requestline
 		if self.__request.proxy_protocol(requestline):
 			self.requestline = self.read_requestline()
-
 		return super(_PyWSGIWebSocketHandler,self).read_request(self.requestline)
 
 	def get_environ(self):
@@ -193,7 +189,6 @@ class GeventApplicationWorker(ggevent.GeventPyWSGIWorker):
 
 		from nti.monkey import webob_cookie_escaping_patch_on_import
 		webob_cookie_escaping_patch_on_import.patch()
-
 
 	def __init__( self, *args, **kwargs ):
 		# These objects are instantiated by the master process (arbiter)
@@ -296,7 +291,6 @@ class _ServerFactory(object):
 
 	def __init__( self, worker ):
 		self.worker = worker
-
 
 	def __call__( self,
 				  listen_on_socket,
