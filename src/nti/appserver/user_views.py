@@ -22,7 +22,7 @@ from nti.links.externalization import render_link
 
 from .httpexceptions import HTTPFound
 
-@view_config( route_name='objects.generic.traversal',
+@view_config(route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context='nti.dataserver.interfaces.IUser',
 			  request_method='GET',
