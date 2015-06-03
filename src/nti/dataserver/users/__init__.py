@@ -20,7 +20,7 @@ from .users import _FriendsListMap, _DevicesMap, _TranscriptsMap
 
 from .users import onChange
 from .users import user_devicefeedback
-from .users import _get_shared_dataserver
+from .users import get_shared_dataserver as _get_shared_dataserver
 
 from nti.dataserver.activitystream_change import Change
 
