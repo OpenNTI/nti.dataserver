@@ -149,12 +149,12 @@ def install_main( context ):
 		sess_storage = session_storage.OwnerBasedAnnotationSessionServiceStorage()
 		lsm.registerUtility( sess_storage, provided=ISessionServiceStorage )
 
-
 		install_user_catalog( dataserver_folder, intids )
 		install_metadata_catalog( dataserver_folder, intids )
 
 		everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
 		assert intids.getId(everyone) is not None
+		assert everyone.username is not None
 
 		install_flag_storage( dataserver_folder )
 
