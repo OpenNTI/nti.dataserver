@@ -30,14 +30,16 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUserBlacklistedStorage
 
+from nti.dataserver.users import User
+
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.users import User
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
+
+from nti.dataserver.users.utils import remove_broken_objects
 from nti.dataserver.users.utils import reindex_email_verification
-from nti.dataserver.users.users_utils import remove_broken_objects
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
@@ -50,11 +52,11 @@ ITEMS = StandardExternalFields.ITEMS
 
 @view_config(name='GetUserBlacklist')
 @view_config(name='get_user_black_list')
-@view_defaults(	route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_NTI_ADMIN,
-				request_method='GET',
-				context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
+			   request_method='GET',
+			   context=IDataserverFolder)
 class GetUserBlacklistView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -75,11 +77,11 @@ class GetUserBlacklistView(AbstractAuthenticatedView):
 
 @view_config(name='RemoveFromUserBlacklist')
 @view_config(name='remove_from_user_black_list')
-@view_defaults(	route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_NTI_ADMIN,
-				request_method='POST',
-				context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
+			   request_method='POST',
+			   context=IDataserverFolder)
 class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 							   	  ModeledContentUploadRequestUtilsMixin):
 
@@ -88,12 +90,12 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 	"""
 	def __call__(self):
 		values = CaseInsensitiveDict(self.readInput())
-		username = values.get( 'username' ) or values.get('user')
+		username = values.get('username') or values.get('user')
 		if not username:
 			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
 
 		user_blacklist = component.getUtility(IUserBlacklistedStorage)
-		did_remove = user_blacklist.remove_blacklist_for_user( username )
+		did_remove = user_blacklist.remove_blacklist_for_user(username)
 
 		result = LocatedExternalDict()
 		result.__name__ = self.request.view_name
@@ -104,11 +106,11 @@ class RemoveFromUserBlacklistView(AbstractAuthenticatedView,
 
 @view_config(name='RemoveUserBrokenObjects')
 @view_config(name='remove_user_broken_objects')
-@view_defaults(	route_name='objects.generic.traversal',
-				renderer='rest',
-				permission=nauth.ACT_NTI_ADMIN,
-				request_method='POST',
-				context=IDataserverFolder)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN,
+			   request_method='POST',
+			   context=IDataserverFolder)
 class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 							  ModeledContentUploadRequestUtilsMixin):
 
@@ -135,7 +137,7 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 		shared = values.get('shared') or values.get('include_shared')
 		shared = is_true(shared)
 
-		dynamic =  values.get('dynamic') or \
+		dynamic = values.get('dynamic') or \
 				   values.get('dynamic_friends') or \
 				   values.get('include_dynamic') or \
 				   values.get('include_dynamic_friends')
@@ -153,11 +155,11 @@ class RemoveUserBrokenObjects(AbstractAuthenticatedView,
 
 @view_config(name='GetEmailVerificationToken')
 @view_config(name='get_email_verification_token')
-@view_defaults(	route_name='objects.generic.traversal',
-				request_method='GET',
-				context=IDataserverFolder,
-				renderer='rest',
-				permission=nauth.ACT_NTI_ADMIN)
+@view_defaults(route_name='objects.generic.traversal',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN)
 class GetEmailVerificationTokenView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -185,11 +187,11 @@ class GetEmailVerificationTokenView(AbstractAuthenticatedView):
 
 @view_config(name='ForceUserEmailVerification')
 @view_config(name='force_user_email_verification')
-@view_defaults(	route_name='objects.generic.traversal',
-				request_method='POST',
-				context=IDataserverFolder,
-				renderer='rest',
-				permission=nauth.ACT_NTI_ADMIN)
+@view_defaults(route_name='objects.generic.traversal',
+			   request_method='POST',
+			   context=IDataserverFolder,
+			   renderer='rest',
+			   permission=nauth.ACT_NTI_ADMIN)
 class ForceEmailVerificationView(AbstractAuthenticatedView,
 								 ModeledContentUploadRequestUtilsMixin):
 
@@ -215,14 +217,14 @@ class ForceEmailVerificationView(AbstractAuthenticatedView,
 
 		profile.email = email
 		profile.email_verified = True
-		verified = reindex_email_verification(user) # XXX: This should use events
+		verified = reindex_email_verification(user)  # XXX: This should use events
 		assert verified
 
 		return hexc.HTTPNoContent()
 
 @view_config(name='RemoveUser')
 @view_config(name='remove_user')
-@view_defaults(	route_name='objects.generic.traversal',
+@view_defaults(route_name='objects.generic.traversal',
 			 	renderer='rest',
 				permission=nauth.ACT_NTI_ADMIN,
 				request_method='POST',
