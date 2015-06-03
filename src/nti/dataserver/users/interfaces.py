@@ -514,7 +514,6 @@ class IUserProfileSchemaProvider(Interface):
 
 	This is used during the externalization process to determine
 	what sort of data we should require or provide.
-
 	"""
 
 	def getSchema():
@@ -534,6 +533,22 @@ class FriendlyNamedSchemaProvider(object):
 
 	def getSchema(self):
 		return IFriendlyNamed
+
+class ICommunityProfile(IAvatarURL):
+	
+	backgroundURL = URI(# may be data:
+		title="URL of your background picture",
+		required=False )
+
+	about = ValidTextLine(
+		title='About',
+		description="A short description of a community",
+		max_length=500,
+		required=False,
+		constraint=checkCannotBeBlank)
+
+ICommunityProfile['avatarURL']._type = (str,unicode) # relax
+ICommunityProfile['backgroundURL']._type = (str,unicode) # relax
 
 class BlacklistedUsernameError(InvalidValue):
 	"""
