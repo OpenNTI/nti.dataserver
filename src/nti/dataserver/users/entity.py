@@ -24,36 +24,40 @@ from zope.event import notify
 
 from zope.keyreference.interfaces import IKeyReference
 
-import transaction
-
 from ZODB.interfaces import IConnection
 from ZODB.POSException import ConnectionStateError
 
-from nti.common.property import CachedProperty
+import transaction
 
-from nti.dataserver.interfaces import IEntity
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IShardLayout
-from nti.dataserver.interfaces import ILastModified
-from nti.dataserver.interfaces import INewUserPlacer
-from nti.dataserver.interfaces import SYSTEM_USER_NAME
+from nti.common.property import CachedProperty
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.internalization import update_from_external_object
 
-from nti.ntiids import ntiids
+from nti.ntiids.ntiids import DATE
+from nti.ntiids.ntiids import make_ntiid
+from nti.ntiids.ntiids import escape_provider
+from nti.ntiids.ntiids import is_valid_ntiid_string
+from nti.ntiids.ntiids import find_object_with_ntiid
 
-from nti.dataserver.users.interfaces import IRequireProfileUpdate
-from nti.dataserver.users.interfaces import UsernameCannotBeBlank
-from nti.dataserver.users.interfaces import WillDeleteEntityEvent
-from nti.dataserver.users.interfaces import WillUpdateEntityEvent
-from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
-from nti.dataserver.users.interfaces import WillCreateNewEntityEvent
-from nti.dataserver.users.interfaces import WillUpdateNewEntityEvent
-from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
-from nti.dataserver.users.interfaces import UsernameContainsIllegalChar
+from ..interfaces import IEntity
+from ..interfaces import IDataserver
+from ..interfaces import IShardLayout
+from ..interfaces import ILastModified
+from ..interfaces import INewUserPlacer
+from ..interfaces import SYSTEM_USER_NAME
+
+from .interfaces import IRequireProfileUpdate
+from .interfaces import UsernameCannotBeBlank
+from .interfaces import WillDeleteEntityEvent
+from .interfaces import WillUpdateEntityEvent
+from .interfaces import IImmutableFriendlyNamed
+from .interfaces import WillCreateNewEntityEvent
+from .interfaces import WillUpdateNewEntityEvent
+from .interfaces import IUserProfileSchemaProvider
+from .interfaces import UsernameContainsIllegalChar
 
 def get_shared_dataserver(context=None, default=None):
 	if default != None:
@@ -61,10 +65,10 @@ def get_shared_dataserver(context=None, default=None):
 	return component.getUtility(IDataserver, context=context )
 
 def named_entity_ntiid(entity):
-	return ntiids.make_ntiid( date=ntiids.DATE,
-							  provider=SYSTEM_USER_NAME,
-							  nttype=entity.NTIID_TYPE,
-							  specific=ntiids.escape_provider(entity.username.lower()))
+	return make_ntiid(	date=DATE,
+						provider=SYSTEM_USER_NAME,
+						nttype=entity.NTIID_TYPE,
+						specific=escape_provider(entity.username.lower()))
 
 @functools.total_ordering
 @interface.implementer( IEntity, ILastModified, IAttributeAnnotatable)
@@ -89,8 +93,8 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		if username is None:
 			return default
 
-		if ntiids.is_valid_ntiid_string( username ):
-			result = ntiids.find_object_with_ntiid( username )
+		if is_valid_ntiid_string( username ):
+			result = find_object_with_ntiid( username )
 			if result is not None:
 				if not isinstance(result,Entity):
 					result = None
@@ -113,12 +117,12 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		raises a :class:`KeyError`. You handle the transaction.
 
 		The newly-created user will be placed in a shard through use of a
-		:class:`nti.dataserver.interfaces.INewUserPlacer`. If the unnamed (default)
+		:class:`..interfaces.INewUserPlacer`. If the unnamed (default)
 		utility is available, it will be used. Otherwise, the utility named
 		``default`` (which is configured by this package) will be used.
 
-		This method fires :class:`nti.dataserver.users.interfaces.IWillUpdateNewEntityEvent`,
-		:class:`nti.dataserver.users.interfaces.IWillCreateNewEntityEvent`,
+		This method fires :class:`.interfaces.IWillUpdateNewEntityEvent`,
+		:class:`.interfaces.IWillCreateNewEntityEvent`,
 		:class:`zope.lifecycleevent.IObjectCreatedEvent` and 
 		:class:`zope.lifecycleevent.IObjectAddedEvent`, in that order.
 
@@ -350,7 +354,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			# so we can stop providing the update interface
 			interface.noLongerProvides( self, IRequireProfileUpdate )
 
-	### Comparisons and Hashing ###
+	# Comparisons and Hashing 
 
 	@CachedProperty
 	def _lower_username(self):
