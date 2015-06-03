@@ -16,11 +16,12 @@ import itertools
 import functools
 from numbers import Number
 
-from zope import interface
 from zope import component
-from zope.intid.interfaces import IIntIds
+from zope import interface
 
 from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 
@@ -92,7 +93,6 @@ def _TRUE(x):
 
 def _lists_and_dicts_to_iterables( lists_and_dicts ):
 	result = []
-
 	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	lastMod = 0
 	for list_or_dict in lists_and_dicts:
@@ -202,7 +202,8 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 	interface.alsoProvides( result, result_iface )
 	return result
 
-def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_iface=IUGDExternalCollection, ignore_broken=False ):
+def lists_and_dicts_to_ext_collection(lists_and_dicts, predicate=_TRUE,
+									  result_iface=IUGDExternalCollection, ignore_broken=False ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
@@ -211,7 +212,10 @@ def lists_and_dicts_to_ext_collection( lists_and_dicts, predicate=_TRUE, result_
 	:param callable predicate: Objects will only make it into the final 'Items' list
 		if this function returns true for all of them. Defaults to a True filter.
 	"""
-	result = _lists_and_dicts_to_ext_iterables( lists_and_dicts, predicate, result_iface, ignore_broken )
+	result = _lists_and_dicts_to_ext_iterables(lists_and_dicts, 
+											   predicate, 
+											   result_iface,
+											   ignore_broken )
 	items = []
 
 	for to_iter in result['Iterables']:
@@ -242,7 +246,8 @@ def _reference_list_recursive_like_count( proxy ):
 
 def _reference_list_recursive_max_last_modified( proxy ):
 	try:
-		return max( _reference_list_objects( proxy ), key=to_standard_external_last_modified_time )
+		return max(_reference_list_objects( proxy ),
+				   key=to_standard_external_last_modified_time )
 	except ValueError: #Empty list
 		return 0
 
@@ -1263,7 +1268,6 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		top_level['Collection'] = collection
 		return top_level
 
-
 	def _getAllObjects( self, user, ntiid ):
 		pageGet = _UGDView( self.request )
 		streamGet = _RecursiveUGDStreamView( self.request )
@@ -1333,6 +1337,7 @@ class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context, mapping, extra_elements=extra_elements )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
+
 from nti.dataserver.datastructures import LastModifiedCopyingUserList
 
 @view_config( route_name='objects.generic.traversal',
@@ -1368,7 +1373,6 @@ def replies_view(request):
 		referents.updateLastModIfGreater( child.lastModified )
 
 	objs = (referents,)
-
 
 	# Not all the params make sense, but batching does
 	view = _UGDView( request, the_user, root_note.containerId )
