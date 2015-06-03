@@ -16,15 +16,16 @@ import nameparser
 
 from zope import component
 from zope import interface
-from zope.location.interfaces import ILocation
+
 from zope.annotation import factory as afactory
+
+from zope.location.interfaces import ILocation
+
 from zope.schema.fieldproperty import FieldPropertyStoredThroughField
 
 from persistent import Persistent
 
 from nti.common.property import CachedProperty
-
-from nti.zodb import urlproperty
 
 from ..interfaces import IUser
 from ..interfaces import IEntity
@@ -33,11 +34,12 @@ from ..interfaces import IPrincipal
 from .interfaces import IUserProfile
 from .interfaces import IFriendlyNamed
 from .interfaces import IEmailAddressable
-from .interfaces import IAvatarURLProvider
 from .interfaces import ICompleteUserProfile
 from .interfaces import IRestrictedUserProfile
 from .interfaces import IEmailRequiredUserProfile
 from .interfaces import IRestrictedUserProfileWithContactEmail
+
+from .utils import AvatarUrlProperty as _AvatarUrlProperty
 
 class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
 	"""
@@ -135,27 +137,6 @@ class FriendlyNamed(Persistent):
 
 	def get_searchable_realname_parts(self):
 		return self._searchable_realname_parts
-
-class _AvatarUrlProperty(urlproperty.UrlProperty):
-	"""
-	Adds a default value if nothing is set for the instance.
-
-	Requires either a data: url or a complete URL, not a host-relative URL;
-	host-relative URLs are ignored (as an attempt to update-in-place the same
-	externalized URL).
-	"""
-
-	ignore_url_with_missing_host = True
-
-	# TODO: Should we be scaling this now?
-	# TODO: Should we be enforcing constraints on this? Like max size,
-	# ensuring it really is an image, etc? With arbitrary image uploading, we risk
-	# being used as a dumping ground for illegal/copyright infringing material
-	def __get__( self, instance, owner ):
-		result = super(_AvatarUrlProperty,self).__get__( instance, owner )
-		if not result:
-			result = IAvatarURLProvider(instance.context).avatarURL
-		return result
 
 @component.adapter(IUser)
 @interface.implementer(IUserProfile)
