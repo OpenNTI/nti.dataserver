@@ -389,7 +389,6 @@ class _EntityACLProvider(object):
 	def __acl__( self ):
 		"""
 		The ACL for the entity.
-
 		"""
 		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self )])
 		for viewer in self._viewers():
@@ -398,6 +397,28 @@ class _EntityACLProvider(object):
 		if self._do_get_deny_all():
 			# Everyone else can do nothing
 			acl.append( _ace_denying_all( _EntityACLProvider ) )
+		return acl
+
+@interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(nti_interfaces.ICommunity)
+class _CommunityACLProvider(_EntityACLProvider):
+	"""
+	ACL provider for class:`.interfaces.ICommunity` objects. The
+	entity itself is allowed all permissions.
+	"""
+
+	@Lazy
+	def __acl__( self ):
+		"""
+		The ACL for the community.
+		"""
+		acl = _ACL([ace_allowing(self._entity.username, nti_interfaces.ALL_PERMISSIONS, self)])
+		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self))
+		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, self))
+		for viewer in self._viewers():
+			acl.append( ace_allowing( viewer, authorization.ACT_READ, self) )
+		if self._do_get_deny_all():
+			acl.append( _ace_denying_all( _CommunityACLProvider ) )
 		return acl
 
 @component.adapter(nti_interfaces.IUser)
