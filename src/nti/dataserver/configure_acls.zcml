@@ -48,6 +48,7 @@
 	<adapter factory=".authorization_acl._UserACLProvider" />
 	<adapter factory=".authorization_acl._EntityACLProvider" />
 	<adapter factory=".authorization_acl._CreatedACLProvider" />
+	<adapter factory=".authorization_acl._CommunityACLProvider" />
 	<adapter factory=".authorization_acl._FriendsListACLProvider" />
 	<adapter factory=".authorization_acl._EnclosedContentACLProvider" />
 	<adapter factory=".authorization_acl._DataserverFolderACLProvider" />
