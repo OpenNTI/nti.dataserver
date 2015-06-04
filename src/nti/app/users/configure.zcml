@@ -19,5 +19,10 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest" />
+					 
+	<subscriber factory=".decorators._CommunityLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.ICommunity
+					 pyramid.interfaces.IRequest" />
 
 </configure>
