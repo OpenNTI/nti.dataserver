@@ -67,7 +67,7 @@ class CommunityMembersView(AbstractAuthenticatedView):
 		items = result[ITEMS] = []
 		hidden = IHiddenMembership(community)
 		for member in community:
-			if member is hidden and member != self.remoteUser:
+			if member in hidden and member != self.remoteUser:
 				continue
 			ext_obj = toExternalObject(member, name=('personal-summary'
 									   if member == self.remoteUser
