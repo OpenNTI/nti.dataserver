@@ -53,7 +53,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		assert_that(app_iter, has_length(4))
 		for t in app_iter:
 			assert_that(t.split(','), has_length(7))
-			
+
 	@WithSharedApplicationMockDS
 	def test_inactive_accounts(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -91,7 +91,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
 			u = self._create_user(username='ichigo@nt.com',
-								  external_value={u'email':u'ichigo@nt.com', 
+								  external_value={u'email':u'ichigo@nt.com',
 												  u'opt_in_email_communication':True})
 			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
@@ -124,7 +124,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
 			u = self._create_user(username='ichigo@nt.com',
-								  external_value={u'email':u'ichigo@nt.com', 
+								  external_value={u'email':u'ichigo@nt.com',
 												  u'email_verified':True})
 			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
@@ -145,7 +145,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_profile_info(self):
 		with mock_dataserver.mock_db_trans(self.ds):
-			u = self._create_user(external_value={u'email':u"nti@nt.com", 
+			u = self._create_user(external_value={u'email':u"nti@nt.com",
 												  u'opt_in_email_communication':True})
 			interface.alsoProvides(u, ICoppaUserWithAgreementUpgraded)
 
@@ -169,7 +169,6 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		with mock_dataserver.mock_db_trans(self.ds):
 			u = self._create_user(username='ichigo@nt.com',
 							  	  external_value={u'email':u"ichigo@nt.com", u'alias':'foo'})
-
 			assert_that(IFriendlyNamed(u), has_property('alias', 'foo'))
 
 		post_data = {'username':'ichigo@nt.com', 'alias':'Ichigo'}

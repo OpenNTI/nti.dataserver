@@ -33,54 +33,54 @@ class TestUsers(ApplicationLayerTest):
 	@WithSharedApplicationMockDSWithChanges
 	def test_user_blacklist(self):
 		username = 'lazarus'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			# Create user
-			dataserver = component.getUtility( IDataserver )
+			dataserver = component.getUtility(IDataserver)
 			ds_folder = dataserver.dataserver_folder
 
 			blacklist_folder = ds_folder['++etc++username_blacklist']
-			assert_that( blacklist_folder, has_length( 0 ) )
-			user_one = User.create_user( username=username )
+			assert_that(blacklist_folder, has_length(0))
+			user_one = User.create_user(username=username)
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Remove user
-			lifecycleevent.removed( user_one )
+			lifecycleevent.removed(user_one)
 
-			dataserver = component.getUtility( IDataserver )
+			dataserver = component.getUtility(IDataserver)
 			ds_folder = dataserver.dataserver_folder
 
 			blacklist_folder = ds_folder['++etc++username_blacklist']
-			assert_that( blacklist_folder._storage, only_contains( username ) )
+			assert_that(blacklist_folder._storage, only_contains(username))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Same name
-			assert_that( calling( User.create_user ).with_args( username=username ),
-						raises( BlacklistedUsernameError ))
+			assert_that(calling(User.create_user).with_args(username=username),
+						raises(BlacklistedUsernameError))
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Now case insensitive
-			assert_that( calling( User.create_user ).with_args( username=username.upper() ),
-						raises( BlacklistedUsernameError ))
+			assert_that(calling(User.create_user).with_args(username=username.upper()),
+						raises(BlacklistedUsernameError))
 
 	@WithSharedApplicationMockDSWithChanges
 	def test_recreate(self):
 		username = 'lazarus'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			# Create user
-			user_one = User.create_user( username=username )
-			interface.alsoProvides( user_one, IRecreatableUser )
+			user_one = User.create_user(username=username)
+			interface.alsoProvides(user_one, IRecreatableUser)
 
 		with mock_dataserver.mock_db_trans(self.ds):
 			# Remove user that is not blacklisted
 			User.delete_user(username)
 
-			dataserver = component.getUtility( IDataserver )
+			dataserver = component.getUtility(IDataserver)
 			ds_folder = dataserver.dataserver_folder
 			blacklist_folder = ds_folder['++etc++username_blacklist']
-			assert_that( blacklist_folder, has_length( 0 ) )
+			assert_that(blacklist_folder, has_length(0))
 
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			# Recreate user, no problem
-			dataserver = component.getUtility( IDataserver )
+			dataserver = component.getUtility(IDataserver)
 			ds_folder = dataserver.dataserver_folder
-			user_one = User.create_user( username=username )
+			user_one = User.create_user(username=username)

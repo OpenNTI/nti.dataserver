@@ -32,11 +32,11 @@ class TestMailViewFunctions(mock_dataserver.DataserverLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_generate_mail_verification_token(self):
-		user = User.create_user( self.ds, username='ichigo', password='temp001')
+		user = User.create_user(self.ds, username='ichigo', password='temp001')
 
 		IUserProfile(user).email = "ichigo@bleach.org"
 
-		signature, token = generate_mail_verification_pair(user, secret_key='zangetsu')
+		signature, _ = generate_mail_verification_pair(user, secret_key='zangetsu')
 		# Note that we do not test the exact return values of signature and token.
 		# They are dependent upon hash values, which may change from version
 		# to version or impl to impl, or even run-to-run if the PYTHONHASHSEED
@@ -58,7 +58,7 @@ class TestMailViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_with_token(self):
 		email = username = u'ichigo@bleach.org'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.create_user(username=username, password='temp001',
 						 	 		external_value={ u'email':email})
 
@@ -77,7 +77,7 @@ class TestMailViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_view(self):
 		email = username = u'ichigo@bleach.org'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.create_user(username=username, password='temp001',
 						 	 		external_value={ u'email':email})
 
@@ -97,7 +97,7 @@ class TestMailViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_verify_user_email_invalid_view(self):
 		email = username = u'ichigo@bleach.org'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			user = User.create_user(username=username, password='temp001',
 						 	 		external_value={ u'email': email})
 
@@ -125,22 +125,22 @@ class TestMailViews(ApplicationLayerTest):
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_email_verification_link(self):
 		username = 'ichigo'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			User.create_user(username=username, password='temp001',
 						 	 external_value={ u'email':u"ichigo@bleach.org"})
 
 		extra_environ = self._make_extra_environ(user=username)
 		path = '/dataserver2/users/ichigo'
 		res = self.testapp.get(path, extra_environ=extra_environ, status=200)
-		assert_that( res.json_body,
-					 has_entries( 'Links', has_item( has_entry('rel', 'RequestEmailVerification' ) ) ))
-		assert_that( res.json_body,
-					 has_entries( 'Links', has_item( has_entry('rel', 'VerifyEmailWithToken' ) ) ))
+		assert_that(res.json_body,
+					 has_entries('Links', has_item(has_entry('rel', 'RequestEmailVerification'))))
+		assert_that(res.json_body,
+					 has_entries('Links', has_item(has_entry('rel', 'VerifyEmailWithToken'))))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_request_email_verification(self):
 		username = 'ichigo'
-		with mock_dataserver.mock_db_trans( self.ds ):
+		with mock_dataserver.mock_db_trans(self.ds):
 			User.create_user(username=username, password='temp001',
 						 	 external_value={ u'email':u"ichigo@bleach.org"})
 
