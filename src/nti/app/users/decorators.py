@@ -77,7 +77,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			link = Link(context, rel="members")
 			_links.append(link)
 
-		if self.remoteUser in IHiddenMembership(context):
+		if self.remoteUser in IHiddenMembership(context, None) or ():
 			link = Link(context, rel="unhide")
 		else:
 			link = Link(context, rel="hide")
