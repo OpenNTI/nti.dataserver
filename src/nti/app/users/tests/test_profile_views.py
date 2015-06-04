@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from hamcrest.library.number.ordering_comparison import greater_than_or_equal_to
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -175,7 +176,7 @@ class TestApplicationUserProfileViews(ApplicationLayerTest):
 		path = '/dataserver2/@@user_profile_update'
 		res = self.testapp.post_json(path, post_data, status=200)
 
-		assert_that(res.json_body, has_entry('Allowed Fields', has_length(12)))
+		assert_that(res.json_body, has_entry('Allowed Fields', has_length(greater_than_or_equal_to(12))))
 		assert_that(res.json_body, has_entry('External', has_entry('alias', 'Ichigo')))
 		assert_that(res.json_body, has_entry('Profile', u'CompleteUserProfile'))
 		assert_that(res.json_body, has_entry('Summary', has_entry('alias', 'Ichigo')))
