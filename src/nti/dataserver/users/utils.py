@@ -182,13 +182,14 @@ class AvatarUrlProperty(UrlProperty):
 	"""
 
 	ignore_url_with_missing_host = True
-
+	avatar_provider_interface = IAvatarURLProvider
+	
 	# TODO: Should we be scaling this now?
 	# TODO: Should we be enforcing constraints on this? Like max size,
 	# ensuring it really is an image, etc? With arbitrary image uploading, we risk
 	# being used as a dumping ground for illegal/copyright infringing material
 	def __get__(self, instance, owner):
 		result = super(AvatarUrlProperty, self).__get__(instance, owner)
-		if not result:
-			result = IAvatarURLProvider(instance.context).avatarURL
+		if not result and self.avatar_provider_interface is not None:
+			result = self.avatar_provider_interface(instance.context).avatarURL
 		return result
