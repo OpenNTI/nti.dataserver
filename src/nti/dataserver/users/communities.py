@@ -238,7 +238,7 @@ class HiddenMembership(OOTreeSet):
 	hide = add
 	
 	def remove(self, entity):
-		wref = IWeakRef(entity)
+		wref = IWeakRef(entity, None)
 		if wref in self:
 			super(HiddenMembership, self).remove(wref)
 			return True
@@ -246,6 +246,9 @@ class HiddenMembership(OOTreeSet):
 	unhide = remove
 	
 	def __contains__(self, x):
-		return super(HiddenMembership, self).__contains__(x)
+		try:
+			return super(HiddenMembership, self).__contains__(IWeakRef(x, None))
+		except TypeError:
+			return False
 
 _HiddenMembershipFactory = an_factory(HiddenMembership)
