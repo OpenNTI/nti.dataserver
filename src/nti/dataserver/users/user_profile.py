@@ -155,6 +155,11 @@ class UserProfile(FriendlyNamed):
 
 	__getitem__ = avatarURL.make_getitem()
 
+	_backgroundURL = None
+	backgroundURL = _AvatarUrlProperty( data_name="backgroundURL",
+										url_attr_name='_backgroundURL',
+										file_attr_name='_backgroundURL' )
+	
 	username = property( lambda self: self.context.username )
 
 @component.adapter(IUserProfile)
