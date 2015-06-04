@@ -146,8 +146,10 @@ class InsecurePasswordIsForbidden(InvalidPassword):
 		if value:
 			self.value = value
 
+resource_stream = getattr(pkg_resources, 'resource_stream')
+
 def _load_resource(n, f):
-	stream = pkg_resources.resource_stream( n, f )
+	stream = resource_stream( n, f )
 	reader = codecs.getreader('utf-8')(stream)
 	domains = set()
 	for line in reader:
@@ -304,6 +306,15 @@ class IAvatarURL(Interface):
 
 IAvatarURL['avatarURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
 
+class IProfileAvatarURL(IAvatarURL):
+	
+	backgroundURL = URI(# may be data:
+		title="URL of your background picture",
+		description="If not provided, one will be generated for you.",
+		required=False )
+
+IProfileAvatarURL['backgroundURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+
 class IAvatarChoices(Interface):
 	"""
 	Something that can provide choices for possible avatar URLs.
@@ -366,7 +377,7 @@ class IRequireProfileUpdate(Interface):
 
 IFriendlyNamed['realname'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
 
-class IUserProfile(IFriendlyNamed, IAvatarURL):
+class IUserProfile(IFriendlyNamed, IProfileAvatarURL):
 	"""
 	Base class that user profiles should extend.
 	"""
