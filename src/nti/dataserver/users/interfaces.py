@@ -604,6 +604,25 @@ def validateAccept(value):
 		return False
 	return True
 
+# Membership.
+
+class IHiddenMembership(interface.Interface):
+	
+	def hide(entity):
+		"""
+		hide the memebership for the specified entity
+		"""
+	
+	def unhide(self, entity):
+		"""
+		unhide the memebership for the specified entity
+		"""
+	
+	def __contains__(entity):
+		"""
+		check if membership of the specifed entity is hidden
+		"""
+
 # Suggested contacts.
 
 class ISuggestedContactRankingPolicy(Interface):

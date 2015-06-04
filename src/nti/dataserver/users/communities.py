@@ -15,10 +15,13 @@ from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
+from zope.annotation.factory import factory as an_factory
 
 from zope.cachedescriptors.property import cachedIn
 
 from zope.location.interfaces import ISublocations
+
+from BTrees.OOBTree import OOTreeSet
 
 from nti.common.property import Lazy
 
@@ -42,6 +45,8 @@ from ..sharing import _iterable_of_entities_from_named_lazy_set_of_wrefs
 from .entity import Entity
 from .entity import NOOPCM as _NOOPCM
 from .entity import named_entity_ntiid
+
+from .interfaces import IHiddenMembership
 
 @interface.implementer(ICommunity, ISublocations)
 class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matters
@@ -222,3 +227,25 @@ class CommunityEntityContainer(object):
 			return entity in self.context
 		except AttributeError:
 			return False
+
+@component.adapter(ICommunity)
+@interface.implementer(IHiddenMembership)
+class HiddenMembership(OOTreeSet):
+	
+	def add(self, entity):
+		wref = IWeakRef(entity)
+		super(HiddenMembership, self).add(wref)
+	hide = add
+	
+	def remove(self, entity):
+		wref = IWeakRef(entity)
+		if wref in self:
+			super(HiddenMembership, self).remove(wref)
+			return True
+		return False
+	unhide = remove
+	
+	def __contains__(self, x):
+		return super(HiddenMembership, self).__contains__(x)
+
+_HiddenMembershipFactory = an_factory(HiddenMembership)
