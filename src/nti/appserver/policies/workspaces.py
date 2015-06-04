@@ -24,6 +24,8 @@ from nti.externalization import externalization
 
 from nti.links.links import Link
 
+from nti.zodb import isBroken
+
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
 class _UserBoardCollection(object):
@@ -46,7 +48,7 @@ class _UserBoardCollection(object):
 		site = component.queryUtility(ICommunitySitePolicyUserEventListener )
 		community_name = getattr(site, 'COM_USERNAME', None)
 		community = Entity.get_entity(community_name)
-		if community is not None:
+		if community is not None and not isBroken(community):
 			# We just want the user's community board.
 			board = ICommunityBoard( community )
 			board_ntiid = externalization.to_external_ntiid_oid( board )
