@@ -22,7 +22,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 def _write_to_file(name, output):
 	pass
 
-class TestEmailVerificationTemplate( ApplicationLayerTest ):
+class TestEmailVerificationTemplate(ApplicationLayerTest):
 
 	def test_render(self):
 		args = {'profile': 'profile',
@@ -33,11 +33,11 @@ class TestEmailVerificationTemplate( ApplicationLayerTest ):
 				'informal_username': 'Josh',
 				'today': isodate.date_isoformat(datetime.datetime.now()) }
 
-		package = dottedname.resolve( 'nti.app.users.templates' )
+		package = dottedname.resolve('nti.app.users.templates')
 
-		result = render( "email_verification_email.pt",
+		result = render("email_verification_email.pt",
 						 args,
 						 request=self.request,
-						 package=package )
-		_write_to_file( 'email_verification.html', result )
-		assert_that( result, not_none() )
+						 package=package)
+		_write_to_file('email_verification.html', result)
+		assert_that(result, not_none())

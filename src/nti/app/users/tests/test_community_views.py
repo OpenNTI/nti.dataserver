@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.dataserver.users.interfaces import IHiddenMembership
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_in
+from hamcrest import is_not
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+
+from nti.dataserver.users import User
+from nti.dataserver.users import Community
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+class TestCommunityViews(ApplicationLayerTest):
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_join_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			Community.create_community(username='bleach')
+
+		path = '/dataserver2/users/bleach/join'
+		self.testapp.post(path, status=204)
+		with mock_dataserver.mock_db_trans(self.ds):
+			community = Community.get_community(username='bleach')
+			user = User.get_user(self.default_username)
+			assert_that(user, is_in(community))
+			
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_leave_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.create_community(username='bleach')
+			user = User.get_user(self.default_username)
+			user.record_dynamic_membership(c)
+
+		path = '/dataserver2/users/bleach/leave'
+		self.testapp.post(path, status=204)
+		with mock_dataserver.mock_db_trans(self.ds):
+			community = Community.get_community(username='bleach')
+			user = User.get_user(self.default_username)
+			assert_that(user, is_not(is_in(community)))
+			
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_membership_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.create_community(username='bleach')
+			user = User.get_user(self.default_username)
+			user.record_dynamic_membership(c)
+			user = self._create_user("ichigo", "temp001")
+			user.record_dynamic_membership(c)
+
+		path = '/dataserver2/users/bleach/members'
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		
+		res = self.testapp.get(	path, 
+					  			extra_environ=self._make_extra_environ(user="ichigo"),
+					  			status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		
+		hide_path = '/dataserver2/users/bleach/hide'
+		self.testapp.post(hide_path, status=204)
+		
+		res = self.testapp.get(	path, 
+					  			extra_environ=self._make_extra_environ(user="ichigo"),
+					  			status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			community = Community.get_community(username='bleach')
+			user = User.get_user(self.default_username)
+			hidden = IHiddenMembership(community)
+			assert_that(user, is_in(hidden))
+
+		unhide_path = '/dataserver2/users/bleach/unhide'
+		self.testapp.post(unhide_path, status=204)
+		
+		res = self.testapp.get(	path, 
+					  			extra_environ=self._make_extra_environ(user="ichigo"),
+					  			status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))

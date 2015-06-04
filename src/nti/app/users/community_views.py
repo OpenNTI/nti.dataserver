@@ -33,30 +33,30 @@ class JoinCommunityView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		user = self.remoteUser
-		comm = self.request.context
-		if user not in comm:
-			user.record_dynamic_membership(comm)
-			user.follow(comm)
+		community = self.request.context
+		if user not in community:
+			user.record_dynamic_membership(community)
+			user.follow(community)
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
-			 name='join',
-			 request_method='leave',
+			 name='leave',
+			 request_method='POST',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
 class LeaveCommunityView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		user = self.remoteUser
-		comm = self.request.context
-		if user in comm:
-			user.record_no_longer_dynamic_member(comm)
-			user.stop_following(comm)
+		community = self.request.context
+		if user in community:
+			user.record_no_longer_dynamic_member(community)
+			user.stop_following(community)
 		return hexc.HTTPNoContent()
 
 @view_config(route_name='objects.generic.traversal',
-			 name='join',
-			 request_method='members',
+			 name='members',
+			 request_method='GET',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
 class CommunityMembersView(AbstractAuthenticatedView):
@@ -74,3 +74,33 @@ class CommunityMembersView(AbstractAuthenticatedView):
 									   else 'summary'))
 			items.append(ext_obj)
 		return result
+
+@view_config(route_name='objects.generic.traversal',
+			 name='hide',
+			 request_method='POST',
+			 context=ICommunity,
+			 permission=nauth.ACT_READ)
+class HideCommunityMembershipView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		user = self.remoteUser
+		community = self.request.context
+		hidden = IHiddenMembership(community)
+		if user in community and user not in hidden:
+			hidden.hide(user)
+		return hexc.HTTPNoContent()
+
+@view_config(route_name='objects.generic.traversal',
+			 name='unhide',
+			 request_method='POST',
+			 context=ICommunity,
+			 permission=nauth.ACT_READ)
+class UnhideCommunityMembershipView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		user = self.remoteUser
+		community = self.request.context
+		hidden = IHiddenMembership(community)
+		if user in hidden:
+			hidden.unhide(user)
+		return hexc.HTTPNoContent()
