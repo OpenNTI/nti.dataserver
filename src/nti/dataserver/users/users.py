@@ -217,8 +217,6 @@ if os.getenv('DATASERVER_TESTING_PLAIN_TEXT_PWDS') == 'True':
 from nti.common.property import Lazy
 
 from .communities import Everyone
-from .communities import Community
-Community = Community # BWC
 
 from .entity import NOOPCM as _NOOPCM
 
