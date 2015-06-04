@@ -178,9 +178,9 @@
 	<subscriber handler=".application._sync_host_policies" />
 	<subscriber handler=".application._sync_global_library" />
 
+	<subscriber handler=".account_creation_views.link_removed_on_user" />
 	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
-	<subscriber handler=".account_creation_views.link_removed_on_user" />
 
 	<!-- Logon -->
 	<include package="." file="configure_logon.zcml" />
@@ -194,6 +194,11 @@
 
 	<adapter factory="._adapters.UserExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.CommunityExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.ICommunity pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
