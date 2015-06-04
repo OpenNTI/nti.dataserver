@@ -46,8 +46,11 @@ from .entity import named_entity_ntiid
 @interface.implementer(ICommunity, ISublocations)
 class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matters
 	
-	mime_type = 'application/vnd.nextthought.community'
+	mimeType = mime_type = 'application/vnd.nextthought.community'
 
+	public = False
+	joinable = False
+	
 	@classmethod
 	def create_community(cls, dataserver=None, **kwargs):
 		"""
