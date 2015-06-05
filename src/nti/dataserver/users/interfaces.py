@@ -306,14 +306,17 @@ class IAvatarURL(Interface):
 
 IAvatarURL['avatarURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
 
-class IProfileAvatarURL(IAvatarURL):
+class IBackgroundURL(Interface):
 	
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
 
-IProfileAvatarURL['backgroundURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+IBackgroundURL['backgroundURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+
+class IProfileAvatarURL(IAvatarURL, IBackgroundURL):
+	pass
 
 class IAvatarChoices(Interface):
 	"""
