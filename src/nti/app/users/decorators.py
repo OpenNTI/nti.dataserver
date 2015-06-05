@@ -73,7 +73,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				link = Link(context, rel="leave")
 			_links.append(link)
 		
-		if context.public or in_community:
+		if context.public:
 			link = Link(context, rel="members")
 			_links.append(link)
 
