@@ -11,8 +11,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
 import random
 import urlparse
+from io import BytesIO
 
 from zope import interface
 from zope import component
@@ -26,6 +28,7 @@ from ..interfaces import ICoppaUser
 
 from .interfaces import IAvatarURL
 from .interfaces import IAvatarChoices
+from .interfaces import IFriendlyNamed
 from .interfaces import IAvatarURLProvider
 from .interfaces import ICompleteUserProfile
 
@@ -200,3 +203,49 @@ class GravatarComputedAvatarURLChoices(object):
 		choices = StringComputedAvatarURLChoices(fake_addr).get_choices()
 		choices[0] = self.avatarURL
 		return choices
+
+# background
+
+from PIL import Image, ImageFont, ImageDraw
+
+TEXT_SIZE = 40
+TEXT_COLORS = ( (0, 0, 0), )
+
+BACKGROUND_SIZE = (60,50)
+BACKGROUND_COLORS = ( (255, 0, 0, 0), )
+
+def get_image_font(size=TEXT_SIZE):
+	path = os.path.join(os.path.dirname(__file__), 'fonts/arial_bold.ttf')
+	result = ImageFont.truetype(path, size)
+	return result
+
+def get_background_color(entity):
+	username = getattr(entity,'username', entity)
+	idx = hash(username) % len(BACKGROUND_COLORS)
+	return BACKGROUND_COLORS[idx]
+
+def get_text_color(entity):
+	username = getattr(entity,'username', entity)
+	idx = hash(username) % len(TEXT_COLORS)
+	return TEXT_COLORS[idx]
+
+def get_background_image(entity, size=BACKGROUND_SIZE):
+	parts = IFriendlyNamed(entity).get_searchable_realname_parts
+	if not parts:
+		parts = entity.username[0:2]
+	else:
+		parts = '%s%s' % (parts[0], parts[1] if len(parts) > 1 else u'')
+	parts = parts.upper()
+	
+	font = get_image_font()
+	tcolor = get_text_color(entity)
+	bcolor = get_background_color(entity)
+	img = Image.new('RGBA', size, bcolor)
+	d = ImageDraw.Draw(img)
+	d.text((0,0), parts, font=font, fill=tcolor)
+	
+	result = BytesIO()
+	img.save(result, "PNG")
+	result.flush()
+	result.seek(0)
+	return result
