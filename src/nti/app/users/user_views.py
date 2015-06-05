@@ -35,6 +35,11 @@ from nti.dataserver.users.avatar_urls import get_background_image_name
 
 from nti.links.externalization import render_link
 
+def _tx_string(s):
+	if s is not None and isinstance(s, unicode):
+		s = s.encode('utf-8')
+	return s
+
 def _image_view(context, request, func):
 	"""
 	Redirects to the location of the actual image.
@@ -91,7 +96,8 @@ class BackgroundsView(AbstractAuthenticatedView):
 	
 	def _get_background_image(self):
 		result = None
-		key = "/background_images/%s" % get_background_image_name(self.remoteUser)
+		name = get_background_image_name(self.remoteUser)
+		key = str("/background_images/%s" % _tx_string(name))
 		mc = component.queryUtility(IMemcacheClient)
 		if mc is not None:
 			result = mc.get(key)
@@ -100,6 +106,7 @@ class BackgroundsView(AbstractAuthenticatedView):
 			result = get_background_image(self.remoteUser)
 			if mc is not None:
 				mc.set(key, result)
+				result.seek(0)
 		return result
 
 	def __call__(self):
