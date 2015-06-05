@@ -226,6 +226,10 @@ from .friends_lists import _FriendsListMap # BWC
 import zope.deferredimport
 zope.deferredimport.initialize()
 
+zope.deferredimport.deprecated(
+	"Import from nti.dataserver.users.communities.Community instead",
+	Community='nti.dataserver.users.communities:Community')
+
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.dataserver.users.friends_lists",
 	"nti.dataserver.users.friends_lists",
