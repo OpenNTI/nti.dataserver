@@ -620,6 +620,11 @@ def validateAccept(value):
 
 # Membership.
 
+class IDisallowHiddenMembership(interface.Interface):
+	"""
+	marker interface to disallow hidden memberships
+	"""
+
 class IHiddenMembership(interface.Interface):
 	
 	def hide(entity):
