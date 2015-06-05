@@ -275,4 +275,4 @@ class GeneratedBackgroundURL(object):
 	def __init__(self, context):
 		name = get_background_image_name(context).lower()
 		name = urllib.quote("%s.png" % name)
-		self.backgroundURL = "/dataserver2/@@background_view?" % name
+		self.backgroundURL = "/dataserver2/backgrounds/" % name

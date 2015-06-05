@@ -88,7 +88,6 @@ def file_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-
 	return _do_view(request, download.Display)
 
 from nti.dataserver.users.interfaces import IAvatarURL
@@ -150,7 +149,6 @@ def file_download_view(request):
 
 	Some ACL in the parent hierarchy must make this readable.
 	"""
-
 	return _do_view(request, download.Download)
 
 @view_config(route_name='objects.generic.traversal',
