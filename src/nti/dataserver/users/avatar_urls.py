@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import random
+import urllib
 import urlparse
 from io import BytesIO
 
@@ -27,10 +28,12 @@ from ..interfaces import IEntity
 from ..interfaces import ICoppaUser
 
 from .interfaces import IAvatarURL
+from .interfaces import IBackgroundURL
 from .interfaces import IAvatarChoices
 from .interfaces import IFriendlyNamed
 from .interfaces import IAvatarURLProvider
 from .interfaces import ICompleteUserProfile
+from .interfaces import IBackgroundURLProvider
 
 @component.adapter(IEntity)
 @interface.implementer(IAvatarURLProvider, IAvatarURL)
@@ -229,14 +232,16 @@ def get_text_color(entity):
 	idx = hash(username) % len(TEXT_COLORS)
 	return TEXT_COLORS[idx]
 
-def get_background_image(entity, size=BACKGROUND_SIZE):
+def get_background_image_name(entity):
 	parts = IFriendlyNamed(entity).get_searchable_realname_parts
 	if not parts:
 		parts = entity.username[0:2]
 	else:
 		parts = '%s%s' % (parts[0], parts[1] if len(parts) > 1 else u'')
-	parts = parts.upper()
+	return parts
 	
+def get_background_image(entity, size=BACKGROUND_SIZE):
+	parts = get_background_image_name(entity).upper()	
 	font = get_image_font()
 	tcolor = get_text_color(entity)
 	bcolor = get_background_color(entity)
@@ -249,3 +254,25 @@ def get_background_image(entity, size=BACKGROUND_SIZE):
 	result.flush()
 	result.seek(0)
 	return result
+
+@interface.implementer(IBackgroundURLProvider, IBackgroundURL)
+class _FixedBackgroundWrapper(object):
+
+	def __init__(self, context):
+		self.backgroundURL = getattr(context, '_backgroundURL')
+
+@component.adapter(IEntity)
+@interface.implementer(IBackgroundURLProvider, IBackgroundURL)
+def BackgroundURLFactory(entity):
+	if getattr(entity, '_backgroundURL', None):
+		return _FixedAvatarWrapper(entity)
+	return component.queryAdapter(entity, IBackgroundURLProvider, name="generated")
+
+@component.adapter(IEntity)
+@interface.implementer(IBackgroundURLProvider, IBackgroundURL)
+class GeneratedBackgroundURL(object):
+
+	def __init__(self, context):
+		name = get_background_image_name(context).lower()
+		name = urllib.quote("%s.png" % name)
+		self.backgroundURL = "/dataserver2/@@background_view?" % name

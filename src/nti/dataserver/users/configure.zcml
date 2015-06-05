@@ -130,6 +130,19 @@
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.IUser" />
+			 
+	<!-- Background URLs -->
+	<!-- Default -->
+	<adapter factory=".avatar_urls.BackgroundURLFactory"
+			 provides=".interfaces.IBackgroundURLProvider" />
+
+	<adapter factory=".avatar_urls.BackgroundURLFactory"
+			 provides=".interfaces.IBackgroundURL" />
+
+	<!-- Named fallback -->
+	<adapter factory=".avatar_urls.GeneratedBackgroundURL"
+			 provides=".interfaces.IBackgroundURLProvider"
+			 name="generated" />
 
 	<!-- User profile info -->
 	<!-- Default -->
