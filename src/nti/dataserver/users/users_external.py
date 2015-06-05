@@ -90,6 +90,9 @@ class _AbstractEntitySummaryExternalObject(object):
 		self.entity = entity
 
 	_DECORATE = False
+	_AVATAR_URL = True
+	_BACKGROUND_URL = True
+	
 	def _do_toExternalObject(self, **kwargs):
 		"""
 		Inspects the context entity and produces its external summary form.
@@ -108,7 +111,10 @@ class _AbstractEntitySummaryExternalObject(object):
 		else:
 			extDict['ID'] = extDict['Username'] = entity.NTIID
 
-		extDict['avatarURL'] = _avatar_url(entity)
+		if self._AVATAR_URL:
+			extDict['avatarURL'] = _avatar_url(entity)
+		if self._BACKGROUND_URL:
+			extDict['avatarURL'] = _background_url(entity)
 
 		names = IFriendlyNamed(entity)
 		extDict['realname'] = names.realname or entity.username
@@ -139,7 +145,10 @@ class _EntitySummaryExternalObject(_AbstractEntitySummaryExternalObject):
 
 @component.adapter(IFriendsList)
 class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
+
 	_DECORATE = True
+	_BACKGROUND_URL = False
+	
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['IsDynamicSharing'] = IDynamicSharingTarget.providedBy(self.entity)
@@ -147,6 +156,8 @@ class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
 
 @component.adapter(IDynamicSharingTargetFriendsList)
 class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
+
+	_BACKGROUND_URL = True
 
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_DynamicFriendListSummaryExternalObject, self)._do_toExternalObject(**kwargs)
@@ -156,7 +167,9 @@ class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
 	def _do_toExternalObject(self, **kwargs):
-		""" :return: The value of :meth:`toSummaryExternalObject` """
+		""" 
+		:return: The value of :meth:`toSummaryExternalObject` 
+		"""
 		result = super(_EntityExternalObject, self)._do_toExternalObject(**kwargs)
 		# restore last modified since we are the true representation
 		result['Last Modified'] = getattr(self.entity, 'lastModified', 0)
@@ -165,6 +178,8 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 @component.adapter(IFriendsList)
 class _FriendsListExternalObject(_EntityExternalObject):
 
+	_BACKGROUND_URL = False
+	
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_FriendsListExternalObject, self)._do_toExternalObject(**kwargs)
 		theFriends = []
@@ -207,6 +222,8 @@ class _FriendsListExternalObject(_EntityExternalObject):
 @component.adapter(IDynamicSharingTargetFriendsList)
 class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 
+	_BACKGROUND_URL = True
+
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_DynamicFriendsListExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['Locked'] = self.entity.Locked
@@ -247,6 +264,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		:return: the externalization intended to be sent when requested by this user.
 		"""
 		from nti.dataserver._Dataserver import InappropriateSiteError  # circular imports
+
 		extDict = super(_UserPersonalSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		def _externalize_subordinates(l, name='summary'):
 			result = []
@@ -339,11 +357,12 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 # externalizer
 from pyramid.threadlocal import get_current_request
 
-def _named_externalizer(user):
+def _named_externalizer(user, req=None):
 	# XXX This doesn't exactly belong at this layer. Come up with
 	# a better way to do this switching.
-	req = get_current_request()
-	if req is None or req.authenticated_userid is None or req.authenticated_userid != user.username:
+	req = get_current_request() if req is None else req
+	if 	req is None or req.authenticated_userid is None or \
+		req.authenticated_userid != user.username:
 		return 'summary'
 	return 'personal-summary'
 
