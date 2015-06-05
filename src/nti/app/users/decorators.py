@@ -20,6 +20,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IDisallowHiddenMembership
 
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -73,12 +74,13 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				link = Link(context, rel="leave")
 			_links.append(link)
 		
-		if context.public:
+		if context.public or in_community:
 			link = Link(context, rel="members")
 			_links.append(link)
 
-		if self.remoteUser in IHiddenMembership(context, None) or ():
-			link = Link(context, rel="unhide")
-		else:
-			link = Link(context, rel="hide")
-		_links.append(link)
+		if not IDisallowHiddenMembership.providedBy(context):
+			if self.remoteUser in IHiddenMembership(context, None) or ():
+				link = Link(context, rel="unhide")
+			else:
+				link = Link(context, rel="hide")
+			_links.append(link)
