@@ -233,7 +233,7 @@ def get_text_color(entity):
 	return TEXT_COLORS[idx]
 
 def get_background_image_name(entity):
-	parts = IFriendlyNamed(entity).get_searchable_realname_parts
+	parts = IFriendlyNamed(entity).get_searchable_realname_parts()
 	if not parts:
 		parts = entity.username[0:2]
 	else:
