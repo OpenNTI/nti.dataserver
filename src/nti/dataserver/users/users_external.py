@@ -44,6 +44,7 @@ from nti.zodb import urlproperty
 from .interfaces import IAvatarURL
 from .interfaces import IUserProfile
 from .interfaces import IAvatarChoices
+from .interfaces import IBackgroundURL
 from .interfaces import IFriendlyNamed
 from .interfaces import TAG_HIDDEN_IN_UI
 from .interfaces import IRestrictedUserProfile
@@ -76,6 +77,10 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 
 def _avatar_url(entity):
 	result = _image_url(entity, IAvatarURL, 'avatarURL', '@@avatar_view')
+	return result
+
+def _background_url(entity):
+	result = _image_url(entity, IBackgroundURL, 'backgroundURL', '@@background_view')
 	return result
 
 @interface.implementer(IExternalObject)
@@ -282,19 +287,26 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# DynamicMemberships/Communities are not currently editable,
 		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
 		# (proper events could handle the latter)
-		extDict['Communities'] = _externalize_subordinates(
-									self.entity.xxx_hack_filter_non_memberships(self.entity.dynamic_memberships,
-																				 log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization",
-																				 the_logger=logger),
+		log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
+		extDict['Communities'] = \
+					_externalize_subordinates(
+						self.entity.xxx_hack_filter_non_memberships(self.entity.dynamic_memberships,
+																 	log_msg=log_msg,
+																	the_logger=logger),
 									name='')  # Deprecated
 		extDict['DynamicMemberships'] = extDict['Communities']
 
 		# Following is writable
-		extDict['following'] = _externalize_subordinates(self.entity.xxx_hack_filter_non_memberships(self.entity.entities_followed))
+		extDict['following'] = \
+					_externalize_subordinates(
+						self.entity.xxx_hack_filter_non_memberships(self.entity.entities_followed))
+
 		# as is ignoring and accepting
 		extDict['ignoring'] = _externalize_subordinates(self.entity.entities_ignoring_shared_data_from)
 		extDict['accepting'] = _externalize_subordinates(self.entity.entities_accepting_shared_data_from)
+
 		extDict['AvatarURLChoices'] = component.getAdapter(self.entity, IAvatarChoices).get_choices()
+
 		extDict['Links'] = self._replace_or_add_edit_link_with_self(extDict.get('Links', ()))
 		extDict['Last Modified'] = getattr(self.entity, 'lastModified', 0)
 
@@ -308,7 +320,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			# Save the value from the profile, or if the profile doesn't have it yet,
 			# use the default (if there is one). Otherwise its None
 			extDict[name] = field.query(prof, getattr(field, 'default', None))
-
 		return extDict
 
 	def _replace_or_add_edit_link_with_self(self, _links):

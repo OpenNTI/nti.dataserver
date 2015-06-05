@@ -294,6 +294,17 @@ class IAvatarURLProvider(Interface):
 		description="If not provided, one will be generated for you.",
 		required=False )
 
+class IBackgroundURLProvider(Interface):
+	"""
+	Something that can provide a background URL. This is separate
+	from the profile hierarchy to allow delegation of adapters.
+	"""
+
+	backgroundURL = URI(# may be data:
+		title="URL of your background picture",
+		description="If not provided, one will be generated for you.",
+		required=False )
+	
 class IAvatarURL(Interface):
 	"""
 	Something that features a display URL.
