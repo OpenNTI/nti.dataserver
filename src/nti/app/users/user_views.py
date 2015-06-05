@@ -15,23 +15,22 @@ import six
 import time
 
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.users.users_external import _avatar_url
 
 from nti.links.externalization import render_link
 
-from .httpexceptions import HTTPFound
-
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context='nti.dataserver.interfaces.IUser',
-			  request_method='GET',
-			  name='avatar')
+			 renderer='rest',
+			 context=IUser,
+			 request_method='GET',
+			 name='avatar')
 def avatar_view(context, request):
 	"""
 	Redirects to the location of the actual avatar.
 	"""
-
 	# Use a 302 response to tell clients where to go,
 	# and let them cache it for awhile (a 303 is completely
 	# uncachable). We expect that this method will not be
@@ -48,7 +47,7 @@ def avatar_view(context, request):
 		# we're sending direct OID links, does it still work? Or will it 404?
 		url_or_link = render_link(url_or_link)
 
-	result = HTTPFound(url_or_link)
+	result = hexc.HTTPFound(url_or_link)
 	# Let it be cached for a bit. gravatar uses 5 minutes
 	result.cache_control.max_age = 300
 	result.expires = time.time() + 300
