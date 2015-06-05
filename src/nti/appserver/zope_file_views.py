@@ -16,15 +16,14 @@ from . import MessageFactory as _
 from zope.browserresource.interfaces import IFileResource
 
 from zope.file import download
-
 from zope.file.interfaces import IFile
 
 from zope.publisher.interfaces.browser import IBrowserRequest
 
-from ZODB.POSException import POSKeyError
-
 from pyramid.view import view_config
 from pyramid.security import NO_PERMISSION_REQUIRED
+
+from ZODB.POSException import POSKeyError
 
 try:
 	from plone.namedfile import NamedImage
@@ -38,7 +37,7 @@ from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.common import dataurl
 
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserverFolder
 
 from . import httpexceptions as hexc
 
@@ -93,16 +92,13 @@ def file_view(request):
 	return _do_view(request, download.Display)
 
 from nti.dataserver.users.interfaces import IAvatarURL
+from nti.dataserver.users.interfaces import IBackgroundURL
 
-@view_config(route_name='objects.generic.traversal',
-			 context=IFile,
-			 request_method='GET',
-			 name="avatar_view")
-def avatar_file_view(request):
+def _image_file_view(request, image_interface, attr_name):
 	"""
 	Like :func:`file_view`, but does not require the
 	user to be authenticated. We take care to use this only
-	for the user's avatar URL.
+	for the user's avatar/background URL.
 	"""
 	# Alternately, we could use a custom path traverser through the
 	# actual user object and in that way use a new object with a custom
@@ -110,15 +106,32 @@ def avatar_file_view(request):
 	# (it depends on how the file is stored) but has slightly fewer
 	# moving pieces.
 	the_file = request.context
-	if not IAvatarURL.providedBy(the_file.__parent__):
+	if not image_interface.providedBy(the_file.__parent__):
 		raise hexc.HTTPForbidden()
 
-	with_url = IAvatarURL(the_file.__parent__)
+	with_url = image_interface(the_file.__parent__)
 	url_property = type(with_url).avatarURL
 	if url_property.get_file(with_url) is not the_file:
 		raise hexc.HTTPForbidden()
 
-	return _do_view(request, download.Display)
+	result = _do_view(request, download.Display)
+	return result
+
+@view_config(route_name='objects.generic.traversal',
+			 context=IFile,
+			 request_method='GET',
+			 name="avatar_view")
+def avatar_file_view(request):
+	result = _image_file_view(request, IAvatarURL, 'avatarURL')
+	return result
+
+@view_config(route_name='objects.generic.traversal',
+			 context=IFile,
+			 request_method='GET',
+			 name="background_view")
+def background_file_view(request):
+	result = _image_file_view(request, IBackgroundURL, 'backgroundURL')
+	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 context=IFile,
@@ -158,7 +171,7 @@ def file_resource_HEAD_view(request):
 	return request.response
 
 @view_config(route_name='objects.generic.traversal',
-			 context=nti_interfaces.IDataserverFolder,
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_READ,  # anyone logged in...
 			 request_method='POST',
 			 name="image_to_dataurl")
@@ -208,7 +221,7 @@ def image_to_dataurl(request):
 	return response
 
 @view_config(route_name='objects.generic.traversal',
-			 context=nti_interfaces.IDataserverFolder,
+			 context=IDataserverFolder,
 			 permission=nauth.ACT_READ,  # anyone logged in...
 			 request_method='POST',
 			 name="image_to_dataurl_extjs")
