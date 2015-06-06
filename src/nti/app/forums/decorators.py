@@ -11,8 +11,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.container.interfaces import ILocation
 
 from pyramid.threadlocal import get_current_request
@@ -25,13 +26,18 @@ from nti.app.publishing import VIEW_UNPUBLISH
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.appserver._util import link_belongs_to_user
-from nti.appserver.pyramid_authorization import is_readable, can_create
+
+from nti.appserver.pyramid_authorization import can_create
+from nti.appserver.pyramid_authorization import is_readable
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IGroupMember
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
+from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
@@ -117,8 +123,14 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	false_view = VIEW_PUBLISH
 	true_view = VIEW_UNPUBLISH
 
+	def has_admin_role(self):
+		pg = IGroupMember(self.remoteUser, None)
+		groups = getattr(pg, "groups") or ()
+		result = ROLE_ADMIN in groups
+		return result
+		
 	def link_predicate( self, context, current_username ):
-		return IDefaultPublished.providedBy( context )
+		return IDefaultPublished.providedBy( context ) or self.has_admin_role()
 
 	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
 		# The owner is the only one that gets the links
