@@ -32,12 +32,9 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
-from nti.dataserver.interfaces import IGroupMember
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
-
-from nti.dataserver.authorization import ROLE_ADMIN
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
@@ -68,20 +65,20 @@ class BlogLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
-		the_links = mapping.setdefault( LINKS, [] )
+	def decorateExternalMapping(self, context, mapping):
+		the_links = mapping.setdefault(LINKS, [])
 
 		# Notice we DO NOT adapt; it must already exist, meaning that the
 		# owner has at one time added content to it. It may not have published
 		# content, though, and it may no longer have any entries
 		# (hence 'not None' rather than __nonzero__)
-		blog = context.containers.getContainer( _BLOG_NAME )
-		if blog is not None and is_readable( blog ):
-			link = Link( context,
+		blog = context.containers.getContainer(_BLOG_NAME)
+		if blog is not None and is_readable(blog):
+			link = Link(context,
 						 rel=_BLOG_NAME,
-						 elements=(_BLOG_NAME,) )
-			link_belongs_to_user( link, context )
-			the_links.append( link )
+						 elements=(_BLOG_NAME,))
+			link_belongs_to_user(link, context)
+			the_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(ICommunity)
@@ -89,8 +86,8 @@ class CommunityBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, mapping ):
-		if IUnscopedGlobalCommunity.providedBy( context ):
+	def decorateExternalMapping(self, context, mapping):
+		if IUnscopedGlobalCommunity.providedBy(context):
 			# The global communities that do not participate in security
 			# (e.g., Everyone) do not get a forum
 			return
@@ -98,14 +95,14 @@ class CommunityBoardLinkDecorator(object):
 		# TODO: This may be slow, if the forum doesn't persistently
 		# exist and we keep creating it and throwing it away (due to
 		# not commiting on GET)
-		board = ICommunityBoard( context, None )
-		if board is not None: # Not checking security. If the community is visible to you, the forum is too
-			the_links = mapping.setdefault( LINKS, [] )
-			link = Link( context,
+		board = ICommunityBoard(context, None)
+		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
+			the_links = mapping.setdefault(LINKS, [])
+			link = Link(context,
 						 rel=_BOARD_NAME,
-						 elements=(_BOARD_NAME,) )
-			link_belongs_to_user( link, context )
-			the_links.append( link )
+						 elements=(_BOARD_NAME,))
+			link_belongs_to_user(link, context)
+			the_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
 class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
@@ -123,23 +120,17 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	false_view = VIEW_PUBLISH
 	true_view = VIEW_UNPUBLISH
 
-	def has_admin_role(self):
-		pg = IGroupMember(self.remoteUser, None)
-		groups = getattr(pg, "groups") or ()
-		result = ROLE_ADMIN in groups
-		return result
-		
-	def link_predicate( self, context, current_username ):
-		return IDefaultPublished.providedBy( context ) or self.has_admin_role()
+	def link_predicate(self, context, current_username):
+		return IDefaultPublished.providedBy(context)
 
-	def _do_decorate_external_link( self, context, mapping, extra_elements=() ):
+	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
 		# The owner is the only one that gets the links
 		current_user = self.remoteUser
 		if current_user and current_user == context.creator:
-			super(PublishLinkDecorator,self)._do_decorate_external_link(context, mapping)
+			super(PublishLinkDecorator, self)._do_decorate_external_link(context, mapping)
 
 	def _do_decorate_external(self, context, mapping):
-		super(PublishLinkDecorator,self)._do_decorate_external(context, mapping)
+		super(PublishLinkDecorator, self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
 		mapping['PublicationState'] = 'DefaultPublished' \
 									  if IDefaultPublished.providedBy(context) else None
@@ -163,7 +154,7 @@ class ForumObjectContentsLinkProvider(object):
 	def add_link(cls, rel, context, mapping, request, elements=None):
 		_links = mapping.setdefault(LINKS, [])
 		elements = elements or (VIEW_CONTENTS,
-								md5_etag(context.lastModified, 
+								md5_etag(context.lastModified,
 										 request.authenticated_userid).replace('/', '_'))
 		link = Link(context, rel=rel, elements=elements)
 		interface.alsoProvides(link, ILocation)
@@ -184,8 +175,8 @@ class ForumObjectContentsLinkProvider(object):
 		# All forum objects should have fully traversable paths by themself,
 		# without considering acquired info (NTIIDs from the User would mess
 		# up rendering)
-		context = aq_base( context )
-		if context.__parent__ is None: # pragma: no cover
+		context = aq_base(context)
+		if context.__parent__ is None:  # pragma: no cover
 			return
 
 		# TODO: This can be generalized by using the component
@@ -206,7 +197,7 @@ class ForumObjectContentsLinkProvider(object):
 		# our timestamp is also modified. We include the user asking just to be safe
 		# We also advertise that you can POST new items to this url, which is good for caching
 		elements = (VIEW_CONTENTS, md5_etag(context.lastModified,
-											request.authenticated_userid).replace('/','_'))
+											request.authenticated_userid).replace('/', '_'))
 		self.add_link(VIEW_CONTENTS, context, mapping, request, elements)
 
 		current_user = get_remote_user(get_current_request())
@@ -247,7 +238,7 @@ class SecurityAwareForumTopicCountDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalObject( self, context, mapping ):
+	def decorateExternalObject(self, context, mapping):
 		if not mapping['TopicCount']:
 			# Nothing to do if its already empty
 			return
@@ -256,6 +247,7 @@ class SecurityAwareForumTopicCountDecorator(object):
 		i = 0
 		newest_topic = None
 		newest_topic_time = -1.0
+
 		# We search if it's anything provided by the newest
 		# descendant that's not visible; the case of a private
 		# newest comment only occurs when a person has commented
@@ -264,9 +256,9 @@ class SecurityAwareForumTopicCountDecorator(object):
 		# (TODO: Do we need to aq wrap this?)
 		_newest_descendant = context.NewestDescendant
 		need_replacement_descendant = _newest_descendant is not None and \
-									  not is_readable(_newest_descendant,request)
+									  not is_readable(_newest_descendant, request)
 		for x in context.values():
-			if is_readable(x,request):
+			if is_readable(x, request):
 				i += 1
 				if need_replacement_descendant and x.lastModified > newest_topic_time:
 					newest_topic = x
