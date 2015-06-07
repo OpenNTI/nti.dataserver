@@ -114,7 +114,7 @@ class _AbstractEntitySummaryExternalObject(object):
 		if self._AVATAR_URL:
 			extDict['avatarURL'] = _avatar_url(entity)
 		if self._BACKGROUND_URL:
-			extDict['avatarURL'] = _background_url(entity)
+			extDict['backgroundURL'] = _background_url(entity)
 
 		names = IFriendlyNamed(entity)
 		extDict['realname'] = names.realname or entity.username
