@@ -31,7 +31,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			Community.create_community(username='bleach')
 
 		path = '/dataserver2/users/bleach/join'
-		self.testapp.post(path, status=204)
+		self.testapp.post(path, status=200)
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.get_community(username='bleach')
 			user = User.get_user(self.default_username)
@@ -45,7 +45,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			user.record_dynamic_membership(c)
 
 		path = '/dataserver2/users/bleach/leave'
-		self.testapp.post(path, status=204)
+		self.testapp.post(path, status=200)
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.get_community(username='bleach')
 			user = User.get_user(self.default_username)
@@ -70,7 +70,7 @@ class TestCommunityViews(ApplicationLayerTest):
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
 		
 		hide_path = '/dataserver2/users/bleach/hide'
-		self.testapp.post(hide_path, status=204)
+		self.testapp.post(hide_path, status=200)
 		
 		res = self.testapp.get(	path, 
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
@@ -84,7 +84,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			assert_that(user, is_in(hidden))
 
 		unhide_path = '/dataserver2/users/bleach/unhide'
-		self.testapp.post(unhide_path, status=204)
+		self.testapp.post(unhide_path, status=200)
 		
 		res = self.testapp.get(	path, 
 					  			extra_environ=self._make_extra_environ(user="ichigo"),

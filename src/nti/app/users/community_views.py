@@ -50,7 +50,7 @@ class JoinCommunityView(AbstractAuthenticatedView):
 		if user not in community:
 			user.record_dynamic_membership(community)
 			user.follow(community)
-		return hexc.HTTPNoContent()
+		return community
 
 @view_config(route_name='objects.generic.traversal',
 			 name='leave',
@@ -65,7 +65,7 @@ class LeaveCommunityView(AbstractAuthenticatedView):
 		if user in community:
 			user.record_no_longer_dynamic_member(community)
 			user.stop_following(community)
-		return hexc.HTTPNoContent()
+		return community
 
 @view_config(route_name='objects.generic.traversal',
 			 name='members',
@@ -101,7 +101,7 @@ class HideCommunityMembershipView(AbstractAuthenticatedView):
 		hidden = IHiddenMembership(community)
 		if user in community and user not in hidden:
 			hidden.hide(user)
-		return hexc.HTTPNoContent()
+		return community
 
 @view_config(route_name='objects.generic.traversal',
 			 name='unhide',
@@ -116,7 +116,7 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 		hidden = IHiddenMembership(community)
 		if user in hidden:
 			hidden.unhide(user)
-		return hexc.HTTPNoContent()
+		return community
 
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',
