@@ -16,8 +16,8 @@ import sys
 import pprint
 import argparse
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Entity
@@ -44,7 +44,7 @@ def _create_user(factory, username, password, realname, communities=(), options=
 	if options.shard:
 		# Provide the unnamed, default utility to do this
 		class FixedShardPlacer(AbstractShardPlacer):
-			def placeNewUser( self, user, user_directory, *args ):
+			def placeNewUser(self, user, user_directory, *args):
 				self.place_user_in_shard_named(user, user_directory, options.shard)
 		component.provideUtility(FixedShardPlacer(), provides=INewUserPlacer)
 	elif options.site:
@@ -67,7 +67,7 @@ def _create_user(factory, username, password, realname, communities=(), options=
 	if password:
 		args['password'] = password
 	ext_value = {}
-	
+
 	if options.email:
 		ext_value['email'] = unicode(options.email)
 	if realname:
@@ -76,6 +76,11 @@ def _create_user(factory, username, password, realname, communities=(), options=
 		ext_value['alias'] = alias
 	if options.birthdate:
 		ext_value['birthdate'] = unicode(options.birthdate)
+
+	if options.public:
+		ext_value['public'] = True
+	if options.joinable:
+		ext_value['joinable'] = True
 
 	args['external_value'] = ext_value
 	user = factory(**args)
@@ -89,7 +94,7 @@ def _create_user(factory, username, password, realname, communities=(), options=
 		if 	options.coppa and \
 			not ICoppaUserWithoutAgreement.providedBy(user):
 			logger.info("Applying coppa to %s", user)
-			interface.alsoProvides(user, ICoppaUserWithoutAgreement )
+			interface.alsoProvides(user, ICoppaUserWithoutAgreement)
 
 	if options.verbose:
 		pprint.pprint(to_external_object(user))
@@ -130,9 +135,21 @@ def create_user(args=None):
 							 action='store_true',
 							 default=False,
 							 help="Creating a user to whom COPPA applies (under 13)")
+
 	arg_parser.add_argument('--contact_email',
 							 dest='contact_email',
 							 help="The contact email address of the user")
+
+	arg_parser.add_argument('--public',
+							 dest='public',
+							 action='store_true',
+							 default=False,
+							 help="Public community")
+	arg_parser.add_argument('--joinable',
+							 dest='joinable',
+							 action='store_true',
+							 default=False,
+							 help="Joinable community")
 
 	site_group = arg_parser.add_mutually_exclusive_group()
 
@@ -151,7 +168,7 @@ def create_user(args=None):
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		print("Invalid dataserver environment root directory", env_dir)
 		sys.exit(2)
-	
+
 	username = args.username
 	password = args.password
 
@@ -160,7 +177,7 @@ def create_user(args=None):
 						xmlconfig_packages=(package,),
 						verbose=args.verbose,
 						function=lambda: _create_user(_type_map[args.type], username,
-													  password, args.name, 
+													  password, args.name,
 													  args.communities, args))
 
 def main(args=None):
