@@ -608,13 +608,6 @@ class TestNote(DataserverLayerTest):
 		ext = to_external_object( n )
 		assert_that( ext['body'], is_( [u'<html><body><p>At <a href="http://www.nextthought.com">www.nextthought.com</a></p></body></html>'] ) )
 
-	def test_external_is_public_intent(self):
-		n = Note()
-		n.isPublicIntent = False
-		update_from_external_object( n, { 'isPublicIntent': True } )
-		ext = to_external_object( n )
-		assert_that( ext['isPublicIntent'], is_( True ) )
-
 	def test_external_body_hyperlink_incoming_plain(self):
 		n = Note()
 		update_from_external_object( n, { 'body': ["So visit www.nextthought.com and see for yourself."] } )
