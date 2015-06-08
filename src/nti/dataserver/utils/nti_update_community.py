@@ -27,7 +27,8 @@ from nti.externalization.internalization import update_from_external_object
 
 from . import run_with_dataserver
 
-def update_community(username, name=None, alias=None, verbose=False):
+def update_community(username, name=None, alias=None, public=False,
+					 joinable=False, verbose=False):
 	__traceback_info__ = locals().items()
 
 	if alias and not isinstance(alias, unicode):
@@ -55,6 +56,9 @@ def update_community(username, name=None, alias=None, verbose=False):
 	if alias:
 		ext_value['alias'] = alias
 
+	ext_value['public'] = public
+	ext_value['joinable'] = joinable
+
 	update_from_external_object(community, ext_value)
 	if verbose:
 		pprint.pprint(to_external_object(community))
@@ -67,7 +71,7 @@ def process_args(args=None):
 	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
-	
+
 	arg_parser.add_argument('-n', '--name',
 							 dest='name',
 							 help="The realname of the community")
@@ -75,6 +79,18 @@ def process_args(args=None):
 	arg_parser.add_argument('-a', '--alias',
 							 dest='alias',
 							 help="The alias of the community")
+
+	arg_parser.add_argument('--public',
+							 dest='public',
+							 action='store_true',
+							 default=False,
+							 help="Public community")
+
+	arg_parser.add_argument('--joinable',
+							 dest='joinable',
+							 action='store_true',
+							 default=False,
+							 help="Joinable community")
 
 	arg_parser.add_argument('--site',
 							dest='site',
@@ -85,7 +101,7 @@ def process_args(args=None):
 	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise IOError("Invalid dataserver environment root directory", env_dir)
-	
+
 	username = args.username
 	conf_packages = () if not args.site else ('nti.appserver',)
 
@@ -95,6 +111,8 @@ def process_args(args=None):
 						function=lambda: update_community(username,
 														  args.name,
 														  args.alias,
+														  args.public,
+														  args.joinable,
 														  args.verbose))
 def main(args=None):
 	process_args(args)
