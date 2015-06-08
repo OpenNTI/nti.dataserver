@@ -35,6 +35,7 @@ from .index import IX_EMAIL_VERIFIED
 
 from .interfaces import IUserProfile
 from .interfaces import IAvatarURLProvider
+from .interfaces import IBackgroundURLProvider
 
 # email
 
@@ -172,7 +173,7 @@ def remove_broken_objects(user, include_containers=True, include_stream=True,
 
 # properties
 
-class AvatarUrlProperty(UrlProperty):
+class ImageUrlProperty(UrlProperty):
 	"""
 	Adds a default value if nothing is set for the instance.
 
@@ -181,15 +182,25 @@ class AvatarUrlProperty(UrlProperty):
 	externalized URL).
 	"""
 
+	avatar_field_name = u''
+	avatar_provider_interface = None
 	ignore_url_with_missing_host = True
-	avatar_provider_interface = IAvatarURLProvider
 	
 	# TODO: Should we be scaling this now?
 	# TODO: Should we be enforcing constraints on this? Like max size,
 	# ensuring it really is an image, etc? With arbitrary image uploading, we risk
 	# being used as a dumping ground for illegal/copyright infringing material
 	def __get__(self, instance, owner):
-		result = super(AvatarUrlProperty, self).__get__(instance, owner)
+		result = super(ImageUrlProperty, self).__get__(instance, owner)
 		if not result and self.avatar_provider_interface is not None:
-			result = self.avatar_provider_interface(instance.context).avatarURL
+			adapted = self.avatar_provider_interface(instance.context)
+			result = getattr(adapted, self.avatar_field_name, None)
 		return result
+	
+class AvatarUrlProperty(ImageUrlProperty):
+	avatar_field_name = 'avatarURL'
+	avatar_provider_interface = IAvatarURLProvider
+
+class BackgroundUrlProperty(ImageUrlProperty):
+	avatar_field_name = 'backgroundURL'
+	avatar_provider_interface = IBackgroundURLProvider

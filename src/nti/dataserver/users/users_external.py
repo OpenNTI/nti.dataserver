@@ -54,7 +54,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	Takes into account file storage and generates Link objects
 	instead of data: urls. Tightly coupled to user_profile.
 	"""
-	with_url = avatar_iface(entity)
+	with_url = avatar_iface(entity, None)
 	url_property = getattr(type(with_url), attr_name, None)
 	if isinstance(url_property, urlproperty.UrlProperty):
 		the_file = url_property.get_file(with_url)

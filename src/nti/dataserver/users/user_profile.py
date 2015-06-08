@@ -40,6 +40,7 @@ from .interfaces import IEmailRequiredUserProfile
 from .interfaces import IRestrictedUserProfileWithContactEmail
 
 from .utils import AvatarUrlProperty as _AvatarUrlProperty
+from .utils import BackgroundUrlProperty as _BackgrounUrlProperty
 
 class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
 	"""
@@ -147,7 +148,8 @@ class UserProfile(FriendlyNamed):
 
 	For convenience, we have a read-only shadow of the username value.
 	"""
-	### NOTE: See users_external, this is fairly tightly coupled to that
+	#: NOTE: See users_external, this is fairly tightly coupled to that
+
 	_avatarURL = None
 	avatarURL = _AvatarUrlProperty( data_name="avatarURL",
 									url_attr_name='_avatarURL',
@@ -156,9 +158,9 @@ class UserProfile(FriendlyNamed):
 	__getitem__ = avatarURL.make_getitem()
 
 	_backgroundURL = None
-	backgroundURL = _AvatarUrlProperty( data_name="backgroundURL",
-										url_attr_name='_backgroundURL',
-										file_attr_name='_backgroundURL' )
+	backgroundURL = _BackgrounUrlProperty(data_name="backgroundURL",
+										  url_attr_name='_backgroundURL',
+										  file_attr_name='_backgroundURL' )
 	
 	username = property( lambda self: self.context.username )
 

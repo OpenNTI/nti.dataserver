@@ -29,7 +29,6 @@ from .interfaces import ISuggestedContactRankingPolicy
 @EqHash("username", "rank")
 @interface.implementer(ISuggestedContact)
 class SuggestedContact(SchemaConfigured, Contained):
-
 	createDirectFieldProperties(ISuggestedContact)
 
 	@property

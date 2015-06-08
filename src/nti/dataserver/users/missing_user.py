@@ -15,6 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 from zope import interface
+
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from nti.common import create_gravatar_url
@@ -39,9 +40,9 @@ class _TransientMissingEntity(object):
 
 	alias = _('Missing Entity')
 	realname = _('Deleted Entity')
-	username = 'Missing Entity' # spaces are illegal in real usernames so this can never resolve
-	avatarURL = create_gravatar_url('Missing Entity@alias.nextthought.com' )
-	
+	username = 'Missing Entity'  # spaces are illegal in real usernames so this can never resolve
+	avatarURL = create_gravatar_url('Missing Entity@alias.nextthought.com')
+
 	__name__ = username
 	__parent__ = None
 
@@ -56,25 +57,25 @@ class _TransientMissingUser(_TransientMissingEntity):
 
 	alias = _('Missing User')
 	realname = _('Deleted User')
-	username = 'Missing User' # spaces are illegal in real usernames so this can never resolve
-	avatarURL = create_gravatar_url( 'Missing User@alias.nextthought.com' )
+	username = 'Missing User'  # spaces are illegal in real usernames so this can never resolve
+	avatarURL = create_gravatar_url('Missing User@alias.nextthought.com')
 
 	lastLoginTime = minmax.ConstantZeroValue()
 	notificationCount = minmax.ConstantZeroValue()
-	
+
 	following = ()
 	communities = ()
 	ignoring_shared_data_from = ()
 	accepting_shared_data_from = ()
 
-def MissingEntity( username ):
+def MissingEntity(username):
 	"""
 	Return a missing entity proxy for the given username.
 	"""
 	return _TransientMissingEntity()  # Not cacheable due to annotations
 
-def MissingUser( username ):
+def MissingUser(username):
 	"""
 	Return a missing user proxy for the given username.
 	"""
-	return _TransientMissingUser() # Not cacheable due to annotations
+	return _TransientMissingUser()  # Not cacheable due to annotations
