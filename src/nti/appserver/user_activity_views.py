@@ -49,11 +49,11 @@ def _always_toplevel_filter(x):
 		return _toplevel_filter(x)
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_READ,
-			  context=nti_interfaces.IUser,
-			  name=REL_USER_ACTIVITY,
-			  request_method='GET')
+			 renderer='rest',
+			 permission=nauth.ACT_READ,
+			 context=nti_interfaces.IUser,
+			 name=REL_USER_ACTIVITY,
+			 request_method='GET')
 class UserActivityGetView(RecursiveUGDQueryView):
 	"""
 	The /Activity view for a particular user.
@@ -91,8 +91,8 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	def __init__(self, request):
 		self.request = request
-		super(UserActivityGetView, self).__init__(request, 
-												  the_user=request.context, 
+		super(UserActivityGetView, self).__init__(request,
+												  the_user=request.context,
 												  the_ntiid=ntiids.ROOT)
 
 	def _get_filter_names(self):
@@ -115,7 +115,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		# Collect the UGD recursively
 		result = super(UserActivityGetView, self).getObjectsForId(user, ntiid)
 		result = [x for x in result if x is not ()]
-		# At this point, we know we have a list of dicts-like objects 
+		# At this point, we know we have a list of dicts-like objects
 		# (btrees and other containers)
 
 		# Add the blog (possibly missing)
@@ -125,7 +125,7 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 		# However, we do need to add the activity, if it exists
 		# FIXME: Note that right now, we are only querying the global store
-		# (all the recursion and iteration is handled in the super). This is probably 
+		# (all the recursion and iteration is handled in the super). This is probably
 		# easy to fix, but we are also only using the global store (see forum_views)
 		activity_provider = component.queryMultiAdapter((user, self.request),
 														IUserActivityProvider)

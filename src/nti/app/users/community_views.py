@@ -9,18 +9,31 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
+from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
+
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.appserver.ugd_query_views import _UGDView
+
 from nti.dataserver import authorization as nauth
 from nti.dataserver.core.interfaces import ICommunity
 from nti.dataserver.users.interfaces import IHiddenMembership
 
+from nti.dataserver.metadata_index import IX_SHAREDWITH
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -104,3 +117,25 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 		if user in hidden:
 			hidden.unhide(user)
 		return hexc.HTTPNoContent()
+
+@view_config(route_name='objects.generic.traversal',
+			 name='Activity',
+			 request_method='GET',
+			 context=ICommunity,
+			 permission=nauth.ACT_READ)
+class ActivityCommunityMembershipView(_UGDView):
+
+	def _set_user_and_ntiid(self, *args, **kwargs):
+		self.ntiid = u''
+		self.user = self.remoteUser
+	
+	def getObjectsForId(self, *args, **kwargs ):
+		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		if catalog is None:
+			raise hexc.HTTPNotFound("No catalog")
+		intids = component.getUtility(IIntIds)
+		
+		username = self.request.context.username
+		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
+		items = ResultSet(intids_shared_with_comm, intids, ignore_invalid=True)
+		return (items,)

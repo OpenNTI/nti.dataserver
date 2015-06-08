@@ -16,6 +16,7 @@ from hamcrest import assert_that
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
+from nti.dataserver.contenttypes import Note
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -89,3 +90,23 @@ class TestCommunityViews(ApplicationLayerTest):
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_activity_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.create_community(username='bleach')
+			user = User.get_user(self.default_username)
+			user.record_dynamic_membership(c)
+			user = self._create_user("ichigo", "temp001")
+			user.record_dynamic_membership(c)
+
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = user
+			note.addSharingTarget(c)
+			note.containerId = u'mycontainer'
+			user.addContainedObject(note)
+		
+		path = '/dataserver2/users/bleach/Activity'
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
