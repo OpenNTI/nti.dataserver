@@ -159,6 +159,14 @@ class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matte
 		if '_members' in self.__dict__:
 			for wref in self._members:
 				yield wref.username
+				
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		result = super(Community, self).updateFromExternalObject(parsed, *args, **kwargs)
+		if 'public' in parsed:
+			self.public = bool(parsed['public'])
+		if 'joinable' in parsed:
+			self.joinable = bool(parsed['joinable'])
+		return result
 
 @interface.implementer(IUnscopedGlobalCommunity)
 class Everyone(Community):
