@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.dataserver.users.interfaces import IHiddenMembership
 __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
@@ -17,6 +16,7 @@ from hamcrest import assert_that
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.tests import mock_dataserver
 
