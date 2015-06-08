@@ -453,10 +453,13 @@ class _UGDView(AbstractAuthenticatedView,
 
 	def __init__( self, request, the_user=None, the_ntiid=None ):
 		super(_UGDView,self).__init__( request )
-		if self.request.context:
-			self.user = the_user or self.request.context.user
-			self.ntiid = the_ntiid or self.request.context.ntiid
+		self._set_user_and_ntiid(request, the_user, the_ntiid)
 		self.context_cache = SharingContextCache()
+
+	def _set_user_and_ntiid(self, request, the_user, the_ntiid):
+		if request.context:
+			self.user = the_user or request.context.user
+			self.ntiid = the_ntiid or request.context.ntiid
 
 	def check_cross_user( self ):
 		if not self._support_cross_user:
