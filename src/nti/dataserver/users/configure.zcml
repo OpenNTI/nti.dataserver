@@ -140,9 +140,9 @@
 			 provides=".interfaces.IBackgroundURL" />
 
 	<!-- Named fallback -->
-	<adapter factory=".avatar_urls.GeneratedBackgroundURL"
+	<adapter factory=".avatar_urls.DefaultBackgroundURL"
 			 provides=".interfaces.IBackgroundURLProvider"
-			 name="generated" />
+			 name="default" />
 
 	<!-- User profile info -->
 	<!-- Default -->

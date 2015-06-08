@@ -13,7 +13,6 @@ logger = __import__('logging').getLogger(__name__)
 
 import os
 import random
-import urllib
 import urlparse
 from io import BytesIO
 
@@ -52,6 +51,13 @@ class _FixedAvatarWrapper(object):
 
 	def __init__(self, context):
 		self.avatarURL = getattr(context, '_avatarURL')
+
+@component.adapter(IEntity)
+@interface.implementer(IAvatarURLProvider, IAvatarURL)
+class DefaultAvatarURL(object):
+
+	def __init__(self, context):
+		self.avatarURL = None
 
 # See also https://www.libravatar.org/
 # for a FOSS Gravatar clone that supports delegation by domain.
@@ -222,7 +228,7 @@ def get_image_font(size=TEXT_SIZE):
 	result = ImageFont.truetype(path, size)
 	return result
 
-def get_background_color(entity):
+def get_profile_color(entity):
 	username = getattr(entity,'username', entity)
 	idx = hash(username) % len(BACKGROUND_COLORS)
 	return BACKGROUND_COLORS[idx]
@@ -232,7 +238,7 @@ def get_text_color(entity):
 	idx = hash(username) % len(TEXT_COLORS)
 	return TEXT_COLORS[idx]
 
-def get_background_image_name(entity):
+def get_profile_image_name(entity):
 	parts = IFriendlyNamed(entity).get_searchable_realname_parts()
 	if not parts:
 		parts = entity.username[0:2]
@@ -240,11 +246,11 @@ def get_background_image_name(entity):
 		parts = '%s%s' % (parts[0], parts[1] if len(parts) > 1 else u'')
 	return parts
 	
-def get_background_image(entity, size=BACKGROUND_SIZE):
-	parts = get_background_image_name(entity).upper()	
+def get_profile_image(entity, size=BACKGROUND_SIZE):
+	parts = get_profile_image_name(entity).upper()	
 	font = get_image_font()
 	tcolor = get_text_color(entity)
-	bcolor = get_background_color(entity)
+	bcolor = get_profile_color(entity)
 	img = Image.new('RGBA', size, bcolor)
 	d = ImageDraw.Draw(img)
 	d.text((0,0), parts, font=font, fill=tcolor)
@@ -266,13 +272,11 @@ class _FixedBackgroundWrapper(object):
 def BackgroundURLFactory(entity):
 	if getattr(entity, '_backgroundURL', None):
 		return _FixedAvatarWrapper(entity)
-	return component.queryAdapter(entity, IBackgroundURLProvider, name="generated")
+	return component.queryAdapter(entity, IBackgroundURLProvider, name="default")
 
 @component.adapter(IEntity)
 @interface.implementer(IBackgroundURLProvider, IBackgroundURL)
-class GeneratedBackgroundURL(object):
+class DefaultBackgroundURL(object):
 
 	def __init__(self, context):
-		name = get_background_image_name(context).lower()
-		name = urllib.quote("%s.png" % name)
-		self.backgroundURL = "/dataserver2/backgrounds/%s" % name
+		self.backgroundURL = None

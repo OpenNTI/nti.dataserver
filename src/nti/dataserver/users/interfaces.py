@@ -21,8 +21,9 @@ import codecs
 import string
 import pkg_resources
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.interface import Interface
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
