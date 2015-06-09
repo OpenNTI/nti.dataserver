@@ -31,7 +31,7 @@ from nti.dataserver import authentication
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.ntiids import ntiids
 
@@ -39,6 +39,9 @@ from nti.traversal import traversal
 
 from .interfaces import IACE
 from .interfaces import IACL
+from .interfaces import IUser
+from .interfaces import IEntity
+from .interfaces import ICommunity
 from .interfaces import IPrincipal
 from .interfaces import IPermission
 from .interfaces import IACLProvider
@@ -186,8 +189,8 @@ def _ace_allowing_all(provenance=None):
 	return _ACE(*(ACE_ALLOW_ALL + (provenance,)))
 
 # Export these ACE functions publicly
-ace_allowing = _ACE.allowing
 ace_denying = _ACE.denying
+ace_allowing = _ACE.allowing
 ace_denying_all = _ace_denying_all
 ace_allowing_all = _ace_allowing_all
 ace_from_string = _ACE.from_external_string
@@ -239,8 +242,8 @@ def ACLProvider(obj, default=None):
 		If the object provides :class:`.IACLProviderCacheable` (typically this will be set up
 		in configuration) then the ACL derived from adapting to a provider is cached
 		directly on the object. This is a side-effect.
-
 	"""
+
 	try:
 		if obj.__acl__ is not None:
 			return obj
@@ -269,7 +272,6 @@ def has_permission(permission, context, username, **kwargs):
 
 	:return: An object that behaves like a boolean value but provides a description
 		about what was allowed or denied when printed.
-
 	"""
 
 	try:
@@ -308,9 +310,9 @@ def is_writable(context, username, **kwargs):
 
 import functools
 
-from ZODB.POSException import POSKeyError
+from ZODB.POSException import POSError
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 @component.adapter(object)
 class ACLDecorator(object):
 	__metaclass__ = SingletonDecorator
@@ -324,8 +326,8 @@ class ACLDecorator(object):
 			# defer it until/if we need it by using a callable because
 			# computing it can be expensive if the cache is cold.
 			result.__acl__ = functools.partial(ACL, orig)
-		except POSKeyError:
-			logger.warn("Failed to get ACL on POSKeyError")
+		except POSError:
+			logger.warn("Failed to get ACL on POSError")
 			result.__acl__ = ()
 
 @interface.implementer(IACL)
@@ -374,8 +376,8 @@ def _add_admin_moderation(acl, provenance):
 	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance))
 	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance))
 
-@interface.implementer(nti_interfaces.IACLProvider)
-@component.adapter(nti_interfaces.IEntity)
+@interface.implementer(IACLProvider)
+@component.adapter(IEntity)
 class _EntityACLProvider(object):
 	"""
 	ACL provider for class:`.interfaces.IEntity` objects. The
@@ -410,14 +412,17 @@ class _EntityACLProvider(object):
 			acl.append(_ace_denying_all(_EntityACLProvider))
 		return acl
 
-@interface.implementer(nti_interfaces.IACLProvider)
-@component.adapter(nti_interfaces.ICommunity)
+@interface.implementer(IACLProvider)
+@component.adapter(ICommunity)
 class _CommunityACLProvider(_EntityACLProvider):
 	"""
 	ACL provider for class:`.interfaces.ICommunity` objects. The
 	entity itself is allowed all permissions.
 	"""
 
+	def _viewers(self):
+		return (AUTHENTICATED_GROUP_NAME,) if self._entity.public else ()
+	
 	@Lazy
 	def __acl__(self):
 		"""
@@ -432,7 +437,7 @@ class _CommunityACLProvider(_EntityACLProvider):
 			acl.append(_ace_denying_all(_CommunityACLProvider))
 		return acl
 
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(IUser)
 class _UserACLProvider(_EntityACLProvider):
 	"""
 	ACL Provider for :class:`.interfaces.IUser`.
@@ -452,7 +457,7 @@ class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
 	def _viewers(self):
 		return ()  # nobody!
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(nti_interfaces.ICreated)
 class _CreatedACLProvider(object):
 	"""
@@ -472,7 +477,7 @@ class _CreatedACLProvider(object):
 	context = alias('_created')
 
 	_REQUIRE_CREATOR = False
-	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
+	_PERMS_FOR_CREATOR = (ALL_PERMISSIONS,)
 	_DENY_ALL = True
 
 	def _do_get_deny_all(self):
@@ -550,8 +555,8 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 	def __do_get_sharing_target_names(self):
 		try:
 			return self._get_sharing_target_names()
-		except POSKeyError:
-			logger.warn("POSKeyError getting sharing target names.")
+		except POSError:
+			logger.warn("POSError getting sharing target names.")
 			return ()
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
@@ -672,9 +677,9 @@ class _TestingLibraryTOCEntryACLProvider(object):
 
 	@_LazyOnClass
 	def __acl__(self):
-		return (ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
-							   nti_interfaces.ALL_PERMISSIONS,
-							   _TestingLibraryTOCEntryACLProvider),)
+		return (ace_allowing(AUTHENTICATED_GROUP_NAME,
+							 ALL_PERMISSIONS,
+							 _TestingLibraryTOCEntryACLProvider),)
 
 # TODO: This could be (and was) registered for a simple IDelimitedHierarchyEntry.
 # There is none of that separate from the contentpackage/unit though, so it shouldn't
@@ -718,12 +723,13 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 				if self._add_default_deny_to_acl_from_file:
 					__acl__.append(_ace_denying_all('Default Deny After File ACL'))
 			except (ValueError, AssertionError, TypeError, ComponentLookupError):
-				logger.exception("Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name)
+				logger.exception("Failed to read acl from %s/%s; denying all access.",
+								 self.context, self._acl_sibling_entry_name)
 				__acl__ = _ACL((_ace_denying_all('Default Deny Due to Parsing Error'),))
 		elif self._default_allow:
-			__acl__ = _ACL((ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
-										   nti_interfaces.ALL_PERMISSIONS,
-										   _AbstractDelimitedHierarchyEntryACLProvider),))
+			__acl__ = _ACL((ace_allowing(AUTHENTICATED_GROUP_NAME,
+										 ALL_PERMISSIONS,
+										 _AbstractDelimitedHierarchyEntryACLProvider),))
 		else:
 			__acl__ = ()  # Inherit from parent
 
@@ -749,11 +755,11 @@ def _supplement_acl_with_content_role(self, context, acl):
 		parts = ntiids.get_parts(package.ntiid)
 		if parts and parts.provider and parts.specific:
 			acl = acl + ace_allowing(authorization.role_for_providers_content(parts.provider, parts.specific),
-									  authorization.ACT_READ,
-									  self)
+									 authorization.ACT_READ,
+									 self)
 	return acl
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(content_interfaces.IDelimitedHierarchyContentPackage)
 class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
@@ -773,7 +779,7 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 		acl = super(_DelimitedHierarchyContentPackageACLProvider, self)._acl_from_string(context, acl_string, provenance=provenance)
 		return _supplement_acl_with_content_role(self, context, acl)
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
 class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
@@ -840,7 +846,7 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		result.append(ace_denying_all(_FriendsListACLProvider))
 		return result
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
@@ -870,7 +876,7 @@ class _DataserverFolderACLProvider(object):
 # ## Content/bundle library.
 # TODO: These should move up to nti.app.contentlibrary.
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(content_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryACLProvider(object):
 
@@ -885,7 +891,7 @@ class _ContentPackageLibraryACLProvider(object):
 								  _ContentPackageLibraryACLProvider),))
 
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(content_interfaces.IContentPackageBundleLibrary)
 class _ContentPackageBundleLibraryACLProvider(object):
 
