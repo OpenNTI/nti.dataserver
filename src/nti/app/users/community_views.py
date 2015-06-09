@@ -23,9 +23,12 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.appserver.ugd_query_views import _UGDView
 
-from nti.dataserver import authorization as nauth
-from nti.dataserver.core.interfaces import ICommunity
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
+
 from nti.dataserver.users.interfaces import IHiddenMembership
+
+from nti.dataserver import authorization as nauth
 
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
@@ -67,6 +70,13 @@ class LeaveCommunityView(AbstractAuthenticatedView):
 			user.record_no_longer_dynamic_member(community)
 			user.stop_following(community)
 		return community
+
+def _replace_username(username):
+	substituter = component.queryUtility(IUsernameSubstitutionPolicy)
+	if substituter is None:
+		return username
+	result = substituter.replace(username) or username
+	return result
 
 @view_config(route_name='objects.generic.traversal',
 			 name='members',
