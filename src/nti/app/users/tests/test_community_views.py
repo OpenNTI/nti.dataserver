@@ -26,6 +26,25 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 class TestCommunityViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_get_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			Community.create_community(username='bleach')
+			self._create_user("ichigo", "temp001")
+			
+		path = '/dataserver2/users/bleach'
+		self.testapp.get(path, 
+					  	 extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 status=403)
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.get_community(username='bleach')
+			c.public = True
+			
+		self.testapp.get(path, 
+					  	 extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 status=200)
+			
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_join_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			Community.create_community(username='bleach')
