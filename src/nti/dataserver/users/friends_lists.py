@@ -437,6 +437,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 		# return source is self.creator or source in list(self)
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
+		updated = False
 		for key, name in (('Locked', 'Locked'), ('About', 'About'), ('about', 'About')):
 			value = parsed.pop(key, _marker)
 			if value is not _marker:
