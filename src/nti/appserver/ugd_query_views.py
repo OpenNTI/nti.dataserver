@@ -212,8 +212,8 @@ def lists_and_dicts_to_ext_collection(lists_and_dicts, predicate=_TRUE,
 	:param callable predicate: Objects will only make it into the final 'Items' list
 		if this function returns true for all of them. Defaults to a True filter.
 	"""
-	result = _lists_and_dicts_to_ext_iterables(lists_and_dicts, 
-											   predicate, 
+	result = _lists_and_dicts_to_ext_iterables(lists_and_dicts,
+											   predicate,
 											   result_iface,
 											   ignore_broken )
 	items = []
@@ -532,9 +532,9 @@ class _UGDView(AbstractAuthenticatedView,
 		# To determine the existence of the container,
 		# My stuff either exists or it doesn't. The others, being shared,
 		# may be empty or not empty.
-		if (mystuffDict is None \
-			or (not allow_empty and not mystuffDict)) \
-			   and not sharedstuffList:
+		if 		(mystuffDict is None \
+			or 	(not allow_empty and not mystuffDict)) \
+			and not sharedstuffList:
 
 			raise hexc.HTTPNotFound(containerId)
 
@@ -1102,8 +1102,8 @@ class _RecursiveUGDView(_UGDView):
 					if not readable:
 						return False
 					current = getattr(current, '__parent__', None)  # Avoid asking unless we need it
-				except KeyError:  # broken object
-					logger.exception("Broken object, stopping ACL traversal %r", current)
+				except KeyError:
+					logger.exception("Broken object, stopping ACL traversal.")
 					return False
 		return True
 
