@@ -48,6 +48,8 @@ from nti.links.links import Link
 
 from nti.mimetype import mimetype
 
+from nti.zodb import isBroken
+
 from .error import handle_validation_error
 from .error import handle_possible_validation_error
 
@@ -155,14 +157,7 @@ class BatchingUtilsMixin(object):
 		return batch_result
 
 	def _is_valid(self, x):
-		result = (x is not None)
-		if result:
-			try:
-				if hasattr(x, '_p_activate'):
-					x._p_activate()
-				result = not IBroken.providedBy(x)
-			except POSError:
-				result = False
+		result = (x is not None and not isBroken(x))
 		return result
 
 	def _batch_items_iterable(self, result, items,
