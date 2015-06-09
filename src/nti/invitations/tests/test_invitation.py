@@ -11,6 +11,8 @@ from hamcrest import contains
 from hamcrest import assert_that
 from hamcrest import has_property
 
+import unittest
+
 from zope.component import eventtesting
 
 from nti.invitations.interfaces import IInvitation
@@ -18,20 +20,22 @@ from nti.invitations.interfaces import IInvitationAcceptedEvent
 
 from nti.invitations.invitation import PersistentInvitation
 
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
 from nti.testing.matchers import verifiably_provides
 
-class TestInvitation(DataserverLayerTest):
-	
+from nti.invitations.tests import SharedConfiguringTestLayer
+
+class TestInvitation(unittest.TestCase):
+
+	layer = SharedConfiguringTestLayer
+
 	def test_valid_interface(self):
-		assert_that(PersistentInvitation(), verifiably_provides( IInvitation ) )
+		assert_that(PersistentInvitation(), verifiably_provides(IInvitation))
 
 	def test_accept_event(self):
 		eventtesting.clearEvents()
 
 		invite = PersistentInvitation()
-		invite.accept( invite )
+		invite.accept(invite)
 
-		assert_that( eventtesting.getEvents( IInvitationAcceptedEvent ),
-					 contains( has_property( 'object', invite ) ) )
+		assert_that(eventtesting.getEvents(IInvitationAcceptedEvent),
+					contains(has_property('object', invite)))

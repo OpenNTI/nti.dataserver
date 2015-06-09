@@ -8,6 +8,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	
-	<include package=".invitations" file="meta.zcml" />
+	<include package="." file="meta.zcml" />
 
 </configure>
