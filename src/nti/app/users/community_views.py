@@ -19,8 +19,11 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.appserver.ugd_query_views import _UGDView
+
+from nti.common.iterables import isorted
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.core.interfaces import ICommunity
@@ -72,23 +75,40 @@ class LeaveCommunityView(AbstractAuthenticatedView):
 			 request_method='GET',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
-class CommunityMembersView(AbstractAuthenticatedView):
+class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
+	
+	_DEFAULT_BATCH_SIZE = 50
+	_DEFAULT_BATCH_START = 0
+	
+	def _batch_params(self):
+		self.batch_size, self.batch_start = self._get_batch_size_start()
+		self.limit = self.batch_start + self.batch_size + 2
+		self.batch_after = None
+		self.batch_before = None
+		
 	def __call__(self):
+		self._batch_params()
+
 		community = self.request.context
 		if not community.public and self.remoteUser not in community:
 			raise hexc.HTTPForbidden()
 
 		result = LocatedExternalDict()
-		items = result[ITEMS] = []
 		hidden = IHiddenMembership(community)
-		for member in community:
-			if member in hidden and member != self.remoteUser:
-				continue
-			ext_obj = toExternalObject(member, name=('personal-summary'
-									   if member == self.remoteUser
-									   else 'summary'))
-			items.append(ext_obj)
+
+		def _selector(x):
+			if x is None or (x in hidden and x != self.remoteUser):
+				return None
+			return toExternalObject(x, name=('personal-summary'
+									if x == self.remoteUser
+									else 'summary'))
+
+		self._batch_items_iterable(result, isorted(community),
+								   number_items_needed=self.limit,
+								   batch_size=self.batch_size,
+								   batch_start=self.batch_start,
+								   selector=_selector)
 		return result
 
 @view_config(route_name='objects.generic.traversal',
