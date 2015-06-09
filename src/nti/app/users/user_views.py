@@ -44,6 +44,9 @@ def _image_view(context, request, func):
 	# on implementation details about the user and his data.
 
 	url_or_link = func(context)
+	if url_or_link is None:
+		raise hexc.HTTPNotFound()
+
 	if not isinstance(url_or_link, six.string_types):
 		# In this case, we have a file we're hosting.
 		# What happens when the user changes or removes that file?
