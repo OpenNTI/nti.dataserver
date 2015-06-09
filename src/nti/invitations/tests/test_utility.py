@@ -15,12 +15,14 @@ from hamcrest import none
 
 from zope import component
 from zope import interface
+
 from zope.keyreference.interfaces import IKeyReference
+
 from zope.intid import IIntIds
 
-from nti.appserver.invitations import utility
-from nti.appserver.invitations import interfaces
-from nti.appserver.invitations import invitation
+from nti.invitations import utility
+from nti.invitations import interfaces
+from nti.invitations import invitation
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest

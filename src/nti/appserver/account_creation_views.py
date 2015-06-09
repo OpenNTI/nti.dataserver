@@ -39,9 +39,6 @@ from nti.appserver._util import logon_user_with_request
 from nti.appserver.interfaces import IUserUpgradedEvent
 from nti.appserver.interfaces import UserCreatedWithRequestEvent
 
-from nti.appserver.invitations.utility import accept_invitations
-from nti.appserver.invitations.interfaces import InvitationValidationError
-
 from nti.appserver.link_providers import flag_link_provider
 from nti.appserver.link_providers.interfaces import IFlagLinkRemovedEvent
 
@@ -69,6 +66,9 @@ from nti.dataserver.users.interfaces import IWillCreateNewEntityEvent
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.intid.utility import IntIdMissingError
+
+from nti.invitations.utility import accept_invitations
+from nti.invitations.interfaces import InvitationValidationError
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface

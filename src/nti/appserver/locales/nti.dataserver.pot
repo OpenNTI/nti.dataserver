@@ -126,11 +126,11 @@ msgstr ""
 msgid "Not an image upload"
 msgstr ""
 
-#: src/nti/appserver/invitations/interfaces.py:150
+#: src/nti/invitations/interfaces.py:150
 msgid "The invitation code is not valid."
 msgstr ""
 
-#: src/nti/appserver/invitations/interfaces.py:154
+#: src/nti/invitations/interfaces.py:154
 msgid "The invitation code has expired."
 msgstr ""
 

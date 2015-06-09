@@ -11,12 +11,12 @@ from hamcrest import contains
 from hamcrest import assert_that
 from hamcrest import has_property
 
-from nti.appserver.invitations.interfaces import IInvitation
-from nti.appserver.invitations.interfaces import IInvitationAcceptedEvent
-
-from nti.appserver.invitations.invitation import PersistentInvitation
-
 from zope.component import eventtesting
+
+from nti.invitations.interfaces import IInvitation
+from nti.invitations.interfaces import IInvitationAcceptedEvent
+
+from nti.invitations.invitation import PersistentInvitation
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
