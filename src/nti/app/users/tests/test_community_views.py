@@ -59,6 +59,7 @@ class TestCommunityViews(ApplicationLayerTest):
 			user.record_dynamic_membership(c)
 			user = self._create_user("ichigo", "temp001")
 			user.record_dynamic_membership(c)
+			self._create_user("aizen", "temp001")
 
 		path = '/dataserver2/users/bleach/members'
 		res = self.testapp.get(path, status=200)
@@ -68,6 +69,10 @@ class TestCommunityViews(ApplicationLayerTest):
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		
+		self.testapp.get(path, 
+					  	 extra_environ=self._make_extra_environ(user="aizen"),
+					  	 status=403)
 		
 		hide_path = '/dataserver2/users/bleach/hide'
 		self.testapp.post(hide_path, status=200)
