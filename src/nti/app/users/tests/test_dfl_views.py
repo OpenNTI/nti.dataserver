@@ -13,6 +13,7 @@ from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import ends_with
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_entries
 does_not = is_not
@@ -22,6 +23,7 @@ import urllib
 from nti.app.users.dfl_views import REL_MY_MEMBERSHIP
 
 from nti.dataserver import users
+from nti.dataserver.contenttypes import Note
 
 from nti.app.testing.webtest import TestApp
 
@@ -115,3 +117,38 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 		if 'Links' in res.json_body:
 			assert_that(res.json_body, has_entry('Links',
 												 does_not(has_item(has_entries('rel', 'edit')))))
+
+	@WithSharedApplicationMockDS
+	def test_activity_dfl(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			owner = self._create_user()
+			owner_username = owner.username
+			ichigo = self._create_user('ichigo')
+			aizen = self._create_user('aizen')
+			self._create_user('rukia')
+			
+			dfl = users.DynamicFriendsList(username='Friends')
+			dfl.creator = owner  # Creator must be set
+			owner.addContainedObject(dfl)
+			dfl.addFriend(ichigo)
+			dfl.addFriend(aizen)
+			dfl_ntiid = dfl.NTIID
+			
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = owner
+			note.addSharingTarget(dfl)
+			note.containerId = u'mycontainer'
+			owner.addContainedObject(note)
+		
+		path = '/dataserver2/Objects/%s/Activity' % dfl_ntiid
+		testapp = TestApp(self.app)
+		path = urllib.quote(str(path))
+		
+		res = testapp.get(path, extra_environ=self._make_extra_environ(owner_username))
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		
+		res = testapp.get(path, extra_environ=self._make_extra_environ('ichigo'))
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		
+		testapp.get(path, extra_environ=self._make_extra_environ('rukia'), status=403)
