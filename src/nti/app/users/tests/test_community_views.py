@@ -31,6 +31,12 @@ class TestCommunityViews(ApplicationLayerTest):
 			Community.create_community(username='bleach')
 
 		path = '/dataserver2/users/bleach/join'
+		self.testapp.post(path, status=403)
+		
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.get_community(username='bleach')
+			c.joinable = True
+			
 		self.testapp.post(path, status=200)
 		with mock_dataserver.mock_db_trans(self.ds):
 			community = Community.get_community(username='bleach')
@@ -41,6 +47,7 @@ class TestCommunityViews(ApplicationLayerTest):
 	def test_leave_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			c = Community.create_community(username='bleach')
+			c.joinable = True
 			user = User.get_user(self.default_username)
 			user.record_dynamic_membership(c)
 

@@ -49,8 +49,11 @@ ITEMS = StandardExternalFields.ITEMS
 class JoinCommunityView(AbstractAuthenticatedView):
 
 	def __call__(self):
-		user = self.remoteUser
 		community = self.request.context
+		if not community.joinable:
+			raise hexc.HTTPForbidden()
+		
+		user = self.remoteUser
 		if user not in community:
 			user.record_dynamic_membership(community)
 			user.follow(community)
@@ -64,6 +67,10 @@ class JoinCommunityView(AbstractAuthenticatedView):
 class LeaveCommunityView(AbstractAuthenticatedView):
 
 	def __call__(self):
+		community = self.request.context
+		if not community.joinable:
+			raise hexc.HTTPForbidden()
+
 		user = self.remoteUser
 		community = self.request.context
 		if user in community:
