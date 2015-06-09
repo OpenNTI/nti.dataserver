@@ -13,8 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import codecs
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.property import Lazy
 
@@ -37,7 +37,22 @@ from nti.ntiids import ntiids
 
 from nti.traversal import traversal
 
-@interface.implementer( nti_interfaces.IACE )
+from .interfaces import IACE
+from .interfaces import IACL
+from .interfaces import IPrincipal
+from .interfaces import IPermission
+from .interfaces import IACLProvider
+from .interfaces import IAuthorizationPolicy
+from .interfaces import IACLProviderCacheable
+
+from .interfaces import ACE_ACT_DENY
+from .interfaces import ACE_DENY_ALL
+from .interfaces import ACE_ALLOW_ALL
+from .interfaces import ACE_ACT_ALLOW
+from .interfaces import ALL_PERMISSIONS
+from .interfaces import AUTHENTICATED_GROUP_NAME
+
+@interface.implementer(IACE)
 class _ACE(object):
 	"""
 	Object to hold a single ACE, permitting more descriptive code and
@@ -47,7 +62,7 @@ class _ACE(object):
 	"""
 
 	@classmethod
-	def allowing( cls, actor=None, permission=None, provenance=None ):
+	def allowing(cls, actor=None, permission=None, provenance=None):
 		"""
 		:return: An :class:`.IACE` allowing the given `actor` the given `permission.`
 
@@ -58,10 +73,10 @@ class _ACE(object):
 			or an interable sequence thereof. Also allowable is :const:`.ALL_PERMISSIONS`.
 		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
-		return cls( nti_interfaces.ACE_ACT_ALLOW, actor, permission, provenance=provenance )
+		return cls(ACE_ACT_ALLOW, actor, permission, provenance=provenance)
 
 	@classmethod
-	def denying( cls, actor=None, permission=None, provenance=None ):
+	def denying(cls, actor=None, permission=None, provenance=None):
 		"""
 		:return: An :class:`.IACE` denying the given `actor` the given `permission.`
 
@@ -72,11 +87,11 @@ class _ACE(object):
 			or an interable sequence thereof. Also allowable is :const:`.ALL_PERMISSIONS`.
 		:param provenance: A string or :class:`type` giving information about where this entry came from.
 		"""
-		return cls( nti_interfaces.ACE_ACT_DENY, actor, permission, provenance=provenance )
+		return cls(ACE_ACT_DENY, actor, permission, provenance=provenance)
 
 	@classmethod
-	def from_external_string( cls, string, provenance='from_string' ):
-		parts = string.split( ':' )
+	def from_external_string(cls, string, provenance='from_string'):
+		parts = string.split(':')
 		__traceback_info__ = parts, string, provenance
 		# It happens that we use a : to delimit parts, but that is a valid character
 		# to use in a role name. We arbitrarily decide that it is not a valid character
@@ -85,46 +100,43 @@ class _ACE(object):
 		# by colons to form the actor
 		assert len(parts) >= 3
 		action = parts[0]
-		actor = ':'.join( parts[1:-1] )
+		actor = ':'.join(parts[1:-1])
 
 		perms = parts[-1]
 		if perms == 'All':
-			perms = nti_interfaces.ALL_PERMISSIONS
+			perms = ALL_PERMISSIONS
 		else:
 			# trim the surrounding array chars
 			perms = perms[1:-1]
 			perms = [x.strip().strip("'") for x in perms.split(',')]
 
-		return cls( action, actor, perms, provenance=provenance )
+		return cls(action, actor, perms, provenance=provenance)
 
 	_provenance = None
 
-	def __init__( self, action, actor, permission, provenance=None ):
+	def __init__(self, action, actor, permission, provenance=None):
 		self.action = action
-		assert self.action in (nti_interfaces.ACE_ACT_ALLOW,nti_interfaces.ACE_ACT_DENY)
-		self.actor = (nti_interfaces.IPrincipal( actor )
-						if not nti_interfaces.IPrincipal.providedBy( actor )
-						else actor)
-		if not hasattr( permission, '__iter__' ): # XXX breaks on py3
+		assert self.action in (ACE_ACT_ALLOW, ACE_ACT_DENY)
+		self.actor = (IPrincipal(actor) if not IPrincipal.providedBy(actor) else actor)
+		if not hasattr(permission, '__iter__'):  # XXX breaks on py3
 			permission = [permission]
 
 		if provenance:
 			self._provenance = provenance
 
-		if permission is nti_interfaces.ALL_PERMISSIONS:
+		if permission is ALL_PERMISSIONS:
 			self.permission = permission
 		else:
-			self.permission = [(component.getUtility(nti_interfaces.IPermission, x) # permissions MUST be named utilities
-								if not nti_interfaces.IPermission.providedBy(x)
-								else x)
-								for x
-								in permission]
+			self.permission = [  # permissions MUST be named utilities
+				(component.getUtility(IPermission, x) if not IPermission.providedBy(x) else x)
+				for x in permission ]
 			assert self.permission, "Must provide a permission"
 
-	def __getstate__( self ):
+	def __getstate__(self):
 		return self.to_external_string()
-	def __setstate__( self, state ):
-		other = self.from_external_string( state, provenance='from pickle' )
+
+	def __setstate__(self, state):
+		other = self.from_external_string(state, provenance='from pickle')
 		self.__dict__ = other.__dict__
 
 	def to_external_string(self):
@@ -134,10 +146,10 @@ class _ACE(object):
 		"""
 		return "%s:%s:%s" % (self.action,
 							 self.actor.id,
-							 'All' 	if self.permission is nti_interfaces.ALL_PERMISSIONS \
+							 'All' 	if self.permission is ALL_PERMISSIONS \
 							 		else [str(x.id) for x in self.permission])
 
-	def __eq__(self,other):
+	def __eq__(self, other):
 		# TODO: Work on this
 		# This trick (reversing the order and comparing to a tuple) lets us compare
 		# equal to plain tuples as used in pyramid and that sometimes sneak in
@@ -147,30 +159,31 @@ class _ACE(object):
 			return NotImplemented
 
 	def __hash__(self):
-		return hash( (self.action,self.actor.id,self.permission) )
+		return hash((self.action, self.actor.id, self.permission))
 
 	def __iter__(self):
-		return iter( (self.action, self.actor, self.permission) )
+		return iter((self.action, self.actor, self.permission))
 
 	def __repr__(self):
 		provenance = ''
 		if self._provenance:
-			if isinstance( self._provenance, six.string_types ):
+			if isinstance(self._provenance, six.string_types):
 				provenance = self._provenance
-			elif isinstance( self._provenance, type ):
+			elif isinstance(self._provenance, type):
 				provenance = self._provenance.__name__
 			else:
 				provenance = type(self._provenance).__name__
 		return "<%s: %s,%s,%s%s>" % (self.__class__.__name__,
 									 self.action,
 									 self.actor.id,
-									 getattr( self.permission, 'id', self.permission ),
-									 (" := " + provenance if provenance else '' ) )
+									 getattr(self.permission, 'id', self.permission),
+									 (" := " + provenance if provenance else ''))
 
-def _ace_denying_all( provenance=None ):
-	return _ACE( *(nti_interfaces.ACE_DENY_ALL + (provenance,) ) )
-def _ace_allowing_all( provenance=None ):
-	return _ACE( *(nti_interfaces.ACE_ALLOW_ALL + (provenance,) ) )
+def _ace_denying_all(provenance=None):
+	return _ACE(*(ACE_DENY_ALL + (provenance,)))
+
+def _ace_allowing_all(provenance=None):
+	return _ACE(*(ACE_ALLOW_ALL + (provenance,)))
 
 # Export these ACE functions publicly
 ace_allowing = _ACE.allowing
@@ -179,7 +192,7 @@ ace_denying_all = _ace_denying_all
 ace_allowing_all = _ace_allowing_all
 ace_from_string = _ACE.from_external_string
 
-def acl_from_file( path_or_file ):
+def acl_from_file(path_or_file):
 	"""
 	Return an ACL parsed from reading the contents of the given file.
 
@@ -193,16 +206,16 @@ def acl_from_file( path_or_file ):
 			provenance = path_or_file
 	else:
 		lines = path_or_file.readlines()
-		provenance = getattr( path_or_file, 'name', str(path_or_file) )
+		provenance = getattr(path_or_file, 'name', str(path_or_file))
 
-	return _acl_from_ace_lines( lines, provenance )
+	return _acl_from_ace_lines(lines, provenance)
 
-def _acl_from_ace_lines( lines, provenance ):
-	return _ACL( [ace_from_string(x.strip(), provenance=provenance)
+def _acl_from_ace_lines(lines, provenance):
+	return _ACL([ace_from_string(x.strip(), provenance=provenance)
 				  for x in lines
-				  if x and x.strip() and not x.strip().startswith( '#' )] )
+				  if x and x.strip() and not x.strip().startswith('#')])
 
-def ACL( obj, default=() ):
+def ACL(obj, default=()):
 	"""
 	Produce an ACL for the given `obj`. If the object already has an ACL,
 	that will be returned. Otherwise, if it can be adapted into
@@ -210,12 +223,11 @@ def ACL( obj, default=() ):
 	If no ACL can be found, returns an empty iterable (or whatever
 	the value of the `default` parameter is).
 	"""
-	prov = ACLProvider( obj )
+	prov = ACLProvider(obj)
 	__traceback_info__ = obj, prov
 	return prov.__acl__ if prov is not None else default
 
-
-def ACLProvider( obj, default=None ):
+def ACLProvider(obj, default=None):
 	"""
 	Produce an ACL provider for the given `obj`. If the object already has an ACL,
 	the object is its own provider. Otherwise, if it can be adapted into
@@ -234,15 +246,15 @@ def ACLProvider( obj, default=None ):
 			return obj
 	except AttributeError:
 		try:
-			result = nti_interfaces.IACLProvider( obj )
-			if nti_interfaces.IACLProviderCacheable.providedBy( obj ):
+			result = IACLProvider(obj)
+			if IACLProviderCacheable.providedBy(obj):
 				obj.__acl__ = result.__acl__
 				result = obj
 			return result
 		except TypeError:
 			return default
 
-def has_permission( permission, context, username, **kwargs ):
+def has_permission(permission, context, username, **kwargs):
 	"""
 	Checks to see if the user named by ``username`` has been
 	allowed the ``permission`` on (or in) the ``context``.
@@ -271,21 +283,20 @@ def has_permission( permission, context, username, **kwargs ):
 			# losing the tree.
 			# A workaround, where this is a problem, is to be sure the ACL provider
 			# object returns the parent of its context.
-			to_check = nti_interfaces.IACLProvider( context )
+			to_check = IACLProvider(context)
 		except TypeError:
-			return pyramid.security.Denied( "No ACL found" )
+			return pyramid.security.Denied("No ACL found")
 	else:
 		to_check = context
 
-
-	policy = component.queryUtility(nti_interfaces.IAuthorizationPolicy)
+	policy = component.queryUtility(IAuthorizationPolicy)
 	if not policy:
-		return pyramid.security.Denied( "No IAuthorizationPolicy installed" )
-	return policy.permits( to_check,
-						   authentication.effective_principals( username, **kwargs ),
-						   permission )
+		return pyramid.security.Denied("No IAuthorizationPolicy installed")
+	return policy.permits(to_check,
+						   authentication.effective_principals(username, **kwargs),
+						   permission)
 
-def is_writable( context, username, **kwargs ):
+def is_writable(context, username, **kwargs):
 	"""
 	Is the ``context`` object writable by the ``username``? The ``context`` object should
 	generally not be an already-externalized object.
@@ -293,7 +304,7 @@ def is_writable( context, username, **kwargs ):
 	A shortcut to :func:``has_permission``; see its docs for details.
 	"""
 
-	return has_permission( authorization.ACT_UPDATE, context, username, **kwargs )
+	return has_permission(authorization.ACT_UPDATE, context, username, **kwargs)
 
 import functools
 
@@ -304,7 +315,7 @@ from ZODB.POSException import POSKeyError
 class ACLDecorator(object):
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, orig, result ):
+	def decorateExternalMapping(self, orig, result):
 		try:
 			if hasattr(orig, '__acl__') and result.__acl__ is not None:
 				return
@@ -312,23 +323,23 @@ class ACLDecorator(object):
 			# supports either a callable or the flattened list;
 			# defer it until/if we need it by using a callable because
 			# computing it can be expensive if the cache is cold.
-			result.__acl__ = functools.partial( ACL, orig )
+			result.__acl__ = functools.partial(ACL, orig)
 		except POSKeyError:
-			logger.warn( "Failed to get ACL on POSKeyError" )
+			logger.warn("Failed to get ACL on POSKeyError")
 			result.__acl__ = ()
 
-@interface.implementer(nti_interfaces.IACL)
+@interface.implementer(IACL)
 class _ACL(list):
 
-	def __add__( self, other ):
+	def __add__(self, other):
 		"We allow concatenating single ACE objects to an ACL to produce a new ACL"
-		if isinstance( other, _ACE ):
-			result = _ACL( self )
-			result.append( other )
+		if isinstance(other, _ACE):
+			result = _ACL(self)
+			result.append(other)
 			return result
-		return super(_ACL,self).__add__( other )
+		return super(_ACL, self).__add__(other)
 
-	def write_to_file( self, path_or_file ):
+	def write_to_file(self, path_or_file):
 		"""
 		Given a path to a writable file or a file-like object (having the `write` method),
 		writes each entry in this ACL to the file.
@@ -336,32 +347,32 @@ class _ACL(list):
 		"""
 		def _write(f):
 			for x in self:
-				f.write( x.to_external_string() )
-				f.write( '\n' )
+				f.write(x.to_external_string())
+				f.write('\n')
+
 		if isinstance(path_or_file, six.string_types):
 			with codecs.open(path_or_file, 'w', encoding='utf-8') as f:
 				_write(f)
 		else:
-			_write( path_or_file )
+			_write(path_or_file)
 
-def acl_from_aces( *args ):
+def acl_from_aces(*args):
 	"""
 	Create an ACL from ACEs.
 	Can either provide a list of ACEs, or var-args that are individual ACEs.
 	"""
 	if len(args) == 1:
-		if isinstance(args[0],_ACE):
-			return _ACL( (args[0],) )
-		return _ACL( args[0] )
-
-	return _ACL( args )
+		if isinstance(args[0], _ACE):
+			return _ACL((args[0],))
+		return _ACL(args[0])
+	return _ACL(args)
 
 from nti.common.property import LazyOnClass as _LazyOnClass
 
-def _add_admin_moderation( acl, provenance ):
-	acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance ) )
-	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance ) )
-	acl.append( ace_allowing( authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance ) )
+def _add_admin_moderation(acl, provenance):
+	acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance))
+	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance))
+	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance))
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.IEntity)
@@ -376,27 +387,27 @@ class _EntityACLProvider(object):
 
 	_DENY_ALL = True
 
-	def __init__( self, entity ):
+	def __init__(self, entity):
 		self._entity = entity
 
 	def _viewers(self):
-		return ( nti_interfaces.AUTHENTICATED_GROUP_NAME, )
+		return (AUTHENTICATED_GROUP_NAME,)
 
 	def _do_get_deny_all(self):
 		return self._DENY_ALL
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		"""
 		The ACL for the entity.
 		"""
-		acl = _ACL([ace_allowing( self._entity.username, nti_interfaces.ALL_PERMISSIONS, self )])
+		acl = _ACL([ace_allowing(self._entity.username, ALL_PERMISSIONS, self)])
 		for viewer in self._viewers():
-			acl.append( ace_allowing( viewer, authorization.ACT_READ, self) )
-		_add_admin_moderation( acl, self )
+			acl.append(ace_allowing(viewer, authorization.ACT_READ, self))
+		_add_admin_moderation(acl, self)
 		if self._do_get_deny_all():
 			# Everyone else can do nothing
-			acl.append( _ace_denying_all( _EntityACLProvider ) )
+			acl.append(_ace_denying_all(_EntityACLProvider))
 		return acl
 
 @interface.implementer(nti_interfaces.IACLProvider)
@@ -408,7 +419,7 @@ class _CommunityACLProvider(_EntityACLProvider):
 	"""
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		"""
 		The ACL for the community.
 		"""
@@ -416,9 +427,9 @@ class _CommunityACLProvider(_EntityACLProvider):
 		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self))
 		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, self))
 		for viewer in self._viewers():
-			acl.append( ace_allowing( viewer, authorization.ACT_READ, self) )
+			acl.append(ace_allowing(viewer, authorization.ACT_READ, self))
 		if self._do_get_deny_all():
-			acl.append( _ace_denying_all( _CommunityACLProvider ) )
+			acl.append(_ace_denying_all(_CommunityACLProvider))
 		return acl
 
 @component.adapter(nti_interfaces.IUser)
@@ -430,7 +441,7 @@ class _UserACLProvider(_EntityACLProvider):
 	def _viewers(self):
 		# intersecting community members have viewing rights
 		# this is a private function while in flux
-		return authentication._dynamic_memberships_that_participate_in_security( self._entity )
+		return authentication._dynamic_memberships_that_participate_in_security(self._entity)
 
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
 class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
@@ -439,7 +450,7 @@ class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
 	"""
 
 	def _viewers(self):
-		return () # nobody!
+		return ()  # nobody!
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.ICreated)
@@ -455,26 +466,26 @@ class _CreatedACLProvider(object):
 
 	"""
 
-	def __init__( self, created ):
+	def __init__(self, created):
 		self._created = created
 
 	context = alias('_created')
+
 	_REQUIRE_CREATOR = False
 	_PERMS_FOR_CREATOR = (nti_interfaces.ALL_PERMISSIONS,)
 	_DENY_ALL = True
-
 
 	def _do_get_deny_all(self):
 		"""
 		If the context object has the special attribute __acl_deny_all__,
 		that takes priority over our value for _DENY_ALL
 		"""
-		return getattr( self._created, '__acl_deny_all__', self._DENY_ALL )
+		return getattr(self._created, '__acl_deny_all__', self._DENY_ALL)
 
 	def _do_get_perms_for_creator(self):
 		return self._PERMS_FOR_CREATOR
 
-	def _creator_acl( self ):
+	def _creator_acl(self):
 		"""
 		Creates the ACL for just the creator; subclasses may call.
 
@@ -485,10 +496,10 @@ class _CreatedACLProvider(object):
 					  if getattr(self._created, 'creator', None)  # They don't all comply with the interface
 					  else [])
 		if self._REQUIRE_CREATOR and len(result) != 1:
-			raise ValueError( "Unable to get creator", self._created )
+			raise ValueError("Unable to get creator", self._created)
 		return result
 
-	def _extend_acl_before_deny( self, acl ):
+	def _extend_acl_before_deny(self, acl):
 		"""
 		Called after the creator and sharing target acls have been added, and after optional extensions, but
 		before the deny-everyone is added (and only if it will be added). You can add additional options here.
@@ -497,18 +508,19 @@ class _CreatedACLProvider(object):
 
 	def _handle_deny_all(self, acl):
 		if self._do_get_deny_all():
-			self._extend_acl_before_deny( acl )
-			acl.append( _ace_denying_all( type(self) ) )
+			self._extend_acl_before_deny(acl)
+			acl.append(_ace_denying_all(type(self)))
 		return acl
+
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		"""
 		The ACL for the creator.
 
 		:return: A fresh, mutable list containing at exactly two :class:`_ACE` for
 				the creator (if there is a creator), and one denying all rights to everyone else.
 		"""
-		acl = self._creator_acl( )
+		acl = self._creator_acl()
 		return self._handle_deny_all(acl)
 
 class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
@@ -522,11 +534,10 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 
 		Subclasses can set this to ``True`` (default is ``False``) to force explicitly
 		denying all access to everyone not otherwise listed as having access.
-
 	"""
 
 	_PERMS_FOR_SHARING_TARGETS = (authorization.ACT_READ,)
-	_DENY_ALL = False # Override superclass
+	_DENY_ALL = False  # Override superclass
 
 	def _get_sharing_target_names(self):
 		"""
@@ -534,41 +545,41 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		the access given in :data:`_PERMS_FOR_SHARING_TARGETS`. Each element of the returned
 		sequence will be adapted to an :class:`nti.dataserver.interfaces.IPrincipal`.
 		"""
-		raise NotImplementedError() # pragma: no cover
+		raise NotImplementedError()  # pragma: no cover
 
 	def __do_get_sharing_target_names(self):
 		try:
 			return self._get_sharing_target_names()
 		except POSKeyError:
-			logger.warn( "POSKeyError getting sharing target names.")
+			logger.warn("POSKeyError getting sharing target names.")
 			return ()
 
-	def _extend_acl_after_creator_and_sharing( self, acl ):
+	def _extend_acl_after_creator_and_sharing(self, acl):
 		"""
 		Called after the creator and sharing target acls have been added to add
 		optional extensions. A deny-all may be added following this.
 		"""
 		return
 
-	def _extend_with_admin_privs( self, acl, provenance=None ):
+	def _extend_with_admin_privs(self, acl, provenance=None):
 		"""
 		Subclasses need to call this if admins should have full permissions,
 		from `_extend_acl_after_creator_and_sharing`.
 		"""
 		provenance = provenance or self
-		_add_admin_moderation( acl, provenance )
-		acl.append( ace_allowing( authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance ) )
-		acl.append( ace_allowing( authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance ) )
+		_add_admin_moderation(acl, provenance)
+		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance))
+		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance))
 
 	def _do_get_perms_for_sharing_targets(self):
 		return self._PERMS_FOR_SHARING_TARGETS
 
-	def _extend_for_sharing_target( self, target, acl ):
+	def _extend_for_sharing_target(self, target, acl):
 		for perm in self._do_get_perms_for_sharing_targets():
-			acl.append( ace_allowing( target, perm, type(self) ) )
+			acl.append(ace_allowing(target, perm, type(self)))
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		"""
 		The ACL for this object. If this class sets :attr:`_DENY_ALL` to ``True`` then everyone
 		not explicitly listed is denied any access.
@@ -576,9 +587,9 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		result = self._creator_acl()
 		for name in self.__do_get_sharing_target_names():
 			__traceback_info__ = name
-			self._extend_for_sharing_target( name, result )
-		self._extend_acl_after_creator_and_sharing( result )
-		return self._handle_deny_all( result )
+			self._extend_for_sharing_target(name, result)
+		self._extend_acl_after_creator_and_sharing(result)
+		return self._handle_deny_all(result)
 
 @component.adapter(nti_interfaces.IShareableModeledContent)
 class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
@@ -608,43 +619,43 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	_DENY_ALL = True
 
-	def _get_sharing_target_names( self ):
+	def _get_sharing_target_names(self):
 		# By expanding in this way, in certain cases we can get
 		# multiple entries for the creator. That's OK, because the creator
 		# ACE comes first, and because they are both 'allow' entries
 		return self.context.flattenedSharingTargetNames
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		# Inherit if we are nested. See class comment. NOTE: We are just checking the direct parent,
 		# not the entire traversal chain; checking to see if anything we are within is IReadableShared
 		# might pull in the wrong permissions, depending on how the nesting goes (?)
-		if nti_interfaces.IReadableShared.providedBy( getattr( self.context, '__parent__', None ) ):
+		if nti_interfaces.IReadableShared.providedBy(getattr(self.context, '__parent__', None)):
 			result = _ACL()
-			self._extend_with_admin_privs( result, 'Nested _ShareableModeledContentACLProvider' )
+			self._extend_with_admin_privs(result, 'Nested _ShareableModeledContentACLProvider')
 			return result
-		return super(_ShareableModeledContentACLProvider,self).__acl__
+		return super(_ShareableModeledContentACLProvider, self).__acl__
 
-@component.adapter( nti_interfaces.IEnclosedContent )
+@component.adapter(nti_interfaces.IEnclosedContent)
 class _EnclosedContentACLProvider(_CreatedACLProvider):
 	"""
 	The ACL for enclosed content depends on a few things, most notably
 	whether the content it is enclosing itself has an ACL.
 	"""
 
-	def __init__( self, obj ):
-		super(_EnclosedContentACLProvider,self).__init__( obj )
+	def __init__(self, obj):
+		super(_EnclosedContentACLProvider, self).__init__(obj)
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		# Give the creator full rights.
 		result = self._creator_acl()
 		# Add to this any ACL we can determine for the enclosed
 		# content
-		result.extend( ACL( self._created.data ) )
+		result.extend(ACL(self._created.data))
 		return result
 
-@interface.implementer( nti_interfaces.IACLProvider )
+@interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(content_interfaces.IContentUnit)
 class _TestingLibraryTOCEntryACLProvider(object):
 	"""
@@ -652,18 +663,18 @@ class _TestingLibraryTOCEntryACLProvider(object):
 	This class is for testing only, never for use in a production scenario.
 	"""
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	@property
-	def __parent__( self ):
+	def __parent__(self):
 		return self.context.__parent__
 
 	@_LazyOnClass
 	def __acl__(self):
-		return ( ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+		return (ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
 							   nti_interfaces.ALL_PERMISSIONS,
-							   _TestingLibraryTOCEntryACLProvider ), )
+							   _TestingLibraryTOCEntryACLProvider),)
 
 # TODO: This could be (and was) registered for a simple IDelimitedHierarchyEntry.
 # There is none of that separate from the contentpackage/unit though, so it shouldn't
@@ -676,12 +687,12 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 	Otherwise, the ACL allows all authenticated users access.
 	"""
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	_acl_sibling_entry_name = '.nti_acl'
-	#: If defined by a subclass, this will be checked
-	#: when `_acl_sibling_entry_name` does not exist.
+	# : If defined by a subclass, this will be checked
+	# : when `_acl_sibling_entry_name` does not exist.
 	_acl_sibling_fallback_name = None
 	_default_allow = True
 	_add_default_deny_to_acl_from_file = False
@@ -691,36 +702,35 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 	@Lazy
 	def __acl__(self):
 		provenance = self._acl_sibling_entry_name
-		acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_entry_name )
+		acl_string = self.context.read_contents_of_sibling_entry(self._acl_sibling_entry_name)
 		if acl_string is None and self._acl_sibling_fallback_name is not None:
 			provenance = self._acl_sibling_fallback_name
-			acl_string = self.context.read_contents_of_sibling_entry( self._acl_sibling_fallback_name )
+			acl_string = self.context.read_contents_of_sibling_entry(self._acl_sibling_fallback_name)
 		if acl_string is not None:
 			try:
-				__acl__ = self._acl_from_string(self.context, acl_string, provenance )
+				__acl__ = self._acl_from_string(self.context, acl_string, provenance)
 				# Empty files (those that do exist but feature no valid ACL lines)
 				# are considered a mistake, an overlooked accident. In the interest of trying
 				# to be secure by default and not allow oversights through, call them out.
 				# This results in default-deny
 				if not __acl__:
-					raise ValueError( "ACL file had no valid contents." )
+					raise ValueError("ACL file had no valid contents.")
 				if self._add_default_deny_to_acl_from_file:
-					__acl__.append( _ace_denying_all( 'Default Deny After File ACL' ) )
-			except (ValueError,AssertionError,TypeError,ComponentLookupError):
-				logger.exception( "Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name )
-				__acl__ = _ACL( (_ace_denying_all( 'Default Deny Due to Parsing Error' ),) )
+					__acl__.append(_ace_denying_all('Default Deny After File ACL'))
+			except (ValueError, AssertionError, TypeError, ComponentLookupError):
+				logger.exception("Failed to read acl from %s/%s; denying all access.", self.context, self._acl_sibling_entry_name)
+				__acl__ = _ACL((_ace_denying_all('Default Deny Due to Parsing Error'),))
 		elif self._default_allow:
-			__acl__ = _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME,
+			__acl__ = _ACL((ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
 										   nti_interfaces.ALL_PERMISSIONS,
-										   _AbstractDelimitedHierarchyEntryACLProvider ), ) )
+										   _AbstractDelimitedHierarchyEntryACLProvider),))
 		else:
-			__acl__ = () # Inherit from parent
+			__acl__ = ()  # Inherit from parent
 
 		return __acl__
 
 	def _acl_from_string(self, context, acl_string, provenance=None):
-		return _acl_from_ace_lines( acl_string.splitlines(), provenance or context )
-
+		return _acl_from_ace_lines(acl_string.splitlines(), provenance or context)
 
 def _supplement_acl_with_content_role(self, context, acl):
 	"""
@@ -734,17 +744,17 @@ def _supplement_acl_with_content_role(self, context, acl):
 	to be very specific.)
 	"""
 
-	package = traversal.find_interface( context, content_interfaces.IContentPackage, strict=False )
+	package = traversal.find_interface(context, content_interfaces.IContentPackage, strict=False)
 	if package is not None and package.ntiid:
-		parts = ntiids.get_parts( package.ntiid )
+		parts = ntiids.get_parts(package.ntiid)
 		if parts and parts.provider and parts.specific:
-			acl = acl + ace_allowing( authorization.role_for_providers_content( parts.provider, parts.specific ),
+			acl = acl + ace_allowing(authorization.role_for_providers_content(parts.provider, parts.specific),
 									  authorization.ACT_READ,
-									  self )
+									  self)
 	return acl
 
-@interface.implementer( nti_interfaces.IACLProvider )
-@component.adapter( content_interfaces.IDelimitedHierarchyContentPackage )
+@interface.implementer(nti_interfaces.IACLProvider)
+@component.adapter(content_interfaces.IDelimitedHierarchyContentPackage)
 class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
 	For content packages that are part of a hierarchy,
@@ -759,9 +769,9 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 
 	_add_default_deny_to_acl_from_file = True
 
-	def _acl_from_string( self, context, acl_string, provenance=None ):
-		acl = super(_DelimitedHierarchyContentPackageACLProvider,self)._acl_from_string( context, acl_string, provenance=provenance )
-		return _supplement_acl_with_content_role( self, context, acl )
+	def _acl_from_string(self, context, acl_string, provenance=None):
+		acl = super(_DelimitedHierarchyContentPackageACLProvider, self)._acl_from_string(context, acl_string, provenance=provenance)
+		return _supplement_acl_with_content_role(self, context, acl)
 
 @interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
@@ -789,27 +799,28 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 
 	_default_allow = False
 
-	def __init__( self, context ):
-		super(_DelimitedHierarchyContentUnitACLProvider,self).__init__( context )
+	def __init__(self, context):
+		super(_DelimitedHierarchyContentUnitACLProvider, self).__init__(context)
 		ordinals = []
-		ordinals.append( context.ordinal )
+		ordinals.append(context.ordinal)
 		parent = context.__parent__
-		while parent is not None and content_interfaces.IContentUnit.providedBy( parent ) and \
-			  not content_interfaces.IContentPackage.providedBy( parent ):
-			ordinals.append( parent.ordinal )
+		while parent is not None and content_interfaces.IContentUnit.providedBy(parent) and \
+			  not content_interfaces.IContentPackage.providedBy(parent):
+			ordinals.append(parent.ordinal)
 			parent = parent.__parent__
 
 		ordinals.reverse()
-		path = '.'.join( [str(i) for i in ordinals] )
+		path = '.'.join([str(i) for i in ordinals])
 		self._acl_sibling_entry_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.' + path
 
-		if len(ordinals) == 1: # a "chapter"; we don't do this at every level for efficiency (TODO: For best caching, we need to read this off the ContentPackage)
+		if len(ordinals) == 1:  # a "chapter"; we don't do this at every level for efficiency (TODO: For best caching, we need to read this off the ContentPackage)
 			self._acl_sibling_fallback_name = _AbstractDelimitedHierarchyEntryACLProvider._acl_sibling_entry_name + '.default'
 			self._add_default_deny_to_acl_from_file = True
 
-	def _acl_from_string( self, context, acl_string, provenance=None ):
-		acl = super(_DelimitedHierarchyContentUnitACLProvider,self)._acl_from_string( context, acl_string, provenance=provenance )
-		return _supplement_acl_with_content_role( self, context, acl ) if self._acl_sibling_fallback_name else acl
+	def _acl_from_string(self, context, acl_string, provenance=None):
+		acl = super(_DelimitedHierarchyContentUnitACLProvider, self)._acl_from_string(context, acl_string, provenance=provenance)
+		return 	_supplement_acl_with_content_role(self, context, acl) \
+				if self._acl_sibling_fallback_name else acl
 
 @component.adapter(nti_interfaces.IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):
@@ -817,74 +828,73 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 	Makes friends lists readable by those it contains.
 	"""
 
-	def __init__( self, obj ):
-		super(_FriendsListACLProvider,self).__init__( obj )
+	def __init__(self, obj):
+		super(_FriendsListACLProvider, self).__init__(obj)
 
 	@Lazy
-	def __acl__( self ):
+	def __acl__(self):
 		result = self._creator_acl()
 		for friend in self._created:
-			result.append( ace_allowing( friend.username, authorization.ACT_READ ) )
+			result.append(ace_allowing(friend.username, authorization.ACT_READ))
 		# And finally nobody else gets jack squat
-		result.append( ace_denying_all( _FriendsListACLProvider ) )
+		result.append(ace_denying_all(_FriendsListACLProvider))
 		return result
 
-@interface.implementer( nti_interfaces.IACLProvider )
+@interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(nti_interfaces.IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		pass
 
 	@_LazyOnClass
-	def __acl__( self ):
+	def __acl__(self):
 		# Got to be here after the components are registered
 		acl = acl_from_aces(
 			# Everyone logged in has read and search access at the root
-			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
-						  authorization.ACT_READ,
-						  _DataserverFolderACLProvider ),
-			ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
-						  authorization.ACT_SEARCH,
-						  _DataserverFolderACLProvider ),
+			ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
+						 authorization.ACT_READ,
+						 _DataserverFolderACLProvider),
+			ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
+						 authorization.ACT_SEARCH,
+						 _DataserverFolderACLProvider),
 			# Global admins also get impersonation rights globally
 			# TODO: We could easily site scope this, or otherwise
-			ace_allowing( authorization.ROLE_ADMIN, 
-						  authorization.ACT_IMPERSONATE, 
-						  _DataserverFolderACLProvider )
+			ace_allowing(authorization.ROLE_ADMIN,
+						 authorization.ACT_IMPERSONATE,
+						 _DataserverFolderACLProvider)
 			)
-		_add_admin_moderation( acl, _DataserverFolderACLProvider )
+		_add_admin_moderation(acl, _DataserverFolderACLProvider)
 		return acl
 
-### Content/bundle library.
+# ## Content/bundle library.
 # TODO: These should move up to nti.app.contentlibrary.
 
-@interface.implementer( nti_interfaces.IACLProvider )
+@interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(content_interfaces.IContentPackageLibrary)
 class _ContentPackageLibraryACLProvider(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		pass
 
 	@_LazyOnClass
-	def __acl__( self ):
+	def __acl__(self):
 		# Got to be here after the components are registered, not at the class
-		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
-									authorization.ACT_READ, 
-									_ContentPackageLibraryACLProvider ), ) )
+		return _ACL((ace_allowing(AUTHENTICATED_GROUP_NAME,
+								  authorization.ACT_READ,
+								  _ContentPackageLibraryACLProvider),))
 
 
-@interface.implementer( nti_interfaces.IACLProvider )
+@interface.implementer(nti_interfaces.IACLProvider)
 @component.adapter(content_interfaces.IContentPackageBundleLibrary)
 class _ContentPackageBundleLibraryACLProvider(object):
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		pass
 
 	@_LazyOnClass
-	def __acl__( self ):
+	def __acl__(self):
 		# Got to be here after the components are registered, not at the class
-		return _ACL( (ace_allowing( nti_interfaces.AUTHENTICATED_GROUP_NAME, 
-									authorization.ACT_READ, 
-									_ContentPackageLibraryACLProvider ), ) )
-
+		return _ACL((ace_allowing(AUTHENTICATED_GROUP_NAME,
+								  authorization.ACT_READ,
+								  _ContentPackageLibraryACLProvider),))
