@@ -11,7 +11,11 @@ import unittest
 
 from zope.dottedname import resolve as dottedname
 
+from nti.invitations.tests import SharedConfiguringTestLayer
+
 class TestInterfaces(unittest.TestCase):
 
+	layer = SharedConfiguringTestLayer
+	
 	def test_ifaces(self):
-		dottedname.resolve('nti.appserver.invitations.interfaces')
+		dottedname.resolve('nti.invitations.interfaces')
