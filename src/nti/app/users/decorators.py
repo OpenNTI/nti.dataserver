@@ -77,20 +77,20 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		in_community = self.remoteUser in context
 		if context.joinable:
 			if not in_community:
-				link = Link(context, rel="join")
+				link = Link(context, elements=('join',), rel="join")
 			else:
-				link = Link(context, rel="leave")
+				link = Link(context, elements=('leave',), rel="leave")
 			_links.append(link)
 		
 		if not IDisallowMembersLink.providedBy(context) and (context.public or in_community):
-			link = Link(context, rel="members")
+			link = Link(context, elements=('members',), rel="members")
 			_links.append(link)
 
 		if not IDisallowHiddenMembership.providedBy(context):
 			if self.remoteUser in IHiddenMembership(context, None) or ():
-				link = Link(context, rel="unhide")
+				link = Link(context, elements=('unhide',), rel="unhide")
 			else:
-				link = Link(context, rel="hide")
+				link = Link(context, elements=('hide',), rel="hide")
 			_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
