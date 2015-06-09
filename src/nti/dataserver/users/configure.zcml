@@ -121,7 +121,7 @@
 			 for="nti.dataserver.interfaces.ICoppaUser"
 			 name="generated" />
 
-	<adapter factory=".avatar_urls.DefaultAvatarURL"
+	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 for="nti.dataserver.interfaces.ICoppaUser"
 			 name="default" />
