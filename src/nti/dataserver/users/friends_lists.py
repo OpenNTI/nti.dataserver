@@ -436,7 +436,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		locked = parsed.pop('Locked', None)
-		about = parsed.pop('About') or parsed.pop('bout') 
+		about = parsed.pop('About', None) or parsed.pop('about', None) 
 		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
 		if about is not None:
 			updated = True
