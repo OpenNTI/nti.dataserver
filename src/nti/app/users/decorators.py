@@ -20,6 +20,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IDisallowMembersLink
 from nti.dataserver.users.interfaces import IDisallowHiddenMembership
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -74,7 +75,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				link = Link(context, rel="leave")
 			_links.append(link)
 		
-		if context.public or in_community:
+		if not IDisallowMembersLink.providedBy(context) and (context.public or in_community):
 			link = Link(context, rel="members")
 			_links.append(link)
 
