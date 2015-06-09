@@ -76,7 +76,7 @@ class CommunityMembersView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		community = self.request.context
-		if self.remoteUser not in community:
+		if not community.public and self.remoteUser not in community:
 			raise hexc.HTTPForbidden()
 
 		result = LocatedExternalDict()
