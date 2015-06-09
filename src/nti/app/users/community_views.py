@@ -23,8 +23,6 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.appserver.ugd_query_views import _UGDView
 
-from nti.common.iterables import isorted
-
 from nti.dataserver import authorization as nauth
 from nti.dataserver.core.interfaces import ICommunity
 from nti.dataserver.users.interfaces import IHiddenMembership
@@ -96,6 +94,7 @@ class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 		result = LocatedExternalDict()
 		hidden = IHiddenMembership(community)
+		members = sorted(community)
 
 		def _selector(x):
 			if x is None or (x in hidden and x != self.remoteUser):
@@ -104,7 +103,7 @@ class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 									if x == self.remoteUser
 									else 'summary'))
 
-		self._batch_items_iterable(result, isorted(community),
+		self._batch_items_iterable(result, members,
 								   number_items_needed=self.limit,
 								   batch_size=self.batch_size,
 								   batch_start=self.batch_start,
