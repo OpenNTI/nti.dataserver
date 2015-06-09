@@ -9,6 +9,10 @@ Dataserver interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+import zope.i18nmessageid
+MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
+_ = MessageFactory
+
 import six
 import sys
 
@@ -18,6 +22,8 @@ from zope import interface
 from zope.annotation.interfaces import IAnnotatable
 
 from zope.catalog.interfaces import ICatalog
+
+from zope.i18n import translate
 
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -52,6 +58,8 @@ from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
 
+from nti.schema.interfaces import InvalidValue
+
 class ACLLocationProxy(LocationProxy):
 	"""
 	Like :class:`LocationProxy` but also adds transparent storage
@@ -82,6 +90,39 @@ class ACLProxy(ProxyBase):
 		self.__acl__ = acl
 
 # pylint: disable=E0213,E0211
+
+class InvalidData(InvalidValue):
+	"""
+	Invalid Value
+	"""
+
+	i18n_message = None
+
+	def __str__(self):
+		if self.i18n_message:
+			return translate(self.i18n_message)
+		return super(InvalidData, self).__str__()
+
+	def doc(self):
+		if self.i18n_message:
+			return self.i18n_message
+		return self.__class__.__doc__
+_InvalidData = InvalidData
+
+class FieldCannotBeOnlyWhitespace(InvalidData):
+
+	i18n_message = _("The field cannot be blank.")
+
+	def __init__( self, field_name, value, field_external=None ):
+		super(FieldCannotBeOnlyWhitespace,self).__init__( self.i18n_message,
+														  field_external or (field_name and field_name.capitalize()),
+														  value,
+														  value=value )
+
+def checkCannotBeBlank(value):
+	if not value or not value.strip():
+		raise FieldCannotBeOnlyWhitespace( None, value )
+	return True
 
 # BWC exports
 from nti.coremetadata.interfaces import ICreatedTime
@@ -754,7 +795,9 @@ class ILengthEnumerableEntityContainer(IEnumerableEntityContainer):
 	"""
 
 	def __len__():
-		"About how many entities in this container?"
+		"""
+		About how many entities in this container?
+		"""
 
 class ISharingTargetEnumerableIntIdEntityContainer(ILengthEnumerableEntityContainer,
 												   IEntityIntIdIterable,
@@ -1042,6 +1085,13 @@ class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,
 	"""
 	A type of :class:`IDynamicSharingTarget` that is a list of members.
 	"""
+
+	About = ValidTextLine(
+				title='About',
+				description="A short description of a grouo",
+				max_length=500,
+				required=False,
+				constraint=checkCannotBeBlank)
 
 	Locked = Bool(title='Locked flag. No group code, no removal', required=False, default=False)
 
