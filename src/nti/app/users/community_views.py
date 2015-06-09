@@ -123,7 +123,7 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 			 request_method='GET',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
-class ActivityCommunityMembershipView(_UGDView):
+class CommunityActivityView(_UGDView):
 
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''

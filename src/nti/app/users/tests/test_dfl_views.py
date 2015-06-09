@@ -1,31 +1,34 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import assert_that
-from hamcrest import has_entry
-from hamcrest import has_item
-
+from hamcrest import is_not
 from hamcrest import contains
-from hamcrest import has_entries
-
-from hamcrest import is_not as does_not
+from hamcrest import has_item
 from hamcrest import ends_with
-
-from .test_application import TestApp
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_entries
+does_not = is_not
 
 import urllib
 
-from nti.dataserver.tests import mock_dataserver
+from nti.app.users.dfl_views import REL_MY_MEMBERSHIP
+
 from nti.dataserver import users
 
-from ..dfl_views import REL_MY_MEMBERSHIP
+from nti.app.testing.webtest import TestApp
 
-from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.dataserver.tests import mock_dataserver
 
 class TestApplicationDFLViews(ApplicationLayerTest):
 
