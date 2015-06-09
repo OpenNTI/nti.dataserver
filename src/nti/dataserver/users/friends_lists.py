@@ -375,7 +375,9 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 	stop following this DFL, cutting down on the visible noise.
 	"""
 
+	About = None
 	Locked = False
+	
 	defaultGravatarType = 'retro'
 
 	__external_class_name__ = 'FriendsList'
@@ -434,7 +436,12 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		locked = parsed.pop('Locked', None)
+		about = parsed.pop('About') or parsed.pop('bout') 
 		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
+		if about is not None:
+			updated = True
+			self.About = about
+			self.updateLastMod()
 		if locked is not None:
 			updated = True
 			self.Locked = locked
@@ -480,7 +487,8 @@ class _DynamicFriendsListEntityIterable(_FriendsListEntityIterable):
 			yield self.context.creator
 
 	def __contains__(self, other):
-		return super(_DynamicFriendsListEntityIterable, self).__contains__(other) or other == self.context.creator
+		return 	super(_DynamicFriendsListEntityIterable, self).__contains__(other) or \
+				other == self.context.creator
 
 	def iter_intids(self):
 		for x in super(_DynamicFriendsListEntityIterable, self).iter_intids():

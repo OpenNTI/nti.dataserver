@@ -28,8 +28,6 @@ from zope.interface import Interface
 from zope.interface.interfaces import ObjectEvent
 from zope.interface.interfaces import IObjectEvent
 
-from zope.i18n import translate
-
 from zope.schema import URI
 
 from z3c.password.interfaces import NoPassword
@@ -53,36 +51,9 @@ from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
-class _InvalidData(InvalidValue):
-	"""Invalid Value"""
-
-	i18n_message = None
-
-	def __str__(self):
-		if self.i18n_message:
-			return translate(self.i18n_message)
-		return super(_InvalidData, self).__str__()
-
-	def doc(self):
-		if self.i18n_message:
-			return self.i18n_message
-		return self.__class__.__doc__
-
-class FieldCannotBeOnlyWhitespace(_InvalidData):
-
-	i18n_message = _("The field cannot be blank.") # TODO: Not very good
-
-	def __init__( self, field_name, value, field_external=None ):
-		super(FieldCannotBeOnlyWhitespace,self).__init__( self.i18n_message,
-														  field_external or (field_name and field_name.capitalize()),
-														  value,
-														  value=value )
-
-def checkCannotBeBlank(value):
-	if not value or not value.strip():
-		raise FieldCannotBeOnlyWhitespace( None, value )
-
-	return True
+from ..interfaces import InvalidData
+from ..interfaces import checkCannotBeBlank
+from ..interfaces import FieldCannotBeOnlyWhitespace
 
 class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
@@ -91,7 +62,7 @@ class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 	def __init__( self, username ):
 		super(UsernameCannotBeBlank,self).__init__( 'Username', username )
 
-class UsernameContainsIllegalChar(_InvalidData):
+class UsernameContainsIllegalChar(InvalidData):
 
 	def __init__( self, username, allowed_chars ):
 		self.username = username
@@ -111,18 +82,23 @@ class UsernameContainsIllegalChar(_InvalidData):
 		allowed_chars = set(self.allowed_chars) - set(restricted_chars)
 		return type(self)( self.username, allowed_chars )
 
-class EmailAddressInvalid(_InvalidData):
-	"""Invalid email address."""
+class EmailAddressInvalid(InvalidData):
+	"""
+	Invalid email address.
+	"""
 
 	i18n_message = _("The email address you have entered is not valid.")
 
 	def __init__( self, address ):
 		super(EmailAddressInvalid,self).__init__( address, value=address )
 
-class RealnameInvalid(_InvalidData):
-	""" Invalid realname. """
-	i18n_message = _("The first or last name you have entered is not valid.")
+class RealnameInvalid(InvalidData):
+	""" 
+	Invalid realname. 
+	"""
+
 	field = 'realname'
+	i18n_message = _("The first or last name you have entered is not valid.")
 
 	def __init__( self, name ):
 		super(RealnameInvalid,self).__init__( name, value=name )
@@ -131,7 +107,6 @@ class BlankHumanNameError(RealnameInvalid):
 
 	def __init__(self, name=''):
 		super(BlankHumanNameError,self).__init__(name)
-
 
 class OldPasswordDoesNotMatchCurrentPassword(InvalidPassword):
 	i18n_message = _("The password you supplied does not match the current password.")
@@ -191,7 +166,6 @@ def _isValidEmail(email):
 def checkEmailAddress(value):
 	if value and _isValidEmail(value):
 		return True
-
 	raise EmailAddressInvalid( value )
 
 #: A sequence of only non-alphanumeric characters
