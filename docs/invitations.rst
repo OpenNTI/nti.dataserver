@@ -8,13 +8,13 @@ Model
 =====
 
 The implementation of the API and storage lives in the
-``nti.appserver.invitations`` package.
+``nti.invitations`` package.
 
-.. automodule:: nti.appserver.invitations
+.. automodule:: nti.invitations
 
-.. automodule:: nti.appserver.invitations.interfaces
+.. automodule:: nti.invitations.interfaces
 
-.. automodule:: nti.appserver.invitations.utility
+.. automodule:: nti.invitations.utility
 
 
 Views
