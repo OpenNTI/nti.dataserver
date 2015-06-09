@@ -23,13 +23,13 @@ from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
 from nti.appserver.pyramid_authorization import is_writable
 
-from nti.appserver.invitations.interfaces import IInvitations
-from nti.appserver.invitations.interfaces import InvitationValidationError
+from nti.invitations.interfaces import IInvitations
+from nti.invitations.interfaces import InvitationValidationError
 
-from nti.appserver.invitations.invitation import JoinEntitiesInvitation
+from nti.invitations.invitation import JoinEntitiesInvitation
 
-from nti.appserver.invitations.utility import ZcmlInvitations
-from nti.appserver.invitations.utility import accept_invitations
+from nti.invitations.utility import ZcmlInvitations
+from nti.invitations.utility import accept_invitations
 
 from nti.dataserver import authorization as nauth
 
