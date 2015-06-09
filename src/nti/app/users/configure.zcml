@@ -13,16 +13,23 @@
 	<subscriber handler=".subscribers._send_email_confirmation" />
 	<subscriber handler=".subscribers._new_user_is_not_blacklisted" />
 	<subscriber handler=".subscribers._user_modified_from_external_event" />
-	
+
 	<!-- Decorators -->
 	<subscriber factory=".decorators._UserEmailVerificationLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest" />
-					 
+				 
 	<subscriber factory=".decorators._CommunityLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.ICommunity
 					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators.DFLGetMembershipLinkProvider"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+			
+	<subscriber factory=".decorators.DFLEditLinkRemoverDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
 
 </configure>
