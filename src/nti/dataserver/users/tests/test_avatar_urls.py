@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import has_item
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -40,51 +41,49 @@ class TestAvatarURLs(DataserverLayerTest):
 
 		o = O()
 
+		interface.alsoProvides(o, nti_interfaces.ICoppaUserWithAgreement)
+		interface.alsoProvides(o, an_interfaces.IAttributeAnnotatable)
 
-		interface.alsoProvides( o, nti_interfaces.ICoppaUserWithAgreement )
-		interface.alsoProvides( o, an_interfaces.IAttributeAnnotatable )
+		assert_that(interfaces.IAvatarURL(o),
+					verifiably_provides(interfaces.IAvatarURL))
+		assert_that(interfaces.IAvatarURL(o),
+					has_property('avatarURL', contains_string('https://')))
 
-		assert_that( interfaces.IAvatarURL( o ),
-					 verifiably_provides( interfaces.IAvatarURL ) )
-		assert_that( interfaces.IAvatarURL( o ),
-					 has_property( 'avatarURL', contains_string( 'https://' ) ) )
+		choices = interfaces.IAvatarChoices(o).get_choices()
+		assert_that(choices, has_length(greater_than_or_equal_to(16)))
+		assert_that(choices, has_item(interfaces.IAvatarURL(o).avatarURL))
 
-		choices = interfaces.IAvatarChoices( o ).get_choices()
-		assert_that( choices, has_length( greater_than_or_equal_to( 16 ) ) )
-		assert_that( choices, has_item( interfaces.IAvatarURL( o ).avatarURL ) )
-
-		profile = interfaces.IAvatarURL( o )
+		profile = interfaces.IAvatarURL(o)
 		profile.avatarURL = 'data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw=='
-		_file = getattr( type(profile), 'avatarURL' ).get_file(profile)
-		_file.to_external_ntiid_oid = lambda: 'the_external_ntiid' # rather than setting up _p_jar
-		assert_that( users_external._avatar_url( o ), is_( links.Link ) )
+		_file = getattr(type(profile), 'avatarURL').get_file(profile)
+		_file.to_external_ntiid_oid = lambda: 'the_external_ntiid'  # rather than setting up _p_jar
+		assert_that(users_external._avatar_url(o), is_(links.Link))
 
 		# host-less URLs are ignored
 		profile.avatarURL = '/a/path/to/data/@@view'
-		assert_that( users_external._avatar_url( o ), is_( links.Link ) )
-
+		assert_that(users_external._avatar_url(o), is_(links.Link))
 
 	def test_user_with_email(self):
-
-		u = users.User( "jason.madden@nextthought.com" )
-		profile = interfaces.ICompleteUserProfile( u )
+		u = users.User("jason.madden@nextthought.com")
+		profile = interfaces.ICompleteUserProfile(u)
 
 		profile.email = 'jason.madden@nextthought.com'
 
-		avurl_prof = interfaces.IAvatarURL( u )
+		avurl_prof = interfaces.IAvatarURL(u)
+		assert_that(avurl_prof.avatarURL, is_(none()))
 
-		assert_that( avurl_prof.avatarURL,
-					 is_( 'https://secure.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=identicon#using_provided_email_address' ) )
+		avurl_prof = interfaces.IBackgroundURL(u)
+		assert_that(avurl_prof.backgroundURL, is_(none()))
 
 	def test_everyone(self):
-
 		o = Everyone()
+		assert_that(interfaces.IAvatarURL(o),
+					verifiably_provides(interfaces.IAvatarURL))
+		assert_that(interfaces.IAvatarURL(o),
+					has_property('avatarURL', contains_string('http://')))
+		assert_that(interfaces.IBackgroundURL(o),
+					has_property('backgroundURL', is_(none())))
 
-		assert_that( interfaces.IAvatarURL( o ),
-					 verifiably_provides( interfaces.IAvatarURL ) )
-		assert_that( interfaces.IAvatarURL( o ),
-					 has_property( 'avatarURL', contains_string( 'http://' ) ) )
-
-		choices = interfaces.IAvatarChoices( o ).get_choices()
-		assert_that( choices, has_length( 1 ) )
-		assert_that( choices, has_item( interfaces.IAvatarURL( o ).avatarURL ) )
+		choices = interfaces.IAvatarChoices(o).get_choices()
+		assert_that(choices, has_length(1))
+		assert_that(choices, has_item(interfaces.IAvatarURL(o).avatarURL))
