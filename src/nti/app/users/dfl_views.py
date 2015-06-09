@@ -77,12 +77,15 @@ class DFLActivityView(_UGDView):
 		self.user = self.remoteUser
 	
 	def getObjectsForId(self, *args, **kwargs ):
+		context = self.request.context
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
 			raise hexc.HTTPNotFound("No catalog")
+		if self.remoteUser not in context and self.remoteUser != context.creator:
+			raise hexc.HTTPForbidden()
 		intids = component.getUtility(IIntIds)
 		
-		username = self.request.context.username
+		username = context.NTIID
 		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
 		items = ResultSet(intids_shared_with_comm, intids, ignore_invalid=True)
 		return (items,)
