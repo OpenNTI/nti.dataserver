@@ -11,11 +11,26 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
+from zope.catalog.interfaces import ICatalog
+
+from zope.intid.interfaces import IIntIds
+
 from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 from nti.app.authentication import get_remote_user
 
+from nti.appserver.ugd_query_views import _UGDView
+
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.metadata_index import IX_SHAREDWITH
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+
+from nti.zope_catalog.catalog import ResultSet
 
 # The link relationship type describing the current user's
 # membership in something like a :class:`nti.dataserver.interfaces.IDynamicSharingTargetFriendsList`.
@@ -35,7 +50,7 @@ def _authenticated_user_is_member(context, request):
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
-			 context='nti.dataserver.interfaces.IDynamicSharingTargetFriendsList',
+			 context=IDynamicSharingTargetFriendsList,
 			 permission=nauth.ACT_READ,
 			 request_method='DELETE',
 			 name=REL_MY_MEMBERSHIP,
@@ -49,3 +64,25 @@ def exit_dfl_view(context, request):
 	# return the new object that we can no longer actually see but could just a moment ago
 	# TODO: Not sure what I really want to return
 	return context
+
+@view_config(route_name='objects.generic.traversal',
+			 name='Activity',
+			 request_method='GET',
+			 context=IDynamicSharingTargetFriendsList,
+			 permission=nauth.ACT_READ)
+class DFLActivityView(_UGDView):
+
+	def _set_user_and_ntiid(self, *args, **kwargs):
+		self.ntiid = u''
+		self.user = self.remoteUser
+	
+	def getObjectsForId(self, *args, **kwargs ):
+		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
+		if catalog is None:
+			raise hexc.HTTPNotFound("No catalog")
+		intids = component.getUtility(IIntIds)
+		
+		username = self.request.context.username
+		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
+		items = ResultSet(intids_shared_with_comm, intids, ignore_invalid=True)
+		return (items,)
