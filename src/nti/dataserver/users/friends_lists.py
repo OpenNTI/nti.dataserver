@@ -50,6 +50,8 @@ from ..enclosures import SimpleEnclosureMixin
 
 from .entity import Entity
 
+_marker = object()
+
 @interface.implementer(IFriendsList, ISimpleEnclosureContainer)
 class FriendsList(SimpleEnclosureMixin, Entity):  # Mixin order matters for __setstate__
 	"""
@@ -435,17 +437,13 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 		# return source is self.creator or source in list(self)
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
-		locked = parsed.pop('Locked', None)
-		about = parsed.pop('About', None) or parsed.pop('about', None) 
-		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs)
-		if about is not None:
-			updated = True
-			self.About = about
-			self.updateLastMod()
-		if locked is not None:
-			updated = True
-			self.Locked = locked
-			self.updateLastMod()
+		for key, name in (('Locked', 'Locked'), ('About', 'About'), ('about', 'About')):
+			value = parsed.pop(key, _marker)
+			if value is not _marker:
+				updated = True
+				self.updateLastMod()
+				setattr(self, name, value)
+		updated = super(DynamicFriendsList, self).updateFromExternalObject(parsed, *args, **kwargs) or updated
 		return updated
 
 @interface.implementer(IUsernameIterable)

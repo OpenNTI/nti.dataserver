@@ -29,8 +29,6 @@ from nti.dataserver.users import DynamicFriendsList
 
 from nti.dataserver.contenttypes import Note
 
-import nti.externalization.internalization
-import nti.externalization.externalization
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
@@ -53,177 +51,178 @@ class TestFriendsLists(DataserverLayerTest):
 
 		o = FriendsList('MyList')
 		ntiid = o.NTIID
-		ext_value = nti.externalization.externalization.to_external_object( o )
-		assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
-		assert_that( ext_value, has_entry( 'alias', 'MyList' ) )
-		assert_that( ext_value, has_entry( 'realname', 'MyList' ) )
+		ext_value = to_external_object(o)
+		assert_that(ext_value, has_entry('Username', 'MyList'))
+		assert_that(ext_value, has_entry('alias', 'MyList'))
+		assert_that(ext_value, has_entry('realname', 'MyList'))
 
-		nti.externalization.internalization.update_from_external_object( o, {'realname': "My Funny Name"} )
+		update_from_external_object(o, {'realname': "My Funny Name"})
 
-		ext_value = nti.externalization.externalization.to_external_object( o )
+		ext_value = to_external_object(o)
 
-		assert_that( ext_value, has_entry( 'Username', 'MyList' ) )
-		assert_that( ext_value, has_entry( 'realname', 'My Funny Name' ) )
-		assert_that( ext_value, has_entry( 'alias', 'My Funny Name' ) )
+		assert_that(ext_value, has_entry('Username', 'MyList'))
+		assert_that(ext_value, has_entry('realname', 'My Funny Name'))
+		assert_that(ext_value, has_entry('alias', 'My Funny Name'))
 
 		# NTIID didn't change
-		assert_that( o.NTIID, is_( ntiid ) )
+		assert_that(o.NTIID, is_(ntiid))
 		# in fact its cached
-		assert_that( o.NTIID, is_( same_instance( ntiid ) ) )
+		assert_that(o.NTIID, is_(same_instance(ntiid)))
 
 		# Username changing changes it though
 		o.creator = O()
-		assert_that( o.NTIID, is_not( ntiid ) )
+		assert_that(o.NTIID, is_not(ntiid))
 
 	@WithMockDSTrans
 	def test_update_friends_list(self):
-		owner = users.User.create_user( username='owner@bar' )
-		user = users.User.create_user( username='1foo@bar' )
-		user2 = users.User.create_user( username='2foo2@bar' )
-		user3 = users.User.create_user( username='3foo3@bar' )
-		user4 = users.User.create_user( username='4foo4@bar' )
-		user5 = users.User.create_user( username='5foo5@bar' )
-		user6 = users.User.create_user( username='6foo6@bar' )
-		user7 = users.User.create_user( username='7foo7@bar' )
-		user8 = users.User.create_user( username='8foo8@BAR' )
+		owner = users.User.create_user(username='owner@bar')
+		user = users.User.create_user(username='1foo@bar')
+		user2 = users.User.create_user(username='2foo2@bar')
+		user3 = users.User.create_user(username='3foo3@bar')
+		user4 = users.User.create_user(username='4foo4@bar')
+		user5 = users.User.create_user(username='5foo5@bar')
+		user6 = users.User.create_user(username='6foo6@bar')
+		user7 = users.User.create_user(username='7foo7@bar')
+		user8 = users.User.create_user(username='8foo8@BAR')
 
-		fl = FriendsList( 'MyList' )
+		fl = FriendsList('MyList')
 		fl.creator = owner
 
 		# Cannot add self
-		fl.updateFromExternalObject( {'friends': [owner] } )
-		assert_that( list(fl), has_length( 0 ) )
+		fl.updateFromExternalObject({'friends': [owner] })
+		assert_that(list(fl), has_length(0))
 
 		# Can add a few to empty
-		fl.updateFromExternalObject( {'friends': [user, user2] } )
-		assert_that( list(fl), has_length( 2 ) )
-		assert_that( sorted(fl), contains( user, user2 ) )
+		fl.updateFromExternalObject({'friends': [user, user2] })
+		assert_that(list(fl), has_length(2))
+		assert_that(sorted(fl), contains(user, user2))
 
 		# Can add one more
-		fl.updateFromExternalObject( {'friends': [user, user2, user3, user, user2, user3] } )
-		assert_that( list(fl), has_length( 3 ) )
-		assert_that( sorted(fl), contains( user, user2, user3 ) )
+		fl.updateFromExternalObject({'friends': [user, user2, user3, user, user2, user3] })
+		assert_that(list(fl), has_length(3))
+		assert_that(sorted(fl), contains(user, user2, user3))
 
 		# Can go back to one
-		fl.updateFromExternalObject( {'friends': [user2] } )
-		assert_that( list(fl), has_length( 1 ) )
-		assert_that( list(fl), contains( user2 ) )
+		fl.updateFromExternalObject({'friends': [user2] })
+		assert_that(list(fl), has_length(1))
+		assert_that(list(fl), contains(user2))
 
-		fl.updateFromExternalObject( {'friends': [user] } )
-		assert_that( list(fl), contains( user ) )
+		fl.updateFromExternalObject({'friends': [user] })
+		assert_that(list(fl), contains(user))
 
-		fl.updateFromExternalObject( {'friends': [user, user2, user3, user, user2, user3] } )
-		assert_that( list(fl), has_length( 3 ) )
-		assert_that( sorted(fl), contains( user, user2, user3 ) )
+		fl.updateFromExternalObject({'friends': [user, user2, user3, user, user2, user3] })
+		assert_that(list(fl), has_length(3))
+		assert_that(sorted(fl), contains(user, user2, user3))
 
-		updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username]} )
-		assert_that( updated, is_true() )
-		assert_that( list(fl), has_length( 4 ) )
-		assert_that( sorted(fl), contains( user, user2, user3, user4 ) )
+		updated = fl.updateFromExternalObject({'friends': [user.username, user2.username, user3.username, user4.username]})
+		assert_that(updated, is_true())
+		assert_that(list(fl), has_length(4))
+		assert_that(sorted(fl), contains(user, user2, user3, user4))
 
-		updated = fl.updateFromExternalObject( {'friends': [user4.username, user3.username, user2.username, user.username]} )
-		assert_that( updated, is_false() ) # no change
+		updated = fl.updateFromExternalObject({'friends': [user4.username, user3.username, user2.username, user.username]})
+		assert_that(updated, is_false())  # no change
 
-		updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
-															user5.username, user6.username]} )
-		assert_that( updated, is_true() )
-		assert_that( list(fl), has_length( 6 ) )
-		assert_that( sorted(fl), contains( user, user2, user3, user4, user5, user6 ) )
+		updated = fl.updateFromExternalObject({'friends': [user.username, user2.username, user3.username, user4.username,
+															user5.username, user6.username]})
+		assert_that(updated, is_true())
+		assert_that(list(fl), has_length(6))
+		assert_that(sorted(fl), contains(user, user2, user3, user4, user5, user6))
 
-
-		updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
-															user5.username, user6.username, user7.username, user8.username]} )
-		assert_that( updated, is_true() )
-		assert_that( list(fl), has_length( 8 ) )
-		assert_that( sorted(fl), contains( user, user2, user3, user4, user5, user6, user7, user8 ) )
+		updated = fl.updateFromExternalObject({'friends': [user.username, user2.username, user3.username, user4.username,
+															user5.username, user6.username, user7.username, user8.username]})
+		assert_that(updated, is_true())
+		assert_that(list(fl), has_length(8))
+		assert_that(sorted(fl), contains(user, user2, user3, user4, user5, user6, user7, user8))
 
 		# Break some refs
-		users.User.delete_user( user.username )
+		users.User.delete_user(user.username)
 
-		updated = fl.updateFromExternalObject( {'friends': [user.username, user2.username, user3.username, user4.username,
-															user5.username, user6.username, user7.username, user8.username]} )
-		assert_that( updated, is_true() )
-		assert_that( list(fl), has_length( 7 ) )
-		assert_that( sorted(fl), contains( user2, user3, user4, user5, user6, user7, user8 ) )
+		updated = fl.updateFromExternalObject({'friends': [user.username, user2.username, user3.username, user4.username,
+															user5.username, user6.username, user7.username, user8.username]})
+		assert_that(updated, is_true())
+		assert_that(list(fl), has_length(7))
+		assert_that(sorted(fl), contains(user2, user3, user4, user5, user6, user7, user8))
 
 	@WithMockDS
 	def test_create_update_dynamic_friendslist(self):
 		ds = mock_dataserver.current_mock_ds
-		with mock_dataserver.mock_db_trans( ds ):
-			user1 = User.create_user( ds, username='foo23' )
-			user2 = User.create_user( ds, username='foo12' )
-			user3 = User.create_user( ds, username='foo13' )
+		with mock_dataserver.mock_db_trans(ds):
+			user1 = User.create_user(ds, username='foo23')
+			user2 = User.create_user(ds, username='foo12')
+			user3 = User.create_user(ds, username='foo13')
 
 			fl1 = DynamicFriendsList(username='Friends')
-			fl1.creator = user1 # Creator must be set
+			fl1.creator = user1  # Creator must be set
 
-			user1.addContainedObject( fl1 )
-			fl1.addFriend( user2 )
+			user1.addContainedObject(fl1)
+			fl1.addFriend(user2)
 
-			assert_that( user2.dynamic_memberships, has_item( fl1 ) )
-			assert_that( user2.entities_followed, has_item( fl1 ) )
+			assert_that(user2.dynamic_memberships, has_item(fl1))
+			assert_that(user2.entities_followed, has_item(fl1))
 
 		for u in user1, user2, user3:
 			u._p_deactivate()
 			u._p_invalidate()
-			assert_that( u, has_property( '__dict__', {} ) )
+			assert_that(u, has_property('__dict__', {}))
 
-		with mock_dataserver.mock_db_trans( ds ):
+		with mock_dataserver.mock_db_trans(ds):
 			# This process actually activates the objects directly, immediately, during the
 			# iteration process
-			fl1.updateFromExternalObject( {'friends': [user3.username]} )
+			fl1.updateFromExternalObject({'friends': [user3.username]})
 
-			assert_that( user3.dynamic_memberships, has_item( fl1 ) )
-			assert_that( to_external_object( user3, name='personal-summary' ), has_entry( 'Communities', has_item( has_entry( 'realname', 'Friends' ) ) ) )
+			assert_that(user3.dynamic_memberships, has_item(fl1))
+			assert_that(to_external_object(user3, name='personal-summary'), has_entry('Communities', has_item(has_entry('realname', 'Friends'))))
 
-			assert_that( user2.dynamic_memberships, does_not( has_item( fl1 ) ) )
-			assert_that( user2.entities_followed, does_not( has_item( fl1 ) ) )
-			assert_that( to_external_object( user2, name='personal-summary' ), has_entry( 'Communities', does_not( has_item( has_entry( 'realname', 'Friends' ) ) ) ) )
+			assert_that(user2.dynamic_memberships, does_not(has_item(fl1)))
+			assert_that(user2.entities_followed, does_not(has_item(fl1)))
+			assert_that(to_external_object(user2, name='personal-summary'), has_entry('Communities', does_not(has_item(has_entry('realname', 'Friends')))))
 
 			# The external form masquerades as a normal FL...
-			x = to_external_object( fl1 )
+			x = to_external_object(fl1)
 			assert_that(x, has_entry('Class', 'FriendsList'))
 			assert_that(x, has_entry('MimeType', 'application/vnd.nextthought.friendslist'))
 			assert_that(x, has_entry('NTIID', 'tag:nextthought.com,2011-10:foo23-MeetingRoom:Group-friends'))
 			assert_that(x, has_entry('Locked', is_(False)))
 			# ... with one exception
-			assert_that( x, has_entry( 'IsDynamicSharing', True ) )
-
+			assert_that(x, has_entry('IsDynamicSharing', True))
 
 	@WithMockDSTrans
 	def test_delete_dynamic_friendslist_clears_memberships(self):
 		ds = mock_dataserver.current_mock_ds
-		user1 = User.create_user( ds, username='foo23' )
-		user2 = User.create_user( ds, username='foo12' )
+		user1 = User.create_user(ds, username='foo23')
+		user2 = User.create_user(ds, username='foo12')
 
 		fl1 = DynamicFriendsList(username='Friends')
-		fl1.creator = user1 # Creator must be set
+		fl1.creator = user1  # Creator must be set
 
-		user1.addContainedObject( fl1 )
-		fl1.addFriend( user2 )
+		user1.addContainedObject(fl1)
+		fl1.addFriend(user2)
 
-		assert_that( list(user2.dynamic_memberships), has_item( fl1 ) )
-		assert_that( list(user2.entities_followed), has_item( fl1 ) )
+		assert_that(list(user2.dynamic_memberships), has_item(fl1))
+		assert_that(list(user2.entities_followed), has_item(fl1))
 
 		eventtesting.clearEvents()
-		assert_that( user1.deleteContainedObject( fl1.containerId, fl1.id ), is_( fl1 ) )
+		assert_that(user1.deleteContainedObject(fl1.containerId, fl1.id), is_(fl1))
 
 		# If the events don't fire correctly, the weakref will still have this cached
 		# so it will still seem to be present
-		assert_that( list(user2.dynamic_memberships), does_not( has_item( fl1 ) ) )
-		assert_that( list(user2.entities_followed), does_not( has_item( fl1 ) ) )
-		assert_that( user2, has_property( '_dynamic_memberships', has_length( 1 ) ) )
+		assert_that(list(user2.dynamic_memberships), does_not(has_item(fl1)))
+		assert_that(list(user2.entities_followed), does_not(has_item(fl1)))
+		assert_that(user2, has_property('_dynamic_memberships', has_length(1)))
 
-from nti.dataserver.interfaces import IEntityContainer
-from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
-from nti.dataserver.interfaces import IIntIdIterable
-from nti.testing.matchers import validly_provides
 from hamcrest import contains_inanyorder
-from zope.intid.interfaces import IIntIds
+
 from zope import component
 
+from zope.intid.interfaces import IIntIds
 
-def _note_from( creator, text='Hi there', containerId='tag:nti' ):
+from nti.dataserver.interfaces import IIntIdIterable
+from nti.dataserver.interfaces import IEntityContainer
+from nti.dataserver.interfaces import ILengthEnumerableEntityContainer
+
+from nti.testing.matchers import validly_provides
+
+def _note_from(creator, text='Hi there', containerId='tag:nti'):
 	owner_note = Note()
 	owner_note.applicableRange = ContentRangeDescription()
 	owner_note.creator = creator
@@ -231,7 +230,7 @@ def _note_from( creator, text='Hi there', containerId='tag:nti' ):
 	owner_note.containerId = containerId
 	return owner_note
 
-def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
+def _dfl_sharing_fixture(ds, owner_username='OwnerUser@bar', passwords=None):
 	"""
 	Create a user owning a DFL. Two other users are added to the dfl.
 
@@ -242,16 +241,16 @@ def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
 	if passwords:
 		password_kwargs = {'password': passwords}
 	# Create a user with a DFL and two friends in the DFL
-	owner_user = users.User.create_user( username=owner_username, **password_kwargs )
+	owner_user = users.User.create_user(username=owner_username, **password_kwargs)
 	parent_dfl = DynamicFriendsList(username="ParentFriendsList")
 	parent_dfl.creator = owner_user
-	owner_user.addContainedObject( parent_dfl )
+	owner_user.addContainedObject(parent_dfl)
 
-	member_user = users.User.create_user( username="memberuser@bar", **password_kwargs )
-	parent_dfl.addFriend( member_user )
+	member_user = users.User.create_user(username="memberuser@bar", **password_kwargs)
+	parent_dfl.addFriend(member_user)
 
-	member_user2 = users.User.create_user( username="memberuser2@bar", **password_kwargs )
-	parent_dfl.addFriend( member_user2 )
+	member_user2 = users.User.create_user(username="memberuser2@bar", **password_kwargs)
+	parent_dfl.addFriend(member_user2)
 
 	# Reset notification counts (Circled notices would have gone out)
 	for u in (owner_user, member_user, member_user2):
@@ -259,34 +258,34 @@ def _dfl_sharing_fixture( ds, owner_username='OwnerUser@bar', passwords=None ):
 
 	return owner_user, member_user, member_user2, parent_dfl
 
-from nti.dataserver.tests.test_authorization_acl import permits
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.tests.test_authorization_acl import permits
 
-def _assert_that_item_is_in_contained_stream_and_data_with_notification_count( user, item, count=1 ):
+def _assert_that_item_is_in_contained_stream_and_data_with_notification_count(user, item, count=1):
 	__traceback_info__ = user, item
-	child_stream = user.getContainedStream( item.containerId )
-	assert_that( child_stream, has_length( count ) )
-	assert_that( child_stream, has_item( has_property( 'object', item ) ), "stream has right item" )
-	assert_that( user.notificationCount, has_property( 'value', count ), "notification count has right size" )
+	child_stream = user.getContainedStream(item.containerId)
+	assert_that(child_stream, has_length(count))
+	assert_that(child_stream, has_item(has_property('object', item)), "stream has right item")
+	assert_that(user.notificationCount, has_property('value', count), "notification count has right size")
 
-	shared_data = user.getSharedContainer( item.containerId )
-	assert_that( shared_data, has_item( item ), "item is in shared data" )
-	assert_that( shared_data, has_length( greater_than_or_equal_to( count ) ), "shared data has right size" )
+	shared_data = user.getSharedContainer(item.containerId)
+	assert_that(shared_data, has_item(item), "item is in shared data")
+	assert_that(shared_data, has_length(greater_than_or_equal_to(count)), "shared data has right size")
 
 class TestDFL(DataserverLayerTest):
 
 	@WithMockDSTrans
 	def test_dfl_container(self):
-		owner = users.User.create_user( username='owner@bar' )
-		user = users.User.create_user( username='1foo@bar' )
-		user2 = users.User.create_user( username='2foo2@bar' )
-		user3 = users.User.create_user( username='3foo3@bar' )
-		user4 = users.User.create_user( username='4foo4@bar' )
-		user5 = users.User.create_user( username='5foo5@bar' )
-		user6 = users.User.create_user( username='6foo6@bar' )
-		user7 = users.User.create_user( username='7foo7@bar' )
-		user8 = users.User.create_user( username='8foo8@BAR' )
+		owner = users.User.create_user(username='owner@bar')
+		user = users.User.create_user(username='1foo@bar')
+		user2 = users.User.create_user(username='2foo2@bar')
+		user3 = users.User.create_user(username='3foo3@bar')
+		user4 = users.User.create_user(username='4foo4@bar')
+		user5 = users.User.create_user(username='5foo5@bar')
+		user6 = users.User.create_user(username='6foo6@bar')
+		user7 = users.User.create_user(username='7foo7@bar')
+		user8 = users.User.create_user(username='8foo8@BAR')
 
 		all_users = user, user2, user3, user4, user5, user6, user7, user8
 
@@ -302,67 +301,80 @@ class TestDFL(DataserverLayerTest):
 					validly_provides(ILengthEnumerableEntityContainer,
 									 IIntIdIterable))
 
-		members = all_users + (owner, )
+		members = all_users + (owner,)
 		for x in members:
 			__traceback_info__ = x
 			assert x in container
 
-		assert_that( container, has_length(8) )
+		assert_that(container, has_length(8))
 
-		assert_that( container.iter_intids(),
-					 contains_inanyorder( *(x._ds_intid for x in members) ) )
-		assert_that( list(container),
-					 contains_inanyorder( *members ) )
+		assert_that(container.iter_intids(),
+					contains_inanyorder(*(x._ds_intid for x in members)))
+		assert_that(list(container),
+					contains_inanyorder(*members))
 
-
-
-
+	@WithMockDSTrans
+	def test_dfl_internal(self):
+		fl = DynamicFriendsList('MyList')
+		component.getUtility(IIntIds).register(fl)
+		fl.About = u'my list'
+		fl.Locked = True
+		
+		ext_obj = to_external_object(fl)
+		assert_that(ext_obj, has_entry('About', 'my list'))
+		assert_that(ext_obj, has_entry('Locked', is_(True)))
+		
+		ext_obj['Locked'] = False
+		ext_obj['About'] = 'foo list'
+		update_from_external_object(fl, ext_obj)
+		
+		assert_that(fl, has_property('About', 'foo list'))
+		assert_that(fl, has_property('Locked', is_(False)))
+		
 	@WithMockDS
 	def test_sharing_with_dfl(self):
 		ds = mock_dataserver.current_mock_ds
-		with mock_dataserver.mock_db_trans( ds ):
-			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( ds )
+		with mock_dataserver.mock_db_trans(ds):
+			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture(ds)
 
 			with owner_user.updates():
 				# Create a note
-				owner_note = _note_from( owner_user )
+				owner_note = _note_from(owner_user)
 
 				# (Check base states)
 				for u in (member_user, member_user2):
-					child_stream = u.getContainedStream( owner_note.containerId )
-					assert_that( child_stream, has_length( 0 ) )
+					child_stream = u.getContainedStream(owner_note.containerId)
+					assert_that(child_stream, has_length(0))
 
 				# Share the note with the DFL and thus its two members
-				owner_note.addSharingTarget( parent_dfl )
-				owner_user.addContainedObject( owner_note )
+				owner_note.addSharingTarget(parent_dfl)
+				owner_user.addContainedObject(owner_note)
 
 			# Sharing with the DFL caused broadcast events and notices to go out
 			# to the members of the DFL. These members have the shared object
 			# in their stream and shared data
 			for u in (member_user, member_user2):
-				_assert_that_item_is_in_contained_stream_and_data_with_notification_count( u, owner_note )
-
+				_assert_that_item_is_in_contained_stream_and_data_with_notification_count(u, owner_note)
 
 
 			# If a member of the DFL replies to the note,
 			# then the same thing happens,
 			with member_user.updates():
-				child_note = _note_from( member_user, 'A reply' )
+				child_note = _note_from(member_user, 'A reply')
 
-				ext_obj = to_external_object( child_note )
-				ext_obj['inReplyTo'] = to_external_ntiid_oid( owner_note )
+				ext_obj = to_external_object(child_note)
+				ext_obj['inReplyTo'] = to_external_ntiid_oid(owner_note)
 
-				update_from_external_object( child_note, ext_obj, context=ds )
+				update_from_external_object(child_note, ext_obj, context=ds)
 
-				assert_that( child_note, has_property( 'inReplyTo', owner_note ) )
-				assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,owner_user)) ) )
+				assert_that(child_note, has_property('inReplyTo', owner_note))
+				assert_that(child_note, has_property('sharingTargets', set((parent_dfl, owner_user))))
 
-				member_user.addContainedObject( child_note )
+				member_user.addContainedObject(child_note)
 
 			# Notices go out to the other members of the DFL, including the owner
-			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( member_user2, child_note, 2 )
-			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( owner_user, child_note, 1 )
-
+			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(member_user2, child_note, 2)
+			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(owner_user, child_note, 1)
 
 	@WithMockDS
 	def test_sharing_with_dfl_member_shares_top_level(self):
@@ -374,42 +386,41 @@ class TestDFL(DataserverLayerTest):
 		"""
 
 		ds = mock_dataserver.current_mock_ds
-		with mock_dataserver.mock_db_trans( ds ):
-			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture( ds )
+		with mock_dataserver.mock_db_trans(ds):
+			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture(ds)
 
 			with member_user.updates():
-				child_note = _note_from( member_user, 'From the child' )
-				child_note.addSharingTarget( parent_dfl )
+				child_note = _note_from(member_user, 'From the child')
+				child_note.addSharingTarget(parent_dfl)
 
-				assert_that( child_note, has_property( 'sharingTargets', set((parent_dfl,)) ) )
+				assert_that(child_note, has_property('sharingTargets', set((parent_dfl,))))
 
-				member_user.addContainedObject( child_note )
+				member_user.addContainedObject(child_note)
 
 			# The shared note is in the shared data for the owner of the DFL
 			# And in the stream of the owner of the DFL
 			# and as a notification for the DFL owner
-			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( owner_user, child_note, 1 )
-
+			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(owner_user, child_note, 1)
 
 			# and is in the other member's stream and shared data as well
-			_assert_that_item_is_in_contained_stream_and_data_with_notification_count( member_user2, child_note, 1 )
+			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(member_user2, child_note, 1)
 
 			# This Note provides ACL access to its creator and the members of the DFL
 			# (TODO: This is implemented by expanding the membership list of the DFL
 			# when the ACL is constructed. The other option is to have the DFL
 			# appear in the principal list of the user, as is done for communities; that
 			# would change this test.)
-			assert_that( child_note, permits( member_user, nauth.ACT_READ ) )
-			assert_that( child_note, permits( owner_user, nauth.ACT_READ ) )
-			assert_that( child_note, permits( member_user2, nauth.ACT_READ ) )
+			assert_that(child_note, permits(member_user, nauth.ACT_READ))
+			assert_that(child_note, permits(owner_user, nauth.ACT_READ))
+			assert_that(child_note, permits(member_user2, nauth.ACT_READ))
 
 			# Even though the other members do not have data in this NTIID, they
 			# still register that they are interested in it
 			for member in (owner_user, member_user, member_user2):
 				ids = list(member.iterntiids())
 				__traceback_info__ = member, ids
-				assert_that( ids, contains( child_note.containerId ) )
-				
+				assert_that(ids, contains(child_note.containerId))
+
 				intids = list(member.iter_intids())
 				assert_that(intids, has_length(greater_than_or_equal_to(1)))
 
@@ -421,13 +432,13 @@ class TestDFL(DataserverLayerTest):
 		"""
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
-			jmadden = users.User.create_user( username='jmadden@nextthought.com' )
-			sjohnson = users.User.create_user( username='sjohnson@nextthought.com' )
+			jmadden = users.User.create_user(username='jmadden@nextthought.com')
+			sjohnson = users.User.create_user(username='sjohnson@nextthought.com')
 
 			ntusrs = DynamicFriendsList(username='ntusrs')
 			ntusrs.creator = jmadden
-			jmadden.addContainedObject( ntusrs )
-			ntusrs.addFriend( sjohnson )
+			jmadden.addContainedObject(ntusrs)
+			ntusrs.addFriend(sjohnson)
 
 			note = Note()
 			note.body = [u'Violent Blades']
@@ -435,18 +446,18 @@ class TestDFL(DataserverLayerTest):
 			note.containerId = u'c1'
 
 			with jmadden.updates():
-				note.addSharingTarget( ntusrs )
-				note = jmadden.addContainedObject( note )
+				note.addSharingTarget(ntusrs)
+				note = jmadden.addContainedObject(note)
 
-			scnt = sjohnson.getSharedContainer(  u'c1' )
+			scnt = sjohnson.getSharedContainer(u'c1')
 			assert_that(note, is_in(scnt))
 
 			with jmadden.updates():
 				note = jmadden.getContainedObject(u'c1', note.id)
 				note.clearSharingTargets()
-				note.addSharingTarget( sjohnson )
+				note.addSharingTarget(sjohnson)
 
-			scnt = sjohnson.getSharedContainer(  u'c1' )
+			scnt = sjohnson.getSharedContainer(u'c1')
 			assert_that(note, is_in(scnt))
 
 	@WithMockDSTrans
@@ -454,14 +465,13 @@ class TestDFL(DataserverLayerTest):
 		owner = users.User.create_user(username='owner@bar')
 		fl1 = DynamicFriendsList(username='Friends')
 		fl1.creator = owner
-		owner.addContainedObject( fl1 )
+		owner.addContainedObject(fl1)
 
 		collected = []
 		for x in range(100):
 			user = users.User.create_user(username='%sfoo@bar' % x)
-			fl1.addFriend( user )
+			fl1.addFriend(user)
 			collected.append(user)
-
 
 		result = fl1.removeFriends(*collected[50:])
 		assert_that(result, is_(50))
