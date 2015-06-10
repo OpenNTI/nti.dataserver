@@ -43,8 +43,8 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 	def setUp(self):
 		super( ContentlibraryLayerTest, self ).setUp()
-		library_dir = os.path.join( os.path.dirname(__file__), 'library' )
-		self.library = FileLibrary(library_dir)
+		self.library_dir = os.path.join( os.path.dirname(__file__), 'library' )
+		self.library = FileLibrary( self.library_dir )
 		component.getGlobalSiteManager().registerUtility(self.library, IContentPackageLibrary)
 
 	def tearDown(self):
@@ -120,6 +120,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( results, has_length( 0 ))
 
 		# Re-index does nothing (since files have not changed)
+		# Touch our content package, but not the index files
 		self.library.syncContentPackages()
 		results = catalog.search_objects( container_ntiids=(unit_ntiid,) )
 		assert_that( results, has_length( 0 ))

@@ -31,7 +31,7 @@ class ContentlibraryTestLayer(ZopeComponentLayer,
 							  DSInjectorMixin):
 
 
-	set_up_packages = ('nti.contentlibrary','nti.externalization', 'nti.contenttypes.presentation', 'nti.dataserver')
+	set_up_packages = ('nti.contentlibrary','nti.externalization', 'nti.contenttypes.presentation', 'nti.dataserver', 'nti.app.contentlibrary')
 
 	@classmethod
 	def setUp(cls):

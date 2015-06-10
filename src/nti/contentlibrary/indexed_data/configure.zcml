@@ -18,24 +18,4 @@
 	<adapter factory=".adapters._slidevideo_to_contained_type" />
 	<adapter factory=".adapters._related_to_contained_type" />
 
-	<adapter factory=".adapters.audio_indexed_data_adapter"
-			 for="..interfaces.IContentUnit"
-			 provides=".interfaces.IAudioIndexedDataContainer"/>
-
-	<adapter factory=".adapters.video_indexed_data_adapter"
-			 for="..interfaces.IContentUnit"
-			 provides=".interfaces.IVideoIndexedDataContainer" />
-
-	<adapter factory=".adapters.related_content_indexed_data_adapter"
-			 for="..interfaces.IContentUnit"
-			 provides=".interfaces.IRelatedContentIndexedDataContainer" />
-
-	<adapter factory=".adapters.timeline_indexed_data_adapter"
-			 for="..interfaces.IContentUnit"
-			 provides=".interfaces.ITimelineIndexedDataContainer" />
-
-	<adapter factory=".adapters.slide_deck_indexed_data_adapter"
-			 for="..interfaces.IContentUnit"
-			 provides=".interfaces.ISlideDeckIndexedDataContainer" />
-
 </configure>
