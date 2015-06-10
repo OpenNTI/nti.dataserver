@@ -80,7 +80,7 @@ class DFLActivityView(_UGDView):
 	
 	def getObjectsForId(self, *args, **kwargs ):
 		context = self.request.context
-		if self.remoteUser not in context:
+		if self.remoteUser != context.creator and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
 
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
