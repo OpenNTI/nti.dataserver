@@ -19,7 +19,7 @@ import sys
 import pprint
 import argparse
 
-from nti.dataserver import users
+from nti.dataserver.users import Community
 from nti.dataserver.interfaces import ICommunity
 
 from nti.externalization.externalization import to_external_object
@@ -37,7 +37,7 @@ def update_community(username, name=None, alias=None, public=False,
 	if name and not isinstance(name, unicode):
 		name = unicode(name.decode("UTF-8"))
 
-	community = users.Community.get_community(username)
+	community = Community.get_community(username)
 	if community is None:
 		print("community does not exists", file=sys.stderr)
 		sys.exit(2)
@@ -46,19 +46,21 @@ def update_community(username, name=None, alias=None, public=False,
 		print("Invalid community", repr(community), file=sys.stderr)
 		sys.exit(3)
 
-	if not name and not alias:
-		print("Nothing to do", repr(community), file=sys.stderr)
-		sys.exit(2)
-
 	ext_value = {}
 	if name:
 		ext_value['realname'] = name
 	if alias:
 		ext_value['alias'] = alias
 
-	ext_value['public'] = public
-	ext_value['joinable'] = joinable
+	if community.public != public:
+		ext_value['public'] = public
+	if community.joinable != joinable:
+		ext_value['joinable'] = joinable
 
+	if not ext_value:
+		print("Nothing to do", repr(community), file=sys.stderr)
+		sys.exit(0)
+		
 	update_from_external_object(community, ext_value)
 	if verbose:
 		pprint.pprint(to_external_object(community))
