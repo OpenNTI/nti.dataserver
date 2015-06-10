@@ -95,7 +95,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IDynamicSharingTargetFriendsList, IRequest)
-class DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
+class _DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 
 	true_view = REL_MY_MEMBERSHIP
 
@@ -105,18 +105,37 @@ class DFLGetMembershipLinkProvider(AbstractTwoStateViewLinkDecorator):
 		return result
 
 @component.adapter(IDynamicSharingTargetFriendsList)
-@interface.implementer(IExternalObjectDecorator)
-class DFLEditLinkRemoverDecorator(object):
+@interface.implementer(IExternalMappingDecorator)
+class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
+	def _predicate(self, context, result):
+		result = bool(self._is_authenticated and \
+					  self.remoteUser in context)
+		return result
+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel="Activity",
+					elements=('Activity',))
+		_links.append(link)
+	
+@component.adapter(IDynamicSharingTargetFriendsList)
+@interface.implementer(IExternalObjectDecorator)
+class _DFLEditLinkRemoverDecorator(object):
+	"""
+	Remove the edit link if the DFL is locked
+	
+	:Note The order in which decorators are called is completely
+	undefined. The only reason this happens to work now
+	is the distinction between IExternalObjectDecorator
+	and IExternalMappingDecorator; if any of the registrations
+	change this will break.
+	"""
+	
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, context, external):
 		if context.Locked:
-			# The order in which decorators are called is completely
-			# undefined. The only reason this happens to work now
-			# is the distinction between IExternalObjectDecorator
-			# and IExternalMappingDecorator; if any of the registrations
-			# change this will break.
 			edit_idx = -1
 			links = external.get(LINKS, ())
 			for idx, link in enumerate(links):
