@@ -18,18 +18,41 @@ import sys
 import pprint
 import argparse
 
-from nti.dataserver import users
+from zope import component
+
+from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.externalization.externalization import to_external_object
 
 from . import run_with_dataserver
 
+def _tx_string(s):
+	if s is not None and isinstance(s, unicode):
+		s = s.encode('utf-8')
+	return s
+
+def list_communities():
+	print('\nusername,realname,alias,public,joinable', file=sys.stderr)
+	dataserver = component.getUtility(IDataserver)
+	users_folder = IShardLayout(dataserver).users_folder
+	for entity in users_folder.values():
+		if not ICommunity.providedBy(entity):
+			continue
+		fn = IFriendlyNamed(entity)
+		print('%s,"%s","%s",%s,%s' % (_tx_string(entity.username),
+			  _tx_string(fn.realname), _tx_string(fn.alias), 
+			  entity.public, entity.joinable), file=sys.stderr)
+	print(file=sys.stderr)
+
 def join_communities(user, communities=(), follow=False, exitOnError=False):
 	not_found = set()
 	for com_name in communities:
-		comm = users.Entity.get_entity(com_name)
+		comm = Entity.get_entity(com_name)
 		if not comm or not ICommunity.providedBy(comm):
 			not_found.add(com_name)
 			if exitOnError:
@@ -42,26 +65,44 @@ def join_communities(user, communities=(), follow=False, exitOnError=False):
 	return tuple(not_found)
 
 def _process_args(args):
-	user = users.User.get_user(args.username)
-	if not user or not IUser.providedBy(user):
-		print("No user found", args, file=sys.stderr)
+	if args.list:
+		list_communities()
+	elif args.username:
+		user = Entity.get_entity(args.username)
+		if not user or not IUser.providedBy(user):
+			print("No user found", args, file=sys.stderr)
+			sys.exit(2)
+	
+		not_found = join_communities(user, args.communities, args.follow, True)
+		if not_found:
+			print("No community found", args, file=sys.stderr)
+			sys.exit(3)
+	
+		if args.verbose:
+			pprint.pprint(to_external_object(user))
+	else:
+		print("No username specified", args, file=sys.stderr)
 		sys.exit(2)
-
-	not_found = join_communities(user, args.communities, args.follow, True)
-	if not_found:
-		print("No community found", args, file=sys.stderr)
-		sys.exit(3)
-
-	if args.verbose:
-		pprint.pprint(to_external_object(user))
 
 def main():
 	arg_parser = argparse.ArgumentParser( description="Join one or more existing communities" )
-	arg_parser.add_argument('username', help="The username that should join communities")
+	arg_parser.add_argument('--list',
+							dest='list',
+							action='store_true',
+							default=False,
+							help="List all communities")	
+	
+	arg_parser.add_argument('-u', '--username',
+							 dest='username',
+							 help="The username that should join communities",
+							 default=None)
+
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
 							action='store_true', dest='verbose')
+		
 	arg_parser.add_argument('-f', '--follow', help="Also follow the communities", 
 							action='store_true', dest='follow')
+
 	arg_parser.add_argument('-c', '--communities',
 							dest='communities',
 							nargs="+",
