@@ -117,6 +117,9 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 		if 'Links' in res.json_body:
 			assert_that(res.json_body, has_entry('Links',
 												 does_not(has_item(has_entries('rel', 'edit')))))
+			
+			assert_that(res.json_body, has_entry('Links',
+												 has_item(has_entries('rel', 'Activity'))))
 
 	@WithSharedApplicationMockDS
 	def test_activity_dfl(self):
