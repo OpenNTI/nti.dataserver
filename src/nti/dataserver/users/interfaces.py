@@ -595,6 +595,11 @@ def validateAccept(value):
 
 # Membership.
 
+class IDisallowActivityLink(interface.Interface):
+	"""
+	marker interface to disallow activity link
+	"""
+	
 class IDisallowMembersLink(interface.Interface):
 	"""
 	marker interface to disallow members link
