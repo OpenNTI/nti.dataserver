@@ -45,6 +45,8 @@ from nti.site.utils import registerUtility
 from nti.site.interfaces import IHostPolicySiteManager
 
 from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data import get_index_last_modified
+from nti.contentlibrary.indexed_data import set_index_last_modified
 from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
@@ -178,22 +180,21 @@ def _get_container_tree( container_id ):
 	paths = library.pathToNTIID( container_id )
 	return [path.ntiid for path in paths] if paths else ()
 
-def _update_index_when_content_changes( content_package, index_iface, item_iface, object_creator, force_change=False ):
+def _update_index_when_content_changes( content_package, index_iface, item_iface, object_creator ):
 	namespace = index_iface.getTaggedValue(TAG_NAMESPACE_FILE)
 	sibling_key = content_package.does_sibling_entry_exist(namespace)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	container = index_iface( content_package )
-	if 		not force_change \
-		and container.lastModified \
-		and container.lastModified >= sibling_key.lastModified:
+	last_modified = get_index_last_modified( index_iface, content_package )
+	if 		not last_modified \
+		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
 					sibling_key.lastModified )
 		return
-	container.lastModified = sibling_key.lastModified
+	set_index_last_modified( index_iface, content_package, sibling_key.lastModified )
 
 	logger.info( "Loading index data %s", sibling_key )
 	index_text = content_package.read_contents_of_sibling_entry( namespace )
