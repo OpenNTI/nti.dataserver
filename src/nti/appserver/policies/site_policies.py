@@ -54,16 +54,18 @@ from nti.mailer.interfaces import ITemplatedMailer
 from nti.contentfragments import censor
 from nti.contentfragments.interfaces import ICensoredContentPolicy
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IS3Key
+from nti.contentlibrary.interfaces import IAbsoluteContentUnitHrefMapper
 
 from nti.dataserver import users
 from nti.dataserver import shards as nti_shards
+from nti.dataserver.interfaces import INewUserPlacer
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import to_external_object
+from nti.externalization.interfaces import IExternalObjectDecorator
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
@@ -115,7 +117,8 @@ def get_possible_site_names(request=None, include_default=False):
 	return site_names
 
 def _find_site_components(request, include_default=False, site_names=None):
-	site_names = site_names or get_possible_site_names(request=request, include_default=include_default)
+	site_names = site_names or get_possible_site_names(request=request, 
+													   include_default=include_default)
 	for site_name in site_names:
 		if not site_name:
 			components = component
@@ -127,21 +130,20 @@ def _find_site_components(request, include_default=False, site_names=None):
 
 _marker = object()
 
-def queryUtilityInSite(iface, request=None, site_names=None, default=None, name='', return_site_name=False):
+def queryUtilityInSite(iface, request=None, site_names=None, default=None, 
+					   name='', return_site_name=False):
 	result = _marker
 	components = _find_site_components(request, include_default=True, site_names=site_names)
 	if components is not None:
 		result = components.queryUtility(iface, default=_marker, name=name)
 
 	result = result if result is not _marker else default
-
 	if not return_site_name:
 		return result
 
 	site_name = None
 	if components is not None:
 		site_name = components.__name__ if components.__name__ != component.__name__ else ''
-
 	return result, site_name
 
 def queryAdapterInSite(obj, target, request=None, site_names=None, default=None):
@@ -181,9 +183,8 @@ def queryMultiAdapterInSite(objects, target, request=None, site_names=None, defa
 			return result
 	return default
 
-
-@component.adapter(lib_interfaces.IS3Key)
-@interface.implementer(lib_interfaces.IAbsoluteContentUnitHrefMapper)
+@component.adapter(IS3Key)
+@interface.implementer(IAbsoluteContentUnitHrefMapper)
 class RequestAwareS3KeyHrefMapper(object):
 	"""
 	Produces HTTP URLs for keys in buckets.	Takes steps to work with CORS
@@ -211,7 +212,7 @@ class RequestAwareS3KeyHrefMapper(object):
 		else:
 			self.href = 'http://' + key.bucket.name + '/' + key.key
 
-@interface.implementer(nti_interfaces.INewUserPlacer)
+@interface.implementer(INewUserPlacer)
 class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 	"""
 	A user placer that takes the current request's origin and host (if there is one)
@@ -234,7 +235,7 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 		for site_name in get_possible_site_names():
 			# TODO: Convert to z3c.baseregistry components? Nothing is actually implementing
 			# this at the moment.
-			placer = component.queryUtility(nti_interfaces.INewUserPlacer, name=site_name)
+			placer = component.queryUtility(INewUserPlacer, name=site_name)
 			if placer:
 				placed = True
 				placer.placeNewUser(user, users_directory, shards)
@@ -245,7 +246,7 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 				break
 
 		if not placed:
-			component.getUtility(nti_interfaces.INewUserPlacer, name='default').placeNewUser(user, users_directory, shards)
+			component.getUtility(INewUserPlacer, name='default').placeNewUser(user, users_directory, shards)
 
 ####
 # # Handling events within particular sites
@@ -292,7 +293,7 @@ class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
 # and become simply normal event listeners.
 ####
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 class SiteBasedExternalObjectDecorator(object):
 	"""
 	Something that can be registered as a subscriber to forward
@@ -310,11 +311,11 @@ class SiteBasedExternalObjectDecorator(object):
 		if not request:
 			return
 
-		adapter = component.queryMultiAdapter((orig_obj, request), ext_interfaces.IExternalObjectDecorator)
+		adapter = component.queryMultiAdapter((orig_obj, request), IExternalObjectDecorator)
 		if adapter:
 			adapter.decorateExternalObject(orig_obj, ext_obj)
 
-@interface.implementer(ext_interfaces.IExternalObjectDecorator)
+@interface.implementer(IExternalObjectDecorator)
 class LogonLinksCreationStripper(object):
 	"""
 	Configured for sites that are not allowing account creation through the UI.
@@ -323,7 +324,6 @@ class LogonLinksCreationStripper(object):
 
 	def decorateExternalObject(self, orig_obj, result):
 		result['Links'] = [link for link in result['Links'] if link['rel'] not in ('account.create', 'account.preflight.create')]
-
 
 def find_site_policy(request=None):  # deprecated
 	"""
@@ -382,11 +382,13 @@ def _dispatch_to_policy(user, event, func_name):
 	"""
 	utility, site_name = find_site_policy()
 	if utility:
-		logger.log(TRACE, "Site %s wants to handle user creation event %s for %s with %s", site_name, func_name, user, utility)
+		logger.log(TRACE, "Site %s wants to handle user creation event %s for %s with %s", 
+				   site_name, func_name, user, utility)
 		getattr(utility, func_name)(user, event)
 		return True
 
-	logger.log(TRACE, "No site in %s wanted to handle user event %s for %s", site_name, func_name, user)
+	logger.log(TRACE, "No site in %s wanted to handle user event %s for %s", 
+			   site_name, func_name, user)
 
 @component.adapter(nti_interfaces.IUser, IObjectCreatedEvent)
 def dispatch_user_created_to_site_policy(user, event):
@@ -418,12 +420,14 @@ def _censor_usernames(entity, event=None):
 	policy = policy or censor.DefaultCensoredContentPolicy()
 
 	if policy.censor(entity.username, entity) != entity.username:
-		raise FieldContainsCensoredSequence(_("Username contains a censored sequence"), 'Username', entity.username)
+		raise FieldContainsCensoredSequence(_("Username contains a censored sequence"), 
+											'Username', entity.username)
 
 	names = user_interfaces.IFriendlyNamed(entity, None)
 	if names and names.alias:  # TODO: What about realname?
 		if policy.censor(names.alias, entity) != names.alias:
-			raise FieldContainsCensoredSequence(_("Alias contains a censored sequence"), 'alias', names.alias)
+			raise FieldContainsCensoredSequence(_("Alias contains a censored sequence"),
+												'alias', names.alias)
 
 def _is_x_or_more_years_ago(birthdate, years_ago=13):
 	if birthdate is None:
@@ -431,7 +435,6 @@ def _is_x_or_more_years_ago(birthdate, years_ago=13):
 
 	today = datetime.date.today()
 	x_years_ago = datetime.date.today().replace(year=today.year - years_ago)
-
 	return birthdate < x_years_ago
 
 _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
@@ -515,7 +518,7 @@ class AbstractSitePolicyEventListener(object):
 			community = users.Entity.get_entity(self.COM_USERNAME)
 			if community is None:
 				community = users.Community.create_community(username=self.COM_USERNAME)
-				community.public = True
+				community.public = False
 				community.joinable = False
 				com_names = user_interfaces.IFriendlyNamed(community)
 				com_names.alias = self.COM_ALIAS
