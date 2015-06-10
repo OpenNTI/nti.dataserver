@@ -31,6 +31,7 @@ from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver import authorization as nauth
+
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
