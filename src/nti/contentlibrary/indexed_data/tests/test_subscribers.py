@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -7,66 +6,121 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import contains
-from hamcrest import has_entry
+import os
+import fudge
+
 from hamcrest import has_length
 from hamcrest import assert_that
-from hamcrest import has_property
+from hamcrest import contains_inanyorder
 
-import os
-
-from zope import lifecycleevent
+from zope import component
 
 from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
-from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import ITimelineIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import ISlideDeckIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data.subscribers import _clear_when_removed
+
+from nti.contenttypes.presentation.interfaces import INTIVideo
+from nti.contenttypes.presentation.interfaces import INTITimeline
+from nti.contenttypes.presentation.interfaces import INTISlideDeck
+from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
 
 from nti.contentlibrary.tests import ContentlibraryLayerTest
+
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from persistent import Persistent
+
+from zope.component.persistentregistry import PersistentComponents as Components
+
+class PersistentComponents(Components, Persistent):
+	pass
 
 class TestSubscribers(ContentlibraryLayerTest):
 
 	def setUp(self):
+		super( ContentlibraryLayerTest, self ).setUp()
 		library_dir = os.path.join( os.path.dirname(__file__), 'library' )
 		self.library = FileLibrary(library_dir)
+		component.getGlobalSiteManager().registerUtility(self.library, IContentPackageLibrary)
 
-	def _do_test(self, iface,
-				 unit_ntiid='tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1',
-				 entry_ntiid=None):
+	def tearDown(self):
+		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
 
+	@WithMockDSTrans
+	@fudge.patch( 'nti.contentlibrary.indexed_data.subscribers._registry' )
+	def test_indexing( self, mock_registry ):
+		registry = PersistentComponents()
+		mock_dataserver.current_transaction.add(registry)
+		mock_registry.is_callable().returns( registry )
+
+		unit_ntiid='tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
 		self.library.syncContentPackages()
-		unit = self.library.pathToNTIID(unit_ntiid)[-1]
+		catalog = get_catalog()
+		results = catalog.search_objects( container_ntiids=(unit_ntiid,) )
+		assert_that( results, has_length( 4 ))
 
-		container = iface(unit)
+		# Type
+		for provided, count in ( ( 'video', 1 ),
+								( 'relatedwork', 2 ),
+								( 'slidedeck', 1 ),
+								( 'timeline', 1 ) ):
+			results = catalog.search_objects( provided=provided )
+			assert_that( results, has_length( count ))
 
-		assert_that( container, has_length(1) )
-		assert_that( container.get_data_items(),
-					 contains( has_entry('ntiid',
-										 entry_ntiid) ) )
+		results = catalog.search_objects( provided='audio' )
+		assert_that( results, has_length( 0 ))
 
-		lifecycleevent.removed(self.library[0])
+		# Containers
+		item_ntiid = 'tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0'
+		obj = registry.queryUtility( INTIRelatedWorkRef, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		exp_containers = self.library.pathToNTIID( unit_ntiid )
+		exp_containers = [x.ntiid for x in exp_containers]
+		assert_that( containers, contains_inanyorder( *exp_containers ))
 
-		assert_that( container, has_length(0) )
-		assert_that( container, has_property('lastModified', -1))
+		item_ntiid = "tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1"
+		obj = registry.queryUtility( INTIVideo, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		assert_that( containers, contains_inanyorder( *exp_containers ))
 
-		lifecycleevent.added(self.library[0])
-		lifecycleevent.modified(self.library[0])
-		assert_that( container, has_length(1) )
+		item_ntiid = "tag:nextthought.com,2011-10:OU-JSON:Timeline-CourseTestContent.timeline.heading_west"
+		obj = registry.queryUtility( INTITimeline, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		assert_that( containers, contains_inanyorder( *exp_containers ))
 
-	def test_related_work(self):
-		self._do_test(IRelatedContentIndexedDataContainer,
-					  entry_ntiid='tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0')
+		item_ntiid = "tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionals"
+		obj = registry.queryUtility( INTISlideDeck, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		assert_that( containers, contains_inanyorder( *exp_containers ))
 
-	def test_video(self):
-		self._do_test(IVideoIndexedDataContainer,
-					  entry_ntiid="tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1")
-		
-	def test_timeline(self):
-		self._do_test(ITimelineIndexedDataContainer,
-					  entry_ntiid="tag:nextthought.com,2011-10:OU-JSON:Timeline-CourseTestContent.timeline.heading_west")
-		
-	def test_slidedeck(self):
-		self._do_test(ISlideDeckIndexedDataContainer,
-					  entry_ntiid="tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionals")
+		# DNE
+		item_ntiid = "tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionalsxxxx"
+		obj = registry.queryUtility( INTISlideDeck, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		assert_that( containers, has_length( 0 ))
+
+		# Clear everything
+		packages = self.library.contentPackages
+		_clear_when_removed( packages[0] )
+
+		for provided in ( 'video','relatedwork', 'slidedeck', 'timeline', 'audio' ):
+			results = catalog.search_objects( provided=provided )
+			assert_that( results, has_length( 0 ))
+
+		item_ntiid = 'tag:nextthought.com,2011-10:NTI-RelatedWorkRef-CourseTestContent.relatedworkref.0'
+		obj = registry.queryUtility( INTIRelatedWorkRef, name=item_ntiid )
+		containers = catalog.get_containers( obj )
+		assert_that( containers, has_length( 0 ))
+
+		results = catalog.search_objects( container_ntiids=(unit_ntiid,) )
+		assert_that( results, has_length( 0 ))
+
+		# Re-index does nothing (since files have not changed)
+		self.library.syncContentPackages()
+		results = catalog.search_objects( container_ntiids=(unit_ntiid,) )
+		assert_that( results, has_length( 0 ))
+

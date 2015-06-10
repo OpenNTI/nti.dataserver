@@ -34,7 +34,7 @@ from nti.externalization.interfaces import IExternalObject
 import boto.s3.key
 import fudge
 
-from . import ContentlibraryLayerTest
+from nti.contentlibrary.tests import ContentlibraryLayerTest
 
 from zope.site.folder import rootFolder
 from zope.site.folder import Folder
@@ -141,10 +141,21 @@ class TestExternalization(ContentlibraryLayerTest):
 
 		root = rootFolder()
 		root.absolute_path = '/'
-		child = root['DNE'] = Folder()
-		child = child['Library'] = Folder()
-		child = child['WebServer'] = Folder()
-		child = child['Documents'] = Folder()
+		# Do not fire events
+		child = Folder()
+		root.__setitem__( 'DNE', child )
+
+		new_child = Folder()
+		child.__setitem__( 'Library', new_child )
+		child = new_child
+
+		new_child = Folder()
+		child.__setitem__( 'WebServer', new_child )
+		child = new_child
+
+		new_child = Folder()
+		child.__setitem__( 'Documents', new_child )
+		child = new_child
 		child.url_prefix = ''
 		child.absolute_path = '/DNE/Library/WebServer/Documents'
 

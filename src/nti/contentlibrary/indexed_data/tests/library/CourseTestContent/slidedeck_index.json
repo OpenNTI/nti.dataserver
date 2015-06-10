@@ -15,7 +15,8 @@
                 }
             ],
             "ntiid": "tag:nextthought.com,2011-10:OU-NTISlideDeck-CourseTestContent.nsd.pres:Nested_Conditionals",
-            "class": "ntislidedeck"
+            "class": "ntislidedeck",
+            "creator": "sjohnson@nextthought.com"
         }
     },
     "Containers": {

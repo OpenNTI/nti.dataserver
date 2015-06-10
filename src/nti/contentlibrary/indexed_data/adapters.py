@@ -13,16 +13,68 @@ logger = __import__('logging').getLogger(__name__)
 
 import sys
 
+from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
+from nti.contenttypes.presentation.interfaces import INTIAudio
+from nti.contenttypes.presentation.interfaces import INTIVideo
+from nti.contenttypes.presentation.interfaces import INTISlide
+from nti.contenttypes.presentation.interfaces import INTITimeline
+from nti.contenttypes.presentation.interfaces import INTISlideDeck
+from nti.contenttypes.presentation.interfaces import INTISlideVideo
+from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+
 from . import container
 from . import interfaces
 
-_KEY =  'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
+_KEY =  'nti.contentlibrary.indexed_data.container.IndexedDataContainerLastModified'
 
 from .interfaces import TAG_NAMESPACE_FILE
+from .interfaces import IContainedTypeAdapter
+
+class _Type(object):
+
+	__slots__ = (b'type',)
+
+	def __init__(self, type):
+		self.type = type
+
+@component.adapter( INTIAudio )
+@interface.implementer(IContainedTypeAdapter)
+def _audio_to_contained_type(context):
+	return _Type( 'audio' )
+
+@component.adapter( INTIVideo )
+@interface.implementer(IContainedTypeAdapter)
+def _video_to_contained_type(context):
+	return _Type( 'video' )
+
+@component.adapter( INTISlide )
+@interface.implementer(IContainedTypeAdapter)
+def _slide_to_contained_type(context):
+	return _Type( 'slide' )
+
+@component.adapter( INTITimeline )
+@interface.implementer(IContainedTypeAdapter)
+def _timeline_to_contained_type(context):
+	return _Type( 'timeline' )
+
+@component.adapter( INTISlideDeck )
+@interface.implementer(IContainedTypeAdapter)
+def _slidedeck_to_contained_type(context):
+	return _Type( 'slidedeck' )
+
+@component.adapter( INTISlideVideo )
+@interface.implementer(IContainedTypeAdapter)
+def _slidevideo_to_contained_type(context):
+	return _Type( 'slidevideo' )
+
+@component.adapter( INTIRelatedWorkRef )
+@interface.implementer(IContainedTypeAdapter)
+def _related_to_contained_type(context):
+	return _Type( 'relatedwork' )
 
 def indexed_data_adapter(content_unit,
 						 factory=container.IndexedDataContainer,

@@ -65,6 +65,8 @@ from nti.dataserver.interfaces import IUserBlacklistedStorage
 from nti.dataserver.users import index as user_index
 from nti.dataserver.users.users import UserBlacklistedStorage
 
+from nti.contentlibrary.indexed_data import index as container_index
+
 from nti.intid import utility as intid_utility
 
 def install_chat( context ):
@@ -151,6 +153,7 @@ def install_main( context ):
 
 		install_user_catalog( dataserver_folder, intids )
 		install_metadata_catalog( dataserver_folder, intids )
+		install_container_catalog( dataserver_folder, intids )
 
 		everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
 		assert intids.getId(everyone) is not None
@@ -186,6 +189,9 @@ def install_user_catalog( dataserver_folder, intids ):
 
 def install_metadata_catalog( dataserver_folder, intids ):
 	return metadata_index.install_metadata_catalog(dataserver_folder, intids)
+
+def install_container_catalog( dataserver_folder, intids ):
+	return container_index.install_container_catalog(dataserver_folder, intids)
 
 def install_password_utility( dataserver_folder ):
 	lsm = dataserver_folder.getSiteManager()
