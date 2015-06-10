@@ -27,7 +27,9 @@ from nti.appserver.ugd_query_views import _UGDView
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
+from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
+from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.zope_catalog.catalog import ResultSet
@@ -86,6 +88,10 @@ class DFLActivityView(_UGDView):
 		intids = component.getUtility(IIntIds)
 		
 		username = context.NTIID
-		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-		items = ResultSet(intids_shared_with_comm, intids, ignore_invalid=True)
+		intids_shared_with_dfl = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
+		
+		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
+		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_dfl)
+		
+		items = ResultSet(top_level_shared_intids, intids, ignore_invalid=True)
 		return (items,)
