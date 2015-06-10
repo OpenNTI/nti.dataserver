@@ -20,7 +20,7 @@ from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as File
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.contentlibrary.indexed_data import get_catalog
-from nti.contentlibrary.indexed_data.subscribers import _clear_when_removed
+from nti.app.contentlibrary.subscribers import _clear_when_removed
 
 from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTITimeline
@@ -51,7 +51,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
 
 	@WithMockDSTrans
-	@fudge.patch( 'nti.contentlibrary.indexed_data.subscribers._registry' )
+	@fudge.patch( 'nti.app.contentlibrary.subscribers._registry' )
 	def test_indexing( self, mock_registry ):
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
@@ -64,10 +64,10 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( results, has_length( 4 ))
 
 		# Type
-		for provided, count in ( ( 'video', 1 ),
-								( 'relatedwork', 2 ),
-								( 'slidedeck', 1 ),
-								( 'timeline', 1 ) ):
+		for provided, count in ( ( 'NTIVideo', 1 ),
+								( 'NTIRelatedWorkRef', 2 ),
+								( 'NTISlideDeck', 1 ),
+								( 'NTITimeline', 1 ) ):
 			results = catalog.search_objects( provided=provided )
 			assert_that( results, has_length( count ))
 
