@@ -1114,13 +1114,13 @@ class TestApplication(ApplicationLayerTest):
 			username = user.username
 			user_ext_id = to_external_ntiid_oid( user )
 
-		res = testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
-						  status=302)
-		assert_that( res.location, is_('https://secure.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon') )
+		testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
+					status=404)
+		# assert_that(res.location,
+		#			  is_('https://secure.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon') )
 
 		res = self._edit_user_ext_field( 'avatarURL', data, username, user_ext_id )
 		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
-
 
 		res = testapp.get( res.json_body['avatarURL'], extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'image/gif' ) )
