@@ -25,7 +25,9 @@ import nameparser
 
 from zope import component
 from zope import interface
+
 from zope.component.interfaces import IComponents
+
 from zope.interface.common.idatetime import IDate
 
 from zope.dottedname import resolve as dottedname
@@ -40,12 +42,13 @@ from zope.security.interfaces import IPrincipal
 
 from ZODB.loglevels import TRACE
 
-from pyramid.threadlocal import get_current_request
 from pyramid.path import package_of
+from pyramid.threadlocal import get_current_request
 
 from nti.app.users.utils import generate_verification_email_url
 
 from nti.appserver import interfaces as app_interfaces
+
 from nti.mailer.interfaces import ITemplatedMailer
 
 from nti.contentfragments import censor
@@ -58,11 +61,9 @@ from nti.dataserver import shards as nti_shards
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users import interfaces as user_interfaces
 
-from nti.externalization import interfaces as ext_interfaces
-
-from nti.externalization.externalization import to_external_object
-
 from nti.externalization.singleton import SingletonDecorator
+from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.externalization import to_external_object
 
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
@@ -209,7 +210,6 @@ class RequestAwareS3KeyHrefMapper(object):
 			self.href = 'http://' + sites[0] + '/' + key.key
 		else:
 			self.href = 'http://' + key.bucket.name + '/' + key.key
-
 
 @interface.implementer(nti_interfaces.INewUserPlacer)
 class RequestAwareUserPlacer(nti_shards.AbstractShardPlacer):
@@ -406,7 +406,7 @@ def dispatch_user_created_with_request_to_site_policy(user, event):
 
 @component.adapter(nti_interfaces.IUser, app_interfaces.IUserLogonEvent)
 def dispatch_user_logon_to_site_policy(user, event):
-	_dispatch_to_policy( user, event, 'user_did_logon' )
+	_dispatch_to_policy(user, event, 'user_did_logon')
 
 def _censor_usernames(entity, event=None):
 	"""
@@ -436,7 +436,7 @@ def _is_x_or_more_years_ago(birthdate, years_ago=13):
 
 _is_thirteen_or_more_years_ago = _is_x_or_more_years_ago
 
-def _to_date( string, field=None ):
+def _to_date(string, field=None):
 	try:
 		return IDate(string) if string else None
 	except InvalidValue:
@@ -468,17 +468,17 @@ class AbstractSitePolicyEventListener(object):
 	Basics of a site policy.
 	"""
 
-	#: An email address used to send emails to users
-	#: such as account creation, both on behalf of this
-	#: object as well as from other places. Optional.
+	# : An email address used to send emails to users
+	# : such as account creation, both on behalf of this
+	# : object as well as from other places. Optional.
 	DEFAULT_EMAIL_SENDER = None
 
-	#: The asset spec for a template having both text and
-	#: HTML versions. If the asset spec is a bare name
-	#: like "foobar", it is assumed to be located in the
-	#: ``templates`` directory in the package this object
-	#: is located in. Otherwise, it can be a complete spec
-	#: such as "the.package:other_dir/foobar"
+	# : The asset spec for a template having both text and
+	# : HTML versions. If the asset spec is a bare name
+	# : like "foobar", it is assumed to be located in the
+	# : ``templates`` directory in the package this object
+	# : is located in. Otherwise, it can be a complete spec
+	# : such as "the.package:other_dir/foobar"
 	NEW_USER_CREATED_EMAIL_TEMPLATE_BASE_NAME = None
 	NEW_USER_CREATED_EMAIL_SUBJECT = None
 	NEW_USER_CREATED_BCC = None
@@ -491,19 +491,19 @@ class AbstractSitePolicyEventListener(object):
 	USERNAME_RECOVERY_EMAIL_TEMPLATE_BASE_NAME = 'username_recovery_email'
 	USERNAME_RECOVERY_EMAIL_SUBJECT = "Username Reminder"
 
-	#: If defined, this will be send in the ``nti.landing_page``
-	#: cookie when a user logs on. Must be a byte string.
+	# : If defined, this will be send in the ``nti.landing_page``
+	# : cookie when a user logs on. Must be a byte string.
 	LANDING_PAGE_NTIID = None
 
 	BRAND = 'NextThought'
 
-	COM_USERNAME = None
 	COM_ALIAS = None
+	COM_USERNAME = None
 	COM_REALNAME = None
 
 	_v_my_package = None
 
-	def __init__( self ):
+	def __init__(self):
 		pass
 
 	def _join_community_user_created(self, user, event):
@@ -515,6 +515,8 @@ class AbstractSitePolicyEventListener(object):
 			community = users.Entity.get_entity(self.COM_USERNAME)
 			if community is None:
 				community = users.Community.create_community(username=self.COM_USERNAME)
+				community.public = True
+				community.joinable = False
 				com_names = user_interfaces.IFriendlyNamed(community)
 				com_names.alias = self.COM_ALIAS
 				com_names.realname = self.COM_REALNAME
@@ -523,7 +525,7 @@ class AbstractSitePolicyEventListener(object):
 			user.follow(community)
 
 	def __find_my_package(self):
-		specific_package = getattr( self, 'PACKAGE', None )
+		specific_package = getattr(self, 'PACKAGE', None)
 		if specific_package is not None:
 			return specific_package
 
@@ -584,10 +586,10 @@ class AbstractSitePolicyEventListener(object):
 			request=event.request,
 			package=self.__find_my_package())
 
-	def _set_landing_page_cookie( self, user, event ):
+	def _set_landing_page_cookie(self, user, event):
 		if self.LANDING_PAGE_NTIID:
 			event.request.response.set_cookie(b'nti.landing_page',
-											   value=urllib.quote(self.LANDING_PAGE_NTIID) )
+											   value=urllib.quote(self.LANDING_PAGE_NTIID))
 
 	def _check_realname(self, user, required=True):
 		# Icky. For some random reason we require everyone to provide
@@ -598,7 +600,7 @@ class AbstractSitePolicyEventListener(object):
 		if names.realname is None or not names.realname.strip():
 			if required:
 				raise user_interfaces.BlankHumanNameError()
-			return # Not required
+			return  # Not required
 
 		human_name = nameparser.HumanName(names.realname)
 		if not human_name.first:
@@ -617,7 +619,7 @@ class AbstractSitePolicyEventListener(object):
 	def _censor_usernames(self, user):
 		_censor_usernames(user)
 
-	def _check_age_makes_sense(self,user):
+	def _check_age_makes_sense(self, user):
 		profile = user_interfaces.IUserProfile(user)
 		birthdate = getattr(profile, 'birthdate', None)
 		if birthdate:
@@ -633,7 +635,7 @@ class AbstractSitePolicyEventListener(object):
 				v = _("Birthdate must be less than 150 years ago.")
 
 			if t:
-				raise t( v, 'birthdate', birthdate.isoformat(), value=birthdate )
+				raise t(v, 'birthdate', birthdate.isoformat(), value=birthdate)
 
 	def map_validation_exception(self, incoming_data, exception):
 		return exception
@@ -659,8 +661,8 @@ class AbstractSitePolicyEventListener(object):
 class DevmodeSitePolicyEventListener(AbstractSitePolicyEventListener):
 
 	def user_will_create(self, user, event):
-		self._check_realname( user, required=False )
-		self._check_age_makes_sense( user )
+		self._check_realname(user, required=False)
+		self._check_age_makes_sense(user)
 
 class GenericSitePolicyEventListener(AbstractSitePolicyEventListener):
 	"""
@@ -720,7 +722,7 @@ class GenericKidSitePolicyEventListener(GenericSitePolicyEventListener):
 			logger.debug("No need to upgrade user %s that doesn't provide %s", user, self.IF_WOUT_AGREEMENT)
 			request = get_current_request()
 			if request is not None and getattr(request, 'session', None) is not None:
-				request.session.flash( "User %s doesn't need to be upgraded" % user, queue='warn' )
+				request.session.flash("User %s doesn't need to be upgraded" % user, queue='warn')
 			return False
 
 		# Copy the profile info. First, adapt to the old profile:
@@ -856,7 +858,8 @@ class GenericAdultSitePolicyEventListener(GenericSitePolicyEventListener):
 				if not email:
 					profile.email = user.username
 				elif user.username != email:
-					raise AtInUsernameImpliesMatchingEmail("If you want to use an email address for the username, it must match the email address you enter", 'Username', user.username)
+					msg = "If you want to use an email address for the username, it must match the email address you enter"
+					raise AtInUsernameImpliesMatchingEmail(msg, 'Username', user.username)
 
 # Profiles for MC
 
@@ -865,7 +868,7 @@ zope.deferredimport.deprecatedFrom(
 	" The only valid use is existing ZODB objects",
 	'nti.app.sites.mathcounts.profile',
 	"MathcountsCoppaUserWithoutAgreementUserProfile",
-	"MathcountsCoppaUserWithAgreementUserProfile" )
+	"MathcountsCoppaUserWithAgreementUserProfile")
 
 @interface.implementer(app_interfaces.IUserCapabilityFilter)
 @component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
@@ -906,15 +909,14 @@ class NoChatAvatarDFLCapabilityFilter(NoDFLCapabilityFilter):
 		result.discard('nti.platform.p2p.chat')
 		return result
 
-
 @interface.implementer(ICommunitySitePolicyUserEventListener)
 class AdultCommunitySitePolicyEventListener(GenericAdultSitePolicyEventListener):
 	"""
 	Implements the policy for an adult site, adding new users to a single community.
 	"""
 
-	COM_USERNAME = None
 	COM_ALIAS = None
+	COM_USERNAME = None
 	COM_REALNAME = None
 
 	def user_created(self, user, event):
@@ -932,10 +934,10 @@ zope.deferredimport.deprecatedFrom(
 	" The only valid use is existing ZODB objects",
 
 	"nti.app.sites.columbia.interfaces",
-	"IColumbiaBusinessUserProfile" )
+	"IColumbiaBusinessUserProfile")
 
 zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the columbia site package."
 	" The only valid use is existing ZODB objects",
 	"nti.app.sites.columbia.profile",
-	"ColumbiaBusinessUserProfile" )
+	"ColumbiaBusinessUserProfile")
