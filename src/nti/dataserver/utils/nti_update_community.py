@@ -19,8 +19,11 @@ import sys
 import pprint
 import argparse
 
+from zope import interface
+
 from nti.dataserver.users import Community
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.users.interfaces import IDisallowActivityLink
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
@@ -28,7 +31,7 @@ from nti.externalization.internalization import update_from_external_object
 from . import run_with_dataserver
 
 def update_community(username, name=None, alias=None, public=False,
-					 joinable=False, verbose=False):
+					 joinable=False, profile=True, verbose=False):
 	__traceback_info__ = locals().items()
 
 	if alias and not isinstance(alias, unicode):
@@ -57,11 +60,14 @@ def update_community(username, name=None, alias=None, public=False,
 	if community.joinable != joinable:
 		ext_value['joinable'] = joinable
 
-	if not ext_value:
-		print("Nothing to do", repr(community), file=sys.stderr)
-		sys.exit(0)
-		
-	update_from_external_object(community, ext_value)
+	if ext_value:
+		update_from_external_object(community, ext_value)
+
+	if not profile and not IDisallowActivityLink.providedBy(community):
+		interface.alsoProvides(community, IDisallowActivityLink)
+	elif profile and IDisallowActivityLink.providedBy(community):
+		interface.noLongerProvides(community, IDisallowActivityLink)
+
 	if verbose:
 		pprint.pprint(to_external_object(community))
 
@@ -93,10 +99,12 @@ def process_args(args=None):
 							 action='store_true',
 							 default=False,
 							 help="Joinable community")
-
-	arg_parser.add_argument('--site',
-							dest='site',
-							help="Application SITE.")
+	
+	arg_parser.add_argument('--no-profile',
+							 dest='profile',
+							 action='store_true',
+							 default=False,
+							 help="Does not accept a profile")
 
 	args = arg_parser.parse_args(args=args)
 
@@ -105,8 +113,9 @@ def process_args(args=None):
 		raise IOError("Invalid dataserver environment root directory", env_dir)
 
 	username = args.username
-	conf_packages = () if not args.site else ('nti.appserver',)
+	conf_packages = ('nti.appserver',)
 
+	no_profile = not bool(args.profile)
 	run_with_dataserver(environment_dir=env_dir,
 						xmlconfig_packages=conf_packages,
 						verbose=args.verbose,
@@ -115,6 +124,7 @@ def process_args(args=None):
 														  args.alias,
 														  args.public,
 														  args.joinable,
+														  no_profile,
 														  args.verbose))
 def main(args=None):
 	process_args(args)
