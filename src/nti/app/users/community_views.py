@@ -26,11 +26,14 @@ from nti.appserver.ugd_query_views import _UGDView
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver import authorization as nauth
-
+from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
+from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -173,7 +176,21 @@ class CommunityActivityView(_UGDView):
 			raise hexc.HTTPNotFound("No catalog")
 		intids = component.getUtility(IIntIds)
 		
-		username = self.request.context.username
+		context = self.request.context
+		username = context.username
 		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-		items = ResultSet(intids_shared_with_comm, intids, ignore_invalid=True)
+		
+		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
+		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_comm)
+		
+		topics_intids = intids.family.IF.LFSet()
+		board = IBoard(context, None) or {}
+		for forum in board.values():
+			for topic in forum.values():
+				uid = intids.queryId(topic)
+				if uid is not None:
+					topics_intids.add(uid)
+		
+		all_intids = intids.family.IF.union(topics_intids,  top_level_shared_intids)
+		items = ResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
