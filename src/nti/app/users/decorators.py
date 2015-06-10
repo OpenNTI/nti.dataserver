@@ -25,6 +25,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembersLink
+from nti.dataserver.users.interfaces import IDisallowActivityLink
 from nti.dataserver.users.interfaces import IDisallowHiddenMembership
 
 from nti.externalization.singleton import SingletonDecorator
@@ -92,6 +93,10 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			else:
 				link = Link(context, elements=('hide',), rel="hide")
 			_links.append(link)
+			
+		if not IDisallowActivityLink.providedBy(context):
+			link = Link(context, rel="Activity", elements=('Activity',))
+			_links.append(link)
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IDynamicSharingTargetFriendsList, IRequest)
@@ -115,8 +120,7 @@ class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel="Activity",
-					elements=('Activity',))
+		link = Link(context, rel="Activity", elements=('Activity',))
 		_links.append(link)
 	
 @component.adapter(IDynamicSharingTargetFriendsList)
