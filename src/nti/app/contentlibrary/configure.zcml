@@ -128,4 +128,68 @@
 					 pyramid.interfaces.IRequest"
 				zcml:condition="installed nti.app.products.courseware"/>
 
+	<!-- Content package modifications. -->
+	<!-- addition -->
+	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_video_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_timeline_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<subscriber handler=".subscribers._update_slidedeck_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectAddedEvent" />
+
+	<!-- mutation -->
+	<subscriber handler=".subscribers._update_audio_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<subscriber handler=".subscribers._update_video_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<subscriber handler=".subscribers._update_related_content_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<subscriber handler=".subscribers._update_timeline_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<subscriber handler=".subscribers._update_slidedeck_index_when_content_changes"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectModifiedEvent" />
+
+	<!-- removal -->
+	<subscriber handler=".subscribers._clear_audio_index_when_content_removed"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+
+	<subscriber handler=".subscribers._clear_video_index_when_content_removed"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+
+	<subscriber handler=".subscribers._clear_related_index_when_content_removed"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+
+	<subscriber handler=".subscribers._clear_timeline_index_when_content_removed"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+
+	<subscriber handler=".subscribers._clear_slidedeck_index_when_content_removed"
+				for="nti.contentlibrary.interfaces.IContentPackage
+					 zope.lifecycleevent.IObjectRemovedEvent" />
+
 </configure>
