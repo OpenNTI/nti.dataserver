@@ -26,7 +26,7 @@ from nti.appserver.ugd_query_views import _UGDView
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 
-from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver.users.interfaces import IHiddenMembership
 
@@ -184,7 +184,7 @@ class CommunityActivityView(_UGDView):
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_comm)
 		
 		topics_intids = intids.family.IF.LFSet()
-		board = IBoard(context, None) or {}
+		board = ICommunityBoard(context, None) or {}
 		for forum in board.values():
 			for topic in forum.values():
 				uid = intids.queryId(topic)
