@@ -11,26 +11,35 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import os
+import tempfile
+import shutil
 
 from nti.testing.layers import ZopeComponentLayer
 from nti.testing.layers import ConfiguringLayerMixin
 from zope.component.hooks import setHooks
 
+from zope import component
 import zope.testing.cleanup
 
 from ..interfaces import IContentUnitAnnotationUtility
-from zope import component
+
+from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
 
 class ContentlibraryTestLayer(ZopeComponentLayer,
-							  ConfiguringLayerMixin):
+							  ConfiguringLayerMixin,
+							  DSInjectorMixin):
 
 
-	set_up_packages = ('nti.contentlibrary','nti.externalization')
+	set_up_packages = ('nti.contentlibrary','nti.externalization', 'nti.contenttypes.presentation', 'nti.dataserver')
 
 	@classmethod
 	def setUp(cls):
 		setHooks() # in case something already tore this down
 		cls.setUpPackages()
+		cls.old_data_dir = os.getenv('DATASERVER_DATA_DIR')
+		cls.new_data_dir = tempfile.mkdtemp(dir="/tmp")
+		os.environ['DATASERVER_DATA_DIR'] = cls.new_data_dir
 
 	@classmethod
 	def tearDown(cls):
@@ -43,6 +52,9 @@ class ContentlibraryTestLayer(ZopeComponentLayer,
 		# they are tracked by NTIID and would otherwise persist
 		annotations = component.getUtility(IContentUnitAnnotationUtility)
 		annotations.annotations.clear()
+		cls.setUpTestDS(test)
+		shutil.rmtree(cls.new_data_dir, True)
+		os.environ['DATASERVER_DATA_DIR'] = cls.old_data_dir or '/tmp'
 
 	@classmethod
 	def testTearDown(cls):

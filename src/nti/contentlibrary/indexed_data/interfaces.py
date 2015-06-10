@@ -106,3 +106,13 @@ CONTAINER_IFACES = (IRelatedContentIndexedDataContainer,
 					ITimelineIndexedDataContainer,
 					IVideoIndexedDataContainer,
 					IAudioIndexedDataContainer)
+
+class IContainedObjectCatalog(interface.Interface):
+	"""
+	An index that maps contained objects to their containers.
+	"""
+
+class IContainedTypeAdapter(interface.Interface):
+	"""
+	Adapts contained objects to their str type.
+	"""

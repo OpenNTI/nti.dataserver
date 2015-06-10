@@ -212,7 +212,7 @@ class AbstractContentPackageLibrary(object):
 				raise Exception("No package to update was found")
 
 		return by_list, by_ntiid
-		
+
 	def syncContentPackages(self, packages=None):
 		"""
 		Fires created, added, modified, or removed events for each
@@ -224,7 +224,7 @@ class AbstractContentPackageLibrary(object):
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
 					self._content_packages_tuple(self._contentPackages, packages)
-		
+
 		## make sure we get ALL packages
 		contentPackages = self._enumeration.enumerateContentPackages()
 		new_content_packages, new_content_packages_by_ntiid = \
@@ -248,7 +248,7 @@ class AbstractContentPackageLibrary(object):
 			added = ()
 			unfiltered_content_packages, _ = \
 						self._content_packages_tuple(self._contentPackages)
-						
+
 			## make sure we get old references
 			unmodified = [package
 				 			for package in unfiltered_content_packages
@@ -528,7 +528,7 @@ class AbstractContentPackageLibrary(object):
 		"""
 		# We store as weak refs to avoid ConnectionStateErrors
 		# and to reduce memory usage.
-		# TODO We could increase this cache size if it's extremely small,
+		# We could increase this cache size if it's extremely small,
 		# as expected.
 		result = None
 
