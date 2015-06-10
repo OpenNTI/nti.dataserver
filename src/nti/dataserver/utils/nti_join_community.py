@@ -14,6 +14,7 @@ relstorage_patch_all_except_gevent_on_import.patch()
 logger = __import__('logging').getLogger(__name__)
 
 import os
+import csv
 import sys
 import pprint
 import argparse
@@ -37,16 +38,20 @@ def _tx_string(s):
 	return s
 
 def list_communities():
-	print('\nusername,realname,alias,public,joinable', file=sys.stderr)
+	print(file=sys.stderr)
+	writer = csv.writer( sys.stderr )
+	header = ["username","realname","alias","public","joinable"]
+	writer.writerow(header)
+	
 	dataserver = component.getUtility(IDataserver)
 	users_folder = IShardLayout(dataserver).users_folder
 	for entity in users_folder.values():
 		if not ICommunity.providedBy(entity):
 			continue
 		fn = IFriendlyNamed(entity)
-		print('%s,"%s","%s",%s,%s' % (_tx_string(entity.username),
-			  _tx_string(fn.realname), _tx_string(fn.alias), 
-			  entity.public, entity.joinable), file=sys.stderr)
+		row = [entity.username, fn.realname, fn.alias, str(entity.public),
+			   str(entity.joinable)]
+		writer.writerow([_tx_string(x) for x in row])
 	print(file=sys.stderr)
 
 def join_communities(user, communities=(), follow=False, exitOnError=False):
