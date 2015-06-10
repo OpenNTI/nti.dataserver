@@ -24,6 +24,7 @@ from zope.location.interfaces import ISublocations
 from BTrees.OOBTree import OOTreeSet
 
 from nti.common.property import Lazy
+from nti.common.property import alias
 
 from nti.ntiids.ntiids import TYPE_NAMED_ENTITY_COMMUNITY
 
@@ -55,6 +56,9 @@ class Community(DynamicSharingTargetMixin, Entity): # order of inheritance matte
 
 	public = False
 	joinable = False
+	
+	Public = alias('public')
+	Joinable = alias('joinable')
 	
 	@classmethod
 	def create_community(cls, dataserver=None, **kwargs):
