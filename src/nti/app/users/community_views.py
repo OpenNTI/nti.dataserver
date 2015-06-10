@@ -172,12 +172,15 @@ class CommunityActivityView(_UGDView):
 		self.user = self.remoteUser
 	
 	def getObjectsForId(self, *args, **kwargs ):
+		context = self.request.context
+		if not context.public and self.remoteUser not in context:
+			raise hexc.HTTPForbidden()
+		
 		catalog = component.queryUtility(ICatalog, METADATA_CATALOG_NAME)
 		if catalog is None:
 			raise hexc.HTTPNotFound("No catalog")
 		intids = component.getUtility(IIntIds)
-		
-		context = self.request.context
+
 		username = context.username
 		intids_shared_with_comm = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
 		
