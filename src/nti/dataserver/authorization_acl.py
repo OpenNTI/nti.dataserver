@@ -6,6 +6,7 @@ ACL providers for the various content types.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -428,7 +429,11 @@ class _CommunityACLProvider(_EntityACLProvider):
 		"""
 		The ACL for the community.
 		"""
-		acl = _ACL([ace_allowing(self._entity.username, nti_interfaces.ALL_PERMISSIONS, self)])
+		if IUseNTIIDAsExternalUsername.providedBy(self._entity):
+			username = self._entity.NTIID
+		else:
+			username = self._entity.username
+		acl = _ACL([ace_allowing(username, nti_interfaces.ALL_PERMISSIONS, self)])
 		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self))
 		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, self))
 		for viewer in self._viewers():
