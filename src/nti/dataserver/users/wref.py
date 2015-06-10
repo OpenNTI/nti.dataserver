@@ -70,17 +70,15 @@ class WeakRef(object):
 		__slots__ = (b'username',
 					 b'_entity_id',
 					 b'_v_entity_cache')
-
 	else:
 		__slots__ = ('username',
 					 '_entity_id',
 					 '_v_entity_cache')
 
-
-	def __init__( self, entity ):
+	def __init__(self, entity):
 		self.username = entity.username.lower()
 		try:
-			self._entity_id = component.getUtility( zc_intid.IIntIds ).getId( entity )
+			self._entity_id = component.getUtility(zc_intid.IIntIds).getId(entity)
 		except KeyError:
 			# Turn the missing-id KeyError into a NotYet
 			# error, which makes more sense
@@ -92,10 +90,10 @@ class WeakRef(object):
 
 	intid = read_alias('_entity_id')
 
-	def __getstate__( self ):
+	def __getstate__(self):
 		return self.username, self._entity_id
 
-	def __setstate__( self, state ):
+	def __setstate__(self, state):
 		self.username, self._entity_id = state
 		self._v_entity_cache = None
 
@@ -105,29 +103,28 @@ class WeakRef(object):
 
 		try:
 			__traceback_info__ = self.username, self._entity_id
-			result = component.getUtility( zc_intid.IIntIds ).getObject( self._entity_id )
+			result = component.getUtility(zc_intid.IIntIds).getObject(self._entity_id)
 		except KeyError:
 			result = None
 
 		try:
-			result_username = getattr( result, 'username', None )
-		except KeyError: # pragma: no cover
+			result_username = getattr(result, 'username', None)
+		except KeyError:  # pragma: no cover
 			# Typically (only) a POSKeyError
-			logger.warning( "POSKeyError accessing weak ref to %s", self.username )
+			logger.warning("POSKeyError accessing weak ref to %s", self.username)
 			result = None
 		else:
 			if result_username is None or result_username.lower() != self.username:
 				result = None
 
-		if allow_cached: # only perturb the state if we are allowed to
+		if allow_cached:  # only perturb the state if we are allowed to
 			if result is not None:
 				self._v_entity_cache = result
 			else:
 				self._v_entity_cache = False
-
 		return result
 
-	def __call__(self, return_missing_proxy=False, allow_cached=True ):
+	def __call__(self, return_missing_proxy=False, allow_cached=True):
 		"""
 		Return the entity object, or None if it no longer exists.
 
@@ -140,21 +137,19 @@ class WeakRef(object):
 			the user still exists.
 		"""
 		result = self._cached(allow_cached)
-
 		if result is None and return_missing_proxy:
 			factory = return_missing_proxy if callable(return_missing_proxy) else missing_user.MissingEntity
-			result = factory( self.username )
-
+			result = factory(self.username)
 		return result
 
-	def __lt__( self, other ):
+	def __lt__(self, other):
 		try:
 			return (self.username, self._entity_id) < (other.username, other._entity_id)
-		except AttributeError: # pragma: no cover
+		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
 	def __repr__(self):
-		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__, 
+		return "<%s.%s %s/%s>" % (self.__class__.__module__, self.__class__.__name__,
 								  self.username, self._entity_id)
 
 	# TODO: Consider making this object act like a proxy for the entity if its found.

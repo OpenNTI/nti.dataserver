@@ -26,6 +26,7 @@ from BTrees.OOBTree import OOTreeSet
 from BTrees.OOBTree import difference as OOBTree_difference
 from BTrees.OOBTree import intersection as OOBTree_intersection
 
+from nti.common.property import alias
 from nti.common.property import CachedProperty
 
 from nti.mimetype.mimetype import ModeledContentTypeAwareRegistryMetaclass
@@ -380,6 +381,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 	About = None
 	Locked = False
 	
+	about = alias('About')
 	defaultGravatarType = 'retro'
 
 	__external_class_name__ = 'FriendsList'

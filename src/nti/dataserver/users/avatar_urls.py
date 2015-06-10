@@ -14,8 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 import random
 import urlparse
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.common import create_gravatar_url
 from nti.common import GENERATED_GRAVATAR_TYPES
@@ -40,7 +40,6 @@ def AvatarURLFactory(entity):
 	# Something explicitly set, historical
 	if getattr(entity, '_avatarURL', None):
 		return _FixedAvatarWrapper(entity)
-
 	return component.queryAdapter(entity, IAvatarURLProvider, name="generated")
 
 @interface.implementer(IAvatarURLProvider, IAvatarURL)
