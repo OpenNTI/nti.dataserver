@@ -78,7 +78,6 @@ def _UserSearchView(request):
 		is that we should only be able to find users that intersect the set of communities
 		we are in. (To do that efficiently, we need community indexes).
 	"""
-
 	dataserver = request.registry.getUtility(IDataserver)
 	remote_user = get_remote_user(request, dataserver)
 	assert remote_user is not None
@@ -204,7 +203,7 @@ def _ResolveUsersView(request):
 	assert remote_user is not None
 
 	values = simplejson.loads(unicode(request.body, request.charset))
-	usernames = values.get('usernames', values.get('terms', ()))
+	usernames = values.get('usernames') or values.get('terms') or ()
 	if isinstance(usernames, six.string_types):
 		usernames = usernames.split()
 
@@ -275,13 +274,17 @@ def _provide_location(result, dataserver):
 	return result
 
 def _authenticated_search(remote_user, dataserver, search_term):
+	def _selector(x):
+		result = IUser.providedBy(x) or \
+				 (ICommunity.providedBy(x) and x.public)
+		return result
+
 	user_search_matcher = IUserSearchPolicy(remote_user)
 	result = user_search_matcher.query(search_term,
-										# Match Users and Communities here. Do not match
-										# IFriendsLists, because that
-										# would get private objects from other users.
-										provided=lambda x: IUser.providedBy(x) or \
-														   ICommunity.providedBy(x))
+									   # Match Users and Communities here. Do not match
+									   # IFriendsLists, because that
+									   # would get private objects from other users.
+									   provided=_selector)
 
 	# FIXME: Hack in a policy of limiting searching to overlapping communities
 	test = _make_visibility_test(remote_user)
@@ -361,10 +364,15 @@ def _make_visibility_test(remote_user):
 			# User can see himself
 			if x is remote_user:
 				return True
+
 			# No one can see the Koppa Kids
 			# FIXME: Hardcoding this site/user policy
 			if ICoppaUserWithoutAgreement.providedBy(x):
 				return False
+			
+			# public comms can be searched
+			if ICommunity.providedBy(x) and x.public:
+				return True
 
 			# User can see dynamic memberships he's a member of
 			# or owns. First, the general case
