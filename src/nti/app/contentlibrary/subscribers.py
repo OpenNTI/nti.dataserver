@@ -167,10 +167,11 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 				result.append(internal)
 	return result
 
-def _get_container_tree(container_id):
-	library = component.queryUtility(IContentPackageLibrary)
-	paths = library.pathToNTIID(container_id)
-	return [path.ntiid for path in paths] if paths else ()
+def _get_container_tree( container_id ):
+	library = component.queryUtility( IContentPackageLibrary )
+	paths = library.pathToNTIID( container_id )
+	results = {path.ntiid for path in paths} if paths else ()
+	return results
 
 def _update_index_when_content_changes(content_package, index_iface, item_iface, object_creator):
 	namespace = index_iface.getTaggedValue(TAG_NAMESPACE_FILE)
@@ -188,7 +189,6 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 		return
 	set_index_last_modified(index_iface, content_package, sibling_key.lastModified)
 
-	logger.info("Loading index data %s", sibling_key)
 	index_text = content_package.read_contents_of_sibling_entry(namespace)
 
 	if isinstance(index_text, bytes):
@@ -206,25 +206,32 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 	# }
 
 	# Load our json index files
+	added = ()
 	if item_iface == INTISlideDeck:
-		_load_and_register_slidedeck_json(index_text,
+		added = _load_and_register_slidedeck_json(index_text,
 										  registry=registry,
 										  connection=connection,
 										  object_creator=object_creator)
 	elif object_creator is not None:
-		_load_and_register_json(item_iface, index_text,
+		added = _load_and_register_json(item_iface, index_text,
 								registry=registry,
 								connection=connection,
 								external_object_creator=object_creator)
+	registered_count = len( added )
 
 	# Index our contained items; ignoring the global library.
+	index_item_count = 0
+
 	if registry != component.getGlobalSiteManager():
 		for container_id, indexed_ids in index['Containers'].items():
 			for indexed_id in indexed_ids:
-				obj = registry.queryUtility(item_iface, name=indexed_id)
-				lineage_ntiids = _get_container_tree(container_id)
+				obj = registry.queryUtility( item_iface, name=indexed_id )
+				lineage_ntiids = _get_container_tree( container_id )
 				if lineage_ntiids:
+					index_item_count += 1
 					catalog.index(obj, container_ntiids=lineage_ntiids)
+	logger.info( 'Finished indexing %s (registered=%s) (indexed=%s)',
+					sibling_key, registered_count, index_item_count )
 
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
@@ -265,23 +272,18 @@ def _clear_when_removed(content_package):
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
 	registry = _registry()
+	count = removed = 0
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()
 		contained_objects = catalog.search_objects(container_ntiids=content_package.ntiid)
 		for contained_object in tuple(contained_objects):
-			catalog.unindex(contained_object)
+			count += 1
+			was_removed = catalog.unindex(contained_object)
+			if was_removed:
+				removed += 1
+	logger.info( 'Removed indexes for content package %s (count=%s) (removed=%s)',
+				content_package, count, removed )
 
-def _clear_audio_index_when_content_removed(content_package, event):
+def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
 
-def _clear_video_index_when_content_removed(content_package, event):
-	return _clear_when_removed(content_package)
-
-def _clear_related_index_when_content_removed(content_package, event):
-	return _clear_when_removed(content_package)
-
-def _clear_timeline_index_when_content_removed(content_package, event):
-	return _clear_when_removed(content_package)
-
-def _clear_slidedeck_index_when_content_removed(content_package, event):
-	return _clear_when_removed(content_package)
