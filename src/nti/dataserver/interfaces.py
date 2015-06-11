@@ -940,9 +940,9 @@ class IPublishable(interface.Interface):
 ### Content
 
 # BWC exports
-from nti.dataserver.fragments.interfaces import ITitledContent
-from nti.dataserver.fragments.schema import CompoundModeledContentBody
-from nti.dataserver.fragments.schema import ExtendedCompoundModeledContentBody
+from nti.dataserver_fragments.interfaces import ITitledContent
+from nti.dataserver_fragments.schema import CompoundModeledContentBody
+from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
 
 ITitledContent = ITitledContent
 CompoundModeledContentBody = CompoundModeledContentBody
