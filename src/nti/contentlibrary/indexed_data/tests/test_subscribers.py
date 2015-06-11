@@ -59,15 +59,20 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		unit_ntiid='tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
 		self.library.syncContentPackages()
+		content_package = self.library.contentPackages[0]
 		catalog = get_catalog()
 		results = catalog.search_objects( container_ntiids=(unit_ntiid,) )
 		assert_that( results, has_length( 4 ))
 
+		# Namespace
+		results = catalog.search_objects( namespace=content_package.ntiid )
+		assert_that( results, has_length( 5 ) )
+
 		# Type
-		for provided, count in ( ( 'NTIVideo', 1 ),
-								( 'NTIRelatedWorkRef', 2 ),
-								( 'NTISlideDeck', 1 ),
-								( 'NTITimeline', 1 ) ):
+		for provided, count in ( ( 'INTIVideo', 1 ),
+								( 'INTIRelatedWorkRef', 2 ),
+								( 'INTISlideDeck', 1 ),
+								( 'INTITimeline', 1 ) ):
 			results = catalog.search_objects( provided=provided )
 			assert_that( results, has_length( count ))
 
@@ -104,8 +109,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( containers, has_length( 0 ))
 
 		# Clear everything
-		packages = self.library.contentPackages
-		_clear_when_removed( packages[0] )
+		_clear_when_removed( content_package )
 
 		for provided in ( 'video','relatedwork', 'slidedeck', 'timeline', 'audio' ):
 			results = catalog.search_objects( provided=provided )

@@ -20,6 +20,7 @@ from nti.common.iterables import is_nonstr_iter
 
 from nti.zope_catalog.catalog import ResultSet
 from nti.zope_catalog.index import SetIndex as RawSetIndex
+from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 
 from .interfaces import IContainedTypeAdapter
@@ -66,10 +67,19 @@ class KeepSetIndex(RawSetIndex):
 		else:
 			super(KeepSetIndex, self).unindex_doc(doc_id)
 
-# Map types
-IX_TYPE = 'type'
-# Map our contained item to container
-IX_CONTAINER = 'container'
+class CheckRawValueIndex(RawValueIndex):
+
+	def index_doc(self, doc_id, value):
+		if value is None:
+			self.unindex_doc(doc_id)
+		else:
+			documents_to_values = self.documents_to_values
+			old = documents_to_values.get(doc_id)
+			if old is None or old != value:
+				super(CheckRawValueIndex, self).index_doc(doc_id, value)
+
+class NamespaceIndex(CheckRawValueIndex):
+	pass
 
 class TypeIndex(ValueIndex):
 
@@ -100,6 +110,8 @@ class ContainedObjectCatalog( Persistent ):
 		self._type_index = TypeIndex(family=self.family)
 		# Track the containers the object belongs to
 		self._container_index = KeepSetIndex(family=self.family)
+		# Track the source/file name an object was read from
+		self._namespace_index = NamespaceIndex(family=self.family)
 
 	def _doc_id(self, item, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
@@ -134,9 +146,11 @@ class ContainedObjectCatalog( Persistent ):
 			return True
 		return False
 
-	def get_references(self, container_ntiids=None, provided=None):
+	def get_references( self, container_ntiids=None, provided=None, namespace=None ):
 		result = None
+		# Provided is interface that maps to our type adapter
 		for index, value, query in ( (self._type_index, provided, 'any_of'),
+									 (self._namespace_index, namespace, 'any_of'),
 							  		 (self._container_index, container_ntiids, 'all_of') ):
 			if value is not None:
 				value = _to_iter(value)
@@ -147,28 +161,34 @@ class ContainedObjectCatalog( Persistent ):
 					result = self.family.IF.intersection(result, ids)
 		return result or ()
 
-	def search_objects(self, container_ntiids=None, provided=None, intids=None):
+	def search_objects(self, container_ntiids=None, provided=None, namespace=None, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
-			refs = self.get_references(container_ntiids, provided)
+			refs = self.get_references(container_ntiids, provided, namespace)
 			result = ResultSet(refs, intids)
 		else:
 			result = ()
 		return result
 
-	def index(self, item, container_ntiids=None, intids=None):
+	def index(self, item, container_ntiids=None, namespace=None, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
 
-		self._type_index.index_doc( doc_id, item )
-		self._container_index.index_doc( doc_id, container_ntiids )
+		if namespace is not None:
+			namespace = getattr(namespace, '__name__', namespace)
+
+		for index, value in ( (self._type_index, item),
+							  (self._namespace_index, namespace),
+							  (self._container_index, container_ntiids) ):
+			if value is not None:
+				index.index_doc(doc_id, value)
 		return True
 
 	def unindex(self, item, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
-		for index in (self._container_index, self._type_index):
+		for index in (self._container_index, self._type_index, self._namespace_index):
 			index.unindex_doc(doc_id)
 		return True

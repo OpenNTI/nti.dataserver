@@ -41,6 +41,7 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
 from nti.site.utils import registerUtility
+from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
 
 from nti.contentlibrary.indexed_data import get_catalog
@@ -167,6 +168,38 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 				result.append(internal)
 	return result
 
+def _removed_registered(provided, name, intids=None, registry=None, catalog=None):
+	registry = _registry(registry)
+	registered = registry.queryUtility(provided, name=name)
+	intids = component.queryUtility(IIntIds) if intids is None else intids
+	if registered is not None:
+		catalog = get_catalog() if catalog is None else catalog
+		catalog.unindex(registered, intids=intids)
+		unregisterUtility(registry, provided=provided, name=name)
+		intids.unregister(registered, event=False)
+	return registered
+
+def _remove_from_registry(containers=None, namespace=None, provided=None,
+						  registry=None, intids=None, catalog=None):
+	result = []
+	registry = _registry(registry)
+	catalog = get_catalog() if catalog is None else catalog
+	intids = component.queryUtility(IIntIds) if intids is None else intids
+	for utility in catalog.search_objects(intids=intids, provided=provided,
+										  container_ntiids=containers, namespace=namespace):
+		try:
+			ntiid = utility.ntiid
+			if ntiid:
+				result.append(utility)
+				_removed_registered(provided,
+									name=ntiid,
+									intids=intids,
+									catalog=catalog,
+									registry=registry)
+		except AttributeError:
+			pass
+	return result
+
 def _get_container_tree( container_id ):
 	library = component.queryUtility( IContentPackageLibrary )
 	paths = library.pathToNTIID( container_id )
@@ -198,6 +231,13 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 	registry = _registry()
 	connection = _connection(registry)
 	catalog = get_catalog()
+	intids = component.queryUtility(IIntIds)
+
+	removed = _remove_from_registry(namespace=content_package.ntiid,
+									provided=item_iface,
+									registry=registry,
+									catalog=catalog,
+									intids=intids)
 
 	# These are structured as follows:
 	# {
@@ -208,6 +248,19 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 	# Load our json index files
 	added = ()
 	if item_iface == INTISlideDeck:
+		# Also remove our other slide types
+		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
+							  				 provided=INTISlide,
+							  				 registry=registry,
+							 				 catalog=catalog,
+							  			 	 intids=intids))
+
+		removed.extend(_remove_from_registry(namespace=content_package.ntiid,
+							  				 provided=INTISlideVideo,
+							 				 registry=registry,
+							  				 catalog=catalog,
+							  				 intids=intids))
+
 		added = _load_and_register_slidedeck_json(index_text,
 										  registry=registry,
 										  connection=connection,
@@ -218,6 +271,7 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 								connection=connection,
 								external_object_creator=object_creator)
 	registered_count = len( added )
+	removed_count = len( removed )
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
@@ -229,9 +283,11 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 				lineage_ntiids = _get_container_tree( container_id )
 				if lineage_ntiids:
 					index_item_count += 1
-					catalog.index(obj, container_ntiids=lineage_ntiids)
-	logger.info( 'Finished indexing %s (registered=%s) (indexed=%s)',
-					sibling_key, registered_count, index_item_count )
+					catalog.index(obj, container_ntiids=lineage_ntiids,
+									namespace=content_package.ntiid)
+
+	logger.info( 'Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
+					sibling_key, registered_count, index_item_count, removed_count )
 
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
@@ -263,6 +319,8 @@ def _update_slidedeck_index_when_content_changes(content_package, event):
 											  INTISlideDeck,
 											  create_object_from_external)
 
+INTERFACES = ( INTIAudio, INTIVideo, INTITimeline, INTISlideDeck, INTIRelatedWorkRef)
+
 def _clear_when_removed(content_package):
 	"""
 	Because we don't know where the data is stored, when an
@@ -272,17 +330,25 @@ def _clear_when_removed(content_package):
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
 	registry = _registry()
-	count = removed = 0
+	removed_count = 0
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()
-		contained_objects = catalog.search_objects(container_ntiids=content_package.ntiid)
-		for contained_object in tuple(contained_objects):
-			count += 1
-			was_removed = catalog.unindex(contained_object)
-			if was_removed:
-				removed += 1
-	logger.info( 'Removed indexes for content package %s (count=%s) (removed=%s)',
-				content_package, count, removed )
+		for item_iface in INTERFACES:
+			removed = _remove_from_registry(namespace=content_package.ntiid,
+								  provided=item_iface,
+								  catalog=catalog)
+			removed_count += len( removed )
+		removed = _remove_from_registry(namespace=content_package.ntiid,
+							  provided=INTISlide,
+							  catalog=catalog)
+		removed_count += len( removed )
+
+		removed = _remove_from_registry(namespace=content_package.ntiid,
+							  provided=INTISlideVideo,
+							  catalog=catalog)
+		removed_count += len( removed )
+	logger.info( 'Removed indexes for content package %s (removed=%s)',
+				content_package, removed_count )
 
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)

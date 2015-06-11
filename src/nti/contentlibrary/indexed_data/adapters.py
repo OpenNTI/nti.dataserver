@@ -44,37 +44,37 @@ class _Type(object):
 @component.adapter( INTIAudio )
 @interface.implementer(IContainedTypeAdapter)
 def _audio_to_contained_type(context):
-	return _Type( 'NTIAudio' )
+	return _Type( 'INTIAudio' )
 
 @component.adapter( INTIVideo )
 @interface.implementer(IContainedTypeAdapter)
 def _video_to_contained_type(context):
-	return _Type( 'NTIVideo' )
+	return _Type( 'INTIVideo' )
 
 @component.adapter( INTISlide )
 @interface.implementer(IContainedTypeAdapter)
 def _slide_to_contained_type(context):
-	return _Type( 'NTISlide' )
+	return _Type( 'INTISlide' )
 
 @component.adapter( INTITimeline )
 @interface.implementer(IContainedTypeAdapter)
 def _timeline_to_contained_type(context):
-	return _Type( 'NTITimeline' )
+	return _Type( 'INTITimeline' )
 
 @component.adapter( INTISlideDeck )
 @interface.implementer(IContainedTypeAdapter)
 def _slidedeck_to_contained_type(context):
-	return _Type( 'NTISlideDeck' )
+	return _Type( 'INTISlideDeck' )
 
 @component.adapter( INTISlideVideo )
 @interface.implementer(IContainedTypeAdapter)
 def _slidevideo_to_contained_type(context):
-	return _Type( 'NTISlideVideo' )
+	return _Type( 'INTISlideVideo' )
 
 @component.adapter( INTIRelatedWorkRef )
 @interface.implementer(IContainedTypeAdapter)
 def _related_to_contained_type(context):
-	return _Type( 'NTIRelatedWorkRef' )
+	return _Type( 'INTIRelatedWorkRef' )
 
 def indexed_data_adapter(content_unit,
 						 factory=container.IndexedDataContainer,
