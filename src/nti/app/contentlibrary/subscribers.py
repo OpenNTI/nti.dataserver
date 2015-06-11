@@ -10,7 +10,6 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import simplejson
-import anyjson as json
 
 from zope import component
 
@@ -19,8 +18,8 @@ from zope.intid import IIntIds
 from ZODB.interfaces import IConnection
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.interfaces import IGlobalContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+from nti.contentlibrary.interfaces import IGlobalContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
 
 from nti.contenttypes.presentation.interfaces import INTIAudio
@@ -58,16 +57,9 @@ from .interfaces import IContentBoard
 
 ITEMS = StandardExternalFields.ITEMS
 
-INTERFACE_TUPLES = (
-	(IAudioIndexedDataContainer, INTIAudio, create_ntiaudio_from_external),
-	(IVideoIndexedDataContainer, INTIVideo, create_ntivideo_from_external),
-	(ITimelineIndexedDataContainer, INTITimeline, create_timelime_from_external),
-	(ISlideDeckIndexedDataContainer, INTISlideDeck, create_object_from_external),
-	(IRelatedContentIndexedDataContainer, INTIRelatedWorkRef, create_relatedwork_from_external))
-
 @component.adapter(IContentPackageLibrary, IContentPackageLibraryDidSyncEvent)
 def _on_content_pacakge_library_synced(library, event):
-	site  = library.__parent__
+	site = library.__parent__
 	if IHostPolicySiteManager.providedBy(site):
 		bundle_library = site.getUtility(IContentPackageBundleLibrary)
 		for bundle in bundle_library.values():
@@ -175,36 +167,36 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 				result.append(internal)
 	return result
 
-def _get_container_tree( container_id ):
-	library = component.queryUtility( IContentPackageLibrary )
-	paths = library.pathToNTIID( container_id )
+def _get_container_tree(container_id):
+	library = component.queryUtility(IContentPackageLibrary)
+	paths = library.pathToNTIID(container_id)
 	return [path.ntiid for path in paths] if paths else ()
 
-def _update_index_when_content_changes( content_package, index_iface, item_iface, object_creator ):
+def _update_index_when_content_changes(content_package, index_iface, item_iface, object_creator):
 	namespace = index_iface.getTaggedValue(TAG_NAMESPACE_FILE)
 	sibling_key = content_package.does_sibling_entry_exist(namespace)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	last_modified = get_index_last_modified( index_iface, content_package )
+	last_modified = get_index_last_modified(index_iface, content_package)
 	if 		not last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
-					sibling_key.lastModified )
+					sibling_key.lastModified)
 		return
-	set_index_last_modified( index_iface, content_package, sibling_key.lastModified )
+	set_index_last_modified(index_iface, content_package, sibling_key.lastModified)
 
-	logger.info( "Loading index data %s", sibling_key )
-	index_text = content_package.read_contents_of_sibling_entry( namespace )
+	logger.info("Loading index data %s", sibling_key)
+	index_text = content_package.read_contents_of_sibling_entry(namespace)
 
 	if isinstance(index_text, bytes):
 		index_text = index_text.decode('utf-8')
 
-	index = json.loads(index_text)
+	index = simplejson.loads(index_text)
 	registry = _registry()
-	connection = _connection( registry )
+	connection = _connection(registry)
 	catalog = get_catalog()
 
 	# These are structured as follows:
@@ -215,12 +207,12 @@ def _update_index_when_content_changes( content_package, index_iface, item_iface
 
 	# Load our json index files
 	if item_iface == INTISlideDeck:
-		_load_and_register_slidedeck_json(	index_text,
-											registry=registry,
-										   	connection=connection,
-										   	object_creator=object_creator)
+		_load_and_register_slidedeck_json(index_text,
+										  registry=registry,
+										  connection=connection,
+										  object_creator=object_creator)
 	elif object_creator is not None:
-		_load_and_register_json( item_iface, index_text,
+		_load_and_register_json(item_iface, index_text,
 								registry=registry,
 								connection=connection,
 								external_object_creator=object_creator)
@@ -229,10 +221,10 @@ def _update_index_when_content_changes( content_package, index_iface, item_iface
 	if registry != component.getGlobalSiteManager():
 		for container_id, indexed_ids in index['Containers'].items():
 			for indexed_id in indexed_ids:
-				obj = registry.queryUtility( item_iface, name=indexed_id )
-				lineage_ntiids = _get_container_tree( container_id )
+				obj = registry.queryUtility(item_iface, name=indexed_id)
+				lineage_ntiids = _get_container_tree(container_id)
 				if lineage_ntiids:
-					catalog.index( obj, container_ntiids=lineage_ntiids )
+					catalog.index(obj, container_ntiids=lineage_ntiids)
 
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
@@ -275,9 +267,9 @@ def _clear_when_removed(content_package):
 	registry = _registry()
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()
-		contained_objects = catalog.search_objects( container_ntiids=content_package.ntiid )
-		for contained_object in tuple( contained_objects ):
-			catalog.unindex( contained_object )
+		contained_objects = catalog.search_objects(container_ntiids=content_package.ntiid)
+		for contained_object in tuple(contained_objects):
+			catalog.unindex(contained_object)
 
 def _clear_audio_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
@@ -293,4 +285,3 @@ def _clear_timeline_index_when_content_removed(content_package, event):
 
 def _clear_slidedeck_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
-
