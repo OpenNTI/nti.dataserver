@@ -16,18 +16,22 @@ from zope.catalog.interfaces import ICatalog
 from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
+from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.ugd_query_views import _UGDView
 
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
-
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
+from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver import authorization as nauth
@@ -44,6 +48,50 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.zope_catalog.catalog import ResultSet
 
 ITEMS = StandardExternalFields.ITEMS
+
+@view_config(name='CreateCommunity')
+@view_config(name='create.community')
+@view_defaults(route_name='objects.generic.traversal',
+			   name='create.community',
+			   request_method='POST',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
+class CreateCommunityView(AbstractAuthenticatedView,
+						  ModeledContentUploadRequestUtilsMixin):
+
+	def __call__(self):
+		externalValue = self.readInput()
+		username = externalValue.pop('username', None) or externalValue.pop('Username', None)
+		if not username:
+			raise hexc.HTTPUnprocessableEntity("Username not specified")
+		
+		community = Community.get_community(username)
+		if community is not None:
+			raise hexc.HTTPUnprocessableEntity("Community already exists")
+		
+		args = {'username': username}
+		args['external_value'] = externalValue
+		community = Community.create_community(**args)
+		return community
+
+@view_config(route_name='objects.generic.traversal',
+			 context=ICommunity,
+			 request_method='PUT',
+			 permission=nauth.ACT_NTI_ADMIN,
+			 renderer='rest')
+class UpdateCommunityView(AbstractAuthenticatedView,
+						  ModeledContentEditRequestUtilsMixin,
+						  ModeledContentUploadRequestUtilsMixin):
+
+	content_predicate = ICommunity.providedBy
+
+	def __call__(self):
+		theObject = self.request.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+		externalValue = self.readInput()
+		self.updateContentObject(theObject, externalValue)
+		return theObject
 
 @view_config(route_name='objects.generic.traversal',
 			 name='join',
@@ -96,7 +144,6 @@ def _replace_username(username):
 			 permission=nauth.ACT_READ)
 class CommunityMembersView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
-	
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
 	

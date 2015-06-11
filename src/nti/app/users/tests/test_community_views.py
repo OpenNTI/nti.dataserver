@@ -7,11 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
+from hamcrest import has_property
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
@@ -25,6 +27,46 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 class TestCommunityViews(ApplicationLayerTest):
 
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_create_community(self):
+		ext_obj = {'username': 'bleach',
+ 				   'alias': 'Bleach',	
+ 				   'realname': u'Bleach',
+ 				   'public': True,
+ 				   'joinable': True}
+		path = '/dataserver2/@@create.community'
+		res = self.testapp.post_json(path, ext_obj, status=200)
+		assert_that(res.json_body, has_entry('Username', 'bleach'))
+		assert_that(res.json_body, has_entry('alias', 'Bleach'))
+		assert_that(res.json_body, has_entry('realname', 'Bleach'))
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.get_community(username='bleach')
+			assert_that(c, has_property('public', is_(True)))
+			assert_that(c, has_property('joinable', is_(True)))
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_update_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.create_community(username='bleach')
+			assert_that(c, has_property('public', is_(False)))
+			assert_that(c, has_property('joinable', is_(False)))
+			
+		ext_obj = {'alias': 'Bleach',	
+ 				   'realname': u'Bleach',
+ 				   'public': True,
+ 				   'joinable': True}
+		path = '/dataserver2/users/bleach'
+
+		res = self.testapp.put_json(path, ext_obj, status=200,
+									extra_environ=self._make_extra_environ(user=self.default_username))
+		assert_that(res.json_body, has_entry('Username', 'bleach'))
+		assert_that(res.json_body, has_entry('alias', 'Bleach'))
+		assert_that(res.json_body, has_entry('realname', 'Bleach'))
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.get_community(username='bleach')
+			assert_that(c, has_property('public', is_(True)))
+			assert_that(c, has_property('joinable', is_(True)))
+	
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_get_community(self):
 		with mock_dataserver.mock_db_trans(self.ds):
