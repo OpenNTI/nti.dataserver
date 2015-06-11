@@ -29,7 +29,7 @@ from nti.common.property import alias
 
 from nti.coremetadata.interfaces import ILastModified
 
-from nti.dataserver.core.interfaces import IShouldHaveTraversablePath
+from nti.dataserver_core.interfaces import IShouldHaveTraversablePath
 
 from nti.dublincore.interfaces import IDCOptionalDescriptiveProperties
 

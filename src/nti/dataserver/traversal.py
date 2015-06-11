@@ -15,8 +15,8 @@ del traversing_patch_on_import
 
 from zope import component
 
-from nti.dataserver.core.interfaces import ILink
-from nti.dataserver.core.interfaces import IDataserver
+from nti.dataserver_core.interfaces import ILink
+from nti.dataserver_core.interfaces import IDataserver
 
 from nti.traversal.traversal import find_nearest_site as nti_find_nearest_site
 

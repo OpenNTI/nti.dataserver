@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
+from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields

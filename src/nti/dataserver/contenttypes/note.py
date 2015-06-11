@@ -29,7 +29,7 @@ from nti.dataserver.interfaces import IFlaggable
 from nti.dataserver.interfaces import IContentFile
 from nti.dataserver.interfaces import IFavoritable
 
-from nti.dataserver.core.schema import BodyFieldProperty
+from nti.dataserver_core.schema import BodyFieldProperty
 
 from nti.externalization.internalization import update_from_external_object
 

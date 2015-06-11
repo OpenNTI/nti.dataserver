@@ -18,10 +18,10 @@ from hamcrest import has_entries
 from hamcrest import has_property
 from hamcrest import only_contains
 
-from nti.dataserver.core.interfaces import IContentFile
-
 from nti.dataserver.contenttypes.note import Note
 from nti.dataserver.contenttypes.file import ContentFile
+
+from nti.dataserver_core.interfaces import IContentFile
 
 from nti.externalization.externalization import to_external_object
 

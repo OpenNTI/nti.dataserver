@@ -113,7 +113,7 @@ from nti.dataserver.interfaces import SYSTEM_USER_NAME
 from nti.dataserver.interfaces import ITranscriptSummary
 from nti.dataserver.activitystream_change import Change
 
-from nti.dataserver.core.mixins import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 

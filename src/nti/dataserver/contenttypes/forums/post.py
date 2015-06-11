@@ -22,7 +22,7 @@ from zope.schema.fieldproperty import FieldProperty
 
 from nti.dataserver import sharing
 
-from nti.dataserver.core.mixins import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
