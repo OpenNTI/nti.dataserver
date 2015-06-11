@@ -963,7 +963,7 @@ class ITitledDescribedContent(ITitledContent, IDCDescriptiveProperties):
 	description = PlainText(title="The human-readable description of this object.")
 
 # BWC exports
-from nti.dataserver.fragments.interfaces import ITaggedContent
+from nti.dataserver_fragments.interfaces import ITaggedContent
 IUserTaggedContent = ITaggedContent
 
 # BWC exports
