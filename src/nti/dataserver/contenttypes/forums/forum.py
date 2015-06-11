@@ -31,7 +31,7 @@ from nti.dataserver import sharing
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver import containers as nti_containers
 
-from nti.dataserver.core.mixins import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 

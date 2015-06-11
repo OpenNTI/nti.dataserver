@@ -132,8 +132,8 @@ ICreatedTime = ICreatedTime
 ILastModified = ILastModified
 
 # BWC exports
-from nti.dataserver.core.interfaces import IIdentity
-from nti.dataserver.core.interfaces import IDataserver
+from nti.dataserver_core.interfaces import IIdentity
+from nti.dataserver_core.interfaces import IDataserver
 
 IIdentity = IIdentity
 IDataserver = IDataserver
@@ -248,20 +248,20 @@ class IOIDResolver(interface.Interface):
 		"""
 
 # BWC exports
-from nti.dataserver.core.interfaces import IEnvironmentSettings
+from nti.dataserver_core.interfaces import IEnvironmentSettings
 IEnvironmentSettings = IEnvironmentSettings
 
-from nti.dataserver.core.interfaces import ILink
-from nti.dataserver.core.interfaces import ILinked
-from nti.dataserver.core.interfaces import ILinkExternalHrefOnly
+from nti.dataserver_core.interfaces import ILink
+from nti.dataserver_core.interfaces import ILinked
+from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 
 ILink = ILink
 ILined = ILinked
 ILinkExternalHrefOnly = ILinkExternalHrefOnly
 
-from nti.dataserver.core.interfaces import IContainer
-from nti.dataserver.core.interfaces import IContainerNamesContainer
-from nti.dataserver.core.interfaces import IZContainerNamesContainer
+from nti.dataserver_core.interfaces import IContainer
+from nti.dataserver_core.interfaces import IContainerNamesContainer
+from nti.dataserver_core.interfaces import IZContainerNamesContainer
 
 IContainer = IContainer
 IContainerNamesContainer = IContainerNamesContainer
@@ -285,7 +285,7 @@ class IHomogeneousTypeContainer(IContainer):
 IHTC_NEW_FACTORY = 'nti.dataserver.interfaces.IHTCNewFactory'
 
 # BWC exports
-from nti.dataserver.core.interfaces import INamedContainer
+from nti.dataserver_core.interfaces import INamedContainer
 INamedContainer = INamedContainer
 
 # BWC exports
@@ -300,7 +300,7 @@ ICreated = ICreated
 ILastViewed = ILastViewed
 
 # BWC exports
-from nti.dataserver.core.interfaces import IContained
+from nti.dataserver_core.interfaces import IContained
 
 IContained = IContained
 
@@ -316,7 +316,7 @@ class IAnchoredRepresentation(IContained):
 							 description="The default is an empty, unplaced anchor.")
 
 # BWC exports
-from nti.dataserver.core.interfaces import IContainerIterable
+from nti.dataserver_core.interfaces import IContainerIterable
 IContainerIterable = IContainerIterable
 
 # ## Changes related to content objects/users
@@ -411,9 +411,9 @@ class TargetedStreamChangeEvent(ObjectEvent):
 		self.entity = target
 
 # BWC exports
-from nti.dataserver.core.interfaces import IMutedInStream
-from nti.dataserver.core.interfaces import INeverStoredInSharedStream
-from nti.dataserver.core.interfaces import INotModifiedInStreamWhenContainerModified
+from nti.dataserver_core.interfaces import IMutedInStream
+from nti.dataserver_core.interfaces import INeverStoredInSharedStream
+from nti.dataserver_core.interfaces import INotModifiedInStreamWhenContainerModified
 
 IMutedInStream = IMutedInStream
 INeverStoredInSharedStream = INeverStoredInSharedStream
@@ -446,13 +446,13 @@ from zope.security.management import system_user
 system_user = system_user
 
 # BWC exports
-from nti.dataserver.core.interfaces import ME_USER_ID
-from nti.dataserver.core.interfaces import SYSTEM_USER_ID
-from nti.dataserver.core.interfaces import SYSTEM_USER_NAME
-from nti.dataserver.core.interfaces import RESERVED_USER_IDS
-from nti.dataserver.core.interfaces import EVERYONE_GROUP_NAME
-from nti.dataserver.core.interfaces import LOWER_RESERVED_USER_IDS
-from nti.dataserver.core.interfaces import AUTHENTICATED_GROUP_NAME
+from nti.dataserver_core.interfaces import ME_USER_ID
+from nti.dataserver_core.interfaces import SYSTEM_USER_ID
+from nti.dataserver_core.interfaces import SYSTEM_USER_NAME
+from nti.dataserver_core.interfaces import RESERVED_USER_IDS
+from nti.dataserver_core.interfaces import EVERYONE_GROUP_NAME
+from nti.dataserver_core.interfaces import LOWER_RESERVED_USER_IDS
+from nti.dataserver_core.interfaces import AUTHENTICATED_GROUP_NAME
 
 ME_USER_ID = ME_USER_ID
 SYSTEM_USER_ID = SYSTEM_USER_ID
@@ -461,7 +461,7 @@ EVERYONE_GROUP_NAME = EVERYONE_GROUP_NAME
 AUTHENTICATED_GROUP_NAME = AUTHENTICATED_GROUP_NAME
 LOWER_RESERVED_USER_IDS = _LOWER_RESERVED_USER_IDS = LOWER_RESERVED_USER_IDS
 
-from nti.dataserver.core.interfaces import username_is_reserved
+from nti.dataserver_core.interfaces import username_is_reserved
 username_is_reserved = username_is_reserved
 
 # Exported policies
@@ -554,7 +554,7 @@ class IMutableGroupMember(IGroupMember):
 		"""
 
 # BWC exports
-from nti.dataserver.core.interfaces import valid_entity_username
+from nti.dataserver_core.interfaces import valid_entity_username
 
 class ICreatedUsername(interface.Interface):
 	"""
@@ -585,14 +585,14 @@ class DefaultCreatedUsername(object):
 			return None
 
 # BWC exports
-from nti.dataserver.core.interfaces import IUser
-from nti.dataserver.core.interfaces import IEntity
-from nti.dataserver.core.interfaces import ICommunity
-from nti.dataserver.core.interfaces import IMissingEntity
-from nti.dataserver.core.interfaces import IDynamicSharingTarget
-from nti.dataserver.core.interfaces import IUnscopedGlobalCommunity
-from nti.dataserver.core.interfaces import IShouldHaveTraversablePath
-from nti.dataserver.core.interfaces import IUsernameSubstitutionPolicy
+from nti.dataserver_core.interfaces import IUser
+from nti.dataserver_core.interfaces import IEntity
+from nti.dataserver_core.interfaces import ICommunity
+from nti.dataserver_core.interfaces import IMissingEntity
+from nti.dataserver_core.interfaces import IDynamicSharingTarget
+from nti.dataserver_core.interfaces import IUnscopedGlobalCommunity
+from nti.dataserver_core.interfaces import IShouldHaveTraversablePath
+from nti.dataserver_core.interfaces import IUsernameSubstitutionPolicy
 
 IUser = IUser
 IEntity = IEntity
@@ -948,7 +948,7 @@ ITitledContent = ITitledContent
 CompoundModeledContentBody = CompoundModeledContentBody
 
 # BWC exports
-from nti.dataserver.core.interfaces import IContent
+from nti.dataserver_core.interfaces import IContent
 IContent = IContent
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
@@ -967,8 +967,8 @@ from nti.dataserver_fragments.interfaces import ITaggedContent
 IUserTaggedContent = ITaggedContent
 
 # BWC exports
-from nti.dataserver.core.interfaces import IModeledContent
-from nti.dataserver.core.interfaces import IEnclosedContent
+from nti.dataserver_core.interfaces import IModeledContent
+from nti.dataserver_core.interfaces import IEnclosedContent
 
 IEnclosedContent = IEnclosedContent
 
@@ -1003,17 +1003,17 @@ class ISimpleEnclosureContainer(interface.Interface):
 ### Particular content types
 
 # BWC exports
-from nti.dataserver.core.interfaces import IThreadable
-from nti.dataserver.core.interfaces import IWeakThreadable
-from nti.dataserver.core.interfaces import IInspectableWeakThreadable
+from nti.dataserver_core.interfaces import IThreadable
+from nti.dataserver_core.interfaces import IWeakThreadable
+from nti.dataserver_core.interfaces import IInspectableWeakThreadable
 
 IWeakThreadable = IWeakThreadable
 IInspectableWeakThreadable = IInspectableWeakThreadable
 
 # BWC exports
-from nti.dataserver.core.interfaces import IReadableShared
-from nti.dataserver.core.interfaces import IWritableShared
-from nti.dataserver.core.interfaces import IInspectableWeakThreadable
+from nti.dataserver_core.interfaces import IReadableShared
+from nti.dataserver_core.interfaces import IWritableShared
+from nti.dataserver_core.interfaces import IInspectableWeakThreadable
 
 IReadableShared = IReadableShared
 IWritableShared = IWritableShared
@@ -1038,7 +1038,7 @@ class ObjectSharingModifiedEvent(ObjectModifiedEvent):
 		self.oldSharingTargets = kwargs.pop( 'oldSharingTargets', () )
 
 # BWC exports
-from nti.dataserver.core.interfaces import IShareableModeledContent
+from nti.dataserver_core.interfaces import IShareableModeledContent
 
 IShareable = IWritableShared # bwc alias
 
@@ -1128,12 +1128,12 @@ class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
 
 # BWC exports
-from nti.dataserver.core.interfaces import IMedia
-from nti.dataserver.core.interfaces import ICanvas
-from nti.dataserver.core.interfaces import IContentFile
-from nti.dataserver.core.interfaces import IEmbeddedAudio
-from nti.dataserver.core.interfaces import IEmbeddedMedia
-from nti.dataserver.core.interfaces import IEmbeddedVideo
+from nti.dataserver_core.interfaces import IMedia
+from nti.dataserver_core.interfaces import ICanvas
+from nti.dataserver_core.interfaces import IContentFile
+from nti.dataserver_core.interfaces import IEmbeddedAudio
+from nti.dataserver_core.interfaces import IEmbeddedMedia
+from nti.dataserver_core.interfaces import IEmbeddedVideo
 
 IMedia = IMedia
 ICanvas = ICanvas
@@ -1188,8 +1188,8 @@ class IPresentationPropertyHolder(interface.Interface):
 								  default=None)
 
 # BWC exports
-from nti.dataserver.core.interfaces import IContainerContext
-from nti.dataserver.core.interfaces import IContextAnnotatable
+from nti.dataserver_core.interfaces import IContainerContext
+from nti.dataserver_core.interfaces import IContextAnnotatable
 
 IContainerContext = IContainerContext
 

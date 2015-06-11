@@ -32,7 +32,7 @@ from nti.dataserver.users import entity
 from nti.dataserver.contenttypes import threadable
 from nti.dataserver.contenttypes.base import _make_getitem
 
-from nti.dataserver.core.schema import MessageInfoBodyFieldProperty
+from nti.dataserver_core.schema import MessageInfoBodyFieldProperty
 
 from nti.externalization.datastructures import InterfaceObjectIO
 from nti.externalization.externalization import to_external_object

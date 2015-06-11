@@ -41,7 +41,7 @@ from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
 from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
 
-from nti.dataserver.core.mixins import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.schema.fieldproperty import AcquisitionFieldProperty

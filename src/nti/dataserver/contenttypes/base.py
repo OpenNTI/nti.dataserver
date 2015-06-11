@@ -31,7 +31,7 @@ from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IUsernameIterable
 from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 
-from nti.dataserver.core.mixins import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
