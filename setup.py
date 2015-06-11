@@ -131,7 +131,7 @@ setup(
 		'nti.contenttypes.presentation',  # legacy
 		'nti.coremetadata',
 		'nti.dataserver.core',
-		'nti.dataserver.fragments',
+		'nti.dataserver_fragments',
 		'nti.dublincore',
 		'nti.externalization',
 		'nti.futures',
