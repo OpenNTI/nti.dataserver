@@ -173,23 +173,7 @@
 						 zope.lifecycleevent.IObjectModifiedEvent" />
 
 		<!-- removal -->
-		<subscriber handler=".subscribers._clear_audio_index_when_content_removed"
-					for="nti.contentlibrary.interfaces.IContentPackage
-						 zope.lifecycleevent.IObjectRemovedEvent" />
-
-		<subscriber handler=".subscribers._clear_video_index_when_content_removed"
-					for="nti.contentlibrary.interfaces.IContentPackage
-						 zope.lifecycleevent.IObjectRemovedEvent" />
-
-		<subscriber handler=".subscribers._clear_related_index_when_content_removed"
-					for="nti.contentlibrary.interfaces.IContentPackage
-						 zope.lifecycleevent.IObjectRemovedEvent" />
-
-		<subscriber handler=".subscribers._clear_timeline_index_when_content_removed"
-					for="nti.contentlibrary.interfaces.IContentPackage
-						 zope.lifecycleevent.IObjectRemovedEvent" />
-
-		<subscriber handler=".subscribers._clear_slidedeck_index_when_content_removed"
+		<subscriber handler=".subscribers._clear_index_when_content_removed"
 					for="nti.contentlibrary.interfaces.IContentPackage
 						 zope.lifecycleevent.IObjectRemovedEvent" />
 	</configure>
