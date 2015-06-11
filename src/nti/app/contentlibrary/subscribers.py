@@ -19,7 +19,6 @@ from ZODB.interfaces import IConnection
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
-from nti.contentlibrary.interfaces import IGlobalContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
 
 from nti.contenttypes.presentation.interfaces import INTIAudio
@@ -45,6 +44,7 @@ from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
 
 from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data import registry as _registry
 from nti.contentlibrary.indexed_data import get_index_last_modified
 from nti.contentlibrary.indexed_data import set_index_last_modified
 from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
@@ -71,15 +71,6 @@ def _on_content_pacakge_library_synced(library, event):
 def prepare_json_text(s):
 	result = unicode(s, 'utf-8') if isinstance(s, bytes) else s
 	return result
-
-def _registry(registry=None):
-	if registry is None:
-		library = component.queryUtility(IContentPackageLibrary)
-		if IGlobalContentPackageLibrary.providedBy(library):
-			registry = component.getGlobalSiteManager()
-		else:
-			registry = component.getSiteManager()
-	return registry
 
 def _connection(registry=None):
 	registry = _registry(registry)
