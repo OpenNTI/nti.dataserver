@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.interface.common.mapping import IEnumerableMapping
 
 from zope.container.interfaces import ILocation
