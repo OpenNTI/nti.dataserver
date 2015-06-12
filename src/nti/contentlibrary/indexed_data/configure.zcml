@@ -10,14 +10,6 @@
 	<include package="zope.security" />
 	<include package="zope.location" />
 
-	<adapter factory=".adapters._audio_to_contained_type" />
-	<adapter factory=".adapters._video_to_contained_type" />
-	<adapter factory=".adapters._slide_to_contained_type" />
-	<adapter factory=".adapters._timeline_to_contained_type" />
-	<adapter factory=".adapters._slidedeck_to_contained_type" />
-	<adapter factory=".adapters._slidevideo_to_contained_type" />
-	<adapter factory=".adapters._related_to_contained_type" />
-
 	<adapter factory=".adapters.audio_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IAudioIndexedDataContainer"/>
