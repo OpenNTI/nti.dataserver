@@ -19,6 +19,7 @@ from nti.assessment.interfaces import IQSurvey
 from nti.assessment.interfaces import IQuestion
 from nti.assessment.interfaces import IQuestionSet
 from nti.assessment.interfaces import IQAssignment
+from nti.assessment.interfaces import IQAssessment
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
@@ -31,11 +32,14 @@ from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import INTIDiscussionRef
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import INTILessonOverview
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
 
 from nti.dataserver.interfaces import system_user
+
+from nti.schema.interfaces import find_most_derived_interface
 
 @interface.implementer(IPrincipal)
 @component.adapter(IContentPackageBundle)
@@ -104,6 +108,12 @@ def _courseoverview_to_contained_type(context):
 def _courseoverviewspacer_to_contained_type(context):
 	return _Type('INTICourseOverviewSpacer')
 
+@component.adapter(IPresentationAsset)
+@interface.implementer(IContainedTypeAdapter)
+def _asset_to_contained_type(context):
+	provided = find_most_derived_interface(context, IPresentationAsset)
+	return _Type(provided.__name__)
+
 @component.adapter(IQAssignment)
 @interface.implementer(IContainedTypeAdapter)
 def _assignment_to_contained_type(context):
@@ -128,3 +138,9 @@ def _survey_to_contained_type(context):
 @interface.implementer(IContainedTypeAdapter)
 def _poll_to_contained_type(context):
 	return _Type('IQPoll')
+
+@component.adapter(IQAssessment)
+@interface.implementer(IContainedTypeAdapter)
+def _assessment_to_contained_type(context):
+	provided = find_most_derived_interface(context, IQAssessment)
+	return _Type(provided.__name__)
