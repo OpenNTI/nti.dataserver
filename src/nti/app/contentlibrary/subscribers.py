@@ -18,9 +18,9 @@ from zope.intid import IIntIds
 from ZODB.interfaces import IConnection
 
 from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_index_last_modified
 from nti.contentlibrary.indexed_data import set_index_last_modified
-from nti.contentlibrary.indexed_data import get_registry as _registry
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
@@ -67,7 +67,7 @@ def prepare_json_text(s):
 	return result
 
 def _connection(registry=None):
-	registry = _registry(registry)
+	registry = get_registry(registry)
 	result = IConnection(registry, None)
 	return result
 
@@ -82,7 +82,7 @@ def intid_register(item, registry, intids=None, connection=None):
 
 def _register_utility(item, provided, ntiid, registry=None, intids=None, connection=None):
 	if provided.providedBy(item):
-		registry = _registry(registry)
+		registry = get_registry(registry)
 		registered = registry.queryUtility(provided, name=ntiid)
 		if registered is None:
 			assert is_valid_ntiid_string(ntiid), "Invalid NTIID %s" % ntiid
@@ -103,7 +103,7 @@ def _was_utility_registered(item, item_iface, ntiid, registry=None,
 def _load_and_register_items(item_iterface, items, registry=None, connection=None,
 							 external_object_creator=create_object_from_external):
 	result = []
-	registry = _registry(registry)
+	registry = get_registry(registry)
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
 		if _was_utility_registered(internal, item_iterface, ntiid,
@@ -135,7 +135,7 @@ def _canonicalize(items, item_iface, registry):
 def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 									  object_creator=create_object_from_external):
 	result = []
-	registry = _registry(registry)
+	registry = get_registry(registry)
 	index = simplejson.loads(prepare_json_text(jtext))
 	items = index.get(ITEMS) or {}
 	for ntiid, data in items.items():
@@ -154,7 +154,7 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 	return result
 
 def _removed_registered(provided, name, intids=None, registry=None, catalog=None):
-	registry = _registry(registry)
+	registry = get_registry(registry)
 	registered = registry.queryUtility(provided, name=name)
 	intids = component.queryUtility(IIntIds) if intids is None else intids
 	if registered is not None:
@@ -167,7 +167,7 @@ def _removed_registered(provided, name, intids=None, registry=None, catalog=None
 def _remove_from_registry(containers=None, namespace=None, provided=None,
 						  registry=None, intids=None, catalog=None):
 	result = []
-	registry = _registry(registry)
+	registry = get_registry(registry)
 	catalog = get_catalog() if catalog is None else catalog
 	intids = component.queryUtility(IIntIds) if intids is None else intids
 	for utility in catalog.search_objects(intids=intids, provided=provided,
@@ -212,7 +212,7 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 		index_text = index_text.decode('utf-8')
 
 	index = simplejson.loads(index_text)
-	registry = _registry()
+	registry = get_registry()
 	connection = _connection(registry)
 	catalog = get_catalog()
 	intids = component.queryUtility(IIntIds)
@@ -313,7 +313,7 @@ def _clear_when_removed(content_package):
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
-	registry = _registry()
+	registry = get_registry()
 	removed_count = 0
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()

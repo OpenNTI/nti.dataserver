@@ -75,7 +75,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
 
 	@WithMockDSTrans
-	@fudge.patch('nti.app.contentlibrary.subscribers._registry')
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_registry')
 	def test_indexing(self, mock_registry):
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
