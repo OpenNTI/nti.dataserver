@@ -17,6 +17,11 @@ from zope.intid import IIntIds
 
 from ZODB.interfaces import IConnection
 
+from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data import get_index_last_modified
+from nti.contentlibrary.indexed_data import set_index_last_modified
+from nti.contentlibrary.indexed_data import get_registry as _registry
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
@@ -42,11 +47,6 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.site.utils import registerUtility
 from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
-
-from nti.contentlibrary.indexed_data import get_catalog
-from nti.contentlibrary.indexed_data import get_index_last_modified
-from nti.contentlibrary.indexed_data import set_index_last_modified
-from nti.contentlibrary.indexed_data import get_registry as _registry
 
 from .interfaces import IContentBoard
 
@@ -185,28 +185,28 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 			pass
 	return result
 
-def _get_container_tree( container_id ):
-	library = component.queryUtility( IContentPackageLibrary )
-	paths = library.pathToNTIID( container_id )
+def _get_container_tree(container_id):
+	library = component.queryUtility(IContentPackageLibrary)
+	paths = library.pathToNTIID(container_id)
 	results = {path.ntiid for path in paths} if paths else ()
 	return results
 
 def _update_index_when_content_changes(content_package, index_filename, item_iface, object_creator):
-	sibling_key = content_package.does_sibling_entry_exist( index_filename )
+	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	last_modified = get_index_last_modified( index_filename, content_package )
+	last_modified = get_index_last_modified(index_filename, content_package)
 	if 		not last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
 					sibling_key.lastModified)
 		return
-	set_index_last_modified( index_filename, content_package, sibling_key.lastModified )
+	set_index_last_modified(index_filename, content_package, sibling_key.lastModified)
 
-	index_text = content_package.read_contents_of_sibling_entry( index_filename )
+	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
 	if isinstance(index_text, bytes):
 		index_text = index_text.decode('utf-8')
@@ -246,16 +246,16 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 							  				 intids=intids))
 
 		added = _load_and_register_slidedeck_json(index_text,
-										  registry=registry,
-										  connection=connection,
-										  object_creator=object_creator)
+										  		  registry=registry,
+										  		  connection=connection,
+										 		  object_creator=object_creator)
 	elif object_creator is not None:
 		added = _load_and_register_json(item_iface, index_text,
-								registry=registry,
-								connection=connection,
-								external_object_creator=object_creator)
-	registered_count = len( added )
-	removed_count = len( removed )
+										registry=registry,
+										connection=connection,
+										external_object_creator=object_creator)
+	registered_count = len(added)
+	removed_count = len(removed)
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
@@ -263,15 +263,15 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 	if registry != component.getGlobalSiteManager():
 		for container_id, indexed_ids in index['Containers'].items():
 			for indexed_id in indexed_ids:
-				obj = registry.queryUtility( item_iface, name=indexed_id )
-				lineage_ntiids = _get_container_tree( container_id )
+				obj = registry.queryUtility(item_iface, name=indexed_id)
+				lineage_ntiids = _get_container_tree(container_id)
 				if lineage_ntiids:
 					index_item_count += 1
 					catalog.index(obj, container_ntiids=lineage_ntiids,
-									namespace=content_package.ntiid)
+								  namespace=content_package.ntiid)
 
-	logger.info( 'Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
-					sibling_key, registered_count, index_item_count, removed_count )
+	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
+					sibling_key, registered_count, index_item_count, removed_count)
 
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
@@ -303,7 +303,7 @@ def _update_slidedeck_index_when_content_changes(content_package, event):
 											  INTISlideDeck,
 											  create_object_from_external)
 
-INTERFACES = ( INTIAudio, INTIVideo, INTITimeline, INTISlideDeck, INTIRelatedWorkRef)
+INTERFACES = (INTIAudio, INTIVideo, INTITimeline, INTISlideDeck, INTIRelatedWorkRef)
 
 def _clear_when_removed(content_package):
 	"""
@@ -319,21 +319,20 @@ def _clear_when_removed(content_package):
 		catalog = get_catalog()
 		for item_iface in INTERFACES:
 			removed = _remove_from_registry(namespace=content_package.ntiid,
-								  provided=item_iface,
-								  catalog=catalog)
-			removed_count += len( removed )
+								  			provided=item_iface,
+								  			catalog=catalog)
+			removed_count += len(removed)
 		removed = _remove_from_registry(namespace=content_package.ntiid,
-							  provided=INTISlide,
-							  catalog=catalog)
-		removed_count += len( removed )
+							  			provided=INTISlide,
+							  			catalog=catalog)
+		removed_count += len(removed)
 
 		removed = _remove_from_registry(namespace=content_package.ntiid,
-							  provided=INTISlideVideo,
-							  catalog=catalog)
-		removed_count += len( removed )
-	logger.info( 'Removed indexes for content package %s (removed=%s)',
-				content_package, removed_count )
+							  			provided=INTISlideVideo,
+							 			catalog=catalog)
+		removed_count += len(removed)
+	logger.info('Removed indexes for content package %s (removed=%s)',
+				content_package, removed_count)
 
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
-

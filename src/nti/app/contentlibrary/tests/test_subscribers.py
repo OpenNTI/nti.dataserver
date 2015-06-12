@@ -19,12 +19,13 @@ from zope.component.persistentregistry import PersistentComponents as Components
 
 from persistent import Persistent
 
-from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
+from nti.app.contentlibrary.subscribers import _clear_when_removed
+
+from nti.contentlibrary.indexed_data import get_catalog
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.contentlibrary.indexed_data import get_catalog
-from nti.app.contentlibrary.subscribers import _clear_when_removed
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
 from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTITimeline
