@@ -54,7 +54,7 @@ def set_index_last_modified(index_iface, unit, now=None):
 	annotes = IAnnotations(unit)
 	annotes[key] = now
 
-def registry(registry=None):
+def get_registry(registry=None):
 	if registry is None:
 		library = component.queryUtility(IContentPackageLibrary)
 		if IGlobalContentPackageLibrary.providedBy(library):
@@ -62,3 +62,4 @@ def registry(registry=None):
 		else:
 			registry = component.getSiteManager()
 	return registry
+registry = get_registry
