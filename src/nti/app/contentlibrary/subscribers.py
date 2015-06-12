@@ -44,9 +44,9 @@ from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
 
 from nti.contentlibrary.indexed_data import get_catalog
-from nti.contentlibrary.indexed_data import registry as _registry
 from nti.contentlibrary.indexed_data import get_index_last_modified
 from nti.contentlibrary.indexed_data import set_index_last_modified
+from nti.contentlibrary.indexed_data import get_registry as _registry
 from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
