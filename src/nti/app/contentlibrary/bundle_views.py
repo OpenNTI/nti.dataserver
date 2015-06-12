@@ -26,7 +26,7 @@ from nti.dataserver import authorization as nauth
 			 context=IContentPackageBundle,
 			 permission=nauth.ACT_READ,
 			 name='Pages')
-class ContentBundlePagesView( ContainerContextUGDPostView ):
+class ContentBundlePagesView(ContainerContextUGDPostView):
 	"""
 	A pages view on the course.  We subclass ``ContainerContextUGDPostView``
 	in order to intervene and annotate our ``IContainerContext``

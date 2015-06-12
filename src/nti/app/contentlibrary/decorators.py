@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 from zope import interface
+
 from zope.location.interfaces import ILocation
 
 from pyramid.interfaces import IRequest
@@ -69,7 +70,7 @@ class _ContentBundlePagesLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping( self, context, result ):
+	def decorateExternalMapping(self, context, result):
 		_links = result.setdefault(LINKS, [])
 
 		link = Link(context, rel='Pages', elements=('Pages',))
@@ -96,9 +97,7 @@ class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDec
 	NTIIDs for this specific version of the ipad app.
 	"""
 
-	_BAD_UAS = (
-		"NTIFoundation DataLoader NextThought/1.2.0",
-	)
+	_BAD_UAS = ("NTIFoundation DataLoader NextThought/1.2.0",)
 
 	def _predicate(self, context, result):
 		ua = self.request.environ.get('HTTP_USER_AGENT', '')
@@ -122,7 +121,6 @@ class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDec
 				pass
 			if not ntiid:
 				ntiid = getattr(x, 'ntiid', None) or getattr(x, 'NTIID', None)
-
 			if ntiid:
 				new_packages.append(ntiid)
 		result['ContentPackages'] = new_packages
