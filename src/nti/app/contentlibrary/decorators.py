@@ -23,9 +23,9 @@ from nti.appserver.interfaces import IContentUnitInfo
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
 
@@ -72,7 +72,6 @@ class _ContentBundlePagesLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, result):
 		_links = result.setdefault(LINKS, [])
-
 		link = Link(context, rel='Pages', elements=('Pages',))
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
