@@ -128,6 +128,7 @@ setup(
 		'nti.contentindexing',
 		'nti.contentprocessing',
 		'nti.contentrendering', # legacy
+		'nti.contentrendering_assessment', # legacy
 		'nti.contenttypes.presentation',  # legacy
 		'nti.coremetadata',
 		'nti.dataserver_core',
@@ -140,7 +141,6 @@ setup(
 		'nti.mimetype',
 		'nti.ntiids',
 		'nti.plasTeX',
-		'nti.rendering.assessment', # legacy
 		'nti.transactions',
 		'nti.traversal',
 		'nti.schema',
