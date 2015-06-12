@@ -47,12 +47,6 @@ from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data import get_index_last_modified
 from nti.contentlibrary.indexed_data import set_index_last_modified
 from nti.contentlibrary.indexed_data import get_registry as _registry
-from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
-from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import ITimelineIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import ISlideDeckIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IRelatedContentIndexedDataContainer
 
 from .interfaces import IContentBoard
 
@@ -197,23 +191,22 @@ def _get_container_tree( container_id ):
 	results = {path.ntiid for path in paths} if paths else ()
 	return results
 
-def _update_index_when_content_changes(content_package, index_iface, item_iface, object_creator):
-	namespace = index_iface.getTaggedValue(TAG_NAMESPACE_FILE)
-	sibling_key = content_package.does_sibling_entry_exist(namespace)
+def _update_index_when_content_changes(content_package, index_filename, item_iface, object_creator):
+	sibling_key = content_package.does_sibling_entry_exist( index_filename )
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	last_modified = get_index_last_modified(index_iface, content_package)
+	last_modified = get_index_last_modified( index_filename, content_package )
 	if 		not last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
 					sibling_key.lastModified)
 		return
-	set_index_last_modified(index_iface, content_package, sibling_key.lastModified)
+	set_index_last_modified( index_filename, content_package, sibling_key.lastModified )
 
-	index_text = content_package.read_contents_of_sibling_entry(namespace)
+	index_text = content_package.read_contents_of_sibling_entry( index_filename )
 
 	if isinstance(index_text, bytes):
 		index_text = index_text.decode('utf-8')
@@ -282,31 +275,31 @@ def _update_index_when_content_changes(content_package, index_iface, item_iface,
 
 def _update_audio_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  IAudioIndexedDataContainer,
+											  'audio_index.json',
 											  INTIAudio,
 											  create_ntiaudio_from_external)
 
 def _update_video_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  IVideoIndexedDataContainer,
+											  'video_index.json',
 											  INTIVideo,
 											  create_ntivideo_from_external)
 
 def _update_related_content_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  IRelatedContentIndexedDataContainer,
+											  'related_content_index.json',
 											  INTIRelatedWorkRef,
 											  create_relatedwork_from_external)
 
 def _update_timeline_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  ITimelineIndexedDataContainer,
+											  'timeline_index.json',
 											  INTITimeline,
 											  create_timelime_from_external)
 
 def _update_slidedeck_index_when_content_changes(content_package, event):
 	return _update_index_when_content_changes(content_package,
-											  ISlideDeckIndexedDataContainer,
+											  'slidedeck_index.json',
 											  INTISlideDeck,
 											  create_object_from_external)
 
