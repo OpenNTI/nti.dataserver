@@ -143,7 +143,11 @@
 	<adapter factory=".adapters._timeline_to_contained_type" />
 	<adapter factory=".adapters._slidedeck_to_contained_type" />
 	<adapter factory=".adapters._slidevideo_to_contained_type" />
-
+	<adapter factory=".adapters._discussionref_to_contained_type" />
+	<adapter factory=".adapters._lessonoverview_to_contained_type" />
+	<adapter factory=".adapters._courseoverview_to_contained_type" />
+	<adapter factory=".adapters._courseoverviewspacer_to_contained_type" />
+	
 	<!-- Content package modifications. -->
 	<!-- addition -->
 	<configure zcml:condition="have devmode">

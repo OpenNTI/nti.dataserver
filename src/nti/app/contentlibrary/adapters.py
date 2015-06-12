@@ -29,7 +29,11 @@ from nti.contenttypes.presentation.interfaces import INTISlide
 from nti.contenttypes.presentation.interfaces import INTITimeline
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
+from nti.contenttypes.presentation.interfaces import INTIDiscussionRef
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+from nti.contenttypes.presentation.interfaces import INTILessonOverview
+from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
+from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
 
 from nti.dataserver.interfaces import system_user
 
@@ -79,6 +83,26 @@ def _slidevideo_to_contained_type(context):
 @interface.implementer(IContainedTypeAdapter)
 def _related_to_contained_type(context):
 	return _Type('INTIRelatedWorkRef')
+
+@component.adapter(INTIDiscussionRef)
+@interface.implementer(IContainedTypeAdapter)
+def _discussionref_to_contained_type(context):
+	return _Type('INTIDiscussionRef')
+
+@component.adapter(INTILessonOverview)
+@interface.implementer(IContainedTypeAdapter)
+def _lessonoverview_to_contained_type(context):
+	return _Type('INTILessonOverview')
+
+@component.adapter(INTICourseOverviewGroup)
+@interface.implementer(IContainedTypeAdapter)
+def _courseoverview_to_contained_type(context):
+	return _Type('INTICourseOverviewGroup')
+
+@component.adapter(INTICourseOverviewSpacer)
+@interface.implementer(IContainedTypeAdapter)
+def _courseoverviewspacer_to_contained_type(context):
+	return _Type('INTICourseOverviewSpacer')
 
 @component.adapter(IQAssignment)
 @interface.implementer(IContainedTypeAdapter)
