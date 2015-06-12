@@ -36,20 +36,20 @@ def get_catalog():
 	return result
 get_index = get_catalog
 
-def _get_key( index_filename ):
+def _get_key(index_filename):
 	key = BASE_KEY
 	if index_filename:
 		key = key + '_' + index_filename
 	return key
 
-def get_index_last_modified( index_filename, unit ):
-	key = _get_key( index_filename )
+def get_index_last_modified(index_filename, unit):
+	key = _get_key(index_filename)
 	annotes = IAnnotations(unit)
 	return annotes.get(key)
 
-def set_index_last_modified( index_filename, unit, now=None ):
+def set_index_last_modified(index_filename, unit, now=None):
 	now = time.time() if now is None else now
-	key = _get_key( index_filename )
+	key = _get_key(index_filename)
 	annotes = IAnnotations(unit)
 	annotes[key] = now
 

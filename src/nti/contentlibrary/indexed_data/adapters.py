@@ -22,13 +22,13 @@ from . import interfaces
 
 from .interfaces import TAG_NAMESPACE_FILE
 
-_KEY =  'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
+_KEY = 'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
 
 def indexed_data_adapter(content_unit,
 						 factory=container.IndexedDataContainer,
 						 iface=interfaces.IIndexedDataContainer):
 	key = _KEY
-	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE,'')
+	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE, '')
 	if namespace:
 		key = key + '_' + namespace
 
@@ -61,7 +61,7 @@ def _make_adapters():
 	for base in types:
 		identifier = ''.join([x.capitalize() for x in base.split('_')])
 		identifier = identifier + 'IndexedDataContainer'
-		iface = getattr(interfaces, 'I' + identifier )
+		iface = getattr(interfaces, 'I' + identifier)
 		factory = getattr(container, identifier)
 
 		func = make_func(iface, factory)

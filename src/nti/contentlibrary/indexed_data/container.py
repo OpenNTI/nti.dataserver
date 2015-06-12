@@ -37,7 +37,7 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	__name__ = None
 
 	def __init__(self, ntiid):
-		super(IndexedDataContainer,self).__init__()
+		super(IndexedDataContainer, self).__init__()
 		self.ntiid = ntiid
 		# Override the super and do not set lastModified
 		# to current time because we will want to track it

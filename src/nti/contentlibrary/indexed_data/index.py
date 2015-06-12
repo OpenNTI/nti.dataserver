@@ -9,16 +9,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
+
+from zope.intid import IIntIds
+
 import BTrees
 
 from persistent import Persistent
 
-from zope import component
-from zope.intid import IIntIds
-
 from nti.common.iterables import is_nonstr_iter
 
 from nti.zope_catalog.catalog import ResultSet
+
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
@@ -28,7 +30,7 @@ from .interfaces import IContainedObjectCatalog
 
 from . import CATALOG_INDEX_NAME
 
-def _to_iter(value):
+def to_iterable(value):
 	value = getattr(value, '__name__', value)
 	if is_nonstr_iter(value):
 		result = value
@@ -44,7 +46,7 @@ class KeepSetIndex(RawSetIndex):
 	empty_set = set()
 
 	def index_doc(self, doc_id, value):
-		value = {v for v in _to_iter( value ) if v is not None}
+		value = {v for v in to_iterable(value) if v is not None}
 		old = self.documents_to_values.get(doc_id) or self.empty_set
 		if value.difference(old):
 			value.update(old or ())
@@ -53,14 +55,14 @@ class KeepSetIndex(RawSetIndex):
 
 	def remove(self, doc_id, value):
 		if self.default_interface is not None:
-			obj = self.default_interface( value, None )
+			obj = self.default_interface(value, None)
 			if obj is None:
 				return None
 
-		old = set( self.documents_to_values.get(doc_id) or () )
+		old = set(self.documents_to_values.get(doc_id) or ())
 		if not old:
 			return
-		for v in _to_iter(value):
+		for v in to_iterable(value):
 			old.discard(v)
 		if old:
 			super(KeepSetIndex, self).index_doc(doc_id, old)
@@ -78,27 +80,14 @@ class CheckRawValueIndex(RawValueIndex):
 			if old is None or old != value:
 				super(CheckRawValueIndex, self).index_doc(doc_id, value)
 
-class NamespaceIndex(CheckRawValueIndex):
-	pass
-
 class TypeIndex(ValueIndex):
-
 	default_field_name = 'type'
 	default_interface = IContainedTypeAdapter
 
-def install_container_catalog(site_manager_container, intids=None):
-	lsm = site_manager_container.getSiteManager()
-	if intids is None:
-		intids = lsm.getUtility( IIntIds )
+class NamespaceIndex(CheckRawValueIndex):
+	pass
 
-	catalog = ContainedObjectCatalog()
-	catalog.__name__ = CATALOG_INDEX_NAME
-	catalog.__parent__ = site_manager_container
-	intids.register( catalog )
-	lsm.registerUtility( catalog, provided=IContainedObjectCatalog, name=CATALOG_INDEX_NAME )
-	return catalog
-
-class ContainedObjectCatalog( Persistent ):
+class ContainedObjectCatalog(Persistent):
 
 	family = BTrees.family64
 
@@ -146,14 +135,14 @@ class ContainedObjectCatalog( Persistent ):
 			return True
 		return False
 
-	def get_references( self, container_ntiids=None, provided=None, namespace=None ):
+	def get_references(self, container_ntiids=None, provided=None, namespace=None):
 		result = None
 		# Provided is interface that maps to our type adapter
-		for index, value, query in ( (self._type_index, provided, 'any_of'),
-									 (self._namespace_index, namespace, 'any_of'),
-							  		 (self._container_index, container_ntiids, 'all_of') ):
+		for index, value, query in ((self._type_index, provided, 'any_of'),
+									(self._namespace_index, namespace, 'any_of'),
+							  		(self._container_index, container_ntiids, 'all_of')):
 			if value is not None:
-				value = _to_iter(value)
+				value = to_iterable(value)
 				ids = index.apply({query: value}) or self.family.IF.LFSet()
 				if result is None:
 					result = ids
@@ -178,9 +167,9 @@ class ContainedObjectCatalog( Persistent ):
 		if namespace is not None:
 			namespace = getattr(namespace, '__name__', namespace)
 
-		for index, value in ( (self._type_index, item),
-							  (self._namespace_index, namespace),
-							  (self._container_index, container_ntiids) ):
+		for index, value in ((self._type_index, item),
+							 (self._namespace_index, namespace),
+							 (self._container_index, container_ntiids)):
 			if value is not None:
 				index.index_doc(doc_id, value)
 		return True
@@ -192,3 +181,15 @@ class ContainedObjectCatalog( Persistent ):
 		for index in (self._container_index, self._type_index, self._namespace_index):
 			index.unindex_doc(doc_id)
 		return True
+
+def install_container_catalog(site_manager_container, intids=None):
+	lsm = site_manager_container.getSiteManager()
+	if intids is None:
+		intids = lsm.getUtility(IIntIds)
+
+	catalog = ContainedObjectCatalog()
+	catalog.__name__ = CATALOG_INDEX_NAME
+	catalog.__parent__ = site_manager_container
+	intids.register(catalog)
+	lsm.registerUtility(catalog, provided=IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
+	return catalog
