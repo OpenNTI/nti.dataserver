@@ -54,12 +54,12 @@ def iface_of_thing(item):
 			return iface
 	return None
 
-def _index_items(item_iface, namespace, *registered):
+def _index_items(_, namespace, *registered):
 	catalog = get_catalog()
 	intids = component.queryUtility(IIntIds)
 	for item in registered:
 		catalog.index(item, intids=intids, namespace=namespace)
-		
+
 class PersistentComponents(Components, Persistent):
 	pass
 
@@ -157,7 +157,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		path = os.path.join(os.path.dirname(__file__), source)
 		with open(path, "r") as fp:
 			source = fp.read()
-			
+
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
 
@@ -167,7 +167,7 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that(list(registry.registeredUtilities()), has_length(count))
 
 		_index_items(iface, 'xxx', *result)
-		
+
 		result = _remove_from_registry(namespace='xxx', provided=iface, registry=registry)
 		assert_that(result, has_length(count))
 
@@ -185,28 +185,28 @@ class TestSubscribers(ContentlibraryLayerTest):
 	def test_related_content_index(self):
 		self._test_feed('related_content_index.json', INTIRelatedWorkRef, 372,
 						create_relatedwork_from_external)
-	
+
 	@WithMockDSTrans
 	def test_slidedeck_index(self):
 		path = os.path.join(os.path.dirname(__file__), 'slidedeck_index.json')
 		with open(path, "r") as fp:
 			source = fp.read()
-			
+
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
-		
+
 		result = _load_and_register_slidedeck_json(source, registry=registry)
 		assert_that(result, has_length(742))
-		
+
 		for item in result:
 			iface = iface_of_thing(item)
 			_index_items(iface, 'xxx', item)
-		
+
 		result = _remove_from_registry(namespace='xxx', provided=INTISlideDeck, registry=registry)
 		assert_that(result, has_length(57))
-		
+
 		result = _remove_from_registry(namespace='xxx', provided=INTISlideVideo, registry=registry)
 		assert_that(result, has_length(57))
-		
+
 		result = _remove_from_registry(namespace='xxx', provided=INTISlide, registry=registry)
 		assert_that(result, has_length(628))
