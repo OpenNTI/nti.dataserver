@@ -36,21 +36,20 @@ def get_catalog():
 	return result
 get_index = get_catalog
 
-def _get_key(index_iface):
+def _get_key( index_filename ):
 	key = BASE_KEY
-	namespace = index_iface.queryTaggedValue(TAG_NAMESPACE_FILE, '')
-	if namespace:
-		key = key + '_' + namespace
+	if index_filename:
+		key = key + '_' + index_filename
 	return key
 
-def get_index_last_modified(index_iface, unit):
-	key = _get_key(index_iface)
+def get_index_last_modified( index_filename, unit ):
+	key = _get_key( index_filename )
 	annotes = IAnnotations(unit)
 	return annotes.get(key)
 
-def set_index_last_modified(index_iface, unit, now=None):
+def set_index_last_modified( index_filename, unit, now=None ):
 	now = time.time() if now is None else now
-	key = _get_key(index_iface)
+	key = _get_key( index_filename )
 	annotes = IAnnotations(unit)
 	annotes[key] = now
 
