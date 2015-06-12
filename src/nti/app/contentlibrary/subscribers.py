@@ -166,6 +166,10 @@ def _removed_registered(provided, name, intids=None, registry=None, catalog=None
 
 def _remove_from_registry(containers=None, namespace=None, provided=None,
 						  registry=None, intids=None, catalog=None):
+	"""
+	For our type, get our indexed objects so we can remove from both the
+	registry and the index.
+	"""
 	result = []
 	registry = get_registry(registry)
 	catalog = get_catalog() if catalog is None else catalog
@@ -198,7 +202,7 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 		return
 
 	last_modified = get_index_last_modified(index_filename, content_package)
-	if 		not last_modified \
+	if 		last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
@@ -230,6 +234,7 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 	# }
 
 	# Load our json index files
+	# TODO Do we need to register our global, non-persistent catalog?
 	added = ()
 	if item_iface == INTISlideDeck:
 		# Also remove our other slide types
