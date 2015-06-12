@@ -14,6 +14,12 @@ from zope import interface
 
 from zope.security.interfaces import IPrincipal
 
+from nti.assessment.interfaces import IQPoll
+from nti.assessment.interfaces import IQSurvey
+from nti.assessment.interfaces import IQuestion
+from nti.assessment.interfaces import IQuestionSet
+from nti.assessment.interfaces import IQAssignment
+
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
@@ -73,3 +79,28 @@ def _slidevideo_to_contained_type(context):
 @interface.implementer(IContainedTypeAdapter)
 def _related_to_contained_type(context):
 	return _Type('INTIRelatedWorkRef')
+
+@component.adapter(IQAssignment)
+@interface.implementer(IContainedTypeAdapter)
+def _assignment_to_contained_type(context):
+	return _Type('IQAssignment')
+
+@component.adapter(IQuestionSet)
+@interface.implementer(IContainedTypeAdapter)
+def _questionset_to_contained_type(context):
+	return _Type('IQuestionSet')
+
+@component.adapter(IQuestion)
+@interface.implementer(IContainedTypeAdapter)
+def _question_to_contained_type(context):
+	return _Type('IQuestion')
+
+@component.adapter(IQSurvey)
+@interface.implementer(IContainedTypeAdapter)
+def _survey_to_contained_type(context):
+	return _Type('IQSurvey')
+
+@component.adapter(IQPoll)
+@interface.implementer(IContainedTypeAdapter)
+def _poll_to_contained_type(context):
+	return _Type('IQPoll')
