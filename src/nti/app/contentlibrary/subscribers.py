@@ -201,14 +201,14 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 		# Nothing to do
 		return
 
-	last_modified = get_index_last_modified(index_filename, content_package)
+	last_modified = get_index_last_modified( index_filename, content_package )
 	if 		last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
 					sibling_key.lastModified)
 		return
-	set_index_last_modified(index_filename, content_package, sibling_key.lastModified)
+	set_index_last_modified( index_filename, content_package, sibling_key.lastModified )
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
