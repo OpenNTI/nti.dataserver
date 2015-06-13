@@ -6,6 +6,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import not_none
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import contains_inanyorder
@@ -27,6 +28,8 @@ from nti.app.contentlibrary.subscribers import _load_and_register_json
 from nti.app.contentlibrary.subscribers import _load_and_register_slidedeck_json
 
 from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data import get_index_last_modified
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
 from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
@@ -87,6 +90,8 @@ class TestSubscribers(ContentlibraryLayerTest):
 		catalog = get_catalog()
 		results = catalog.search_objects(container_ntiids=(unit_ntiid,))
 		assert_that(results, has_length(4))
+		last_mod = get_index_last_modified( 'video_index.json', content_package )
+		assert_that( last_mod, not_none() )
 
 		# Namespace
 		results = catalog.search_objects(namespace=content_package.ntiid)
