@@ -27,14 +27,25 @@ from ..interfaces import IGlobalContentPackageLibrary
 from .interfaces import TAG_NAMESPACE_FILE
 from .interfaces import IContainedObjectCatalog
 
+# catalog
 CATALOG_INDEX_NAME = '++etc++contentlibrary.container_index'
-
-BASE_KEY = 'nti.contentlibrary.indexed_data.LastModified'
 
 def get_catalog():
 	result = component.queryUtility(IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
 	return result
 get_index = get_catalog
+
+# Types
+NTI_AUDIO_TYPE = 'INTIAudio'
+NTI_VIDEO_TYPE = 'INTIVideo'
+NTI_SLIDE_TYPE = 'INTISlide'
+NTI_TIMELINE_TYPE = 'INTITimeline'
+NTI_SLIDE_DECK_TYPE = 'INTISlideDeck'
+NTI_SLIDE_VIDEO_TYPE = 'INTISlideVideo'
+NTI_RELATED_WORK_TYPE = NTI_RELATED_WORK_REF_TYPE = 'INTIRelatedWorkRef'
+
+# LastModified
+BASE_KEY = 'nti.contentlibrary.indexed_data.LastModified'
 
 def _get_key(index_filename):
 	key = BASE_KEY
@@ -53,6 +64,7 @@ def set_index_last_modified(index_filename, unit, now=None):
 	annotes = IAnnotations(unit)
 	annotes[key] = now
 
+# Registry
 def get_registry(registry=None):
 	if registry is None:
 		library = component.queryUtility(IContentPackageLibrary)
