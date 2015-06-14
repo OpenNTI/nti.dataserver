@@ -17,16 +17,18 @@ import warnings
 
 from repoze.lru import LRUCache
 
-from ZODB.POSException import POSError
-from ZODB.interfaces import IConnection, IBroken
-
 import zope.intid
+
 from zope import component
 from zope import interface
 from zope import lifecycleevent
 
-from zope.event import notify
 from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.event import notify
+
+from ZODB.POSException import POSError
+from ZODB.interfaces import IConnection, IBroken
 
 from persistent import Persistent
 
@@ -88,9 +90,9 @@ class AbstractContentPackageEnumeration(object):
 		"""
 		titles = []
 		for path in self._possible_content_packages():
-			title = self._package_factory( path )
+			title = self._package_factory(path)
 			if title:
-				titles.append( title )
+				titles.append(title)
 		return titles
 
 @interface.implementer(IDelimitedHierarchyContentPackageEnumeration)
@@ -113,48 +115,48 @@ class AbstractDelimitedHiercharchyContentPackageEnumeration(AbstractContentPacka
 			return ()
 		return root.enumerateChildren()
 
-def _register_units( content_unit ):
+def _register_units(content_unit):
 	"""
 	Recursively register content units.
 	"""
-	intids = component.queryUtility( zope.intid.IIntIds )
+	intids = component.queryUtility(zope.intid.IIntIds)
 	if intids is None:
 		return
 
-	def _register( obj ):
+	def _register(obj):
 		try:
 			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
 				return
-			intid = intids.queryId( obj )
+			intid = intids.queryId(obj)
 			if intid is None:
-				intids.register( obj )
-		except (TypeError, POSError): # Broken object
+				intids.register(obj)
+		except (TypeError, POSError):  # Broken object
 			return
 		for child in obj.children:
-			_register( child )
-	_register( content_unit )
+			_register(child)
+	_register(content_unit)
 
-def _unregister_units( content_unit ):
+def _unregister_units(content_unit):
 	"""
 	Recursively unregister content units.
 	"""
-	intids = component.queryUtility( zope.intid.IIntIds )
+	intids = component.queryUtility(zope.intid.IIntIds)
 	if intids is None:
 		return
 
-	def _unregister( obj ):
+	def _unregister(obj):
 		intid = None
 		try:
 			if IBroken.providedBy(obj) or not IPersistentContentUnit.providedBy(obj):
 				return
-			intid = intids.queryId( obj )
+			intid = intids.queryId(obj)
 			if intid is not None:
-				intids.unregister( obj )
-		except (TypeError, POSError): # Broken object
+				intids.unregister(obj)
+		except (TypeError, POSError):  # Broken object
 			pass
 		for child in obj.children:
-			_unregister( child )
-	_unregister( content_unit )
+			_unregister(child)
+	_unregister(content_unit)
 
 @interface.implementer(ISyncableContentPackageLibrary)
 class AbstractContentPackageLibrary(object):
@@ -169,22 +171,22 @@ class AbstractContentPackageLibrary(object):
 	equivalent.
 	"""
 
-	#: Placeholder for prefixes that should be applied when generating
-	#: URLs for items in this library.
+	# Placeholder for prefixes that should be applied when generating
+	# URLs for items in this library.
 	url_prefix = ''
 
-	#: A place where we will cache the list of known
-	#: content packages. A value of `None` means we have never
-	#: been synced. The behaviour of iterating content packages
-	#: to implicitly sync is deprecated.
+	# A place where we will cache the list of known
+	# content packages. A value of `None` means we have never
+	# been synced. The behaviour of iterating content packages
+	# to implicitly sync is deprecated.
 	_contentPackages = None
 
-	#: The enumeration we will use when asked to sync
-	#: content packages.
+	# The enumeration we will use when asked to sync
+	# content packages.
 	_enumeration = None
 
-	#: When we sync, we capture the `lastModified` timestamp
-	#: of the enumeration, if it provides it.
+	# When we sync, we capture the `lastModified` timestamp
+	# of the enumeration, if it provides it.
 	_enumeration_last_modified = 0
 
 	__name__ = 'Library'
@@ -220,12 +222,12 @@ class AbstractContentPackageLibrary(object):
 		"""
 		notify(ContentPackageLibraryWillSyncEvent(self))
 
-		## filter packages if specified
+		# filter packages if specified
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
 					self._content_packages_tuple(self._contentPackages, packages)
 
-		## make sure we get ALL packages
+		# make sure we get ALL packages
 		contentPackages = self._enumeration.enumerateContentPackages()
 		new_content_packages, new_content_packages_by_ntiid = \
 					self._content_packages_tuple(contentPackages)
@@ -233,23 +235,23 @@ class AbstractContentPackageLibrary(object):
 				"Invalid library"
 		enumeration_last_modified = getattr(self._enumeration, 'lastModified', 0)
 
-		## Before we fire any events, compute all the work so that
-		## we can present a consistent view to any listeners that
-		## will be watching
+		# Before we fire any events, compute all the work so that
+		# we can present a consistent view to any listeners that
+		# will be watching
 		removed = []
 		changed = []
-		if not packages: ## no filter
+		if not packages:  # no filter
 			unmodified = []
 			added = [package
 				 		for ntiid, package in new_content_packages_by_ntiid.items()
 				 		if ntiid not in filtered_old_content_packages_by_ntiid]
 		else:
-			## chosing this path WILL NOT add any new package
+			# chosing this path WILL NOT add any new package
 			added = ()
 			unfiltered_content_packages, _ = \
 						self._content_packages_tuple(self._contentPackages)
 
-			## make sure we get old references
+			# make sure we get old references
 			unmodified = [package
 				 			for package in unfiltered_content_packages
 				 			if package.ntiid not in filtered_old_content_packages_by_ntiid]
@@ -259,13 +261,13 @@ class AbstractContentPackageLibrary(object):
 			if new is None:
 				removed.append(old)
 			elif old.lastModified < new.lastModified:
-				changed.append( (new, old) )
+				changed.append((new, old))
 			else:
 				unmodified.append(old)
 
 		something_changed = removed or added or changed
 
-		## now set up our view of the world
+		# now set up our view of the world
 		_contentPackages = []
 		_contentPackages.extend(added)
 		_contentPackages.extend(unmodified)
@@ -275,13 +277,13 @@ class AbstractContentPackageLibrary(object):
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
-		## updated pacakges
+		# updated pacakges
 		packages = set(_content_packages_by_ntiid.keys()) if not packages else packages
 		if something_changed or never_synced:
-			## CS/JZ, 1-29-15 We need this before event firings because some code
-			## (at least question_map.py used to) relies on getting the new content units
-			## via pathToNtiid.
-			## TODO: Verify nothing else is doing so.
+			# CS/JZ, 1-29-15 We need this before event firings because some code
+			# (at least question_map.py used to) relies on getting the new content units
+			# via pathToNtiid.
+			# TODO: Verify nothing else is doing so.
 			self._contentPackages = _contentPackages
 			self._enumeration_last_modified = enumeration_last_modified
 			self._content_packages_by_ntiid = _content_packages_by_ntiid
@@ -291,16 +293,16 @@ class AbstractContentPackageLibrary(object):
 				logger.info("Library %s removing packages %s", self, removed)
 				logger.info("Library %s changing packages %s", self, changed)
 
-			## Now fire the events letting listeners (e.g., index and question adders)
-			## know that we have content. Randomize the order of this across worker
-			## processes so that we don't collide too badly on downloading indexes if need be
-			## (only matters if we are not preloading).
-			## Do this in greenlets/parallel. This can radically speed up
-			## S3 loading when we need the network.
-			## XXX: Does order matter?
-			## XXX: Note that we are not doing it in parallel, because if we need
-			## ZODB site access, we can have issues. Also not we're not
-			## randomizing because we expect to be preloaded.
+			# Now fire the events letting listeners (e.g., index and question adders)
+			# know that we have content. Randomize the order of this across worker
+			# processes so that we don't collide too badly on downloading indexes if need be
+			# (only matters if we are not preloading).
+			# Do this in greenlets/parallel. This can radically speed up
+			# S3 loading when we need the network.
+			# XXX: Does order matter?
+			# XXX: Note that we are not doing it in parallel, because if we need
+			# ZODB site access, we can have issues. Also not we're not
+			# randomizing because we expect to be preloaded.
 			for old in removed:
 				lifecycleevent.removed(old)
 				_unregister_units(old)
@@ -308,49 +310,49 @@ class AbstractContentPackageLibrary(object):
 
 			for new, old in changed:
 				new.__parent__ = self
-				## new is a created object
-				IConnection( self ).add( new )
-				## XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
-				## lifecycleevent.added on 'new' objects as modified events subscribers
-				## are expected to handle any change
-				_register_units( new )
-				## Note that this is the special event that shows both objects.
+				# new is a created object
+				IConnection(self).add(new)
+				# XXX CS/JZ, 2-04-15 DO NEITHER call lifecycleevent.created nor
+				# lifecycleevent.added on 'new' objects as modified events subscribers
+				# are expected to handle any change
+				_register_units(new)
+				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old))
 
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
-				_register_units( new )
+				_register_units(new)
 
-			## after updating remove parent reference for old objects
+			# after updating remove parent reference for old objects
 			for _, old in changed:
-				## CS/JZ, 2-04-15  DO NOT call lifecycleevent.removed on this
-				## objects b/c this may unregister things we don't want to leaving
-				## the database in a invalid state
+				# CS/JZ, 2-04-15  DO NOT call lifecycleevent.removed on this
+				# objects b/c this may unregister things we don't want to leaving
+				# the database in a invalid state
 				_unregister_units(old)
 				old.__parent__ = None
 
-			## Ok, new let people know that 'contentPackages' changed
+			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
 			event = ContentPackageLibraryModifiedOnSyncEvent(self, packages, attributes)
 			notify(event)
 
-		## Signal what pacakges WERE NOT modified
+		# Signal what pacakges WERE NOT modified
 		for pacakge in unmodified or ():
 			notify(ContentPackageUnmodifiedEvent(pacakge))
 
-		## Finish up by saying that we sync'd, even if nothing changed
+		# Finish up by saying that we sync'd, even if nothing changed
 		notify(ContentPackageLibraryDidSyncEvent(self, packages))
 
 		self._enumeration.lastSynchronized = time.time()
 		if something_changed or never_synced:
 			self._clear_caches()
 
-	#: A map from top-level content-package NTIID to the content package.
-	#: This is cached based on the value of the _contentPackages variable,
-	#: and uses that variable, which must not be modified outside the
-	#: confines of this class.
+	# A map from top-level content-package NTIID to the content package.
+	# This is cached based on the value of the _contentPackages variable,
+	# and uses that variable, which must not be modified outside the
+	# confines of this class.
 	_content_packages_by_ntiid = ()
 
 	@property
@@ -385,7 +387,7 @@ class AbstractContentPackageLibrary(object):
 		if name == 'contentPackages':
 			self.resetContentPackages()
 		else:
-			super(AbstractContentPackageLibrary,self).__delattr__(name)
+			super(AbstractContentPackageLibrary, self).__delattr__(name)
 
 	titles = alias('contentPackages')
 
@@ -444,11 +446,11 @@ class AbstractContentPackageLibrary(object):
 		lastModified = max(self._enumeration_last_modified, lastModified)
 		return lastModified
 
-	def __getitem__( self, key ):
+	def __getitem__(self, key):
 		"""
 		:return: The LibraryEntry having an ntiid that matches `key`.
 		"""
-		if isinstance(key,numbers.Integral):
+		if isinstance(key, numbers.Integral):
 			if key != 0:
 				raise TypeError("Integers other than 0---first---not supported")
 			# This should only be done by tests
@@ -464,26 +466,26 @@ class AbstractContentPackageLibrary(object):
 		# We no longer check titles
 		parent = queryNextUtility(self, IContentPackageLibrary)
 		if parent is None:
-			raise KeyError( key )
+			raise KeyError(key)
 
 		return parent.__getitem__(key)
 
-	def get( self, key, default=None ):
+	def get(self, key, default=None):
 		try:
 			return self[key]
 		except KeyError:
 			return default
 
 	# Other container methods
-	def __delitem__( self, key ):
+	def __delitem__(self, key):
 		raise TypeError("deletion not supported")
-	def __setitem__( self, key ):
-		raise TypeError("setting not supported" )
-	def __len__( self ):
+	def __setitem__(self, key):
+		raise TypeError("setting not supported")
+	def __len__(self):
 		# XXX: This doesn't make much sense
 		return len(self._content_packages_by_ntiid)
-	def __contains__( self, key ):
-		return self.get( key ) is not None
+	def __contains__(self, key):
+		return self.get(key) is not None
 
 	def __bool__(self):
 		# We are always true, regardless of content
@@ -510,12 +512,12 @@ class AbstractContentPackageLibrary(object):
 		result = None
 		if ntiid == NTI_ROOT:
 			for title in self.contentPackages:
-				if getattr( title, 'ntiid', None ) == ntiid:
+				if getattr(title, 'ntiid', None) == ntiid:
 					result = [title]
 					break
 		else:
 			for title in self.contentPackages:
-				vals = _pathToPropertyValue( title, 'ntiid', ntiid )
+				vals = _pathToPropertyValue(title, 'ntiid', ntiid)
 				if vals:
 					result = vals
 					break
@@ -547,33 +549,33 @@ class AbstractContentPackageLibrary(object):
 				# Empty list cached
 				return None
 
-		result = self._do_path_to_ntiid( ntiid )
+		result = self._do_path_to_ntiid(ntiid)
 
 		if not skip_cache:
 			if result:
 				cache_val = [_PathCacheContentUnitWeakRef(x) for x in result]
-				self._v_path_to_ntiid_cache.put( ntiid, cache_val )
+				self._v_path_to_ntiid_cache.put(ntiid, cache_val)
 			else:
 				# Make sure we don't lose these worst-cases.
-				self._v_path_to_ntiid_cache.put( ntiid, [] )
+				self._v_path_to_ntiid_cache.put(ntiid, [])
 		return result
 
-	def childrenOfNTIID( self, ntiid ):
+	def childrenOfNTIID(self, ntiid):
 		"""
 		Returns a flattened list of all the children entries of ntiid in
 		no particular order. If there are no children, returns an empty list.
 
 		:return: Always returns a fresh list.
 		"""
-		path = self.pathToNTIID( ntiid )
+		path = self.pathToNTIID(ntiid)
 		result = []
 		if path:
 			parent = path[-1]
-			def rec(toc,accum):
+			def rec(toc, accum):
 				for child in toc.children:
-					rec( child, accum )
-				accum.append( toc )
-			rec( parent, result )
+					rec(child, accum)
+				accum.append(toc)
+			rec(parent, result)
 			# And the last thing we did was append the parent
 			# itself, so take it off; we only want the children
 			result.pop()
@@ -591,33 +593,33 @@ class AbstractContentPackageLibrary(object):
 		result = []
 		def rec(unit):
 			if ntiid in unit.embeddedContainerNTIIDs:
-				result.append( self.pathToNTIID( unit.ntiid ) )
-			for child in unit.children: # it is even possible to embed the thing twice within a hierarchy
+				result.append(self.pathToNTIID(unit.ntiid))
+			for child in unit.children:  # it is even possible to embed the thing twice within a hierarchy
 				rec(child)
 
 		for package in self.contentPackages:
 			rec(package)
 		return result
 
-def _pathToPropertyValue( unit, prop, value ):
+def _pathToPropertyValue(unit, prop, value):
 	"""
 	A convenience function for returning, in order from the root down,
 	the sequence of children required to reach one with a property equal to
 	the given value.
 	"""
-	results = __pathToPropertyValue( unit, prop, value )
+	results = __pathToPropertyValue(unit, prop, value)
 	if results:
 		results.reverse()
 	return results
 
-def __pathToPropertyValue( unit, prop, value ):
-	if getattr( unit, prop, None ) == value:
+def __pathToPropertyValue(unit, prop, value):
+	if getattr(unit, prop, None) == value:
 		return [unit]
 
 	for child in unit.children:
-		childPath = __pathToPropertyValue( child, prop, value )
+		childPath = __pathToPropertyValue(child, prop, value)
 		if childPath:
-			childPath.append( unit )
+			childPath.append(unit)
 			return childPath
 	return None
 
@@ -672,9 +674,9 @@ class _PathCacheContentUnitWeakRef(object):
 		self._intid = None
 
 		try:
-			intids = component.getUtility( zope.intid.IIntIds )
-			self._intid = intids.getId( contentunit )
-		except (IntIdMissingError,ComponentLookupError):
+			intids = component.getUtility(zope.intid.IIntIds)
+			self._intid = intids.getId(contentunit)
+		except (IntIdMissingError, ComponentLookupError):
 			# For non-persistant cases (or unit tests), store the object itself.
 			# These should be rare.
 			self._obj = contentunit
@@ -683,7 +685,7 @@ class _PathCacheContentUnitWeakRef(object):
 		if self._obj is not None:
 			result = self._obj
 		else:
-			intids = component.getUtility( zope.intid.IIntIds )
-			result = intids.getObject( self._intid )
+			intids = component.getUtility(zope.intid.IIntIds)
+			result = intids.getObject(self._intid)
 
 		return result

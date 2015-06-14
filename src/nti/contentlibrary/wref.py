@@ -11,7 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import functools
+from functools import total_ordering
 
 from zope import component
 from zope import interface
@@ -25,10 +25,12 @@ from nti.wref.interfaces import IWeakRef
 from .interfaces import IContentUnit
 from .interfaces import IContentPackageLibrary
 
+# pylint:disable=I0011,W0212
+
+@total_ordering
+@EqHash('_ntiid')
 @component.adapter(IContentUnit)
 @interface.implementer(IWeakRef)
-@functools.total_ordering
-@EqHash('_ntiid')
 class ContentUnitWeakRef(object):
 
 	__slots__ = (b'_ntiid',)
@@ -44,7 +46,7 @@ class ContentUnitWeakRef(object):
 		return lib.get(self._ntiid)
 
 	def __lt__(self, other):
-		return self._ntiid < other._ntiid #pylint:disable=I0011,W0212
+		return self._ntiid < other._ntiid
 
 	def __getstate__(self):
 		return (1, self._ntiid)
@@ -65,5 +67,5 @@ def contentunit_wref_to_missing_ntiid(ntiid):
 
 	validate_ntiid_string(ntiid)
 	wref = ContentUnitWeakRef.__new__(ContentUnitWeakRef)
-	wref._ntiid = ntiid #pylint:disable=I0011,W0212
+	wref._ntiid = ntiid
 	return wref
