@@ -54,11 +54,6 @@ class KeepSetIndex(RawSetIndex):
 			return result
 
 	def remove(self, doc_id, value):
-		if self.default_interface is not None:
-			obj = self.default_interface(value, None)
-			if obj is None:
-				return None
-
 		old = set(self.documents_to_values.get(doc_id) or ())
 		if not old:
 			return
