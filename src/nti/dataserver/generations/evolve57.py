@@ -20,11 +20,11 @@ from nti.contentlibrary.library import _register_units
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
 def _do_register_units():
-	library = component.queryUtility( IContentPackageLibrary )
+	library = component.queryUtility(IContentPackageLibrary)
 	if library is not None:
-		logger.info( 'Registering units for %s', library )
+		logger.info('Registering units for %s', library)
 		for package in library.contentPackages:
-			_register_units( package )
+			_register_units(package)
 
 def do_evolve(context):
 	setHooks()
@@ -43,13 +43,13 @@ def do_evolve(context):
 		# the IDataserver utility. Perhaps because we're not
 		# fully started at this point.
 
-		run_job_in_all_host_sites( _do_register_units )
+		run_job_in_all_host_sites(_do_register_units)
 
 		# As a workaround, we could reset out top level library so
 		# that everything will be picked up fresh as the ds starts.
-		logger.info( 'Dataserver evolution %s done.', generation )
+		logger.info('Dataserver evolution %s done.', generation)
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Make sure all persistent content units are registered; this
 	is primarily for caching/weak-ref usage.

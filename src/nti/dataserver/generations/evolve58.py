@@ -25,14 +25,14 @@ def do_evolve(context):
 	with site(ds_folder):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
-		intids = component.getUtility( IIntIds )
-		install_container_catalog( ds_folder, intids )
+		intids = component.getUtility(IIntIds)
+		install_container_catalog(ds_folder, intids)
 
-		logger.info( 'Dataserver evolution %s done.', generation )
+		logger.info('Dataserver evolution %s done.', generation)
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Add a container index, which indexes contained objects to their
 	containers and types.
 	"""
-	do_evolve( context )
+	do_evolve(context)

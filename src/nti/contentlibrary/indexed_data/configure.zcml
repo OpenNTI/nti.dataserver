@@ -10,6 +10,7 @@
 	<include package="zope.security" />
 	<include package="zope.location" />
 
+	<!--
 	<adapter factory=".adapters.audio_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.IAudioIndexedDataContainer"/>
@@ -29,5 +30,6 @@
 	<adapter factory=".adapters.slide_deck_indexed_data_adapter"
 			 for="..interfaces.IContentUnit"
 			 provides=".interfaces.ISlideDeckIndexedDataContainer" />
+	-->
 
 </configure>

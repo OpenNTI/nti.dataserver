@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 59
+generation = 60
 
 # Allow going forward/backward for testing
 import os
@@ -19,7 +19,9 @@ generation = int(os.getenv('DATASERVER_TEST_GENERATION', generation))
 from zope.generations.generations import SchemaManager
 
 class _DataserverSchemaManager(SchemaManager):
-	"A schema manager that we can register as a utility in ZCML."
+	"""
+	A schema manager that we can register as a utility in ZCML.
+	"""
 	def __init__( self ):
 		super( _DataserverSchemaManager, self ).__init__(generation=generation,
 														 minimum_generation=generation,

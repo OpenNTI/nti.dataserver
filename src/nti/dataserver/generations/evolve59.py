@@ -28,10 +28,10 @@ def do_evolve(context):
 
 		catalog = get_catalog()
 		catalog.reset()
-		logger.info( 'Dataserver evolution %s done.', generation )
+		logger.info('Dataserver evolution %s done.', generation)
 
-def evolve( context ):
+def evolve(context):
 	"""
 	Reset the content library catalog to add a new index; should only affect dev.
 	"""
-	do_evolve( context )
+	do_evolve(context)
