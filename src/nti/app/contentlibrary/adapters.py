@@ -22,6 +22,14 @@ from nti.assessment.interfaces import IQAssignment
 from nti.assessment.interfaces import IQAssessment
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
+
+from nti.contentlibrary.indexed_data import NTI_AUDIO_TYPE
+from nti.contentlibrary.indexed_data import NTI_VIDEO_TYPE
+from nti.contentlibrary.indexed_data import NTI_SLIDE_TYPE
+from nti.contentlibrary.indexed_data import NTI_TIMELINE_TYPE
+from nti.contentlibrary.indexed_data import NTI_SLIDE_DECK_TYPE
+from nti.contentlibrary.indexed_data import NTI_SLIDE_VIDEO_TYPE
+from nti.contentlibrary.indexed_data import NTI_RELATED_WORK_TYPE 
 from nti.contentlibrary.indexed_data.interfaces import IContainedTypeAdapter
 
 from nti.contenttypes.presentation.interfaces import INTIAudio
@@ -56,37 +64,37 @@ class _Type(object):
 @component.adapter(INTIAudio)
 @interface.implementer(IContainedTypeAdapter)
 def _audio_to_contained_type(context):
-	return _Type('INTIAudio')
+	return _Type(NTI_AUDIO_TYPE)
 
 @component.adapter(INTIVideo)
 @interface.implementer(IContainedTypeAdapter)
 def _video_to_contained_type(context):
-	return _Type('INTIVideo')
+	return _Type(NTI_VIDEO_TYPE)
 
 @component.adapter(INTISlide)
 @interface.implementer(IContainedTypeAdapter)
 def _slide_to_contained_type(context):
-	return _Type('INTISlide')
+	return _Type(NTI_SLIDE_TYPE)
 
 @component.adapter(INTITimeline)
 @interface.implementer(IContainedTypeAdapter)
 def _timeline_to_contained_type(context):
-	return _Type('INTITimeline')
+	return _Type(NTI_TIMELINE_TYPE)
 
 @component.adapter(INTISlideDeck)
 @interface.implementer(IContainedTypeAdapter)
 def _slidedeck_to_contained_type(context):
-	return _Type('INTISlideDeck')
+	return _Type(NTI_SLIDE_DECK_TYPE)
 
 @component.adapter(INTISlideVideo)
 @interface.implementer(IContainedTypeAdapter)
 def _slidevideo_to_contained_type(context):
-	return _Type('INTISlideVideo')
+	return _Type(NTI_SLIDE_VIDEO_TYPE)
 
 @component.adapter(INTIRelatedWorkRef)
 @interface.implementer(IContainedTypeAdapter)
 def _related_to_contained_type(context):
-	return _Type('INTIRelatedWorkRef')
+	return _Type(NTI_RELATED_WORK_TYPE)
 
 @component.adapter(INTIDiscussionRef)
 @interface.implementer(IContainedTypeAdapter)
