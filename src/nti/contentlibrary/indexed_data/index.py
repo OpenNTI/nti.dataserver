@@ -102,6 +102,8 @@ class NTIIDIndex(ValueIndex):
 
 class ContainedObjectCatalog(Persistent):
 
+	_ntiid_index = None
+	
 	family = BTrees.family64
 
 	type_index = alias('_type_index')
