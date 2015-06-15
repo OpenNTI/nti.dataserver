@@ -99,6 +99,9 @@ def do_evolve(context):
 		lsm = dataserver_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 		catalog = get_catalog()
+		if hasattr(catalog, '_last_modified'):
+			return
+		
 		catalog._last_modified = intids.family.OI.BTree()
 
 		# Load library
