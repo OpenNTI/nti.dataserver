@@ -202,7 +202,8 @@ class ContainedObjectCatalog(Persistent):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
-		for index in (self._container_index, self._type_index, self._namespace_index):
+		for index in (self._container_index, self._type_index, 
+					  self._namespace_index, self._ntiid_index):
 			index.unindex_doc(doc_id)
 		return True
 
