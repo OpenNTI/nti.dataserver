@@ -118,6 +118,8 @@ class ContainedObjectCatalog(Persistent):
 		self.reset()
 
 	def reset(self):
+		# Last mod by key
+		self._last_modified = self.family.OI.BTree()
 		# Track the object type (interface name)
 		self._type_index = TypeIndex(family=self.family)
 		# Track the ntiid of the object
@@ -126,8 +128,6 @@ class ContainedObjectCatalog(Persistent):
 		self._container_index = KeepSetIndex(family=self.family)
 		# Track the source/file name an object was read from
 		self._namespace_index = NamespaceIndex(family=self.family)
-		# Last mod by ntiid
-		self._last_modified = self.family.OI.BTree()
 
 	def get_last_modified(self, namespace):
 		try:

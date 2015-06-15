@@ -11,7 +11,6 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 62
 
-import BTrees
 import functools
 
 from zope import interface
@@ -87,19 +86,20 @@ def do_evolve(context):
 	setHooks()
 	conn = context.connection
 	root = conn.root()
-	ds_folder = root['nti.dataserver']
+	dataserver_folder = root['nti.dataserver']
 
 	mock_ds = MockDataserver()
-	mock_ds.root = ds_folder
+	mock_ds.root = dataserver_folder
 	component.provideUtility(mock_ds, IDataserver)
-
-	with site(ds_folder):
-		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
+	
+	with site(dataserver_folder):
+		assert	component.getSiteManager() == dataserver_folder.getSiteManager(), \
 				"Hooks not installed?"
 
-		intids = component.getUtility(IIntIds)
+		lsm = dataserver_folder.getSiteManager()
+		intids = lsm.getUtility(IIntIds)
 		catalog = get_catalog()
-		catalog._last_modified = BTrees.family64.OI.BTree()
+		catalog._last_modified = intids.family.OI.BTree()
 
 		# Load library
 		library = component.queryUtility(IContentPackageLibrary)
