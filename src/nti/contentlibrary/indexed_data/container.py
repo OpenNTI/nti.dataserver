@@ -56,7 +56,7 @@ class IndexedDataContainer(object):
 												 ntiid=key,
 												 intids=self.intids))
 		if len(items) == 1:
-			return self.items[0]
+			return items[0]
 		else:
 			raise KeyError(key)
 
