@@ -22,13 +22,13 @@ from zope.intid import IIntIds
 
 from persistent import Persistent
 
+from nti.app.contentlibrary.subscribers import _get_file_last_mod_namespace
 from nti.app.contentlibrary.subscribers import _clear_when_removed
 from nti.app.contentlibrary.subscribers import _remove_from_registry
 from nti.app.contentlibrary.subscribers import _load_and_register_json
 from nti.app.contentlibrary.subscribers import _load_and_register_slidedeck_json
 
 from nti.contentlibrary.indexed_data import get_catalog
-from nti.contentlibrary.indexed_data import get_index_last_modified
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contenttypes.presentation import ALL_PRESENTATION_ASSETS_INTERFACES
@@ -90,7 +90,8 @@ class TestSubscribers(ContentlibraryLayerTest):
 		catalog = get_catalog()
 		results = catalog.search_objects(container_ntiids=(unit_ntiid,))
 		assert_that(results, has_length(4))
-		last_mod = get_index_last_modified( 'video_index.json', content_package )
+		last_mod_namespace = _get_file_last_mod_namespace( content_package, 'video_index.json' )
+		last_mod = catalog.get_last_modified( last_mod_namespace )
 		assert_that( last_mod, not_none() )
 
 		# Namespace

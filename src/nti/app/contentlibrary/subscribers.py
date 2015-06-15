@@ -19,8 +19,6 @@ from ZODB.interfaces import IConnection
 
 from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data import get_registry
-from nti.contentlibrary.indexed_data import get_index_last_modified
-from nti.contentlibrary.indexed_data import set_index_last_modified
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
@@ -195,20 +193,25 @@ def _get_container_tree(container_id):
 	results = {path.ntiid for path in paths} if paths else ()
 	return results
 
+def _get_file_last_mod_namespace( unit, filename ):
+	return '%s.%s.LastModified' % ( unit.ntiid, filename )
+
 def _update_index_when_content_changes(content_package, index_filename, item_iface, object_creator):
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	last_modified = get_index_last_modified( index_filename, content_package )
+	catalog = get_catalog()
+	last_mod_namespace = _get_file_last_mod_namespace( content_package, index_filename )
+	last_modified = catalog.get_last_modified( last_mod_namespace )
 	if 		last_modified \
 		and last_modified >= sibling_key.lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
 					sibling_key.lastModified)
 		return
-	set_index_last_modified( index_filename, content_package, sibling_key.lastModified )
+	catalog.set_last_modified( last_mod_namespace )
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
@@ -218,7 +221,6 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 	index = simplejson.loads(index_text)
 	registry = get_registry()
 	connection = _connection(registry)
-	catalog = get_catalog()
 	intids = component.queryUtility(IIntIds)
 
 	removed = _remove_from_registry(namespace=content_package.ntiid,

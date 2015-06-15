@@ -9,15 +9,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
-
-from zope.intid import IIntIds
-
+import six
+import time
 import BTrees
+
+from zope import component
+from zope.intid import IIntIds
 
 from persistent import Persistent
 
 from nti.common.property import alias
+from nti.common.time import bit64_int_to_time
+from nti.common.time import time_to_64bit_int
 from nti.common.iterables import is_nonstr_iter
 
 from nti.zope_catalog.catalog import ResultSet
@@ -85,9 +88,9 @@ class NamespaceIndex(CheckRawValueIndex):
 
 class ValidatingNTIID(object):
 	"""
-	The "interface" we adapt to to find the NTIID 
+	The "interface" we adapt to to find the NTIID
 	"""
-	
+
 	NTIID = alias('ntiid')
 
 	def __init__(self, obj, default):
@@ -110,7 +113,7 @@ class ContainedObjectCatalog(Persistent):
 	ntiid_index = alias('_ntiid_index')
 	container_index = alias('_container_index')
 	namespace_index = alias('_namespace_index')
-	
+
 	def __init__(self):
 		self.reset()
 
@@ -123,6 +126,25 @@ class ContainedObjectCatalog(Persistent):
 		self._container_index = KeepSetIndex(family=self.family)
 		# Track the source/file name an object was read from
 		self._namespace_index = NamespaceIndex(family=self.family)
+		# Last mod by ntiid
+		self._last_modified = self.family.OI.BTree()
+
+	def get_last_modified(self, namespace):
+		try:
+			return bit64_int_to_time(self._last_modified[namespace])
+		except KeyError:
+			return 0
+
+	def set_last_modified(self, namespace, t=None):
+		assert isinstance(namespace, six.string_types)
+		t = time.time() if t is None else t
+		self._last_modified[namespace] = time_to_64bit_int(t)
+
+	def remove_last_modified(self, namespace):
+		try:
+			del self._last_modified[namespace]
+		except KeyError:
+			pass
 
 	def _doc_id(self, item, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
@@ -136,10 +158,10 @@ class ContainedObjectCatalog(Persistent):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
-			result = self.family.IF.LFSet()
+			result = set()
 		else:
 			result = self._container_index.documents_to_values.get(doc_id)
-			result = self.family.IF.LFSet(result or ())
+			result = set(result or ())
 		return result
 
 	def remove_containers(self, item, containers, intids=None):
@@ -157,7 +179,7 @@ class ContainedObjectCatalog(Persistent):
 			return True
 		return False
 
-	def get_references(self, container_ntiids=None, provided=None, 
+	def get_references(self, container_ntiids=None, provided=None,
 					   namespace=None, ntiid=None):
 		result = None
 		# Provided is interface that maps to our type adapter
@@ -174,7 +196,7 @@ class ContainedObjectCatalog(Persistent):
 					result = self.family.IF.intersection(result, ids)
 		return result if result else self.family.IF.LFSet()
 
-	def search_objects(self, container_ntiids=None, provided=None, namespace=None, 
+	def search_objects(self, container_ntiids=None, provided=None, namespace=None,
 					   ntiid=None, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
@@ -204,7 +226,7 @@ class ContainedObjectCatalog(Persistent):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
-		for index in (self._container_index, self._type_index, 
+		for index in (self._container_index, self._type_index,
 					  self._namespace_index, self._ntiid_index):
 			index.unindex_doc(doc_id)
 		return True
