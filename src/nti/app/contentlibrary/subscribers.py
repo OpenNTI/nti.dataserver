@@ -193,25 +193,25 @@ def _get_container_tree(container_id):
 	results = {path.ntiid for path in paths} if paths else ()
 	return results
 
-def _get_file_last_mod_namespace( unit, filename ):
-	return '%s.%s.LastModified' % ( unit.ntiid, filename )
+def _get_file_last_mod_namespace(unit, filename):
+	return '%s.%s.LastModified' % (unit.ntiid, filename)
 
 def _update_index_when_content_changes(content_package, index_filename, item_iface, object_creator):
+	catalog = get_catalog()
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	catalog = get_catalog()
-	last_mod_namespace = _get_file_last_mod_namespace( content_package, index_filename )
-	last_modified = catalog.get_last_modified( last_mod_namespace )
-	if 		last_modified \
-		and last_modified >= sibling_key.lastModified:
+	sk_lastModified = sibling_key.lastModified
+	last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
+	last_modified = catalog.get_last_modified(last_mod_namespace)
+	if last_modified and last_modified >= sk_lastModified:
 		logger.info("No change to %s since %s, ignoring",
 					sibling_key,
-					sibling_key.lastModified)
+					sk_lastModified)
 		return
-	catalog.set_last_modified( last_mod_namespace )
+	catalog.set_last_modified(last_mod_namespace, sk_lastModified)
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
