@@ -20,10 +20,8 @@ import fudge
 import gevent
 import quopri
 
-from unittest import TestCase
-
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.app.bulkemail import views as bulk_email_views
 
@@ -36,8 +34,9 @@ from nti.externalization.oids import to_external_ntiid_oid
 from nti.ntiids import ntiids
 
 from nti.dataserver import contenttypes
-from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.users.users import User
+
+from nti.dataserver.tests import mock_dataserver
 
 from nti.appserver.tests import ExLibraryApplicationTestLayer
 
@@ -71,6 +70,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	layer = ExLibraryApplicationTestLayer
 
+	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_path_to_note_container(self):
 		from ..digest_email import _TemplateArgs
 		args = _TemplateArgs([self], None)
@@ -212,12 +212,12 @@ class TestApplicationDigest(ApplicationLayerTest):
 	@fudge.patch('boto.ses.connect_to_region')
 	def test_with_notable_data_in_required_community(self, fake_connect):
 		from nti.appserver.policies.site_policies import DevmodeSitePolicyEventListener
-		from nti.dataserver.users import User, Entity
+		from nti.dataserver.users import Entity
 		assert_that( getattr(DevmodeSitePolicyEventListener, 'COM_USERNAME', self), is_(none()))
 		DevmodeSitePolicyEventListener.COM_USERNAME = 'Everyone'
 		with mock_dataserver.mock_db_trans(self.ds):
 			everyone = Entity.get_entity('Everyone')
-			everyone._note_member(User.get_user('jason'))
+			everyone._note_member(Entity.get_entity('jason'))
 
 		try:
 			self._do_test_sends_one(fake_connect)
