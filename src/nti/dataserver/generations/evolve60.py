@@ -16,6 +16,8 @@ import functools
 from zope import component
 from zope import interface
 
+from zope.annotation.interfaces import IAnnotations
+
 from zope.component.hooks import site, setHooks
 
 from zope.intid.interfaces import IIntIds
@@ -28,6 +30,8 @@ from nti.app.contentlibrary.subscribers import _update_related_content_index_whe
 
 from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
+from nti.contentlibrary.indexed_data.interfaces import CONTAINER_IFACES
+from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
@@ -49,6 +53,23 @@ class MockDataserver(object):
 			return resolver.get_object_by_oid(oid, ignore_creator=ignore_creator)
 		return None
 
+def _drop_annotation(unit, iface):
+	key = 'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
+	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE, '')
+	if namespace:
+		key = key + '_' + namespace
+	annotations = IAnnotations(unit)
+	annotations.data.pop(key, None)
+
+def _drop_annotations_for_unit(unit):
+	"""
+	Recursively remove annotation for the given unit and children.
+	"""
+	for iface in CONTAINER_IFACES:
+		_drop_annotation(unit, iface)
+	for child in unit.children:
+		_drop_annotations_for_unit(child)
+
 def index_library(intids):
 	library = component.queryUtility(IContentPackageLibrary)
 	if library is not None:
@@ -57,6 +78,7 @@ def index_library(intids):
 			uid = intids.queryId(package)
 			if uid is not None:
 				logger.info('Indexing (%s)', package)
+				_drop_annotations_for_unit(package)
 				_update_audio_index_when_content_changes(package, None)
 				_update_video_index_when_content_changes(package, None)
 				_update_timeline_index_when_content_changes(package, None)
