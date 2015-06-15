@@ -71,7 +71,7 @@ class IndexedDataContainer(object):
 		items = self.catalog.get_references(container_ntiids=(self.ntiid,),
 											provided=self.type,
 											ntiid=key)
-		return len(items or ()) == 1
+		return len(items) == 1
 
 	@property
 	def doc_ids(self):
