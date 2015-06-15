@@ -15,15 +15,11 @@ from zope import interface
 
 from zope.interface.common.mapping import IEnumerableMapping
 
-from zope.container.interfaces import ILocation
+TAG_NAMESPACE_FILE = 'nti.contentlibrary.indexed_data.NamespaceFile'
 
-from nti.coremetadata.interfaces import ILastModified
-
-class IIndexedDataContainer(ILocation, ILastModified, IEnumerableMapping):
+class IIndexedDataContainer(IEnumerableMapping):
 	"""
-	The indexed data for a content unit. Because content units
-	are not always persistent, this should not hold a direct reference
-	to the content unit.
+	The indexed data for a content unit. 
 
 	These are expected to be accessed by adapting the content
 	unit to this interface; there may be several different
@@ -49,19 +45,7 @@ class IIndexedDataContainer(ILocation, ILastModified, IEnumerableMapping):
 		ntiid?
 		"""
 
-class IWritableIndexedDataContainer(IIndexedDataContainer):
-	"""
-	For updating/writing the data container.
-	"""
-
-	def set_data_items(data_items):
-		"""
-		Make this container hold the given sequence of data items.
-		"""
-
-TAG_NAMESPACE_FILE = 'nti.contentlibrary.indexed_data.NamespaceFile'
-
-class IAudioIndexedDataContainer(IWritableIndexedDataContainer):
+class IAudioIndexedDataContainer(IIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for audio index data.
 	"""
@@ -69,7 +53,7 @@ class IAudioIndexedDataContainer(IWritableIndexedDataContainer):
 IAudioIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 										  'audio_index.json')
 
-class IVideoIndexedDataContainer(IWritableIndexedDataContainer):
+class IVideoIndexedDataContainer(IIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for video index data.
 	"""
@@ -77,7 +61,7 @@ class IVideoIndexedDataContainer(IWritableIndexedDataContainer):
 IVideoIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 										  'video_index.json')
 
-class IRelatedContentIndexedDataContainer(IWritableIndexedDataContainer):
+class IRelatedContentIndexedDataContainer(IIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for related content index data.
 	"""
@@ -86,7 +70,7 @@ IRelatedContentIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 												   'related_content_index.json')
 
 
-class ITimelineIndexedDataContainer(IWritableIndexedDataContainer):
+class ITimelineIndexedDataContainer(IIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for timeline data.
 	"""
@@ -94,7 +78,7 @@ class ITimelineIndexedDataContainer(IWritableIndexedDataContainer):
 ITimelineIndexedDataContainer.setTaggedValue(TAG_NAMESPACE_FILE,
 									  		'timeline_index.json')
 
-class ISlideDeckIndexedDataContainer(IWritableIndexedDataContainer):
+class ISlideDeckIndexedDataContainer(IIndexedDataContainer):
 	"""
 	Special adapter, pre-namespaced for slidedeck data.
 	"""

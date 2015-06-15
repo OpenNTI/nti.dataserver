@@ -17,6 +17,7 @@ import BTrees
 
 from persistent import Persistent
 
+from nti.common.property import alias
 from nti.common.iterables import is_nonstr_iter
 
 from nti.zope_catalog.catalog import ResultSet
@@ -82,6 +83,23 @@ class TypeIndex(ValueIndex):
 class NamespaceIndex(CheckRawValueIndex):
 	pass
 
+class ValidatingNTIID(object):
+	"""
+	The "interface" we adapt to to find the NTIID 
+	"""
+	
+	NTIID = alias('ntiid')
+
+	def __init__(self, obj, default):
+		self.ntiid = getattr(obj, "NTIID", None) or getattr(obj, "ntiid", None)
+
+	def __reduce__(self):
+		raise TypeError()
+
+class NTIIDIndex(ValueIndex):
+	default_field_name = 'ntiid'
+	default_interface = ValidatingNTIID
+
 class ContainedObjectCatalog(Persistent):
 
 	family = BTrees.family64
@@ -92,6 +110,8 @@ class ContainedObjectCatalog(Persistent):
 	def reset(self):
 		# Track the object type (interface name)
 		self._type_index = TypeIndex(family=self.family)
+		# Track the ntiid of the object
+		self._ntiid_index = NTIIDIndex(family=self.family)
 		# Track the containers the object belongs to
 		self._container_index = KeepSetIndex(family=self.family)
 		# Track the source/file name an object was read from
@@ -130,10 +150,11 @@ class ContainedObjectCatalog(Persistent):
 			return True
 		return False
 
-	def get_references(self, container_ntiids=None, provided=None, namespace=None):
+	def get_references(self, container_ntiids=None, provided=None, namespace=None, ntiid=None):
 		result = None
 		# Provided is interface that maps to our type adapter
-		for index, value, query in ((self._type_index, provided, 'any_of'),
+		for index, value, query in ((self._ntiid_index, ntiid, 'any_of'),
+									(self._type_index, provided, 'any_of'),
 									(self._namespace_index, namespace, 'any_of'),
 							  		(self._container_index, container_ntiids, 'all_of')):
 			if value is not None:
@@ -145,10 +166,11 @@ class ContainedObjectCatalog(Persistent):
 					result = self.family.IF.intersection(result, ids)
 		return result or ()
 
-	def search_objects(self, container_ntiids=None, provided=None, namespace=None, intids=None):
+	def search_objects(self, container_ntiids=None, provided=None, namespace=None, 
+					   ntiid=None, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
-			refs = self.get_references(container_ntiids, provided, namespace)
+			refs = self.get_references(container_ntiids, provided, namespace, ntiid)
 			result = ResultSet(refs, intids)
 		else:
 			result = ()
@@ -163,6 +185,7 @@ class ContainedObjectCatalog(Persistent):
 			namespace = getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
+							 (self._ntiid_index, item),
 							 (self._namespace_index, namespace),
 							 (self._container_index, container_ntiids)):
 			if value is not None:
