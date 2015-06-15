@@ -17,6 +17,7 @@ from zope import interface
 from zope.intid import IIntIds
 
 from nti.common.property import Lazy
+
 from nti.zope_catalog.catalog import ResultSet
 
 from .interfaces import IIndexedDataContainer
