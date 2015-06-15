@@ -16,11 +16,12 @@ from . import MessageFactory as _
 import time
 import collections
 
-from zope.intid.interfaces import IIntIds
-
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.interface.interfaces import ComponentLookupError
+
+from zope.intid.interfaces import IIntIds
 
 from zc.displayname.interfaces import IDisplayNameGenerator
 
@@ -183,10 +184,10 @@ class _TemplateArgs(object):
 		if path:
 			return path
 
-		ifaces = (IAudioIndexedDataContainer,IVideoIndexedDataContainer)
+		ifaces = (IAudioIndexedDataContainer, IVideoIndexedDataContainer)
 		def _search(unit):
 			for iface in ifaces:
-				if iface(unit).contains_data_item_with_ntiid(name):
+				if name in iface(unit):
 					return lib.pathToNTIID(unit.ntiid)
 			for child in unit.children:
 				r = _search(child)
@@ -294,7 +295,7 @@ class DigestEmailCollector(object):
 		last_viewed_data = notable_data.lastViewed or self.remoteUser.lastLoginTime
 		historical_cap = self.historical_cap()
 
-		min_created_time = max( last_email_sent, last_time_collected, last_viewed_data, historical_cap )
+		min_created_time = max(last_email_sent, last_time_collected, last_viewed_data, historical_cap)
 		return min_created_time
 
 	def __call__(self):
@@ -322,7 +323,7 @@ class DigestEmailCollector(object):
 			logger.error("Ignoring removed/unregistered user %s", self.remoteUser)
 			return
 
-		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
+		notable_data = component.getMultiAdapter((self.remoteUser, self.request),
 												  IUserNotableData)
 
 		# Has anything notable happened since the user last checked?
@@ -340,7 +341,7 @@ class DigestEmailCollector(object):
 		notable_intids_since_last_viewed = notable_data.get_notable_intids(min_created_time=min_created_time)
 		if not notable_intids_since_last_viewed:
 			# Hooray, nothing to do
-			logger.debug( "User %s/%s had 0 notable items since %s",
+			logger.debug("User %s/%s had 0 notable items since %s",
 						  self.remoteUser, addr.email, min_created_time)
 
 			return
@@ -365,7 +366,7 @@ class DigestEmailCollector(object):
 		# because it is not IContentTypeAware, it will be dropped!
 		sorted_by_type_time = notable_data.sort_notable_intids(sorted_by_time,
 															   field_name='mimeType',
-															   reify=True )
+															   reify=True)
 
 		logger.debug("User %s/%s had %d notable items since %s",
 					  self.remoteUser, addr.email, len(sorted_by_type_time), min_created_time)
@@ -382,7 +383,7 @@ class DigestEmailCollector(object):
 
 		values = collections.defaultdict(list)
 
-		notable_data = component.getMultiAdapter( (self.remoteUser, self.request),
+		notable_data = component.getMultiAdapter((self.remoteUser, self.request),
 												  IUserNotableData)
 
 		total_found = 0
@@ -413,9 +414,9 @@ class DigestEmailCollector(object):
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
 		# We may want to exclude 'circled' and others from this count?
-		result['total_remaining'] = sum( [ x.remaining for x in result.values() if isinstance( x, _TemplateArgs ) ] )
+		result['total_remaining'] = sum([ x.remaining for x in result.values() if isinstance(x, _TemplateArgs) ])
 		if result['total_remaining']:
-			result['total_remaining_href'] = _TemplateArgs( (None,), request, self.remoteUser ).total_remaining_href
+			result['total_remaining_href'] = _TemplateArgs((None,), request, self.remoteUser).total_remaining_href
 		return result
 
 from nti.externalization.singleton import SingletonDecorator
@@ -520,8 +521,8 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		# principal IDs, not the passed-in remote user
 		# (Which is weird, I know), so we must be sure
 		# to impersonate each user as we ask for notable data
-		auth_policy = component.getUtility( IAuthenticationPolicy )
-		imp_policy = IImpersonatedAuthenticationPolicy( auth_policy )
+		auth_policy = component.getUtility(IAuthenticationPolicy)
+		imp_policy = IImpersonatedAuthenticationPolicy(auth_policy)
 
 		# If we can find a community for the current site, we
 		# must filter users to only those within that community.
@@ -541,7 +542,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 		now = time.time()
 		for user in users_folder:
 			if self._accept_user(user):
-				imp_user = imp_policy.impersonating_userid( user.username )
+				imp_user = imp_policy.impersonating_userid(user.username)
 				with imp_user():
 					collector = self._collector_for_user(user)
 					collector.collection_time = now
@@ -552,7 +553,7 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 						yield possible_recipient
 
 	def compute_template_args_for_recipient(self, recipient):
-		user = User.get_user( recipient['email'].id, self._dataserver )
+		user = User.get_user(recipient['email'].id, self._dataserver)
 		# XXX If the user disappears, we're screwed.
 		collector = DigestEmailCollector(user, self.request)
 
@@ -586,10 +587,10 @@ class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):
 
 class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
-	_subject =  'TEST - ' + DigestEmailProcessDelegate._subject
+	_subject = 'TEST - ' + DigestEmailProcessDelegate._subject
 
 	def _accept_user(self, user):
-		if super(DigestEmailProcessTestingDelegate,self)._accept_user(user):
+		if super(DigestEmailProcessTestingDelegate, self)._accept_user(user):
 			if user.username in ('ossmkitty', 'madd2844'):
 				return True
 
@@ -613,11 +614,11 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 		return collector
 
 	def collect_recipients(self):
-		for possible_recipient in super(DigestEmailProcessTestingDelegate,self).collect_recipients():
+		for possible_recipient in super(DigestEmailProcessTestingDelegate, self).collect_recipients():
 			# Reset the sent and collected times if desired
 			self._collector_for_user(User.get_user(possible_recipient['email'].id, self._dataserver))
 
-			logger.info( "User %s/%s had %d notable objects",
+			logger.info("User %s/%s had %d notable objects",
 						 possible_recipient['email'].id, possible_recipient['email'].email,
 						 len(possible_recipient['template_args']))
 			if self.request.get('override_to'):
