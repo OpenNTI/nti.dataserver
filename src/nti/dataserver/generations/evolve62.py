@@ -13,19 +13,20 @@ generation = 62
 
 import functools
 
-from zope import interface
 from zope import component
+from zope import interface
+
+from zope.annotation.interfaces import IAnnotations
+
+from zope.intid.interfaces import IIntIds
+
+from zope.component.hooks import site, setHooks
 
 from nti.common.time import time_to_64bit_int
 
-from zope.component.hooks import site, setHooks
-from zope.intid.interfaces import IIntIds
-from zope.annotation.interfaces import IAnnotations
-
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
 from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
@@ -111,7 +112,6 @@ def do_evolve(context):
 
 		_index_library( intids )
 		run_job_in_all_host_sites(functools.partial(_index_library, intids))
-
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):

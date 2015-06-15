@@ -38,9 +38,8 @@ def do_evolve(context):
 	docs_ids = catalog._type_index.documents_to_values.keys()
 	for doc_id, value in ResultSet(docs_ids, intids, True).iter_pairs():
 		catalog._ntiid_index.index_doc(doc_id, value)
-		
 	logger.info('Dataserver evolution %s done.', generation)
-
+	
 def evolve(context):
 	"""
 	Evolve to generation 61 by adding an index to the library index catalog
