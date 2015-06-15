@@ -44,26 +44,6 @@ NTI_SLIDE_DECK_TYPE = 'INTISlideDeck'
 NTI_SLIDE_VIDEO_TYPE = 'INTISlideVideo'
 NTI_RELATED_WORK_TYPE = NTI_RELATED_WORK_REF_TYPE = 'INTIRelatedWorkRef'
 
-# LastModified
-BASE_KEY = 'nti.contentlibrary.indexed_data.LastModified'
-
-def _get_key(index_filename):
-	key = BASE_KEY
-	if index_filename:
-		key = key + '_' + index_filename
-	return key
-
-def get_index_last_modified(index_filename, unit):
-	key = _get_key(index_filename)
-	annotes = IAnnotations(unit)
-	return annotes.get(key)
-
-def set_index_last_modified(index_filename, unit, now=None):
-	now = time.time() if now is None else now
-	key = _get_key(index_filename)
-	annotes = IAnnotations(unit)
-	annotes[key] = now
-
 # Registry
 def get_registry(registry=None):
 	if registry is None:

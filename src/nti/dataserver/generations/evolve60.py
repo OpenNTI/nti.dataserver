@@ -75,9 +75,7 @@ def index_library(intids):
 		for package in library.contentPackages:
 			uid = intids.queryId(package)
 			if uid is not None:
-				# Remove annotations for our package, the
-				# annotation will get regenerated with a
-				# timestamp such that we re-index.
+				# Remove annotations for our package.
 				_drop_annotations_for_unit(package)
 				logger.info('Indexing (%s)', package)
 				_update_audio_index_when_content_changes(package, None)
