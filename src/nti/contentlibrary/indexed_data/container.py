@@ -11,9 +11,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
+from zope.intid import IIntIds
+
 from nti.common.property import Lazy
+from nti.zope_catalog.catalog import ResultSet
 
 from .interfaces import IIndexedDataContainer
 from .interfaces import IAudioIndexedDataContainer
@@ -24,20 +28,35 @@ from .interfaces import IRelatedContentIndexedDataContainer
 
 from . import get_catalog
 
+from . import NTI_AUDIO_TYPE
+from . import NTI_VIDEO_TYPE
+from . import NTI_TIMELINE_TYPE
+from . import NTI_SLIDE_DECK_TYPE
+from . import NTI_RELATED_WORK_REF_TYPE
+
 @interface.implementer(IIndexedDataContainer)
 class IndexedDataContainer(object):
 
-	def __init__(self, ntiid):
-		self.ntiid = ntiid
+	type = None
+
+	def __init__(self, unit):
+		self.ntiid = getattr(unit, 'ntiid', str(unit))
 
 	@Lazy
 	def catalog(self):
 		return get_catalog()
 
+	@Lazy
+	def intids(self):
+		return component.getUtility(IIntIds)
+
 	def __getitem__(self, key):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return self._data[key]
+		items = list(self.catalog.search_objects(container_ntiids=(self.ntiid,),
+												 provided=self.type,
+												 ntiid=key,
+												 intids=self.intids))
+		if len(items) == 1:
+			return self.items[0]
 		else:
 			raise KeyError(key)
 
@@ -47,55 +66,55 @@ class IndexedDataContainer(object):
 		except KeyError:
 			return default
 
-	def __contains__(self, ntiid):
-		self._p_activate()
-		return '_data' in self.__dict__ and ntiid in self._data
-	contains_data_item_with_ntiid = __contains__
+	def __contains__(self, key):
+		items = self.catalog.get_references(container_ntiids=(self.ntiid,),
+											provided=self.type,
+											ntiid=key)
+		return len(items or ()) == 1
+
+	@property
+	def doc_ids(self):
+		result = self.catalog.get_references(container_ntiids=(self.ntiid,),
+											 provided=self.type)
+		return result
 
 	def keys(self):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return self._data.keys()
-		return ()
+		ntiid_index = self.catalog.ntiid_index
+		for doc_id in self.doc_ids:
+			value = ntiid_index.documents_to_values.get(doc_id)
+			if value is not None:
+				yield value
 
 	def __iter__(self):
 		return iter(self.keys())
 
 	def values(self):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return self._data.values()
-		return ()
-	get_data_items = values
+		for obj in ResultSet(self.doc_ids, self.intids, True):
+			yield obj
 
 	def items(self):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return self._data.items()
-		return ()
+		for doc_id, value in ResultSet(self.doc_ids, self.intids, True).iter_pairs():
+			return doc_id, value
 
 	def __len__(self):
-		self._p_activate()
-		if '_data' in self.__dict__:
-			return len(self._data)
-		return 0
+		return len(self.doc_ids)
 
 @interface.implementer(IAudioIndexedDataContainer)
 class AudioIndexedDataContainer(IndexedDataContainer):
-	pass
+	type = NTI_AUDIO_TYPE
 
 @interface.implementer(IVideoIndexedDataContainer)
 class VideoIndexedDataContainer(IndexedDataContainer):
-	pass
+	type = NTI_VIDEO_TYPE
 
 @interface.implementer(IRelatedContentIndexedDataContainer)
 class RelatedContentIndexedDataContainer(IndexedDataContainer):
-	pass
+	type = NTI_RELATED_WORK_REF_TYPE
 
 @interface.implementer(ITimelineIndexedDataContainer)
 class TimelineIndexedDataContainer(IndexedDataContainer):
-	pass
+	type = NTI_TIMELINE_TYPE
 
 @interface.implementer(ISlideDeckIndexedDataContainer)
 class SlideDeckIndexedDataContainer(IndexedDataContainer):
-	pass
+	type = NTI_SLIDE_DECK_TYPE

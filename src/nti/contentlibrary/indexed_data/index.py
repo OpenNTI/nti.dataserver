@@ -104,6 +104,11 @@ class ContainedObjectCatalog(Persistent):
 
 	family = BTrees.family64
 
+	type_index = alias('_type_index')
+	ntiid_index = alias('_ntiid_index')
+	container_index = alias('_container_index')
+	namespace_index = alias('_namespace_index')
+	
 	def __init__(self):
 		self.reset()
 
@@ -132,7 +137,7 @@ class ContainedObjectCatalog(Persistent):
 			result = ()
 		else:
 			result = self._container_index.documents_to_values.get(doc_id)
-			result = set(result or ())
+			result = self.family.IF.LFSet(result or ())
 		return result
 
 	def remove_containers(self, item, containers, intids=None):
@@ -150,7 +155,8 @@ class ContainedObjectCatalog(Persistent):
 			return True
 		return False
 
-	def get_references(self, container_ntiids=None, provided=None, namespace=None, ntiid=None):
+	def get_references(self, container_ntiids=None, provided=None, 
+					   namespace=None, ntiid=None):
 		result = None
 		# Provided is interface that maps to our type adapter
 		for index, value, query in ((self._ntiid_index, ntiid, 'any_of'),
@@ -164,7 +170,7 @@ class ContainedObjectCatalog(Persistent):
 					result = ids
 				else:
 					result = self.family.IF.intersection(result, ids)
-		return result or ()
+		return result or self.family.IF.LFSet()
 
 	def search_objects(self, container_ntiids=None, provided=None, namespace=None, 
 					   ntiid=None, intids=None):

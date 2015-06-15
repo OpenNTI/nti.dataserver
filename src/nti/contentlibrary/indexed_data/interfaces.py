@@ -13,11 +13,11 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.interface.common.mapping import IEnumerableMapping
+from zope.interface.common.mapping import IReadMapping
 
 TAG_NAMESPACE_FILE = 'nti.contentlibrary.indexed_data.NamespaceFile'
 
-class IIndexedDataContainer(IEnumerableMapping):
+class IIndexedDataContainer(IReadMapping):
 	"""
 	The indexed data for a content unit. 
 
@@ -32,18 +32,6 @@ class IIndexedDataContainer(IEnumerableMapping):
 	"""
 
 	ntiid = interface.Attribute("The NTIID of the content unit.")
-
-	def get_data_items():
-		"""
-		Return an iterable across the data items associated with
-		this container in this namespace.
-		"""
-
-	def contains_data_item_with_ntiid(ntiid):
-		"""
-		Does this container (content unit) have data for the given
-		ntiid?
-		"""
 
 class IAudioIndexedDataContainer(IIndexedDataContainer):
 	"""

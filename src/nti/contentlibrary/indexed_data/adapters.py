@@ -68,5 +68,3 @@ def _make_adapters():
 		func_name = base + '_indexed_data_adapter'
 		func.__name__ = str(func_name)
 		frame.f_globals[func_name] = func
-
-_make_adapters()
