@@ -13,56 +13,26 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.cachedescriptors.property import Lazy
+from nti.common.property import Lazy
 
-from zc.dict import Dict
-
-from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
-
+from .interfaces import IIndexedDataContainer
 from .interfaces import IAudioIndexedDataContainer
 from .interfaces import IVideoIndexedDataContainer
-from .interfaces import IWritableIndexedDataContainer
 from .interfaces import ITimelineIndexedDataContainer
 from .interfaces import ISlideDeckIndexedDataContainer
 from .interfaces import IRelatedContentIndexedDataContainer
 
-class _IndexedDataDict(Dict):
-	__parent__ = None
-	__name__ = None
+from . import get_catalog
 
-@interface.implementer(IWritableIndexedDataContainer)
-class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
-
-	__parent__ = None
-	__name__ = None
+@interface.implementer(IIndexedDataContainer)
+class IndexedDataContainer(object):
 
 	def __init__(self, ntiid):
-		super(IndexedDataContainer, self).__init__()
 		self.ntiid = ntiid
-		# Override the super and do not set lastModified
-		# to current time because we will want to track it
-		# externally; instead, set it to the default for
-		# "unknown"
-		self.lastModified = -1
 
 	@Lazy
-	def _data(self):
-		data = _IndexedDataDict()
-		data.__parent__ = self
-		self._p_changed = True
-		return data
-
-	def set_data_items(self, data_items):
-		self._p_activate()
-
-		if '_data' in self.__dict__:
-			self._data.clear()
-
-		data = self._data
-		for item in data_items or ():
-			ntiid = item.get('ntiid') or item.get('NTIID')
-			if ntiid:
-				data[ntiid] = item
+	def catalog(self):
+		return get_catalog()
 
 	def __getitem__(self, key):
 		self._p_activate()
