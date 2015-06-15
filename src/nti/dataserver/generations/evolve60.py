@@ -16,8 +16,6 @@ import functools
 from zope import component
 from zope import interface
 
-from zope.annotation.interfaces import IAnnotations
-
 from zope.component.hooks import site, setHooks
 
 from zope.intid.interfaces import IIntIds
@@ -28,16 +26,15 @@ from nti.app.contentlibrary.subscribers import _update_timeline_index_when_conte
 from nti.app.contentlibrary.subscribers import _update_slidedeck_index_when_content_changes
 from nti.app.contentlibrary.subscribers import _update_related_content_index_when_content_changes
 
+from nti.contentlibrary.indexed_data import get_catalog
+from nti.contentlibrary.indexed_data.index import NTIIDIndex
+
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from nti.contentlibrary.indexed_data.interfaces import CONTAINER_IFACES
-
-from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):
@@ -52,22 +49,6 @@ class MockDataserver(object):
 			return resolver.get_object_by_oid(oid, ignore_creator=ignore_creator)
 		return None
 
-def _drop_annotation(unit, iface):
-	key = 'nti.contentlibrary.indexed_data.container.IndexedDataContainer'
-	namespace = iface.queryTaggedValue(TAG_NAMESPACE_FILE, '')
-	if namespace:
-		key = key + '_' + namespace
-
-	annotations = IAnnotations(unit)
-	annotations.data.pop(key, None)
-
-def _drop_annotations_for_unit(unit):
-	"Recursively remove annotation for the given unit and children."
-	for iface in CONTAINER_IFACES:
-		_drop_annotation(unit, iface)
-	for child in unit.children:
-		_drop_annotations_for_unit(child)
-
 def index_library(intids):
 	library = component.queryUtility(IContentPackageLibrary)
 	if library is not None:
@@ -75,8 +56,6 @@ def index_library(intids):
 		for package in library.contentPackages:
 			uid = intids.queryId(package)
 			if uid is not None:
-				# Remove annotations for our package.
-				_drop_annotations_for_unit(package)
 				logger.info('Indexing (%s)', package)
 				_update_audio_index_when_content_changes(package, None)
 				_update_video_index_when_content_changes(package, None)
@@ -98,9 +77,17 @@ def do_evolve(context):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
-		intids = component.getUtility(IIntIds)
-
-		# Load library
+		lsm = ds_folder.getSiteManager()
+		intids = lsm.getUtility(IIntIds)
+		catalog = get_catalog()
+		
+		if not hasattr(catalog, '_ntiid_index'):
+			catalog._ntiid_index = NTIIDIndex(family=intids.family)
+		
+		if not hasattr(catalog, '_last_modified'):
+			catalog._last_modified = intids.family.OI.BTree()
+		
+		# load library
 		library = component.queryUtility(IContentPackageLibrary)
 		if library is not None:
 			library.syncContentPackages()

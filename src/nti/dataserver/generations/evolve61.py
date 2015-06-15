@@ -31,11 +31,13 @@ def do_evolve(context):
 	intids = lsm.getUtility(IIntIds)
 
 	catalog = lsm.getUtility(IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
-	if not hasattr(catalog, '_ntiid_index'):
-		catalog._ntiid_index = NTIIDIndex(family=intids.family)
-		docs_ids = catalog._type_index.documents_to_values.keys()
-		for doc_id, value in ResultSet(docs_ids, intids, True).iter_pairs():
-			catalog._ntiid_index.index_doc(doc_id, value)
+	if hasattr(catalog, '_ntiid_index'):
+		return # process done
+	
+	catalog._ntiid_index = NTIIDIndex(family=intids.family)
+	docs_ids = catalog._type_index.documents_to_values.keys()
+	for doc_id, value in ResultSet(docs_ids, intids, True).iter_pairs():
+		catalog._ntiid_index.index_doc(doc_id, value)
 		
 	logger.info('Dataserver evolution %s done.', generation)
 
