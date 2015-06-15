@@ -7,6 +7,7 @@ Container implementations.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from operator import __contains__
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -72,6 +73,7 @@ class IndexedDataContainer(object):
 											provided=self.type,
 											ntiid=key)
 		return len(items) == 1
+	contains_data_item_with_ntiid = __contains__
 
 	@property
 	def doc_ids(self):
@@ -92,6 +94,7 @@ class IndexedDataContainer(object):
 	def values(self):
 		for obj in ResultSet(self.doc_ids, self.intids, True):
 			yield obj
+	get_data_items = values
 
 	def items(self):
 		for doc_id, value in ResultSet(self.doc_ids, self.intids, True).iter_pairs():
