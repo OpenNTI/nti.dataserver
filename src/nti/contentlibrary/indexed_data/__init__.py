@@ -19,12 +19,9 @@ import time
 
 from zope import component
 
-from zope.annotation.interfaces import IAnnotations
-
 from ..interfaces import IContentPackageLibrary
 from ..interfaces import IGlobalContentPackageLibrary
 
-from .interfaces import TAG_NAMESPACE_FILE
 from .interfaces import IContainedObjectCatalog
 
 # catalog
