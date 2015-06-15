@@ -134,7 +134,7 @@ class ContainedObjectCatalog(Persistent):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
-			result = ()
+			result = self.family.IF.LFSet()
 		else:
 			result = self._container_index.documents_to_values.get(doc_id)
 			result = self.family.IF.LFSet(result or ())
@@ -170,7 +170,7 @@ class ContainedObjectCatalog(Persistent):
 					result = ids
 				else:
 					result = self.family.IF.intersection(result, ids)
-		return result or self.family.IF.LFSet()
+		return result if result else self.family.IF.LFSet()
 
 	def search_objects(self, container_ntiids=None, provided=None, namespace=None, 
 					   ntiid=None, intids=None):
