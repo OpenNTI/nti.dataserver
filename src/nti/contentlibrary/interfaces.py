@@ -251,11 +251,15 @@ class IContentPackageLibrary(ILastModified,
 
 class ISynchronizationParams(interface.Interface):
 
-	packages = IndexedIterable(title="An iterable of NTIIDs of pacakge to update",
+	packages = IndexedIterable(title="An iterable of NTIIDs of pacakge to sync",
 							   value_type=TextLine(title="The NTIID"),
 							   unique=True,
 							   default=(),
 							   required=False)
+	
+	allowDrops = Bool(title="Allow content drops/removal",
+					  default=False,
+					  required=False)
 
 class ISynchronizationResults(interface.Interface):
 	pass
