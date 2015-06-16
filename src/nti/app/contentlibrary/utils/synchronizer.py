@@ -24,6 +24,8 @@ def main():
 							dest='verbose')
 	arg_parser.add_argument('-s', '--site', help="Sites name",
 							dest='site', default=None)
+	arg_parser.add_argument('-r', '--removal', help="Allow removal", action='store_true',
+							dest='removal')
 	arg_parser.add_argument('-p', '--packages', help="Package ntiids", nargs="+",
 							dest='packages', default=())
 	
@@ -34,6 +36,7 @@ def main():
 		raise IOError("Invalid dataserver environment root directory")
 	
 	site = args.site
+	removal = args.removal
 	packages = tuple(args.packages) if args.packages else ()	
 	if not site and packages:
 		raise IOError("Must specify a site")
@@ -44,7 +47,9 @@ def main():
 						 xmlconfig_packages=conf_packages,
 						 verbose=args.verbose,
 						 context=context,
-						 function=lambda: synchronize(site=site, packages=packages))
+						 function=lambda: synchronize(site=site,
+													  allowRemoval=removal,
+													  packages=packages))
 	
 	sys.exit( 0 )
 

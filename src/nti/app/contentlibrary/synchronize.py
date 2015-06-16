@@ -25,16 +25,20 @@ from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesWillSyncEvent
 
 from nti.contentlibrary.synchronize import SynchronizationParams
+from nti.contentlibrary.synchronize import SynchronizationResults
 
 from nti.contentlibrary.subscribers import install_site_content_library
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
-def synchronize(sleep=None, site=None, packages=()):
+def synchronize(sleep=None, allowRemoval=True, site=None, packages=()):
 	
 	params = SynchronizationParams()
+	params.allowRemoval = allowRemoval
 	params.packages = packages or ()
+	
+	results = SynchronizationResults()
 
 	# notify
 	notify(AllContentPackageLibrariesWillSyncEvent(params))
@@ -73,12 +77,13 @@ def synchronize(sleep=None, site=None, packages=()):
 		syncer = ISyncableContentPackageLibrary(site_lib, None)
 		if syncer is not None:
 			logger.info("Sync library %s", site_lib)
-			result = site_lib.syncContentPackages(params)
-			return True if result is None else result
+			site_lib.syncContentPackages(params, results)
+			return True
+		return False
 
 	# sync
-	results = run_job_in_all_host_sites(sync_site_library)
-	result =[x[0].__name__ for x in results if x is not None and x[1] != None]
+	sites = run_job_in_all_host_sites(sync_site_library)
+	sites =[x[0].__name__ for x in sites if x is not None and x[1]]
 	
 	# mark sync time
 	hostsites = component.getUtility(IEtcNamespace, name='hostsites')
@@ -88,5 +93,5 @@ def synchronize(sleep=None, site=None, packages=()):
 	gc.collect()
 	
 	# notify
-	notify(AllContentPackageLibrariesDidSyncEvent(params))
-	return result
+	notify(AllContentPackageLibrariesDidSyncEvent(params, results))
+	return params, results, sites

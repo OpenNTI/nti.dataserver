@@ -258,30 +258,30 @@ class ISynchronizationParams(interface.Interface):
 							   default=(),
 							   required=False)
 	
-	allowDrops = Bool(title="Allow content drops/removal",
-					  default=False,
-					  required=False)
+	allowRemoval = Bool(title="Allow content drops/removal",
+					  	default=False,
+					  	required=False)
 
 class ISynchronizationResults(interface.Interface):
 
 	Added = Dict(title="Content added",
 				 key_type=TextLine(title="The key"),
 				 value_type=IndexedIterable(title="An iterable NTIID of content added", 
-											TextLine(title="The NTIID"),
+											value_type=TextLine(title="The NTIID"),
 											unique=True),
 				 required=False)
 			
 	Modified = Dict(title="Content modified",
 				 	key_type=TextLine(title="The key"),
 				 	value_type=IndexedIterable(title="An iterable NTIID of content modified", 
-											   TextLine(title="The NTIID"),
+											   value_type=TextLine(title="The NTIID"),
 											   unique=True),
 				 	required=False)
 
 	Removed = Dict(title="Content dropped",
 				   key_type=TextLine(title="The key"),
 				   value_type=IndexedIterable(title="An iterable NTIID of content dropped", 
-											  TextLine(title="The NTIID"),
+											  value_type=TextLine(title="The NTIID"),
 											  unique=True),
 				   required=False)
 	

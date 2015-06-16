@@ -34,11 +34,8 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.authorization import ACT_NTI_ADMIN
 
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.interfaces import StandardExternalFields
 
 from .synchronize import synchronize
-
-ITEMS = StandardExternalFields.ITEMS
 
 @view_config(route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -114,9 +111,13 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		try:
 			result = LocatedExternalDict()
 			result['Started'] = now
-			result[ITEMS] = synchronize(sleep=self._SLEEP,
-										site=site,
-										packages=packages)
+			params, results, sites = synchronize(sleep=self._SLEEP,
+										 		 allowRemoval=True,
+										 		 site=site,
+										 		 packages=packages)
+			result['Sites'] = sites
+			result['Params'] = params
+			result['Results'] = results
 			result['Elapsed'] = time.time() - now
 			return result
 		finally:

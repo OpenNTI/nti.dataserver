@@ -298,6 +298,9 @@ class AbstractContentPackageLibrary(object):
 				logger.info("Library %s removing packages %s", self, removed)
 				logger.info("Library %s changing packages %s", self, changed)
 
+			if removed and params != None and not params.allowRemoval:
+				raise Exception("Cannot remove content pacakges without explicitly allowing it")
+
 			# Now fire the events letting listeners (e.g., index and question adders)
 			# know that we have content. Randomize the order of this across worker
 			# processes so that we don't collide too badly on downloading indexes if need be
@@ -310,6 +313,7 @@ class AbstractContentPackageLibrary(object):
 			# randomizing because we expect to be preloaded.
 			for old in removed:
 				lifecycleevent.removed(old)
+				results.removed(old.ntiid)
 				_unregister_units(old)
 				old.__parent__ = None
 
@@ -321,6 +325,7 @@ class AbstractContentPackageLibrary(object):
 				# lifecycleevent.added on 'new' objects as modified events subscribers
 				# are expected to handle any change
 				_register_units(new)
+				results.modified(new.ntiid)
 				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old, params, results))
 
@@ -329,6 +334,7 @@ class AbstractContentPackageLibrary(object):
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
 				_register_units(new)
+				results.added(new.ntiid)
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
