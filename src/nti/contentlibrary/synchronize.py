@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from nti.common.property import alias
 from nti.common.representation import WithRepr
 
 from nti.schema.field import SchemaConfigured
@@ -23,6 +24,8 @@ from .interfaces import ISynchronizationResults
 @interface.implementer(ISynchronizationParams)
 class SynchronizationParams(SchemaConfigured):
     createDirectFieldProperties(ISynchronizationParams)
+
+    allowDrops = alias('allowRemoval')
 
 @WithRepr
 @interface.implementer(ISynchronizationResults)
@@ -40,7 +43,9 @@ class SynchronizationResults(SchemaConfigured):
     def modified(self, ntiid, contentType='ContentPacakge'):
         self.Modified = {} if self.Modified is None else self.Modified
         self._register(self.Modified, ntiid, contentType)
-        
+    updated = modified
+
     def removed(self, ntiid, contentType='ContentPacakge'):
         self.Removed = {} if self.Removed is None else self.Removed
         self._register(self.Removed, ntiid, contentType)
+    dropped = removed
