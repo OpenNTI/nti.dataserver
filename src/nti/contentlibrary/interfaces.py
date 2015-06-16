@@ -37,6 +37,7 @@ from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
+from nti.schema.field import Dict
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Iterable
@@ -251,7 +252,7 @@ class IContentPackageLibrary(ILastModified,
 
 class ISynchronizationParams(interface.Interface):
 
-	packages = IndexedIterable(title="An iterable of NTIIDs of pacakge to sync",
+	packages = IndexedIterable(title="An iterable of NTIIDs of packages to sync",
 							   value_type=TextLine(title="The NTIID"),
 							   unique=True,
 							   default=(),
@@ -262,7 +263,42 @@ class ISynchronizationParams(interface.Interface):
 					  required=False)
 
 class ISynchronizationResults(interface.Interface):
-	pass
+
+	Added = Dict(title="Content added",
+				 key_type=TextLine(title="The key"),
+				 value_type=IndexedIterable(title="An iterable NTIID of content added", 
+											TextLine(title="The NTIID"),
+											unique=True),
+				 required=False)
+			
+	Modified = Dict(title="Content modified",
+				 	key_type=TextLine(title="The key"),
+				 	value_type=IndexedIterable(title="An iterable NTIID of content modified", 
+											   TextLine(title="The NTIID"),
+											   unique=True),
+				 	required=False)
+
+	Removed = Dict(title="Content dropped",
+				   key_type=TextLine(title="The key"),
+				   value_type=IndexedIterable(title="An iterable NTIID of content dropped", 
+											  TextLine(title="The NTIID"),
+											  unique=True),
+				   required=False)
+	
+	def added(ntiid, contentType):
+		"""
+		Mark the content with specified ntiid as addded
+		"""
+		
+	def modified(ntiid, contentType):
+		"""
+		Mark the content with specified ntiid as modified
+		"""
+
+	def removed(ntiid, contentType):
+		"""
+		Mark the content with specified ntiid as dropped
+		"""
 	
 class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	"""

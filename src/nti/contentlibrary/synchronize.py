@@ -28,3 +28,19 @@ class SynchronizationParams(SchemaConfigured):
 @interface.implementer(ISynchronizationResults)
 class SynchronizationResults(SchemaConfigured):
     createDirectFieldProperties(ISynchronizationResults)
+
+    def _register(self, m, ntiid, contentType='ContentPacakge'):
+        m.setdefault(contentType, [])
+        m[contentType].append(ntiid)
+
+    def added(self, ntiid, contentType='ContentPacakge'):
+        self.Added = {} if self.Added is None else self.Added
+        self._register(self.Added, ntiid, contentType)
+    
+    def modified(self, ntiid, contentType='ContentPacakge'):
+        self.Modified = {} if self.Modified is None else self.Modified
+        self._register(self.Modified, ntiid, contentType)
+        
+    def removed(self, ntiid, contentType='ContentPacakge'):
+        self.Removed = {} if self.Removed is None else self.Removed
+        self._register(self.Removed, ntiid, contentType)
