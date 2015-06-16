@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
+from zope.container.contained import Contained
+
 from nti.common.property import alias
 from nti.common.representation import WithRepr
 
@@ -19,33 +21,47 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISynchronizationParams
 from .interfaces import ISynchronizationResults
+from .interfaces import ILibrarySynchronizationResults
 
 @WithRepr
 @interface.implementer(ISynchronizationParams)
 class SynchronizationParams(SchemaConfigured):
-    createDirectFieldProperties(ISynchronizationParams)
+	createDirectFieldProperties(ISynchronizationParams)
 
-    allowDrops = alias('allowRemoval')
+	allowDrops = alias('allowRemoval')
+
+@WithRepr
+@interface.implementer(ILibrarySynchronizationResults)
+class LibrarySynchronizationResults(SchemaConfigured, Contained):
+	createDirectFieldProperties(ILibrarySynchronizationResults)
+
+	def __init__(self, *args, **kwargs):
+		SchemaConfigured.__init__(self, *args, **kwargs)
+
+	def added(self, ntiid):
+		self.Added = [] if self.Added is None else self.Added
+		self.Added.append(ntiid)
+
+	def modified(self, ntiid):
+		self.Modified = [] if self.Modified is None else self.Modified
+		self.Modified.append(ntiid)
+	updated = modified
+
+	def removed(self, ntiid):
+		self.Removed = [] if self.Removed is None else self.Removed
+		self.Removed.append(ntiid)
+	dropped = removed
 
 @WithRepr
 @interface.implementer(ISynchronizationResults)
-class SynchronizationResults(SchemaConfigured):
-    createDirectFieldProperties(ISynchronizationResults)
+class SynchronizationResults(SchemaConfigured, Contained):
+	createDirectFieldProperties(ISynchronizationResults)
 
-    def _register(self, m, key, content_type='ContentPacakge'):
-        m.setdefault(content_type, [])
-        m[content_type].append(key)
+	def __init__(self, *args, **kwargs):
+		SchemaConfigured.__init__(self, *args, **kwargs)
 
-    def added(self, key, content_type='ContentPacakge'):
-        self.Added = {} if self.Added is None else self.Added
-        self._register(self.Added, key, content_type)
-    
-    def modified(self, key, content_type='ContentPacakge'):
-        self.Modified = {} if self.Modified is None else self.Modified
-        self._register(self.Modified, key, content_type)
-    updated = modified
-
-    def removed(self, key, content_type='ContentPacakge'):
-        self.Removed = {} if self.Removed is None else self.Removed
-        self._register(self.Removed, key, content_type)
-    dropped = removed
+	def add(self, item):
+		assert item is not None
+		self.Items = [] if self.Items is None else self.Items
+		item.__parent__ = self
+		self.Items.append(item)

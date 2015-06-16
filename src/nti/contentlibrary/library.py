@@ -55,6 +55,7 @@ from .interfaces import ContentPackageLibraryModifiedOnSyncEvent
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from .synchronize import SynchronizationResults
+from .synchronize import LibrarySynchronizationResults
 
 @interface.implementer(IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
@@ -217,16 +218,24 @@ class AbstractContentPackageLibrary(object):
 
 		return by_list, by_ntiid
 
+	@property
+	def _root_name(self):
+		root = getattr(self._enumeration, 'root', None) 
+		name = root.__name__ if root is not None else self.__name__
+		return name
+
 	def syncContentPackages(self, params=None, results=None):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
-		notify(ContentPackageLibraryWillSyncEvent(self, params))
-		
 		packages = params.packages if params is not None else ()
 		results = SynchronizationResults() if results is None else results
-	
+		notify(ContentPackageLibraryWillSyncEvent(self, params))
+
+		lib_sync_results = LibrarySynchronizationResults(Name=self._root_name)
+		results.add(lib_sync_results)
+		
 		# filter packages if specified
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
@@ -313,9 +322,9 @@ class AbstractContentPackageLibrary(object):
 			# randomizing because we expect to be preloaded.
 			for old in removed:
 				lifecycleevent.removed(old)
-				results.removed(old.ntiid)
 				_unregister_units(old)
 				old.__parent__ = None
+				lib_sync_results.removed(old.ntiid) # register
 
 			for new, old in changed:
 				new.__parent__ = self
@@ -325,7 +334,7 @@ class AbstractContentPackageLibrary(object):
 				# lifecycleevent.added on 'new' objects as modified events subscribers
 				# are expected to handle any change
 				_register_units(new)
-				results.modified(new.ntiid)
+				lib_sync_results.modified(new.ntiid) # register
 				# Note that this is the special event that shows both objects.
 				notify(ContentPackageReplacedEvent(new, old, params, results))
 
@@ -334,7 +343,7 @@ class AbstractContentPackageLibrary(object):
 				lifecycleevent.created(new)
 				lifecycleevent.added(new)
 				_register_units(new)
-				results.added(new.ntiid)
+				lib_sync_results.added(new.ntiid) # register
 
 			# after updating remove parent reference for old objects
 			for _, old in changed:
@@ -359,7 +368,7 @@ class AbstractContentPackageLibrary(object):
 		self._enumeration.lastSynchronized = time.time()
 		if something_changed or never_synced:
 			self._clear_caches()
-		return results
+		return lib_sync_results
 
 	# A map from top-level content-package NTIID to the content package.
 	# This is cached based on the value of the _contentPackages variable,
@@ -699,5 +708,4 @@ class _PathCacheContentUnitWeakRef(object):
 		else:
 			intids = component.getUtility(zope.intid.IIntIds)
 			result = intids.getObject(self._intid)
-
 		return result

@@ -111,11 +111,10 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		try:
 			result = LocatedExternalDict()
 			result['Started'] = now
-			params, results, sites = synchronize(sleep=self._SLEEP,
-										 		 allowRemoval=True,
-										 		 site=site,
-										 		 packages=packages)
-			result['Sites'] = sites
+			params, results = synchronize(sleep=self._SLEEP,
+										  allowRemoval=True,
+										  site=site,
+										  packages=packages)
 			result['Params'] = params
 			result['Results'] = results
 			result['Elapsed'] = time.time() - now
