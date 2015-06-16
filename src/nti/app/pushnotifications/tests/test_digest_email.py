@@ -37,6 +37,7 @@ from nti.dataserver import contenttypes
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.appserver.tests import ExLibraryApplicationTestLayer
 
@@ -70,7 +71,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 
 	layer = ExLibraryApplicationTestLayer
 
-	@WithSharedApplicationMockDS(users=True,testapp=True)
+	@WithMockDSTrans
 	def test_path_to_note_container(self):
 		from ..digest_email import _TemplateArgs
 		args = _TemplateArgs([self], None)
