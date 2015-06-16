@@ -129,7 +129,7 @@ setup(
 		'nti.contentprocessing',
 		'nti.contentrendering', # legacy
 		'nti.contentrendering_assessment', # legacy
-		'nti.contenttypes.presentation',  # legacy
+		'nti.contenttypes.presentation',
 		'nti.coremetadata',
 		'nti.dataserver_core',
 		'nti.dataserver_fragments',
@@ -263,6 +263,7 @@ setup(
 		'pyparsing', # used by rdflib
 		 # Pure python PDF reading and manipulation library.
 		'pyPDF2',
+		'pyScss',
 		 # See also z3c.rml for a complete PDF layout and rendering environment, which should
 		 # work with page templates as well.
 		 # jquery-like traversing of python datastructures. lxml, cssselect
