@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Having to do with mime types.
-
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -12,15 +11,18 @@ import sys
 import logging
 import functools
 
-from zope.exceptions.exceptionformatter import print_exception
-import zope.exceptions.log
-
 from zope import interface
 from zope import component
+
 from zope.component.hooks import setSite
 from zope.component.hooks import setHooks
+
 from zope.configuration import xmlconfig, config
+
 from zope.dottedname import resolve as dottedname
+
+import zope.exceptions.log
+from zope.exceptions.exceptionformatter import print_exception
 
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverTransactionRunner
@@ -40,30 +42,30 @@ def _configure(self=None, set_up_packages=(), features=(), context=None, execute
 	if set_up_packages:
 		if context is None:
 			context = config.ConfigurationMachine()
-			xmlconfig.registerCommonDirectives( context )
+			xmlconfig.registerCommonDirectives(context)
 		for feature in features:
-			context.provideFeature( feature )
+			context.provideFeature(feature)
 
 		for i in set_up_packages:
 			__traceback_info__ = (i, self, set_up_packages)
-			if isinstance( i, tuple ):
+			if isinstance(i, tuple):
 				filename = i[0]
 				package = i[1]
 			else:
 				filename = 'configure.zcml'
 				package = i
 
-			if isinstance( package, basestring ):
-				package = dottedname.resolve( package )
+			if isinstance(package, basestring):
+				package = dottedname.resolve(package)
 			context = xmlconfig.file(filename, package=package,
-									 context=context, execute=execute )
+									 context=context, execute=execute)
 
 		return context
 
-_user_function_failed = object() # sentinel
+_user_function_failed = object()  # sentinel
 class _DataserverCreationFailed(Exception): pass
 
-def run_with_dataserver( environment_dir=None,
+def run_with_dataserver(environment_dir=None,
 						 function=None,
 						 as_main=True,
 						 verbose=False,
@@ -107,10 +109,10 @@ def run_with_dataserver( environment_dir=None,
 		try:
 			return function()
 		except Exception:
-			print_exception( *sys.exc_info() )
+			print_exception(*sys.exc_info())
 			raise
 
-	@functools.wraps(function) # yes, two layers, but we do wrap `function`
+	@functools.wraps(function)  # yes, two layers, but we do wrap `function`
 	def run_user_fun_transaction_wrapper():
 		try:
 			if not minimal_ds:
@@ -121,7 +123,7 @@ def run_with_dataserver( environment_dir=None,
 			# Reraise something we can deal with (in collusion with run), but with the
 			# original traceback. This traceback should be safe.
 			exc_info = sys.exc_info()
-			raise _DataserverCreationFailed( exc_info[1] ), None, exc_info[2]
+			raise _DataserverCreationFailed(exc_info[1]), None, exc_info[2]
 
 		component.provideUtility(ds, IDataserver)
 		try:
@@ -134,7 +136,7 @@ def run_with_dataserver( environment_dir=None,
 			# we have seen this if the function closed the dataserver manually, but left
 			# the transaction open. Committing then fails. badly.
 			try:
-				print_exception( *sys.exc_info() )
+				print_exception(*sys.exc_info())
 			except:
 				pass
 			raise
@@ -151,13 +153,13 @@ def run_with_dataserver( environment_dir=None,
 			except:
 				pass
 
-	return run( function=run_user_fun_transaction_wrapper, as_main=as_main,
+	return run(function=run_user_fun_transaction_wrapper, as_main=as_main,
 				verbose=verbose, config_features=config_features,
 				xmlconfig_packages=xmlconfig_packages, context=context,
 				_print_exc=False, logging_verbose_level=logging_verbose_level)
 
 def run(function=None, as_main=True, verbose=False, config_features=(),
-		xmlconfig_packages=(),  context=None, _print_exc=True,
+		xmlconfig_packages=(), context=None, _print_exc=True,
 		logging_verbose_level=logging.INFO):
 	"""
 	Execute the `function`, taking care to print exceptions and handle configuration.
@@ -199,8 +201,8 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 		try:
 			_configure(set_up_packages=packages, features=config_features, context=context)
 		except Exception:
-			print_exception( *sys.exc_info() )
-			sys.exit( 5 )
+			print_exception(*sys.exc_info())
+			sys.exit(5)
 
 	if _print_exc:
 		@functools.wraps(function)
@@ -210,7 +212,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 			try:
 				return function()
 			except Exception:
-				print_exception( *sys.exc_info() )
+				print_exception(*sys.exc_info())
 				raise
 	else:
 		fun = function
@@ -239,7 +241,7 @@ def run(function=None, as_main=True, verbose=False, config_features=(),
 		if as_main:
 			print("Failed to execute", getattr(fun, '__name__', fun), type(_user_ex),
 				  _user_ex_str, _user_ex_repr)
-			sys.exit( 6 )
+			sys.exit(6)
 		# returning none in this case is backwards compatibile behaviour. we'd really
 		# like to raise...something
 		result = None
@@ -314,9 +316,9 @@ def interactive_setup(root=".",
 
 	"""
 
-	log_format =  '[%(name)s] %(levelname)s: %(message)s'
+	log_format = '[%(name)s] %(levelname)s: %(message)s'
 	logging.basicConfig(level=logging.INFO)
-	logging.root.handlers[0].setFormatter( zope.exceptions.log.Formatter(log_format))
+	logging.root.handlers[0].setFormatter(zope.exceptions.log.Formatter(log_format))
 
 	setHooks()
 	if context is None:
@@ -329,20 +331,19 @@ def interactive_setup(root=".",
 	if with_library:
 		# XXX: Very similar to nti.appserver.application.
 		DATASERVER_DIR = os.getenv('DATASERVER_DIR', '')
-		dataserver_dir_exists = os.path.isdir( DATASERVER_DIR )
+		dataserver_dir_exists = os.path.isdir(DATASERVER_DIR)
 		if dataserver_dir_exists:
-			DATASERVER_DIR = os.path.abspath( DATASERVER_DIR )
-		def dataserver_file( *args ):
-			return os.path.join( DATASERVER_DIR, *args )
-		def is_dataserver_file( *args ):
-			return dataserver_dir_exists and os.path.isfile( dataserver_file( *args ) )
-		if is_dataserver_file( 'etc', 'library.zcml'):
-			library_zcml = dataserver_file( 'etc', 'library.zcml' )
+			DATASERVER_DIR = os.path.abspath(DATASERVER_DIR)
+		def dataserver_file(*args):
+			return os.path.join(DATASERVER_DIR, *args)
+		def is_dataserver_file(*args):
+			return dataserver_dir_exists and os.path.isfile(dataserver_file(*args))
+		if is_dataserver_file('etc', 'library.zcml'):
+			library_zcml = dataserver_file('etc', 'library.zcml')
 			context = xmlconfig.file(library_zcml,
 									 package=dottedname.resolve('nti.appserver'),
 									 context=context,
 									 execute=False)
-
 	context.execute_actions()
 
 	from nti.dataserver.config import temp_get_config

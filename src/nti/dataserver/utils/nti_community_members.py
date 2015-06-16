@@ -7,6 +7,9 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+from nti.monkey import relstorage_patch_all_except_gevent_on_import
+relstorage_patch_all_except_gevent_on_import.patch()
+
 logger = __import__('logging').getLogger(__name__)
 
 import os
@@ -17,6 +20,7 @@ import argparse
 import zope.intid
 
 from zope import component
+
 from zope.catalog.interfaces import ICatalog
 
 from nti.common.string import safestr
@@ -36,7 +40,7 @@ def _get_field_value(userid, ent_catalog, indexname):
 	rev_index = getattr(idx, '_rev_index', {})
 	result = safestr(rev_index.get(userid, u''))
 	return result
-			
+
 def get_member_info(community):
 	intids = component.getUtility(zope.intid.IIntIds)
 	catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
@@ -55,7 +59,7 @@ def _output_members(username, tabs=False, output=None, site=None, verbose=False)
 	sep = '\t' if tabs else ','
 	if site:
 		set_site(site)
-	
+
 	community = Community.get_community(username)
 	if community is None or not ICommunity.providedBy(community):
 		print("Community does not exists", file=sys.stderr)
@@ -66,7 +70,7 @@ def _output_members(username, tabs=False, output=None, site=None, verbose=False)
 			 if output else sys.stdout
 	header = ['username', 'realname', 'alias', 'email']
 	output.write('%s\n' % sep.join(header))
-	
+
 	for row in get_member_info(community):
 		__traceback_info__ = row
 		try:
@@ -103,7 +107,7 @@ def process_args(args=None):
 						function=lambda: _output_members(args.username,
 														 args.tabs,
 														 args.output,
-														 args.site, 
+														 args.site,
 														 verbose=args.verbose))
 def main(args=None):
 	process_args(args)
