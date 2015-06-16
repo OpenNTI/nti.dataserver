@@ -42,7 +42,7 @@ class IndexedDataContainer(object):
 	type = None
 
 	def __init__(self, unit):
-		self.ntiid = getattr(unit, 'ntiid', str(unit))
+		self.ntiid = getattr(unit, 'ntiid', None) or getattr(unit, 'NTIID', None) or u''
 
 	@Lazy
 	def catalog(self):
