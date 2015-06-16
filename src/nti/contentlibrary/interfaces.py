@@ -13,7 +13,7 @@ from zope.interface.interfaces import IObjectEvent
 
 from zope.annotation.interfaces import IAnnotatable
 
-from zope.container.constraints import contains # If passing strings, they require bytes, NOT unicode, or they fail
+from zope.container.constraints import contains  # If passing strings, they require bytes, NOT unicode, or they fail
 from zope.container.interfaces import IContentContainer
 
 from zope.dublincore import interfaces as dub_interfaces
@@ -50,7 +50,7 @@ from nti.schema.field import ValidTextLine as TextLine
 # all the __setitem__ and __parent__ in the interfaces.
 # pylint: disable=I0011,E0602
 
-### Hierarchy abstraction
+# ## Hierarchy abstraction
 
 # TODO: I'm not happy with the way paths are handled. How can the 'relative'
 # stuff be done better? This is mostly an issue with the IContentPackage and its 'root'
@@ -176,9 +176,9 @@ class IDelimitedHierarchyContentPackageEnumeration(IContentPackageEnumeration):
 	"""
 
 	root = Object(IEnumerableDelimitedHierarchyBucket,
-					title="The bucket that will be introspected for content",
-					default=None,
-					required=True)
+				  title="The bucket that will be introspected for content",
+				  default=None,
+				  required=True)
 
 	def childEnumeration(name):
 		"""
@@ -249,6 +249,17 @@ class IContentPackageLibrary(ILastModified,
 
 	contentPackages = Iterable(title=u'Sequence of all known :class:`IContentPackage`')
 
+class ISynchronizationParams(interface.Interface):
+
+	packages = IndexedIterable(title="An iterable of NTIIDs of pacakge to update",
+							   value_type=TextLine(title="The NTIID"),
+							   unique=True,
+							   default=(),
+							   required=False)
+
+class ISynchronizationResults(interface.Interface):
+	pass
+	
 class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	"""
 	A library that relies on external information and must be
@@ -256,7 +267,7 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	value.
 	"""
 
-	def syncContentPackages(packages=None):
+	def syncContentPackages(params=None):
 		"""
 		Do whatever is necessary to sync content packages.
 
@@ -264,8 +275,9 @@ class ISyncableContentPackageLibrary(IContentPackageLibrary):
 		should fire an :class:`IContentPackageLibrarySynchedEvent`.
 		By the time this event is fired, any added/removed/modified
 		events for individual content packages will have been fired.
-		
-		:param packages: A list of pacakge NTIIDs to sync. Empty or none syncs all 
+
+		:param params: Synchronization parameters
+		:return  Synchronization results
 		"""
 
 class IContentPackageLibraryWillSyncEvent(IObjectEvent):
@@ -286,26 +298,37 @@ class IContentPackageLibraryWillSyncEvent(IObjectEvent):
 		information about this library in an event listener.
 	"""
 
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+
 @interface.implementer(IContentPackageLibraryWillSyncEvent)
 class ContentPackageLibraryWillSyncEvent(ObjectEvent):
-	pass
+
+	def __init__(self, obj, params=None):
+		super(ContentPackageLibraryWillSyncEvent, self).__init__(obj)
+		self.params = params
 
 class IContentPackageLibraryDidSyncEvent(IObjectEvent):
 	"""
 	A library completed synchronization, with or without changes.
 	"""
 
-	packages = IndexedIterable(	title="An iterable of NTIIDs of updated pacakges",
-								value_type=TextLine(title="The NTIID"),
-								unique=True,
-								default=())
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+	
+	results = Object(ISynchronizationResults,
+					 title="Synchronization results",
+					 required=False)
 
 @interface.implementer(IContentPackageLibraryDidSyncEvent)
 class ContentPackageLibraryDidSyncEvent(ObjectEvent):
-	
-	 def __init__(self, object, packages=()):
-	 	super(ContentPackageLibraryDidSyncEvent, self).__init__(object)
-	 	self.packages = packages or ()
+
+	def __init__(self, obj, params=None, results=None):
+		super(ContentPackageLibraryDidSyncEvent, self).__init__(obj)
+		self.params = params
+		self.results = results
 
 class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	"""
@@ -313,10 +336,13 @@ class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	a synchronization that resulted in changes. This is fired
 	after events for individual content package changes.
 	"""
-	packages = IndexedIterable(	title="An iterable of NTIIDs of updated pacakges",
-								value_type=TextLine(title="The NTIID"),
-								unique=True,
-								default=())
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+	
+	results = Object(ISynchronizationResults,
+					 title="Synchronization results",
+					 required=False)
 	# JAM: Should this be a plain ObjectEvent, not
 	# ObjectModifiedEvent (that way none of the indexing logic or
 	# similar gets invoked)? But the `attributes` property
@@ -327,32 +353,52 @@ class ContentPackageLibraryModifiedOnSyncEvent(ObjectModifiedEvent):
 	"""
 	Content package library synced event.
 	"""
-	
-	def __init__(self, object, packages=(), *descriptions):
-	 	super(ContentPackageLibraryModifiedOnSyncEvent, self).__init__(object, *descriptions)
-	 	self.packages = packages or ()
+
+	def __init__(self, obj, params=None, results=None, *descriptions):
+		super(ContentPackageLibraryModifiedOnSyncEvent, self).__init__(obj, *descriptions)
+		self.params = params
+		self.results = results
 
 class IAllContentPackageLibrariesWillSyncEvent(interface.Interface):
 	"""
 	An event fired before all ContentPackage Libraries are synced
 	"""
 
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+
 @interface.implementer(IAllContentPackageLibrariesWillSyncEvent)
 class AllContentPackageLibrariesWillSyncEvent(object):
 	"""
 	Before all Content package libraries are synced event.
 	"""
+	
+	def __init__(self, params=None):
+		self.params = params
 
 class IAllContentPackageLibrariesDidSyncEvent(interface.Interface):
 	"""
 	An event fired when all ContentPackage Libraries have been synced
 	"""
 
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+	
+	results = Object(ISynchronizationResults,
+					 title="Synchronization results",
+					 required=False)
+
 @interface.implementer(IAllContentPackageLibrariesDidSyncEvent)
 class AllContentPackageLibrariesDidSyncEvent(object):
 	"""
 	All Content package libraries synced event.
 	"""
+	
+	def __init__(self, params=None, results=None):
+		self.params = params
+		self.results = results
 
 class IGlobalContentPackageLibrary(ISyncableContentPackageLibrary):
 	"""
@@ -388,12 +434,12 @@ class IDisplayablePlatformPresentationResources(interface.Interface):
 								   "from this named platform.",
 								   required=False)
 	Version = Int(title="The version of the layout of resources",
-				  default=1, min=1 )
+				  default=1, min=1)
 
 	root = Object(IDelimitedHierarchyBucket,
 				 title="The key designating this entry in the hierarchy.",
 				 default=None)
-	root.setTaggedValue( '_ext_excluded_out', True)
+	root.setTaggedValue('_ext_excluded_out', True)
 
 
 	# XXX: Fill in missing to match disk layout. Should we have pointers
@@ -554,7 +600,7 @@ class IContentPackage(IContentUnit,
 	index_last_modified = Number(title="Time since the epoch the index for this package was last modified.",
 								 description="This is currently the best indication of when this package as a whole may have changed.",
 								 readonly=True,
-								 default=-1 )
+								 default=-1)
 	installable = Bool(title="Whether or not this content package can be installed locally (offline)",
 					   default=False)
 	archive = TextLine(title="DEPRECATED. If this content is installable, this is the relative path to a ZIP archive of the content",
@@ -573,10 +619,23 @@ class IContentPackageUnmodifiedEvent(IObjectEvent):
 	A special type of event to signal a content package
 	was not modififed
 	"""
+	
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+	
+	results = Object(ISynchronizationResults,
+					 title="Synchronization results",
+					 required=False)
 
 @interface.implementer(IContentPackageUnmodifiedEvent)
 class ContentPackageUnmodifiedEvent(ObjectEvent):
 	pacakge = alias('object')
+
+	def __init__(self, obj, params=None, results=None):
+		ObjectEvent.__init__(self, obj)
+		self.params = params
+		self.results = results
 		
 class IContentPackageReplacedEvent(IObjectModifiedEvent):
 	"""
@@ -596,18 +655,29 @@ class IContentPackageReplacedEvent(IObjectModifiedEvent):
 
 	replacement = Object(IContentPackage,
 						 title="The replacement object; same as .object")
+
 	original = Object(IContentPackage,
 					  title="The object being replaced")
+	
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+	
+	results = Object(ISynchronizationResults,
+					 title="Synchronization results",
+					 required=False)
 
 @interface.implementer(IContentPackageReplacedEvent)
 class ContentPackageReplacedEvent(ObjectModifiedEvent):
-
-	replacement = alias('object')
+	
 	original = None
+	replacement = alias('object')
 
-	def __init__(self, replacement, original, *descriptions):
+	def __init__(self, replacement, original, params=None, results=None, *descriptions):
 		ObjectModifiedEvent.__init__(self, replacement, *descriptions)
 		self.original = original
+		self.params = params
+		self.results = results
 
 class IPersistentContentUnit(IPersistent, IContentUnit):
 	"""
@@ -701,7 +771,6 @@ class IS3ContentUnit(dub_interfaces.IDCTimes, IDelimitedHierarchyContentUnit):
 class IS3ContentPackage(IDelimitedHierarchyContentPackage, IS3ContentUnit):
 	pass
 
-
 class IFilesystemBucket(IEnumerableDelimitedHierarchyBucket):
 	"""
 	An absolute string of a filesystem directory.
@@ -771,9 +840,8 @@ class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 											 IFilesystemContentPackageLibrary):
 	pass
 
-###
 # Content bundles
-###
+
 class IContentPackageBundle(IDisplayableContent,
 							ILastModified,
 							IShouldHaveTraversablePath,
@@ -793,15 +861,15 @@ class IContentPackageBundle(IDisplayableContent,
 
 	# However, there are other places that can refer to a bundle,
 	# so we don't *force* them to be inside a library
-	#containers(str('.IContentPackageBundleLibrary'))
-	#__parent__.required = False
+	# containers(str('.IContentPackageBundleLibrary'))
+	# __parent__.required = False
 
 
 	root = Object(IDelimitedHierarchyItem,
 				  title="The key giving the root of this content package",
 				  description="Will be externalized through the href mapper",
 				  required=True)
-	root.setTaggedValue( '_ext_excluded_out', True)
+	root.setTaggedValue('_ext_excluded_out', True)
 
 	ntiid = ValidNTIID(title="The NTIID for this item",
 					 default=None,
@@ -822,7 +890,7 @@ class IContentPackageBundleLibrary(IContentContainer):
 	contains(IContentPackageBundle)
 	__setitem__.__doc__ = None
 
-	def get(key,default=None):
+	def get(key, default=None):
 		"""
 		Find the bundle with the given ntiid in this library
 		or a parent.
