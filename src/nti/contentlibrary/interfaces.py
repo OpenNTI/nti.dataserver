@@ -285,19 +285,19 @@ class ISynchronizationResults(interface.Interface):
 											  unique=True),
 				   required=False)
 	
-	def added(ntiid, contentType):
+	def added(key, content_type):
 		"""
-		Mark the content with specified ntiid as addded
+		Mark the content with specified key as addded
 		"""
 		
-	def modified(ntiid, contentType):
+	def modified(key, content_type):
 		"""
-		Mark the content with specified ntiid as modified
+		Mark the content with specified key as modified
 		"""
 
-	def removed(ntiid, contentType):
+	def removed(key, content_type):
 		"""
-		Mark the content with specified ntiid as dropped
+		Mark the content with specified key as dropped
 		"""
 	
 class ISyncableContentPackageLibrary(IContentPackageLibrary):
