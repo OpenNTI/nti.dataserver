@@ -54,6 +54,8 @@ from .interfaces import ContentPackageLibraryWillSyncEvent
 from .interfaces import ContentPackageLibraryModifiedOnSyncEvent
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
+from .synchronize import SynchronizationResults
+
 @interface.implementer(IContentPackageEnumeration)
 class AbstractContentPackageEnumeration(object):
 	"""
@@ -215,13 +217,16 @@ class AbstractContentPackageLibrary(object):
 
 		return by_list, by_ntiid
 
-	def syncContentPackages(self, packages=None):
+	def syncContentPackages(self, params=None, results=None):
 		"""
 		Fires created, added, modified, or removed events for each
 		content package, as appropriate.
 		"""
-		notify(ContentPackageLibraryWillSyncEvent(self))
-
+		notify(ContentPackageLibraryWillSyncEvent(self, params))
+		
+		packages = params.packages if params is not None else ()
+		results = SynchronizationResults() if results is None else results
+	
 		# filter packages if specified
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
@@ -277,7 +282,7 @@ class AbstractContentPackageLibrary(object):
 		_content_packages_by_ntiid = {x.ntiid: x for x in _contentPackages}
 		assert len(_contentPackages) == len(_content_packages_by_ntiid), "Invalid library"
 
-		# updated pacakges
+		# updated packages
 		packages = set(_content_packages_by_ntiid.keys()) if not packages else packages
 		if something_changed or never_synced:
 			# CS/JZ, 1-29-15 We need this before event firings because some code
@@ -317,7 +322,7 @@ class AbstractContentPackageLibrary(object):
 				# are expected to handle any change
 				_register_units(new)
 				# Note that this is the special event that shows both objects.
-				notify(ContentPackageReplacedEvent(new, old))
+				notify(ContentPackageReplacedEvent(new, old, params, results))
 
 			for new in added:
 				new.__parent__ = self
@@ -335,19 +340,20 @@ class AbstractContentPackageLibrary(object):
 
 			# Ok, new let people know that 'contentPackages' changed
 			attributes = lifecycleevent.Attributes(IContentPackageLibrary, 'contentPackages')
-			event = ContentPackageLibraryModifiedOnSyncEvent(self, packages, attributes)
+			event = ContentPackageLibraryModifiedOnSyncEvent(self, params, results, attributes)
 			notify(event)
 
 		# Signal what pacakges WERE NOT modified
 		for pacakge in unmodified or ():
-			notify(ContentPackageUnmodifiedEvent(pacakge))
+			notify(ContentPackageUnmodifiedEvent(pacakge, params, results))
 
 		# Finish up by saying that we sync'd, even if nothing changed
-		notify(ContentPackageLibraryDidSyncEvent(self, packages))
+		notify(ContentPackageLibraryDidSyncEvent(self, params, results))
 
 		self._enumeration.lastSynchronized = time.time()
 		if something_changed or never_synced:
 			self._clear_caches()
+		return results
 
 	# A map from top-level content-package NTIID to the content package.
 	# This is cached based on the value of the _contentPackages variable,

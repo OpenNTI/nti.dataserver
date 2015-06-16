@@ -24,14 +24,20 @@ from nti.contentlibrary.interfaces import ISyncableContentPackageLibrary
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesDidSyncEvent
 from nti.contentlibrary.interfaces import AllContentPackageLibrariesWillSyncEvent
 
+from nti.contentlibrary.synchronize import SynchronizationParams
+
 from nti.contentlibrary.subscribers import install_site_content_library
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
 from nti.site.hostpolicy import synchronize_host_policies
 
 def synchronize(sleep=None, site=None, packages=()):
+	
+	params = SynchronizationParams()
+	params.packages = packages or ()
+
 	# notify
-	notify(AllContentPackageLibrariesWillSyncEvent())
+	notify(AllContentPackageLibrariesWillSyncEvent(params))
 	
 	# First, synchronize the policies, make sure everything is all nice and installed.
 	synchronize_host_policies()
@@ -67,7 +73,7 @@ def synchronize(sleep=None, site=None, packages=()):
 		syncer = ISyncableContentPackageLibrary(site_lib, None)
 		if syncer is not None:
 			logger.info("Sync library %s", site_lib)
-			result = site_lib.syncContentPackages(packages)
+			result = site_lib.syncContentPackages(params)
 			return True if result is None else result
 
 	# sync
@@ -82,5 +88,5 @@ def synchronize(sleep=None, site=None, packages=()):
 	gc.collect()
 	
 	# notify
-	notify(AllContentPackageLibrariesDidSyncEvent())
+	notify(AllContentPackageLibrariesDidSyncEvent(params))
 	return result

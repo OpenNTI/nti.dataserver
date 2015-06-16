@@ -75,8 +75,13 @@
 	<include package="nti.externalization" file="meta.zcml" />
 	<include package="nti.externalization" />
 
-	<adapter factory=".externalization._ContentPackageLibraryExternal" />
+	<ext:registerAutoPackageIO
+		root_interfaces=".interfaces.ISynchronizationParams
+						 .interfaces.ISynchronizationResults"
+		modules=".synchronize" />
+
 	<adapter factory=".externalization._ContentPackageExternal" />
+	<adapter factory=".externalization._ContentPackageLibraryExternal" />
 	<adapter factory=".externalization._LegacyCourseConflatedContentPackageExternal" />
 
 	<adapter factory=".externalization._ContentBundleIO" />
@@ -87,8 +92,8 @@
 	<adapter factory=".externalization._FilesystemBucketHrefMapper" />
 	<adapter factory=".externalization._FilesystemContentUnitHrefMapper" />
 
-	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
 	<adapter factory=".externalization._S3KeyHrefMapper" />
+	<adapter factory=".externalization._S3ContentUnitHrefMapper" />
 
 	<include package=".indexed_data" />
 
