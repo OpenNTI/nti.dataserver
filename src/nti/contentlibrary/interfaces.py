@@ -37,7 +37,7 @@ from nti.ntiids.schema import ValidNTIID
 
 from nti.schema.field import Int
 from nti.schema.field import Bool
-from nti.schema.field import Dict
+from nti.schema.field import List
 from nti.schema.field import Number
 from nti.schema.field import Object
 from nti.schema.field import Iterable
@@ -262,44 +262,36 @@ class ISynchronizationParams(interface.Interface):
 					  	default=False,
 					  	required=False)
 
-class ISynchronizationResults(interface.Interface):
+class IGenericSynchronizationResults(interface.Interface):
+	pass
 
-	Added = Dict(title="Content added",
-				 key_type=TextLine(title="The key"),
-				 value_type=IndexedIterable(title="An iterable NTIID of content added", 
-											value_type=TextLine(title="The NTIID"),
-											unique=True),
+class ILibrarySynchronizationResults(IGenericSynchronizationResults):
+
+	Name = TextLine(title="Libray name", required=False)
+	
+	Added = List(title="An iterable NTIID of content package added", 
+				 value_type=TextLine(title="The NTIID"),
 				 required=False)
 			
-	Modified = Dict(title="Content modified",
-				 	key_type=TextLine(title="The key"),
-				 	value_type=IndexedIterable(title="An iterable NTIID of content modified", 
-											   value_type=TextLine(title="The NTIID"),
-											   unique=True),
-				 	required=False)
+	Modified = List(title="An iterable NTIID of modified content package", 
+					value_type=TextLine(title="The NTIID"),
+					required=False)
 
-	Removed = Dict(title="Content dropped",
-				   key_type=TextLine(title="The key"),
-				   value_type=IndexedIterable(title="An iterable NTIID of content dropped", 
-											  value_type=TextLine(title="The NTIID"),
-											  unique=True),
+	Removed = List(title="An iterable NTIID of content package dropped", 
+				   value_type=TextLine(title="The NTIID"),
 				   required=False)
 	
-	def added(key, content_type):
+class ISynchronizationResults(interface.Interface):
+
+	Items = IndexedIterable(title="An iterable of sync results", 
+							value_type=Object(IGenericSynchronizationResults),
+							required=False)
+			
+	def add(item):
 		"""
-		Mark the content with specified key as addded
-		"""
-		
-	def modified(key, content_type):
-		"""
-		Mark the content with specified key as modified
+		Add a sync result
 		"""
 
-	def removed(key, content_type):
-		"""
-		Mark the content with specified key as dropped
-		"""
-	
 class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	"""
 	A library that relies on external information and must be

@@ -46,12 +46,15 @@
 
 	<!-- for dublincore annotations-->
 	<include package="zope.dublincore" />
+
 	<adapter factory=".dublincore.DisplayableContentZopeDublinCoreAdapter"
 			 for=".interfaces.IContentPackage"
 			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
+
 	<adapter factory=".dublincore.DisplayableContentZopeDublinCoreAdapter"
 			 for=".interfaces.IContentPackageBundle"
 			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
+
 	<adapter factory=".dublincore.DescriptivePropertiesZopeDublinCoreAdapter"
 			 for=".interfaces.IContentUnit"
 			 provides="zope.dublincore.interfaces.IWriteZopeDublinCore"/>
@@ -77,7 +80,8 @@
 
 	<ext:registerAutoPackageIO
 		root_interfaces=".interfaces.ISynchronizationParams
-						 .interfaces.ISynchronizationResults"
+						 .interfaces.ISynchronizationResults
+						 .interfaces.ILibrarySynchronizationResults"
 		modules=".synchronize" />
 
 	<adapter factory=".externalization._ContentPackageExternal" />
