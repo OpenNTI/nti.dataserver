@@ -7,7 +7,6 @@ Container implementations.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from operator import __contains__
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -18,6 +17,8 @@ from zope import interface
 from zope.intid import IIntIds
 
 from nti.common.property import Lazy
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -37,10 +38,13 @@ from . import NTI_SLIDE_DECK_TYPE
 from . import NTI_RELATED_WORK_REF_TYPE
 
 @interface.implementer(IIndexedDataContainer)
-class IndexedDataContainer(object):
+class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject): # BWC
 
 	type = None
-
+	
+	__name__ = None
+	__parent__ = None
+	
 	def __init__(self, unit):
 		self.ntiid = getattr(unit, 'ntiid', None) or getattr(unit, 'NTIID', None) or u''
 
