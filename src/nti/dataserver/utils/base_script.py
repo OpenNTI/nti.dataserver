@@ -56,7 +56,7 @@ def create_context(env_dir=None, with_library=False, context=None):
 		if not os.path.exists(library_zcml):
 			raise IOError("Could not locate library zcml file %s", library_zcml)
 		xmlconfig.include(context, file=library_zcml, package='nti.appserver')
-		
+
 	# Include zope.browserpage.meta.zcm for tales:expressiontype
 	# before including the products
 	xmlconfig.include(context, file="meta.zcml", package=zope.browserpage)
@@ -65,13 +65,13 @@ def create_context(env_dir=None, with_library=False, context=None):
 	includePluginsDirective(context, PP_APP)
 	includePluginsDirective(context, PP_APP_SITES)
 	includePluginsDirective(context, PP_APP_PRODUCTS)
-	
+
 	return context
 
 def set_site(site):
 	if site:
 		cur_site = hooks.getSite()
-		new_site = get_site_for_site_names( (site,), site=cur_site )
+		new_site = get_site_for_site_names((site,), site=cur_site)
 		if new_site is cur_site:
 			raise ValueError("Unknown site name", site)
 		hooks.setSite(new_site)
