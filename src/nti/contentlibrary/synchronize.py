@@ -32,20 +32,20 @@ class SynchronizationParams(SchemaConfigured):
 class SynchronizationResults(SchemaConfigured):
     createDirectFieldProperties(ISynchronizationResults)
 
-    def _register(self, m, ntiid, contentType='ContentPacakge'):
-        m.setdefault(contentType, [])
-        m[contentType].append(ntiid)
+    def _register(self, m, key, content_type='ContentPacakge'):
+        m.setdefault(content_type, [])
+        m[content_type].append(key)
 
-    def added(self, ntiid, contentType='ContentPacakge'):
+    def added(self, key, content_type='ContentPacakge'):
         self.Added = {} if self.Added is None else self.Added
-        self._register(self.Added, ntiid, contentType)
+        self._register(self.Added, key, content_type)
     
-    def modified(self, ntiid, contentType='ContentPacakge'):
+    def modified(self, key, content_type='ContentPacakge'):
         self.Modified = {} if self.Modified is None else self.Modified
-        self._register(self.Modified, ntiid, contentType)
+        self._register(self.Modified, key, content_type)
     updated = modified
 
-    def removed(self, ntiid, contentType='ContentPacakge'):
+    def removed(self, key, content_type='ContentPacakge'):
         self.Removed = {} if self.Removed is None else self.Removed
-        self._register(self.Removed, ntiid, contentType)
+        self._register(self.Removed, key, content_type)
     dropped = removed
