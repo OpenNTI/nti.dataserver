@@ -105,8 +105,6 @@ class NTIIDIndex(ValueIndex):
 	default_interface = ValidatingNTIID
 
 class ContainedObjectCatalog(Persistent):
-
-	_ntiid_index = None
 	
 	family = BTrees.family64
 
