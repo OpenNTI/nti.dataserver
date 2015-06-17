@@ -12,9 +12,12 @@ logger = __import__('logging').getLogger(__name__)
 generation = 59
 
 from zope import component
+
 from zope.component.hooks import site, setHooks
 
-from nti.contentlibrary.indexed_data import get_catalog
+from zope.intid.interfaces import IIntIds
+
+from nti.contentlibrary.indexed_data.index import install_container_catalog
 
 def do_evolve(context):
 	setHooks()
@@ -26,8 +29,10 @@ def do_evolve(context):
 		assert	component.getSiteManager() == ds_folder.getSiteManager(), \
 				"Hooks not installed?"
 
-		catalog = get_catalog()
+		intids = component.getUtility(IIntIds)
+		catalog = install_container_catalog(ds_folder, intids)
 		catalog.reset()
+
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):

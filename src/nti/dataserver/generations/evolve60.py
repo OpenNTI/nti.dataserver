@@ -24,8 +24,9 @@ from zope.intid.interfaces import IIntIds
 
 from nti.app.contentlibrary.subscribers import _update_indices_when_content_changes
 
-from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
+from nti.contentlibrary.indexed_data.index import install_container_catalog
+
 from nti.contentlibrary.indexed_data.interfaces import CONTAINER_IFACES
 from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 
@@ -93,8 +94,9 @@ def do_evolve(context):
 
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
-		catalog = get_catalog()
 		
+		catalog = install_container_catalog(ds_folder, intids)
+
 		if not hasattr(catalog, '_ntiid_index'):
 			catalog._ntiid_index = NTIIDIndex(family=intids.family)
 		
