@@ -23,6 +23,14 @@ from .interfaces import ISynchronizationParams
 from .interfaces import ISynchronizationResults
 from .interfaces import ILibrarySynchronizationResults
 
+class SynchronizationExeception(Exception):
+	
+	def __init__(self, message, code=None):
+		args = (message,) if code is None else (message, "Code:%s" % code)
+		Exception.__init__(self, *args)
+		self.code = code
+SynchException = SynchronizationExeception
+
 @WithRepr
 @interface.implementer(ISynchronizationParams)
 class SynchronizationParams(SchemaConfigured):
