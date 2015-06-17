@@ -15,6 +15,7 @@ import pyquery
 
 from zope import component
 from zope import interface
+
 from zope.container.contained import Contained
 
 from pyramid.view import view_config
@@ -52,24 +53,24 @@ class _ContentCardResolver(object):
 			# We arbitrarily choose the first one.
 			# We might instead want to go through and find one that
 			# is accessible for the current user?
-			card = _ContentCard( paths[0] )
+			card = _ContentCard(paths[0])
 			# Preserve the parent for ACL purposes
 			card.__parent__ = paths[0][-1]
 			card.__name__ = key
 			return card
 
-_view_defaults = dict( route_name='objects.generic.traversal',
+_view_defaults = dict(route_name='objects.generic.traversal',
 					   renderer='rest',
 					   context=_ContentCard,
 					   permission=nauth.ACT_READ,
-					   request_method='GET' )
+					   request_method='GET')
 @view_config(accept=PAGE_INFO_MT_JSON.encode('ascii'), **_view_defaults)
 def pageinfo_from_content_card_view(request):
 	assert request.accept
-	return find_page_info_view_helper( request, request.context.path[-1] )
+	return find_page_info_view_helper(request, request.context.path[-1])
 
 @view_config(accept=b'application/vnd.nextthought.link+json', **_view_defaults)
-def get_card_view_link( request ):
+def get_card_view_link(request):
 	# Not supported.
 	return hexc.HTTPBadRequest()
 
@@ -81,22 +82,23 @@ def get_card_view(request):
 	# and WILL change.
 
 	containing_unit = request.context.path[-1]
-	contents = None # Walk up to find physical contents
+	contents = None  # Walk up to find physical contents
 	while containing_unit is not None and not contents:
 		contents = containing_unit.read_contents()
-		containing_unit = getattr(containing_unit, '__parent__', None )
+		containing_unit = getattr(containing_unit, '__parent__', None)
 
 	if not contents:
 		return hexc.HTTPNotFound()
 
-	pq = pyquery.PyQuery( contents, parser='html' )
+	pq = pyquery.PyQuery(contents, parser='html')
+	
 	# Because of syntax issues, and unicode issues, we have to iterate
 	# for the object ourself
 
 	nodes = pq(b'object[data-ntiid]')
 	object_elm = None
 	for node in nodes:
-		if node.tag == 'object' and node.attrib.get( 'data-ntiid' ) == request.context.__name__:
+		if node.tag == 'object' and node.attrib.get('data-ntiid') == request.context.__name__:
 			object_elm = node
 			break
 
@@ -105,7 +107,7 @@ def get_card_view(request):
 
 	result = {}
 	for k, v in object_elm.attrib.items():
-		if k == 'class': # CSS class
+		if k == 'class':  # CSS class
 			continue
 		if k == 'type':
 			k = 'MimeType'
@@ -116,7 +118,7 @@ def get_card_view(request):
 			k = 'NTIID'
 		result[k] = v
 
-	img = object_elm.find( 'img' )
+	img = object_elm.find('img')
 	if img is not None:
 		result['image'] = img.attrib['src']
 

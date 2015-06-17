@@ -13,8 +13,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.container.interfaces import IContained
 
@@ -51,9 +51,9 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 	"""
 
 	def __new__(cls, base, request):
-		return ProxyBase.__new__( cls, base )
+		return ProxyBase.__new__(cls, base)
 
-	def __init__( self, base, request ):
+	def __init__(self, base, request):
 		ProxyBase.__init__(self, base)
 		self.library = base
 		self.request = request
@@ -62,17 +62,16 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 	@property
 	def contentPackages(self):
 		if self._v_contentPackages is None:
-			def test( content_package ):
-				if is_readable( content_package, self.request ):
+			def test(content_package):
+				if is_readable(content_package, self.request):
 					return True
 				# Nope. What about a top-level child?
-				return any( (is_readable(child, self.request) for child in content_package.children) )
+				return any((is_readable(child, self.request) for child in content_package.children))
 
 			self._v_contentPackages = list(filter(test, self.library.contentPackages))
 
 		return self._v_contentPackages
 
-####
 # A chain for getting the library that a user can view
 # during workspace access.
 # The chain is a bit convoluted, but very flexible. (note that the
@@ -84,7 +83,6 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 # That library turns out to wrap the global library and apply permissioning
 #   through the proxy defined above.
 # Ultimately, it is that proxy that goes in the workspace.
-####
 
 @interface.implementer(IContentPackageLibrary)
 def _library_for_library(library, request):
@@ -93,49 +91,48 @@ def _library_for_library(library, request):
 
 @interface.implementer(IContentPackageLibrary)
 def _library_for_user(user, request):
-	global_library = component.getUtility( IContentPackageLibrary )
-	result = component.getMultiAdapter( (global_library, request), IContentPackageLibrary )
+	global_library = component.getUtility(IContentPackageLibrary)
+	result = component.getMultiAdapter((global_library, request), IContentPackageLibrary)
 	return result
 
 @interface.implementer(IWorkspace)
-def _library_workspace_for_library( library, request ):
-	library = component.getMultiAdapter( (library, request), IContentPackageLibrary )
+def _library_workspace_for_library(library, request):
+	library = component.getMultiAdapter((library, request), IContentPackageLibrary)
 	ws = LibraryWorkspace(library)
 	return ws
 
 @interface.implementer(IWorkspace)
-def _library_workspace_for_user( user, request ):
-	library = component.getMultiAdapter( (user,request), IContentPackageLibrary )
+def _library_workspace_for_user(user, request):
+	library = component.getMultiAdapter((user, request), IContentPackageLibrary)
 	ws = LibraryWorkspace(library)
 	ws.__parent__ = user
 	return ws
 
 @interface.implementer(IWorkspace)
 @component.adapter(IUserService)
-def _library_workspace( user_service ):
+def _library_workspace(user_service):
 	request = get_current_request()
 	user = user_service.user
-	ws = component.getMultiAdapter( (user, request),
+	ws = component.getMultiAdapter((user, request),
 									IWorkspace,
-									name='Library' )
+									name='Library')
 	ws.__parent__ = user
 	return ws
 
-@interface.implementer(IWorkspace,
-					   IContained)
+@interface.implementer(IWorkspace, IContained)
 class LibraryWorkspace(object):
 
 	__parent__ = None
 	__name__ = 'Library'
 	name = alias('__name__')
 
-	def __init__( self, lib ):
+	def __init__(self, lib):
 		self._library = lib
 
 	@CachedProperty
-	def collections( self ):
+	def collections(self):
 		# Right now, we're assuming one collection for the whole library
-		adapt = component.getAdapter( self._library, ICollection )
+		adapt = component.getAdapter(self._library, ICollection)
 		adapt.__parent__ = self
 		return (adapt,)
 
@@ -163,7 +160,7 @@ class LibraryCollection(object):
 	# BWC
 	_library = alias('context')
 
-	def __init__( self, lib ):
+	def __init__(self, lib):
 		self.context = lib
 
 	@property
@@ -191,23 +188,23 @@ class LibraryCollectionDetailExternalizer(object):
 	# TODO: This doesn't do a good job of externalizing it,
 	# though. We're skipping all the actual Collection parts
 
-	def __init__(self, collection ):
+	def __init__(self, collection):
 		self._collection = collection
 
 	def toExternalObject(self, **kwargs):
 		library_items = self._collection.library_items
-		result = LocatedExternalDict( {
+		result = LocatedExternalDict({
 			'title': "Library",
-			'titles' : [to_external_object(x, **kwargs) for x in library_items] } )
+			'titles' : [to_external_object(x, **kwargs) for x in library_items] })
 		result.__name__ = self._collection.__name__
 		result.__parent__ = self._collection.__parent__
 		return result
 
 @interface.implementer(IWorkspace)
 @component.adapter(IUserService)
-def _bundle_workspace( user_service, request=None ): # take request so we can fit the common multi-adapt pattern
-	#request = get_current_request()
-	user = getattr(user_service, 'user', user_service) # also for multi-adapt
+def _bundle_workspace(user_service, request=None):  # take request so we can fit the common multi-adapt pattern
+	# request = get_current_request()
+	user = getattr(user_service, 'user', user_service)  # also for multi-adapt
 	# Note that, instead of doing the complicated thing that
 	# the library above does, for simplicity to start with we're doing
 	# the simple thing and directly instantiating the object.
@@ -227,7 +224,7 @@ def _bundle_workspace( user_service, request=None ): # take request so we can fi
 
 	bundle_library = component.queryUtility(IContentPackageBundleLibrary)
 	if bundle_library is not None:
-		ws =_BundleLibraryWorkspace(bundle_library)
+		ws = _BundleLibraryWorkspace(bundle_library)
 		ws.__parent__ = user
 		return ws
 
