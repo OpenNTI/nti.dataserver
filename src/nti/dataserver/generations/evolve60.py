@@ -22,11 +22,7 @@ from zope.component.hooks import site, setHooks
 
 from zope.intid.interfaces import IIntIds
 
-from nti.app.contentlibrary.subscribers import _update_audio_index_when_content_changes
-from nti.app.contentlibrary.subscribers import _update_video_index_when_content_changes
-from nti.app.contentlibrary.subscribers import _update_timeline_index_when_content_changes
-from nti.app.contentlibrary.subscribers import _update_slidedeck_index_when_content_changes
-from nti.app.contentlibrary.subscribers import _update_related_content_index_when_content_changes
+from nti.app.contentlibrary.subscribers import _update_indices_when_content_changes
 
 from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data.index import NTIIDIndex
@@ -79,11 +75,7 @@ def index_library(intids):
 			if uid is not None:
 				logger.info('Indexing (%s)', package)
 				_drop_annotations_for_unit(package)
-				_update_audio_index_when_content_changes(package, None)
-				_update_video_index_when_content_changes(package, None)
-				_update_timeline_index_when_content_changes(package, None)
-				_update_slidedeck_index_when_content_changes(package, None)
-				_update_related_content_index_when_content_changes(package, None)
+				_update_indices_when_content_changes(package, None)
 
 def do_evolve(context):
 	setHooks()
