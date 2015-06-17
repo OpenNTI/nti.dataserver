@@ -24,29 +24,29 @@ from pyramid import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.dataserver import authorization as nauth
 
 from nti.ntiids import ntiids
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from ..library_views import _RootLibraryTOCRedirectView
 from ..library_views import _LibraryTOCRedirectView
+from ..library_views import _RootLibraryTOCRedirectView
 
 from .interfaces import IContentUnitPreferences
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IContentUnitPreferences,
-			  permission=nauth.ACT_UPDATE,
-			  request_method='PUT' )
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 context=IContentUnitPreferences,
+			 permission=nauth.ACT_UPDATE,
+			 request_method='PUT')
 class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,
 									 ModeledContentUploadRequestUtilsMixin):
 
-	def _transformInput( self, value ):
+	def _transformInput(self, value):
 		return value
 
-	def updateContentObject( self, unit_prefs, externalValue, set_id=False, notify=True ):
+	def updateContentObject(self, unit_prefs, externalValue, set_id=False, notify=True):
 		# At this time, externalValue must be a dict containing the 'sharedWith' setting
 		try:
 			unit_prefs.sharedWith = externalValue['sharedWith']
@@ -58,7 +58,7 @@ class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		value = self.readInput()
-		self.updateContentObject( self.request.context, value )
+		self.updateContentObject(self.request.context, value)
 
 		# Since we are used as a field updater, we want to return
 		# the object whose field we updated (as is the general rule)
@@ -69,10 +69,10 @@ class _ContentUnitPreferencesPutView(AbstractAuthenticatedView,
 			# NOTE: This means that we are passing the wrong type of
 			# context object
 			self.request.view_name = ntiids.ROOT
-			return _RootLibraryTOCRedirectView( self.request )
+			return _RootLibraryTOCRedirectView(self.request)
 
-		content_lib = component.getUtility( IContentPackageLibrary )
+		content_lib = component.getUtility(IContentPackageLibrary)
 
 		content_units = content_lib.pathToNTIID(ntiid)
 		self.request.context = content_units[-1]
-		return _LibraryTOCRedirectView( self.request )
+		return _LibraryTOCRedirectView(self.request)
