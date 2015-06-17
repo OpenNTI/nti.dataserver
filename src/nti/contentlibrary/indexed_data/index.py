@@ -237,9 +237,11 @@ def install_container_catalog(site_manager_container, intids=None):
 	if intids is None:
 		intids = lsm.getUtility(IIntIds)
 
-	catalog = ContainedObjectCatalog()
-	catalog.__name__ = CATALOG_INDEX_NAME
-	catalog.__parent__ = site_manager_container
-	intids.register(catalog)
-	lsm.registerUtility(catalog, provided=IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
+	catalog = lsm.queryUtility(IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
+	if catalog is None:
+		catalog = ContainedObjectCatalog()
+		catalog.__name__ = CATALOG_INDEX_NAME
+		catalog.__parent__ = site_manager_container
+		intids.register(catalog)
+		lsm.registerUtility(catalog, provided=IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
 	return catalog
