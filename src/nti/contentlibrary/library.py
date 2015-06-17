@@ -45,6 +45,8 @@ from nti.site.localutility import queryNextUtility
 
 from .interfaces import IContentPackageLibrary
 from .interfaces import IPersistentContentUnit
+from .interfaces import ContentPackageAddedEvent
+from .interfaces import ContentPackageRemovedEvent
 from .interfaces import IContentPackageEnumeration
 from .interfaces import ContentPackageReplacedEvent
 from .interfaces import ContentPackageUnmodifiedEvent
@@ -321,7 +323,7 @@ class AbstractContentPackageLibrary(object):
 			# ZODB site access, we can have issues. Also not we're not
 			# randomizing because we expect to be preloaded.
 			for old in removed:
-				lifecycleevent.removed(old)
+				notify(ContentPackageRemovedEvent(old, params))
 				_unregister_units(old)
 				old.__parent__ = None
 				lib_sync_results.removed(old.ntiid) # register
@@ -341,7 +343,7 @@ class AbstractContentPackageLibrary(object):
 			for new in added:
 				new.__parent__ = self
 				lifecycleevent.created(new)
-				lifecycleevent.added(new)
+				notify(ContentPackageAddedEvent(new, params))
 				_register_units(new)
 				lib_sync_results.added(new.ntiid) # register
 

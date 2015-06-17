@@ -18,7 +18,11 @@ from zope.container.interfaces import IContentContainer
 
 from zope.dublincore import interfaces as dub_interfaces
 
+from zope.lifecycleevent import ObjectAddedEvent
+from zope.lifecycleevent import ObjectRemovedEvent
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.location.interfaces import IContained as IZContained
@@ -429,6 +433,38 @@ class AllContentPackageLibrariesDidSyncEvent(object):
 	"""
 	
 	def __init__(self, params=None, results=None):
+		self.params = params
+		self.results = results
+
+class IContentPackageAddedEvent(IObjectAddedEvent):
+	"""
+	An event fired when a content package has been added
+	"""
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+
+@interface.implementer(IContentPackageAddedEvent)
+class ContentPackageAddedEvent(ObjectAddedEvent):
+
+	def __init__(self, obj, params=None, results=None):
+		super(ContentPackageAddedEvent, self).__init__(obj)
+		self.params = params
+		self.results = results
+
+class IContentPackageRemovedEvent(IObjectRemovedEvent):
+	"""
+	An event fired when a content package has been removed.
+	"""
+	params = Object(ISynchronizationParams,
+					title="Synchronization parameters",
+					required=False)
+
+@interface.implementer(IContentPackageRemovedEvent)
+class ContentPackageRemovedEvent(ObjectRemovedEvent):
+
+	def __init__(self, obj, params=None, results=None):
+		super(ContentPackageRemovedEvent, self).__init__(obj)
 		self.params = params
 		self.results = results
 
