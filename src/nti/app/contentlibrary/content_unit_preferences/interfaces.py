@@ -16,8 +16,7 @@ from nti.dataserver.interfaces import ILastModified
 from nti.schema.field import List
 from nti.schema.field import Object
 
-class IContentUnitPreferences(ILocation,
-							  ILastModified):
+class IContentUnitPreferences(ILocation, ILastModified):
 	"""
 	Storage location for preferences related to a content unit.
 	"""

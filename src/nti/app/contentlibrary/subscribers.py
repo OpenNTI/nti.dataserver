@@ -196,7 +196,8 @@ def _get_container_tree(container_id):
 def _get_file_last_mod_namespace(unit, filename):
 	return '%s.%s.LastModified' % (unit.ntiid, filename)
 
-def _update_index_when_content_changes(content_package, index_filename, item_iface, object_creator):
+def _update_index_when_content_changes(content_package, index_filename,
+									   item_iface, object_creator):
 	catalog = get_catalog()
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
@@ -278,7 +279,7 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 								  namespace=content_package.ntiid)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
-					sibling_key, registered_count, index_item_count, removed_count)
+				sibling_key, registered_count, index_item_count, removed_count)
 
 
 INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
@@ -288,10 +289,8 @@ INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
 
 def _update_indices_when_content_changes(content_package, event):
-	for name, iface, func in INDICES:
-		_update_index_when_content_changes(content_package, name, iface, func)
-
-INTERFACES = (INTIAudio, INTIVideo, INTITimeline, INTISlideDeck, INTIRelatedWorkRef)
+	for name, item_iface, func in INDICES:
+		_update_index_when_content_changes(content_package, name, item_iface, func)
 
 def _clear_when_removed(content_package):
 	"""
@@ -305,7 +304,7 @@ def _clear_when_removed(content_package):
 	removed_count = 0
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()
-		for item_iface in INTERFACES:
+		for _, item_iface, _ in INDICES:
 			removed = _remove_from_registry(namespace=content_package.ntiid,
 								  			provided=item_iface,
 								  			catalog=catalog)

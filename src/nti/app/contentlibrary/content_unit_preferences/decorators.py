@@ -11,13 +11,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from pyramid.interfaces import IRequest
 
-from nti.appserver.interfaces import IContentUnitInfo
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
+
+from nti.appserver.interfaces import IContentUnitInfo
 
 from nti.externalization.interfaces import IExternalMappingDecorator
 
@@ -27,13 +28,16 @@ from .prefs import find_prefs_for_content_and_user
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IContentUnitInfo, IRequest)
 class _ContentUnitPreferencesDecorator(AbstractAuthenticatedRequestAwareDecorator):
-	"Decorates the mapping with the sharing preferences"""
+	"""
+	Decorates the mapping with the sharing preferences
+	"""
 
 	def _predicate(self, context, result):
 		return self._is_authenticated and context.contentUnit is not None
 
 	def _do_decorate_external(self, context, result):
-		prefs, provenance, contentUnit = find_prefs_for_content_and_user(context.contentUnit, self.remoteUser)
+		prefs, provenance, contentUnit = \
+					find_prefs_for_content_and_user(context.contentUnit, self.remoteUser)
 
 		if prefs_present( prefs ):
 			ext_obj = {}
