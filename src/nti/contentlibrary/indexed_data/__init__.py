@@ -30,9 +30,8 @@ CATALOG_INDEX_NAME = '++etc++contentlibrary.container_index'
 def get_catalog():
 	result = component.queryUtility(IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
 	return result
-get_index = get_catalog
 
-# Types
+# types
 NTI_AUDIO_TYPE = 'INTIAudio'
 NTI_VIDEO_TYPE = 'INTIVideo'
 NTI_SLIDE_TYPE = 'INTISlide'
@@ -41,7 +40,7 @@ NTI_SLIDE_DECK_TYPE = 'INTISlideDeck'
 NTI_SLIDE_VIDEO_TYPE = 'INTISlideVideo'
 NTI_RELATED_WORK_TYPE = NTI_RELATED_WORK_REF_TYPE = 'INTIRelatedWorkRef'
 
-# Registry
+# registry
 def get_registry(registry=None):
 	if registry is None:
 		library = component.queryUtility(IContentPackageLibrary)
