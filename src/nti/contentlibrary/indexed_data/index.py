@@ -11,10 +11,11 @@ logger = __import__('logging').getLogger(__name__)
 
 import six
 import time
-import BTrees
 
 from zope import component
 from zope.intid import IIntIds
+
+import BTrees
 
 from persistent import Persistent
 

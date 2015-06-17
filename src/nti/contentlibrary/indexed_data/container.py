@@ -38,7 +38,8 @@ from . import NTI_SLIDE_DECK_TYPE
 from . import NTI_RELATED_WORK_REF_TYPE
 
 @interface.implementer(IIndexedDataContainer)
-class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject): # BWC
+class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject): 
+	# Make it persistent for BWC
 
 	type = None
 	
