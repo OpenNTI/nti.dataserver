@@ -157,7 +157,8 @@ def _removed_registered(provided, name, intids=None, registry=None, catalog=None
 	intids = component.queryUtility(IIntIds) if intids is None else intids
 	if registered is not None:
 		catalog = get_catalog() if catalog is None else catalog
-		catalog.unindex(registered, intids=intids)
+		if catalog is not None: # may be None in test mode
+			catalog.unindex(registered, intids=intids)
 		unregisterUtility(registry, provided=provided, name=name)
 		intids.unregister(registered, event=False)
 	return registered
@@ -171,20 +172,23 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	result = []
 	registry = get_registry(registry)
 	catalog = get_catalog() if catalog is None else catalog
-	intids = component.queryUtility(IIntIds) if intids is None else intids
-	for utility in catalog.search_objects(intids=intids, provided=provided,
-										  container_ntiids=containers, namespace=namespace):
-		try:
-			ntiid = utility.ntiid
-			if ntiid:
-				result.append(utility)
-				_removed_registered(provided,
-									name=ntiid,
-									intids=intids,
-									catalog=catalog,
-									registry=registry)
-		except AttributeError:
-			pass
+	if catalog is None: # may be None in test mode
+		return result
+	else:
+		intids = component.queryUtility(IIntIds) if intids is None else intids
+		for utility in catalog.search_objects(intids=intids, provided=provided,
+											  container_ntiids=containers, namespace=namespace):
+			try:
+				ntiid = utility.ntiid
+				if ntiid:
+					result.append(utility)
+					_removed_registered(provided,
+										name=ntiid,
+										intids=intids,
+										catalog=catalog,
+										registry=registry)
+			except AttributeError:
+				pass
 	return result
 
 def _get_container_tree(container_id):
@@ -197,22 +201,23 @@ def _get_file_last_mod_namespace(unit, filename):
 	return '%s.%s.LastModified' % (unit.ntiid, filename)
 
 def _update_index_when_content_changes(content_package, index_filename,
-									   item_iface, object_creator):
-	catalog = get_catalog()
+									   item_iface, object_creator, catalog=None):
+	catalog = get_catalog() if catalog is None else catalog
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
 		return
 
-	sk_lastModified = sibling_key.lastModified
-	last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
-	last_modified = catalog.get_last_modified(last_mod_namespace)
-	if last_modified and last_modified >= sk_lastModified:
-		logger.info("No change to %s since %s, ignoring",
-					sibling_key,
-					sk_lastModified)
-		return
-	catalog.set_last_modified(last_mod_namespace, sk_lastModified)
+	if catalog is not None: # may be None in test mode
+		sk_lastModified = sibling_key.lastModified
+		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
+		last_modified = catalog.get_last_modified(last_mod_namespace)
+		if last_modified and last_modified >= sk_lastModified:
+			logger.info("No change to %s since %s, ignoring",
+						sibling_key,
+						sk_lastModified)
+			return
+		catalog.set_last_modified(last_mod_namespace, sk_lastModified)
 
 	index_text = content_package.read_contents_of_sibling_entry(index_filename)
 
@@ -297,11 +302,11 @@ def _clear_when_removed(content_package):
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
 	"""
+	removed_count = 0
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
 	registry = get_registry()
-	removed_count = 0
 	if registry != component.getGlobalSiteManager():
 		catalog = get_catalog()
 		for _, item_iface, _ in INDICES:
