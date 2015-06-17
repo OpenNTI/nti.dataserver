@@ -23,6 +23,7 @@ from pyramid import httpexceptions as hexc
 from pyramid.view import view_config, view_defaults
 
 from nti.app.authentication import get_remote_user
+
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 

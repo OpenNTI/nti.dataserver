@@ -280,35 +280,16 @@ def _update_index_when_content_changes(content_package, index_filename, item_ifa
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 					sibling_key, registered_count, index_item_count, removed_count)
 
-def _update_audio_index_when_content_changes(content_package, event):
-	return _update_index_when_content_changes(content_package,
-											  'audio_index.json',
-											  INTIAudio,
-											  create_ntiaudio_from_external)
 
-def _update_video_index_when_content_changes(content_package, event):
-	return _update_index_when_content_changes(content_package,
-											  'video_index.json',
-											  INTIVideo,
-											  create_ntivideo_from_external)
+INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+			('video_index.json', INTIVideo, create_ntivideo_from_external),
+			('timeline_index.json', INTITimeline, create_timelime_from_external), 
+			('slidedeck_index.json', INTISlideDeck, create_object_from_external), 
+			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
 
-def _update_related_content_index_when_content_changes(content_package, event):
-	return _update_index_when_content_changes(content_package,
-											  'related_content_index.json',
-											  INTIRelatedWorkRef,
-											  create_relatedwork_from_external)
-
-def _update_timeline_index_when_content_changes(content_package, event):
-	return _update_index_when_content_changes(content_package,
-											  'timeline_index.json',
-											  INTITimeline,
-											  create_timelime_from_external)
-
-def _update_slidedeck_index_when_content_changes(content_package, event):
-	return _update_index_when_content_changes(content_package,
-											  'slidedeck_index.json',
-											  INTISlideDeck,
-											  create_object_from_external)
+def _update_indices_when_content_changes(content_package, event):
+	for name, iface, func in INDICES:
+		_update_index_when_content_changes(content_package, name, iface, func)
 
 INTERFACES = (INTIAudio, INTIVideo, INTITimeline, INTISlideDeck, INTIRelatedWorkRef)
 
