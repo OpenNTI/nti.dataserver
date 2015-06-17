@@ -38,10 +38,10 @@ from nti.externalization.interfaces import LocatedExternalDict
 from .synchronize import synchronize
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IDataserverFolder,
-			  permission=ACT_NTI_ADMIN,
-			  name='SyncAllLibraries')
+			 renderer='rest',
+			 context=IDataserverFolder,
+			 permission=ACT_NTI_ADMIN,
+			 name='SyncAllLibraries')
 class _SyncAllLibrariesView(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
 	"""
@@ -57,17 +57,17 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		from there.
 	"""
 
-	# : Because we'll be doing a lot of filesystem IO, which may not
-	# : be well cooperatively tasked (gevent), we would like to give
-	# : the opportunity for other greenlets to run by sleeping inbetween
-	# : syncing each library. However, for some reason, under unittests,
-	# : this leads to very odd and unexpected test failures
-	# : (specifically in nti.app.products.courseware) so we allow
-	# : disabling it.
+	# Because we'll be doing a lot of filesystem IO, which may not
+	# be well cooperatively tasked (gevent), we would like to give
+	# the opportunity for other greenlets to run by sleeping inbetween
+	# syncing each library. However, for some reason, under unittests,
+	# this leads to very odd and unexpected test failures
+	# (specifically in nti.app.products.courseware) so we allow
+	# disabling it.
 	_SLEEP = True
 
-	# : The amount of time for which we will hold the lock during
-	# : sync
+	# The amount of time for which we will hold the lock during
+	# sync
 	lock_timeout = 60 * 30  # 30 minutes
 
 	lock_name = '/var/libraries/Lock/sync'
@@ -107,20 +107,20 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# (which works so long as zope.securitypolicy doesn't get involved...)
 		# This is somewhat difficult to test the side-effects of, sadly.
 		now = time.time()
+		result = LocatedExternalDict()
+		result['Started'] = now
 		endInteraction()
 		try:
-			result = LocatedExternalDict()
-			result['Started'] = now
 			params, results = synchronize(sleep=self._SLEEP,
 										  allowRemoval=True,
 										  site=site,
 										  packages=packages)
 			result['Params'] = params
 			result['Results'] = results
-			result['Elapsed'] = time.time() - now
-			return result
 		finally:
 			restoreInteraction()
+			result['Elapsed'] = time.time() - now
+		return result
 
 	def __call__(self):
 		with self.lock:
