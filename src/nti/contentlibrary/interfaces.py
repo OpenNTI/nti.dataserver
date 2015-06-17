@@ -295,6 +295,7 @@ class ISynchronizationResults(interface.Interface):
 		"""
 		Add a sync result
 		"""
+	append = add # alias
 
 class ISyncableContentPackageLibrary(IContentPackageLibrary):
 	"""
