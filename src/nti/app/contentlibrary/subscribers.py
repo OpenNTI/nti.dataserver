@@ -64,14 +64,14 @@ def prepare_json_text(s):
 	result = unicode(s, 'utf-8') if isinstance(s, bytes) else s
 	return result
 
-def _connection(registry=None):
+def get_connection(registry=None):
 	registry = get_registry(registry)
 	result = IConnection(registry, None)
 	return result
 
 def intid_register(item, registry, intids=None, connection=None):
 	intids = component.queryUtility(IIntIds) if intids is None else intids
-	connection = _connection(registry) if connection is None else connection
+	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
 		intids.register(item, event=False)
@@ -226,7 +226,7 @@ def _update_index_when_content_changes(content_package, index_filename,
 
 	index = simplejson.loads(index_text)
 	registry = get_registry()
-	connection = _connection(registry)
+	connection = get_connection(registry)
 	intids = component.queryUtility(IIntIds)
 
 	removed = _remove_from_registry(namespace=content_package.ntiid,
@@ -285,7 +285,6 @@ def _update_index_when_content_changes(content_package, index_filename,
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
-
 
 INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('video_index.json', INTIVideo, create_ntivideo_from_external),
