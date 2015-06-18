@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from _ast import Add
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -74,4 +73,4 @@ class SynchronizationResults(SchemaConfigured, Contained):
 		self.Items = [] if self.Items is None else self.Items
 		item.__parent__ = self
 		self.Items.append(item)
-	append = Add
+	append = add
