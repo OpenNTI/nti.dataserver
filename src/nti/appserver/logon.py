@@ -409,8 +409,8 @@ class _SimpleExistingUserLinkProvider(object):
 @component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 class _OnlinePolicyLinkProvider (object):
 	
-	tos_rel = REL_TOS_DIRECT_LINK
-	privacy_rel = REL_PRIVACY_DIRECT_LINK
+	tos_rel = TOS_URL
+	privacy_rel = PRIVACY_POLICY_URL
 	
 	def __init__ ( self, user, req ):
 		self.request = req
