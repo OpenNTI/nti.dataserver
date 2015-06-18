@@ -1,44 +1,41 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not
-does_not = is_not
-from hamcrest import has_property
 from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_property
+does_not = is_not
 
-from nti.testing.matchers import verifiably_provides
 import fudge
 
 from zope import interface
 from zope import component
 from zope.component.hooks import site
 
-from nti.dataserver.site import _TrivialSite
-from nti.appserver.policies.sites import BASECOPPA
+from nti.appserver.policies.sites import BASECOPPA  #TODO: Remove this
+
+from nti.contentlibrary.interfaces import IS3Key
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IAbsoluteContentUnitHrefMapper
+from nti.contentlibrary.interfaces import IFilesystemContentPackageLibrary
+
+from nti.contentlibrary.boto_s3 import BotoS3BucketContentLibrary
+
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary
+
 from nti.externalization.externalization import to_external_object
 
-from ..interfaces import IContentPackageLibrary
-from ..interfaces import IFilesystemContentPackageLibrary
-from ..interfaces import IAbsoluteContentUnitHrefMapper
-from ..interfaces import IS3Key
-from ..filesystem import EnumerateOnceFilesystemLibrary
-from ..boto_s3 import BotoS3BucketContentLibrary
+from nti.site.transient import TrivialSite
+
+from nti.testing.matchers import verifiably_provides
 
 HEAD_ZCML_STRING = """
 		<configure xmlns="http://namespaces.zope.org/zope"
@@ -77,11 +74,11 @@ BOTO_ZCML_STRING = HEAD_ZCML_STRING + """
 		</configure>
 		"""
 
-from . import ContentlibraryLayerTest
 from zope.configuration import xmlconfig, config
 
-class TestZcml(ContentlibraryLayerTest):
+from nti.contentlibrary.tests import ContentlibraryLayerTest
 
+class TestZcml(ContentlibraryLayerTest):
 
 	def setUp(self):
 		super(TestZcml,self).setUp()
@@ -99,9 +96,9 @@ class TestZcml(ContentlibraryLayerTest):
 
 		assert_that( BASECOPPA.__bases__, is_( (component.globalSiteManager,) ) )
 
-		#assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
+		# assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
-		with site( _TrivialSite( BASECOPPA ) ):
+		with site( TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )
 			assert_that( lib, verifiably_provides( IFilesystemContentPackageLibrary ) )
 			assert_that( lib, is_( EnumerateOnceFilesystemLibrary ) )
@@ -110,7 +107,6 @@ class TestZcml(ContentlibraryLayerTest):
 			pack_ext = to_external_object( lib[0] )
 			assert_that( pack_ext, has_entry( 'href', '/SomePrefix/TestFilesystem/index.html' ) )
 			assert_that( pack_ext, has_entry( 'root', '/SomePrefix/TestFilesystem/' ) )
-
 
 
 	@fudge.patch('boto.connect_s3')
@@ -125,9 +121,9 @@ class TestZcml(ContentlibraryLayerTest):
 		xmlconfig.registerCommonDirectives( context )
 
 		xmlconfig.string( BOTO_ZCML_STRING, context )
-		#assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
+		# assert_that( component.queryUtility( IContentPackageLibrary ), is_( none() ) )
 
-		with site( _TrivialSite( BASECOPPA ) ):
+		with site( TrivialSite( BASECOPPA ) ):
 			lib = component.getUtility( IContentPackageLibrary )
 			assert_that( lib, verifiably_provides( IContentPackageLibrary ) )
 			assert_that( lib, is_( BotoS3BucketContentLibrary ) )

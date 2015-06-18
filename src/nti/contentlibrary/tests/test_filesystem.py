@@ -25,6 +25,7 @@ from hamcrest import greater_than_or_equal_to
 import time
 import os.path
 import anyjson as json
+
 try:
 	from six.moves import cPickle as pickle
 except ImportError:
@@ -43,7 +44,6 @@ from nti.testing.matchers import validly_provides
 from nti.testing.matchers import verifiably_provides
 
 class TestFilesystem(ContentlibraryLayerTest):
-
 
 	def test_filesystem_content_interfaces(self):
 
@@ -75,7 +75,6 @@ class TestFilesystem(ContentlibraryLayerTest):
 						 is_(unicode))
 		assert_that(list(as_yaml.keys())[0],
 						 is_(unicode))
-
 
 	def test_from_filesystem(self):
 		absolute_path = os.path.join( os.path.dirname( __file__ ),
@@ -198,7 +197,6 @@ class TestFilesystem(ContentlibraryLayerTest):
 		assert_that( new_cache.get( path1 ), none() )
 		found_path = library.pathToNTIID( path1 )
 		assert_that( found_path, has_length( 2 ) )
-
 
 	def test_site_library(self):
 		global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )

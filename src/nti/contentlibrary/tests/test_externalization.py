@@ -1,43 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from hamcrest import assert_that, has_entry, has_entries
-from hamcrest import greater_than_or_equal_to
-from hamcrest import has_key
-from hamcrest import is_not
 from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import has_property
+from hamcrest import greater_than_or_equal_to
+
+import fudge
+
+import boto.s3.key
+
+from zope import interface
+from zope.site.folder import Folder
+from zope.site.folder import rootFolder
 
 from nti.contentlibrary import filesystem
 from nti.contentlibrary import boto_s3
 from nti.contentlibrary import interfaces
 
-from nti.testing.matchers import validly_provides
-
-import nti.externalization
-from zope import interface
 from nti.externalization.interfaces import IExternalObject
-
-import boto.s3.key
-import fudge
 
 from nti.contentlibrary.tests import ContentlibraryLayerTest
 
-from zope.site.folder import rootFolder
-from zope.site.folder import Folder
+from nti.testing.matchers import validly_provides
 
 class TestExternalization(ContentlibraryLayerTest):
 
@@ -59,7 +54,9 @@ class TestExternalization(ContentlibraryLayerTest):
 					 has_entry( 'icon', '/prealgebra/icons/The%20Icon.png' ) )
 
 
-	def _do_test_escape_if_needed( self, factory, key, index='eclipse-toc.xml', archive_unit=None, prefix='', installable=True):
+	def _do_test_escape_if_needed(self, factory, key, 
+								  index='eclipse-toc.xml', archive_unit=None, 
+								  prefix='', installable=True):
 		if isinstance(key, basestring):
 
 			parts = key.split('/')
@@ -130,7 +127,6 @@ class TestExternalization(ContentlibraryLayerTest):
 			key='prealgebra/index.html',
 			index=None)
 
-
 	def test_escape_if_needed_filesystem_full_path(self):
 		def factory(**kwargs):
 			r = filesystem.FilesystemContentPackage(**kwargs)
@@ -184,9 +180,6 @@ class TestExternalization(ContentlibraryLayerTest):
 		# and we reproduce the original href
 		mapper = interfaces.IContentUnitHrefMapper(child)
 		assert_that( mapper, has_property('href', '/prealgebra/' + child_href_with_spaces))
-
-
-
 
 
 	@fudge.patch('nti.contentlibrary.boto_s3.BotoS3ContentUnit._connect_key')

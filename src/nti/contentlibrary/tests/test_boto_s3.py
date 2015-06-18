@@ -1,36 +1,36 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from hamcrest import assert_that
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_not
 from hamcrest import not_none
-from hamcrest import none
-from hamcrest import same_instance
+from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import same_instance
 
-from nti.contentlibrary import externalization
-from nti.contentlibrary import interfaces
+import gzip
+from cStringIO import StringIO
+
+import boto.exception
 
 from zope import interface
 from zope import component
 
-from ..boto_s3 import BotoS3ContentUnit
-from ..boto_s3 import _read_key as read_key
+from nti.contentlibrary import interfaces
+from nti.contentlibrary import externalization
 
-from cStringIO import StringIO
-import gzip
-import boto.exception
+from nti.contentlibrary.boto_s3 import BotoS3ContentUnit
+from nti.contentlibrary.boto_s3 import _read_key as read_key
 
-from . import ContentlibraryLayerTest
+from nti.contentlibrary.tests import ContentlibraryLayerTest
+
 from nti.testing.matchers import validly_provides
 
 class TestBotoS3(ContentlibraryLayerTest):

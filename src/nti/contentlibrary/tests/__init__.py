@@ -1,37 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
 import os
-import tempfile
 import shutil
+import tempfile
 
-from nti.testing.layers import ZopeComponentLayer
-from nti.testing.layers import ConfiguringLayerMixin
 from zope.component.hooks import setHooks
 
 from zope import component
+
 import zope.testing.cleanup
 
-from ..interfaces import IContentUnitAnnotationUtility
+from nti.contentlibrary.interfaces import IContentUnitAnnotationUtility
 
 from nti.dataserver.tests.mock_dataserver import DSInjectorMixin
+
+from nti.testing.layers import ZopeComponentLayer
+from nti.testing.layers import ConfiguringLayerMixin
 
 class ContentlibraryTestLayer(ZopeComponentLayer,
 							  ConfiguringLayerMixin,
 							  DSInjectorMixin):
 
 
-	set_up_packages = ('nti.contentlibrary','nti.externalization', 'nti.contenttypes.presentation', 'nti.dataserver', 'nti.app.contentlibrary')
+	set_up_packages = (	'nti.contentlibrary', 
+						'nti.externalization', 
+						'nti.contenttypes.presentation', 
+						'nti.dataserver')
 
 	@classmethod
 	def setUp(cls):
@@ -60,11 +61,12 @@ class ContentlibraryTestLayer(ZopeComponentLayer,
 	def testTearDown(cls):
 		pass
 
-
 import unittest
+
 from nti.testing.base import AbstractTestBase
 
 class ContentlibraryLayerTest(unittest.TestCase):
+
 	layer = ContentlibraryTestLayer
 
 	get_configuration_package = AbstractTestBase.get_configuration_package.__func__
