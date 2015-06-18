@@ -118,6 +118,14 @@ REL_INITIAL_TOS_PAGE = "content.initial_tos_page"
 #: link.
 REL_PERMANENT_TOS_PAGE = 'content.permanent_tos_page'
 
+_tosPageLink = 'https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+_privacyPolicyLink = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
+
+# Link providing the direct link to the
+# Terms-of-service page in its href
+REL_TOS_DIRECT_LINK = 'content.direct_tos_link'
+REL_PRIVACY_DIRECT_LINK = 'content.direct_privacy_link'
+
 REL_PING = 'logon.ping' #: See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
 REL_CONTINUE  = 'logon.continue'
@@ -395,6 +403,22 @@ class _SimpleExistingUserLinkProvider(object):
 		if self.user.has_password():
 			return Link( self.request.route_path( self.rel, _query={'username': self.user.username}),
 						 rel=self.rel )
+			
+
+@interface.implementer( app_interfaces.IAuthenticatedUserLinkProvider )
+@component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
+class _OnlinePolicyLinkProvider (object):
+	
+	tosRel = REL_TOS_DIRECT_LINK
+	privacyRel = REL_PRIVACY_DIRECT_LINK
+	
+	def __init__ (self, user, req):
+		self.request = req;
+		self.user = user
+	
+	def get_links (self):
+		return (Link (target=_tosPageLink, rel=self.tosRel),
+				Link (target=_privacyPolicyLink, rel=self.privacyRel),)
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )

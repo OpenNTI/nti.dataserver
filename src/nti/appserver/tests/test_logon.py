@@ -17,6 +17,7 @@ from hamcrest import has_item
 from hamcrest import same_instance, greater_than_or_equal_to, greater_than
 from hamcrest import contains_string
 from hamcrest import contains
+from hamcrest import equal_to
 from hamcrest.library import has_property
 
 from nti.testing.matchers import provides
@@ -450,13 +451,35 @@ class TestLogonViews(ApplicationLayerTest):
 							status=204 )
 			assert_that( user_link_provider.has_link( user, 'first_time_logon' ),
 						is_( False ) )
-
+		
 		# Or a redirect
 		get_current_request().params['success'] = '/the/url/to/go/to'
 		result = password_logon( get_current_request() )
 		assert_that( result, is_( hexc.HTTPSeeOther ) )
 		assert_that( result.headers, has_entry( "Policy", 'jason.madden@nextthought.com') )
 		assert_that( result, has_property( 'location', '/the/url/to/go/to' ) )
+		
+	@WithMockDSTrans
+	def test_policy_links(self):			
+
+		class Policy(object):
+			interface.implements( pyramid.interfaces.IAuthenticationPolicy )
+			def remember( self, request, who ):
+				return [("Policy", who)]
+			def authenticated_userid( self, request ):
+				return 'zachary.roux@nextthought.com'
+			def effective_principals(self, request):
+				return [self.authenticated_userid(request)]
+			
+		get_current_request().registry.registerUtility( Policy() )
+ 		get_current_request().params['username'] = 'zachary.roux@nextthought.com'
+		user = users.User.create_user(self.ds, username='zachary.roux@nextthought.com', password='temp001')
+		result = handshake(get_current_request())
+		
+		tosLink = self._get_link_by_rel(result.links, 'content.direct_tos_link')
+	 	assert_that(tosLink.target, equal_to(logon._tosPageLink))
+		privacyLink = self._get_link_by_rel(result.links, 'content.direct_privacy_link')
+		assert_that(privacyLink.target, equal_to(logon._privacyPolicyLink))
 
 	@WithMockDSTrans
 	def test_create_openid_from_external( self ):
