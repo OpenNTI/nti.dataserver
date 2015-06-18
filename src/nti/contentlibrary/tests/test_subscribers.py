@@ -1,38 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
-does_not = is_not
-from hamcrest import same_instance
-from hamcrest import has_length
 from hamcrest import has_key
-from hamcrest import has_property
-from hamcrest import has_entries
-from hamcrest import has_entry
-from hamcrest import greater_than
-from hamcrest import empty as is_empty
 from hamcrest import contains
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_entries
+from hamcrest import has_property
+from hamcrest import greater_than
+from hamcrest import same_instance
+from hamcrest import empty as is_empty
 from hamcrest import contains_inanyorder
-
-
-from nti.testing.matchers import validly_provides
+does_not = is_not
 
 from nti.externalization.tests import externalizes
 
@@ -40,31 +29,32 @@ import os
 
 from zope import component
 
-
-
-from ..interfaces import IContentPackageLibrary
-from .. import filesystem
-from .. import subscribers
-from .. import interfaces
-from ..bundle import ContentPackageBundle
-
-from . import ContentlibraryLayerTest
-
-from zope.site.interfaces import NewLocalSite
-from zope.site.folder import Folder
-from zope.site.site import LocalSiteManager
+from zope.component import eventtesting
 from zope.component.hooks import site as current_site
 
 from zope.annotation.interfaces import IAnnotations
 
 from zope.lifecycleevent.interfaces import IObjectAddedEvent
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from zope.site.folder import Folder
+from zope.site.site import LocalSiteManager
+from zope.site.interfaces import NewLocalSite
+
 from zope.schema.interfaces import IFieldUpdatedEvent
 
-from zope.component import eventtesting
+from nti.contentlibrary import filesystem
+from nti.contentlibrary import interfaces
+from nti.contentlibrary import subscribers
+from nti.contentlibrary.bundle import ContentPackageBundle
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.zodb.minmax import NumericMaximum
+
+from nti.contentlibrary.tests import ContentlibraryLayerTest
+
+from nti.testing.matchers import validly_provides
 
 class TestSubscribers(ContentlibraryLayerTest):
 
@@ -79,7 +69,6 @@ class TestSubscribers(ContentlibraryLayerTest):
 	def tearDown(self):
 		component.getGlobalSiteManager().unregisterUtility( self.global_library,
 															provided=IContentPackageLibrary )
-
 
 	def test_install_site_library(self):
 
@@ -106,7 +95,8 @@ class TestSubscribers(ContentlibraryLayerTest):
 		unit = embed_paths[0][0]
 		assert_that( IAnnotations(unit), does_not(has_key('foo')) )
 		IAnnotations(unit)['foo'] = 42
-		ann = IAnnotations(unit)
+		
+		IAnnotations(unit)
 		assert_that( IAnnotations(unit), has_key('foo')) # check the dict contract
 
 		# ...we can read them in the child site...
@@ -127,7 +117,6 @@ class TestSubscribers(ContentlibraryLayerTest):
 		ann = IAnnotations(unit)
 		assert_that( ann.get('foo'), is_(42))
 		assert_that( ann, has_entry( 'foo', 42)) # check the dict contract
-
 
 		# This also had the side effect of registering the bundle library
 		assert_that( sm.queryUtility(interfaces.IContentPackageBundleLibrary),
@@ -154,17 +143,16 @@ class TestSubscribers(ContentlibraryLayerTest):
 		sm = LocalSiteManager(site)
 		site.setSiteManager(sm)
 
-		site_lib = site_factory.library_for_site_named( 'localsite' )
+		site_factory.library_for_site_named( 'localsite' )
 		eventtesting.clearEvents()
 
-		site_lib = subscribers.install_site_content_library( sm, NewLocalSite(sm))
+		subscribers.install_site_content_library( sm, NewLocalSite(sm))
 
 		evts = eventtesting.getEvents(interfaces.IContentPackageBundleLibraryModifiedOnSyncEvent)
 		assert_that( evts, has_length(1) )
 
 		bundle_lib = evts[0].object
 		bundle_bucket = evts[0].bucket
-
 
 		evts = eventtesting.getEvents(
 			IObjectAddedEvent,
@@ -179,10 +167,9 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that( bundle_lib.get(bundle.ntiid), is_(bundle) )
 		assert_that( bundle_lib.get('missing', 1), is_(1) )
 
-		### XXX: This doesn't exactly belong here, it's just convenient
+		# XXX: This doesn't exactly belong here, it's just convenient
 
 		# test externalization
-
 
 		assert_that( bundle, validly_provides(interfaces.IContentPackageBundle) )
 

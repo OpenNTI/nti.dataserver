@@ -1,49 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-
-
-.. $Id$
-"""
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-import unittest
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import is_not
-from hamcrest import same_instance
-from hamcrest import has_length
-
-from nti.testing import base
-from nti.testing import matchers
+from hamcrest import assert_that
 
 import os
 
 from zope import component
 
+try:
+	from six.moves import cPickle as pickle
+except ImportError:
+	import pickle
+
+from nti.contentlibrary import filesystem
+from nti.contentlibrary import interfaces
+from nti.contentlibrary.wref import ContentUnitWeakRef
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.wref.interfaces import IWeakRef
 
-from ..interfaces import IContentPackageLibrary
-from .. import filesystem
-from .. import interfaces
-
-from ..wref import ContentUnitWeakRef
-
-from . import ContentlibraryLayerTest
-
-from six.moves import cPickle as pickle
+from nti.contentlibrary.tests import ContentlibraryLayerTest
 
 class TestWref(ContentlibraryLayerTest):
 
 	def setUp(self):
 		global_library = self.global_library = filesystem.GlobalFilesystemContentPackageLibrary( os.path.dirname(__file__) )
+	
 		global_library.syncContentPackages()
 
 		component.getGlobalSiteManager().registerUtility( global_library,
@@ -68,7 +57,6 @@ class TestWref(ContentlibraryLayerTest):
 		assert_that( wref2, is_( wref ))
 
 		assert_that( wref2(), is_( unit ))
-
 
 	def test_wref_to_persistent(self):
 		unit = filesystem.PersistentFilesystemContentUnit()
