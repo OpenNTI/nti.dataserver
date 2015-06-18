@@ -17,6 +17,7 @@
 	<!-- Local users with passwords get a direct logon link -->
 	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
 				provides=".interfaces.ILogonLinkProvider"/>
+				
 	<!--
 		Users we've never seen before get a logon link too: Security through
 		obscurity and avoiding leaking information. Also, since
@@ -28,6 +29,11 @@
 				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
 
 	<!-- Additional links for logged-in users -->
+	
+	<!-- Terms of service and privacy policy direct links -->
+	<subscriber factory=".logon._OnlinePolicyLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+	
 	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
 
