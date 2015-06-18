@@ -123,8 +123,8 @@ PRIVACY_POLICY_URL = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gva
 
 # Link providing the direct link to the
 # Terms-of-service page in its href
-REL_TOS_DIRECT_LINK = 'content.direct_tos_link'
-REL_PRIVACY_DIRECT_LINK = 'content.direct_privacy_link'
+REL_TOS_URL = 'content.direct_tos_link'
+REL_PRIVACY_POLICY_URL = 'content.direct_privacy_link'
 
 REL_PING = 'logon.ping' #: See :func:`ping`
 REL_HANDSHAKE = 'logon.handshake' #: See :func:`handshake`
@@ -409,8 +409,8 @@ class _SimpleExistingUserLinkProvider(object):
 @component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 class _OnlinePolicyLinkProvider (object):
 	
-	tos_rel = TOS_URL
-	privacy_rel = PRIVACY_POLICY_URL
+	tos_rel = REL_TOS_URL
+	privacy_rel = REL_PRIVACY_POLICY_URL
 	
 	def __init__ ( self, user, req ):
 		self.request = req
