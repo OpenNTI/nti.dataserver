@@ -473,13 +473,13 @@ class TestLogonViews(ApplicationLayerTest):
 			
 		get_current_request().registry.registerUtility( Policy() )
  		get_current_request().params['username'] = 'zachary.roux@nextthought.com'
-		user = users.User.create_user(self.ds, username='zachary.roux@nextthought.com', password='temp001')
-		result = handshake(get_current_request())
+		user = users.User.create_user( self.ds, username='zachary.roux@nextthought.com', password='temp001' )
+		result = handshake( get_current_request() )
 		
-		tosLink = self._get_link_by_rel(result.links, 'content.direct_tos_link')
-	 	assert_that(tosLink.target, equal_to(logon._tosPageLink))
-		privacyLink = self._get_link_by_rel(result.links, 'content.direct_privacy_link')
-		assert_that(privacyLink.target, equal_to(logon._privacyPolicyLink))
+		tos_link = self._get_link_by_rel( result.links, 'content.direct_tos_link' )
+	 	assert_that( tos_link.target, equal_to( logon.TOS_URL ) )
+		privacy_link = self._get_link_by_rel( result.links, 'content.direct_privacy_link' )
+		assert_that( privacy_link.target, equal_to( logon.PRIVACY_POLICY_URL ) )
 
 	@WithMockDSTrans
 	def test_create_openid_from_external( self ):

@@ -118,8 +118,8 @@ REL_INITIAL_TOS_PAGE = "content.initial_tos_page"
 #: link.
 REL_PERMANENT_TOS_PAGE = 'content.permanent_tos_page'
 
-_tosPageLink = 'https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
-_privacyPolicyLink = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
+TOS_URL = 'https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+PRIVACY_POLICY_URL = 'https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM'
 
 # Link providing the direct link to the
 # Terms-of-service page in its href
@@ -409,16 +409,16 @@ class _SimpleExistingUserLinkProvider(object):
 @component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
 class _OnlinePolicyLinkProvider (object):
 	
-	tosRel = REL_TOS_DIRECT_LINK
-	privacyRel = REL_PRIVACY_DIRECT_LINK
+	tos_rel = REL_TOS_DIRECT_LINK
+	privacy_rel = REL_PRIVACY_DIRECT_LINK
 	
-	def __init__ (self, user, req):
-		self.request = req;
+	def __init__ ( self, user, req ):
+		self.request = req
 		self.user = user
 	
 	def get_links (self):
-		return (Link (target=_tosPageLink, rel=self.tosRel),
-				Link (target=_privacyPolicyLink, rel=self.privacyRel),)
+		return ( Link ( target=TOS_URL, rel=self.tos_rel ),
+				 Link ( target=PRIVACY_POLICY_URL, rel=self.privacy_rel ), )
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
