@@ -48,6 +48,10 @@ from .interfaces import IContentPackageBundleLibrary
 
 from .presentationresource import DisplayableContentMixin
 
+from . import DuplicatePacakgeException
+from . import MissingContentBundleNTIIDException
+from . import MissingContentPacakgeReferenceException
+
 @WithRepr
 @interface.implementer(IContentPackageBundle, IAttributeAnnotatable)
 class ContentPackageBundle(CreatedAndModifiedTimeMixin,
@@ -119,7 +123,8 @@ class PersistentContentPackageBundle(ContentPackageBundle,
 	def _set_ContentPackages(self, packages):
 		self._ContentPackages_wrefs = tuple([IWeakRef(p) for p in packages])
 		if len(self._ContentPackages_wrefs) != len(set(self._ContentPackages_wrefs)):
-			raise ValueError("Duplicate packages")
+			raise DuplicatePacakgeException("Duplicate packages")
+
 	def _get_ContentPackages(self):
 		result = list()
 		for x in self._ContentPackages_wrefs:
@@ -243,7 +248,7 @@ class _ContentBundleMetaInfo(object):
 		# TODO: If there is no NTIID, we should derive one automatically
 		# from the key name
 		if require_ntiid and 'ntiid' not in json_value:
-			raise ValueError("Missing ntiid", key)
+			raise MissingContentBundleNTIIDException("Missing ntiid", key)
 
 		for k, v in json_value.items():
 			setattr(self, str(k), v)
@@ -281,11 +286,12 @@ from .dublincore import read_dublincore_from_named_key
 
 def _validate_package_refs(bundle, meta):
 	try:
-		if 		len(bundle._ContentPackages_wrefs) == len(meta._ContentPackages_wrefs) \
+		if 	len(bundle._ContentPackages_wrefs) == len(meta._ContentPackages_wrefs) \
 			and len([x for x in meta._ContentPackages_wrefs if x() is not None]) == 0:
 			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
-			raise ValueError('A package reference no longer exists in the library. Content issue? (refs=%s)' %
-							[getattr(x, '_ntiid', None) for x in meta._ContentPackages_wrefs])
+			raise MissingContentPacakgeReferenceException(
+					'A package reference no longer exists in the library. Content issue? (refs=%s)' %
+					[getattr(x, '_ntiid', None) for x in meta._ContentPackages_wrefs])
 	except AttributeError:
 		# Not sure we can do anything here.
 		pass

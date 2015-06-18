@@ -14,24 +14,28 @@ logger = __import__('logging').getLogger(__name__)
 #disable: accessing protected members, too many methods
 #pylint: disable=W0212,R0904
 
+from hamcrest import raises
+from hamcrest import calling
 from hamcrest import assert_that
 from hamcrest import greater_than
 from hamcrest import has_property
-from hamcrest import raises
-from hamcrest import calling
 
-from nti.testing.time import time_monotonically_increases
 import os
 
 from zope import component
 
-from .. import filesystem
-from ..interfaces import IContentPackageLibrary
-from . import ContentlibraryLayerTest
+from nti.contentlibrary import filesystem
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-from ..bundle import PersistentContentPackageBundle
-from ..bundle import _ContentBundleMetaInfo
-from ..bundle import sync_bundle_from_json_key
+from nti.contentlibrary import MissingContentPacakgeReferenceException
+
+from nti.contentlibrary.bundle import _ContentBundleMetaInfo
+from nti.contentlibrary.bundle import sync_bundle_from_json_key
+from nti.contentlibrary.bundle import PersistentContentPackageBundle
+
+from nti.contentlibrary.tests import ContentlibraryLayerTest
+
+from nti.testing.time import time_monotonically_increases
 
 class TestBundle(ContentlibraryLayerTest):
 
@@ -103,4 +107,4 @@ class TestBundle(ContentlibraryLayerTest):
 		# We will raise if the package is missing
 		assert_that( calling( sync_bundle_from_json_key ) \
 						.with_args(key, bundle, self.global_library, _meta=meta),
-					raises( ValueError ) )
+					raises( MissingContentPacakgeReferenceException ) )
