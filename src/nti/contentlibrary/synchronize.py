@@ -23,13 +23,28 @@ from .interfaces import ISynchronizationParams
 from .interfaces import ISynchronizationResults
 from .interfaces import ILibrarySynchronizationResults
 
+MISSING_NTIID_ERROR_CODE = 010
+DUPLICATE_PACAKGES_ERROR_CODE = 100
+MISSING_PACAKGE_REFERENCE_ERROR_CODE = 110
+
 class SynchronizationExeception(Exception):
 	
-	def __init__(self, message, code=None):
-		args = (message,) if code is None else (message, "Code:%s" % code)
-		Exception.__init__(self, *args)
-		self.code = code
-SynchException = SynchronizationExeception
+	code = None
+	
+	def __str__(self, *args, **kwargs):
+		result = Exception.__str__(self, *args, **kwargs)
+		if self.code is not None:
+			result += '. Code:%s' % self.code
+		return  result
+
+class MissingContentBundleNTIIDException(SynchronizationExeception):
+	code = MISSING_NTIID_ERROR_CODE
+
+class DuplicatePacakgeException(SynchronizationExeception):
+	code = DUPLICATE_PACAKGES_ERROR_CODE
+
+class MissingContentPacakgeReferenceException(SynchronizationExeception):
+	code = MISSING_PACAKGE_REFERENCE_ERROR_CODE
 
 @WithRepr
 @interface.implementer(ISynchronizationParams)

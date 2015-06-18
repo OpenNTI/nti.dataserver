@@ -15,5 +15,6 @@ logger = __import__('logging').getLogger(__name__)
 import zope.i18nmessageid
 MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
-from .synchronize import SynchException
-from .synchronize import SynchronizationExeception
+from .synchronize import DuplicatePacakgeException
+from .synchronize import MissingContentBundleNTIIDException
+from .synchronize import MissingContentPacakgeReferenceException
