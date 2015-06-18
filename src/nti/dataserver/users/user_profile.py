@@ -27,14 +27,21 @@ from persistent import Persistent
 
 from nti.common.property import CachedProperty
 
+from nti.externalization.representation import WithRepr
+
+from nti.schema.field import SchemaConfigured
+from nti.schema.fieldproperty import createDirectFieldProperties
+
 from ..interfaces import IUser
 from ..interfaces import IEntity
 from ..interfaces import IPrincipal
 
+from .interfaces import IEducation
 from .interfaces import IUserProfile
 from .interfaces import IFriendlyNamed
 from .interfaces import IEmailAddressable
 from .interfaces import ICompleteUserProfile
+from .interfaces import IProfessionalPosition
 from .interfaces import IRestrictedUserProfile
 from .interfaces import IEmailRequiredUserProfile
 from .interfaces import IRestrictedUserProfileWithContactEmail
@@ -51,33 +58,32 @@ class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroug
 
 	_existing_name = None
 
-	def __init__( self, field, name=None, exist_name=None ):
-		super(_ExistingDictReadFieldPropertyStoredThroughField,self).__init__( field, name=name )
+	def __init__(self, field, name=None, exist_name=None):
+		super(_ExistingDictReadFieldPropertyStoredThroughField, self).__init__(field, name=name)
 		if exist_name:
 			self._existing_name = exist_name
 
-	def getValue( self, inst, field):
+	def getValue(self, inst, field):
 		ex_val = getattr(inst.context,
-						 self._existing_name or 'This Value Cannot Be an Attr', None )
+						 self._existing_name or 'This Value Cannot Be an Attr', None)
 		if ex_val:
 			return ex_val
-		return super(_ExistingDictReadFieldPropertyStoredThroughField,self).getValue( inst, field )
+		return super(_ExistingDictReadFieldPropertyStoredThroughField, self).getValue(inst, field)
 
-	def setValue( self, inst, field, value ):
+	def setValue(self, inst, field, value):
 		try:
 			del inst.context.__dict__[self._existing_name]
 		except KeyError:
 			pass
-		super(_ExistingDictReadFieldPropertyStoredThroughField,self).setValue( inst, field, value )
+		super(_ExistingDictReadFieldPropertyStoredThroughField, self).setValue(inst, field, value)
 		# We're not implementing the queryValue method, which is used
 		# somehow when the field is readonly and...something
 		# We don't use this for readonly fields, so we don't care
 
-####
-## The profile classes use schema fields to define what can be stored
-## and to perform validation. The schema fields are handled dynamically with the
-## fieldproperty classes, and are added to the classes themselves dynamically in _init
-####
+# The profile classes use schema fields to define what can be stored
+# and to perform validation. The schema fields are handled dynamically with the
+# fieldproperty classes, and are added to the classes themselves dynamically in _init
+
 # TODO: Isn't this extremely similar to dm.zope.schema? Did we forget about that?
 
 def get_searchable_realname_parts(realname):
@@ -118,11 +124,11 @@ class FriendlyNamed(Persistent):
 	constructor.
 	"""
 
-	__parent__ = None
 	__name__ = None
+	__parent__ = None
 
-	def __init__( self, context=None ):
-		super(FriendlyNamed,self).__init__()
+	def __init__(self, context=None):
+		super(FriendlyNamed, self).__init__()
 		if context:
 			self.__parent__ = context
 
@@ -132,7 +138,7 @@ class FriendlyNamed(Persistent):
 
 	@CachedProperty('realname')
 	def _searchable_realname_parts(self):
-		result =  get_searchable_realname_parts(self.realname)
+		result = get_searchable_realname_parts(self.realname)
 		# Returning none keeps the entity out of the index
 		return result
 
@@ -148,32 +154,32 @@ class UserProfile(FriendlyNamed):
 
 	For convenience, we have a read-only shadow of the username value.
 	"""
-	#: NOTE: See users_external, this is fairly tightly coupled to that
+	# : NOTE: See users_external, this is fairly tightly coupled to that
 
 	_avatarURL = None
-	avatarURL = _AvatarUrlProperty( data_name="avatarURL",
-									url_attr_name='_avatarURL',
-									file_attr_name='_avatarURL' )
+	avatarURL = _AvatarUrlProperty(data_name="avatarURL",
+								   url_attr_name='_avatarURL',
+								   file_attr_name='_avatarURL')
 
 	__getitem__ = avatarURL.make_getitem()
 
 	_backgroundURL = None
 	backgroundURL = _BackgrounUrlProperty(data_name="backgroundURL",
 										  url_attr_name='_backgroundURL',
-										  file_attr_name='_backgroundURL' )
-	
-	username = property( lambda self: self.context.username )
+										  file_attr_name='_backgroundURL')
+
+	username = property(lambda self: self.context.username)
 
 @component.adapter(IUserProfile)
 @interface.implementer(IPrincipal)
 def _profile_to_principal(profile):
 	return IPrincipal(profile.context)
 
-def make_password_recovery_email_hash( email ):
+def make_password_recovery_email_hash(email):
 	if not email:
 		raise ValueError("Must provide email")
-	email = email.lower() # ensure casing is consistent
-	return unicode( hashlib.sha1( email ).hexdigest() )
+	email = email.lower()  # ensure casing is consistent
+	return unicode(hashlib.sha1(email).hexdigest())
 
 @component.adapter(IUser)
 @interface.implementer(IRestrictedUserProfile)
@@ -181,9 +187,9 @@ class RestrictedUserProfile(UserProfile):
 	email_verified = False
 
 	# If anyone tries to set an email on us, we turn it into the recovery hash
-	email = property( lambda self: None,
-					  lambda self, nv: setattr( self, 'password_recovery_email_hash',
-												make_password_recovery_email_hash( nv ) ),
+	email = property(lambda self: None,
+					  lambda self, nv: setattr(self, 'password_recovery_email_hash',
+											   make_password_recovery_email_hash(nv)),
 					  doc="This type of profile cannot store an actual email address."
 					  	  "If anyone tries, it becomes the recovery hash")
 
@@ -213,7 +219,25 @@ class EmailRequiredUserProfile(CompleteUserProfile):
 	An adapter for requiring the email.
 	"""
 
-def add_profile_fields( iface, clazz, field_map=None ):
+@WithRepr
+@interface.implementer(IEducation)
+class Education(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IEducation)
+
+	def __init__(self, *args, **kwargs):
+		Persistent.__init__(self)
+		SchemaConfigured.__init__(self, *args, **kwargs)
+	
+@WithRepr
+@interface.implementer(IProfessionalPosition)
+class ProfessionalPosition(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IProfessionalPosition)
+
+	def __init__(self, *args, **kwargs):
+		Persistent.__init__(self)
+		SchemaConfigured.__init__(self, *args, **kwargs)
+			
+def add_profile_fields(iface, clazz, field_map=None):
 	"""
 	Given an interfaces that extends :class:`nti.dataserver.users.interfaces.IUserProfile`
 	and a class that extends :class:`nti.dataserver.users.user_profile.UserProfile`,
@@ -231,13 +255,11 @@ def add_profile_fields( iface, clazz, field_map=None ):
 		if not _x in clazz.__dict__:
 			if field_map and _x in field_map:
 				field = _ExistingDictReadFieldPropertyStoredThroughField(iface[_x],
-																		 exist_name=field_map[_x] )
+																		 exist_name=field_map[_x])
 			else:
-				field = FieldPropertyStoredThroughField( iface[_x] )
+				field = FieldPropertyStoredThroughField(iface[_x])
 
-			setattr( clazz,
-					 _x,
-					 field )
+			setattr(clazz, _x, field)
 
 	return clazz
 
@@ -246,28 +268,29 @@ def _init():
 	_field_map = { 'alias': '_alias',
 				   'realname': '_realname'}
 
-	_class_map = {  IUserProfile: UserProfile,
-					IFriendlyNamed: FriendlyNamed,
-					ICompleteUserProfile: CompleteUserProfile,
-				  	IRestrictedUserProfile: RestrictedUserProfile,
-				  	IEmailRequiredUserProfile: EmailRequiredUserProfile,
-				   	IRestrictedUserProfileWithContactEmail: RestrictedUserProfileWithContactEmail }
+	_class_map = {  
+			IUserProfile: UserProfile,
+			IFriendlyNamed: FriendlyNamed,
+			ICompleteUserProfile: CompleteUserProfile,
+			IRestrictedUserProfile: RestrictedUserProfile,
+			IEmailRequiredUserProfile: EmailRequiredUserProfile,
+			IRestrictedUserProfileWithContactEmail: RestrictedUserProfileWithContactEmail }
 
 	for iface, clazz in _class_map.items():
-		add_profile_fields( iface, clazz, field_map=_field_map )
+		add_profile_fields(iface, clazz, field_map=_field_map)
 
 _init()
 del _init
 
-FriendlyNamedFactory = afactory( FriendlyNamed )
+FriendlyNamedFactory = afactory(FriendlyNamed)
 
-RestrictedUserProfileFactory = afactory( RestrictedUserProfile )
-RestrictedUserProfileWithContactEmailFactory = afactory( RestrictedUserProfileWithContactEmail )
+RestrictedUserProfileFactory = afactory(RestrictedUserProfile)
+RestrictedUserProfileWithContactEmailFactory = afactory(RestrictedUserProfileWithContactEmail)
 
 COMPLETE_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.CompleteUserProfile'
-CompleteUserProfileFactory = afactory( 	CompleteUserProfile,
-										key=COMPLETE_USER_PROFILE_KEY )
+CompleteUserProfileFactory = afactory(CompleteUserProfile,
+									  key=COMPLETE_USER_PROFILE_KEY)
 
 EMAIL_REQUIRED_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.EmailRequiredUserProfile'
-EmailRequiredUserProfileFactory = afactory( EmailRequiredUserProfile,
-											key=EMAIL_REQUIRED_USER_PROFILE_KEY )
+EmailRequiredUserProfileFactory = afactory(EmailRequiredUserProfile,
+										   key=EMAIL_REQUIRED_USER_PROFILE_KEY)

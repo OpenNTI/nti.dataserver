@@ -56,8 +56,10 @@
 			 name="personal-summary" />
 
 	<ext:registerAutoPackageIO
-		root_interfaces=".interfaces.ISuggestedContact"
-		modules=".suggested_contacts" />
+		root_interfaces=".interfaces.ISuggestedContact
+						 .interfaces.IEducation
+						 .interfaces.IProfessionalPosition"
+		modules=".suggested_contacts .user_profile" />
 
 	<!-- Groups and ACLs -->
 	<!-- First, make something that can store group names on the user -->
@@ -71,11 +73,13 @@
 	<!-- FriendsLists can iterate usernames -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._FriendsListUsernameIterable" />
+
 	<adapter factory=".friends_lists._FriendsListEntityIterable" />
 
 	<!-- DFLs do so specially -->
 	<adapter provides="nti.dataserver.interfaces.IUsernameIterable"
 			 factory=".friends_lists._DynamicFriendsListUsernameIterable" />
+
 	<adapter factory=".friends_lists._DynamicFriendsListEntityIterable" />
 
 	<!-- Communities can report memberships, iterate them, report length, iterate intids -->
