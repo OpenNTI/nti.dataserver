@@ -14,13 +14,15 @@ logger = __import__('logging').getLogger(__name__)
 from zope import interface
 from zope import component
 from zope import lifecycleevent
-from zope.event import notify
-from zope.container.contained import Contained
 
 # Because we only expect to store persistent versions
 # of these things, and we expect to update them directly
 # in place, we make them attribute annotatable.
 from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.container.contained import Contained
+
+from zope.event import notify
 
 from nti.common.property import alias
 
@@ -46,9 +48,8 @@ from .interfaces import IContentPackageBundleLibrary
 
 from .presentationresource import DisplayableContentMixin
 
-@interface.implementer(IContentPackageBundle,
-					   IAttributeAnnotatable)
 @WithRepr
+@interface.implementer(IContentPackageBundle, IAttributeAnnotatable)
 class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 						   DisplayableContentMixin,
 						   Contained,
@@ -91,7 +92,7 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 		we echo the first content package we have that does contain
 		them. This should simplify things for the clients.
 		"""
-		ours = super(ContentPackageBundle,self).PlatformPresentationResources
+		ours = super(ContentPackageBundle, self).PlatformPresentationResources
 		if ours:
 			return ours
 
@@ -99,7 +100,6 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 			theirs = package.PlatformPresentationResources
 			if theirs:
 				return theirs
-
 		return ()
 
 class PersistentContentPackageBundle(ContentPackageBundle,
@@ -129,7 +129,6 @@ class PersistentContentPackageBundle(ContentPackageBundle,
 		return result
 	ContentPackages = property(_get_ContentPackages, _set_ContentPackages)
 
-
 _marker = object()
 
 @interface.implementer(IContentPackageBundleLibrary)
@@ -137,10 +136,14 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	"""
 	BTree-based implementation of a bundle library.
 	"""
+
 	__external_can_create__ = False
 
 	def __repr__(self):
-		return "<%s(%s, %s) at %s>" % (self.__class__.__name__, self.__name__, len(self), id(self))
+		return "<%s(%s, %s) at %s>" % (self.__class__.__name__, 
+									   self.__name__, 
+									   len(self), 
+									   id(self))
 
 	@property
 	def _parent_lib(self):
@@ -186,10 +189,10 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 			seen_ids.add(bundle.__name__)
 			yield bundle
 
-#: The name of the file that identifies a directory
-#: as a content bundle
+# : The name of the file that identifies a directory
+# : as a content bundle
 _BUNDLE_META_NAME = "bundle_meta_info.json"
-BUNDLE_META_NAME = _BUNDLE_META_NAME # export
+BUNDLE_META_NAME = _BUNDLE_META_NAME  # export
 
 from nti.ntiids.schema import ValidNTIID
 
@@ -252,7 +255,6 @@ class _ContentBundleMetaInfo(object):
 			self._ContentPackages_wrefs = self.getContentPackagesWrefs(content_library)
 			self.__dict__[str('ContentPackages')] = self._ContentPackages_wrefs
 
-
 	def getContentPackagesWrefs(self, library):
 		"""
 		persistent content bundles want to refer to weak refs;
@@ -279,11 +281,11 @@ from .dublincore import read_dublincore_from_named_key
 
 def _validate_package_refs(bundle, meta):
 	try:
-		if 		len( bundle._ContentPackages_wrefs ) == len( meta._ContentPackages_wrefs ) \
-			and len( [x for x in meta._ContentPackages_wrefs if x() is not None] ) == 0:
+		if 		len(bundle._ContentPackages_wrefs) == len(meta._ContentPackages_wrefs) \
+			and len([x for x in meta._ContentPackages_wrefs if x() is not None]) == 0:
 			# Wrefs are the same size, but nothing is resolvable (e.g. not in the library).
-			raise ValueError( 'A package reference no longer exists in the library. Content issue? (refs=%s)' %
-							[getattr(x, '_ntiid', None) for x in meta._ContentPackages_wrefs] )
+			raise ValueError('A package reference no longer exists in the library. Content issue? (refs=%s)' %
+							[getattr(x, '_ntiid', None) for x in meta._ContentPackages_wrefs])
 	except AttributeError:
 		# Not sure we can do anything here.
 		pass
@@ -315,7 +317,7 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 
 	:keyword dc_meta_name: If given (defaults to a standard value),
 		DublinCore metadata will be read from this file (a sibling of the `data_key`).
-	    You can use a non-standard
+		You can use a non-standard
 		filename if you might have multiple things in the same bucket.
 	"""
 	# we can't check the lastModified dates, the bundle object
@@ -366,14 +368,14 @@ def sync_bundle_from_json_key(data_key, bundle, content_library=None,
 		bundle.root = meta.key.__parent__
 
 	if modified:
-		bundle.updateLastMod( meta.lastModified )
+		bundle.updateLastMod(meta.lastModified)
 	elif bundle.lastModified < meta.lastModified:
 		bundle.updateLastModIfGreater(meta.lastModified)
 
 	# Metadata if we need it
 	read_dublincore_from_named_key(bundle, data_key.__parent__, dc_meta_name)
 
-	return bundle
+	return modified
 
 @interface.implementer(ISyncableContentPackageBundleLibrary)
 @component.adapter(IContentPackageBundleLibrary)
@@ -383,7 +385,6 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 		self.context = context
 
 	def syncFromBucket(self, bucket):
-
 		content_library = component.getSiteManager(self.context).getUtility(IContentPackageLibrary)
 		_readCurrent(content_library)
 		_readCurrent(self.context)
@@ -411,7 +412,7 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 			logger.info("Removing all bundles from library %s: %s", self.context, list(self.context))
 			need_event = True
 			for k in list(self.context):
-				del self.context[k] # fires bunches of events
+				del self.context[k]  # fires bunches of events
 		else:
 			bundle_metas = {_ContentBundleMetaInfo(k, content_library) for k in bundle_meta_keys}
 			all_ntiids = {x.ntiid for x in bundle_metas}
@@ -443,7 +444,7 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 				sync_bundle_from_json_key(meta.key, bundle,
 										  content_library=content_library,
 										  # pass in the existing object as an optimization
-										  _meta=meta )
+										  _meta=meta)
 				assert meta.ntiid == bundle.ntiid
 
 
@@ -455,10 +456,10 @@ class _ContentPackageBundleLibrarySynchronizer(object):
 				for meta in things_to_add:
 					bundle = PersistentContentPackageBundle()
 					bundle.createdTime = meta.createdTime
-					_update_bundle( bundle, meta )
+					_update_bundle(bundle, meta)
 
 					lifecycleevent.created(bundle)
-					self.context[meta.ntiid] = bundle # added
+					self.context[meta.ntiid] = bundle  # added
 
 			# Now the deletions
 			if del_ntiids:
