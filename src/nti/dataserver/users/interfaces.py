@@ -45,7 +45,9 @@ from nti.schema.field import Date
 from nti.schema.field import Object
 from nti.schema.field import HTTPURL
 from nti.schema.field import TextLine
+from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
+from nti.schema.field import ListOrTuple
 from nti.schema.field import ValidTextLine
 from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
@@ -141,7 +143,6 @@ def _load_resource(n, f):
 # as extremely common and in all the rainbow tables, etc, is forbidden
 # see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
 _VERBOTEN_PASSWORDS = _load_resource( __name__, 'verboten-passwords.txt' )
-
 del _load_resource
 
 def _checkEmailAddress(address):
@@ -431,6 +432,103 @@ class IContactEmailRecovery(interface.Interface):
 	contact_email_recovery_hash = interface.Attribute( "A string giving the hash of the contact email.")
 	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
 
+class ISocialMediaProfile(interface.Interface):
+	"""
+	A social media profile
+	"""
+
+	facebook = ValidURI(title='facebook',
+						description=u'The Facebook URL',
+						required=False)
+	
+	twitter = ValidURI(title='twitter',
+					   description=u'The twitter URL',
+					   required=False)
+		
+	googlePlus = ValidURI(title='GooglePlus',
+					  	  description=u'The GooglePlus URL',
+					   	  required=False)
+
+	linkedIn = ValidURI(title='linkedIn',
+					  	description=u'The LinkedIn URL',
+					   	required=False)
+
+
+class IEducation(interface.Interface):
+
+	school = ValidTextLine(title='School name',
+						   description=u'School name.',
+						   required=True)
+	
+	startYear = Int(title='Start year',
+					description=u'Start year',
+					required=False)
+	
+	endYear = Int(title='End year',
+				  description=u'End year',
+				  required=False)
+	
+	degree = ValidTextLine(title='Degree name',
+				 		   description=u'Degree name',
+				  		   required=False)
+	
+	description = ValidText(title='Degree description',
+				 		   	description=u'Degree description',
+				  		   	required=False)
+
+class IEducationProfile(interface.Interface):
+	"""
+	A social media profile
+	"""
+
+	education = ListOrTuple(Object(IEducation, title="The education entry"),
+							title="Education entries",
+							required=False,
+							min_length=0)
+
+class IProfessionalPosition(interface.Interface):
+
+	companyName = ValidTextLine(title='Company name',
+						   		description=u'CompanyName name.',
+						   		required=True)
+	
+	title = ValidTextLine(title='Title',
+						  description=u'Title',
+						  required=True)
+	
+	startYear = Int(title='Start year',
+					description=u'Start year',
+					required=True)
+	
+	endYear = Int(title='End year',
+				  description=u'End year',
+				  required=False)
+
+	description = ValidText(title='Position description',
+				 		   	description=u'Position description',
+				  		   	required=False)
+IPosition = IProfessionalPosition
+
+class IProfessionalProfile(interface.Interface):
+	"""
+	A professional profile
+	"""
+
+	positions = ListOrTuple(Object(IProfessionalPosition, title="The profesional position entry"),
+							title="profesional position entries",
+							required=False,
+							min_length=0)
+
+class IInterestProfile(interface.Interface):
+	"""
+	A Interest profile
+	"""
+
+	interests = ListOrTuple(ValidTextLine(title="An interest"),
+							title="interest entries",
+							required=False,
+							min_length=0)
+	
 class ICompleteUserProfile(IRestrictedUserProfile, IEmailAddressable):
 	"""
 	A complete user profile.
@@ -486,10 +584,9 @@ class ICompleteUserProfile(IRestrictedUserProfile, IEmailAddressable):
 		required=False,
 		constraint=checkCannotBeBlank)
 
-	about = ValidTextLine(
+	about = ValidText(
 		title='About',
-		description="A short description of a user",
-		max_length=500,
+		description="A description of a user",
 		required=False,
 		constraint=checkCannotBeBlank)
 
