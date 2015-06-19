@@ -49,10 +49,10 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 
 	def _predicate(self, context, result):
 		profile = IUserProfile(context, None)
-		result = bool(	self._is_authenticated and \
-						profile is not None and \
-						not profile.email_verified and \
-                        self.remoteUser.username==context.username )
+		result = bool(self._is_authenticated and \
+					  self.remoteUser==context and \
+					  profile is not None and \
+					  not profile.email_verified)
 		return result
 
 	def _do_decorate_external(self, context, result):
@@ -66,7 +66,6 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 		link = Link(ds2, rel="VerifyEmailWithToken", method='POST',
 					elements=('@@' + VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,))
 		_links.append(link)
-        
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)
@@ -85,7 +84,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			else:
 				link = Link(context, elements=('leave',), rel="leave")
 			_links.append(link)
-		
+
 		if not IDisallowMembersLink.providedBy(context) and (context.public or in_community):
 			link = Link(context, elements=('members',), rel="members")
 			_links.append(link)
@@ -96,7 +95,7 @@ class _CommunityLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			else:
 				link = Link(context, elements=('hide',), rel="hide")
 			_links.append(link)
-			
+
 		if not IDisallowActivityLink.providedBy(context):
 			link = Link(context, rel="Activity", elements=('Activity',))
 			_links.append(link)
@@ -125,20 +124,20 @@ class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel="Activity", elements=('Activity',))
 		_links.append(link)
-	
+
 @component.adapter(IDynamicSharingTargetFriendsList)
 @interface.implementer(IExternalObjectDecorator)
 class _DFLEditLinkRemoverDecorator(object):
 	"""
 	Remove the edit link if the DFL is locked
-	
+
 	:Note The order in which decorators are called is completely
 	undefined. The only reason this happens to work now
 	is the distinction between IExternalObjectDecorator
 	and IExternalMappingDecorator; if any of the registrations
 	change this will break.
 	"""
-	
+
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, context, external):
