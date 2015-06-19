@@ -46,7 +46,7 @@ from nti.contenttypes.presentation.utils import create_timelime_from_external
 from nti.contenttypes.presentation.utils import create_ntivideo_from_external
 from nti.contenttypes.presentation.utils import create_relatedwork_from_external
 
-from nti.contentlibrary.tests import ContentlibraryLayerTest
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 import nti.dataserver.tests.mock_dataserver as mock_dataserver
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
@@ -57,19 +57,19 @@ def iface_of_thing(item):
 			return iface
 	return None
 
-def _index_items(_, namespace, *registered):
+def _index_items(namespace, *registered):
 	catalog = get_catalog()
 	intids = component.queryUtility(IIntIds)
 	for item in registered:
 		catalog.index(item, intids=intids, namespace=namespace)
+	return catalog
 
 class PersistentComponents(Components, Persistent):
 	pass
 
-class TestSubscribers(ContentlibraryLayerTest):
+class TestSubscribers(ApplicationLayerTest):
 
 	def setUp(self):
-		super(ContentlibraryLayerTest, self).setUp()
 		self.library_dir = os.path.join(os.path.dirname(__file__), 'library')
 		self.library = FileLibrary(self.library_dir)
 		component.getGlobalSiteManager().registerUtility(self.library, IContentPackageLibrary)
@@ -172,9 +172,12 @@ class TestSubscribers(ContentlibraryLayerTest):
 		assert_that(result, has_length(count))
 		assert_that(list(registry.registeredUtilities()), has_length(count))
 
-		_index_items(iface, 'xxx', *result)
+		catalog = _index_items('xxx', *result)
 
-		result = _remove_from_registry(namespace='xxx', provided=iface, registry=registry)
+		result = _remove_from_registry(namespace='xxx', 
+									   provided=iface.__name__,
+									   registry=registry,
+									   catalog=catalog)
 		assert_that(result, has_length(count))
 
 	@WithMockDSTrans
@@ -203,16 +206,23 @@ class TestSubscribers(ContentlibraryLayerTest):
 
 		result = _load_and_register_slidedeck_json(source, registry=registry)
 		assert_that(result, has_length(742))
-
-		for item in result:
-			iface = iface_of_thing(item)
-			_index_items(iface, 'xxx', item)
-
-		result = _remove_from_registry(namespace='xxx', provided=INTISlideDeck, registry=registry)
+		
+		catalog = _index_items('xxx', *result)
+		
+		result = _remove_from_registry(namespace='xxx', 
+									   provided=INTISlideDeck, 
+									   registry=registry,
+									   catalog=catalog)
 		assert_that(result, has_length(57))
 
-		result = _remove_from_registry(namespace='xxx', provided=INTISlideVideo, registry=registry)
+		result = _remove_from_registry(namespace='xxx',
+									   provided=INTISlideVideo.__name__, 
+									   registry=registry,
+									   catalog=catalog)
 		assert_that(result, has_length(57))
 
-		result = _remove_from_registry(namespace='xxx', provided=INTISlide, registry=registry)
+		result = _remove_from_registry(namespace='xxx', 
+									   provided=INTISlide,
+									   registry=registry,
+									   catalog=catalog)
 		assert_that(result, has_length(628))
