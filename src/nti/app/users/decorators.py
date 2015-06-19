@@ -51,19 +51,22 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 		profile = IUserProfile(context, None)
 		result = bool(	self._is_authenticated and \
 						profile is not None and \
-						not profile.email_verified )
+						not profile.email_verified and \
+                        self.remoteUser.username==context.username )
 		return result
 
 	def _do_decorate_external(self, context, result):
+
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel="RequestEmailVerification",
 					elements=(REQUEST_EMAIL_VERFICATION_VIEW,))
 		_links.append(link)
-		
+
 		ds2 = find_interface(context, IDataserverFolder)
 		link = Link(ds2, rel="VerifyEmailWithToken", method='POST',
 					elements=('@@' + VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,))
 		_links.append(link)
+        
 
 @component.adapter(ICommunity)
 @interface.implementer(IExternalMappingDecorator)
