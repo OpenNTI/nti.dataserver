@@ -529,7 +529,12 @@ class IInterestProfile(interface.Interface):
 							required=False,
 							min_length=0)
 	
-class ICompleteUserProfile(IRestrictedUserProfile, IEmailAddressable):
+class ICompleteUserProfile(IRestrictedUserProfile, 
+						   IEmailAddressable,
+						   ISocialMediaProfile,
+						   IEducationProfile,
+						   IProfessionalProfile,
+						   IInterestProfile):
 	"""
 	A complete user profile.
 	"""
