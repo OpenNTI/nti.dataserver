@@ -21,7 +21,7 @@ from zope.annotation import factory as afactory
 
 from zope.location.interfaces import ILocation
 
-from zope.schema.fieldproperty import FieldPropertyStoredThroughField
+from zope.schema.fieldproperty import FieldPropertyStoredThroughField as FP
 
 from persistent import Persistent
 
@@ -39,8 +39,12 @@ from ..interfaces import IPrincipal
 from .interfaces import IEducation
 from .interfaces import IUserProfile
 from .interfaces import IFriendlyNamed
+from .interfaces import IInterestProfile
+from .interfaces import IEducationProfile
 from .interfaces import IEmailAddressable
+from .interfaces import ISocialMediaProfile
 from .interfaces import ICompleteUserProfile
+from .interfaces import IProfessionalProfile
 from .interfaces import IProfessionalPosition
 from .interfaces import IRestrictedUserProfile
 from .interfaces import IEmailRequiredUserProfile
@@ -49,7 +53,7 @@ from .interfaces import IRestrictedUserProfileWithContactEmail
 from .utils import AvatarUrlProperty as _AvatarUrlProperty
 from .utils import BackgroundUrlProperty as _BackgrounUrlProperty
 
-class _ExistingDictReadFieldPropertyStoredThroughField(FieldPropertyStoredThroughField):
+class _ExistingDictReadFieldPropertyStoredThroughField(FP):
 	"""
 	Migration from existing data fields in instance dictionaries to
 	our profile storage. There are probably few enough of these in places we care
@@ -208,17 +212,6 @@ class RestrictedUserProfileWithContactEmailAddressable(object):
 	def __init__(self, context):
 		self.email = context.contact_email
 
-@component.adapter(IUser)
-@interface.implementer(ICompleteUserProfile)
-class CompleteUserProfile(RestrictedUserProfile):
-	pass
-
-@interface.implementer(IEmailRequiredUserProfile)
-class EmailRequiredUserProfile(CompleteUserProfile):
-	"""
-	An adapter for requiring the email.
-	"""
-
 @WithRepr
 @interface.implementer(IEducation)
 class Education(SchemaConfigured, Persistent):
@@ -236,6 +229,52 @@ class ProfessionalPosition(SchemaConfigured, Persistent):
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
+
+@WithRepr
+@interface.implementer(ISocialMediaProfile)
+class SocialMediaProfile(SchemaConfigured, Persistent):
+	createDirectFieldProperties(ISocialMediaProfile)
+
+	facebook = FP(ISocialMediaProfile['facebook'])
+	twitter = FP(ISocialMediaProfile['twitter'])
+	googlePlus = FP(ISocialMediaProfile['googlePlus'])
+	linkedIn = FP(ISocialMediaProfile['linkedIn'])
+	
+@WithRepr
+@interface.implementer(IEducationProfile)
+class EducationProfile(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IEducationProfile)
+	
+	education =  FP(IEducationProfile['education'])
+	
+@WithRepr
+@interface.implementer(IProfessionalProfile)
+class ProfessionalProfile(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IProfessionalProfile)
+	
+	positions =  FP(IProfessionalProfile['positions'])
+
+@WithRepr
+@interface.implementer(IInterestProfile)
+class InterestProfile(SchemaConfigured, Persistent):
+	createDirectFieldProperties(IInterestProfile)
+	
+	interests =  FP(IInterestProfile['interests'])
+
+@component.adapter(IUser)
+@interface.implementer(ICompleteUserProfile)
+class CompleteUserProfile(RestrictedUserProfile, # order matters
+						  SocialMediaProfile,
+						  InterestProfile,
+						  EducationProfile,
+						  ProfessionalProfile):
+	pass
+
+@interface.implementer(IEmailRequiredUserProfile)
+class EmailRequiredUserProfile(CompleteUserProfile):
+	"""
+	An adapter for requiring the email.
+	"""
 			
 def add_profile_fields(iface, clazz, field_map=None):
 	"""
@@ -257,7 +296,7 @@ def add_profile_fields(iface, clazz, field_map=None):
 				field = _ExistingDictReadFieldPropertyStoredThroughField(iface[_x],
 																		 exist_name=field_map[_x])
 			else:
-				field = FieldPropertyStoredThroughField(iface[_x])
+				field = FP(iface[_x])
 
 			setattr(clazz, _x, field)
 

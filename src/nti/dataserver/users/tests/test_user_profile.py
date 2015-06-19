@@ -10,11 +10,12 @@ __docformat__ = "restructuredtext en"
 import unittest
 from hamcrest import is_
 from hamcrest import none
+from hamcrest import is_not
 from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
-from hamcrest import is_not as does_not
+does_not = is_not
 
 from nose.tools import assert_raises
 
@@ -55,6 +56,28 @@ class TestUserProfile(DataserverLayerTest):
 					has_property('backgroundURL', is_(none())))
 		assert_that(prof,
 					has_property('opt_in_email_communication', is_false()))
+		
+		assert_that(prof,
+					verifiably_provides(interfaces.ISocialMediaProfile))
+		assert_that(prof,
+					has_property('twitter', is_(none())))
+		assert_that(prof,
+					has_property('facebook', is_(none())))
+		
+		assert_that(prof,
+					verifiably_provides(interfaces.IEducationProfile))
+		assert_that(prof,
+					has_property('education', is_(none())))
+		
+		assert_that(prof,
+					verifiably_provides(interfaces.IInterestProfile))
+		assert_that(prof,
+					has_property('interests', is_(none())))
+				
+		assert_that(prof,
+					verifiably_provides(interfaces.IProfessionalProfile))
+		assert_that(prof,
+					has_property('positions', is_(none())))
 
 		# We can get to the principal representing the user
 		assert_that(IPrincipal(prof), has_property('id', user.username))
