@@ -566,3 +566,9 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.app.notabledata",
 	"nti.app.notabledata.interfaces",
 	"IUserPresentationPriorityCreators")
+
+class IJoinableContextProvider(interface.Interface):
+	"""
+	An adapter interface that returns objects that a user
+	may join in order to access the adapted object.
+	"""

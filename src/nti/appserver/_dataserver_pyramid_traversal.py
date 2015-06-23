@@ -30,12 +30,11 @@ from pyramid.security import ALL_PERMISSIONS
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
+from nti.appserver.interfaces import IJoinableContextProvider
 
 from nti.common.property import alias
 
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.contentlibrary.indexed_data import get_catalog
-from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization_acl as nacl
 from nti.dataserver import interfaces as nti_interfaces
@@ -220,22 +219,11 @@ class _ObjectsContainerResource(_ContainerResource):
 		if 		queryInteraction() is not None \
 			and not is_readable( context ):
 
-			catalog = get_catalog()
-			if not catalog:
-				return
-			containers = catalog.get_containers( context )
-			result = LocatedExternalDict()
-			result[ ITEMS ] = catalog_entries = []
-			for container in containers:
-				container = ntiids.find_object_with_ntiid( container )
-				catalog_entry = ICourseCatalogEntry( container, None )
-
-				# We only want to add publicly available entries.
-				if 		catalog_entry is not None \
-					and is_readable( catalog_entry ):
-					catalog_entries.append( catalog_entry )
-			if catalog_entries:
+			results = IJoinableContextProvider( context, None )
+			if results:
 				response = hexc.HTTPForbidden()
+				result = LocatedExternalDict()
+				result[ ITEMS ] = results
 				response.json_body = toExternalObject( result )
 				raise response
 
