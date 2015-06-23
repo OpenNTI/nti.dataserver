@@ -15,28 +15,43 @@ from zope import component
 from zope import interface
 
 from zope.location import interfaces as loc_interfaces
-
 from zope.traversing import interfaces as trv_interfaces
+
+from zope.security.management import queryInteraction
 
 import pyramid.traversal
 import pyramid.interfaces
-from pyramid.threadlocal import get_current_request
 
 from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 
 from pyramid.security import ALL_PERMISSIONS
 
+from pyramid.threadlocal import get_current_request
+
+from nti.appserver import httpexceptions as hexc
+
 from nti.common.property import alias
 
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.indexed_data import get_catalog
+from nti.contenttypes.courses.interfaces import ICourseCatalogEntry
 
 from nti.dataserver import authorization_acl as nacl
 from nti.dataserver import interfaces as nti_interfaces
+from nti.appserver.pyramid_authorization import is_readable
+
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids import ntiids
 
+from nti.utils._compat import aq_base, IAcquirer
+
 from . import interfaces
+
+ITEMS = StandardExternalFields.ITEMS
 
 def root_resource_factory( request ):
 	"""
@@ -103,7 +118,7 @@ class _AbstractContainerResource(object):
 		return pyramid.traversal.find_interface( self, nti_interfaces.IUser )
 
 @interface.implementer(interfaces.IContainerResource)
-class _ContainerResource(_AbstractContainerResource):
+class  _ContainerResource(_AbstractContainerResource):
 
 	def traverse( self, key, remaining_path ):
 		contained_object = self.user.getContainedObject( self.__name__, key )
@@ -170,8 +185,6 @@ class _PageContainerResource(_AbstractPageContainerResource):
 class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
-from nti.utils._compat import aq_base, IAcquirer
-
 @interface.implementer(interfaces.IObjectsContainerResource)
 class _ObjectsContainerResource(_ContainerResource):
 
@@ -184,6 +197,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		if result is None: # pragma: no cover
 			raise loc_interfaces.LocationError( key )
 
+		self._check_permission( result )
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
 		if 	getattr( result, '__parent__', None ) is not None and \
@@ -196,6 +210,35 @@ class _ObjectsContainerResource(_ContainerResource):
 				pass
 		return result
 
+	def _check_permission( self, context ):
+		"""
+		For generic object requests, we'd like to handle
+		the object-level permissioning ourselves in order
+		to provide information on where the user *might* obtain
+		permission to view the object in the case of 403s.
+		"""
+		if 		queryInteraction() is not None \
+			and not is_readable( context ):
+
+			catalog = get_catalog()
+			if not catalog:
+				return
+			containers = catalog.get_containers( context )
+			result = LocatedExternalDict()
+			result[ ITEMS ] = catalog_entries = []
+			for container in containers:
+				container = ntiids.find_object_with_ntiid( container )
+				catalog_entry = ICourseCatalogEntry( container, None )
+
+				# We only want to add publicly available entries.
+				if 		catalog_entry is not None \
+					and is_readable( catalog_entry ):
+					catalog_entries.append( catalog_entry )
+			if catalog_entries:
+				response = hexc.HTTPForbidden()
+				response.json_body = toExternalObject( result )
+				raise response
+
 	def _getitem_with_ds( self, ds, key ):
 		# The dataserver wants to provide user-based security
 		# for access with an OID. We can do better than that, though,
@@ -206,7 +249,8 @@ class _ObjectsContainerResource(_ContainerResource):
 		# traversed to get a correct ACL, and coming in this way that doesn't happen.
 		# NOTE: We do not expect to get a fragment here. Browsers drop fragments in URLs.
 		# Fragment handling will have to be completely client side.
-		return ntiids.find_object_with_ntiid( key )
+		result = ntiids.find_object_with_ntiid( key )
+		return result
 
 class _NTIIDsContainerResource(_ObjectsContainerResource):
 	"""
