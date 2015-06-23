@@ -26,6 +26,7 @@ from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.common.property import Lazy
+from nti.common.string import TRUE_VALUES
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IRedisClient
@@ -93,9 +94,10 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	def _do_call(self):
 		values = self.readInput()
 		site = values.get('site')
+		allowRemoval = values.get('allowRemoval') or u''
+		allowRemoval = allowRemoval.lower() in TRUE_VALUES
 		packages = values.get('packages') or values.get('package') or ()
 		packages = set(packages.split()) if isinstance(packages, string_types) else packages
-
 		# Unfortunately, zope.dublincore includes a global subscriber registration
 		# (zope.dublincore.creatorannotator.CreatorAnnotator)
 		# that will update the `creators` property of IZopeDublinCore to include
@@ -112,9 +114,9 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		endInteraction()
 		try:
 			params, results = synchronize(sleep=self._SLEEP,
-										  allowRemoval=True,
 										  site=site,
-										  packages=packages)
+										  packages=packages,
+										  allowRemoval=allowRemoval)
 			result['Params'] = params
 			result['Results'] = results
 		finally:
