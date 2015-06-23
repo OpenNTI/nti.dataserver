@@ -23,7 +23,8 @@ from .interfaces import ISynchronizationParams
 from .interfaces import ISynchronizationResults
 from .interfaces import ILibrarySynchronizationResults
 
-MISSING_NTIID_ERROR_CODE = 010
+CONTENT_REMOVAL_ERROR_CODE 	  = 001
+MISSING_NTIID_ERROR_CODE 	  = 010
 DUPLICATE_PACAKGES_ERROR_CODE = 100
 MISSING_PACAKGE_REFERENCE_ERROR_CODE = 110
 
@@ -37,6 +38,9 @@ class SynchronizationExeception(Exception):
 			result += '. Code:%s' % self.code
 		return  result
 
+class ContentRemovalException(SynchronizationExeception):
+	code = CONTENT_REMOVAL_ERROR_CODE
+	
 class MissingContentBundleNTIIDException(SynchronizationExeception):
 	code = MISSING_NTIID_ERROR_CODE
 

@@ -57,6 +57,7 @@ from .interfaces import ContentPackageLibraryModifiedOnSyncEvent
 from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from .synchronize import SynchronizationResults
+from .synchronize import ContentRemovalException
 from .synchronize import LibrarySynchronizationResults
 
 @interface.implementer(IContentPackageEnumeration)
@@ -310,7 +311,8 @@ class AbstractContentPackageLibrary(object):
 				logger.info("Library %s changing packages %s", self, changed)
 
 			if removed and params != None and not params.allowRemoval:
-				raise Exception("Cannot remove content pacakges without explicitly allowing it")
+				raise ContentRemovalException(
+						"Cannot remove content pacakges without explicitly allowing it")
 
 			# Now fire the events letting listeners (e.g., index and question adders)
 			# know that we have content. Randomize the order of this across worker
