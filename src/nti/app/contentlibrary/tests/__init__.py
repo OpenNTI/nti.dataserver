@@ -61,7 +61,7 @@ class _SharedSetup(object):
 	@staticmethod
 	def setUp(cls):
 		# Must implement!
-		cls.__old_library = component.getUtility(IContentPackageLibrary)
+		cls.__old_library = component.queryUtility(IContentPackageLibrary)
 		global_library = cls.global_library = cls._setup_library()
 
 		component.provideUtility(global_library, IContentPackageLibrary)
