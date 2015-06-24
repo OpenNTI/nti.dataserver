@@ -1,43 +1,58 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
 import nti.appserver
 
 import zope.deferredimport
 zope.deferredimport.initialize()
 
-
-import nti.common.deprecated # Increase warning verbosity
+import nti.common.deprecated  # Increase warning verbosity
 assert nti.common.deprecated
-from nti.app.testing.request_response import DummyRequest
+
 from nti.app.testing.testing import TestMailDelivery
 from nti.app.testing.testing import ITestMailDelivery
-
 
 from nti.app.testing.matchers import has_permission as _has_permission
 from nti.app.testing.matchers import doesnt_have_permission as _doesnt_have_permission
 
+from nti.app.testing.request_response import DummyRequest
+
 from nti.app.testing.base import _create_request
 _create_request = _create_request
+
 from nti.app.testing.base import TestBaseMixin
 _TestBaseMixin = TestBaseMixin
+
 from nti.app.testing.base import ConfiguringTestBase
 ConfiguringTestBase = ConfiguringTestBase
+
 from nti.app.testing.base import SharedConfiguringTestBase
 SharedConfiguringTestBase = SharedConfiguringTestBase
+
 from nti.app.testing.base import NewRequestSharedConfiguringTestBase
 NewRequestSharedConfiguringTestBase = NewRequestSharedConfiguringTestBase
 
-from zope import component
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-
-from nti.app.testing.application_webtest import ApplicationTestLayer
 import os
 import os.path
 
+from zope import component
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
+from nti.app.testing.application_webtest import ApplicationTestLayer
+
 class ExLibraryApplicationTestLayer(ApplicationTestLayer):
-	library_dir = os.path.join( os.path.dirname(__file__), 'ExLibrary' )
+	library_dir = os.path.join(os.path.dirname(__file__), 'ExLibrary')
 	@classmethod
-	def _setup_library( cls, *args, **kwargs ):
+	def _setup_library(cls, *args, **kwargs):
 		from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
-		return FileLibrary( cls.library_dir )
+		return FileLibrary(cls.library_dir)
 
 	@classmethod
 	def setUp(cls):
@@ -57,8 +72,9 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 		# Must implement!
 		cls.__current_library.resetContentPackages()
 		del cls.__current_library
-		component.provideUtility(cls.__old_library, IContentPackageLibrary)
-		cls.__old_library.syncContentPackages()
+		if cls.__old_library is not None:
+			component.provideUtility(cls.__old_library, IContentPackageLibrary)
+			cls.__old_library.syncContentPackages()
 
 	# TODO: May need to recreate the application with this library?
 
