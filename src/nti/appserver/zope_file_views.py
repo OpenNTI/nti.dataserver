@@ -109,7 +109,7 @@ def _image_file_view(request, image_interface, attr_name):
 		raise hexc.HTTPForbidden()
 
 	with_url = image_interface(the_file.__parent__)
-	url_property = type(with_url).avatarURL
+	url_property = getattr(type(with_url), attr_name)
 	if url_property.get_file(with_url) is not the_file:
 		raise hexc.HTTPForbidden()
 
