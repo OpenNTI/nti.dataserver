@@ -8,7 +8,7 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-	
+
 	<include package="zope.location" />
 
 	<include package="nti.externalization" file="meta.zcml" />
@@ -22,7 +22,7 @@
 	<subscriber handler=".users.onChange" />
 	<subscriber handler=".users._blacklist_username" />
 	<subscriber handler=".users.user_devicefeedback" />
-	
+
 	<subscriber handler=".communities._add_member_to_community" />
 	<subscriber handler=".communities._remove_member_from_community" />
 	<subscriber handler=".communities._remove_all_members_when_community_deleted" />
@@ -48,10 +48,10 @@
 			 name="personal-summary" />
 
 	<adapter factory=".users_external._CoppaUserExternalObject" />
-	
+
 	<adapter factory=".users_external._CoppaUserSummaryExternalObject"
 			 name="summary" />
-	
+
 	<adapter factory=".users_external._CoppaUserPersonalSummaryExternalObject"
 			 name="personal-summary" />
 
@@ -108,12 +108,12 @@
 	<!-- Named fallback -->
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
-			 name="generated" 
+			 name="generated"
 			 zcml:condition="not-have devmode" />
 
 	<adapter factory=".avatar_urls.DefaultAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
-			 name="generated" 
+			 name="generated"
 			 zcml:condition="have devmode" />
 
 	<!-- Default for Koppa Kids -->
@@ -140,7 +140,7 @@
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURLChoices"
 			 provides=".interfaces.IAvatarChoices"
 			 for="nti.dataserver.interfaces.IUser" />
-			 
+
 	<!-- Background URLs -->
 	<!-- Default -->
 	<adapter factory=".avatar_urls.BackgroundURLFactory"
@@ -162,7 +162,7 @@
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile._profile_to_principal" />
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
-	
+
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
 			 zcml:condition="have devmode" />
