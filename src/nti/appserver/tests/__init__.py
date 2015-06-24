@@ -42,8 +42,9 @@ class ExLibraryApplicationTestLayer(ApplicationTestLayer):
 	@classmethod
 	def setUp(cls):
 		# Must implement!
-		cls.__old_library = component.getUtility(IContentPackageLibrary)
-		cls.__old_library.resetContentPackages()
+		cls.__old_library = component.queryUtility(IContentPackageLibrary)
+		if cls.__old_library is not None:
+			cls.__old_library.resetContentPackages()
 
 		lib = cls._setup_library()
 
