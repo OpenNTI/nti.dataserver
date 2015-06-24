@@ -217,14 +217,20 @@ class RestrictedUserProfileWithContactEmailAddressable(object):
 class Education(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IEducation)
 
+	__external_class_name__ = "Education"
+	mime_type = mimeType = 'application/vnd.nextthought.education'
+
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
 		SchemaConfigured.__init__(self, *args, **kwargs)
-	
+
 @WithRepr
 @interface.implementer(IProfessionalPosition)
 class ProfessionalPosition(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IProfessionalPosition)
+
+	__external_class_name__ = "ProfessionalPosition"
+	mime_type = mimeType = 'application/vnd.nextthought.professionalposition'
 
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
@@ -239,26 +245,26 @@ class SocialMediaProfile(SchemaConfigured, Persistent):
 	twitter = FP(ISocialMediaProfile['twitter'])
 	googlePlus = FP(ISocialMediaProfile['googlePlus'])
 	linkedIn = FP(ISocialMediaProfile['linkedIn'])
-	
+
 @WithRepr
 @interface.implementer(IEducationProfile)
 class EducationProfile(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IEducationProfile)
-	
+
 	education =  FP(IEducationProfile['education'])
-	
+
 @WithRepr
 @interface.implementer(IProfessionalProfile)
 class ProfessionalProfile(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IProfessionalProfile)
-	
+
 	positions =  FP(IProfessionalProfile['positions'])
 
 @WithRepr
 @interface.implementer(IInterestProfile)
 class InterestProfile(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IInterestProfile)
-	
+
 	interests =  FP(IInterestProfile['interests'])
 
 @component.adapter(IUser)
@@ -275,7 +281,7 @@ class EmailRequiredUserProfile(CompleteUserProfile):
 	"""
 	An adapter for requiring the email.
 	"""
-			
+
 def add_profile_fields(iface, clazz, field_map=None):
 	"""
 	Given an interfaces that extends :class:`nti.dataserver.users.interfaces.IUserProfile`
@@ -307,7 +313,7 @@ def _init():
 	_field_map = { 'alias': '_alias',
 				   'realname': '_realname'}
 
-	_class_map = {  
+	_class_map = {
 			IUserProfile: UserProfile,
 			IFriendlyNamed: FriendlyNamed,
 			ICompleteUserProfile: CompleteUserProfile,
