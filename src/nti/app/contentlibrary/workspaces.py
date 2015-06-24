@@ -91,8 +91,8 @@ def _library_for_library(library, request):
 
 @interface.implementer(IContentPackageLibrary)
 def _library_for_user(user, request):
-	global_library = component.getUtility(IContentPackageLibrary)
-	result = component.getMultiAdapter((global_library, request), IContentPackageLibrary)
+	global_library = component.queryUtility(IContentPackageLibrary)
+	result = component.queryMultiAdapter((global_library, request), IContentPackageLibrary)
 	return result
 
 @interface.implementer(IWorkspace)
@@ -103,21 +103,23 @@ def _library_workspace_for_library(library, request):
 
 @interface.implementer(IWorkspace)
 def _library_workspace_for_user(user, request):
-	library = component.getMultiAdapter((user, request), IContentPackageLibrary)
-	ws = LibraryWorkspace(library)
-	ws.__parent__ = user
-	return ws
+	library = component.queryMultiAdapter((user, request), IContentPackageLibrary)
+	if library is not None:
+		ws = LibraryWorkspace(library)
+		ws.__parent__ = user
+		return ws
 
 @interface.implementer(IWorkspace)
 @component.adapter(IUserService)
 def _library_workspace(user_service):
 	request = get_current_request()
 	user = user_service.user
-	ws = component.getMultiAdapter((user, request),
-									IWorkspace,
-									name='Library')
-	ws.__parent__ = user
-	return ws
+	ws = component.queryMultiAdapter((user, request),
+									 IWorkspace,
+									 name='Library')
+	if ws is not None:
+		ws.__parent__ = user
+		return ws
 
 @interface.implementer(IWorkspace, IContained)
 class LibraryWorkspace(object):
