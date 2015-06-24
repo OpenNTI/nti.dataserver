@@ -92,7 +92,7 @@ class _AbstractEntitySummaryExternalObject(object):
 	_DECORATE = False
 	_AVATAR_URL = True
 	_BACKGROUND_URL = True
-	
+
 	def _do_toExternalObject(self, **kwargs):
 		"""
 		Inspects the context entity and produces its external summary form.
@@ -150,7 +150,7 @@ class _FriendListSummaryExternalObject(_AbstractEntitySummaryExternalObject):
 
 	_DECORATE = True
 	_BACKGROUND_URL = False
-	
+
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_FriendListSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		extDict['IsDynamicSharing'] = IDynamicSharingTarget.providedBy(self.entity)
@@ -170,8 +170,8 @@ class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
 	def _do_toExternalObject(self, **kwargs):
-		""" 
-		:return: The value of :meth:`toSummaryExternalObject` 
+		"""
+		:return: The value of :meth:`toSummaryExternalObject`
 		"""
 		result = super(_EntityExternalObject, self)._do_toExternalObject(**kwargs)
 		# restore last modified since we are the true representation
@@ -182,7 +182,7 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 class _FriendsListExternalObject(_EntityExternalObject):
 
 	_BACKGROUND_URL = False
-	
+
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_FriendsListExternalObject, self)._do_toExternalObject(**kwargs)
 		theFriends = []
@@ -331,7 +331,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 		extDict['Links'] = self._replace_or_add_edit_link_with_self(extDict.get('Links', ()))
 		extDict['Last Modified'] = getattr(self.entity, 'lastModified', 0)
-
 		# Ok, we did the standard profile fields. Now, find the most derived interface
 		# for this profile and write the additional fields
 		most_derived_profile_iface = find_most_derived_interface(prof, IRestrictedUserProfile)
@@ -339,9 +338,10 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			if 	name in extDict or field.queryTaggedValue(TAG_HIDDEN_IN_UI) or \
 				interface.interfaces.IMethod.providedBy(field):
 				continue
-			# Save the value from the profile, or if the profile doesn't have it yet,
+			# Save the externalized value from the profile, or if the profile doesn't have it yet,
 			# use the default (if there is one). Otherwise its None
-			extDict[name] = field.query(prof, getattr(field, 'default', None))
+			field_val = field.query(prof, getattr(field, 'default', None))
+			extDict[name] = toExternalObject( field_val )
 		return extDict
 
 	def _replace_or_add_edit_link_with_self(self, _links):
