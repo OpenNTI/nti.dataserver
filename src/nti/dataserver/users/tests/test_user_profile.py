@@ -12,7 +12,9 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_key
+from hamcrest import not_none
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 does_not = is_not
@@ -26,6 +28,10 @@ from nti.dataserver.users import User
 from nti.dataserver.users import Everyone
 from nti.dataserver.users import interfaces
 
+from nti.dataserver.users.user_profile import Education
+from nti.dataserver.users.user_profile import ProfessionalPosition
+
+from nti.externalization import internalization
 from nti.externalization.externalization import to_external_object
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
@@ -56,24 +62,24 @@ class TestUserProfile(DataserverLayerTest):
 					has_property('backgroundURL', is_(none())))
 		assert_that(prof,
 					has_property('opt_in_email_communication', is_false()))
-		
+
 		assert_that(prof,
 					verifiably_provides(interfaces.ISocialMediaProfile))
 		assert_that(prof,
 					has_property('twitter', is_(none())))
 		assert_that(prof,
 					has_property('facebook', is_(none())))
-		
+
 		assert_that(prof,
 					verifiably_provides(interfaces.IEducationProfile))
 		assert_that(prof,
 					has_property('education', is_(none())))
-		
+
 		assert_that(prof,
 					verifiably_provides(interfaces.IInterestProfile))
 		assert_that(prof,
 					has_property('interests', is_(none())))
-				
+
 		assert_that(prof,
 					verifiably_provides(interfaces.IProfessionalProfile))
 		assert_that(prof,
@@ -177,6 +183,78 @@ class TestUserProfile(DataserverLayerTest):
 
 		ext_user = to_external_object(user)
 		assert_that(ext_user, has_entry('location', 'foo bar'))
+
+	@mock_dataserver.WithMockDSTrans
+	def test_externalized_profile(self):
+		user = User.create_user(username="foo@bar")
+		prof = interfaces.ICompleteUserProfile(user)
+		ext_prof = to_external_object( user, name=('personal-summary') )
+		assert_that( ext_prof, has_entry( 'positions', none() ))
+		assert_that( ext_prof, has_entry( 'education', none() ))
+
+		# Add position
+		start_year = 1999
+		end_year = 2004
+		company_name = 'Omnicorp'
+		title = 'Ex VP'
+		description = 'ima description'
+		school = 'School of Hard Knocks'
+		degree = 'CS'
+		prof.positions = [ProfessionalPosition( startYear=start_year,
+												endYear=end_year,
+												companyName=company_name,
+												title=title,
+												description=description )]
+		prof.education = [Education( startYear=start_year,
+									endYear=end_year,
+									school=school,
+									degree=degree,
+									description=description )]
+		user_prof = to_external_object( user, name=('personal-summary') )
+
+		# Positions
+		ext_prof = user_prof.get( 'positions' )
+		assert_that( ext_prof, has_length( 1 ))
+
+		ext_prof = ext_prof[0]
+		assert_that(ext_prof, has_entry('Class',
+										ProfessionalPosition.__external_class_name__ ))
+		assert_that(ext_prof, has_entry('MimeType',
+										ProfessionalPosition.mime_type ))
+
+		factory = internalization.find_factory_for(ext_prof)
+		assert_that(factory, is_(not_none()))
+
+		new_io = factory()
+		internalization.update_from_external_object(new_io, ext_prof)
+		assert_that(new_io, has_property( 'startYear', is_( start_year )))
+		assert_that(new_io, has_property( 'endYear', is_( end_year )))
+		assert_that(new_io, has_property( 'companyName', is_( company_name )))
+		assert_that(new_io, has_property( 'title', is_( title )))
+		assert_that(new_io, has_property( 'description', is_( description )))
+		assert_that( new_io, is_( ProfessionalPosition ) )
+
+		# Education
+		ext_prof = user_prof.get( 'education' )
+		assert_that( ext_prof, has_length( 1 ))
+
+		ext_prof = ext_prof[0]
+		assert_that(ext_prof, has_entry('Class',
+										Education.__external_class_name__ ))
+		assert_that(ext_prof, has_entry('MimeType',
+										Education.mime_type ))
+
+		factory = internalization.find_factory_for(ext_prof)
+		assert_that(factory, is_(not_none()))
+
+		new_io = factory()
+		internalization.update_from_external_object(new_io, ext_prof)
+		assert_that(new_io, has_property( 'startYear', is_( start_year )))
+		assert_that(new_io, has_property( 'endYear', is_( end_year )))
+		assert_that(new_io, has_property( 'school', is_( school )))
+		assert_that(new_io, has_property( 'degree', is_( degree )))
+		assert_that(new_io, has_property( 'description', is_( description )))
+		assert_that( new_io, is_( Education ) )
 
 from nti.dataserver.users.user_profile import FriendlyNamed
 
