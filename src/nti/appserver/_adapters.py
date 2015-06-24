@@ -182,8 +182,8 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 		profile_iface = IUserProfileSchemaProvider(context).getSchema()
 		profile = profile_iface(context)
 		profile_schema = find_most_derived_interface(profile,
-													  profile_iface,
-													  possibilities=interface.providedBy(profile))
+													 profile_iface,
+													 possibilities=interface.providedBy(profile))
 
 		allowed_fields = {'lastLoginTime', 'password', 'mute_conversation',
 						  'unmute_conversation', 'ignoring', 'accepting',
@@ -196,7 +196,6 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 			# v could be a schema field or an interface.Attribute
 			if v.queryTaggedValue(TAG_HIDDEN_IN_UI):
 				continue
-
 			allowed_fields.add(k)
 
 		self._allowed_fields = allowed_fields
