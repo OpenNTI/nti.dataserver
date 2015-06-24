@@ -196,7 +196,7 @@ class CanvasAffineTransform(object):
 					raise WrongType(val, numbers.Number, k)
 				setattr(self, k, val)
 
-	def toExternalDictionary(self, mergeFrom=None):
+	def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
 		"""
 		Note that we externalize ourself directly, without going through the superclass
 		at all, for speed. We would only delete most of the stuff it added anyway.
@@ -208,8 +208,8 @@ class CanvasAffineTransform(object):
 	def toArray(self):
 		return [self.a, self.b, self.c, self.d, self.tx, self.ty]
 
-	def toExternalObject(self):
-		return self.toExternalDictionary()
+	def toExternalObject(self, *args, **kwargs):
+		return self.toExternalDictionary(*args, **kwargs)
 
 	def __eq__(self, other):
 		try:
@@ -290,7 +290,7 @@ class _CanvasShape(ExternalizableInstanceDict):
 			assert stroke_width <= 100.0
 			self._stroke_width = stroke_width
 
-	def toExternalDictionary(self, mergeFrom=None, **kwargs):
+	def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
 		# Implementation note: For now, because we are not
 		# doing anything fancy with keeping track of identical objects
 		# when we update a canvas, we are also eliding these same fields like Point.
@@ -312,11 +312,11 @@ class _CanvasShape(ExternalizableInstanceDict):
 		mergeFrom['fillColor'] = self.fillColor
 		mergeFrom['fillOpacity'] = self.fillOpacity
 
-		return super(_CanvasShape, self).toExternalDictionary(mergeFrom=mergeFrom, **kwargs)
+		return super(_CanvasShape, self).toExternalDictionary(mergeFrom=mergeFrom, *args, **kwargs)
 	__external_use_minimal_base__ = True  # Avoid the call to standard_dictionary, and just use the minimal fields
 
-	def toExternalObject(self, **kwargs):
-		return self.toExternalDictionary(**kwargs)
+	def toExternalObject(self, *args, **kwargs):
+		return self.toExternalDictionary(*args, **kwargs)
 
 	def __eq__(self, other):
 		# Implementation note: when toExternalDictionary changes,
@@ -397,8 +397,8 @@ class _CanvasUrlShape(_CanvasShape):
 
 	__getitem__ = url.make_getitem()
 
-	def toExternalDictionary(self, mergeFrom=None, **kwargs):
-		result = super(_CanvasUrlShape, self).toExternalDictionary(mergeFrom=mergeFrom, **kwargs)
+	def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
+		result = super(_CanvasUrlShape, self).toExternalDictionary(mergeFrom=mergeFrom, *args, **kwargs)
 		if self._file is not None:
 			# See __getitem__
 			# TODO: This is pretty tightly coupled to the app layer
@@ -473,8 +473,8 @@ class _CanvasPathShape(_CanvasShape):
 			assert isinstance(i, numbers.Real)
 		assert (len(self.points) % 2) == 0  # Must be even number of pairs
 
-	def toExternalDictionary(self, mergeFrom=None):
-		result = super(_CanvasPathShape, self).toExternalDictionary(mergeFrom=mergeFrom)
+	def toExternalDictionary(self, mergeFrom=None, *args, **kwargs):
+		result = super(_CanvasPathShape, self).toExternalDictionary(mergeFrom=mergeFrom, *args, **kwargs)
 		result['points'] = self.points
 		return result
 
