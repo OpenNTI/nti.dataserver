@@ -101,6 +101,7 @@ class _AbstractEntitySummaryExternalObject(object):
 				 These properties include 'Username', 'avatarURL', 'realname', and 'alias'.
 		"""
 		entity = self.entity
+		kwargs.pop('decorate', None)
 		extDict = to_standard_external_dictionary(entity, decorate=False, **kwargs)
 		# Notice that we delete the last modified date. Because this is
 		# not a real representation of the object, we don't want people to cache based
@@ -135,7 +136,8 @@ class _AbstractEntitySummaryExternalObject(object):
 		# decorate the external mapping when all the objects in the hierarchy
 		# have completed their work and the mapping is complete
 		extDict = self._do_toExternalObject(**kwargs)
-		if self._DECORATE:
+		decorate = kwargs.get('decorate', True) and self._DECORATE 
+		if decorate:
 			decorate_external_mapping(self.entity, extDict)
 		return extDict
 
