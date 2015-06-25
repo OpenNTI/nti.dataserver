@@ -117,6 +117,7 @@ ACT_COPPA_ADMIN = Permission('nti.actions.coppa_admin')
 ACT_IMPERSONATE = Permission('nti.actions.impersonate')
 ACT_READ     	= Permission('zope.View')
 ACT_NTI_ADMIN 	= ACT_COPPA_ADMIN # alias
+ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 
 @interface.implementer(nti_interfaces.IMutableGroupMember)
 @component.adapter(annotation.interfaces.IAttributeAnnotatable)
