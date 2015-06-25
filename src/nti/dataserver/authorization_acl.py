@@ -873,6 +873,10 @@ class _DataserverFolderACLProvider(object):
 			# TODO: We could easily site scope this, or otherwise
 			ace_allowing(authorization.ROLE_ADMIN,
 						 authorization.ACT_IMPERSONATE,
+						 _DataserverFolderACLProvider),
+			# Global admins also get library sync rights globally
+			ace_allowing(authorization.ROLE_ADMIN,
+						 authorization.ACT_SYNC_LIBRARY,
 						 _DataserverFolderACLProvider)
 			)
 		_add_admin_moderation(acl, _DataserverFolderACLProvider)

@@ -33,15 +33,17 @@ from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.authorization import ACT_NTI_ADMIN
+from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
 from .synchronize import synchronize
 
+
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 context=IDataserverFolder,
-			 permission=ACT_NTI_ADMIN,
+			 permission=ACT_SYNC_LIBRARY,
 			 name='SyncAllLibraries')
 class _SyncAllLibrariesView(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
@@ -123,7 +125,8 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			restoreInteraction()
 			result['Elapsed'] = time.time() - now
 		return result
-
+			
 	def __call__(self):
 		with self.lock:
 			return self._do_call()
+
