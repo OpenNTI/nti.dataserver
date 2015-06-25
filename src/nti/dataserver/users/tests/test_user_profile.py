@@ -192,7 +192,7 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that( ext_prof, has_entry( 'positions', none() ))
 		assert_that( ext_prof, has_entry( 'education', none() ))
 
-		# Add position
+		# Add position/education
 		start_year = 1999
 		end_year = 2004
 		company_name = 'Omnicorp'
