@@ -22,7 +22,6 @@ from nti.testing.time import time_monotonically_increases
 from nti.testing.matchers import is_empty
 import unittest
 
-
 import zope.deferredimport
 zope.deferredimport.initialize()
 zope.deferredimport.deprecatedFrom(
@@ -55,18 +54,19 @@ from nti.dataserver_core.mixins import ZContainedMixin
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import to_external_object
 from nti.contentrange import contentrange
-from nti.dataserver import contenttypes
 from nti.links import links
-from nti.dataserver import interfaces as nti_interfaces
 
+from nti.dataserver import contenttypes
+from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.users.user_profile import Education
+from nti.dataserver.users.user_profile import ProfessionalPosition
 
 import anyjson as json
 from urllib import quote as UQ
 from persistent import Persistent
 from zope import interface
 from zope import component
-
 
 from zope.keyreference.interfaces import IKeyReference
 
@@ -1161,6 +1161,70 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.json_body, has_key( 'Username' ) )
 		# Another user cannot
 		othertestapp.get( path, status=403 )
+
+	@WithSharedApplicationMockDS
+	def test_profile_field_put(self):
+		username = 'larry.david@curb.com'
+		with mock_dataserver.mock_db_trans( self.ds ):
+			self._create_user( username )
+		testapp = TestApp( self.app )
+
+		user_path = '/dataserver2/users/%s' % username
+		extra_environ = self._make_extra_environ( username=username )
+		res = testapp.get( user_path, extra_environ=extra_environ  )
+		assert_that( res.json_body, has_entry( 'positions', none() ))
+
+		start_year = 1999
+		end_year = 2004
+		company_name = 'The Producers'
+		title = 'Producer'
+		description = 'no good?'
+		school = 'School of Hard Knocks'
+		degree = 'CS'
+
+		data = '''[{"MimeType": "%s",
+					"startYear": "%s",
+					"endYear": "%s",
+					"companyName" : "%s",
+					"description" : "%s",
+					"title" : "%s"}]''' \
+				 % ( ProfessionalPosition.mime_type, start_year,
+					end_year, company_name, description, title )
+		path = '/dataserver2/users/%s/++fields++positions' % username
+		res = testapp.put( path,
+							data,
+							extra_environ=extra_environ )
+
+		res = testapp.get( user_path, extra_environ=extra_environ  )
+		assert_that( res.json_body, has_entry( 'positions',
+										has_item( has_entries( 'startYear', start_year,
+														 'endYear', end_year,
+														 'companyName', company_name,
+														 'description', description,
+														 'title', title ) )) )
+
+		# Education
+		data = '''[{"MimeType": "%s",
+				"startYear": "%s",
+				"endYear": "%s",
+				"school" : "%s",
+				"description" : "%s",
+				"degree" : "%s"}]''' \
+				% ( Education.mime_type, start_year,
+					end_year, school, description, degree )
+		path = '/dataserver2/users/%s/++fields++education' % username
+		res = testapp.put( path,
+							data,
+							extra_environ=extra_environ )
+
+		res = testapp.get( user_path, extra_environ=extra_environ  )
+		assert_that( res.json_body, has_entry( 'positions', not_none() ))
+		assert_that( res.json_body, has_entry( 'education',
+										has_item( has_entries( 'startYear', start_year,
+														 'endYear', end_year,
+														 'school', school,
+														 'description', description,
+														 'degree', degree ) ) ))
 
 	@WithSharedApplicationMockDS(users=True,testapp=True,default_authenticate=True)
 	def test_transaction_tween_abort_ioerror(self):
