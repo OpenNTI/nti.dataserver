@@ -218,7 +218,7 @@ class Education(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IEducation)
 
 	__external_class_name__ = "EducationalExperience"
-	mime_type = mimeType = 'application/vnd.nextthought.profile.educationalexperiance'
+	mime_type = mimeType = 'application/vnd.nextthought.profile.educationalexperience'
 
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
