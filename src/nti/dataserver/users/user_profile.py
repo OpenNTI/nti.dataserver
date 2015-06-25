@@ -217,8 +217,8 @@ class RestrictedUserProfileWithContactEmailAddressable(object):
 class Education(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IEducation)
 
-	__external_class_name__ = "Education"
-	mime_type = mimeType = 'application/vnd.nextthought.education'
+	__external_class_name__ = "EducationalExperience"
+	mime_type = mimeType = 'application/vnd.nextthought.profile.educationalexperiance'
 
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
@@ -230,7 +230,7 @@ class ProfessionalPosition(SchemaConfigured, Persistent):
 	createDirectFieldProperties(IProfessionalPosition)
 
 	__external_class_name__ = "ProfessionalPosition"
-	mime_type = mimeType = 'application/vnd.nextthought.professionalposition'
+	mime_type = mimeType = 'application/vnd.nextthought.profile.professionalposition'
 
 	def __init__(self, *args, **kwargs):
 		Persistent.__init__(self)
