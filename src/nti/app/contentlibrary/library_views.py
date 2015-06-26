@@ -45,7 +45,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.externalization.interfaces import LocatedExternalList
-from nti.externalization.externalization import toExternalObject
 
 from nti.links.links import Link
 
@@ -330,11 +329,17 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 			 name=LIBRARY_CONTAINER_PATH_GET_VIEW )
 class LibraryPathView( GenericGetView ):
 	"""
-	Return an ordered list of the library path to an object.
+	Return an ordered list of lists of library paths to an object.
 	Typically, we expect this to be called with the containerId
 	of a UGD item.
-	"""
 
+	Typical return:
+		[ [ <TopLevelContext>,
+			<ContentPackage>,
+			<PageInfo>* ],
+			...
+		]
+	"""
 	def __call__(self):
 		params = CaseInsensitiveDict(self.request.params)
 		container_id = params.get( 'containerId' )
@@ -353,7 +358,7 @@ class LibraryPathView( GenericGetView ):
 		if top_level_contexts:
 			# Assuming one top level container for now.
 			top_level_context = tuple( top_level_contexts )[0]
-			context_path = [ toExternalObject( top_level_context ) ]
+			context_path = [ top_level_context ]
 		else:
 			context_path = []
 
@@ -366,9 +371,11 @@ class LibraryPathView( GenericGetView ):
 			# FIXME List of list
 			units = units[0]
 			package = units[0]
-			context_path.append( toExternalObject( package ))
+			context_path.append( package )
 			units = units[1:]
 			for unit in units:
+				# For content units, we need to externalize as pageinfos.
+				# TODO Do we want to do capture 403s from this?
 				unit_res = find_page_info_view_helper( self.request, unit )
 				context_path.append( unit_res.json_body )
 

@@ -6,7 +6,7 @@ __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
-
+import os
 
 from hamcrest import is_
 from hamcrest import raises
@@ -27,7 +27,10 @@ from pyramid.request import Request
 from nti.appserver.httpexceptions import HTTPNotFound
 
 from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.filesystem import EnumerateOnceFilesystemLibrary as FileLibrary
 
+from nti.app.contentlibrary import LIBRARY_CONTAINER_PATH_GET_VIEW
 from nti.app.contentlibrary.library_views import find_page_info_view_helper
 
 @interface.implementer(lib_interfaces.IContentUnit)
@@ -98,8 +101,34 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( calling(find_page_info_view_helper).with_args(request, unit),
 						 raises(HTTPNotFound))
 
+class TestLibraryPathview( ApplicationLayerTest ):
+
+	def setUp(self):
+		self.library_dir = os.path.join(os.path.dirname(__file__), 'library')
+		self.library = FileLibrary(self.library_dir)
+		component.getGlobalSiteManager().registerUtility(self.library, IContentPackageLibrary)
+
+	def tearDown(self):
+		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
+
+	@WithSharedApplicationMockDS(testapp=True, users=True)
+	def test_library_path(self):
+		container_id = 'tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1'
+		package_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content'
+		lesson_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
+		path = '/dataserver2/%s?CONTAINERID=%s' % ( LIBRARY_CONTAINER_PATH_GET_VIEW, container_id )
+		res = self.testapp.get( path )
+		res = res.json_body
+		# List of lists of library paths
+		assert_that( res, has_length( 1 ))
+		res = res[0]
+		# Our library path
+		assert_that( res, has_length( 2 ))
+		result_ntiids = [x.get( 'NTIID' ) for x in res]
+		assert_that( result_ntiids, contains( package_ntiid, lesson_ntiid ))
+
 class TestApplicationContent(ApplicationLayerTest):
-	
+
 	layer = ContentLibraryApplicationTestLayer
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
