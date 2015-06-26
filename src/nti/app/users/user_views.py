@@ -29,8 +29,6 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
 
-from nti.dataserver.users.interfaces import IHiddenMembership
-
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
 
@@ -125,11 +123,9 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 				result = None
 			elif context == self.remoteUser:
 				result = toExternalObject(x)
-			elif ICommunity.providedBy(x) and x.public:
-				hidden = IHiddenMembership(x, None) or ()
-				if context not in hidden:
-					result = toExternalObject(x)
-			elif IDynamicSharingTargetFriendsList.providedBy(x) and context in x:
+			elif ICommunity.providedBy(x) and (x.public or self.remoteUser in x):
+				result = toExternalObject(x)
+			elif IDynamicSharingTargetFriendsList.providedBy(x) and self.remoteUser in x:
 				result = toExternalObject(x)
 			return result
 			
