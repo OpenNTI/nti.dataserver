@@ -47,6 +47,7 @@ from .interfaces import IAvatarChoices
 from .interfaces import IBackgroundURL
 from .interfaces import IFriendlyNamed
 from .interfaces import TAG_HIDDEN_IN_UI
+from .interfaces import IHiddenMembership
 from .interfaces import IRestrictedUserProfile
 
 def _image_url(entity, avatar_iface, attr_name, view_name):
@@ -136,7 +137,7 @@ class _AbstractEntitySummaryExternalObject(object):
 		# decorate the external mapping when all the objects in the hierarchy
 		# have completed their work and the mapping is complete
 		extDict = self._do_toExternalObject(**kwargs)
-		decorate = kwargs.get('decorate', True) and self._DECORATE 
+		decorate = kwargs.get('decorate', True) and self._DECORATE
 		if decorate:
 			decorate_external_mapping(self.entity, extDict)
 		return extDict
@@ -236,8 +237,8 @@ class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 @component.adapter(IUser)
 class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
-	# : Even in summary (i.e. to other people), we want to publish all these fields
-	# : because it looks better
+	# Even in summary (i.e. to other people), we want to publish all these fields
+	# because it looks better
 	public_summary_profile_fields = ('affiliation', 'home_page', 'description',
 									 'location', 'role', 'about')
 
@@ -256,9 +257,31 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
 @component.adapter(ICoppaUserWithoutAgreement)
 class _CoppaUserSummaryExternalObject(_UserSummaryExternalObject):
-	# : Privacy is very important for the precious children. None of their profile
-	# : fields are public to other people.
+	# Privacy is very important for the precious children. None of their profile
+	# fields are public to other people.
 	public_summary_profile_fields = ()
+
+# By default, when externalizing we send the minimum public data.
+# A few places exist, such as the resolve user api, that can
+# get the 'complete' data by asking for the registered 'personal'
+# externalizer
+from pyramid.threadlocal import get_current_request
+
+def _is_remote_same_as_authenticated(user, req=None):
+	# XXX This doesn't exactly belong at this layer. Come up with
+	# a better way to do this switching.
+	req = get_current_request() if req is None else req
+	if 	req is None or req.authenticated_userid is None or \
+		req.authenticated_userid != user.username:
+		return False
+	return True
+
+def _named_externalizer(user, req=None):
+	# XXX This doesn't exactly belong at this layer. Come up with
+	# a better way to do this switching.
+	if _is_remote_same_as_authenticated(user, req):
+		return 'personal-summary'
+	return 'summary'
 
 @component.adapter(IUser)
 class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
@@ -309,19 +332,24 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		# DynamicMemberships/Communities are not currently editable,
 		# and will need special handling of (a) Everyone and (b) DynamicFriendsLists
 		# (proper events could handle the latter)
-		log_msg="Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
-		extDict['Communities'] = \
-					_externalize_subordinates(
-						self.entity.xxx_hack_filter_non_memberships(self.entity.dynamic_memberships,
-																 	log_msg=log_msg,
-																	the_logger=logger),
-									name='')  # Deprecated
-		extDict['DynamicMemberships'] = extDict['Communities']
+		_same_as_authenticated = _is_remote_same_as_authenticated(self.entity)
+		def _selector(x):
+			if _same_as_authenticated:
+				return True
+			else:
+				hidden = IHiddenMembership(x, None) or ()
+				return not self in hidden
+
+		log_msg = "Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
+		memberships = self.entity.xxx_hack_filter_non_memberships(self.entity.dynamic_memberships,
+																  log_msg=log_msg,
+																  the_logger=logger)
+		extDict['DynamicMemberships'] = extDict['Communities'] = \
+					_externalize_subordinates(filter(_selector, memberships), name='')  # Deprecated
 
 		# Following is writable
-		extDict['following'] = \
-					_externalize_subordinates(
-						self.entity.xxx_hack_filter_non_memberships(self.entity.entities_followed))
+		following = self.entity.xxx_hack_filter_non_memberships(self.entity.entities_followed)
+		extDict['following'] = _externalize_subordinates(filter(_selector, following))
 
 		# as is ignoring and accepting
 		extDict['ignoring'] = _externalize_subordinates(self.entity.entities_ignoring_shared_data_from)
@@ -331,6 +359,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 
 		extDict['Links'] = self._replace_or_add_edit_link_with_self(extDict.get('Links', ()))
 		extDict['Last Modified'] = getattr(self.entity, 'lastModified', 0)
+
 		# Ok, we did the standard profile fields. Now, find the most derived interface
 		# for this profile and write the additional fields
 		most_derived_profile_iface = find_most_derived_interface(prof, IRestrictedUserProfile)
@@ -341,7 +370,7 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 			# Save the externalized value from the profile, or if the profile doesn't have it yet,
 			# use the default (if there is one). Otherwise its None
 			field_val = field.query(prof, getattr(field, 'default', None))
-			extDict[name] = toExternalObject( field_val )
+			extDict[name] = toExternalObject(field_val)
 		return extDict
 
 	def _replace_or_add_edit_link_with_self(self, _links):
@@ -354,21 +383,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		if not added:
 			_links.append(Link(self.entity, rel='edit'))
 		return _links
-
-# By default, when externalizing we send the minimum public data.
-# A few places exist, such as the resolve user api, that can
-# get the 'complete' data by asking for the registered 'personal'
-# externalizer
-from pyramid.threadlocal import get_current_request
-
-def _named_externalizer(user, req=None):
-	# XXX This doesn't exactly belong at this layer. Come up with
-	# a better way to do this switching.
-	req = get_current_request() if req is None else req
-	if 	req is None or req.authenticated_userid is None or \
-		req.authenticated_userid != user.username:
-		return 'summary'
-	return 'personal-summary'
 
 @interface.implementer(IExternalObject)
 @component.adapter(IUser)
