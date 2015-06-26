@@ -10,17 +10,29 @@ __docformat__ = "restructuredtext en"
 from zope import schema
 from zope import component
 from zope import interface
-from zope.interface.common import mapping
-from zope.location.interfaces import ILocation
+
 from zope.container.interfaces import IContained
-from zope.traversing import interfaces as trv_interfaces
 
-from pyramid import interfaces as pyramid_interfaces
+from zope.interface.common.mapping import IFullMapping
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from zope.location.interfaces import ILocation
 
-import nti.dataserver.interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+from zope.traversing.interfaces import IPathAdapter
+from zope.traversing.interfaces import ITraversable
+
+from dolmen.builtins import IIterable
+
+from pyramid.interfaces import IRequest
+
+from nti.contentlibrary.interfaces import IContentUnit
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ILinked
+from nti.dataserver.interfaces import UserEvent
+from nti.dataserver.interfaces import IUserEvent
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
 from nti.schema.field import Object
@@ -58,7 +70,7 @@ class ICreatableObjectFilter(interface.Interface):
 	to filter the available list of objects that user is allowed to create.
 	"""
 
-	def filter_creatable_object_terms( terms ):
+	def filter_creatable_object_terms(terms):
 		"""
 		Given a dictionary of vocabulary terms, filter them to remove the objects
 		that are not acceptable.
@@ -68,22 +80,22 @@ class ICreatableObjectFilter(interface.Interface):
 
 class IUserCapabilityFilter(interface.Interface):
 
-	def filterCapabilities( cap_set ):
+	def filterCapabilities(cap_set):
 		"""
 		Given a set of capability strings, return a set filtered to just
 		the ones allowed.
 		"""
 
-class IContentUnitInfo(ILocation, nti_interfaces.ILastModified, nti_interfaces.ILinked):
+class IContentUnitInfo(ILocation, ILastModified, ILinked):
 	"""
 	Information about a particular bit of content and the links it contains.
 	"""
 
-	contentUnit = Object( lib_interfaces.IContentUnit,
-						  title="The IContentUnit this object provides info for, if there is one.",
-						  description=""" Typically this will only be provided for one-off requests.
+	contentUnit = Object(IContentUnit,
+						 title="The IContentUnit this object provides info for, if there is one.",
+						 description=""" Typically this will only be provided for one-off requests.
 									Bulk collections/requests will not have it.
-									"""	)
+									""")
 
 class IPrincipalUGDFilter(interface.Interface):
 	"""
@@ -102,9 +114,8 @@ def get_principal_ugd_filter(user):
 		return all((f(user, obj) for f in filters))
 	return uber_filter
 
-###
 # Presentation
-###
+
 class IChangePresentationDetails(interface.Interface):
 	"""
 	An object with details about how to present a :class:`.IStreamChangeEvent`
@@ -134,9 +145,7 @@ class IChangePresentationDetails(interface.Interface):
 	title = interface.Attribute("The pretty title to describe the entry")
 	categories = interface.Attribute("A sequence of short tags to caterogize this")
 
-###
 # Logon services
-###
 
 class ILogonPong(interface.Interface):
 	"""
@@ -151,16 +160,16 @@ class IUserViewTokenCreator(interface.Interface):
 	"""
 	# Or maybe this should be an adapter on the request?
 
-	def getTokenForUserId( userid ):
+	def getTokenForUserId(userid):
 		"""
 		Given a logon id for a user, return a long-lasting
 		token. If this cannot be done, return None.
 		"""
 
 class IMissingUser(interface.Interface):
-	"Stand-in for an :class:`nti_interfaces.IUser` when one does not yet exist."
+	"Stand-in for an :class:`IUser` when one does not yet exist."
 	# TODO: Convert to zope.authentication.IUnauthenticatedPrincipal?
-	username = schema.TextLine( title=u"The desired username" )
+	username = schema.TextLine(title=u"The desired username")
 
 class ILogonOptionLinkProvider(interface.Interface):
 	"""
@@ -172,13 +181,13 @@ class ILogonOptionLinkProvider(interface.Interface):
 	"""
 
 	rel = schema.TextLine(
-		title=u"The link rel that this object may produce." )
+		title=u"The link rel that this object may produce.")
 
 	priority = interface.Attribute("The priority of this provider among all providers that share a rel. Optional")
 
-	def __call__( ):
+	def __call__():
 		"""
-		Returns a single instance of :class:`nti_interfaces.ILink` object, or None.
+		Returns a single instance of :class:`ILink` object, or None.
 
 		If there are multiple link providers for a given `rel`, they will be sorted by the
 		optional (descending) priority field before calling, and the first one that returns a
@@ -188,8 +197,7 @@ class ILogonOptionLinkProvider(interface.Interface):
 		the integer 0.
 		"""
 
-ILogonLinkProvider = ILogonOptionLinkProvider # BWC
-
+ILogonLinkProvider = ILogonOptionLinkProvider  # BWC
 
 class ILogonUsernameFromIdentityURLProvider(interface.Interface):
 	"""
@@ -201,7 +209,7 @@ class ILogonUsernameFromIdentityURLProvider(interface.Interface):
 	same object that implements :class:`ILogonOptionLinkProvider`.
 	"""
 
-	def getUsername( identity_url, extra_info=None ):
+	def getUsername(identity_url, extra_info=None):
 		"""
 		Return the desired username corresponding to the identity URL.
 
@@ -239,8 +247,6 @@ class IUnauthenticatedUserLinkProvider(interface.Interface):
 		are specified independently, based on the link relationship.
 		"""
 
-IUserEvent = nti_interfaces.IUserEvent
-
 class IUserLogonEvent(IUserEvent):
 	"""
 	Fired when a user has successfully logged on.
@@ -250,10 +256,10 @@ class IUserLogonEvent(IUserEvent):
 	"""
 	# Very surprised not to find an analogue of this event in zope.*
 	# or pyramid, so we roll our own.
-	# TODO: Might want to build this on a lower-level (nti_interfaces)
+	# TODO: Might want to build this on a lower-level 
 	# event holding the principal, this level adding the request
 
-	request = schema.Object(pyramid_interfaces.IRequest,
+	request = schema.Object(IRequest,
 							title="The request that completed the login process.",
 							description="Useful to get IP information and the like.")
 
@@ -263,15 +269,14 @@ class IUserLogoutEvent(IUserLogonEvent):
 	rarely due to cookies.
 	"""
 
-class _UserEventWithRequest(nti_interfaces.UserEvent):
+class _UserEventWithRequest(UserEvent):
 
 	request = None
 
-	def __init__( self, user, request=None ):
-		super(_UserEventWithRequest,self).__init__( user )
+	def __init__(self, user, request=None):
+		super(_UserEventWithRequest, self).__init__(user)
 		if request is not None:
 			self.request = request
-
 
 @interface.implementer(IUserLogonEvent)
 class UserLogonEvent(_UserEventWithRequest):
@@ -288,10 +293,9 @@ class IUserCreatedWithRequestEvent(IUserEvent):
 
 	This is fired just before the :class:`IUserLogonEvent` is fired for the new
 	user, and after the zope lifecycle events.
-
 	"""
 
-	request = schema.Object(pyramid_interfaces.IRequest,
+	request = schema.Object(IRequest,
 							title="The request that completed the creation process.",
 							description="Useful to get IP information and the like.")
 
@@ -305,13 +309,13 @@ class IUserUpgradedEvent(IUserEvent):
 	less restrictive one, e.g., from a limited COPPA account to an unlimited account.
 	"""
 
-	restricted_interface = schema.InterfaceField( title="The original interface." )
-	restricted_profile = schema.Object( user_interfaces.IUserProfile,
-										title="The original profile.")
+	restricted_interface = schema.InterfaceField(title="The original interface.")
+	restricted_profile = schema.Object(IUserProfile,
+									   title="The original profile.")
 
-	upgraded_interface = schema.InterfaceField( title="The new interface." )
-	upgraded_profile = schema.Object( user_interfaces.IUserProfile,
-									  title="The new profile." )
+	upgraded_interface = schema.InterfaceField(title="The new interface.")
+	upgraded_profile = schema.Object(IUserProfile,
+									 title="The new profile.")
 
 @interface.implementer(IUserUpgradedEvent)
 class UserUpgradedEvent(_UserEventWithRequest):
@@ -321,14 +325,14 @@ class UserUpgradedEvent(_UserEventWithRequest):
 	upgraded_interface = None
 	upgraded_profile = None
 
-	def __init__(self, user, restricted_interface=None, restricted_profile=None, upgraded_interface=None, upgraded_profile=None, request=None):
-		super(UserUpgradedEvent,self).__init__( user, request=request )
+	def __init__(self, user, restricted_interface=None, restricted_profile=None, 
+				 upgraded_interface=None, upgraded_profile=None, request=None):
+		super(UserUpgradedEvent, self).__init__(user, request=request)
 		for k in UserUpgradedEvent.__dict__:
 			if k in locals() and locals()[k]:
-				setattr( self, k, locals()[k] )
+				setattr(self, k, locals()[k])
 
-
-### Dealing with responses
+# Dealing with responses
 # Data rendering
 
 zope.deferredimport.deprecatedFrom(
@@ -346,7 +350,7 @@ zope.deferredimport.deprecatedFrom(
 	"IExternalizationCatchComponentAction",
 	"IETagCachedUGDExternalCollection",
 	"IUnModifiedInResponse",
-	"IResponseRenderer" )
+	"IResponseRenderer")
 
 class IModeratorDealtWithFlag(interface.Interface):
 	"""
@@ -355,9 +359,8 @@ class IModeratorDealtWithFlag(interface.Interface):
 	and shouldn't be subject to further flagging or mutation.
 	"""
 
-###
 # Traversing into objects
-###
+
 class IExternalFieldResource(ILocation):
 	"""
 	Marker for objects representing an individually externally updateable field
@@ -365,21 +368,21 @@ class IExternalFieldResource(ILocation):
 	should be the actual object to update.
 	"""
 
-	resource = interface.Attribute( "The object to be updated." )
+	resource = interface.Attribute("The object to be updated.")
 
-	wrap_value = schema.Bool( title="Whether to wrap the value as a dictionary name:value.",
+	wrap_value = schema.Bool(title="Whether to wrap the value as a dictionary name:value.",
 							  description="If False, then assume that the value passed in is acceptable to the object to update.",
 							  default=True,
-							  required=False )
+							  required=False)
 
-class IExternalFieldTraversable(trv_interfaces.ITraversable):
+class IExternalFieldTraversable(ITraversable):
 	"""
 	Marker interface that says that this object traverses into the externally visible
 	fields or properties of an object. It generally will produce instances of :class:`IExternalFieldResource`,
 	but not necessarily.
 	"""
 
-class INamedLinkPathAdapter(trv_interfaces.IPathAdapter):
+class INamedLinkPathAdapter(IPathAdapter):
 	"""
 	A special type of path adapter that should be registered
 	to represent a named link that should be advertised
@@ -389,6 +392,7 @@ class INamedLinkPathAdapter(trv_interfaces.IPathAdapter):
 @interface.implementer(IContained)
 class NamedLinkPathAdapter(object):
 	__name__ = None
+
 	def __init__(self, context, request):
 		self.__parent__ = context
 		self.request = request
@@ -411,9 +415,7 @@ class INamedLinkView(interface.Interface):
 	from views that should be taken as named links.
 	"""
 
-###
 # Resources.
-###
 # This is mostly a migration thing
 
 class IContainerResource(interface.Interface):
@@ -421,8 +423,8 @@ class IContainerResource(interface.Interface):
 
 class IPageContainerResource(interface.Interface):
 
-	user = schema.Object( nti_interfaces.IUser, title="The user that owns the page container")
-	ntiid = schema.TextLine( title="The NTIID of the container" )
+	user = schema.Object(IUser, title="The user that owns the page container")
+	ntiid = schema.TextLine(title="The NTIID of the container")
 
 class INewPageContainerResource(interface.Interface):
 	pass
@@ -444,7 +446,7 @@ class IUserCheckout(interface.Interface):
 	objects. Register as a multi-adapter on (context, request).
 	"""
 
-	def checkObjectOutFromUserForUpdate( user, containerId, objId ):
+	def checkObjectOutFromUserForUpdate(user, containerId, objId):
 		"""
 		If the user validly contains the given object, return it. Otherwise return None.
 		"""
@@ -462,7 +464,7 @@ class INewObjectTransformer(interface.Interface):
 	factories to return singleton objects such as a function.
 	"""
 
-	def __call__( posted_object ):
+	def __call__(posted_object):
 		"""
 		Given the object posted from external, return the object to actually store.
 
@@ -489,13 +491,11 @@ class INewObjectTransformer(interface.Interface):
 			appropriately.
 		"""
 
-###
 # Policies
-###
 
 class IUserSearchPolicy(interface.Interface):
 
-	def query( search_term, provided=nti_interfaces.IEntity.providedBy ):
+	def query(search_term, provided=IEntity.providedBy):
 		"""
 		Return all entity objects that match the query.
 
@@ -511,7 +511,7 @@ class IUserSearchPolicy(interface.Interface):
 
 class IIntIdUserSearchPolicy(IUserSearchPolicy):
 
-	def query_intids( search_term ):
+	def query_intids(search_term):
 		"""
 		Return the intid of all entity objects that match the query.
 
@@ -520,9 +520,7 @@ class IIntIdUserSearchPolicy(IUserSearchPolicy):
 		:return: A (BTree) set of intids of entities that match.
 		"""
 
-###
 # Additional indexed data storage
-###
 
 class IUserActivityStorage(interface.Interface):
 	"""
@@ -544,18 +542,14 @@ class IUserActivityProvider(interface.Interface):
 		The returned value should have a proper ``lastModified`` value.
 		"""
 
-###
 # Misc
-###
 
-class IApplicationSettings(mapping.IFullMapping):
+class IApplicationSettings(IFullMapping):
 	"""
 	The application settings dictionary.
 	"""
 
-####
 # BWC exports
-####
 
 zope.deferredimport.deprecatedFrom(
 	"Moved to nti.dataserver.interfaces ",
@@ -573,8 +567,13 @@ class IJoinableContextProvider(interface.Interface):
 	may join in order to access the adapted object.
 	"""
 
-class ITopLevelContainerContextProvider(interface.Interface):
+class ITopLevelContainerContextProvider(IIterable):
 	"""
 	An adapter interface that returns the top-level
 	container object(s) of the adapted object.
 	"""
+	
+	def __len__():
+		"""
+		Return the number of items.
+		"""
