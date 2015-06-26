@@ -25,6 +25,8 @@ from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IUser 
 from nti.dataserver.interfaces import IEntity
 
+from nti.dataserver.users import Entity
+
 from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.users_external import _avatar_url
@@ -113,14 +115,19 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships,
 															  log_msg=log_msg,
 															  the_logger=logger)
+		
+		everyone = Entity.get_entity(u'Everyone')
 		def _selector(x):
-			result = None
-			if context == self.remoteUser:
+			if x == everyone:
+				result = None
+			elif context == self.remoteUser:
 				result = toExternalObject(x)
 			else:
 				hidden = IHiddenMembership(x, None) or ()
 				if context not in hidden:
 					result = toExternalObject(x)
+				else:
+					result = None
 			return result
 			
 		result = LocatedExternalDict()

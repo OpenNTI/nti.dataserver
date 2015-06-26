@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 from hamcrest import raises
 from hamcrest import calling
+from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import only_contains
@@ -20,10 +21,14 @@ from zope import lifecycleevent
 from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
+from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IRecreatableUser
+from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
+
+from nti.app.testing.decorators import WithSharedApplicationMockDS
 from nti.app.testing.decorators import WithSharedApplicationMockDSWithChanges
 
 from nti.dataserver.tests import mock_dataserver
@@ -84,3 +89,40 @@ class TestUsers(ApplicationLayerTest):
 			dataserver = component.getUtility(IDataserver)
 			ds_folder = dataserver.dataserver_folder
 			user_one = User.create_user(username=username)
+
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_membership_community(self):
+		with mock_dataserver.mock_db_trans(self.ds):
+			c = Community.create_community(username='bleach')
+			user = User.get_user(self.default_username)
+			user.record_dynamic_membership(c)
+			
+			ichigo = self._create_user("ichigo", "temp001")
+			ichigo.record_dynamic_membership(c)
+			
+			aizen = self._create_user("aizen", "temp001")
+			aizen.record_dynamic_membership(c)
+			
+			hidden = IHiddenMembership(c)
+			hidden.hide(aizen)
+
+		path = '/dataserver2/users/%s/memberships' % self.default_username
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		
+		res = self.testapp.get(	path, 
+					  			extra_environ=self._make_extra_environ(user="ichigo"),
+					  			status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+
+		path = '/dataserver2/users/aizen/memberships'
+		res = self.testapp.get(path, 
+					  		   extra_environ=self._make_extra_environ(user="aizen"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		
+		path = '/dataserver2/users/aizen/memberships'
+		res = self.testapp.get(path, 
+					  	 	   extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(0)))
