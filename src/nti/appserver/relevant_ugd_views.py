@@ -111,7 +111,7 @@ class _RelevantUGDView(_UGDView):
 		results = []
 		if unit is not None:
 			for video_data in IVideoIndexedDataContainer(unit).values():
-				video_id = video_data['ntiid']
+				video_id = video_data.ntiid
 				items = self._get_items(video_id)
 				if items:
 					results.extend(items)
