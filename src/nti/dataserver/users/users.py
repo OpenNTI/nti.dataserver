@@ -980,8 +980,8 @@ class User(Principal):
 
 		:return: set of memberships
 		"""
-		result = set(relationships)
 		discarded = []
+		result = set(relationships)
 		for x in list(result):
 			if IFriendsList.providedBy( x ) and self not in x:
 				discarded.append( (x,x.NTIID) )
