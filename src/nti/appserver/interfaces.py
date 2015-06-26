@@ -572,3 +572,9 @@ class IJoinableContextProvider(interface.Interface):
 	An adapter interface that returns objects that a user
 	may join in order to access the adapted object.
 	"""
+
+class ITopLevelContainerContextProvider(interface.Interface):
+	"""
+	An adapter interface that returns the top-level
+	container object(s) of the adapted object.
+	"""
