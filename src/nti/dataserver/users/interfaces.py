@@ -53,6 +53,8 @@ from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
+from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
+
 from ..interfaces import InvalidData
 from ..interfaces import checkCannotBeBlank
 from ..interfaces import FieldCannotBeOnlyWhitespace
@@ -95,8 +97,8 @@ class EmailAddressInvalid(InvalidData):
 		super(EmailAddressInvalid,self).__init__( address, value=address )
 
 class RealnameInvalid(InvalidData):
-	""" 
-	Invalid realname. 
+	"""
+	Invalid realname.
 	"""
 
 	field = 'realname'
@@ -280,7 +282,7 @@ class IBackgroundURLProvider(Interface):
 		title="URL of your background picture",
 		description="If not provided, one will be generated for you.",
 		required=False )
-	
+
 class IAvatarURL(Interface):
 	"""
 	Something that features a display URL.
@@ -294,7 +296,7 @@ class IAvatarURL(Interface):
 IAvatarURL['avatarURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
 
 class IBackgroundURL(Interface):
-	
+
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		description="If not provided, one will be generated for you.",
@@ -440,11 +442,11 @@ class ISocialMediaProfile(interface.Interface):
 	facebook = ValidURI(title='facebook',
 						description=u'The Facebook URL',
 						required=False)
-	
+
 	twitter = ValidURI(title='twitter',
 					   description=u'The twitter URL',
 					   required=False)
-		
+
 	googlePlus = ValidURI(title='GooglePlus',
 					  	  description=u'The GooglePlus URL',
 					   	  required=False)
@@ -459,19 +461,19 @@ class IEducation(interface.Interface):
 	school = ValidTextLine(title='School name',
 						   description=u'School name.',
 						   required=True)
-	
+
 	startYear = Int(title='Start year',
 					description=u'Start year',
 					required=False)
-	
+
 	endYear = Int(title='End year',
 				  description=u'End year',
 				  required=False)
-	
+
 	degree = ValidTextLine(title='Degree name',
 				 		   description=u'Degree name',
 				  		   required=False)
-	
+
 	description = ValidText(title='Degree description',
 				 		   	description=u'Degree description',
 				  		   	required=False)
@@ -491,15 +493,15 @@ class IProfessionalPosition(interface.Interface):
 	companyName = ValidTextLine(title='Company name',
 						   		description=u'CompanyName name.',
 						   		required=True)
-	
+
 	title = ValidTextLine(title='Title',
 						  description=u'Title',
 						  required=True)
-	
+
 	startYear = Int(title='Start year',
 					description=u'Start year',
 					required=True)
-	
+
 	endYear = Int(title='End year',
 				  description=u'End year',
 				  required=False)
@@ -528,8 +530,8 @@ class IInterestProfile(interface.Interface):
 							title="interest entries",
 							required=False,
 							min_length=0)
-	
-class ICompleteUserProfile(IRestrictedUserProfile, 
+
+class ICompleteUserProfile(IRestrictedUserProfile,
 						   IEmailAddressable,
 						   ISocialMediaProfile,
 						   IEducationProfile,
@@ -589,11 +591,8 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		required=False,
 		constraint=checkCannotBeBlank)
 
-	about = ValidText(
-		title='About',
-		description="A description of a user",
-		required=False,
-		constraint=checkCannotBeBlank)
+	about = ExtendedCompoundModeledContentBody()
+	about.__name__ = 'about'
 
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
@@ -637,7 +636,7 @@ class FriendlyNamedSchemaProvider(object):
 		return IFriendlyNamed
 
 class ICommunityProfile(IAvatarURL):
-	
+
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		required=False )
@@ -701,29 +700,29 @@ class IDisallowActivityLink(interface.Interface):
 	"""
 	marker interface to disallow activity link
 	"""
-	
+
 class IDisallowMembersLink(interface.Interface):
 	"""
 	marker interface to disallow members link
 	"""
-	
+
 class IDisallowHiddenMembership(interface.Interface):
 	"""
 	marker interface to disallow hidden memberships
 	"""
 
 class IHiddenMembership(interface.Interface):
-	
+
 	def hide(entity):
 		"""
 		hide the memebership for the specified entity
 		"""
-	
+
 	def unhide(self, entity):
 		"""
 		unhide the memebership for the specified entity
 		"""
-	
+
 	def __contains__(entity):
 		"""
 		check if membership of the specifed entity is hidden

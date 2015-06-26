@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 import string
 import functools
 
+from six import string_types
+
 from zc import intid as zc_intid
 
 from zope import interface
@@ -123,7 +125,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 		This method fires :class:`.interfaces.IWillUpdateNewEntityEvent`,
 		:class:`.interfaces.IWillCreateNewEntityEvent`,
-		:class:`zope.lifecycleevent.IObjectCreatedEvent` and 
+		:class:`zope.lifecycleevent.IObjectCreatedEvent` and
 		:class:`zope.lifecycleevent.IObjectAddedEvent`, in that order.
 
 		:keyword dict external_value: Optional dictionary used to update the object
@@ -132,9 +134,9 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			fired. No notifications are emitted during this process.
 		:keyword bool preflight_only: If ``False`` (the default), the user is created
 			as normal. If set to ``True``, then the process stops before the
-			:class:`zope.lifecycleevent.IObjectCreated` and 
-			:class:`zope.lifecycleevent.IObjectAdded` events are fired, and the user 
-			object is not actually added to the database. When ``True``, the preflight 
+			:class:`zope.lifecycleevent.IObjectCreated` and
+			:class:`zope.lifecycleevent.IObjectAdded` events are fired, and the user
+			object is not actually added to the database. When ``True``, the preflight
 			object is returned (assuming validation went as planned),
 			but it will not have a valid ``__parent__``
 		"""
@@ -147,7 +149,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
 		__traceback_info__ = kwargs
-		
+
 		# When we auto-create users, we need to be sure
 		# they have a database connection so that things that
 		# are added /to them/ (their contained storage) in the same transaction
@@ -157,7 +159,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		# First we create the skeleton object
 		user = cls.__new__( cls )
 		user.username = kwargs['username']
-		
+
 		# Then we place it in a database. It's important to do this before any code
 		# runs so that subobjects which might go looking through their parents
 		# to find a IConnection find the user's IConnection *first*, before they find
@@ -193,22 +195,22 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		# ObjectAdded (which is usually when intids get assigned) can use it.
 		component.getUtility(zc_intid.IIntIds).register(user)
 		notify(WillCreateNewEntityEvent(user, ext_value, preflight_only, meta_data))
-		
+
 		if preflight_only:
 			if user.username in root_users:
 				raise KeyError( user.username )
 			user.__parent__ = None
-			
+
 			# Be sure we didn't add this guy anywhere. If we did, then things are
 			# wacked and we need this transaction to fail.
 			assert getattr( user, '_p_jar', None ) is None, "User should NOT have a connection"
-			
+
 			# Must NOT try to commit the transaction since the object has been added to the intid registry
 			transaction.doom()
 			return user
 
 		lifecycleevent.created( user ) # Fire created event
-		
+
 		# Must manually fire added event if parent was given
 		if kwargs['parent'] is not None:
 			lifecycleevent.added( user, kwargs['parent'], user.username )
@@ -250,7 +252,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 	# NOTE: This is prohibiting Unicode characters
 	# NOTE: This has bad effects on FriendsLists since right now they are entities
 	# prohibit whitespace and punctuation not needed/allowed in emails
-	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_' 
+	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_'
 
 	def __init__(self, username,
 				 parent=None):
@@ -280,8 +282,8 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 		if parent is not None:
 			# If we pre-set this, then the ObjectAdded event doesn't
-			# fire (the ObjectCreatedEvent does). On the other hand, we can't 
-			# add anything to friendsLists if an intid utility is installed 
+			# fire (the ObjectCreatedEvent does). On the other hand, we can't
+			# add anything to friendsLists if an intid utility is installed
 			# if we don't have a parent (and thus cannot be adapted to IKeyReference).
 			self.__parent__ = parent
 
@@ -317,13 +319,13 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		""" Our ID is a synonym for our username"""
 		return self.username
 
-	# Externalization 
+	# Externalization
 
 	def updateFromExternalObject( self, parsed, *args, **kwargs ):
 		# Notify we're about to update
 		if getattr( self, '_p_jar', None ):
 			notify(WillUpdateEntityEvent(self, parsed))
-		
+
 		# Profile info
 		profile_iface = IUserProfileSchemaProvider( self ).getSchema()
 		profile = profile_iface( self )
@@ -339,6 +341,12 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			if profile.realname and parsed.get( 'realname' ) and not profile_update:
 				parsed.pop( 'realname' )
 
+		# Clients may be sending strings; map those to modeled-content.
+		about = parsed.get( 'about' )
+		if about and isinstance( about, string_types ):
+			about = [ about, ]
+			parsed[ 'about' ] = about
+
 		# Only validate it though, if we are not saved and not forcing a profile update.
 		# Once we are saved, presumably with a
 		# valid profile, then if the profile changes and we are missing (new) fields,
@@ -346,7 +354,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		# TODO: I think this make is impossible to just change a password while the profile needs updated
 		validate = profile_update or not self._p_mtime
 		__traceback_info__ = profile_iface, profile_update, validate
-		
+
 		io = InterfaceObjectIO( profile, profile_iface, validate_after_update=validate )
 		io.updateFromExternalObject( parsed, *args, **kwargs )
 		if profile_update:
@@ -354,7 +362,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			# so we can stop providing the update interface
 			interface.noLongerProvides( self, IRequireProfileUpdate )
 
-	# Comparisons and Hashing 
+	# Comparisons and Hashing
 
 	@CachedProperty
 	def _lower_username(self):
