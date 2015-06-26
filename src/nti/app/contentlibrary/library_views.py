@@ -31,6 +31,8 @@ from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGet
 
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
+from nti.appserver.pyramid_authorization import is_readable
+
 from nti.appserver.workspaces.interfaces import IService
 
 from nti.common.maps import CaseInsensitiveDict
@@ -340,7 +342,34 @@ class LibraryPathView( GenericGetView ):
 			...
 		]
 	"""
-	def __call__(self):
+	def _get_top_level_context_for_package(self, top_level_contexts, package):
+		"""
+		Return the top_level_context containing the given package,
+		removing from the dict if found.
+		"""
+		# Assuming one-to-one-mapping between package and course.
+		for context_ntiid, context in dict( top_level_contexts ).items():
+			try:
+				packages = context.ContentPackageBundle.ContentPackages
+			except AttributeError:
+				packages = (context.legacy_content_package,)
+			for content_package in packages:
+				if package == content_package:
+					return top_level_contexts.pop( context_ntiid )
+		return None
+
+	def _get_top_level_contexts( self, container_id ):
+		"Return a dict of ntiid to top_level_context."
+		container = find_object_with_ntiid( container_id )
+		top_level_contexts = ITopLevelContainerContextProvider( container, None )
+		result = {}
+		for top_level_context in top_level_contexts:
+			ntiid = getattr( top_level_context, 'ntiid',
+						getattr( top_level_context, 'NTIID', None ))
+			result[ ntiid ] = top_level_context
+		return result
+
+	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
 		container_id = params.get( 'containerId' )
 		if 		container_id is None \
@@ -350,33 +379,45 @@ class LibraryPathView( GenericGetView ):
 		library = component.queryUtility( IContentPackageLibrary )
 		if library is None:
 			raise hexc.HTTPUnprocessableEntity( "No library available." )
+		return container_id, library
 
-		container = find_object_with_ntiid( container_id )
-		top_level_contexts = ITopLevelContainerContextProvider( container, None )
+	def __call__(self):
 		result = LocatedExternalList()
+		container_id, library = self._get_params()
+		top_level_contexts = self._get_top_level_contexts( container_id )
 
-		if top_level_contexts:
-			# Assuming one top level container for now.
-			top_level_context = tuple( top_level_contexts )[0]
-			context_path = [ top_level_context ]
-		else:
+		# Do we need our own general algorithm that looks at children and embedded?
+		path_lists = library.pathsToEmbeddedNTIID( container_id )
+		for path_list in path_lists or ():
+			if not path_list:
+				continue
+			package = path_list[0]
+			units = path_list[1:]
+			top_level_context = self._get_top_level_context_for_package(
+														top_level_contexts,
+														package )
 			context_path = []
+			if top_level_context is not None:
+				# Bail if our top-level context is not readable.
+				if not is_readable( top_level_context ):
+					continue
+				context_path.append( top_level_context )
 
-		result.append( context_path )
+			if is_readable( package ):
+				context_path.append( package )
 
-		# TODO Do we need our own general algorithm that
-		# looks at children and embedded?
-		units = library.pathsToEmbeddedNTIID( container_id )
-		if units:
-			# FIXME List of list
-			units = units[0]
-			package = units[0]
-			context_path.append( package )
-			units = units[1:]
-			for unit in units:
-				# For content units, we need to externalize as pageinfos.
-				# TODO Do we want to do capture 403s from this?
-				unit_res = find_page_info_view_helper( self.request, unit )
-				context_path.append( unit_res.json_body )
+				try:
+					for unit in units:
+						# For content units, we need to externalize as pageinfos.
+						unit_res = find_page_info_view_helper( self.request, unit )
+						context_path.append( unit_res.json_body )
+				except hexc.HTTPForbidden:
+					# No permission, just allow the top-level object through.
+					context_path = context_path[:1]
 
+			if context_path:
+				result.append( context_path )
+		# Is it possible to have top-level-contexts that are not in our results?
+		# That would mean we do not have packages from our library for those
+		# top-level objects.
 		return result
