@@ -112,7 +112,7 @@ class TestUserProfile(DataserverLayerTest):
 
 		prof = interfaces.ICompleteUserProfile(user)
 
-		for field in ('about', 'affiliation', 'role', 'location', 'description'):
+		for field in ('affiliation', 'role', 'location', 'description'):
 			with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
 				setattr(prof, field, '   ')  # spaces
 			with assert_raises(interfaces.FieldCannotBeOnlyWhitespace):
