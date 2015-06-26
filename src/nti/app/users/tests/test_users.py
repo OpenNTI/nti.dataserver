@@ -23,7 +23,6 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IRecreatableUser
-from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -103,8 +102,7 @@ class TestUsers(ApplicationLayerTest):
 			aizen = self._create_user("aizen", "temp001")
 			aizen.record_dynamic_membership(c)
 			
-			hidden = IHiddenMembership(c)
-			hidden.hide(aizen)
+			self._create_user("rukia", "temp001")
 
 		path = '/dataserver2/users/%s/memberships' % self.default_username
 		res = self.testapp.get(path, status=200)
@@ -123,6 +121,6 @@ class TestUsers(ApplicationLayerTest):
 		
 		path = '/dataserver2/users/aizen/memberships'
 		res = self.testapp.get(path, 
-					  	 	   extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 	   extra_environ=self._make_extra_environ(user="rukia"),
 					  	 	   status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(0)))

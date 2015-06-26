@@ -20,8 +20,6 @@ from pyramid import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
-from nti.dataserver import authorization as nauth
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -95,8 +93,7 @@ def background_view(context, request):
 @view_config(route_name='objects.generic.traversal',
 			 name='memberships',
 			 request_method='GET',
-			 context=IUser,
-			 permission=nauth.ACT_READ)
+			 context=IUser)
 class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	_DEFAULT_BATCH_SIZE = 50
@@ -109,6 +106,9 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		self.batch_before = None
 		
 	def __call__(self):
+		if self.remoteUser is None:
+			raise hexc.HTTPForbidden()
+			
 		self._batch_params()
 		context = self.request.context
 		log_msg = "User %s is no longer a member of %s. Ignoring for externalization"
