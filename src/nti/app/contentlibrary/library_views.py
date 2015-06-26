@@ -29,7 +29,11 @@ from nti.app.renderers.caching import AbstractReliableLastModifiedCacheControlle
 
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
+from nti.appserver.interfaces import ITopLevelContainerContextProvider
+
 from nti.appserver.workspaces.interfaces import IService
+
+from nti.common.maps import CaseInsensitiveDict
 
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
@@ -38,20 +42,27 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IDataserverFolder
+
+from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.externalization import toExternalObject
 
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.ntiids import ROOT
+from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
+
+from . import LIBRARY_CONTAINER_PATH_GET_VIEW
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
 
 def _encode(s):
 	return s.encode('utf-8') if isinstance(s, unicode) else s
-	
+
 def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 	"""
 	Helper function to resolve a NTIID to PageInfo.
@@ -67,7 +78,7 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 		content_unit = find_object_with_ntiid(page_ntiid_or_content_unit)
 	else:
 		content_unit = page_ntiid_or_content_unit
-		
+
 	while content_unit and '#' in getattr( content_unit, 'href', '' ):
 		content_unit = getattr( content_unit, '__parent__', None )
 
@@ -79,12 +90,12 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 
 	# Rather than redirecting to the canonical URL for the page, request it
 	# directly. This saves a round trip, and is more compatible with broken clients that
-	# don't follow redirects parts of the request should be native strings, 
+	# don't follow redirects parts of the request should be native strings,
 	# which under py2 are bytes. Also make sure we pass any params to subrequest
 	path = b'/dataserver2/Objects/' + _encode(page_ntiid)
 	if request.query_string:
 		path += '?' + _encode(request.query_string)
-		
+
 	# set subrequest
 	subrequest = request.blank( path )
 	subrequest.method = b'GET'
@@ -97,7 +108,7 @@ def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
 			if k not in subrequest.environ:
 				subrequest.environ[k] = request.environ[k]
 	subrequest.accept = PAGE_INFO_MT_JSON
-	
+
 	# invoke
 	result = request.invoke_subrequest(subrequest)
 	return result
@@ -118,7 +129,7 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	user_workspace = user_service.user_workspace
 	pages_collection = user_workspace.pages_collection
 	info = pages_collection.make_info_for( ntiid )
-	
+
 	# set extra links
 	if href:
 		info.extra_links = (Link( href, rel='content' ),) # TODO: The rel?
@@ -189,7 +200,7 @@ class _LibraryTOCRedirectClassView(object):
 	link_mt = nti_mimetype_with_class( 'link' )
 	link_mt_json = link_mt + '+json'
 	link_mts = (link_mt, link_mt_json)
-	
+
 	json_mt = 'application/json'
 	page_info_mt = PAGE_INFO_MT
 	page_info_mt_json = PAGE_INFO_MT_JSON
@@ -220,11 +231,11 @@ class _LibraryTOCRedirectClassView(object):
 		request = self.request
 		href = request.context.href
 		jsonp_href = None
-		
+
 		# Right now, the ILibraryTOCEntries always have relative hrefs,
 		# which may or may not include a leading /.
 		assert not href.startswith( '/' ) or '://' not in href # Is it a relative path?
-		
+
 		# FIXME: We're assuming these map into the URL space
 		# based in their root name. Is that valid? Do we need another mapping layer?
 		href = IContentUnitHrefMapper(request.context).href or href
@@ -246,14 +257,14 @@ class _LibraryTOCRedirectClassView(object):
 		if accept_type in self.page_mts:
 			# Send back our canonical location, just in case we got here via
 			# something like the _ContentUnitPreferencesPutView. This assists the cache
-			# to know what to invalidate. 
+			# to know what to invalidate.
 			# (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
 			request.response.content_location = \
 					UQ( ('/dataserver2/Objects/' + request.context.ntiid).encode( 'utf-8' ) )
-					
+
 			return _create_page_info(request,
-									 href, 
-									 request.context.ntiid, 
+									 href,
+									 request.context.ntiid,
 									 last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
@@ -314,3 +325,51 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	@property
 	def _context_specific(self):
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
+
+@view_config(context=IDataserverFolder,
+			 name=LIBRARY_CONTAINER_PATH_GET_VIEW )
+class LibraryPathView( GenericGetView ):
+	"""
+	Return an ordered list of the library path to an object.
+	Typically, we expect this to be called with the containerId
+	of a UGD item.
+	"""
+
+	def __call__(self):
+		params = CaseInsensitiveDict(self.request.params)
+		container_id = params.get( 'containerId' )
+		if 		container_id is None \
+			or not is_valid_ntiid_string( container_id ):
+			raise hexc.HTTPUnprocessableEntity( "Invalid containerId." )
+
+		library = component.queryUtility( IContentPackageLibrary )
+		if library is None:
+			raise hexc.HTTPUnprocessableEntity( "No library available." )
+
+		container = find_object_with_ntiid( container_id )
+		top_level_contexts = ITopLevelContainerContextProvider( container, None )
+		result = LocatedExternalList()
+
+		if top_level_contexts:
+			# Assuming one top level container for now.
+			top_level_context = tuple( top_level_contexts )[0]
+			context_path = [ toExternalObject( top_level_context ) ]
+		else:
+			context_path = []
+
+		result.append( context_path )
+
+		# TODO Do we need our own general algorithm that
+		# looks at children and embedded?
+		units = library.pathsToEmbeddedNTIID( container_id )
+		if units:
+			# FIXME List of list
+			units = units[0]
+			package = units[0]
+			context_path.append( toExternalObject( package ))
+			units = units[1:]
+			for unit in units:
+				unit_res = find_page_info_view_helper( self.request, unit )
+				context_path.append( unit_res.json_body )
+
+		return result
