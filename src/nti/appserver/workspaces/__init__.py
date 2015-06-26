@@ -81,8 +81,8 @@ class _ContainerWrapper(object):
 	An object wrapping a container. Location aware.
 
 	If the container is location aware, we will default to using its
-	parent and its name. If the container happens to be a 
-	:class:`INamedContainer` we will use that name as a 
+	parent and its name. If the container happens to be a
+	:class:`INamedContainer` we will use that name as a
 	last resort. This can be overridden.
 	"""
 
@@ -111,7 +111,7 @@ def _collections( self, containers ):
 		# the site manager hooks are properly installed at runtime.
 		# See the test package for info.
 		adapt = ICollection(x,None) or component.queryAdapter( x, ICollection )
-		if not adapt: 
+		if not adapt:
 			continue
 		adapt.__parent__ = self # Right?
 		yield adapt
@@ -189,7 +189,7 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 
 		dfl_memberships = []
 		entity_dynamic_memberships =  \
-				entity.xxx_hack_filter_non_memberships( 
+				entity.xxx_hack_filter_non_memberships(
 						entity.dynamic_memberships,
 						log_msg="Relationship trouble: User %s is no longer a member of %s. Ignoring for FL container",
 						the_logger=logger )
@@ -327,7 +327,8 @@ class GlobalWorkspace(object):
 	@property
 	def collections(self):
 		return [GlobalCollection(self.__parent__, 'Objects'),
-				GlobalCollection(self.__parent__, 'NTIIDs' )]
+				GlobalCollection(self.__parent__, 'NTIIDs' ),
+				GlobalCollection(self.__parent__, 'PathToContainerId')]
 
 @interface.implementer(ICollection)
 class GlobalCollection(object):
@@ -444,8 +445,8 @@ class _NTIIDEntry(object):
 		return result
 
 	def __repr__( self ):
-		return "<%s.%s %s at %s>" % ( type(self).__module__, 
-									  type(self).__name__, 
+		return "<%s.%s %s at %s>" % ( type(self).__module__,
+									  type(self).__name__,
 									  self.ntiid, hex(id(self)) )
 
 class _RootNTIIDEntry(_NTIIDEntry):
