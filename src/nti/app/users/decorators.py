@@ -50,7 +50,7 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 	def _predicate(self, context, result):
 		profile = IUserProfile(context, None)
 		result = bool(self._is_authenticated and \
-					  self.remoteUser==context and \
+					  self.remoteUser == context and \
 					  profile is not None and \
 					  not profile.email_verified)
 		return result
@@ -65,6 +65,19 @@ class _UserEmailVerificationLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 		ds2 = find_interface(context, IDataserverFolder)
 		link = Link(ds2, rel="VerifyEmailWithToken", method='POST',
 					elements=('@@' + VERIFY_USER_EMAIL_WITH_TOKEN_VIEW,))
+		_links.append(link)
+
+@component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
+class _UserMembershipsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _predicate(self, context, result):
+		result = self._is_authenticated
+		return result
+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel="memberships", elements=('memberships',))
 		_links.append(link)
 
 @component.adapter(ICommunity)

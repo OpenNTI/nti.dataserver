@@ -17,13 +17,26 @@ import time
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import BatchingUtilsMixin
+
+from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IUser 
 from nti.dataserver.interfaces import IEntity
+
+from nti.dataserver.users.interfaces import IHiddenMembership
 
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
 
+from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.interfaces import StandardExternalFields
+
 from nti.links.externalization import render_link
+
+ITEMS = StandardExternalFields.ITEMS
 
 def _tx_string(s):
 	if s is not None and isinstance(s, unicode):
@@ -76,3 +89,44 @@ def avatar_view(context, request):
 def background_view(context, request):
 	result = _image_view(context, request, _background_url)
 	return result
+
+@view_config(route_name='objects.generic.traversal',
+			 name='memberships',
+			 request_method='GET',
+			 context=IUser,
+			 permission=nauth.ACT_READ)
+class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+
+	_DEFAULT_BATCH_SIZE = 50
+	_DEFAULT_BATCH_START = 0
+	
+	def _batch_params(self):
+		self.batch_size, self.batch_start = self._get_batch_size_start()
+		self.limit = self.batch_start + self.batch_size + 2
+		self.batch_after = None
+		self.batch_before = None
+		
+	def __call__(self):
+		self._batch_params()
+		context = self.request.context
+		log_msg = "User %s is no longer a member of %s. Ignoring for externalization"
+		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships,
+															  log_msg=log_msg,
+															  the_logger=logger)
+		def _selector(x):
+			result = None
+			if context == self.remoteUser:
+				result = toExternalObject(x)
+			else:
+				hidden = IHiddenMembership(x, None) or ()
+				if context not in hidden:
+					result = toExternalObject(x)
+			return result
+			
+		result = LocatedExternalDict()
+		self._batch_items_iterable(result, memberships,
+								   number_items_needed=self.limit,
+								   batch_size=self.batch_size,
+								   batch_start=self.batch_start,
+								   selector=_selector)
+		return result
