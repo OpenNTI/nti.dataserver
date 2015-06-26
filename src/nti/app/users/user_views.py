@@ -22,8 +22,10 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IUser 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
 
@@ -118,16 +120,17 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		
 		everyone = Entity.get_entity(u'Everyone')
 		def _selector(x):
-			if x == everyone:
+			result = None
+			if x == everyone: # always 
 				result = None
 			elif context == self.remoteUser:
 				result = toExternalObject(x)
-			else:
+			elif ICommunity.providedBy(x) and x.public:
 				hidden = IHiddenMembership(x, None) or ()
 				if context not in hidden:
 					result = toExternalObject(x)
-				else:
-					result = None
+			elif IDynamicSharingTargetFriendsList.providedBy(x) and context in x:
+				result = toExternalObject(x)
 			return result
 			
 		result = LocatedExternalDict()
