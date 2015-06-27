@@ -29,6 +29,7 @@ from nti.dataserver.users import Entity
 
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
+from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
@@ -123,7 +124,9 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 				result = None
 			elif context == self.remoteUser:
 				result = toExternalObject(x)
-			elif ICommunity.providedBy(x) and (x.public or self.remoteUser in x):
+			elif ICommunity.providedBy(x) and \
+				 not IDisallowMembershipOperations.providedBy(x) and \
+				 (x.public or self.remoteUser in x):
 				result = toExternalObject(x)
 			elif IDynamicSharingTargetFriendsList.providedBy(x) and self.remoteUser in x:
 				result = toExternalObject(x)
