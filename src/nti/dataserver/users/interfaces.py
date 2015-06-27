@@ -711,6 +711,11 @@ class IDisallowHiddenMembership(interface.Interface):
 	marker interface to disallow hidden memberships
 	"""
 
+class IDisallowMembershipOperations(IDisallowMembersLink,
+									IDisallowActivityLink,
+									IDisallowHiddenMembership):
+	pass
+
 class IHiddenMembership(interface.Interface):
 
 	def hide(entity):
