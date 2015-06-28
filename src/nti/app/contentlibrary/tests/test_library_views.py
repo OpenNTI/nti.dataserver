@@ -116,7 +116,7 @@ class TestLibraryPathview( ApplicationLayerTest ):
 		container_id = 'tag:nextthought.com,2011-10:NTI-NTIVideo-CourseTestContent.ntivideo.video1'
 		package_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.course_test_content'
 		lesson_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
-		path = '/dataserver2/%s?CONTAINERID=%s' % ( LIBRARY_CONTAINER_PATH_GET_VIEW, container_id )
+		path = '/dataserver2/%s?OBJECTID=%s' % ( LIBRARY_CONTAINER_PATH_GET_VIEW, container_id )
 		res = self.testapp.get( path )
 		res = res.json_body
 		# List of lists of library paths
