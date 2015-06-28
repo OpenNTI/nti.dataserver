@@ -7,6 +7,7 @@ Views for exposing the content library to clients.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from __builtin__ import True
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -36,6 +37,8 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IService
 
 from nti.common.maps import CaseInsensitiveDict
+
+from nti.contentlibrary.indexed_data import get_catalog
 
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
@@ -342,82 +345,95 @@ class LibraryPathView( GenericGetView ):
 			...
 		]
 	"""
-	def _get_top_level_context_for_package(self, top_level_contexts, package):
-		"""
-		Return the top_level_context containing the given package,
-		removing from the dict if found.
-		"""
-		# Assuming one-to-one-mapping between package and course.
-		for context_ntiid, context in dict( top_level_contexts ).items():
-			try:
-				packages = context.ContentPackageBundle.ContentPackages
-			except AttributeError:
-				packages = (context.legacy_content_package,)
-			for content_package in packages:
-				if package == content_package:
-					return top_level_contexts.pop( context_ntiid )
-		return None
-
-	def _get_top_level_contexts( self, container_id ):
+	def _get_top_level_contexts( self, obj ):
 		"Return a dict of ntiid to top_level_context."
-		container = find_object_with_ntiid( container_id )
-		top_level_contexts = ITopLevelContainerContextProvider( container, None )
-		result = {}
-		for top_level_context in top_level_contexts:
-			ntiid = getattr( top_level_context, 'ntiid',
-						getattr( top_level_context, 'NTIID', None ))
-			result[ ntiid ] = top_level_context
-		return result
+		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
+		return top_level_contexts
+
+	def _get_path_for_package(self, package, target_ntiid):
+		"""
+		"""
+		def recur( unit ):
+			item_ntiid = getattr( unit, 'ntiid', None )
+			if item_ntiid == target_ntiid:
+				return [ unit ]
+			if target_ntiid in unit.embeddedContainerNTIIDs:
+				item = find_object_with_ntiid( target_ntiid )
+				return [ item, unit ]
+			for child in unit.children:
+				result = recur( child )
+				if result:
+					result.append( unit )
+					return result
+
+		results = recur( package )
+		if results:
+			results.reverse()
+		return results
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
-		container_id = params.get( 'containerId' )
-		if 		container_id is None \
-			or not is_valid_ntiid_string( container_id ):
-			raise hexc.HTTPUnprocessableEntity( "Invalid containerId." )
+		obj_ntiid = params.get( 'ObjectId' )
+		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
+			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
 
-		library = component.queryUtility( IContentPackageLibrary )
-		if library is None:
-			raise hexc.HTTPUnprocessableEntity( "No library available." )
-		return container_id, library
+		obj = find_object_with_ntiid( obj_ntiid )
+		if obj is None:
+			raise hexc.HTTPNotFound()
+		return obj
 
 	def __call__(self):
 		result = LocatedExternalList()
-		container_id, library = self._get_params()
-		top_level_contexts = self._get_top_level_contexts( container_id )
+		obj = self._get_params()
+		# TODO We should make this work for multiple types.
+		# TODO For instructors; that may not be true.  Do we get every
+		# top context for a given container id?  Probably not, the
+		# underlying adapter probably only picks one.  We probably
+		# need an adapter that returns *every* possibility.
+		# -- Or, we only care about either:
+		#	1) A specific context (IContainerContext)
+		#	2) Any possible context, which would be the first returned
+		# 		by our underlying adapter.
+		top_level_contexts = self._get_top_level_contexts( obj )
+		container_id = obj.containerId
 
-		# Do we need our own general algorithm that looks at children and embedded?
-		path_lists = library.pathsToEmbeddedNTIID( container_id )
-		for path_list in path_lists or ():
-			if not path_list:
+		catalog = get_catalog()
+		if catalog is None:
+			return
+		# TODO We have some readings that do not exist in our catalog.
+		# We need to fetch containers of content units.
+		for top_level_context in top_level_contexts:
+			# Bail if our top-level context is not readable.
+			if not is_readable( top_level_context ):
 				continue
-			package = path_list[0]
-			units = path_list[1:]
-			top_level_context = self._get_top_level_context_for_package(
-														top_level_contexts,
-														package )
-			context_path = []
-			if top_level_context is not None:
-				# Bail if our top-level context is not readable.
-				if not is_readable( top_level_context ):
-					continue
-				context_path.append( top_level_context )
+			try:
+				packages = top_level_context.ContentPackageBundle.ContentPackages
+			except AttributeError:
+				packages = (top_level_context.legacy_content_package,)
+			for package in packages:
+				path_list = self._get_path_for_package( package, container_id )
+				if path_list:
+					# We have a hit
+					result_list = [ top_level_context ]
+					if is_readable( package ):
+						result_list.append( package )
 
-			if is_readable( package ):
-				context_path.append( package )
+						try:
+							for unit in path_list:
+								# For content units, we need to externalize as pageinfos.
+								try:
+									unit_res = find_page_info_view_helper( self.request, unit )
+									result_list.append( unit_res.json_body )
+								except hexc.HTTPMethodNotAllowed:
+									# Underlying content object, append as-is
+									result_list.append( unit )
+						except hexc.HTTPForbidden:
+							# No permission, just allow the top-level object through.
+							pass
+					result.append( result_list )
 
-				try:
-					for unit in units:
-						# For content units, we need to externalize as pageinfos.
-						unit_res = find_page_info_view_helper( self.request, unit )
-						context_path.append( unit_res.json_body )
-				except hexc.HTTPForbidden:
-					# No permission, just allow the top-level object through.
-					context_path = context_path[:1]
-
-			if context_path:
-				result.append( context_path )
-		# Is it possible to have top-level-contexts that are not in our results?
-		# That would mean we do not have packages from our library for those
-		# top-level objects.
+		# TODO If we have nothing yet, it could mean our object
+		# is in legacy content. So we have to look through the library.
+		if not result:
+			raise hexc.HTTPNotFound()
 		return result
