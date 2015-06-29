@@ -7,7 +7,6 @@ Views for exposing the content library to clients.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from __builtin__ import True
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -37,8 +36,6 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.workspaces.interfaces import IService
 
 from nti.common.maps import CaseInsensitiveDict
-
-from nti.contentlibrary.indexed_data import get_catalog
 
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
@@ -371,6 +368,38 @@ class LibraryPathView( GenericGetView ):
 			results.reverse()
 		return results
 
+	def _externalize_children( self, units ):
+		# For content units, we need to externalize as pageinfos.
+		results = []
+		try:
+			for unit in units:
+				try:
+					unit_res = find_page_info_view_helper( self.request, unit )
+					results.append( unit_res.json_body )
+				except hexc.HTTPMethodNotAllowed:
+					# Underlying content object, append as-is
+					results.append( unit )
+		except hexc.HTTPForbidden:
+			# No permission
+			pass
+		return results
+
+	def _get_legacy_path_to_id( self, container_id ):
+		# In the worst case, we may have to go through the
+		# library twice, looking for children and then
+		# embedded. With caching, this may not be too horrible.
+		library = component.queryUtility( IContentPackageLibrary )
+		result = None
+		if library:
+			# This should hit most UGD on lessons.
+			result = library.pathToNTIID( container_id )
+			if not result:
+				# Well, now we try embedded, and the first
+				# of the results.
+				result = library.pathsToEmbeddedNTIID()
+				result = result[0] if result else result
+		return result
+
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
 		obj_ntiid = params.get( 'ObjectId' )
@@ -396,10 +425,6 @@ class LibraryPathView( GenericGetView ):
 		# 		by our underlying adapter.
 		top_level_contexts = self._get_top_level_contexts( obj )
 		container_id = obj.containerId
-
-		catalog = get_catalog()
-		if catalog is None:
-			return
 		# TODO We have some readings that do not exist in our catalog.
 		# We need to fetch containers of content units.
 		for top_level_context in top_level_contexts:
@@ -417,23 +442,34 @@ class LibraryPathView( GenericGetView ):
 					result_list = [ top_level_context ]
 					if is_readable( package ):
 						result_list.append( package )
-
-						try:
-							for unit in path_list:
-								# For content units, we need to externalize as pageinfos.
-								try:
-									unit_res = find_page_info_view_helper( self.request, unit )
-									result_list.append( unit_res.json_body )
-								except hexc.HTTPMethodNotAllowed:
-									# Underlying content object, append as-is
-									result_list.append( unit )
-						except hexc.HTTPForbidden:
-							# No permission, just allow the top-level object through.
-							pass
+						path_list = self._externalize_children( path_list )
+						result_list.extend( path_list )
 					result.append( result_list )
 
-		# TODO If we have nothing yet, it could mean our object
+		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
+		if not result and not top_level_contexts:
+			legacy_path = self._get_legacy_path_to_id( container_id )
+			if legacy_path:
+				package = legacy_path[0]
+
+				top_level_context = self._get_top_level_contexts( package )
+				for top_level_context in top_level_contexts:
+					# Bail if our top-level context is not readable.
+					if not is_readable( top_level_context ):
+						continue
+					# We have a hit
+					# Take the first we find
+					result_list = [ top_level_context ]
+					if is_readable( package ):
+						result_list.append( package )
+						if len( legacy_path ) > 1:
+							path_list = legacy_path[1:]
+							path_list = self._externalize_children( path_list )
+							result_list.extend( path_list )
+					result.append( result_list )
+					break
+
 		if not result:
 			raise hexc.HTTPNotFound()
 		return result
