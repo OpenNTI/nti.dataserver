@@ -344,7 +344,7 @@ class LibraryPathView( GenericGetView ):
 	"""
 	def _get_top_level_contexts( self, obj ):
 		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
-		return top_level_contexts
+		return top_level_contexts or ()
 
 	def _get_path_for_package(self, package, target_ntiid):
 		"""
