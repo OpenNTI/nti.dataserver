@@ -561,11 +561,16 @@ zope.deferredimport.deprecatedFrom(
 	"nti.app.notabledata.interfaces",
 	"IUserPresentationPriorityCreators")
 
-class IJoinableContextProvider(interface.Interface):
+class IJoinableContextProvider(IIterable):
 	"""
 	An adapter interface that returns objects that a user
 	may join in order to access the adapted object.
 	"""
+
+	def __len__():
+		"""
+		Return the number of items.
+		"""
 
 class ITopLevelContainerContextProvider(IIterable):
 	"""
