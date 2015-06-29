@@ -343,12 +343,12 @@ class LibraryPathView( GenericGetView ):
 		]
 	"""
 	def _get_top_level_contexts( self, obj ):
-		"Return a dict of ntiid to top_level_context."
 		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
 		return top_level_contexts
 
 	def _get_path_for_package(self, package, target_ntiid):
 		"""
+		For a given package, return the path to the target ntiid.
 		"""
 		def recur( unit ):
 			item_ntiid = getattr( unit, 'ntiid', None )
@@ -394,11 +394,38 @@ class LibraryPathView( GenericGetView ):
 			# This should hit most UGD on lessons.
 			result = library.pathToNTIID( container_id )
 			if not result:
-				# Well, now we try embedded, and the first
+				# Now we try embedded, and the first
 				# of the results.
 				result = library.pathsToEmbeddedNTIID()
 				result = result[0] if result else result
 		return result
+
+	def _get_legacy_results( self, container_id, result ):
+		"""
+		We need to iterate through the library, and some paths
+		only return the first available result. So we make
+		sure we only return a single result for now.
+		"""
+		legacy_path = self._get_legacy_path_to_id( container_id )
+		if legacy_path:
+			package = legacy_path[0]
+
+			top_level_contexts = self._get_top_level_contexts( package )
+			for top_level_context in top_level_contexts:
+				# Bail if our top-level context is not readable.
+				if not is_readable( top_level_context ):
+					continue
+				# We have a hit
+				# Take the first we find
+				result_list = [ top_level_context ]
+				if is_readable( package ):
+					result_list.append( package )
+					if len( legacy_path ) > 1:
+						path_list = legacy_path[1:]
+						path_list = self._externalize_children( path_list )
+						result_list.extend( path_list )
+				result.append( result_list )
+				break
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
@@ -414,19 +441,12 @@ class LibraryPathView( GenericGetView ):
 	def __call__(self):
 		result = LocatedExternalList()
 		obj = self._get_params()
-		# TODO We should make this work for multiple types.
-		# TODO For instructors; that may not be true.  Do we get every
-		# top context for a given container id?  Probably not, the
-		# underlying adapter probably only picks one.  We probably
-		# need an adapter that returns *every* possibility.
-		# -- Or, we only care about either:
-		#	1) A specific context (IContainerContext)
-		#	2) Any possible context, which would be the first returned
-		# 		by our underlying adapter.
+		# TODO We could make this work for multiple types.
+		# TODO Can we get outline node?
 		top_level_contexts = self._get_top_level_contexts( obj )
 		container_id = obj.containerId
-		# TODO We have some readings that do not exist in our catalog.
-		# We need to fetch containers of content units.
+		# We have some readings that do not exist in our catalog.
+		# We need content units to be indexed.
 		for top_level_context in top_level_contexts:
 			# Bail if our top-level context is not readable.
 			if not is_readable( top_level_context ):
@@ -449,27 +469,5 @@ class LibraryPathView( GenericGetView ):
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
 		if not result and not top_level_contexts:
-			legacy_path = self._get_legacy_path_to_id( container_id )
-			if legacy_path:
-				package = legacy_path[0]
-
-				top_level_context = self._get_top_level_contexts( package )
-				for top_level_context in top_level_contexts:
-					# Bail if our top-level context is not readable.
-					if not is_readable( top_level_context ):
-						continue
-					# We have a hit
-					# Take the first we find
-					result_list = [ top_level_context ]
-					if is_readable( package ):
-						result_list.append( package )
-						if len( legacy_path ) > 1:
-							path_list = legacy_path[1:]
-							path_list = self._externalize_children( path_list )
-							result_list.extend( path_list )
-					result.append( result_list )
-					break
-
-		if not result:
-			raise hexc.HTTPNotFound()
+			self._get_legacy_results( container_id, result )
 		return result
