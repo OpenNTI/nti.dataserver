@@ -21,15 +21,36 @@ try:
 except ImportError:
 	KNOWN_LEGACY_COURSES_BY_SITE = {}
 
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IOIDResolver
+
 from nti.dataserver.users import Community
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
+
+@interface.implementer(IDataserver)
+class MockDataserver(object):
+
+	root = None
+
+	def get_by_oid(self, oid, ignore_creator=False):
+		resolver = component.queryUtility(IOIDResolver)
+		if resolver is None:
+			logger.warn("Using dataserver without a proper ISiteManager configuration.")
+		else:
+			return resolver.get_object_by_oid(oid, ignore_creator=ignore_creator)
+		return None
 
 def do_evolve(context):
 	setHooks()
 	conn = context.connection
 	root = conn.root()
 	dataserver_folder = root['nti.dataserver']
-
+	
+	mock_ds = MockDataserver()
+	mock_ds.root = dataserver_folder
+	component.provideUtility(mock_ds, IDataserver)
+	
 	with site(dataserver_folder):
 		assert	component.getSiteManager() == dataserver_folder.getSiteManager(), \
 				"Hooks not installed?"
@@ -37,7 +58,7 @@ def do_evolve(context):
 		for site_courses in KNOWN_LEGACY_COURSES_BY_SITE.values():
 
 			for value in site_courses or ():
-				if len(value) < 4:
+				if len(value) <= 2:
 					continue
 				
 				scopes = value[2]
@@ -45,7 +66,7 @@ def do_evolve(context):
 					if not name:
 						continue
 					community = Community.get_community(name)
-					if community is not None:
+					if community is not None and ICommunity.providedBy(community):
 						interface.alsoProvides(community, IDisallowMembershipOperations)
 					
 	logger.info('Dataserver evolution %s done.', generation)
