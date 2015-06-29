@@ -396,7 +396,7 @@ class LibraryPathView( GenericGetView ):
 			if not result:
 				# Now we try embedded, and the first
 				# of the results.
-				result = library.pathsToEmbeddedNTIID()
+				result = library.pathsToEmbeddedNTIID( container_id )
 				result = result[0] if result else result
 		return result
 
