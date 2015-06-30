@@ -406,6 +406,12 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		hiearchy_contexts = IHierarchicalContextProvider( obj, None )
 		return hiearchy_contexts or ()
 
+	def _get_hierarchy_context_for_context( self, obj, top_level_context ):
+		hierarchy_contexts = component.queryMultiAdapter(
+										( top_level_context, obj ),
+										IHierarchicalContextProvider )
+		return hierarchy_contexts or ()
+
 	def _get_path_for_package(self, package, target_ntiid):
 		"""
 		For a given package, return the path to the target ntiid.
@@ -460,7 +466,12 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 				result = result[0] if result else result
 		return result
 
-	def _get_legacy_results( self, container_id, result ):
+	def _filter_hierarchy(self, hiearchy_nodes):
+		# TODO Implement
+		results = hiearchy_nodes
+		return results
+
+	def _get_legacy_results( self, obj, container_id, result ):
 		"""
 		We need to iterate through the library, and some paths
 		only return the first available result. So we make
@@ -472,14 +483,18 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 
 			top_level_contexts = self._get_top_level_contexts( package )
 			for top_level_context in top_level_contexts:
+
 				# Bail if our top-level context is not readable.
 				if not is_readable( top_level_context ):
 					continue
-				# We have a hit
-				# Take the first we find
+				# We have a hit.
 				result_list = [ top_level_context ]
 				if is_readable( package ):
-					result_list.append( package )
+
+					hierarchy_context = self._get_hierarchy_context_for_context(
+														obj, top_level_context )
+					hiearchy_nodes = self._filter_hierarchy( hierarchy_context[1:] )
+					result_list.extend( hiearchy_nodes )
 					if len( legacy_path ) > 1:
 						path_list = legacy_path[1:]
 						path_list = self._externalize_children( path_list )
@@ -494,9 +509,9 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		container_id = obj.containerId
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
-		for hiearchy_context in hierarchy_contexts:
+		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable.
-			top_level_context = hiearchy_context[0]
+			top_level_context = hierarchy_context[0]
 			if not is_readable( top_level_context ):
 				continue
 			try:
@@ -510,9 +525,8 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 					result_list = [ top_level_context ]
 					if is_readable( package ):
 						# TODO permissions on nodes?
-						# TODO Filtering
-						result_list.extend( hiearchy_context[1:] )
-						result_list.append( package )
+						hiearchy_nodes = self._filter_hierarchy( hierarchy_context[1:] )
+						result_list.extend( hiearchy_nodes )
 						path_list = self._externalize_children( path_list )
 						result_list.extend( path_list )
 					result.append( result_list )
@@ -520,7 +534,8 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
-			self._get_legacy_results( container_id, result )
+			logger.info( 'Iterating through library for library path.' )
+			self._get_legacy_results( obj, container_id, result )
 		return result
 
 # TODO
