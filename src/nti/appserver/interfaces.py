@@ -256,7 +256,7 @@ class IUserLogonEvent(IUserEvent):
 	"""
 	# Very surprised not to find an analogue of this event in zope.*
 	# or pyramid, so we roll our own.
-	# TODO: Might want to build this on a lower-level 
+	# TODO: Might want to build this on a lower-level
 	# event holding the principal, this level adding the request
 
 	request = schema.Object(IRequest,
@@ -325,7 +325,7 @@ class UserUpgradedEvent(_UserEventWithRequest):
 	upgraded_interface = None
 	upgraded_profile = None
 
-	def __init__(self, user, restricted_interface=None, restricted_profile=None, 
+	def __init__(self, user, restricted_interface=None, restricted_profile=None,
 				 upgraded_interface=None, upgraded_profile=None, request=None):
 		super(UserUpgradedEvent, self).__init__(user, request=request)
 		for k in UserUpgradedEvent.__dict__:
@@ -577,7 +577,18 @@ class ITopLevelContainerContextProvider(IIterable):
 	An adapter interface that returns the top-level
 	container object(s) of the adapted object.
 	"""
-	
+
+	def __len__():
+		"""
+		Return the number of items.
+		"""
+
+class IHierarchicalContextProvider(IIterable):
+	"""
+	An adapter interface that returns the hierarchical
+	path to the adapted object.
+	"""
+
 	def __len__():
 		"""
 		Return the number of items.
