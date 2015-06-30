@@ -246,18 +246,24 @@ class UGDPutView(AbstractAuthenticatedView,
 		# more specific. Also, we could check and refuse to execute if there is a
 		# subpath, view names, or query params, that was unconsumed.
 		# Now experementing with using dataserver's IModeledContent which is actually correct)
-		containerId = theObject.containerId
-
+		containerId = getattr(theObject, 'containerId', None)
+		objectId = getattr(theObject, 'id', None) or str(theObject)
+		
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified
 
-		# TS thinks this log message should be info not debug.  It exists to provide
-		# statistics not to debug.
-		logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator,
-					theObject.id,
-					getattr(theObject, '__class__', type(theObject)).__name__,
-					containerId)
-
+		if containerId:
+			# TS thinks this log message should be info not debug.  It exists to provide
+			# statistics not to debug.
+			logger.info("User '%s' updated object '%s'/'%s' for container '%s'", creator,
+						objectId,
+						getattr(theObject, '__class__', type(theObject)).__name__,
+						containerId)
+		else:
+			logger.info("User '%s' updated object '%s'/'%s'", creator,
+						objectId,
+						getattr(theObject, '__class__', type(theObject)).__name__)
+			
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by
 			# the user himself. We never want to send

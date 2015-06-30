@@ -204,7 +204,7 @@ class UserExternalFieldTraverser(_AbstractExternalFieldTraverser):
 @interface.implementer(IExternalFieldTraversable)
 class CommunityExternalFieldTraverser(_AbstractExternalFieldTraverser):
 
-	_unwrapped_fields = ('password',)
+	_unwrapped_fields = ()
 
 	def __init__(self, context, request=None):
 		super(CommunityExternalFieldTraverser, self).__init__(context, request=request)
