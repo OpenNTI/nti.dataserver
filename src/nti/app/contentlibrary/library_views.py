@@ -438,16 +438,23 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		# For content units, we need to externalize as pageinfos.
 		results = []
 		try:
+			# The clients only need the leaf pageinfo. So
+			# we start at the end.
+			units.reverse()
 			for unit in units:
+				if IContentPackage.providedBy( unit ):
+					continue
 				try:
 					unit_res = find_page_info_view_helper( self.request, unit )
 					results.append( unit_res.json_body )
+					break
 				except hexc.HTTPMethodNotAllowed:
 					# Underlying content object, append as-is
 					results.append( unit )
 		except hexc.HTTPForbidden:
 			# No permission
 			pass
+		results.reverse()
 		return results
 
 	def _get_legacy_path_to_id( self, container_id ):
@@ -466,12 +473,7 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 				result = result[0] if result else result
 		return result
 
-	def _filter_hierarchy(self, hiearchy_nodes):
-		# TODO Implement
-		results = hiearchy_nodes
-		return results
-
-	def _get_legacy_results( self, obj, container_id, result ):
+	def _get_legacy_results( self, obj, container_id ):
 		"""
 		We need to iterate through the library, and some paths
 		only return the first available result. So we make
@@ -493,14 +495,11 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 
 					hierarchy_context = self._get_hierarchy_context_for_context(
 														obj, top_level_context )
-					hiearchy_nodes = self._filter_hierarchy( hierarchy_context[1:] )
-					result_list.extend( hiearchy_nodes )
-					if len( legacy_path ) > 1:
-						path_list = legacy_path[1:]
-						path_list = self._externalize_children( path_list )
-						result_list.extend( path_list )
-				result.append( result_list )
-				break
+					if len( hierarchy_context ) > 1:
+						result_list.extend( hierarchy_context[1:] )
+					path_list = self._externalize_children( legacy_path )
+					result_list.extend( path_list )
+				return result_list
 
 	def __call__(self):
 		result = LocatedExternalList()
@@ -525,8 +524,8 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 					result_list = [ top_level_context ]
 					if is_readable( package ):
 						# TODO permissions on nodes?
-						hiearchy_nodes = self._filter_hierarchy( hierarchy_context[1:] )
-						result_list.extend( hiearchy_nodes )
+						if len( hierarchy_context ) > 1:
+							result_list.extend( hierarchy_context[1:] )
 						path_list = self._externalize_children( path_list )
 						result_list.extend( path_list )
 					result.append( result_list )
@@ -535,7 +534,9 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
 			logger.info( 'Iterating through library for library path.' )
-			self._get_legacy_results( obj, container_id, result )
+			result_list = self._get_legacy_results( obj, container_id )
+			result.append( result_list )
+
 		return result
 
 # TODO
