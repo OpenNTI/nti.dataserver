@@ -9,4 +9,4 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-LIBRARY_CONTAINER_PATH_GET_VIEW = 'PathToContainerId'
+LIBRARY_PATH_GET_VIEW = 'LibraryPath'

@@ -328,7 +328,7 @@ class GlobalWorkspace(object):
 	def collections(self):
 		return [GlobalCollection(self.__parent__, 'Objects'),
 				GlobalCollection(self.__parent__, 'NTIIDs' ),
-				GlobalCollection(self.__parent__, 'PathToContainerId')]
+				GlobalCollection(self.__parent__, 'LibraryPath')]
 
 @interface.implementer(ICollection)
 class GlobalCollection(object):

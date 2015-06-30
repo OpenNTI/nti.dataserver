@@ -23,13 +23,21 @@ from nti.appserver.interfaces import IContentUnitInfo
 from nti.contentlibrary.interfaces import IContentPackageBundle
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
+from nti.dataserver.interfaces import IHighlight
+
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
 
+from nti.ntiids.ntiids import find_object_with_ntiid
 from nti.ntiids.ntiids import is_valid_ntiid_string
+
+from . import LIBRARY_PATH_GET_VIEW
 
 LINKS = StandardExternalFields.LINKS
 
@@ -73,6 +81,60 @@ class _ContentBundlePagesLinkDecorator(object):
 	def decorateExternalMapping(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel='Pages', elements=('Pages',))
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IHighlight)
+class _UGDLibraryPathLinkDecorator(object):
+	"""
+	Create a `LibraryPath` link to our container id.
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, result):
+		container_id = context.containerId
+		container = find_object_with_ntiid( container_id )
+		if container is not None:
+			_links = result.setdefault(LINKS, [])
+			link = Link(container, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
+			interface.alsoProvides(link, ILocation)
+			link.__name__ = ''
+			link.__parent__ = context
+			_links.append(link)
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IPost)
+class _PostLibraryPathLinkDecorator(object):
+	"""
+	Create a `LibraryPath` link to our post.
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
+		interface.alsoProvides(link, ILocation)
+		link.__name__ = ''
+		link.__parent__ = context
+		_links.append(link)
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(ITopic)
+class _TopicLibraryPathLinkDecorator(object):
+	"""
+	Create a `LibraryPath` link to our topic.
+	"""
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
 		link.__parent__ = context
