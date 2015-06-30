@@ -24,6 +24,8 @@ from pyramid.view import view_config, view_defaults
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
@@ -43,10 +45,16 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverFolder
 
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+
 from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.externalization import to_external_ntiid_oid
 
 from nti.links.links import Link
 
@@ -56,7 +64,7 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-from . import LIBRARY_CONTAINER_PATH_GET_VIEW
+from . import LIBRARY_PATH_GET_VIEW
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
 PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
@@ -328,12 +336,58 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
 @view_config(context=IDataserverFolder,
-			 name=LIBRARY_CONTAINER_PATH_GET_VIEW )
+			 name=LIBRARY_PATH_GET_VIEW )
 class LibraryPathView( GenericGetView ):
 	"""
+	A generic library path request on an 'ObjectId' NTIID param.
+	"""
+
+	def _get_params(self):
+		params = CaseInsensitiveDict(self.request.params)
+		obj_ntiid = params.get( 'ObjectId' )
+		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
+			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
+
+		self.obj = find_object_with_ntiid( obj_ntiid )
+		if self.obj is None:
+			raise hexc.HTTPNotFound()
+		return self.obj
+
+	def __call__(self):
+		obj = self._get_params()
+		object_ntiid = to_external_ntiid_oid( obj )
+		if not obj and not object_ntiid:
+			return
+
+		request = self.request
+		path = b'/dataserver2/Objects/%s/%s' % ( _encode( object_ntiid ) ,
+												LIBRARY_PATH_GET_VIEW )
+
+		# Set subrequest
+		subrequest = request.blank( path )
+		subrequest.method = b'GET'
+		subrequest.possible_site_names = request.possible_site_names
+		# prepare environ
+		subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
+		subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
+		for k in request.environ:
+			if k.startswith('paste.') or k.startswith('HTTP_'):
+				if k not in subrequest.environ:
+					subrequest.environ[k] = request.environ[k]
+
+		# Invoke
+		result = request.invoke_subrequest(subrequest)
+		return result
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  name=LIBRARY_PATH_GET_VIEW,
+			  context=IHighlight,
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
+class _NoteLibraryPathView( AbstractAuthenticatedView ):
+	"""
 	Return an ordered list of lists of library paths to an object.
-	Typically, we expect this to be called with the containerId
-	of a UGD item.
 
 	Typical return:
 		[ [ <TopLevelContext>,
@@ -427,21 +481,9 @@ class LibraryPathView( GenericGetView ):
 				result.append( result_list )
 				break
 
-	def _get_params(self):
-		params = CaseInsensitiveDict(self.request.params)
-		obj_ntiid = params.get( 'ObjectId' )
-		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
-			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
-
-		obj = find_object_with_ntiid( obj_ntiid )
-		if obj is None:
-			raise hexc.HTTPNotFound()
-		return obj
-
 	def __call__(self):
 		result = LocatedExternalList()
-		obj = self._get_params()
-		# TODO We could make this work for multiple types.
+		obj = self.context
 		# TODO Can we get outline node?
 		top_level_contexts = self._get_top_level_contexts( obj )
 		container_id = obj.containerId
@@ -470,4 +512,48 @@ class LibraryPathView( GenericGetView ):
 		# is in legacy content. So we have to look through the library.
 		if not result and not top_level_contexts:
 			self._get_legacy_results( container_id, result )
+		return result
+
+# TODO
+# - All TopLevelContexts
+# - Outlines
+# - Video
+# - PageInfo
+# - [Course, Leaf OutlineNode, Leaf PersistentOverview < relatedworkref >, Leaf full pageinfo ]
+# - Future: decorating, caching
+
+@view_config(context=IPost)
+@view_config(context=ITopic)
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  name=LIBRARY_PATH_GET_VIEW,
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
+class _PostLibraryPathView( AbstractAuthenticatedView ):
+	"""
+	For board items, getting the path traversal can
+	be accomplished through lineage.
+	"""
+
+	def __call__(self):
+		result = LocatedExternalList()
+		obj = self.context
+		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
+
+		def _top_level_endpoint( item ):
+			return item is None or IContentPackage.providedBy( item )
+
+		if top_level_contexts:
+			def _top_level_endpoint( item ):
+				return item is None or item == top_level_contexts[0]
+
+		item = obj.__parent__
+		result_list = [ item ]
+		while not _top_level_endpoint( item ):
+			item = item.__parent__
+			if item is not None:
+				result_list.append( item )
+
+		result_list.reverse()
+		result.append( result_list )
 		return result

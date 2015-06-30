@@ -121,6 +121,15 @@
 				for="nti.contentlibrary.interfaces.IContentPackageBundle
 					 pyramid.interfaces.IRequest"/>
 
+	<subscriber factory=".decorators._UGDLibraryPathLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators._PostLibraryPathLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators._TopicLibraryPathLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<!-- this thing is not a real IBundle -->
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
