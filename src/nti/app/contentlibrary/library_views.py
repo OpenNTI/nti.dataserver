@@ -32,6 +32,7 @@ from nti.app.renderers.caching import AbstractReliableLastModifiedCacheControlle
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
+from nti.appserver.interfaces import IHierarchicalContextProvider
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -391,7 +392,8 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 
 	Typical return:
 		[ [ <TopLevelContext>,
-			<ContentPackage>,
+			<Heirarchical Node>,
+			<Heirarchical Node>,
 			<PageInfo>* ],
 			...
 		]
@@ -399,6 +401,10 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 	def _get_top_level_contexts( self, obj ):
 		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
 		return top_level_contexts or ()
+
+	def _get_hierarchy_context( self, obj ):
+		hiearchy_contexts = IHierarchicalContextProvider( obj, None )
+		return hiearchy_contexts or ()
 
 	def _get_path_for_package(self, package, target_ntiid):
 		"""
@@ -484,13 +490,13 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 	def __call__(self):
 		result = LocatedExternalList()
 		obj = self.context
-		# TODO Can we get outline node?
-		top_level_contexts = self._get_top_level_contexts( obj )
+		hierarchy_contexts = self._get_hierarchy_context( obj )
 		container_id = obj.containerId
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
-		for top_level_context in top_level_contexts:
+		for hiearchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable.
+			top_level_context = hiearchy_context[0]
 			if not is_readable( top_level_context ):
 				continue
 			try:
@@ -503,6 +509,9 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 					# We have a hit
 					result_list = [ top_level_context ]
 					if is_readable( package ):
+						# TODO permissions on nodes?
+						# TODO Filtering
+						result_list.extend( hiearchy_context[1:] )
 						result_list.append( package )
 						path_list = self._externalize_children( path_list )
 						result_list.extend( path_list )
@@ -510,13 +519,11 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
-		if not result and not top_level_contexts:
+		if not result and not hierarchy_contexts:
 			self._get_legacy_results( container_id, result )
 		return result
 
 # TODO
-# - All TopLevelContexts
-# - Outlines
 # - Video
 # - PageInfo
 # - [Course, Leaf OutlineNode, Leaf PersistentOverview < relatedworkref >, Leaf full pageinfo ]
