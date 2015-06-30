@@ -205,6 +205,11 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
+	<adapter factory="._adapters.CommunityExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.ICommunity"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
 	<!-- Object graph traversal -->
 	<!--
 	The default traversable is registered by zope.traversing for no
