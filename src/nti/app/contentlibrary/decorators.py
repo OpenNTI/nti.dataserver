@@ -32,6 +32,8 @@ from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+from nti.externalization.externalization import to_external_ntiid_oid
+
 from nti.links.links import Link
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -98,9 +100,13 @@ class _UGDLibraryPathLinkDecorator(object):
 	def decorateExternalMapping(self, context, result):
 		container_id = context.containerId
 		container = find_object_with_ntiid( container_id )
-		if container is not None:
+		# TODO This what we want, or just use containerId?
+		external_ntiid = to_external_ntiid_oid( container ) if container else None
+		if external_ntiid is not None:
+			path = '/dataserver2/%s' % LIBRARY_PATH_GET_VIEW
+			link = Link(path, rel=LIBRARY_PATH_GET_VIEW, method='GET',
+						params={'ObjectId': external_ntiid})
 			_links = result.setdefault(LINKS, [])
-			link = Link(container, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
 			interface.alsoProvides(link, ILocation)
 			link.__name__ = ''
 			link.__parent__ = context
