@@ -43,9 +43,13 @@ from . import LIBRARY_PATH_GET_VIEW
 
 LINKS = StandardExternalFields.LINKS
 
-def get_content_package_ntiid(ntiid):
+def get_content_package_paths(ntiid):
 	library = component.queryUtility(IContentPackageLibrary)
 	paths = library.pathToNTIID(ntiid) if library else ()
+	return paths
+
+def get_content_package_ntiid(ntiid):
+	paths = get_content_package_paths(ntiid)
 	result = paths[0].ntiid if paths else None
 	return result
 
@@ -99,9 +103,9 @@ class _UGDLibraryPathLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, result):
 		container_id = context.containerId
-		container = find_object_with_ntiid( container_id )
+		container = find_object_with_ntiid(container_id)
 		# TODO This what we want, or just use containerId?
-		external_ntiid = to_external_ntiid_oid( container ) if container else None
+		external_ntiid = to_external_ntiid_oid(container) if container else None
 		if external_ntiid is not None:
 			path = '/dataserver2/%s' % LIBRARY_PATH_GET_VIEW
 			link = Link(path, rel=LIBRARY_PATH_GET_VIEW, method='GET',
