@@ -509,6 +509,9 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		if IHighlight.providedBy( obj ):
 			obj_ntiid = obj.containerId
 			obj = find_object_with_ntiid( obj_ntiid )
+
+		# Get the ntiid off the object because we may have an OID
+		obj_ntiid = getattr( obj, 'ntiid', None ) or obj_ntiid
 		return obj, obj_ntiid
 
 	def __call__(self):
