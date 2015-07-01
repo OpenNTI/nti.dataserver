@@ -104,9 +104,9 @@ class IntIds(_ZCIntIds):
 		except KeyError:
 			raise ObjectMissingError(ID, self)
 
-	def forceRegister(self, uid, ob):
+	def forceRegister(self, uid, ob, check=True):
 		unwrapped = unwrap(aq_base(ob))
-		if uid in self.refs:
+		if check and uid in self.refs:
 			raise IntIdAlreadyInUseError(ob)
 		self.refs[uid] = unwrapped
 		return uid
