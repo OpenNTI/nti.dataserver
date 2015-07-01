@@ -13,7 +13,10 @@ import six
 import time
 
 from zope import component
+
 from zope.intid import IIntIds
+
+from zope.proxy import removeAllProxies
 
 import BTrees
 
@@ -148,6 +151,7 @@ class ContainedObjectCatalog(Persistent):
 	def _doc_id(self, item, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if not isinstance(item, int):
+			item = removeAllProxies(item)
 			doc_id = intids.queryId(item) if intids is not None else None
 		else:
 			doc_id = item
