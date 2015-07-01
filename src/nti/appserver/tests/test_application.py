@@ -1101,10 +1101,7 @@ class TestApplication(ApplicationLayerTest):
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
-	@WithSharedApplicationMockDS
-	def test_edit_user_avatar_url(self):
-		#"We can POST to a specific sub-URL to change the avatarURL"
-
+	def _test_edit_user_image_url(self, name):
 		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
 
 		testapp = TestApp( self.app )
@@ -1114,21 +1111,34 @@ class TestApplication(ApplicationLayerTest):
 			username = user.username
 			user_ext_id = to_external_ntiid_oid( user )
 
-		testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
+		view_name = '/@@%s' % name
+		attr_name = '%sURL' % name
+		testapp.get('/dataserver2/users/' + username + view_name, extra_environ=self._make_extra_environ(),
 					status=404)
 		# assert_that(res.location,
 		#			  is_('https://secure.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon') )
 
-		res = self._edit_user_ext_field( 'avatarURL', data, username, user_ext_id )
-		assert_that( res.json_body, has_entry( 'avatarURL', starts_with( '/dataserver2/' ) ) )
+		res = self._edit_user_ext_field( attr_name, data, username, user_ext_id )
+		assert_that( res.json_body, has_entry( attr_name, starts_with( '/dataserver2/' ) ) )
 
-		res = testapp.get( res.json_body['avatarURL'], extra_environ=self._make_extra_environ() )
+		res = testapp.get( res.json_body[attr_name], extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'image/gif' ) )
 		# And this one is also directly available at this location
-		res = testapp.get('/dataserver2/users/' + username + '/@@avatar', extra_environ=self._make_extra_environ(),
+		res = testapp.get('/dataserver2/users/' + username + view_name, 
+						  extra_environ=self._make_extra_environ(),
 						  status=302)
 		assert_that( res.location, starts_with( 'http://localhost/dataserver2/' ) )
 
+	@WithSharedApplicationMockDS
+	def test_edit_user_avatar_url(self):
+		#"We can POST to a specific sub-URL to change the avatarURL"
+		self._test_edit_user_image_url('avatar')
+
+	@WithSharedApplicationMockDS
+	def test_edit_user_background_url(self):
+		#"We can POST to a specific sub-URL to change the backgroundURL"
+		self._test_edit_user_image_url('background')
+		
 	@WithSharedApplicationMockDS
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):
