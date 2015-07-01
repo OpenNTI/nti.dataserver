@@ -7,7 +7,6 @@ Implementations for user externalization.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.dataserver.users.interfaces import ICommunityProfile
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -49,6 +48,7 @@ from .interfaces import IAvatarChoices
 from .interfaces import IBackgroundURL
 from .interfaces import IFriendlyNamed
 from .interfaces import TAG_HIDDEN_IN_UI
+from .interfaces import ICommunityProfile
 from .interfaces import IHiddenMembership
 from .interfaces import IRestrictedUserProfile
 
@@ -186,16 +186,12 @@ class _CommunityExternalObject(_EntityExternalObject):
 	
 	def _do_toExternalObject(self, **kwargs):
 		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
-		# Ok, we did the standard profile fields. Now, find the most derived interface
-		# for this profile and write the additional fields
 		entity = self.entity
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
 		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
 			if 	name in result or field.queryTaggedValue(TAG_HIDDEN_IN_UI) or \
 				interface.interfaces.IMethod.providedBy(field):
 				continue
-			# Save the externalized value from the profile, or if the profile doesn't have it yet,
-			# use the default (if there is one). Otherwise its None
 			field_val = field.query(entity, getattr(field, 'default', None))
 			result[name] = toExternalObject(field_val)
 		return result
