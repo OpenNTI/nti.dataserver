@@ -410,7 +410,7 @@ class DigestEmailCollector(object):
 				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
 				result[name] = _TemplateArgs(objs, request, self.remoteUser)
 
-		result['unsubscribe_link'] = generate_unsubscribe_url(self.remoteUser)
+		result['unsubscribe_link'] = generate_unsubscribe_url(self.remoteUser, request)
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
 		# We may want to exclude 'circled' and others from this count?
