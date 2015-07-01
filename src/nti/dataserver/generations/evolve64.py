@@ -17,10 +17,13 @@ from zope.annotation.interfaces import IAnnotations
 
 from zope.component.hooks import site, setHooks
 
+from nti.common.string import safestr
+
 from nti.dataserver.interfaces import ICommunity
 
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.user_profile import FRIENDLY_NAME_KEY
+
 
 def do_evolve(context):
 	setHooks()
@@ -40,8 +43,8 @@ def do_evolve(context):
 			annotations = IAnnotations(entity)
 			friendly = annotations.pop(FRIENDLY_NAME_KEY, None)
 			if friendly is not None:
-				profile.alias = unicode(getattr(friendly, 'alias', None) or u'')
-				profile.realname = unicode(getattr(friendly, 'realname', None) or u'')
+				profile.alias = safestr(getattr(friendly, 'alias', None))
+				profile.realname = safestr(getattr(friendly, 'realname', None))
 
 	logger.info('Dataserver evolution %s done.', generation)
 
