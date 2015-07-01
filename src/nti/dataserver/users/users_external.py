@@ -7,6 +7,7 @@ Implementations for user externalization.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.dataserver.users.interfaces import ICommunityProfile
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -22,6 +23,7 @@ from nti.dataserver import authorization_acl as auth
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IDynamicSharingTarget
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
@@ -87,12 +89,12 @@ def _background_url(entity):
 @interface.implementer(IExternalObject)
 class _AbstractEntitySummaryExternalObject(object):
 
-	def __init__(self, entity):
-		self.entity = entity
-
 	_DECORATE = False
 	_AVATAR_URL = True
 	_BACKGROUND_URL = True
+
+	def __init__(self, entity):
+		self.entity = entity
 
 	def _do_toExternalObject(self, **kwargs):
 		"""
@@ -115,6 +117,7 @@ class _AbstractEntitySummaryExternalObject(object):
 
 		if self._AVATAR_URL:
 			extDict['avatarURL'] = _avatar_url(entity)
+
 		if self._BACKGROUND_URL:
 			extDict['backgroundURL'] = _background_url(entity)
 
@@ -171,14 +174,32 @@ class _DynamicFriendListSummaryExternalObject(_FriendListSummaryExternalObject):
 class _EntityExternalObject(_EntitySummaryExternalObject):
 
 	def _do_toExternalObject(self, **kwargs):
-		"""
-		:return: The value of :meth:`toSummaryExternalObject`
-		"""
 		result = super(_EntityExternalObject, self)._do_toExternalObject(**kwargs)
 		# restore last modified since we are the true representation
 		result['Last Modified'] = getattr(self.entity, 'lastModified', 0)
 		return result
 
+@component.adapter(ICommunity)
+class _CommunityExternalObject(_EntityExternalObject):
+	
+	_DECORATE = True
+	
+	def _do_toExternalObject(self, **kwargs):
+		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
+		# Ok, we did the standard profile fields. Now, find the most derived interface
+		# for this profile and write the additional fields
+		entity = self.entity
+		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
+		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
+			if 	name in result or field.queryTaggedValue(TAG_HIDDEN_IN_UI) or \
+				interface.interfaces.IMethod.providedBy(field):
+				continue
+			# Save the externalized value from the profile, or if the profile doesn't have it yet,
+			# use the default (if there is one). Otherwise its None
+			field_val = field.query(entity, getattr(field, 'default', None))
+			result[name] = toExternalObject(field_val)
+		return result
+	
 @component.adapter(IFriendsList)
 class _FriendsListExternalObject(_EntityExternalObject):
 
@@ -394,7 +415,8 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_CoppaUserPersonalSummaryExternalObject, self)._do_toExternalObject(**kwargs)
-		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 'location', 'home_page'):
+		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 
+				  'location', 'home_page', 'about'):
 			extDict[k] = None
 		return extDict
 

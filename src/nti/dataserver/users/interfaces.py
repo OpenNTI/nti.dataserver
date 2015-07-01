@@ -539,7 +539,8 @@ class IAboutProfile(interface.Interface):
 							  required=False,
 							  constraint=checkCannotBeBlank),
 					 ExtendedCompoundModeledContentBody()),
-					 description="The body is either a string, or a Note body")
+					 description="The body is either a string, or a Note body",
+					 required=False)
 	about.__name__ = 'about'
 
 class ICompleteUserProfile(IRestrictedUserProfile,
