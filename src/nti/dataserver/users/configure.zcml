@@ -160,6 +160,9 @@
 	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
 			 for="nti.dataserver.interfaces.IEntity" />
 	
+	<adapter factory=".interfaces.CommunitySchemaProvider"
+			 for="nti.dataserver.interfaces.ICommunity" />
+			 
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
 
