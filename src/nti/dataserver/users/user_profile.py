@@ -336,7 +336,8 @@ def _init():
 _init()
 del _init
 
-FriendlyNamedFactory = afactory(FriendlyNamed)
+FRIENDLY_NAME_KEY = 'nti.dataserver.users.user_profile.FriendlyNamed'
+FriendlyNamedFactory = afactory(FriendlyNamed, key=FRIENDLY_NAME_KEY)
 
 RestrictedUserProfileFactory = afactory(RestrictedUserProfile)
 RestrictedUserProfileWithContactEmailFactory = afactory(RestrictedUserProfileWithContactEmail)
