@@ -380,13 +380,7 @@ class LibraryPathView( GenericGetView ):
 		result = request.invoke_subrequest(subrequest)
 		return result
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  name=LIBRARY_PATH_GET_VIEW,
-			  context=IHighlight,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
-class _NoteLibraryPathView( AbstractAuthenticatedView ):
+class _AbstractLibraryPathView( AbstractAuthenticatedView ):
 	"""
 	Return an ordered list of lists of library paths to an object.
 
@@ -473,13 +467,13 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 				result = result[0] if result else result
 		return result
 
-	def _get_legacy_results( self, obj, container_id ):
+	def _get_legacy_results( self, obj, target_ntiid ):
 		"""
 		We need to iterate through the library, and some paths
 		only return the first available result. So we make
 		sure we only return a single result for now.
 		"""
-		legacy_path = self._get_legacy_path_to_id( container_id )
+		legacy_path = self._get_legacy_path_to_id( target_ntiid )
 		if legacy_path:
 			package = legacy_path[0]
 
@@ -492,7 +486,6 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 				# We have a hit.
 				result_list = [ top_level_context ]
 				if is_readable( package ):
-
 					hierarchy_context = self._get_hierarchy_context_for_context(
 														obj, top_level_context )
 					if len( hierarchy_context ) > 1:
@@ -501,11 +494,10 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 					result_list.extend( path_list )
 				return result_list
 
-	def __call__(self):
+	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
-		obj = self.context
+
 		hierarchy_contexts = self._get_hierarchy_context( obj )
-		container_id = obj.containerId
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
@@ -518,7 +510,7 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 			except AttributeError:
 				packages = (top_level_context.legacy_content_package,)
 			for package in packages:
-				path_list = self._get_path_for_package( package, container_id )
+				path_list = self._get_path_for_package( package, target_ntiid )
 				if path_list:
 					# We have a hit
 					result_list = [ top_level_context ]
@@ -534,15 +526,39 @@ class _NoteLibraryPathView( AbstractAuthenticatedView ):
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
 			logger.info( 'Iterating through library for library path.' )
-			result_list = self._get_legacy_results( obj, container_id )
+			result_list = self._get_legacy_results( obj, target_ntiid )
 			result.append( result_list )
-
 		return result
+
+	def __call__(self):
+		obj = self.context
+		return self._get_path( obj, obj.ntiid )
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=IContentUnit,
+			  name=LIBRARY_PATH_GET_VIEW,
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
+class _PageInfoLibraryPathView( _AbstractLibraryPathView ):
+	pass
+
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=IHighlight,
+			  name=LIBRARY_PATH_GET_VIEW,
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
+class _NoteLibraryPathView( _AbstractLibraryPathView ):
+
+	def __call__(self):
+		obj = self.context
+		return self._get_path( obj, obj.containerId )
+
 
 # TODO
 # - Video
 # - PageInfo
-# - [Course, Leaf OutlineNode, Leaf PersistentOverview < relatedworkref >, Leaf full pageinfo ]
 # - Future: decorating, caching
 
 @view_config(context=IPost)
@@ -559,6 +575,7 @@ class _PostLibraryPathView( AbstractAuthenticatedView ):
 	"""
 
 	def __call__(self):
+		# TODO Permissioning concerns?
 		result = LocatedExternalList()
 		obj = self.context
 		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
