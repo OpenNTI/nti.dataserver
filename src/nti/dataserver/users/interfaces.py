@@ -44,6 +44,7 @@ from nti.schema.field import Bool
 from nti.schema.field import Date
 from nti.schema.field import Object
 from nti.schema.field import HTTPURL
+from nti.schema.field import Variant
 from nti.schema.field import TextLine
 from nti.schema.field import ValidURI
 from nti.schema.field import ValidText
@@ -531,12 +532,23 @@ class IInterestProfile(interface.Interface):
 							required=False,
 							min_length=0)
 
+class IAboutProfile(interface.Interface):
+
+	about = Variant((ValidText(title='About',
+							  description="A description of a user",
+							  required=False,
+							  constraint=checkCannotBeBlank),
+					 ExtendedCompoundModeledContentBody()),
+					 description="The body is either a string, or a Note body")
+	about.__name__ = 'about'
+
 class ICompleteUserProfile(IRestrictedUserProfile,
 						   IEmailAddressable,
 						   ISocialMediaProfile,
 						   IEducationProfile,
 						   IProfessionalProfile,
-						   IInterestProfile):
+						   IInterestProfile,
+						   IAboutProfile):
 	"""
 	A complete user profile.
 	"""
@@ -591,9 +603,6 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		required=False,
 		constraint=checkCannotBeBlank)
 
-	about = ExtendedCompoundModeledContentBody()
-	about.__name__ = 'about'
-
 class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
 	A user profile that ensures the email is filled in.
@@ -635,18 +644,11 @@ class FriendlyNamedSchemaProvider(object):
 	def getSchema(self):
 		return IFriendlyNamed
 
-class ICommunityProfile(IAvatarURL):
+class ICommunityProfile(IAvatarURL, IAboutProfile):
 
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		required=False )
-
-	about = ValidTextLine(
-		title='About',
-		description="A short description of a community",
-		max_length=500,
-		required=False,
-		constraint=checkCannotBeBlank)
 
 ICommunityProfile['avatarURL']._type = (str,unicode) # relax
 ICommunityProfile['backgroundURL']._type = (str,unicode) # relax

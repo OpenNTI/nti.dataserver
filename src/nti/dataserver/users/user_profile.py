@@ -34,12 +34,14 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from ..interfaces import IUser
 from ..interfaces import IEntity
+from ..interfaces import ICommunity
 from ..interfaces import IPrincipal
 
 from .interfaces import IEducation
 from .interfaces import IUserProfile
 from .interfaces import IFriendlyNamed
 from .interfaces import IInterestProfile
+from .interfaces import ICommunityProfile
 from .interfaces import IEducationProfile
 from .interfaces import IEmailAddressable
 from .interfaces import ISocialMediaProfile
@@ -149,12 +151,11 @@ class FriendlyNamed(Persistent):
 	def get_searchable_realname_parts(self):
 		return self._searchable_realname_parts
 
-@component.adapter(IUser)
-@interface.implementer(IUserProfile)
-class UserProfile(FriendlyNamed):
+class ImageProfileMixin(object):
 	"""
 	An adapter for storing profile information. We provide a specific implementation
-	of the ``avatarURL`` property rather than relying on field storage.
+	of the ``avatarURL`` and 'backgroundURL' properties rather than relying on field 
+	storage.
 
 	For convenience, we have a read-only shadow of the username value.
 	"""
@@ -172,8 +173,17 @@ class UserProfile(FriendlyNamed):
 										  url_attr_name='_backgroundURL',
 										  file_attr_name='_backgroundURL')
 
+@component.adapter(IUser)
+@interface.implementer(IUserProfile)
+class UserProfile(FriendlyNamed, ImageProfileMixin):
 	username = property(lambda self: self.context.username)
 
+@component.adapter(ICommunity)
+@interface.implementer(ICommunityProfile)
+class CommunityProfile(FriendlyNamed, ImageProfileMixin):
+	about = FP(ICommunityProfile['about'])
+	username = property(lambda self: self.context.username)
+	
 @component.adapter(IUserProfile)
 @interface.implementer(IPrincipal)
 def _profile_to_principal(profile):
@@ -192,10 +202,10 @@ class RestrictedUserProfile(UserProfile):
 
 	# If anyone tries to set an email on us, we turn it into the recovery hash
 	email = property(lambda self: None,
-					  lambda self, nv: setattr(self, 'password_recovery_email_hash',
-											   make_password_recovery_email_hash(nv)),
-					  doc="This type of profile cannot store an actual email address."
-					  	  "If anyone tries, it becomes the recovery hash")
+					 lambda self, nv: setattr(self, 'password_recovery_email_hash',
+											  make_password_recovery_email_hash(nv)),
+					 doc="This type of profile cannot store an actual email address."
+					  	 "If anyone tries, it becomes the recovery hash")
 
 @component.adapter(IUser)
 @interface.implementer(IRestrictedUserProfileWithContactEmail)
@@ -205,8 +215,8 @@ class RestrictedUserProfileWithContactEmail(RestrictedUserProfile):
 # XXX: We actually will want to register this in the same
 # cases we register the profile itself, for the same kinds of users
 
-@component.adapter(IRestrictedUserProfileWithContactEmail)
 @interface.implementer(IEmailAddressable)
+@component.adapter(IRestrictedUserProfileWithContactEmail)
 class RestrictedUserProfileWithContactEmailAddressable(object):
 
 	def __init__(self, context):
@@ -310,12 +320,11 @@ def add_profile_fields(iface, clazz, field_map=None):
 
 def _init():
 	# Map "existing"/legacy User/Entity dict storage to their new profile field
-	_field_map = { 'alias': '_alias',
-				   'realname': '_realname'}
-
+	_field_map = { 'alias': '_alias', 'realname': '_realname'}
 	_class_map = {
 			IUserProfile: UserProfile,
 			IFriendlyNamed: FriendlyNamed,
+			ICommunityProfile: CommunityProfile,
 			ICompleteUserProfile: CompleteUserProfile,
 			IRestrictedUserProfile: RestrictedUserProfile,
 			IEmailRequiredUserProfile: EmailRequiredUserProfile,
@@ -331,6 +340,10 @@ FriendlyNamedFactory = afactory(FriendlyNamed)
 
 RestrictedUserProfileFactory = afactory(RestrictedUserProfile)
 RestrictedUserProfileWithContactEmailFactory = afactory(RestrictedUserProfileWithContactEmail)
+
+COMMUNITY_PROFILE_KEY = 'nti.dataserver.users.user_profile.CommunityProfile'
+CommunityProfileFactory = afactory(CommunityProfile,
+								   key=COMMUNITY_PROFILE_KEY)
 
 COMPLETE_USER_PROFILE_KEY = 'nti.dataserver.users.user_profile.CompleteUserProfile'
 CompleteUserProfileFactory = afactory(CompleteUserProfile,
