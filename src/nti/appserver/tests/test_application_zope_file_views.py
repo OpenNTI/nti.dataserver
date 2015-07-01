@@ -79,7 +79,7 @@ class TestApplicationZopeFileViews(ApplicationLayerTest):
 								 user_hook=lambda u: setattr( user_interfaces.IUserProfile(u),
 															  'avatarURL',
 															  PNG_DATAURL) )
-	def test_view_profile_data(self):
+	def test_avatar_view_profile_data(self):
 		# Note that we turn default authentication off, because this URL is available
 		# to everyone
 		ext_user = self.resolve_user(extra_environ=self._make_extra_environ())
@@ -87,6 +87,26 @@ class TestApplicationZopeFileViews(ApplicationLayerTest):
 		avatar_url = ext_user['avatarURL']
 		assert_that( avatar_url, starts_with( '/dataserver' ) )
 		assert_that( avatar_url, ends_with( '@@avatar_view' ) )
+
+		res = self.testapp.get( avatar_url )
+
+		assert_that( res, has_property( 'content_length', 725 ) )
+		assert_that( res, has_property( 'content_type', 'image/png' ) )
+		
+	@WithSharedApplicationMockDS(users=True,
+								 testapp=True,
+								 default_authenticate=False,
+								 user_hook=lambda u: setattr( user_interfaces.IUserProfile(u),
+															  'backgroundURL',
+															  PNG_DATAURL) )
+	def test_background_view_profile_data(self):
+		# Note that we turn default authentication off, because this URL is available
+		# to everyone
+		ext_user = self.resolve_user(extra_environ=self._make_extra_environ())
+
+		avatar_url = ext_user['backgroundURL']
+		assert_that( avatar_url, starts_with( '/dataserver' ) )
+		assert_that( avatar_url, ends_with( '@@background_view' ) )
 
 		res = self.testapp.get( avatar_url )
 
