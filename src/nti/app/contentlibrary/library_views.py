@@ -336,51 +336,13 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	def _context_specific(self):
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
-@view_config(context=IDataserverFolder,
-			 name=LIBRARY_PATH_GET_VIEW )
-class LibraryPathView( GenericGetView ):
-	"""
-	A generic library path request on an 'ObjectId' NTIID param.
-	"""
-
-	def _get_params(self):
-		params = CaseInsensitiveDict(self.request.params)
-		obj_ntiid = params.get( 'ObjectId' )
-		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
-			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
-
-		self.obj = find_object_with_ntiid( obj_ntiid )
-		if self.obj is None:
-			raise hexc.HTTPNotFound()
-		return self.obj
-
-	def __call__(self):
-		obj = self._get_params()
-		object_ntiid = to_external_ntiid_oid( obj )
-		if not obj and not object_ntiid:
-			return
-
-		request = self.request
-		path = b'/dataserver2/Objects/%s/%s' % ( _encode( object_ntiid ) ,
-												LIBRARY_PATH_GET_VIEW )
-
-		# Set subrequest
-		subrequest = request.blank( path )
-		subrequest.method = b'GET'
-		subrequest.possible_site_names = request.possible_site_names
-		# prepare environ
-		subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
-		subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
-		for k in request.environ:
-			if k.startswith('paste.') or k.startswith('HTTP_'):
-				if k not in subrequest.environ:
-					subrequest.environ[k] = request.environ[k]
-
-		# Invoke
-		result = request.invoke_subrequest(subrequest)
-		return result
-
-class _AbstractLibraryPathView( AbstractAuthenticatedView ):
+@view_config( route_name='objects.generic.traversal',
+			  renderer='rest',
+			  context=IDataserverFolder,
+			  name=LIBRARY_PATH_GET_VIEW,
+			  permission=nauth.ACT_READ,
+			  request_method='GET' )
+class _LibraryPathView( AbstractAuthenticatedView ):
 	"""
 	Return an ordered list of lists of library paths to an object.
 
@@ -522,6 +484,8 @@ class _AbstractLibraryPathView( AbstractAuthenticatedView ):
 						result_list.extend( path_list )
 					result.append( result_list )
 
+		# TODO Caching, last mod?
+
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
@@ -530,36 +494,69 @@ class _AbstractLibraryPathView( AbstractAuthenticatedView ):
 			result.append( result_list )
 		return result
 
-	def __call__(self):
-		obj = self.context
-		return self._get_path( obj, obj.ntiid )
+	def _get_params(self):
+		params = CaseInsensitiveDict(self.request.params)
+		obj_ntiid = params.get( 'ObjectId' )
+		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
+			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IContentUnit,
-			  name=LIBRARY_PATH_GET_VIEW,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
-class _PageInfoLibraryPathView( _AbstractLibraryPathView ):
-	pass
-
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IHighlight,
-			  name=LIBRARY_PATH_GET_VIEW,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
-class _NoteLibraryPathView( _AbstractLibraryPathView ):
+		self.obj = find_object_with_ntiid( obj_ntiid )
+		if self.obj is None:
+			raise hexc.HTTPNotFound()
+		return self.obj, obj_ntiid
 
 	def __call__(self):
-		obj = self.context
-		return self._get_path( obj, obj.containerId )
+		obj, object_ntiid = self._get_params()
+		return self._get_path( obj, object_ntiid )
+
+# @view_config(context=IDataserverFolder,
+# 			 name=LIBRARY_PATH_GET_VIEW )
+# class LibraryPathView( _AbstractLibraryPathView ):
+# 	"""
+# 	A generic library path request on an 'ObjectId' NTIID param.
+# 	"""
+#
+# 	def _get_params(self):
+# 		params = CaseInsensitiveDict(self.request.params)
+# 		obj_ntiid = params.get( 'ObjectId' )
+# 		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
+# 			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
+#
+# 		self.obj = find_object_with_ntiid( obj_ntiid )
+# 		if self.obj is None:
+# 			raise hexc.HTTPNotFound()
+# 		return self.obj
+#
+# 	def __call__(self):
+# 		obj = self._get_params()
+# 		object_ntiid = to_external_ntiid_oid( obj )
+# 		return self._get_path( obj, object_ntiid )
+#
+# @view_config( route_name='objects.generic.traversal',
+# 			  renderer='rest',
+# 			  context=IContentUnit,
+# 			  name=LIBRARY_PATH_GET_VIEW,
+# 			  permission=nauth.ACT_READ,
+# 			  request_method='GET' )
+# class _PageInfoLibraryPathView( _AbstractLibraryPathView ):
+# 	pass
+#
+# @view_config( route_name='objects.generic.traversal',
+# 			  renderer='rest',
+# 			  context=IHighlight,
+# 			  name=LIBRARY_PATH_GET_VIEW,
+# 			  permission=nauth.ACT_READ,
+# 			  request_method='GET' )
+# class _NoteLibraryPathView( _AbstractLibraryPathView ):
+#
+# 	def __call__(self):
+# 		obj = self.context
+# 		return self._get_path( obj, obj.containerId )
 
 
 # TODO
 # - Video
 # - PageInfo
-# - Future: decorating, caching
 
 @view_config(context=IPost)
 @view_config(context=ITopic)
