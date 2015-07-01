@@ -20,10 +20,12 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
 
+from nti.app.contentlibrary.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
+
 class TestApplicationContentCard(ApplicationLayerTest):
-	
+
 	layer = ContentLibraryApplicationTestLayer
-	
+
 	child_ntiid = b'tag:nextthought.com,2011-10:testing-NTICard-temp.nticard.1'
 
 	card_ntiid = child_ntiid
@@ -32,17 +34,22 @@ class TestApplicationContentCard(ApplicationLayerTest):
 	def test_fetch_content_card_by_ntiid_accept_pageinfo(self):
 		# If we fetch the URL of a content card, but specify that we accept PageInfo,
 		# that's what we get back
-		from ..library_views import PAGE_INFO_MT_JSON as page_info_mt_json
-
 		res = self.fetch_by_ntiid( self.card_ntiid,
 								   headers={b'Accept': str(page_info_mt_json)} )
 
 		assert_that( res.status_int, is_( 200 ) )
-		assert_that( res.json_body, has_entry( 'Class', 'PageInfo' ) )
+		res = res.json_body
+		assert_that( res, has_entry( 'Class', 'PageInfo' ) )
 
 		# The content info we return points to an actual physical page
-		assert_that( res.json_body, has_entry( 'Links', has_item( has_entries( 'rel', 'content',
-																			   'href', '/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html') ) ) )
+		assert_that( res, has_entry( 'Links',
+									has_item(
+										has_entries(
+											'rel', 'content',
+											'href', '/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html') ) ) )
+		# We externalize title and cp-ntiid
+		assert_that( res, has_entries( 'ContentPackageNTIID', 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.cohen_v._california.',
+										'Title', 'COHEN v. CALIFORNIA.' ) )
 
 	@WithSharedApplicationMockDS(testapp=True,users=True)
 	def test_fetch_content_card_by_ntiid_accept_link(self):

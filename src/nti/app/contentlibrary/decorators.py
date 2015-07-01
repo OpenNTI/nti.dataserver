@@ -76,6 +76,25 @@ class _ContentUnitInfoDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			result['ContentPackageNTIID'] = ntiid
 
 @interface.implementer(IExternalMappingDecorator)
+@component.adapter(IContentUnitInfo, IRequest)
+class _ContentUnitInfoTitleDecorator(AbstractAuthenticatedRequestAwareDecorator):
+	"""
+	Decorates context with ContentPackage title.
+	"""
+
+	def _predicate(self, context, result):
+		result = bool(self._is_authenticated and context.contentUnit is not None)
+		if result:
+			try:
+				context.contentUnit.title
+			except AttributeError:
+				result = False
+		return result
+
+	def _do_decorate_external(self, context, result):
+		result['Title'] = context.contentUnit.title
+
+@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IContentPackageBundle)
 class _ContentBundlePagesLinkDecorator(object):
 	"""
