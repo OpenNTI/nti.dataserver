@@ -40,8 +40,8 @@ def do_evolve(context):
 			annotations = IAnnotations(entity)
 			friendly = annotations.pop(FRIENDLY_NAME_KEY, None)
 			if friendly is not None:
-				profile.alias = getattr(friendly, 'alias', None)
-				profile.realname = getattr(friendly, 'realname', None)
+				profile.alias = unicode(getattr(friendly, 'alias', None) or u'')
+				profile.realname = unicode(getattr(friendly, 'realname', None) or u'')
 
 	logger.info('Dataserver evolution %s done.', generation)
 
