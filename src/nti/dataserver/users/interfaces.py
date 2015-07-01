@@ -37,6 +37,8 @@ from z3c.schema.email import isValidMailAddress
 
 from plone.i18n.locales.interfaces import ICcTLDInformation
 
+from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
+
 from nti.mailer.interfaces import IEmailAddressable
 
 from nti.schema.field import Int
@@ -54,8 +56,6 @@ from nti.schema.interfaces import InvalidValue
 from nti.schema.jsonschema import TAG_HIDDEN_IN_UI, TAG_UI_TYPE
 from nti.schema.jsonschema import TAG_REQUIRED_IN_UI, TAG_READONLY_IN_UI
 
-from nti.dataserver_fragments.schema import ExtendedCompoundModeledContentBody
-
 from ..interfaces import InvalidData
 from ..interfaces import checkCannotBeBlank
 from ..interfaces import FieldCannotBeOnlyWhitespace
@@ -64,15 +64,15 @@ class UsernameCannotBeBlank(FieldCannotBeOnlyWhitespace):
 
 	i18n_message = _("The username cannot be blank.")
 
-	def __init__( self, username ):
-		super(UsernameCannotBeBlank,self).__init__( 'Username', username )
+	def __init__(self, username):
+		super(UsernameCannotBeBlank, self).__init__('Username', username)
 
 class UsernameContainsIllegalChar(InvalidData):
 
-	def __init__( self, username, allowed_chars ):
+	def __init__(self, username, allowed_chars):
 		self.username = username
-		allowed_chars = set(allowed_chars) - set( string.letters + string.digits )
-		allowed_chars = ''.join( sorted(allowed_chars) )
+		allowed_chars = set(allowed_chars) - set(string.letters + string.digits)
+		allowed_chars = ''.join(sorted(allowed_chars))
 		self.allowed_chars = allowed_chars
 		if not allowed_chars:
 			allowed_chars = 'no special characters'
@@ -80,12 +80,12 @@ class UsernameContainsIllegalChar(InvalidData):
 			'Username contains an illegal character. Only letters, digits, and ${allowed_chars} are allowed.',
 			mapping={'allowed_chars': allowed_chars})
 
-		super(UsernameContainsIllegalChar,self).__init__( self.i18n_message, 'Username',
-														  username, value=username )
+		super(UsernameContainsIllegalChar, self).__init__(self.i18n_message, 'Username',
+														  username, value=username)
 
-	def new_instance_restricting_chars( self, restricted_chars ):
+	def new_instance_restricting_chars(self, restricted_chars):
 		allowed_chars = set(self.allowed_chars) - set(restricted_chars)
-		return type(self)( self.username, allowed_chars )
+		return type(self)(self.username, allowed_chars)
 
 class EmailAddressInvalid(InvalidData):
 	"""
@@ -94,8 +94,8 @@ class EmailAddressInvalid(InvalidData):
 
 	i18n_message = _("The email address you have entered is not valid.")
 
-	def __init__( self, address ):
-		super(EmailAddressInvalid,self).__init__( address, value=address )
+	def __init__(self, address):
+		super(EmailAddressInvalid, self).__init__(address, value=address)
 
 class RealnameInvalid(InvalidData):
 	"""
@@ -105,13 +105,13 @@ class RealnameInvalid(InvalidData):
 	field = 'realname'
 	i18n_message = _("The first or last name you have entered is not valid.")
 
-	def __init__( self, name ):
-		super(RealnameInvalid,self).__init__( name, value=name )
+	def __init__(self, name):
+		super(RealnameInvalid, self).__init__(name, value=name)
 
 class BlankHumanNameError(RealnameInvalid):
 
 	def __init__(self, name=''):
-		super(BlankHumanNameError,self).__init__(name)
+		super(BlankHumanNameError, self).__init__(name)
 
 class OldPasswordDoesNotMatchCurrentPassword(InvalidPassword):
 	i18n_message = _("The password you supplied does not match the current password.")
@@ -122,15 +122,15 @@ class PasswordCannotConsistOfOnlyWhitespace(NoPassword):
 class InsecurePasswordIsForbidden(InvalidPassword):
 	i18n_message = _("The password you supplied has been identified by security researchers as commonly used and insecure. Please try again.")
 
-	def __init__( self, value=None ):
-		super(InsecurePasswordIsForbidden,self).__init__()
+	def __init__(self, value=None):
+		super(InsecurePasswordIsForbidden, self).__init__()
 		if value:
 			self.value = value
 
 resource_stream = getattr(pkg_resources, 'resource_stream')
 
 def _load_resource(n, f):
-	stream = resource_stream( n, f )
+	stream = resource_stream(n, f)
 	reader = codecs.getreader('utf-8')(stream)
 	domains = set()
 	for line in reader:
@@ -138,14 +138,13 @@ def _load_resource(n, f):
 		if not line or line.startswith('#'):
 			continue
 		line = line.upper()
-
-		domains.add( line )
+		domains.add(line)
 	return domains
 
 # 2012-12-07: This list of passwords, identified by industry researchers,
 # as extremely common and in all the rainbow tables, etc, is forbidden
 # see http://arstechnica.com/gadgets/2012/12/blackberry-has-had-it-up-to-here-with-your-terrible-passwords/
-_VERBOTEN_PASSWORDS = _load_resource( __name__, 'verboten-passwords.txt' )
+_VERBOTEN_PASSWORDS = _load_resource(__name__, 'verboten-passwords.txt')
 del _load_resource
 
 def _checkEmailAddress(address):
@@ -157,7 +156,7 @@ def _checkEmailAddress(address):
 		raise EmailAddressInvalid(address)
 
 	cctlds = component.getUtility(ICcTLDInformation)
-	domain = address.rsplit( '.', 1 )[-1]
+	domain = address.rsplit('.', 1)[-1]
 	if domain.lower() not in cctlds.getAvailableTLDs():
 		raise EmailAddressInvalid(address)
 	return True
@@ -170,12 +169,12 @@ def _isValidEmail(email):
 def checkEmailAddress(value):
 	if value and _isValidEmail(value):
 		return True
-	raise EmailAddressInvalid( value )
+	raise EmailAddressInvalid(value)
 
-#: A sequence of only non-alphanumeric characters
-#: or a sequence of only digits and spaces, the underscore, and non-alphanumeric characters
-#: (which is basically \W with digits and _ added back
-_INVALID_REALNAME_RE = re.compile( r'^\W+$|^[\d\s\W_]+$', re.UNICODE )
+# : A sequence of only non-alphanumeric characters
+# : or a sequence of only digits and spaces, the underscore, and non-alphanumeric characters
+# : (which is basically \W with digits and _ added back
+_INVALID_REALNAME_RE = re.compile(r'^\W+$|^[\d\s\W_]+$', re.UNICODE)
 
 def checkRealname(value):
 	"""
@@ -184,10 +183,10 @@ def checkRealname(value):
 	"""
 
 	if value:
-		if _INVALID_REALNAME_RE.match( value ):
-			raise RealnameInvalid( value )
+		if _INVALID_REALNAME_RE.match(value):
+			raise RealnameInvalid(value)
 		# Component parts? TODO: What about 'Jon Smith 3' as 'Jon Smith III'?
-		#for x in value.split():
+		# for x in value.split():
 	return True
 
 class IWillUpdateNewEntityEvent(IObjectEvent):
@@ -259,8 +258,8 @@ class IWillDeleteEntityEvent(IObjectEvent):
 @interface.implementer(IWillDeleteEntityEvent)
 class WillDeleteEntityEvent(ObjectEvent):
 
-	def __init__( self, obj):
-		super(WillDeleteEntityEvent,self).__init__( obj )
+	def __init__(self, obj):
+		super(WillDeleteEntityEvent, self).__init__(obj)
 
 class IAvatarURLProvider(Interface):
 	"""
@@ -271,7 +270,7 @@ class IAvatarURLProvider(Interface):
 	avatarURL = URI(# may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
-		required=False )
+		required=False)
 
 class IBackgroundURLProvider(Interface):
 	"""
@@ -282,7 +281,7 @@ class IBackgroundURLProvider(Interface):
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		description="If not provided, one will be generated for you.",
-		required=False )
+		required=False)
 
 class IAvatarURL(Interface):
 	"""
@@ -292,18 +291,18 @@ class IAvatarURL(Interface):
 	avatarURL = URI(# may be data:
 		title="URL of your avatar picture",
 		description="If not provided, one will be generated for you.",
-		required=False )
+		required=False)
 
-IAvatarURL['avatarURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+IAvatarURL['avatarURL']._type = (str, unicode)  # Relax this constraint for the sake of BWC
 
 class IBackgroundURL(Interface):
 
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
 		description="If not provided, one will be generated for you.",
-		required=False )
+		required=False)
 
-IBackgroundURL['backgroundURL']._type = (str,unicode) # Relax this constraint for the sake of BWC
+IBackgroundURL['backgroundURL']._type = (str, unicode)  # Relax this constraint for the sake of BWC
 
 class IProfileAvatarURL(IAvatarURL, IBackgroundURL):
 	pass
@@ -368,7 +367,7 @@ class IRequireProfileUpdate(Interface):
 	and allow bypassing certain parts of :class:`IImmutableFriendlyNamed.`
 	"""
 
-IFriendlyNamed['realname'].setTaggedValue( TAG_REQUIRED_IN_UI, True )
+IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
 class IUserProfile(IFriendlyNamed, IProfileAvatarURL):
 	"""
@@ -386,15 +385,15 @@ class IRestrictedUserProfile(IUserProfile):
 		title='birthdate',
 		description='Your date of birth. '
 			'If one is not provided, you will be assumed to be underage.',
-		required=False )
+		required=False)
 
 	password_recovery_email_hash = ValidTextLine(
 		title="A secure hash of an email address used during password recovery",
 		description="Typically auto-generated by setting the `email` field.",
-		required=False )
-	password_recovery_email_hash.setTaggedValue( TAG_HIDDEN_IN_UI, True )
-	password_recovery_email_hash.setTaggedValue( TAG_READONLY_IN_UI, True )
-	password_recovery_email_hash.setTaggedValue( TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL )
+		required=False)
+	password_recovery_email_hash.setTaggedValue(TAG_HIDDEN_IN_UI, True)
+	password_recovery_email_hash.setTaggedValue(TAG_READONLY_IN_UI, True)
+	password_recovery_email_hash.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
 	email = ValidTextLine(
 		title='Email',
@@ -402,14 +401,14 @@ class IRestrictedUserProfile(IUserProfile):
 			' to be able to set the password_recovery_email_hash',
 		required=False,
 		constraint=checkEmailAddress)
-	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL )
+	email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_HASHED_EMAIL)
 
 	email_verified = Bool(
 		title="Has the email been verified?",
 		required=False,
-		default=False )
-	email_verified.setTaggedValue( TAG_HIDDEN_IN_UI, True )
-	email_verified.setTaggedValue( TAG_READONLY_IN_UI, True )
+		default=False)
+	email_verified.setTaggedValue(TAG_HIDDEN_IN_UI, True)
+	email_verified.setTaggedValue(TAG_READONLY_IN_UI, True)
 
 class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 	"""
@@ -423,8 +422,8 @@ class IRestrictedUserProfileWithContactEmail(IRestrictedUserProfile):
 		required=False,
 		constraint=checkEmailAddress)
 
-	contact_email.setTaggedValue( TAG_REQUIRED_IN_UI, True )
-	contact_email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
+	contact_email.setTaggedValue(TAG_REQUIRED_IN_UI, True)
+	contact_email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
 class IContactEmailRecovery(interface.Interface):
 	"""
@@ -432,8 +431,8 @@ class IContactEmailRecovery(interface.Interface):
 	COPPA users, since we cannot actually retain the contact email.
 	Should be registered as an adapter on the user.
 	"""
-	contact_email_recovery_hash = interface.Attribute( "A string giving the hash of the contact email.")
-	consent_email_last_sent = interface.Attribute( "A float giving the time the last consent email was sent.")
+	contact_email_recovery_hash = interface.Attribute("A string giving the hash of the contact email.")
+	consent_email_last_sent = interface.Attribute("A float giving the time the last consent email was sent.")
 
 class ISocialMediaProfile(interface.Interface):
 	"""
@@ -559,12 +558,12 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		description=u'An email address that can be used for communication.',
 		required=False,
 		constraint=checkEmailAddress)
-	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
+	email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
 	opt_in_email_communication = Bool(
 		title="Can we contact you by email?",
 		required=False,
-		default=False )
+		default=False)
 
 	home_page = HTTPURL(
 		title='Home page',
@@ -577,7 +576,7 @@ class ICompleteUserProfile(IRestrictedUserProfile,
 		description="A short overview of who you are and what you "
 					  "do. Will be displayed on your author page, linked "
 					  "from the items you create.",
-		max_length=140, # twitter
+		max_length=140,  # twitter
 		required=False,
 		constraint=checkCannotBeBlank)
 
@@ -613,11 +612,11 @@ class IEmailRequiredUserProfile(ICompleteUserProfile):
 	"""
 
 	email = ValidTextLine(
-		title='Email',
-		description=u'',
-		required=True, # TODO: This should move up when ready
-		constraint=checkEmailAddress)
-	email.setTaggedValue( TAG_UI_TYPE, UI_TYPE_EMAIL )
+				title='Email',
+				description=u'',
+				required=True,  # TODO: This should move up when ready
+				constraint=checkEmailAddress)
+	email.setTaggedValue(TAG_UI_TYPE, UI_TYPE_EMAIL)
 
 class IUserProfileSchemaProvider(Interface):
 	"""
@@ -639,23 +638,23 @@ class FriendlyNamedSchemaProvider(object):
 	adapter for anything that extends Entity, and the most derived available
 	profile will be used (that is registered as an adapter for that type).
 	"""
-	def __init__( self, context ):
+	def __init__(self, context):
 		pass
 
 	def getSchema(self):
 		return IFriendlyNamed
 
-class IBaseCommunityProfile(IFriendlyNamed, IAboutProfile):
+class ICommunitySchema(IFriendlyNamed, IAboutProfile):
 	pass
 
-class ICommunityProfile(IBaseCommunityProfile, IAvatarURL):
+class ICommunityProfile(ICommunitySchema, IAvatarURL):
 
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
-		required=False )
+		required=False)
 
-ICommunityProfile['avatarURL']._type = (str,unicode) # relax
-ICommunityProfile['backgroundURL']._type = (str,unicode) # relax
+ICommunityProfile['avatarURL']._type = (str, unicode)  # relax
+ICommunityProfile['backgroundURL']._type = (str, unicode)  # relax
 
 @interface.implementer(IUserProfileSchemaProvider)
 class CommunitySchemaProvider(object):
@@ -664,7 +663,7 @@ class CommunitySchemaProvider(object):
 		pass
 
 	def getSchema(self):
-		return IBaseCommunityProfile
+		return ICommunitySchema
 
 class BlacklistedUsernameError(InvalidValue):
 	"""
@@ -748,7 +747,7 @@ class IHiddenMembership(interface.Interface):
 		check if membership of the specifed entity is hidden
 		"""
 
-# Suggested contacts.
+# suggested contacts.
 
 class ISuggestedContactRankingPolicy(Interface):
 	"""
