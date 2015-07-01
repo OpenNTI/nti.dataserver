@@ -645,7 +645,10 @@ class FriendlyNamedSchemaProvider(object):
 	def getSchema(self):
 		return IFriendlyNamed
 
-class ICommunityProfile(IAvatarURL, IAboutProfile):
+class IBaseCommunityProfile(IFriendlyNamed, IAboutProfile):
+	pass
+
+class ICommunityProfile(IBaseCommunityProfile, IAvatarURL):
 
 	backgroundURL = URI(# may be data:
 		title="URL of your background picture",
@@ -653,6 +656,15 @@ class ICommunityProfile(IAvatarURL, IAboutProfile):
 
 ICommunityProfile['avatarURL']._type = (str,unicode) # relax
 ICommunityProfile['backgroundURL']._type = (str,unicode) # relax
+
+@interface.implementer(IUserProfileSchemaProvider)
+class CommunitySchemaProvider(object):
+
+	def __init__(self, context):
+		pass
+
+	def getSchema(self):
+		return IBaseCommunityProfile
 
 class BlacklistedUsernameError(InvalidValue):
 	"""
