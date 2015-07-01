@@ -18,7 +18,7 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
-def get_content_untis(ntiids=()):
+def get_content_units(ntiids=()):
 	result = []
 	library = component.queryUtility(IContentPackageLibrary)
 	if library is not None:
@@ -30,8 +30,8 @@ def get_content_untis(ntiids=()):
 				result.append(context)
 		return result
 
-def get_presentation_asset_content_units(item, sort=False):
+def get_item_content_units(item, sort=False):
 	catalog = get_catalog()
 	entries = catalog.get_containers(item)
-	result = get_content_untis(entries) if entries else ()
+	result = get_content_units(entries) if entries else ()
 	return result
