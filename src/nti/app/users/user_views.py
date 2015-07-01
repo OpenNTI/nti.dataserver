@@ -99,39 +99,37 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	_DEFAULT_BATCH_SIZE = 50
 	_DEFAULT_BATCH_START = 0
-	
+
 	def _batch_params(self):
 		self.batch_size, self.batch_start = self._get_batch_size_start()
 		self.limit = self.batch_start + self.batch_size + 2
 		self.batch_after = None
 		self.batch_before = None
-		
+
 	def __call__(self):
 		if self.remoteUser is None:
 			raise hexc.HTTPForbidden()
-			
+
 		self._batch_params()
 		context = self.request.context
 		log_msg = "User %s is no longer a member of %s. Ignoring for externalization"
 		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships,
 															  log_msg=log_msg,
 															  the_logger=logger)
-		
+
 		everyone = Entity.get_entity(u'Everyone')
 		def _selector(x):
 			result = None
-			if x == everyone: # always 
+			if x == everyone: # always
 				result = None
-			elif context == self.remoteUser:
-				result = toExternalObject(x)
 			elif ICommunity.providedBy(x) and \
-				 not IDisallowMembershipOperations.providedBy(x) and \
-				 (x.public or self.remoteUser in x):
+				not IDisallowMembershipOperations.providedBy(x) and \
+				(x.public or self.remoteUser in x):
 				result = toExternalObject(x)
 			elif IDynamicSharingTargetFriendsList.providedBy(x) and self.remoteUser in x:
 				result = toExternalObject(x)
 			return result
-			
+
 		result = LocatedExternalDict()
 		self._batch_items_iterable(result, memberships,
 								   number_items_needed=self.limit,
