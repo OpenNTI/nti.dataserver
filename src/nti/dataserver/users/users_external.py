@@ -17,6 +17,8 @@ import functools
 from zope import component
 from zope import interface
 
+from zope.proxy import removeAllProxies
+
 from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth
 
@@ -57,6 +59,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	Takes into account file storage and generates Link objects
 	instead of data: urls. Tightly coupled to user_profile.
 	"""
+	entity = removeAllProxies(entity)
 	with_url = avatar_iface(entity, None)
 	url_property = getattr(type(with_url), attr_name, None)
 	if isinstance(url_property, urlproperty.UrlProperty):
@@ -185,6 +188,7 @@ class _CommunityExternalObject(_EntityExternalObject):
 	_DECORATE = True
 
 	def _do_toExternalObject(self, **kwargs):
+		from IPython.core.debugger import Tracer; Tracer()()
 		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
 		entity = self.entity
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
