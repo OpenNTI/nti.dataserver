@@ -371,7 +371,7 @@ IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
 class IUserProfile(IFriendlyNamed, IProfileAvatarURL):
 	"""
-	Base class that user profiles should extend.
+	Base class that user/entity profiles should extend.
 	"""
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
@@ -647,11 +647,8 @@ class FriendlyNamedSchemaProvider(object):
 class ICommunitySchema(IFriendlyNamed, IAboutProfile):
 	pass
 
-class ICommunityProfile(ICommunitySchema, IAvatarURL):
-
-	backgroundURL = URI(# may be data:
-		title="URL of your background picture",
-		required=False)
+class ICommunityProfile(IUserProfile, ICommunitySchema):
+	pass
 
 ICommunityProfile['avatarURL']._type = (str, unicode)  # relax
 ICommunityProfile['backgroundURL']._type = (str, unicode)  # relax
