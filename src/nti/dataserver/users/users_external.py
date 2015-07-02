@@ -181,21 +181,25 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 
 @component.adapter(ICommunity)
 class _CommunityExternalObject(_EntityExternalObject):
-	
+
 	_DECORATE = True
-	
+
 	def _do_toExternalObject(self, **kwargs):
 		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
 		entity = self.entity
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
+		# Adapt to our profile
+		entity = most_derived_profile_iface( entity )
+
 		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
-			if 	name in result or field.queryTaggedValue(TAG_HIDDEN_IN_UI) or \
-				interface.interfaces.IMethod.providedBy(field):
+			if 	   result.get( name, None ) \
+				or field.queryTaggedValue(TAG_HIDDEN_IN_UI) \
+				or interface.interfaces.IMethod.providedBy(field):
 				continue
 			field_val = field.query(entity, getattr(field, 'default', None))
 			result[name] = toExternalObject(field_val)
 		return result
-	
+
 @component.adapter(IFriendsList)
 class _FriendsListExternalObject(_EntityExternalObject):
 
@@ -411,7 +415,7 @@ class _CoppaUserPersonalSummaryExternalObject(_UserPersonalSummaryExternalObject
 
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_CoppaUserPersonalSummaryExternalObject, self)._do_toExternalObject(**kwargs)
-		for k in ('affiliation', 'email', 'birthdate', 'contact_email', 
+		for k in ('affiliation', 'email', 'birthdate', 'contact_email',
 				  'location', 'home_page', 'about'):
 			extDict[k] = None
 		return extDict
