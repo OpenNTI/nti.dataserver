@@ -89,14 +89,14 @@ class TestSubscribers(ApplicationLayerTest):
 		content_package = self.library.contentPackages[0]
 		catalog = get_catalog()
 		results = catalog.search_objects(container_ntiids=(unit_ntiid,))
-		assert_that(results, has_length(4))
+		assert_that(results, has_length(5))
 		last_mod_namespace = _get_file_last_mod_namespace( content_package, 'video_index.json' )
 		last_mod = catalog.get_last_modified( last_mod_namespace )
 		assert_that( last_mod, not_none() )
 
 		# Namespace
 		results = catalog.search_objects(namespace=content_package.ntiid)
-		assert_that(results, has_length(5))
+		assert_that(results, has_length(6))
 
 		# Type
 		for provided, count in (('INTIVideo', 1),
