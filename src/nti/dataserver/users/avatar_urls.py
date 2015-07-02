@@ -215,13 +215,13 @@ class GravatarComputedAvatarURLChoices(object):
 class _FixedBackgroundWrapper(object):
 
 	def __init__(self, context):
-		self.backgroundURL = getattr(context, '_backgroundURL')
+		self.backgroundURL = getattr(context, '_backgroundURL', None)
 
 @component.adapter(IEntity)
 @interface.implementer(IBackgroundURLProvider, IBackgroundURL)
 def BackgroundURLFactory(entity):
 	if getattr(entity, '_backgroundURL', None):
-		return _FixedAvatarWrapper(entity)
+		return _FixedBackgroundWrapper(entity)
 	return component.queryAdapter(entity, IBackgroundURLProvider, name="default")
 
 @component.adapter(IEntity)
