@@ -496,7 +496,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
-		obj_ntiid = params.get( 'ObjectId' )
+		obj_ntiid = params.get( 'objectId' )
 		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
 			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
 
