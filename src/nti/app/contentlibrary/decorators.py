@@ -128,7 +128,7 @@ class _UGDLibraryPathLinkDecorator(object):
 		if external_ntiid is not None:
 			path = '/dataserver2/%s' % LIBRARY_PATH_GET_VIEW
 			link = Link(path, rel=LIBRARY_PATH_GET_VIEW, method='GET',
-						params={'ObjectId': external_ntiid})
+						params={'objectId': external_ntiid})
 			_links = result.setdefault(LINKS, [])
 			interface.alsoProvides(link, ILocation)
 			link.__name__ = ''
