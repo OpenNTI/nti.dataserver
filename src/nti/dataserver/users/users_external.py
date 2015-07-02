@@ -188,7 +188,6 @@ class _CommunityExternalObject(_EntityExternalObject):
 	_DECORATE = True
 
 	def _do_toExternalObject(self, **kwargs):
-		from IPython.core.debugger import Tracer; Tracer()()
 		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
 		entity = self.entity
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
