@@ -64,7 +64,7 @@ from .interfaces import UsernameContainsIllegalChar
 def get_shared_dataserver(context=None, default=None):
 	if default != None:
 		return component.queryUtility(IDataserver, context=context, default=default)
-	return component.getUtility(IDataserver, context=context )
+	return component.getUtility(IDataserver, context=context)
 
 def named_entity_ntiid(entity):
 	return make_ntiid(date=DATE,
@@ -79,10 +79,10 @@ class Entity(PersistentCreatedModDateTrackingObject):
 	The root for things that represent human-like objects.
 	"""
 
-	_ds_namespace = 'users' # TODO: This doesn't really belong here
+	_ds_namespace = 'users'  # TODO: This doesn't really belong here
 
 	@classmethod
-	def get_entity( cls, username, dataserver=None, default=None, _namespace=None ):
+	def get_entity(cls, username, dataserver=None, default=None, _namespace=None):
 		"""
 		Returns an existing entity with the given username or None. If the
 		dataserver is not given, then the global dataserver will be used.
@@ -95,10 +95,10 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		if username is None:
 			return default
 
-		if is_valid_ntiid_string( username ):
-			result = find_object_with_ntiid( username )
+		if is_valid_ntiid_string(username):
+			result = find_object_with_ntiid(username)
 			if result is not None:
-				if not isinstance(result,Entity):
+				if not isinstance(result, Entity):
 					result = None
 				return result or default
 
@@ -107,11 +107,11 @@ class Entity(PersistentCreatedModDateTrackingObject):
 			# Sometimes we get a dict sneaking in here when updating from external objects.
 			# The CaseInsensitiveLastModifiedBTreeFolder turns out to throw a TypeError
 			# in that case, the same thing that, say, BTrees.IIBTree.IIBTree does
-			return dataserver.root[_namespace or cls._ds_namespace].get( username, default )
+			return dataserver.root[_namespace or cls._ds_namespace].get(username, default)
 		return default
 
 	@classmethod
-	def create_entity( cls, dataserver=None, **kwargs ):
+	def create_entity(cls, dataserver=None, **kwargs):
 		"""
 		Creates (and returns) and places in the dataserver a new entity,
 		constructed using the keyword arguments given, the same as those
@@ -143,8 +143,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 		dataserver = dataserver or get_shared_dataserver()
 		root_users = dataserver.root[cls._ds_namespace]
-
-		preflight_only = kwargs.pop( 'preflight_only', False )
+		preflight_only = kwargs.pop('preflight_only', False)
 
 		if 'parent' not in kwargs:
 			kwargs['parent'] = root_users
@@ -157,7 +156,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		# an OID.
 		# NOTE: This is also where we decide which database shard the user lives in
 		# First we create the skeleton object
-		user = cls.__new__( cls )
+		user = cls.__new__(cls)
 		user.username = kwargs['username']
 
 		# Then we place it in a database. It's important to do this before any code
@@ -167,21 +166,21 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		if not preflight_only:
 			placer = component.queryUtility(INewUserPlacer) or \
 					 component.getUtility(INewUserPlacer, name='default')
-			placer.placeNewUser( user, root_users, dataserver.shards )
+			placer.placeNewUser(user, root_users, dataserver.shards)
 
-			IKeyReference( user ) # Ensure it gets added to the database
-			assert getattr( user, '_p_jar', None ), "User should have a connection"
+			IKeyReference(user)  # Ensure it gets added to the database
+			assert getattr(user, '_p_jar', None), "User should have a connection"
 
 		# Take out some extra arguments used during the
 		# creation process from external data but
 		# not internally. Site policies and the like will
 		# look for, and possibly modify these, so ensure
 		# that we have one dictionary throughout the process
-		meta_data = kwargs.pop( 'meta_data', {} )
-		ext_value = kwargs.pop( 'external_value', {} )
+		meta_data = kwargs.pop('meta_data', {})
+		ext_value = kwargs.pop('external_value', {})
 
 		# Finally, we init the user
-		user.__init__( **kwargs )
+		user.__init__(**kwargs)
 		assert preflight_only or getattr(user, '_p_jar', None), "User should still have a connection"
 
 		# Notify we're about to update
@@ -198,22 +197,22 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 		if preflight_only:
 			if user.username in root_users:
-				raise KeyError( user.username )
+				raise KeyError(user.username)
 			user.__parent__ = None
 
 			# Be sure we didn't add this guy anywhere. If we did, then things are
 			# wacked and we need this transaction to fail.
-			assert getattr( user, '_p_jar', None ) is None, "User should NOT have a connection"
+			assert getattr(user, '_p_jar', None) is None, "User should NOT have a connection"
 
 			# Must NOT try to commit the transaction since the object has been added to the intid registry
 			transaction.doom()
 			return user
 
-		lifecycleevent.created( user ) # Fire created event
+		lifecycleevent.created(user)  # Fire created event
 
 		# Must manually fire added event if parent was given
 		if kwargs['parent'] is not None:
-			lifecycleevent.added( user, kwargs['parent'], user.username )
+			lifecycleevent.added(user, kwargs['parent'], user.username)
 
 		# Now store it. If there was no parent given or parent was none,
 		# this will fire ObjectAdded. If parent was given and is different than root_users,
@@ -222,7 +221,7 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		return user
 
 	@classmethod
-	def delete_entity( cls, username, dataserver=None ):
+	def delete_entity(cls, username, dataserver=None):
 		"""
 		Delete the entity (in this class's namespace) given by `username`. If the entity
 		doesn't exist, raises :class:`KeyError`.
@@ -233,17 +232,17 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		root_users = dataserver.root[cls._ds_namespace]
 		user = root_users[username]
 
-		notify(WillDeleteEntityEvent( user ) )
+		notify(WillDeleteEntityEvent(user))
 
 		del root_users[username]
 
 		# Also clean it up from whatever shard it happened to come from
-		home_shard = IShardLayout( IConnection( user ) )
+		home_shard = IShardLayout(IConnection(user))
 		if username in home_shard.users_folder:
 			del home_shard.users_folder[username]
 		return user
 
-	creator = SYSTEM_USER_NAME # TODO: This is probably wrong. creator is generally an entity, this breaks many expectations
+	creator = SYSTEM_USER_NAME  # TODO: This is probably wrong. creator is generally an entity, this breaks many expectations
 	__parent__ = None
 
 	# % is illegal because we sometimes have to
@@ -254,24 +253,23 @@ class Entity(PersistentCreatedModDateTrackingObject):
 	# prohibit whitespace and punctuation not needed/allowed in emails
 	ALLOWED_USERNAME_CHARS = string.letters + string.digits + '-+.@_'
 
-	def __init__(self, username,
-				 parent=None):
-		super(Entity,self).__init__()
+	def __init__(self, username, parent=None):
+		super(Entity, self).__init__()
 		__traceback_info__ = username, parent
 		if not username or not username.strip():
 			# Throw a three-arg version, similar to what a Field would do
-			raise UsernameCannotBeBlank( username )
+			raise UsernameCannotBeBlank(username)
 
 		username = unicode(username)
 		for c in username:
 			if c not in self.ALLOWED_USERNAME_CHARS:
-				raise UsernameContainsIllegalChar( username, self.ALLOWED_USERNAME_CHARS )
+				raise UsernameContainsIllegalChar(username, self.ALLOWED_USERNAME_CHARS)
 
 		# NOTE: Although we could look for the most derived IEntity self implements
 		# and validate against that schema we don't necessarily want to do so
 		# at this time since there are so many extent types of IEntity and
 		# we haven't enforced constraints like this before. This needs to be cleaned up
-		IEntity['username'].bind( self ).validate( username )
+		IEntity['username'].bind(self).validate(username)
 		self.username = username
 
 		# Entities, and in particular Principals, have a created time,
@@ -289,16 +287,16 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 	def _get__name__(self):
 		return self.username
-	def _set__name__(self,new_name):
+	def _set__name__(self, new_name):
 		if new_name:
 			# Deleting from a container wants to remove our name.
 			# We cannot allow that.
 			self.username = new_name
-	__name__ = property(_get__name__, _set__name__ )
+	__name__ = property(_get__name__, _set__name__)
 
 	def __repr__(self):
 		try:
-			return '%s(%s)' % (self.__class__.__name__,self.username)
+			return '%s(%s)' % (self.__class__.__name__, self.username)
 		except (ConnectionStateError, AttributeError):
 			# This most commonly (only?) comes up in unit tests when nose defers logging of an
 			# error until after the transaction has exited. There will
@@ -321,29 +319,29 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 	# Externalization
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		# Notify we're about to update
-		if getattr( self, '_p_jar', None ):
+		if getattr(self, '_p_jar', None):
 			notify(WillUpdateEntityEvent(self, parsed))
 
 		# Profile info
-		profile_iface = IUserProfileSchemaProvider( self ).getSchema()
-		profile = profile_iface( self )
+		profile_iface = IUserProfileSchemaProvider(self).getSchema()
+		profile = profile_iface(self)
 		# Cause certain fields to be effectively read-only once they are
 		# set. At this time, we cannot update the alias or realname fields once created; we assume
 		# them to be immutable. There are some few, one-time-only scenarios where we allow updates,
 		# usually when our interface has changed
-		immutably_named = IImmutableFriendlyNamed.providedBy( self )
-		profile_update = IRequireProfileUpdate.providedBy( self )
+		immutably_named = IImmutableFriendlyNamed.providedBy(self)
+		profile_update = IRequireProfileUpdate.providedBy(self)
 		if immutably_named:
-			if profile.alias and parsed.get( 'alias' ):
-				parsed.pop( 'alias' )
-			if profile.realname and parsed.get( 'realname' ) and not profile_update:
-				parsed.pop( 'realname' )
+			if profile.alias and parsed.get('alias'):
+				parsed.pop('alias')
+			if profile.realname and parsed.get('realname') and not profile_update:
+				parsed.pop('realname')
 
 		# Clients may be sending strings; map those to modeled-content.
-		about = parsed.get( 'about' )
-		if about and isinstance( about, string_types ):
+		about = parsed.get('about')
+		if about and isinstance(about, string_types):
 			about = [ about, ]
 			parsed[ 'about' ] = about
 
@@ -355,12 +353,12 @@ class Entity(PersistentCreatedModDateTrackingObject):
 		validate = profile_update or not self._p_mtime
 		__traceback_info__ = profile_iface, profile_update, validate
 
-		io = InterfaceObjectIO( profile, profile_iface, validate_after_update=validate )
-		io.updateFromExternalObject( parsed, *args, **kwargs )
+		io = InterfaceObjectIO(profile, profile_iface, validate_after_update=validate)
+		io.updateFromExternalObject(parsed, *args, **kwargs)
 		if profile_update:
 			# If we got here, then we got the data to validly update our profile,
 			# so we can stop providing the update interface
-			interface.noLongerProvides( self, IRequireProfileUpdate )
+			interface.noLongerProvides(self, IRequireProfileUpdate)
 
 	# Comparisons and Hashing
 
@@ -385,9 +383,9 @@ class Entity(PersistentCreatedModDateTrackingObject):
 
 class _NoOpCm(object):
 
-	def __enter__( self ):
+	def __enter__(self):
 		pass
 
-	def __exit__( self, t, v, tb ):
+	def __exit__(self, t, v, tb):
 		pass
 NOOPCM = _NoOpCm()

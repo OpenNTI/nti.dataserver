@@ -369,10 +369,11 @@ class IRequireProfileUpdate(Interface):
 
 IFriendlyNamed['realname'].setTaggedValue(TAG_REQUIRED_IN_UI, True)
 
-class IUserProfile(IFriendlyNamed, IProfileAvatarURL):
+class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
 	"""
 	Base class that user/entity profiles should extend.
 	"""
+IUserProfile = IEntityProfile # alias for BWC
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
 
