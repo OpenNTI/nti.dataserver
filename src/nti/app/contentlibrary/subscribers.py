@@ -200,6 +200,26 @@ def _get_container_tree(container_id):
 def _get_file_last_mod_namespace(unit, filename):
 	return '%s.%s.LastModified' % (unit.ntiid, filename)
 
+def _index_item(item, content_package, container_id, catalog):
+	result = 1
+	lineage_ntiids = _get_container_tree(container_id)
+	lineage_ntiids = None if not lineage_ntiids else lineage_ntiids
+	# index item
+	catalog.index(item, container_ntiids=lineage_ntiids,
+				  namespace=content_package.ntiid)
+	# check for slide decks
+	if INTISlideDeck.providedBy(item):
+		for slide in item.Slides or ():
+			result += 1
+			catalog.index(slide, container_ntiids=lineage_ntiids,
+				  		  namespace=content_package.ntiid)
+		
+		for video in item.Videos or ():
+			result += 1
+			catalog.index(video, container_ntiids=lineage_ntiids,
+				  		  namespace=content_package.ntiid)
+	return result
+
 def _update_index_when_content_changes(content_package, index_filename,
 									   item_iface, object_creator, catalog=None):
 	catalog = get_catalog() if catalog is None else catalog
@@ -277,11 +297,9 @@ def _update_index_when_content_changes(content_package, index_filename,
 		for container_id, indexed_ids in index['Containers'].items():
 			for indexed_id in indexed_ids:
 				obj = registry.queryUtility(item_iface, name=indexed_id)
-				lineage_ntiids = _get_container_tree(container_id)
-				if lineage_ntiids:
-					index_item_count += 1
-					catalog.index(obj, container_ntiids=lineage_ntiids,
-								  namespace=content_package.ntiid)
+				if obj is not None:
+					index_item_count += _index_item(obj, content_package, 
+													container_id, catalog)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
