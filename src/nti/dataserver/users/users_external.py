@@ -190,9 +190,8 @@ class _CommunityExternalObject(_EntityExternalObject):
 		most_derived_profile_iface = find_most_derived_interface(entity, ICommunityProfile)
 		# Adapt to our profile
 		entity = most_derived_profile_iface( entity )
-
 		for name, field in most_derived_profile_iface.namesAndDescriptions(all=True):
-			if 	   result.get( name, None ) \
+			if 	   name in result \
 				or field.queryTaggedValue(TAG_HIDDEN_IN_UI) \
 				or interface.interfaces.IMethod.providedBy(field):
 				continue
