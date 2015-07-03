@@ -335,6 +335,26 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	def _context_specific(self):
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
+def _get_top_level_contexts( obj ):
+	results = []
+	for top_level_contexts in component.subscribers( (obj,),
+													ITopLevelContainerContextProvider ):
+		results.extend( top_level_contexts )
+	return results
+
+def _get_hierarchy_context( obj ):
+	results = []
+	for hiearchy_contexts in component.subscribers( (obj,),
+												IHierarchicalContextProvider ):
+		results.extend( hiearchy_contexts )
+	return results
+
+def _get_hierarchy_context_for_context( obj, top_level_context ):
+	hierarchy_contexts = component.queryMultiAdapter(
+									( top_level_context, obj ),
+									IHierarchicalContextProvider )
+	return hierarchy_contexts or ()
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=IDataserverFolder,
@@ -353,20 +373,6 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			...
 		]
 	"""
-	def _get_top_level_contexts( self, obj ):
-		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
-		return top_level_contexts or ()
-
-	def _get_hierarchy_context( self, obj ):
-		hiearchy_contexts = IHierarchicalContextProvider( obj, None )
-		return hiearchy_contexts or ()
-
-	def _get_hierarchy_context_for_context( self, obj, top_level_context ):
-		hierarchy_contexts = component.queryMultiAdapter(
-										( top_level_context, obj ),
-										IHierarchicalContextProvider )
-		return hierarchy_contexts or ()
-
 	def _get_path_for_package(self, package, target_ntiid):
 		"""
 		For a given package, return the path to the target ntiid.
@@ -438,7 +444,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		if legacy_path:
 			package = legacy_path[0]
 
-			top_level_contexts = self._get_top_level_contexts( package )
+			top_level_contexts = _get_top_level_contexts( package )
 			for top_level_context in top_level_contexts:
 
 				# Bail if our top-level context is not readable.
@@ -447,7 +453,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 				# We have a hit.
 				result_list = [ top_level_context ]
 				if is_readable( package ):
-					hierarchy_context = self._get_hierarchy_context_for_context(
+					hierarchy_context = _get_hierarchy_context_for_context(
 														obj, top_level_context )
 					if len( hierarchy_context ) > 1:
 						result_list.extend( hierarchy_context[1:] )
@@ -458,7 +464,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 
-		hierarchy_contexts = self._get_hierarchy_context( obj )
+		hierarchy_contexts = _get_hierarchy_context( obj )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
@@ -469,7 +475,11 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			try:
 				packages = top_level_context.ContentPackageBundle.ContentPackages
 			except AttributeError:
-				packages = (top_level_context.legacy_content_package,)
+				try:
+					packages = (top_level_context.legacy_content_package,)
+				except AttributeError:
+					packages = top_level_context.ContentPackages
+
 			for package in packages:
 				path_list = self._get_path_for_package( package, target_ntiid )
 				if path_list:
@@ -536,14 +546,14 @@ class _PostLibraryPathView( AbstractAuthenticatedView ):
 		# TODO Permissioning concerns?
 		result = LocatedExternalList()
 		obj = self.context
-		top_level_contexts = ITopLevelContainerContextProvider( obj, None )
+		top_level_contexts = _get_top_level_contexts( obj )
 
 		def _top_level_endpoint( item ):
 			return item is None or IContentPackage.providedBy( item )
 
 		if top_level_contexts:
 			def _top_level_endpoint( item ):
-				return item is None or item == top_level_contexts[0]
+				return item is None or item in top_level_contexts
 
 		item = obj.__parent__
 		result_list = [ item ]

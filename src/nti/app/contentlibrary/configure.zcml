@@ -163,6 +163,21 @@
 	<adapter factory=".adapters._lessonoverview_to_contained_type" />
 	<adapter factory=".adapters._courseoverviewspacer_to_contained_type" />
 
+	<!-- Top-level/hierarchy -->
+	<adapter factory=".adapters._content_unit_to_bundle" />
+
+	<subscriber factory=".adapters._bundles_from_unit"
+				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
+				for="nti.contentlibrary.interfaces.IContentUnit"/>
+
+	<subscriber factory=".adapters._hierarchy_from_obj"
+				provides="nti.appserver.interfaces.IHierarchicalContextProvider"
+				for="*"/>
+
+	<subscriber factory=".adapters._bundles_from_container_object"
+				provides="nti.appserver.interfaces.IJoinableContextProvider"
+				for="*"/>
+
 	<!-- Content package modifications. -->
 	<!-- addition -->
 	<subscriber handler=".subscribers._update_indices_when_content_changes"
