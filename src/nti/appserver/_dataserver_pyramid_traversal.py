@@ -184,6 +184,12 @@ class _PageContainerResource(_AbstractPageContainerResource):
 class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
+def _get_joinable_contexts( obj ):
+	results = []
+	for joinable_contexts in component.subscribers( (obj,), IJoinableContextProvider ):
+		results.extend( joinable_contexts )
+	return results
+
 @interface.implementer(interfaces.IObjectsContainerResource)
 class _ObjectsContainerResource(_ContainerResource):
 
@@ -217,7 +223,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		permission to view the object in the case of 403s.
 		"""
 		if queryInteraction() is not None and not is_readable(context):
-			results = IJoinableContextProvider(context, None)
+			results = _get_joinable_contexts( context )
 			if results:
 				response = hexc.HTTPForbidden()
 				result = LocatedExternalDict()
