@@ -59,7 +59,6 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	Takes into account file storage and generates Link objects
 	instead of data: urls. Tightly coupled to user_profile.
 	"""
-	entity = removeAllProxies(entity)
 	with_url = avatar_iface(entity, None)
 	url_property = getattr(type(with_url), attr_name, None)
 	if isinstance(url_property, urlproperty.UrlProperty):
@@ -186,6 +185,9 @@ class _EntityExternalObject(_EntitySummaryExternalObject):
 class _CommunityExternalObject(_EntityExternalObject):
 
 	_DECORATE = True
+
+	def __init__(self, entity):
+		super(_CommunityExternalObject, self).__init__(removeAllProxies(entity))
 
 	def _do_toExternalObject(self, **kwargs):
 		result = super(_CommunityExternalObject, self)._do_toExternalObject(**kwargs)
