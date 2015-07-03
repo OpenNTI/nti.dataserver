@@ -277,7 +277,8 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 		if self.public_summary_profile_fields:
 			prof = IUserProfile(self.entity)
 			for f in self.public_summary_profile_fields:
-				extDict[f] = getattr(prof, f, None)
+				val = getattr(prof, f, None)
+				extDict[f] = toExternalObject( val )
 		return extDict
 
 @component.adapter(ICoppaUserWithoutAgreement)
