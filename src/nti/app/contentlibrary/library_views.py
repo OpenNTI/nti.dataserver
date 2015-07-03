@@ -379,11 +379,9 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		"""
 		def recur( unit ):
 			item_ntiid = getattr( unit, 'ntiid', None )
-			if item_ntiid == target_ntiid:
+			if 		item_ntiid == target_ntiid \
+				or target_ntiid in unit.embeddedContainerNTIIDs:
 				return [ unit ]
-			if target_ntiid in unit.embeddedContainerNTIIDs:
-				item = find_object_with_ntiid( target_ntiid )
-				return [ item, unit ]
 			for child in unit.children:
 				result = recur( child )
 				if result:
