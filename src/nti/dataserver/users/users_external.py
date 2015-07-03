@@ -42,6 +42,8 @@ from nti.links.links import Link
 
 from nti.schema.interfaces import find_most_derived_interface
 
+from nti.site.interfaces import InappropriateSiteError
+
 from nti.zodb import urlproperty
 
 from .interfaces import IAvatarURL
@@ -318,8 +320,6 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 		"""
 		:return: the externalization intended to be sent when requested by this user.
 		"""
-		from nti.dataserver._Dataserver import InappropriateSiteError  # circular imports
-
 		extDict = super(_UserPersonalSummaryExternalObject, self)._do_toExternalObject(**kwargs)
 		def _externalize_subordinates(l, name='summary'):
 			result = []
