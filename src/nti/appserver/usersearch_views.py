@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import operator
 import simplejson
+from collections import Mapping
 
 from zope import component
 from zope import interface
@@ -203,12 +204,13 @@ def _ResolveUsersView(request):
 	assert remote_user is not None
 
 	values = simplejson.loads(unicode(request.body, request.charset))
-	usernames = values.get('usernames') or values.get('terms') or ()
-	if isinstance(usernames, six.string_types):
+	if isinstance(values, Mapping):
+		usernames = values.get('usernames') or values.get('terms') or ()
+	elif isinstance(usernames, six.string_types):
 		usernames = usernames.split()
 
 	result = {}
-	for term in set(usernames):
+	for term in set(usernames or ()):
 		item = _resolve_user(term, remote_user)
 		if item:
 			match = item[0]
@@ -217,7 +219,9 @@ def _ResolveUsersView(request):
 													  if match == remote_user
 													  else 'summary'))
 
-	result = LocatedExternalDict({'Last Modified': 0, 'Items': result, 'Total':len(result)})
+	result = LocatedExternalDict({'Last Modified': 0, 
+								  'Items': result,
+								  'Total':len(result)})
 	return _provide_location(result, dataserver)
 
 interface.directlyProvides(_ResolveUsersView, INamedLinkView)
