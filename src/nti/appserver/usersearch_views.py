@@ -37,7 +37,6 @@ from nti.appserver.interfaces import IUserSearchPolicy
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
@@ -45,9 +44,12 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IEntityContainer
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
+from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
@@ -215,9 +217,13 @@ def _ResolveUsersView(request):
 		if item:
 			match = item[0]
 			IPreRenderResponseCacheController(match)(match, {'request': request})
-			result[match.username] = toExternalObject(match, name=('personal-summary'
-													  if match == remote_user
-													  else 'summary'))
+			if IUseNTIIDAsExternalUsername.providedBy(match):
+				keyname = to_external_ntiid_oid(match)
+			else:
+				keyname = match.username
+			result[keyname] = toExternalObject( match, name=('personal-summary'
+												if match == remote_user
+												else 'summary'))
 
 	result = LocatedExternalDict({'Last Modified': 0, 
 								  'Items': result,
