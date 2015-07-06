@@ -170,9 +170,9 @@ def _assessment_to_contained_type(context):
 def _content_unit_to_bundles(unit):
 	result = []
 	package = find_interface(unit, IContentPackage, strict=False)
-	bundle_catalog = component.getUtility(IContentPackageBundleLibrary)
+	bundle_catalog = component.queryUtility(IContentPackageBundleLibrary)
 
-	for bundle in bundle_catalog.getBundles():
+	for bundle in bundle_catalog.getBundles() or ():
 		if package in bundle.ContentPackages:
 			result.append( bundle )
 	return result
