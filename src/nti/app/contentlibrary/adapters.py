@@ -171,10 +171,10 @@ def _content_unit_to_bundles(unit):
 	result = []
 	package = find_interface(unit, IContentPackage, strict=False)
 	bundle_catalog = component.queryUtility(IContentPackageBundleLibrary)
-
-	for bundle in bundle_catalog.getBundles() or ():
+	bundles = bundle_catalog.getBundles() if bundle_catalog is not None else ()
+	for bundle in bundles or ():
 		if package in bundle.ContentPackages:
-			result.append( bundle )
+			result.append(bundle)
 	return result
 
 @interface.implementer(IContentPackageBundle)
@@ -183,7 +183,7 @@ def _content_unit_to_bundle(unit):
 	bundles = _content_unit_to_bundles(unit)
 	return bundles[0] if bundles else None
 
-def _get_bundles_from_container( obj ):
+def _get_bundles_from_container(obj):
 	catalog = get_catalog()
 	results = set()
 	if catalog:
@@ -198,12 +198,12 @@ def _get_bundles_from_container( obj ):
 @interface.implementer(IHierarchicalContextProvider)
 @component.adapter(interface.Interface)
 def _hierarchy_from_obj(obj):
-	container_bundles = _get_bundles_from_container( obj )
+	container_bundles = _get_bundles_from_container(obj)
 	results = [(bundle,) for bundle in container_bundles]
 	return results
 
 @interface.implementer(ITopLevelContainerContextProvider)
-@component.adapter( IContentUnit )
+@component.adapter(IContentUnit)
 def _bundles_from_unit(obj):
 	# We could tweak the adapter above to return
 	# all possible bundles, or use the container index.
@@ -214,14 +214,14 @@ def _bundles_from_unit(obj):
 	if bundle:
 		return (bundle,)
 
-def _get_top_level_contexts( obj ):
+def _get_top_level_contexts(obj):
 	results = set()
-	for top_level_contexts in component.subscribers( (obj,),
-													ITopLevelContainerContextProvider ):
+	for top_level_contexts in component.subscribers((obj,),
+													ITopLevelContainerContextProvider):
 		top_level_contexts = []
 		for top_level_context in top_level_contexts:
-			if IContentPackageBundle.providedBy( top_level_context ):
-				results.add( top_level_context )
+			if IContentPackageBundle.providedBy(top_level_context):
+				results.add(top_level_context)
 	return results
 
 @interface.implementer(IJoinableContextProvider)
@@ -232,7 +232,7 @@ def _bundles_from_container_object(obj):
 	the given object.
 	"""
 	results = set()
-	bundles = _get_top_level_contexts( obj )
+	bundles = _get_top_level_contexts(obj)
 	for bundle in bundles or ():
 		# We only want to add publicly available entries.
 		if is_readable(bundle):
