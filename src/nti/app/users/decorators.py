@@ -181,7 +181,12 @@ class _UserSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 @interface.implementer(IExternalMappingDecorator)
 class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	# TODO public, etc+
+	def _predicate(self, context, result):
+		result = bool(self._is_authenticated and \
+					  (self.remoteUser in context or \
+					  self.remoteUser == context.creator))
+		return result
+
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel=SUGGESTED_CONTACTS, elements=(SUGGESTED_CONTACTS,))
@@ -191,7 +196,12 @@ class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAware
 @interface.implementer(IExternalMappingDecorator)
 class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	# TODO public, etc+
+	def _predicate(self, context, result):
+		result = bool(self._is_authenticated and \
+					  (self.remoteUser in context or \
+					  self.remoteUser == context.creator))
+		return result
+
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		link = Link(context, rel=SUGGESTED_CONTACTS, elements=(SUGGESTED_CONTACTS,))
