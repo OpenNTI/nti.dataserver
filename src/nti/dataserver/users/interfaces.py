@@ -373,7 +373,7 @@ class IEntityProfile(IFriendlyNamed, IProfileAvatarURL):
 	"""
 	Base class that user/entity profiles should extend.
 	"""
-IUserProfile = IEntityProfile # alias for BWC
+IUserProfile = IEntityProfile  # alias for BWC
 
 from nti.schema.jsonschema import UI_TYPE_EMAIL, UI_TYPE_HASHED_EMAIL
 
@@ -777,13 +777,14 @@ class ISuggestedContactsProvider(Interface):
 		return a iterator with suggested contacts ordered by the ranking policy
 		"""
 
-class ISuggestedContactsSource(Interface):
+class ISuggestedContactsSource(ISuggestedContactsProvider):
 
 	"""
 	Defines a utility that allows to return contact suggestions based on the
 	source context.  The returned suggestions will not exist in the given
 	user's followers.
 	"""
+
 	context = Object(Interface, title="Source context", required=False)
 
 	def suggestions(user, limit=None):

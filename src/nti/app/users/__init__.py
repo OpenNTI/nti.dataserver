@@ -15,13 +15,12 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 import six
 
 REL_MY_MEMBERSHIP = 'my_membership'
+SUGGESTED_CONTACTS = 'SuggestedContacts'
 VERIFY_USER_EMAIL_VIEW = "verify_user_email"
 REQUEST_EMAIL_VERFICATION_VIEW = "request_email_verification"
 SEND_USER_EMAIL_VERFICATION_VIEW = "send_user_email_verification"
 VERIFY_USER_EMAIL_WITH_TOKEN_VIEW = "verify_user_email_with_token"
-SUGGESTED_CONTACTS = 'SuggestedContacts'
 
 def is_true(value):
-    value = value if isinstance(value, six.string_types) else str(value)
-    return value.lower() in ('1', 'y', 'yes', 't', 'true')
-
+	value = value if isinstance(value, six.string_types) else str(value)
+	return value.lower() in ('1', 'y', 'yes', 't', 'true')

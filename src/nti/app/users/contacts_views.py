@@ -7,7 +7,6 @@ Generic views for any user (or sometimes, entities).
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -19,11 +18,8 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import ICommunity
-from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import User
-
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
 
@@ -63,7 +59,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		contact sources.
 		"""
 		result = self.LIMITED_CONTACT_RATIO * self.batch_size
-		self.limited_count = int( result )
+		self.limited_count = int(result)
 		self.fill_in_count = self.batch_size - self.limited_count
 		# TODO Do we need a min fill count?
 		self.minimum_fill_count = 0
@@ -80,15 +76,15 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		limited_count = self.limited_count
 
 		for source in source_pool:
-			source = ILimitedSuggestedContactsSource( source, None )
-			suggestions = source.suggestions( self.context ) if source else ()
+			source = ILimitedSuggestedContactsSource(source, None)
+			suggestions = source.suggestions(self.context) if source else ()
 			if source and suggestions:
-				results.update( suggestions )
-				if len( results ) >= limited_count:
+				results.update(suggestions)
+				if len(results) >= limited_count:
 					break
 
 		# Respect our boundary
-		if len( results ) > limited_count:
+		if len(results) > limited_count:
 			results = results[:limited_count]
 
 		return results
@@ -105,13 +101,13 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		existing_pool = {e.username for e in self.context.entities_followed}
 		results = set()
 
-		for contact in get_all_suggested_contacts( self.context ):
+		for contact in get_all_suggested_contacts(self.context):
 			if		contact.username not in intermediate_usernames \
 				and contact.username not in existing_pool:
-				contact = User.get_user( contact.username )
+				contact = User.get_user(contact.username)
 				if contact:
-					results.add( contact )
-					if len( results ) >= fill_in_count:
+					results.add(contact)
+					if len(results) >= fill_in_count:
 						break
 
 		return results
@@ -124,13 +120,13 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		self._batch_params()
 		self._portion_counts()
 		limited_contacts = self._get_limited_contacts()
-		fill_in_contacts = self._get_fill_in_contacts( limited_contacts )
+		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = 'SuggestedContacts'
-		if len( fill_in_contacts ) >= self.minimum_fill_count:
+		if len(fill_in_contacts) >= self.minimum_fill_count:
 			result_list = []
-			result_list.extend( limited_contacts )
-			result_list.extend( fill_in_contacts )
+			result_list.extend(limited_contacts)
+			result_list.extend(fill_in_contacts)
 			results[ ITEMS ] = result_list
-			results[ 'ItemCount' ] = len( result_list )
+			results[ 'ItemCount' ] = len(result_list)
 		return results
