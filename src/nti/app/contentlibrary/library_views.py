@@ -459,17 +459,34 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 					result_list.extend( path_list )
 				return result_list
 
+	def _get_wrapped_bundles(self, hierarchy_contexts):
+		"""
+		For our hierarchy paths, get all wrapped bundles.
+		"""
+		results = []
+		for hierarchy_context in hierarchy_contexts:
+			top_level_context = hierarchy_context[0]
+			try:
+				results.append( top_level_context.ContentPackageBundle )
+			except AttributeError:
+				pass
+		return results
+
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 
 		hierarchy_contexts = _get_hierarchy_context( obj )
+		wrapped_bundles = self._get_wrapped_bundles( hierarchy_contexts )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
-			# Bail if our top-level context is not readable.
+			# Bail if our top-level context is not readable,
+			# or if we're wrapped by another context.
 			top_level_context = hierarchy_context[0]
-			if not is_readable( top_level_context ):
+			if 		not is_readable( top_level_context ) \
+				or 	top_level_context in wrapped_bundles:
 				continue
+
 			try:
 				packages = top_level_context.ContentPackageBundle.ContentPackages
 			except AttributeError:
@@ -502,6 +519,13 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 				result.append( result_list )
 		return result
 
+	def _sort(self, result_lists):
+		"""
+		Sorting by the length of the results may generally be good enough.
+		Longer paths might indicate full permission down the path tree.
+		"""
+		result_lists.sort( key=lambda x: len( x ), reverse=True )
+
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
 		obj_ntiid = params.get( 'objectId' )
@@ -525,6 +549,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
 		results = self._get_path( obj, object_ntiid )
+		self._sort( results )
 		return results
 
 @view_config(context=IPost)

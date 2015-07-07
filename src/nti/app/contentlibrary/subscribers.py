@@ -213,7 +213,7 @@ def _index_item(item, content_package, container_id, catalog):
 			result += 1
 			catalog.index(slide, container_ntiids=lineage_ntiids,
 				  		  namespace=content_package.ntiid)
-		
+
 		for video in item.Videos or ():
 			result += 1
 			catalog.index(video, container_ntiids=lineage_ntiids,
@@ -298,7 +298,7 @@ def _update_index_when_content_changes(content_package, index_filename,
 			for indexed_id in indexed_ids:
 				obj = registry.queryUtility(item_iface, name=indexed_id)
 				if obj is not None:
-					index_item_count += _index_item(obj, content_package, 
+					index_item_count += _index_item(obj, content_package,
 													container_id, catalog)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
