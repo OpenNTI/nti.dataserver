@@ -131,7 +131,8 @@ class _DFLLinksDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
 		result = bool(self._is_authenticated and \
-					  self.remoteUser in context)
+					  (self.remoteUser in context or \
+					  self.remoteUser == context.creator))
 		return result
 
 	def _do_decorate_external(self, context, result):
