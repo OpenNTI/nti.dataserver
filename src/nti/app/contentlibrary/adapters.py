@@ -55,6 +55,7 @@ from nti.contenttypes.presentation.interfaces import INTILessonOverview
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
 
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -196,15 +197,15 @@ def _get_bundles_from_container(obj):
 	return results
 
 @interface.implementer(IHierarchicalContextProvider)
-@component.adapter(interface.Interface)
-def _hierarchy_from_obj(obj):
+@component.adapter(interface.Interface, IUser)
+def _hierarchy_from_obj(obj, user):
 	container_bundles = _get_bundles_from_container(obj)
 	results = [(bundle,) for bundle in container_bundles]
 	return results
 
 @interface.implementer(ITopLevelContainerContextProvider)
-@component.adapter(IContentUnit)
-def _bundles_from_unit(obj):
+@component.adapter(IContentUnit, IUser)
+def _bundles_from_unit(obj, user):
 	# We could tweak the adapter above to return
 	# all possible bundles, or use the container index.
 	# TODO Do we want to return top-level ContentPackages here?

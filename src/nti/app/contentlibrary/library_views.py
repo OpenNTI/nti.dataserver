@@ -342,9 +342,16 @@ def _get_top_level_contexts( obj ):
 		results.extend( top_level_contexts )
 	return results
 
-def _get_hierarchy_context( obj ):
+def _get_top_level_contexts_for_user( obj, user ):
 	results = []
-	for hiearchy_contexts in component.subscribers( (obj,),
+	for top_level_contexts in component.subscribers( (obj, user),
+													ITopLevelContainerContextProvider ):
+		results.extend( top_level_contexts )
+	return results
+
+def _get_hierarchy_context( obj, user ):
+	results = []
+	for hiearchy_contexts in component.subscribers( (obj,user),
 												IHierarchicalContextProvider ):
 		results.extend( hiearchy_contexts )
 	return results
@@ -442,7 +449,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		if legacy_path:
 			package = legacy_path[0]
 
-			top_level_contexts = _get_top_level_contexts( package )
+			top_level_contexts = _get_top_level_contexts_for_user( package, self.remoteUser )
 			for top_level_context in top_level_contexts:
 
 				# Bail if our top-level context is not readable.
@@ -461,7 +468,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def _get_wrapped_bundles(self, hierarchy_contexts):
 		"""
-		For our hierarchy paths, get all wrapped bundles.
+		For our hierarchy paths, get all contained bundles.
 		"""
 		results = []
 		for hierarchy_context in hierarchy_contexts:
@@ -475,7 +482,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 
-		hierarchy_contexts = _get_hierarchy_context( obj )
+		hierarchy_contexts = _get_hierarchy_context( obj, self.remoteUser )
 		wrapped_bundles = self._get_wrapped_bundles( hierarchy_contexts )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
