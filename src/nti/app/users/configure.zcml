@@ -19,7 +19,7 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser
 					 pyramid.interfaces.IRequest" />
-				
+
 	<subscriber factory=".decorators._UserMembershipsLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IUser
@@ -37,9 +37,24 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList
 					 pyramid.interfaces.IRequest" />
-					 		
+
 	<subscriber factory=".decorators._DFLEditLinkRemoverDecorator"
 				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"/>
+
+	<subscriber factory=".decorators._UserSuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					pyramid.interfaces.IRequest"/>
+
+	<subscriber factory=".decorators._CommunitySuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.ICommunity
+					pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._DFLSuggestedContactsLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList
+					pyramid.interfaces.IRequest" />
 
 </configure>

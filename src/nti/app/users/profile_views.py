@@ -94,7 +94,7 @@ def _format_time(t):
 	except ValueError:
 		logger.debug("Cannot parse time '%s'", t)
 		return str(t)
-	
+
 def _format_date(d):
 	try:
 		return d.isoformat() if d is not None else u''
@@ -115,7 +115,7 @@ def _get_user_info_extract():
 		u = intids.queryObject(iid, None)
 		if not IUser.providedBy(u):
 			continue
-		
+
 		username = u.username
 		userid = _replace_username(username)
 		alias = _get_index_field_value(iid, ent_catalog, 'alias')
@@ -131,7 +131,7 @@ def _get_user_info_extract():
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_NTI_ADMIN)
 class UserInfoExtractView(AbstractAuthenticatedView):
-	
+
 	def __call__(self):
 		stream = BytesIO()
 		writer = csv.writer( stream )
@@ -170,7 +170,7 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 	for user in users or ():
 		if not IUser.providedBy(user):
 			continue
-		
+
 		if coppaOnly and not ICoppaUser.providedBy(user):
 			continue
 
@@ -190,13 +190,13 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_NTI_ADMIN)
 class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
-	
+
 	def __call__(self):
 		values = CaseInsensitiveDict(**self.request.params)
 		value = values.get('coppaOnly') or values.get('onlyCoppa') or values.get('coppa')
 		coppaOnly = is_true(value or 'F')
-		generator = partial(_get_topics_info, coppaOnly=coppaOnly)	
-		
+		generator = partial(_get_topics_info, coppaOnly=coppaOnly)
+
 		stream = BytesIO()
 		writer = csv.writer( stream )
 		response = self.request.response
@@ -212,15 +212,15 @@ class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_NTI_ADMIN)
 class UserEmailVerifiedView(AbstractAuthenticatedView):
-	
+
 	def __call__(self):
 		values = CaseInsensitiveDict(**self.request.params)
 		value = values.get('coppaOnly') or values.get('onlyCoppa') or values.get('coppa')
 		coppaOnly = is_true(value or 'F')
-		generator = partial(_get_topics_info, 
+		generator = partial(_get_topics_info,
 							topics_key='email_verified',
-							coppaOnly=coppaOnly)	
-		
+							coppaOnly=coppaOnly)
+
 		stream = BytesIO()
 		writer = csv.writer( stream )
 		response = self.request.response
@@ -241,7 +241,7 @@ def _get_profile_info(coppaOnly=False):
 	_users = IShardLayout( dataserver ).users_folder
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-	
+
 	for user in _users.values():
 		if 	not IUser.providedBy(user) or \
 			(coppaOnly and not ICoppaUser.providedBy(user)):
@@ -250,7 +250,7 @@ def _get_profile_info(coppaOnly=False):
 		iid = intids.queryId(user, None)
 		if iid is None:
 			continue
-		
+
 		username = user.username
 		userid = _replace_username(username)
 		email = _get_index_field_value(iid, ent_catalog, 'email')
@@ -269,8 +269,8 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 		request = self.request
 		values = CaseInsensitiveDict(**request.params)
 		coppaOnly = is_true(values.get('coppaOnly', 'F'))
-		generator = partial(_get_profile_info, coppaOnly=coppaOnly)	
-			
+		generator = partial(_get_profile_info, coppaOnly=coppaOnly)
+
 		stream = BytesIO()
 		writer = csv.writer( stream )
 		response = self.request.response
@@ -285,17 +285,17 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 def _get_inactive_accounts():
 	header = ['username', 'userid', 'realname', 'email', 'createdTime', 'lastLoginTime']
 	yield header
-	
+
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout( dataserver ).users_folder
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
-	
+
 	now = datetime.utcnow()
 	for user in _users.values():
 		if not IUser.providedBy(user):
 			continue
-		
+
 		iid = intids.queryId(user, None)
 		if iid is None:
 			continue
@@ -310,7 +310,7 @@ def _get_inactive_accounts():
 
 		if lastLoginTime and (now - lastLoginTime).days < 365:
 			continue
-		
+
 		username = user.username
 		userid = _replace_username(username)
 		email = _get_index_field_value(iid, ent_catalog, 'email')
@@ -360,14 +360,14 @@ def allowed_fields(user):
 			 renderer='rest',
 			 context=IDataserverFolder,
 			 permission=nauth.ACT_NTI_ADMIN)
-class UserProfileUpdateView(AbstractAuthenticatedView, 
+class UserProfileUpdateView(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
-	
+
 	def readInput(self, value=None):
 		result = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
 		result = CaseInsensitiveDict(result)
 		return result
-		
+
 	def __call__(self):
 		values = self.readInput()
 		authenticated_userid = self.remoteUser.username
@@ -375,7 +375,7 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 		user = User.get_user(username)
 		if user is None or not IUser.providedBy(user):
 			raise hexc.HTTPUnprocessableEntity('User not found')
-	
+
 		external = {}
 		profile, fields = allowed_fields(user)
 		for name, sch_def in fields.items():
@@ -383,17 +383,17 @@ class UserProfileUpdateView(AbstractAuthenticatedView,
 			if value is not None:
 				value = safestr(value)
 				external[name] = sch_def.fromUnicode(unicode(value)) if value else None
-	
+
 		restore_iface = False
 		if IImmutableFriendlyNamed.providedBy(user):
 			restore_iface = True
 			interface.noLongerProvides(user, IImmutableFriendlyNamed)
-	
+
 		update_from_external_object(user, external)
-	
+
 		if restore_iface:
 			interface.alsoProvides(user, IImmutableFriendlyNamed)
-	
+
 		result = LocatedExternalDict()
 		result['External'] = external
 		result['Profile'] = profile.__class__.__name__

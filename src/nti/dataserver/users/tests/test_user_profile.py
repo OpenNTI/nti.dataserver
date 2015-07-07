@@ -217,6 +217,8 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that( ext_prof, has_length( 1 ))
 
 		ext_prof = ext_prof[0]
+		# Clear optional field
+		ext_prof[ 'endYear' ] = ''
 		assert_that(ext_prof, has_entry('Class',
 										ProfessionalPosition.__external_class_name__ ))
 		assert_that(ext_prof, has_entry('MimeType',
@@ -228,7 +230,7 @@ class TestUserProfile(DataserverLayerTest):
 		new_io = factory()
 		internalization.update_from_external_object(new_io, ext_prof)
 		assert_that(new_io, has_property( 'startYear', is_( start_year )))
-		assert_that(new_io, has_property( 'endYear', is_( end_year )))
+		assert_that(new_io, has_property( 'endYear', none()))
 		assert_that(new_io, has_property( 'companyName', is_( company_name )))
 		assert_that(new_io, has_property( 'title', is_( title )))
 		assert_that(new_io, has_property( 'description', is_( description )))
