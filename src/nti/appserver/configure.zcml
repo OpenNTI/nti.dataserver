@@ -195,6 +195,11 @@
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
+	<adapter factory="._adapters.DFLExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList pyramid.interfaces.IRequest"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
 	<adapter factory="._adapters.GenericModeledContentExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.IModeledContent"
 			 provides="zope.traversing.interfaces.ITraversable"
@@ -207,6 +212,11 @@
 
 	<adapter factory="._adapters.CommunityExternalFieldTraverser"
 			 for="nti.dataserver.interfaces.ICommunity"
+			 provides="zope.traversing.interfaces.ITraversable"
+			 name="fields" />
+
+	<adapter factory="._adapters.DFLExternalFieldTraverser"
+			 for="nti.dataserver.interfaces.IDynamicSharingTargetFriendsList"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
