@@ -22,6 +22,9 @@ from nti.dataserver.authorization import ACT_READ
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
+
+from nti.dataserver.users.interfaces import ICommunity
+from nti.dataserver.users.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
 
