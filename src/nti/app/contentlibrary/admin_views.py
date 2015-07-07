@@ -33,14 +33,12 @@ from nti.common.maps import CaseInsensitiveDict
 from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IDataserverFolder
 
-from nti.dataserver.authorization import ACT_NTI_ADMIN
 from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
 from .synchronize import synchronize
 
-@view_config(permission=ACT_NTI_ADMIN)
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
