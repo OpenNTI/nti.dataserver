@@ -318,7 +318,7 @@ class IAnchoredRepresentation(IContained):
 from nti.dataserver_core.interfaces import IContainerIterable
 IContainerIterable = IContainerIterable
 
-# ## Changes related to content objects/users
+# Changes related to content objects/users
 SC_SHARED = "Shared"
 SC_CREATED = "Created"
 SC_DELETED = "Deleted"
@@ -418,7 +418,7 @@ IMutedInStream = IMutedInStream
 INeverStoredInSharedStream = INeverStoredInSharedStream
 INotModifiedInStreamWhenContainerModified = INotModifiedInStreamWhenContainerModified
 
-### Groups/Roles/ACLs
+# Groups/Roles/ACLs
 
 # some aliases
 
@@ -936,7 +936,7 @@ class IPublishable(interface.Interface):
 	def unpublish():
 		"Cause this object to no longer provide :class:`IDefaultPublished`"
 
-### Content
+# Content
 
 # BWC exports
 from nti.dataserver_fragments.interfaces import ITitledContent
@@ -999,7 +999,7 @@ class ISimpleEnclosureContainer(interface.Interface):
  			within this object.
  		"""
 
-### Particular content types
+# Particular content types
 
 # BWC exports
 from nti.dataserver_core.interfaces import IThreadable
@@ -1032,8 +1032,8 @@ class IObjectSharingModifiedEvent(IObjectModifiedEvent):
 @interface.implementer(IObjectSharingModifiedEvent)
 class ObjectSharingModifiedEvent(ObjectModifiedEvent):
 
-	def __init__( self, object, *descriptions, **kwargs ):
-		super(ObjectSharingModifiedEvent,self).__init__( object, *descriptions )
+	def __init__( self, obj, *descriptions, **kwargs ):
+		super(ObjectSharingModifiedEvent,self).__init__( obj, *descriptions )
 		self.oldSharingTargets = kwargs.pop( 'oldSharingTargets', () )
 
 # BWC exports
@@ -1310,7 +1310,7 @@ class IDeletedObjectPlaceholder(interface.Interface):
 	has to be left behind. These will typically be rendered specially.
 	"""
 
-# ## Dynamic event handling
+# Dynamic event handling
 import nti.socketio.interfaces
 
 class ISocketProxySession(nti.socketio.interfaces.ISocketIOChannel):
@@ -1501,9 +1501,7 @@ class IUserBlacklistedStorage(interface.Interface):
 		Remove the given username from the blacklist.
 		"""
 
-####
-# # Weak Refs and related BWC exports
-####
+# Weak Refs and related BWC exports
 
 import zope.deferredimport
 zope.deferredimport.initialize()
