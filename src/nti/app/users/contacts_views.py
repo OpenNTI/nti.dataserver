@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Generic views for any user (or sometimes, entities).
-
 .. $Id$
 """
 
@@ -10,6 +8,8 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
+
+from zope.security.interfaces import IPrincipal
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -24,7 +24,7 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import User
-
+from nti.dataserver.users.suggested_contacts import SuggestedContact
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
 
@@ -36,6 +36,14 @@ from . import SUGGESTED_CONTACTS
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
 
+def to_suggested_contacts(users):
+	result = []
+	for user in users or ():
+		principal = IPrincipal(user)
+		contact = SuggestedContact(username=principal.id, rank=1)
+		result.append(contact)
+	return result
+	
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
