@@ -380,7 +380,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 
 	About = None
 	Locked = False
-	
+
 	about = alias('About')
 	defaultGravatarType = 'retro'
 
@@ -440,7 +440,8 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 
 	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		updated = False
-		for key, name in (('Locked', 'Locked'), ('About', 'About'), ('about', 'About')):
+		for key, name in (('Locked', 'Locked'), ('locked', 'Locked'),
+						  ('About', 'About'), ('about', 'About')):
 			value = parsed.pop(key, _marker)
 			if value is not _marker:
 				updated = True

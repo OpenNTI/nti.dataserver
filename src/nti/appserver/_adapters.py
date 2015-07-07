@@ -37,8 +37,10 @@ from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import IShareableModeledContent
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI, ICommunityProfile
+from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
+from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.externalization.singleton import SingletonDecorator
@@ -218,6 +220,13 @@ class CommunityExternalFieldTraverser(_AbstractExternalFieldTraverser):
 				continue
 			allowed_fields.add(k)
 		self._allowed_fields = allowed_fields
+
+@component.adapter(IDynamicSharingTargetFriendsList)
+@interface.implementer(IExternalFieldTraversable)
+class DFLExternalFieldTraverser(_AbstractExternalFieldTraverser):
+
+	_unwrapped_fields = ()
+	_allowed_fields = ('About', 'about', 'Locked', 'locked')
 
 import nameparser
 nameparser_config = getattr(nameparser, "config")
