@@ -20,6 +20,7 @@ from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.internalization import read_body_as_external_object
@@ -39,12 +40,12 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from .synchronize import synchronize
 
-
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 context=IDataserverFolder,
-			 permission=ACT_SYNC_LIBRARY,
-			 name='SyncAllLibraries')
+@view_config(permission=ACT_NTI_ADMIN)
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IDataserverFolder,
+			   name='SyncAllLibraries')
 class _SyncAllLibrariesView(AbstractAuthenticatedView,
 							ModeledContentUploadRequestUtilsMixin):
 	"""
@@ -125,8 +126,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 			restoreInteraction()
 			result['Elapsed'] = time.time() - now
 		return result
-			
+
 	def __call__(self):
 		with self.lock:
 			return self._do_call()
-
