@@ -180,6 +180,14 @@
 				provides="nti.appserver.interfaces.IJoinableContextProvider"
 				for="*"/>
 
+	<subscriber factory=".adapters._bundles_from_post"
+				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.IPost"/>
+
+	<subscriber factory=".adapters._bundles_from_topic"
+				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"/>
+
 	<!-- Content package modifications. -->
 	<!-- addition -->
 	<subscriber handler=".subscribers._update_indices_when_content_changes"

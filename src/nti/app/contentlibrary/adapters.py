@@ -55,6 +55,9 @@ from nti.contenttypes.presentation.interfaces import INTILessonOverview
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
 
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import ITopic
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
 
@@ -213,6 +216,20 @@ def _bundles_from_unit(obj, user):
 	# another object?
 	bundle = IContentPackageBundle(obj, None)
 	if bundle:
+		return (bundle,)
+
+@interface.implementer(ITopLevelContainerContextProvider)
+@component.adapter(IPost)
+def _bundles_from_post(obj):
+	bundle = find_interface(obj, IContentPackageBundle, strict=False)
+	if bundle is not None:
+		return (bundle,)
+
+@interface.implementer(ITopLevelContainerContextProvider)
+@component.adapter(ITopic)
+def _bundles_from_topic(obj):
+	bundle = find_interface(obj, IContentPackageBundle, strict=False)
+	if bundle is not None:
 		return (bundle,)
 
 def _get_top_level_contexts(obj):
