@@ -17,6 +17,8 @@ from pyramid import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
+from nti.dataserver.authorization import ACT_READ
+
 from nti.dataserver.interfaces import IUser
 
 from nti.dataserver.users import User
@@ -34,6 +36,7 @@ CLASS = StandardExternalFields.CLASS
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
+			 permission=ACT_READ,
 			 context=IUser)
 class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	"""
@@ -47,6 +50,9 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	# much sense.
 	_DEFAULT_BATCH_SIZE = 20
 	_DEFAULT_BATCH_START = 0
+
+	# TODO Max size default
+	# TODO Total limit
 
 	LIMITED_CONTACT_RATIO = .6
 
@@ -129,4 +135,64 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 			result_list.extend(fill_in_contacts)
 			results[ ITEMS ] = result_list
 			results[ 'ItemCount' ] = len(result_list)
+		return results
+
+@view_config(context=ICommunity)
+@view_config(context=IDynamicSharingTargetFriendsList)
+@view_config(route_name='objects.generic.traversal',
+			 name=SUGGESTED_CONTACTS,
+			 permission=ACT_READ,
+			 request_method='GET')
+class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+	"""
+	Simple contact suggestions based on members of
+	context.
+	"""
+
+	# If we do any randomization, these batch params would not
+	# much sense.
+	_DEFAULT_BATCH_SIZE = 20
+	_DEFAULT_BATCH_START = 0
+
+	MAX_REQUEST_SIZE = 50
+	MIN_RESULT_COUNT = 5
+
+	def _batch_params(self):
+		self.batch_size, self.batch_start = self._get_batch_size_start()
+
+	def _get_params(self):
+		"""
+		The ratio of contacts we will retrieve from limited
+		contact sources.
+		"""
+		self._batch_params()
+		self.result_count = self.batch_size
+		if self.batch_size > self.MAX_REQUEST_SIZE:
+			self.result_count = self.MAX_REQUEST_SIZE
+
+		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
+
+	def _get_contacts(self):
+		results = set()
+		for member in self.context:
+			if member.username not in self.existing_pool:
+				results.add( member )
+				if len( results ) >= self.result_count:
+					break
+		return results
+
+	def __call__(self):
+		if self.remoteUser is None:
+			raise hexc.HTTPForbidden()
+
+		results = LocatedExternalDict()
+		self._get_params()
+		contacts = self._get_contacts()
+		results[ 'ItemCount' ] = 0
+		results[ CLASS ] = 'SuggestedContacts'
+		if len( contacts ) >= self.MIN_RESULT_COUNT:
+			result_list = []
+			result_list.extend( contacts )
+			results[ ITEMS ] = result_list
+			results[ 'ItemCount' ] = len( result_list )
 		return results
