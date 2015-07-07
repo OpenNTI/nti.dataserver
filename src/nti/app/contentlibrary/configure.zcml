@@ -168,11 +168,13 @@
 
 	<subscriber factory=".adapters._bundles_from_unit"
 				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
-				for="nti.contentlibrary.interfaces.IContentUnit"/>
+				for="nti.contentlibrary.interfaces.IContentUnit
+						nti.dataserver.interfaces.IUser"/>
 
 	<subscriber factory=".adapters._hierarchy_from_obj"
 				provides="nti.appserver.interfaces.IHierarchicalContextProvider"
-				for="*"/>
+				for="*
+					nti.dataserver.interfaces.IUser"/>
 
 	<subscriber factory=".adapters._bundles_from_container_object"
 				provides="nti.appserver.interfaces.IJoinableContextProvider"
