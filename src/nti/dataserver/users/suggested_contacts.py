@@ -11,8 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from functools import total_ordering
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.container.contained import Contained
 
 from nti.dataserver_core.interfaces import IUser
@@ -65,6 +66,14 @@ class SuggestedContactRankingPolicy(SchemaConfigured, Contained):
 		return sorted(contacts, reverse=True)
 DefaultSuggestedContactRankingPolicy = SuggestedContactRankingPolicy
 
+@interface.implementer(ISuggestedContactRankingPolicy)
+class NoOpSuggestedContactRankingPolicy(SchemaConfigured, Contained):
+	createDirectFieldProperties(ISuggestedContactRankingPolicy)
+
+	@classmethod
+	def sort(cls, contacts):
+		return contacts
+
 @interface.implementer(ISuggestedContactsProvider)
 class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	createDirectFieldProperties(ISuggestedContactsProvider)
@@ -90,8 +99,10 @@ class _UserLimitedSuggestedContactSource(object):
 
 	def __init__(self, context):
 		self.source = context
-
-	def suggestions(self, user):
+		self.ranking = NoOpSuggestedContactRankingPolicy()
+		self.ranking.provider = self
+		
+	def suggestions(self, user, *args, **kwargs):
 		# And no dupes
 		existing_pool = {e.username for e in user.entities_followed}
 		entities_followed = {e.username for e in self.source.entities_followed}
