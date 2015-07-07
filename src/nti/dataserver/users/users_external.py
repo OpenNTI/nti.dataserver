@@ -257,8 +257,8 @@ class _DynamicFriendsListExternalObject(_FriendsListExternalObject):
 
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_DynamicFriendsListExternalObject, self)._do_toExternalObject(**kwargs)
-		extDict['About'] = self.entity.About
-		extDict['Locked'] = self.entity.Locked
+		extDict['about'] = extDict['About'] = self.entity.About
+		extDict['locked'] = extDict['Locked'] = self.entity.Locked
 		return extDict
 
 @component.adapter(IUser)
