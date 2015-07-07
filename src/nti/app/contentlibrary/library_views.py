@@ -335,18 +335,57 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	def _context_specific(self):
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
+def _get_wrapped_bundles( top_level_contexts ):
+	results = []
+	for top_level_context in top_level_contexts:
+		try:
+			results.append( top_level_context.ContentPackageBundle )
+		except AttributeError:
+			pass
+	return results
+
+def _dedupe_bundles( top_level_contexts ):
+	"""
+	Filter out bundles that may be contained by other contexts.
+	"""
+	results = []
+	wrapped_bundles = _get_wrapped_bundles( top_level_contexts )
+	for top_level_context in top_level_contexts:
+		if top_level_context not in wrapped_bundles:
+			results.append( top_level_context )
+	return results
+
 def _get_top_level_contexts( obj ):
 	results = []
 	for top_level_contexts in component.subscribers( (obj,),
 													ITopLevelContainerContextProvider ):
 		results.extend( top_level_contexts )
-	return results
+	return _dedupe_bundles( results )
 
 def _get_top_level_contexts_for_user( obj, user ):
 	results = []
 	for top_level_contexts in component.subscribers( (obj, user),
 													ITopLevelContainerContextProvider ):
 		results.extend( top_level_contexts )
+	return _dedupe_bundles( results )
+
+def _get_wrapped_bundles_from_hierarchy( hierarchy_contexts ):
+	"""
+	For our hierarchy paths, get all contained bundles.
+	"""
+	top_level_contexts = (x[0] for x in hierarchy_contexts if x)
+	return _get_wrapped_bundles( top_level_contexts )
+
+def _dedupe_bundles_from_hierarchy( hierarchy_contexts ):
+	"""
+	Filter out bundles that may be contained by other contexts.
+	"""
+	results = []
+	wrapped_bundles = _get_wrapped_bundles_from_hierarchy( hierarchy_contexts )
+	for hierarchy_context in hierarchy_contexts:
+		top_level_context = hierarchy_context[0]
+		if top_level_context not in wrapped_bundles:
+			results.append( hierarchy_context )
 	return results
 
 def _get_hierarchy_context( obj, user ):
@@ -354,13 +393,13 @@ def _get_hierarchy_context( obj, user ):
 	for hiearchy_contexts in component.subscribers( (obj,user),
 												IHierarchicalContextProvider ):
 		results.extend( hiearchy_contexts )
-	return results
+	return _dedupe_bundles_from_hierarchy( results )
 
 def _get_hierarchy_context_for_context( obj, top_level_context ):
-	hierarchy_contexts = component.queryMultiAdapter(
+	results = component.queryMultiAdapter(
 									( top_level_context, obj ),
 									IHierarchicalContextProvider )
-	return hierarchy_contexts or ()
+	return _dedupe_bundles_from_hierarchy( results )
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
@@ -466,32 +505,17 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 					result_list.extend( path_list )
 				return result_list
 
-	def _get_wrapped_bundles(self, hierarchy_contexts):
-		"""
-		For our hierarchy paths, get all contained bundles.
-		"""
-		results = []
-		for hierarchy_context in hierarchy_contexts:
-			top_level_context = hierarchy_context[0]
-			try:
-				results.append( top_level_context.ContentPackageBundle )
-			except AttributeError:
-				pass
-		return results
-
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 
 		hierarchy_contexts = _get_hierarchy_context( obj, self.remoteUser )
-		wrapped_bundles = self._get_wrapped_bundles( hierarchy_contexts )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable,
 			# or if we're wrapped by another context.
 			top_level_context = hierarchy_context[0]
-			if 		not is_readable( top_level_context ) \
-				or 	top_level_context in wrapped_bundles:
+			if not is_readable( top_level_context ):
 				continue
 
 			try:
