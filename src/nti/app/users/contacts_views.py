@@ -64,8 +64,8 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	_DEFAULT_BATCH_SIZE = 20
 	_DEFAULT_BATCH_START = 0
 	LIMITED_CONTACT_RATIO = .6
-	MAX_REQUEST_SIZE = 50
-	MIN_RESULT_COUNT = 5
+	MAX_REQUEST_SIZE = 10
+	MIN_RESULT_COUNT = 0
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
@@ -166,7 +166,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 	_DEFAULT_BATCH_SIZE = 20
 	_DEFAULT_BATCH_START = 0
 
-	MAX_REQUEST_SIZE = 50
+	MAX_REQUEST_SIZE = 10
 	MIN_RESULT_COUNT = 5
 
 	def _batch_params(self):
@@ -186,6 +186,15 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 
 	def _get_contacts(self):
 		results = set()
+		creator = self.context.creator
+		try:
+			creator_username = creator.username
+		except AttributeError:
+			creator_username = creator
+
+		if creator and creator_username not in self.existing_pool:
+				results.add( creator )
+
 		for member in self.context:
 			if member.username not in self.existing_pool:
 				results.add( member )
