@@ -20,11 +20,11 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.dataserver.authorization import ACT_READ
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import User
 
-from nti.dataserver.users.interfaces import ICommunity
-from nti.dataserver.users.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
 
@@ -131,7 +131,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
 		results[ 'ItemCount' ] = 0
-		results[ CLASS ] = 'SuggestedContacts'
+		results[ CLASS ] = SUGGESTED_CONTACTS
 		if len(fill_in_contacts) >= self.minimum_fill_count:
 			result_list = []
 			result_list.extend(limited_contacts)
@@ -192,7 +192,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 		self._get_params()
 		contacts = self._get_contacts()
 		results[ 'ItemCount' ] = 0
-		results[ CLASS ] = 'SuggestedContacts'
+		results[ CLASS ] = SUGGESTED_CONTACTS
 		if len( contacts ) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend( contacts )
