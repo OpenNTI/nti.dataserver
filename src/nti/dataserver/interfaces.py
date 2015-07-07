@@ -132,6 +132,7 @@ ILastModified = ILastModified
 # BWC exports
 from nti.dataserver_core.interfaces import IIdentity
 from nti.dataserver_core.interfaces import IDataserver
+from nti.dataserver_core.interfaces import IExternalService
 
 IIdentity = IIdentity
 IDataserver = IDataserver
@@ -139,7 +140,7 @@ IDataserver = IDataserver
 class IDataserverClosedEvent(interface.interfaces.IObjectEvent):
 	"Fired when a dataserver is closed"
 
-class IRedisClient(interface.Interface):
+class IRedisClient(IExternalService):
 	"""
 	A very poor abstraction of a :class:`redis.StrictRedis` client.
 	In general, this should only be used in the lowest low level code and
@@ -150,7 +151,7 @@ class IRedisClient(interface.Interface):
 	separated by the ``/`` character.
 	"""
 
-class IMemcacheClient(interface.Interface):
+class IMemcacheClient(IExternalService):
 	"""
 	A very poor abstraction of a :class:`memcache.Client` client.
 	In general, this should only be used in the lowest low level code and
