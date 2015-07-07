@@ -39,7 +39,7 @@
 
 	<adapter factory=".users_external._CommunityExternalObject"
 			 name="summary" />
-			 
+
 	<adapter factory=".users_external._EntityExternalObject" />
 	<adapter factory=".users_external._CommunityExternalObject" />
 	<adapter factory=".users_external._FriendsListExternalObject" />
@@ -162,15 +162,15 @@
 	<!-- Default -->
 	<adapter factory=".interfaces.FriendlyNamedSchemaProvider"
 			 for="nti.dataserver.interfaces.IEntity" />
-	
+
 	<adapter factory=".interfaces.CommunitySchemaProvider"
 			 for="nti.dataserver.interfaces.ICommunity" />
-			 
+
 	<adapter factory=".user_profile.FriendlyNamedFactory" />
 	<adapter factory=".user_profile.RestrictedUserProfileWithContactEmailAddressable" />
 
 	<adapter factory=".user_profile.CommunityProfileFactory" />
-	
+
 	<!-- In dev mode, we don't impose too many restrictions by default -->
 	<adapter factory=".user_profile.CompleteUserProfileFactory"
 			 zcml:condition="have devmode" />
@@ -180,10 +180,14 @@
 
 	<!-- Profile to principal -->
 	<adapter factory=".user_profile._profile_to_principal" />
-		
+
 	<!-- Hidden memberships -->
 	<adapter factory=".communities._HiddenMembershipFactory"
 			 for="nti.dataserver.interfaces.ICommunity"
 			 provides=".interfaces.IHiddenMembership" />
+
+	<!-- Suggested contacts -->
+	<adapter factory=".suggested_contacts._UserLimitedSuggestedContactSource"
+			 provides=".interfaces.ILimitedSuggestedContactsSource" />
 
 </configure>

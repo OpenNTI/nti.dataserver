@@ -15,7 +15,7 @@ logger = __import__('logging').getLogger(__name__)
 #pylint: disable=W0212,R0904
 
 from hamcrest import (
-	contains, has_value, is_in, same_instance,
+	contains, has_value, is_in,
     assert_that, greater_than_or_equal_to, has_entry, has_length,
     has_property, is_, is_not, none, )
 does_not = is_not
@@ -25,7 +25,6 @@ from hamcrest import has_key
 import unittest
 from nose.tools import assert_raises
 
-import persistent
 from zope import component
 import zc.intid
 from z3c.password import interfaces as pwd_interfaces

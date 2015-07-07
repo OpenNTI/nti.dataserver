@@ -7,6 +7,7 @@ Generic views for any user (or sometimes, entities).
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -29,6 +30,7 @@ from nti.dataserver.users import Entity
 
 from nti.dataserver.users.users_external import _avatar_url
 from nti.dataserver.users.users_external import _background_url
+
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.externalization.interfaces import LocatedExternalDict

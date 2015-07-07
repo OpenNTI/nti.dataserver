@@ -12,7 +12,10 @@ logger = __import__('logging').getLogger(__name__)
 from functools import total_ordering
 
 from zope import interface
+from zope import component
 from zope.container.contained import Contained
+
+from nti.dataserver_core.interfaces import IUser
 
 from nti.externalization.representation import WithRepr
 
@@ -21,6 +24,7 @@ from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISuggestedContact
+from .interfaces import ILimitedSuggestedContactsSource
 from .interfaces import ISuggestedContactsProvider
 from .interfaces import ISuggestedContactRankingPolicy
 
@@ -73,3 +77,23 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 	def suggestions(self, user):
 		raise NotImplementedError()
 SuggestedContactsProvider = DefaultSuggestedContactsProvider
+
+@component.adapter(IUser)
+@interface.implementer(ILimitedSuggestedContactsSource)
+class _UserLimitedSuggestedContactSource(object):
+	"""
+	Based on the given user context, a limited number
+	of suggested contacts will be returned.
+	"""
+
+	LIMIT = 1
+
+	def __init__(self, context):
+		self.source = context
+
+	def suggestions(self, user):
+		# And no dupes
+		existing_pool = {e.username for e in user.entities_followed}
+		entities_followed = {e.username for e in self.source.entities_followed}
+		results = entities_followed - existing_pool
+		return results[:self.LIMIT] if results else ()

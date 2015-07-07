@@ -38,6 +38,7 @@ from nti.links.links import Link
 from nti.traversal.traversal import find_interface
 
 from . import REL_MY_MEMBERSHIP
+from . import SUGGESTED_CONTACTS
 from . import REQUEST_EMAIL_VERFICATION_VIEW
 from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
@@ -165,3 +166,32 @@ class _DFLEditLinkRemoverDecorator(object):
 				links.pop(edit_idx)
 			if not links and LINKS in external:
 				del external[LINKS]
+
+@component.adapter(IUser, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _UserSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel=SUGGESTED_CONTACTS, elements=(SUGGESTED_CONTACTS,))
+		_links.append(link)
+
+@component.adapter(ICommunity, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	# TODO public, etc+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel=SUGGESTED_CONTACTS, elements=(SUGGESTED_CONTACTS,))
+		_links.append(link)
+
+@component.adapter(IDynamicSharingTargetFriendsList, IRequest)
+@interface.implementer(IExternalMappingDecorator)
+class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
+
+	# TODO public, etc+
+	def _do_decorate_external(self, context, result):
+		_links = result.setdefault(LINKS, [])
+		link = Link(context, rel=SUGGESTED_CONTACTS, elements=(SUGGESTED_CONTACTS,))
+		_links.append(link)
