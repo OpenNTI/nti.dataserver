@@ -30,6 +30,8 @@ from nti.ntiids.interfaces import INTIIDResolver
 from .library_views import PAGE_INFO_MT_JSON
 from .library_views import find_page_info_view_helper
 
+PAGE_INFO_MT_JSON = PAGE_INFO_MT_JSON
+
 # See also assessment_views, especially for notes on Accept header handling.
 
 # Content cards are not true modeled content; this package
