@@ -28,7 +28,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 class TestCommunityViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-	def test_create_community(self):
+	def test_create_list_community(self):
 		ext_obj = {'username': 'bleach',
  				   'alias': 'Bleach',	
  				   'realname': u'Bleach',
@@ -43,6 +43,16 @@ class TestCommunityViews(ApplicationLayerTest):
 			c = Community.get_community(username='bleach')
 			assert_that(c, has_property('public', is_(True)))
 			assert_that(c, has_property('joinable', is_(True)))
+			
+		path = '/dataserver2/@@list.communities'
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+		assert_that(res.json_body, has_entry('Total', is_(2)))
+		
+		path = '/dataserver2/@@list.communities?term=B'
+		res = self.testapp.get(path, status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(1)))
+		assert_that(res.json_body, has_entry('Total', is_(1)))
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
 	def test_update_community(self):

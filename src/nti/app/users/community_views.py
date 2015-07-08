@@ -26,7 +26,11 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.appserver.ugd_query_views import _UGDView
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
@@ -72,6 +76,53 @@ class CreateCommunityView(AbstractAuthenticatedView,
 		args['external_value'] = externalValue
 		community = Community.create_community(**args)
 		return community
+
+def _make_min_max_btree_range(search_term):
+	min_inclusive = search_term  # start here
+	max_exclusive = search_term[0:-1] + unichr(ord(search_term[-1]) + 1)
+	return min_inclusive, max_exclusive
+
+def username_search(search_term=None):
+	dataserver = component.getUtility(IDataserver)
+	_users = IShardLayout(dataserver).users_folder
+	if search_term:
+		min_inclusive, max_exclusive = _make_min_max_btree_range(search_term)	
+		usernames = _users.iterkeys(min_inclusive, max_exclusive, excludemax=True)
+	else:
+		usernames = _users.iterkeys()
+	return usernames
+
+@view_config(name='ListCommunities')
+@view_config(name='list.communities')
+@view_defaults(route_name='objects.generic.traversal',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
+class ListCommunitiesView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		request = self.request
+		values = CaseInsensitiveDict(**request.params)
+		term = values.get('term') or values.get('search')
+		usernames = values.get('usernames') or values.get('username')
+		if term:
+			usernames = username_search(term)
+		elif usernames:
+			usernames = usernames.split(",")
+		else:
+			usernames = username_search()
+	
+		total = 0
+		result = LocatedExternalDict()
+		items = result[ITEMS] = {}
+		for username in usernames:
+			community = Community.get_community(username)
+			if community is None or not ICommunity.providedBy(community):
+				continue
+			items[username] = community
+			total += 1
+		result['Total'] = total
+		return result
 
 @view_config(route_name='objects.generic.traversal',
 			 context=ICommunity,
