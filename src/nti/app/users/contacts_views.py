@@ -31,6 +31,7 @@ from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
 
 from . import SUGGESTED_CONTACTS
@@ -144,7 +145,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 			result_list = []
 			result_list.extend(limited_contacts)
 			result_list.extend(fill_in_contacts)
-			results[ ITEMS ] = result_list
+			results[ ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
 			results[ 'ItemCount' ] = len(result_list)
 		return results
 
