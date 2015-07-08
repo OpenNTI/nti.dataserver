@@ -156,17 +156,14 @@ class _DFLEditLinkRemoverDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalObject(self, context, external):
+		links = external.get(LINKS, ())
 		if context.Locked:
-			edit_idx = -1
-			links = external.get(LINKS, ())
-			for idx, link in enumerate(links):
+			for idx, link in enumerate(list(links)): # mutating
 				if link.get('rel') == 'edit':
-					edit_idx = idx
-					break
-			if edit_idx != -1:
-				links.pop(edit_idx)
-			if not links and LINKS in external:
-				del external[LINKS]
+					links.pop(idx)
+					break				
+		if not links and LINKS in external:
+			del external[LINKS]
 
 @component.adapter(IUser, IRequest)
 @interface.implementer(IExternalMappingDecorator)

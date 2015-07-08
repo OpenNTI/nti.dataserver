@@ -189,13 +189,10 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 	def _get_contacts(self):
 		results = set()
 		creator = self.context.creator
-		try:
-			creator_username = creator.username
-		except AttributeError:
-			creator_username = creator
+		creator_username = getattr(creator, 'username', creator)
 
 		if creator and creator_username not in self.existing_pool:
-				results.add( creator )
+			results.add( creator )
 
 		for member in self.context:
 			if member.username not in self.existing_pool:
@@ -216,6 +213,6 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 		if len( contacts ) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend( contacts )
-			results[ ITEMS ] = result_list
+			results[ ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
 			results[ 'ItemCount' ] = len( result_list )
 		return results
