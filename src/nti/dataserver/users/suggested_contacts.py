@@ -105,9 +105,14 @@ class _UserLimitedSuggestedContactSource(object):
 		self.ranking.provider = self
 
 	def suggestions(self, user, *args, **kwargs):
-		# And no dupes
 		existing_pool = {e.username for e in user.entities_followed}
 		entities_followed = {e.username for e in self.source.entities_followed}
-		results = tuple( entities_followed - existing_pool )
-		results = results[:self.LIMIT] if results else ()
-		return [User.get_user( x ) for x in results]
+		possibles = entities_followed - existing_pool
+		results = []
+		for possible in possibles:
+			user = User.get_user( possible )
+			if user is not None:
+				results.append( user )
+				if len( results ) >= self.LIMIT:
+					break
+		return results
