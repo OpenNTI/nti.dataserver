@@ -11,9 +11,15 @@ logger = __import__('logging').getLogger(__name__)
 
 from functools import total_ordering
 
+from ZODB.utils import u64
+
 from zope import interface
 
 from zope.container.contained import Contained
+
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IEntityContainer
+from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 
 from nti.dataserver.users import User
 
@@ -27,6 +33,47 @@ from .interfaces import ISuggestedContact
 from .interfaces import ISuggestedContactsProvider
 from .interfaces import ISuggestedContactRankingPolicy
 from .interfaces import ISecondOrderSuggestedContactProvider
+
+def _make_visibility_test( user ):
+	"""
+	For a given user, create a lambda that excludes those users
+	not visible from our user's communities. We also exclude
+	`nextthought.com` users.
+	"""
+	if user:
+		user_community_names = user.usernames_of_dynamic_memberships - set(('Everyone',))
+		def test(x):
+			try:
+				username = getattr(x, 'username')
+			except KeyError:  # pragma: no cover
+				# typically POSKeyError
+				logger.warning("Failed to filter entity with id %s", hex(u64(x._p_oid)))
+				return False
+			# User can see himself
+			if x is user:
+				return True
+
+			# No one can see the Koppa Kids or nextthought users.
+			if 		ICoppaUserWithoutAgreement.providedBy(x) \
+				or 	username.endswith( '@nextthought.com' ):
+				return False
+
+			# public comms can be searched
+			if ICommunity.providedBy(x) and x.public:
+				return True
+
+			# User can see dynamic memberships he's a member of
+			# or owns. First, the general case
+			container = IEntityContainer(x, None)
+			if container is not None:
+				return user in container or getattr(x, 'creator', None) is user
+
+			# Otherwise, visible if it doesn't have dynamic memberships,
+			# or we share dynamic memberships
+			return 	not hasattr(x, 'usernames_of_dynamic_memberships') or \
+					x.usernames_of_dynamic_memberships.intersection( user_community_names )
+		return test
+	return lambda _: True
 
 @total_ordering
 @WithRepr
@@ -89,9 +136,8 @@ SuggestedContactsProvider = DefaultSuggestedContactsProvider
 @interface.implementer(ISecondOrderSuggestedContactProvider)
 class _SecondOrderContactProvider(object):
 	"""
-	For the given user, return the best second
-	order contacts.  This is pretty cheap to do in-memory,
-	for now.
+	For the given user, return the best second order contacts.
+	This is pretty cheap to do in-memory, for now.
 	"""
 
 	def __init__(self):
@@ -109,6 +155,8 @@ class _SecondOrderContactProvider(object):
 				accum[username] = SuggestedContact( username=username, rank=1 )
 
 	def suggestions(self, user, *args, **kwargs):
+		# Could we ever come across cross-site suggestions?
+		accept_filter = _make_visibility_test( user )
 		accum = dict()
 		for target in user.entities_followed:
 			self._get_contacts( target, accum )
@@ -120,5 +168,7 @@ class _SecondOrderContactProvider(object):
 			target_name = contact.username
 			if target_name not in existing_pool:
 				target = User.get_user( target_name )
-				if target is not None:
+
+				if 		target is not None \
+					and accept_filter( target ):
 					yield target
