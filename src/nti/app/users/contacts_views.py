@@ -81,7 +81,6 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 		result = self.LIMITED_CONTACT_RATIO * self.result_count
 		self.limited_count = int(result)
-		self.fill_in_count = self.result_count - self.limited_count
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
 
 	def _get_limited_contacts(self):
@@ -113,7 +112,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		"""
 		# TODO Currently our only subscriber does so based on
 		# courses.  We also need one for global community.
-		fill_in_count = self.fill_in_count
+		fill_in_count = self.result_count - len( intermediate_contacts )
 		intermediate_usernames = {x.username for x in intermediate_contacts}
 		results = set()
 
