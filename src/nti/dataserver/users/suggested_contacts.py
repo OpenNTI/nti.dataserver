@@ -11,12 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from functools import total_ordering
 
-from zope import component
 from zope import interface
 
 from zope.container.contained import Contained
-
-from nti.dataserver_core.interfaces import IUser
 
 from nti.dataserver.users import User
 
@@ -27,9 +24,9 @@ from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import ISuggestedContact
-from .interfaces import ILimitedSuggestedContactsSource
 from .interfaces import ISuggestedContactsProvider
 from .interfaces import ISuggestedContactRankingPolicy
+from .interfaces import ISecondOrderSuggestedContactProvider
 
 @total_ordering
 @WithRepr
@@ -89,30 +86,39 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 		raise NotImplementedError()
 SuggestedContactsProvider = DefaultSuggestedContactsProvider
 
-@component.adapter(IUser)
-@interface.implementer(ILimitedSuggestedContactsSource)
-class _UserLimitedSuggestedContactSource(object):
+@interface.implementer(ISecondOrderSuggestedContactProvider)
+class _SecondOrderContactProvider(object):
 	"""
-	Based on the given user context, a limited number
-	of suggested contacts will be returned.
+	For the given user, return the best second
+	order contacts.  This is pretty cheap to do in-memory,
+	for now.
 	"""
 
-	LIMIT = 1
-
-	def __init__(self, context):
-		self.source = context
-		self.ranking = NoOpSuggestedContactRankingPolicy()
+	def __init__(self):
+		self.ranking = SuggestedContactRankingPolicy()
 		self.ranking.provider = self
 
+	def _get_contacts(self, target, accum):
+		entities_followed = getattr( target, 'entities_followed', () )
+		for entity in entities_followed:
+			username = entity.username
+			if username in accum:
+				suggested_contact = accum[username]
+				suggested_contact.rank += 1
+			else:
+				accum[username] = SuggestedContact( username=username, rank=1 )
+
 	def suggestions(self, user, *args, **kwargs):
+		accum = dict()
+		for target in user.entities_followed:
+			self._get_contacts( target, accum )
+
 		existing_pool = {e.username for e in user.entities_followed}
-		entities_followed = {e.username for e in self.source.entities_followed}
-		possibles = entities_followed - existing_pool
-		results = []
-		for possible in possibles:
-			user = User.get_user( possible )
-			if user is not None:
-				results.append( user )
-				if len( results ) >= self.LIMIT:
-					break
-		return results
+		existing_pool.add( user.username )
+		contacts = self.ranking.sort( accum.values() )
+		for contact in contacts:
+			target_name = contact.username
+			if target_name not in existing_pool:
+				target = User.get_user( target_name )
+				if target is not None:
+					yield target
