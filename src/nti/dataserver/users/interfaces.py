@@ -723,9 +723,15 @@ class IDisallowHiddenMembership(interface.Interface):
 	marker interface to disallow hidden memberships
 	"""
 
+class IDisallowSuggestedContacts(interface.Interface):
+	"""
+	marker interface to disallow suggested contacts
+	"""
+
 class IDisallowMembershipOperations(IDisallowMembersLink,
 									IDisallowActivityLink,
-									IDisallowHiddenMembership):
+									IDisallowHiddenMembership,
+									IDisallowSuggestedContacts):
 	pass
 
 class IHiddenMembership(interface.Interface):
