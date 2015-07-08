@@ -52,7 +52,6 @@ ITEMS = StandardExternalFields.ITEMS
 @view_config(name='CreateCommunity')
 @view_config(name='create.community')
 @view_defaults(route_name='objects.generic.traversal',
-			   name='create.community',
 			   request_method='POST',
 			   context=IDataserverFolder,
 			   permission=nauth.ACT_NTI_ADMIN)
