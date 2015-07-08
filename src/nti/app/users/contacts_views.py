@@ -29,6 +29,9 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import User
 from nti.dataserver.users.suggested_contacts import SuggestedContact
+
+from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
 from nti.dataserver.users.interfaces import ISecondOrderSuggestedContactProvider
 
@@ -183,27 +186,40 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
 		self.existing_pool.add( self.remoteUser.username )
 
+	def _accept_filter(self, member, hidden):
+		"""
+		Only add new, non-hidden, non-nextthought users.
+		"""
+		return		IUser.providedBy( member ) \
+				and	member.username not in self.existing_pool \
+				and not member.username.endswith( '@nextthought.com' ) \
+				and not member in hidden
+
 	def _get_contacts(self):
 		results = set()
 		creator = self.context.creator
-		creator_username = getattr(creator, 'username', creator)
+		creator_username = getattr( creator, 'username', creator )
+		hidden = IHiddenMembership( self.context, None ) or ()
 
 		if creator and creator_username not in self.existing_pool:
 			results.add( creator )
 
 		for member in self.context:
-			# Only add new, non nextthought users.
-			if 		IUser.providedBy( member ) \
-				and	member.username not in self.existing_pool \
-				and not member.username.endswith( '@nextthought.com' ) :
+			if self._accept_filter( member, hidden ):
 				results.add( member )
 				if len( results ) >= self.result_count:
 					break
 		return results
 
 	def __call__(self):
-		# TODO Validate public, hidden, etc.
-		if self.remoteUser is None:
+		context = self.context
+		# Should we check for public here? It's false by default.
+		#is_public = context.public if ICommunity.providedBy( context ) else True
+
+		if 		self.remoteUser is None \
+			or 	IDisallowSuggestedContacts.providedBy( context ) \
+			or 	not (	self.remoteUser in context \
+					or	self.remoteUser == context.creator):
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()

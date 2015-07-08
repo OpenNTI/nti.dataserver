@@ -27,6 +27,7 @@ from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembersLink
 from nti.dataserver.users.interfaces import IDisallowActivityLink
 from nti.dataserver.users.interfaces import IDisallowHiddenMembership
+from nti.dataserver.users.interfaces import IDisallowSuggestedContacts
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
@@ -161,7 +162,7 @@ class _DFLEditLinkRemoverDecorator(object):
 			for idx, link in enumerate(list(links)): # mutating
 				if link.get('rel') == 'edit':
 					links.pop(idx)
-					break				
+					break
 		if not links and LINKS in external:
 			del external[LINKS]
 
@@ -179,9 +180,11 @@ class _UserSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecor
 class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		result = bool(self._is_authenticated and \
-					  (self.remoteUser in context or \
-					  self.remoteUser == context.creator))
+		# Should we check for public here? It's false by default.
+		result = bool(	self._is_authenticated \
+					and not IDisallowSuggestedContacts.providedBy( context ) \
+					or	(	self.remoteUser in context \
+				  		or	self.remoteUser == context.creator))
 		return result
 
 	def _do_decorate_external(self, context, result):
@@ -194,9 +197,9 @@ class _CommunitySuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAware
 class _DFLSuggestedContactsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
-		result = bool(self._is_authenticated and \
-					  (self.remoteUser in context or \
-					  self.remoteUser == context.creator))
+		result = bool(	self._is_authenticated \
+					and (	self.remoteUser in context \
+					  	or	self.remoteUser == context.creator))
 		return result
 
 	def _do_decorate_external(self, context, result):
