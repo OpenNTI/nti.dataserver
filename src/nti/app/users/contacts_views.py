@@ -21,6 +21,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -51,11 +52,11 @@ def to_suggested_contacts(users):
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
-			 permission=ACT_READ,
+			 permission=ACT_UPDATE,
 			 context=IUser)
 class UserSuggestedContactsView(AbstractAuthenticatedView):
 	"""
-	For our user, return suggested contacts based on:
+	For the contextual user, return suggested contacts based on:
 
 		1. Friends friends list (2nd order)
 		2. Suggested contacts utility
@@ -201,6 +202,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 		return results
 
 	def __call__(self):
+		# TODO Validate public, hidden, etc.
 		if self.remoteUser is None:
 			raise hexc.HTTPForbidden()
 
