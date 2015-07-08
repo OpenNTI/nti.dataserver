@@ -51,18 +51,13 @@ def to_suggested_contacts(users):
 			 request_method='GET',
 			 permission=ACT_READ,
 			 context=IUser)
-class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+class UserSuggestedContactsView(AbstractAuthenticatedView):
 	"""
 	For our user, return suggested contacts based on:
 
 		1. Friends friends list (2nd order)
 		2. Suggested contacts utility
 	"""
-
-	# If we do any randomization, these batch params would not
-	# much sense.
-	_DEFAULT_BATCH_SIZE = 20
-	_DEFAULT_BATCH_START = 0
 	# The portion of results we get from our contacts
 	LIMITED_CONTACT_RATIO = .6
 	# The minimum number of contacts we must have in our pool
@@ -74,15 +69,11 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
-	def _batch_params(self):
-		self.batch_size, self.batch_start = self._get_batch_size_start()
-
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
-		self._batch_params()
-		self.result_count = self.batch_size or params.get( 'Count' )
-		if self.batch_size > self.MAX_REQUEST_SIZE:
+		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
+		if self.result_count > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
 
 		self.limited_count = 0
@@ -99,7 +90,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		# We could randomize this, with a daily seed to
 		# limit fishing.
 		source_pool = self.context.entities_followed
-		if not source_pool:
+		if not source_pool or not self.limited_count:
 			return ()
 		results = set()
 
@@ -171,11 +162,12 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 
 	# If we do any randomization, these batch params would not
 	# much sense.
+	# TODO Support batching
 	_DEFAULT_BATCH_SIZE = 20
 	_DEFAULT_BATCH_START = 0
 
 	MAX_REQUEST_SIZE = 10
-	MIN_RESULT_COUNT = 5
+	MIN_RESULT_COUNT = 0
 
 	def _batch_params(self):
 		self.batch_size, self.batch_start = self._get_batch_size_start()
@@ -185,9 +177,10 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 		The ratio of contacts we will retrieve from limited
 		contact sources.
 		"""
+		params = CaseInsensitiveDict(self.request.params)
 		self._batch_params()
-		self.result_count = self.batch_size
-		if self.batch_size > self.MAX_REQUEST_SIZE:
+		self.result_count = self.batch_size or params.get( 'Count' ) or self.MAX_REQUEST_SIZE
+		if self.result_count > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
 
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
