@@ -99,8 +99,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 			suggestions = source.suggestions(self.context) if source else ()
 			if source and suggestions:
 				for suggestion in suggestions:
-					suggestion_username = getattr( suggestion, 'username', suggestion )
-					if suggestion_username not in self.existing_pool:
+					if suggestion.username not in self.existing_pool:
 						results.add( suggestion )
 						if len(results) >= self.limited_count:
 							break

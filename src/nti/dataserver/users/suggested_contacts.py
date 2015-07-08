@@ -18,6 +18,8 @@ from zope.container.contained import Contained
 
 from nti.dataserver_core.interfaces import IUser
 
+from nti.dataserver.users import User
+
 from nti.externalization.representation import WithRepr
 
 from nti.schema.schema import EqHash
@@ -107,4 +109,5 @@ class _UserLimitedSuggestedContactSource(object):
 		existing_pool = {e.username for e in user.entities_followed}
 		entities_followed = {e.username for e in self.source.entities_followed}
 		results = tuple( entities_followed - existing_pool )
-		return results[:self.LIMIT] if results else ()
+		results = results[:self.LIMIT] if results else ()
+		return [User.get_user( x ) for x in results]
