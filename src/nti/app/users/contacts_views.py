@@ -191,7 +191,10 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 			results.add( creator )
 
 		for member in self.context:
-			if member.username not in self.existing_pool:
+			# Only add new, non nextthought users.
+			if 		IUser.providedBy( member ) \
+				and	member.username not in self.existing_pool \
+				and not member.username.endswith( '@nextthought.com' ) :
 				results.add( member )
 				if len( results ) >= self.result_count:
 					break
