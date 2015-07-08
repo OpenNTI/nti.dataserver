@@ -399,7 +399,7 @@ def _get_hierarchy_context_for_context( obj, top_level_context ):
 	results = component.queryMultiAdapter(
 									( top_level_context, obj ),
 									IHierarchicalContextProvider )
-	return _dedupe_bundles_from_hierarchy( results )
+	return results
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
