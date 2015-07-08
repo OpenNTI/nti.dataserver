@@ -14,6 +14,8 @@ from six import string_types
 import zope.intid
 from zope import component
 
+from nti.common.string import safestr
+
 from nti.contentprocessing import compute_ngrams
 from nti.contentprocessing.interfaces import IStopWords
 
@@ -38,7 +40,14 @@ from .interfaces import IShareableContentResolver
 from .interfaces import IMessageInfoContentResolver
 
 def get_content(text, lang='en'):
-	tokens = tokenize_content(text, lang)
+	__traceback_info__ = text
+	try:
+		text = safestr(text)
+		tokens = tokenize_content(text, lang)
+	except ValueError:
+		logger.exception('Cannot tokenize "%s"', text)
+		tokens = [text]
+	# remove stop words
 	sw_util = component.queryUtility(IStopWords)
 	stopwords = sw_util.stopwords(lang) if sw_util is not None else ()
 	if stopwords:
