@@ -53,19 +53,24 @@ def to_suggested_contacts(users):
 			 context=IUser)
 class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 	"""
-	For our user, return suggested contacts based on
+	For our user, return suggested contacts based on:
 
-	1. Friends friends list
-	2. Suggested contacts utility
+		1. Friends friends list (2nd order)
+		2. Suggested contacts utility
 	"""
 
 	# If we do any randomization, these batch params would not
 	# much sense.
 	_DEFAULT_BATCH_SIZE = 20
 	_DEFAULT_BATCH_START = 0
+	# The portion of results we get from our contacts
 	LIMITED_CONTACT_RATIO = .6
+	# The minimum number of contacts we must have in our pool
+	MIN_LIMITED_CONTACT_POOL_SIZE = 2
+	# The maximum number of results we will return
 	MAX_REQUEST_SIZE = 10
-	MIN_RESULT_COUNT = 0
+	# The minimum number of results we must return
+	MIN_RESULT_COUNT = 4
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
@@ -74,25 +79,29 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
+		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
 		self._batch_params()
 		self.result_count = self.batch_size or params.get( 'Count' )
 		if self.batch_size > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
 
-		result = self.LIMITED_CONTACT_RATIO * self.result_count
-		self.limited_count = int(result)
-		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
+		self.limited_count = 0
+		# Only fetch from our limited contacts if our pool size is
+		# large enough.
+		if len( self.existing_pool ) >= self.MIN_LIMITED_CONTACT_POOL_SIZE:
+			limited_count = self.LIMITED_CONTACT_RATIO * self.result_count
+			self.limited_count = int(limited_count)
 
 	def _get_limited_contacts(self):
 		"""
 		Get our prioritized contacts from our friends.
 		"""
-		# TODO Should we randomize this?
+		# We could randomize this, with a daily seed to
+		# limit fishing.
 		source_pool = self.context.entities_followed
 		if not source_pool:
 			return ()
 		results = set()
-		limited_count = self.limited_count
 
 		for source in source_pool:
 			source = ILimitedSuggestedContactsSource(source, None)
@@ -101,7 +110,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 				for suggestion in suggestions:
 					if suggestion.username not in self.existing_pool:
 						results.add( suggestion )
-						if len(results) >= limited_count:
+						if len(results) >= self.limited_count:
 							break
 		return results
 
