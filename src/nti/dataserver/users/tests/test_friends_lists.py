@@ -319,18 +319,21 @@ class TestDFL(DataserverLayerTest):
 		component.getUtility(IIntIds).register(fl)
 		fl.About = u'my list'
 		fl.Locked = True
-		
+
 		ext_obj = to_external_object(fl)
 		assert_that(ext_obj, has_entry('About', 'my list'))
+		assert_that(ext_obj, has_entry('about', 'my list'))
 		assert_that(ext_obj, has_entry('Locked', is_(True)))
-		
-		ext_obj['Locked'] = False
-		ext_obj['About'] = 'foo list'
+
+		# Only the lowercase update will work
+		ext_obj['locked'] = False
+		ext_obj['about'] = 'foo list'
 		update_from_external_object(fl, ext_obj)
-		
+
 		assert_that(fl, has_property('About', 'foo list'))
+		assert_that(fl, has_property('about', 'foo list'))
 		assert_that(fl, has_property('Locked', is_(False)))
-		
+
 	@WithMockDS
 	def test_sharing_with_dfl(self):
 		ds = mock_dataserver.current_mock_ds
