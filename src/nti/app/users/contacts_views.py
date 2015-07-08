@@ -180,7 +180,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 			self.result_count = self.MAX_REQUEST_SIZE
 
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
-		self.existing_pool.add( self.context.username )
+		self.existing_pool.add( self.remoteUser.username )
 
 	def _get_contacts(self):
 		results = set()
