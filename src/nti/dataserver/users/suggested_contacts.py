@@ -101,10 +101,10 @@ class _UserLimitedSuggestedContactSource(object):
 		self.source = context
 		self.ranking = NoOpSuggestedContactRankingPolicy()
 		self.ranking.provider = self
-		
+
 	def suggestions(self, user, *args, **kwargs):
 		# And no dupes
 		existing_pool = {e.username for e in user.entities_followed}
 		entities_followed = {e.username for e in self.source.entities_followed}
-		results = entities_followed - existing_pool
+		results = tuple( entities_followed - existing_pool )
 		return results[:self.LIMIT] if results else ()
