@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope.security.interfaces import IPrincipal
 
 from pyramid.view import view_config
@@ -28,7 +29,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users import User
 from nti.dataserver.users.suggested_contacts import SuggestedContact
 from nti.dataserver.users.interfaces import get_all_suggested_contacts
-from nti.dataserver.users.interfaces import ILimitedSuggestedContactsSource
+from nti.dataserver.users.interfaces import ISecondOrderSuggestedContactProvider
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import toExternalObject
@@ -72,7 +73,8 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
-		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
+		self.existing_pool = {x.username for x in self.context.entities_followed}
+		self.existing_pool.add( self.context.username )
 		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
 		if self.result_count > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
@@ -88,22 +90,15 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 		"""
 		Get our prioritized contacts from our friends.
 		"""
-		# We could randomize this, with a daily seed to
-		# limit fishing.
-		source_pool = self.context.entities_followed
-		if not source_pool or not self.limited_count:
+		if not self.existing_pool or not self.limited_count:
 			return ()
 		results = set()
 
-		for source in source_pool:
-			source = ILimitedSuggestedContactsSource(source, None)
-			suggestions = source.suggestions(self.context) if source else ()
-			if source and suggestions:
-				for suggestion in suggestions:
-					if suggestion.username not in self.existing_pool:
-						results.add( suggestion )
-						if len(results) >= self.limited_count:
-							break
+		for _, provider in list(component.getUtilitiesFor( ISecondOrderSuggestedContactProvider )):
+			for suggestion in provider.suggestions( self.context ):
+				results.add( suggestion )
+				if len(results) >= self.limited_count:
+					break
 		return results
 
 	def _get_fill_in_contacts(self, intermediate_contacts):
@@ -185,6 +180,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 			self.result_count = self.MAX_REQUEST_SIZE
 
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
+		self.existing_pool.add( self.context.username )
 
 	def _get_contacts(self):
 		results = set()

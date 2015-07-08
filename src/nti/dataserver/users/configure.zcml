@@ -187,7 +187,7 @@
 			 provides=".interfaces.IHiddenMembership" />
 
 	<!-- Suggested contacts -->
-	<adapter factory=".suggested_contacts._UserLimitedSuggestedContactSource"
-			 provides=".interfaces.ILimitedSuggestedContactsSource" />
+	<utility factory=".suggested_contacts._SecondOrderContactProvider"
+			 provides=".interfaces.ISecondOrderSuggestedContactProvider" />
 
 </configure>

@@ -777,27 +777,10 @@ class ISuggestedContactsProvider(Interface):
 		return a iterator with suggested contacts ordered by the ranking policy
 		"""
 
-class ISuggestedContactsSource(ISuggestedContactsProvider):
+class ISecondOrderSuggestedContactProvider(ISuggestedContactsProvider):
 
 	"""
-	Defines a utility that allows to return contact suggestions based on the
-	source context.  The returned suggestions will not exist in the given
-	user's followers.
-	"""
-
-	context = Object(Interface, title="Source context", required=False)
-
-	def suggestions(user, limit=None):
-		"""
-		returns a iterator with suggested contacts from our context,
-		optionally limited.
-		"""
-
-class ILimitedSuggestedContactsSource(ISuggestedContactsSource):
-
-	"""
-	Defines a utility that allows to return contact suggestions based on the
-	source context, with a limited number of items returned.
+	Defines a utility that allows to return second order contact suggestions.
 	"""
 
 class ISuggestedContact(Interface):
