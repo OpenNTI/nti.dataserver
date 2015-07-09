@@ -113,6 +113,9 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 															  log_msg=log_msg,
 															  the_logger=logger)
 
+		memberships = set( memberships )
+		memberships.update( set( context.friendsLists.values() ) )
+
 		everyone = Entity.get_entity(u'Everyone')
 		def _selector(x):
 			result = None
@@ -122,7 +125,8 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 				not IDisallowMembershipOperations.providedBy(x) and \
 				(x.public or self.remoteUser in x):
 				result = toExternalObject(x, name='summary')
-			elif IDynamicSharingTargetFriendsList.providedBy(x) and self.remoteUser in x:
+			elif IDynamicSharingTargetFriendsList.providedBy(x) and \
+				(self.remoteUser in x or self.remoteUser == x.creator):
 				result = toExternalObject(x)
 			return result
 
