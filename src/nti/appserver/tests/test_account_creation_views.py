@@ -9,7 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import unittest
 from hamcrest import is_
 from hamcrest import is_not
 from hamcrest import has_key
@@ -23,10 +22,13 @@ from hamcrest import contains_string
 does_not = is_not
 
 import datetime
+import unittest
 import itertools
 
 from zope import component
+
 from zope.component import eventtesting
+
 from zope.lifecycleevent import IObjectCreatedEvent, IObjectAddedEvent
 
 import pyramid.httpexceptions as hexc
@@ -123,10 +125,8 @@ class _AbstractValidationViewBase(TestBaseMixin):
 		with assert_raises( hexc.HTTPUnprocessableEntity ) as exc:
 			self.the_view( self.request )
 
-
 		assert_that( exc.exception.json_body, has_entry( 'field', 'password' ) )
 		assert_that( exc.exception.json_body, has_entry( 'code', 'InsecurePasswordIsForbidden' ) )
-
 
 	@WithMockDSTrans
 	def test_create_invalid_email( self ):
@@ -153,7 +153,6 @@ class _AbstractValidationViewBase(TestBaseMixin):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
-
 
 	@WithMockDSTrans
 	def test_create_invalid_username( self ):
@@ -202,7 +201,6 @@ class _AbstractNotDevmodeViewBase(TestBaseMixin):
 		assert_that( e.exception.json_body, has_entry( 'code', 'FieldContainsCensoredSequence' ) )
 		assert_that( e.exception.json_body, has_entry( 'field', 'Username' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'censored' ) ) )
-
 
 	@WithMockDSTrans
 	def test_create_censored_alias( self ):
@@ -276,7 +274,6 @@ class _AbstractNotDevmodeViewBase(TestBaseMixin):
 		assert_that( e.exception.json_body, has_entry( 'field', 'birthdate' ) )
 		assert_that( e.exception.json_body, has_entry( 'message', contains_string( 'four' ) ) )
 
-
 	@WithMockDSTrans
 	def test_create_blank_realname( self ):
 
@@ -333,7 +330,7 @@ class _AbstractNotDevmodeViewBase(TestBaseMixin):
 
 		assert_that( e.exception.json_body, has_entry( 'field', 'home_page' ) )
 		assert_that( e.exception.json_body, has_entry( 'code', 'InvalidURI' ) )
-		assert_that( e.exception.json_body, has_entry( 'message', 'The specified URI is not valid.' ) )
+		assert_that( e.exception.json_body, has_entry( 'message', 'The specified URL is not valid.' ) )
 
 class TestPreflightView(unittest.TestCase,_AbstractValidationViewBase):
 	layer = NewRequestSharedConfiguringTestLayer
@@ -416,9 +413,10 @@ class TestCreateViewNotDevmode(unittest.TestCase,_AbstractNotDevmodeViewBase):
 
 		assert_that( e.exception.json_body, has_entry( 'code', 'DuplicateUsernameError' ) )
 
-
 class TestCreateView(unittest.TestCase,_AbstractValidationViewBase):
+	
 	layer = NewRequestSharedConfiguringTestLayer
+
 	def setUp( self ):
 		super(TestCreateView,self).setUp()
 		self.the_view = account_create_view
@@ -552,7 +550,9 @@ class _AbstractApplicationCreateUserTest(AppTestBaseMixin):
 from nti.appserver.tests.test_application import NonDevmodeButAnySiteApplicationTestLayer
 
 class TestApplicationCreateUserNonDevmode(_AbstractApplicationCreateUserTest, NonDevmodeApplicationLayerTest):
+	
 	layer = NonDevmodeButAnySiteApplicationTestLayer
+	
 	@WithSharedApplicationMockDS
 	def test_create_user( self ):
 		super(TestApplicationCreateUserNonDevmode,self).test_create_user()
@@ -567,7 +567,6 @@ class TestApplicationCreateUser(_AbstractApplicationCreateUserTest, ApplicationL
 		super(TestApplicationCreateUser,self).test_create_user()
 		mailer = component.getUtility( ITestMailDelivery )
 		assert_that( mailer.queue, has_length( 0 ) ) # no email in devmode because there is no site policy
-
 
 	@WithSharedApplicationMockDS
 	def test_create_user_email_site_policy(self):
@@ -612,7 +611,6 @@ class TestApplicationPreflightUser(_AbstractApplicationCreateUserTest, Applicati
 	def test_preflight_user( self ):
 		app = TestApp( self.app )
 
-
 		data_with_username_only = {'Username': 'jason@test.nextthought.com'}
 		data_full = {'Username': 'jason@test.nextthought.com',
 					 'password': 'pass123word',
@@ -651,7 +649,6 @@ class TestApplicationProfile(_AbstractApplicationCreateUserTest, ApplicationLaye
 		assert_that( res.json_body, has_entry( 'ProfileSchema', has_key( 'opt_in_email_communication' ) ) )
 		assert_that( res.json_body['ProfileSchema'], has_key( 'birthCountry' ) )
 
-
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_migrate_columbia_profile(self):
 
@@ -678,14 +675,19 @@ def main(email=None, uname=None, cname=None):
 	For manually testing email/SMTP/qp on the command line.
 	"""
 	import sys
+	
 	_contact_email = email or sys.argv[1]
 	_username = uname or sys.argv[2]
 	child_name = cname or sys.argv[3]
 
 	from zope import interface
+	
 	from zope.annotation.interfaces import IAttributeAnnotatable
+	
 	from zope.security.interfaces import IPrincipal
+	
 	from nti.mailer.interfaces import IEmailAddressable
+	
 	@interface.implementer(user_interfaces.IUserProfile,
 						   IPrincipal,
 						   IAttributeAnnotatable,
@@ -701,8 +703,10 @@ def main(email=None, uname=None, cname=None):
 		request = True
 
 	import nti.dataserver.utils
+	
 	from pyramid.testing import setUp as psetUp
 	from pyramid.testing import DummyRequest
+	
 	nti.dataserver.utils._configure( set_up_packages=('nti.appserver',) )
 	request = DummyRequest()
 	config = psetUp(registry=component.getGlobalSiteManager(),request=request,hook_zca=False)
@@ -711,13 +715,18 @@ def main(email=None, uname=None, cname=None):
 
 	import pyramid_mailer
 	from pyramid_mailer.interfaces import IMailer
-	component.provideUtility( pyramid_mailer.Mailer.from_settings( {'mail.queue_path': '/tmp/ds_maildir', 'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
+	component.provideUtility( pyramid_mailer.Mailer.from_settings(
+				 {'mail.queue_path': '/tmp/ds_maildir', 
+				  'mail.default_sender': 'no-reply@nextthought.com' } ), IMailer )
 
 	import nti.app.pyramid_zope.z3c_zpt
 	from pyramid.interfaces import IRendererFactory
+	
 	component.provideUtility( nti.app.pyramid_zope.z3c_zpt.renderer_factory, IRendererFactory, name='.pt' )
+	
 	import pyramid_chameleon.text
 	component.provideUtility( pyramid_chameleon.text.renderer_factory, IRendererFactory, name=".txt")
+	
 	import nti.appserver.policies.user_policies
 	nti.appserver.policies.user_policies.send_consent_request_on_new_coppa_account(FakeUser(), FakeEvent)
 
