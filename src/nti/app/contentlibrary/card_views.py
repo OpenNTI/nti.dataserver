@@ -38,10 +38,14 @@ PAGE_INFO_MT_JSON = PAGE_INFO_MT_JSON
 # contains traversal helpers to fake it
 class _ContentCard(Contained):
 
-	__slots__ = (b'path',)
+	__slots__ = (b'path', b'ntiid')
 
 	def __init__(self, path):
 		self.path = path
+
+	@property
+	def ntiid(self):
+		return None
 
 @interface.implementer(INTIIDResolver)
 class _ContentCardResolver(object):
