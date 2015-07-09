@@ -74,16 +74,21 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 				obj = intids.getObject(uid)
 				if isBroken(obj, uid):
 					broken[uid] = str(type(obj))
-					logger.info("Unregistering broken object %s,%s", uid, type(obj))
-					intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			except KeyError:
 				missing.append(uid)
-				logger.info("Unregistering missing %s", uid)
-				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			else:
 				total += 1
+		
+		for uid, obj in broken.items():
+			logger.info("Unregistering broken object %s,%s", uid, obj)
+			intids.forceUnregister(uid, notify=False, removeAttribute=False)
+					
+		for uid in missing:
+			logger.info("Unregistering missing %s", uid)
+			intids.forceUnregister(uid, notify=False, removeAttribute=False)
+			
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
-		logger.info("unregister missing objects %s", result)
+		logger.info("Missing/Broken objects %s", result)
 		return result
