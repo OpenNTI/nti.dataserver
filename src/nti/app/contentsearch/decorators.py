@@ -26,7 +26,7 @@ class _SearchResultsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 	def _predicate(self, context, result):
 		return bool(self._is_authenticated)
-	
+
 	def _do_decorate_external(self, original, external):
 		query = original.Query
 		batch_hits = getattr(original, 'Batch', None)
@@ -38,7 +38,7 @@ class _SearchResultsLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			if batch is not None and batch != batch_hits:
 				batch_params = self.request.params.copy()
 				batch_params['batchStart'] = batch.start
-				query_params = sorted(batch_params.items()) # for testing
+				query_params = sorted(batch_params.items())  # for testing
 				link_next_href = self.request.current_route_path(_query=query_params)
 				link_next = Link(link_next_href, rel=rel)
 				external.setdefault('Links', []).append(link_next)
