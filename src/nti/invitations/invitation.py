@@ -12,18 +12,20 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
+
 from zope.event import notify
 
 from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.contained import Contained
 
-from nti.dataserver import users
+from nti.dataserver.users import Entity
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import SYSTEM_USER_NAME
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .interfaces import IInvitation
@@ -69,15 +71,16 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 
 	def _iter_entities(self):
 		for entity_name in self.entities:
-			entity = users.Entity.get_entity( entity_name )
+			entity = Entity.get_entity(entity_name)
 			if entity is None:
-				logger.warn("Unable to accept invitation to join non-existent entity %s", entity_name)
+				logger.warn("Unable to accept invitation to join non-existent entity %s",
+							 entity_name)
 				continue
 			yield entity
 
 	def accept(self, user):
 		for entity in self._iter_entities():
-			if ICommunity.providedBy( entity ):
+			if ICommunity.providedBy(entity):
 				logger.info("Accepting invitation to join community %s", entity)
 				user.record_dynamic_membership(entity)
 				user.follow(entity)
@@ -85,7 +88,8 @@ class JoinEntitiesInvitation(ZcmlInvitation):
 				logger.info("Accepting invitation to join DFL %s", entity)
 				entity.addFriend(user)
 			else:
-				logger.warn("Don't know how to accept invitation to join entity %s", entity)
+				logger.warn("Don't know how to accept invitation to join entity %s",
+							entity)
 		super(JoinEntitiesInvitation, self).accept(user)
 
 JoinCommunityInvitation = JoinEntitiesInvitation
