@@ -18,10 +18,11 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 import zope.intid
-
 from zope import component
 from zope import interface
+
 from zope.catalog.interfaces import ICatalog
+
 from zope.interface.interfaces import IMethod
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -32,6 +33,8 @@ from nti.appserver.utils import is_true
 from nti.common.string import safestr
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.dataserver import authorization as nauth
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICoppaUser
 from nti.dataserver.interfaces import IDataserver
@@ -40,13 +43,10 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
 from nti.dataserver.interfaces import ICoppaUserWithAgreementUpgraded
 
-from nti.dataserver import authorization as nauth
-
 from nti.dataserver.users import User
 from nti.dataserver.users.index import CATALOG_NAME
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
 from nti.dataserver.users.interfaces import IImmutableFriendlyNamed
-
 from nti.dataserver.users.interfaces import IUserProfileSchemaProvider
 
 from nti.externalization.interfaces import LocatedExternalDict
@@ -77,15 +77,13 @@ def _write_generator(generator, writer, stream):
 	return stream
 
 def _get_index_userids(ent_catalog, indexname='realname'):
-	ref_idx = ent_catalog.get(indexname, None)
-	rev_index = getattr(ref_idx, '_rev_index', {})
-	result = rev_index.keys()  #
+	index = ent_catalog.get(indexname, None)
+	result = index.ids()
 	return result
 
 def _get_index_field_value(userid, ent_catalog, indexname):
-	idx = ent_catalog.get(indexname, None)
-	rev_index = getattr(idx, '_rev_index', {})
-	result = rev_index.get(userid, u'')
+	index = ent_catalog.get(indexname, None)
+	result = index.doc_value(userid) or u''
 	return result
 
 def _format_time(t):
@@ -134,9 +132,9 @@ class UserInfoExtractView(AbstractAuthenticatedView):
 
 	def __call__(self):
 		stream = BytesIO()
-		writer = csv.writer( stream )
+		writer = csv.writer(stream)
 		response = self.request.response
-		response.content_encoding = str('identity' )
+		response.content_encoding = str('identity')
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="usr_info.csv"')
 		response.body_file = _write_generator(_get_user_info_extract, writer, stream)
@@ -198,9 +196,9 @@ class UserOptInEmailCommunicationView(AbstractAuthenticatedView):
 		generator = partial(_get_topics_info, coppaOnly=coppaOnly)
 
 		stream = BytesIO()
-		writer = csv.writer( stream )
+		writer = csv.writer(stream)
 		response = self.request.response
-		response.content_encoding = str('identity' )
+		response.content_encoding = str('identity')
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="opt_in.csv"')
 		response.body_file = _write_generator(generator, writer, stream)
@@ -222,9 +220,9 @@ class UserEmailVerifiedView(AbstractAuthenticatedView):
 							coppaOnly=coppaOnly)
 
 		stream = BytesIO()
-		writer = csv.writer( stream )
+		writer = csv.writer(stream)
 		response = self.request.response
-		response.content_encoding = str('identity' )
+		response.content_encoding = str('identity')
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="verified_email.csv"')
 		response.body_file = _write_generator(generator, writer, stream)
@@ -238,7 +236,7 @@ def _get_profile_info(coppaOnly=False):
 	yield header
 
 	dataserver = component.getUtility(IDataserver)
-	_users = IShardLayout( dataserver ).users_folder
+	_users = IShardLayout(dataserver).users_folder
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
@@ -272,9 +270,9 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 		generator = partial(_get_profile_info, coppaOnly=coppaOnly)
 
 		stream = BytesIO()
-		writer = csv.writer( stream )
+		writer = csv.writer(stream)
 		response = self.request.response
-		response.content_encoding = str('identity' )
+		response.content_encoding = str('identity')
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="profile.csv"')
 		response.body_file = _write_generator(generator, writer, stream)
@@ -282,12 +280,12 @@ class UserProfileInfoView(AbstractAuthenticatedView):
 
 # user profile
 
-def _get_inactive_accounts():
+def _get_inactive_accounts(max_days=365):
 	header = ['username', 'userid', 'realname', 'email', 'createdTime', 'lastLoginTime']
 	yield header
 
 	dataserver = component.getUtility(IDataserver)
-	_users = IShardLayout( dataserver ).users_folder
+	_users = IShardLayout(dataserver).users_folder
 	intids = component.getUtility(zope.intid.IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
@@ -308,7 +306,7 @@ def _get_inactive_accounts():
 			logger.error("Cannot parse %s for user %s", lastLoginTime, user)
 			continue
 
-		if lastLoginTime and (now - lastLoginTime).days < 365:
+		if lastLoginTime and (now - lastLoginTime).days < max_days:
 			continue
 
 		username = user.username
@@ -317,7 +315,7 @@ def _get_inactive_accounts():
 		createdTime = _parse_time(getattr(user, 'createdTime', 0))
 		realname = _get_index_field_value(iid, ent_catalog, 'realname')
 		lastLoginTime = lastLoginTime.isoformat() if lastLoginTime else None
-		info = [username, userid, realname, email, createdTime,lastLoginTime]
+		info = [username, userid, realname, email, createdTime, lastLoginTime]
 		yield info
 
 @view_config(route_name='objects.generic.traversal',
@@ -330,16 +328,15 @@ class InactiveAccountsView(AbstractAuthenticatedView):
 	def __call__(self):
 		generator = _get_inactive_accounts
 		stream = BytesIO()
-		writer = csv.writer( stream )
+		writer = csv.writer(stream)
 		response = self.request.response
-		response.content_encoding = str('identity' )
+		response.content_encoding = str('identity')
 		response.content_type = str('text/csv; charset=UTF-8')
 		response.content_disposition = str('attachment; filename="inactive.csv"')
 		response.body_file = _write_generator(generator, writer, stream)
 		return response
 
 def allowed_fields(user):
-	result = {}
 	profile_iface = IUserProfileSchemaProvider(user).getSchema()
 	profile = profile_iface(user)
 	profile_schema = \
@@ -347,11 +344,11 @@ def allowed_fields(user):
 									profile_iface,
 									possibilities=interface.providedBy(profile))
 
+	result = {}
 	for k, v in profile_schema.namesAndDescriptions(all=True):
 		if IMethod.providedBy(v) or v.queryTaggedValue(TAG_HIDDEN_IN_UI):
 			continue
 		result[k] = v
-
 	return profile, result
 
 @view_config(route_name='objects.generic.traversal',
