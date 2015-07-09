@@ -7,7 +7,6 @@ Generic views for any user (or sometimes, entities).
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -40,11 +39,6 @@ from nti.externalization.interfaces import StandardExternalFields
 from nti.links.externalization import render_link
 
 ITEMS = StandardExternalFields.ITEMS
-
-def _tx_string(s):
-	if s is not None and isinstance(s, unicode):
-		s = s.encode('utf-8')
-	return s
 
 def _image_view(context, request, func):
 	"""
@@ -115,7 +109,7 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		self._batch_params()
 		context = self.request.context
 		log_msg = "User %s is no longer a member of %s. Ignoring for externalization"
-		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships,
+		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships, 
 															  log_msg=log_msg,
 															  the_logger=logger)
 
@@ -127,7 +121,7 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 			elif ICommunity.providedBy(x) and \
 				not IDisallowMembershipOperations.providedBy(x) and \
 				(x.public or self.remoteUser in x):
-				result = toExternalObject(x)
+				result = toExternalObject(x, name='summary')
 			elif IDynamicSharingTargetFriendsList.providedBy(x) and self.remoteUser in x:
 				result = toExternalObject(x)
 			return result
