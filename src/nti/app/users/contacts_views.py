@@ -20,7 +20,6 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.authorization import ACT_READ
-from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -58,19 +57,19 @@ class _AbstractSuggestedContactsView( AbstractAuthenticatedView ):
 	# The minimum number of results we must return
 	MIN_RESULT_COUNT = 4
 
-	def _get_params(self, user):
+	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
 		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
 		if self.result_count > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
 
-		self.existing_pool = {x.username for x in user.entities_followed}
-		self.existing_pool.add( user.username )
+		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
+		self.existing_pool.add( self.remoteUser.username )
 
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
-			 permission=ACT_UPDATE,
+			 permission=ACT_READ,
 			 context=IUser)
 class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 	"""
@@ -86,14 +85,25 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
-	def _get_params(self, user):
-		super( UserSuggestedContactsView, self )._get_params( user )
+	def _get_params(self):
+		super( UserSuggestedContactsView, self )._get_params()
 		self.limited_count = 0
 		# Only fetch from our limited contacts if our pool size is
 		# large enough.
 		if len( self.existing_pool ) >= self.MIN_LIMITED_CONTACT_POOL_SIZE:
 			limited_count = self.LIMITED_CONTACT_RATIO * self.result_count
 			self.limited_count = int(limited_count)
+
+	def _get_suggestion_args(self):
+		"""
+		We are fetching suggested contacts for a user, or for
+		a user based on another user.
+		"""
+		if self.remoteUser == self.context:
+			results = (self.remoteUser,)
+		else:
+			results = (self.remoteUser, self.context)
+		return results
 
 	def _get_limited_contacts(self):
 		"""
@@ -103,8 +113,9 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 			return ()
 		results = set()
 
+		suggestion_args = self._get_suggestion_args()
 		for _, provider in list(component.getUtilitiesFor( ISecondOrderSuggestedContactProvider )):
-			for suggestion in provider.suggestions( self.context ):
+			for suggestion in provider.suggestions( *suggestion_args ):
 				results.add( suggestion )
 				if len(results) >= self.limited_count:
 					break
@@ -121,6 +132,8 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		intermediate_usernames = {x.username for x in intermediate_contacts}
 		results = set()
 
+		# TODO We want to do something smarter here for users
+		# looking at suggestions in other user's profiles.
 		for contact in get_all_suggested_contacts(self.context):
 			if		contact.username not in intermediate_usernames \
 				and contact.username not in self.existing_pool:
@@ -137,7 +150,7 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()
-		self._get_params( self.context )
+		self._get_params()
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
 		results[ 'ItemCount' ] = 0
@@ -202,7 +215,7 @@ class _MembershipSuggestedContactsView( _AbstractSuggestedContactsView ):
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()
-		self._get_params( self.remoteUser )
+		self._get_params()
 		contacts = self._get_contacts()
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = SUGGESTED_CONTACTS
