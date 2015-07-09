@@ -20,17 +20,16 @@ import transaction
 
 try:
 	from Acquisition import aq_base
-except ImportError: #PyPy?
+except ImportError:  # PyPy?
 	def aq_base(o): return o
 
 from zope import interface
 
 from zope.schema.interfaces import ValidationError
 
-from ZODB.interfaces import IBroken
-from ZODB.POSException import POSError
-
 from z3c.batching.batch import Batch
+
+from ZODB.POSException import POSError
 
 from pyramid import traversal
 from pyramid import httpexceptions as hexc
@@ -74,14 +73,14 @@ class BatchingUtilsMixin(object):
 	_DEFAULT_BATCH_SIZE = None
 	_DEFAULT_BATCH_START = None
 
-	def _get_batch_size_start( self ):
+	def _get_batch_size_start(self):
 		"""
 		Return a two-tuple, (batch_size, batch_start). If the values are
 		invalid, raises an HTTP exception. If either is missing, returns
 		the defaults for both.
 		"""
-		batch_size = self.request.params.get( 'batchSize', self._DEFAULT_BATCH_SIZE )
-		batch_start = self.request.params.get( 'batchStart', self._DEFAULT_BATCH_START )
+		batch_size = self.request.params.get('batchSize', self._DEFAULT_BATCH_SIZE)
+		batch_start = self.request.params.get('batchStart', self._DEFAULT_BATCH_START)
 		if batch_size is not None and batch_start is not None:
 			try:
 				batch_size = int(batch_size)
@@ -95,9 +94,9 @@ class BatchingUtilsMixin(object):
 
 		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
-	#: A sequence of names of query params that will be dropped from
-	#: links we generate for batch-next and batch-prev, typically
-	#: because they do not have relevance in a next/prev query.
+	# : A sequence of names of query params that will be dropped from
+	# : links we generate for batch-next and batch-prev, typically
+	# : because they do not have relevance in a next/prev query.
 	_BATCH_LINK_DROP_PARAMS = ('batchAround', 'batchContaining', 'batchBefore')
 
 	def _set_batch_links(self, result, result_list, next_batch_start,
@@ -107,13 +106,13 @@ class BatchingUtilsMixin(object):
 				batch_params = self.request.GET.copy()
 				# Pop some things that don't work
 				for n in self._BATCH_LINK_DROP_PARAMS:
-					batch_params.pop( n, None )
+					batch_params.pop(n, None)
 
 				batch_params['batchStart'] = batch
-				query = sorted(batch_params.items()) # sort for reliable testing
+				query = sorted(batch_params.items())  # sort for reliable testing
 				link_next_href = self.request.current_route_path(_query=query)
-				link_next = Link( link_next_href, rel=rel )
-				result.setdefault( 'Links', [] ).append( link_next )
+				link_next = Link(link_next_href, rel=rel)
+				result.setdefault('Links', []).append(link_next)
 
 		return result_list
 
@@ -129,7 +128,7 @@ class BatchingUtilsMixin(object):
 		if batch_start >= len(result_list):
 			# Batch raises IndexError in this case, avoid that
 			return []
-		batch_result = Batch( result_list, batch_start, batch_size )
+		batch_result = Batch(result_list, batch_start, batch_size)
 		# Insert links to the next and previous batch
 		# NOTE: If our batch_start is not a multiple of the batch_size,
 		# then using IBatch.next and IBatch.previous fails as it expects
@@ -152,7 +151,7 @@ class BatchingUtilsMixin(object):
 		else:
 			next_batch_start = None
 
-		self._set_batch_links( result, batch_result, next_batch_start, prev_batch_start)
+		self._set_batch_links(result, batch_result, next_batch_start, prev_batch_start)
 
 		return batch_result
 
@@ -197,7 +196,7 @@ class BatchingUtilsMixin(object):
 			for x in items:
 				x = _trax(x)
 				if x is not None:
-					result_list.append( x )
+					result_list.append(x)
 			result[ITEMS] = result_list
 			return result
 
@@ -211,7 +210,7 @@ class BatchingUtilsMixin(object):
 			x = _trax(x)
 			if x is not None:
 				count += 1
-				result_list.append( x )
+				result_list.append(x)
 				if count > number_items_needed:
 					break
 
@@ -220,7 +219,7 @@ class BatchingUtilsMixin(object):
 												 batch_start, batch_size,
 												 number_items_needed)
 		result[ITEMS] = batched_results
-		result['ItemCount'] = len( batched_results )
+		result['ItemCount'] = len(batched_results)
 		return result
 
 	def _batch_tuple_iterable(self, *args, **kwargs):
@@ -264,18 +263,18 @@ class BatchingUtilsMixin(object):
 		# Ok, they have requested that we compute a beginning index for them.
 		# We do this by materializing the list in memory and walking through
 		# to find the index of the requested object.
-		batch_start = None # ignore input
+		batch_start = None  # ignore input
 		result_list = []
 		match_index = None
 		for i, key_value in enumerate(iterator):
-			result_list.append( key_value )
+			result_list.append(key_value)
 
 			# Only keep testing until we find what we need
 			if batch_start is None:
 				if test(key_value):
 					if batch_containing:
 						# Find our natural page
-						batch_start = ( i // batch_size ) * batch_size
+						batch_start = (i // batch_size) * batch_size
 					elif batch_after:
 						batch_start = i + 1
 					elif batch_before:
@@ -285,12 +284,12 @@ class BatchingUtilsMixin(object):
 						elif i <= batch_size:
 							# Need to reduce our batch size to capture
 							# everything before our item.
-							self.request.GET['batchSize'] = str( i )
+							self.request.GET['batchSize'] = str(i)
 							batch_start = 0
 						else:
 							batch_start = i - batch_size
 					else:
-						batch_start = max( 0, i - (batch_size // 2) - 1 )
+						batch_start = max(0, i - (batch_size // 2) - 1)
 					match_index = i
 					if batch_start is not None:
 						number_items_needed = batch_start + batch_size + 2
@@ -315,7 +314,7 @@ class BatchingUtilsMixin(object):
 			# we could wind up returning a list that doesn't include
 			# the around value. Do our best to make sure that
 			# doesn't happen.
-			batch_start = max( 0, match_index - (batch_size // 2))
+			batch_start = max(0, match_index - (batch_size // 2))
 
 		# Likewise, if the batch_size is very small and the match is at the end
 		# typically with batch_size == 1
@@ -332,7 +331,7 @@ class BatchingUtilsMixin(object):
 			# with generic math, or at least I'm stupid and missing what
 			# the right algorithm is in all cases. Special case this
 			# common size to get it right
-			batch_start = max( 0, match_index - 1 )
+			batch_start = max(0, match_index - 1)
 
 		self.request.GET['batchStart'] = str(batch_start)
 		return result_list
@@ -359,7 +358,7 @@ class UploadRequestUtilsMixin(object):
 			field = None
 			for k in self.request.POST:
 				v = self.request.POST[k]
-				if hasattr( v, 'type' ) and hasattr( v, 'file' ):
+				if hasattr(v, 'type') and hasattr(v, 'file'):
 					# must be our field
 					field = v
 					break
@@ -373,7 +372,7 @@ class UploadRequestUtilsMixin(object):
 		field = self._find_file_field()
 		if field is not None:
 			in_file = field.file
-			in_file.seek( 0 )
+			in_file.seek(0)
 			return in_file.read()
 		return self.request.body
 
@@ -398,7 +397,7 @@ class UploadRequestUtilsMixin(object):
 		field = self._find_file_field()
 		if field is not None and field.filename:
 			return field.filename
-		return self.request.headers.get( 'Slug' ) or ''
+		return self.request.headers.get('Slug') or ''
 
 class ModeledContentUploadRequestUtilsMixin(object):
 	"""
@@ -410,14 +409,14 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	inputClass = dict
 	content_predicate = id
 
-	#: Subclasses can define this as a tuple of types to
-	#: catch that we can't be sure are client or server errors.
-	#: We catch TypeError and LookupError (which includes KeyError)
-	#: by default, often they're a failed
-	#: interface adaptation, but that could be because of bad input
-	_EXTRA_INPUT_ERRORS = (TypeError,LookupError)
+	# : Subclasses can define this as a tuple of types to
+	# : catch that we can't be sure are client or server errors.
+	# : We catch TypeError and LookupError (which includes KeyError)
+	# : by default, often they're a failed
+	# : interface adaptation, but that could be because of bad input
+	_EXTRA_INPUT_ERRORS = (TypeError, LookupError)
 
-	def __call__( self ):
+	def __call__(self):
 		"""
 		Subclasses may implement a `_do_call` method if they do not override
 		__call__.
@@ -426,16 +425,16 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			return self._do_call()
 		except ValidationError as e:
 			transaction.doom()
-			handle_validation_error( self.request, e )
+			handle_validation_error(self.request, e)
 		except interface.Invalid as e:
 			transaction.doom()
-			handle_possible_validation_error( self.request, e )
-		except self._EXTRA_INPUT_ERRORS: # pragma: no cover
+			handle_possible_validation_error(self.request, e)
+		except self._EXTRA_INPUT_ERRORS:  # pragma: no cover
 			# These are borderline server/client errors. They could
 			# be either, depending on details...
 			transaction.doom()
 			logger.warn("Failed to accept input. Client or server problem?", exc_info=True)
-			raise hexc.HTTPUnprocessableEntity( _("Unexpected internal error; see logs"))
+			raise hexc.HTTPUnprocessableEntity(_("Unexpected internal error; see logs"))
 
 	def readInput(self, value=None):
 		"""
@@ -446,11 +445,11 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
 			client request.
 		"""
-		result = read_body_as_external_object( 	self.request,
+		result = read_body_as_external_object(self.request,
 												input_data=value,
-												expected_type=self.inputClass )
+												expected_type=self.inputClass)
 		try:
-			return self._transformInput( result )
+			return self._transformInput(result)
 		except hexc.HTTPException:
 			raise
 		except Exception:
@@ -460,15 +459,15 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			# transformInput may raise TypeError if the request is bad, but it
 			# may also raise AttributeError if the inputClass is bad, but that
 			# could also come from other places. We call it all client error.
-			logger.exception( "Failed to parse/transform value %s", value )
+			logger.exception("Failed to parse/transform value %s", value)
 			_, _, tb = sys.exc_info()
 			ex = hexc.HTTPBadRequest("Failed to parse/transform value")
 			raise ex, None, tb
 
-	def _transformInput( self, value ):
+	def _transformInput(self, value):
 		return value
 
-	def findContentType( self, externalValue ):
+	def findContentType(self, externalValue):
 		"""
 		Attempts to find the best content type (datatype), one that can be used with
 		:meth:`createContentObject`.
@@ -483,51 +482,51 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		string.
 		"""
 
-		if externalValue.get( MIMETYPE ):
+		if externalValue.get(MIMETYPE):
 			return externalValue[MIMETYPE]
 
 		if 	self.request.content_type and \
-			self.request.content_type.startswith( mimetype.MIME_BASE ):
+			self.request.content_type.startswith(mimetype.MIME_BASE):
 			datatype = self.request.content_type
-			if datatype.endswith( '+json' ):
-				datatype = datatype[:-5] # strip +json
-			if datatype and datatype != mimetype.MIME_BASE: # prevent taking just the base type
+			if datatype.endswith('+json'):
+				datatype = datatype[:-5]  # strip +json
+			if datatype and datatype != mimetype.MIME_BASE:  # prevent taking just the base type
 				return datatype
 
-		if externalValue.get( CLASS ):
+		if externalValue.get(CLASS):
 			return externalValue[CLASS] + 's'
 
-	def createContentObject( self, user, datatype, externalValue, creator ):
-		return create_modeled_content_object( self.dataserver,
+	def createContentObject(self, user, datatype, externalValue, creator):
+		return create_modeled_content_object(self.dataserver,
 											  user,
 											  datatype,
 											  externalValue,
-											  creator )
+											  creator)
 
-	def createAndCheckContentObject( self, owner, datatype, externalValue, creator, predicate=None ):
+	def createAndCheckContentObject(self, owner, datatype, externalValue, creator, predicate=None):
 		if predicate is None:
 			predicate = self.content_predicate
-		containedObject = self.createContentObject( owner, datatype,
-													externalValue, creator )
+		containedObject = self.createContentObject(owner, datatype,
+													externalValue, creator)
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
-			logger.debug( "Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
-						  datatype, externalValue, containedObject, predicate )
-			raise hexc.HTTPUnprocessableEntity( _('Unsupported/missing Class' ))
+			logger.debug("Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
+						  datatype, externalValue, containedObject, predicate)
+			raise hexc.HTTPUnprocessableEntity(_('Unsupported/missing Class'))
 		return containedObject
 
-	def updateContentObject( self, contentObject, externalValue, set_id=False, notify=True ):
+	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
-		containedObject = update_object_from_external_object( aq_base(contentObject),
+		containedObject = update_object_from_external_object(aq_base(contentObject),
 															  externalValue,
 															  notify=notify,
-															  request=self.request )
+															  request=self.request)
 
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
-			and hasattr( containedObject, StandardInternalFields.ID ) \
-			and getattr( containedObject, StandardInternalFields.ID, None ) != externalValue[StandardExternalFields.ID]:
+			and hasattr(containedObject, StandardInternalFields.ID) \
+			and getattr(containedObject, StandardInternalFields.ID, None) != externalValue[StandardExternalFields.ID]:
 			try:
 				containedObject.id = externalValue['ID']
 			except AttributeError:
@@ -551,7 +550,7 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		"""
 		creator = user
 		externalValue = self.readInput() if not externalValue else externalValue
-		datatype = self.findContentType( externalValue )
+		datatype = self.findContentType(externalValue)
 
 		context = self.request.context
 		# If our context contains a user resource, then that's where we should be trying to
@@ -559,31 +558,31 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		# user is an administrator (TODO: Revisit this.)
 		owner_root = None
 		if search_owner:
-			owner_root = traversal.find_interface( context, IUser )
+			owner_root = traversal.find_interface(context, IUser)
 			if owner_root is not None:
-				owner_root = getattr( owner_root, 'user', owner_root ) # migration compat
+				owner_root = getattr(owner_root, 'user', owner_root)  # migration compat
 			if owner_root is None:
-				owner_root = traversal.find_interface( context, IUser )
-			if owner_root is None and hasattr( context, 'container' ):
-				owner_root = traversal.find_interface( context.container, IUser )
+				owner_root = traversal.find_interface(context, IUser)
+			if owner_root is None and hasattr(context, 'container'):
+				owner_root = traversal.find_interface(context.container, IUser)
 
 		owner = owner_root if owner_root else creator
 
-		containedObject = self.createAndCheckContentObject( owner, datatype, externalValue, creator )
+		containedObject = self.createAndCheckContentObject(owner, datatype, externalValue, creator)
 		containedObject.creator = creator
 
 		# The process of updating may need to index and create KeyReferences
 		# so we need to have a jar. We don't have a parent to inherit from just yet
 		# (If we try to set the wrong one, it messes with some events and some
 		# KeyError detection in the containers)
-		#containedObject.__parent__ = owner
-		owner_jar = getattr( owner, '_p_jar', None )
-		if owner_jar and getattr( containedObject, '_p_jar', self) is None:
-			owner_jar.add( containedObject )
+		# containedObject.__parent__ = owner
+		owner_jar = getattr(owner, '_p_jar', None)
+		if owner_jar and getattr(containedObject, '_p_jar', self) is None:
+			owner_jar.add(containedObject)
 
 		# Update the object, but don't fire any modified events. We don't know
 		# if we'll keep this object yet, and we haven't fired a created event
-		self.updateContentObject( containedObject, externalValue, set_id=True, notify=False )
+		self.updateContentObject(containedObject, externalValue, set_id=True, notify=False)
 
 		return (containedObject, owner) if search_owner else containedObject
 
@@ -599,10 +598,10 @@ class ModeledContentEditRequestUtilsMixin(object):
 		with :class:`IDeletedObjectPlaceholder`), raises a 404 error.
 		The remaining arguments are used as details in the message.
 		"""
-		if o is None or IDeletedObjectPlaceholder.providedBy( o ):
-			raise hexc.HTTPNotFound( "No object %s/%s/%s" % (cr, cid,oid))
+		if o is None or IDeletedObjectPlaceholder.providedBy(o):
+			raise hexc.HTTPNotFound("No object %s/%s/%s" % (cr, cid, oid))
 
-	def _check_object_unmodified_since( self, obj ):
+	def _check_object_unmodified_since(self, obj):
 		"""
 		If the request for this object has a 'If-Unmodified-Since' header,
 		and the provided object supports modification times, then the two
@@ -612,7 +611,7 @@ class ModeledContentEditRequestUtilsMixin(object):
 		"""
 
 		if self.request.if_unmodified_since is not None:
-			obj_last_mod = to_standard_external_last_modified_time( obj )
+			obj_last_mod = to_standard_external_last_modified_time(obj)
 			if 	obj_last_mod is not None \
-				and datetime.datetime.fromtimestamp( obj_last_mod, webob.datetime_utils.UTC ) > self.request.if_unmodified_since:
+				and datetime.datetime.fromtimestamp(obj_last_mod, webob.datetime_utils.UTC) > self.request.if_unmodified_since:
 				raise hexc.HTTPPreconditionFailed()
