@@ -16,7 +16,6 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -52,12 +51,28 @@ def to_suggested_contacts(users):
 		result.append(contact)
 	return result
 
+class _AbstractSuggestedContactsView( AbstractAuthenticatedView ):
+
+	# The maximum number of results we will return
+	MAX_REQUEST_SIZE = 10
+	# The minimum number of results we must return
+	MIN_RESULT_COUNT = 4
+
+	def _get_params(self, user):
+		params = CaseInsensitiveDict(self.request.params)
+		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
+		if self.result_count > self.MAX_REQUEST_SIZE:
+			self.result_count = self.MAX_REQUEST_SIZE
+
+		self.existing_pool = {x.username for x in user.entities_followed}
+		self.existing_pool.add( user.username )
+
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
 			 permission=ACT_UPDATE,
 			 context=IUser)
-class UserSuggestedContactsView(AbstractAuthenticatedView):
+class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 	"""
 	For the contextual user, return suggested contacts based on:
 
@@ -68,21 +83,11 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 	LIMITED_CONTACT_RATIO = .6
 	# The minimum number of contacts we must have in our pool
 	MIN_LIMITED_CONTACT_POOL_SIZE = 2
-	# The maximum number of results we will return
-	MAX_REQUEST_SIZE = 10
-	# The minimum number of results we must return
-	MIN_RESULT_COUNT = 4
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
-	def _get_params(self):
-		params = CaseInsensitiveDict(self.request.params)
-		self.existing_pool = {x.username for x in self.context.entities_followed}
-		self.existing_pool.add( self.context.username )
-		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
-		if self.result_count > self.MAX_REQUEST_SIZE:
-			self.result_count = self.MAX_REQUEST_SIZE
-
+	def _get_params(self, user):
+		super( UserSuggestedContactsView, self )._get_params( user )
 		self.limited_count = 0
 		# Only fetch from our limited contacts if our pool size is
 		# large enough.
@@ -132,7 +137,7 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()
-		self._get_params()
+		self._get_params( self.context )
 		limited_contacts = self._get_limited_contacts()
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
 		results[ 'ItemCount' ] = 0
@@ -154,37 +159,11 @@ class UserSuggestedContactsView(AbstractAuthenticatedView):
 			 name=SUGGESTED_CONTACTS,
 			 permission=ACT_READ,
 			 request_method='GET')
-class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsMixin):
+class _MembershipSuggestedContactsView( _AbstractSuggestedContactsView ):
 	"""
 	Simple contact suggestions based on members of
 	context.
 	"""
-
-	# If we do any randomization, these batch params would not
-	# much sense.
-	# TODO Support batching
-	_DEFAULT_BATCH_SIZE = 20
-	_DEFAULT_BATCH_START = 0
-
-	MAX_REQUEST_SIZE = 10
-	MIN_RESULT_COUNT = 0
-
-	def _batch_params(self):
-		self.batch_size, self.batch_start = self._get_batch_size_start()
-
-	def _get_params(self):
-		"""
-		The ratio of contacts we will retrieve from limited
-		contact sources.
-		"""
-		params = CaseInsensitiveDict(self.request.params)
-		self._batch_params()
-		self.result_count = self.batch_size or params.get( 'Count' ) or self.MAX_REQUEST_SIZE
-		if self.result_count > self.MAX_REQUEST_SIZE:
-			self.result_count = self.MAX_REQUEST_SIZE
-
-		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
-		self.existing_pool.add( self.remoteUser.username )
 
 	def _accept_filter(self, member, hidden):
 		"""
@@ -223,7 +202,7 @@ class _MembershipSuggestedContactsView(AbstractAuthenticatedView, BatchingUtilsM
 			raise hexc.HTTPForbidden()
 
 		results = LocatedExternalDict()
-		self._get_params()
+		self._get_params( self.remoteUser )
 		contacts = self._get_contacts()
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = SUGGESTED_CONTACTS
