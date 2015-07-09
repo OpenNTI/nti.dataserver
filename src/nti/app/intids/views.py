@@ -9,14 +9,12 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.intid
-
 from zope import component
-from zope.mimetype.interfaces import IContentTypeAware
 
-from ZODB.POSException import POSError
+from zope.intid import IIntIds
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -24,9 +22,10 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 from nti.externalization.interfaces import LocatedExternalDict
+
+from nti.zodb import isBroken
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
@@ -41,51 +40,45 @@ class IntIdResolverView(AbstractAuthenticatedView):
 		uid = request.subpath[0] if request.subpath else ''
 		if uid is None:
 			raise hexc.HTTPUnprocessableEntity("Must specify a intid")
-		
+
 		try:
 			uid = int(uid)
 		except (ValueError, TypeError, AssertionError):
 			raise hexc.HTTPUnprocessableEntity("Must specify a valid intid")
-		
-		intids = component.getUtility(zope.intid.IIntIds)
+
+		intids = component.getUtility(IIntIds)
 		result = intids.queryObject(uid)
 		if result is None:
 			raise hexc.HTTPNotFound()
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 name='unregister_missing_objects',
-			 renderer='rest',
-			 request_method='POST',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
-class UnregisterMissingObjectsView(AbstractAuthenticatedView, 
+@view_config(name='UnregisterMissingObjects')
+@view_config(name='unregister_missing_objects')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='POST',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
+class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 						 		   ModeledContentUploadRequestUtilsMixin):
-	
+
 	def __call__(self):
 		total = 0
 		result = LocatedExternalDict()
 		broken = result['Broken'] = {}
 		missing = result['Missing'] = []
-		intids = component.getUtility(zope.intid.IIntIds)
+		intids = component.getUtility(IIntIds)
 		for uid in intids:
 			obj = None
 			try:
 				obj = intids.getObject(uid)
-				if obj is not None and hasattr(obj, '_p_activate'):
-					obj._p_activate()
-				else:
-					# load to validate
-					getattr(obj, "creator", None)
-					IDeletedObjectPlaceholder.providedBy(obj)
-					IContentTypeAware(obj, None)
+				if isBroken(obj, uid):
+					broken[uid] = str(type(obj))
+					logger.info("Unregistering broken object %s,%s", uid, type(obj))
+					intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			except KeyError:
 				missing.append(uid)
 				logger.info("Unregistering missing %s", uid)
-				intids.forceUnregister(uid, notify=False, removeAttribute=False)
-			except POSError:
-				broken[uid] = str(type(obj))
-				logger.info("Unregistering broken object %s,%s", uid, type(obj))
 				intids.forceUnregister(uid, notify=False, removeAttribute=False)
 			else:
 				total += 1
