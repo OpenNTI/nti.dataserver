@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import itertools
+
 from functools import total_ordering
 
 from zope import interface
@@ -122,22 +124,22 @@ class _SecondOrderContactProvider(object):
 				# User can see himself
 				if x is user:
 					return True
-	
+
 				# No one can see the Koppa Kids or nextthought users.
 				if 		ICoppaUserWithoutAgreement.providedBy(x) \
 					or 	username.endswith( '@nextthought.com' ):
 					return False
-	
+
 				# public comms can be searched
 				if ICommunity.providedBy(x) and x.public:
 					return True
-	
+
 				# User can see dynamic memberships he's a member of
 				# or owns. First, the general case
 				container = IEntityContainer(x, None)
 				if container is not None:
 					return user in container or getattr(x, 'creator', None) is user
-	
+
 				# Otherwise, visible if it doesn't have dynamic memberships,
 				# or we share dynamic memberships
 				return 	not hasattr(x, 'usernames_of_dynamic_memberships') or \
@@ -155,9 +157,11 @@ class _SecondOrderContactProvider(object):
 			else:
 				accum[username] = SuggestedContact( username=username, rank=1 )
 
-	def suggestions(self, user, *args, **kwargs):
-		# Could we ever come across cross-site suggestions?
-		accept_filter = self._make_visibility_test( user )
+	def _get_suggestions_for_user(self, user):
+		"""
+		Pull all second order contacts for a user and rank them
+		according to frequency.
+		"""
 		accum = dict()
 		for target in user.entities_followed:
 			self._get_contacts( target, accum )
@@ -165,9 +169,28 @@ class _SecondOrderContactProvider(object):
 		existing_pool = {e.username for e in user.entities_followed}
 		existing_pool.add( user.username )
 		contacts = self.ranking.sort( accum.values() )
-		for contact in contacts:
+		return contacts
+
+	def suggestions(self, user, source_user=None, *args, **kwargs):
+		# Could we ever come across cross-site suggestions?
+		accept_filter = self._make_visibility_test( user )
+		existing_pool = {e.username for e in user.entities_followed}
+		existing_pool.add( user.username )
+
+		if source_user is not None and user != source_user:
+			# Ok, we want suggestions for a user based on a
+			# another user.  Add that user and her friends.
+			contacts_iter = itertools.chain( (source_user,),
+											source_user.entities_followed )
+		else:
+			# Suggestions based on just our given user.
+			contacts_iter = self._get_suggestions_for_user( user )
+
+		for contact in contacts_iter:
 			target_name = contact.username
 			if target_name not in existing_pool:
 				target = User.get_user( target_name )
-				if target is not None and accept_filter( target ):
+
+				if 		target is not None \
+					and accept_filter( target ):
 					yield target
