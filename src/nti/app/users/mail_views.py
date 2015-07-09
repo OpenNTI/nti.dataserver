@@ -51,19 +51,19 @@ from nti.dataserver.users.interfaces import checkEmailAddress
 from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.utils import reindex_email_verification
 
-from . import VERIFY_USER_EMAIL_VIEW
-from . import REQUEST_EMAIL_VERFICATION_VIEW
-from . import SEND_USER_EMAIL_VERFICATION_VIEW
-from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
-
 from .utils import get_email_verification_time
 from .utils import safe_send_email_verification
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
 
+from . import VERIFY_USER_EMAIL_VIEW
+from . import REQUEST_EMAIL_VERFICATION_VIEW
+from . import SEND_USER_EMAIL_VERFICATION_VIEW
+from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
+
 MAX_WAIT_TIME_EMAILS = 300
 
-def _login_root():
+def _login_app_root():
 	settings = component.getUtility(IApplicationSettings)
 	login_root = settings.get('login_app_root', '/login/')
 	return login_root
@@ -105,7 +105,7 @@ class VerifyUserEmailView( AbstractAuthenticatedView ):
 	def __call__(self):
 		request = self.request
 		user = self.remoteUser
-		login_root = _login_root()
+		login_root = _login_app_root()
 
 		if user is None:
 			# If unauthenticated, redirect to login with redirect to this view.
