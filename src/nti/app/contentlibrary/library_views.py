@@ -539,8 +539,6 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 						result_list.extend( path_list )
 					result.append( result_list )
 
-		# TODO Caching, last mod?
-
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
@@ -548,6 +546,9 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			result_list = self._get_legacy_results( obj, target_ntiid )
 			if result_list:
 				result.append( result_list )
+
+		# Not sure how we would cache here, it would have to be by user
+		# since we may have user-specific data returned.
 		return result
 
 	def _sort(self, result_lists):
@@ -597,7 +598,8 @@ class _PostLibraryPathView( AbstractAuthenticatedView ):
 	"""
 
 	def __call__(self):
-		# TODO Permissioning concerns?
+		# Permissioning concerns? If we have permission
+		# on underlying object, we should have permission up the tree.
 		result = LocatedExternalList()
 		obj = self.context
 		top_level_contexts = _get_top_level_contexts( obj )
