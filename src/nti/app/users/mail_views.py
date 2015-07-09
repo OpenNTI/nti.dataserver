@@ -13,10 +13,13 @@ from . import MessageFactory as _
 
 import six
 import time
-import gevent
 import urllib
-
 from urlparse import urljoin
+
+try:
+	from gevent import sleep
+except ImportError:
+	from time import sleep
 
 from zope import component
 
@@ -27,7 +30,6 @@ from pyramid import httpexceptions as hexc
 from itsdangerous import BadSignature
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
-
 from nti.app.externalization.error import raise_json_error as raise_error
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -242,5 +244,5 @@ class SendUserEmailVerificationView(AbstractAuthenticatedView,
 			else:
 				logger.debug("Not sending email verification to %s", user)
 			# wait a bit
-			gevent.sleep(0.5)
+			sleep(0.5)
 		return hexc.HTTPNoContent()

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Search pyramid views.
-
 .. $Id$
 """
 
@@ -14,15 +12,16 @@ logger = __import__('logging').getLogger(__name__)
 import time
 
 from zope import interface
-from zope.event import notify
-from zope.location import locate
 
-from pyramid import httpexceptions as hexc
+from zope.event import notify
+
+from zope.location import locate
 
 from z3c.batching.batch import Batch
 
-from nti.app.base.abstract_views import AbstractAuthenticatedView
+from pyramid import httpexceptions as hexc
 
+from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.internalization import update_object_from_external_object
@@ -68,8 +67,7 @@ class BaseView(AbstractAuthenticatedView):
 		result = self.locate(result, self.request.root)
 		return result
 
-class BaseSearchView(BaseView,
-					 BatchingUtilsMixin):
+class BaseSearchView(BaseView, BatchingUtilsMixin):
 
 	def _batch_results(self, results):
 		batch_size, batch_start = self._get_batch_size_start()
@@ -81,16 +79,16 @@ class BaseSearchView(BaseView,
 		if batch_start < len(results):
 			batch_hits = Batch(results.Hits, batch_start, batch_size)
 			new_results.Hits = batch_hits  # Set hits
-			## CS: this is a bit hackish, but it avoids building a new
-			## batch object plus the link decorator needs the orignal
-			## batch object. Consider using _batch_items_iterable
+			# CS: this is a bit hackish, but it avoids building a new
+			# batch object plus the link decorator needs the orignal
+			# batch object. Consider using _batch_items_iterable
 			new_results.Batch = batch_hits  # save for decorator
 		return new_results, results
 
 	def _do_search(self, query, store=None):
 		result = self.indexmanager.search(query=query, store=store)
 		return result
-	
+
 	def search(self, *queries):
 		result = None
 		now = time.time()
@@ -116,7 +114,7 @@ class SuggestView(BaseView):
 	def _do_search(self, query, store=None):
 		result = self.indexmanager.suggest(query=query, store=store)
 		return result
-	
+
 	def search(self, *queries):
 		result = None
 		now = time.time()
