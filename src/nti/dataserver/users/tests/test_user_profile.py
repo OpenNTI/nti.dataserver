@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-import unittest
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
@@ -20,6 +19,8 @@ from hamcrest import has_property
 does_not = is_not
 
 from nose.tools import assert_raises
+
+import unittest
 
 from zope import interface
 from zope.security.interfaces import IPrincipal
@@ -200,18 +201,24 @@ class TestUserProfile(DataserverLayerTest):
 		description = 'ima description'
 		school = 'School of Hard Knocks'
 		degree = 'CS'
+		
+		prof.interests = ['reading', 'development']
+		
 		prof.positions = [ProfessionalPosition( startYear=start_year,
 												endYear=end_year,
 												companyName=company_name,
 												title=title,
 												description=description )]
-		prof.education = [Education( startYear=start_year,
+		prof.education = [Education(startYear=start_year,
 									endYear=end_year,
 									school=school,
 									degree=degree,
 									description=description )]
 		user_prof = to_external_object( user, name=('personal-summary') )
 
+		ext_prof = user_prof.get( 'interests' )
+		assert_that( ext_prof, has_length( 2 ))
+		
 		# Positions
 		ext_prof = user_prof.get( 'positions' )
 		assert_that( ext_prof, has_length( 1 ))
