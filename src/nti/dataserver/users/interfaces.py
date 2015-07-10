@@ -778,9 +778,10 @@ class ISuggestedContactsProvider(Interface):
 	context = Object(Interface, title="Provider context",
 					 required=False)
 
-	def suggestions(user):
+	def suggestions(user, source_user=None):
 		"""
-		return a iterator with suggested contacts ordered by the ranking policy
+		Return a iterator with suggested contacts ordered by the ranking policy.
+		Optionally, give a source_user to return targeted suggestions.
 		"""
 
 class ISecondOrderSuggestedContactProvider(ISuggestedContactsProvider):
