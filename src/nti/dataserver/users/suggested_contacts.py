@@ -90,7 +90,7 @@ class DefaultSuggestedContactsProvider(SchemaConfigured, Contained):
 		result = getattr(self.ranking, 'priority', None) or 1
 		return result
 
-	def suggestions(self, user):
+	def suggestions(self, user, source_user=None):
 		raise NotImplementedError()
 SuggestedContactsProvider = DefaultSuggestedContactsProvider
 
