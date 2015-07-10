@@ -78,21 +78,38 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		1. Friends friends list (2nd order)
 		2. Suggested contacts utility
 	"""
-	# The portion of results we get from our contacts
+	# The portion of results we get from our contact pool.
 	LIMITED_CONTACT_RATIO = .6
+	# The portion of results we get from the context.
+	LIMITED_CONTACT_RATIO_SINGLE_SOURCE = .2
 	# The minimum number of contacts we must have in our pool
 	MIN_LIMITED_CONTACT_POOL_SIZE = 2
+	# The minimum number of contacts our context must have.
+	# For a user with 5 friends, we'll return a single contact
+	# from that source. Less than that and we'll return nothing.
+	MIN_LIMITED_CONTACT_POOL_SIZE_SINGLE_SOURCE = 5
 	# TODO Do we need a min fill count to preserve privacy?
 	MIN_FILL_COUNT = 0
 
-	def _get_params(self):
-		super( UserSuggestedContactsView, self )._get_params()
+	def _set_limited_count(self, pool, pool_size_min, limited_ratio):
 		self.limited_count = 0
 		# Only fetch from our limited contacts if our pool size is
 		# large enough.
-		if len( self.existing_pool ) >= self.MIN_LIMITED_CONTACT_POOL_SIZE:
-			limited_count = self.LIMITED_CONTACT_RATIO * self.result_count
+		if len( pool ) >= pool_size_min:
+			limited_count = limited_ratio * self.result_count
 			self.limited_count = int(limited_count)
+
+	def _get_params(self):
+		super( UserSuggestedContactsView, self )._get_params()
+
+		if self.remoteUser == self.context:
+			self._set_limited_count( self.existing_pool,
+									self.MIN_LIMITED_CONTACT_POOL_SIZE,
+									self.LIMITED_CONTACT_RATIO )
+		else:
+			self._set_limited_count( tuple( self.context.entities_followed ),
+									self.MIN_LIMITED_CONTACT_POOL_SIZE_SINGLE_SOURCE,
+									self.LIMITED_CONTACT_RATIO_SINGLE_SOURCE )
 
 	def _get_suggestion_args(self):
 		"""
