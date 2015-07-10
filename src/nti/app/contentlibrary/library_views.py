@@ -47,12 +47,16 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -401,6 +405,41 @@ def _get_hierarchy_context_for_context( obj, top_level_context ):
 									IHierarchicalContextProvider )
 	return results
 
+def _is_blog_item( obj ):
+	return IPersonalBlogEntry.providedBy( obj ) \
+		or IPersonalBlogComment.providedBy( obj ) \
+		or IPersonalBlogEntryPost.providedBy( obj )
+
+def _get_board_obj_path( obj ):
+	"""
+	For a board level object, return the lineage path.
+	"""
+	# Permissioning concerns? If we have permission
+	# on underlying object, we should have permission up the tree.
+	result = LocatedExternalList()
+	top_level_contexts = _get_top_level_contexts( obj )
+
+	if top_level_contexts:
+		def _top_level_endpoint( item ):
+			return item is None or item in top_level_contexts
+	elif _is_blog_item( obj ):
+		def _top_level_endpoint( item ):
+			return item is None or IUser.providedBy( item )
+	else:
+		def _top_level_endpoint( item ):
+			return item is None or IContentPackage.providedBy( item )
+
+	item = obj.__parent__
+	result_list = [ item ]
+	while not _top_level_endpoint( item ):
+		item = item.__parent__
+		if item is not None:
+			result_list.append( item )
+
+	result_list.reverse()
+	result.append( result_list )
+	return result
+
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  context=IDataserverFolder,
@@ -580,8 +619,11 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		results = self._get_path( obj, object_ntiid )
-		self._sort( results )
+		if ITopic.providedBy( obj ) or IPost.providedBy( obj ):
+			results = _get_board_obj_path( obj )
+		else:
+			results = self._get_path( obj, object_ntiid )
+			self._sort( results )
 		return results
 
 @view_config(context=IPost)
@@ -598,26 +640,4 @@ class _PostLibraryPathView( AbstractAuthenticatedView ):
 	"""
 
 	def __call__(self):
-		# Permissioning concerns? If we have permission
-		# on underlying object, we should have permission up the tree.
-		result = LocatedExternalList()
-		obj = self.context
-		top_level_contexts = _get_top_level_contexts( obj )
-
-		def _top_level_endpoint( item ):
-			return item is None or IContentPackage.providedBy( item )
-
-		if top_level_contexts:
-			def _top_level_endpoint( item ):
-				return item is None or item in top_level_contexts
-
-		item = obj.__parent__
-		result_list = [ item ]
-		while not _top_level_endpoint( item ):
-			item = item.__parent__
-			if item is not None:
-				result_list.append( item )
-
-		result_list.reverse()
-		result.append( result_list )
-		return result
+		return _get_board_obj_path( self.context )
