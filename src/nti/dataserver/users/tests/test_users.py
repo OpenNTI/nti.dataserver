@@ -1,71 +1,82 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-from hamcrest import (
-	contains, has_value, is_in,
-    assert_that, greater_than_or_equal_to, has_entry, has_length,
-    has_property, is_, is_not, none, )
-does_not = is_not
-from hamcrest import has_item
-from hamcrest import greater_than
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_in
+from hamcrest import is_not
 from hamcrest import has_key
-import unittest
+from hamcrest import contains
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import has_value
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+from hamcrest import greater_than
+from hamcrest import greater_than_or_equal_to
+does_not = is_not
+
 from nose.tools import assert_raises
 
-from zope import component
+import copy
+import time
+import unittest
+
 import zc.intid
+
+from zope import component
+from zope.component import eventtesting
+
+from zope.container.interfaces import InvalidItemType
+
+from zope.location import interfaces as loc_interfaces
+
 from z3c.password import interfaces as pwd_interfaces
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization import internalization
 
-from nti.dataserver.datastructures import  ZContainedMixin as ContainedMixin
-from nti.dataserver.users import User, FriendsList, Device, Community, _FriendsListMap as FriendsListContainer
-from nti.dataserver.interfaces import IFriendsList
+import persistent.wref
+
+from nti.contentrange.contentrange import ContentRangeDescription
+
+from nti.dataserver_core.mixins import  ZContainedMixin as ContainedMixin
+
 from nti.dataserver.contenttypes import Note
+from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.activitystream_change import Change
+from nti.dataserver.users import User, FriendsList, Device
+from nti.dataserver.users import Community, _FriendsListMap as FriendsListContainer
 
-from nti.testing.matchers import provides
-from nti.testing.matchers import verifiably_provides
-from nti.testing.matchers import is_false
-from nti.testing.time import time_monotonically_increases
+from nti.externalization import internalization
+from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.persistence import getPersistentState
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
-from zope.container.interfaces import InvalidItemType
-from zope.location import interfaces as loc_interfaces
-from zope.component import eventtesting
-
-from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-import persistent.wref
 
 from nti.ntiids import ntiids
-from nti.contentrange.contentrange import ContentRangeDescription
-import time
-import copy
 
-class PersistentContainedThreadable(ContainedMixin,persistent.Persistent):
+from nti.testing.matchers import is_false
+from nti.testing.matchers import provides
+from nti.testing.matchers import verifiably_provides
+from nti.testing.time import time_monotonically_increases
+
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
+class PersistentContainedThreadable(ContainedMixin, persistent.Persistent):
+	creator = None
 	lastModified = 0
 	inReplyTo = None
-	creator = None
 	references = ()
 	shared_with = True
 	def isSharedDirectlyWith( self, other ):
@@ -79,7 +90,8 @@ class TestMisc(unittest.TestCase):
 	def test_create_friends_list_through_registry(self):
 		def _test( name, dynamic_sharing=False ):
 			user = User( 'foo12' )
-			created = user.maybeCreateContainedObjectWithType( name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
+			created = user.maybeCreateContainedObjectWithType( 
+									name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
 			assert_that( created, is_(FriendsList) )
 			assert_that( created.username, is_( 'Friend' ) )
 			assert_that( created, provides( IFriendsList ) )
@@ -119,18 +131,18 @@ class TestMisc(unittest.TestCase):
 		with assert_raises(zope.schema.interfaces.ConstraintNotSatisfied):
 			users.Entity( username=nti_interfaces.SYSTEM_USER_ID )
 
-
 class TestUser(DataserverLayerTest):
+
 	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_type_error(self):
+	
 		with assert_raises(TypeError):
 			users.Entity.get_entity( username={} )
 
 		with assert_raises(TypeError):
 			users.Entity.get_entity( username=1 )
-
 
 	@WithMockDSTrans
 	def test_can_find_friendslist_with_ntiid(self):
@@ -150,7 +162,6 @@ class TestUser(DataserverLayerTest):
 		assert_that( user2.get_entity( fl1.NTIID ), is_( fl1 ) )
 		assert_that( User.get_entity( fl1.NTIID ), is_( fl1 ) )
 		assert_that( User.get_entity( 'foo@bar' ), is_( user1 ) )
-
 
 	@WithMockDSTrans
 	def test_friendslist_updated_through_user_updates_last_mod(self):
@@ -215,7 +226,6 @@ class TestUser(DataserverLayerTest):
 			user2_stream = user2.getContainedStream( '' )
 			assert_that( user2_stream, has_length( 1 ) )
 
-
 	@WithMockDSTrans
 	def test_cannot_create_twice(self):
 		user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
@@ -235,7 +245,6 @@ class TestUser(DataserverLayerTest):
 	def test_cannot_have_whitespace_pwd(self):
 		with assert_raises(pwd_interfaces.InvalidPassword):
 			User.create_user( self.ds, username="foo@bar", password=' \t ' )
-
 
 	@WithMockDSTrans
 	def test_share_unshare_note(self):
@@ -398,7 +407,6 @@ class TestUser(DataserverLayerTest):
 			assert_that( stream, has_length( 1 ) )
 			assert_that( stream[0], has_property( 'type', nti_interfaces.SC_MODIFIED ) )
 
-
 	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_dfl_unshare_directly(self):
 		#"""An item shared both directly and indirectly with me is still shared with me if the direct sharing is removed"""
@@ -504,7 +512,6 @@ class TestUser(DataserverLayerTest):
 				# Must not try to commit this
 				del user2._noticeChange
 
-
 	@WithMockDS
 	def test_share_unshare_note_with_dynamic_friendslist_external(self):
 		with mock_dataserver.mock_db_trans(self.ds):
@@ -586,7 +593,6 @@ class TestUser(DataserverLayerTest):
 
 		with mock_dataserver.mock_db_trans():
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
-			lm = None
 			eventtesting.clearEvents()
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
@@ -621,11 +627,11 @@ class TestUser(DataserverLayerTest):
 			note.addSharingTarget( user2 )
 
 		with mock_dataserver.mock_db_trans():
+			nots = []
 			user1 = User.get_user( 'foo@bar', dataserver=mock_dataserver.current_mock_ds )
 			user1._postNotification = lambda *args: nots.append( args )
 			eventtesting.clearEvents()
 
-			lm = None
 			with user1.updates():
 				c_note = user1.getContainedObject( note.containerId, note.id )
 				user1.deleteContainedObject( c_note.containerId, c_note.id )
@@ -639,7 +645,6 @@ class TestUser(DataserverLayerTest):
 			assert_that(evts, has_length(1))
 			assert_that( evts[0].object, has_property('type', 'Deleted') )
 			assert_that( evts[0].object, has_property('object', c_note) )
-
 
 	@WithMockDSTrans
 	def test_getSharedContainer_defaults( self ):
@@ -721,7 +726,6 @@ class TestUser(DataserverLayerTest):
 
 		user.unmute_conversation( to_external_ntiid_oid( c ) )
 		assert_that( user.getSharedContainer( 'foo' ), has_length( 2 ) )
-
 
 	@WithMockDSTrans
 	def test_getContainedStream_Note_shared_community_cache(self):
@@ -947,11 +951,12 @@ class TestUser(DataserverLayerTest):
 						 has_item(friends_list._ds_intid) )
 
 from zope.event import notify
+
 from nti.apns.interfaces import APNSDeviceFeedback
 
 class TestFeedbackEvent(DataserverLayerTest):
+	
 	layer = mock_dataserver.SharedConfiguringTestLayer
-
 
 	@WithMockDSTrans
 	def test_devicefeedback(self):
@@ -970,6 +975,7 @@ class TestFeedbackEvent(DataserverLayerTest):
 import zope.schema.interfaces
 
 class TestUserNotDevMode(mock_dataserver.NotDevmodeDataserverLayerTest):
+	
 	features = ()
 
 	@WithMockDS
@@ -988,12 +994,13 @@ class TestUserNotDevMode(mock_dataserver.NotDevmodeDataserverLayerTest):
 
 			update_from_external_object( user, {} )
 
-from nti.testing.matchers import validly_provides
 from hamcrest import contains_inanyorder
 
-class TestCommunity(DataserverLayerTest):
-	layer = mock_dataserver.SharedConfiguringTestLayer
+from nti.testing.matchers import validly_provides
 
+class TestCommunity(DataserverLayerTest):
+
+	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@WithMockDSTrans
 	def test_community_enumarable_adapter(self):
