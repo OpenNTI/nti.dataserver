@@ -37,8 +37,7 @@ from zope.location.interfaces import ISublocations
 
 from zope.password.interfaces import IPasswordManager
 
-from ZODB.POSException import POSError
-from ZODB.interfaces import IConnection, IBroken
+from ZODB.interfaces import IConnection
 
 from z3c.password import interfaces as pwd_interfaces
 
@@ -93,7 +92,7 @@ from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
-from nti.zodb import minmax
+from nti.zodb import minmax, isBroken
 
 # Starts as none, which matches what get_shared_dataserver takes as its
 # clue to use get instead of query. But set to False or 0 to use
@@ -579,8 +578,9 @@ class User(Principal):
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		result = self.xxx_hack_filter_non_memberships( super(User,self)._get_dynamic_sharing_targets_for_read(),
-													   "Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
+		result = self.xxx_hack_filter_non_memberships( 
+					super(User,self)._get_dynamic_sharing_targets_for_read(),
+					"Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
 
 		for fl in self.friendsLists.values():
 			if IDynamicSharingTarget.providedBy( fl ):
@@ -588,8 +588,9 @@ class User(Principal):
 		return result
 
 	def _get_entities_followed_for_read( self ):
-		return self.xxx_hack_filter_non_memberships( super(User,self)._get_entities_followed_for_read(),
-													 "Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read" )
+		return self.xxx_hack_filter_non_memberships(
+					super(User,self)._get_entities_followed_for_read(),
+					"Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read" )
 
 	@Lazy
 	def _circled_events_storage(self):
@@ -868,14 +869,11 @@ class User(Principal):
 			else:
 				collection = container
 			for obj in collection:
-				try:
-					obj = self.containers._v_unwrap(obj) if unwrap else obj
-					if IBroken.providedBy(obj):
-						logger.error("ignoring broken object %s", type(obj))
-					else:
-						yield obj
-				except POSError:
+				obj = self.containers._v_unwrap(obj) if unwrap else obj
+				if isBroken(obj):
 					logger.error("ignoring broken object %s", type(obj))
+				else:
+					yield obj
 
 		if not stream_only:
 			for name, container in self.containers.iteritems():
