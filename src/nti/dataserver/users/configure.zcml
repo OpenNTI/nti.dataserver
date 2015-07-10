@@ -113,12 +113,12 @@
 	<adapter factory=".avatar_urls.GravatarComputedAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 name="generated"
-			 zcml:condition="not-have devmode" />
+			 zcml:condition="not-have no_avatar" />
 
 	<adapter factory=".avatar_urls.DefaultAvatarURL"
 			 provides=".interfaces.IAvatarURLProvider"
 			 name="generated"
-			 zcml:condition="have devmode" />
+			 zcml:condition="have no_avatar" />
 
 	<!-- Default for Koppa Kids -->
 	<adapter factory=".avatar_urls.GravatarComputedCoppaAvatarURL"
