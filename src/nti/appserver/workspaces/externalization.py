@@ -22,6 +22,8 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.renderers import rest
 
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.dataserver import datastructures
 from nti.dataserver import interfaces as nti_interfaces
 
@@ -265,7 +267,7 @@ class ContentUnitInfoHrefDecorator(object):
 			nearest_site = None
 
 		if nearest_site is None:
-			logger.debug("Not providing href links for %s, could not find site", 
+			logger.debug("Not providing href links for %s, could not find site",
 						 type(context) )
 			return
 
@@ -273,7 +275,7 @@ class ContentUnitInfoHrefDecorator(object):
 		link.__parent__ = getattr(nearest_site, '__parent__', None) # Nearest site may be IRoot, which has no __parent__
 		link.__name__ = ''
 		interface.alsoProvides( link, loc_interfaces.ILocation )
-	
+
 		mapping['href'] = render_link( link, nearest_site=nearest_site )['href']
 
 @interface.implementer(IExternalObject)
@@ -294,6 +296,9 @@ class ServiceExternalizer(object):
 
 @component.adapter(IUserService)
 class UserServiceExternalizer(ServiceExternalizer):
+	"""
+	Expose our capabilities and site-level community.
+	"""
 
 	def toExternalObject(self, **kwargs):
 		result = super(UserServiceExternalizer,self).toExternalObject(**kwargs)
@@ -313,4 +318,10 @@ class UserServiceExternalizer(ServiceExternalizer):
 		if cap_filter:
 			capabilities = cap_filter.filterCapabilities( capabilities )
 		result['CapabilityList'] = list( capabilities )
+
+		# Now our community name
+		site_policy = component.queryUtility( ISitePolicyUserEventListener )
+		community_username = getattr(site_policy, 'COM_USERNAME', '')
+		if community_username:
+			result['SiteCommunity'] = community_username
 		return result
