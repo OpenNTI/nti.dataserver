@@ -268,7 +268,7 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 	# because it looks better
 	public_summary_profile_fields = ('affiliation', 'home_page', 'description',
 									 'location', 'role', 'about', 'twitter',
-									 'facebook', 'googlePlus', 'linkedin',
+									 'facebook', 'googlePlus', 'linkedIn',
 									 'education', 'positions' )
 
 	# These could probably be put as tags on the interface fields, but the number of
@@ -276,7 +276,6 @@ class _UserSummaryExternalObject(_EntitySummaryExternalObject):
 
 	def _do_toExternalObject(self, **kwargs):
 		extDict = super(_UserSummaryExternalObject, self)._do_toExternalObject(**kwargs)
-
 		extDict['lastLoginTime'] = self.entity.lastLoginTime
 		if self.public_summary_profile_fields:
 			prof = IUserProfile(self.entity)
