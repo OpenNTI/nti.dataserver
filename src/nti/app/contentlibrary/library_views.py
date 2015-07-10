@@ -54,9 +54,6 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -405,11 +402,6 @@ def _get_hierarchy_context_for_context( obj, top_level_context ):
 									IHierarchicalContextProvider )
 	return results
 
-def _is_blog_item( obj ):
-	return IPersonalBlogEntry.providedBy( obj ) \
-		or IPersonalBlogComment.providedBy( obj ) \
-		or IPersonalBlogEntryPost.providedBy( obj )
-
 def _get_board_obj_path( obj ):
 	"""
 	For a board level object, return the lineage path.
@@ -422,12 +414,12 @@ def _get_board_obj_path( obj ):
 	if top_level_contexts:
 		def _top_level_endpoint( item ):
 			return item is None or item in top_level_contexts
-	elif _is_blog_item( obj ):
-		def _top_level_endpoint( item ):
-			return item is None or IEntity.providedBy( item )
 	else:
+		# Blog, community boards, etc.
 		def _top_level_endpoint( item ):
-			return item is None or IContentPackage.providedBy( item )
+			return item is None \
+				or IContentPackage.providedBy( item ) \
+				or IEntity.providedBy( item )
 
 	item = obj.__parent__
 	result_list = [ item ]
