@@ -47,7 +47,7 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverFolder
@@ -424,7 +424,7 @@ def _get_board_obj_path( obj ):
 			return item is None or item in top_level_contexts
 	elif _is_blog_item( obj ):
 		def _top_level_endpoint( item ):
-			return item is None or IUser.providedBy( item )
+			return item is None or IEntity.providedBy( item )
 	else:
 		def _top_level_endpoint( item ):
 			return item is None or IContentPackage.providedBy( item )
