@@ -28,7 +28,7 @@ MISSING_NTIID_ERROR_CODE 	  = 010
 DUPLICATE_PACAKGES_ERROR_CODE = 100
 MISSING_PACAKGE_REFERENCE_ERROR_CODE = 110
 
-class SynchronizationExeception(Exception):
+class SynchronizationException(Exception):
 	
 	code = None
 	
@@ -38,16 +38,16 @@ class SynchronizationExeception(Exception):
 			result += '. Code:%s' % self.code
 		return  result
 
-class ContentRemovalException(SynchronizationExeception):
+class ContentRemovalException(SynchronizationException):
 	code = CONTENT_REMOVAL_ERROR_CODE
 	
-class MissingContentBundleNTIIDException(SynchronizationExeception):
+class MissingContentBundleNTIIDException(SynchronizationException):
 	code = MISSING_NTIID_ERROR_CODE
 
-class DuplicatePacakgeException(SynchronizationExeception):
+class DuplicatePacakgeException(SynchronizationException):
 	code = DUPLICATE_PACAKGES_ERROR_CODE
 
-class MissingContentPacakgeReferenceException(SynchronizationExeception):
+class MissingContentPacakgeReferenceException(SynchronizationException):
 	code = MISSING_PACAKGE_REFERENCE_ERROR_CODE
 
 @WithRepr
