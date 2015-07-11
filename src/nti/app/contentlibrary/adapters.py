@@ -9,10 +9,18 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import time
+
 from zope import component
 from zope import interface
 
+from zope.interface.common.mapping import IMapping
+
+from zope.location.interfaces import IContained
+
 from zope.security.interfaces import IPrincipal
+
+from persistent.mapping import PersistentMapping
 
 from nti.appserver.interfaces import IJoinableContextProvider
 from nti.appserver.interfaces import IHierarchicalContextProvider
@@ -54,12 +62,15 @@ from nti.contenttypes.presentation.interfaces import IPresentationAsset
 from nti.contenttypes.presentation.interfaces import INTILessonOverview
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewGroup
 from nti.contenttypes.presentation.interfaces import INTICourseOverviewSpacer
+from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
+
+from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -256,3 +267,22 @@ def _bundles_from_container_object(obj):
 		if is_readable(bundle):
 			results.add(bundle)
 	return results
+
+@interface.implementer(IPresentationAssetContainer, IContained, IMapping)
+class _PresentationAssetContainer(PersistentMapping,
+							   	  PersistentCreatedAndModifiedTimeObject):
+	__name__ = None
+	__parent__ = None
+	_SET_CREATED_MODTIME_ON_INIT = False
+
+@interface.implementer(IPresentationAssetContainer)
+def presentation_asset_items_factory(context):
+	try:
+		result = context._presentation_asset_item_container
+		return result
+	except AttributeError:
+		result = context._question_map_assessment_item_container = _PresentationAssetContainer()
+		result.createdTime = time.time()
+		result.__parent__ = context
+		result.__name__ = '_presentation_asset_item_container'
+		return result
