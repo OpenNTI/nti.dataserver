@@ -47,7 +47,6 @@
 			 factory=".workspaces._bundle_workspace_for_user"
 			 provides="zope.traversing.interfaces.IPathAdapter" />
 
-
 	<!-- Also a simple named adapter -->
 	<adapter name="Library"
 			 for="nti.dataserver.interfaces.IUser pyramid.interfaces.IRequest"
@@ -82,7 +81,6 @@
 
 	<adapter factory=".forum._ContentBoardACLProvider" />
 	<adapter factory=".forum._ContentForumACLProvider" />
-
 
 	<!-- Traversal to the forum objects -->
 	<adapter factory="nti.traversal.traversal.DefaultAdapterTraversable"
@@ -163,6 +161,10 @@
 	<adapter factory=".adapters._lessonoverview_to_contained_type" />
 	<adapter factory=".adapters._courseoverviewspacer_to_contained_type" />
 
+	<adapter factory=".adapters.presentation_asset_items_factory"
+			 for="nti.contentlibrary.interfaces.IContentUnit"
+			 provides="nti.contenttypes.presentation.interfaces.IPresentationAssetContainer" />
+			 
 	<!-- Top-level/hierarchy -->
 	<adapter factory=".adapters._content_unit_to_bundle" />
 

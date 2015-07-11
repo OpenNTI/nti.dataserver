@@ -220,6 +220,16 @@ def _index_item(item, content_package, container_id, catalog):
 				  		  namespace=content_package.ntiid)
 	return result
 
+def _index_items(content_package, index, item_iface, removed, catalog, registry):
+	result = 0
+	for container_id, indexed_ids in index['Containers'].items():
+		for indexed_id in indexed_ids:
+			obj = registry.queryUtility(item_iface, name=indexed_id)
+			if obj is not None:
+				result += _index_item(obj, content_package,
+									  container_id, catalog)
+	return result
+
 def _update_index_when_content_changes(content_package, index_filename,
 									   item_iface, object_creator, catalog=None):
 	catalog = get_catalog() if catalog is None else catalog
@@ -292,14 +302,9 @@ def _update_index_when_content_changes(content_package, index_filename,
 
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
-
 	if registry != component.getGlobalSiteManager():
-		for container_id, indexed_ids in index['Containers'].items():
-			for indexed_id in indexed_ids:
-				obj = registry.queryUtility(item_iface, name=indexed_id)
-				if obj is not None:
-					index_item_count += _index_item(obj, content_package,
-													container_id, catalog)
+		index_item_count = _index_items(content_package, index, item_iface, 
+										removed, catalog, registry)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
