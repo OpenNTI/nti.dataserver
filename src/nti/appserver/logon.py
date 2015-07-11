@@ -438,7 +438,6 @@ class _SimpleMissingUserFacebookLinkProvider(object):
 class _SimpleExistingUserFacebookLinkProvider(_SimpleMissingUserFacebookLinkProvider):
 	pass
 
-
 def _prepare_oid_link( request, username, rel, params=() ):
 	query = dict(params)
 	query['oidcsum'] = _checksum(username) if 'oidcsum' not in query else query['oidcsum']
@@ -471,7 +470,7 @@ def _prepare_oid_link( request, username, rel, params=() ):
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( nti_interfaces.IUser, pyramid.interfaces.IRequest )
-class _WhitelistedDomainGoogleLoginLinkProvider(object):
+class WhitelistedDomainGoogleLoginLinkProvider(object):
 	"""
 	Provides a Google login link for a predefined list of domains.
 	"""
@@ -496,12 +495,16 @@ class _WhitelistedDomainGoogleLoginLinkProvider(object):
 	def params_for( self, user ):
 		return ()
 
+_WhitelistedDomainGoogleLoginLinkProvider = WhitelistedDomainGoogleLoginLinkProvider # BWC
+
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
-class _MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
+class MissingUserWhitelistedDomainGoogleLoginLinkProvider(_WhitelistedDomainGoogleLoginLinkProvider):
 	"""
 	Provides a Google login link for a predefined list of domains
 	when an account needs to be created.
 	"""
+
+_MissingUserWhitelistedDomainGoogleLoginLinkProvider = MissingUserWhitelistedDomainGoogleLoginLinkProvider # BWC
 
 class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
 	"""
@@ -530,7 +533,6 @@ class _MissingUserAopsLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLogin
 		username = idurl.split( '/' )[-1]
 		username = username + '@' + self.domains[0]
 		return username
-
 
 class _MissingUserMallowstreetLoginLinkProvider(_MissingUserWhitelistedDomainGoogleLoginLinkProvider):
 	"""
@@ -561,7 +563,7 @@ class _MissingUserMallowstreetLoginLinkProvider(_MissingUserWhitelistedDomainGoo
 
 @interface.implementer( app_interfaces.ILogonLinkProvider )
 @component.adapter( app_interfaces.IMissingUser, pyramid.interfaces.IRequest )
-class _OnlineQueryGoogleLoginLinkProvider(object):
+class OnlineQueryGoogleLoginLinkProvider(object):
 	"""
 	Queries google to see if the domain is an Apps domain that
 	we can expect to use google auth on.
@@ -599,6 +601,8 @@ class _OnlineQueryGoogleLoginLinkProvider(object):
 
 		if allow:
 			return _prepare_oid_link( self.request, self.user.username, self.rel )
+
+_OnlineQueryGoogleLoginLinkProvider = OnlineQueryGoogleLoginLinkProvider # BWC
 
 @component.adapter( nti_interfaces.IOpenIdUser, pyramid.interfaces.IRequest )
 class _ExistingOpenIdUserLoginLinkProvider(object):
