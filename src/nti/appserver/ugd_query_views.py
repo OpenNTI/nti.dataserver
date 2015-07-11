@@ -5,8 +5,8 @@ Views for querying user generated data.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.ntiids.ntiids import find_object_with_ntiid
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -27,7 +27,6 @@ from zope.intid.interfaces import IIntIds
 from pyramid.view import view_config
 
 from nti.app.renderers.interfaces import IUGDExternalCollection
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import httpexceptions as hexc
@@ -43,13 +42,12 @@ from nti.contentlibrary import interfaces as lib_interfaces
 
 from nti.dataserver import users
 from nti.dataserver import liking
-from nti.dataserver.users import entity
+from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
 from nti.dataserver.sharing import SharingContextCache
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
-from nti.mimetype.mimetype import nti_mimetype_from_object, nti_mimetype_with_class
-liking_like_count = liking.like_count  # minor optimization
+from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
@@ -60,11 +58,15 @@ from nti.externalization.externalization import to_standard_external_last_modifi
 
 from nti.links.links import Link
 
+from nti.mimetype.mimetype import nti_mimetype_with_class
+from nti.mimetype.mimetype import nti_mimetype_from_object 
+
 from nti.ntiids import ntiids
+from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.zope_catalog.catalog import ResultSet
 
-from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
+liking_like_count = liking.like_count  # minor optimization
 
 LINKS = StandardExternalFields.LINKS
 ITEMS = StandardExternalFields.ITEMS
@@ -537,7 +539,7 @@ class _UGDView(AbstractAuthenticatedView,
 		names = self._get_shared_with_names()
 		entities = []
 		for name in names:
-			ent = entity.Entity.get_entity( name )
+			ent = Entity.get_entity( name )
 			if ent is not None:
 				# TODO: Should there be an access check here?
 				entities.append( ent )
