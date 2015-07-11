@@ -596,14 +596,13 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
 
 		obj = find_object_with_ntiid( obj_ntiid )
-		if obj is None:
-			raise hexc.HTTPNotFound()
-
 		# If we get a contained object, we need the path
 		# to the container.
 		if IHighlight.providedBy( obj ):
 			obj_ntiid = obj.containerId
 			obj = find_object_with_ntiid( obj_ntiid )
+		if obj is None:
+			raise hexc.HTTPNotFound( '%s not found' % obj_ntiid )
 
 		# Get the ntiid off the object because we may have an OID
 		obj_ntiid = getattr( obj, 'ntiid', None ) or obj_ntiid
