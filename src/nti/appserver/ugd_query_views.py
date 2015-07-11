@@ -6,6 +6,7 @@ Views for querying user generated data.
 .. $Id$
 """
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.ntiids.ntiids import find_object_with_ntiid
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -36,6 +37,7 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IPrincipalUGDFilter
 from nti.appserver.interfaces import get_principal_ugd_filter
+from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
@@ -455,6 +457,24 @@ class _UGDView(AbstractAuthenticatedView,
 		super(_UGDView,self).__init__( request )
 		self._set_user_and_ntiid(request, the_user, the_ntiid)
 		self.context_cache = SharingContextCache()
+		self.top_level_context_filters = self._get_top_level_filter_contexts()
+
+	def _get_top_level_contexts(self, obj):
+		top_level_contexts = []
+		if self.user is not None:
+			for new_contexts in component.subscribers( (obj,),
+													ITopLevelContainerContextProvider ):
+				top_level_contexts.extend( new_contexts )
+		else:
+			for new_contexts in component.subscribers( (obj, self.user),
+													ITopLevelContainerContextProvider ):
+				top_level_contexts.extend( new_contexts )
+		return top_level_contexts
+
+	def _toplevel_context_filter(self, obj):
+		top_level_contexts = self._get_top_level_contexts( obj )
+		return top_level_contexts \
+			and self.top_level_context_filters.intersection( set( top_level_contexts ))
 
 	def _set_user_and_ntiid(self, request, the_user, the_ntiid):
 		if request.context:
@@ -491,6 +511,15 @@ class _UGDView(AbstractAuthenticatedView,
 	def _get_filter_operator(self):
 		param = self.request.params.get( 'filterOperator',  None )
 		return Operator.fromUnicode(param)
+
+	def _get_top_level_filter_contexts(self):
+		top_level_contexts = self.__get_list_param( 'topLevelContextFilter' )
+		results = set()
+		for top_level_context in top_level_contexts:
+			top_level_context = find_object_with_ntiid( top_level_context )
+			if top_level_context is not None:
+				results.add( top_level_context )
+		return results
 
 	def _get_filter_names(self):
 		return self.__get_list_param( 'filter' )
@@ -608,6 +637,9 @@ class _UGDView(AbstractAuthenticatedView,
 					if shared_with_value in x_sharedWith:
 						return True
 			predicate = _combine_predicate( filter_shared_with, predicate )
+
+		if self.top_level_context_filters:
+			predicate = _combine_predicate( self._toplevel_context_filter, predicate )
 
 		return predicate
 
@@ -815,6 +847,11 @@ class _UGDView(AbstractAuthenticatedView,
 			A string parameter with to indicate what operator (union, intersection) is to
 			be used when combining the filters. The values are ('0', 'union') for union operator or
 			('1','intersection') for intersection. The default is intersection
+
+		topLevelContextFilter
+			A list param of top-level-context ntiids.  We will only return objects
+			contained within these top-level-contexts. Currently, only a union of given
+			contexts is supported.
 
 		:param dict result: The result dictionary that will be returned to the client.
 			Contains the ``Items`` list of all items found. You may add keys to the dictionary.
