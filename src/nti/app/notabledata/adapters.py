@@ -50,6 +50,8 @@ _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment
 _TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
 _TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
 
+_MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
+
 @interface.implementer(IUserNotableData)
 @component.adapter(IUser,interface.Interface)
 class UserNotableData(AbstractAuthenticatedView):
@@ -273,7 +275,12 @@ class UserNotableData(AbstractAuthenticatedView):
 			questionable_obj = uidutil.getObject(questionable_uid)
 			if security_check(questionable_obj):
 				safely_viewable_intids.add(questionable_uid)
-
+				
+		# 2015-07-11 Subtract any message info
+		messageinfo_intids = catalog['mimeType'].apply({'any_of': (_MESSAGEINFO_MYMETYPE,)})
+		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
+															  messageinfo_intids)
+		
 		# Make sure none of the stuff we created got in
 		intids_created_by_me = self._intids_created_by_me
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)
