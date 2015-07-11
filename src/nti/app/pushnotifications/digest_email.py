@@ -36,6 +36,8 @@ from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
 from nti.common.property import Lazy
 
+from nti.common.gravatar import MYSTERY_MAN_URL as DEFAULT_AVATAR_URL
+
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -45,7 +47,10 @@ from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContaine
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
+
+from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
+
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import ICommentPost
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
@@ -226,7 +231,10 @@ class _TemplateArgs(object):
 
 	@property
 	def creator_avatar_url(self):
-		return self.request.resource_url(self._primary.creator, '@@avatar')
+		avatar_container = IAvatarURL( self._primary.creator )
+		if avatar_container.avatarURL:
+			return self.request.resource_url(self._primary.creator, '@@avatar')
+		return DEFAULT_AVATAR_URL
 
 class DigestEmailTemplateArgs(dict):
 

@@ -19,7 +19,6 @@ from zope import interface
 
 from nti.common import create_gravatar_url
 from nti.common import GENERATED_GRAVATAR_TYPES
-from nti.common.gravatar import MYSTERY_MAN_URL as DEFAULT_URL
 
 from ..interfaces import IUser
 from ..interfaces import IEntity
@@ -54,7 +53,7 @@ class _FixedAvatarWrapper(object):
 class DefaultAvatarURL(object):
 
 	def __init__(self, context):
-		self.avatarURL = DEFAULT_URL
+		self.avatarURL = None
 
 # See also https://www.libravatar.org/
 # for a FOSS Gravatar clone that supports delegation by domain.
