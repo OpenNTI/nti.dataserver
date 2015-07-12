@@ -222,7 +222,6 @@ def _index_item(item, content_package, container_id, catalog):
 
 def _index_items(content_package, index, item_iface, removed, catalog, registry):
 	result = 0
-	from IPython.core.debugger import Tracer; Tracer()()
 	for container_id, indexed_ids in index['Containers'].items():
 		for indexed_id in indexed_ids:
 			obj = registry.queryUtility(item_iface, name=indexed_id)
