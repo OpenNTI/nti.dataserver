@@ -129,7 +129,7 @@ class ContentPackage(ContentUnit,
 		return result
 	
 	def __getitem__(self, ntiid):
-		return self._v_references.get(ntiid)
+		return self._v_references[ntiid]
 		
 # TODO: We need to do caching of does_sibling_entry_exist and read_contents.
 # does_exist is used by appserver/censor_policies on every object creation/edit
