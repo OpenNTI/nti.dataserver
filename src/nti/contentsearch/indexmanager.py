@@ -173,16 +173,17 @@ class IndexManager(object):
 					ntiid, sm, result)
 		return result
 
-	def get_content_searcher(self, query):
-		name = query.indexid.lower() if query.indexid else ''
-		searcher = component.queryUtility(IContentSearcher, name=name)
-		return searcher
+	def get_content_searchers(self, query):
+		for name in query.packages or ():
+			name = name.lower() if name else ''
+			searcher = component.queryUtility(IContentSearcher, name=name)
+			if searcher is not None:
+				yield searcher
 
 	def content_search(self, query, store=None):
 		query = ISearchQuery(query)
 		results = get_or_create_search_results(query, store)
-		searcher = self.get_content_searcher(query)
-		if searcher is not None:
+		for searcher in self.get_content_searchers(query):
 			r = searcher.search(query, store=results)
 			results = merge_search_results(results, r)
 		return results
@@ -190,8 +191,7 @@ class IndexManager(object):
 	def content_suggest_and_search(self, query, store=None):
 		query = ISearchQuery(query)
 		results = get_or_create_suggest_and_search_results(query, store)
-		searcher = self.get_content_searcher(query)
-		if searcher is not None:
+		for searcher in self.get_content_searchers(query):
 			rs = searcher.suggest_and_search(query, store=results)
 			results = merge_suggest_and_search_results(results, rs)
 		return results
@@ -199,8 +199,7 @@ class IndexManager(object):
 	def content_suggest(self, query, store=None, *args, **kwargs):
 		query = ISearchQuery(query)
 		results = get_or_create_suggest_results(query, store)
-		searcher = self.get_content_searcher(query)
-		if searcher is not None:
+		for searcher in self.get_content_searchers(query):
 			rs = searcher.suggest(query, store=results)
 			results = merge_suggest_results(results, rs)
 		return results

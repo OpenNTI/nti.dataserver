@@ -71,8 +71,8 @@ class QueryObject(SchemaConfigured):
 	createDirectFieldProperties(ISearchQuery)
 
 	def __init__(self, *args, **kwargs):
-		indexid = kwargs.get('indexid', None)
-		packages = kwargs.get('packages', ())
+		indexid = kwargs.pop('indexid', None)
+		packages = kwargs.get('packages', None)
 		if indexid and not packages:
 			kwargs['packages'] = (indexid,)
 		super(QueryObject, self).__init__(*args, **kwargs)
