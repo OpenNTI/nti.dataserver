@@ -14,9 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from persistent import Persistent
-
 from z3c.password.password import HighSecurityPasswordUtility
+
+from persistent import Persistent
 
 from .interfaces import IZContained
 

@@ -79,7 +79,7 @@ def lookup_rating_for_read(context, cat_name, safe=False):
 	try:
 		annotations = IAnnotations(context) \
 		if not safe else IAnnotations(context, {})
-		storage = annotations.get( key )
+		storage = annotations.get(key)
 		if storage:
 			# Ok, we already have one. Use it.
 			return lookup_rating_for_write(context, cat_name=cat_name)
@@ -101,7 +101,6 @@ def unrate_object(context, username, cat_name=RATING_CAT_NAME):
 		old_rating = storage.userRating(username)
 		if old_rating is not None:
 			storage.remove_rating(username)
-
 			# NOTE: The default implementation of a category does not
 			# fire an event on unrating, so we do.
 			# Must include the rating so that the listeners can know who did it
@@ -112,19 +111,20 @@ def get_object_rating(context, username, cat_name, safe=False, default=None):
 	result = default
 	rating = lookup_rating_for_read(context, cat_name=cat_name, safe=safe)
 	if rating is not None:
-		user_rating = rating.userRating( username )
+		user_rating = rating.userRating(username)
 		result = user_rating if user_rating is not None else default
 	return result
 
 def cached_decorator(key_func):
+
 	def factory(func):
 		@functools.wraps(func)
-		def _caching( *args, **kwargs ):
+		def _caching(*args, **kwargs):
 			key = key_func(*args, **kwargs)
 			if key:
 				cache = component.queryUtility(IMemcacheClient)
 				if cache:
-					cached = cache.get( key )
+					cached = cache.get(key)
 					if cached is not None:
 						return cached
 
@@ -132,7 +132,7 @@ def cached_decorator(key_func):
 
 			if key and cache:
 				__traceback_info__ = key, result, cache
-				cache.set( key, result )
+				cache.set(key, result)
 
 			return result
 		return _caching
@@ -142,7 +142,7 @@ def generic_cache_key(context, cat_name, path):
 	try:
 		oid = to_external_oid(context)
 		return (oid + '/@@' + cat_name + '/' + path).encode('utf-8')
-	except TypeError: # to_external_oid throws if context not saved
+	except TypeError:  # to_external_oid throws if context not saved
 		return None
 
 def _rate_count_cache_key(context, cat_name):

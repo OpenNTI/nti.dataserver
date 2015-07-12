@@ -29,8 +29,10 @@ except ImportError:
 
 from zope import interface
 from zope import component
-from zope.event import notify
+
 from zope.cachedescriptors.property import Lazy
+
+from zope.event import notify
 
 from ZODB.loglevels import TRACE
 
@@ -285,7 +287,6 @@ class SessionService(object):
 		# Let any listeners across the cluster also know it
 		self._publish_msg( b'session_dead', s.session_id, b"42" )
 
-
 	def _validated_session( self, s, send_event=True ):
 		""" Returns a live session or None """
 		if s and self._is_session_dead( s ):
@@ -322,7 +323,6 @@ class SessionService(object):
 			notify(SocketSessionDisconnectedEvent( dead_session ) )
 
 		return result
-
 
 	def get_session_by_owner( self, session_owner_name, session_ids=_AlwaysIn() ):
 		"""
@@ -405,7 +405,6 @@ class SessionService(object):
 		else:
 			imp_user = _NOP_CM
 
-
 		with imp_user():
 			# Trap externalization errors /now/ rather than later during
 			# the process
@@ -479,11 +478,9 @@ class SessionService(object):
 		self._put_msg( 'enqueue_message_from_client', 'server_queue', session_id, msg )
 		self._publish_msg( b'queue_message_from_client', session_id, json.dumps( msg ) )
 
-
 	def queue_message_to_client(self, session_id, msg):
 		self._put_msg( 'enqueue_message_to_client', 'client_queue', session_id, msg )
 		self._publish_msg( b'queue_message_to_client', session_id, msg )
-
 
 	def _get_msgs( self, q_name, session_id ):
 		result = None
@@ -542,7 +539,6 @@ class SessionService(object):
 		key_name = self._heartbeat_key( session_id )
 		self._redis.pipeline( ).set( key_name, heartbeat_time or time.time() ).expire( key_name, self.SESSION_HEARTBEAT_TIMEOUT * 2 ).execute()
 
-
 	def get_last_heartbeat_time(self, session_id, session=None ):
 		# TODO: This gets called a fair amount. Do we need to cache?
 		key_name = self._heartbeat_key( session_id )
@@ -566,7 +562,6 @@ def _send_notification(user_notification_event):
 			except Exception: # pragma: no cover
 				logger.exception("Failed to send %s to %s", user_notification_event, target)
 
-
 # We maintain some extra stats in redis about who has how many active sessions
 # Note that this is non-transactional; that may be an issue in case of many conflicts?
 # Have to try and see
@@ -575,7 +570,6 @@ _session_active_keys = 'sessions/active_sessions_set'
 def _increment_count_for_new_socket(session, event):
 	redis = component.getUtility( nti_interfaces.IRedisClient )
 	redis.zincrby(_session_active_keys, session.owner, 1)
-
 
 @component.adapter( ISocketSession, ISocketSessionDisconnectedEvent )
 def _decrement_count_for_dead_socket(session, event):

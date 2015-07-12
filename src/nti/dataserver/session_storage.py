@@ -120,7 +120,7 @@ class _OwnerSetMapping(persistent.Persistent):
 		for ref in tuple(for_owner):
 			result = ref()
 			try:
-				_read_current( result )
+				_read_current(result)
 			except POSKeyError:
 				# We've seen cases (alpha, prod) where
 				# sessions are in our structure, but not in the db.
@@ -141,18 +141,17 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 
 	family = BTrees.family64
 
-	def __init__( self, family=None ):
-		if family: # pragma: no cover
+	def __init__(self, family=None):
+		if family:  # pragma: no cover
 			self.family = family
 		# TODO: Use the same or different attribute name as the main
 		# intid utility? The 'id' attribute has to be an ascii string,
 		# so we can't directly use that...since we cannot look them
 		# up in the same utility, it seems to make sense to use different
 		# attributes
-		intids = intid_utility.IntIds('_session_intid', family=self.family )
+		intids = intid_utility.IntIds('_session_intid', family=self.family)
 		intids.__name__ = '++etc++session_intids'
 		intids.__parent__ = self
-
 		self.intids = intids
 
 	@Lazy
@@ -173,55 +172,55 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 		_read_current(self.intids.refs)
 		return self.intids
 
-	def register_session( self, session ):
-		session_id = self._intids_rc.register( session )
+	def register_session(self, session):
+		session_id = self._intids_rc.register(session)
 		session.id = hex(session_id)
 		self._by_owner.add_session(session)
-		logger.info( 'Registered session id %s for %s', session.id, session.owner )
+		logger.info('Registered session id %s for %s', session.id, session.owner)
 
-	def get_session( self, session_id ):
+	def get_session(self, session_id):
 		# The session id is supposed to come in as the base 16 session id we created
 		# in register_session
 		try:
-			session_id = int( session_id, 0 )
-		except TypeError: # pragma: no cover
+			session_id = int(session_id, 0)
+		except TypeError:  # pragma: no cover
 			# probably already an int
 			pass
 		try:
-			return self.intids.queryObject( session_id )
-		except TypeError: # pragma: no cover
+			return self.intids.queryObject(session_id)
+		except TypeError:  # pragma: no cover
 			# We couldn't convert the session_id to an int
 			pass
 
-	def get_sessions_by_owner( self, session_owner ):
+	def get_sessions_by_owner(self, session_owner):
 		return self._by_owner.sessions_for_owner(session_owner)
 
-	def unregister_session( self, session ):
+	def unregister_session(self, session):
 		if session is None:
 			return
 
-		session_id = self._intids_rc.queryId( session )
+		session_id = self._intids_rc.queryId(session)
 		if session_id is not None:
 			# Not registered, or gone
-			self.intids.unregister( session )
+			self.intids.unregister(session)
 
 		self._by_owner.drop_session(session)
-		logger.info( "Unregistered session %s for %s", session_id, session.owner )
+		logger.info("Unregistered session %s for %s", session_id, session.owner)
 
-	def unregister_all_sessions_for_owner( self, session_owner ):
+	def unregister_all_sessions_for_owner(self, session_owner):
 		for session in list(self._by_owner.sessions_for_owner(session_owner)):
 			self.unregister_session(session)
 
 		self._by_owner.drop_all_sessions_for_owner(session_owner)
-		logger.info( "Unregistered all sessions for %s", session_owner )
+		logger.info("Unregistered all sessions for %s", session_owner)
 
 @component.adapter(IUser, IObjectRemovedEvent)
-def _remove_sessions_for_removed_user( user, event ):
-	storage = component.queryUtility(ISessionServiceStorage )
+def _remove_sessions_for_removed_user(user, event):
+	storage = component.queryUtility(ISessionServiceStorage)
 	# This is tightly coupled to OwnerBasedAnnotationSessionServiceStorage
-	if hasattr( storage, 'unregister_all_sessions_for_owner' ):
+	if hasattr(storage, 'unregister_all_sessions_for_owner'):
 		try:
-			storage.unregister_all_sessions_for_owner( user )
+			storage.unregister_all_sessions_for_owner(user)
 		except Exception:
 			# The consequence might be some extra storage space used
 			# but nothing dire
