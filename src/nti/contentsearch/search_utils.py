@@ -215,10 +215,10 @@ def create_queryobject(username, params, matchdict):
 			if root is not None:
 				root_ntiid = root.ntiid
 				packages.append(root_ntiid)
-				if 'indexid' not in args: # legacy
-					args['indexid'] = root_ntiid
 			else:
 				logger.debug("Could not find collection for ntiid '%s'" % pid)
+
+	args['packages'] = sorted(set(args['packages'])) # predictable order 
 
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)

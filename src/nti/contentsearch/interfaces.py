@@ -68,8 +68,6 @@ class ISearchQuery(interface.Interface):
 	packages = ListOrTuple(ValidTextLine(title="Book content NTIID to search on"),
 						   required=False)
 
-	indexid = ValidTextLine(title="Book content NTIID", required=False)
-
 	searchOn = ListOrTuple(ValidTextLine(title="Content types to search on"),
 						   required=False)
 
