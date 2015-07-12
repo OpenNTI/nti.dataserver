@@ -21,16 +21,13 @@ from nti.common.property import alias
 
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IEnclosedContent
-
 from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.oids import to_external_ntiid_oid
 
-@interface.implementer( IEnclosedContent,
-						IContentTypeAware,
-						IZContained )
+@interface.implementer(IEnclosedContent, IContentTypeAware, IZContained)
 class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
 	"""
 	A trivial implementation of a persistent enclosure.
@@ -45,8 +42,8 @@ class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
 	__name__ = alias('name')
 	_data = None
 
-	def __init__( self, name, data='', mime_type='text/plain' ):
-		super(SimplePersistentEnclosure,self).__init__()
+	def __init__(self, name, data='', mime_type='text/plain'):
+		super(SimplePersistentEnclosure, self).__init__()
 		self.name = name
 		self.mime_type = mime_type
 		self.data = data
@@ -55,26 +52,26 @@ class SimplePersistentEnclosure(PersistentCreatedModDateTrackingObject):
 
 	mimeType = alias('mime_type')
 
-	def __setstate__( self, state ):
+	def __setstate__(self, state):
 		if 'data' in state:
 			state['_data'] = state['data']
 			del state['data']
-		super(SimplePersistentEnclosure,self).__setstate__( state )
+		super(SimplePersistentEnclosure, self).__setstate__(state)
 
-	def _get_data( self ):
+	def _get_data(self):
 		return self._data
-	def _set_data( self, dta ):
-		if hasattr( dta, '__parent__' ):
+	def _set_data(self, dta):
+		if hasattr(dta, '__parent__'):
 			dta.__parent__ = self
 		self._data = dta
-	data = property( _get_data, _set_data )
+	data = property(_get_data, _set_data)
 
 	@property
 	def NTIID(self):
 		# If we wrap something with an NTIID, we want to be treated like it
 		result = getattr(self.data, 'NTIID', None)
 		if not result:
-			result = to_external_ntiid_oid( self )
+			result = to_external_ntiid_oid(self)
 		return result
 
 from zope.location import locate
@@ -90,24 +87,25 @@ class SimpleEnclosureMixin(object):
 	_enclosures = None
 
 	def __init__(self, *args, **kwargs):
-		super(SimpleEnclosureMixin,self).__init__( *args, **kwargs )
+		super(SimpleEnclosureMixin, self).__init__(*args, **kwargs)
 
-	### Enclosures
+	# ## Enclosures
 	# The backing store, the _enclosures BTreeContainer, is created
 	# on demand
 
 	def _new_enclosure_container(self):
 		return CaseInsensitiveLastModifiedBTreeContainer()
 
-	def iterenclosures( self ):
-		enc = self._enclosures or {} # In case of None
-		return iter( enc.values() )
+	def iterenclosures(self):
+		enc = self._enclosures or {}  # In case of None
+		return iter(enc.values())
 
-	def add_enclosure( self, content ):
+	def add_enclosure(self, content):
 		"""
 		Adds a new enclosure to this object.
 
-		:param content: An instance of :class:`nti_interfaces.IContent` (esp. :class:`nti_interfaces.IEnclosedContent`)
+		:param content: An instance of :class:`nti_interfaces.IContent` 
+			(esp. :class:`nti_interfaces.IEnclosedContent`)
 			This method may change the `name` attribute of this object if
 			there is already an enclosure with this name, and the enclosure
 			container provides an :class:`INameChooser` adapter.
@@ -124,16 +122,16 @@ class SimpleEnclosureMixin(object):
 
 		if self._enclosures is None:
 			self._enclosures = self._new_enclosure_container()
-			locate( self._enclosures, self, '++adapter++enclosures' )
+			locate(self._enclosures, self, '++adapter++enclosures')
 
 		enclosures = self._enclosures
 		name_chooser = INameChooser(enclosures, None)
 		if name_chooser:
-			content.name = name_chooser.chooseName( content.name, content )
+			content.name = name_chooser.chooseName(content.name, content)
 		enclosures[content.name] = content
 		return content
 
-	def get_enclosure( self, name ):
+	def get_enclosure(self, name):
 		"""
 		Return the enclosure with the given name.
 		:raises KeyError: If no such enclosure is found.
@@ -141,5 +139,5 @@ class SimpleEnclosureMixin(object):
 
 		return (self._enclosures or {})[name]
 
-	def del_enclosure( self, name ):
+	def del_enclosure(self, name):
 		del (self._enclosures or {})[name]

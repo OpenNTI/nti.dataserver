@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 from zope import component
+
 from zope.site.site import SiteManagerContainer
 
 from ZODB.interfaces import IConnection
@@ -98,7 +99,6 @@ class AbstractShardPlacer(object):
 		if shard_conn and shard_conn is not root_conn:
 			logger.info("Assigning new user %s to shard %s", user.username, shard_name)
 			shard_conn.add( user )
-
 			# Also put it in the root directory of this shard, so that this shard
 			# can get GC'd without fear of losing users
 			IShardLayout(shard_conn).users_folder[user.username] = user

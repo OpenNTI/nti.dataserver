@@ -17,8 +17,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from contentratings.interfaces import IUserRating
 from contentratings.interfaces import IRatingStorage
@@ -49,7 +49,7 @@ def _lookup_like_rating_for_write(context, cat_name=LIKE_CAT_NAME):
 
 def _rates_object(context, username, cat_name, safe=False):
 	result = ranking.get_object_rating(context, username, cat_name, safe=safe,
-									   	  default=False)
+									   default=False)
 	return result
 
 # We define likes simply as a rating of 1, and unlikes remove
@@ -75,7 +75,7 @@ def _unrate_object(context, username, cat_name):
 		assert int(old_rating) is 1, old_rating
 		return storage
 
-def like_object( context, username ):
+def like_object(context, username):
 	"""
 	Like the `context` idempotently.
 
@@ -85,7 +85,7 @@ def like_object( context, username ):
 	:return: An object with a boolean value; if action was taken, the value is True-y.
 	:raises TypeError: If the `context` is not really likeable.
 	"""
-	return _rate_object( context, username, LIKE_CAT_NAME )
+	return _rate_object(context, username, LIKE_CAT_NAME)
 
 def unlike_object(context, username):
 	"""
@@ -103,7 +103,7 @@ def _likes_object_cache_key(context, username):
 	return ranking.generic_cache_key(context, LIKE_CAT_NAME, username)
 
 @_cached(_likes_object_cache_key)
-def likes_object( context, username ):
+def likes_object(context, username):
 	"""
 	Determine if the `username` likes the `context`.
 
@@ -116,7 +116,7 @@ def likes_object( context, username ):
 	result = _rates_object(context, username, LIKE_CAT_NAME)
 	return result
 
-def like_count( context ):
+def like_count(context):
 	"""
 	Determine how many distinct users like the `context`.
 
@@ -143,8 +143,7 @@ def unfavorite_object(context, username):
 	Unfavorite the ``object``, idempotently.
 
 	:param context: An :class:`~.IFavoritable` object.
-	:param username: The name of the user unfavoriting the object. Should not be
-		empty.
+	:param username: The name of the user unfavoriting the object. Should not be empty.
 	:return: An object with a boolean value; if action was taken, the value is True-y.
 	:raises TypeError: If the `context` is not really likeable.
 	"""
@@ -181,7 +180,7 @@ class LikeDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, context, mapping):
-		mapping['LikeCount'] = like_count( context ) # go through the function to be safe
+		mapping['LikeCount'] = like_count(context)  # go through the function to be safe
 
 from zope.container.contained import Contained
 
@@ -208,42 +207,48 @@ class _BinaryUserRatings(Contained, Persistent):
 	family = BTrees.family64
 
 	def __init__(self):
-		super(_BinaryUserRatings,self).__init__()
+		super(_BinaryUserRatings, self).__init__()
 		# Since we are simply recording the presence or absence of a user,
 		# can can use a simple set of strings
 		self._ratings = self.family.OO.TreeSet()
 		self._length = Length()
 
 	def rate(self, rating, username=None, session_key=None):
-		"""Set a rating for a particular user"""
-		if rating != 1 or not username or session_key: # pragma: no cover
+		"""
+		Set a rating for a particular user
+		"""
+		if rating != 1 or not username or session_key:  # pragma: no cover
 			__traceback_info__ = rating, username, session_key
-			raise ValueError( "Rating must be 1, only username must be given" )
+			raise ValueError("Rating must be 1, only username must be given")
 
 		if username not in self._ratings:
-			self._ratings.add( username )
+			self._ratings.add(username)
 			self._length.change(1)
 
-		return NPRating( 1, username )
+		return NPRating(1, username)
 
 	def userRating(self, username=None):
-		"""Retreive the rating for the specified user, which must be provided."""
-		if not username:  #pragma: no cover
-			raise ValueError( "Must give username" )
+		"""
+		Retreive the rating for the specified user, which must be provided.
+		"""
+		if not username:  # pragma: no cover
+			raise ValueError("Must give username")
 		if username in self._ratings:
-			return NPRating( 1, username )
+			return NPRating(1, username)
 
 	def remove_rating(self, username):
-		"""Remove the rating for a given user"""
+		"""
+		Remove the rating for a given user
+		"""
 		self._ratings.remove(username)
 		self._length.change(-1)
-		return NPRating( 0, username )
+		return NPRating(0, username)
 
 	def all_user_ratings(self, include_anon=False):
 		"""
 		:param bool include_anon: Ignored.
 		"""
-		return (NPRating( 1, username) for username in self.all_raters)
+		return (NPRating(1, username) for username in self.all_raters)
 
 	@property
 	def all_raters(self):
@@ -258,19 +263,23 @@ class _BinaryUserRatings(Contained, Persistent):
 		return 1 if self._length() else 0
 
 	def last_anon_rating(self, session_key):
-		"""Returns a timestamp indicating the last time the anonymous user
-		with the given session_key rated the object."""
-		raise NotImplementedError() # pragma: no cover
-		#return datetime.utcnow()
+		"""
+		Returns a timestamp indicating the last time the anonymous user
+		with the given session_key rated the object.
+		"""
+		raise NotImplementedError()  # pragma: no cover
+		# return datetime.utcnow()
 
 	@property
 	def most_recent(self):
-		""" We don't track this and don't use it. """
+		""" 
+		We don't track this and don't use it. 
+		"""
 		# But it is a validated part of the interface, so we can't raise
 		return None
 
 @component.adapter(ILastModified, IObjectRatedEvent)
-def update_last_mod_on_rated( modified_object, event ):
+def update_last_mod_on_rated(modified_object, event):
 	cache = component.queryUtility(IMemcacheClient)
 	if cache:
 		try:
@@ -279,5 +288,5 @@ def update_last_mod_on_rated( modified_object, event ):
 			elif event.category == FAVR_CAT_NAME:
 				key_func = _favorites_object_cache_key
 			cache.delete(key_func(modified_object, event.rating.userid))
-		except cache.MemcachedKeyNoneError: # not saved yet
+		except cache.MemcachedKeyNoneError:  # not saved yet
 			pass
