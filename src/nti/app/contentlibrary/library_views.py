@@ -400,7 +400,7 @@ def _get_hierarchy_context_for_context( obj, top_level_context ):
 	results = component.queryMultiAdapter(
 									( top_level_context, obj ),
 									IHierarchicalContextProvider )
-	return results or ()
+	return results or (top_level_context,)
 
 def _get_board_obj_path( obj ):
 	"""
