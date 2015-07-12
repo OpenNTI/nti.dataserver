@@ -23,10 +23,13 @@ from nti.contentsearch import interfaces as search_interfaces
 
 from nti.contentsearch.tests import SharedConfiguringTestLayer
 
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
 class TestSearchUtils(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
+	@WithMockDSTrans
 	def test_create_query_object_accept(self):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
@@ -47,6 +50,7 @@ class TestSearchUtils(unittest.TestCase):
 		qo = create_queryobject('harribel@bleach.com', params, matchdict)
 		assert_that(qo.searchOn, is_([invalid_type_]))
 
+	@WithMockDSTrans
 	def test_create_query_object_exclude(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
@@ -66,6 +70,7 @@ class TestSearchUtils(unittest.TestCase):
 		qo = create_queryobject('ulquiorra@bleach.com', params, matchdict)
 		assert_that(qo.searchOn, is_((invalid_type_,)))
 
+	@WithMockDSTrans
 	def test_create_query_object_badnumbers(self):
 
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
@@ -92,6 +97,7 @@ class TestSearchUtils(unittest.TestCase):
 		except:
 			pass
 
+	@WithMockDSTrans
 	def test_query_pac(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
@@ -112,6 +118,7 @@ class TestSearchUtils(unittest.TestCase):
 		assert_that(qo.sortOrder, 'descending')
 		assert_that(qo.searchOn, has_length(greater_than_or_equal_to(5)))
 		
+	@WithMockDSTrans
 	def test_query_times(self):
 		ntiid = make_ntiid(nttype='hollow', specific='vastolorde')
 		matchdict = {'term':'arrancar', 'ntiid':ntiid}
