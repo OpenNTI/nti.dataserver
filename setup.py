@@ -11,6 +11,7 @@ entry_points = {
 		"nti_interactive = nti.dataserver.utils.nti_interactive:main",
 		"nti_cache_avatars = nti.dataserver.utils.nti_cache_avatars:main",
 		"nti_create_user = nti.dataserver.utils.nti_create_user:main",
+		"nti_update_user = nti.dataserver.utils.nti_update_user:main",
 		"nti_create_friendslist = nti.dataserver.utils.nti_create_friendslist:main",
 		"nti_add_remove_friends = nti.dataserver.utils.nti_add_remove_friends:main",
 		"nti_join_dfl = nti.dataserver.utils.nti_join_dfl:main",
