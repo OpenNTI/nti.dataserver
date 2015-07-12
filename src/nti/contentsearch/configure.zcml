@@ -180,6 +180,11 @@
 				for="*"
 				zcml:condition="have devmode" />
 
+	<!-- Search pacakge resolvers -->
+	<subscriber factory=".subscribers._DefaultSearchPacakgeResolver"
+				provides=".interfaces.ISearchPackageResolver"
+				for="nti.dataserver.interfaces.IUser" />
+				
 	<!-- Content Resolvers -->
 	<adapter factory=".adapters._StringContentResolver"
 			 provides=".interfaces.IContentResolver"

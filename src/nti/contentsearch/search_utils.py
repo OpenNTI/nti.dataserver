@@ -23,14 +23,11 @@ from pyramid.threadlocal import get_current_request
 
 from nti.common.string import safestr
 
-from nti.contentlibrary.interfaces import IContentPackageBundle
-
 from nti.dataserver.users import User
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.ntiids.ntiids import TYPE_OID
 from nti.ntiids.ntiids import is_ntiid_of_type
-from nti.ntiids.ntiids import find_object_with_ntiid
 
 from .common import sort_search_types
 from .common import get_indexable_types
@@ -80,7 +77,7 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 	else:
 		ntiid = ntiid or package.ntiid
 		indexdir = indexdir or package.make_sibling_key('indexdir').absolute_path
-		indexname = os.path.basename(package.get_parent_key().absolute_path) # TODO: So many assumptions here
+		indexname = os.path.basename(package.get_parent_key().absolute_path)  # TODO: So many assumptions here
 
 	if indexmanager is None:
 
@@ -92,7 +89,7 @@ def register_content(package=None, indexname=None, indexdir=None, ntiid=None, in
 			logger.debug('Added index %s at %s to indexmanager', indexname, indexdir)
 		else:
 			logger.warn('Failed to add index %s at %s to indexmanager', indexname, indexdir)
-	except ImportError: # pragma: no cover
+	except ImportError:  # pragma: no cover
 		# Adding a book on disk loads the Whoosh indexes, which
 		# are implemented as pickles. Incompatible version changes
 		# lead to unloadable pickles. We've seen this manifest as ImportError
@@ -156,7 +153,7 @@ def _parse_dateRange(args, fields):
 		value = check_time(value) if value is not None else None
 		if value is not None:
 			result = result or DateTimeRange()
-			if idx == 0: #after
+			if idx == 0:  # after
 				result.startTime = value
 			else:  # before
 				result.endTime = value
@@ -167,7 +164,7 @@ def _parse_dateRange(args, fields):
 	return result
 
 def _is_type_oid(ntiid):
-	return bool( is_ntiid_of_type(ntiid, TYPE_OID) )
+	return bool(is_ntiid_of_type(ntiid, TYPE_OID))
 
 def _resolve_package_ntiids(username, ntiid=None):
 	result = set()
@@ -176,23 +173,14 @@ def _resolve_package_ntiids(username, ntiid=None):
 		for resolver in component.subscribers((user,), ISearchPackageResolver):
 			ntiids = resolver.resolve(user, ntiid)
 			result.update(ntiids or ())
-
-		if not result: # default
-			if _is_type_oid(ntiid):
-				obj = find_object_with_ntiid(ntiid)
-				bundle = IContentPackageBundle(obj, None)
-				if bundle is not None and bundle.ContentPackages:
-					result = [x.ntiid for x in bundle.ContentPackages]
-			else:
-				result = [ntiid]
-	return sorted(result) # predictable order for digest
+	return sorted(result)  # predictable order for digest
 
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = get_indexable_types()
 	username = username or matchdict.get('user', None)
 
 	context = {}
-	
+
 	# parse params:
 	args = dict(params)
 	for name in list(args.keys()):
@@ -203,7 +191,7 @@ def create_queryobject(username, params, matchdict):
 			del args[name]
 
 	args['context'] = context
-	
+
 	term = matchdict.get('term', u'')
 	term = clean_search_query(safestr(term))
 	args['term'] = term
@@ -223,8 +211,10 @@ def create_queryobject(username, params, matchdict):
 				packages.append(root_ntiid)
 			else:
 				logger.debug("Could not find collection for ntiid '%s'" % pid)
+	elif ntiid:
+		args['location'] = ntiid
 
-	args['packages'] = sorted(set(args['packages'])) # predictable order 
+	args['packages'] = sorted(set(args['packages']))  # predictable order
 
 	accept = args.pop('accept', None)
 	exclude = args.pop('exclude', None)
