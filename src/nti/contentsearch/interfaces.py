@@ -140,6 +140,16 @@ class ISearchQueryParser(interface.Interface):
 
 # searcher
 
+class ISearchPackageResolver(interface.Interface):
+	"""
+	Interface for registered subscribers that returns
+	a list of pkgs ntiids for the specied user and 
+	source ntiid
+	"""
+	
+	def resolve(user, ntiid):
+		pass
+		
 class ISearcher(interface.Interface):
 
 	def search(query, *args, **kwargs):

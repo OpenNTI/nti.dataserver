@@ -25,6 +25,7 @@ from nti.common.string import safestr
 
 from nti.contentlibrary.interfaces import IContentPackageBundle
 
+from nti.dataserver.users import User
 from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 from nti.ntiids.ntiids import TYPE_OID
@@ -42,6 +43,7 @@ from .content_utils import get_content_translation_table
 
 from .interfaces import ISearchQuery
 from .interfaces import IIndexManager
+from .interfaces import ISearchPackageResolver
 
 from .search_query import QueryObject
 from .search_query import DateTimeRange
@@ -167,17 +169,23 @@ def _parse_dateRange(args, fields):
 def _is_type_oid(ntiid):
 	return bool( is_ntiid_of_type(ntiid, TYPE_OID) )
 
-def _resolve_package_ntiids(ntiid):
-	result = []
+def _resolve_package_ntiids(username, ntiid=None):
+	result = set()
 	if ntiid:
-		if _is_type_oid(ntiid):
-			obj = find_object_with_ntiid(ntiid)
-			bundle = IContentPackageBundle(obj, None)
-			if bundle is not None and bundle.ContentPackages:
-				result = [x.ntiid for x in bundle.ContentPackages]
-		else:
-			result = [ntiid]
-	return result
+		user = User.get_user(username)
+		for resolver in component.subscribers((user,), ISearchPackageResolver):
+			ntiids = resolver.resolve(user, ntiid)
+			result.update(ntiids or ())
+
+		if not result: # default
+			if _is_type_oid(ntiid):
+				obj = find_object_with_ntiid(ntiid)
+				bundle = IContentPackageBundle(obj, None)
+				if bundle is not None and bundle.ContentPackages:
+					result = [x.ntiid for x in bundle.ContentPackages]
+			else:
+				result = [ntiid]
+	return sorted(result) # predictable order for digest
 
 def create_queryobject(username, params, matchdict):
 	indexable_type_names = get_indexable_types()
@@ -204,10 +212,8 @@ def create_queryobject(username, params, matchdict):
 	packages = args['packages'] = list()
 
 	ntiid = matchdict.get('ntiid', None)
-	package_ntiids = _resolve_package_ntiids(ntiid)
+	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
-		# predictable order for digest
-		package_ntiids.sort()
 		# make sure we register the location where the search query is being made
 		args['location'] = package_ntiids[0] if _is_type_oid(ntiid) else ntiid
 		for pid in package_ntiids:
