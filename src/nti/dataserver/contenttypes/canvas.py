@@ -178,13 +178,17 @@ class CanvasAffineTransform(object):
 	A = D = 1
 	B = C = TX = TY = 0
 
-	def __init__(self):
+	def __init__(self, a=1, b=0, c=0, d=1, tx=0, ty=0):
 		"""
 		Initializes to the identity transform.
 		"""
 		# cannot mix __slots__ with class attributes
-		self.a = self.d = self.A
-		self.b = self.c = self.tx = self.ty = self.B
+		self.a = a
+		self.d = d
+		self.b = b
+		self.c = c 
+		self.tx = tx 
+		self.ty = ty
 
 	def updateFromExternalObject(self, parsed, **kwargs):
 		for k in self.__slots__:
