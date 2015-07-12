@@ -315,6 +315,8 @@ INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
 			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
 
+def _clear_assets(content_package):
+
 def _update_indices_when_content_changes(content_package, event):
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package, name, item_iface, func)

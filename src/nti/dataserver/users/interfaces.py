@@ -497,11 +497,11 @@ class IProfessionalPosition(interface.Interface):
 
 	title = ValidTextLine(title='Title',
 						  description=u'Title',
-						  required=True)
+						  required=False)
 
 	startYear = Int(title='Start year',
 					description=u'Start year',
-					required=True)
+					required=False)
 
 	endYear = Int(title='End year',
 				  description=u'End year',
