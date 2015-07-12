@@ -31,6 +31,7 @@ from nti.contenttypes.presentation.interfaces import INTITimeline
 from nti.contenttypes.presentation.interfaces import INTISlideDeck
 from nti.contenttypes.presentation.interfaces import INTISlideVideo
 from nti.contenttypes.presentation.interfaces import INTIRelatedWorkRef
+from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.contenttypes.presentation.utils import create_object_from_external
 from nti.contenttypes.presentation.utils import create_ntiaudio_from_external
@@ -220,6 +221,16 @@ def _index_item(item, content_package, container_id, catalog):
 				  		  namespace=content_package.ntiid)
 	return result
 
+def _store_asset(content_package, container_id, ntiid, item):
+	try:
+		unit = content_package[container_id]
+	except KeyError:
+		unit = content_package
+	
+	container = IPresentationAssetContainer(unit, None)
+	if container is not None:
+		container[ntiid] = item
+			
 def _index_items(content_package, index, item_iface, removed, catalog, registry):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
@@ -316,6 +327,13 @@ INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
 
 def _clear_assets(content_package):
+	def recur(unit):
+		for child in unit.children or ():
+			recur(child)
+		container = IPresentationAssetContainer(unit, None)
+		if container is not None:
+			container.clear()
+	recur(content_package)
 
 def _update_indices_when_content_changes(content_package, event):
 	for name, item_iface, func in INDICES:
