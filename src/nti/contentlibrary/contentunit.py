@@ -17,6 +17,7 @@ from zope.container.contained import Contained
 
 from nti.common.property import alias
 from nti.common.property import read_alias
+from nti.common.property import CachedProperty
 
 from nti.dublincore.time_mixins import DCTimesLastModifiedMixin
 
@@ -117,6 +118,19 @@ class ContentPackage(ContentUnit,
 	# : clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
+	@CachedProperty('index_last_modified')
+	def _v_references(self):
+		result = {}
+		def recur(unit):
+			for child in unit.children or ():
+				recur(child)
+			result[unit.ntiid] = unit
+		recur(self)
+		return result
+	
+	def __getitem__(self, ntiid):
+		return self._v_references.get(ntiid)
+		
 # TODO: We need to do caching of does_sibling_entry_exist and read_contents.
 # does_exist is used by appserver/censor_policies on every object creation/edit
 # which quickly adds up.
