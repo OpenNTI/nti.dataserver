@@ -145,8 +145,17 @@ class _PostLibraryPathLinkDecorator(object):
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, context, result):
+		# Use the OID NTIID rather than the 'physical' path because
+		# the 'physical' path may not quite be traversable at this
+		# point. Not sure why that would be, but the ILocation parents
+		# had a root above dataserver.
+		target_ntiid = to_external_ntiid_oid( context )
+		if target_ntiid is None:
+			logger.warn( "Failed to get ntiid; not adding LibraryPath link for %s", context )
+			return
+
 		_links = result.setdefault(LINKS, [])
-		link = Link(context, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
+		link = Link(target_ntiid, rel=LIBRARY_PATH_GET_VIEW, elements=(LIBRARY_PATH_GET_VIEW,))
 		interface.alsoProvides(link, ILocation)
 		link.__name__ = ''
 		link.__parent__ = context
