@@ -65,6 +65,8 @@ from nti.ntiids.ntiids import ROOT
 from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from nti.traversal.traversal import find_interface
+
 from . import LIBRARY_PATH_GET_VIEW
 
 PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
@@ -454,6 +456,14 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		"""
 		For a given package, return the path to the target ntiid.
 		"""
+		obj = find_object_with_ntiid( target_ntiid )
+		if obj is not None:
+			unit = find_interface( obj, IContentUnit, strict=False )
+			if unit is not None:
+				# Found a unit in our lineage, easy.
+				return [unit]
+
+		# Try iterating.
 		def recur( unit ):
 			item_ntiid = getattr( unit, 'ntiid', None )
 			if 		item_ntiid == target_ntiid \
@@ -468,6 +478,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		results = recur( package )
 		if results:
 			results.reverse()
+
 		return results
 
 	def _externalize_children( self, units ):
