@@ -66,6 +66,7 @@ from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IForum
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import system_user
@@ -239,6 +240,13 @@ def _bundles_from_post(obj):
 @interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(ITopic)
 def _bundles_from_topic(obj):
+	bundle = find_interface(obj, IContentPackageBundle, strict=False)
+	if bundle is not None:
+		return (bundle,)
+
+@interface.implementer(ITopLevelContainerContextProvider)
+@component.adapter(IForum)
+def _bundles_from_forum(obj):
 	bundle = find_interface(obj, IContentPackageBundle, strict=False)
 	if bundle is not None:
 		return (bundle,)

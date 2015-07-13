@@ -54,6 +54,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IForum
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -410,6 +411,7 @@ def _get_board_obj_path( obj ):
 	"""
 	# Permissioning concerns? If we have permission
 	# on underlying object, we should have permission up the tree.
+
 	result = LocatedExternalList()
 	top_level_contexts = _get_top_level_contexts( obj )
 
@@ -549,7 +551,6 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
-
 		hierarchy_contexts = _get_hierarchy_context( obj, self.remoteUser )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
@@ -621,7 +622,9 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		if ITopic.providedBy( obj ) or IPost.providedBy( obj ):
+		if 		ITopic.providedBy( obj ) \
+			or 	IPost.providedBy( obj ) \
+			or IForum.providedBy( obj ):
 			results = _get_board_obj_path( obj )
 		else:
 			results = self._get_path( obj, object_ntiid )
@@ -630,6 +633,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 @view_config(context=IPost)
 @view_config(context=ITopic)
+@view_config(context=IForum)
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
 			  name=LIBRARY_PATH_GET_VIEW,
