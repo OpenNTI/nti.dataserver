@@ -70,7 +70,8 @@ class TestAvatarURLs(DataserverLayerTest):
 		profile.email = 'jason.madden@nextthought.com'
 
 		avurl_prof = interfaces.IAvatarURL(u)
-		assert_that(avurl_prof.avatarURL, is_(none()))
+		assert_that(avurl_prof.avatarURL,
+					is_( 'https://secure.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=identicon#using_provided_email_address' ) )
 
 		avurl_prof = interfaces.IBackgroundURL(u)
 		assert_that(avurl_prof.backgroundURL, is_(none()))

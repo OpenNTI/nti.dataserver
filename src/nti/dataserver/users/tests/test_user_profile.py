@@ -16,6 +16,7 @@ from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
+from hamcrest import contains_string
 does_not = is_not
 
 from nose.tools import assert_raises
@@ -58,7 +59,7 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that(prof,
 					verifiably_provides(interfaces.ICompleteUserProfile))
 		assert_that(prof,
-					has_property('avatarURL', is_(none())))
+					has_property('avatarURL', contains_string( 'https://' ) ) )
 		assert_that(prof,
 					has_property('backgroundURL', is_(none())))
 		assert_that(prof,
@@ -201,9 +202,9 @@ class TestUserProfile(DataserverLayerTest):
 		description = 'ima description'
 		school = 'School of Hard Knocks'
 		degree = 'CS'
-		
+
 		prof.interests = ['reading', 'development']
-		
+
 		prof.positions = [ProfessionalPosition( startYear=start_year,
 												endYear=end_year,
 												companyName=company_name,
@@ -218,7 +219,7 @@ class TestUserProfile(DataserverLayerTest):
 
 		ext_prof = user_prof.get( 'interests' )
 		assert_that( ext_prof, has_length( 2 ))
-		
+
 		# Positions
 		ext_prof = user_prof.get( 'positions' )
 		assert_that( ext_prof, has_length( 1 ))
