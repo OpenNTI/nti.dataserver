@@ -80,7 +80,7 @@ def _update_user(username, options):
 		update_from_external_object(user, external)
 
 	if options.verbose:
-		pprint(to_external_object(user))
+		pprint.pprint(to_external_object(user))
 
 	return user
 
