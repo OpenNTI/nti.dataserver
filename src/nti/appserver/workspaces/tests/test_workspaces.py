@@ -36,12 +36,15 @@ from persistent import Persistent
 
 import transaction
 
-from nti.ntiids import ntiids
+from nti.appserver.policies.interfaces import ISitePolicyUserEventListener
+
 from nti.dataserver import  users
 from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.externalization import toExternalObject
+
+from nti.ntiids import ntiids
 
 from .. import FriendsListContainerCollection
 from .. import UserEnumerationWorkspace as UEW
@@ -112,7 +115,7 @@ class TestContainerEnumerationWorkspace(ApplicationLayerTest):
 		# adaptable to a collection
 		container = C()
 		icontainer.conts = (container,)
-		
+
 		class Adapter(object):
 			interface.implements(ICollection)
 			component.adapts(ITestI)
@@ -141,7 +144,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
 	@mock_dataserver.WithMockDSTrans
 	def test_root_ntiid(self):
-		
+
 		class MockUser(object):
 			interface.implements(nti_interfaces.IUser)
 			__name__ = 'user@place'
@@ -157,14 +160,14 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 
 		# Expecting the pages collection at least
 		assert_that( uew.collections, has_length( greater_than_or_equal_to( 1 ) ) )
-		
+
 		# which in turn has one container
 		assert_that( uew.pages_collection.container, has_length( 1 ) )
 		root = uew.pages_collection.container[0]
 		ext_obj = toExternalObject( root )
-		
+
 		__traceback_info__ = ext_obj
-		
+
 		assert_that( ext_obj, has_entry( 'ID', ntiids.ROOT ) )
 		self.require_link_href_with_rel( ext_obj, 'RecursiveStream' )
 
@@ -276,6 +279,12 @@ class TestUserService(ApplicationLayerTest):
 
 		assert_that( user_ws['Items'], has_item( has_entry( 'Title', 'Boards' ) ) )
 
+		# And, if we have a site community, it's exposed.
+		site_policy = component.queryUtility( ISitePolicyUserEventListener )
+		site_policy.COM_USERNAME = 'community_username'
+		ext_object = toExternalObject( service )
+		assert_that( ext_object, has_entry( 'SiteCommunity', 'community_username' ) )
+
 	@mock_dataserver.WithMockDSTrans
 	def test_user_pages_collection_accepts_only_external_types(self):
 		#"A user's Pages collection only claims to accept things that are externally creatable."
@@ -347,7 +356,7 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
-				return [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request), 
+				return [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request),
 																nti_interfaces.AUTHENTICATED_GROUP_NAME,
 																nti_interfaces.EVERYONE_GROUP_NAME]]
 
