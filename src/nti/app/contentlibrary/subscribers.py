@@ -230,7 +230,16 @@ def _store_asset(content_package, container_id, ntiid, item):
 	container = IPresentationAssetContainer(unit, None)
 	if container is not None:
 		container[ntiid] = item
-			
+		# check for slide decks
+		if INTISlideDeck.providedBy(item):
+			for slide in item.Slides or ():
+				container[slide.ntiid] = slide
+
+			for video in item.Videos or ():
+				container[video.ntiid] = video
+		return True
+	return False
+
 def _index_items(content_package, index, item_iface, removed, catalog, registry):
 	result = 0
 	for container_id, indexed_ids in index['Containers'].items():
