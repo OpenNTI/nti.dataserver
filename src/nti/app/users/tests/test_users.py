@@ -22,6 +22,8 @@ from nti.dataserver.interfaces import IDataserver
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Community
+from nti.dataserver.users import DynamicFriendsList
+
 from nti.dataserver.users.interfaces import IRecreatableUser
 from nti.dataserver.users.interfaces import BlacklistedUsernameError
 
@@ -90,37 +92,70 @@ class TestUsers(ApplicationLayerTest):
 			user_one = User.create_user(username=username)
 
 	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
-	def test_membership_community(self):
+	def test_memberships(self):
 		with mock_dataserver.mock_db_trans(self.ds):
 			c = Community.create_community(username='bleach')
 			user = User.get_user(self.default_username)
 			user.record_dynamic_membership(c)
-			
+
 			ichigo = self._create_user("ichigo", "temp001")
 			ichigo.record_dynamic_membership(c)
-			
+
 			aizen = self._create_user("aizen", "temp001")
 			aizen.record_dynamic_membership(c)
-			
+
 			self._create_user("rukia", "temp001")
+
+			# Our DFL creator and member will now have 2 memberships.
+			dfl = DynamicFriendsList( username='Friends' )
+			dfl.creator = ichigo
+			ichigo.addContainedObject( dfl )
+			dfl.addFriend( aizen )
 
 		path = '/dataserver2/users/%s/memberships' % self.default_username
 		res = self.testapp.get(path, status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
-		
-		res = self.testapp.get(	path, 
+
+		# Ichigo on sjohnson
+		res = self.testapp.get(	path,
 					  			extra_environ=self._make_extra_environ(user="ichigo"),
 					  			status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(1)))
 
-		path = '/dataserver2/users/aizen/memberships'
-		res = self.testapp.get(path, 
+		# DFL owner
+		path = '/dataserver2/users/ichigo/memberships'
+		res = self.testapp.get(path,
+					  		   extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+
+		# Member on owner returns the same
+		res = self.testapp.get(path,
 					  		   extra_environ=self._make_extra_environ(user="aizen"),
 					  	 	   status=200)
-		assert_that(res.json_body, has_entry('Items', has_length(1)))
-		
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+
+		# Member
 		path = '/dataserver2/users/aizen/memberships'
-		res = self.testapp.get(path, 
+		res = self.testapp.get(path,
+					  		   extra_environ=self._make_extra_environ(user="aizen"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+
+		# Owner on the member sees it
+		res = self.testapp.get(path,
+					  		   extra_environ=self._make_extra_environ(user="ichigo"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(2)))
+
+		# Third party nothing
+		res = self.testapp.get(path,
+					  	 	   extra_environ=self._make_extra_environ(user="rukia"),
+					  	 	   status=200)
+		assert_that(res.json_body, has_entry('Items', has_length(0)))
+
+		path = '/dataserver2/users/aizen/memberships'
+		res = self.testapp.get(path,
 					  	 	   extra_environ=self._make_extra_environ(user="rukia"),
 					  	 	   status=200)
 		assert_that(res.json_body, has_entry('Items', has_length(0)))

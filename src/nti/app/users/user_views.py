@@ -109,7 +109,7 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 		self._batch_params()
 		context = self.request.context
 		log_msg = "User %s is no longer a member of %s. Ignoring for externalization"
-		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships, 
+		memberships = context.xxx_hack_filter_non_memberships(context.dynamic_memberships,
 															  log_msg=log_msg,
 															  the_logger=logger)
 
