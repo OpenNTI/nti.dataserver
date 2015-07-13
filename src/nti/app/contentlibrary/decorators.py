@@ -27,6 +27,7 @@ from nti.dataserver.interfaces import IHighlight
 
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
+from nti.dataserver.contenttypes.forums.interfaces import IForum
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
@@ -161,11 +162,9 @@ class _PostLibraryPathLinkDecorator(object):
 		link.__parent__ = context
 		_links.append(link)
 
-@interface.implementer(IExternalMappingDecorator)
-@component.adapter(ITopic)
-class _TopicLibraryPathLinkDecorator(object):
+class _BaseBoardLibraryPathLinkDecorator(object):
 	"""
-	Create a `LibraryPath` link to our topic.
+	Create a `LibraryPath` link to our board object.
 	"""
 
 	__metaclass__ = SingletonDecorator
@@ -177,6 +176,16 @@ class _TopicLibraryPathLinkDecorator(object):
 		link.__name__ = ''
 		link.__parent__ = context
 		_links.append(link)
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(ITopic)
+class _TopicLibraryPathLinkDecorator(_BaseBoardLibraryPathLinkDecorator):
+	pass
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IForum)
+class _ForumLibraryPathLinkDecorator(_BaseBoardLibraryPathLinkDecorator):
+	pass
 
 class _IPad120BundleContentPackagesAdjuster(AbstractAuthenticatedRequestAwareDecorator):
 	"""

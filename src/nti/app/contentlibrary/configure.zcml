@@ -133,6 +133,9 @@
 	<subscriber factory=".decorators._TopicLibraryPathLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
+	<subscriber factory=".decorators._ForumLibraryPathLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
 	<!-- this thing is not a real IBundle -->
 	<subscriber factory=".decorators._IPad120BundleContentPackagesAdjuster"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
@@ -164,7 +167,7 @@
 	<adapter factory=".adapters.presentation_asset_items_factory"
 			 for="nti.contentlibrary.interfaces.IContentUnit"
 			 provides="nti.contenttypes.presentation.interfaces.IPresentationAssetContainer" />
-			 
+
 	<!-- Top-level/hierarchy -->
 	<adapter factory=".adapters._content_unit_to_bundle" />
 
@@ -189,6 +192,10 @@
 	<subscriber factory=".adapters._bundles_from_topic"
 				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
 				for="nti.dataserver.contenttypes.forums.interfaces.ITopic"/>
+
+	<subscriber factory=".adapters._bundles_from_forum"
+				provides="nti.appserver.interfaces.ITopLevelContainerContextProvider"
+				for="nti.dataserver.contenttypes.forums.interfaces.IForum"/>
 
 	<!-- Content package modifications. -->
 	<!-- addition -->
