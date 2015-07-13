@@ -86,7 +86,6 @@ def _update_user(username, options):
 
 def _create_args_parser():
 	arg_parser = argparse.ArgumentParser(description="Set user attributes.")
-	arg_parser.add_argument('env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('username', help="The username to edit")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true', dest='verbose')
 	arg_parser.add_argument('--site',
