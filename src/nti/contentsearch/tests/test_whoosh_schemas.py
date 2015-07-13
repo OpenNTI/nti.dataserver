@@ -20,7 +20,7 @@ from whoosh.qparser import QueryParser
 
 from nti.ntiids.ntiids import make_ntiid
 
-from nti.contentsearch.whoosh_schemas import create_book_schema
+from nti.contentindexing.whooshidx.schemas import create_book_schema
 
 from . import find_test
 from . import SharedConfiguringTestLayer
