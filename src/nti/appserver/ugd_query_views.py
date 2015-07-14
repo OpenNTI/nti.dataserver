@@ -26,11 +26,11 @@ from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 
+from nti.app.authentication import get_remote_user
 from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.appserver import httpexceptions as hexc
-from nti.app.authentication import get_remote_user
 from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.interfaces import INamedLinkView
@@ -38,21 +38,35 @@ from nti.appserver.interfaces import IPrincipalUGDFilter
 from nti.appserver.interfaces import get_principal_ugd_filter
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
 
-from nti.dataserver import users
+from nti.contenttypes.presentation.interfaces import INTIAudio
+from nti.contenttypes.presentation.interfaces import INTIVideo
+
 from nti.dataserver import liking
+from nti.dataserver.users import User
 from nti.dataserver.users import Entity
 from nti.dataserver import authorization as nauth
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import IBookmark
+from nti.dataserver.interfaces import IThreadable
+from nti.dataserver.interfaces import IUsernameIterable
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import ICommunityHeadlineTopic
+
 from nti.dataserver.sharing import SharingContextCache
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as for_interfaces
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_standard_external_created_time
 from nti.externalization.externalization import to_standard_external_last_modified_time
 
@@ -82,7 +96,7 @@ class Operator(object):
 			return Operator.union
 		return Operator.intersection
 
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(IUser)
 @interface.implementer(IPrincipalUGDFilter)
 class _DefaultPrincipalUGDFilter(object):
 
@@ -196,7 +210,6 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 	else:
 		_predicate = lambda x: _base_predicate(x) and predicate(x)
 
-
 	iterables, result.lastModified = _lists_and_dicts_to_iterables( lists_and_dicts )
 	iterables = _iterables_to_filtered_iterables( iterables, _predicate )
 
@@ -207,7 +220,8 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 	return result
 
 def lists_and_dicts_to_ext_collection(lists_and_dicts, predicate=_TRUE,
-									  result_iface=IUGDExternalCollection, ignore_broken=False ):
+									  result_iface=IUGDExternalCollection, 
+									  ignore_broken=False ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
 	are ModDateTracking (have a lastModified value) then the returned
@@ -274,7 +288,9 @@ def _creator_based_predicate_factory(accepted_usernames):
 	return _filter
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
-	me = get_remote_user(request) # the 'I' means the current user, not the one whose date we look at (not  request.context.user)
+	# the 'I' means the current user, not the one whose date we look at 
+	# (not  request.context.user)
+	me = get_remote_user(request) 
 	following_usernames = set()
 	if and_me:
 		following_usernames.add( me.username )
@@ -284,10 +300,11 @@ def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
 			following_usernames.add( followed_username )
 		if expand_nested:
 			# Expand things that should be expanded, such as DFLs
-			for nested_username in nti_interfaces.IUsernameIterable(followed, ()):
+			for nested_username in IUsernameIterable(followed, ()):
 				following_usernames.add( nested_username )
 
-	return _creator_based_predicate_factory( following_usernames )
+	result = _creator_based_predicate_factory( following_usernames )
+	return result
 
 def _ifollowandme_predicate_factory( request ):
 	return _ifollow_predicate_factory( request, and_me=True )
@@ -300,8 +317,8 @@ def _favorite_predicate_factory( request ):
 	return functools.partial( liking.favorites_object, username=auth_userid, safe=True )
 
 def _bookmark_predicate_factory( request ):
+	is_bm_p = IBookmark.providedBy
 	is_fav_p = _favorite_predicate_factory(request)
-	is_bm_p = nti_interfaces.IBookmark.providedBy
 	return lambda o: is_fav_p( o ) or is_bm_p( o )
 
 def _only_me_predicate_factory( request ):
@@ -324,14 +341,16 @@ SORT_KEYS = {
 	'LikeCount': liking_like_count,
 	'ReferencedByCount':  _reference_list_length,
 	'RecursiveLikeCount':  _reference_list_recursive_like_count,
-	}
+}
 SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, some clients send this value
+
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
 	'ReferencedByCount': 'descending',
 	'RecursiveLikeCount': 'descending',
 	'lastModified': 'descending'
-	}
+}
+
 FILTER_NAMES = {
 	'TopLevel': _toplevel_filter,
 	'IFollow': (_ifollow_predicate_factory,),
@@ -340,7 +359,7 @@ FILTER_NAMES = {
 	'Favorite': (_favorite_predicate_factory,),
 	'Bookmarks': (_bookmark_predicate_factory,),
 	'OnlyMe': (_only_me_predicate_factory,),
-	}
+}
 
 class _MimeFilter(object):
 
@@ -401,7 +420,7 @@ def _personalblogcomment_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 		return True
 	if self.isSharedWith( user ):
 		return True
-	if find_interface( self, nti_interfaces.IUser, strict=False ) == user:
+	if find_interface( self, IUser, strict=False ) == user:
 		return True
 
 from nti.dataserver.contenttypes.forums.post import PersonalBlogComment
@@ -428,9 +447,9 @@ class _UGDView(AbstractAuthenticatedView,
 	SORT_DIRECTION_DEFAULT = SORT_DIRECTION_DEFAULT
 	SORT_KEYS = SORT_KEYS
 
-	get_owned = users.User.getContainer
-	get_shared = users.User.getSharedContainer
-	#get_public = None
+	get_owned = User.getContainer
+	get_shared = User.getSharedContainer
+	# get_public = None
 
 	_my_objects_may_be_empty = True
 	_support_cross_user = True
@@ -547,8 +566,8 @@ class _UGDView(AbstractAuthenticatedView,
 
 	@classmethod
 	def do_getObjects( cls, owner, containerId, remote_user,
-					   get_owned=users.User.getContainer,
-					   get_shared=users.User.getSharedContainer,
+					   get_owned=User.getContainer,
+					   get_shared=User.getSharedContainer,
 					   allow_empty=True, context_cache=None ):
 		"""
 		Returns a sequence of values that can be passed to
@@ -674,7 +693,6 @@ class _UGDView(AbstractAuthenticatedView,
 		else:
 			sort_key_function = _sort_key_function
 		return sort_key_function
-
 
 	def _get_security_check(self):
 		needs_security = self._force_apply_security or self.remoteUser != self.user
@@ -994,9 +1012,9 @@ class _RecursiveUGDView(_UGDView):
 	are examined (the hierarchy is effectively ignored).
 	"""
 
+	_can_special_case_root = True
 	_iter_ntiids_stream_only = False
 	_iter_ntiids_include_stream = True
-	_can_special_case_root = True
 
 	def __call__(self):
 		# Special case when a user is asking for his own data for the root;
@@ -1078,7 +1096,6 @@ class _RecursiveUGDView(_UGDView):
 								   number_items_needed=number_items_needed,
 								   batch_size=batch_size,
 								   batch_start=batch_start)
-
 		return result
 
 	def _get_filter_names( self ):
@@ -1098,13 +1115,21 @@ class _RecursiveUGDView(_UGDView):
 	def _get_containerids_for_id( self, user, ntiid ):
 		containers = ()
 		if ntiid == ntiids.ROOT:
-			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,stream_only=self._iter_ntiids_stream_only))
+			containers = set(user.iterntiids(include_stream=self._iter_ntiids_include_stream,
+											 stream_only=self._iter_ntiids_stream_only))
 		else:
-			library = component.getUtility( lib_interfaces.IContentPackageLibrary )
+			library = component.getUtility(IContentPackageLibrary)
 			tocEntries = library.childrenOfNTIID( ntiid )
-
 			containers = {toc.ntiid for toc in tocEntries} # children
 			containers.add( ntiid ) # item
+			
+			# include media containers.
+			catalog = lib_catalog()
+			if catalog is not None: # test mode
+				objects = catalog.search_objects(container_ntiids=containers, 
+									   			 provided=(INTIVideo, INTIAudio))
+				for obj in objects:
+					containers.add(obj.ntiid)
 
 		# We always include the unnamed root (which holds things like CIRCLED)
 		# NOTE: This is only in the stream. Normally we cannot store contained
@@ -1119,10 +1144,10 @@ class _RecursiveUGDView(_UGDView):
 		# Note that this completely discards what at ACL is supposed to mean
 		# XXX cf forums.views
 		# TODO: Remove hack
-		if 	nti_interfaces.IStreamChangeEvent.providedBy(obj) and \
-			(for_interfaces.ICommunityHeadlineTopic.providedBy(obj.object) or \
-			 for_interfaces.ICommunityHeadlinePost.providedBy(obj.object) or \
-			 for_interfaces.IGeneralForumComment.providedBy(obj.object)):
+		if 	IStreamChangeEvent.providedBy(obj) and \
+			(ICommunityHeadlineTopic.providedBy(obj.object) or \
+			 ICommunityHeadlinePost.providedBy(obj.object) or \
+			 IGeneralForumComment.providedBy(obj.object)):
 
 			readable = True
 			current = obj.object
@@ -1134,8 +1159,8 @@ class _RecursiveUGDView(_UGDView):
 				   # the ACL checks already in place, but the less risky short-term fix is to
 				   # stop when we hit a Board (which should be one level below the entity
 				   # in the legacy case; we never permission at that level).
-				   and not nti_interfaces.IEntity.providedBy(current)
-				   and not for_interfaces.IBoard.providedBy(current)):
+				   and not IEntity.providedBy(current)
+				   and not IBoard.providedBy(current)):
 				try:
 					readable = is_readable(current)
 					if not readable:
@@ -1148,7 +1173,9 @@ class _RecursiveUGDView(_UGDView):
 
 	def _make_complete_predicate(self, operator=Operator.intersection):
 		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
-		predicate = _combine_predicate(self._filter_inaccessible_object, predicate, operator=Operator.intersection)
+		predicate = _combine_predicate(self._filter_inaccessible_object, 
+									   predicate,
+									   operator=Operator.intersection)
 		return predicate
 
 	def getObjectsForId( self, user, ntiid ):
@@ -1195,7 +1222,7 @@ class _ChangeMimeFilter(_MimeFilter):
 @interface.implementer(INamedLinkView)
 class _UGDStreamView(_UGDView):
 
-	get_owned = users.User.getContainedStream
+	get_owned = User.getContainedStream
 	get_shared = None
 	_my_objects_may_be_empty = False
 	_support_cross_user = False
@@ -1228,7 +1255,7 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 	_iter_ntiids_stream_only = False
 	_can_special_case_root = False
 
-	get_owned = users.User.getContainedStream
+	get_owned = User.getContainedStream
 	get_shared = None
 
 	# Default to paging us
@@ -1343,8 +1370,8 @@ import pyramid.interfaces
 from nti.app.renderers.caching import md5_etag
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
-@component.adapter(nti_interfaces.IThreadable,pyramid.interfaces.IRequest)
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IThreadable, pyramid.interfaces.IRequest)
 class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 	"""
 	Decorates the external object based on the presence of things that
@@ -1367,7 +1394,6 @@ class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 		reply_count = _reference_list_length( context )
 		if reply_count >= 0:
 			mapping['ReferencedByCount'] = reply_count
-
 		mapping['RecursiveLikeCount'] = _reference_list_recursive_like_count( context )
 
 		# Use the reply count and the maximum modification date
@@ -1376,7 +1402,9 @@ class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 		etag = md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
 		extra_elements = (etag,)
 
-		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context, mapping, extra_elements=extra_elements )
+		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context, 
+																			mapping, 
+																			extra_elements=extra_elements )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
 
@@ -1384,7 +1412,7 @@ from nti.dataserver.datastructures import LastModifiedCopyingUserList
 
 @view_config( route_name='objects.generic.traversal',
 			  renderer='rest',
-			  context=nti_interfaces.IThreadable,
+			  context=IThreadable,
 			  permission=nauth.ACT_READ,
 			  request_method='GET',
 			  name=REL_REPLIES)
@@ -1399,7 +1427,7 @@ def replies_view(request):
 	"""
 
 	# First collect the objects
-	the_user = users.User.get_user( request.authenticated_userid )
+	the_user = User.get_user( request.authenticated_userid )
 	root_note = request.context
 
 	result_iface = IUGDExternalCollection
