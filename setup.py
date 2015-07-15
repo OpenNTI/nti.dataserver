@@ -128,8 +128,6 @@ setup(
 		'nti.contentfragments',
 		'nti.contentindexing',
 		'nti.contentprocessing',
-		'nti.contentrendering', # legacy
-		'nti.contentrendering_assessment', # legacy
 		'nti.contenttypes.presentation',
 		'nti.coremetadata',
 		'nti.dataserver_core',
@@ -139,7 +137,9 @@ setup(
 		'nti.futures',
 		'nti.geventwebsocket',
 		'nti.links',
+		'nti.metadata',
 		'nti.mimetype',
+		'nti.namedfile',
 		'nti.ntiids',
 		'nti.plasTeX',
 		'nti.transactions',
