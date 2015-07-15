@@ -22,6 +22,7 @@ from z3c.batching.batch import Batch
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.internalization import update_object_from_external_object
@@ -33,7 +34,7 @@ from nti.common.property import CachedProperty
 from nti.contentsearch.interfaces import IIndexManager
 from nti.contentsearch.interfaces import ISearchResults
 from nti.contentsearch.interfaces import SearchCompletedEvent
-from nti.contentsearch.search_utils import construct_queryobject
+from nti.contentsearch.search_utils import create_queryobject
 
 from nti.dataserver.users import Entity
 
@@ -42,10 +43,22 @@ from nti.externalization.internalization import find_factory_for
 class BaseView(AbstractAuthenticatedView):
 
 	name = None
+	
+	@classmethod
+	def construct_queryobject(cls, request):
+		username = request.matchdict.get('user', None)
+		username = username or request.authenticated_userid
+		params = dict(request.params)
+		params['username'] = username
+		params['term'] = request.matchdict.get('term', None)
+		params['ntiid'] = request.matchdict.get('ntiid', None)
+		params['site_names'] = getattr(request, 'possible_site_names', ()) or ('',)
+		result = create_queryobject(username, params)
+		return result
 
 	@property
 	def query(self):
-		return construct_queryobject(self.request)
+		return self.construct_queryobject(self.request)
 
 	@CachedProperty
 	def indexmanager(self):
