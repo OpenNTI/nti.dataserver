@@ -94,46 +94,41 @@ class BatchingUtilsMixin(object):
 
 		return self._DEFAULT_BATCH_SIZE, self._DEFAULT_BATCH_START
 
-	# : A sequence of names of query params that will be dropped from
-	# : links we generate for batch-next and batch-prev, typically
-	# : because they do not have relevance in a next/prev query.
+	# A sequence of names of query params that will be dropped from
+	# links we generate for batch-next and batch-prev, typically
+	# because they do not have relevance in a next/prev query.
 	_BATCH_LINK_DROP_PARAMS = ('batchAround', 'batchContaining', 'batchBefore')
 
-	def _set_batch_links(self, result, result_list, next_batch_start,
-						prev_batch_start):
+	@classmethod
+	def _create_batch_links(cls, request, result, next_batch_start, prev_batch_start):
 		for batch, rel in ((next_batch_start, 'batch-next'), (prev_batch_start, 'batch-prev')):
 			if batch is not None:
-				batch_params = self.request.GET.copy()
+				batch_params = request.GET.copy()
 				# Pop some things that don't work
-				for n in self._BATCH_LINK_DROP_PARAMS:
+				for n in cls._BATCH_LINK_DROP_PARAMS:
 					batch_params.pop(n, None)
 
 				batch_params['batchStart'] = batch
 				query = sorted(batch_params.items())  # sort for reliable testing
-				link_next_href = self.request.current_route_path(_query=query)
+				link_next_href = request.current_route_path(_query=query)
 				link_next = Link(link_next_href, rel=rel)
 				result.setdefault('Links', []).append(link_next)
 
+	def _set_batch_links(self, result, result_list, next_batch_start, prev_batch_start):
+		self._create_batch_links(self.request, result, next_batch_start, prev_batch_start)
 		return result_list
 
-	def __batch_result_list(self, result, result_list,
-							batch_start, batch_size,
-							number_items_needed):
-		# These may have changed from the request params, or be
-		# defaults, tell the client what we really used if we generate
-		# links
-		self.request.GET['batchSize'] = str(batch_size)
-		self.request.GET['batchStart'] = str(batch_start)
+	@classmethod
+	def _get_number_items_needed(cls, batch_size, batch_start, number_items_needed=_marker):
+		if number_items_needed is _marker or number_items_needed is None:
+			number_items_needed = batch_size + batch_start + 2
+		return number_items_needed
 
-		if batch_start >= len(result_list):
-			# Batch raises IndexError in this case, avoid that
-			return []
-		batch_result = Batch(result_list, batch_start, batch_size)
-		# Insert links to the next and previous batch
-		# NOTE: If our batch_start is not a multiple of the batch_size,
-		# then using IBatch.next and IBatch.previous fails as it expects
-		# to the index of the batch to correlate with the previous
-		# batch start. So we manually do the math for start
+	@classmethod
+	def _batch_start_tuple(cls, batch_start, batch_size, number_items_needed=_marker):
+		number_items_needed = cls._get_number_items_needed(batch_size,
+														   batch_start,
+														   number_items_needed)
 
 		# Previous first. We want to try to go back exactly the page
 		# size, otherwise to zero.
@@ -150,6 +145,30 @@ class BatchingUtilsMixin(object):
 			next_batch_start = batch_start + batch_size
 		else:
 			next_batch_start = None
+		return prev_batch_start, next_batch_start
+
+	def __batch_result_list(self, result, result_list,
+							batch_start, batch_size,
+							number_items_needed):
+		# These may have changed from the request params, or be
+		# defaults, tell the client what we really used if we generate
+		# links
+		self.request.GET['batchSize'] = str(batch_size)
+		self.request.GET['batchStart'] = str(batch_start)
+
+		if batch_start >= len(result_list):
+			# Batch raises IndexError in this case, avoid that
+			return []
+		batch_result = Batch(result_list, batch_start, batch_size)
+
+		# Insert links to the next and previous batch
+		# NOTE: If our batch_start is not a multiple of the batch_size,
+		# then using IBatch.next and IBatch.previous fails as it expects
+		# to the index of the batch to correlate with the previous
+		# batch start. So we manually do the math for start
+		prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start,
+																	 batch_size,
+																	 number_items_needed)
 
 		self._set_batch_links(result, batch_result, next_batch_start, prev_batch_start)
 
@@ -201,8 +220,9 @@ class BatchingUtilsMixin(object):
 			return result
 
 		# Ok, reify up to batch_size + batch_start + 2 items from merged
-		if number_items_needed is _marker or number_items_needed is None:
-			number_items_needed = batch_size + batch_start + 2
+		number_items_needed = self._get_number_items_needed(batch_size,
+															batch_start,
+															number_items_needed)
 
 		count = 0
 		result_list = []
@@ -232,7 +252,8 @@ class BatchingUtilsMixin(object):
 			kwargs['selector'] = _tuple_selector
 		return self._batch_items_iterable(*args, **kwargs)
 
-	def _batch_on_item(self, iterator, test, batch_containing=False, batch_after=False, batch_before=False):
+	def _batch_on_item(self, iterator, test, batch_containing=False, 
+					   batch_after=False, batch_before=False):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired
 		batch-around item is found, handle the batching. The request params for
@@ -498,16 +519,16 @@ class ModeledContentUploadRequestUtilsMixin(object):
 
 	def createContentObject(self, user, datatype, externalValue, creator):
 		return create_modeled_content_object(self.dataserver,
-											  user,
-											  datatype,
-											  externalValue,
-											  creator)
+											 user,
+											 datatype,
+											 externalValue,
+											 creator)
 
 	def createAndCheckContentObject(self, owner, datatype, externalValue, creator, predicate=None):
 		if predicate is None:
 			predicate = self.content_predicate
 		containedObject = self.createContentObject(owner, datatype,
-													externalValue, creator)
+												   externalValue, creator)
 		if containedObject is None or not predicate(containedObject):
 			transaction.doom()
 			logger.debug("Failing to POST: input of unsupported/missing Class: %s %s => %s %s",
@@ -519,9 +540,9 @@ class ModeledContentUploadRequestUtilsMixin(object):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
 		containedObject = update_object_from_external_object(aq_base(contentObject),
-															  externalValue,
-															  notify=notify,
-															  request=self.request)
+															 externalValue,
+															 notify=notify,
+															 request=self.request)
 
 		# If they provided an ID, use it if we can and we need to
 		if set_id and StandardExternalFields.ID in externalValue \
