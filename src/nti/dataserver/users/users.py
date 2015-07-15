@@ -523,52 +523,53 @@ class User(Principal):
 			self.unmute_conversation( parsed.pop( 'unmute_conversation' ) )
 			updated = True
 
-
 		# See notes on how ignoring and accepting values may arrive.
-		# NOTE2: In the past, we avoided broadcasting CIRCLED notices during this
-		# process; is that necessary?
-		def handle_ext( resetAll, reset, add, remove, value ):
-			if isinstance( value, collections.Sequence ):
-				updated = True # TODO: Py3 nonlocal keyword.
-				# replacement list
-				resetAll()
+		def handle_ext( reset, add, value ):
+			if value:
+				updated = True
 				for x in value:
 					reset( x )
 					add( x )
+
+		def set_from_input( field, existing, remove ):
+			"""
+			Get our set from input. For targeted removes, go
+			ahead and remove.
+			"""
+			value = parsed.pop( field, None )
+			result = None
+			if isinstance( value, collections.Sequence ):
+				result = set( value )
 			elif isinstance( value, collections.Mapping ):
-				updated = True
-				# adds and removes
-				# Could be present but None, so be explicit about default
+				result = set( existing )
 				for x in (value.get( 'add' ) or ()):
-					reset( x )
-					add( x )
+					result.add( x )
 				for x in (value.get( 'remove') or () ):
+					updated = True
+					result.discard( x )
 					remove( x )
 			elif value is not None:
-				updated = True
-				# One to add
-				reset( x )
-				add( value )
+				result = set( (value,) )
+			return result or set()
 
-		# These two arrays cancel each other out. In order to just have to
-		# deal with sending one array or the other, the presence of an entry
-		# in one array will remove it from the other. This happens
-		# automatically for ignores, but because the implicit calls
-		# to accept shared data ignore those in the ignore list (in our implementation)
-		# we must manually make this happen for that list.
-		ignoring = parsed.pop( 'ignoring', None )
-		handle_ext( self.reset_ignored_shared_data,
-					self.reset_shared_data_from,
+		# Allow targeted add/removals for ignoring/accepting. With this
+		# order, accepts trump ignores (we may ignore a person and then
+		# accept from them if they exist in both arrays).  We get our
+		# incoming set (and remove specified drops) and then do any
+		# new ignores or accepts.
+		old_ignore = set( self.entities_ignoring_shared_data_from )
+		ignoring = set_from_input( 'ignoring', old_ignore, self.stop_ignoring_shared_data_from )
+		ignoring_diff = ignoring - old_ignore
+		handle_ext( self.reset_shared_data_from,
 					self.ignore_shared_data_from,
-					self.stop_ignoring_shared_data_from,
-					ignoring )
+					ignoring_diff )
 
-		accepting = parsed.pop( 'accepting', None )
-		handle_ext( self.reset_accepted_shared_data,
-					self.reset_shared_data_from,
+		old_accept = set( self.entities_accepting_shared_data_from )
+		accepting = set_from_input( 'accepting', old_accept, self.stop_accepting_shared_data_from )
+		accepting_diff = accepting - old_accept
+		handle_ext( self.reset_shared_data_from,
 					self.accept_shared_data_from,
-					self.stop_accepting_shared_data_from,
-				accepting )
+					accepting_diff )
 		return updated
 
 	### Sharing
@@ -578,7 +579,7 @@ class User(Principal):
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		result = self.xxx_hack_filter_non_memberships( 
+		result = self.xxx_hack_filter_non_memberships(
 					super(User,self)._get_dynamic_sharing_targets_for_read(),
 					"Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
 
@@ -862,7 +863,7 @@ class User(Principal):
 
 	def iter_objects(self, include_stream=True, stream_only=False,
 					 include_shared=False, only_ntiid_containers=False):
-		
+
 		def _loop(container, unwrap=False):
 			if hasattr(container, 'values'):
 				collection = container.values()
@@ -880,7 +881,7 @@ class User(Principal):
 				if not only_ntiid_containers or self._is_container_ntiid(name):
 					for obj in _loop(container, True):
 						yield obj
-				
+
 		if include_stream:
 			for name, container in self.streamCache.iteritems():
 				if not only_ntiid_containers or self._is_container_ntiid(name):
@@ -888,7 +889,7 @@ class User(Principal):
 						yield obj
 
 		if include_shared:
-			fl_set = {x for x in self.friendsLists.values() 
+			fl_set = {x for x in self.friendsLists.values()
 					  if IDynamicSharingTarget.providedBy(x) }
 
 			interesting_dynamic_things = set(self.dynamic_memberships) | fl_set
@@ -898,7 +899,7 @@ class User(Principal):
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
 							for obj in _loop(container, False):
 								yield obj
-							
+
 				if include_stream and hasattr( com, 'streamCache' ):
 					for name, container in com.streamCache.iteritems():
 						if not only_ntiid_containers or self._is_container_ntiid( name ):
@@ -909,11 +910,11 @@ class User(Principal):
 					include_shared=False, only_ntiid_containers=False):
 		seen = set()
 		intid = component.getUtility( zope.intid.IIntIds )
-		for obj in self.iter_objects(include_stream=include_stream, 
+		for obj in self.iter_objects(include_stream=include_stream,
 									 stream_only=stream_only,
 									 include_shared=include_shared,
 									 only_ntiid_containers=only_ntiid_containers):
-			
+
 				uid = intid.queryId(obj)
 				if uid is not None and uid not in seen:
 					seen.add(uid)
@@ -922,7 +923,7 @@ class User(Principal):
 	def updates( self ):
 		"""
 		This is officially deprecated now.
-		
+
 		noisy if enabled; logic in flagging_views still needs its existence until rewritten
 		"""
 		return _NOOPCM
