@@ -289,7 +289,7 @@ def presentation_asset_items_factory(context):
 		result = context._presentation_asset_item_container
 		return result
 	except AttributeError:
-		result = context._question_map_assessment_item_container = _PresentationAssetContainer()
+		result = context._presentation_asset_item_container = _PresentationAssetContainer()
 		result.createdTime = time.time()
 		result.__parent__ = context
 		result.__name__ = '_presentation_asset_item_container'
