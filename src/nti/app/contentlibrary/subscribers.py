@@ -246,7 +246,7 @@ def _index_items(content_package, index, item_iface, removed, catalog, registry)
 		for indexed_id in indexed_ids:
 			obj = registry.queryUtility(item_iface, name=indexed_id)
 			if obj is not None:
-				# _store_asset(content_package, container_id, indexed_id, obj)
+				_store_asset(content_package, container_id, indexed_id, obj)
 				result += _index_item(obj, content_package,
 									  container_id, catalog)
 	return result
@@ -346,7 +346,7 @@ def _clear_assets(content_package):
 	recur(content_package)
 
 def _update_indices_when_content_changes(content_package, event):
-	# _clear_assets(content_package)
+	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
 		_update_index_when_content_changes(content_package, name, item_iface, func)
 
