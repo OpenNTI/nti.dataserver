@@ -68,21 +68,25 @@ def _store_asset(content_unit, container_id, ntiid, item):
 		return True
 	return False
 
-def _store_assets(intids, catalog):
+def _store_assets(intids, catalog, seen):
 	result = 0
 	library = component.queryUtility(IContentPackageLibrary)
 	if library is None:
 		return result
 
-	logger.info('Migrating library (%s)', library)
+	logger.info('Scanning library (%s)', library)
 	for name, item in component.getUtilitiesFor(IPresentationAsset):
+		if name in seen:
+			continue
+		seen.add(name)
 		containers = catalog.get_containers(item, intids)
 		for container in containers or ():
 			unit = find_object_with_ntiid(container)
 			unit = IContentUnit(unit, None)
-			if unit is not None and not unit.children:
+			if unit is not None and not unit.children and name not in container:
 				_store_asset(unit, container, name, item)
 				result += 1
+	logger.info('%s asset(s) stored for library (%s)', result, library)
 	return result
 
 def do_evolve(context, generation=generation):
@@ -107,9 +111,10 @@ def do_evolve(context, generation=generation):
 		library = component.queryUtility(IContentPackageLibrary)
 		if library is not None:
 			library.syncContentPackages()
-
-		_store_assets(intids, catalog)
-		run_job_in_all_host_sites(functools.partial(_store_assets, intids, catalog))
+			
+		seen = set()
+		_store_assets(intids, catalog, seen)
+		run_job_in_all_host_sites(functools.partial(_store_assets, intids, catalog, seen))
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
