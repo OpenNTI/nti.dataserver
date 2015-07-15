@@ -40,6 +40,8 @@ from nti.appserver.workspaces.interfaces import IService
 
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.contentlibrary.indexed_data import get_catalog
+
 from nti.contentlibrary.interfaces import IContentUnit
 from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -454,22 +456,33 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			...
 		]
 	"""
-	def _get_path_for_package(self, package, target_ntiid):
+	def _get_path_for_package(self, package, obj, target_ntiid):
 		"""
 		For a given package, return the path to the target ntiid.
 		"""
-		obj = find_object_with_ntiid( target_ntiid )
-		if obj is not None:
-			unit = find_interface( obj, IContentUnit, strict=False )
-			if unit is not None:
-				# Found a unit in our lineage, easy.
-				return [unit]
+		unit = find_interface( obj, IContentUnit, strict=False )
+		if unit is not None:
+			# Found a unit in our lineage, easy.
+			return [unit]
 
-		# Try iterating.
+		# Try catalog.
+		catalog = get_catalog()
+		containers = catalog.get_containers( obj ) or ()
+		for container in containers:
+			try:
+				container = package[container]
+				# Find our leaf container, the unit without children.
+				if not container.children:
+					return [container]
+			except (KeyError, AttributeError):
+				pass
+
+		# Try iterating
 		def recur( unit ):
 			item_ntiid = getattr( unit, 'ntiid', None )
 			if 		item_ntiid == target_ntiid \
-				or target_ntiid in unit.embeddedContainerNTIIDs:
+				or target_ntiid in unit.embeddedContainerNTIIDs \
+				and unit != package: # FIXME REMOVE JZ
 				return [ unit ]
 			for child in unit.children:
 				result = recur( child )
@@ -531,7 +544,6 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		legacy_path = self._get_legacy_path_to_id( target_ntiid )
 		if legacy_path:
 			package = legacy_path[0]
-
 			top_level_contexts = _get_top_level_contexts_for_user( package, self.remoteUser )
 			for top_level_context in top_level_contexts:
 
@@ -570,7 +582,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 					packages = top_level_context.ContentPackages
 
 			for package in packages:
-				path_list = self._get_path_for_package( package, target_ntiid )
+				path_list = self._get_path_for_package( package, obj, target_ntiid )
 				if path_list:
 					# We have a hit
 					result_list = [ top_level_context ]
