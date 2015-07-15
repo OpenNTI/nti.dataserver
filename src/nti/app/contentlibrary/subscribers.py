@@ -355,6 +355,8 @@ def _clear_when_removed(content_package):
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
 	"""
+	_clear_assets(content_package)
+
 	removed_count = 0
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
