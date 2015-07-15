@@ -43,7 +43,7 @@ from nti.externalization.internalization import find_factory_for
 class BaseView(AbstractAuthenticatedView):
 
 	name = None
-	
+
 	@classmethod
 	def construct_queryobject(cls, request):
 		username = request.matchdict.get('user', None)
@@ -75,10 +75,13 @@ class BaseView(AbstractAuthenticatedView):
 		raise NotImplementedError()
 
 	def __call__(self):
-		query = self.query
-		result = self.search(query)
-		result = self.locate(result, self.request.root)
-		return result
+		try:
+			query = self.query
+			result = self.search(query)
+			result = self.locate(result, self.request.root)
+			return result
+		except ValueError as e:
+			raise hexc.HTTPUnprocessableEntity(str(e))
 
 class BaseSearchView(BaseView, BatchingUtilsMixin):
 
