@@ -20,10 +20,4 @@
 	<subscriber handler=".subscribers.reset_indexes_when_removed" />
 	<subscriber handler=".subscribers.reset_indexes_when_modified" />
 
-	<!-- Decorators -->
-	<subscriber factory=".decorators._SearchResultsLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator"
-				for="nti.contentsearch.interfaces.ISearchResults
-					 pyramid.interfaces.IRequest" />
-
 </configure>

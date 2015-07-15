@@ -39,6 +39,7 @@ from nti.contentsearch.search_utils import create_queryobject
 from nti.dataserver.users import Entity
 
 from nti.externalization.internalization import find_factory_for
+from nti.externalization.externalization import to_external_object
 
 class BaseView(AbstractAuthenticatedView):
 
@@ -85,21 +86,16 @@ class BaseView(AbstractAuthenticatedView):
 
 class BaseSearchView(BaseView, BatchingUtilsMixin):
 
-	def _batch_results(self, results):
-		batch_size, batch_start = self._get_batch_size_start()
+	def _batch_results(self, results, batch_size, batch_start):
 		if 	batch_size is None or batch_start is None or \
 			not ISearchResults.providedBy(results):
-			return results, results
-
-		new_results = results.clone(hits=False)
-		if batch_start < len(results):
+			response = (results, results, None)
+		else:
+			new_results = results.clone(hits=False)
 			batch_hits = Batch(results.Hits, batch_start, batch_size)
 			new_results.Hits = batch_hits  # Set hits
-			# CS: this is a bit hackish, but it avoids building a new
-			# batch object plus the link decorator needs the orignal
-			# batch object. Consider using _batch_items_iterable
-			new_results.Batch = batch_hits  # save for decorator
-		return new_results, results
+			response = (new_results, results, batch_hits)
+		return response
 
 	def _do_search(self, query, store=None):
 		result = self.indexmanager.search(query=query, store=store)
@@ -108,12 +104,26 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 	def search(self, *queries):
 		result = None
 		now = time.time()
-		for query in queries:
+		# execute search
+		for query in queries: # TODO: Handle multiple queries
 			result = self._do_search(query=query, store=result)
-		result, original = self._batch_results(result)
+		
+		# page if required	
+		batch_size, batch_start = self._get_batch_size_start()
+		result, original, batch = self._batch_results(result, batch_size, batch_start)
 		elapsed = time.time() - now
+
+		# notify
 		entity = Entity.get_entity(query.username)
 		notify(SearchCompletedEvent(entity, original, elapsed))
+				
+		# externalize to add links
+		result = to_external_object(result)
+		if batch is not None:
+			result['BatchPage'] = batch_start // batch_size + 1
+			result['ItemCount'] = len(result.get('Hits', ()))
+			prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start, batch_size)
+			self._create_batch_links(self.request, result, next_batch_start, prev_batch_start)
 		return result
 
 class SearchView(BaseSearchView):
