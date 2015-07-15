@@ -18,9 +18,6 @@ import functools
 
 from zope import component
 
-from pyramid import httpexceptions as hexc
-from pyramid.threadlocal import get_current_request
-
 from nti.common.string import safestr
 
 from nti.dataserver.users import User
@@ -45,24 +42,40 @@ from .interfaces import ISearchPackageResolver
 from .search_query import QueryObject
 from .search_query import DateTimeRange
 
-def gevent_spawn(request=None, side_effect_free=True, func=None, **kwargs):
+def _get_current_request():
+	result = None
+	try:
+		from pyramid.threadlocal import get_current_request
+		result = get_current_request()
+	except ImportError:
+		pass
+	return result
+
+def _get_site_names(query=None):
+	result =  getattr(query, 'site_names', None) 
+	if result is None:
+		request = _get_current_request()
+		result = getattr(request, 'possible_site_names', None)
+	return  ('',) if not result else result 
+
+def gevent_spawn(func=None, **kwargs):
 	assert func is not None
 
 	# prepare function call
 	new_callable = functools.partial(func, **kwargs)
 
-	# save site names  / deprecated
-	request = request if request is not None else get_current_request()
-	site_names = getattr(request, 'possible_site_names', ()) or ('',)
+	query = kwargs.get('query', None)
+	site_names = _get_site_names(query)
 
 	def _runner():
 		transactionRunner = component.getUtility(IDataserverTransactionRunner)
 		transactionRunner = functools.partial(transactionRunner,
 											  site_names=site_names,
-											  side_effect_free=side_effect_free)
+											  side_effect_free=True)
 		transactionRunner(new_callable)
 
 	# user the avaible spawn function
+	request = _get_current_request()
 	greenlet = 	request.nti_gevent_spawn(run=_runner) if request is not None \
 				else gevent.spawn(_runner)
 
@@ -130,20 +143,17 @@ def get_batch_size_start(params):
 			batch_size = int(batch_size)
 			batch_start = int(batch_start)
 		except ValueError:
-			raise hexc.HTTPBadRequest()
+			raise ValueError("Invalid batch size/start")
 		if batch_size <= 0 or batch_start < 0:
-			raise hexc.HTTPBadRequest()
+			raise ValueError("Invalid batch size/start")
 	else:
 		batch_size = batch_start = None
 	return batch_size, batch_start
 
 def check_time(value):
-	try:
-		value = float(value)
-	except ValueError:
-		raise hexc.HTTPBadRequest()
+	value = float(value)
 	if value < 0:
-		raise hexc.HTTPBadRequest()
+		raise ValueError("Invalid time float")
 	return value
 
 def _parse_dateRange(args, fields):
@@ -160,7 +170,7 @@ def _parse_dateRange(args, fields):
 
 	if 	result is not None and result.endTime is not None and \
 		result.startTime is not None and result.endTime < result.startTime:
-		raise hexc.HTTPBadRequest()
+		raise ValueError("Invalid time interval")
 	return result
 
 def _is_type_oid(ntiid):
@@ -175,9 +185,9 @@ def _resolve_package_ntiids(username, ntiid=None):
 			result.update(ntiids or ())
 	return sorted(result)  # predictable order for digest
 
-def create_queryobject(username, params, matchdict):
+def create_queryobject(username, params):
 	indexable_type_names = get_indexable_types()
-	username = username or matchdict.get('user', None)
+	username = username or params.get('username', None)
 
 	context = {}
 
@@ -189,17 +199,20 @@ def create_queryobject(username, params, matchdict):
 			if value:
 				context[safestr(name)] = safestr(value)
 			del args[name]
+	# remove to be resetted
+	for name in ('ntiid', 'term', 'username'):
+		args.pop(name, None)
 
 	args['context'] = context
 
-	term = matchdict.get('term', u'')
+	term = params.get('term', u'')
 	term = clean_search_query(safestr(term))
 	args['term'] = term
 
 	args['username'] = username
 	packages = args['packages'] = list()
 
-	ntiid = matchdict.get('ntiid', None)
+	ntiid = params.get('ntiid', None)
 	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
 		# make sure we register the location where the search query is being made
@@ -244,9 +257,3 @@ def create_queryobject(username, params, matchdict):
 	args['applyHighlights'] = is_true(args.get('applyHighlights', True))
 
 	return QueryObject(**args)
-
-def construct_queryobject(request):
-	username = request.matchdict.get('user', None)
-	username = username or request.authenticated_userid
-	result = create_queryobject(username, request.params, request.matchdict)
-	return result

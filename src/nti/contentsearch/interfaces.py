@@ -108,6 +108,9 @@ class ISearchQuery(interface.Interface):
 
 	decayFactor = Number(title="decay factor", required=False, min=0.001, max=1.0, default=0.94)
 
+	site_names = ListOrTuple(ValidTextLine(title="Site names"), required=False)
+	site_names.setTaggedValue('_ext_excluded_out', True)
+
 	context = Dict(ValidTextLine(title='name'),
 				   ValidTextLine(title='value'),
 				   title="Search query context", required=False, default={})

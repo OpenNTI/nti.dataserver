@@ -19,8 +19,10 @@ except ImportError:
 	from threading import BoundedSemaphore
 
 from zope import interface
-from zope.proxy import ProxyBase
+
 from zope.container.contained import Contained
+
+from zope.proxy import ProxyBase
 
 from nti.common.property import CachedProperty
 
