@@ -1,0 +1,46 @@
+--- contrib/halog/halog.c
++++ contrib/halog/halog.c
+@@ -694,7 +694,7 @@ int main(int argc, char **argv)
+ 	struct eb32_node *n;
+ 	struct url_stat *ustat = NULL;
+ 	int val, test;
+-	uint uval;
++	unsigned int uval;
+ 	int filter_acc_delay = 0, filter_acc_count = 0;
+ 	int filter_time_resp = 0;
+ 	int filt_http_status_low = 0, filt_http_status_high = 0;
+--- include/common/regex.h
++++ include/common/regex.h
+@@ -79,7 +79,7 @@ extern regmatch_t pmatch[MAX_MATCH];
+  * The function return 1 is succes case, else return 0 and err is filled.
+  */
+ int regex_comp(const char *str, struct my_regex *regex, int cs, int cap, char **err);
+-int exp_replace(char *dst, uint dst_size, char *src, const char *str, const regmatch_t *matches);
++int exp_replace(char *dst, unsigned int dst_size, char *src, const char *str, const regmatch_t *matches);
+ const char *check_replace_string(const char *str);
+ const char *chain_regex(struct hdr_exp **head, const regex_t *preg,
+ 			int action, const char *replace, void *cond);
+--- src/regex.c
++++ src/regex.c
+@@ -22,7 +22,7 @@
+ /* regex trash buffer used by various regex tests */
+ regmatch_t pmatch[MAX_MATCH];  /* rm_so, rm_eo for regular expressions */
+ 
+-int exp_replace(char *dst, uint dst_size, char *src, const char *str, const regmatch_t *matches)
++int exp_replace(char *dst, unsigned int dst_size, char *src, const char *str, const regmatch_t *matches)
+ {
+ 	char *old_dst = dst;
+ 	char* dst_end = dst + dst_size;
+--- src/standard.c
++++ src/standard.c
+@@ -2416,8 +2416,8 @@ char *env_expand(char *in)
+ const char *strnistr(const char *str1, int len_str1, const char *str2, int len_str2)
+ {
+ 	char *pptr, *sptr, *start;
+-	uint slen, plen;
+-	uint tmp1, tmp2;
++	unsigned int slen, plen;
++	unsigned int tmp1, tmp2;
+ 
+ 	if (str1 == NULL || len_str1 == 0) // search pattern into an empty string => search is not found
+ 		return NULL;

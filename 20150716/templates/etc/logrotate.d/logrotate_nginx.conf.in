@@ -1,0 +1,12 @@
+${deployment:log-directory}/nginx/*.log {
+    daily
+    rotate 7
+    dateext
+    nocompress
+    notifempty
+    missingok
+    sharedscripts
+    postrotate
+        kill -USR1 `cat ${deployment:run-directory}/nginx.pid`
+    endscript
+}

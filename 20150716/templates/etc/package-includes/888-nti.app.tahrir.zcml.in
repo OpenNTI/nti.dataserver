@@ -1,0 +1,12 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:tdb="http://nextthought.com/ntp/tahrir">
+			
+	<include package="nti.badges.tahrir" file="meta.zcml" />
+	<tdb:registerTahrirDB	dburi="${tahrir:driver}://${tahrir:user}:${tahrir:password}@${tahrir:host}/${tahrir:dbname}"
+							twophase="${tahrir:twophase}" 
+							autocommit="${tahrir:autocommit}" />
+
+</configure>

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Put sencha and compass on the path
+export PATH=${deployment:bin-directory|shell-path}:${senchacmd:location|shell-path}:$PATH
+# Let compass know where its gems are, as the wrapper
+# script isn't smart enough to do that
+export GEM_HOME=${buildout:parts-directory|shell-path}/compass
+
+cd ${environment:webapp_path|shell-path}
+# First, compass compile
+compass compile
+
+# Run the minify. It's easiest to run it
+# from the directory containing the source
+cd ${environment:webapp_path/src/main|shell-path}
+# If the minify succeeds, copy the minified file to index.html,
+# but only if the file doesn't exist, or (if it does exist) it isn't
+# a symlink
+${python|shell-path} ${environment:webapp_path|shell-path}/src/main/app-minify.py ${analytics-key} ${closure} ${itunes} $*
+if [ $? -eq 0 ]; then
+	if [ ! -e index.html ]; then
+		cp index-minify.html index.html
+	elif [ ! -L index.html ]; then
+		cp index-minify.html index.html
+	fi
+fi
+
+# Now the login app
+# First the templates
+cd ${environment:loginapp_path}
+make render
+
+# Then the timestamps
+cd src/main
+${python|shell-path} ./deploy.py ${analytics-key} ${itunes}

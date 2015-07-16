@@ -1,0 +1,16 @@
+#!/bin/sh
+
+DEFAULTS_FILE=$1
+DB_HOST=$2
+DB_PORT=$3
+LOG_DEST=$4
+
+if [ ! -e $LOG_DEST ]
+then
+    echo "Creating $LOG_DIR"
+    mkdir -p $LOG_DEST
+fi
+
+FIRST_LOG=`echo 'SHOW BINARY LOGS' | ${deployment:root-directory}/parts/mysql/bin/mysql --defaults-file=$DEFAULTS_FILE --host $DB_HOST --port $DB_PORT | awk 'NR==2 {print $1}'`
+
+${deployment:root-directory}/parts/mysql/bin/mysqlbinlog --defaults-file=$DEFAULTS_FILE --read-from-remote-server --host $DB_HOST --port $DB_PORT --raw --stop-never --stop-never-slave-server-id=${backupvars:slave_id} --result-file=$LOG_DEST $FIRST_LOG

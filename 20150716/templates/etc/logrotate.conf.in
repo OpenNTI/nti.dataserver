@@ -1,0 +1,4 @@
+# installation wide config options
+
+# include component logrotate config files
+include ${deployment:logrotate-directory}

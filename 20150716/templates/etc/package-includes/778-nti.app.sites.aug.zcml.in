@@ -1,0 +1,18 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:adb="http://nextthought.com/analytics/database">
+
+	<include package="nti.analytics.database" file="meta.zcml" />
+
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<registerIn registry="nti.app.sites.augs.AUGS">
+		<adb:registerAnalyticsDB
+				dburi="${analytics-aug:driver}://${analytics-aug:user}:${analytics-aug:password}@${analytics-aug:host}/${analytics-aug:dbname}?charset=utf8"
+				twophase="${analytics-aug:twophase}"
+				autocommit="${analytics-aug:autocommit}" />
+	</registerIn>
+
+</configure>

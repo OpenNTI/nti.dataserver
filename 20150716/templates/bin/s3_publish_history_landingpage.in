@@ -1,0 +1,24 @@
+#!/bin/bash
+
+pushd ${landingpage_src}
+rm -rf client.history-channel
+git checkout -- client.history-channel
+git pull
+
+for file in $(find . -name '*.html')
+	do
+	sed -i -e 's|\(href=\"\)\(/[A-Za-z]\)|\1${remote_server}\2|g' $file
+	sed -i -e 's|\(src=\"\)\(/[A-Za-z]\)|\1${remote_server}\2|g' $file
+	sed -i -e 's|\(data-url=\"\)\(/[A-Za-z]\)|\1${remote_server}\2|g' $file
+	sed -i -e 's|\(tags.tiqcdn.com/utag/aenetworks/historycourse/\)dev\(/\)|\1${ae_analytics}\2|g' $file
+done
+
+git status
+
+${buildout:directory}/bin/nti_s3_publish_landingpage -a ${s3_access_key} -s ${s3_secret_key} --cache-max-age=${cache_max_age} -b ${s3_bucket} -p ${landingpage_src}/client.history-channel ${landingpage_src}/client.history-channel/
+
+# Clean up
+rm -rf client.history-channel
+git checkout -- client.history-channel
+
+popd

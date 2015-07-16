@@ -1,0 +1,18 @@
+<configure    xmlns="http://namespaces.zope.org/zope"
+	xmlns:sp="http://nextthought.com/ntp/securitypolicy">
+
+<!-- Assign principals to roles in the Alpha environment -->
+<!--
+For principals, note that only 'id' actually matters.
+It must match the username of a User in the database
+to have any effect.
+-->
+<sp:principal
+	id="brandon.bonk"
+	login="brandon.bonk"
+	title="Brandon Bonk" />
+
+<sp:grant principal="brandon.bonk"
+	role="nti.roles.contentlibrary.admin" />
+
+</configure>

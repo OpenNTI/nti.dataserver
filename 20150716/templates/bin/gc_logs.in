@@ -1,0 +1,33 @@
+#!${deployment:bin-directory}/python
+
+import datetime
+import os
+import re
+
+from shutil import rmtree
+
+def _find_gc_candidates( backup_path ):
+	t_delta = datetime.timedelta(days=${backupvars:uncompressed_log_retention_period})
+	threshold = (datetime.datetime.today() - t_delta).strftime('%Y%m%d')
+	candidates = []
+	pattern = re.compile('20[0-9][0-9][0-1][0-9][0-3][0-9]')
+	for root, dirs, files in os.walk( backup_path ):
+		for dir in dirs:
+			if pattern.match(dir):
+				diff = int(dir) - int(threshold)
+				if diff < 0:
+					candidates.append(os.path.join(root, dir))
+	return candidates
+
+def main():
+	# Find GC candidates
+	candidates = _find_gc_candidates('${backupvars:log_backup_dir}')
+	# delete candidates
+	for candidate in candidates:
+		print('Removing %s' % candidate)
+		#print(candidate)
+		rmtree(candidate)
+
+if __name__ == '__main__': # pragma: no cover
+	main()
+

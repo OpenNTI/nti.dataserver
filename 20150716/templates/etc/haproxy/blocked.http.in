@@ -1,0 +1,24 @@
+HTTP/1.1 403 Forbidden
+Server: nginx/1.5.8
+Date: Tue, 28 Jan 2014 16:56:55 GMT
+Content-Type: text/html
+Content-Length: 401
+Last-Modified: Fri, 29 Jan 2014 07:24:46 GMT
+Vary: Accept-Encoding
+ETag: "52e2153e-1029"
+Cache-Control: max-age=3600
+Cache-Control: proxy-revalidate
+
+<html>
+	<head>
+<title>IP Address Blocked</title>
+</head>
+<body>
+<h1>IP Address Blocked</h1>
+<p style="color: red; font-size: larger">
+Our system indicates that you are attempting to access the site from
+an IP address associated with a country currently subject to U.S.
+economic and trade sanctions. In order to comply with U.S. export
+controls, we cannot allow you access to the site.
+</body>
+</html>

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+SSH_AUTH_SOCK=`find /tmp -user $USER -name 'agent\.[0-9]*' 2>/dev/null`
+export SSH_AUTH_SOCK
+
+FEED_USER=$1
+FEED_DIR=$2
+
+if [ -z $SSH_AUTH_SOCK ]
+then
+	echo 'No SSH agent found. Aborting the attempt to fetch the feed.'
+else
+	pushd $FEED_DIR
+	echo 'get *.xml' | sftp -b - $FEED_USER@sftp.nextthought.com:outgoing/
+	popd
+fi
+

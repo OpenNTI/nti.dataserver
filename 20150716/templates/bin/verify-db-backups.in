@@ -1,0 +1,126 @@
+#!${deployment:bin-directory}/python
+
+import argparse
+import codecs
+import json
+import os
+import shutil
+
+from datetime import datetime
+from multiprocessing import Pool
+from subprocess import check_call
+from subprocess import PIPE
+from subprocess import Popen
+from tempfile import mkdtemp
+
+
+def _restore_database( config ):
+    cmd = [
+        '${deployment:root-directory}/parts/mysql/bin/mysql',
+        '--defaults-file=%s' % config['defaults_file'],
+        '--socket', config['socket']
+    ]
+
+    with codecs.open(config['backup_file'], 'rb', 'utf-8') as infile:
+        process = Popen(cmd, stdin=infile, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = process.communicate()
+        if stdout or stderr:
+            print(stdout, stderr)
+
+def _uncompress_backup( archive ):
+    cmd = [
+        'tar',
+        'xf', archive
+    ]
+    check_call( cmd )
+
+def _download_backup( archive_uri, archive_name, access_key, secret_key ):
+    env = {
+        'AWS_ACCESS_KEY_ID': access_key,
+        'AWS_SECRET_ACCESS_KEY': secret_key
+    }
+
+    cmd = [
+        '${deployment:bin-directory}/fetch_file',
+        '--out-file', archive_name,
+        archive_uri
+    ]
+
+    process = Popen( cmd, env=env )
+    stdout, stderr = process.communicate()
+    if stdout or stderr:
+        print(stdout, stderr)
+
+def _verify_backup(backup_uri, backup_name, servers, defaults_file):
+    access_key = u'${boto:aws_access_key_id}'
+    secret_key = u'${boto:aws_secret_access_key}'
+
+    old_dir = os.getcwd()
+    tmp_dir = mkdtemp()
+    try:
+        os.chdir(tmp_dir)
+        # Download the backup from S3
+        _download_backup(backup_uri, backup_name, access_key, secret_key)
+
+        # Decompress the backup
+        _uncompress_backup( backup_name )
+
+        # Restore backup
+        sets = []
+        for server in servers:
+            _data = {}
+            _data['backup_file'] = os.path.join(backup_name.split(u'.')[0], server['filename'])
+            _data['socket'] = server['socket']
+            _data['defaults_file'] =  defaults_file
+            sets.append(_data)
+
+        process_pool = Pool(processes=len(sets))
+        process_pool.map_async(_restore_database, sets)
+        process_pool.close()
+        process_pool.join()
+    finally:
+        os.chdir(old_dir)
+        if os.path.exists(tmp_dir):
+            shutil.rmtree(tmp_dir)
+
+def _parse_args():
+    arg_parser = argparse.ArgumentParser( description="NTI DB Backup Verification Utility" )
+    arg_parser.add_argument( '-c', '--config',
+                             help="Database verification configuration file." )
+    arg_parser.add_argument( '-e', '--environment-name', dest='environment_name',
+                             help="Name of the environment to verify." )
+    arg_parser.add_argument( '--s3-bucket', dest='s3_bucket',
+                             help="S3 bucket to retrive the backup from." )
+    arg_parser.add_argument( '--date', dest='date', default=datetime.now().strftime('%Y%m%d'),
+                             help="Path to the root of the database backup store." )
+    return arg_parser.parse_args()
+
+def main():
+    # Parse command line args
+    args = _parse_args()
+    
+    config_file = os.path.abspath(os.path.expanduser(args.config))
+    environment_name = args.environment_name
+    date = args.date + u'0000'
+    s3_bucket = args.s3_bucket
+
+    environment = None
+    defaults_file = None
+    with codecs.open(config_file, 'rb', 'utf-8') as data_file:
+        _data = json.load(data_file)
+        if u'environments' in _data:
+            if environment_name in _data['environments']:
+                environment = _data['environments'][environment_name]
+        defaults_file = _data['defaults-file']
+
+    if environment is None:
+        print('No definition for the %s environment found in %s' % (environment_name, config_file))
+
+    backup_name = u'db-backup-%s-%s.tar.xz' % (environment_name,date)
+    backup_uri = u's3://%s/db/%s/%s' % (s3_bucket, environment_name, backup_name)
+
+    _verify_backup( backup_uri, backup_name, environment['servers'], defaults_file )
+
+
+if __name__ == '__main__': # pragma: no cover
+    main()
