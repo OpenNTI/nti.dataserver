@@ -11,6 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import six
 import isodate
 from datetime import datetime
 
@@ -44,9 +45,13 @@ from nti.dataserver.users.utils import reindex_email_verification
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from .utils import generate_mail_verification_pair
 
 from . import is_true
+from . import all_usernames
+from . import username_search
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -243,3 +248,49 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 
 		User.delete_user(username)
 		return hexc.HTTPNoContent()
+
+@view_config(name='GetUserGhostContainers')
+@view_config(name='get_user_ghost_containers')
+@view_defaults(route_name='objects.generic.traversal',
+			   name='user_ghost_containers',
+			   renderer='rest',
+			   request_method='GET',
+			   permission=nauth.ACT_NTI_ADMIN)
+class GetUserGhostContainersView(AbstractAuthenticatedView):
+	
+	exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
+	
+	def _check_users_containers(self, usernames=()):	
+		for username in usernames or ():
+			user = User.get_user(username)
+			if user is None or not IUser.providedBy(user):
+				continue
+			usermap = {}
+			method = getattr(user, 'getAllContainers', lambda : ())
+			for name in method():
+				if name in self.exclude_containers:
+					continue
+	
+				obj = find_object_with_ntiid(name)
+				if obj is None:
+					container = user.getContainer(name)
+					usermap[name] = len(container) if container is not None else 0
+			if usermap:
+				yield user.username, usermap
+
+	def __call__(self):
+		values = CaseInsensitiveDict(self.request.params)
+		term = values.get('term') or values.get('search')
+		usernames = values.get('usernames') or values.get('username')
+		if term:
+			usernames = username_search(term)
+		elif isinstance(usernames, six.string_types):
+			usernames = set(usernames.split(","))
+		else:
+			usernames = all_usernames()
+	
+		result = LocatedExternalDict()
+		items = result['Items'] = {}
+		for username, rmap in self._check_users_containers(usernames):
+			items[username] = rmap
+		return result
