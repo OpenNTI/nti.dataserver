@@ -28,12 +28,13 @@ from zope.keyreference.interfaces import NotYet
 
 from nti.common.property import read_alias
 
-from nti.dataserver.users import missing_user
-from nti.dataserver.interfaces import IEntity
-
 from nti.schema.schema import EqHash
 
 from nti.wref.interfaces import ICachingWeakRef
+
+from ..interfaces import IEntity
+
+from .missing_user import MissingEntity
 
 @functools.total_ordering
 @EqHash('username', '_entity_id')
@@ -138,7 +139,7 @@ class WeakRef(object):
 		"""
 		result = self._cached(allow_cached)
 		if result is None and return_missing_proxy:
-			factory = return_missing_proxy if callable(return_missing_proxy) else missing_user.MissingEntity
+			factory = return_missing_proxy if callable(return_missing_proxy) else MissingEntity
 			result = factory(self.username)
 		return result
 

@@ -19,14 +19,14 @@ from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
-from nti.dataserver.interfaces import IStreamChangeEvent
-from nti.dataserver.interfaces import IDynamicSharingTarget
-
 from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.zodb import isBroken
 from nti.zodb import readCurrent
 from nti.zodb.urlproperty import UrlProperty
+
+from ..interfaces import IStreamChangeEvent
+from ..interfaces import IDynamicSharingTarget
 
 from .index import IX_EMAIL
 from .index import IX_TOPICS
