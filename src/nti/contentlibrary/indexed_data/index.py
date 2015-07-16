@@ -233,6 +233,12 @@ class ContainedObjectCatalog(Persistent):
 					  self._namespace_index, self._ntiid_index):
 			index.unindex_doc(doc_id)
 		return True
+	
+	def clear(self):
+		self._last_modified.clear()
+		for index in (self._container_index, self._type_index,
+					  self._namespace_index, self._ntiid_index):
+			index.clear()
 
 def install_container_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
