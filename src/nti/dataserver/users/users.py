@@ -16,7 +16,6 @@ import time
 import BTrees
 import numbers
 import warnings
-import functools
 import collections
 
 import zope.intid
@@ -24,8 +23,6 @@ import zope.intid
 from zope import interface
 from zope import component
 from zope import lifecycleevent
-
-from zope.component.factory import Factory
 
 from zope.cachedescriptors.property import cachedIn
 
@@ -52,10 +49,7 @@ from nti.dataserver import dicts
 from nti.dataserver import sharing
 from nti.dataserver import datastructures
 
-from nti.dataserver.interfaces import IHTC_NEW_FACTORY
-
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import IDevice
 from nti.dataserver.interfaces import IOpenIdUser
 from nti.dataserver.interfaces import ITranscript
 from nti.dataserver.interfaces import IZContained
@@ -63,7 +57,6 @@ from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IFacebookUser
 from nti.dataserver.interfaces import IIntIdIterable
 from nti.dataserver.interfaces import INamedContainer
-from nti.dataserver.interfaces import IDeviceContainer
 from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import ITranscriptContainer
 from nti.dataserver.interfaces import IDynamicSharingTarget
@@ -82,13 +75,6 @@ from nti.dataserver.users.interfaces import PasswordCannotConsistOfOnlyWhitespac
 from nti.dataserver.users.interfaces import OldPasswordDoesNotMatchCurrentPassword
 
 from nti.dataserver.activitystream_change import Change
-
-from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
-
-from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.datastructures import ExternalizableDictionaryMixin
-
-from nti.mimetype import mimetype
 
 from nti.ntiids import ntiids
 
@@ -151,7 +137,7 @@ class _Password(object):
 	# be directly compared outside the context of their
 	# manager.
 
-from nti.dataserver.users.entity import named_entity_ntiid
+from .entity import named_entity_ntiid
 
 class Principal(sharing.SharingSourceMixin, Entity):  # order matters
 	""" A Principal represents a set of credentials that has access to the system.
@@ -238,77 +224,8 @@ zope.deferredimport.deprecatedFrom(
 ShareableMixin = sharing.ShareableMixin
 deprecated( 'ShareableMixin', 'Prefer sharing.ShareableMixin' )
 
-@functools.total_ordering
-@interface.implementer(IDevice, IZContained)
-class Device(PersistentCreatedModDateTrackingObject,
-			 ExternalizableDictionaryMixin):
-
-	__metaclass__ = mimetype.ModeledContentTypeAwareRegistryMetaclass
-	__external_can_create__ = True
-
-	__name__ = None
-	__parent__ = None
-
-	def __init__(self, deviceId):
-		"""
-		:param deviceId: Either a basic dictionary containing `StandardExternalFields.ID`
-			or a string in hex encoding the bytes of a device id.
-		"""
-		super(Device,self).__init__()
-		if isinstance(deviceId,collections.Mapping):
-			deviceId = deviceId[StandardExternalFields.ID]
-		# device id arrives in hex encoding
-		self.deviceId = deviceId.decode( 'hex' )
-
-	def get_containerId( self ):
-		return _DevicesMap.container_name
-
-	def set_containerId( self, cid ):
-		pass
-	containerId = property( get_containerId, set_containerId )
-
-	@property
-	def id(self):
-		# Make ID not be writable
-		return self.deviceId.encode('hex')
-
-	def toExternalObject(self, *args, **kwargs):
-		result = super(Device, self).toExternalDictionary(*args, **kwargs)
-		return result
-
-	def updateFromExternalObject(self, ext):
-		pass
-
-	def __eq__(self, other):
-		try:
-			return self.deviceId == other.deviceId
-		except AttributeError:
-			return NotImplemented
-
-	def __lt__(self, other):
-		try:
-			return self.deviceId < other.deviceId
-		except AttributeError:
-			return NotImplemented
-
-	def __hash__(self):
-		return self.deviceId.__hash__()
-
-@interface.implementer(IDeviceContainer )
-class _DevicesMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
-	contained_type = IDevice
-	container_name = 'Devices'
-
-	__name__ = container_name
-
-	def __setitem__( self, key, value ):
-		if not isinstance( value, Device ):
-			value = Device( value )
-		super(_DevicesMap,self).__setitem__( key, value )
-
-
-IDevice.setTaggedValue( IHTC_NEW_FACTORY,
-						Factory( Device, interfaces=(IDevice,)) )
+from .device import Device
+from .device import _DevicesMap
 
 @interface.implementer(ITranscriptContainer )
 class _TranscriptsMap(datastructures.AbstractNamedLastModifiedBTreeContainer):
@@ -558,14 +475,14 @@ class User(Principal):
 		# incoming set (and remove specified drops) and then do any
 		# new ignores or accepts.
 		old_ignore = set( self.entities_ignoring_shared_data_from )
-		ignoring = set_from_input( 'ignoring', old_ignore, self.stop_ignoring_shared_data_from )
+		ignoring = set_from_input('ignoring', old_ignore, self.stop_ignoring_shared_data_from)
 		ignoring_diff = ignoring - old_ignore
 		handle_ext( self.reset_shared_data_from,
 					self.ignore_shared_data_from,
 					ignoring_diff )
 
 		old_accept = set( self.entities_accepting_shared_data_from )
-		accepting = set_from_input( 'accepting', old_accept, self.stop_accepting_shared_data_from )
+		accepting = set_from_input('accepting', old_accept, self.stop_accepting_shared_data_from)
 		accepting_diff = accepting - old_accept
 		handle_ext( self.reset_shared_data_from,
 					self.accept_shared_data_from,
@@ -701,7 +618,6 @@ class User(Principal):
 
 		result = self.containers.addContainedObject( contained )
 		return result
-
 
 	def deleteContainedObject( self, containerId, containedId ):
 		try:
