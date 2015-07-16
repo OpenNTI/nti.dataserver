@@ -213,6 +213,8 @@ def create_queryobject(username, params):
 	packages = args['packages'] = list()
 
 	ntiid = params.get('ntiid', None)
+	args['origin'] = ntiid
+
 	package_ntiids = _resolve_package_ntiids(username, ntiid)
 	if package_ntiids:
 		# make sure we register the location where the search query is being made
