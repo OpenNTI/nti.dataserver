@@ -13,9 +13,14 @@ from . import MessageFactory as _
 
 import six
 import isodate
+from urllib import unquote
 from datetime import datetime
 
 from zope import component
+
+from zope.component.hooks import site as current_site
+
+from zope.traversing.interfaces import IEtcNamespace
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -45,6 +50,8 @@ from nti.dataserver.users.utils import reindex_email_verification
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.ntiids.ntiids import ROOT
+from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 from .utils import generate_mail_verification_pair
@@ -257,10 +264,28 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 			   request_method='GET',
 			   permission=nauth.ACT_NTI_ADMIN)
 class GetUserGhostContainersView(AbstractAuthenticatedView):
-	
-	exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog')
-	
-	def _check_users_containers(self, usernames=()):	
+
+	exclude_containers = (u'Devices', u'FriendsLists', u'', u'Blog', ROOT)
+
+	def _find_object(self, name):
+		if not is_valid_ntiid_string(name):
+			return False
+
+		# try current site
+		result = find_object_with_ntiid(name)
+		if result is not None:
+			return True
+
+		# look in other sites
+		hostsites = component.queryUtility(IEtcNamespace, name='hostsites') or {}
+		for site in hostsites.values():
+			with current_site(site):
+				result = find_object_with_ntiid(name)
+				if result is not None:
+					return True
+		return False
+
+	def _check_users_containers(self, usernames=()):
 		for username in usernames or ():
 			user = User.get_user(username)
 			if user is None or not IUser.providedBy(user):
@@ -270,9 +295,8 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 			for name in method():
 				if name in self.exclude_containers:
 					continue
-	
-				obj = find_object_with_ntiid(name)
-				if obj is None:
+
+				if not self._find_object(name):
 					container = user.getContainer(name)
 					usermap[name] = len(container) if container is not None else 0
 			if usermap:
@@ -283,12 +307,12 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 		term = values.get('term') or values.get('search')
 		usernames = values.get('usernames') or values.get('username')
 		if term:
-			usernames = username_search(term)
+			usernames = username_search(unquote(term))
 		elif isinstance(usernames, six.string_types):
-			usernames = set(usernames.split(","))
+			usernames = set(unquote(usernames).split(","))
 		else:
 			usernames = all_usernames()
-	
+
 		result = LocatedExternalDict()
 		items = result['Items'] = {}
 		for username, rmap in self._check_users_containers(usernames):
