@@ -130,8 +130,9 @@ def _lists_and_dicts_to_iterables( lists_and_dicts ):
 			# Then it must be a 'list', possibly a result set. This might
 			# be expensive to wake up items to get lastMod.
 			to_iter = list_or_dict
-			lastMod = max( lastMod,
-						max( (getattr( x, 'lastModified', 0) for x in to_iter )) )
+			if to_iter:
+				lastMod = max( lastMod,
+							max( (getattr( x, 'lastModified', 0) for x in to_iter )) )
 
 		result.append( to_iter )
 
