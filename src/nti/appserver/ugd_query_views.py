@@ -73,7 +73,7 @@ from nti.externalization.externalization import to_standard_external_last_modifi
 from nti.links.links import Link
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
-from nti.mimetype.mimetype import nti_mimetype_from_object 
+from nti.mimetype.mimetype import nti_mimetype_from_object
 
 from nti.ntiids import ntiids
 from nti.ntiids.ntiids import find_object_with_ntiid
@@ -127,10 +127,17 @@ def _lists_and_dicts_to_iterables( lists_and_dicts ):
 			to_iter = list_or_dict.itervalues()
 			lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
 		except (AttributeError,TypeError):
-			# then it must be a 'list'
+			# Then it must be a 'list', possibly a result set. This might
+			# be expensive to wake up items to get lastMod.
 			to_iter = list_or_dict
+			lastMod = max( lastMod,
+						max( (getattr( x, 'lastModified', 0) for x in to_iter )) )
 
 		result.append( to_iter )
+
+	# If our lastMod is still zero, return None to avoid caching.
+	if not lastMod:
+		lastMod = None
 	return result, lastMod
 
 def _flatten_list_and_dicts(lists_and_dicts, predicate=None):
@@ -220,7 +227,7 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 	return result
 
 def lists_and_dicts_to_ext_collection(lists_and_dicts, predicate=_TRUE,
-									  result_iface=IUGDExternalCollection, 
+									  result_iface=IUGDExternalCollection,
 									  ignore_broken=False ):
 	""" Given items that may be dictionaries or lists, combines them
 	and externalizes them for return to the user as a dictionary. If the individual items
@@ -288,9 +295,9 @@ def _creator_based_predicate_factory(accepted_usernames):
 	return _filter
 
 def _ifollow_predicate_factory( request, and_me=False, expand_nested=True ):
-	# the 'I' means the current user, not the one whose date we look at 
+	# the 'I' means the current user, not the one whose date we look at
 	# (not  request.context.user)
-	me = get_remote_user(request) 
+	me = get_remote_user(request)
 	following_usernames = set()
 	if and_me:
 		following_usernames.add( me.username )
@@ -1122,11 +1129,11 @@ class _RecursiveUGDView(_UGDView):
 			tocEntries = library.childrenOfNTIID( ntiid )
 			containers = {toc.ntiid for toc in tocEntries} # children
 			containers.add( ntiid ) # item
-			
+
 			# include media containers.
 			catalog = lib_catalog()
 			if catalog is not None: # test mode
-				objects = catalog.search_objects(container_ntiids=containers, 
+				objects = catalog.search_objects(container_ntiids=containers,
 									   			 provided=(INTIVideo, INTIAudio))
 				for obj in objects:
 					containers.add(obj.ntiid)
@@ -1173,7 +1180,7 @@ class _RecursiveUGDView(_UGDView):
 
 	def _make_complete_predicate(self, operator=Operator.intersection):
 		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
-		predicate = _combine_predicate(self._filter_inaccessible_object, 
+		predicate = _combine_predicate(self._filter_inaccessible_object,
 									   predicate,
 									   operator=Operator.intersection)
 		return predicate
@@ -1402,8 +1409,8 @@ class ReferenceListBasedDecorator(AbstractTwoStateViewLinkDecorator):
 		etag = md5_etag( reply_count, max_last_modified ).replace( '/', '_' )
 		extra_elements = (etag,)
 
-		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context, 
-																			mapping, 
+		return super(RepliesLinkDecorator,self)._do_decorate_external_link( context,
+																			mapping,
 																			extra_elements=extra_elements )
 
 RepliesLinkDecorator = ReferenceListBasedDecorator # BWC
