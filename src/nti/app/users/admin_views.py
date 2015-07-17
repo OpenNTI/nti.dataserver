@@ -317,4 +317,5 @@ class GetUserGhostContainersView(AbstractAuthenticatedView):
 		items = result['Items'] = {}
 		for username, rmap in self._check_users_containers(usernames):
 			items[username] = rmap
+		result['Total'] = len(items)
 		return result

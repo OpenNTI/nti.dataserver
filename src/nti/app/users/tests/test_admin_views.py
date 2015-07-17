@@ -18,6 +18,7 @@ from hamcrest import has_property
 from zope import lifecycleevent
 
 from nti.dataserver.users import User
+from nti.dataserver.contenttypes import Note
 from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.utils import is_email_verified
 
@@ -120,3 +121,22 @@ class TestAdminViews(ApplicationLayerTest):
 		self.testapp.post_json('/dataserver2/@@RemoveUser',
 								{'username':username},
 								status=422)
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True, default_authenticate=True)
+	def test_ghost_user_objects(self):
+		username = self.default_username.lower()
+		with mock_dataserver.mock_db_trans(self.ds):
+			user = User.get_user(username)
+			note = Note()
+			note.body = [u'bankai']
+			note.creator = user
+			note.containerId = u'mycontainer'
+			note = user.addContainedObject(note)
+
+		path = '/dataserver2/@@GetUserGhostContainers'
+		params = {"usernames": username}
+		res = self.testapp.get(path, params, status=200)
+		assert_that(res.json_body, has_entry('Total', is_(1)))
+		assert_that(res.json_body,
+					has_entry('Items',
+					 		  has_entry(username, has_length(1))))
