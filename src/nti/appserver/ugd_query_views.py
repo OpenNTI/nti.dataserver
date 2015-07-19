@@ -111,8 +111,8 @@ def _TRUE(x):
 
 def _lists_and_dicts_to_iterables( lists_and_dicts ):
 	result = []
-	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	lastMod = 0
+	lists_and_dicts = [item for item in lists_and_dicts if item is not None]
 	for list_or_dict in lists_and_dicts:
 		try:
 			lastMod = max( lastMod, list_or_dict.lastModified )
@@ -120,19 +120,21 @@ def _lists_and_dicts_to_iterables( lists_and_dicts ):
 			pass
 		# about half of these will be lists, half dicts. sigh.
 		try:
-			# ModDateTrackingOOBTrees tend to lose the custom
-			# 'lastModified' attribute during persistence
-			# so if there is a 'Last Modified' entry, go
-			# for that
-			to_iter = list_or_dict.itervalues()
-			lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
-		except (AttributeError,TypeError):
-			# Then it must be a 'list', possibly a result set. This might
-			# be expensive to wake up items to get lastMod.
-			to_iter = list_or_dict
-			if to_iter:
+			if hasattr(list_or_dict, "itervalues"):
+				# ModDateTrackingOOBTrees tend to lose the custom
+				# 'lastModified' attribute during persistence
+				# so if there is a 'Last Modified' entry, go
+				# for that
+				to_iter = list_or_dict.itervalues()
+				lastMod = max( lastMod, list_or_dict.get( 'Last Modified', 0 ) )
+			else:
+				# Then it must be a 'list', possibly a result set (IntidResolvingIterable).
+				# This might be expensive to wake up items to get lastMod.
+				to_iter = list_or_dict
 				lastMod = max( lastMod,
-							max( (getattr( x, 'lastModified', 0) for x in to_iter )) )
+							   max( (getattr( x, 'lastModified', 0) for x in to_iter )) )
+		except (ValueError, TypeError):
+			pass
 
 		result.append( to_iter )
 
