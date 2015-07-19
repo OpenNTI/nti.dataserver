@@ -232,8 +232,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 		new_activity_res = self.fetch_user_activity()
 		assert_that( new_activity_res.json_body['Items'], has_item(has_entry('NTIID', entry_ntiid)))
 		assert_that(new_activity_res.last_modified, is_not(none()))
-		if activity_res.last_modified is not None:
-			assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified )))
+		assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified )))
 		assert_that( new_activity_res.etag, is_not(activity_res.etag))
 		return post_res
 
@@ -383,10 +382,10 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
 
 		self.testapp.put_json( topic_res.json_body['headline']['href'], {'title': "A new and different title"} )
 
-		forum_contents_res2 = self.testapp.get( forum_contents_href,
-												headers={b'If-None-Match': forum_contents_res.etag,
-														 b'If-Modified-Since': forum_contents_res.headers['Last-Modified']},
-												status=200)
+		self.testapp.get(forum_contents_href,
+						 headers={b'If-None-Match': forum_contents_res.etag,
+								  b'If-Modified-Since': forum_contents_res.headers['Last-Modified']},
+						 status=200)
 
 	@WithSharedApplicationMockDS
 	@time_monotonically_increases

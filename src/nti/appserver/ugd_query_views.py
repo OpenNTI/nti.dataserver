@@ -27,6 +27,7 @@ from zope.intid.interfaces import IIntIds
 from pyramid.view import view_config
 
 from nti.app.authentication import get_remote_user
+from nti.app.renderers.interfaces import IUncacheableInResponse
 from nti.app.renderers.interfaces import IUGDExternalCollection
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
@@ -138,9 +139,6 @@ def _lists_and_dicts_to_iterables( lists_and_dicts ):
 
 		result.append( to_iter )
 
-	# If our lastMod is still zero, return None to avoid caching.
-	if not lastMod:
-		lastMod = None
 	return result, lastMod
 
 def _flatten_list_and_dicts(lists_and_dicts, predicate=None):
@@ -227,6 +225,8 @@ def _lists_and_dicts_to_ext_iterables( lists_and_dicts,
 	result['Last Modified'] = result.lastModified
 	result.mimeType = nti_mimetype_with_class( None )
 	interface.alsoProvides( result, result_iface )
+	if not result.lastModified:
+		interface.alsoProvides(result, IUncacheableInResponse)
 	return result
 
 def lists_and_dicts_to_ext_collection(lists_and_dicts, predicate=_TRUE,
