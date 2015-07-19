@@ -50,7 +50,7 @@ from nti.ntiids import ntiids
 from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.externalization.representation import to_json_representation as to_external_representation
-from nti.dataserver.datastructures import ZContainedMixin
+from nti.dataserver_core.mixins import ZContainedMixin
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans, WithMockDS
 from nti.dataserver.tests import mock_dataserver
 import nti.dataserver.contenttypes
@@ -411,7 +411,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			def __repr__(self): return "<class O>"
 		o = O()
 		col1.append( o )
-		yield _check_items, (col1,col2), [o], 32
+		yield _check_items, (col1,col2), [o], 42
 
 	def test_lists_and_dicts_to_collection(self):
 		# nose2 seems to have some issue with directly using
