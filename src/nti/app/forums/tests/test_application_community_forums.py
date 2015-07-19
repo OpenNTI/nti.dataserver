@@ -240,7 +240,7 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		# the modification date and etag of the data changed
 		new_activity_res = self.fetch_user_activity()
 		assert_that( new_activity_res.json_body['Items'], has_item(has_entry('NTIID', entry_ntiid)))
-		assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified )))
+		assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified or 0 )))
 		assert_that( new_activity_res.etag, is_not(activity_res.etag))
 		return post_res
 
