@@ -1,53 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
 
-
-$Id$
-"""
-
-from __future__ import print_function, unicode_literals, absolute_import
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
-
-
-from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import is_not as does_not
-is_not = does_not
+from hamcrest import none
+from hamcrest import is_not
+from hamcrest import has_key
 from hamcrest import contains
 from hamcrest import has_item
 from hamcrest import has_entry
-from hamcrest import has_entries
-from hamcrest import has_property
 from hamcrest import has_length
-from hamcrest import has_key
+from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import greater_than
+from hamcrest import has_property
 
-from nti.testing.time import time_monotonically_increases
-
-from zope.component import eventtesting
-from zope.lifecycleevent import IObjectRemovedEvent
-from zope.intid.interfaces import IIntIdRemovedEvent
-
-
-from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
-_FORUM_NAME = CommunityForum.__default_name__
-from nti.dataserver.contenttypes.forums.board import CommunityBoard
-_BOARD_NAME = CommunityBoard.__default_name__
-
-
-from nti.app.testing.application_webtest import ApplicationLayerTest
-from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
-from nti.app.testing.webtest import TestApp as _TestApp
+from urllib import quote as UQ
 
 from pyquery import PyQuery
-from urllib import quote as UQ
+
+from zope.component import eventtesting
+
+from zope.lifecycleevent import IObjectRemovedEvent
+
+from zope.intid.interfaces import IIntIdRemovedEvent
+
+from nti.dataserver.contenttypes.forums.forum import CommunityForum
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
+from nti.dataserver.contenttypes.forums.topic import  CommunityHeadlineTopic
+
+_FORUM_NAME = CommunityForum.__default_name__
+_BOARD_NAME = CommunityBoard.__default_name__
+
+from nti.app.testing.webtest import TestApp as _TestApp
+from nti.app.testing.application_webtest import ApplicationLayerTest
+from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -56,16 +48,18 @@ from urllib import quote as UQ
 from nti.dataserver.contenttypes.forums import externalization as frm_ext
 frm_ext = frm_ext
 
+from nti.app.forums.tests.base_forum_testing import _plain
+from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
+from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
 
-from .base_forum_testing import AbstractTestApplicationForumsBaseMixin
-from .base_forum_testing import UserCommunityFixture
-from .base_forum_testing import _plain
+from nti.testing.time import time_monotonically_increases
 
-
-class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,ApplicationLayerTest):
+class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,
+									 ApplicationLayerTest):
 	__test__ = True
 
 	extra_environ_default_user = AbstractTestApplicationForumsBaseMixin.default_username
+	
 	default_community = 'TheCommunity'
 	default_entityname = default_community
 	forum_url_relative_to_user = _BOARD_NAME + '/' + _FORUM_NAME
@@ -99,10 +93,8 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		href = self.require_link_href_with_rel( user, self.board_link_rel )
 		assert_that( href, is_( self.board_pretty_url ) )
 
-
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_default_board_can_be_resolved_by_ntiid( self ):
-
 		board_res = self.fetch_by_ntiid( self.board_ntiid )
 		assert_that( board_res, has_property( 'content_type', self.board_content_type ) )
 		assert_that( board_res.json_body, has_entry( 'MimeType', _plain( self.board_content_type ) ) )
@@ -161,7 +153,6 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		rem_events = eventtesting.getEvents(IObjectRemovedEvent)
 		assert_that( rem_events, has_length( 1 ) )
 		self.testapp.get( forum_res.location, status=404 )
-
 
 	@WithSharedApplicationMockDS(users=('sjohnson@nextthought.com',),testapp=True,default_authenticate=True)
 	def test_super_user_can_delete_forum_with_topic_and_comments(self):
@@ -240,7 +231,9 @@ class TestApplicationCommunityForums(AbstractTestApplicationForumsBaseMixin,Appl
 		# the modification date and etag of the data changed
 		new_activity_res = self.fetch_user_activity()
 		assert_that( new_activity_res.json_body['Items'], has_item(has_entry('NTIID', entry_ntiid)))
-		assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified or 0 )))
+		assert_that(new_activity_res.last_modified, is_not(none()))
+		if activity_res.last_modified is not None:
+			assert_that( new_activity_res.last_modified, is_( greater_than( activity_res.last_modified )))
 		assert_that( new_activity_res.etag, is_not(activity_res.etag))
 		return post_res
 
