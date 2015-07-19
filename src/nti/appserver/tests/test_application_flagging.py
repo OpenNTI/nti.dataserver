@@ -1,42 +1,51 @@
 #!/usr/bin/env python
-from __future__ import print_function, absolute_import, unicode_literals
+# -*- coding: utf-8 -*-
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
 
-from hamcrest import (assert_that, is_, none, starts_with,
-					  has_entry, has_length, has_item, has_key,
-					  contains_string, ends_with, all_of, has_entries)
-from hamcrest import is_not as does_not
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import has_item
+from hamcrest import has_entry
+from hamcrest import assert_that
+from hamcrest import contains_string
+does_not = is_not
 
 from nti.testing.matchers import validly_provides as verifiably_provides
 
+from urllib import quote as UQ
+
 from zope import interface
+
 from zope.event import notify
 
-from .test_application import TestApp
+from nti.appserver import flagging_views
 
+from nti.chatserver.messageinfo import MessageInfo
+from nti.chatserver import interfaces as chat_interfaces
 
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.dataserver import contenttypes, users
 from nti.contentrange import contentrange
 
-from nti.chatserver import interfaces as chat_interfaces
-from nti.chatserver.messageinfo import MessageInfo
-from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
 from nti.dataserver import chat_transcripts
+from nti.dataserver import contenttypes, users
+from nti.dataserver.meeting_storage import CreatorBasedAnnotationMeetingStorage
 
+from nti.externalization.oids import to_external_ntiid_oid
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.tests import mock_dataserver
 
-from .test_application import PersistentContainedExternal
-from .. import flagging_views
+from nti.appserver.tests.test_application import TestApp
+from nti.appserver.tests.test_application import PersistentContainedExternal
 
-from urllib import quote as UQ
-from nti.app.testing.application_webtest import ApplicationLayerTest
 from nti.app.testing.decorators import WithSharedApplicationMockDS
+from nti.app.testing.application_webtest import ApplicationLayerTest
 
 class TestApplicationFlagging(ApplicationLayerTest):
 
@@ -106,7 +115,6 @@ class TestApplicationFlagging(ApplicationLayerTest):
 			path = b'/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % i
 			path = UQ( path )
 			testapp.post( path + b'/@@flag', '', extra_environ=self._make_extra_environ() )
-
 
 		# Fetch the page
 		path = b'/dataserver2/@@moderation_admin'
@@ -192,6 +200,7 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		# TODO: Note that our plain-textification is screwing up at paragraph boundaries.
 		assert_that( res.body, contains_string( 'part is HTML</p><p>And spreads across paragraphs.</p><br />'
 												"<div class='canvas'>&lt;CANVAS OBJECT of length 0&gt;") )
+	
 	@WithSharedApplicationMockDS
 	def test_flag_moderation_chat_message(self):
 		#"Test moderation of a chat message"
@@ -244,7 +253,6 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		assert_that( res.body, contains_string( 'The first part' ) )
 		assert_that( res.body, contains_string( '12/3/12 12:06 PM' ) )
 
-
 		form = res.form
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
 		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
@@ -281,7 +289,6 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
 		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 302 ) )
-
 
 		# And its gone
 		testapp.get( entry_url, status=404 )
@@ -320,7 +327,6 @@ class TestApplicationFlagging(ApplicationLayerTest):
 		form.set( 'table-note-selected-0-selectedItems', True, index=0 )
 		res = form.submit( 'subFormTable.buttons.delete', extra_environ=self._make_extra_environ() )
 		assert_that( res.status_int, is_( 302 ) )
-
 
 		# And its gone
 		testapp.get( comment_url, status=404 )
