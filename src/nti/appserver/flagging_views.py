@@ -73,11 +73,11 @@ def _do_flag(f, request):
 		raise hexc.HTTPNotFound()
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IFlaggable,
-			  permission=nauth.ACT_READ,  # anyone logged in...
-			  request_method='POST',
-			  name=FLAG_VIEW)
+			 renderer='rest',
+			 context=IFlaggable,
+			 permission=nauth.ACT_READ,  # anyone logged in...
+			 request_method='POST',
+			 name=FLAG_VIEW)
 def _FlagView(request):
 	"""
 	Given an :class:`.IFlaggable`, make the
@@ -89,20 +89,20 @@ def _FlagView(request):
 	return _do_flag(flagging.flag_object, request)
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IFlaggable,
-			  permission=nauth.ACT_READ,  # anyone logged in...
-			  request_method='POST',
-			  name=FLAG_AGAIN_VIEW)
+			 renderer='rest',
+			 context=IFlaggable,
+			 permission=nauth.ACT_READ,  # anyone logged in...
+			 request_method='POST',
+			 name=FLAG_AGAIN_VIEW)
 def _FlagMeTooView(request):
 	return _FlagView(request)
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IFlaggable,
-			  permission=nauth.ACT_MODERATE,
-			  request_method='POST',
-			  name=UNFLAG_VIEW)
+			 renderer='rest',
+			 context=IFlaggable,
+			 permission=nauth.ACT_MODERATE,
+			 request_method='POST',
+			 name=UNFLAG_VIEW)
 def _UnFlagView(request):
 	"""
 	Given an :class:`IFlaggable`, make the
@@ -146,18 +146,18 @@ def _moderation_table(request):
 	return the_table
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='templates/moderation_admin.pt',
-			  permission=nauth.ACT_MODERATE,
-			  request_method='GET',
-			  name='moderation_admin')
+			 renderer='templates/moderation_admin.pt',
+			 permission=nauth.ACT_MODERATE,
+			 request_method='GET',
+			 name='moderation_admin')
 def moderation_admin(request):
 	return _moderation_table(request)
 
 @view_config(route_name='objects.generic.traversal',
-			  renderer='rest',
-			  permission=nauth.ACT_MODERATE,
-			  request_method='POST',
-			  name='moderation_admin')
+			 renderer='rest',
+			 permission=nauth.ACT_MODERATE,
+			 request_method='POST',
+			 name='moderation_admin')
 def moderation_admin_post(request):
 	the_table = _moderation_table(request)
 
@@ -209,9 +209,10 @@ def moderation_admin_post(request):
 					pass
 
 				if del_item is None:
-					# OK, even its user cannot delete it. At least we can try to update its 'body' property.
-					# This is probably a chat message
-					update_from_external_object(item, {'body': [_("This item has been deleted by the moderator.")] })
+					# OK, even its user cannot delete it. At least we can try to update its
+					# 'body' property. This is probably a chat message
+					update_from_external_object(item, 
+							{'body': [_("This item has been deleted by the moderator.")] })
 					logger.warn("Failed to delete moderated item %s", item)
 
 	# Else, no action.
