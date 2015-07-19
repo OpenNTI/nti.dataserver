@@ -8,8 +8,8 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_
-from hamcrest import equal_to
 from hamcrest import has_key
+from hamcrest import equal_to
 from hamcrest import assert_that
 from hamcrest import is_not as does_not
 
