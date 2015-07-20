@@ -14,18 +14,20 @@ from . import MessageFactory as _
 import functools
 import collections
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.event import notify
 
 from zc import intid as zc_intid
 
 import BTrees
+
 from persistent import Persistent
 
 from nti.ntiids import ntiids
 
-from nti.socketio import interfaces as sio_interfaces
+from nti.socketio.interfaces import SocketEventHandlerClientError
 
 from ._metaclass import _ChatObjectMeta
 
@@ -34,22 +36,23 @@ from .interfaces import IMeetingPolicy
 from .interfaces import IMessageInfoStorage
 from .interfaces import MessageInfoPostedToRoomEvent
 from .interfaces import IMeetingShouldChangeModerationStateEvent
-from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING #, STATUS_INITIAL
+from .interfaces import STATUS_POSTED, STATUS_SHADOWED, STATUS_PENDING
 from .interfaces import CHANNEL_DEFAULT, CHANNEL_WHISPER, CHANNEL_STATE, CHANNELS
 
-class MessageTooBig(sio_interfaces.SocketEventHandlerClientError):
+class MessageTooBig(SocketEventHandlerClientError):
 	"""
 	Raised when a policy is asked to post a message that exceeds the size limits.
 	"""
 
 @interface.implementer(IMeetingPolicy)
 class _MeetingMessagePostPolicy(object):
-	"""Class that actually emits the messages"""
+	"""
+	Class that actually emits the messages
+	"""
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessage', 'enteredRoom', 'exitedRoom',
 				 'roomMembershipChanged', 'roomModerationChanged' )
-
 
 	def __init__( self, chatserver=None, room=None, occupant_names=(), transcripts_to=() ):
 		self._room = room # We need the room so we can emit the right notify() events
@@ -154,9 +157,9 @@ class _MeetingMessagePostPolicy(object):
 			return False
 
 		# Then we better have a handler function for it
-		handler = getattr( self,
-						   '_post_message_handle_' + str(msg_info.channel or CHANNEL_DEFAULT),
-						   self._post_message_handle_DEFAULT if self._post_message_should_handle_channel_as_default( msg_info ) else None )
+		handler = getattr(self,
+						  '_post_message_handle_' + str(msg_info.channel or CHANNEL_DEFAULT),
+						  self._post_message_handle_DEFAULT if self._post_message_should_handle_channel_as_default( msg_info ) else None )
 
 		return handler( msg_info )
 
@@ -262,12 +265,11 @@ class _ModeratedMeetingState(Persistent):
 		if family is not None:
 			self.family = family
 		else:
-			intids = component.queryUtility( zc_intid.IIntIds )
+			intids = component.queryUtility(zc_intid.IIntIds)
 			if intids is not None:
 				self.family = intids.family
 
 		self._moderation_queue = self.family.OI.BTree()
-
 
 	@property
 	def moderated_by_usernames( self ):
@@ -299,7 +301,7 @@ class _ModeratedMeetingState(Persistent):
 		# overlap (I think we are, they are UUIDs, we should probably add
 		# a check
 		assert msg_info.MessageId and msg_info.MessageId not in self._moderation_queue
-		self._moderation_queue[msg_info.MessageId] = component.getUtility( zc_intid.IIntIds ).getId( msg_info )
+		self._moderation_queue[msg_info.MessageId] = component.getUtility(zc_intid.IIntIds).getId(msg_info)
 		msg_info.Status = STATUS_PENDING
 
 	def approve_message( self, msg_id ):
@@ -317,7 +319,9 @@ class _ModeratedMeetingState(Persistent):
 		return msg
 
 def _bypass_for_moderator( f ):
-	"The decorated function simply calls through to the superclass if the message sender is a moderator"
+	"""
+	The decorated function simply calls through to the superclass if the message sender is a moderator
+	"""
 	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
@@ -327,7 +331,9 @@ def _bypass_for_moderator( f ):
 	return bypassing
 
 def _only_for_moderator( f ):
-	"The decorated function can only be called if the message sender is a moderator; otherwise return false"
+	"""
+	The decorated function can only be called if the message sender is a moderator; otherwise return false
+	"""
 	@functools.wraps(f)
 	def enforcing( self, msg_info ):
 		if not self.is_moderated_by( msg_info.Sender ):
@@ -336,7 +342,9 @@ def _only_for_moderator( f ):
 	return enforcing
 
 def _always_true_for_moderator( f ):
-	"The decorated function is always true if the message sender is a moderator; otherwise the function is run"
+	"""
+	The decorated function is always true if the message sender is a moderator; otherwise the function is run
+	"""
 	@functools.wraps(f)
 	def bypassing( self, msg_info ):
 		if self.is_moderated_by( msg_info.Sender ):
@@ -345,7 +353,9 @@ def _always_true_for_moderator( f ):
 	return bypassing
 
 class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
-	"""A chat room that moderates messages."""
+	"""
+	A chat room that moderates messages.
+	"""
 
 	__metaclass__ = _ChatObjectMeta
 	__emits__ = ('recvMessageForModeration', 'recvMessageForShadow')
@@ -401,10 +411,10 @@ class _ModeratedMeetingMessagePostPolicy(_MeetingMessagePostPolicy):
 
 		if not handled:
 			if handler:
-				logger.debug( 'Handler (%s) rejected message (%s) sent by %s/%s (moderators: %s)',
-							  handler, msg_info, msg_info.Sender, msg_info.Sender, self.moderated_by_usernames )
+				logger.debug('Handler (%s) rejected message (%s) sent by %s/%s (moderators: %s)',
+							 handler, msg_info, msg_info.Sender, msg_info.Sender, self.moderated_by_usernames)
 			else:
-				logger.debug( 'Dropping message on unknown channel %s', msg_info )
+				logger.debug('Dropping message on unknown channel %s', msg_info)
 		return handled
 
 	def _can_sender_whisper_to( self, msg_info ):
@@ -552,14 +562,14 @@ def MeetingPostPolicy(self):
 	.. note:: This is currently intricately tied to the meeting.
 	"""
 	if self._moderation_state:
-		policy = _ModeratedMeetingMessagePostPolicy( self._chatserver,
-													 room=self,
-													 occupant_names=self._occupant_names,
-													 transcripts_to=self._addl_transcripts_to,
-													 moderation_state=self._moderation_state )
+		policy = _ModeratedMeetingMessagePostPolicy(self._chatserver,
+													room=self,
+													occupant_names=self._occupant_names,
+													transcripts_to=self._addl_transcripts_to,
+													moderation_state=self._moderation_state )
 	else:
-		policy = _MeetingMessagePostPolicy( self._chatserver,
-											room=self,
-											occupant_names=self._occupant_names,
-											transcripts_to=self._addl_transcripts_to )
+		policy = _MeetingMessagePostPolicy(self._chatserver,
+										   room=self,
+										   occupant_names=self._occupant_names,
+										   transcripts_to=self._addl_transcripts_to )
 	return policy
