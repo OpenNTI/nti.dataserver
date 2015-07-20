@@ -1513,6 +1513,18 @@ zope.deferredimport.deprecatedFrom(
 	"IWeakRefToMissing",
 	"ICachingWeakRef")
 
+# deprecations
+
+from zope.deprecation import deprecated
+
+deprecated('IEnrolledContainer', 'No longer used')
+class IEnrolledContainer(interface.Interface):
+	pass
+
+deprecated('ISectionInfoContainer', 'No longer used')
+class ISectionInfoContainer(interface.Interface):
+	pass
+
 # XXX Now make all the interfaces previously
 # declared implement the correct interface
 # This is mostly an optimization, right?
