@@ -11,12 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import persistent
-
-import zc.intid as zc_intid
-
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
@@ -24,7 +20,11 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 from zope.container.contained import contained
 from zope.container.contained import Contained
 
+from zope.intid import IIntIds
+
 from zope.location.interfaces import ISublocations
+
+import persistent
 
 from nti.dataserver import containers
 
@@ -61,7 +61,7 @@ class PersistentInvitations(persistent.Persistent, Contained):
 
 	def registerInvitation(self, invitation):
 		if not invitation.code:
-			iid = component.getUtility(zc_intid.IIntIds).register(invitation)
+			iid = component.getUtility(IIntIds).register(invitation)
 			invitation.code = integer_strings.to_external_string(iid)
 		# The container implementation raises KeyError if the key is already used
 		self._invitations[invitation.code] = invitation
