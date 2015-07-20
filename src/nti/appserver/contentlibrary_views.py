@@ -9,6 +9,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import zope.deferredimport
+zope.deferredimport.initialize()
+
+zope.deferredimport.deprecatedFrom(
+    "Moved to nti.app.contentlibrary.content_unit_preferences",
+    "nti.app.contentlibrary.content_unit_preferences.adapters",
+    "_ContentUnitPreferences")
+
 # Restore (partial) backwards compatibility with old
 # ZODB pickles. This is only partial because, while we can
 # fix the imports, fixing the annotation factory keys, which are
