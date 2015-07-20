@@ -15,21 +15,25 @@ from . import MessageFactory as _
 
 import datetime
 
-import zope.intid
-
 from zope import schema
-from zope import interface
 from zope import component
+from zope import interface
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
 
+from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdAddedEvent
 
 from ZODB.interfaces import IConnection
 
-from nti.dataserver import sharing
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver import containers as nti_containers
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IRedisClient
+
+from nti.dataserver.containers import AcquireObjectsOnReadMixin
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
 
@@ -41,19 +45,32 @@ from nti.traversal.traversal import find_interface
 
 from nti.utils._compat import Implicit
 
+from .interfaces import IPost
+from .interfaces import IBoard
+from .interfaces import IForum
+from .interfaces import ITopic
+from .interfaces import IGeneralForum
+from .interfaces import IPersonalBlog
+from .interfaces import ICommunityBoard
+from .interfaces import ICommunityForum
+from .interfaces import IACLCommunityForum
+
+from .interfaces import NTIID_TYPE_GENERAL_FORUM
+from .interfaces import NTIID_TYPE_PERSONAL_BLOG
+from .interfaces import NTIID_TYPE_COMMUNITY_FORUM
+
 from . import _containerIds_from_parent
-from . import interfaces as frm_interfaces
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 _NEWEST_TTL = datetime.timedelta(days=7)
 
 def query_uid(obj, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
+	intids = intids or component.getUtility(IIntIds)
 	result = intids.queryId(obj)
 	return result
 
 def query_object(uid, intids=None):
-	intids = intids or component.getUtility(zope.intid.IIntIds)
+	intids = intids or component.getUtility(IIntIds)
 	try:
 		# JAM: FIXME: Shouldn't this be long? We need to check the family
 		result = intids.queryObject(int(uid), None)
@@ -66,19 +83,19 @@ def query_object(uid, intids=None):
 		result = None
 	return result
 
-@interface.implementer(frm_interfaces.IForum, an_interfaces.IAttributeAnnotatable)
+@interface.implementer(IForum, IAttributeAnnotatable)
 class Forum(Implicit,
-			nti_containers.AcquireObjectsOnReadMixin,
-			nti_containers.CheckingLastModifiedBTreeContainer,
+			AcquireObjectsOnReadMixin,
+			CheckingLastModifiedBTreeContainer,
 			ZContainedMixin,
-			sharing.AbstractReadableSharedWithMixin):
+			AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False
 
 	sharingTargets = ()
-	title = AdaptingFieldProperty(frm_interfaces.IForum['title'])
-	description = AdaptingFieldProperty(frm_interfaces.IBoard['description'])
-	TopicCount = property(nti_containers.CheckingLastModifiedBTreeContainer.__len__)
+	title = AdaptingFieldProperty(IForum['title'])
+	description = AdaptingFieldProperty(IBoard['description'])
+	TopicCount = property(CheckingLastModifiedBTreeContainer.__len__)
 
 	id, containerId = _containerIds_from_parent()
 
@@ -112,7 +129,7 @@ class Forum(Implicit,
 
 		# 2. Remote cache
 		if newest_object is None:
-			redis = component.getUtility(nti_interfaces.IRedisClient)
+			redis = component.getUtility(IRedisClient)
 			data = redis.get(self._descendent_key())
 			newest_object = query_object(data) if data else None
 
@@ -146,7 +163,7 @@ class Forum(Implicit,
 		if uid:
 			self._v_newest_descendant = descendant
 
-			redis = component.getUtility(nti_interfaces.IRedisClient)
+			redis = component.getUtility(IRedisClient)
 			args = (redis, unicode(uid),)
 			transactions.do(target=self,
 							call=self._publish_descendant_to_redis,
@@ -157,7 +174,7 @@ class Forum(Implicit,
 
 	NewestDescendant = property(_get_NewestDescendant)
 
-@component.adapter(frm_interfaces.IPost, IIntIdAddedEvent)
+@component.adapter(IPost, IIntIdAddedEvent)
 def _post_added_to_topic(post, event):
 	"""
 	Watch for a post to be added to a topic and keep track of the
@@ -166,11 +183,11 @@ def _post_added_to_topic(post, event):
 	The ContainerModifiedEvent does not give us the object (post)
 	and it also can't tell us if the post was added or removed.
 	"""
-	forum = find_interface(post, frm_interfaces.IForum, strict=False)
+	forum = find_interface(post, IForum, strict=False)
 	if forum is not None:
 		forum._set_NewestDescendant(post)
 
-@component.adapter(frm_interfaces.ITopic, IIntIdAddedEvent)
+@component.adapter(ITopic, IIntIdAddedEvent)
 def _topic_added_to_forum(topic, event):
 	"""
 	Watch for a topic to be added to a forum and keep track of the
@@ -183,20 +200,20 @@ def _topic_added_to_forum(topic, event):
 	# for this. It's extremely unlikely that a topic will be
 	# removed while it is still the newest in the forum, and
 	# if that is the case, it's no big loss
-	if frm_interfaces.IForum.providedBy(topic.__parent__):
+	if IForum.providedBy(topic.__parent__):
 		topic.__parent__._set_NewestDescendant(topic)
 
-@interface.implementer(frm_interfaces.IPersonalBlog)
+@interface.implementer(IPersonalBlog)
 class PersonalBlog(Forum, _SingleInstanceNTIIDMixin):
 
 	__external_can_create__ = False
 
 	creator = None
 	__name__ = __blog_name__ = __default_name__ = 'Blog'
-	_ntiid_type = frm_interfaces.NTIID_TYPE_PERSONAL_BLOG
+	_ntiid_type = NTIID_TYPE_PERSONAL_BLOG
 
-@interface.implementer(frm_interfaces.IPersonalBlog)
-@component.adapter(nti_interfaces.IUser)
+@interface.implementer(IPersonalBlog)
+@component.adapter(IUser)
 def PersonalBlogAdapter(user):
 	"""
 	Adapts a user to his one-and-only :class:`IPersonalBlog` entry.
@@ -227,13 +244,13 @@ def PersonalBlogAdapter(user):
 		jar = IConnection(user, None)
 		if jar:
 			jar.add(forum)  # ensure we store with the user
-		errors = schema.getValidationErrors(frm_interfaces.IPersonalBlog, forum)
+		errors = schema.getValidationErrors(IPersonalBlog, forum)
 		if errors:
 			__traceback_info__ = errors
 			raise errors[0][1]
 	return forum
 
-@interface.implementer(frm_interfaces.IPersonalBlog)
+@interface.implementer(IPersonalBlog)
 def NoBlogAdapter(user):
 	"""
 	An adapter that does not actually create an :class:`IPersonalBlog`.
@@ -242,27 +259,27 @@ def NoBlogAdapter(user):
 	would otherwise be inherited."""
 	return None
 
-@interface.implementer(frm_interfaces.IGeneralForum)
+@interface.implementer(IGeneralForum)
 class GeneralForum(Forum, _SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 	creator = None
 	__name__ = __default_name__ = 'Forum'
-	_ntiid_type = frm_interfaces.NTIID_TYPE_GENERAL_FORUM
+	_ntiid_type = NTIID_TYPE_GENERAL_FORUM
 
-@interface.implementer(frm_interfaces.ICommunityForum)
+@interface.implementer(ICommunityForum)
 class CommunityForum(GeneralForum):
 	__external_can_create__ = True
-	_ntiid_type = frm_interfaces.NTIID_TYPE_COMMUNITY_FORUM
+	_ntiid_type = NTIID_TYPE_COMMUNITY_FORUM
 
-@interface.implementer(frm_interfaces.ICommunityForum)
-@component.adapter(nti_interfaces.ICommunity)
+@interface.implementer(ICommunityForum)
+@component.adapter(ICommunity)
 def GeneralForumCommunityAdapter(community):
 	"""
 	All communities that have a board (which by default is all communities)
 	have at least one default forum in that board. If the board exists,
 	but no forum exists, one is added.
 	"""
-	board = frm_interfaces.ICommunityBoard(community, None)
+	board = ICommunityBoard(community, None)
 	if board is None:
 		return None  # No board is allowed
 
@@ -282,13 +299,13 @@ def GeneralForumCommunityAdapter(community):
 	board[forum.__default_name__] = forum
 	forum.title = _('Forum')
 
-	errors = schema.getValidationErrors(frm_interfaces.ICommunityForum, forum)
+	errors = schema.getValidationErrors(ICommunityForum, forum)
 	if errors:
 		__traceback_info__ = errors
 		raise errors[0][1]
 	return forum
 
-@interface.implementer(frm_interfaces.IACLCommunityForum)
+@interface.implementer(IACLCommunityForum)
 class ACLCommunityForum(CommunityForum):
 	__external_can_create__ = False
 	mime_type = 'application/vnd.nextthought.forums.communityforum'

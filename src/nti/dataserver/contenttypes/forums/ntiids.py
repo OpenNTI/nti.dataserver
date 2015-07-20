@@ -13,18 +13,21 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+
 from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
 from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 
-from nti.ntiids import ntiids
 from nti.ntiids.ntiids import get_specific
-from nti.ntiids import interfaces as nid_interfaces
+from nti.ntiids.interfaces import INTIIDResolver
 
-from . import interfaces as frm_interfaces
+from .interfaces import IPersonalBlog
+from .interfaces import ICommunityBoard
+from .interfaces import ICommunityForum
 
-@interface.implementer(nid_interfaces.INTIIDResolver)
+@interface.implementer(INTIIDResolver)
 class _BlogResolver(AbstractAdaptingUserBasedResolver):
 	"""
 	Resolves the one blog that belongs to a user, if one does exist.
@@ -32,10 +35,10 @@ class _BlogResolver(AbstractAdaptingUserBasedResolver):
 	Register with the name :const:`.NTIID_TYPE_PERSONAL_BLOG`.
 	"""
 
-	required_iface = nti_interfaces.IUser
-	adapt_to = frm_interfaces.IPersonalBlog
+	required_iface = IUser
+	adapt_to = IPersonalBlog
 
-@interface.implementer(nid_interfaces.INTIIDResolver)
+@interface.implementer(INTIIDResolver)
 class _BlogEntryResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
 	Resolves a single blog entry within a user.
@@ -43,11 +46,11 @@ class _BlogEntryResolver(AbstractMappingAdaptingUserBasedResolver):
 	Register with the name :const:`.NTIID_TYPE_PERSONAL_BLOG_ENTRY`.
 	"""
 
-	required_iface = nti_interfaces.IUser
-	adapt_to = frm_interfaces.IPersonalBlog
+	required_iface = IUser
+	adapt_to = IPersonalBlog
 	# because of this, __name__ of the entry must be NTIID safe
 
-@interface.implementer(nid_interfaces.INTIIDResolver)
+@interface.implementer(INTIIDResolver)
 class _CommunityBoardResolver(AbstractAdaptingUserBasedResolver):
 	"""
 	Resolves the default board that belongs to a community, if one does exist.
@@ -55,10 +58,10 @@ class _CommunityBoardResolver(AbstractAdaptingUserBasedResolver):
 	Register with the name :const:`.NTIID_TYPE_COMMUNITY_BOARD`
 	"""
 
-	required_iface = nti_interfaces.ICommunity
-	adapt_to = frm_interfaces.ICommunityBoard
+	required_iface = ICommunity
+	adapt_to = ICommunityBoard
 
-@interface.implementer(nid_interfaces.INTIIDResolver)
+@interface.implementer(INTIIDResolver)
 class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 	"""
 	Resolves a forum that belongs to a community.
@@ -66,16 +69,16 @@ class _CommunityForumResolver(AbstractMappingAdaptingUserBasedResolver):
 	Register with the name :const:`.NTIID_TYPE_COMMUNITY_FORUM`
 	"""
 
-	required_iface = nti_interfaces.ICommunity
-	adapt_to = frm_interfaces.ICommunityBoard  # adapt to a board, look inside for a named forum
+	required_iface = ICommunity
+	adapt_to = ICommunityBoard  # adapt to a board, look inside for a named forum
 
 	def _resolve(self, ntiid, community):
 		forum = super(_CommunityForumResolver, self)._resolve(ntiid, community)
-		if forum is None and ntiids.get_specific(ntiid) == 'Forum':  # Hmm, is it the default?
-			forum = frm_interfaces.ICommunityForum(community, None)
+		if forum is None and get_specific(ntiid) == 'Forum':  # Hmm, is it the default?
+			forum = ICommunityForum(community, None)
 		return forum
 
-@interface.implementer(nid_interfaces.INTIIDResolver)
+@interface.implementer(INTIIDResolver)
 class _CommunityTopicResolver(AbstractUserBasedResolver):
 	"""
 	Resolves a topic in the one forum that belongs to a community, if one does exist.
@@ -83,11 +86,11 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 	Register with the name :const:`.NTIID_TYPE_COMMUNITY_TOPIC`
 	"""
 
-	required_iface = nti_interfaces.ICommunity
-	adapt_to = frm_interfaces.ICommunityForum
+	required_iface = ICommunity
+	adapt_to = ICommunityForum
 
 	def _resolve(self, ntiid, community):
-		board = frm_interfaces.ICommunityBoard(community, None)
+		board = ICommunityBoard(community, None)
 		if board is None:
 			return None
 		return resolve_ntiid_in_board(ntiid, board)

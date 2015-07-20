@@ -26,7 +26,12 @@ from zope import component
 from zope import interface
 
 from nti.dataserver.users import Entity
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+from nti.dataserver.interfaces import ALL_PERMISSIONS
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.authorization_acl import ace_denying
@@ -36,8 +41,6 @@ from nti.dataserver.authorization_acl import AbstractCreatedAndSharedACLProvider
 from nti.traversal.traversal import find_interface
 
 from . import interfaces as frm_interfaces
-
-ALL_PERMISSIONS = nti_interfaces.ALL_PERMISSIONS
 
 class _ForumACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
@@ -82,7 +85,7 @@ class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 # non-user entities like communities; in that case, we want the permissions to only
 # grant the creator read access
 def _do_get_perms_for_creator_by_kind(self):
-	if nti_interfaces.IUser.providedBy(self.context.creator):
+	if IUser.providedBy(self.context.creator):
 		return self._PERMS_FOR_CREATOR
 	return (nauth.ACT_READ,)
 
@@ -139,13 +142,13 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		# Ok, now the topic creator can delete, but not update
-		topic_creator = find_interface(self.context, nti_interfaces.IUser, strict=False)
+		topic_creator = find_interface(self.context, IUser, strict=False)
 		if topic_creator:
 			acl.append(ace_allowing(topic_creator, nauth.ACT_DELETE, self))
 			acl.append(ace_allowing(topic_creator, nauth.ACT_READ, self))
 
 @component.adapter(frm_interfaces.IHeadlinePost)
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 class _HeadlinePostACLProvider(object):
 	"""
 	Headline posts are never permissioned any differently than topic
@@ -157,7 +160,7 @@ class _HeadlinePostACLProvider(object):
 
 	@property
 	def __acl__(self):
-		return nti_interfaces.IACLProvider(self.context.__parent__).__acl__
+		return IACLProvider(self.context.__parent__).__acl__
 
 
 ###################################################
@@ -170,7 +173,7 @@ class _ACLBasedProvider(object):
 
 	@classmethod
 	def _resolve_action(cls, action):
-		result = ace_allowing if action == nti_interfaces.ACE_ACT_ALLOW else ace_denying
+		result = ace_allowing if action == ACE_ACT_ALLOW else ace_denying
 		return result
 
 	@classmethod
@@ -188,7 +191,7 @@ class _ACLBasedProvider(object):
 	def _resolve_entities(cls, eid):
 		result = ()
 		entity = Entity.get_entity(eid)
-		if nti_interfaces.IDynamicSharingTargetFriendsList.providedBy(entity):
+		if IDynamicSharingTargetFriendsList.providedBy(entity):
 			result = (entity, entity.creator)  # make sure we  specify the DFL creator
 		else:
 			result = (entity,) if entity is not None else ()

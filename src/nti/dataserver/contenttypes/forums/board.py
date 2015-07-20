@@ -14,8 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 from zope import schema
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 
@@ -23,9 +23,13 @@ from zope.container.interfaces import INameChooser
 
 from ZODB.interfaces import IConnection
 
-from nti.dataserver import sharing
-from nti.dataserver import containers
+from nti.dataserver.containers import AcquireObjectsOnReadMixin
+from nti.dataserver.containers import AbstractNTIIDSafeNameChooser
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+
 from nti.dataserver.interfaces import ICommunity
+
+from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.schema.fieldproperty import AdaptingFieldProperty
 
@@ -41,9 +45,9 @@ from . import _CreatedNamedNTIIDMixin
 
 @interface.implementer(IBoard)
 class Board(Base,
-			containers.AcquireObjectsOnReadMixin,
-			containers.CheckingLastModifiedBTreeContainer,
-			sharing.AbstractReadableSharedWithMixin):
+			AcquireObjectsOnReadMixin,
+			CheckingLastModifiedBTreeContainer,
+			AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False
 	__name__ = __default_name__ = 'DiscussionBoard'
@@ -52,7 +56,7 @@ class Board(Base,
 	title = AdaptingFieldProperty(IBoard['title'])
 	description = AdaptingFieldProperty(IBoard['description'])
 
-	ForumCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
+	ForumCount = property(CheckingLastModifiedBTreeContainer.__len__)
 
 	sharingTargets = ()
 	creator = None
@@ -116,7 +120,7 @@ def GeneralBoardCommunityAdapter(community):
 
 @component.adapter(IBoard)
 @interface.implementer(INameChooser)
-class BoardNameChooser(containers.AbstractNTIIDSafeNameChooser):
+class BoardNameChooser(AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for a forum in a board
 	"""

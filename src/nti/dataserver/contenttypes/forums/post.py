@@ -11,16 +11,16 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.lifecycleevent import IObjectModifiedEvent
 
 from zope.schema.fieldproperty import FieldProperty
 
-from nti.dataserver import sharing
+from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
 
@@ -34,21 +34,30 @@ from ..note import BodyFieldProperty
 
 from ..threadable import ThreadableMixin
 
-from . import _containerIds_from_parent
-from . import interfaces as for_interfaces
+from .interfaces import IPost
+from .interfaces import ICommentPost
+from .interfaces import IGeneralPost
+from .interfaces import IHeadlinePost
+from .interfaces import IGeneralForumComment
+from .interfaces import IGeneralHeadlinePost
+from .interfaces import IPersonalBlogComment
+from .interfaces import ICommunityHeadlinePost
+from .interfaces import IPersonalBlogEntryPost
 
-@interface.implementer(for_interfaces.IPost, an_interfaces.IAttributeAnnotatable)
+from . import _containerIds_from_parent
+
+@interface.implementer(IPost, IAttributeAnnotatable)
 class Post(ZContainedMixin,
 		   PersistentCreatedModDateTrackingObject,
-		   sharing.AbstractReadableSharedWithMixin,
+		   AbstractReadableSharedWithMixin,
 		   Implicit):
 
 	mimeType = None
 
-	body = BodyFieldProperty(for_interfaces.IPost['body'])
+	body = BodyFieldProperty(IPost['body'])
 
-	title = AdaptingFieldProperty(for_interfaces.IPost['title'])
-	tags = FieldProperty(for_interfaces.IPost['tags'])
+	title = AdaptingFieldProperty(IPost['title'])
+	tags = FieldProperty(IPost['tags'])
 
 	sharingTargets = ()
 
@@ -70,11 +79,11 @@ class Post(ZContainedMixin,
 	def __hash__( self ):
 		return hash( (self.id, self.containerId, self.title, tuple(self.body or ()), self.creator) )
 
-@interface.implementer(for_interfaces.IHeadlinePost)
+@interface.implementer(IHeadlinePost)
 class HeadlinePost(Post):
 	pass
 
-@component.adapter( for_interfaces.IHeadlinePost, IObjectModifiedEvent )
+@component.adapter(IHeadlinePost, IObjectModifiedEvent)
 def _update_forum_when_headline_modified( modified_object, event ):
 	"""
 	When a headline post, contained inside a topic contained inside a forum
@@ -82,17 +91,16 @@ def _update_forum_when_headline_modified( modified_object, event ):
 	so that we know its \"contents\" listing is out of date.
 	Generic listeners handle everything except the grandparent level (the forum).
 	"""
-
 	try:
 		modified_object.__parent__.__parent__.updateLastModIfGreater( modified_object.lastModified )
 	except AttributeError:
 		pass
 
-@interface.implementer(for_interfaces.IGeneralPost)
+@interface.implementer(IGeneralPost)
 class GeneralPost(Post):
 	pass
 
-@interface.implementer(for_interfaces.ICommentPost)
+@interface.implementer(ICommentPost)
 class CommentPost(Post, ThreadableMixin):
 	pass
 
@@ -104,24 +112,23 @@ class CommentPost(Post, ThreadableMixin):
 # TODO: Still not sure this is really correct
 from . import _AcquiredSharingTargetsProperty
 
-@interface.implementer(for_interfaces.IGeneralHeadlinePost)
-class GeneralHeadlinePost(GeneralPost,HeadlinePost):
+@interface.implementer(IGeneralHeadlinePost)
+class GeneralHeadlinePost(GeneralPost, HeadlinePost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
-@interface.implementer(for_interfaces.IGeneralForumComment)
-class GeneralForumComment(GeneralPost,
-						  CommentPost):
+@interface.implementer(IGeneralForumComment)
+class GeneralForumComment(GeneralPost, CommentPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
-@interface.implementer(for_interfaces.ICommunityHeadlinePost)
+@interface.implementer(ICommunityHeadlinePost)
 class CommunityHeadlinePost(GeneralHeadlinePost):
 	pass
 
-@interface.implementer(for_interfaces.IPersonalBlogEntryPost)
+@interface.implementer(IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
-@interface.implementer(for_interfaces.IPersonalBlogComment)
+@interface.implementer(IPersonalBlogComment)
 class PersonalBlogComment(CommentPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
 
