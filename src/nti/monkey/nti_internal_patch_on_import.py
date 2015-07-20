@@ -20,3 +20,6 @@ def patch():
 
 	# deleted session_consumer module
 	moved("nti.dataserver.session_consumer", "nti.socketio.session_consumer")
+	
+	# content search invalid package
+	moved("nti.contentsearch._repoze_adpater", "nti.contentsearch._repoze_adapter") 
