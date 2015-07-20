@@ -21,11 +21,7 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from . import relstorage_patch_all_except_gevent_on_import
-
 relstorage_patch_all_except_gevent_on_import.patch()
-
-from . import python_persistent_bugs_patch_on_import
-python_persistent_bugs_patch_on_import.patch()
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -78,7 +74,7 @@ logger = __import__('logging').getLogger(__name__)
 
 try:
 	from zodbpickle.fastpickle import Unpickler
-except ImportError: # PyPy?
+except ImportError:  # PyPy?
 	from cPickle import Unpickler
 
 from cStringIO import StringIO
@@ -92,10 +88,11 @@ except AttributeError:
 _all_missed_classes = set()
 
 from zope.app.broken.broken import Broken
+
 import ZODB.broken
 
 def _make_find_global():
-	Broken_ = Broken # make it local for speed
+	Broken_ = Broken  # make it local for speed
 	_find_global = ZODB.broken.find_global
 
 	def type_(name, bases, tdict):
@@ -115,10 +112,10 @@ def getrefs(p, storage_name, ignore):
 	"Return a sequence of (db_name, oid) pairs"
 	refs = []
 	u = Unpickler(StringIO(p))
-	u.persistent_load = refs # Just append to this list
+	u.persistent_load = refs  # Just append to this list
 	u.find_global = find_global
 	if _has_noload:
-		b1 = u.noload() # Once for the class/type reference
+		b1 = u.noload()  # Once for the class/type reference
 	else:
 		# if we don't have noload, we also probably don't support the
 		# optimized case of appending to the list, so we
@@ -129,7 +126,7 @@ def getrefs(p, storage_name, ignore):
 		u.find_class = find_global
 		b1 = u.load()
 	try:
-		b2 = u.load() # again for the state
+		b2 = u.load()  # again for the state
 	except AttributeError as e:
 		if e.message != "'DATETIME' object has no attribute 'numtype'":
 			# Ancient whoosh error
@@ -163,9 +160,9 @@ def getrefs(p, storage_name, ignore):
 				if ref[0] not in ignore:
 					yield ref[:2]
 			elif kind == b'w':
-				if len(ref) == 1: # oid in this db
+				if len(ref) == 1:  # oid in this db
 					yield storage_name, ref[0]
-				elif len(ref) == 2: # oid in other db
+				elif len(ref) == 2:  # oid in other db
 					yield ref[1], ref[0]
 				else:
 					raise ValueError('Unknown weak ref type', ref)
@@ -173,6 +170,7 @@ def getrefs(p, storage_name, ignore):
 				raise ValueError('Unknown persistent ref', kind, ref)
 
 import zope.interface.declarations
+
 def Provides(*interfaces):
 	"""
 	Due to a bug in nti.mimetype, some very old objects
@@ -228,13 +226,12 @@ def main():
 	fixrefs()
 
 	# Not a threaded process, no need to check for switches
-	sys.setcheckinterval( 100000 )
+	sys.setcheckinterval(100000)
 	try:
 		ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
 	finally:
 		report()
 	sys.exit(ec)
-
 
 if __name__ == '__main__':
 	main()
