@@ -216,6 +216,7 @@ setup(
 		 # this stuff globally (https://github.com/collective/collective.subscribe/tree/master/collective/subscribe)
 		'contentratings',  # requires small patch to work without acquisition
 		'cryptacular',	 # see z3c.crypt
+		# 'cryptography', # oauthlib
 		'cssselect',  # Used by pyquery
 		'cython',
 		 # Adds support for detecting aborts to transactions which
