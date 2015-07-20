@@ -13,9 +13,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.event import notify
-
 from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.event import notify
 
 from zope.container.contained import Contained
 

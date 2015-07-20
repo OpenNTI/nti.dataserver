@@ -26,15 +26,16 @@ from . import MessageFactory as _
 from zope import schema
 from zope import interface
 
-from zope.container.interfaces import IContained
-
 from zope.annotation.interfaces import IAnnotatable
+
+from zope.container.interfaces import IContained
 
 from zope.interface.interfaces import ObjectEvent, IObjectEvent
 
 from zope.schema import ValidationError
 
 from nti.dataserver.interfaces import IUser
+
 from nti.dataserver_core.interfaces import ICreated
 from nti.dataserver_core.interfaces import ILastModified
 
