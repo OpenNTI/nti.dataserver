@@ -36,6 +36,9 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import sys
+import operator
+
 def _update_from_rgb_opacity(parsed, arr, colName, opacName):
 	stroke_color = parsed.pop(colName, None)  # "rgb(r,g,b)"
 	stroke_opacity = parsed.pop(opacName, None)  # float
@@ -90,9 +93,6 @@ def _write_rgba(val):
 	else:
 		fs = "{:.3f} {:.3f} {:.3f} {:.2f}"
 	return fs.format(*val)
-
-import sys
-import operator
 
 def _names(color_name):
 	name = str(color_name)
