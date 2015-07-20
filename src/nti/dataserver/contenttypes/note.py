@@ -43,7 +43,7 @@ from .threadable import ThreadableMixin
 
 # Ownership (containment) and censoring are already taken care of by the
 # event listeners on IBeforeSequenceAssignedEvent
-BodyFieldProperty = BodyFieldProperty # BWC alias
+BodyFieldProperty = BodyFieldProperty  # BWC alias
 
 _style_field = INote['style'].bind(None)
 _style_field.default = 'suppressed'
@@ -54,37 +54,37 @@ _style_field.default = 'suppressed'
 					   IFlaggable,
 					   IRatable,
 					   # provides annotations
-					   IAttributeAnnotatable )
+					   IAttributeAnnotatable)
 class Note(ThreadableMixin, Highlight):
 	"""
 	Implementation of a note.
 	"""
 
-	#: A sequence of properties we would like to copy from the parent
-	#: when a child reply is created. If the child already has them, they
-	#: are left alone.
-	#: This consists of the anchoring properties, and for some reason the title
-	_inheritable_properties_ = ( 'applicableRange', 'title' )
+	# : A sequence of properties we would like to copy from the parent
+	# : when a child reply is created. If the child already has them, they
+	# : are left alone.
+	# : This consists of the anchoring properties, and for some reason the title
+	_inheritable_properties_ = ('applicableRange', 'title')
 
-	#: We override the default highlight style to suppress it.
+	# : We override the default highlight style to suppress it.
 	style = FieldProperty(_style_field)
 
-	body = BodyFieldProperty(INote['body']) # uses the 'body' in the dict, which is compatible with persistent objects
+	body = BodyFieldProperty(INote['body'])  # uses the 'body' in the dict, which is compatible with persistent objects
 
 	title = FieldProperty(INote['title'])
 
 	def __init__(self):
-		super(Note,self).__init__()
+		super(Note, self).__init__()
 
-	__getitem__ = _make_getitem( 'body' )
+	__getitem__ = _make_getitem('body')
 
 from .highlight import HighlightInternalObjectIO
 from .threadable import ThreadableExternalizableMixin
 
 @component.adapter(INote)
-class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObjectIO):
+class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjectIO):
 
-	def _resolve_external_body( self, context, parsed, body ):
+	def _resolve_external_body(self, context, parsed, body):
 		"""
 		Attempt to resolve elements in the body to existing canvas objects
 		that are my children. If we find them, then update them in place
@@ -96,7 +96,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			return body
 
 		# Support raw body, not wrapped
-		if isinstance(body, six.string_types ):
+		if isinstance(body, six.string_types):
 			body = [body]
 
 		for i, item in enumerate(body):
@@ -107,7 +107,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
 			if 'NTIID' not in ext_val:
 				continue
-	
+
 			existing_object = find_object_with_ntiid(ext_val['NTIID'])
 			if getattr(existing_object, '__parent__', None) is not note:
 				continue
@@ -124,16 +124,16 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 
 	__external_resolvers__ = { 'body': _resolve_external_body }
 
-	def toExternalObject( self, mergeFrom=None, **kwargs ):
-		ext = super(NoteInternalObjectIO,self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
-		if ext['body'] in ( Note.body, [''], None ): # don't write out the base state, it confuses updating and isn't valid
+	def toExternalObject(self, mergeFrom=None, **kwargs):
+		ext = super(NoteInternalObjectIO, self).toExternalObject(mergeFrom=mergeFrom, **kwargs)
+		if ext['body'] in (Note.body, [''], None):  # don't write out the base state, it confuses updating and isn't valid
 			del ext['body']
 		return ext
 
-	def updateFromExternalObject( self, parsed, *args, **kwargs ):
+	def updateFromExternalObject(self, parsed, *args, **kwargs):
 		# Only updates to the body are accepted
-		parsed.pop( 'text', None )
-		super(NoteInternalObjectIO, self).updateFromExternalObject( parsed, *args, **kwargs )
+		parsed.pop('text', None)
+		super(NoteInternalObjectIO, self).updateFromExternalObject(parsed, *args, **kwargs)
 
 		note = self.context
 
@@ -146,17 +146,17 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin,HighlightInternalObject
 			# of the parent, and share back to the parent's creator,
 			# only making sure not to share with ourself since that's weird
 			# (Be a bit defensive about bad inReplyTo)
-			if not hasattr( note.inReplyTo, 'sharingTargets' ): # pragma: no cover
-				raise AttributeError( 'Illegal value for inReplyTo: %s' % note.inReplyTo )
-			sharingTargets = set( note.inReplyTo.sharingTargets )
-			sharingTargets.add( note.inReplyTo.creator )
-			sharingTargets.discard( note.creator )
-			sharingTargets.discard( None )
+			if not hasattr(note.inReplyTo, 'sharingTargets'):  # pragma: no cover
+				raise AttributeError('Illegal value for inReplyTo: %s' % note.inReplyTo)
+			sharingTargets = set(note.inReplyTo.sharingTargets)
+			sharingTargets.add(note.inReplyTo.creator)
+			sharingTargets.discard(note.creator)
+			sharingTargets.discard(None)
 
-			note.updateSharingTargets( sharingTargets )
+			note.updateSharingTargets(sharingTargets)
 
 			# Now some other things we want to inherit if possible
 			for copy in note._inheritable_properties_:
-				val = getattr( note.inReplyTo, copy, getattr( note, copy, None ) )
+				val = getattr(note.inReplyTo, copy, getattr(note, copy, None))
 				if val is not None:
-					setattr( note, copy, val )
+					setattr(note, copy, val)

@@ -13,8 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import collections
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdAddedEvent

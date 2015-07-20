@@ -11,21 +11,21 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from persistent import Persistent
-
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.annotation.factory import factory as an_factory
 
-from nti.dataserver.interfaces import IContainerContext
-from nti.dataserver.interfaces import IContextAnnotatable
+from persistent import Persistent
+
+from ..interfaces import IContainerContext
+from ..interfaces import IContextAnnotatable
 
 @component.adapter(IContextAnnotatable)
 @interface.implementer(IContainerContext)
-class _ContainerContextAnnotation( Persistent ):
+class _ContainerContextAnnotation(Persistent):
 
 	def __init__(self):
 		self.context_id = None
 
-_ContainerContext = an_factory( _ContainerContextAnnotation,
-							'container_context' )
+_ContainerContext = an_factory(_ContainerContextAnnotation, 'container_context')

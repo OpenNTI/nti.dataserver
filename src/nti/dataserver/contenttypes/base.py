@@ -14,12 +14,10 @@ logger = __import__('logging').getLogger(__name__)
 import collections
 
 from zope import interface
+
 from zope.deprecation import deprecate
 
 from nti.common.property import alias
-
-from nti.externalization.externalization import to_external_object
-from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.users import User
 from nti.dataserver.users import Entity
@@ -34,6 +32,9 @@ from nti.dataserver.interfaces import IObjectSharingModifiedEvent
 from nti.dataserver_core.mixins import ZContainedMixin
 
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
+
+from nti.externalization.externalization import to_external_object
+from nti.externalization.internalization import update_from_external_object
 
 from nti.mimetype import mimetype
 

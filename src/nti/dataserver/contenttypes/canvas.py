@@ -15,8 +15,9 @@ import six
 import numbers
 from urllib import quote as urlquote
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.schema.interfaces import WrongType
 from zope.schema.interfaces import WrongContainedType
 
@@ -29,12 +30,10 @@ from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import ILinkExternalHrefOnly
 
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
-
 from nti.externalization.datastructures import ExternalizableInstanceDict
-
-from nti.externalization.oids import to_external_ntiid_oid
 
 from nti.mimetype import mimetype
 
