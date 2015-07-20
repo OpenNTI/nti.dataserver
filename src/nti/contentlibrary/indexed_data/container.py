@@ -127,3 +127,14 @@ class TimelineIndexedDataContainer(IndexedDataContainer):
 @interface.implementer(ISlideDeckIndexedDataContainer)
 class SlideDeckIndexedDataContainer(IndexedDataContainer):
 	type = NTI_SLIDE_DECK_TYPE
+
+
+from zope.deprecation import deprecated
+
+from zope.container.contained import Contained
+
+from zc.dict import Dict
+
+deprecated('_IndexedDataDict', 'No longer used')
+class _IndexedDataDict(Dict, Contained):
+	pass
