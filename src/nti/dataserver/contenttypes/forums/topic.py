@@ -11,16 +11,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
-from zope.event import notify
+from zope import interface
 from zope import lifecycleevent
 
-from zope.annotation import interfaces as an_interfaces
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.container.interfaces import INameChooser
 from zope.container.contained import ContainerSublocations
 from zope.container.contained import dispatchToSublocations
+
+from zope.event import notify
 
 from zope.intid.interfaces import IIntIdAddedEvent
 
@@ -32,14 +33,21 @@ from nti.common.property import Lazy
 from nti.common.property import readproperty
 from nti.common.property import CachedProperty
 
-from nti.dataserver import users
-from nti.dataserver import sharing
-from nti.dataserver import containers
+from nti.dataserver.containers import AcquireObjectsOnReadMixin
+from nti.dataserver.containers import AbstractNTIIDSafeNameChooser
+from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+
+from nti.dataserver.users import Entity
 
 from nti.dataserver.interfaces import ICommunity
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+from nti.dataserver.interfaces import IWritableShared
+from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
-from nti.dataserver.interfaces import IDefaultPublished, IWritableShared
+
+from nti.dataserver.sharing import ShareableMixin
+from nti.dataserver.sharing import AbstractReadableSharedWithMixin
+from nti.dataserver.sharing import AbstractDefaultPublishableSharedWithMixin
 
 from nti.dataserver_core.mixins import ZContainedMixin
 
@@ -50,24 +58,40 @@ from nti.traversal.traversal import find_interface
 
 from nti.utils._compat import Implicit
 
-from nti.wref import interfaces as wref_interfaces
+from nti.wref.interfaces import IWeakRef
+
+from .interfaces import IPost
+from .interfaces import IBoard
+from .interfaces import ITopic
+from .interfaces import IACLEnabled
+from .interfaces import IGeneralForum
+from .interfaces import IGeneralTopic
+from .interfaces import IPersonalBlog
+from .interfaces import IHeadlineTopic
+from .interfaces import IPersonalBlogEntry
+from .interfaces import IGeneralHeadlineTopic
+from .interfaces import ICommunityHeadlineTopic
+from .interfaces import NTIID_TYPE_GENERAL_TOPIC
+from .interfaces import NTIID_TYPE_COMMUNITY_TOPIC
+from .interfaces import NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
 from . import _CreatedNamedNTIIDMixin
 from . import _containerIds_from_parent
-from . import interfaces as for_interfaces
 
-class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
-							 containers.CheckingLastModifiedBTreeContainer,
+class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
+							 CheckingLastModifiedBTreeContainer,
 							 ZContainedMixin,
 							 Implicit):
-	title = AdaptingFieldProperty(for_interfaces.ITopic['title'])
-	description = AdaptingFieldProperty(for_interfaces.IBoard['description'])
-	sharingTargets = ()
-	tags = FieldProperty(for_interfaces.IPost['tags'])
-	PostCount = property(containers.CheckingLastModifiedBTreeContainer.__len__)
+
+	tags = FieldProperty(IPost['tags'])
+	title = AdaptingFieldProperty(ITopic['title'])
+	description = AdaptingFieldProperty(IBoard['description'])
+	PostCount = property(CheckingLastModifiedBTreeContainer.__len__)
 
 	id, containerId = _containerIds_from_parent()
 
+	sharingTargets = ()
+	
 	@property
 	def NewestDescendantCreatedTime(self):
 		post = self.NewestDescendant
@@ -103,15 +127,14 @@ class _AbstractUnsharedTopic(containers.AcquireObjectsOnReadMixin,
 
 		return self._newestPostWref() if self._newestPostWref is not None else None
 	def _set_NewestPost(self, post):
-		self._newestPostWref = wref_interfaces.IWeakRef(post)
+		self._newestPostWref = IWeakRef(post)
 	NewestDescendant = property(_get_NewestPost, _set_NewestPost)
 
-@interface.implementer(for_interfaces.ITopic, an_interfaces.IAttributeAnnotatable)
-class Topic(_AbstractUnsharedTopic,
-			sharing.AbstractReadableSharedWithMixin):
+@interface.implementer(ITopic, IAttributeAnnotatable)
+class Topic(_AbstractUnsharedTopic, AbstractReadableSharedWithMixin):
 	pass
 
-@component.adapter(for_interfaces.IPost, IIntIdAddedEvent)
+@component.adapter(IPost, IIntIdAddedEvent)
 def _post_added_to_topic(post, event):
 	"""
 	Watch for a post to be added to a topic and keep track of the
@@ -121,12 +144,12 @@ def _post_added_to_topic(post, event):
 	and it also can't tell us if the post was added or removed.
 	"""
 
-	if for_interfaces.ITopic.providedBy(post.__parent__):
+	if ITopic.providedBy(post.__parent__):
 		post.__parent__.NewestDescendant = post
 
-@interface.implementer(for_interfaces.IHeadlineTopic)
+@interface.implementer(IHeadlineTopic)
 class HeadlineTopic(Topic):
-	headline = AcquisitionFieldProperty(for_interfaces.IHeadlineTopic['headline'])
+	headline = AcquisitionFieldProperty(IHeadlineTopic['headline'])
 
 	def _did_modify_publication_status(self, oldSharingTargets):
 		"Fire off a modified event when the publication status changes. The event notes the sharing has changed."
@@ -172,23 +195,25 @@ class HeadlineTopic(Topic):
 		interface.noLongerProvides(self, IDefaultPublished)
 		self._did_modify_publication_status(oldSharingTargets)
 
-@interface.implementer(for_interfaces.IGeneralTopic)
+@interface.implementer(IGeneralTopic)
 class GeneralTopic(Topic):
 	pass
 
-@interface.implementer(for_interfaces.IGeneralHeadlineTopic)
-class GeneralHeadlineTopic(sharing.AbstractDefaultPublishableSharedWithMixin,
+@interface.implementer(IGeneralHeadlineTopic)
+class GeneralHeadlineTopic(AbstractDefaultPublishableSharedWithMixin,
 						   GeneralTopic,
 						   HeadlineTopic,
 						   _CreatedNamedNTIIDMixin):
-	headline = AcquisitionFieldProperty(for_interfaces.IGeneralHeadlineTopic['headline'])
+	headline = AcquisitionFieldProperty(IGeneralHeadlineTopic['headline'])
 
 	creator = None
 
-	_ntiid_type = for_interfaces.NTIID_TYPE_GENERAL_TOPIC
+	_ntiid_type = NTIID_TYPE_GENERAL_TOPIC
 	_ntiid_include_parent_name = True
 
-@interface.implementer(for_interfaces.ICommunityHeadlineTopic)
+from .interfaces import can_read
+
+@interface.implementer(ICommunityHeadlineTopic)
 class CommunityHeadlineTopic(GeneralHeadlineTopic):
 	# Note: This used to extend (sharing.AbstractDefaultPublishableSharedWithMixin,GeneralHeadlineTopic)
 	# in that order. But AbstractDefaultPublishableSharedWithMixin is already a base
@@ -199,7 +224,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 	# a mixin.
 	mimeType = None
 
-	_ntiid_type = for_interfaces.NTIID_TYPE_COMMUNITY_TOPIC
+	_ntiid_type = NTIID_TYPE_COMMUNITY_TOPIC
 
 	@CachedProperty('__parent__')
 	def _community(self):
@@ -227,7 +252,6 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		if community:
 			return community.username
 
-
 	@property
 	def sharingTargetsWhenPublished(self):
 		# HACK: We need to check the of the community forum has an ACL
@@ -236,13 +260,13 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# TODO: Remove hack
 		_forum = self.__parent__
 		# TODO: REMOVE IACL
-		if for_interfaces.IACLEnabled.providedBy(_forum):
+		if IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
 			result = set()
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
-					if action == nti_interfaces.ACE_ACT_ALLOW and for_interfaces.can_read(perm):
-						entity = users.Entity.get_entity(entity)
+					if action == ACE_ACT_ALLOW and can_read(perm):
+						entity = Entity.get_entity(entity)
 						result.add(entity)
 			result.discard(None)
 			return result
@@ -252,15 +276,15 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# restrict it to the community in which we are embedded
 		return [self._community] if self._community else ()
 
-@interface.implementer(for_interfaces.IPersonalBlogEntry)
-class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
+@interface.implementer(IPersonalBlogEntry)
+class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 						HeadlineTopic,
 						_CreatedNamedNTIIDMixin):
 	creator = None
-	headline = AcquisitionFieldProperty(for_interfaces.IPersonalBlogEntry['headline'])
+	headline = AcquisitionFieldProperty(IPersonalBlogEntry['headline'])
 	mimeType = None
 
-	_ntiid_type = for_interfaces.NTIID_TYPE_PERSONAL_BLOG_ENTRY
+	_ntiid_type = NTIID_TYPE_PERSONAL_BLOG_ENTRY
 
 	def __init__(self, *args, **kwargs):
 		super(PersonalBlogEntry, self).__init__(*args, **kwargs)
@@ -275,7 +299,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 	# We use this object to implement sharing storage when we are not published
 	@Lazy
 	def _sharing_storage(self):
-		result = sharing.ShareableMixin()
+		result = ShareableMixin()
 		self._p_changed = True
 		return result
 
@@ -329,7 +353,7 @@ class PersonalBlogEntry(sharing.AbstractDefaultPublishableSharedWithMixin,
 			return self._sharing_storage.sharingTargets
 		return ()
 
-@component.adapter(for_interfaces.IHeadlineTopic)
+@component.adapter(IHeadlineTopic)
 class HeadlineTopicSublocations(ContainerSublocations):
 	"""
 	Headline topics contain their children and also their story.
@@ -342,18 +366,18 @@ class HeadlineTopicSublocations(ContainerSublocations):
 		if story is not None:
 			yield story
 
-@component.adapter(for_interfaces.IPersonalBlog)
+@component.adapter(IPersonalBlog)
 @interface.implementer(INameChooser)
-class PersonalBlogEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
+class PersonalBlogEntryNameChooser(AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an entry in a blog.
 	"""
-	leaf_iface = for_interfaces.IPersonalBlog
+	leaf_iface = IPersonalBlog
 
-@component.adapter(for_interfaces.IGeneralForum)
+@component.adapter(IGeneralForum)
 @interface.implementer(INameChooser)
-class GeneralForumEntryNameChooser(containers.AbstractNTIIDSafeNameChooser):
+class GeneralForumEntryNameChooser(AbstractNTIIDSafeNameChooser):
 	"""
 	Handles NTIID-safe name choosing for an general forum entries.
 	"""
-	leaf_iface = for_interfaces.IGeneralForum
+	leaf_iface = IGeneralForum
