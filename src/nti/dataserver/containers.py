@@ -341,7 +341,8 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 			return self.items(min)
 		return self._SampleContainer__data.items(min,max,excludemin,excludemax)
 
-collections.Mapping.register( LastModifiedBTreeContainer )
+mapping_register = getattr(collections.Mapping, 'register')
+mapping_register( LastModifiedBTreeContainer )
 
 ModDateTrackingBTreeContainer = LastModifiedBTreeContainer # BWC
 
