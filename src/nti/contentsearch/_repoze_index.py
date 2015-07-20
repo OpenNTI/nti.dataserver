@@ -14,5 +14,6 @@ zope.deferredimport.initialize()
 
 zope.deferredimport.deprecatedFrom(
     "Moved to nti.contentsearch.discriminators",
-    "nti.contentsearch.common",
-    "get_sharedWith")
+    "nti.contentsearch.discriminators",
+    "get_sharedWith",
+    "get_object_ngrams")
