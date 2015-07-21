@@ -7,8 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import is_
-from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import assert_that
@@ -53,7 +51,7 @@ class TestZcml(ConfiguringTestBase):
 
 		<include package="zope.component" />
 		<include package="z3c.baseregistry" file="meta.zcml" />
-		
+
 		<cap:capability
 			id='nti.only_in_mathcounts'
 			title="only_in_mathcounts" />
@@ -64,6 +62,7 @@ class TestZcml(ConfiguringTestBase):
 		self._check_cap_present()  # the defaults are there
 
 		cap_name = 'nti.only_in_mathcounts'
+		assert_that(cap_name, is_in(vocabulary.getVocabularyRegistry().get(None, VOCAB_NAME)))
 
 		# Now, in the sub site, they are bath present
 		self._check_cap_present()
