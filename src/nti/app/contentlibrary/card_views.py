@@ -27,9 +27,9 @@ from nti.dataserver import authorization as nauth
 
 from nti.ntiids.interfaces import INTIIDResolver
 
-from .library_views import PAGE_INFO_MT_JSON
 from .library_views import find_page_info_view_helper
 
+from . import PAGE_INFO_MT_JSON
 PAGE_INFO_MT_JSON = PAGE_INFO_MT_JSON
 
 # See also assessment_views, especially for notes on Accept header handling.
