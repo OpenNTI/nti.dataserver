@@ -31,8 +31,8 @@ from nti.app.renderers.caching import AbstractReliableLastModifiedCacheControlle
 
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
-from nti.appserver.interfaces import ITopLevelContainerContextProvider
 from nti.appserver.interfaces import IHierarchicalContextProvider
+from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -70,63 +70,11 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
+from .utils import PAGE_INFO_MT
+from .utils import PAGE_INFO_MT_JSON
+from .utils import find_page_info_view_helper
+
 from . import LIBRARY_PATH_GET_VIEW
-
-PAGE_INFO_MT = nti_mimetype_with_class('pageinfo')
-PAGE_INFO_MT_JSON = PAGE_INFO_MT + '+json'
-
-def _encode(s):
-	return s.encode('utf-8') if isinstance(s, unicode) else s
-
-def find_page_info_view_helper( request, page_ntiid_or_content_unit ):
-	"""
-	Helper function to resolve a NTIID to PageInfo.
-	"""
-
-	# XXX Assuming one location in the hierarchy, plus assuming things
-	# about the filename For the sake of the application (trello #932
-	# https://trello.com/c/5cxwEgVH), if the question is nested in a
-	# sub-section of a content library, we want to return the PageInfo
-	# for the nearest containing *physical* file. In short, this means
-	# we look for an href that does not have a '#' in it.
-	if not IContentUnit.providedBy(page_ntiid_or_content_unit):
-		content_unit = find_object_with_ntiid(page_ntiid_or_content_unit)
-	else:
-		content_unit = page_ntiid_or_content_unit
-
-	while content_unit and '#' in getattr( content_unit, 'href', '' ):
-		content_unit = getattr( content_unit, '__parent__', None )
-
-	page_ntiid = ''
-	if content_unit:
-		page_ntiid = content_unit.ntiid
-	elif isinstance(page_ntiid_or_content_unit, basestring):
-		page_ntiid = page_ntiid_or_content_unit
-
-	# Rather than redirecting to the canonical URL for the page, request it
-	# directly. This saves a round trip, and is more compatible with broken clients that
-	# don't follow redirects parts of the request should be native strings,
-	# which under py2 are bytes. Also make sure we pass any params to subrequest
-	path = b'/dataserver2/Objects/' + _encode(page_ntiid)
-	if request.query_string:
-		path += '?' + _encode(request.query_string)
-
-	# set subrequest
-	subrequest = request.blank( path )
-	subrequest.method = b'GET'
-	subrequest.possible_site_names = request.possible_site_names
-	# prepare environ
-	subrequest.environ[b'REMOTE_USER'] = request.environ['REMOTE_USER']
-	subrequest.environ[b'repoze.who.identity'] = request.environ['repoze.who.identity'].copy()
-	for k in request.environ:
-		if k.startswith('paste.') or k.startswith('HTTP_'):
-			if k not in subrequest.environ:
-				subrequest.environ[k] = request.environ[k]
-	subrequest.accept = PAGE_INFO_MT_JSON
-
-	# invoke
-	result = request.invoke_subrequest(subrequest)
-	return result
 
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
@@ -164,11 +112,11 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 @view_config( name='' )
 @view_config( name='pageinfo+json' )
 @view_config( name='link+json' )
-@view_defaults( route_name='objects.generic.traversal',
-				renderer='rest',
-				context='nti.contentlibrary.interfaces.IContentUnit',
-				permission=nauth.ACT_READ,
-				request_method='GET' )
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context='nti.contentlibrary.interfaces.IContentUnit',
+			   permission=nauth.ACT_READ,
+			   request_method='GET' )
 class _LibraryTOCRedirectClassView(object):
 	"""
 	Given an :class:`lib_interfaces.IContentUnit`, redirect the
@@ -288,11 +236,11 @@ class _LibraryTOCRedirectClassView(object):
 def _LibraryTOCRedirectView(request):
 	return _LibraryTOCRedirectClassView( request )()
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  name=ROOT,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 name=ROOT,
+			 permission=nauth.ACT_READ,
+			 request_method='GET' )
 def _RootLibraryTOCRedirectView(request):
 	"""
 	For the root NTIID, we only support returning PageInfo (never a link to content,
@@ -438,12 +386,12 @@ def _get_board_obj_path( obj ):
 	result.append( result_list )
 	return result
 
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  context=IDataserverFolder,
-			  name=LIBRARY_PATH_GET_VIEW,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 context=IDataserverFolder,
+			 name=LIBRARY_PATH_GET_VIEW,
+			 permission=nauth.ACT_READ,
+			 request_method='GET' )
 class _LibraryPathView( AbstractAuthenticatedView ):
 	"""
 	Return an ordered list of lists of library paths to an object.
@@ -646,11 +594,11 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 @view_config(context=IPost)
 @view_config(context=ITopic)
 @view_config(context=IForum)
-@view_config( route_name='objects.generic.traversal',
-			  renderer='rest',
-			  name=LIBRARY_PATH_GET_VIEW,
-			  permission=nauth.ACT_READ,
-			  request_method='GET' )
+@view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 name=LIBRARY_PATH_GET_VIEW,
+			 permission=nauth.ACT_READ,
+			 request_method='GET' )
 class _PostLibraryPathView( AbstractAuthenticatedView ):
 	"""
 	For board items, getting the path traversal can

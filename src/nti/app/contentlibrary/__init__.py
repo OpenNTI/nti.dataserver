@@ -9,4 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from .utils import PAGE_INFO_MT
+from .utils import PAGE_INFO_MT_JSON
+
 LIBRARY_PATH_GET_VIEW = 'LibraryPath'
