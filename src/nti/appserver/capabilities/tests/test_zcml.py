@@ -16,7 +16,7 @@ from hamcrest import has_property
 does_not = is_not
 
 from zope import component
-from zope.component.hooks import site
+
 from zope.schema import vocabulary
 
 from nti.appserver.capabilities.interfaces import VOCAB_NAME
@@ -30,21 +30,21 @@ from nti.testing.base import ConfiguringTestBase
 class TestZcml(ConfiguringTestBase):
 
 	def test_default_registrations(self):
-		self.configure_packages( set_up_packages=( ('capabilities.zcml', 'nti.appserver.capabilities',), ) )
+		self.configure_packages(set_up_packages=(('capabilities.zcml', 'nti.appserver.capabilities',),))
 		self._check_cap_present()
 
-	def _check_cap_present( self, cap_name='nti.platform.p2p.chat' ):
-		component.getUtility( ICapability, cap_name )
+	def _check_cap_present(self, cap_name='nti.platform.p2p.chat'):
+		component.getUtility(ICapability, cap_name)
 
-		assert_that( cap_name, is_in( CapabilityNameTokenVocabulary() ) )
-		assert_that( cap_name, is_in( CapabilityNameVocabulary(None) ) )
+		assert_that(cap_name, is_in(CapabilityNameTokenVocabulary()))
+		assert_that(cap_name, is_in(CapabilityNameVocabulary(None)))
 
-		assert_that( CapabilityUtilityVocabulary( None ).getTermByToken(cap_name), has_property( 'token', cap_name ) )
+		assert_that(CapabilityUtilityVocabulary(None).getTermByToken(cap_name), has_property('token', cap_name))
 
 	def test_site_registrations(self):
 		"Can we add new registrations in a sub-site?"
 
-		self.configure_packages( set_up_packages=('nti.appserver.capabilities',) )
+		self.configure_packages(set_up_packages=('nti.appserver.capabilities',))
 		zcml_string = """
 		<configure xmlns="http://namespaces.zope.org/zope"
 			xmlns:zcml="http://namespaces.zope.org/zcml"
@@ -53,34 +53,18 @@ class TestZcml(ConfiguringTestBase):
 
 		<include package="zope.component" />
 		<include package="z3c.baseregistry" file="meta.zcml" />
-
-		<utility
-			component="nti.appserver.policies.sites.BASECOPPA"
-			provides="zope.component.interfaces.IComponents"
-			name="genericcoppabase" />
-
-		<registerIn registry="nti.appserver.policies.sites.BASECOPPA">
-			<cap:capability
+		
+		<cap:capability
 			id='nti.only_in_mathcounts'
-			title="only_in_mathcounts"/>
-		</registerIn>
+			title="only_in_mathcounts" />
+
 		</configure>
 		"""
-		self.configure_string( zcml_string )
-		self._check_cap_present() # the defaults are there
-		from nti.site.transient import TrivialSite 
-		from nti.appserver.policies.sites import BASECOPPA
+		self.configure_string(zcml_string)
+		self._check_cap_present()  # the defaults are there
 
-		# First, it's not present globally, in any utility
 		cap_name = 'nti.only_in_mathcounts'
 
-		assert_that( component.queryUtility( ICapability, cap_name ), is_( none() ) )
-
-		assert_that( cap_name, is_not( is_in( CapabilityNameTokenVocabulary() ) ) )
-		assert_that( cap_name, is_not( is_in( CapabilityNameVocabulary(None) ) ) )
-		assert_that( cap_name, is_not( is_in( vocabulary.getVocabularyRegistry().get( None, VOCAB_NAME ) ) ) )
-
 		# Now, in the sub site, they are bath present
-		with site( TrivialSite( BASECOPPA ) ):
-			self._check_cap_present( )
-			self._check_cap_present( cap_name )
+		self._check_cap_present()
+		self._check_cap_present(cap_name)

@@ -24,4 +24,4 @@ class Capability(permission.Permission):
 	"""
 
 	def __init__(self, cap_id, title='', description=''):
-		super(Capability, self).__init__( cap_id, title=title, description=description )
+		super(Capability, self).__init__(cap_id, title=title, description=description)
