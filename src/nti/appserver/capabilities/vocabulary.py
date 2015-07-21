@@ -13,9 +13,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from zope.schema.interfaces import IVocabularyFactory
 from zope.componentvocabulary.vocabulary import UtilityNames
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
+
+from zope.schema.interfaces import IVocabularyFactory
 
 from .interfaces import ICapability
 
