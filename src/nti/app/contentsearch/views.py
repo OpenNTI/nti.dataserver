@@ -39,7 +39,10 @@ from nti.contentsearch.search_utils import create_queryobject
 from nti.dataserver.users import Entity
 
 from nti.externalization.internalization import find_factory_for
+from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.externalization import to_external_object
+
+ITEMS = StandardExternalFields.ITEMS
 
 class BaseView(AbstractAuthenticatedView):
 
@@ -120,10 +123,16 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 		# externalize to add links
 		result = to_external_object(result)
 		if batch is not None:
+			total_pages = len(original) // batch_size + 1
 			result['BatchPage'] = batch_start // batch_size + 1
-			result['ItemCount'] = len(result.get('Hits', ()))
-			prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start, batch_size)
-			self._create_batch_links(self.request, result, next_batch_start, prev_batch_start)
+			result['ItemCount'] = len(result.get(ITEMS, ()))
+			prev_batch_start, next_batch_start = self._batch_start_tuple(batch_start, 
+																		 batch_size)
+			# check last page
+			if total_pages == result['BatchPage']: 
+				next_batch_start = None
+			self._create_batch_links(self.request, result, 
+									 next_batch_start, prev_batch_start)
 		return result
 
 class SearchView(BaseSearchView):
