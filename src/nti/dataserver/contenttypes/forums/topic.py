@@ -23,6 +23,7 @@ from zope.container.contained import dispatchToSublocations
 
 from zope.event import notify
 
+from zope.intid.interfaces import IIntIds
 from zope.intid.interfaces import IIntIdAddedEvent
 
 from zope.location.interfaces import ILocationInfo
@@ -154,6 +155,7 @@ def _post_added_to_topic(post, event):
 
 @interface.implementer(IHeadlineTopic)
 class HeadlineTopic(Topic):
+
 	headline = AcquisitionFieldProperty(IHeadlineTopic['headline'])
 
 	def _did_modify_publication_status(self, oldSharingTargets):
@@ -286,7 +288,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		return [self._community] if self._community else ()
 
 @interface.implementer(IDFLHeadlineTopic)
-class DFLHeadlineTopic(GeneralHeadlineTopic):
+class DFLHeadlineTopic(GeneralHeadlineTopic): # order matters
 	
 	mimeType = None
 
@@ -303,10 +305,10 @@ class DFLHeadlineTopic(GeneralHeadlineTopic):
 
 	@readproperty
 	def _ntiid_creator_username(self):
-		" The DFL, not the user "
-		dfl = self._dfl
-		if dfl:
-			return dfl.username
+		intids = component.queryUtility(IIntIds)
+		if intids is not None and self._dfl:
+			result = intids.queryId(self._dfl)
+			return str(result) if result is not None else None
 
 	@property
 	def sharingTargetsWhenPublished(self):

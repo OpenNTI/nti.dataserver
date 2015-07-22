@@ -11,7 +11,10 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
+
+from zope.intid import IIntIds
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
@@ -21,6 +24,7 @@ from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
 from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 
+from nti.ntiids.ntiids import get_provider
 from nti.ntiids.ntiids import get_specific
 from nti.ntiids.interfaces import INTIIDResolver
 
@@ -136,6 +140,16 @@ class _DFLTopicResolver(AbstractUserBasedResolver):
 
 	adapt_to = IDFLForum
 	required_iface = IDynamicSharingTargetFriendsList
+
+	def resolve( self, ntiid ):
+		entity = None
+		provider_name = get_provider( ntiid )
+		intids = component.queryUtility(IIntIds)
+		if intids is not None:
+			provider_name = int(provider_name)
+			entity = intids.queryObject(provider_name) 
+		if entity and self.required_iface.providedBy( entity ):
+			return self._resolve(ntiid, entity)
 
 	def _resolve(self, ntiid, dfl):
 		board = IDFLBoard(dfl, None)

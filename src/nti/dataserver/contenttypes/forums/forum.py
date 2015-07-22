@@ -348,7 +348,7 @@ def GeneralForumDFLAdapter(dfl):
 	board[forum.__default_name__] = forum
 	forum.title = _('Forum')
 
-	errors = schema.getValidationErrors(ICommunityForum, forum)
+	errors = schema.getValidationErrors(IDFLForum, forum)
 	if errors:
 		__traceback_info__ = errors
 		raise errors[0][1]

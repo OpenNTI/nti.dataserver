@@ -1,50 +1,48 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-$Id: test_forum.py 21359 2013-07-26 05:23:32Z carlos.sanchez $
-"""
-from __future__ import print_function, unicode_literals, absolute_import
+
+from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-#disable: accessing protected members, too many methods
-#pylint: disable=W0212,R0904
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import has_length
-from hamcrest import has_entry
-from hamcrest import has_entries
-from hamcrest import instance_of
 from hamcrest import is_
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import has_entries
+from hamcrest import assert_that
+from hamcrest import instance_of
 
+from nti.testing.matchers import verifiably_provides, validly_provides
 
+from zope import interface
+
+from zope.security.interfaces import IPrincipal
+
+from nti.dataserver.users import Community
+from nti.dataserver.interfaces import IACLProvider
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
 from nti.dataserver import interfaces as nti_interfaces
+
 from nti.externalization.externalization import toExternalObject
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.internalization import update_from_external_object
 
-from ..interfaces import IForumACE
-from ..interfaces import IACLCommunityForum
-from ..interfaces import IACLCommunityBoard
-from nti.dataserver.interfaces import IACLProvider
-from nti.dataserver.interfaces import ACE_ACT_ALLOW
-from zope import interface
-from zope.security.interfaces import IPrincipal
-from nti.dataserver.users import Community
-from ..board import CommunityBoard
-from ..topic import CommunityHeadlineTopic
-from ..post import CommunityHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IForumACE
+from nti.dataserver.contenttypes.forums.interfaces import IACLCommunityForum
+from nti.dataserver.contenttypes.forums.interfaces import IACLCommunityBoard
 
-from ..ace import ForumACE
-from ..forum import ACLCommunityForum
-from ..acl import _ACLCommunityForumACLProvider
-
-from nti.testing.matchers import verifiably_provides, validly_provides
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.contenttypes.forums.ace import ForumACE
+from nti.dataserver.contenttypes.forums.board import CommunityBoard
+from nti.dataserver.contenttypes.forums.forum import ACLCommunityForum
+from nti.dataserver.contenttypes.forums.acl import _ACLCommunityForumACLProvider
 
 from . import ForumLayerTest
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
-from zope import schema
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 
 class TestForumACL(ForumLayerTest):
 
@@ -97,7 +95,7 @@ class TestBoardACL(DataserverLayerTest):
 		creator = Community.create_community(dataserver=self.ds, username='Creator')
 
 		com_ntiid = community.NTIID
-		assert_that( com_ntiid, is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-testcommunity') )
+		assert_that(com_ntiid, is_('tag:nextthought.com,2011-10:system-NamedEntity:Community-testcommunity'))
 
 		ace = ForumACE(Action='Allow',
 					   Permissions=('Read',),
@@ -110,5 +108,5 @@ class TestBoardACL(DataserverLayerTest):
 		prov = IACLProvider(board)
 		acl = prov.__acl__
 
-		assert_that( list(acl[-2])[:2],
-					 is_( [ACE_ACT_ALLOW, IPrincipal(community)]) )
+		assert_that(list(acl[-2])[:2],
+					 is_([ACE_ACT_ALLOW, IPrincipal(community)]))

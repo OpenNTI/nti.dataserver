@@ -44,6 +44,10 @@ except ImportError:
 		def __set__(self, instance, value):
 			return
 
+from zope import component
+
+from zope.intid import IIntIds
+
 from nti.common.property import alias as _alias
 from nti.common.property import CachedProperty as _CachedProperty
 
@@ -116,6 +120,24 @@ class _CreatedNamedNTIIDMixin(object):
 							   provider=creator_name,
 							   nttype=self._ntiid_type,
 							   specific=self._ntiid_specific_part)
+
+class _CreatedIntIdNTIIDMixin(_CreatedNamedNTIIDMixin):
+	"""
+	Mix this in to get NTIIDs based on the creator and its intid.
+	You must define the ``ntiid_type``.
+	"""
+
+	creator = None
+	__name__ = None
+
+	_ntiid_type = None
+	_ntiid_include_parent_name = False
+
+	@property
+	def _ntiid_creator_username(self):
+		intids = component.queryUtility(IIntIds)
+		if intids is not None and self.creator:
+			return intids.queryId(self.creator) 
 
 def _containerIds_from_parent():
 	"""
