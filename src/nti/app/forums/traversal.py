@@ -12,17 +12,17 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
-from zope.traversing.interfaces import TraversalError
+
 from zope.container.traversal import ContainerTraversable
+
+from zope.traversing.interfaces import TraversalError
 
 from nti.appserver._adapters import GenericModeledContentExternalFieldTraverser
 
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_FORUM_NAME
+
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import IDefaultForumBoard
-
-from nti.dataserver.contenttypes.forums.forum import CommunityForum
-
-_FORUM_NAME = CommunityForum.__default_name__
 
 @component.adapter(IPost)
 class _PostFieldTraverser(GenericModeledContentExternalFieldTraverser):
@@ -38,10 +38,10 @@ class _DefaultForumBoardTraversable(ContainerTraversable):
 	"""
 
 	def traverse(self, name, furtherPath):
-		if name not in self._container and name == _FORUM_NAME:
+		if name not in self._container and name == DEFAULT_FORUM_NAME:
 			try:
 				return self._container.createDefaultForum()
-			except (TypeError,AttributeError): # pragma: no cover
+			except (TypeError, AttributeError): # pragma: no cover
 				raise TraversalError( self._container, name ) # No adapter
 
 		result = ContainerTraversable.traverse(self, name, furtherPath)
