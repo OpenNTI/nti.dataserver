@@ -64,6 +64,7 @@ from .interfaces import NTIID_TYPE_PERSONAL_BLOG
 from .interfaces import NTIID_TYPE_COMMUNITY_FORUM
 
 from . import _containerIds_from_parent
+from . import _CreatedIntIdNTIIDMixin as _SingleInstanceIntIdMixin
 from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 _NEWEST_TTL = datetime.timedelta(days=7)
@@ -276,7 +277,7 @@ class CommunityForum(GeneralForum):
 	_ntiid_type = NTIID_TYPE_COMMUNITY_FORUM
 
 @interface.implementer(IDFLForum)
-class DFLForum(GeneralForum):
+class DFLForum(_SingleInstanceIntIdMixin, GeneralForum):
 	__external_can_create__ = True
 	_ntiid_type = NTIID_TYPE_DFL_FORUM
 

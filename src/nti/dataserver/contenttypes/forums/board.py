@@ -46,6 +46,7 @@ from .interfaces import NTIID_TYPE_DFL_BOARD
 from .interfaces import NTIID_TYPE_COMMUNITY_BOARD
 
 from . import _CreatedNamedNTIIDMixin
+from . import _CreatedIntIdNTIIDMixin
 
 @interface.implementer(IBoard)
 class Board(Base,
@@ -78,12 +79,12 @@ class CommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 		return ICommunityForum(self.creator)  # Ask the ICommunity
 
 @interface.implementer(IDFLBoard)
-class DFLBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+class DFLBoard(GeneralBoard, _CreatedIntIdNTIIDMixin):
 	__external_can_create__ = False
 	_ntiid_type = NTIID_TYPE_DFL_BOARD
 
 	def createDefaultForum(self):
-		return IDFLForum(self.creator)  # Ask the ICommunity
+		return IDFLForum(self.creator)  # Ask the DFL
 	
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()

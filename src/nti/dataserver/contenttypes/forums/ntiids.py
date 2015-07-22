@@ -102,8 +102,20 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 			return None
 		return resolve_ntiid_in_board(ntiid, board)
 
+class _DFLResolverMixin(AbstractAdaptingUserBasedResolver):
+
+	def resolve(self, ntiid):
+		entity = None
+		provider_name = get_provider(ntiid)
+		intids = component.queryUtility(IIntIds)
+		if intids is not None:
+			provider_name = int(provider_name)
+			entity = intids.queryObject(provider_name)
+		if entity and self.required_iface.providedBy(entity):
+			return self._resolve(ntiid, entity)
+
 @interface.implementer(INTIIDResolver)
-class _DFLBoardResolver(AbstractAdaptingUserBasedResolver):
+class _DFLBoardResolver(_DFLResolverMixin):
 	"""
 	Resolves the default board that belongs to a DFL, if one does exist.
 
@@ -114,7 +126,7 @@ class _DFLBoardResolver(AbstractAdaptingUserBasedResolver):
 	required_iface = IDynamicSharingTargetFriendsList
 
 @interface.implementer(INTIIDResolver)
-class _DFLForumResolver(AbstractMappingAdaptingUserBasedResolver):
+class _DFLForumResolver(_DFLResolverMixin):
 	"""
 	Resolves a forum that belongs to a DFL.
 
@@ -131,7 +143,7 @@ class _DFLForumResolver(AbstractMappingAdaptingUserBasedResolver):
 		return forum
 
 @interface.implementer(INTIIDResolver)
-class _DFLTopicResolver(AbstractUserBasedResolver):
+class _DFLTopicResolver(_DFLResolverMixin):
 	"""
 	Resolves a topic in the one forum that belongs to a DFL, if one does exist.
 
@@ -141,22 +153,12 @@ class _DFLTopicResolver(AbstractUserBasedResolver):
 	adapt_to = IDFLForum
 	required_iface = IDynamicSharingTargetFriendsList
 
-	def resolve( self, ntiid ):
-		entity = None
-		provider_name = get_provider( ntiid )
-		intids = component.queryUtility(IIntIds)
-		if intids is not None:
-			provider_name = int(provider_name)
-			entity = intids.queryObject(provider_name) 
-		if entity and self.required_iface.providedBy( entity ):
-			return self._resolve(ntiid, entity)
-
 	def _resolve(self, ntiid, dfl):
 		board = IDFLBoard(dfl, None)
 		if board is None:
 			return None
 		return resolve_ntiid_in_board(ntiid, board)
-	
+
 def resolve_forum_ntiid_in_board(ntiid, board):
 	"""
 	Finds a specific forum in a board,
