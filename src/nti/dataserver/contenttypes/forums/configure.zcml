@@ -22,13 +22,19 @@
 	<adapter factory=".board.GeneralBoardCommunityAdapter"
 			 provides=".interfaces.ICommunityBoard" />
 
+	<adapter factory=".forum.GeneralForumDFLAdapter"
+			 provides=".interfaces.IDFLForum" />
+
+	<adapter factory=".board.GeneralBoardDFLAdapter"
+			 provides=".interfaces.IDFLBoard" />
+
 	<adapter provides="zope.location.interfaces.ISublocations"
 			 for=".interfaces.IHeadlineTopic"
 			 factory=".topic.HeadlineTopicSublocations" />
 
+	<adapter factory=".board.BoardNameChooser" />
 	<adapter factory=".topic.PersonalBlogEntryNameChooser" />
 	<adapter factory=".topic.GeneralForumEntryNameChooser" />
-	<adapter factory=".board.BoardNameChooser" />
 
 	<!-- WeakRefs -->
 	<!-- (IPost is covered as IModeledContent) -->
@@ -43,9 +49,14 @@
 	<!-- NTIID resolvers -->
 	<utility factory=".ntiids._BlogResolver" name="Forum:PersonalBlog" />
 	<utility factory=".ntiids._BlogEntryResolver" name="Topic:PersonalBlogEntry" />
+
 	<utility factory=".ntiids._CommunityBoardResolver" name="Board:GeneralCommunity" />
 	<utility factory=".ntiids._CommunityForumResolver" name="Forum:GeneralCommunity" />
 	<utility factory=".ntiids._CommunityTopicResolver" name="Topic:GeneralCommunity" />
+
+	<utility factory=".ntiids._DFLBoardResolver" name="Board:GeneralDFL" />
+	<utility factory=".ntiids._DFLForumResolver" name="Forum:GeneralDFL" />
+	<utility factory=".ntiids._DFLTopicResolver" name="Topic:GeneralDFL" />
 
 	<!-- Events -->
 	<subscriber handler=".topic._post_added_to_topic" />
@@ -64,8 +75,7 @@
 						 .interfaces.ITopic 
 						 .interfaces.IPost 
 						 .interfaces.IForumACE"
-		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO"
-	/>
+		iobase=".externalization._MaybeThreadableForumObjectInternalObjectIO" />
 
 	<!-- ACLs -->
 	<adapter factory=".acl._TopicACLProvider"
@@ -85,6 +95,12 @@
 
 	<adapter factory=".acl._CommunityBoardACLProvider"
 			 for=".interfaces.ICommunityBoard"/>
+
+	<adapter factory=".acl._DFLForumACLProvider"
+			 for=".interfaces.IDFLForum"/>
+
+	<adapter factory=".acl._DFLBoardACLProvider"
+			 for=".interfaces.IDFLBoard"/>
 
 	<adapter factory=".acl._PostACLProvider" />
 	<adapter factory=".acl._HeadlinePostACLProvider" />

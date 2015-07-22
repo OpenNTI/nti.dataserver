@@ -24,8 +24,7 @@ class _MaybeThreadableForumObjectInternalObjectIO(ThreadableExternalizableMixin,
 	we distinguish here. This was easier than registering custom
 	objects for the specific interfaces.
 
-	.. note: We are not enforcing that replies are to objects in the same
-		topic.
+	.. note: We are not enforcing that replies are to objects in the same topic.
 	"""
 
 	def _ext_can_write_threads(self):

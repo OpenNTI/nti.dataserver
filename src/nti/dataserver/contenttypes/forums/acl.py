@@ -81,6 +81,32 @@ class _CommunityBoardACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		self._extend_with_admin_privs(acl)
 
+class _DFLForumACLProvider(_ForumACLProvider):
+	"""
+	Also adds the ability for anyone who can see it to create
+	new topics within it.
+	"""
+
+	_PERMS_FOR_CREATOR = AbstractCreatedAndSharedACLProvider._PERMS_FOR_SHARING_TARGETS
+	_PERMS_FOR_SHARING_TARGETS = (nauth.ACT_READ, nauth.ACT_CREATE)
+
+	def _get_sharing_target_names(self):
+		return (self.context.creator,)  # the IDFL
+
+class _DFLBoardACLProvider(AbstractCreatedAndSharedACLProvider):
+	"""
+	Gives admins the ability to create/delete entire forums.
+	"""
+
+	_DENY_ALL = False  # inherit the acl from our parent, entity, which would give the creator full control
+	_REQUIRE_CREATOR = True
+
+	def _get_sharing_target_names(self):
+		return ()
+
+	def _extend_acl_after_creator_and_sharing(self, acl):
+		self._extend_with_admin_privs(acl)
+
 # Sometimes we have topics and headline posts that are owned by
 # non-user entities like communities; in that case, we want the permissions to only
 # grant the creator read access

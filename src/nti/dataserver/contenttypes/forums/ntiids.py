@@ -15,6 +15,7 @@ from zope import interface
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.ntiids import AbstractUserBasedResolver
 from nti.dataserver.ntiids import AbstractAdaptingUserBasedResolver
@@ -23,6 +24,8 @@ from nti.dataserver.ntiids import AbstractMappingAdaptingUserBasedResolver
 from nti.ntiids.ntiids import get_specific
 from nti.ntiids.interfaces import INTIIDResolver
 
+from .interfaces import IDFLBoard
+from .interfaces import IDFLForum
 from .interfaces import IPersonalBlog
 from .interfaces import ICommunityBoard
 from .interfaces import ICommunityForum
@@ -95,6 +98,51 @@ class _CommunityTopicResolver(AbstractUserBasedResolver):
 			return None
 		return resolve_ntiid_in_board(ntiid, board)
 
+@interface.implementer(INTIIDResolver)
+class _DFLBoardResolver(AbstractAdaptingUserBasedResolver):
+	"""
+	Resolves the default board that belongs to a DFL, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_DFL_BOARD`
+	"""
+
+	adapt_to = IDFLBoard
+	required_iface = IDynamicSharingTargetFriendsList
+
+@interface.implementer(INTIIDResolver)
+class _DFLForumResolver(AbstractMappingAdaptingUserBasedResolver):
+	"""
+	Resolves a forum that belongs to a DFL.
+
+	Register with the name :const:`.NTIID_TYPE_DFL_FORUM`
+	"""
+
+	adapt_to = IDFLBoard  # adapt to a board, look inside for a named forum
+	required_iface = IDynamicSharingTargetFriendsList
+
+	def _resolve(self, ntiid, dfl):
+		forum = super(_DFLForumResolver, self)._resolve(ntiid, dfl)
+		if forum is None and get_specific(ntiid) == 'Forum':  # Hmm, is it the default?
+			forum = IDFLForum(dfl, None)
+		return forum
+
+@interface.implementer(INTIIDResolver)
+class _DFLTopicResolver(AbstractUserBasedResolver):
+	"""
+	Resolves a topic in the one forum that belongs to a DFL, if one does exist.
+
+	Register with the name :const:`.NTIID_TYPE_DFL_TOPIC`
+	"""
+
+	adapt_to = IDFLForum
+	required_iface = IDynamicSharingTargetFriendsList
+
+	def _resolve(self, ntiid, dfl):
+		board = IDFLBoard(dfl, None)
+		if board is None:
+			return None
+		return resolve_ntiid_in_board(ntiid, board)
+	
 def resolve_forum_ntiid_in_board(ntiid, board):
 	"""
 	Finds a specific forum in a board,
