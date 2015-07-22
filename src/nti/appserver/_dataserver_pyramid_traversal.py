@@ -383,8 +383,10 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 		resource.__acl__ = nacl.ACL(self.user)
 		return resource
 
+from nti.dataserver.contenttypes.forums.board import DFLBoard
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.board import CommunityBoard
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
@@ -393,6 +395,9 @@ def _BlogResource(context, request):
 
 def _CommunityBoardResource(context, request):
 	return ICommunityBoard(context, None)
+
+def _DFLBoardResource(context, request):
+	return IDFLBoard(context, None)
 
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
@@ -408,7 +413,6 @@ class UserTraversable(_PseudoTraversableMixin):
 	def __init__(self, context, request=None):
 		self.context = context
 		self.request = request
-
 
 	def traverse(self, key, remaining_path):
 		# First, some pseudo things the user
@@ -469,7 +473,6 @@ class CommunityTraversable(_PseudoTraversableMixin):
 		self.context = context
 		self.request = request
 
-
 	def traverse(self, key, remaining_path):
 		try:
 			return self._pseudo_traverse(key, remaining_path)
@@ -477,6 +480,25 @@ class CommunityTraversable(_PseudoTraversableMixin):
 			# Is there a named path adapter?
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
 
+@interface.implementer(trv_interfaces.ITraversable)
+@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList, pyramid.interfaces.IRequest)
+class DFLTraversable(_PseudoTraversableMixin):
+
+	_pseudo_classes_ = { DFLBoard.__default_name__: _DFLBoardResource }
+
+	_DENY_ALL = True
+
+	def __init__(self, context, request=None):
+		self.context = context
+		self.request = request
+
+	def traverse(self, key, remaining_path):
+		try:
+			return self._pseudo_traverse(key, remaining_path)
+		except KeyError:
+			# Is there a named path adapter?
+			return adapter_request(self.context, self.request).traverse(key, remaining_path)
+		
 @interface.implementer(trv_interfaces.ITraversable)
 @component.adapter(lib_interfaces.IContentPackageLibrary, pyramid.interfaces.IRequest)
 class LibraryTraversable(object):
