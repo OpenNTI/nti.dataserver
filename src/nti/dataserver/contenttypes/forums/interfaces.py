@@ -398,20 +398,20 @@ class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
 	contains(b'.ICommunityHeadlineTopic')
 	__parent__.required = False
 
-class IDFLForum(IGeneralForum, IShouldHaveTraversablePath):
-	"""
-	A forum belonging to a particular DFL.
-	"""
-	containers(IDynamicSharingTargetFriendsList, ICommunityBoard)
-	contains(b'.IDFLHeadlineTopic')
-	__parent__.required = False
-
 class IDFLBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
 	"""
 	A board belonging to a particular dfl.
 	"""
 	contains(b'.IDFLForum')
 	__setitem__.__doc__ = None
+
+class IDFLForum(IGeneralForum, IShouldHaveTraversablePath):
+	"""
+	A forum belonging to a particular DFL.
+	"""
+	containers(IDynamicSharingTargetFriendsList, IDFLBoard)
+	contains(b'.IDFLHeadlineTopic')
+	__parent__.required = False
 
 class IGeneralTopic(ITopic):
 	containers(IGeneralForum)
