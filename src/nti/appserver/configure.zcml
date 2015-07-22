@@ -88,6 +88,7 @@
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"/>
+
 	<adapter factory="._dataserver_pyramid_traversal.Dataserver2RootTraversable"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 for="nti.dataserver.interfaces.IDataserverFolder"/>
@@ -96,6 +97,9 @@
 			 provides="zope.traversing.interfaces.ITraversable" />
 
 	<adapter factory="._dataserver_pyramid_traversal.CommunityTraversable"
+			 provides="zope.traversing.interfaces.ITraversable" />
+
+	<adapter factory="._dataserver_pyramid_traversal.DFLTraversable"
 			 provides="zope.traversing.interfaces.ITraversable" />
 
 	<include package=".workspaces" />
