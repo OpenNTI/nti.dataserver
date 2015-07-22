@@ -69,6 +69,9 @@ from . import _CreatedNamedNTIIDMixin as _SingleInstanceNTIIDMixin
 
 _NEWEST_TTL = datetime.timedelta(days=7)
 
+DEFAULT_FORUM_NAME = 'Forum'
+DEFAULT_PERSONAL_BLOG_NAME = 'Blog'
+
 def query_uid(obj, intids=None):
 	intids = intids or component.getUtility(IIntIds)
 	result = intids.queryId(obj)
@@ -214,7 +217,7 @@ class PersonalBlog(Forum, _SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 
 	creator = None
-	__name__ = __blog_name__ = __default_name__ = 'Blog'
+	__name__ = __blog_name__ = __default_name__ = DEFAULT_PERSONAL_BLOG_NAME
 	_ntiid_type = NTIID_TYPE_PERSONAL_BLOG
 
 @interface.implementer(IPersonalBlog)
@@ -268,7 +271,7 @@ def NoBlogAdapter(user):
 class GeneralForum(Forum, _SingleInstanceNTIIDMixin):
 	__external_can_create__ = False
 	creator = None
-	__name__ = __default_name__ = 'Forum'
+	__name__ = __default_name__ = DEFAULT_FORUM_NAME
 	_ntiid_type = NTIID_TYPE_GENERAL_FORUM
 
 @interface.implementer(ICommunityForum)
