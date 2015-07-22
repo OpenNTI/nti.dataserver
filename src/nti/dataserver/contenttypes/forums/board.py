@@ -48,6 +48,8 @@ from .interfaces import NTIID_TYPE_COMMUNITY_BOARD
 from . import _CreatedNamedNTIIDMixin
 from . import _CreatedIntIdNTIIDMixin
 
+DEFAULT_BOARD_NAME = 'DiscussionBoard'
+
 @interface.implementer(IBoard)
 class Board(Base,
 			AcquireObjectsOnReadMixin,
@@ -55,7 +57,7 @@ class Board(Base,
 			AbstractReadableSharedWithMixin):
 
 	__external_can_create__ = False
-	__name__ = __default_name__ = 'DiscussionBoard'
+	__name__ = __default_name__ = DEFAULT_BOARD_NAME
 	mimeType = None  # for static analysis; real value filled in by externalization
 
 	title = AdaptingFieldProperty(IBoard['title'])
