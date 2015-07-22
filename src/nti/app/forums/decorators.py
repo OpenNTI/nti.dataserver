@@ -41,6 +41,9 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
+from nti.dataserver.contenttypes.forums.board import DEFAULT_BOARD_NAME
+from nti.dataserver.contenttypes.forums.forum import DEFAULT_PERSONAL_BLOG_NAME
+
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalObjectDecorator
@@ -50,16 +53,10 @@ from nti.links.links import Link
 
 from nti.utils._compat import aq_base
 
+from . import VIEW_CONTENTS
+
 # These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = StandardExternalFields.LINKS
-
-from nti.dataserver.contenttypes.forums.forum import PersonalBlog
-_BLOG_NAME = PersonalBlog.__default_name__
-
-from nti.dataserver.contenttypes.forums.board import CommunityBoard
-_BOARD_NAME = CommunityBoard.__default_name__
-
-from . import VIEW_CONTENTS
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IUser)
@@ -69,16 +66,15 @@ class BlogLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, mapping):
 		the_links = mapping.setdefault(LINKS, [])
-
 		# Notice we DO NOT adapt; it must already exist, meaning that the
 		# owner has at one time added content to it. It may not have published
 		# content, though, and it may no longer have any entries
 		# (hence 'not None' rather than __nonzero__)
-		blog = context.containers.getContainer(_BLOG_NAME)
+		blog = context.containers.getContainer(DEFAULT_PERSONAL_BLOG_NAME)
 		if blog is not None and is_readable(blog):
 			link = Link(context,
-						 rel=_BLOG_NAME,
-						 elements=(_BLOG_NAME,))
+						 rel=DEFAULT_PERSONAL_BLOG_NAME,
+						 elements=(DEFAULT_PERSONAL_BLOG_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
 
@@ -101,8 +97,8 @@ class CommunityBoardLinkDecorator(object):
 		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
 			the_links = mapping.setdefault(LINKS, [])
 			link = Link(context,
-						rel=_BOARD_NAME,
-						elements=(_BOARD_NAME,))
+						rel=DEFAULT_BOARD_NAME,
+						elements=(DEFAULT_BOARD_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
 
@@ -114,11 +110,11 @@ class DFLBoardLinkDecorator(object):
 
 	def decorateExternalMapping(self, context, mapping):	
 		board = IDFLBoard(context, None)
-		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
+		if board is not None:  # Not checking security.
 			the_links = mapping.setdefault(LINKS, [])
 			link = Link(context,
-						rel=_BOARD_NAME,
-						elements=(_BOARD_NAME,))
+						rel=DEFAULT_BOARD_NAME,
+						elements=(DEFAULT_BOARD_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
 

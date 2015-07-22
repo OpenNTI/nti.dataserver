@@ -90,7 +90,8 @@ class UserCommunityFixture(object):
 			user2_following_2 = self._create_user( username='user2_following_2@foo' )
 
 			# make them share a community
-			community = users.Community.get_community( community_name, self.ds ) or users.Community.create_community( username=community_name )
+			community = users.Community.get_community( community_name, self.ds ) or \
+						users.Community.create_community( username=community_name )
 			user.record_dynamic_membership(community)
 			user2.record_dynamic_membership(community)
 			user3.record_dynamic_membership(community)
@@ -117,7 +118,67 @@ class UserCommunityFixture(object):
 	def __getattr__( self, name ):
 		return getattr( self.test, name )
 
-class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
+class AbstractPostCreationMixin(object):
+
+	forum_pretty_url = None
+	
+	forum_comment_unique = 'UNIQUETOCOMMENT'
+	
+	forum_headline_class_type = 'Post'
+	forum_headline_unique = 'UNIQUETOHEADLINE'
+	forum_headline_content_type = POST_MIME_TYPE
+	
+	def _create_post_data_for_POST(self):
+		unique = self.forum_headline_unique
+		data = { 'Class': self.forum_headline_class_type,
+				 'MimeType': self.forum_headline_content_type,
+				 'title': 'My New Blog',
+				 'description': "This is a description of the thing I'm creating",
+				 'body': ['My first thought. ' + unique] }
+
+		return data
+
+	def _create_comment_data_for_POST(self):
+		""" Always returns a plain Post so we can be sure that the correct Mime transformation happens. """
+		unique = self.forum_comment_unique
+		data = { 'Class': 'Post',
+				 'title': 'A comment',
+				 'body': ['This is a comment body ' + unique ] }
+		return data
+
+	def _POST_topic_entry( self, data=None, content_type=None, status_only=None, forum_url=None ):
+		testapp = self.testapp
+		if data is None:
+			data = self._create_post_data_for_POST()
+
+		kwargs = {'status': 201}
+		meth = testapp.post_json
+		post_data = data
+		if content_type:
+			kwargs['headers'] = {b'Content-Type': str(content_type)}
+			# testapp.post_json forces the content-type header
+			meth = testapp.post
+			post_data = json.dumps( data )
+		if status_only:
+			kwargs['status'] = status_only
+
+		res = meth(  forum_url or self.forum_pretty_url,
+					 post_data,
+					 **kwargs )
+
+		return res
+
+	def _POST_and_publish_topic_entry( self, data=None, forum_url=None ):
+		""" Returns (publish Response, topic data) """
+		if data is None:
+			data = self._create_post_data_for_POST()
+		res = self._POST_topic_entry( data=data, forum_url=forum_url )
+
+		publish_url = self.require_link_href_with_rel( res.json_body, 'publish' )
+		res = self.testapp.post( publish_url )
+		return res, data
+
+class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMixin, TestBaseMixin):
 	#: make nosetests only run subclasses of this that set __test__ to True
 	__test__ = False
 
@@ -126,18 +187,13 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 	forum_ntiid = 'tag:nextthought.com,2011-10:' + default_username + '-Forum:PersonalBlog-Blog'
 	forum_url_relative_to_user = 'Blog'
 	forum_content_type = None
-	forum_headline_class_type = 'Post'
-	forum_headline_content_type = POST_MIME_TYPE
-	forum_pretty_url = None
+	
 	forum_link_rel = None
 	forum_title = default_username
 	forum_type = None
 	forum_topic_content_type = None
 	forum_topic_ntiid_base = 'tag:nextthought.com,2011-10:' + default_username + '-Topic:PersonalBlogEntry-'
 	forum_topic_comment_content_type = None
-
-	forum_comment_unique = 'UNIQUETOCOMMENT'
-	forum_headline_unique = 'UNIQUETOHEADLINE'
 
 	# Define these to get testing at the board level
 	board_pretty_url = None
@@ -1233,57 +1289,6 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin,TestBaseMixin):
 		contents_res = self.testapp.get( contents_href )
 		assert_that( contents_res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( contents_res.json_body['Items'][0], has_entry( 'MimeType', _plain( self.forum_content_type ) ) )
-
-
-	def _create_post_data_for_POST(self):
-		unique = self.forum_headline_unique
-		data = { 'Class': self.forum_headline_class_type,
-				 'MimeType': self.forum_headline_content_type,
-				 'title': 'My New Blog',
-				 'description': "This is a description of the thing I'm creating",
-				 'body': ['My first thought. ' + unique] }
-
-		return data
-
-	def _create_comment_data_for_POST(self):
-		""" Always returns a plain Post so we can be sure that the correct Mime transformation happens. """
-		unique = self.forum_comment_unique
-		data = { 'Class': 'Post',
-				 'title': 'A comment',
-				 'body': ['This is a comment body ' + unique ] }
-		return data
-
-	def _POST_topic_entry( self, data=None, content_type=None, status_only=None, forum_url=None ):
-		testapp = self.testapp
-		if data is None:
-			data = self._create_post_data_for_POST()
-
-		kwargs = {'status': 201}
-		meth = testapp.post_json
-		post_data = data
-		if content_type:
-			kwargs['headers'] = {b'Content-Type': str(content_type)}
-			# testapp.post_json forces the content-type header
-			meth = testapp.post
-			post_data = json.dumps( data )
-		if status_only:
-			kwargs['status'] = status_only
-
-		res = meth(  forum_url or self.forum_pretty_url,
-					 post_data,
-					 **kwargs )
-
-		return res
-
-	def _POST_and_publish_topic_entry( self, data=None, forum_url=None ):
-		""" Returns (publish Response, topic data) """
-		if data is None:
-			data = self._create_post_data_for_POST()
-		res = self._POST_topic_entry( data=data, forum_url=forum_url )
-
-		publish_url = self.require_link_href_with_rel( res.json_body, 'publish' )
-		res = self.testapp.post( publish_url )
-		return res, data
 
 	def _do_simple_tests_for_POST_of_topic_entry( self, data, content_type=None, status_only=None, expected_data=None ):
 		res = self._POST_topic_entry( data, content_type=content_type, status_only=status_only )
