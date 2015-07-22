@@ -28,6 +28,7 @@ frm_ext = frm_ext
 
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForum
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
+from nti.dataserver.contenttypes.forums.interfaces import IDFLHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralForumComment
 from nti.dataserver.contenttypes.forums.interfaces import IGeneralHeadlinePost
@@ -86,6 +87,7 @@ class PostObjectPutView(UGDPutView):
 			validate_attachments(contentObject, sources.values())
 		return result
 	
+@view_config(context=IDFLHeadlineTopic) 
 @view_config(context=IGeneralHeadlineTopic)
 @view_config(context=ICommunityHeadlineTopic) # Needed?
 @view_defaults( permission=nauth.ACT_UPDATE,

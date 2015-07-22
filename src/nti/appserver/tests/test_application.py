@@ -246,11 +246,10 @@ class TestApplication(ApplicationLayerTest):
 			user = self._create_user()
 			interface.alsoProvides( user, nti_interfaces.ICoppaUserWithoutAgreement )
 
-
 		res = testapp.get( '/dataserver2',
 						   extra_environ=self._make_extra_environ( HTTP_ORIGIN=b'http://mathcounts.nextthought.com' ),
 						   status=200 )
-		assert_that(res.json_body['CapabilityList'], has_length(2))
+		assert_that(res.json_body['CapabilityList'], has_length(3))
 
 
 	@WithSharedApplicationMockDS

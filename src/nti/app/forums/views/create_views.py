@@ -71,6 +71,16 @@ class CommunityBoardPostView(AbstractBoardPostView):
 
 @view_config( name='' )
 @view_config( name=VIEW_CONTENTS )
+@view_defaults( context=frm_interfaces.IDFLBoard,
+				**_c_view_defaults)
+class DFLBoardPostView(AbstractBoardPostView):
+	
+	# XXX: We can do better
+	def _get_topic_creator(self):
+		return self.request.context.creator # the dfl
+
+@view_config( name='' )
+@view_config( name=VIEW_CONTENTS )
 @view_defaults( context=frm_interfaces.IForum,
 				**_c_view_defaults)
 class ForumPostView(_AbstractForumPostView):
