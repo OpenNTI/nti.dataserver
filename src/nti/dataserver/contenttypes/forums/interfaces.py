@@ -26,7 +26,26 @@ from zope.dublincore.interfaces import IDCTimes
 
 from zope.schema import Int
 
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import ACE_ACT_DENY
+from nti.dataserver.interfaces import ACE_ACT_ALLOW
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IThreadable
+from nti.dataserver.interfaces import IPublishable
+from nti.dataserver.interfaces import ILastModified
+from nti.dataserver.interfaces import IMutedInStream
+from nti.dataserver.interfaces import ITitledContent
+from nti.dataserver.interfaces import IModeledContent
+from nti.dataserver.interfaces import IReadableShared
+from nti.dataserver.interfaces import IUserTaggedContent
+from nti.dataserver.interfaces import ITitledDescribedContent
+from nti.dataserver.interfaces import INeverStoredInSharedStream
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.interfaces import ExtendedCompoundModeledContentBody
+from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 
 from nti.schema.field import Object, Number, Variant, ValidTextLine, ListOrTuple
 
@@ -42,6 +61,9 @@ NTIID_TYPE_GENERAL_BOARD = NTIID_TYPE_BOARD + ':General'
 
 # : The subtype of NTIID used to represent a :class:`.ICommunityBoard`
 NTIID_TYPE_COMMUNITY_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Community'
+
+# : The subtype of NTIID used to represent a :class:`.IDFLBoard`
+NTIID_TYPE_DFL_BOARD = NTIID_TYPE_GENERAL_BOARD + 'DFL'
 
 # The subtype of NTIID used to represent a :class:`.IClassBoard`
 NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Class'
@@ -61,6 +83,9 @@ NTIID_TYPE_GENERAL_FORUM = NTIID_TYPE_FORUM + ':General'
 # : The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_COMMUNITY_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Community'
 
+# : The subtype of NTIID used to represent a :class:`.IDFLForum`
+NTIID_TYPE_DFL_FORUM = NTIID_TYPE_GENERAL_FORUM + 'DFL'
+
 # : The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Class'
 
@@ -78,6 +103,9 @@ NTIID_TYPE_GENERAL_TOPIC = NTIID_TYPE_TOPIC + ':General'
 
 # The subtype of NTIID used for community general topics
 NTIID_TYPE_COMMUNITY_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "Community"
+
+# The subtype of NTIID used for DFL general topics
+NTIID_TYPE_DFL_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "DFL"
 
 # : The type of NTIID used to represent an individual :class:`IPost`
 NTIID_TYPE_POST = 'Post'
@@ -98,11 +126,11 @@ class IUseOIDForNTIID(interface.Interface):
 class IPost(IContained,
 			IAcquirer,
 			IDCTimes,
-			nti_interfaces.IModeledContent,
-			nti_interfaces.IReadableShared,
-			nti_interfaces.ITitledContent,
-			nti_interfaces.IUserTaggedContent,
-			nti_interfaces.INeverStoredInSharedStream):
+			IModeledContent,
+			IReadableShared,
+			ITitledContent,
+			IUserTaggedContent,
+			INeverStoredInSharedStream):
 	"""
 	A post within a topic.
 
@@ -113,10 +141,10 @@ class IPost(IContained,
 	containers(b'.ITopic')  # Adds __parent__ as required
 	__parent__.required = False
 
-	body = nti_interfaces.ExtendedCompoundModeledContentBody()
+	body = ExtendedCompoundModeledContentBody()
 
 class ICommentPost(IPost,
-				   nti_interfaces.IThreadable):
+				   IThreadable):
 	"""
 	Comments within (under) the headline post of a topic.
 	"""
@@ -125,11 +153,11 @@ class ITopic(IContentContainer,
 			 IContained,
 			 IAcquirer,
 			 IDCTimes,
-			 nti_interfaces.ILastModified,
-			 nti_interfaces.ITitledDescribedContent,
-			 nti_interfaces.IUserTaggedContent,
-			 nti_interfaces.INeverStoredInSharedStream,
-			 nti_interfaces.INotModifiedInStreamWhenContainerModified):
+			 ILastModified,
+			 ITitledDescribedContent,
+			 IUserTaggedContent,
+			 INeverStoredInSharedStream,
+			 INotModifiedInStreamWhenContainerModified):
 	"""
 	A topic is contained by a forum. It is distinctly named within the containing
 	forum (often this name will be auto-generated). A topic contains potentially many posts
@@ -161,9 +189,9 @@ class IForum(IContentContainer,
 			 IContained,
 			 IAcquirer,
 			 IDCTimes,
-			 nti_interfaces.ILastModified,
-			 nti_interfaces.ITitledDescribedContent,
-			 nti_interfaces.INotModifiedInStreamWhenContainerModified):
+			 ILastModified,
+			 ITitledDescribedContent,
+			 INotModifiedInStreamWhenContainerModified):
 	"""
 	A forum is contained by a board. A forum itself contains arbitrarily
 	many topics and is folderish for those topics. Forums are a level of permissioning, with only certain people
@@ -188,8 +216,8 @@ class IForum(IContentContainer,
 class IBoard(IContentContainer,
 			 IContained,
 			 IDCTimes,
-			 nti_interfaces.ILastModified,
-			 nti_interfaces.ITitledDescribedContent):  # implementations may be IAcquirer
+			 ILastModified,
+			 ITitledDescribedContent):  # implementations may be IAcquirer
 	"""
 	A board is the outermost object. It contains potentially many forums (though
 	usually this number is relatively small). Each forum is distinctly named
@@ -204,7 +232,7 @@ class IBoard(IContentContainer,
 
 
 class IHeadlinePost(IPost,
-					nti_interfaces.IMutedInStream):
+					IMutedInStream):
 	"""
 	The headline post for a headline topic.
 	"""
@@ -213,7 +241,7 @@ class IHeadlinePost(IPost,
 
 
 class IPublishableTopic(ITopic,
-						nti_interfaces.IPublishable):
+						IPublishable):
 	"""
 	Mixin/marker interface for topics that are publishable.
 	"""
@@ -226,8 +254,8 @@ class IHeadlineTopic(ITopic):
 	headline = Object(IHeadlinePost, title="The main, first post of this topic.")
 
 class IPersonalBlog(IForum,
-					nti_interfaces.ICreated,
-					nti_interfaces.IShouldHaveTraversablePath):
+					ICreated,
+					IShouldHaveTraversablePath):
 	"""
 	A personal blog is a special type of forum, in that it contains only :class:`.IPersonalBlogEntry`
 	objects and is contained by an :class:`nti.dataserver.interfaces.IUser`.
@@ -238,7 +266,7 @@ class IPersonalBlog(IForum,
 
 	contains(b".IPersonalBlogEntry")
 	__setitem__.__doc__ = None
-	containers(nti_interfaces.IUser)
+	containers(IUser)
 	__parent__.required = False
 
 class IPersonalBlogEntryPost(IHeadlinePost):
@@ -249,18 +277,15 @@ class IPersonalBlogEntryPost(IHeadlinePost):
 	containers(b'.IPersonalBlogEntry')  # Adds __parent__ as required
 	__parent__.required = False
 
-
-class IPersonalBlogComment(ICommentPost,
-						   nti_interfaces.IShouldHaveTraversablePath):
+class IPersonalBlogComment(ICommentPost, IShouldHaveTraversablePath):
 	containers(b'.IPersonalBlogEntry')  # Adds __parent__ as required
 	__parent__.required = False
 
-
 class IPersonalBlogEntry(IHeadlineTopic,
 						 IPublishableTopic,
-						 nti_interfaces.ICreated,
-						 nti_interfaces.IReadableShared,
-						 nti_interfaces.IShouldHaveTraversablePath):
+						 ICreated,
+						 IReadableShared,
+						 IShouldHaveTraversablePath):
 	"""
 	A special kind of headline topic that is only contained by blogs.
 
@@ -328,14 +353,14 @@ class IGeneralHeadlinePost(IGeneralPost, IHeadlinePost):
 	containers(b'.IGeneralHeadlineTopic')
 	__parent__.required = False
 
-class IGeneralBoard(IBoard, nti_interfaces.ICreated):
+class IGeneralBoard(IBoard, ICreated):
 	"""
 	A general purpose board.
 	"""
 	contains(b'.IGeneralForum')
 	__setitem__.__doc__ = None
 
-class IGeneralForum(IForum, nti_interfaces.ICreated):
+class IGeneralForum(IForum, ICreated):
 	"""
 	A general purpose forum that is not a blog.
 	"""
@@ -358,35 +383,49 @@ class IDefaultForumBoard(IGeneralBoard):
 		# NOTE: This is not a good abstraction and is tied up
 		# with the way that the appserver wants to handle traversal
 
-class ICommunityBoard(IDefaultForumBoard,
-					  nti_interfaces.IShouldHaveTraversablePath):
+class ICommunityBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
 	"""
 	A board belonging to a particular community.
 	"""
 	contains(b'.ICommunityForum')
 	__setitem__.__doc__ = None
 
-class ICommunityForum(IGeneralForum, nti_interfaces.IShouldHaveTraversablePath):
+class ICommunityForum(IGeneralForum, IShouldHaveTraversablePath):
 	"""
 	A forum belonging to a particular community.
 	"""
-	containers(nti_interfaces.ICommunity, ICommunityBoard)
+	containers(ICommunity, ICommunityBoard)
 	contains(b'.ICommunityHeadlineTopic')
 	__parent__.required = False
+
+class IDFLForum(IGeneralForum, IShouldHaveTraversablePath):
+	"""
+	A forum belonging to a particular DFL.
+	"""
+	containers(IDynamicSharingTargetFriendsList, ICommunityBoard)
+	contains(b'.IDFLHeadlineTopic')
+	__parent__.required = False
+
+class IDFLBoard(IDefaultForumBoard, IShouldHaveTraversablePath):
+	"""
+	A board belonging to a particular dfl.
+	"""
+	contains(b'.IDFLForum')
+	__setitem__.__doc__ = None
 
 class IGeneralTopic(ITopic):
 	containers(IGeneralForum)
 	__parent__.required = False
 	contains(b".IGeneralForumComment")
 
-class IGeneralHeadlineTopic(IGeneralTopic, IHeadlineTopic,
-							nti_interfaces.ICreated,
-							nti_interfaces.IReadableShared,
-							nti_interfaces.IShouldHaveTraversablePath):
+class IGeneralHeadlineTopic(IGeneralTopic, 
+							IHeadlineTopic,
+							ICreated,
+							IReadableShared,
+							IShouldHaveTraversablePath):
 	containers(IGeneralForum)
 	__parent__.required = False
 	headline = Object(IGeneralHeadlinePost, title="The main, first post of this topic.")
-
 
 class ICommunityHeadlinePost(IGeneralHeadlinePost):
 	"""The headline of a community topic"""
@@ -399,16 +438,26 @@ class ICommunityHeadlineTopic(IGeneralHeadlineTopic,
 	__parent__.required = False
 	headline = Object(ICommunityHeadlinePost, title="The main, first post of this topic.")
 
+class IDFLHeadlinePost(IGeneralHeadlinePost):
+	"""The headline of a DFL topic"""
+	containers(b'.IDFLHeadlineTopic')
+	__parent__.required = False
+
+class IDFLHeadlineTopic(IGeneralHeadlineTopic, IPublishableTopic):
+	containers(IDFLForum)
+	__parent__.required = False
+	headline = Object(IDFLHeadlinePost, title="The main, first post of this topic.")
 
 class IGeneralForumComment(IGeneralPost,
 						   ICommentPost,
-						   nti_interfaces.IShouldHaveTraversablePath):
+						   IShouldHaveTraversablePath):
 	"""Secondary comments in a general topic."""
 	containers(IGeneralTopic)
 	__parent__.required = False
 
-ACTIONS = (nti_interfaces.ACE_ACT_ALLOW, nti_interfaces.ACE_ACT_DENY)
-ACTION_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in ACTIONS])
+ACTIONS = (ACE_ACT_ALLOW, ACE_ACT_DENY)
+ACTION_VOCABULARY = schema.vocabulary.SimpleVocabulary(
+						[schema.vocabulary.SimpleTerm(_x) for _x in ACTIONS])
 
 # ACL Boards and Forums.
 # This is defined to allow control to whom can create a forum or a board in a class
@@ -419,19 +468,28 @@ READ_PERMISSION = u'Read'
 WRITE_PERMISSION = u'Write'
 CREATE_PERMISSION = u'Create'
 DELETE_PERMISSION = u'Delete'
-PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION, CREATE_PERMISSION, DELETE_PERMISSION)
-PERMISSIONS_VOCABULARY = schema.vocabulary.SimpleVocabulary([schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
+PERMISSIONS = (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION,
+			   CREATE_PERMISSION, DELETE_PERMISSION)
+PERMISSIONS_VOCABULARY = \
+		schema.vocabulary.SimpleVocabulary(
+						[schema.vocabulary.SimpleTerm(_x) for _x in PERMISSIONS])
 
 def can_read(perm):
 	return perm in (ALL_PERMISSIONS, READ_PERMISSION, WRITE_PERMISSION)
 
 class IForumACE(interface.Interface):
-	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, title='ACE action', required=True)
-	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"), title="entities ids", required=True)
-	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, title='ACE permission'), required=True)
+	Action = schema.Choice(vocabulary=ACTION_VOCABULARY, 
+						   title='ACE action', 
+						   required=True)
+	Entities = ListOrTuple(value_type=ValidTextLine(title="entity id"),
+						   title="entities ids", required=True)
+	Permissions = ListOrTuple(value_type=schema.Choice(vocabulary=PERMISSIONS_VOCABULARY, 
+													   title='ACE permission'), 
+							  required=True)
 
 class IACLEnabled(interface.Interface):
-	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"), title="ACL spec", required=False)
+	ACL = ListOrTuple(value_type=Object(IForumACE, title="the ace"),
+					  title="ACL spec", required=False)
 
 # ACL Boards
 
@@ -448,7 +506,7 @@ IACLCommunityBoard.setTaggedValue('__external_class_name__', "CommunityBoard")
 
 # ACL Forums
 
-class IACLGeneralForum(IACLEnabled, IForum, nti_interfaces.ICreated):
+class IACLGeneralForum(IACLEnabled, IForum, ICreated):
 	"""
 	A general purpose forum that has its own ACL
 	"""

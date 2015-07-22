@@ -28,6 +28,7 @@ from nti.dataserver.containers import AbstractNTIIDSafeNameChooser
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
@@ -36,9 +37,12 @@ from nti.schema.fieldproperty import AdaptingFieldProperty
 from nti.utils._compat import Base
 
 from .interfaces import IBoard
+from .interfaces import IDFLBoard
+from .interfaces import IDFLForum
 from .interfaces import IGeneralBoard
 from .interfaces import ICommunityBoard
 from .interfaces import ICommunityForum
+from .interfaces import NTIID_TYPE_DFL_BOARD
 from .interfaces import NTIID_TYPE_COMMUNITY_BOARD
 
 from . import _CreatedNamedNTIIDMixin
@@ -73,6 +77,14 @@ class CommunityBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
 	def createDefaultForum(self):
 		return ICommunityForum(self.creator)  # Ask the ICommunity
 
+@interface.implementer(IDFLBoard)
+class DFLBoard(GeneralBoard, _CreatedNamedNTIIDMixin):
+	__external_can_create__ = False
+	_ntiid_type = NTIID_TYPE_DFL_BOARD
+
+	def createDefaultForum(self):
+		return IDFLForum(self.creator)  # Ask the ICommunity
+	
 def _prepare_annotation_board(clazz, iface, creator, title, name=None):
 	board = clazz()
 	board.__parent__ = creator
@@ -117,6 +129,17 @@ def GeneralBoardCommunityAdapter(community):
 	"""
 	# TODO: Note the similarity to personalBlogAdapter
 	return AnnotatableBoardAdapter(community, CommunityBoard, ICommunityBoard)
+
+@interface.implementer(ICommunityBoard)
+@component.adapter(IDynamicSharingTargetFriendsList)
+def GeneralBoardDFLAdapter(dfl):
+	"""
+	For the moment, we will say that all DFLs have a single board, in the same
+	way that all users have a blog. DFL owners can create forums
+	within the board
+	"""
+	# TODO: Note the similarity to personalBlogAdapter
+	return AnnotatableBoardAdapter(dfl, DFLBoard, IDFLBoard)
 
 @component.adapter(IBoard)
 @interface.implementer(INameChooser)

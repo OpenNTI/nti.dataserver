@@ -29,6 +29,7 @@ from ZODB.interfaces import IConnection
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IRedisClient
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.containers import AcquireObjectsOnReadMixin
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
@@ -49,12 +50,15 @@ from .interfaces import IPost
 from .interfaces import IBoard
 from .interfaces import IForum
 from .interfaces import ITopic
+from .interfaces import IDFLBoard
+from .interfaces import IDFLForum
 from .interfaces import IGeneralForum
 from .interfaces import IPersonalBlog
 from .interfaces import ICommunityBoard
 from .interfaces import ICommunityForum
 from .interfaces import IACLCommunityForum
 
+from .interfaces import NTIID_TYPE_DFL_FORUM
 from .interfaces import NTIID_TYPE_GENERAL_FORUM
 from .interfaces import NTIID_TYPE_PERSONAL_BLOG
 from .interfaces import NTIID_TYPE_COMMUNITY_FORUM
@@ -271,8 +275,13 @@ class CommunityForum(GeneralForum):
 	__external_can_create__ = True
 	_ntiid_type = NTIID_TYPE_COMMUNITY_FORUM
 
-@interface.implementer(ICommunityForum)
+@interface.implementer(IDFLForum)
+class DFLForum(GeneralForum):
+	__external_can_create__ = True
+	_ntiid_type = NTIID_TYPE_DFL_FORUM
+
 @component.adapter(ICommunity)
+@interface.implementer(ICommunityForum)
 def GeneralForumCommunityAdapter(community):
 	"""
 	All communities that have a board (which by default is all communities)
@@ -310,3 +319,37 @@ class ACLCommunityForum(CommunityForum):
 	__external_can_create__ = False
 	mime_type = 'application/vnd.nextthought.forums.communityforum'
 	ACL = ()
+
+@interface.implementer(IDFLForum)
+@component.adapter(IDynamicSharingTargetFriendsList)
+def GeneralForumDFLAdapter(dfl):
+	"""
+	All dfls that have a board (which by default is all dfls)
+	have at least one default forum in that board. If the board exists,
+	but no forum exists, one is added.
+	"""
+	board = IDFLBoard(dfl, None)
+	if board is None:
+		return None  # No board is allowed
+
+	if board:  # contains some forums, yay!
+		if len(board) == 1:
+			# Whatever the single forum is
+			return board.values()[0]
+
+		forum = board.get(DFLForum.__default_name__)
+		if forum is not None:
+			return forum
+
+	# Board is empty, or at least doesn't have our desired forum,
+	# so create and store it
+	forum = DFLForum()
+	forum.creator = dfl
+	board[forum.__default_name__] = forum
+	forum.title = _('Forum')
+
+	errors = schema.getValidationErrors(ICommunityForum, forum)
+	if errors:
+		__traceback_info__ = errors
+		raise errors[0][1]
+	return forum

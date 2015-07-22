@@ -38,6 +38,7 @@ from .interfaces import IPost
 from .interfaces import ICommentPost
 from .interfaces import IGeneralPost
 from .interfaces import IHeadlinePost
+from .interfaces import IDFLHeadlinePost
 from .interfaces import IGeneralForumComment
 from .interfaces import IGeneralHeadlinePost
 from .interfaces import IPersonalBlogComment
@@ -124,6 +125,10 @@ class GeneralForumComment(GeneralPost, CommentPost):
 class CommunityHeadlinePost(GeneralHeadlinePost):
 	pass
 
+@interface.implementer(IDFLHeadlinePost)
+class DFLHeadlinePost(GeneralHeadlinePost):
+	pass
+
 @interface.implementer(IPersonalBlogEntryPost)
 class PersonalBlogEntryPost(HeadlinePost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
@@ -131,10 +136,3 @@ class PersonalBlogEntryPost(HeadlinePost):
 @interface.implementer(IPersonalBlogComment)
 class PersonalBlogComment(CommentPost):
 	sharingTargets = _AcquiredSharingTargetsProperty()
-
-#	@CachedProperty
-#	def NTIID(self):
-#		return ntiids.make_ntiid( date=ntiids.DATE,
-#								  provider=self._creator_username,
-#								  nttype=ntiids.TYPE_MEETINGROOM_GROUP,
-#								  specific=ntiids.escape_provider(self.username.lower()))

@@ -22,8 +22,8 @@ try:
 		def __get__(self, instance, klass):
 			if instance is None:
 				return self
-			# NOTE: This only works if __parent__ is already set. It fails
-			# otherwise
+			# NOTE: This only works if __parent__ is already set. 
+			# It fails otherwise
 			return getattr(aq_parent(instance), 'sharingTargets', ())
 
 		def __set__(self, instance, value):
@@ -83,7 +83,7 @@ class _CreatedNamedNTIIDMixin(object):
 	@property
 	def _ntiid_mask_creator(self):
 		return True
-	
+
 	@property
 	def _ntiid_creator_username(self):
 		return IPrincipal(self.creator).id if self.creator else None
@@ -113,12 +113,14 @@ class _CreatedNamedNTIIDMixin(object):
 		creator_name = self._ntiid_creator_username
 		if creator_name:
 			return _make_ntiid(date=_NTIID_DATE,
-								provider=creator_name,
-								nttype=self._ntiid_type,
-								specific=self._ntiid_specific_part)
+							   provider=creator_name,
+							   nttype=self._ntiid_type,
+							   specific=self._ntiid_specific_part)
 
 def _containerIds_from_parent():
-	"Returns a tuple of properties to assign to id and containerId"
+	"""
+	Returns a tuple of properties to assign to id and containerId
+	"""
 
 	# BWC: Some few objects will have this is their __dict__, but that's OK, it should
 	# match what we get anyway (and if it doesn't, its wrong)
