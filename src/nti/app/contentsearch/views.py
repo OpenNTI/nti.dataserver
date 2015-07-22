@@ -95,6 +95,7 @@ class BaseSearchView(BaseView, BatchingUtilsMixin):
 			response = (results, results, None)
 		else:
 			new_results = results.clone(hits=False)
+			batch_start = len(results)-1 if batch_start >= len(results) else batch_start
 			batch_hits = Batch(results.Hits, batch_start, batch_size)
 			new_results.Hits = batch_hits  # Set hits
 			response = (new_results, results, batch_hits)
