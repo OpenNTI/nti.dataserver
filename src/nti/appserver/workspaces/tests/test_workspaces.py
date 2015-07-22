@@ -247,7 +247,8 @@ class TestUserService(ApplicationLayerTest):
 
 		ext_object = toExternalObject( service )
 
-		assert_that(ext_object, has_entry('CapabilityList', has_length(2)))
+		assert_that(ext_object, has_entry('CapabilityList', has_length(3)))
+		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.dflforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.forums.communityforums')))
 		assert_that(ext_object, has_entry('CapabilityList', has_item(u'nti.platform.customization.can_change_password')))
 

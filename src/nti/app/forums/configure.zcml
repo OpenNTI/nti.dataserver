@@ -37,6 +37,11 @@
 		title="Participate in community forums"
 		description='Can the user participate in community forums?' />
 
+	<cap:capability
+		id='nti.platform.forums.dflforums'
+		title="Participate in DFL forums"
+		description='Can the user participate in DFL forums?' />
+
 	<!-- Entry in service doc -->
 	<subscriber factory=".workspaces._UserBlogCollectionFactory"
 				provides="nti.appserver.workspaces.interfaces.ICollection"
@@ -82,6 +87,9 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<subscriber factory=".decorators.CommunityBoardLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+
+	<subscriber factory=".decorators.DFLBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<subscriber factory=".decorators.ForumObjectContentsLinkProvider"

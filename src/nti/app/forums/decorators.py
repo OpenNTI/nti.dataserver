@@ -35,8 +35,10 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.externalization.singleton import SingletonDecorator
@@ -99,8 +101,24 @@ class CommunityBoardLinkDecorator(object):
 		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
 			the_links = mapping.setdefault(LINKS, [])
 			link = Link(context,
-						 rel=_BOARD_NAME,
-						 elements=(_BOARD_NAME,))
+						rel=_BOARD_NAME,
+						elements=(_BOARD_NAME,))
+			link_belongs_to_user(link, context)
+			the_links.append(link)
+
+@interface.implementer(IExternalMappingDecorator)
+@component.adapter(IDynamicSharingTargetFriendsList)
+class DFLBoardLinkDecorator(object):
+
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, mapping):	
+		board = IDFLBoard(context, None)
+		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
+			the_links = mapping.setdefault(LINKS, [])
+			link = Link(context,
+						rel=_BOARD_NAME,
+						elements=(_BOARD_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
 
