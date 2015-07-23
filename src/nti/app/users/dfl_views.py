@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from . import MessageFactory as _
+
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
@@ -23,6 +25,7 @@ from pyramid import httpexceptions as hexc
 from nti.app.authentication import get_remote_user
 
 from nti.appserver.ugd_query_views import _UGDView
+from nti.appserver.ugd_edit_views import UGDDeleteView
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -68,6 +71,19 @@ def exit_dfl_view(context, request):
 	return context
 
 @view_config(route_name='objects.generic.traversal',
+			 renderer='rest',
+			 request_method='DELETE',
+			 context=IDynamicSharingTargetFriendsList,
+			 permission=nauth.ACT_DELETE)
+class DFLDeleteView(UGDDeleteView):
+
+	def _do_delete_object(self, theObject):
+		members = list(theObject) # resolve all members
+		if members:
+			raise hexc.HTTPForbidden(_("Group is not empty"))
+		return super(DFLDeleteView, self)._do_delete_object(theObject)
+
+@view_config(route_name='objects.generic.traversal',
 			 name='Activity',
 			 request_method='GET',
 			 context=IDynamicSharingTargetFriendsList,
@@ -77,8 +93,8 @@ class DFLActivityView(_UGDView):
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''
 		self.user = self.remoteUser
-	
-	def getObjectsForId(self, *args, **kwargs ):
+
+	def getObjectsForId(self, *args, **kwargs):
 		context = self.request.context
 		if self.remoteUser != context.creator and self.remoteUser not in context:
 			raise hexc.HTTPForbidden()
@@ -89,12 +105,12 @@ class DFLActivityView(_UGDView):
 		if self.remoteUser not in context and self.remoteUser != context.creator:
 			raise hexc.HTTPForbidden()
 		intids = component.getUtility(IIntIds)
-		
+
 		username = context.NTIID
 		intids_shared_with_dfl = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
-		
+
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_dfl)
-		
+
 		items = ResultSet(top_level_shared_intids, intids, ignore_invalid=True)
 		return (items,)
