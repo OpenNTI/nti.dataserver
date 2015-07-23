@@ -1129,8 +1129,7 @@ class _RecursiveUGDView(_UGDView):
 											 stream_only=self._iter_ntiids_stream_only))
 		else:
 			library = component.getUtility(IContentPackageLibrary)
-			tocEntries = library.childrenOfNTIID( ntiid )
-			containers = {toc.ntiid for toc in tocEntries} # children
+			containers = set( library.childrenOfNTIID( ntiid ) )
 			containers.add( ntiid ) # item
 
 			# include media containers.

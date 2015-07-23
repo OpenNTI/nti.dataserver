@@ -22,7 +22,7 @@ from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.ugd_query_views import Operator
-from nti.appserver.ugd_query_views import _UGDView
+from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _combine_predicate
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
@@ -34,6 +34,8 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
+from nti.ntiids.ntiids import find_object_with_ntiid
+
 from .ugd_query_views import lists_and_dicts_to_ext_collection
 
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
@@ -41,7 +43,7 @@ LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 union_operator = Operator.union
 intersection_operator = Operator.intersection
 
-class _RelevantUGDView(_UGDView):
+class _RelevantUGDView(_RecursiveUGDView):
 
 	def _make_accept_predicate(self):
 		accept_types = ('application/vnd.nextthought.redaction',)
@@ -78,7 +80,7 @@ class _RelevantUGDView(_UGDView):
 
 	def _get_items(self, ntiid):
 		# query objects
-		view = _UGDView(self.request)
+		view = _RecursiveUGDView(self.request)
 		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
 		try:
 			results = view.getObjectsForId(self.user, ntiid)
@@ -96,7 +98,14 @@ class _RelevantUGDView(_UGDView):
 		# quizzes are often subcontainers, so we look at the parent and its children
 		ntiids = set()
 		results = []
-		for unit in library.childrenOfNTIID(ntiid) + [self._get_library_path(ntiid)]:
+		units = []
+		children = library.childrenOfNTIID(ntiid)
+		for unit in children:
+			unit = find_object_with_ntiid( unit )
+			if unit is not None:
+				units.append( unit )
+
+		for unit in units + [self._get_library_path(ntiid)]:
 			for asm_item in IQAssessmentItemContainer(unit, ()):
 				q_ntiid = getattr(asm_item, 'ntiid', None)
 				if q_ntiid and q_ntiid not in ntiids:
