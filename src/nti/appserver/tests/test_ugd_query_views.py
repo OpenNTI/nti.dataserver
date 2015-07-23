@@ -296,7 +296,7 @@ class TestUGDQueryViews(NewRequestLayerTest):
 			ntiid = child_ntiid
 		class Lib(object):
 			contentPackages = ()
-			def childrenOfNTIID( self, nti ): return [NID] if nti == ntiids.ROOT else []
+			def childrenOfNTIID( self, nti ): return [NID.ntiid] if nti == ntiids.ROOT else []
 		get_current_request().registry.registerUtility( Lib(), lib_interfaces.IContentPackageLibrary )
 		view = _UGDAndRecursiveStreamView( get_current_request() )
 		user = users.User.create_user( self.ds, username='jason.madden@nextthought.com')

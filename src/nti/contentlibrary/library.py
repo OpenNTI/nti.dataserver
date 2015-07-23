@@ -223,7 +223,7 @@ class AbstractContentPackageLibrary(object):
 
 	@property
 	def _root_name(self):
-		root = getattr(self._enumeration, 'root', None) 
+		root = getattr(self._enumeration, 'root', None)
 		name = root.__name__ if root is not None else self.__name__
 		return name
 
@@ -238,7 +238,7 @@ class AbstractContentPackageLibrary(object):
 
 		lib_sync_results = LibrarySynchronizationResults(Name=self._root_name)
 		results.add(lib_sync_results)
-		
+
 		# filter packages if specified
 		never_synced = self._contentPackages is None
 		filtered_old_content_packages, filtered_old_content_packages_by_ntiid = \
@@ -551,7 +551,7 @@ class AbstractContentPackageLibrary(object):
 	def pathToNTIID(self, ntiid, skip_cache=False):
 		"""
 		Returns a list of TOCEntry objects in order until
-		the given ntiid is encountered, or None of the id cannot be found.
+		the given ntiid is encountered, or None if the id cannot be found.
 		"""
 		# We store as weak refs to avoid ConnectionStateErrors
 		# and to reduce memory usage.
@@ -597,9 +597,10 @@ class AbstractContentPackageLibrary(object):
 		if path:
 			parent = path[-1]
 			def rec(toc, accum):
+				accum.extend( toc.embeddedContainerNTIIDs )
 				for child in toc.children:
 					rec(child, accum)
-				accum.append(toc)
+				accum.append(toc.ntiid)
 			rec(parent, result)
 			# And the last thing we did was append the parent
 			# itself, so take it off; we only want the children
