@@ -9,24 +9,27 @@ Implements vocabularies that limit what a user can create.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 logger = __import__('logging').getLogger(__name__)
+
+from . import MessageFactory as _
 
 from zope import component
 from zope import interface
-from zope.schema import interfaces as sch_interfaces
+
 from zope.componentvocabulary.vocabulary import UtilityVocabulary
+
+from zope.schema.interfaces import IVocabularyFactory
 
 from pyramid import httpexceptions as hexc
 from pyramid.threadlocal import get_current_request
 
-from nti.appserver import interfaces as app_interfaces
+from nti.dataserver.users import User
 
-from nti.dataserver import users
-
-from nti.externalization import interfaces as ext_interfaces
+from nti.externalization.interfaces import IMimeObjectFactory
+from nti.externalization.interfaces import IExternalizedObjectFactoryFinder
 from nti.externalization.internalization import default_externalized_object_factory_finder
+
+from .interfaces import ICreatableObjectFilter
 
 # TODO: zope.schema.vocabulary provides a vocab registry
 # Should we make use of that? Especially since these registries
@@ -36,18 +39,16 @@ class _CreatableMimeObjectVocabulary(UtilityVocabulary):
 	"""
 	A vocabulary that reports the names (MIME types) of installed
 	:class:`nti.externalization.interfaces.IMimeObjectFactory` objects.
-	There
 	"""
 	nameOnly = False
-	interface = ext_interfaces.IMimeObjectFactory
+	interface = IMimeObjectFactory
 
 	def __init__(self, context):
 		super(_CreatableMimeObjectVocabulary, self).__init__(context)
-		term_filter = component.queryAdapter(context, app_interfaces.ICreatableObjectFilter, context=context)
-		if term_filter:
-			self._terms = term_filter.filter_creatable_objects(self._terms)
+		for subs in component.subscribers((context,), ICreatableObjectFilter):
+			self._terms = subs.filter_creatable_objects(self._terms)
 
-@interface.implementer(app_interfaces.ICreatableObjectFilter)
+@interface.implementer(ICreatableObjectFilter)
 class _SimpleRestrictedContentObjectFilter(object):
 
 	RESTRICTED = ('application/vnd.nextthought.canvasurlshape',  # images
@@ -59,18 +60,18 @@ class _SimpleRestrictedContentObjectFilter(object):
 				  'application/vnd.nextthought.embeddedvideo',
 				  'application/vnd.nextthought.forums.ace')
 
-	def __init__( self, context=None ):
+	def __init__(self, context=None):
 		pass
 
-	def filter_creatable_objects( self, terms ):
+	def filter_creatable_objects(self, terms):
 		for name in self.RESTRICTED:
-			terms.pop( name, None )
+			terms.pop(name, None)
 		return terms
 
-@interface.implementer(app_interfaces.ICreatableObjectFilter)
+@interface.implementer(ICreatableObjectFilter)
 class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentObjectFilter):
 
-	RESTRICTED = ('application/vnd.nextthought.canvasurlshape', #images
+	RESTRICTED = ('application/vnd.nextthought.canvasurlshape',  # images
 				  'application/vnd.nextthought.redaction',
 				  'application/vnd.nextthought.media',
 				  'application/vnd.nextthought.embeddedaudio',
@@ -79,16 +80,16 @@ class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentOb
 				  'application/vnd.nextthought.forums.ace')
 
 
-@interface.implementer(sch_interfaces.IVocabularyFactory)
+@interface.implementer(IVocabularyFactory)
 class _UserCreatableMimeObjectVocabularyFactory(object):
 
-	def __init__( self ):
+	def __init__(self):
 		pass
 
-	def __call__( self, user ):
-		return _CreatableMimeObjectVocabulary( user )
+	def __call__(self, user):
+		return _CreatableMimeObjectVocabulary(user)
 
-@interface.implementer(ext_interfaces.IExternalizedObjectFactoryFinder)
+@interface.implementer(IExternalizedObjectFactoryFinder)
 def _user_sensitive_factory_finder(ext_object):
 	vocabulary = None
 
@@ -102,31 +103,31 @@ def _user_sensitive_factory_finder(ext_object):
 			# Some test cases call us with bad header values, causing
 			# repoze.who.api.request_classifier and paste.httpheaders to incorrectly
 			# blow up
-			logger.debug( "Failed to get authenticated userid. If this is not a test case, this is a problem" )
+			logger.debug("Failed to get authenticated userid. If this is not a test case, this is a problem")
 			auth_user_name = None
 
 		if auth_user_name:
-			auth_user = users.User.get_user( auth_user_name )
+			auth_user = User.get_user(auth_user_name)
 			if auth_user:
-				vocabulary = component.getUtility( sch_interfaces.IVocabularyFactory, "Creatable External Object Types" )( auth_user )
+				name = "Creatable External Object Types"
+				vocabulary = component.getUtility(IVocabularyFactory, name)(auth_user)
 
-
-	factory = default_externalized_object_factory_finder( ext_object )
+	factory = default_externalized_object_factory_finder(ext_object)
 	if vocabulary is None or factory is None:
 		return factory
 
-	if factory not in vocabulary and component.IFactory.providedBy( factory ):
+	if factory not in vocabulary and component.IFactory.providedBy(factory):
 		# If it's not in the vocabulary, don't let it be created.
 		# We make a pass for legacy 'Class' based things when a MimeType was not
 		# sent in (so we found the Class object, not the MimeType).
 		# This is potentially as small security hole, but the things that are blocked are
 		# not found by Class at this time.
-		raise hexc.HTTPForbidden( _("Cannot create that type of object:") + str(factory))
+		raise hexc.HTTPForbidden(_("Cannot create that type of object:") + str(factory))
 
 	return factory
 
 _user_sensitive_factory_finder.find_factory = _user_sensitive_factory_finder
 
-@interface.implementer(ext_interfaces.IExternalizedObjectFactoryFinder)
-def _user_sensitive_factory_finder_factory( externalized_object ):
+@interface.implementer(IExternalizedObjectFactoryFinder)
+def _user_sensitive_factory_finder_factory(externalized_object):
 	return _user_sensitive_factory_finder
