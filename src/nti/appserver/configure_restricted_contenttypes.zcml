@@ -19,20 +19,14 @@
 
 	<includeOverrides file="restricted_overrides.zcml" />
 
-	<!--
-	Then, install a vocabulary that filters
-	-->
+	<!-- Then, install a vocabulary that filters -->
 	<utility
 		factory="._creatable_mime_object_vocabulary._UserCreatableMimeObjectVocabularyFactory"
 		provides="zope.schema.interfaces.IVocabularyFactory"
 		name="Creatable External Object Types" />
 
-	<!--
-	Last, install a filter
-	-->
-	<adapter
-		factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
-		for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
-
-
+	<!-- Last, install a filter -->
+	<subscriber	factory="._creatable_mime_object_vocabulary._SimpleRestrictedContentObjectFilter"
+				provides=".interfaces.ICreatableObjectFilter"
+				for="nti.dataserver.interfaces.ICoppaUserWithoutAgreement" />
 </configure>
