@@ -45,6 +45,7 @@ from nti.dataserver.interfaces import IEntityContainer
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -217,7 +218,9 @@ def _ResolveUsersView(request):
 		if item:
 			match = item[0]
 			IPreRenderResponseCacheController(match)(match, {'request': request})
-			if IUseNTIIDAsExternalUsername.providedBy(match):
+			if IDynamicSharingTargetFriendsList.providedBy(match):
+				keyname = match.NTIID
+			elif IUseNTIIDAsExternalUsername.providedBy(match):
 				keyname = to_external_ntiid_oid(match)
 			else:
 				keyname = match.username
