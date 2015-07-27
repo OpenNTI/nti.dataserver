@@ -169,9 +169,14 @@ class GenericModeledContentExternalFieldTraverser(TitledDescribedExternalFieldTr
 												  SharedWithExternalFieldTraverser):
 
 	_allowed_fields = 	SharedWithExternalFieldTraverser._allowed_fields + \
-						TitledDescribedExternalFieldTraverser._allowed_fields + ('body',)
+						TitledDescribedExternalFieldTraverser._allowed_fields + ('body', 'Creator')
 	_unwrapped_fields = SharedWithExternalFieldTraverser._unwrapped_fields + \
 						TitledDescribedExternalFieldTraverser._unwrapped_fields
+
+	def __getitem__(self, key):
+		if key == 'Creator':
+			return _DefaultExternalFieldResource('creator', self.context, None)
+		return super( GenericModeledContentExternalFieldTraverser, self ).__getitem__( key )
 
 @component.adapter(IUser)
 @interface.implementer(IExternalFieldTraversable)

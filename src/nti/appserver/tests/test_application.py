@@ -825,22 +825,28 @@ class TestApplication(ApplicationLayerTest):
 		# The user creates it
 		path = '/dataserver2/users/sjohnson@nextthought.com/FriendsLists/'
 
-		res = testapp.post( path, data, extra_environ=self._make_extra_environ(), headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
+		res = testapp.post( path, data, extra_environ=self._make_extra_environ(),
+						headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( 'boom@nextthought.com' ) )
-		assert_that( res.headers, has_entry( 'Content-Type', contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+		assert_that( res.headers, has_entry( 'Content-Type',
+											contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
 
 		assert_that( res.json_body, has_entry( 'IsDynamicSharing', True ) )
 
 		# It is visible to the member in a few places
-		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com',
+										extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
 		resolved_member = resolved_member_res.json_body['Items'][0]
 
 		for k in ('DynamicMemberships', 'following', 'Communities'):
-			assert_that( resolved_member, has_entry( k, has_item( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
+			assert_that( resolved_member, has_entry( k, has_item(
+														has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
 
-		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		assert_that( member_fl_res.json_body, has_entry( 'Items', has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
+		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists',
+									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		assert_that( member_fl_res.json_body, has_entry( 'Items',
+												has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
 
 		# The owner can edit it to remove the membership
 		data = '[]'
@@ -853,14 +859,19 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'friends', [] ) )
 
 		# And it is no longer visible to the ex-member
-		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		resolved_member_res = testapp.get( '/dataserver2/ResolveUser/troy.daley@nextthought.com',
+										extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
 		resolved_member = resolved_member_res.json_body['Items'][0]
 
 		for k in ('DynamicMemberships', 'following', 'Communities'):
-			assert_that( resolved_member, has_entry( k, does_not( has_item( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+			assert_that( resolved_member, has_entry( k, does_not( has_item(
+																has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
-		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists', extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		assert_that( member_fl_res.json_body, has_entry( 'Items', does_not( has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists',
+									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+		assert_that( member_fl_res.json_body, has_entry( 'Items',
+													does_not( has_value(
+															has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
 
 	@WithSharedApplicationMockDS
@@ -1058,6 +1069,40 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.json_body, has_entry( 'href', urllib.quote( path ) ) )
 		assert_that( res.json_body, has_entry( 'Links', has_item( has_entry( 'rel', 'edit' ) ) ) )
 
+	@WithSharedApplicationMockDS
+	def test_note_field_creator(self):
+		"""
+		We can fetch a creator field, but not updated it.
+		"""
+		with mock_dataserver.mock_db_trans( self.ds ):
+			user = self._create_user()
+			username = user.username
+
+			n = contenttypes.Note()
+			n.applicableRange = contentrange.ContentRangeDescription()
+			n.containerId = u'tag:nti:foo'
+			user.addContainedObject( n )
+			assert_that( n.sharingTargets, is_( set() ) )
+			n_ext_id = to_external_ntiid_oid( n )
+
+		testapp = TestApp( self.app )
+		path = '/dataserver2/users/sjohnson@nextthought.com/Objects/%s' % n_ext_id
+		field_path = path + '/++fields++Creator' # The name of the external field
+
+		# Fetch
+		res = testapp.get( urllib.quote( field_path ),
+						   extra_environ=self._make_extra_environ() )
+		assert_that( res.status_int, is_( 200 ) )
+		assert_that( res.json_body, has_entry( "Username", is_( username )))
+
+		# Update to field is ignored
+		res = testapp.put( urllib.quote( field_path ),
+						   '"dne_user1"',
+						   extra_environ=self._make_extra_environ(),
+						   headers={"Content-Type": "application/json" } )
+
+		assert_that( res.json_body, has_entry( "Creator", is_( username ) ) )
+
 	def _edit_user_ext_field( self, field, data, username=None, user_ext_id=None ):
 		if username is None:
 			with mock_dataserver.mock_db_trans( self.ds ):
@@ -1123,7 +1168,7 @@ class TestApplication(ApplicationLayerTest):
 		res = testapp.get( res.json_body[attr_name], extra_environ=self._make_extra_environ() )
 		assert_that( res.content_type, is_( 'image/gif' ) )
 		# And this one is also directly available at this location
-		res = testapp.get('/dataserver2/users/' + username + view_name, 
+		res = testapp.get('/dataserver2/users/' + username + view_name,
 						  extra_environ=self._make_extra_environ(),
 						  status=302)
 		assert_that( res.location, starts_with( 'http://localhost/dataserver2/' ) )
@@ -1137,7 +1182,7 @@ class TestApplication(ApplicationLayerTest):
 	def test_edit_user_background_url(self):
 		#"We can POST to a specific sub-URL to change the backgroundURL"
 		self._test_edit_user_image_url('background')
-		
+
 	@WithSharedApplicationMockDS
 	def test_put_data_to_user( self ):
 		with mock_dataserver.mock_db_trans( self.ds ):

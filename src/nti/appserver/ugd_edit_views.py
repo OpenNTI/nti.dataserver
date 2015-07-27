@@ -43,10 +43,10 @@ from . import httpexceptions as hexc
 def _id(x): return x
 
 class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
-	""" 
-	HTTP says POST creates a NEW entity under the Request-URI 
 	"""
-	
+	HTTP says POST creates a NEW entity under the Request-URI
+	"""
+
 	# Therefore our context is a container, and we should respond created.
 
 	def readCreateUpdateContentObject(self, creator, search_owner=True, externalValue=None):
@@ -63,7 +63,7 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 																				 search_owner=search_owner,
 																				 externalValue=externalValue)
 		return note, owner
-	
+
 	def _transform_incoming_object(self, containedObject):
 		try:
 			transformer = component.queryMultiAdapter( (self.request, containedObject),
@@ -104,7 +104,7 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 		if not getattr( containedObject, StandardInternalFields.CONTAINER_ID, None ):
 			transaction.doom()
 			logger.debug( "Failing to POST: input of unsupported/missing ContainerId" )
-			e = InvalidContainerType("Unsupported/missing ContainerId", 
+			e = InvalidContainerType("Unsupported/missing ContainerId",
 									 StandardExternalFields.CONTAINER_ID, None )
 			e.field = nti_interfaces.IContained['containerId']
 			raise e
@@ -142,7 +142,7 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 
 		containerId = getattr( containedObject, StandardInternalFields.CONTAINER_ID, None )
 		# I think this log message should be info not debug.  It exists to provide statistics not to debug.
-		logger.info("User '%s' created object '%s'/'%s' for container '%s'", 
+		logger.info("User '%s' created object '%s'/'%s' for container '%s'",
 					creator, containedObject.id,
 					type(containedObject).__name__, containerId)
 
@@ -191,7 +191,7 @@ class UGDDeleteView(AbstractAuthenticatedView,
 		# TS thinks this log message should be info not debug.  It exists to provide statistics not to debug.
 		logger.info("User '%s' deleted object '%s'/'%s' from container '%s'",
 					getattr(theObject, 'creator', None),
-					getattr(theObject, 'id', None), 
+					getattr(theObject, 'id', None),
 					getattr(theObject, '__class__', type(theObject)).__name__,
 					getattr(theObject, 'containerId', getattr(theObject, '__parent__', None) ) )
 
@@ -248,7 +248,7 @@ class UGDPutView(AbstractAuthenticatedView,
 		# Now experementing with using dataserver's IModeledContent which is actually correct)
 		containerId = getattr(theObject, 'containerId', None)
 		objectId = getattr(theObject, 'id', None) or str(theObject)
-		
+
 		externalValue = self.readInput()
 		self.updateContentObject(theObject, externalValue)  # Should fire lifecycleevent.modified
 
@@ -263,7 +263,7 @@ class UGDPutView(AbstractAuthenticatedView,
 			logger.info("User '%s' updated object '%s'/'%s'", creator,
 						objectId,
 						getattr(theObject, '__class__', type(theObject)).__name__)
-			
+
 		if theObject and theObject == theObject.creator:
 			# Updating a user. Naturally, this is done by
 			# the user himself. We never want to send
