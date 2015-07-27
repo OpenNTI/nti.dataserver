@@ -16,14 +16,17 @@ import sys
 import time
 import collections
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from zope.container.contained import Contained
+
 from zope.location.interfaces import ISublocations
+
 from zope.mimetype.interfaces import IContentTypeAware
 
+from nti.common.property import alias
 from nti.common.iterables import isorted
-from nti.common.property import Lazy, alias
 
 from nti.mimetype.mimetype import nti_mimetype_with_class
 
@@ -56,7 +59,7 @@ create_search_hit = get_search_hit  # alias
 def _lookup_subscribers(subscriptions=()):
 	result = []
 	for subscription in subscriptions:
-		subscriber = subscription() # construct w/ passing any item
+		subscriber = subscription()  # construct w/ passing any item
 		if subscriber is not None:
 			result.append(subscriber)
 	return result
@@ -70,7 +73,7 @@ def _get_predicate(subscriptions=()):
 			return all((f.allow(item, score, query) for f in filters))
 		result = uber_filter
 	return result
-	
+
 def _get_subscriptions(item, provided=ISearchHitPredicate):
 	adapters = component.getSiteManager().adapters
 	subscriptions = adapters.subscriptions([interface.providedBy(item)], provided)
@@ -90,7 +93,7 @@ class _FilterCache(object):
 			predicate = _get_predicate(subscriptions)
 			self.cache[subscriptions] = predicate
 		return predicate
-		
+
 	def eval(self, item, score=1.0, query=None):
 		predicate = self._lookup(item)
 		__traceback_info__ = predicate
@@ -137,7 +140,7 @@ class SearchHitMetaData(object):
 	def _set_filtered_count(self, count):
 		self.filtered_count = count
 	FilteredCount = property(_get_filtered_count, _set_filtered_count)
-	
+
 	def track(self, selected):
 		self.SearchTime = time.time() - self._ref
 
@@ -198,7 +201,7 @@ class _BaseSearchResults(Contained):
 	Query = alias('query')
 
 	def __init__(self, query=None):
-		super(_BaseSearchResults,self).__init__()
+		super(_BaseSearchResults, self).__init__()
 		self.query = ISearchQuery(query, None)
 
 	def __repr__(self):
@@ -229,6 +232,7 @@ class _SearchResults(_BaseSearchResults):
 		self.count = 0
 		self._hits = []
 		self._seen = set()
+		self._v_filterCache = None
 		self.HitMetaData = SearchHitMetaData()
 
 	def clone(self, meta=True, hits=False):
@@ -274,13 +278,15 @@ class _SearchResults(_BaseSearchResults):
 	def createdTime(self):
 		return self.metadata.createdTime
 
-	@Lazy
+	@property
 	def _limit(self):
 		return getattr(self.query, 'limit', None) or sys.maxint
 
-	@Lazy
+	@property
 	def _filterCache(self):
-		return _FilterCache()
+		if self._v_filterCache is None:
+			self._v_filterCache = _FilterCache()
+		return self._v_filterCache
 
 	def _add_hit(self, hit):
 		if hit.OID not in self._seen and self.count < self._limit:
@@ -336,6 +342,18 @@ class _SearchResults(_BaseSearchResults):
 			self.HitMetaData += other.HitMetaData
 
 		return self
+
+	def __getstate__(self):
+		return {k: v for
+				k, v in self.__dict__.iteritems()
+				if not k.startswith('_v')}
+
+	def __setstate__(self, state):
+		self_dict = self.__dict__
+		for k, v in state.iteritems():
+			if not k.startswith('_v'):
+				self_dict[str(k)] = v
+		self._v_filterCache = None
 
 @interface.implementer(ISuggestResults, IContentTypeAware)
 class _SuggestResults(_BaseSearchResults):
