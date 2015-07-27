@@ -142,7 +142,7 @@ class SearchView(BaseSearchView):
 	name = 'Search'
 
 	max_cache_time = 60
-	max_cache_size = 100
+	max_cache_size = 50
 	use_memcache = True
 	
 	DATA_BASE_KEY = "/search/%s/results/data"
@@ -168,7 +168,6 @@ class SearchView(BaseSearchView):
 			return result
 		try:
 			data = client.get(self._query_key)
-			from IPython.core.debugger import Tracer; Tracer()()
 			if data:
 				stored_query, stamp = data
 				if 	stored_query.digest() == query.digest() and \
