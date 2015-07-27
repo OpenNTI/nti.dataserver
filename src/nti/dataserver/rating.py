@@ -15,8 +15,10 @@ import functools
 
 from zope import component
 from zope import interface
-from zope.event import notify
+
 from zope.annotation.interfaces import IAnnotations
+
+from zope.event import notify
 
 from pyramid.threadlocal import get_current_request
 
@@ -123,17 +125,19 @@ def cached_decorator(key_func):
 			key = key_func(*args, **kwargs)
 			if key:
 				cache = component.queryUtility(IMemcacheClient)
-				if cache:
-					cached = cache.get(key)
-					if cached is not None:
-						return cached
+				if cache is not None:
+					try:
+						cached = cache.get(key)
+						if cached is not None:
+							return cached
+					except Exception as e:
+						logger.error("Cannot get rating from Memcache %s", e)
+						cached = None
 
 			result = func(*args, **kwargs)
-
-			if key and cache:
+			if key and cache is not None:
 				__traceback_info__ = key, result, cache
 				cache.set(key, result)
-
 			return result
 		return _caching
 	return factory
