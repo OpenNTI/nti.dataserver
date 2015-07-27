@@ -298,6 +298,11 @@ def _ugd_odata_views(pyramid_config):
 				  module='nti.appserver.ugd_query_views',
 				  context='nti.appserver.interfaces.IRootPageContainerResource' )
 
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_query_views.UGDFieldGetView',
+							renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
+							permission=nauth.ACT_READ, request_method='GET')
+
+
 def _modifying_ugd_views(pyramid_config):
 
 	### XXX Why was this installed with no predicate?
@@ -370,7 +375,6 @@ def _modifying_ugd_views(pyramid_config):
 	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDFieldPutView',
 							renderer='rest', context='nti.appserver.interfaces.IExternalFieldResource',
 							permission=nauth.ACT_UPDATE, request_method='PUT')
-
 
 def _enclosure_views(pyramid_config):
 

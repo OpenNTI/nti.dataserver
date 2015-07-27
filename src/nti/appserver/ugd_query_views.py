@@ -1459,3 +1459,8 @@ def replies_view(request):
 	view.result_iface = result_iface
 	view.ignore_broken = True
 	return view._sort_filter_batch_objects( objs )
+
+class UGDFieldGetView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		return getattr( self.context.resource, self.context.__name__ )
