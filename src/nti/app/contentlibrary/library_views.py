@@ -49,7 +49,6 @@ from nti.contentlibrary.interfaces import IContentUnitHrefMapper
 
 from nti.dataserver import authorization as nauth
 
-from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import IHighlight
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IDataserverFolder
@@ -57,6 +56,7 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IForum
+from nti.dataserver.contenttypes.forums.interfaces import IBoard
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -363,24 +363,24 @@ def _get_board_obj_path( obj ):
 	# on underlying object, we should have permission up the tree.
 
 	result = LocatedExternalList()
-	top_level_contexts = _get_top_level_contexts( obj )
-
-	if top_level_contexts:
-		def _top_level_endpoint( item ):
-			return item is None or item in top_level_contexts
-	else:
-		# Blog, community boards, etc.
-		def _top_level_endpoint( item ):
-			return item is None \
-				or IContentPackage.providedBy( item ) \
-				or IEntity.providedBy( item )
+	top_level_context = _get_top_level_contexts( obj )
+	top_level_context = top_level_context[0] if top_level_context else None
 
 	item = obj.__parent__
 	result_list = [ item ]
-	while not _top_level_endpoint( item ):
-		item = item.__parent__
-		if item is not None:
-			result_list.append( item )
+
+	# Go up tree until we hit board
+	while item is not None:
+		if IBoard.providedBy( item ):
+			if top_level_context is not None:
+				result_list.append( top_level_context )
+			else:
+				result_list.append( item.__parent__ )
+			item = None
+		else:
+			item = item.__parent__
+			if item is not None:
+				result_list.append( item )
 
 	result_list.reverse()
 	result.append( result_list )
