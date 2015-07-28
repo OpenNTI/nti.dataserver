@@ -22,12 +22,13 @@ from nti.contentindexing.whooshidx.schemas import create_video_transcript_schema
 
 from nti.contentprocessing import rank_words
 
+from .interfaces import ISearchQuery
+
 from . import common
 from . import constants
 from . import whoosh_query
 from . import content_types
 from . import search_results
-from . import interfaces as search_interfaces
 
 from .constants import (content_, ntiid_, last_modified_, videoId_, creator_,
 						containerId_, title_, end_timestamp_, start_timestamp_,
@@ -50,7 +51,7 @@ class _SearchableContent(object):
 		return self._schema
 
 	def _parse_query(self, query, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
+		query = ISearchQuery(query)
 		parsed_query = whoosh_query.parse_query(query, self.schema)
 		return query, parsed_query
 
@@ -61,7 +62,7 @@ class _SearchableContent(object):
 		return results
 
 	def suggest_and_search(self, searcher, query, store=None, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(query)
+		query = ISearchQuery(query)
 		store = search_results.get_or_create_suggest_and_search_results(query, store)
 		if ' ' in query.term or query.IsPrefixSearch or query.IsPhraseSearch:
 			results = self.search(searcher, query, store)
@@ -78,7 +79,7 @@ class _SearchableContent(object):
 		return results
 
 	def suggest(self, searcher, word, store=None, *args, **kwargs):
-		query = search_interfaces.ISearchQuery(word)
+		query = ISearchQuery(word)
 		prefix = query.prefix or len(query.term)
 		maxdist = query.maxdist or self.default_word_max_dist
 		results = search_results.get_or_create_suggest_results(query, store)

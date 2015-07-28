@@ -41,7 +41,7 @@ from .interfaces import ISearchQuery
 from .interfaces import IWhooshContentSearcher
 from .interfaces import IWhooshContentSearcherFactory
 
-from . search_utils import gevent_spawn
+from .search_utils import gevent_spawn
 
 from .search_results import merge_search_results
 from .search_results import merge_suggest_results
