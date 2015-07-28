@@ -36,7 +36,6 @@ class TestViews(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS(users=True, testapp=True)
 	def test_intid_resolver(self):
-
 		with mock_dataserver.mock_db_trans(self.ds):
 			user = self._get_user()
 			intids = component.getUtility(zope.intid.IIntIds)
