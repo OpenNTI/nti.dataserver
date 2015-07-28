@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Event listeners related to establishing and maintaining the
-indexmanager.
+Event listeners related to establishing and maintaining the indexmanager.
 
 .. $Id$
 """
@@ -58,15 +57,17 @@ def add_s3_index(title, event):
 	# It would be created at startup by the application, and given the name of
 	# a directory to use. We would then use it to store and retrieve things,
 	# persistently, across restarts.
-	index_cache_dir = make_cache_dir('whoosh_content_index', env_var='NTI_INDEX_CACHE_DIR')
+	index_cache_dir = make_cache_dir('whoosh_content_index',
+									 env_var='NTI_INDEX_CACHE_DIR')
 
 	indexname = title.get_parent_key().key
 	title_index_cache_dir = os.path.join(index_cache_dir, indexname, 'indexdir')
 	if not os.path.isdir(title_index_cache_dir):
 		os.makedirs(title_index_cache_dir)
 
-	indexdir_keys = title.key.bucket.list(delimiter='/',
-										  prefix=title.make_sibling_key('indexdir').key + '/')
+	indexdir_keys = title.key.bucket.list(
+							delimiter='/',
+							prefix=title.make_sibling_key('indexdir').key + '/')
 
 	# TODO: We are caching based on timestamp. Caching based on version_ids
 	# might be more reliable
@@ -86,14 +87,18 @@ def add_s3_index(title, event):
 			break
 	try:
 		for indexdir_key in indexdir_keys:
-			local_file = os.path.join(title_index_cache_dir, indexdir_key.key.split('/')[-1])
+			local_file = os.path.join(title_index_cache_dir, 
+									  indexdir_key.key.split('/')[-1])
 			__traceback_info__ = title, indexdir_key, local_file
-			# Smarmy bastards. We get different answers for key.last_modified (and hence key_last_modified)
-			# depending on whether we look at it before or after we have downloaded the file.
-			# The string comes back in two different forms, which parse differently (due to timezone parsing)
-			# So we need to preserve the before value so we can be consistent
+			# Smarmy bastards. We get different answers for key.last_modified
+			# (and hence key_last_modified) depending on whether we look at it
+			# before or after we have downloaded the file.
+			# The string comes back in two different forms, which parse differently 
+			# (due to timezone parsing) So we need to preserve the before value so we 
+			# can be consistent
 			last_modified = key_last_modified(indexdir_key)
-			if os.path.exists(local_file) and os.stat(local_file)[os.path.stat.ST_MTIME] >= last_modified:
+			if 	os.path.exists(local_file) and \
+				os.stat(local_file)[os.path.stat.ST_MTIME] >= last_modified:
 				logger.debug("Local file as new as remote %s", local_file)
 				continue
 
@@ -101,7 +106,8 @@ def add_s3_index(title, event):
 			logger.debug("Caching local file from remote %s", local_file)
 			indexdir_key.get_contents_to_filename(local_file)
 			# get_contents_to_filename tries to do this, but cannot be trusted
-			# It may fail, or it will use the 'after download' time, which won't match the 'before download'
+			# It may fail, or it will use the 'after download' time, which won't
+			# match the 'before download'
 			lm = last_modified or key_last_modified(indexdir_key)  # See comments above
 			os.utime(local_file, (lm, lm))
 	finally:
