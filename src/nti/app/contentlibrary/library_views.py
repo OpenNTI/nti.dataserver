@@ -57,6 +57,7 @@ from nti.dataserver.contenttypes.forums.interfaces import IPost
 from nti.dataserver.contenttypes.forums.interfaces import ITopic
 from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
+from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
 from nti.externalization.interfaces import LocatedExternalList
 
@@ -361,7 +362,6 @@ def _get_board_obj_path( obj ):
 	"""
 	# Permissioning concerns? If we have permission
 	# on underlying object, we should have permission up the tree.
-
 	result = LocatedExternalList()
 	top_level_context = _get_top_level_contexts( obj )
 	top_level_context = top_level_context[0] if top_level_context else None
@@ -369,9 +369,11 @@ def _get_board_obj_path( obj ):
 	item = obj.__parent__
 	result_list = [ item ]
 
-	# Go up tree until we hit board
+	# Go up tree until we hit board/blog
 	while item is not None:
-		if IBoard.providedBy( item ):
+		if 		IBoard.providedBy( item ) \
+			or 	IPersonalBlog.providedBy( item ):
+
 			if top_level_context is not None:
 				result_list.append( top_level_context )
 			else:
@@ -515,7 +517,6 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable,
-			# or if we're wrapped by another context.
 			top_level_context = hierarchy_context[0]
 			if not is_readable( top_level_context ):
 				continue
@@ -583,7 +584,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		obj, object_ntiid = self._get_params()
 		if 		ITopic.providedBy( obj ) \
 			or 	IPost.providedBy( obj ) \
-			or IForum.providedBy( obj ):
+			or 	IForum.providedBy( obj ):
 			results = _get_board_obj_path( obj )
 		else:
 			results = self._get_path( obj, object_ntiid )
