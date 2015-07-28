@@ -27,12 +27,13 @@ from nti.externalization.interfaces import LocatedExternalDict
 
 from nti.zodb import isBroken
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 name='intid_resolver',
-			 request_method='GET',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='IntidResolver')
+@view_config(name='intid_resolver')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class IntIdResolverView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -78,15 +79,15 @@ class UnregisterMissingObjectsView(AbstractAuthenticatedView,
 				missing.append(uid)
 			else:
 				total += 1
-		
+
 		for uid, obj in broken.items():
 			logger.info("Unregistering broken object %s,%s", uid, obj)
 			intids.forceUnregister(uid, notify=False, removeAttribute=False)
-					
+
 		for uid in missing:
 			logger.info("Unregistering missing %s", uid)
 			intids.forceUnregister(uid, notify=False, removeAttribute=False)
-			
+
 		result['Total'] = total
 		result['TotalBroken'] = len(broken)
 		result['TotalMissing'] = len(missing)
