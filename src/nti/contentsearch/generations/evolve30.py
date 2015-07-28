@@ -13,8 +13,8 @@ logger = __import__('logging').getLogger(__name__)
 generation = 30
 
 from zope import component
-from zope.component.hooks import site, setHooks
 
+from zope.component.hooks import site, setHooks
 
 from ..interfaces import IContentSearcher
 
