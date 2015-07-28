@@ -14,19 +14,21 @@ __docformat__ = "restructuredtext en"
 from zope import component
 from zope import interface
 
-from zope.location import interfaces as loc_interfaces
-from zope.traversing import interfaces as trv_interfaces
+from zope.location.interfaces import ILocation
+from zope.location.interfaces import LocationError
 
 from zope.security.management import queryInteraction
 
-import pyramid.traversal
-import pyramid.interfaces
+from zope.traversing.interfaces import IPathAdapter
+from zope.traversing.interfaces import ITraversable
 
 from pyramid.interfaces import IView
+from pyramid.interfaces import IRequest
 from pyramid.interfaces import IViewClassifier
 
 from pyramid.security import ALL_PERMISSIONS
 
+from pyramid.traversal import find_interface
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
@@ -35,15 +37,24 @@ from nti.appserver.interfaces import IJoinableContextProvider
 
 from nti.common.property import alias
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver import authorization_acl as nacl
-from nti.dataserver import interfaces as nti_interfaces
 
-from nti.externalization.externalization import toExternalObject
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IZContained
+from nti.dataserver.interfaces import INamedContainer
+from nti.dataserver.interfaces import IDataserverFolder
+from nti.dataserver.interfaces import InappropriateSiteError
+from nti.dataserver.interfaces import IHomogeneousTypeContainer
+from nti.dataserver.interfaces import ISimpleEnclosureContainer
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import to_external_object
 
 from nti.ntiids import ntiids
 
@@ -59,11 +70,11 @@ def root_resource_factory(request):
 
 	:return: An :class:`IRootFolder"
 	"""
-	dataserver = component.getUtility(nti_interfaces.IDataserver)
+	dataserver = component.getUtility(IDataserver)
 	try:
 		root = dataserver.root_folder
 		return root
-	except nti_interfaces.InappropriateSiteError:
+	except InappropriateSiteError:
 		# If an exception occurs and we have the debug toolbar
 		# installed, it makes a new subrequest without using
 		# our tweens, so our site isn't setup. If we raise
@@ -81,7 +92,7 @@ def dataserver2_root_resource_factory(request):
 	:return: An :class:`IDataserverFolder`
 	"""
 
-	dataserver = component.getUtility(nti_interfaces.IDataserver)
+	dataserver = component.getUtility(IDataserver)
 	return dataserver.dataserver_folder
 
 def users_root_resource_factory(request):
@@ -89,12 +100,10 @@ def users_root_resource_factory(request):
 	Returns the object that represents the ``/dataserver2/users``
 	portion of the URL.
 	"""
-
-	dataserver = component.getUtility(nti_interfaces.IDataserver)
+	dataserver = component.getUtility(IDataserver)
 	return dataserver.users_folder
 
-@interface.implementer(trv_interfaces.ITraversable,
-					   loc_interfaces.ILocation)
+@interface.implementer(ITraversable, ILocation)
 class _AbstractContainerResource(object):
 
 	__acl__ = ()
@@ -114,7 +123,7 @@ class _AbstractContainerResource(object):
 
 	@property
 	def user(self):
-		return pyramid.traversal.find_interface(self, nti_interfaces.IUser)
+		return find_interface(self, IUser)
 
 @interface.implementer(interfaces.IContainerResource)
 class  _ContainerResource(_AbstractContainerResource):
@@ -124,7 +133,7 @@ class  _ContainerResource(_AbstractContainerResource):
 		if contained_object is None:
 			# LocationError is a subclass of KeyError, and compatible
 			# with the traverse() interface
-			raise loc_interfaces.LocationError(key)
+			raise LocationError(key)
 		# TODO: We might need to chop off an intid portion of the key
 		# if it's in new style, forced on it by nti.externalization.externalization.
 		# Fortunately, I think everything uses direct OID links and not traversal,
@@ -184,10 +193,10 @@ class _PageContainerResource(_AbstractPageContainerResource):
 class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
-def _get_joinable_contexts( obj ):
+def _get_joinable_contexts(obj):
 	results = []
-	for joinable_contexts in component.subscribers( (obj,), IJoinableContextProvider ):
-		results.extend( joinable_contexts )
+	for joinable_contexts in component.subscribers((obj,), IJoinableContextProvider):
+		results.extend(joinable_contexts)
 	return results
 
 @interface.implementer(interfaces.IObjectsContainerResource)
@@ -197,10 +206,10 @@ class _ObjectsContainerResource(_ContainerResource):
 		super(_ObjectsContainerResource, self).__init__(context, request, name=name or 'Objects')
 
 	def traverse(self, key, remaining_path):
-		ds = component.getUtility(nti_interfaces.IDataserver)
+		ds = component.getUtility(IDataserver)
 		result = self._getitem_with_ds(ds, key)
 		if result is None:  # pragma: no cover
-			raise loc_interfaces.LocationError(key)
+			raise LocationError(key)
 
 		self._check_permission(result)
 		# Make these things be acquisition wrapped, just as if we'd traversed
@@ -223,12 +232,12 @@ class _ObjectsContainerResource(_ContainerResource):
 		permission to view the object in the case of 403s.
 		"""
 		if queryInteraction() is not None and not is_readable(context):
-			results = _get_joinable_contexts( context )
+			results = _get_joinable_contexts(context)
 			if results:
 				response = hexc.HTTPForbidden()
 				result = LocatedExternalDict()
 				result[ITEMS] = results
-				response.json_body = toExternalObject(result, decorate=False)
+				response.json_body = to_external_object(result, decorate=False)
 				raise response
 
 	def _getitem_with_ds(self, ds, key):
@@ -278,10 +287,10 @@ class _PseudoTraversableMixin(object):
 
 			return resource
 
-		raise loc_interfaces.LocationError(key)
+		raise LocationError(key)
 
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.IDataserverFolder, pyramid.interfaces.IRequest)
+@interface.implementer(ITraversable)
+@component.adapter(IDataserverFolder, IRequest)
 class Dataserver2RootTraversable(_PseudoTraversableMixin):
 	"""
 	A traversable for the root folder in the dataserver, providing
@@ -311,7 +320,7 @@ class Dataserver2RootTraversable(_PseudoTraversableMixin):
 		except KeyError:
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
 
-@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
+@component.adapter(IUser, IRequest)
 class _AbstractUserPseudoContainerResource(object):
 	"""
 	Base class for things that represent pseudo-containers under a user.
@@ -327,7 +336,7 @@ class _AbstractUserPseudoContainerResource(object):
 	user = alias('context')
 	resource = alias('context')  # BWC. See GenericGetView
 
-@interface.implementer(trv_interfaces.ITraversable, interfaces.IPagesResource)
+@interface.implementer(ITraversable, interfaces.IPagesResource)
 class _PagesResource(_AbstractUserPseudoContainerResource):
 	"""
 	When requesting /Pages or /Pages(ID), we go through this resource.
@@ -362,20 +371,20 @@ class _PagesResource(_AbstractUserPseudoContainerResource):
 			# a 404 response in that circumstance, as it is generally
 			# not cacheable and more data may arrive in the future.
 			if not remaining_path:
-				raise loc_interfaces.LocationError(key)
+				raise LocationError(key)
 
 			resource = _NewPageContainerResource(None, self.request)
 			resource.__name__ = key
 			resource.__parent__ = self.context
 
 			if (component.queryMultiAdapter((resource, self.request),
-											 trv_interfaces.IPathAdapter,
+											 IPathAdapter,
 											 name=remaining_path[0]) is None
 				and component.getSiteManager().adapters.lookup(
 					(IViewClassifier, self.request.request_iface, interface.providedBy(resource)),
 					IView,
 					name=remaining_path[0]) is None):
-				raise loc_interfaces.LocationError(key)
+				raise LocationError(key)
 
 			# OK, assume a new container. Sigh.
 
@@ -399,12 +408,11 @@ def _CommunityBoardResource(context, request):
 def _DFLBoardResource(context, request):
 	return IDFLBoard(context, None)
 
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.IUser, pyramid.interfaces.IRequest)
+@interface.implementer(ITraversable)
+@component.adapter(IUser, IRequest)
 class UserTraversable(_PseudoTraversableMixin):
 
-	_pseudo_classes_ = {
-						 'Pages': _PagesResource,
+	_pseudo_classes_ = {'Pages': _PagesResource,
 						 PersonalBlog.__default_name__: _BlogResource }
 	_pseudo_classes_.update(_PseudoTraversableMixin._pseudo_classes_)
 
@@ -427,13 +435,13 @@ class UserTraversable(_PseudoTraversableMixin):
 
 		try:
 			return self._pseudo_traverse(key, remaining_path)
-		except loc_interfaces.LocationError:
+		except LocationError:
 			pass
 
 		# Is there a named path adapter?
 		try:
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
-		except loc_interfaces.LocationError:
+		except LocationError:
 			pass
 
 		# Is this an item in the user's workspace?
@@ -447,10 +455,10 @@ class UserTraversable(_PseudoTraversableMixin):
 		# that's registered for IPageContainer. This should be replaced
 		# with one of the above methods.
 		cont = self.context.getContainer(key)
-		if not (nti_interfaces.INamedContainer.providedBy(cont)
-				or nti_interfaces.IHomogeneousTypeContainer.providedBy(cont)):
+		if not (INamedContainer.providedBy(cont)
+				or IHomogeneousTypeContainer.providedBy(cont)):
 			# It may or may not exist, but you cannot access it at this URL
-			raise loc_interfaces.LocationError(key)
+			raise LocationError(key)
 
 		resource = _ContainerResource(cont, self.request)
 		# Allow the owner full permissions. These are the special
@@ -461,8 +469,8 @@ class UserTraversable(_PseudoTraversableMixin):
 
 		return resource
 
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.ICommunity, pyramid.interfaces.IRequest)
+@interface.implementer(ITraversable)
+@component.adapter(ICommunity, IRequest)
 class CommunityTraversable(_PseudoTraversableMixin):
 
 	_pseudo_classes_ = { CommunityBoard.__default_name__: _CommunityBoardResource }
@@ -480,8 +488,8 @@ class CommunityTraversable(_PseudoTraversableMixin):
 			# Is there a named path adapter?
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
 
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList, pyramid.interfaces.IRequest)
+@interface.implementer(ITraversable)
+@component.adapter(IDynamicSharingTargetFriendsList, IRequest)
 class DFLTraversable(_PseudoTraversableMixin):
 
 	_pseudo_classes_ = { DFLBoard.__default_name__: _DFLBoardResource }
@@ -498,9 +506,9 @@ class DFLTraversable(_PseudoTraversableMixin):
 		except KeyError:
 			# Is there a named path adapter?
 			return adapter_request(self.context, self.request).traverse(key, remaining_path)
-		
-@interface.implementer(trv_interfaces.ITraversable)
-@component.adapter(lib_interfaces.IContentPackageLibrary, pyramid.interfaces.IRequest)
+
+@interface.implementer(ITraversable)
+@component.adapter(IContentPackageLibrary, IRequest)
 class LibraryTraversable(object):
 
 	def __init__(self, context, request):
@@ -511,7 +519,7 @@ class LibraryTraversable(object):
 		try:
 			return self.context[key]
 		except KeyError:
-			raise loc_interfaces.LocationError(key)
+			raise LocationError(key)
 
 from nti.traversal.traversal import adapter_request  # BWC export
 
@@ -526,10 +534,10 @@ class _resource_adapter_request(adapter_request):
 
 # Attachments/Enclosures
 
-@interface.implementer(trv_interfaces.IPathAdapter,
-					   trv_interfaces.ITraversable,
-					   nti_interfaces.IZContained)
-@component.adapter(nti_interfaces.ISimpleEnclosureContainer)
+@interface.implementer(IPathAdapter,
+					   ITraversable,
+					   IZContained)
+@component.adapter(ISimpleEnclosureContainer)
 class EnclosureTraversable(object):
 	"""
 	Intended to be registered as an object in the adapter namespace to
@@ -550,7 +558,7 @@ class EnclosureTraversable(object):
 		try:
 			return self.context.get_enclosure(name)
 		except KeyError:
-			raise loc_interfaces.LocationError(self.context, name)
+			raise LocationError(self.context, name)
 
 # The Zope resource namespace
 
