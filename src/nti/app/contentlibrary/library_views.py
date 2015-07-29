@@ -59,7 +59,11 @@ from nti.dataserver.contenttypes.forums.interfaces import IForum
 from nti.dataserver.contenttypes.forums.interfaces import IBoard
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlog
 
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import LocatedExternalList
+from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.externalization import toExternalObject
 
 from nti.links.links import Link
 
@@ -76,6 +80,8 @@ from .utils import PAGE_INFO_MT_JSON
 from .utils import find_page_info_view_helper
 
 from . import LIBRARY_PATH_GET_VIEW
+
+ITEMS = StandardExternalFields.ITEMS
 
 def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	"""
@@ -314,14 +320,16 @@ def _get_top_level_contexts( obj ):
 	results = []
 	for top_level_contexts in component.subscribers( (obj,),
 													ITopLevelContainerContextProvider ):
-		results.extend( top_level_contexts )
+		if top_level_contexts:
+			results.extend( top_level_contexts )
 	return _dedupe_bundles( results )
 
 def _get_top_level_contexts_for_user( obj, user ):
 	results = []
 	for top_level_contexts in component.subscribers( (obj, user),
 													ITopLevelContainerContextProvider ):
-		results.extend( top_level_contexts )
+		if top_level_contexts:
+			results.extend( top_level_contexts )
 	return _dedupe_bundles( results )
 
 def _get_wrapped_bundles_from_hierarchy( hierarchy_contexts ):
@@ -347,7 +355,8 @@ def _get_hierarchy_context( obj, user ):
 	results = []
 	for hiearchy_contexts in component.subscribers( (obj,user),
 												IHierarchicalContextProvider ):
-		results.extend( hiearchy_contexts )
+		if hiearchy_contexts:
+			results.extend( hiearchy_contexts )
 	return _dedupe_bundles_from_hierarchy( results )
 
 def _get_hierarchy_context_for_context( obj, top_level_context ):
@@ -397,6 +406,11 @@ def _get_board_obj_path( obj ):
 class _LibraryPathView( AbstractAuthenticatedView ):
 	"""
 	Return an ordered list of lists of library paths to an object.
+
+	If no such paths exist, we'll return a HTTPForbidden. If we
+	are only able to return TopLevelContexts, we will return
+	HTTPForbidden, indicating the user can access the content via
+	joining the TopLevelContexts.
 
 	Typical return:
 		[ [ <TopLevelContext>,
@@ -510,37 +524,44 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 					result_list.extend( path_list )
 				return result_list
 
+	def _get_context_packages(self, context):
+		try:
+			packages = context.ContentPackageBundle.ContentPackages
+		except AttributeError:
+			try:
+				packages = (context.legacy_content_package,)
+			except AttributeError:
+				try:
+					packages = context.ContentPackages
+				except AttributeError:
+					packages = ()
+		return packages
+
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
 		hierarchy_contexts = _get_hierarchy_context( obj, self.remoteUser )
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
-			# Bail if our top-level context is not readable,
+			# Bail if our top-level context is not readable
 			top_level_context = hierarchy_context[0]
 			if not is_readable( top_level_context ):
 				continue
 
-			try:
-				packages = top_level_context.ContentPackageBundle.ContentPackages
-			except AttributeError:
-				try:
-					packages = (top_level_context.legacy_content_package,)
-				except AttributeError:
-					packages = top_level_context.ContentPackages
+			# We have a hit
+			result_list = [ top_level_context ]
+
+			packages = self._get_context_packages( top_level_context )
 
 			for package in packages:
 				path_list = self._get_path_for_package( package, obj, target_ntiid )
 				if path_list:
-					# We have a hit
-					result_list = [ top_level_context ]
 					if is_readable( package ):
-						# TODO permissions on nodes?
 						if len( hierarchy_context ) > 1:
 							result_list.extend( hierarchy_context[1:] )
 						path_list = self._externalize_children( path_list )
 						result_list.extend( path_list )
-					result.append( result_list )
+			result.append( result_list )
 
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
@@ -589,6 +610,18 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		else:
 			results = self._get_path( obj, object_ntiid )
 			self._sort( results )
+
+		if not results:
+			raise hexc.HTTPForbidden()
+
+		if max( len( x ) for x in results ) <= 1:
+			# It appears we only have top-level-context objects,
+			# return a 403 so the client can react appropriately.
+			response = hexc.HTTPForbidden()
+			result = LocatedExternalDict()
+			result[ITEMS] = results
+			response.json_body = toExternalObject(result, decorate=False)
+			raise response
 		return results
 
 @view_config(context=IPost)
