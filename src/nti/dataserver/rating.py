@@ -131,7 +131,7 @@ def cached_decorator(key_func):
 						if cached is not None:
 							return cached
 					except Exception as e:
-						logger.error("Cannot get rating from Memcache %s", e)
+						logger.error("Cannot get Memcache value for key %s. %s", key, e)
 						cached = None
 
 			result = func(*args, **kwargs)
