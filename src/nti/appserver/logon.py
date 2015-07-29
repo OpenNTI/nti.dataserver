@@ -1075,12 +1075,12 @@ def _user_did_logon(user, event):
 		flag_link_provider.add_link(user, 'first_time_logon')
 	user.update_last_login_time()
 
-
-#
 # TODO: The two facebook methods below could be radically simplified using
-# requests-facebook. As of 0.1.1, it adds no dependencies. (However, it also has no tests in its repo)
+# requests-facebook. As of 0.1.1, it adds no dependencies. 
+# (However, it also has no tests in its repo)
 # http://pypi.python.org/pypi/requests-facebook/0.1.1
-#
+
+FB_DIAG_OAUTH = 'https://www.facebook.com/dialog/oauth'
 
 @view_config(route_name='logon.facebook.oauth1', request_method='GET')
 def facebook_oauth1(request):
@@ -1093,15 +1093,16 @@ def facebook_oauth1(request):
 			request.session['facebook.' + k] = request.params.get(k)
 
 	request.session['facebook.username'] = request.params.get('username')
-	redir_to = 'https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=email' % (app_id, our_uri)
-
+	redir_to = '%s?client_id=%s&redirect_uri=%s&scope=email' % (FB_DIAG_OAUTH, app_id, our_uri)
 	return hexc.HTTPSeeOther(location=redir_to)
 
 @view_config(route_name='logon.facebook.oauth2', request_method='GET')
 def facebook_oauth2(request):
 
 	if 'error' in request.params:
-		return _create_failure_response(request, request.session.get('facebook.failure'), error=request.params.get('error'))
+		return _create_failure_response(request, 
+										request.session.get('facebook.failure'), 
+										error=request.params.get('error'))
 
 	code = request.params['code']
 	app_id = request.registry.settings.get('facebook.app.id')
@@ -1109,15 +1110,19 @@ def facebook_oauth2(request):
 	app_secret = request.registry.settings.get('facebook.app.secret')
 
 	auth = requests.get('https://graph.facebook.com/oauth/access_token',
-						 params={'client_id': app_id, 'redirect_uri': our_uri, 'client_secret': app_secret, 'code': code},
+						 params={'client_id': app_id,
+								 'redirect_uri': our_uri,
+								 'client_secret': app_secret, 
+								 'code': code},
 						 timeout=_REQUEST_TIMEOUT)
 
 	try:
 		auth.raise_for_status()
 	except RequestException as req_ex:
 		logger.exception("Failed facebook login %s", auth.text)
-		return _create_failure_response(request, request.session.get('facebook.failure'), error=str(req_ex))
-
+		return _create_failure_response(request,
+										request.session.get('facebook.failure'),
+										error=str(req_ex))
 
 	# The facebook return value is in ridiculous format.
 	# Are we supposed to try to treat this like a url query value or
@@ -1135,10 +1140,14 @@ def facebook_oauth2(request):
 						 timeout=_REQUEST_TIMEOUT)
 	data = json.loads(data.text)
 	if data['email'] != request.session.get('facebook.username'):
-		logger.warn("Facebook username returned different emails %s != %s", data['email'], request.session.get('facebook.username'))
-		return _create_failure_response(request, request.session.get('facebook.failure'), error='Facebook resolved to different username')
+		logger.warn("Facebook username returned different emails %s != %s", 
+					data['email'], request.session.get('facebook.username'))
+		return _create_failure_response(request, 
+										request.session.get('facebook.failure'),
+										error='Facebook resolved to different username')
 
-	user = _deal_with_external_account(request, username=data['email'],  # TODO: Assuming email address == username
+	# TODO: Assuming email address == username
+	user = _deal_with_external_account(request, username=data['email'], 
 										fname=data['first_name'], lname=data['last_name'],
 										email=data['email'], idurl=data['link'],
 										iface=nti_interfaces.IFacebookUser,
@@ -1162,4 +1171,7 @@ def facebook_oauth2(request):
 		if pic_location and pic_location != user.avatarURL:
 			user.avatarURL = pic_location
 
-	return _create_success_response(request, userid=data['email'], success=request.session.get('facebook.success'))
+	result = _create_success_response(request, 
+									  userid=data['email'], 
+									  success=request.session.get('facebook.success'))
+	return result
