@@ -6,10 +6,8 @@ from __future__ import print_function, unicode_literals
 
 from hamcrest import assert_that
 from hamcrest import is_
-from hamcrest import not_none
 from hamcrest import all_of
 from hamcrest import ends_with
-from hamcrest import starts_with
 from hamcrest import has_entry
 from hamcrest import has_length
 from hamcrest import has_key
@@ -30,9 +28,9 @@ from zope.component import eventtesting
 
 from nti.appserver import logon
 from nti.appserver.logon import (ping, handshake,password_logon,
-								google_login, openid_login,
-								ROUTE_OPENID_RESPONSE, _update_users_content_roles,
-								_checksum, _openidcallback)
+								 openid_login,
+								 ROUTE_OPENID_RESPONSE, _update_users_content_roles,
+								 _checksum, _openidcallback)
 from nti.appserver.link_providers import flag_link_provider as user_link_provider
 
 from nti.app.testing.application_webtest import ApplicationLayerTest
@@ -213,7 +211,6 @@ class TestLogonViews(ApplicationLayerTest):
 
 	# 	self.config.add_route( name='logon.handshake', pattern='/dataserver2/handshake' )
 	# 	self.config.add_route( name='logon.nti.password', pattern='/dataserver2/logon.password' )
-	# 	self.config.add_route( name='logon.google', pattern='/dataserver2/logon.google' )
 	# 	self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
 	# 	self.config.add_route( name='logon.facebook.oauth1', pattern='/dataserver2/logon.facebook.1' )
 
@@ -304,16 +301,8 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that( result, has_property( 'links', has_length( greater_than_or_equal_to( 3 ) ) ) )
 		__traceback_info__ = result.links
 
-		google_link = self._get_link_by_rel( result.links, 'logon.google' )
-		assert_that( google_link, not_none() )
-		assert_that( google_link.target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( google_link.target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( google_link.target, contains_string( 'oidcsum=1290829754' ) )
-
 		facebook_link = self._get_link_by_rel( result.links, 'logon.facebook' )
 		assert_that( facebook_link.target, is_( '/dataserver2/logon.facebook1?username=jason.madden%40nextthought.com' ) )
-		#assert_that( result.links[3].target, is_( '/dataserver2' ) )
-		#assert_that( result.links[4].target, is_( '/dataserver2/logon.logout' ) )
 
 	def test_handshake_no_user(self):
 		assert_that( handshake( get_current_request() ), is_( hexc.HTTPBadRequest ) )
@@ -321,7 +310,7 @@ class TestLogonViews(ApplicationLayerTest):
 	@WithMockDSTrans
 	def test_handshake_existing_user_with_pass(self):
 		# Clean up routes we don't yet want
-		for route_name in ('logon.google', 'logon.openid', 'logon.facebook.oauth1', 'logon.forgot.passcode', 'logon.forgot.username' ):
+		for route_name in ('logon.openid', 'logon.facebook.oauth1', 'logon.forgot.passcode', 'logon.forgot.username' ):
 			route = component.getUtility( pyramid.interfaces.IRouteRequest, name=route_name )
 			__traceback_info__ = route_name, route
 			assert component.globalSiteManager.unregisterUtility( route, provided=pyramid.interfaces.IRouteRequest, name=route_name )
@@ -337,12 +326,7 @@ class TestLogonViews(ApplicationLayerTest):
 		__traceback_info__ = result.links
 
 		pw_link = self._get_link_by_rel( result.links, 'logon.nti.password' )
-		google_link = self._get_link_by_rel( result.links, 'logon.google' )
 		assert_that( pw_link.target, contains_string( '/dataserver2/logon.nti.password?' ) )
-		assert_that( google_link.target, contains_string( '/dataserver2/logon.google?') )
-		assert_that( google_link.target, contains_string( 'username=jason.madden%40nextthought.com' ) )
-		assert_that( google_link.target, contains_string( 'oidcsum=1290829754' ) )
-
 
 		# Give us a specific identity_url, and that changes to open id
 		self.config.add_route( name='logon.openid', pattern='/dataserver2/logon.openid' )
@@ -361,8 +345,6 @@ class TestLogonViews(ApplicationLayerTest):
 		assert_that( openid_link.target, contains_string( 'openid=http' ) )
 
 	def test_openid_login( self ):
-		fail = google_login( None, get_current_request() )
-		assert_that( fail, is_( hexc.HTTPUnauthorized ) )
 		fail = openid_login( None, get_current_request() )
 		assert_that( fail, is_( hexc.HTTPUnauthorized ) )
 
@@ -375,18 +357,6 @@ class TestLogonViews(ApplicationLayerTest):
 		get_current_request().params['oidcsum'] = '1234'
 		# XXX: This test fails when run by zope.testrunner. Why? It works fine in nose
 		self.log_handler.add( 'pyramid_openid.view' )
-		result = google_login( None, get_current_request() )
-		assert_that( result, is_( hexc.HTTPFound ) )
-		assert_that( result.location, starts_with( 'https://www.google.com/accounts/o8/' ) )
-		redir_url = None
-		for r in self.log_handler.records:
-			if (r.getMessage() or '' ).startswith( 'Redirecting to: ' ):
-				redir_url = r.getMessage()[len('Redirecting to: '):]
-				break
-		assert_that( redir_url, is_( not_none() ) )
-		# TODO: These prefixes are probably order dependent and fragile
-		assert_that( redir_url, contains_string( '=unlimited' ) )
-		assert_that( redir_url, contains_string( 'ax.if_available=ext' ) )
 
 		# An openid request to a non-existant domain will fail
 		# to begin negotiation
@@ -394,7 +364,6 @@ class TestLogonViews(ApplicationLayerTest):
 		result = openid_login( None, get_current_request() )
 		assert_that( result, is_( hexc.HTTPUnauthorized ) )
 		assert_that( result.headers, has_key( 'Warning' ) )
-
 
 	def test_password_logon_failed(self):
 		self.beginRequest(request_factory=pyramid.request.Request.blank, request_args=('/',))
@@ -472,12 +441,12 @@ class TestLogonViews(ApplicationLayerTest):
 				return [self.authenticated_userid(request)]
 			
 		get_current_request().registry.registerUtility( Policy() )
- 		get_current_request().params['username'] = 'zachary.roux@nextthought.com'
-		user = users.User.create_user( self.ds, username='zachary.roux@nextthought.com', password='temp001' )
+		get_current_request().params['username'] = 'zachary.roux@nextthought.com'
+		users.User.create_user( self.ds, username='zachary.roux@nextthought.com', password='temp001' )
 		result = handshake( get_current_request() )
 		
 		tos_link = self._get_link_by_rel( result.links, 'content.direct_tos_link' )
-	 	assert_that( tos_link.target, equal_to( logon.TOS_URL ) )
+		assert_that( tos_link.target, equal_to( logon.TOS_URL ) )
 		privacy_link = self._get_link_by_rel( result.links, 'content.direct_privacy_link' )
 		assert_that( privacy_link.target, equal_to( logon.PRIVACY_POLICY_URL ) )
 
@@ -635,8 +604,8 @@ class TestLogonViews(ApplicationLayerTest):
 
 
 from zope.lifecycleevent.interfaces import IObjectCreatedEvent, IObjectModifiedEvent
+
 _user_created_events = []
 @component.adapter(nti_interfaces.IUser,IObjectCreatedEvent)
 def _handle_user_create_event( user, object_added ):
-
 	_user_created_events.append( (user,object_added) )
