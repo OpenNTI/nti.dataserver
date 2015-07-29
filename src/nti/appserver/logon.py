@@ -1148,10 +1148,10 @@ def facebook_oauth2(request):
 
 	# TODO: Assuming email address == username
 	user = _deal_with_external_account(request, username=data['email'], 
-										fname=data['first_name'], lname=data['last_name'],
-										email=data['email'], idurl=data['link'],
-										iface=nti_interfaces.IFacebookUser,
-										user_factory=users.FacebookUser.create_user)
+									   fname=data['first_name'], lname=data['last_name'],
+									   email=data['email'], idurl=data['link'],
+									   iface=nti_interfaces.IFacebookUser,
+									   user_factory=users.FacebookUser.create_user)
 
 	# For the data formats, see here:
 	# https://developers.facebook.com/docs/reference/api/user/
@@ -1175,3 +1175,105 @@ def facebook_oauth2(request):
 									  userid=data['email'], 
 									  success=request.session.get('facebook.success'))
 	return result
+
+# google
+
+import os
+import hashlib
+from urlparse import urljoin 
+
+from nti.utils.interfaces import IOAuthKeys
+
+OPENID_CONFIGURATION = None
+LOGON_GOOGLE_OAUTH2 = 'logon.google.oauth2'
+DEFAULT_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
+DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+
+def _redirect_uri(request):
+	root = request.route_path('objects.generic.traversal', traverse=())
+	root = root[:-1] if root.endswith('/') else root
+	target = urljoin(request.application_url, root)
+	target = target + '/' if not target.endswith('/') else target
+	target = urljoin(target, '@@' + LOGON_GOOGLE_OAUTH2)
+	return target
+
+def get_openid_configuration():
+	global OPENID_CONFIGURATION
+	if not OPENID_CONFIGURATION:
+		s = requests.get(DISCOVERY_DOC_URL)
+		OPENID_CONFIGURATION = s.json() if s.status_code == 200 else {}
+	return OPENID_CONFIGURATION
+
+@view_config(route_name=REL_LOGIN_GOOGLE, request_method='GET')
+def google_oauth1(request):
+	auth_keys = component.getUtility(IOAuthKeys, name="google")
+	
+	state = hashlib.sha256(os.urandom(1024)).hexdigest()
+	config = get_openid_configuration()
+	auth_url = config.get("authorization_endpoint", DEFAULT_AUTH_URL)
+	params = {'state': state,
+			  'scope': 'openid email profile',
+			  'response_type': 'code',
+			  'client_id':auth_keys.APIKey,
+			  'redirect_uri':_redirect_uri(request)}
+
+	# save state for validation
+	request.session['google.state'] = state
+
+	# redirect
+	target = auth_url[:-1] if auth_url.endswith('/') else auth_url
+	target = '%s?%s' % (target, urllib.urlencode(params)) 
+	response = hexc.HTTPSeeOther(location=target)
+	return response
+
+@view_config(route_name=LOGON_GOOGLE_OAUTH2, request_method='GET')
+def google_oauth2(request):
+	auth_keys = component.getUtility(IOAuthKeys, name="google")
+	
+	params = request.params
+	# check for errors
+	if 'error' in params or 'errorCode' in params:
+		error = params.get('error') or params.get('errorCode')
+		return _create_failure_response(request, error=error)
+
+	# Confirm code
+	if 'code' not in params:
+		return _create_failure_response(request,
+										error=_('Could not find code parameter'))
+	code = params.get('code')
+
+	# Confirm anti-forgery state token
+	if 'state' not in params:
+		return _create_failure_response(request,
+										error=_('Could not find state parameter'))
+	params_state = params.get('state')
+	session_state = request.session.get('google.state')
+	if params_state != session_state:
+		return _create_failure_response(request,
+										request.session.get('linkedin.failure'),
+										error=_('Incorrect state values'))
+	
+	# Exchange code for access token and ID token
+	config = get_openid_configuration()
+	token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
+	
+	data = {'code':code, 
+			'client_id':auth_keys.APIKey,
+			'grant_type':'authorization_code',
+			'client_secret':auth_keys.SecretKey,
+			'redirect_uri':_redirect_uri(request)}
+	response = requests.post(token_url, data)
+	
+	data = response.json()
+	if 'access_token' not in data:
+		return _create_failure_response(request,
+										error=_('Could not find access token'))
+	if 'id_token' not in data:
+		return _create_failure_response(request,
+										error=_('Could not find id token'))
+		
+	#id_token = data['id_token']
+	#access_token  = data['access_token']
+	
+	
