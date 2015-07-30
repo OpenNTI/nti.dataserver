@@ -461,7 +461,8 @@ class IEducation(interface.Interface):
 
 	school = ValidTextLine(title='School name',
 						   description=u'School name.',
-						   required=True)
+						   required=True,
+						   min_length=1)
 
 	startYear = Int(title='Start year',
 					description=u'Start year',
@@ -493,7 +494,8 @@ class IProfessionalPosition(interface.Interface):
 
 	companyName = ValidTextLine(title='Company name',
 						   		description=u'CompanyName name.',
-						   		required=True)
+						   		required=True,
+						   		min_length=1)
 
 	title = ValidTextLine(title='Title',
 						  description=u'Title',
