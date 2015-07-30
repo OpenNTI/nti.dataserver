@@ -1193,7 +1193,7 @@ DEFAULT_TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 DEFAULT_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 DISCOVERY_DOC_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 
-def _is_true(s):
+def is_true(s):
 	return bool(s and str(s).lower() in TRUE_VALUES)
 
 def _redirect_uri(request):
@@ -1223,6 +1223,10 @@ def google_oauth1(request):
 			  'client_id':auth_keys.APIKey,
 			  'redirect_uri':_redirect_uri(request)}
 
+	for k in ('success', 'failure'):
+		if request.params.get(k):
+			request.session['google.' + k] = request.params.get(k)
+
 	# save state for validation
 	request.session['google.state'] = state
 
@@ -1240,22 +1244,27 @@ def google_oauth2(request):
 	# check for errors
 	if 'error' in params or 'errorCode' in params:
 		error = params.get('error') or params.get('errorCode')
-		return _create_failure_response(request, error=error)
+		return _create_failure_response(request, 
+										request.session.get('google.failure'),
+										error=error)
 
 	# Confirm code
 	if 'code' not in params:
 		return _create_failure_response(request,
+										request.session.get('google.failure'),
 										error=_('Could not find code parameter.'))
 	code = params.get('code')
 
 	# Confirm anti-forgery state token
 	if 'state' not in params:
 		return _create_failure_response(request,
+										request.session.get('google.failure'),
 										error=_('Could not find state parameter.'))
 	params_state = params.get('state')
 	session_state = request.session.get('google.state')
 	if params_state != session_state:
 		return _create_failure_response(request,
+										request.session.get('google.failure'),
 										error=_('Incorrect state values.'))
 	
 	# Exchange code for access token and ID token
@@ -1272,19 +1281,21 @@ def google_oauth2(request):
 		if response.status_code != 200:
 			return _create_failure_response(
 								request,
+								request.session.get('google.failure'),
 								error=_('Invalid response while getting access token.'))
 
 		data = response.json()
 		if 'access_token' not in data:
 			return _create_failure_response(request,
+											request.session.get('google.failure'),
 											error=_('Could not find access token.'))
 		if 'id_token' not in data:
 			return _create_failure_response(request,
+											request.session.get('google.failure'),
 											error=_('Could not find id token.'))
 			
 		# id_token = data['id_token'] #TODO:Validate id token
 		access_token  = data['access_token']
-		
 		logger.debug("Getting user profile")
 		userinfo_url = config.get('userinfo_endpoint', DEFAULT_USERINFO_URL)
 		response = requests.get(userinfo_url, params={"access_token":access_token})
@@ -1307,14 +1318,16 @@ def google_oauth2(request):
 												idurl=None,
 												iface=None,
 												user_factory=User.create_user)
-			if _is_true(email_verified):
+			if is_true(email_verified):
 				force_email_verification(user) # trusted source
 			request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
-					
+
 		response = _create_success_response(request,
 											userid=username,
-											success=None)
+											success=request.session.get('google.success'))
 	except Exception as e:
 		logger.exception('Failed to login with google')
-		response = _create_failure_response(request, error=str(e))
+		response = _create_failure_response(request, 
+											request.session.get('google.failure'),
+											error=str(e))
 	return response
