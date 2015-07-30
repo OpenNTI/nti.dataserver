@@ -1251,7 +1251,6 @@ def google_oauth2(request):
 	session_state = request.session.get('google.state')
 	if params_state != session_state:
 		return _create_failure_response(request,
-										request.session.get('linkedin.failure'),
 										error=_('Incorrect state values'))
 	
 	# Exchange code for access token and ID token

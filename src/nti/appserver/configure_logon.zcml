@@ -2,6 +2,7 @@
 <configure xmlns="http://namespaces.zope.org/zope"
 		   xmlns:i18n="http://namespaces.zope.org/i18n"
 		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:oauth="http://nextthought.com/ntp/oauth"
 		   xmlns:link="http://nextthought.com/ntp/link_providers">
 
 	<include package="zope.component" file="meta.zcml" />
@@ -65,6 +66,14 @@
 				 for="* pyramid.interfaces.IRequest"
 				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
 				 name="openid.aops.com" />
+				 
+		<!-- Google -->
+		<include package="nti.utils" file="meta.zcml" />
+		<oauth:registerOAuthKeys
+				apiKey="656445967400-op21oh9rpglhrha98ukq5r7cvbdp8333.apps.googleusercontent.com"
+				secretKey="1WLR7Thz8rPcSOEhwDG6WYdW"
+				id="google" />
+				
 	</configure>
 
 </configure>
