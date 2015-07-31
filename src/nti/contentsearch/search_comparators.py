@@ -252,30 +252,34 @@ class _RelevanceSearchHitComparator(_TypeSearchHitComparator):
 			result = item.ContainerId
 		return result
 
-	@classmethod
-	def compare(cls, a, b):
+	@Lazy
+	def query(self):
+		return self.results.query
+
+	def compare(self, a, b):
 		# compare location
-		location_path = cls.get_ntiid_path(a)
-		a_path = cls.get_ntiid_path(cls.get_containerId(a))
-		b_path = cls.get_ntiid_path(cls.get_containerId(b))
-		a_score_path = cls.score_path(location_path, a_path)
-		b_score_path = cls.score_path(location_path, b_path)
-		result = cmp(b_score_path, a_score_path)
+		if self.query.origin != ntiids.ROOT:
+			location_path = self.get_ntiid_path(a)
+			a_path = self.get_ntiid_path(self.get_containerId(a))
+			b_path = self.get_ntiid_path(self.get_containerId(b))
+			a_score_path = self.score_path(location_path, a_path)
+			b_score_path = self.score_path(location_path, b_path)
+			result = cmp(b_score_path, a_score_path)
+		else:
+			result = 0
 
 		# compare types.
 		if result == 0:
-			result = cls.compare_type(a, b)
+			result = self.compare_type(a, b)
 
 		# compare scores. Score comparation at the moment only make sense within
 		# the same types  when we go to a unified index this we no longer need to
 		# compare the types
-		result = cls.compare_score(a, b) if result == 0 else result
+		result = self.compare_score(a, b) if result == 0 else result
 		return result
 
 @interface.implementer(ISearchHitComparatorFactory)
 class _RelevanceSearchHitComparatorFactory(object):
 
-	singleton = _RelevanceSearchHitComparator()
-
 	def __call__(self, results=None):
-		return self.singleton
+		return _RelevanceSearchHitComparator(results)
