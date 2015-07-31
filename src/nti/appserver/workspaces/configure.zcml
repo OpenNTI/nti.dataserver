@@ -9,11 +9,11 @@
 	<include package="zope.security" file="meta.zcml" />
 	<include package="zope.component" />
 	<include package="zope.security" />
-		
+
 	<!-- Renderers -->
 	<adapter factory="nti.app.renderers.caching.UseTheRequestContextCacheController"
 			 for=".interfaces.ILibraryCollection" />
-			 
+
 	<adapter factory=".ContainerEnumerationWorkspace" />
 
 	<!--
@@ -22,6 +22,34 @@
 	<subscriber factory="._UserPagesCollection"
 				provides=".interfaces.ICollection"
 				for=".interfaces.IUserWorkspace" />
+
+	<subscriber factory=".DynamicMembershipsContainerCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+
+	<subscriber factory=".DynamicFriendsListContainerCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+
+	<subscriber factory=".CommunitiesContainerCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+
+	<subscriber factory=".AllCommunitiesContainerCollection"
+				provides=".interfaces.ICollection"
+				for=".interfaces.IUserWorkspace" />
+
+	<adapter factory="._UserDynamicMembershipsCollectionFactory"
+			 name="DynamicMemberships"/>
+
+	<adapter factory="._UserDynamicFriendsListCollectionFactory"
+			 name="Groups"/>
+
+	<adapter factory="._UserCommunitiesCollectionFactory"
+			 name="Communities"/>
+
+	<adapter factory="._UserAllCommunitiesCollectionFactory"
+			 name="AllCommunities"/>
 
 	<!--
 	One of them is the default ICollection adapter. See application.py for why this is wrong.
@@ -45,44 +73,44 @@
 	<class class=".FriendsListContainerCollection">
 		<implements interface="nti.app.renderers.interfaces.IUnModifiedInResponse" />
 	</class>
-	
+
 	<!--
 	The UserService queries to find all the workspaces the user should have.
 	-->
 	<subscriber factory="._user_workspace"
 				provides=".interfaces.IWorkspace" />
-				
+
 	<subscriber factory="._global_workspace"
 				provides=".interfaces.IWorkspace" />
 
 	<adapter factory=".CollectionContentTypeAware" />
-	
+
 	<subscriber	factory=".providers._SearchLinksProvider"
 				provides=".interfaces.IUserWorkspaceLinkProvider"/>
-			
+
 	<subscriber	factory=".providers._ResolveMeLinkProvider"
 				provides=".interfaces.IUserWorkspaceLinkProvider"/>
-					
+
 	<!-- Externalization -->
 	<adapter factory=".externalization.ServiceExternalizer" />
-	
+
 	<adapter factory=".externalization.UserServiceExternalizer"
 			 for=".interfaces.IUserService" />
-			 
+
 	<adapter factory=".externalization._NTIIDEntryExternalizer" />
-	
+
 	<adapter factory=".externalization.CollectionSummaryExternalizer" />
-	
+
 	<adapter factory=".externalization.CollectionSummaryExternalizer"
 			 name="summary"/>
-	
+
 	<adapter factory=".externalization.ContainerCollectionDetailExternalizer"
 			 name="detail"/>
-			 
+
 	<adapter factory=".externalization.ContainerCollectionDetailExternalizer" />
-	
+
 	<adapter factory=".externalization.WorkspaceExternalizer" />
-	
+
 	<!-- Decorators -->
 	<subscriber factory=".decorators.ContentUnitInfoHrefDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>

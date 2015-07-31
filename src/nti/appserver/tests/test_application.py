@@ -810,8 +810,8 @@ class TestApplication(ApplicationLayerTest):
 	@WithSharedApplicationMockDS
 	def test_create_update_dynamicfriends_list_content_type(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
-			_ = self._create_user()
-			_ = self._create_user( username='troy.daley@nextthought.com' )
+			self._create_user()
+			self._create_user( username='troy.daley@nextthought.com' )
 
 		testapp = TestApp( self.app )
 		ext_obj = {
@@ -824,6 +824,14 @@ class TestApplication(ApplicationLayerTest):
 
 		# The user creates it
 		path = '/dataserver2/users/sjohnson@nextthought.com/FriendsLists/'
+
+		def _friends_list_empty_check():
+			member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists',
+									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
+			assert_that( member_fl_res.json_body, has_entry( 'Items',
+												is_not( has_value(
+															has_entry( 'Username',
+																	contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ(),
 						headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
@@ -843,10 +851,15 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( resolved_member, has_entry( k, has_item(
 														has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
 
-		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists',
+		# FL collection does not have it, DFL does.
+		_friends_list_empty_check()
+
+		for dfl_endpoint in ('Groups', 'DynamicMemberships'):
+			member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/%s' % dfl_endpoint,
 									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		assert_that( member_fl_res.json_body, has_entry( 'Items',
-												has_value( has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
+			assert_that( member_fl_res.json_body, has_entry( 'Items',
+												has_value(	has_entry( 'Username',
+																	contains_string( 'boom@nextthought.com' ) ) ) ) )
 
 		# The owner can edit it to remove the membership
 		data = '[]'
@@ -867,11 +880,14 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( resolved_member, has_entry( k, does_not( has_item(
 																has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
-		member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/FriendsLists',
+		_friends_list_empty_check()
+		for dfl_endpoint in ('Groups', 'DynamicMemberships'):
+			member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/%s' % dfl_endpoint,
 									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
-		assert_that( member_fl_res.json_body, has_entry( 'Items',
+			assert_that( member_fl_res.json_body, has_entry( 'Items',
 													does_not( has_value(
-															has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+															has_entry( 'Username',
+																	contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
 
 	@WithSharedApplicationMockDS

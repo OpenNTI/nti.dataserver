@@ -274,6 +274,9 @@ class TestUserService(ApplicationLayerTest):
 		assert_that( user_ws, has_entry( 'Title', user.username ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', 'Pages' ),
 																	has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Pages' ) ) ) ) )
+		for membership_name in ('FriendsLists', 'Groups', 'Communities', 'DynamicMemberships'):
+			assert_that( user_ws, has_entry( 'Items', has_item( all_of( has_entry( 'Title', membership_name ),
+																		has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/' + membership_name ) ) ) ) )
 		assert_that( user_ws, has_entry( 'Items', has_item( has_entry( 'Links', has_item( has_entry('Class', 'Link')) ) ) ) )
 		assert_that( user_ws['Items'], has_item( has_entry( 'Links', has_item(
 			has_entry( 'href', '/dataserver2/users/sjohnson%40nextthought.com/Search/RecursiveUserGeneratedData' ) ) ) ) )
@@ -431,7 +434,7 @@ from nti.dataserver.users.tests.test_friends_lists import _dfl_sharing_fixture
 class TestFriendsListContainerCollection(DataserverLayerTest, tests.TestBaseMixin):
 
 	@mock_dataserver.WithMockDSTrans
-	def test_container_with_dfl_memberships(self):
+	def test_container_only_friends_list(self):
 		owner_user, member_user, _member_user2, parent_dfl = _dfl_sharing_fixture( self.ds )
 
 		owner_fl_cont = FriendsListContainerCollection( owner_user.friendsLists )
@@ -441,8 +444,8 @@ class TestFriendsListContainerCollection(DataserverLayerTest, tests.TestBaseMixi
 
 		# The member container adds the DFL
 		member_cont = FriendsListContainerCollection( member_user.friendsLists )
-		assert_that( member_cont, has_property( 'container', is_not( member_user.friendsLists ) ) )
-		assert_that( member_cont, has_property( 'container', has_value( parent_dfl ) ) )
+		assert_that( member_cont, has_property( 'container', is_( member_user.friendsLists ) ) )
+		assert_that( member_cont, has_property( 'container', is_not( has_value( parent_dfl ) ) ) )
 
 		assert_that( member_cont.container, has_property( '__name__', owner_fl_cont.__name__ ) )
 		assert_that( member_cont.container, has_property( '__parent__', member_user ) )
