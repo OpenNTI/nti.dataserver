@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 from collections import namedtuple
 
 from zope import interface
+
 from zope.interface.common.sequence import IFiniteSequence
 
 from nti.externalization.representation import WithRepr
@@ -97,10 +98,10 @@ def create_from_terms(text, termset, check_word, punkt_pattern):
 	result.text = fragment
 	result.matches = matches if matches else ()
 	return result
-	
-@interface.implementer(ISearchFragment, IFiniteSequence)
+
 @WithRepr
 @EqHash('text', 'matches')
+@interface.implementer(ISearchFragment, IFiniteSequence)
 class SearchFragment(object):
 
 	mime_type = mimeType = 'application/vnd.nextthought.search.searchfragment'
@@ -112,4 +113,3 @@ class SearchFragment(object):
 
 	def __iter__(self):
 		return iter(self.matches)
-
