@@ -620,7 +620,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			response = hexc.HTTPForbidden()
 			result = LocatedExternalDict()
 			result[ITEMS] = results
-			response.json_body = toExternalObject(result, decorate=False)
+			response.json_body = toExternalObject(result)
 			raise response
 		return results
 
