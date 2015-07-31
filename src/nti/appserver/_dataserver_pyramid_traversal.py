@@ -35,6 +35,8 @@ from nti.appserver import httpexceptions as hexc
 from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import IJoinableContextProvider
 
+from nti.appserver.workspaces.interfaces import IContainerCollection
+
 from nti.common.property import alias
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
@@ -54,7 +56,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.externalization import to_external_object
+from nti.externalization.externalization import toExternalObject
 
 from nti.ntiids import ntiids
 
@@ -237,7 +239,7 @@ class _ObjectsContainerResource(_ContainerResource):
 				response = hexc.HTTPForbidden()
 				result = LocatedExternalDict()
 				result[ITEMS] = results
-				response.json_body = to_external_object(result, decorate=False)
+				response.json_body = toExternalObject( toExternalObject( result ) )
 				raise response
 
 	def _getitem_with_ds(self, ds, key):
@@ -408,12 +410,33 @@ def _CommunityBoardResource(context, request):
 def _DFLBoardResource(context, request):
 	return IDFLBoard(context, None)
 
+def _get_named_container_resource( name, context, request ):
+	collection = component.queryAdapter( context, IContainerCollection, name=name )
+	if collection is not None:
+		return _ContainerResource( collection, request )
+
+def _DynamicMembershipsResource(context, request):
+	return _get_named_container_resource( 'DynamicMemberships', context, request )
+
+def _DynamicFriendsListResource(context, request):
+	return _get_named_container_resource( 'Groups', context, request )
+
+def _CommunitiesResource(context, request):
+	return _get_named_container_resource( 'Communities', context, request )
+
+def _AllCommunitiesResource(context, request):
+	return _get_named_container_resource( 'AllCommunities', context, request )
+
 @interface.implementer(ITraversable)
 @component.adapter(IUser, IRequest)
 class UserTraversable(_PseudoTraversableMixin):
 
 	_pseudo_classes_ = {'Pages': _PagesResource,
-						 PersonalBlog.__default_name__: _BlogResource }
+						 PersonalBlog.__default_name__: _BlogResource,
+						 'DynamicMemberships': _DynamicMembershipsResource,
+						 'Groups': _DynamicFriendsListResource,
+						 'Communities': _CommunitiesResource,
+						 'AllCommunities': _AllCommunitiesResource }
 	_pseudo_classes_.update(_PseudoTraversableMixin._pseudo_classes_)
 
 	_DENY_ALL = True

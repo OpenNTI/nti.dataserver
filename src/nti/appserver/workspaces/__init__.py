@@ -29,12 +29,15 @@ from pyramid.interfaces import IView
 from pyramid.interfaces import IViewClassifier
 from pyramid.threadlocal import get_current_request
 
+from nti.app.authentication import get_remote_user
+
 from nti.common.property import alias
 
 from nti.dataserver.users import User
 from nti.dataserver import datastructures
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import INamedContainer
@@ -42,8 +45,13 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IContainerIterable
 from nti.dataserver.interfaces import IFriendsListContainer
 from nti.dataserver.interfaces import IHomogeneousTypeContainer
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
+from nti.dataserver.users.interfaces import IHiddenMembership
+from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
 from nti.externalization.interfaces import LocatedExternalDict
+from nti.externalization.interfaces import StandardExternalFields
 
 from nti.links import links
 
@@ -67,6 +75,8 @@ from .interfaces import IUserService
 from .interfaces import IUserWorkspace
 from .interfaces import IContainerCollection
 from .interfaces import IUserWorkspaceLinkProvider
+
+ITEMS = StandardExternalFields.ITEMS
 
 # pylint
 itc_providedBy = getattr(IContainerTypesConstraint, 'providedBy')
@@ -152,10 +162,6 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 @component.adapter(IFriendsListContainer)
 class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 	"""
-	Magically adds the dynamic sharing communities that a user is a member of
-	to the user's ``FriendsLists`` collection.
-	Hopefully temporary, necessary for the web up to render them.
-
 	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
 		them as editable. We are also sending back the correct creator.
 	"""
@@ -180,36 +186,166 @@ class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
 				return ()
 		return (self._container.contained_type,)
 
+def _is_remote_same_as_authenticated(user, req=None):
+	# XXX This doesn't exactly belong at this layer. Come up with
+	# a better way to do this switching.
+	req = get_current_request() if req is None else req
+	if 	req is None or req.authenticated_userid is None or \
+		req.authenticated_userid != user.username:
+		return False
+	return True
+
+class _AbstractPseudoContainerCollection(_ContainerWrapper):
+	__parent__ = None
+
+	def __init__( self, user_workspace ):
+		self.__parent__ = user_workspace
+		self._workspace = user_workspace
+
+	@property
+	def _user( self ):
+		return self._workspace.user
+
+	@property
+	def remote_user(self):
+		return get_remote_user()
+
+	@property
+	def accepts( self ):
+		return ()
+
+	@property
+	def memberships(self):
+		"""
+		Subclasses should override this to define membership.
+		"""
+		return ()
+
+	@property
+	def last_modified(self):
+		return None
+
+	def selector(self, obj):
+		"""
+		Subclasses should override this to filter membership objects.
+		"""
+		_same_as_authenticated = _is_remote_same_as_authenticated(self._user)
+		if _same_as_authenticated:
+			return True
+		else:
+			hidden = IHiddenMembership(obj, None) or ()
+			return not self in hidden
+
+	def get_filtered_memberships(self):
+		log_msg = "Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
+		result = self._user.xxx_hack_filter_non_memberships(self.memberships,
+														  log_msg=log_msg,
+														  the_logger=logger)
+		result = [x for x in result if self.selector( x )]
+		return result
+
 	@property
 	def container(self):
+		memberships = self.get_filtered_memberships()
+		result = LocatedExternalDict()
+		for membership in memberships:
+			result[ membership.NTIID ] = membership
+		result.__name__ = self.name
+		result.__parent__ = self._user
+		result.lastModified = self.last_modified
+		return result
 
-		entity = self._container.__parent__
-		if not entity:
-			return self._container
+@interface.implementer(IContainerCollection)
+@component.adapter(IUserWorkspace)
+class DynamicMembershipsContainerCollection(_AbstractPseudoContainerCollection):
 
-		dfl_memberships = []
-		entity_dynamic_memberships =  \
-				entity.xxx_hack_filter_non_memberships(
-						entity.dynamic_memberships,
-						log_msg="Relationship trouble: User %s is no longer a member of %s. Ignoring for FL container",
-						the_logger=logger )
+	name = 'DynamicMemberships'
+	__name__ = name
 
-		for x in entity_dynamic_memberships:
-			if IFriendsList.providedBy( x ):
-				dfl_memberships.append( x )
+	@property
+	def memberships(self):
+		return self._user.dynamic_memberships
 
-		if not dfl_memberships:
-			return self._container
+@component.adapter(IUser)
+@interface.implementer(IContainerCollection)
+def _UserDynamicMembershipsCollectionFactory( user ):
+	return DynamicMembershipsContainerCollection( UserEnumerationWorkspace( user ) )
 
-		fake_container = LocatedExternalDict( self._container )
-		fake_container.__name__ = self._container.__name__
-		fake_container.__parent__ = entity
+@interface.implementer(IContainerCollection)
+@component.adapter(IUserWorkspace)
+class DynamicFriendsListContainerCollection(_AbstractPseudoContainerCollection):
 
-		warnings.warn( "Hack for UI: Moving DFLs around." )
-		for v in dfl_memberships:
-			fake_container[v.NTIID] = v
-		fake_container.lastModified = self._container.lastModified
-		return fake_container
+	# TODO Do we need to accept posts here?
+	# TODO LastMod?
+	name = 'Groups'
+	__name__ = name
+
+	@property
+	def memberships(self):
+		# Any that we own plus any we were added to.
+		return set( self._user.friendsLists.values() ) | set( self._user.dynamic_memberships )
+
+	def selector(self, obj):
+		"""
+		DFLs we own or are a member of, even if it it's not our
+		collection.
+		"""
+		return 	IDynamicSharingTargetFriendsList.providedBy( obj ) \
+			and (self.remote_user in obj or self.remote_user == obj.creator)
+
+@component.adapter(IUser)
+@interface.implementer(IContainerCollection)
+def _UserDynamicFriendsListCollectionFactory( user ):
+	return DynamicFriendsListContainerCollection( UserEnumerationWorkspace( user ) )
+
+@interface.implementer(IContainerCollection)
+@component.adapter(IUserWorkspace)
+class CommunitiesContainerCollection(_AbstractPseudoContainerCollection):
+
+	name = 'Communities'
+	__name__ = name
+
+	@property
+	def memberships(self):
+		return self._user.dynamic_memberships
+
+	def selector(self, obj):
+		"""
+		Communities that allow membership ops and are either public or
+		we are a member of.
+		"""
+		return 	ICommunity.providedBy( obj ) \
+			and not IDisallowMembershipOperations.providedBy( obj ) \
+			and (obj.public or self.remote_user in obj)
+
+@component.adapter(IUser)
+@interface.implementer(IContainerCollection)
+def _UserCommunitiesCollectionFactory( user ):
+	return CommunitiesContainerCollection( UserEnumerationWorkspace( user ) )
+
+@interface.implementer(IContainerCollection)
+@component.adapter(IUserWorkspace)
+class AllCommunitiesContainerCollection(_AbstractPseudoContainerCollection):
+
+	name = 'AllCommunities'
+	__name__ = name
+
+	@property
+	def memberships(self):
+		return self._user.dynamic_memberships
+
+	def selector(self, obj):
+		"""
+		Communities you're a member of plus communities
+		"""
+		return 	ICommunity.providedBy( obj ) \
+			and not IDisallowMembershipOperations.providedBy( obj ) \
+			and (obj.public or self.remote_user in obj)
+
+@component.adapter(IUser)
+@interface.implementer(IContainerCollection)
+def _UserAllCommunitiesCollectionFactory( user ):
+	return AllCommunitiesContainerCollection( UserEnumerationWorkspace( user ) )
 
 @component.adapter(ICollection)
 @interface.implementer(IContentTypeAware)
