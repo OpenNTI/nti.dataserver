@@ -28,8 +28,6 @@ from zope.mimetype.interfaces import IContentTypeAware
 from nti.common.property import alias
 from nti.common.iterables import isorted
 
-from nti.mimetype.mimetype import nti_mimetype_with_class
-
 from .common import get_mimetype_from_type
 
 from .constants import VIDEO_TRANSCRIPT_MIME_TYPE
@@ -109,7 +107,7 @@ class SearchHitMetaData(object):
 	unspecified_container = u'+++unspecified_container+++'
 
 	__external_can_create__ = True
-	mime_type = mimeType = nti_mimetype_with_class('SearchHitMetaData')
+	mime_type = mimeType = u"application/vnd.nextthought.search.searchhitmetadata"
 
 	filtered_count = 0
 	SearchTime = lastModified = createdTime = 0
@@ -188,7 +186,7 @@ class _MetaSearchResults(type):
 
 	def __new__(cls, name, bases, dct):
 		t = type.__new__(cls, name, bases, dct)
-		t.mime_type = t.mimeType = nti_mimetype_with_class(name[1:].lower())
+		t.mime_type = t.mimeType = u"application/vnd.nextthought.search.%s" % name[1:].lower()
 		setattr(t, '__external_can_create__', True)
 		setattr(t, '__external_class_name__', name[1:])
 		t.parameters = dict()
