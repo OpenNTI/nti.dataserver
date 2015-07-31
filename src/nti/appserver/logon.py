@@ -68,11 +68,14 @@ from nti.app.renderers import interfaces as app_renderes_interfaces
 
 from nti.contentlibrary import interfaces as lib_interfaces
 
+from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IGoogleUser
+from nti.dataserver import interfaces as nti_interfaces
+
 from nti.dataserver import users
 from nti.dataserver.users import User
-from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.users.utils import force_email_verification
+from nti.dataserver.users.interfaces import GoogleUserCreatedEvent
 
 from nti.externalization import interfaces as ext_interfaces
 
@@ -1184,6 +1187,7 @@ import hashlib
 from urlparse import urljoin 
 
 from nti.common.string import TRUE_VALUES
+
 from nti.utils.interfaces import IOAuthKeys
 
 OPENID_CONFIGURATION = None
@@ -1318,6 +1322,8 @@ def google_oauth2(request):
 												idurl=None,
 												iface=None,
 												user_factory=User.create_user)
+			interface.alsoProvides(user, IGoogleUser)
+			notify(GoogleUserCreatedEvent(user))
 			if is_true(email_verified):
 				force_email_verification(user) # trusted source
 			request.environ[b'nti.request_had_transaction_side_effects'] = b'True'
