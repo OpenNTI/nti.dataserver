@@ -79,7 +79,6 @@ class _ImageAndRedactionRestrictedContentObjectFilter(_SimpleRestrictedContentOb
 				  'application/vnd.nextthought.embeddedvideo',
 				  'application/vnd.nextthought.forums.ace')
 
-
 @interface.implementer(IVocabularyFactory)
 class _UserCreatableMimeObjectVocabularyFactory(object):
 
