@@ -21,7 +21,7 @@ import functools
 from zope import component
 from zope import interface
 
-from zc import intid as zc_intid
+from zc.intid import IIntIds
 
 from nti.externalization import integer_strings
 
@@ -48,12 +48,12 @@ class _AbstractWeakRef(object):
 
 	__slots__ = ()
 
-	def __init__( self, content_object ):
-		self._entity_id = component.getUtility( zc_intid.IIntIds ).getId( content_object )
+	def __init__(self, content_object):
+		self._entity_id = component.getUtility(IIntIds).getId(content_object)
 		# _v_entity_cache is a volatile attribute. It's either None, meaning we have
 		# no idea, the resolved object, or False
 		self._v_entity_cache = content_object
-		self._entity_oid = getattr( content_object, '_p_oid', None )
+		self._entity_oid = getattr(content_object, '_p_oid', None)
 
 	def _cached(self, allow_cached):
 		if allow_cached and self._v_entity_cache is not None:
@@ -64,16 +64,16 @@ class _AbstractWeakRef(object):
 			return self._v_entity_cache if self._v_entity_cache is not False else None
 
 		try:
-			result = component.getUtility( zc_intid.IIntIds ).getObject( self._entity_id )
+			result = component.getUtility(IIntIds).getObject(self._entity_id)
 		except KeyError:
 			result = None
 
 		if self._entity_oid is not None:
-			result_oid = getattr( result, '_p_oid', None )
+			result_oid = getattr(result, '_p_oid', None)
 			if result_oid is None or result_oid != self._entity_oid:
 				result = None
 
-		if allow_cached: # only perturb the state if we are allowed to
+		if allow_cached:  # only perturb the state if we are allowed to
 			if result is not None:
 				self._v_entity_cache = result
 			else:
@@ -84,12 +84,12 @@ class _AbstractWeakRef(object):
 	def __call__(self, allow_cached=True):
 		return self._cached(allow_cached)
 
-	def __eq__( self, other ):
+	def __eq__(self, other):
 		if self is other: return True
 		try:
 			if self._entity_id == other._entity_id:
 				return self._entity_oid == other._entity_oid or self._entity_oid is None
-		except AttributeError: #pragma: no cover
+		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
 	def __ne__(self, other):
@@ -100,10 +100,12 @@ class _AbstractWeakRef(object):
 		return not eq
 
 	def __hash__(self):
-		return hash((self._entity_id,self._entity_oid))
+		return hash((self._entity_id, self._entity_oid))
 
 	def __repr__(self):
-		return "<%s.%s %s>" % (self.__class__.__module__, self.__class__.__name__, self._entity_id)
+		return "<%s.%s %s>" % (self.__class__.__module__,
+							   self.__class__.__name__,
+							   self._entity_id)
 
 	def make_missing_ntiid(self):
 		eid = self._entity_id
@@ -111,9 +113,9 @@ class _AbstractWeakRef(object):
 		# of that. We do some trivial manipulation on it to make it less
 		# obvious what it is, and less likely to come into the system when
 		# we don't want it to
-		eid = integer_strings.to_external_string( eid )
+		eid = integer_strings.to_external_string(eid)
 		# base64 might be nice, but that doesn't play well with ntiids
-		return ntiids.make_ntiid( nttype=ntiids.TYPE_MISSING, specific=eid )
+		return ntiids.make_ntiid(nttype=ntiids.TYPE_MISSING, specific=eid)
 
 @interface.implementer(IWeakRefToMissing, ICachingWeakRef)
 class WeakRef(_AbstractWeakRef):
@@ -131,10 +133,10 @@ class WeakRef(_AbstractWeakRef):
 
 	__slots__ = ('_entity_id', '_entity_oid', '_v_entity_cache')
 
-	def __getstate__( self ):
+	def __getstate__(self):
 		return self._entity_id, self._entity_oid
 
-	def __setstate__( self, state ):
+	def __setstate__(self, state):
 		self._entity_id, self._entity_oid = state
 		self._v_entity_cache = None
 
@@ -142,11 +144,13 @@ class WeakRef(_AbstractWeakRef):
 	# world, but we did have tests relying on it. Try to catch it here,
 	# doing what python would have done itself.
 	def __lt__(self, other):
-		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()), stacklevel=2)
+		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()),
+					  stacklevel=2)
 		return id(self) < id(other)
 
 	def __gt__(self, other):
-		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()), stacklevel=2)
+		warnings.warn("Default WeakRef (to %s) is not totally orderable" % type(self()),
+					  stacklevel=2)
 		return id(self) > id(other)
 
 @functools.total_ordering
@@ -156,13 +160,13 @@ class ArbitraryOrderableWeakRef(WeakRef):
 	way (based simply on intids).
 	"""
 
-	def __lt__(self,other):
+	def __lt__(self, other):
 		try:
 			return (self._entity_id, self._entity_oid) < (other._entity_id, other._entity_oid)
 		except AttributeError:
 			return NotImplemented
 
-	def __gt__(self,other):
+	def __gt__(self, other):
 		try:
 			return (self._entity_id, self._entity_oid) > (other._entity_id, other._entity_oid)
 		except AttributeError:
