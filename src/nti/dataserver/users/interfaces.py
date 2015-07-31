@@ -261,6 +261,17 @@ class WillDeleteEntityEvent(ObjectEvent):
 	def __init__(self, obj):
 		super(WillDeleteEntityEvent, self).__init__(obj)
 
+class IGoogleUserCreatedEvent(IObjectEvent):
+	"""
+	Fired after an Google user has been created
+	"""
+
+@interface.implementer(IGoogleUserCreatedEvent)
+class GoogleUserCreatedEvent(ObjectEvent):
+
+	def __init__(self, obj):
+		super(GoogleUserCreatedEvent, self).__init__(obj)
+
 class IAvatarURLProvider(Interface):
 	"""
 	Something that can provide a display URL. This is separate
