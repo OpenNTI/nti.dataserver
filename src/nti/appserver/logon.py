@@ -1305,6 +1305,7 @@ def google_oauth2(request):
 		response = requests.get(userinfo_url, params={"access_token":access_token})
 		if response.status_code != 200:
 			return _create_failure_response(request,
+											request.session.get('google.failure'),
 											error=_('Invalid access token.'))
 		profile = response.json()
 		username = profile['email']
