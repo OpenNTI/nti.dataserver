@@ -11,6 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+import collections
 from urllib import quote as UQ
 
 from zope import component
@@ -20,6 +22,7 @@ from zope.location.interfaces import ILocationInfo
 
 from pyramid import traversal
 from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config, view_defaults
 
 from nti.app.authentication import get_remote_user
@@ -38,6 +41,7 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.workspaces.interfaces import IService
 
+from nti.common.iterables import is_nonstr_iter
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.contentlibrary.indexed_data import get_catalog
@@ -601,6 +605,22 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		obj_ntiid = getattr( obj, 'ntiid', None ) or obj_ntiid
 		return obj, obj_ntiid
 
+	def to_json_body(self, obj):
+		result = toExternalObject(toExternalObject(obj))
+		def _clean(m):
+			if isinstance(m, collections.Mapping):
+				if 'href' in m and not isinstance(m['href'], six.string_types):
+					m.pop('href', None)
+				values = m.values()
+			elif is_nonstr_iter(m):
+				values = m
+			else:
+				values = ()
+			for x in values:
+				_clean(x)
+		_clean(result)	
+		return result
+		
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
 		if 		ITopic.providedBy( obj ) \
@@ -621,7 +641,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			result = LocatedExternalDict()
 			result[ITEMS] = results
 			__traceback_info__ = result
-			response.json_body = toExternalObject(toExternalObject(result))
+			response.json_body = self.to_json_body(result)
 			raise response
 		return results
 
