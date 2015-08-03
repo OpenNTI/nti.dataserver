@@ -367,15 +367,12 @@ class _UserPersonalSummaryExternalObject(_UserSummaryExternalObject):
 				hidden = IHiddenMembership(x, None) or ()
 				return not self in hidden
 
-		log_msg = "Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
-		memberships = self.entity.xxx_hack_filter_non_memberships(self.entity.dynamic_memberships,
-																  log_msg=log_msg,
-																  the_logger=logger)
+		memberships = self.entity.dynamic_memberships
 		extDict['DynamicMemberships'] = extDict['Communities'] = \
 					_externalize_subordinates(filter(_selector, memberships), name='')  # Deprecated
 
 		# Following is writable
-		following = self.entity.xxx_hack_filter_non_memberships(self.entity.entities_followed)
+		following = self.entity.entities_followed
 		extDict['following'] = _externalize_subordinates(filter(_selector, following))
 
 		# as is ignoring and accepting

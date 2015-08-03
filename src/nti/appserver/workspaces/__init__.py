@@ -104,7 +104,6 @@ class _ContainerWrapper(object):
 
 	def name( self ):
 		return self._name_override or _find_name( self._container )
-		#return _find_name( self._container )
 
 	def set__name__(self, s):
 		self._name_override = s
@@ -159,52 +158,15 @@ class HomogeneousTypedContainerCollection(_ContainerWrapper):
 	def container(self):
 		return self._container
 
-@component.adapter(IFriendsListContainer)
-class FriendsListContainerCollection(HomogeneousTypedContainerCollection):
-	"""
-	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
-		them as editable. We are also sending back the correct creator.
-	"""
-
-	@property
-	def accepts( self ):
-		# Try to determine if we should be allowed to create
-		# this kind of thing or not
-		# TODO: This can probably be generalized up
-		user = None
-		user_service = find_interface( self, IUserService )
-		if user_service:
-			user = user_service.user
-		if user:
-			factory = component.getUtility(sch_interfaces.IVocabularyFactory,
-										   "Creatable External Object Types" )
-			vocab = factory( user )
-			try:
-				vocab.getTermByToken(mimetype.nti_mimetype_from_object(self._container.contained_type))
-			except LookupError:
-				# We can prove that we cannot create it, it's not in our vocabulary.
-				return ()
-		return (self._container.contained_type,)
-
-def _is_remote_same_as_authenticated(user, req=None):
-	# XXX This doesn't exactly belong at this layer. Come up with
-	# a better way to do this switching.
-	req = get_current_request() if req is None else req
-	if 	req is None or req.authenticated_userid is None or \
-		req.authenticated_userid != user.username:
-		return False
-	return True
-
-class _AbstractPseudoContainerCollection(_ContainerWrapper):
-	__parent__ = None
+class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 
 	def __init__( self, user_workspace ):
-		self.__parent__ = user_workspace
-		self._workspace = user_workspace
-
-	@property
-	def _user( self ):
-		return self._workspace.user
+		super( _AbstractPseudoMembershipContainer, self ).__init__( user_workspace )
+		try:
+			self._user = user_workspace.user
+		except AttributeError:
+			self._user = user_workspace.__parent__
+		self.__parent__ = self._user
 
 	@property
 	def remote_user(self):
@@ -237,11 +199,7 @@ class _AbstractPseudoContainerCollection(_ContainerWrapper):
 			return not self in hidden
 
 	def get_filtered_memberships(self):
-		log_msg = "Relationship trouble. User %s is no longer a member of %s. Ignoring for externalization"
-		result = self._user.xxx_hack_filter_non_memberships(self.memberships,
-														  log_msg=log_msg,
-														  the_logger=logger)
-		result = [x for x in result if self.selector( x )]
+		result = [x for x in self.memberships if self.selector( x )]
 		return result
 
 	@property
@@ -255,9 +213,64 @@ class _AbstractPseudoContainerCollection(_ContainerWrapper):
 		result.lastModified = self.last_modified
 		return result
 
+@component.adapter(IFriendsListContainer)
+class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
+									HomogeneousTypedContainerCollection):
+	"""
+	..note:: We are correctly not sending back an 'edit' link, but the UI still presents
+		them as editable. We are also sending back the correct creator.
+	"""
+	def __init__( self, container ):
+		super( FriendsListContainerCollection, self ).__init__( container )
+
+	@property
+	def accepts( self ):
+		# Try to determine if we should be allowed to create
+		# this kind of thing or not
+		# TODO: This can probably be generalized up
+		user = None
+		user_service = find_interface( self, IUserService )
+		if user_service:
+			user = user_service.user
+		if user:
+			factory = component.getUtility(sch_interfaces.IVocabularyFactory,
+										   "Creatable External Object Types" )
+			vocab = factory( user )
+			try:
+				vocab.getTermByToken(mimetype.nti_mimetype_from_object(self._container.contained_type))
+			except LookupError:
+				# We can prove that we cannot create it, it's not in our vocabulary.
+				return ()
+		return (self._container.contained_type,)
+
+	@property
+	def last_modified(self):
+		return self._container.lastModified
+
+	@property
+	def memberships(self):
+		return self._user.friendsLists.values()
+
+	def selector(self, obj):
+		"""
+		DFLs we own or are a member of, even if it it's not our
+		collection.
+		"""
+		return 	not IDynamicSharingTargetFriendsList.providedBy( obj ) \
+			and (self.remote_user in obj or self.remote_user == obj.creator)
+
+def _is_remote_same_as_authenticated(user, req=None):
+	# XXX This doesn't exactly belong at this layer. Come up with
+	# a better way to do this switching.
+	req = get_current_request() if req is None else req
+	if 	req is None or req.authenticated_userid is None or \
+		req.authenticated_userid != user.username:
+		return False
+	return True
+
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
-class DynamicMembershipsContainerCollection(_AbstractPseudoContainerCollection):
+class DynamicMembershipsContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'DynamicMemberships'
 	__name__ = name
@@ -273,7 +286,7 @@ def _UserDynamicMembershipsCollectionFactory( user ):
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
-class DynamicFriendsListContainerCollection(_AbstractPseudoContainerCollection):
+class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
 
 	# TODO Do we need to accept posts here?
 	# TODO LastMod?
@@ -300,7 +313,7 @@ def _UserDynamicFriendsListCollectionFactory( user ):
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
-class CommunitiesContainerCollection(_AbstractPseudoContainerCollection):
+class CommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'Communities'
 	__name__ = name
@@ -325,13 +338,14 @@ def _UserCommunitiesCollectionFactory( user ):
 
 @interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
-class AllCommunitiesContainerCollection(_AbstractPseudoContainerCollection):
+class AllCommunitiesContainerCollection(_AbstractPseudoMembershipContainer):
 
 	name = 'AllCommunities'
 	__name__ = name
 
 	@property
 	def memberships(self):
+		# TODO Not yet implemented.  Need all visible communities.
 		return self._user.dynamic_memberships
 
 	def selector(self, obj):

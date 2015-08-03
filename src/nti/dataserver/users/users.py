@@ -496,19 +496,14 @@ class User(Principal):
 		Overrides the super method to return both the communities we are a
 		member of, plus the friends lists we ourselves have created that are dynamic.
 		"""
-		result = self.xxx_hack_filter_non_memberships(
-					super(User,self)._get_dynamic_sharing_targets_for_read(),
-					"Relationship trouble: User %s is no longer a member of %s. Ignoring for dynamic read" )
-
+		result = set( super(User,self)._get_dynamic_sharing_targets_for_read() )
 		for fl in self.friendsLists.values():
 			if IDynamicSharingTarget.providedBy( fl ):
 				result.add( fl )
 		return result
 
 	def _get_entities_followed_for_read( self ):
-		return self.xxx_hack_filter_non_memberships(
-					super(User,self)._get_entities_followed_for_read(),
-					"Relationship trouble: User %s is no longer a member of %s. Ignoring for followed read" )
+		return set( super(User,self)._get_entities_followed_for_read() )
 
 	@Lazy
 	def _circled_events_storage(self):
@@ -886,26 +881,6 @@ class User(Principal):
 					apnsCon.sendNotification( device.deviceId, payload )
 				except Exception: # Big catch: this is not crucial, we shouldn't hurt anything without it
 					logger.exception("Failed to send APNS notification" )
-
-	def xxx_hack_filter_non_memberships(self, relationships, log_msg=None, the_logger=logger):
-		"""
-		XXX Temporary hack: Filter out some non-members that crept in. There
-		should be no more new ones after this date, but leave this code here as a warning
-		for awhile in case any do creep in.
-
-		:return: set of memberships
-		"""
-		discarded = []
-		result = set(relationships)
-		for x in list(result):
-			if IFriendsList.providedBy( x ) and self not in x:
-				discarded.append( (x,x.NTIID) )
-				result.discard( x )
-
-		if discarded and log_msg and the_logger is not None:
-			the_logger.warning( log_msg, self, discarded )
-
-		return result
 
 	def _xxx_extra_intids_of_memberships(self):
 		# We want things shared with the DFLs we own to be counted
