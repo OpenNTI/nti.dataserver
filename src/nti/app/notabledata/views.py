@@ -121,7 +121,6 @@ class _NotableRecursiveUGDView(_UGDView):
 			safely_viewable_intids = user_notable_data.get_notable_intids(max_created_time=batch_before)
 
 		descending_sort = request.params.get('sortOrder') != 'ascending'
-
 		# Need to sort on lastModified to properly bubble up grades
 		# to the top of the queue (since they're created early and updated
 		# later).

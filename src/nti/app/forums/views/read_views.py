@@ -22,7 +22,7 @@ from nti.app.renderers.interfaces import IETagCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import ILongerCachedUGDExternalCollection
 from nti.app.renderers.interfaces import IUseTheRequestContextUGDExternalCollection
-		
+
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.appserver.pyramid_authorization import is_readable
@@ -117,7 +117,7 @@ class ForumsContainerContentsGetView(UGDQueryView):
 
 	def __init__( self, request ):
 		self.request = request
-		super(ForumsContainerContentsGetView,self).__init__(request, 
+		super(ForumsContainerContentsGetView,self).__init__(request,
 															the_user=self,
 															the_ntiid=self.request.context.__name__ )
 

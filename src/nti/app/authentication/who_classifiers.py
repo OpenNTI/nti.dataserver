@@ -39,7 +39,6 @@ def application_request_classifier( environ ):
 	If the request represents an application, then :const:`CLASS_BROWSER_APP`
 	is returned, otherwise, the response may be ``browser``.
 	"""
-
 	result = default_request_classifier( environ )
 
 	if result == CLASS_BROWSER:
