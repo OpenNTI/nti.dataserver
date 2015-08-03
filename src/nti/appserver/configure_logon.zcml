@@ -71,9 +71,20 @@
 		<include package="nti.utils" file="meta.zcml" />
 		<oauth:registerOAuthKeys
 				apiKey="656445967400-op21oh9rpglhrha98ukq5r7cvbdp8333.apps.googleusercontent.com"
-				secretKey="1WLR7Thz8rPcSOEhwDG6WYdW"
+				secretKey="f2Q0JmM8WA9fGiRCcgwLWw8wE15nLAM/"
 				id="google" />
 				
+	</configure>
+	
+	<configure zcml:condition="not-have devmode">
+
+		<!-- Google -->
+		<include package="nti.utils" file="meta.zcml" />
+		<oauth:registerOAuthKeys
+				apiKey="621475736574-dfgpfgdojhmli7otmhdu4qss4jo9n0b8.apps.googleusercontent.com"
+				secretKey="IgsnDiIOYx0GMDVpVCp+Vhw+JS5zFwEH"
+				id="google" />
+
 	</configure>
 
 </configure>
