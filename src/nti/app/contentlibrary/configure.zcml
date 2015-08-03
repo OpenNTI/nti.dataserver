@@ -213,4 +213,9 @@
 				for="nti.contentlibrary.interfaces.IContentPackage
 					 zope.lifecycleevent.IObjectRemovedEvent" />
 
+	<!-- Filters -->
+	<subscriber	factory=".filters._LibraryContentObjectFilter"
+				provides="nti.appserver.interfaces.ICreatableObjectFilter"
+				for="nti.dataserver.interfaces.IUser" />
+
 </configure>
