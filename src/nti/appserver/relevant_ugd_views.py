@@ -28,6 +28,7 @@ from nti.appserver.ugd_query_views import _combine_predicate
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -115,13 +116,16 @@ class _RelevantUGDView(_RecursiveUGDView):
 						results.extend(items)
 		return results
 
-	def _scan_videos(self, ntiid):
-		unit = self._get_library_path(ntiid)
+	def _scan_media(self, ntiid):
 		results = []
-		if unit is not None:
-			for video_data in IVideoIndexedDataContainer(unit).values():
-				video_id = video_data.ntiid
-				items = self._get_items(video_id)
+		unit = self._get_library_path(ntiid)
+		if unit is None:
+			return results
+		
+		for iface in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
+			for media_data in iface(unit).values():
+				media_id = media_data.ntiid
+				items = self._get_items(media_id)
 				if items:
 					results.extend(items)
 		return results
@@ -130,10 +134,10 @@ class _RelevantUGDView(_RecursiveUGDView):
 		# Gather data
 		items = self.getObjectsForId(self.user, self.ntiid)
 		quiz_items = self._scan_quizzes(self.ntiid)
-		video_items = self._scan_videos(self.ntiid)
+		media_items = self._scan_media(self.ntiid)
 
 		predicate = self._make_complete_predicate()
-		all_items = chain(items, quiz_items, video_items)
+		all_items = chain(items, quiz_items, media_items)
 		# De-dupe; we could batch here if needed.
 		result = lists_and_dicts_to_ext_collection(all_items, predicate)
 		result['Total'] = len(result.get('Items', ()))

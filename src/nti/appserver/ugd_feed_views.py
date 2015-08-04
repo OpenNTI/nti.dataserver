@@ -7,36 +7,45 @@ A typical URL will look something like ``/dataserver2/users/$USER/Pages($NTIID)/
 Your newsreader will need to support HTTP Basic Auth; on the Mac I highly
 recommend NetNewsWire.
 
-$Id$
+.. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
 import datetime
-import feedgenerator
 from collections import namedtuple
 
-from zope import interface
+import feedgenerator
+
 from zope import component
-from zope.dublincore import interfaces as dc_interfaces
+from zope import interface
+
 from zope.contentprovider.interfaces import IContentProvider
 from zope.contentprovider.provider import ContentProviderBase
+
+from zope.dublincore.interfaces import IDCTimes
 
 from pyramid.view import view_defaults
 from pyramid.view import view_config
 
-from nti.appserver import httpexceptions as hexc
-from .interfaces import IChangePresentationDetails
-
 from nti.dataserver import authorization as nauth
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.users import interfaces as user_interfaces
+
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import IEntity
+from nti.dataserver.interfaces import ISelectedRange
+from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.users.interfaces import IUserProfile
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from .interfaces import IChangePresentationDetails
+
 from .ugd_query_views import _RecursiveUGDStreamView
+
+from . import httpexceptions as hexc
 
 class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 	"""
@@ -46,12 +55,13 @@ class _BetterDateAtom1Feed(feedgenerator.Atom1Feed):
 	"""
 
 	def add_item_elements(self, handler, item):
-		super(_BetterDateAtom1Feed,self).add_item_elements( handler, item )
+		super(_BetterDateAtom1Feed, self).add_item_elements(handler, item)
 		if item.get('published') is not None:
-			handler.addQuickElement(u"published", feedgenerator.rfc3339_date(item['published']).decode('utf-8'))
+			handler.addQuickElement(u"published",
+									feedgenerator.rfc3339_date(item['published']).decode('utf-8'))
 
 EntryDetails = namedtuple('EntryDetails',
-						  ['object', 'creator', 'title', 'categories'] )
+						  ['object', 'creator', 'title', 'categories'])
 
 class AbstractFeedView(object):
 	"""
@@ -64,13 +74,13 @@ class AbstractFeedView(object):
 
 	"""
 
-	def __init__( self, request ):
+	def __init__(self, request):
 		self.request = request
 
 	# TODO: We could probably do this with named adapters
 	_data_callable_factory = None
 
-	def _object_and_creator( self, data_item ):
+	def _object_and_creator(self, data_item):
 		"""
 		Returns an :class:`EntryDetails`, which is a named four tuple:
 		(object, creator, title, categories).
@@ -95,15 +105,15 @@ class AbstractFeedView(object):
 		"""
 		raise NotImplementedError()
 
-	def _feed_title( self ):
+	def _feed_title(self):
 		raise NotImplementedError()
 
-	def __call__( self ):
+	def __call__(self):
 		request = self.request
 		response = request.response
 
-		stream_view = self._data_callable_factory( request )
-		ext_dict = stream_view() # May raise HTTPNotFound
+		stream_view = self._data_callable_factory(request)
+		ext_dict = stream_view()  # May raise HTTPNotFound
 		response.last_modified = ext_dict['Last Modified']
 
 		# TODO: This borrows alot from the REST renderers
@@ -124,18 +134,18 @@ class AbstractFeedView(object):
 			link=request.application_url,
 			feed_url=request.path_url,
 			description='',
-			language='en' )
+			language='en')
 
 		for data_item in ext_dict['Items']:
-			data_object, data_creator, data_title, data_categories = self._object_and_creator( data_item )
+			data_object, data_creator, data_title, data_categories = self._object_and_creator(data_item)
 
 			descr = ''
-			renderer = component.queryMultiAdapter( (data_object, request, self), IContentProvider )
+			renderer = component.queryMultiAdapter((data_object, request, self), IContentProvider)
 			if renderer:
 				renderer.update()
 				descr = renderer.render()
 
-			creator_profile = user_interfaces.IUserProfile( data_creator )
+			creator_profile = IUserProfile(data_creator)
 			data_oid = to_external_ntiid_oid(data_object)
 			feed.add_item(
 				title=data_title,
@@ -144,24 +154,24 @@ class AbstractFeedView(object):
 				# Better would be something that involved the server
 				link=request.application_url + '#!' + data_oid,
 				description=descr,
-				author_email=getattr( creator_profile, 'email', None ),
+				author_email=getattr(creator_profile, 'email', None),
 				author_name=data_creator,
-				pubdate=dc_interfaces.IDCTimes( data_item ).created,
+				pubdate=IDCTimes(data_item).created,
 				unique_id=data_oid,
 				categories=data_categories,
 				# extras. If we don't provide a 'published' date
-				updated=dc_interfaces.IDCTimes( data_item ).modified,
-				published=dc_interfaces.IDCTimes( data_item ).created,
-				)
+				updated=IDCTimes(data_item).modified,
+				published=IDCTimes(data_item).created,
+			)
 
-		feed_string = feed.writeString( 'utf-8' )
-		response.content_type = feed.mime_type.encode( 'utf-8' )
+		feed_string = feed.writeString('utf-8')
+		response.content_type = feed.mime_type.encode('utf-8')
 		response.body = feed_string
 
 		return response
 
 @interface.implementer(IChangePresentationDetails)
-@component.adapter(interface.Interface, nti_interfaces.IStreamChangeEvent)
+@component.adapter(interface.Interface, IStreamChangeEvent)
 def ChangePresentationDetails(_, change):
 	# NOTE: This has too much logic and knows about
 	# too many types; this could be split out
@@ -175,54 +185,53 @@ def ChangePresentationDetails(_, change):
 					 	  'CommunityHeadlineTopic': 'discussion',
 					 	  'GeneralForumComment': 'discussion comment'}
 
-	creator_profile = user_interfaces.IUserProfile( change.creator )
+	creator_profile = IUserProfile(change.creator)
 
 	prettyname_creator = creator_profile.realname or creator_profile.alias or unicode(change.creator)
 	prettyname_action_kind = change.type.lower()
-	prettyname_object_kind = change.object.__class__.__name__ # if it's proxied, type() would be wrong
-	prettyname_object_kind = _pretty_type_names.get( prettyname_object_kind, prettyname_object_kind )
+	prettyname_object_kind = change.object.__class__.__name__  # if it's proxied, type() would be wrong
+	prettyname_object_kind = _pretty_type_names.get(prettyname_object_kind, prettyname_object_kind)
 
 	title = "%s %s a %s" % (prettyname_creator, prettyname_action_kind, prettyname_object_kind)
-	if getattr( change.object, 'title', None):
+	if getattr(change.object, 'title', None):
 		title = '%s: "%s"' % (title, change.object.title)
 
 	return EntryDetails(change.object, change.creator, title, (change.type,))
 
-@view_config( context='nti.appserver.interfaces.IPageContainerResource',
-			  name='feed.rss' )
 @view_config(context='nti.appserver.interfaces.IPageContainerResource',
-			  name='feed.atom' )
-@view_config( context='nti.appserver.interfaces.IRootPageContainerResource',
-			  name='feed.atom' )
-@view_config( context='nti.appserver.interfaces.IRootPageContainerResource',
-			  name='feed.rss' )
-@view_defaults( route_name='objects.generic.traversal',
+			  name='feed.rss')
+@view_config(context='nti.appserver.interfaces.IPageContainerResource',
+			  name='feed.atom')
+@view_config(context='nti.appserver.interfaces.IRootPageContainerResource',
+			  name='feed.atom')
+@view_config(context='nti.appserver.interfaces.IRootPageContainerResource',
+			  name='feed.rss')
+@view_defaults(	route_name='objects.generic.traversal',
 				permission=nauth.ACT_READ, request_method='GET',
 				http_cache=datetime.timedelta(hours=1))
 class UGDFeedView(AbstractFeedView):
 	_data_callable_factory = _RecursiveUGDStreamView
 
 
-	def _object_and_creator( self, change ):
-		return component.getMultiAdapter( (change.object, change), IChangePresentationDetails)
+	def _object_and_creator(self, change):
+		return component.getMultiAdapter((change.object, change), IChangePresentationDetails)
 
-	def _feed_title( self ):
-		return self.request.context.ntiid # TODO: Better title
+	def _feed_title(self):
+		return self.request.context.ntiid  # TODO: Better title
 
 # TODO: Not sure these belong here, or where they belong
 from ._table_utils import NoteContentProvider
 
 @interface.implementer(IContentProvider)
-@component.adapter(nti_interfaces.INote, interface.Interface, AbstractFeedView)
+@component.adapter(INote, interface.Interface, AbstractFeedView)
 class NoteFeedRenderer(NoteContentProvider):
 	"""
 	Renderers notes in HTML for feeds. Does what it can with canvas objects,
 	which is to include their URL.
-
 	"""
 
 @interface.implementer(IContentProvider)
-@component.adapter(nti_interfaces.ISelectedRange, interface.Interface, AbstractFeedView)
+@component.adapter(ISelectedRange, interface.Interface, AbstractFeedView)
 class SelectedRangeFeedRenderer(ContentProviderBase):
 	"""
 	For highlights and the like.
@@ -232,7 +241,7 @@ class SelectedRangeFeedRenderer(ContentProviderBase):
 		return self.context.selectedText
 
 @interface.implementer(IContentProvider)
-@component.adapter(nti_interfaces.IEntity, interface.Interface, AbstractFeedView)
+@component.adapter(IEntity, interface.Interface, AbstractFeedView)
 class EntityFeedRenderer(ContentProviderBase):
 	"""
 	For circled users.

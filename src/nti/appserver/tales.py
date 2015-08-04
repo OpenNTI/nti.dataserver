@@ -8,7 +8,7 @@ namespace that handles quoting, and a ``zope`` namespace for
 some general display utilities (like getting size, description, and
 title).
 
-$Id$
+.. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -16,12 +16,14 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
+
+from zope.publisher.interfaces.browser import IBrowserRequest
+
+from zope.tales.interfaces import ITALESFunctionNamespace
 
 from zope.traversing.interfaces import IPathAdapter
-from zope.tales.interfaces import ITALESFunctionNamespace
-from zope.publisher.interfaces.browser import IBrowserRequest
 
 from pyramid.threadlocal import get_current_request
 
@@ -36,8 +38,8 @@ class Currency(object):
 	"""
 
 	def __init__(self, context=None):
-		self.context = context
 		self.currency = None
+		self.context = context
 
 	def setEngine(self, engine):
 		pass
@@ -50,7 +52,7 @@ class Currency(object):
 		request = request or get_current_request()
 		if request is None:
 			# Use a USD default
-			result = '$ %s' % '{:20,.2f}'.format( decimal )
+			result = '$ %s' % '{:20,.2f}'.format(decimal)
 			return result
 
 		locale = IBrowserRequest(request).locale
@@ -80,20 +82,20 @@ class Currency(object):
 		This method, when used as a tales expression, returns a string
 		represeting the formatted currency of the context.
 		"""
-		return self._format_currency( self.context )
+		return self._format_currency(self.context)
 
 	def format_obj_with_currency(self, request=None):
-		return self._format_currency( self.context,
-									  getattr( self.context, 'Currency' ),
-									  request=request )
+		return self._format_currency(self.context,
+									 getattr(self.context, 'Currency'),
+									 request=request)
 
 	def format_with_currency(self, request=None):
-		return self._format_currency( self.context,
-									  self.currency,
-									  request=request )
+		return self._format_currency(self.context,
+									 self.currency,
+									 request=request)
 
 	def format_currency_object(self, obj, request=None):
-		return self._format_currency( obj, request=request )
+		return self._format_currency(obj, request=request)
 
 	def format_currency_attribute(self, obj, attrname, request=None):
 		"""
@@ -104,10 +106,10 @@ class Currency(object):
 									 getattr(obj, 'Currency'),
 									 request=request)
 
-	def __getattr__( self, name ):
-		if name.startswith( 'ATTR_W_CURRENCY_' ):
-			attr = getattr( self.context, name[16:] )
-			self.currency = getattr( self.context, 'Currency' )
+	def __getattr__(self, name):
+		if name.startswith('ATTR_W_CURRENCY_'):
+			attr = getattr(self.context, name[16:])
+			self.currency = getattr(self.context, 'Currency')
 			self.context = attr
 
 			return self.format_with_currency
@@ -120,4 +122,4 @@ class Currency(object):
 			self.currency = name
 			return self
 
-		return super(Currency,self).__getattr__(name)
+		return super(Currency, self).__getattr__(name)

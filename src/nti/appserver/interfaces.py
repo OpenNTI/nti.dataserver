@@ -20,9 +20,9 @@ from zope.location.interfaces import ILocation
 from zope.traversing.interfaces import IPathAdapter
 from zope.traversing.interfaces import ITraversable
 
-from dolmen.builtins import IIterable
-
 from pyramid.interfaces import IRequest
+
+from dolmen.builtins import IIterable
 
 from nti.contentlibrary.interfaces import IContentUnit
 
@@ -371,9 +371,9 @@ class IExternalFieldResource(ILocation):
 	resource = interface.Attribute("The object to be updated.")
 
 	wrap_value = schema.Bool(title="Whether to wrap the value as a dictionary name:value.",
-							  description="If False, then assume that the value passed in is acceptable to the object to update.",
-							  default=True,
-							  required=False)
+							 description="If False, then assume that the value passed in is acceptable to the object to update.",
+							 default=True,
+							 required=False)
 
 class IExternalFieldTraversable(ITraversable):
 	"""
