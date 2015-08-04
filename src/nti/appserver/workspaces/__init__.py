@@ -252,11 +252,9 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		return self._user.friendsLists.values()
 
 	def selector(self, obj):
-		"""
-		DFLs we own or are a member of, even if it it's not our
-		collection.
-		"""
-		return 	IDynamicSharingTargetFriendsList.providedBy( obj ) \
+		# In alpha, some users have timestamps in FL collection.
+		return 	IFriendsList.providedBy( obj ) \
+			and not IDynamicSharingTargetFriendsList.providedBy( obj ) \
 			and (self.remote_user in obj or self.remote_user == obj.creator)
 
 def _is_remote_same_as_authenticated(user, req=None):
