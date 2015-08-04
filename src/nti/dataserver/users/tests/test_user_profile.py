@@ -20,10 +20,13 @@ from hamcrest import contains_string
 does_not = is_not
 
 from nose.tools import assert_raises
+from nti.testing.matchers import is_false
+from nti.testing.matchers import verifiably_provides
 
 import unittest
 
 from zope import interface
+
 from zope.security.interfaces import IPrincipal
 
 from nti.dataserver.users import User
@@ -37,9 +40,6 @@ from nti.externalization import internalization
 from nti.externalization.externalization import to_external_object
 
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-
-from nti.testing.matchers import is_false
-from nti.testing.matchers import verifiably_provides
 
 from nti.dataserver.tests import mock_dataserver
 
@@ -59,7 +59,7 @@ class TestUserProfile(DataserverLayerTest):
 		assert_that(prof,
 					verifiably_provides(interfaces.ICompleteUserProfile))
 		assert_that(prof,
-					has_property('avatarURL', contains_string( 'https://' ) ) )
+					has_property('avatarURL', contains_string('https://')))
 		assert_that(prof,
 					has_property('backgroundURL', is_(none())))
 		assert_that(prof,
@@ -190,9 +190,9 @@ class TestUserProfile(DataserverLayerTest):
 	def test_externalized_profile(self):
 		user = User.create_user(username="foo@bar")
 		prof = interfaces.ICompleteUserProfile(user)
-		ext_prof = to_external_object( user, name=('personal-summary') )
-		assert_that( ext_prof, has_entry( 'positions', none() ))
-		assert_that( ext_prof, has_entry( 'education', none() ))
+		ext_prof = to_external_object(user, name=('personal-summary'))
+		assert_that(ext_prof, has_entry('positions', none()))
+		assert_that(ext_prof, has_entry('education', none()))
 
 		# Add position/education
 		start_year = 1999
@@ -205,66 +205,66 @@ class TestUserProfile(DataserverLayerTest):
 
 		prof.interests = ['reading', 'development']
 
-		prof.positions = [ProfessionalPosition( startYear=start_year,
+		prof.positions = [ProfessionalPosition(	startYear=start_year,
 												endYear=end_year,
 												companyName=company_name,
 												title=title,
-												description=description )]
+												description=description)]
 		prof.education = [Education(startYear=start_year,
 									endYear=end_year,
 									school=school,
 									degree=degree,
-									description=description )]
-		user_prof = to_external_object( user, name=('personal-summary') )
+									description=description)]
+		user_prof = to_external_object(user, name=('personal-summary'))
 
-		ext_prof = user_prof.get( 'interests' )
-		assert_that( ext_prof, has_length( 2 ))
+		ext_prof = user_prof.get('interests')
+		assert_that(ext_prof, has_length(2))
 
 		# Positions
-		ext_prof = user_prof.get( 'positions' )
-		assert_that( ext_prof, has_length( 1 ))
+		ext_prof = user_prof.get('positions')
+		assert_that(ext_prof, has_length(1))
 
 		ext_prof = ext_prof[0]
 		# Clear optional field
 		ext_prof[ 'endYear' ] = ''
 		assert_that(ext_prof, has_entry('Class',
-										ProfessionalPosition.__external_class_name__ ))
+										ProfessionalPosition.__external_class_name__))
 		assert_that(ext_prof, has_entry('MimeType',
-										ProfessionalPosition.mime_type ))
+										ProfessionalPosition.mime_type))
 
 		factory = internalization.find_factory_for(ext_prof)
 		assert_that(factory, is_(not_none()))
 
 		new_io = factory()
 		internalization.update_from_external_object(new_io, ext_prof)
-		assert_that(new_io, has_property( 'startYear', is_( start_year )))
-		assert_that(new_io, has_property( 'endYear', none()))
-		assert_that(new_io, has_property( 'companyName', is_( company_name )))
-		assert_that(new_io, has_property( 'title', is_( title )))
-		assert_that(new_io, has_property( 'description', is_( description )))
-		assert_that( new_io, is_( ProfessionalPosition ) )
+		assert_that(new_io, has_property('startYear', is_(start_year)))
+		assert_that(new_io, has_property('endYear', none()))
+		assert_that(new_io, has_property('companyName', is_(company_name)))
+		assert_that(new_io, has_property('title', is_(title)))
+		assert_that(new_io, has_property('description', is_(description)))
+		assert_that(new_io, is_(ProfessionalPosition))
 
 		# Education
-		ext_prof = user_prof.get( 'education' )
-		assert_that( ext_prof, has_length( 1 ))
+		ext_prof = user_prof.get('education')
+		assert_that(ext_prof, has_length(1))
 
 		ext_prof = ext_prof[0]
 		assert_that(ext_prof, has_entry('Class',
-										Education.__external_class_name__ ))
+										Education.__external_class_name__))
 		assert_that(ext_prof, has_entry('MimeType',
-										Education.mime_type ))
+										Education.mime_type))
 
 		factory = internalization.find_factory_for(ext_prof)
 		assert_that(factory, is_(not_none()))
 
 		new_io = factory()
 		internalization.update_from_external_object(new_io, ext_prof)
-		assert_that(new_io, has_property( 'startYear', is_( start_year )))
-		assert_that(new_io, has_property( 'endYear', is_( end_year )))
-		assert_that(new_io, has_property( 'school', is_( school )))
-		assert_that(new_io, has_property( 'degree', is_( degree )))
-		assert_that(new_io, has_property( 'description', is_( description )))
-		assert_that( new_io, is_( Education ) )
+		assert_that(new_io, has_property('startYear', is_(start_year)))
+		assert_that(new_io, has_property('endYear', is_(end_year)))
+		assert_that(new_io, has_property('school', is_(school)))
+		assert_that(new_io, has_property('degree', is_(degree)))
+		assert_that(new_io, has_property('description', is_(description)))
+		assert_that(new_io, is_(Education))
 
 from nti.dataserver.users.user_profile import FriendlyNamed
 

@@ -71,7 +71,7 @@ class TestAvatarURLs(DataserverLayerTest):
 
 		avurl_prof = interfaces.IAvatarURL(u)
 		assert_that(avurl_prof.avatarURL,
-					is_( 'https://secure.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=identicon#using_provided_email_address' ) )
+					is_('https://secure.gravatar.com/avatar/5738739998b683ac8fe23a61c32bb5a0?s=128&d=identicon#using_provided_email_address'))
 
 		avurl_prof = interfaces.IBackgroundURL(u)
 		assert_that(avurl_prof.backgroundURL, is_(none()))
@@ -80,8 +80,10 @@ class TestAvatarURLs(DataserverLayerTest):
 		o = Everyone()
 		assert_that(interfaces.IAvatarURL(o),
 					verifiably_provides(interfaces.IAvatarURL))
+
 		assert_that(interfaces.IAvatarURL(o),
 					has_property('avatarURL', contains_string('http://')))
+
 		assert_that(interfaces.IBackgroundURL(o),
 					has_property('backgroundURL', is_(none())))
 
