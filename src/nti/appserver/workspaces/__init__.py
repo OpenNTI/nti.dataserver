@@ -256,7 +256,7 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		DFLs we own or are a member of, even if it it's not our
 		collection.
 		"""
-		return 	not IDynamicSharingTargetFriendsList.providedBy( obj ) \
+		return 	IDynamicSharingTargetFriendsList.providedBy( obj ) \
 			and (self.remote_user in obj or self.remote_user == obj.creator)
 
 def _is_remote_same_as_authenticated(user, req=None):
@@ -539,8 +539,6 @@ class UserEnumerationWorkspace(ContainerEnumerationWorkspace):
 						if c] )
 
 		return sorted( result, key=lambda x: x.name )
-
-from nti.app.authentication import get_remote_user
 
 @interface.implementer(IContentUnitInfo)
 class _NTIIDEntry(object):
