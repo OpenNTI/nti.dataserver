@@ -389,7 +389,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 	# : the factory may change this. See :meth:`_FriendsListMap.external_factory`
 	__external_can_create__ = False
 
-	mime_type = 'application/vnd.nextthought.friendslist'
+	mime_type = 'application/vnd.nextthought.dynamicfriendslist'
 
 	# This object handle updating friends on creating/updating
 	# An event (see sharing.py) handles when this object is deleted.

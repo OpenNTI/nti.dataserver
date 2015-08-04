@@ -847,7 +847,7 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.status_int, is_( 201 ) )
 		assert_that( res.body, contains_string( 'boom@nextthought.com' ) )
 		assert_that( res.headers, has_entry( 'Content-Type',
-											contains_string( 'application/vnd.nextthought.friendslist+json' ) ) )
+											contains_string( 'application/vnd.nextthought.dynamicfriendslist+json' ) ) )
 
 		assert_that( res.json_body, has_entry( 'IsDynamicSharing', True ) )
 
