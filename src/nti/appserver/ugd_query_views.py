@@ -356,9 +356,9 @@ SORT_KEYS['CreatedTime'] = SORT_KEYS['createdTime'] # Despite documentation, som
 
 SORT_DIRECTION_DEFAULT = {
 	'LikeCount': 'descending',
+	'lastModified': 'descending',
 	'ReferencedByCount': 'descending',
-	'RecursiveLikeCount': 'descending',
-	'lastModified': 'descending'
+	'RecursiveLikeCount': 'descending'
 }
 
 FILTER_NAMES = {
@@ -409,7 +409,6 @@ class _MimeFilter(object):
 		self._exclude_classes += (o_type,)
 		return False
 
-###
 # XXX Hack in some faster-than-full-ACL support to determine
 # readability during views
 
