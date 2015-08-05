@@ -11,6 +11,9 @@ code to work with the newer physical resource tree.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+import six
+import collections
+
 from zope import component
 from zope import interface
 
@@ -38,6 +41,7 @@ from nti.appserver.interfaces import IJoinableContextProvider
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
 from nti.common.property import alias
+from nti.common.iterables import is_nonstr_iter
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
@@ -56,7 +60,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
-from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_external_object
 
 from nti.ntiids import ntiids
 
@@ -226,6 +230,22 @@ class _ObjectsContainerResource(_ContainerResource):
 				pass
 		return result
 
+	def to_json_body(self, obj):
+		result = to_external_object(to_external_object(obj))
+		def _clean(m):
+			if isinstance(m, collections.Mapping):
+				if 'href' in m and not isinstance(m['href'], six.string_types):
+					m.pop('href', None)
+				values = m.values()
+			elif is_nonstr_iter(m):
+				values = m
+			else:
+				values = ()
+			for x in values:
+				_clean(x)
+		_clean(result)	
+		return result
+
 	def _check_permission(self, context):
 		"""
 		For generic object requests, we'd like to handle
@@ -239,7 +259,7 @@ class _ObjectsContainerResource(_ContainerResource):
 				response = hexc.HTTPForbidden()
 				result = LocatedExternalDict()
 				result[ITEMS] = results
-				response.json_body = toExternalObject( toExternalObject( result ) )
+				response.json_body = self.to_json_body(result)
 				raise response
 
 	def _getitem_with_ds(self, ds, key):
