@@ -68,7 +68,6 @@ def main():
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
 	arg_parser.add_argument('owner', help="The username of the owner")
-	
 	arg_parser.add_argument('username', help="The username of the new DFL")
 	
 	arg_parser.add_argument('-n', '--name',
