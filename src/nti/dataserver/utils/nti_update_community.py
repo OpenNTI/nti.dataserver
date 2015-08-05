@@ -76,7 +76,6 @@ def update_community(username, name=None, alias=None, public=False,
 def process_args(args=None):
 	arg_parser = argparse.ArgumentParser(description="Update a community")
 	arg_parser.add_argument('username', help="The community to update")
-	arg_parser.add_argument('--env_dir', help="Dataserver environment root directory")
 	arg_parser.add_argument('-v', '--verbose', help="Be verbose", action='store_true',
 							dest='verbose')
 
