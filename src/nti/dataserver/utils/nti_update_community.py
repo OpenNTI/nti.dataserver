@@ -21,6 +21,8 @@ import argparse
 
 from zope import interface
 
+from nti.common.string import safestr
+
 from nti.dataserver.users import Community
 from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.users.interfaces import IDisallowActivityLink
@@ -34,29 +36,24 @@ def update_community(username, name=None, alias=None, public=False,
 					 joinable=False, profile=True, verbose=False):
 	__traceback_info__ = locals().items()
 
-	if alias and not isinstance(alias, unicode):
-		alias = unicode(alias.decode("UTF-8"))
-
-	if name and not isinstance(name, unicode):
-		name = unicode(name.decode("UTF-8"))
+	name = safestr(name) if name else name
+	alias = safestr(alias) if alias else alias
 
 	community = Community.get_community(username)
-	if community is None:
-		print("community does not exists", file=sys.stderr)
+	if community is None or not ICommunity.providedBy(community):
+		print("Community does not exists", file=sys.stderr)
 		sys.exit(2)
-
-	if not ICommunity.providedBy(community):
-		print("Invalid community", repr(community), file=sys.stderr)
-		sys.exit(3)
 
 	ext_value = {}
 	if name:
 		ext_value['realname'] = name
+
 	if alias:
 		ext_value['alias'] = alias
 
 	if community.public != public:
 		ext_value['public'] = public
+
 	if community.joinable != joinable:
 		ext_value['joinable'] = joinable
 
@@ -98,7 +95,7 @@ def process_args(args=None):
 							 action='store_true',
 							 default=False,
 							 help="Joinable community")
-	
+
 	arg_parser.add_argument('--no-profile',
 							 dest='profile',
 							 action='store_true',
