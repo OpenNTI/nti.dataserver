@@ -218,10 +218,13 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 	except ImportError:
 		pass
 	else:
-		builtins.__import__ = __builtin__.__import__
-		import gevent.builtins
-		gevent.builtins.allowed_module_name_types = (basestring,)
-		gevent.builtins.__target__ = '__builtin__'
+		try:
+			import gevent.builtins
+			builtins.__import__ = __builtin__.__import__
+			gevent.builtins.allowed_module_name_types = (basestring,)
+			gevent.builtins.__target__ = '__builtin__'
+		except ImportError:
+			pass
 
 	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False, builtins=True)
 
