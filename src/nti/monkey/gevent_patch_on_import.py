@@ -226,7 +226,7 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 		except ImportError:
 			pass
 
-	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False, builtins=True)
+	gevent.monkey.patch_all(subprocess=True, sys=False, Event=False)
 
 	# NOTE: There is an incompatibility with patching 'thread' and the 'multiprocessing' module:
 	# The problem is that multiprocessing.queues.Queue uses a half-duplex multiprocessing.Pipe,
