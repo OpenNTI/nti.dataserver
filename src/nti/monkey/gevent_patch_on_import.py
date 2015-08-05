@@ -218,9 +218,9 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 	except ImportError:
 		pass
 	else:
+		builtins.__import__ = __builtin__.__import__
 		try:
 			import gevent.builtins
-			builtins.__import__ = __builtin__.__import__
 			gevent.builtins.allowed_module_name_types = (basestring,)
 			gevent.builtins.__target__ = '__builtin__'
 		except ImportError:
