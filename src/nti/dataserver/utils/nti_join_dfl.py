@@ -19,7 +19,6 @@ import sys
 import argparse
 
 from nti.dataserver import users
-
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
@@ -41,17 +40,17 @@ def _process_args(args):
 		sys.exit(3)
 
 def main():
-	arg_parser = argparse.ArgumentParser( description="Join one or more existing communities" )
-	arg_parser.add_argument('username', help="The username that should join communities")
-	arg_parser.add_argument('dfl', help="The DFL identifier")
-	arg_parser.add_argument('-v', '--verbose', help="Be verbose", 
+	arg_parser = argparse.ArgumentParser(description="Join a DFL")
+	arg_parser.add_argument('username', help="The username that should join the DFL")
+	arg_parser.add_argument('dfl', help="The DFL NTIID")
+	arg_parser.add_argument('-v', '--verbose', help="Be verbose",
 							action='store_true', dest='verbose')
 	args = arg_parser.parse_args()
-	
+
 	env_dir = os.getenv('DATASERVER_DIR')
 	if not env_dir or not os.path.exists(env_dir) and not os.path.isdir(env_dir):
 		raise IOError("Invalid dataserver environment root directory", env_dir)
-	
+
 	run_with_dataserver(environment_dir=env_dir, function=lambda: _process_args(args),
 						verbose=args.verbose)
 
