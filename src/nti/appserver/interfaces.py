@@ -549,6 +549,13 @@ class IApplicationSettings(IFullMapping):
 	The application settings dictionary.
 	"""
 
+class IGoogleHostedDomain(interface.Interface):
+	
+	def __call__():
+		"""
+		return a string or none with the google hosted domain
+		"""
+
 # BWC exports
 
 zope.deferredimport.deprecatedFrom(
