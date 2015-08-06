@@ -241,7 +241,7 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 			except LookupError:
 				# We can prove that we cannot create it, it's not in our vocabulary.
 				return ()
-		return (self._container.contained_type,)
+		return (self._container.contained_type,IDynamicSharingTargetFriendsList)
 
 	@property
 	def last_modified(self):
@@ -252,6 +252,9 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 		return self._user.friendsLists.values()
 
 	def selector(self, obj):
+		"""
+		Only FL objects that our remote user can see.
+		"""
 		# In alpha, some users have timestamps in FL collection.
 		return 	IFriendsList.providedBy( obj ) \
 			and not IDynamicSharingTargetFriendsList.providedBy( obj ) \
