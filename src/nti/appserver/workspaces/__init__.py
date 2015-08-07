@@ -50,6 +50,8 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 from nti.dataserver.users.interfaces import IHiddenMembership
 from nti.dataserver.users.interfaces import IDisallowMembershipOperations
 
+from nti.dataserver.users.friends_lists import DynamicFriendsList
+
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -241,7 +243,7 @@ class FriendsListContainerCollection(_AbstractPseudoMembershipContainer,
 			except LookupError:
 				# We can prove that we cannot create it, it's not in our vocabulary.
 				return ()
-		return (self._container.contained_type,IDynamicSharingTargetFriendsList)
+		return (self._container.contained_type,DynamicFriendsList)
 
 	@property
 	def last_modified(self):
