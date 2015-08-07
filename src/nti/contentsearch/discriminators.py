@@ -5,6 +5,7 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from Cython.Utility.MemoryView import result
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -109,12 +110,20 @@ def get_title(obj, default=None, language='en'):
 	result = get_content(adapted.title, language) if adapted else None
 	return result.lower() if result else default
 
+def get_ngrams(value, language='en', default=None):
+	try:
+		result = compute_ngrams(value, language)
+	except ValueError:
+		logger.exception('Cannot compute ngrams "%s"', value)
+		result = default
+	return result
+
 def _as_value_and_ngrams(value, default=None, lower=True, language='en'):
 	value_is_string = isinstance(value, string_types)
 	value_is_nonempty_string = value_is_string and bool(value)
 
 	if value_is_nonempty_string:
-		n_grams = compute_ngrams(value, language)
+		n_grams = get_ngrams(value, language)
 		result = '%s %s' % (value, n_grams)
 		if lower:
 			result = result.lower()
@@ -208,7 +217,7 @@ def get_object_content(obj, default=None, language='en'):
 def get_object_ngrams(obj, default=None, language='en'):
 	content = get_object_content(obj, default, language)
 	if isinstance(content, string_types) and content:
-		result = compute_ngrams(content, language) or default
+		result = get_ngrams(content, language, default)
 	else:
 		result = default
 	return result
