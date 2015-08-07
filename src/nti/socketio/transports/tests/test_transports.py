@@ -86,7 +86,7 @@ class TestWebSocket(ConfiguringTestBase):
 		assert_that( jobs, has_length( 3 ) )
 		assert_that( jobs, only_contains( has_property( 'started', True ) ) )
 		for job in jobs:
-			assert_that( job.ready(), is_(False) )
+			assert_that( bool(job.ready()), is_(False) )
 
 		# Sending in a None from the "socket" kills all jobs
 		websocket.queue.put( None )
