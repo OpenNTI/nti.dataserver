@@ -206,6 +206,7 @@ from .communities import Everyone
 from .entity import NOOPCM as _NOOPCM
 
 from .friends_lists import FriendsList
+from .friends_lists import DynamicFriendsList
 from .friends_lists import _FriendsListMap # BWC
 
 import zope.deferredimport
@@ -591,7 +592,7 @@ class User(Principal):
 		else:
 			# FIXME: This is a hack to translate mimetypes to the old
 			# style of name that works with self.containers
-			if datatype == FriendsList.mimeType:
+			if datatype in ( FriendsList.mimeType, DynamicFriendsList.mimeType ):
 				datatype = self.friendsLists.container_name
 			result = self.containers.maybeCreateContainedObjectWithType( datatype, externalValue )
 		return result

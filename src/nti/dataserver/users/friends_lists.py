@@ -384,12 +384,7 @@ class DynamicFriendsList(DynamicSharingTargetMixin, FriendsList):  # order matte
 	about = alias('About')
 	defaultGravatarType = 'retro'
 
-	__external_class_name__ = 'FriendsList'
-	# : Although this class itself cannot be directly created externally,
-	# : the factory may change this. See :meth:`_FriendsListMap.external_factory`
-	__external_can_create__ = False
-
-	mime_type = 'application/vnd.nextthought.dynamicfriendslist'
+	__external_class_name__ = 'DynamicFriendsList'
 
 	# This object handle updating friends on creating/updating
 	# An event (see sharing.py) handles when this object is deleted.
@@ -526,12 +521,6 @@ class _FriendsListMap(AbstractCaseInsensitiveNamedLastModifiedBTreeContainer):
 		If the external dictionary has the ``IsDynamicSharing`` value set to true,
 		then the friends list is a :class:`DynamicFriendsList`. This is necessary because
 		externally we do not distinguish between the two classes for the sake of the UI.
-
-		.. note:: This might need to change; this might in fact be a very bad idea. This
-			bypasses any of the site or role-based object creation set up by nti.appserver;
-			meaning that if we need to implement something like that we have to do it in a different
-			fashion. This would be easier if the UI wanted to/was able to distinguish the two
-			types of FLs.
 		"""
 		factory = FriendsList if not extDict.get('IsDynamicSharing') else DynamicFriendsList
 		result = factory(extDict['Username'] if 'Username' in extDict else extDict['ID'])
