@@ -788,9 +788,9 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 
 		# TranscriptSummaries can be filtered
 		with mock_dataserver.mock_db_trans( self.ds ):
-			# First, give a transcript summary
-
+			# Give a transcript summary
 			user = users.User.get_user( user.username )
+			user_username = user.username
 			from nti.chatserver import interfaces as chat_interfaces
 			import zc.intid as zc_intid
 			storage = chat_interfaces.IUserTranscriptStorage(user)
@@ -804,15 +804,30 @@ class TestApplicationUGDQueryViews(ApplicationLayerTest):
 			meet.ID = 'the_meeting'
 			msg.containerId = meet.containerId
 			msg.ID = '42'
+			meet.add_occupant_name( user_username, broadcast=False )
 
 			component.getUtility( zc_intid.IIntIds ).register( msg )
 			component.getUtility( zc_intid.IIntIds ).register( meet )
 			storage.add_message( meet, msg )
 
-		res = testapp.get( path, params={'accept':'application/vnd.nextthought.transcriptsummary'}, extra_environ=self._make_extra_environ())
+		# Now fetch all transcripts and filtered
+		res = testapp.get( path, params={'accept':'application/vnd.nextthought.transcriptsummary'},
+								extra_environ=self._make_extra_environ())
 		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
 		assert_that( res.json_body, has_entry( 'Items',
 											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
+
+		res = testapp.get( path, params={'accept':'application/vnd.nextthought.transcriptsummary',
+										'transcriptUser': user_username},
+								extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 1 ) ) )
+		assert_that( res.json_body, has_entry( 'Items',
+											   contains( has_entry( 'Class', 'TranscriptSummary' ) ) ) )
+
+		res = testapp.get( path, params={'accept':'application/vnd.nextthought.transcriptsummary',
+										'transcriptUser': 'not_a_chat_user'},
+								extra_environ=self._make_extra_environ())
+		assert_that( res.json_body, has_entry( 'Items', has_length( 0 ) ) )
 
 
 	@WithSharedApplicationMockDS

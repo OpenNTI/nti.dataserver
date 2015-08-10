@@ -488,6 +488,7 @@ class _UGDView(AbstractAuthenticatedView,
 		self._set_user_and_ntiid(request, the_user, the_ntiid)
 		self.context_cache = SharingContextCache()
 		self.top_level_context_filters = self._get_top_level_filter_contexts()
+		self.transcript_user_filter = self._get_transcript_user_filter()
 
 	def _get_top_level_contexts(self, obj):
 		top_level_contexts = []
@@ -505,6 +506,11 @@ class _UGDView(AbstractAuthenticatedView,
 		top_level_contexts = self._get_top_level_contexts( obj )
 		return top_level_contexts \
 			and self.top_level_context_filters.intersection( set( top_level_contexts ))
+
+	def _transcript_user_filter(self, obj):
+		meeting = getattr( obj, 'meeting', None )
+		contributors = getattr( meeting, 'historical_occupant_names', () )
+		return self.transcript_user_filter.intersection( set( contributors ) )
 
 	def _set_user_and_ntiid(self, request, the_user, the_ntiid):
 		if request.context:
@@ -550,6 +556,10 @@ class _UGDView(AbstractAuthenticatedView,
 			if top_level_context is not None:
 				results.add( top_level_context )
 		return results
+
+	def _get_transcript_user_filter(self):
+		transcript_users = self.__get_list_param( 'transcriptUser' )
+		return set( transcript_users )
 
 	def _get_filter_names(self):
 		return self.__get_list_param( 'filter' )
@@ -670,6 +680,9 @@ class _UGDView(AbstractAuthenticatedView,
 
 		if self.top_level_context_filters:
 			predicate = _combine_predicate( self._toplevel_context_filter, predicate )
+
+		if self.transcript_user_filter:
+			predicate = _combine_predicate( self._transcript_user_filter, predicate )
 
 		return predicate
 
