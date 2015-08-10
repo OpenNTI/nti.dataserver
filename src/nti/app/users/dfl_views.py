@@ -24,10 +24,11 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.authentication import get_remote_user
 
-from nti.appserver.ugd_query_views import _UGDView
 from nti.appserver.ugd_edit_views import UGDDeleteView
+from nti.appserver.ugd_query_views import _UGDView as UGDView
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata_index import IX_TOPICS
@@ -78,7 +79,7 @@ def exit_dfl_view(context, request):
 class DFLDeleteView(UGDDeleteView):
 
 	def _do_delete_object(self, theObject):
-		members = list(theObject) # resolve all members
+		members = list(theObject)  # resolve all members
 		if members:
 			raise hexc.HTTPForbidden(_("Group is not empty"))
 		return super(DFLDeleteView, self)._do_delete_object(theObject)
@@ -88,7 +89,7 @@ class DFLDeleteView(UGDDeleteView):
 			 request_method='GET',
 			 context=IDynamicSharingTargetFriendsList,
 			 permission=nauth.ACT_READ)
-class DFLActivityView(_UGDView):
+class DFLActivityView(UGDView):
 
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''
@@ -112,5 +113,14 @@ class DFLActivityView(_UGDView):
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_dfl)
 
-		items = ResultSet(top_level_shared_intids, intids, ignore_invalid=True)
+		topics_intids = intids.family.IF.LFSet()
+		board = IDFLBoard(context, None) or {}
+		for forum in board.values():
+			for topic in forum.values():
+				uid = intids.queryId(topic)
+				if uid is not None:
+					topics_intids.add(uid)
+
+		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
+		items = ResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
