@@ -23,10 +23,10 @@ from nti.app.renderers.interfaces import IUserActivityExternalCollection
 from nti.appserver.interfaces import IUserActivityStorage
 from nti.appserver.interfaces import IUserActivityProvider
 
-from nti.dataserver import authorization as nauth
-
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
+
+from nti.dataserver import authorization as nauth
 
 from nti.intid.containers import IntidContainedStorage
 
@@ -35,10 +35,10 @@ from nti.ntiids import ntiids
 from .ugd_query_views import _toplevel_filter
 from .ugd_query_views import _RecursiveUGDView as RecursiveUGDQueryView
 
-# : The link relationship type for a link to retrieve activity
-# : for a particular user.
-# : Also serves as a view name for that same purpose
-# : (:class:`UserActivityGetView`).
+# The link relationship type for a link to retrieve activity
+# for a particular user.
+# Also serves as a view name for that same purpose
+# (:class:`UserActivityGetView`).
 REL_USER_ACTIVITY = "Activity"  # This permits a URL like .../users/$USER/Activity
 
 def _always_toplevel_filter(x):
@@ -51,7 +51,7 @@ def _always_toplevel_filter(x):
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 permission=nauth.ACT_READ,
-			 context=nti_interfaces.IUser,
+			 context=IUser,
 			 name=REL_USER_ACTIVITY,
 			 request_method='GET')
 class UserActivityGetView(RecursiveUGDQueryView):
@@ -103,12 +103,16 @@ class UserActivityGetView(RecursiveUGDQueryView):
 
 	def _get_exclude_types(self):
 		excludes = set(super(UserActivityGetView, self)._get_exclude_types())
+		excludes.add('application/vnd.nextthought.assessment.pollsubmission')
+		excludes.add('application/vnd.nextthought.assessment.surveysubmission')
 		excludes.add('application/vnd.nextthought.assessment.assessedquestion')
 		excludes.add('application/vnd.nextthought.assessment.assessedquestionset')
 		return excludes
 
 	def _check_for_not_found(self, items, exc_info):
-		"Override to never throw."
+		"""
+		Override to never throw.
+		"""
 		return
 
 	def getObjectsForId(self, user, ntiid):
@@ -134,8 +138,8 @@ class UserActivityGetView(RecursiveUGDQueryView):
 		return result
 
 # TODO: This is almost certainly the wrong place for this
+@component.adapter(IUser)
 @interface.implementer(IUserActivityStorage)
-@component.adapter(nti_interfaces.IUser)
 class DefaultUserActivityStorage(IntidContainedStorage):
 	pass
 DefaultUserActivityStorageFactory = an_factory(DefaultUserActivityStorage)
@@ -143,7 +147,7 @@ DefaultUserActivityStorageFactory = an_factory(DefaultUserActivityStorage)
 @interface.implementer(IUserActivityProvider)
 class DefaultUserActivityProvider(object):
 
-	def __init__(self, user, request):
+	def __init__(self, user, request=None):
 		self.user = user
 
 	def getActivity(self):
