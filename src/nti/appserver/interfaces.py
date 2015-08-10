@@ -36,6 +36,7 @@ from nti.dataserver.users.interfaces import IUserProfile
 from nti.dataserver.users.interfaces import IContactEmailRecovery
 
 from nti.schema.field import Object
+from nti.schema.field import ValidTextLine
 
 IContactEmailRecovery = IContactEmailRecovery  # BBB
 
@@ -549,12 +550,9 @@ class IApplicationSettings(IFullMapping):
 	The application settings dictionary.
 	"""
 
-class IGoogleHostedDomain(interface.Interface):
+class IGoogleLogonSettings(interface.Interface):
 	
-	def __call__():
-		"""
-		return a string or none with the google hosted domain
-		"""
+	hd = ValidTextLine(title='Valid hosted domain', required=False)
 
 # BWC exports
 
