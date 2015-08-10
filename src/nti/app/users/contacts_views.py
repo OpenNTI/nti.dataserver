@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.security.interfaces import IPrincipal
 
 from pyramid.view import view_config
@@ -50,7 +51,7 @@ def to_suggested_contacts(users):
 		result.append(contact)
 	return result
 
-class _AbstractSuggestedContactsView( AbstractAuthenticatedView ):
+class _AbstractSuggestedContactsView(AbstractAuthenticatedView):
 
 	# The maximum number of results we will return
 	MAX_REQUEST_SIZE = 10
@@ -59,19 +60,19 @@ class _AbstractSuggestedContactsView( AbstractAuthenticatedView ):
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
-		self.result_count = params.get( 'Count' ) or self.MAX_REQUEST_SIZE
+		self.result_count = params.get('Count') or self.MAX_REQUEST_SIZE
 		if self.result_count > self.MAX_REQUEST_SIZE:
 			self.result_count = self.MAX_REQUEST_SIZE
 
 		self.existing_pool = {x.username for x in self.remoteUser.entities_followed}
-		self.existing_pool.add( self.remoteUser.username )
+		self.existing_pool.add(self.remoteUser.username)
 
 @view_config(route_name='objects.generic.traversal',
 			 name=SUGGESTED_CONTACTS,
 			 request_method='GET',
 			 permission=ACT_READ,
 			 context=IUser)
-class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
+class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 	"""
 	For the contextual user, return suggested contacts based on:
 
@@ -95,21 +96,21 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		self.limited_count = 0
 		# Only fetch from our limited contacts if our pool size is
 		# large enough.
-		if len( pool ) >= pool_size_min:
+		if len(pool) >= pool_size_min:
 			limited_count = limited_ratio * self.result_count
 			self.limited_count = int(limited_count)
 
 	def _get_params(self):
-		super( UserSuggestedContactsView, self )._get_params()
+		super(UserSuggestedContactsView, self)._get_params()
 
 		if self.remoteUser == self.context:
-			self._set_limited_count( self.existing_pool,
+			self._set_limited_count(self.existing_pool,
 									self.MIN_LIMITED_CONTACT_POOL_SIZE,
-									self.LIMITED_CONTACT_RATIO )
+									self.LIMITED_CONTACT_RATIO)
 		else:
-			self._set_limited_count( tuple( self.context.entities_followed ),
+			self._set_limited_count(tuple(self.context.entities_followed),
 									self.MIN_LIMITED_CONTACT_POOL_SIZE_SINGLE_SOURCE,
-									self.LIMITED_CONTACT_RATIO_SINGLE_SOURCE )
+									self.LIMITED_CONTACT_RATIO_SINGLE_SOURCE)
 
 	def _get_suggestion_args(self):
 		"""
@@ -131,9 +132,9 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		results = set()
 
 		suggestion_args = self._get_suggestion_args()
-		for _, provider in list(component.getUtilitiesFor( ISecondOrderSuggestedContactProvider )):
-			for suggestion in provider.suggestions( *suggestion_args ):
-				results.add( suggestion )
+		for _, provider in list(component.getUtilitiesFor(ISecondOrderSuggestedContactProvider)):
+			for suggestion in provider.suggestions(*suggestion_args):
+				results.add(suggestion)
 				if len(results) >= self.limited_count:
 					break
 		return results
@@ -145,7 +146,7 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		"""
 		# TODO Currently our only subscriber does so based on
 		# courses.  We also need one for global community.
-		fill_in_count = self.result_count - len( intermediate_contacts )
+		fill_in_count = self.result_count - len(intermediate_contacts)
 		intermediate_usernames = {x.username for x in intermediate_contacts}
 		results = set()
 
@@ -174,8 +175,8 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 		results[ CLASS ] = SUGGESTED_CONTACTS
 
 		# Only return anything if we meet our minimum requirements.
-		if 		len( fill_in_contacts ) >= self.MIN_FILL_COUNT \
-			and len( limited_contacts ) + len( fill_in_contacts ) >= self.MIN_RESULT_COUNT:
+		if 		len(fill_in_contacts) >= self.MIN_FILL_COUNT \
+			and len(limited_contacts) + len(fill_in_contacts) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend(limited_contacts)
 			result_list.extend(fill_in_contacts)
@@ -189,7 +190,7 @@ class UserSuggestedContactsView( _AbstractSuggestedContactsView ):
 			 name=SUGGESTED_CONTACTS,
 			 permission=ACT_READ,
 			 request_method='GET')
-class _MembershipSuggestedContactsView( _AbstractSuggestedContactsView ):
+class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
 	"""
 	Simple contact suggestions based on members of
 	context.
@@ -199,35 +200,35 @@ class _MembershipSuggestedContactsView( _AbstractSuggestedContactsView ):
 		"""
 		Only add new, non-hidden, non-nextthought users.
 		"""
-		return		IUser.providedBy( member ) \
+		return		IUser.providedBy(member) \
 				and	member.username not in self.existing_pool \
-				and not member.username.endswith( '@nextthought.com' ) \
+				and not member.username.endswith('@nextthought.com') \
 				and not member in hidden
 
 	def _get_contacts(self):
 		results = set()
 		creator = self.context.creator
-		creator_username = getattr( creator, 'username', creator )
-		hidden = IHiddenMembership( self.context, None ) or ()
+		creator_username = getattr(creator, 'username', creator)
+		hidden = IHiddenMembership(self.context, None) or ()
 
 		if creator and creator_username not in self.existing_pool:
-			results.add( creator )
+			results.add(creator)
 
 		for member in self.context:
-			if self._accept_filter( member, hidden ):
-				results.add( member )
-				if len( results ) >= self.result_count:
+			if self._accept_filter(member, hidden):
+				results.add(member)
+				if len(results) >= self.result_count:
 					break
 		return results
 
 	def __call__(self):
 		context = self.context
 		# Should we check for public here? It's false by default.
-		#is_public = context.public if ICommunity.providedBy( context ) else True
+		# is_public = context.public if ICommunity.providedBy( context ) else True
 
 		if 		self.remoteUser is None \
-			or 	IDisallowSuggestedContacts.providedBy( context ) \
-			or 	not (	self.remoteUser in context \
+			or 	IDisallowSuggestedContacts.providedBy(context) \
+			or 	not (self.remoteUser in context \
 					or	self.remoteUser == context.creator):
 			raise hexc.HTTPForbidden()
 
@@ -236,9 +237,9 @@ class _MembershipSuggestedContactsView( _AbstractSuggestedContactsView ):
 		contacts = self._get_contacts()
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = SUGGESTED_CONTACTS
-		if len( contacts ) >= self.MIN_RESULT_COUNT:
+		if len(contacts) >= self.MIN_RESULT_COUNT:
 			result_list = []
-			result_list.extend( contacts )
+			result_list.extend(contacts)
 			results[ ITEMS ] = [toExternalObject(x, name="summary") for x in result_list]
-			results[ 'ItemCount' ] = len( result_list )
+			results[ 'ItemCount' ] = len(result_list)
 		return results
