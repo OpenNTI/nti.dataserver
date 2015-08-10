@@ -1190,7 +1190,7 @@ from nti.common.string import TRUE_VALUES
 
 from nti.utils.interfaces import IOAuthKeys
 
-from .interfaces import IGoogleHostedDomain
+from .interfaces import IGoogleLogonSettings
 
 OPENID_CONFIGURATION = None
 LOGON_GOOGLE_OAUTH2 = 'logon.google.oauth2'
@@ -1229,9 +1229,9 @@ def google_oauth1(request):
 			  'client_id':auth_keys.APIKey,
 			  'redirect_uri':_redirect_uri(request)}
 
-	hosted_domain = component.queryUtility(IGoogleHostedDomain)
-	if hosted_domain is not None:
-		hosted_domain = hosted_domain()
+	login_config = component.queryUtility(IGoogleLogonSettings)
+	if login_config is not None:
+		hosted_domain = login_config.hd
 	if hosted_domain:
 		params['hd'] = hosted_domain
 
