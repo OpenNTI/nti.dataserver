@@ -84,7 +84,9 @@
 
 	<!-- Externalization -->
 	<subscriber factory=".decorators.BlogLinkDecorator"
-				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
+				provides="nti.externalization.interfaces.IExternalMappingDecorator"
+				for="nti.dataserver.interfaces.IUser
+					 pyramid.interfaces.IRequest" />
 
 	<subscriber factory=".decorators.CommunityBoardLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
