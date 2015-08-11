@@ -55,11 +55,10 @@ from nti.utils._compat import aq_base
 
 from . import VIEW_CONTENTS
 
-# These imports are broken out explicitly for speed (avoid runtime attribute lookup)
 LINKS = StandardExternalFields.LINKS
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(IUser)
+@interface.implementer(IExternalMappingDecorator)
 class BlogLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -73,13 +72,13 @@ class BlogLinkDecorator(object):
 		blog = context.containers.getContainer(DEFAULT_PERSONAL_BLOG_NAME)
 		if blog is not None and is_readable(blog):
 			link = Link(context,
-						 rel=DEFAULT_PERSONAL_BLOG_NAME,
-						 elements=(DEFAULT_PERSONAL_BLOG_NAME,))
+						rel=DEFAULT_PERSONAL_BLOG_NAME,
+						elements=(DEFAULT_PERSONAL_BLOG_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(ICommunity)
+@interface.implementer(IExternalMappingDecorator)
 class CommunityBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
@@ -94,7 +93,8 @@ class CommunityBoardLinkDecorator(object):
 		# exist and we keep creating it and throwing it away (due to
 		# not commiting on GET)
 		board = ICommunityBoard(context, None)
-		if board is not None:  # Not checking security. If the community is visible to you, the forum is too
+		# Not checking security. If the community is visible to you, the forum is too
+		if board is not None:
 			the_links = mapping.setdefault(LINKS, [])
 			link = Link(context,
 						rel=DEFAULT_BOARD_NAME,
@@ -108,7 +108,7 @@ class DFLBoardLinkDecorator(object):
 
 	__metaclass__ = SingletonDecorator
 
-	def decorateExternalMapping(self, context, mapping):	
+	def decorateExternalMapping(self, context, mapping):
 		board = IDFLBoard(context, None)
 		if board is not None:  # Not checking security.
 			the_links = mapping.setdefault(LINKS, [])
