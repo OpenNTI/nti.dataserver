@@ -17,17 +17,24 @@ from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
+from zope.container.interfaces import INameChooser
+
 from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.authentication import get_remote_user
+from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.appserver.ugd_query_views import _UGDView as UGDView
 
+from nti.common.maps import CaseInsensitiveDict
+
 from nti.dataserver import authorization as nauth
+from nti.dataserver.contenttypes.forums.forum import DFLForum
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
@@ -124,3 +131,23 @@ class DFLActivityView(UGDView):
 		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
 		items = ResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
+
+@view_config(route_name='objects.generic.traversal',
+			 name='CreateForum',
+			 request_method='POST',
+			 context=IDynamicSharingTargetFriendsList,
+			 permission=nauth.ACT_UPDATE)
+class DFLCreateForumView(AbstractAuthenticatedView,
+						 ModeledContentUploadRequestUtilsMixin):
+
+	def readInput(self, value=None):
+		result = super(DFLCreateForumView, self).readInput(value=value)
+		result = CaseInsensitiveDict(result)
+		return result
+
+	def _do_call(self):
+		self.readInput()
+		board = IDFLBoard(self.request.context)
+		forum = DFLForum()
+		name = INameChooser(board).chooseName(forum.title, forum)
+		board[name] = forum

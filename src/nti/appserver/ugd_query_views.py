@@ -1025,6 +1025,8 @@ class _UGDView(AbstractAuthenticatedView,
 	def _update_last_modified_after_sort(self, objects, result ):
 		result['Last Modified'] = result.lastModified
 
+UGDView = _UGDView # make public
+
 @interface.implementer(INamedLinkView)
 class _RecursiveUGDView(_UGDView):
 	"""
@@ -1235,6 +1237,8 @@ class _RecursiveUGDView(_UGDView):
 			# Throw the previous not found exception.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
+RecursiveUGDView = _RecursiveUGDView
+
 class _ChangeMimeFilter(_MimeFilter):
 
 	def _object( self, o ):
@@ -1249,6 +1253,8 @@ class _UGDStreamView(_UGDView):
 	_support_cross_user = False
 
 	_MIME_FILTER_FACTORY = _ChangeMimeFilter
+
+UGDStreamView = _UGDStreamView
 
 @interface.implementer(INamedLinkView)
 class _RecursiveUGDStreamView(_RecursiveUGDView):
@@ -1314,6 +1320,8 @@ class _RecursiveUGDStreamView(_RecursiveUGDView):
 		  and not (self._get_exclude_types() or self._get_accept_types()): # for bwc, if we filtered everything out, it's not a 404
 			raise hexc.HTTPNotFound()
 		return items
+
+RecursiveUGDStreamView = _RecursiveUGDStreamView
 
 @interface.implementer(INamedLinkView)
 class _UGDAndRecursiveStreamView(_UGDView):
@@ -1381,6 +1389,8 @@ class _UGDAndRecursiveStreamView(_UGDView):
 		all_data += page_data
 		all_data += stream_data
 		return all_data
+
+UGDAndRecursiveStreamView = _UGDAndRecursiveStreamView
 
 #: The link relationship type that can be used
 #: to get all the visible replies to a Note
