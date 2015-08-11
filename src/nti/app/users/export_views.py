@@ -9,11 +9,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zope.intid
-
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
+
+from zope.intid import IIntIds
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
@@ -64,7 +64,7 @@ def parse_mime_types(value):
 	return tuple(mime_types) if mime_types else ()
 
 def get_user_objects(user, mime_types=()):
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 
 	result_ids = None
@@ -84,7 +84,8 @@ def get_user_objects(user, mime_types=()):
 			mime_types.discard(messageinfo_mime_type)
 
 		if mime_types:
-			mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': tuple(mime_types)})
+			mime_types = tuple(mime_types)
+			mime_types_intids = catalog[IX_MIMETYPE].apply({'any_of': mime_types})
 		else:
 			created_ids = ()  # mark so we don't query the catalog
 	else:
@@ -101,8 +102,7 @@ def get_user_objects(user, mime_types=()):
 	for uid in result_ids or ():
 		try:
 			obj = intids.queryObject(uid)
-			if	obj is None or \
-				isBroken(obj, uid) or \
+			if	isBroken(obj, uid) or \
 				IUser.providedBy(obj) or \
 				IDeletedObjectPlaceholder.providedBy(obj):
 				continue
@@ -168,7 +168,7 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 		if not user:
 			raise hexc.HTTPUnprocessableEntity('User not found')
 
-		intids = component.getUtility(zope.intid.IIntIds)
+		intids = component.getUtility(IIntIds)
 		catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 
 		sharedWith_ids = catalog[IX_SHAREDWITH].apply({'any_of': (username,)})
