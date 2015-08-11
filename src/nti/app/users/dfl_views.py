@@ -28,8 +28,8 @@ from nti.app.authentication import get_remote_user
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_edit_views import UGDDeleteView
-from nti.appserver.ugd_query_views import _UGDView as UGDView
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -146,8 +146,15 @@ class DFLCreateForumView(AbstractAuthenticatedView,
 		return result
 
 	def _do_call(self):
-		self.readInput()
+		value = self.readInput()
+		title = value.get('title')
+		description = value.get('description')
+		if not title:
+			raise hexc.HTTPUnprocessableEntity(_("Must provide a forum title."))
+		if not description:
+			raise hexc.HTTPUnprocessableEntity(_("Must provide a forum description."))
 		board = IDFLBoard(self.request.context)
-		forum = DFLForum()
+		forum = DFLForum(title=title, description=description)
 		name = INameChooser(board).chooseName(forum.title, forum)
 		board[name] = forum
+		# TODO: Set ACL
