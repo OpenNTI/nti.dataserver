@@ -24,6 +24,7 @@ from nti.app.publishing import VIEW_PUBLISH
 from nti.app.publishing import VIEW_UNPUBLISH
 
 from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
+from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver._util import link_belongs_to_user
 
@@ -59,18 +60,12 @@ LINKS = StandardExternalFields.LINKS
 
 @component.adapter(IUser)
 @interface.implementer(IExternalMappingDecorator)
-class BlogLinkDecorator(object):
+class BlogLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping(self, context, mapping):
+	def _do_decorate_external(self, context, mapping):
 		the_links = mapping.setdefault(LINKS, [])
-		# Notice we DO NOT adapt; it must already exist, meaning that the
-		# owner has at one time added content to it. It may not have published
-		# content, though, and it may no longer have any entries
-		# (hence 'not None' rather than __nonzero__)
 		blog = context.containers.getContainer(DEFAULT_PERSONAL_BLOG_NAME)
-		if blog is not None and is_readable(blog):
+		if context == self.remoteUser or ( blog is not None and is_readable(blog)):
 			link = Link(context,
 						rel=DEFAULT_PERSONAL_BLOG_NAME,
 						elements=(DEFAULT_PERSONAL_BLOG_NAME,))

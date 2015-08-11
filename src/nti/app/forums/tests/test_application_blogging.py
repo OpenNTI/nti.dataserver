@@ -7,37 +7,38 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import assert_that
-from hamcrest import has_property
 from hamcrest import is_
-from hamcrest import is_not as does_not
-is_not = does_not
-from hamcrest import has_item
+from hamcrest import has_key
 from hamcrest import contains
-from hamcrest import contains_inanyorder
-from hamcrest import has_length
+from hamcrest import has_item
 from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
 from hamcrest import has_entries
 from hamcrest import greater_than
+from hamcrest import has_property
+from hamcrest import is_not as does_not
+from hamcrest import contains_inanyorder
 from hamcrest import greater_than_or_equal_to
-from hamcrest import has_key
+is_not = does_not
 
 from nti.testing.matchers import is_empty
 from nti.testing.time import time_monotonically_increases
 
-from nti.appserver.policies.tests import test_application_censoring
-
 import datetime
+from urllib import quote as UQ
+
+from pyquery import PyQuery
+
 import webob.datetime_utils
 
-from zope import lifecycleevent
-from zope import interface
 from zope import component
+from zope import interface
+from zope import lifecycleevent
 from zope.component import eventtesting
+
 from zope.intid.interfaces import IIntIdRemovedEvent
 
-
-from nti.ntiids import ntiids
 from nti.dataserver import users
 from nti.dataserver import interfaces as nti_interfaces
 from nti.dataserver.tests import mock_dataserver
@@ -45,12 +46,12 @@ from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.contenttypes.forums.forum import PersonalBlog
 from nti.dataserver.contenttypes.forums.topic import PersonalBlogEntry
 
-from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
+from nti.ntiids import ntiids
+
+from nti.appserver.policies.tests import test_application_censoring
+
 from nti.app.testing.application_webtest import ApplicationLayerTest
-
-from urllib import quote as UQ
-from pyquery import PyQuery
-
+from nti.app.testing.decorators import WithSharedApplicationMockDSHandleChanges as WithSharedApplicationMockDS
 
 # TODO: FIXME: This solves an order-of-imports issue, where
 # mimeType fields are only added to the classes when externalization is
@@ -95,13 +96,6 @@ class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,Application
 		[pages_entry] = [x for x in collections if x['Title'] == 'Pages']
 		for blog_accept in blog_entry['accepts']:
 			assert_that( pages_entry['accepts'], does_not( has_item( blog_accept ) ) )
-
-
-	@WithSharedApplicationMockDS(users=True,testapp=True)
-	def test_users_default_blog_not_in_links( self ):
-		# Default blog is empty, not in my links
-		user = self.resolve_user()
-		self.forbid_link_with_rel( user, self.forum_link_rel )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	def test_user_can_POST_new_blog_entry_censoring_for_coppa_user( self ):
