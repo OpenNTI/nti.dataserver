@@ -19,6 +19,7 @@ from zope.catalog.catalog import ResultSet
 from zope.catalog.interfaces import ICatalog
 
 from BTrees.OOBTree import Set
+from BTrees.LFBTree import LFSet
 
 from nti.common.property import CachedProperty
 
@@ -39,7 +40,7 @@ from nti.utils.property import annotation_alias
 
 from .interfaces import IUserNotableData
 from .interfaces import IUserNotableDataStorage
-from .interfaces import IUserPresentationPriorityCreators
+from .interfaces import IUserPriorityCreatorNotableProvider
 
 from ..base.abstract_views import AbstractAuthenticatedView
 
@@ -225,17 +226,14 @@ class UserNotableData(AbstractAuthenticatedView):
 		intids_tagged_to_me = catalog[IX_TAGGEDTO].apply({'any_of': tagged_to_usernames_or_intids})
 
 		safely_viewable_intids = self._safely_viewable_notable_intids
-		important_creator_usernames = set()
+		intids_by_priority_creators = LFSet()
 		for provider in component.subscribers( (self.remoteUser, self.request),
-											   IUserPresentationPriorityCreators ):
-			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
-
-		intids_by_priority_creators = catalog['creator'].apply({'any_of': important_creator_usernames})
+											   IUserPriorityCreatorNotableProvider ):
+			intids_by_priority_creators.update( provider.get_notable_intids() )
 
 		# Top-level things by the instructors...
 		toplevel_intids_by_priority_creators = toplevel_intids_extent.intersection(intids_by_priority_creators)
-		# ...taking out blog comments because that might be confusing
-		# (2014-06-10)
+		# 2014-06-10 - ...taking out blog comments because that might be confusing
 		toplevel_intids_by_priority_creators = catalog.family.IF.difference(toplevel_intids_by_priority_creators,
 																			self._all_blog_comment_intids)
 
@@ -275,12 +273,12 @@ class UserNotableData(AbstractAuthenticatedView):
 			questionable_obj = uidutil.getObject(questionable_uid)
 			if security_check(questionable_obj):
 				safely_viewable_intids.add(questionable_uid)
-				
+
 		# 2015-07-11 Subtract any message info
 		messageinfo_intids = catalog['mimeType'].apply({'any_of': (_MESSAGEINFO_MYMETYPE,)})
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids,
 															  messageinfo_intids)
-		
+
 		# Make sure none of the stuff we created got in
 		intids_created_by_me = self._intids_created_by_me
 		safely_viewable_intids = catalog.family.IF.difference(safely_viewable_intids, intids_created_by_me)

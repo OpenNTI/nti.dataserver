@@ -138,6 +138,18 @@ class IUserPresentationPriorityCreators(interface.Interface):
 		There is no particular ordering among these creators.
 		"""
 
+class IUserPriorityCreatorNotableProvider(interface.Interface):
+	"""
+	Registered as a subscription adapter to a (subclass of)
+	:class:`IUser` and the request, these are used to provide
+	a set of objects created by priority creators.
+	"""
+
+	def get_notable_intids():
+		"""
+		Return a :mod:`BTrees` integer set containing the notable intids for the user.
+		"""
+
 class IUserNotableDataStorage(interface.Interface):
 	"""
 	An implementation helper for objects which otherwise do not
