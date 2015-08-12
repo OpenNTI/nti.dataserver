@@ -1229,6 +1229,7 @@ def google_oauth1(request):
 			  'client_id':auth_keys.APIKey,
 			  'redirect_uri':_redirect_uri(request)}
 
+	hosted_domain = None
 	login_config = component.queryUtility(IGoogleLogonSettings)
 	if login_config is not None:
 		hosted_domain = login_config.hd
