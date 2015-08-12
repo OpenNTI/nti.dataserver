@@ -100,7 +100,6 @@ class TopLevelPriorityNotableFilter(object):
 		# Ok, we have a top-level object; let's see if
 		# we have an important creator.
 		important_creator_usernames = set()
-		# TODO Do we have a threadlocal request?
 		request = get_current_request()
 
 		for provider in component.subscribers( (user, request),
