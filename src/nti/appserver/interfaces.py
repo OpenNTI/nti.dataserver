@@ -551,7 +551,7 @@ class IApplicationSettings(IFullMapping):
 	"""
 
 class IGoogleLogonSettings(interface.Interface):
-	
+
 	hd = ValidTextLine(title='Valid hosted domain', required=False)
 
 # BWC exports
@@ -560,11 +560,6 @@ zope.deferredimport.deprecatedFrom(
 	"Moved to nti.dataserver.interfaces ",
 	"nti.dataserver.interfaces",
 	"IDeletedObjectPlaceholder")
-
-zope.deferredimport.deprecatedFrom(
-	"Moved to nti.app.notabledata",
-	"nti.app.notabledata.interfaces",
-	"IUserPresentationPriorityCreators")
 
 class IJoinableContextProvider(IIterable):
 	"""

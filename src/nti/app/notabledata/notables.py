@@ -11,14 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
 
 from pyramid.threadlocal import get_current_request
 
 from nti.app.base.abstract_views import make_sharing_security_check
-
-from nti.app.notabledata.interfaces import IUserPresentationPriorityCreators
 
 from nti.dataserver.authentication import _dynamic_memberships_that_participate_in_security
 
@@ -26,7 +23,6 @@ from nti.dataserver.interfaces import INotableFilter
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry
-from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogComment
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.dataserver.metadata_index import isTopLevelContentObjectFilter
@@ -73,40 +69,6 @@ def _check_sharing( obj, user ):
 	shared_with = getattr( obj, 'sharedWith', {} )
 	shared_with = {x.lower() for x in shared_with}
 	return user.username in shared_with
-
-@interface.implementer( INotableFilter )
-class TopLevelPriorityNotableFilter(object):
-	"""
-	Determines whether the object is a notable created by important
-	creators (e.g. instructors of my courses).  These objects must also
-	be top-level objects.
-	"""
-
-	def __init__(self, context):
-		self.context = context
-
-	def is_notable(self, obj, user):
-		obj_creator = getattr( obj, 'creator', None )
-
-		# Filter out blog comments that might cause confusion.
-		if 		obj_creator is None \
-			or 	IPersonalBlogComment.providedBy( obj ):
-			return False
-
-		# Note: pulled from metadata_index; first two params not used.
-		if not isTopLevelContentObjectFilter( None, None, obj ):
-			return False
-
-		# Ok, we have a top-level object; let's see if
-		# we have an important creator.
-		important_creator_usernames = set()
-		request = get_current_request()
-
-		for provider in component.subscribers( (user, request),
-											   IUserPresentationPriorityCreators ):
-			important_creator_usernames.update( provider.iter_priority_creator_usernames() )
-
-		return obj_creator.username in important_creator_usernames
 
 @interface.implementer( INotableFilter )
 class TopLevelNotableFilter(object):

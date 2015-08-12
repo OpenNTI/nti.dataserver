@@ -124,20 +124,6 @@ class IUserNotableData(IIterable):
 						required=True,
 						default=0)
 
-class IUserPresentationPriorityCreators(interface.Interface):
-	"""
-	Registered as a subscription adapter to a (subclass of)
-	:class:`IUser` and the request, these are used to provide
-	a set of the creator usernames that take priority when
-	presenting data to the user.
-	"""
-
-	def iter_priority_creator_usernames():
-		"""
-		Iterates across the usernames of creators that have priority.
-		There is no particular ordering among these creators.
-		"""
-
 class IUserPriorityCreatorNotableProvider(interface.Interface):
 	"""
 	Registered as a subscription adapter to a (subclass of)
