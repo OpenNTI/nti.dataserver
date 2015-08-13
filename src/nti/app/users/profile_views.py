@@ -14,16 +14,17 @@ from io import BytesIO
 from datetime import datetime
 from functools import partial
 
-from pyramid.view import view_config
-from pyramid import httpexceptions as hexc
-
-import zope.intid
 from zope import component
 from zope import interface
 
 from zope.catalog.interfaces import ICatalog
 
 from zope.interface.interfaces import IMethod
+
+from zope.intid import IIntIds
+
+from pyramid.view import view_config
+from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
@@ -101,7 +102,7 @@ def _format_date(d):
 		return str(d)
 
 def _get_user_info_extract():
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	userids = _get_index_userids(ent_catalog)
 
@@ -162,7 +163,7 @@ def _get_topics_info(topics_key='opt_in_email_communication', coppaOnly=False):
 			  'lastLoginTime', 'is_copaWithAgg']
 	yield header
 
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 	users = ent_catalog.searchResults(topics=topics_key)
 	for user in users or ():
@@ -237,7 +238,7 @@ def _get_profile_info(coppaOnly=False):
 
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout(dataserver).users_folder
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
 	for user in _users.values():
@@ -286,7 +287,7 @@ def _get_inactive_accounts(max_days=365):
 
 	dataserver = component.getUtility(IDataserver)
 	_users = IShardLayout(dataserver).users_folder
-	intids = component.getUtility(zope.intid.IIntIds)
+	intids = component.getUtility(IIntIds)
 	ent_catalog = component.getUtility(ICatalog, name=CATALOG_NAME)
 
 	now = datetime.utcnow()
