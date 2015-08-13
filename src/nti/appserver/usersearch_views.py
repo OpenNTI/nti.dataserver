@@ -333,7 +333,10 @@ def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_pre
 	"""
 
 	result = set()
+	everyone = Entity.get_entity('Everyone')
 	def check_entity(x):
+		if x == everyone:
+			return
 		# Run the search on the given entity, checking username and realname/alias
 		# (This needs no policy because the user already has a relationship with this object,
 		# either owning it or being a member). If it matches, it is placed
