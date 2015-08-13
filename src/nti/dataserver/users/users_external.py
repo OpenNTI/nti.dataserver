@@ -19,6 +19,8 @@ from zope import interface
 
 from zope.proxy import removeAllProxies
 
+from ZODB.POSException import POSError
+
 from nti.dataserver import users
 from nti.dataserver import authorization_acl as auth
 
@@ -82,12 +84,19 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	result = getattr(with_url, attr_name, None)
 	return result
 
+def _safe_image_url(entity, avatar_iface, attr_name, view_name):
+	try:
+		return _image_url(entity, avatar_iface, attr_name, view_name)
+	except (POSError, TypeError):
+		logger.exception("Cannot get %s for entity %s", attr_name, entity)
+		return None
+
 def _avatar_url(entity):
-	result = _image_url(entity, IAvatarURL, 'avatarURL', '@@avatar_view')
+	result = _safe_image_url(entity, IAvatarURL, 'avatarURL', '@@avatar_view')
 	return result
 
 def _background_url(entity):
-	result = _image_url(entity, IBackgroundURL, 'backgroundURL', '@@background_view')
+	result = _safe_image_url(entity, IBackgroundURL, 'backgroundURL', '@@background_view')
 	return result
 
 @interface.implementer(IExternalObject)
