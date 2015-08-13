@@ -24,6 +24,7 @@ from zope import interface
 from zc.intid import IIntIds
 
 from zope.catalog.interfaces import ICatalogIndex
+
 from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.ntiids.ntiids import TYPE_OID
@@ -63,6 +64,7 @@ from .interfaces import IDynamicSharingTargetFriendsList
 
 from .contenttypes.forums.interfaces import ICommentPost
 from .contenttypes.forums.interfaces import IHeadlinePost
+from .contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 class MimeTypeIndex(ValueIndex):
 	default_field_name = 'mimeType'
@@ -242,11 +244,14 @@ def isTopLevelContentObjectFilter(extent, docid, document):
 		if IFriendsList.providedBy(document) or IDevice.providedBy(document):
 			# These things are modeled content, for some reason
 			return False
+		
+		if IPersonalBlogEntryPost.providedBy(document):
+			return bool(document.sharedWith)
 		# HeadlinePosts (which are IMutedInStream) are threadable,
 		# but we don't consider them top-level. (At this writing,
 		# we don't consider the containing Topic to be top-level
 		# either, because it isn't IModeledContent.)
-		if IHeadlinePost.providedBy(document):
+		elif IHeadlinePost.providedBy(document):
 			return False
 
 		if IInspectableWeakThreadable.providedBy(document):
