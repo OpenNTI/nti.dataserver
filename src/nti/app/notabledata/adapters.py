@@ -24,6 +24,7 @@ from BTrees.LFBTree import LFSet
 from nti.common.property import CachedProperty
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata_index import IX_TOPICS
@@ -50,6 +51,7 @@ _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment
 
 _TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
 _TOPIC_COMMENT_MYMETYPE = "application/vnd.nextthought.forums.generalforumcomment"
+_DFL_TOPIC_MIMETYPE = "application/vnd.nextthought.forums.dflheadlinetopic"
 
 _MESSAGEINFO_MYMETYPE = "application/vnd.nextthought.messageinfo"
 
@@ -170,14 +172,28 @@ class UserNotableData(AbstractAuthenticatedView):
 		intids_in_time_range = self._catalog['createdTime'].apply({'between': (min_created_time, max_created_time,)})
 		return intids_in_time_range
 
+	@CachedProperty
+	def _group_ntiids(self):
+		# Return all friends list we own or are members of.
+		results = set( self.remoteUser.friendsLists.values() ) | set( self.remoteUser.dynamic_memberships )
+		return {x.NTIID for x in results if IFriendsList.providedBy( x )}
+
 	@CachedProperty('_time_range')
 	def _safely_viewable_notable_intids(self):
 
 		catalog = self._catalog
-		intids_shared_to_me = catalog['sharedWith'].apply({'all_of': (self.remoteUser.username,)})
+		# Any top-level items shared directly to me or my groups
+		shared_with_ids = self._group_ntiids
+		shared_with_ids.add( self.remoteUser.username )
+		intids_shared_to_me = catalog['sharedWith'].apply({'any_of': shared_with_ids})
 
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
+
+		# Any topics shared to me or my groups
+		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,
+															_DFL_TOPIC_MIMETYPE)})
+		topic_intids = catalog.family.IF.intersection( topic_intids, intids_shared_to_me )
 
 		intids_replied_to_me = catalog['repliesToCreator'].apply({'any_of': (self.remoteUser.username,)})
 
@@ -191,6 +207,7 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		safely_viewable_intids = [toplevel_intids_shared_to_me,
 								  intids_replied_to_me,
+								  topic_intids,
 								  toplevel_intids_blog_comments,
 								  blogentry_intids_shared_to_me,
 								  toplevel_intids_forum_comments]

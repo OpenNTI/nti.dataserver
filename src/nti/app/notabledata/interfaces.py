@@ -40,6 +40,8 @@ class IUserNotableData(IIterable):
 
 	* Top-level comments in forum discussions (topics) I create;
 
+	* Top-level comments or topics shared to my groups (DFLTopics).
+
 	* Circled events;
 
 	Excluded objects include:
