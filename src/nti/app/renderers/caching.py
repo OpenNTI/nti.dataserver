@@ -13,13 +13,12 @@ logger = __import__('logging').getLogger(__name__)
 
 from hashlib import md5
 
-import pyramid.httpexceptions
-
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.file import interfaces as zf_interfaces
 
+import pyramid.httpexceptions
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import traversal
@@ -28,9 +27,9 @@ from nti.appserver import interfaces as app_interfaces
 from nti.dataserver import flagging
 from nti.dataserver import interfaces as nti_interfaces
 
+from .interfaces import IExternalCollection
 from .interfaces import IUnModifiedInResponse
 from .interfaces import IUncacheableInResponse
-from .interfaces import IExternalCollection
 from .interfaces import IResponseCacheController
 from .interfaces import IPrivateUncacheableInResponse
 from .interfaces import IUserActivityExternalCollection
@@ -90,7 +89,9 @@ def default_cache_controller( data, system ):
 		body = system.get('nti.rendered')
 		if body is not None:
 			response.md5_etag( body, set_content_md5=True )
-	if response.etag and request.accept_encoding and 'gzip' in request.accept_encoding and not response.etag.endswith(b'./gz'):
+	if 	response.etag and request.accept_encoding \
+		and 'gzip' in request.accept_encoding \
+		and not response.etag.endswith(b'./gz'):
 		# The etag is supposed to vary between encodings
 		response.etag += b'./gz'
 
