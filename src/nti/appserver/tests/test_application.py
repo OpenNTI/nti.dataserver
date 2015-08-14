@@ -809,7 +809,7 @@ class TestApplication(ApplicationLayerTest):
 																	 'href', href ) ) )
 
 	@WithSharedApplicationMockDS
-	def test_create_update_dynamicfriends_list_content_type(self):
+	def test_friends_lists_collections(self):
 		with mock_dataserver.mock_db_trans( self.ds ):
 			creator_username = self._create_user().username
 			member_username = self._create_user( username='troy.daley@nextthought.com' ).username
@@ -823,24 +823,49 @@ class TestApplication(ApplicationLayerTest):
 			'IsDynamicSharing': True }
 		data = json.dumps( ext_obj )
 
-		def _friends_list_empty_check( username ):
-			member_fl_res = testapp.get( '/dataserver2/users/%s/FriendsLists' % username,
-									extra_environ=self._make_extra_environ( username=username ) )
-			assert_that( member_fl_res.json_body, has_entry( 'Items',
-												is_not( has_value(
-															has_entry( 'Username',
-																	contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+		# Base empty case, prep our caching headers
+		etags = {}
+		etags[creator_username] = {}
+		etags[member_username] = {}
+		last_mods = {}
+		last_mods[creator_username] = {}
+		last_mods[member_username] = {}
+		endpoints = ( 'FriendsLists', 'Groups', 'DynamicMemberships', 'Communities' )
+		for username in ( creator_username, member_username ):
+			user_etags = etags.get( username )
+			user_last_mods = last_mods.get( username )
+			for endpoint in endpoints:
+				res = testapp.get( '/dataserver2/users/%s/%s' % ( username, endpoint ),
+											extra_environ=self._make_extra_environ( username=username ) )
+				assert_that( res.etag, not_none() )
+				user_etags[ endpoint ] = res.etag
+				user_last_mods[ endpoint ] = last_mod = res.json_body.get( 'Last Modified' )
+				if endpoint == 'Groups':
+					# No DFLs, so no last mod
+					assert_that( last_mod, none() )
 
-		def _dfl_contains_check( username, owner=False ):
-			to_check = ('Groups',) if owner else ( 'Groups', 'DynamicMemberships' )
-			for dfl_endpoint in to_check:
-				member_fl_res = testapp.get( '/dataserver2/users/%s/%s' % ( username, dfl_endpoint ),
-										extra_environ=self._make_extra_environ( username=username ) )
-				assert_that( member_fl_res.json_body, has_entry( 'Items',
-													has_value(	has_entry( 'Username',
-																		contains_string( 'boom@nextthought.com' ) ) ) ) )
+		def _check_update_caching( res, endpoint, username, updated=False ):
+			"""
+			Check our caching vals for user. If updated, assert they have changed.
+			"""
+			user_etags = etags.get( username )
+			user_last_mods = last_mods.get( username )
+			to_assert = is_not if updated else is_
 
-		# The user creates it
+			assert_that( res.etag, to_assert( user_etags.get( endpoint ) ))
+			user_etags[ endpoint ] = res.etag
+			new_last_mod = res.json_body.get( 'Last Modified' )
+			assert_that( new_last_mod, to_assert( user_last_mods.get( endpoint ) ))
+			user_last_mods[ endpoint ] = new_last_mod
+
+		# Unchanged
+		for username in ( creator_username, member_username ):
+			for endpoint in endpoints:
+				res = testapp.get( '/dataserver2/users/%s/%s' % ( username, endpoint ),
+											extra_environ=self._make_extra_environ( username=username ) )
+				_check_update_caching( res, endpoint, username )
+
+		# The user creates DFL
 		path = '/dataserver2/users/%s/FriendsLists/' % creator_username
 		res = testapp.post( path, data, extra_environ=self._make_extra_environ(),
 						headers={'Content-Type': 'application/vnd.nextthought.friendslist+json' } )
@@ -848,7 +873,6 @@ class TestApplication(ApplicationLayerTest):
 		assert_that( res.body, contains_string( 'boom@nextthought.com' ) )
 		assert_that( res.headers, has_entry( 'Content-Type',
 											contains_string( 'application/vnd.nextthought.dynamicfriendslist+json' ) ) )
-
 		assert_that( res.json_body, has_entry( 'IsDynamicSharing', True ) )
 
 		# It is visible to the member in a few places
@@ -860,10 +884,31 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( resolved_member, has_entry( k, has_item(
 														has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) )
 
+		def _friends_list_empty_check( username, owner=False ):
+			member_fl_res = testapp.get( '/dataserver2/users/%s/FriendsLists' % username,
+									extra_environ=self._make_extra_environ( username=username ) )
+			assert_that( member_fl_res.json_body, has_entry( 'Items',
+												is_not( has_value(
+															has_entry( 'Username',
+																	contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+			# Only updated for owner
+			updated = owner
+			_check_update_caching( member_fl_res, 'FriendsLists', username, updated=updated )
+
+		def _dfl_contains_check( username, owner=False ):
+			to_check = ('Groups',) if owner else ( 'Groups', 'DynamicMemberships' )
+			for dfl_endpoint in to_check:
+				member_fl_res = testapp.get( '/dataserver2/users/%s/%s' % ( username, dfl_endpoint ),
+										extra_environ=self._make_extra_environ( username=username ) )
+				assert_that( member_fl_res.json_body, has_entry( 'Items',
+													has_value(	has_entry( 'Username',
+																		contains_string( 'boom@nextthought.com' ) ) ) ) )
+				_check_update_caching( member_fl_res, dfl_endpoint, username, updated=True )
+
 		# FL collection does not have it, DFL does. Creator and member both see.
-		_friends_list_empty_check( creator_username )
-		_friends_list_empty_check( member_username )
+		_friends_list_empty_check( creator_username, owner=True )
 		_dfl_contains_check( creator_username, owner=True )
+		_friends_list_empty_check( member_username )
 		_dfl_contains_check( member_username )
 
 		# The owner can edit it to remove the membership
@@ -885,15 +930,15 @@ class TestApplication(ApplicationLayerTest):
 			assert_that( resolved_member, has_entry( k, does_not( has_item(
 																has_entry( 'Username', contains_string( 'boom@nextthought.com' ) ) ) ) ) )
 
-		_friends_list_empty_check( creator_username )
-		_friends_list_empty_check( member_username )
+
 		for dfl_endpoint in ('Groups', 'DynamicMemberships'):
-			member_fl_res = testapp.get( '/dataserver2/users/troy.daley@nextthought.com/%s' % dfl_endpoint,
+			member_fl_res = testapp.get( '/dataserver2/users/%s/%s' % (member_username, dfl_endpoint),
 									extra_environ=self._make_extra_environ( username='troy.daley@nextthought.com' ) )
 			assert_that( member_fl_res.json_body, has_entry( 'Items',
 													does_not( has_value(
 															has_entry( 'Username',
 																	contains_string( 'boom@nextthought.com' ) ) ) ) ) )
+			_check_update_caching( member_fl_res, dfl_endpoint, member_username, updated=True )
 
 
 	@WithSharedApplicationMockDS
