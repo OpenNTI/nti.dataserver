@@ -437,10 +437,16 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		catalog = get_catalog()
 		containers = catalog.get_containers( obj ) or ()
 		for container in containers:
+			# Necessary for videos/slides, return the first
+			# non-package unit in our index.  These items will
+			# show up as embedded in the package. If we might
+			# have multiple units here, we could take the longest
+			# pathToNtiid from the library to get the leaf node.
+			if IContentPackage.providedBy( container ):
+				continue
 			try:
 				container = package[container]
-				# Find our leaf container, the unit without children.
-				if not container.children:
+				if container is not None:
 					return [container]
 			except (KeyError, AttributeError):
 				pass
@@ -449,7 +455,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		def recur( unit ):
 			item_ntiid = getattr( unit, 'ntiid', None )
 			if 		item_ntiid == target_ntiid \
-				or target_ntiid in unit.embeddedContainerNTIIDs:
+				or 	target_ntiid in unit.embeddedContainerNTIIDs:
 				return [ unit ]
 			for child in unit.children:
 				result = recur( child )
@@ -618,9 +624,9 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 				values = ()
 			for x in values:
 				_clean(x)
-		_clean(result)	
+		_clean(result)
 		return result
-		
+
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
 		if 		ITopic.providedBy( obj ) \
