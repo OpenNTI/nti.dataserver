@@ -154,7 +154,9 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		# looking at suggestions in other user's profiles.
 		for contact in get_all_suggested_contacts(self.context):
 			if		contact.username not in intermediate_usernames \
-				and contact.username not in self.existing_pool:
+				and contact.username not in self.existing_pool \
+				and not contact.username.endswith('@nextthought.com'):
+
 				contact = User.get_user(contact.username)
 				if contact:
 					results.add(contact)

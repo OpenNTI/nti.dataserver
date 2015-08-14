@@ -121,9 +121,6 @@ class _SecondOrderContactProvider(object):
 					# typically POSKeyError
 					logger.warning("Failed to filter entity with id %s", hex(u64(x._p_oid)))
 					return False
-				# User can see himself
-				if x is user:
-					return True
 
 				# No one can see the Koppa Kids or nextthought users.
 				if 		ICoppaUserWithoutAgreement.providedBy(x) \
