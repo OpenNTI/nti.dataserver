@@ -24,6 +24,8 @@ from zope.container.contained import Contained
 
 from zope.event import notify
 
+from ZODB.POSException import ConnectionStateError
+
 from nti.common.property import alias
 
 from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
@@ -145,10 +147,13 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 	__external_can_create__ = False
 
 	def __repr__(self):
-		return "<%s(%s, %s) at %s>" % (self.__class__.__name__, 
-									   self.__name__, 
-									   len(self), 
-									   id(self))
+		try:
+			return "<%s(%s, %s) at %s>" % (self.__class__.__name__,
+									   	   self.__name__,
+									   	   len(self),
+									   	   id(self))
+		except ConnectionStateError:
+			return object.__repr__(self)
 
 	@property
 	def _parent_lib(self):
