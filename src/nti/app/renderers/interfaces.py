@@ -62,7 +62,13 @@ class IUncacheableUnModifiedInResponse(IUncacheableInResponse, IUnModifiedInResp
 	no Last-Modified date at all.
 	"""
 
-class IUGDExternalCollection(interface.Interface):
+class IExternalCollection(interface.Interface):
+	"""
+	Marker primarily for identifying that this is a collection of data
+	that has the last modified date of the greatest item in that data.
+	"""
+
+class IUGDExternalCollection(IExternalCollection):
 	"""
 	Marker primarily for identifying that this is a collection of data
 	that has the last modified date of the greatest item in that data.

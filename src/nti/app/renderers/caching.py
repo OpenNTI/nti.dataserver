@@ -30,7 +30,7 @@ from nti.dataserver import interfaces as nti_interfaces
 
 from .interfaces import IUnModifiedInResponse
 from .interfaces import IUncacheableInResponse
-from .interfaces import IUGDExternalCollection
+from .interfaces import IExternalCollection
 from .interfaces import IResponseCacheController
 from .interfaces import IPrivateUncacheableInResponse
 from .interfaces import IUserActivityExternalCollection
@@ -358,10 +358,10 @@ class _TranscriptCacheController(_ModeledContentCacheController):
 		return super(_TranscriptCacheController,self)._context_specific + flags
 
 @interface.implementer(IPreRenderResponseCacheController)
-@component.adapter(IUGDExternalCollection)
-class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheController):
+@component.adapter(IExternalCollection)
+class _ExternalCollectionCacheController(_AbstractReliableLastModifiedCacheController):
 	"""
-	UGD collections coming from this specific place have reliable last-modified dates.
+	Arbitrary collections coming from this specific place have reliable last-modified dates.
 	"""
 
 	max_age = 0 # XXX arbitrary
@@ -371,12 +371,12 @@ class _UGDExternalCollectionCacheController(_AbstractReliableLastModifiedCacheCo
 		return self.context.__name__, len(self.context)
 
 @component.adapter(ILongerCachedUGDExternalCollection)
-class _LongerCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
+class _LongerCachedUGDExternalCollectionCacheController(_ExternalCollectionCacheController):
 
 	max_age = 120 # XXX arbitrary
 
 @component.adapter(IETagCachedUGDExternalCollection)
-class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCacheController):
+class _ETagCachedUGDExternalCollectionCacheController(_ExternalCollectionCacheController):
 	# We are guaranteed to get great caching because every time the data changes
 	# we change the link we generate. We don't need to take our own
 	# modification date into account.
@@ -390,7 +390,7 @@ class _ETagCachedUGDExternalCollectionCacheController(_UGDExternalCollectionCach
 from nti.app.authentication import get_remote_user
 
 @component.adapter(IUserActivityExternalCollection)
-class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
+class _UserActivityViewCacheController(_ExternalCollectionCacheController):
 	"""
 	If the owner asks for his own activity, we allow for less caching.
 	If you ask for somebody elses, it may be slightly more stale.
@@ -403,7 +403,7 @@ class _UserActivityViewCacheController(_UGDExternalCollectionCacheController):
 		remote_user = get_remote_user( request )
 		if remote_user and remote_user != context.__data_owner__:
 			self.max_age = _LongerCachedUGDExternalCollectionCacheController.max_age
-		return _UGDExternalCollectionCacheController.__call__( self, context, system )
+		return _ExternalCollectionCacheController.__call__( self, context, system )
 
 @interface.implementer(IPreRenderResponseCacheController)
 @component.adapter(app_interfaces.IContentUnitInfo)

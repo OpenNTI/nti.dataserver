@@ -31,6 +31,9 @@ from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
 
+from nti.app.renderers.interfaces import IExternalCollection
+from nti.app.renderers.interfaces import IPreRenderResponseCacheController
+
 from nti.common.property import alias
 
 from nti.dataserver.users import User
@@ -204,6 +207,29 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 		result = [x for x in self.memberships if self.selector( x )]
 		return result
 
+	def get_last_modified(self, vals):
+		last_mod = self.last_modified
+		if last_mod is None:
+			# If we don't have a container, best guess.
+			# This isn't quite right, if we lose an older
+			# membership, the last mod could still stay
+			# the same.
+			try:
+				last_mod = max( (x.lastModified for x in vals
+								if getattr( x, 'lastModified', 0 )) )
+			except ValueError:
+				pass
+		return last_mod or None
+
+	def _caching_headers(self, result):
+		# This isn't ideal.  See .externalization.py.
+		# Since we don't go through the renderer, we have to specify
+		# our caching here.
+		request = get_current_request()
+		if request is not None:
+			interface.alsoProvides( result, IExternalCollection )
+			IPreRenderResponseCacheController( result )( result, {'request':request} )
+
 	@property
 	def container(self):
 		memberships = self.get_filtered_memberships()
@@ -212,7 +238,8 @@ class _AbstractPseudoMembershipContainer(_ContainerWrapper):
 			result[ membership.NTIID ] = membership
 		result.__name__ = self.name
 		result.__parent__ = self._user
-		result.lastModified = self.last_modified
+		result.lastModified = self.get_last_modified( memberships )
+		self._caching_headers( result )
 		return result
 
 @component.adapter(IFriendsListContainer)
@@ -292,7 +319,6 @@ def _UserDynamicMembershipsCollectionFactory( user ):
 class DynamicFriendsListContainerCollection(_AbstractPseudoMembershipContainer):
 
 	# TODO Do we need to accept posts here?
-	# TODO LastMod?
 	name = 'Groups'
 	__name__ = name
 
