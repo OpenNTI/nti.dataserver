@@ -259,7 +259,6 @@ class RemoveUserView(AbstractAuthenticatedView, ModeledContentUploadRequestUtils
 @view_config(name='GetUserGhostContainers')
 @view_config(name='get_user_ghost_containers')
 @view_defaults(route_name='objects.generic.traversal',
-			   name='user_ghost_containers',
 			   renderer='rest',
 			   request_method='GET',
 			   permission=nauth.ACT_NTI_ADMIN)
