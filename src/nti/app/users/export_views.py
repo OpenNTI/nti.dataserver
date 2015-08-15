@@ -23,6 +23,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
 
+from nti.common.proxy import removeAllProxies
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IUser
@@ -219,6 +220,7 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		result = find_object_with_ntiid(ntiid)
 		if result is None:
 			raise hexc.HTTPNotFound()
+		result = removeAllProxies(result)
 		return result
 
 @view_config(route_name='objects.generic.traversal',
