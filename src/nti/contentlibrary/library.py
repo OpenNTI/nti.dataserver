@@ -58,6 +58,7 @@ from .interfaces import IDelimitedHierarchyContentPackageEnumeration
 
 from .synchronize import SynchronizationResults
 from .synchronize import ContentRemovalException
+from .synchronize import UnmatchedRootNTIIDException
 from .synchronize import LibrarySynchronizationResults
 
 @interface.implementer(IContentPackageEnumeration)
@@ -331,6 +332,10 @@ class AbstractContentPackageLibrary(object):
 				lib_sync_results.removed(old.ntiid) # register
 
 			for new, old in changed:
+				# check ntiid changes
+				if new.ntiid != old.ntiid:
+					raise UnmatchedRootNTIIDException(
+							"Pacakge NTIID changed from %s to %s" % (old.ntiid, new.ntiid))
 				new.__parent__ = self
 				# new is a created object
 				IConnection(self).add(new)
