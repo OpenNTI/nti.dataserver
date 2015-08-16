@@ -353,7 +353,7 @@ class _AbstractUserPseudoContainerResource(object):
 		self.context = context
 		self.request = request
 		self.__acl__ = nacl.acl_from_aces(nacl.ace_allowing(context, ALL_PERMISSIONS, self),
-										   nacl.ace_denying_all(self))
+										  nacl.ace_denying_all(self))
 	__parent__ = alias('context')
 	user = alias('context')
 	resource = alias('context')  # BWC. See GenericGetView
@@ -430,22 +430,22 @@ def _CommunityBoardResource(context, request):
 def _DFLBoardResource(context, request):
 	return IDFLBoard(context, None)
 
-def _get_named_container_resource( name, context, request ):
-	collection = component.queryAdapter( context, IContainerCollection, name=name )
+def _get_named_container_resource(name, context, request):
+	collection = component.queryAdapter(context, IContainerCollection, name=name)
 	if collection is not None:
-		return _ContainerResource( collection, request )
+		return _ContainerResource(collection, request)
 
 def _DynamicMembershipsResource(context, request):
-	return _get_named_container_resource( 'DynamicMemberships', context, request )
+	return _get_named_container_resource('DynamicMemberships', context, request)
 
 def _DynamicFriendsListResource(context, request):
-	return _get_named_container_resource( 'Groups', context, request )
+	return _get_named_container_resource('Groups', context, request)
 
 def _CommunitiesResource(context, request):
-	return _get_named_container_resource( 'Communities', context, request )
+	return _get_named_container_resource('Communities', context, request)
 
 def _AllCommunitiesResource(context, request):
-	return _get_named_container_resource( 'AllCommunities', context, request )
+	return _get_named_container_resource('AllCommunities', context, request)
 
 @interface.implementer(ITraversable)
 @component.adapter(IUser, IRequest)
