@@ -369,7 +369,7 @@ def _modifying_ugd_views(pyramid_config):
 							permission=nauth.ACT_UPDATE, request_method='PUT')
 
 	# And the user itself can be put to
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.ugd_edit_views.UGDPutView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.app.users.user_views.UserUpdateView',
 							renderer='rest', context=nti_interfaces.IUser,
 							permission=nauth.ACT_UPDATE, request_method='PUT')
 
