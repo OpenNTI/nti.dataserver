@@ -34,6 +34,7 @@ from nti.app.renderers.caching import AbstractReliableLastModifiedCacheControlle
 
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
+from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
@@ -300,21 +301,28 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	def _context_specific(self):
 		return sorted( [x.ntiid for x in self.context.contentPackages] )
 
-def _get_wrapped_bundles( top_level_contexts ):
+def _get_wrapped_contexts( top_level_contexts ):
 	results = []
 	for top_level_context in top_level_contexts:
 		try:
 			results.append( top_level_context.ContentPackageBundle )
+			results.extend( top_level_context.ContentPackageBundle.ContentPackages )
 		except AttributeError:
-			pass
+			try:
+				results.append( top_level_context.legacy_content_package )
+			except AttributeError:
+				try:
+					results.extend( top_level_context.ContentPackages )
+				except AttributeError:
+					pass
 	return results
 
 def _dedupe_bundles( top_level_contexts ):
 	"""
-	Filter out bundles that may be contained by other contexts.
+	Filter out bundles/packages that may be contained by other contexts.
 	"""
 	results = []
-	wrapped_bundles = _get_wrapped_bundles( top_level_contexts )
+	wrapped_bundles = _get_wrapped_contexts( top_level_contexts )
 	for top_level_context in top_level_contexts:
 		if top_level_context not in wrapped_bundles:
 			results.append( top_level_context )
@@ -341,7 +349,7 @@ def _get_wrapped_bundles_from_hierarchy( hierarchy_contexts ):
 	For our hierarchy paths, get all contained bundles.
 	"""
 	top_level_contexts = (x[0] for x in hierarchy_contexts if x)
-	return _get_wrapped_bundles( top_level_contexts )
+	return _get_wrapped_contexts( top_level_contexts )
 
 def _dedupe_bundles_from_hierarchy( hierarchy_contexts ):
 	"""
@@ -629,26 +637,30 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		if 		ITopic.providedBy( obj ) \
-			or 	IPost.providedBy( obj ) \
-			or 	IForum.providedBy( obj ):
-			results = _get_board_obj_path( obj )
-		else:
-			results = self._get_path( obj, object_ntiid )
-			self._sort( results )
 
-		if not results:
-			raise hexc.HTTPForbidden()
+		try:
+			if 		ITopic.providedBy( obj ) \
+				or 	IPost.providedBy( obj ) \
+				or 	IForum.providedBy( obj ):
+				results = _get_board_obj_path( obj )
+			else:
+				results = self._get_path( obj, object_ntiid )
+				self._sort( results )
 
-		if max( len( x ) for x in results ) <= 1:
+		except ForbiddenContextException as e:
 			# It appears we only have top-level-context objects,
 			# return a 403 so the client can react appropriately.
 			response = hexc.HTTPForbidden()
 			result = LocatedExternalDict()
-			result[ITEMS] = results
+			result[ITEMS] = e.joinable_contexts
 			__traceback_info__ = result
 			response.json_body = self.to_json_body(result)
 			raise response
+
+		# Nothing found, perhaps no longer available.
+		if not results:
+			raise hexc.HTTPForbidden()
+
 		return results
 
 @view_config(context=IPost)

@@ -223,12 +223,16 @@ def _hierarchy_from_obj(obj, user):
 def _bundles_from_unit(obj, user):
 	# We could tweak the adapter above to return
 	# all possible bundles, or use the container index.
-	# TODO: Do we want to return top-level ContentPackages here?
-	# How would we know if the CP is not contained by
-	# another object?
 	bundle = IContentPackageBundle(obj, None)
+	result = None
 	if bundle:
-		return (bundle,)
+		result = (bundle,)
+	else:
+		# Content package
+		# TODO same in hierarchy
+		package = IContentPackage( obj, None )
+		result = (package,)
+	return result
 
 @interface.implementer(ITopLevelContainerContextProvider)
 @component.adapter(IPost)
