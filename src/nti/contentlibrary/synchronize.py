@@ -26,6 +26,7 @@ from .interfaces import ILibrarySynchronizationResults
 CONTENT_REMOVAL_ERROR_CODE 	  = 001
 MISSING_NTIID_ERROR_CODE 	  = 010
 DUPLICATE_PACAKGES_ERROR_CODE = 100
+UNMATCHED_ROOT_NTTID_ERROR_CODE = 105
 MISSING_PACAKGE_REFERENCE_ERROR_CODE = 110
 
 class SynchronizationException(Exception):
@@ -47,9 +48,12 @@ class MissingContentBundleNTIIDException(SynchronizationException):
 class DuplicatePacakgeException(SynchronizationException):
 	code = DUPLICATE_PACAKGES_ERROR_CODE
 
+class UnmatchedRootNTIIDException(SynchronizationException):
+	code = UNMATCHED_ROOT_NTTID_ERROR_CODE
+
 class MissingContentPacakgeReferenceException(SynchronizationException):
 	code = MISSING_PACAKGE_REFERENCE_ERROR_CODE
-
+	
 @WithRepr
 @interface.implementer(ISynchronizationParams)
 class SynchronizationParams(SchemaConfigured):
