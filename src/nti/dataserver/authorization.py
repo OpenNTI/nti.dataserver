@@ -77,13 +77,14 @@ import functools
 
 from zope import component
 from zope import interface
-from zope import annotation
+
+from zope.annotation import factory as afactory
+from zope.annotation.interfaces import IAnnotations
+from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import Lazy
 
 from zope.container import contained
-
-from zope.annotation.interfaces import IAnnotations
 
 from zope.security.permission import Permission
 
@@ -127,7 +128,7 @@ ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
 ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 
 @interface.implementer(nti_interfaces.IMutableGroupMember)
-@component.adapter(annotation.interfaces.IAttributeAnnotatable)
+@component.adapter(IAttributeAnnotatable)
 class _PersistentGroupMember(persistent.Persistent,
 							 contained.Contained):  # (recall annotations should be IContained)
 	"""
@@ -168,7 +169,7 @@ class _PersistentGroupMember(persistent.Persistent,
 		return '_groups' in self.__dict__ and len(self._groups)
 
 # This factory is registered for the default annotation
-_persistent_group_member_factory = annotation.factory(_PersistentGroupMember)
+_persistent_group_member_factory = afactory(_PersistentGroupMember)
 
 class _PersistentRoleMember(_PersistentGroupMember):
 	GROUP_FACTORY = nti_interfaces.IRole
@@ -185,7 +186,7 @@ def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 		should be registered with the same name as the ``group_type``
 	"""
 	key = factory.__module__ + '.' + factory.__name__ + ':' + group_type
-	return annotation.factory(factory, key)
+	return afactory(factory, key)
 
 # Note that principals should be comparable based solely on their ID.
 # TODO: Should we enforce case-insensitivity here?
@@ -232,10 +233,13 @@ class _AbstractPrincipal(object):
 
 	def __lt__(self, other):
 		return self.id < other.id
+
 	def __hash__(self):
 		return hash(self.id)
+
 	def __str__(self):
 		return self.id
+
 	def __repr__(self):
 		return "%s('%s')" % (self.__class__.__name__,
 							 unicode(self.id).encode('unicode_escape'))
