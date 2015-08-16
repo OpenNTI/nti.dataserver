@@ -243,7 +243,7 @@ class _ObjectsContainerResource(_ContainerResource):
 				values = ()
 			for x in values:
 				_clean(x)
-		_clean(result)	
+		_clean(result)
 		return result
 
 	def _check_permission(self, context):
