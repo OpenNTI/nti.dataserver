@@ -572,6 +572,16 @@ class IJoinableContextProvider(IIterable):
 		Return the number of items.
 		"""
 
+class ForbiddenContextException( Exception ):
+	"""
+	Indicates a user might not have access to a piece
+	of content, but could possibly gain access.
+	"""
+
+	def __init__(self, joinable_contexts ):
+		self.joinable_contexts = joinable_contexts
+
+
 class ITopLevelContainerContextProvider(IIterable):
 	"""
 	An adapter interface that returns the top-level
