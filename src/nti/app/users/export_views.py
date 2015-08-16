@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from collections import defaultdict
+
 from zope import component
 
 from zope.catalog.interfaces import ICatalog
@@ -19,6 +21,7 @@ from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
+from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IUserTranscriptStorage
@@ -48,23 +51,16 @@ from nti.zodb import isBroken
 
 from . import is_true
 from . import all_usernames
+from . import get_mime_type
 from . import username_search
+from . import parse_mime_types
 
 ITEMS = StandardExternalFields.ITEMS
 
 transcript_mime_type = u'application/vnd.nextthought.transcript'
 messageinfo_mime_type = u'application/vnd.nextthought.messageinfo'
 
-def parse_mime_types(value):
-	mime_types = set(value.split(',')) if value else ()
-	if '*/*' in mime_types:
-		mime_types = ()
-	elif mime_types:
-		mime_types = {e.strip().lower() for e in mime_types}
-		mime_types.discard(u'')
-	return tuple(mime_types) if mime_types else ()
-
-def get_user_objects(user, mime_types=()):
+def get_user_objects(user, mime_types=(), broken=False):
 	intids = component.getUtility(IIntIds)
 	catalog = component.getUtility(ICatalog, METADATA_CATALOG_NAME)
 
@@ -103,11 +99,15 @@ def get_user_objects(user, mime_types=()):
 	for uid in result_ids or ():
 		try:
 			obj = intids.queryObject(uid)
-			if	isBroken(obj, uid) or \
+			if 	obj is None or \
 				IUser.providedBy(obj) or \
 				IDeletedObjectPlaceholder.providedBy(obj):
 				continue
-			if process_transcripts and IMessageInfo.providedBy(obj):
+
+			if isBroken(obj, uid):
+				if not broken:
+					continue
+			elif process_transcripts and IMessageInfo.providedBy(obj):
 				continue
 			yield obj
 		except TypeError as e:
@@ -202,6 +202,63 @@ class ExportObjectsSharedWithView(AbstractAuthenticatedView):
 				logger.debug("Error processing object %s(%s); %s", type(obj), uid, e)
 		result['Total'] = len(items)
 		return result
+
+@view_config(route_name='objects.generic.traversal',
+			 name='delete_user_objects',
+			 renderer='rest',
+			 request_method='POST',
+			 permission=nauth.ACT_NTI_ADMIN)
+class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
+
+	def __call__(self):
+		values = CaseInsensitiveDict(self.readInput())
+		username = values.get('username') or values.get('user')
+		if not username:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a username"))
+		user = User.get_user(username)
+		if not user:
+			raise hexc.HTTPUnprocessableEntity('User not found')
+
+		broken = is_true(values.get('broken', 'F'))
+		mime_types = values.get('mime_types') or values.get('mimeTypes') or u''
+		mime_types = parse_mime_types(mime_types)
+
+		broken_objects = set()
+		counter_map = defaultdict(int)
+		for obj in list(get_user_objects(user, mime_types, broken)):
+			if isBroken(obj):
+				oid = getattr(obj, 'oid', None)
+				pid = getattr(obj, '_p_oid', None)
+				if pid:
+					broken_objects.add(pid)
+				if oid:
+					broken_objects.add(oid)
+			else:
+				objId = obj.id
+				mime_type = get_mime_type(obj)
+				containerId = obj.containerId
+				obj = user.getContainedObject(containerId, objId)
+				if obj is not None and user.deleteContainedObject(containerId, objId):
+					counter_map[mime_type] = counter_map[mime_type] + 1
+
+		if broken_objects:
+			for container in list(user.containers.values()):
+				for _, obj in list(container.items()):
+					oid = getattr(obj, 'oid', None)
+					pid = getattr(obj, '_p_oid', None)
+					broken = oid in broken_objects or pid in broken_objects
+					if not broken:
+						strong = obj if not callable(obj) else obj()
+						broken = strong is not None and \
+								 oid in broken_objects and \
+								 pid in broken_objects
+						if broken:
+							obj = strong
+					if broken:
+						counter_map['broken'] = counter_map['broken'] + 1
+						user.containers._v_removeFromContainer(container, obj)
+
+		return counter_map
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',

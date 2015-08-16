@@ -16,6 +16,8 @@ import six
 
 from zope import component
 
+from zope.mimetype.interfaces import IContentTypeAware
+
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 
@@ -47,3 +49,17 @@ def all_usernames():
 	users_folder = IShardLayout(dataserver).users_folder
 	usernames = users_folder.keys()
 	return usernames
+
+def parse_mime_types(value):
+	mime_types = set(value.split(',')) if value else ()
+	if '*/*' in mime_types:
+		mime_types = ()
+	elif mime_types:
+		mime_types = {e.strip().lower() for e in mime_types}
+		mime_types.discard(u'')
+	return tuple(mime_types) if mime_types else ()
+
+def get_mime_type(obj, default='unknown'):
+	obj = IContentTypeAware(obj, obj)
+	result = getattr(obj, 'mimeType', None) or getattr(obj, 'mime_type', None)
+	return result or default
