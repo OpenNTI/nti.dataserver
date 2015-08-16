@@ -6,7 +6,6 @@ ACL providers for the various content types.
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -48,6 +47,7 @@ from .interfaces import IPermission
 from .interfaces import IACLProvider
 from .interfaces import IAuthorizationPolicy
 from .interfaces import IACLProviderCacheable
+from .interfaces import IUseNTIIDAsExternalUsername
 
 from .interfaces import ACE_ACT_DENY
 from .interfaces import ACE_DENY_ALL
