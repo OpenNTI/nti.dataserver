@@ -626,6 +626,8 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 				if 'href' in m and not isinstance(m['href'], six.string_types):
 					m.pop('href', None)
 				values = m.values()
+			elif isinstance( m, set ):
+				values = list( m )
 			elif is_nonstr_iter(m):
 				values = m
 			else:
