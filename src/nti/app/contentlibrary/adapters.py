@@ -22,6 +22,7 @@ from zope.security.interfaces import IPrincipal
 
 from persistent.mapping import PersistentMapping
 
+from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IJoinableContextProvider
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
@@ -257,12 +258,17 @@ def _bundles_from_forum(obj):
 
 def _get_top_level_contexts(obj):
 	results = set()
-	for top_level_contexts in component.subscribers((obj,),
-													ITopLevelContainerContextProvider):
-		top_level_contexts = []
-		for top_level_context in top_level_contexts:
-			if IContentPackageBundle.providedBy(top_level_context):
-				results.add(top_level_context)
+	try:
+		# FIXME Some subscribers throw, we need to ignore
+		# that and look for our other (local) subscribers.
+		for top_level_contexts in component.subscribers((obj,),
+														ITopLevelContainerContextProvider):
+			top_level_contexts = []
+			for top_level_context in top_level_contexts:
+				if IContentPackageBundle.providedBy(top_level_context):
+					results.add(top_level_context)
+	except ForbiddenContextException:
+		pass
 	return results
 
 @interface.implementer(IJoinableContextProvider)
