@@ -17,6 +17,8 @@ import time
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
+from nti.appserver.ugd_edit_views import UGDPutView
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
@@ -132,3 +134,15 @@ class UserMembershipsView(AbstractAuthenticatedView, BatchingUtilsMixin):
 								   batch_start=self.batch_start,
 								   selector=_selector)
 		return result
+
+class UserUpdateView(UGDPutView):
+	"""
+	A concrete class to update user objects. Currently, we just exclude
+	`DynamicMemberships` from the inbound user object.  We don't care
+	about it and the internalization factory tries to create a None username DFL.
+	"""
+
+	def readInput(self, value=None):
+		value = super(UserUpdateView, self).readInput(value=value)
+		value.pop( 'DynamicMemberships', None )
+		return value
