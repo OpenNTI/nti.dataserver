@@ -680,4 +680,15 @@ class _PostLibraryPathView( AbstractAuthenticatedView ):
 	"""
 
 	def __call__(self):
-		return _get_board_obj_path( self.context )
+		try:
+			return _get_board_obj_path( self.context )
+		except ForbiddenContextException as e:
+			# It appears we only have top-level-context objects,
+			# return a 403 so the client can react appropriately.
+			response = hexc.HTTPForbidden()
+			result = LocatedExternalDict()
+			result[ITEMS] = e.joinable_contexts
+			__traceback_info__ = result
+			response.json_body = self.to_json_body(result)
+			raise response
+
