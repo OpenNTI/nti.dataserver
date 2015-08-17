@@ -11,8 +11,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import six
-import collections
 from urllib import quote as UQ
 
 from zope import component
@@ -44,7 +42,6 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.workspaces.interfaces import IService
 
-from nti.common.iterables import is_nonstr_iter
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.contentlibrary.indexed_data import get_catalog
@@ -71,6 +68,7 @@ from nti.externalization.interfaces import LocatedExternalList
 from nti.externalization.interfaces import StandardExternalFields
 
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import removed_unserializable
 
 from nti.links.links import Link
 
@@ -102,17 +100,17 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 	if not remote_user:
 		raise hexc.HTTPForbidden()
 
-	user_service = request.registry.getAdapter( remote_user, IService )
+	user_service = request.registry.getAdapter(remote_user, IService)
 	user_workspace = user_service.user_workspace
 	pages_collection = user_workspace.pages_collection
-	info = pages_collection.make_info_for( ntiid )
+	info = pages_collection.make_info_for(ntiid)
 
 	# set extra links
 	if href:
-		info.extra_links = (Link( href, rel='content' ),) # TODO: The rel?
+		info.extra_links = (Link(href, rel='content'),)  # TODO: The rel?
 	if jsonp_href:
-		link = Link( jsonp_href, rel='jsonp_content', target_mime_type='application/json')
-		info.extra_links = info.extra_links + (link,) # TODO: The rel?
+		link = Link(jsonp_href, rel='jsonp_content', target_mime_type='application/json')
+		info.extra_links = info.extra_links + (link,)  # TODO: The rel?
 
 	info.contentUnit = request.context
 	if last_modified:
@@ -123,14 +121,14 @@ def _create_page_info(request, href, ntiid, last_modified=0, jsonp_href=None):
 		info.lastModified = last_modified
 	return info
 
-@view_config( name='' )
-@view_config( name='pageinfo+json' )
-@view_config( name='link+json' )
+@view_config(name='')
+@view_config(name='pageinfo+json')
+@view_config(name='link+json')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   context='nti.contentlibrary.interfaces.IContentUnit',
 			   permission=nauth.ACT_READ,
-			   request_method='GET' )
+			   request_method='GET')
 class _LibraryTOCRedirectClassView(object):
 	"""
 	Given an :class:`lib_interfaces.IContentUnit`, redirect the
@@ -169,24 +167,24 @@ class _LibraryTOCRedirectClassView(object):
 		# But the ToC is important too, so we take the newest
 		# of all these that we can find
 		root_package = traversal.find_interface(request.context, IContentPackage)
-		lastModified = max( lastModified,
+		lastModified = max(lastModified,
 							getattr(root_package, 'lastModified', 0),
 							getattr(root_package, 'index_last_modified', 0))
 		return lastModified
 
-	link_mt = nti_mimetype_with_class( 'link' )
+	link_mt = nti_mimetype_with_class('link')
 	link_mt_json = link_mt + '+json'
 	link_mts = (link_mt, link_mt_json)
 
 	json_mt = 'application/json'
 	page_info_mt = PAGE_INFO_MT
 	page_info_mt_json = PAGE_INFO_MT_JSON
-	page_mts = (json_mt,page_info_mt,page_info_mt_json)
+	page_mts = (json_mt, page_info_mt, page_info_mt_json)
 
-	mts = ('text/html',link_mt,link_mt_json,json_mt,page_info_mt,page_info_mt_json)
+	mts = ('text/html', link_mt, link_mt_json, json_mt, page_info_mt, page_info_mt_json)
 
 	def _as_link(self, href, lastModified, request):
-		link = Link( href, rel="content" )
+		link = Link(href, rel="content")
 		# We cannot render a raw link using the code in pyramid_renderers, but
 		# we need to return one to get the right mime type header. So we
 		# fake it by rendering here
@@ -211,25 +209,25 @@ class _LibraryTOCRedirectClassView(object):
 
 		# Right now, the ILibraryTOCEntries always have relative hrefs,
 		# which may or may not include a leading /.
-		assert not href.startswith( '/' ) or '://' not in href # Is it a relative path?
+		assert not href.startswith('/') or '://' not in href  # Is it a relative path?
 
 		# FIXME: We're assuming these map into the URL space
 		# based in their root name. Is that valid? Do we need another mapping layer?
 		href = IContentUnitHrefMapper(request.context).href or href
 		jsonp_key = request.context.does_sibling_entry_exist(request.context.href + '.jsonp')
 		if jsonp_key is not None and jsonp_key:
-			jsonp_href = IContentUnitHrefMapper( jsonp_key ).href
+			jsonp_href = IContentUnitHrefMapper(jsonp_key).href
 
-		lastModified = self._lastModified( request )
+		lastModified = self._lastModified(request)
 
 		# If the client asks for a specific type of data,
 		# a link, then give it to them. Otherwise...
 		accept_type = 'text/html'
 		if request.accept:
-			accept_type = request.accept.best_match( self.mts )
+			accept_type = request.accept.best_match(self.mts)
 
 		if accept_type in self.link_mts:
-			return self._as_link( href, lastModified, request )
+			return self._as_link(href, lastModified, request)
 
 		if accept_type in self.page_mts:
 			# Send back our canonical location, just in case we got here via
@@ -237,7 +235,7 @@ class _LibraryTOCRedirectClassView(object):
 			# to know what to invalidate.
 			# (Mostly in tests we find we cannot rely on traversal, so HACK it in manually)
 			request.response.content_location = \
-					UQ( ('/dataserver2/Objects/' + request.context.ntiid).encode( 'utf-8' ) )
+					UQ(('/dataserver2/Objects/' + request.context.ntiid).encode('utf-8'))
 
 			return _create_page_info(request,
 									 href,
@@ -245,16 +243,16 @@ class _LibraryTOCRedirectClassView(object):
 									 last_modified=lastModified, jsonp_href=jsonp_href)
 
 		# ...send a 302. Return rather than raise so that webtest works better
-		return hexc.HTTPSeeOther( location=href )
+		return hexc.HTTPSeeOther(location=href)
 
 def _LibraryTOCRedirectView(request):
-	return _LibraryTOCRedirectClassView( request )()
+	return _LibraryTOCRedirectClassView(request)()
 
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 name=ROOT,
 			 permission=nauth.ACT_READ,
-			 request_method='GET' )
+			 request_method='GET')
 def _RootLibraryTOCRedirectView(request):
 	"""
 	For the root NTIID, we only support returning PageInfo (never a link to content,
@@ -270,19 +268,19 @@ def _RootLibraryTOCRedirectView(request):
 	return _create_page_info(request, None, ntiid)
 
 @view_config(context=IContentPackageLibrary,
-			 request_method='GET' )
+			 request_method='GET')
 class MainLibraryGetView(GenericGetView):
 	"Invoked to return the contents of a library."
 
 	def __call__(self):
 		# TODO: Should generic get view do this step?
 		controller = IPreRenderResponseCacheController(self.request.context)
-		controller( self.request.context, {'request': self.request } )
+		controller(self.request.context, {'request': self.request })
 		# GenericGetView currently wants to try to turn the context into an ICollection
 		# for externalization. We would like to be specific about that here, but
 		# that causes problems when we try to find a CacheController for request.context
-		#self.request.context = ICollection(self.request.context)
-		return super(MainLibraryGetView,self).__call__()
+		# self.request.context = ICollection(self.request.context)
+		return super(MainLibraryGetView, self).__call__()
 
 @component.adapter(IContentPackageLibrary)
 class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheController):
@@ -301,92 +299,92 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 
 	@property
 	def _context_specific(self):
-		return sorted( [x.ntiid for x in self.context.contentPackages] )
+		return sorted([x.ntiid for x in self.context.contentPackages])
 
-def _get_wrapped_contexts( top_level_contexts ):
+def _get_wrapped_contexts(top_level_contexts):
 	results = []
 	for top_level_context in top_level_contexts:
 		try:
-			results.append( top_level_context.ContentPackageBundle )
-			results.extend( top_level_context.ContentPackageBundle.ContentPackages )
+			results.append(top_level_context.ContentPackageBundle)
+			results.extend(top_level_context.ContentPackageBundle.ContentPackages)
 		except AttributeError:
 			try:
-				results.append( top_level_context.legacy_content_package )
+				results.append(top_level_context.legacy_content_package)
 			except AttributeError:
 				try:
-					results.extend( top_level_context.ContentPackages )
+					results.extend(top_level_context.ContentPackages)
 				except AttributeError:
 					pass
 	return results
 
-def _dedupe_bundles( top_level_contexts ):
+def _dedupe_bundles(top_level_contexts):
 	"""
 	Filter out bundles/packages that may be contained by other contexts.
 	"""
 	results = []
-	wrapped_bundles = _get_wrapped_contexts( top_level_contexts )
+	wrapped_bundles = _get_wrapped_contexts(top_level_contexts)
 	for top_level_context in top_level_contexts:
 		if top_level_context not in wrapped_bundles:
-			results.append( top_level_context )
+			results.append(top_level_context)
 	return results
 
-def _get_top_level_contexts( obj ):
+def _get_top_level_contexts(obj):
 	results = []
-	for top_level_contexts in component.subscribers( (obj,),
-													ITopLevelContainerContextProvider ):
+	for top_level_contexts in component.subscribers((obj,),
+													ITopLevelContainerContextProvider):
 		if top_level_contexts:
-			results.extend( top_level_contexts )
-	return _dedupe_bundles( results )
+			results.extend(top_level_contexts)
+	return _dedupe_bundles(results)
 
-def _get_top_level_contexts_for_user( obj, user ):
+def _get_top_level_contexts_for_user(obj, user):
 	results = []
-	for top_level_contexts in component.subscribers( (obj, user),
-													ITopLevelContainerContextProvider ):
+	for top_level_contexts in component.subscribers((obj, user),
+													ITopLevelContainerContextProvider):
 		if top_level_contexts:
-			results.extend( top_level_contexts )
-	return _dedupe_bundles( results )
+			results.extend(top_level_contexts)
+	return _dedupe_bundles(results)
 
-def _get_wrapped_bundles_from_hierarchy( hierarchy_contexts ):
+def _get_wrapped_bundles_from_hierarchy(hierarchy_contexts):
 	"""
 	For our hierarchy paths, get all contained bundles.
 	"""
 	top_level_contexts = (x[0] for x in hierarchy_contexts if x)
-	return _get_wrapped_contexts( top_level_contexts )
+	return _get_wrapped_contexts(top_level_contexts)
 
-def _dedupe_bundles_from_hierarchy( hierarchy_contexts ):
+def _dedupe_bundles_from_hierarchy(hierarchy_contexts):
 	"""
 	Filter out bundles that may be contained by other contexts.
 	"""
 	results = []
-	wrapped_bundles = _get_wrapped_bundles_from_hierarchy( hierarchy_contexts )
+	wrapped_bundles = _get_wrapped_bundles_from_hierarchy(hierarchy_contexts)
 	for hierarchy_context in hierarchy_contexts:
 		top_level_context = hierarchy_context[0]
 		if top_level_context not in wrapped_bundles:
-			results.append( hierarchy_context )
+			results.append(hierarchy_context)
 	return results
 
-def _get_hierarchy_context( obj, user ):
+def _get_hierarchy_context(obj, user):
 	results = []
-	for hiearchy_contexts in component.subscribers( (obj,user),
-												IHierarchicalContextProvider ):
+	for hiearchy_contexts in component.subscribers((obj, user),
+												IHierarchicalContextProvider):
 		if hiearchy_contexts:
-			results.extend( hiearchy_contexts )
-	return _dedupe_bundles_from_hierarchy( results )
+			results.extend(hiearchy_contexts)
+	return _dedupe_bundles_from_hierarchy(results)
 
-def _get_hierarchy_context_for_context( obj, top_level_context ):
+def _get_hierarchy_context_for_context(obj, top_level_context):
 	results = component.queryMultiAdapter(
-									( top_level_context, obj ),
-									IHierarchicalContextProvider )
+									(top_level_context, obj),
+									IHierarchicalContextProvider)
 	return results or (top_level_context,)
 
-def _get_board_obj_path( obj ):
+def _get_board_obj_path(obj):
 	"""
 	For a board level object, return the lineage path.
 	"""
 	# Permissioning concerns? If we have permission
 	# on underlying object, we should have permission up the tree.
 	result = LocatedExternalList()
-	top_level_context = _get_top_level_contexts( obj )
+	top_level_context = _get_top_level_contexts(obj)
 	top_level_context = top_level_context[0] if top_level_context else None
 
 	item = obj.__parent__
@@ -394,59 +392,46 @@ def _get_board_obj_path( obj ):
 
 	# Go up tree until we hit board/blog
 	while item is not None:
-		if 		IBoard.providedBy( item ) \
-			or 	IPersonalBlog.providedBy( item ):
+		if 		IBoard.providedBy(item) \
+			or 	IPersonalBlog.providedBy(item):
 
 			if top_level_context is not None:
-				result_list.append( top_level_context )
+				result_list.append(top_level_context)
 			else:
-				result_list.append( item.__parent__ )
+				result_list.append(item.__parent__)
 			item = None
 		else:
 			item = item.__parent__
 			if item is not None:
-				result_list.append( item )
+				result_list.append(item)
 
 	result_list.reverse()
-	result.append( result_list )
+	result.append(result_list)
 	return result
 
-class PreResponseLibraryPathCacheController( object ):
+class PreResponseLibraryPathCacheController(object):
 
-	def __call__( self, last_modified, system ):
+	def __call__(self, last_modified, system):
 		request = system['request']
 		self.remote_user = request.authenticated_userid
 		response = request.response
 		response.last_modified = last_modified
 		obj = object()
-		cache_controller = IResponseCacheController( obj )
+		cache_controller = IResponseCacheController(obj)
 		# Context is ignored
-		return cache_controller( obj, system )
+		return cache_controller(obj, system)
 
-class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
+class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	"""
 	Handle the caching and 403 response communication for
 	LibraryPath views.
 	"""
 	# Max age of 5 minutes, then they need to check with us.
-	#max_age = 300
+	# max_age = 300
 
 	def to_json_body(self, obj):
 		result = toExternalObject(toExternalObject(obj))
-		def _clean(m):
-			if isinstance(m, collections.Mapping):
-				if 'href' in m and not isinstance(m['href'], six.string_types):
-					m.pop('href', None)
-				values = m.values()
-			elif isinstance( m, set ):
-				values = list( m )
-			elif is_nonstr_iter(m):
-				values = m
-			else:
-				values = ()
-			for x in values:
-				_clean(x)
-		_clean(result)
+		result = removed_unserializable(result)
 		return result
 
 	def _get_library_path_last_mod(self):
@@ -458,26 +443,26 @@ class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
 		return result
 
 	def _get_library_last_mod(self):
-		lib = component.queryUtility( IContentPackageLibrary )
-		return getattr( lib, 'lastModified', 0 )
+		lib = component.queryUtility(IContentPackageLibrary)
+		return getattr(lib, 'lastModified', 0)
 
 	@property
 	def last_mod(self):
 		lib_last_mod = self._get_library_last_mod()
 		sub_last_mod = self._get_library_path_last_mod()
-		result = max( lib_last_mod, sub_last_mod )
+		result = max(lib_last_mod, sub_last_mod)
 		return result or None
 
 	def do_caching(self, obj):
-		setattr( obj, 'lastModified', self.last_mod )
-		interface.alsoProvides( obj, IExternalCollection )
-		controller = IPreRenderResponseCacheController( obj )
-		#controller.max_age = self.max_age
-		controller( obj, {'request': self.request} )
+		setattr(obj, 'lastModified', self.last_mod)
+		interface.alsoProvides(obj, IExternalCollection)
+		controller = IPreRenderResponseCacheController(obj)
+		# controller.max_age = self.max_age
+		controller(obj, {'request': self.request})
 
 	def pre_caching(self):
 		cache_controller = PreResponseLibraryPathCacheController()
-		cache_controller( self.last_mod, {'request': self.request} )
+		cache_controller(self.last_mod, {'request': self.request})
 
 	def do_call(self, to_call, *args):
 		# Try to bail early if our last mod hasn't changed.
@@ -485,8 +470,8 @@ class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
 
 		# Otherwise, try after we have data.
 		try:
-			results = to_call( *args )
-			self.do_caching( results )
+			results = to_call(*args)
+			self.do_caching(results)
 		except ForbiddenContextException as e:
 			# It appears we only have top-level-context objects,
 			# return a 403 so the client can react appropriately.
@@ -494,7 +479,7 @@ class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
 			result = LocatedExternalDict()
 			result[ITEMS] = e.joinable_contexts
 			__traceback_info__ = result
-			self.do_caching( result )
+			self.do_caching(result)
 			response.json_body = self.to_json_body(result)
 			results = response
 		return results
@@ -504,8 +489,8 @@ class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
 			 context=IDataserverFolder,
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
-			 request_method='GET' )
-class _LibraryPathView( _AbstractCachingLibraryPathView ):
+			 request_method='GET')
+class _LibraryPathView(_AbstractCachingLibraryPathView):
 	"""
 	Return an ordered list of lists of library paths to an object.
 
@@ -526,21 +511,21 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 		"""
 		For a given package, return the path to the target ntiid.
 		"""
-		unit = find_interface( obj, IContentUnit, strict=False )
+		unit = find_interface(obj, IContentUnit, strict=False)
 		if unit is not None:
 			# Found a unit in our lineage, easy.
 			return [unit]
 
 		# Try catalog.
 		catalog = get_catalog()
-		containers = catalog.get_containers( obj ) or ()
+		containers = catalog.get_containers(obj) or ()
 		for container in containers:
 			# Necessary for videos/slides, return the first
 			# non-package unit in our index.  These items will
 			# show up as embedded in the package. If we might
 			# have multiple units here, we could take the longest
 			# pathToNtiid from the library to get the leaf node.
-			if IContentPackage.providedBy( container ):
+			if IContentPackage.providedBy(container):
 				continue
 			try:
 				container = package[container]
@@ -550,24 +535,24 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 				pass
 
 		# Try iterating
-		def recur( unit ):
-			item_ntiid = getattr( unit, 'ntiid', None )
+		def recur(unit):
+			item_ntiid = getattr(unit, 'ntiid', None)
 			if 		item_ntiid == target_ntiid \
 				or 	target_ntiid in unit.embeddedContainerNTIIDs:
 				return [ unit ]
 			for child in unit.children:
-				result = recur( child )
+				result = recur(child)
 				if result:
-					result.append( unit )
+					result.append(unit)
 					return result
 
-		results = recur( package )
+		results = recur(package)
 		if results:
 			results.reverse()
 
 		return results
 
-	def _externalize_children( self, units ):
+	def _externalize_children(self, units):
 		# For content units, we need to externalize as pageinfos.
 		results = []
 		try:
@@ -575,61 +560,61 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 			# we start at the end.
 			units.reverse()
 			for unit in units:
-				if IContentPackage.providedBy( unit ):
+				if IContentPackage.providedBy(unit):
 					continue
 				try:
-					unit_res = find_page_info_view_helper( self.request, unit )
-					results.append( unit_res.json_body )
+					unit_res = find_page_info_view_helper(self.request, unit)
+					results.append(unit_res.json_body)
 					break
 				except hexc.HTTPMethodNotAllowed:
 					# Underlying content object, append as-is
-					results.append( unit )
+					results.append(unit)
 		except hexc.HTTPForbidden:
 			# No permission
 			pass
 		results.reverse()
 		return results
 
-	def _get_legacy_path_to_id( self, container_id ):
+	def _get_legacy_path_to_id(self, container_id):
 		# In the worst case, we may have to go through the
 		# library twice, looking for children and then
 		# embedded. With caching, this may not be too horrible.
-		library = component.queryUtility( IContentPackageLibrary )
+		library = component.queryUtility(IContentPackageLibrary)
 		result = None
 		if library:
 			# This should hit most UGD on lessons.
-			result = library.pathToNTIID( container_id )
+			result = library.pathToNTIID(container_id)
 			if not result:
 				# Now we try embedded, and the first
 				# of the results.
-				result = library.pathsToEmbeddedNTIID( container_id )
+				result = library.pathsToEmbeddedNTIID(container_id)
 				result = result[0] if result else result
 		return result
 
-	def _get_legacy_results( self, obj, target_ntiid ):
+	def _get_legacy_results(self, obj, target_ntiid):
 		"""
 		We need to iterate through the library, and some paths
 		only return the first available result. So we make
 		sure we only return a single result for now.
 		"""
-		legacy_path = self._get_legacy_path_to_id( target_ntiid )
+		legacy_path = self._get_legacy_path_to_id(target_ntiid)
 		if legacy_path:
 			package = legacy_path[0]
-			top_level_contexts = _get_top_level_contexts_for_user( package, self.remoteUser )
+			top_level_contexts = _get_top_level_contexts_for_user(package, self.remoteUser)
 			for top_level_context in top_level_contexts:
 
 				# Bail if our top-level context is not readable.
-				if not is_readable( top_level_context ):
+				if not is_readable(top_level_context):
 					continue
 				# We have a hit.
 				result_list = [ top_level_context ]
-				if is_readable( package ):
+				if is_readable(package):
 					hierarchy_context = _get_hierarchy_context_for_context(
-														obj, top_level_context )
-					if len( hierarchy_context ) > 1:
-						result_list.extend( hierarchy_context[1:] )
-					path_list = self._externalize_children( legacy_path )
-					result_list.extend( path_list )
+														obj, top_level_context)
+					if len(hierarchy_context) > 1:
+						result_list.extend(hierarchy_context[1:])
+					path_list = self._externalize_children(legacy_path)
+					result_list.extend(path_list)
 				return result_list
 
 	def _get_context_packages(self, context):
@@ -647,41 +632,41 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
-		hierarchy_contexts = _get_hierarchy_context( obj, self.remoteUser )
+		hierarchy_contexts = _get_hierarchy_context(obj, self.remoteUser)
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
 			# Bail if our top-level context is not readable
 			top_level_context = hierarchy_context[0]
-			if not is_readable( top_level_context ):
+			if not is_readable(top_level_context):
 				continue
 
 			# We have a hit
 			result_list = [ top_level_context ]
 
-			packages = self._get_context_packages( top_level_context )
+			packages = self._get_context_packages(top_level_context)
 
 			for package in packages:
-				path_list = self._get_path_for_package( package, obj, target_ntiid )
+				path_list = self._get_path_for_package(package, obj, target_ntiid)
 				if path_list:
-					if is_readable( package ):
-						if len( hierarchy_context ) > 1:
-							result_list.extend( hierarchy_context[1:] )
-						path_list = self._externalize_children( path_list )
-						result_list.extend( path_list )
-			result.append( result_list )
+					if is_readable(package):
+						if len(hierarchy_context) > 1:
+							result_list.extend(hierarchy_context[1:])
+						path_list = self._externalize_children(path_list)
+						result_list.extend(path_list)
+			result.append(result_list)
 
 		# If we have nothing yet, it could mean our object
 		# is in legacy content. So we have to look through the library.
 		if not result and not hierarchy_contexts:
-			logger.info( 'Iterating through library for library path.' )
-			result_list = self._get_legacy_results( obj, target_ntiid )
+			logger.info('Iterating through library for library path.')
+			result_list = self._get_legacy_results(obj, target_ntiid)
 			if result_list:
-				result.append( result_list )
+				result.append(result_list)
 
 		# Not sure how we would cache here, it would have to be by user
 		# since we may have user-specific data returned.
-		self._sort( result )
+		self._sort(result)
 		return result
 
 	def _sort(self, result_lists):
@@ -689,35 +674,35 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 		Sorting by the length of the results may generally be good enough.
 		Longer paths might indicate full permission down the path tree.
 		"""
-		result_lists.sort( key=lambda x: len( x ), reverse=True )
+		result_lists.sort(key=lambda x: len(x), reverse=True)
 
 	def _get_params(self):
 		params = CaseInsensitiveDict(self.request.params)
-		obj_ntiid = params.get( 'objectId' )
-		if 	obj_ntiid is None or not is_valid_ntiid_string( obj_ntiid ):
-			raise hexc.HTTPUnprocessableEntity( "Invalid ObjectId." )
+		obj_ntiid = params.get('objectId')
+		if 	obj_ntiid is None or not is_valid_ntiid_string(obj_ntiid):
+			raise hexc.HTTPUnprocessableEntity("Invalid ObjectId.")
 
-		obj = find_object_with_ntiid( obj_ntiid )
+		obj = find_object_with_ntiid(obj_ntiid)
 		# If we get a contained object, we need the path
 		# to the container.
-		if IHighlight.providedBy( obj ):
+		if IHighlight.providedBy(obj):
 			obj_ntiid = obj.containerId
-			obj = find_object_with_ntiid( obj_ntiid )
+			obj = find_object_with_ntiid(obj_ntiid)
 		if obj is None:
-			raise hexc.HTTPNotFound( '%s not found' % obj_ntiid )
+			raise hexc.HTTPNotFound('%s not found' % obj_ntiid)
 
 		# Get the ntiid off the object because we may have an OID
-		obj_ntiid = getattr( obj, 'ntiid', None ) or obj_ntiid
+		obj_ntiid = getattr(obj, 'ntiid', None) or obj_ntiid
 		return obj, obj_ntiid
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-		if 		ITopic.providedBy( obj ) \
-			or 	IPost.providedBy( obj ) \
-			or 	IForum.providedBy( obj ):
-			results = self.do_call( _get_board_obj_path, obj )
+		if 		ITopic.providedBy(obj) \
+			or 	IPost.providedBy(obj) \
+			or 	IForum.providedBy(obj):
+			results = self.do_call(_get_board_obj_path, obj)
 		else:
-			results = self.do_call( self._get_path, obj, object_ntiid )
+			results = self.do_call(self._get_path, obj, object_ntiid)
 
 		# Nothing found, perhaps no longer available.
 		if not results:
@@ -732,13 +717,12 @@ class _LibraryPathView( _AbstractCachingLibraryPathView ):
 			 renderer='rest',
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
-			 request_method='GET' )
-class _PostLibraryPathView( _AbstractCachingLibraryPathView ):
+			 request_method='GET')
+class _PostLibraryPathView(_AbstractCachingLibraryPathView):
 	"""
 	For board items, getting the path traversal can
 	be accomplished through lineage.
 	"""
 
 	def __call__(self):
-		return self.do_call( _get_board_obj_path, self.context )
-
+		return self.do_call(_get_board_obj_path, self.context)
