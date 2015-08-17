@@ -603,3 +603,9 @@ class IHierarchicalContextProvider(IIterable):
 		"""
 		Return the number of items.
 		"""
+
+class ILibraryPathLastModifiedProvider(interface.Interface):
+	"""
+	Subscriber that returns last modified input for
+	LibraryPath requests.
+	"""

@@ -37,6 +37,7 @@ from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGet
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
+from nti.appserver.interfaces import ILibraryPathLastModifiedProvider
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -427,7 +428,7 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	LibraryPath views.
 	"""
 	# Max age of 5 minutes, then they need to check with us.
-	# max_age = 300
+	max_age = 300
 
 	def to_json_body(self, obj):
 		result = toExternalObject(toExternalObject(obj))
@@ -436,10 +437,10 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 
 	def _get_library_path_last_mod(self):
 		result = 0
-# 		for library_last_mod in component.subscribers(
-# 										ILibraryPathLastModifiedProvider ):
-# 			if library_last_mod is not None:
-# 				result = max( library_last_mod, result )
+		for library_last_mod in component.subscribers( (self.remoteUser,),
+										ILibraryPathLastModifiedProvider ):
+			if library_last_mod is not None:
+				result = max( library_last_mod, result )
 		return result
 
 	def _get_library_last_mod(self):
@@ -454,11 +455,11 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 		return result or None
 
 	def do_caching(self, obj):
-		setattr(obj, 'lastModified', self.last_mod)
-		interface.alsoProvides(obj, IExternalCollection)
-		controller = IPreRenderResponseCacheController(obj)
-		# controller.max_age = self.max_age
-		controller(obj, {'request': self.request})
+		setattr( obj, 'lastModified', self.last_mod )
+		interface.alsoProvides( obj, IExternalCollection )
+		controller = IPreRenderResponseCacheController( obj )
+		controller.max_age = self.max_age
+		controller( obj, {'request': self.request} )
 
 	def pre_caching(self):
 		cache_controller = PreResponseLibraryPathCacheController()
