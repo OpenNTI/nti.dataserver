@@ -29,7 +29,9 @@ from nti.app.authentication import get_remote_user
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
+from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
+from nti.app.renderers.interfaces import IResponseCacheController
 from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
@@ -409,13 +411,101 @@ def _get_board_obj_path( obj ):
 	result.append( result_list )
 	return result
 
+class PreResponseLibraryPathCacheController( object ):
+
+	def __call__( self, last_modified, system ):
+		request = system['request']
+		self.remote_user = request.authenticated_userid
+		response = request.response
+		response.last_modified = last_modified
+		obj = object()
+		cache_controller = IResponseCacheController( obj )
+		# Context is ignored
+		return cache_controller( obj, system )
+
+class _AbstractCachingLibraryPathView( AbstractAuthenticatedView ):
+	"""
+	Handle the caching and 403 response communication for
+	LibraryPath views.
+	"""
+	# Max age of 5 minutes, then they need to check with us.
+	#max_age = 300
+
+	def to_json_body(self, obj):
+		result = toExternalObject(toExternalObject(obj))
+		def _clean(m):
+			if isinstance(m, collections.Mapping):
+				if 'href' in m and not isinstance(m['href'], six.string_types):
+					m.pop('href', None)
+				values = m.values()
+			elif isinstance( m, set ):
+				values = list( m )
+			elif is_nonstr_iter(m):
+				values = m
+			else:
+				values = ()
+			for x in values:
+				_clean(x)
+		_clean(result)
+		return result
+
+	def _get_library_path_last_mod(self):
+		result = 0
+# 		for library_last_mod in component.subscribers(
+# 										ILibraryPathLastModifiedProvider ):
+# 			if library_last_mod is not None:
+# 				result = max( library_last_mod, result )
+		return result
+
+	def _get_library_last_mod(self):
+		lib = component.queryUtility( IContentPackageLibrary )
+		return getattr( lib, 'lastModified', 0 )
+
+	@property
+	def last_mod(self):
+		lib_last_mod = self._get_library_last_mod()
+		sub_last_mod = self._get_library_path_last_mod()
+		result = max( lib_last_mod, sub_last_mod )
+		return result or None
+
+	def do_caching(self, obj):
+		setattr( obj, 'lastModified', self.last_mod )
+		interface.alsoProvides( obj, IExternalCollection )
+		controller = IPreRenderResponseCacheController( obj )
+		#controller.max_age = self.max_age
+		controller( obj, {'request': self.request} )
+
+	def pre_caching(self):
+		cache_controller = PreResponseLibraryPathCacheController()
+		cache_controller( self.last_mod, {'request': self.request} )
+
+	def do_call(self, to_call, *args):
+		# Try to bail early if our last mod hasn't changed.
+		self.pre_caching()
+
+		# Otherwise, try after we have data.
+		try:
+			results = to_call( *args )
+			self.do_caching( results )
+		except ForbiddenContextException as e:
+			# It appears we only have top-level-context objects,
+			# return a 403 so the client can react appropriately.
+			response = hexc.HTTPForbidden()
+			result = LocatedExternalDict()
+			result[ITEMS] = e.joinable_contexts
+			__traceback_info__ = result
+			self.do_caching( result )
+			response.json_body = self.to_json_body(result)
+			results = response
+		return results
+
 @view_config(route_name='objects.generic.traversal',
 			 renderer='rest',
 			 context=IDataserverFolder,
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
 			 request_method='GET' )
-class _LibraryPathView( AbstractAuthenticatedView ):
+class _LibraryPathView( _AbstractCachingLibraryPathView ):
 	"""
 	Return an ordered list of lists of library paths to an object.
 
@@ -591,6 +681,7 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 
 		# Not sure how we would cache here, it would have to be by user
 		# since we may have user-specific data returned.
+		self._sort( result )
 		return result
 
 	def _sort(self, result_lists):
@@ -619,49 +710,18 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 		obj_ntiid = getattr( obj, 'ntiid', None ) or obj_ntiid
 		return obj, obj_ntiid
 
-	def to_json_body(self, obj):
-		result = toExternalObject(toExternalObject(obj))
-		def _clean(m):
-			if isinstance(m, collections.Mapping):
-				if 'href' in m and not isinstance(m['href'], six.string_types):
-					m.pop('href', None)
-				values = m.values()
-			elif isinstance( m, set ):
-				values = list( m )
-			elif is_nonstr_iter(m):
-				values = m
-			else:
-				values = ()
-			for x in values:
-				_clean(x)
-		_clean(result)
-		return result
-
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
-
-		try:
-			if 		ITopic.providedBy( obj ) \
-				or 	IPost.providedBy( obj ) \
-				or 	IForum.providedBy( obj ):
-				results = _get_board_obj_path( obj )
-			else:
-				results = self._get_path( obj, object_ntiid )
-				self._sort( results )
-
-		except ForbiddenContextException as e:
-			# It appears we only have top-level-context objects,
-			# return a 403 so the client can react appropriately.
-			response = hexc.HTTPForbidden()
-			result = LocatedExternalDict()
-			result[ITEMS] = e.joinable_contexts
-			__traceback_info__ = result
-			response.json_body = self.to_json_body(result)
-			raise response
+		if 		ITopic.providedBy( obj ) \
+			or 	IPost.providedBy( obj ) \
+			or 	IForum.providedBy( obj ):
+			results = self.do_call( _get_board_obj_path, obj )
+		else:
+			results = self.do_call( self._get_path, obj, object_ntiid )
 
 		# Nothing found, perhaps no longer available.
 		if not results:
-			raise hexc.HTTPForbidden()
+			results = hexc.HTTPForbidden()
 
 		return results
 
@@ -673,22 +733,12 @@ class _LibraryPathView( AbstractAuthenticatedView ):
 			 name=LIBRARY_PATH_GET_VIEW,
 			 permission=nauth.ACT_READ,
 			 request_method='GET' )
-class _PostLibraryPathView( AbstractAuthenticatedView ):
+class _PostLibraryPathView( _AbstractCachingLibraryPathView ):
 	"""
 	For board items, getting the path traversal can
 	be accomplished through lineage.
 	"""
 
 	def __call__(self):
-		try:
-			return _get_board_obj_path( self.context )
-		except ForbiddenContextException as e:
-			# It appears we only have top-level-context objects,
-			# return a 403 so the client can react appropriately.
-			response = hexc.HTTPForbidden()
-			result = LocatedExternalDict()
-			result[ITEMS] = e.joinable_contexts
-			__traceback_info__ = result
-			response.json_body = self.to_json_body(result)
-			raise response
+		return self.do_call( _get_board_obj_path, self.context )
 
