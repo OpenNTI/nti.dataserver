@@ -65,8 +65,9 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 			def test(content_package):
 				if is_readable(content_package, self.request):
 					return True
-				# Nope. What about a top-level child?
-				return any((is_readable(child, self.request) for child in content_package.children))
+				# Nope. What about a top-level child? TODO: Why we check children?
+				result = any((is_readable(child, self.request) for child in content_package.children))
+				return result
 
 			self._v_contentPackages = list(filter(test, self.library.contentPackages))
 
