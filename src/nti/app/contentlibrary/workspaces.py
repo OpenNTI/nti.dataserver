@@ -46,6 +46,7 @@ from nti.dataserver.interfaces import IMemcacheClient
 from nti.dataserver.interfaces import IAuthenticationPolicy
 
 from nti.externalization.interfaces import IExternalObject
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
 
 class _PermissionedContentPackageLibrary(ProxyBase):
@@ -83,7 +84,7 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 			result = authn_policy.effective_principals(request)
 		result = {getattr(x, 'id', str(x)) for x in result}
 		return sorted(result)
-	
+
 	def _base_key(self, package):
 		md5 = hashlib.md5()
 		cur_site = hooks.getSite()
@@ -95,7 +96,7 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 	@Lazy
 	def _client(self):
 		return component.queryUtility(IMemcacheClient)
-	
+
 	def _test_and_cache(self, content_package):
 		# test readability
 		request = self.request
@@ -106,7 +107,7 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 			result = any((is_readable(x, request) for x in content_package.children))
 
 		try:
-			# cache if possible 
+			# cache if possible
 			client = self._client
 			if client != None:
 				for name in self._effective_principals(request):
@@ -117,7 +118,7 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		except Exception as e:
 			logger.error("Cannot set value(s) in memcached %s", e)
 		return result
-			
+
 	def _test_is_readable(self, content_package):
 		try:
 			client = self._client
@@ -141,7 +142,6 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		if self._v_contentPackages is None:
 			self._v_contentPackages = list(filter(self._test_is_readable,
 												  self.library.contentPackages))
-
 		return self._v_contentPackages
 
 # A chain for getting the library that a user can view
@@ -249,8 +249,6 @@ class LibraryCollection(object):
 	def accepts(self):
 		# Cannot add to library
 		return ()
-
-from nti.externalization.interfaces import LocatedExternalDict
 
 @interface.implementer(IExternalObject)
 @component.adapter(ILibraryCollection)
