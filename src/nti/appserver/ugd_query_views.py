@@ -39,6 +39,9 @@ from nti.appserver.interfaces import IPrincipalUGDFilter
 from nti.appserver.interfaces import get_principal_ugd_filter
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
+from nti.assessment.interfaces import IQPoll
+from nti.assessment.interfaces import IQSurvey
+
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
 
@@ -1149,8 +1152,10 @@ class _RecursiveUGDView(_UGDView):
 			# include media containers.
 			catalog = lib_catalog()
 			if catalog is not None: # test mode
+				# Should this be all types, or is that too expensive?
 				objects = catalog.search_objects(container_ntiids=containers,
-									   			 provided=(INTIVideo, INTIAudio))
+									   			 provided=(INTIVideo, INTIAudio,
+															IQPoll, IQSurvey))
 				for obj in objects:
 					containers.add(obj.ntiid)
 

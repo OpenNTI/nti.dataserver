@@ -39,11 +39,11 @@ from .interfaces import IContainedObjectCatalog
 from . import CATALOG_INDEX_NAME
 
 def to_iterable(value):
-	value = getattr(value, '__name__', value)
 	if is_nonstr_iter(value):
 		result = value
 	else:
 		result = (value,)
+	result = tuple(getattr(x, '__name__', x) for x in result)
 	return result
 
 class KeepSetIndex(RawSetIndex):
@@ -108,7 +108,7 @@ class NTIIDIndex(ValueIndex):
 	default_interface = ValidatingNTIID
 
 class ContainedObjectCatalog(Persistent):
-	
+
 	family = BTrees.family64
 
 	type_index = alias('_type_index')
@@ -233,7 +233,7 @@ class ContainedObjectCatalog(Persistent):
 					  self._namespace_index, self._ntiid_index):
 			index.unindex_doc(doc_id)
 		return True
-	
+
 	def clear(self):
 		self._last_modified.clear()
 		for index in (self._container_index, self._type_index,
