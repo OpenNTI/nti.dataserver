@@ -708,7 +708,6 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		# Nothing found, perhaps no longer available.
 		if not results:
 			results = hexc.HTTPForbidden()
-
 		return results
 
 @view_config(context=IPost)
