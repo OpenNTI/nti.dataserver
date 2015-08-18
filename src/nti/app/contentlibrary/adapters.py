@@ -259,8 +259,6 @@ def _bundles_from_forum(obj):
 def _get_top_level_contexts(obj):
 	results = set()
 	try:
-		# FIXME Some subscribers throw, we need to ignore
-		# that and look for our other (local) subscribers.
 		for top_level_contexts in component.subscribers((obj,),
 														ITopLevelContainerContextProvider):
 			top_level_contexts = []
