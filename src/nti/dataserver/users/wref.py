@@ -19,10 +19,10 @@ import six
 import sys
 import functools
 
-from zc import intid as zc_intid
-
 from zope import component
 from zope import interface
+
+from zope.intid import IIntIds
 
 from zope.keyreference.interfaces import NotYet
 
@@ -79,7 +79,7 @@ class WeakRef(object):
 	def __init__(self, entity):
 		self.username = entity.username.lower()
 		try:
-			self._entity_id = component.getUtility(zc_intid.IIntIds).getId(entity)
+			self._entity_id = component.getUtility(IIntIds).getId(entity)
 		except KeyError:
 			# Turn the missing-id KeyError into a NotYet
 			# error, which makes more sense
@@ -104,7 +104,7 @@ class WeakRef(object):
 
 		try:
 			__traceback_info__ = self.username, self._entity_id
-			result = component.getUtility(zc_intid.IIntIds).getObject(self._entity_id)
+			result = component.getUtility(IIntIds).getObject(self._entity_id)
 		except KeyError:
 			result = None
 
