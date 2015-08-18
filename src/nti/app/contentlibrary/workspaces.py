@@ -13,13 +13,20 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import hashlib
+
 from zope import component
 from zope import interface
+
+from zope.component import hooks
 
 from zope.container.interfaces import IContained
 
 from zope.proxy.decorator import ProxyBase
 
+from zope.traversing.interfaces import IEtcNamespace
+
+from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver.pyramid_authorization import is_readable
@@ -29,11 +36,14 @@ from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ILibraryCollection
 
-from nti.common.property import alias
+from nti.common.property import alias, Lazy
 from nti.common.property import CachedProperty
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+
+from nti.dataserver.interfaces import IMemcacheClient
+from nti.dataserver.interfaces import IAuthenticationPolicy
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.externalization import to_external_object
@@ -60,16 +70,77 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		self._v_contentPackages = None
 
 	@property
+	def lastSynchronized(self):
+		hostsites = component.queryUtility(IEtcNamespace, name='hostsites')
+		result = getattr(hostsites, 'lastSynchronized', 0)
+		return result
+
+	@classmethod
+	def _effective_principals(cls, request):
+		result = (psec.Everyone,)
+		authn_policy = component.queryUtility(IAuthenticationPolicy)
+		if authn_policy is not None and request is not None:
+			result = authn_policy.effective_principals(request)
+		result = {getattr(x, 'id', str(x)) for x in result}
+		return sorted(result)
+	
+	def _base_key(self, package):
+		md5 = hashlib.md5()
+		cur_site = hooks.getSite()
+		lastSync = self.lastSynchronized
+		for value in ('PCP', cur_site.__name__, package.ntiid, lastSync):
+			md5.update(str(value).lower())
+		return md5
+
+	@Lazy
+	def _client(self):
+		return component.queryUtility(IMemcacheClient)
+	
+	def _test_and_cache(self, content_package):
+		# test readability
+		request = self.request
+		if is_readable(content_package, request):
+			result = True
+		else:
+			# Nope. What about a top-level child? TODO: Why we check children?
+			result = any((is_readable(x, request) for x in content_package.children))
+
+		try:
+			# cache if possible 
+			client = self._client
+			if client != None:
+				for name in self._effective_principals(request):
+					base = self._base_key(content_package)
+					base.update(name)
+					name = base.hexdigest()
+					client.set(name, bool(result))
+		except Exception as e:
+			logger.error("Cannot set value(s) in memcached %s", e)
+		return result
+			
+	def _test_is_readable(self, content_package):
+		try:
+			client = self._client
+			if client != None:
+				request = self.request
+				for name in self._effective_principals(request):
+					base = self._base_key(content_package)
+					base.update(name)
+					name = base.hexdigest()
+					result = client.get(name)
+					if result is not None:
+						return result
+		except Exception as e:
+			logger.error("Cannot get value(s) in memcached %s", e)
+
+		result = self._test_and_cache(content_package)
+		return result
+
+	@property
 	def contentPackages(self):
 		if self._v_contentPackages is None:
-			def test(content_package):
-				if is_readable(content_package, self.request):
-					return True
-				# Nope. What about a top-level child? TODO: Why we check children?
-				result = any((is_readable(child, self.request) for child in content_package.children))
-				return result
-
-			self._v_contentPackages = list(filter(test, self.library.contentPackages))
+			self._v_contentPackages = list(filter(self._test_is_readable,
+												  self.library.contentPackages))
 
 		return self._v_contentPackages
 
