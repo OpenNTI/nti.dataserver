@@ -25,11 +25,6 @@ from nti.schema.field import IndexedIterable as TypedIterable
 # data for portions of the URL space
 ###
 
-class IDisabledLocation(interface.Interface):
-	"""
-	marker interface to mark a location disabled
-	"""
-
 class ICollection(ILocation):
 	"""
 	A collection (in the Atom sense) contains individual objects (entries).
@@ -87,6 +82,17 @@ class IService(ILocation):
 	workspaces = TypedIterable(	title="The workspaces of this service",
 								value_type=Object( IWorkspace, title="Workspaces in the service" ))
 
+class IWorkspaceValiator(interface.Interface):
+	"""
+	Marker interface for utility that validates a workspace before 
+	it is made avaiable in a user's service
+	"""
+	
+	def validate(workspace):
+		"""
+		returns True if the workspace is valid
+		"""
+	
 class IUserWorkspace(IWorkspace):
 	"""
 	A workspace for a particular user.
