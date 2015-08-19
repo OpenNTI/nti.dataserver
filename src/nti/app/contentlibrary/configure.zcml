@@ -217,9 +217,5 @@
 	<subscriber	factory=".filters._LibraryContentObjectFilter"
 				provides="nti.appserver.interfaces.ICreatableObjectFilter"
 				for="nti.dataserver.interfaces.IUser" />
-
-	<!-- change caching on enrollment -->
-	<subscriber handler="._permissioned.on_enroll_record" />
-	<subscriber handler="._permissioned.on_unenroll_record" />
 	
 </configure>
