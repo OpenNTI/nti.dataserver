@@ -167,7 +167,7 @@ class IMemcacheClient(IExternalService):
 	def get(key):
 		"Return the unpickled value, or None"
 
-	def set(key,value):
+	def set(key, value, time=0):
 		"Pickle the value and store it, returning True on success."
 
 	def delete(key):
