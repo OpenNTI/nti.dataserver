@@ -13,45 +13,34 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import hashlib
-
 from zope import component
 from zope import interface
-
-from zope.component import hooks
 
 from zope.container.interfaces import IContained
 
 from zope.proxy.decorator import ProxyBase
 
-from zope.traversing.interfaces import IEtcNamespace
-
 from pyramid.threadlocal import get_current_request
-
-from nti.app.authentication import get_remote_user
-
-from nti.appserver.pyramid_authorization import is_readable
 
 from nti.appserver.workspaces.interfaces import IWorkspace
 from nti.appserver.workspaces.interfaces import ICollection
 from nti.appserver.workspaces.interfaces import IUserService
 from nti.appserver.workspaces.interfaces import ILibraryCollection
 
-from nti.common.property import alias, Lazy
+from nti.common.property import alias
 from nti.common.property import CachedProperty
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
-from nti.dataserver.interfaces import IMemcacheClient
-
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
 
-DAY_IN_SECS = 86400
+from ._permissioned import _PermissionedContentPackageMixin
 
-class _PermissionedContentPackageLibrary(ProxyBase):
+class _PermissionedContentPackageLibrary(ProxyBase, 
+										 _PermissionedContentPackageMixin):
 	"""
 	A wrapper around the global library that implements
 	permissioning of the available titles for the user (which in
@@ -71,72 +60,6 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		self.library = base
 		self.request = request
 		self._v_contentPackages = None
-
-	@property
-	def lastSynchronized(self):
-		hostsites = component.queryUtility(IEtcNamespace, name='hostsites')
-		result = getattr(hostsites, 'lastSynchronized', 0)
-		return result
-
-	@Lazy
-	def _client(self):
-		return component.queryUtility(IMemcacheClient)
-
-	def _user_ticket(self, user):
-		try:
-			key = '%s/pcpl/ticket' % user.username
-			if self._client != None:
-				result = self._client.get(key)
-		except:
-			result = None
-		return result or 0
-
-	def _base_key(self, package):
-		result = hashlib.md5()
-		cur_site = hooks.getSite()
-		lastSync = self.lastSynchronized
-		for value in (cur_site.__name__, package.ntiid, lastSync):
-			result.update(str(value).lower())
-		return result.hexdigest()
-
-	def _test_and_cache(self, content_package):
-		# test readability
-		request = self.request
-		if is_readable(content_package, request):
-			result = True
-		else:
-			# Nope. What about a top-level child? TODO: Why we check children?
-			result = any((is_readable(x, request) for x in content_package.children))
-
-		try:
-			# cache if possible
-			client = self._client
-			user = get_remote_user()
-			if client != None and user != None:
-				ticket = self._user_ticket(user)
-				base = self._base_key(content_package)
-				key = "/%s/%s/%s" % (user.username, base, ticket)
-				client.set(key, bool(result), time=DAY_IN_SECS)
-		except Exception as e:
-			logger.error("Cannot set value(s) in memcached %s", e)
-		return result
-
-	def _test_is_readable(self, content_package):
-		try:
-			client = self._client
-			user = get_remote_user()
-			if client != None and user != None:
-				ticket = self._user_ticket(user)
-				base = self._base_key(content_package)
-				key = "/%s/%s/%s" % (user.username, base, ticket)
-				result = client.get(key)
-				if result is not None:
-					return result
-		except Exception as e:
-			logger.error("Cannot get value(s) from memcached %s", e)
-
-		result = self._test_and_cache(content_package)
-		return result
 
 	@property
 	def contentPackages(self):
