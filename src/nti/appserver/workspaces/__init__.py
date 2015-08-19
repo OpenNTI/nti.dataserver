@@ -34,6 +34,7 @@ from nti.app.authentication import get_remote_user
 from nti.app.renderers.interfaces import IExternalCollection
 from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 
+from nti.common.property import Lazy
 from nti.common.property import alias
 
 from nti.dataserver.users import User
@@ -733,14 +734,6 @@ def _global_workspace( user_service ):
 	assert global_ws.__parent__
 	return global_ws
 
-def _is_valid_workspace(workspace):
-	validator = component.queryUtility(IWorkspaceValidator)
-	if workspace != None and validator != None:
-		result = validator.validate(workspace)
-	else:
-		result = workspace != None
-	return result
-
 @component.adapter(IUser)
 @interface.implementer(IUserService, IContentTypeAware)
 class UserService(Location):
@@ -753,6 +746,16 @@ class UserService(Location):
 		self.user = user
 		self.__name__ = 'users'
 		self.__parent__ = component.getUtility(IDataserver).root
+
+	@Lazy
+	def _validator(self):
+		return component.queryUtility(IWorkspaceValidator)
+	
+	def _is_valid_workspace(self, workspace):
+		result = workspace != None
+		if result and self._validator != None:
+			result = self._validator.validate(workspace)
+		return result
 
 	@property
 	def user_workspace(self):
@@ -771,5 +774,5 @@ class UserService(Location):
 		return sorted( [workspace
 						for workspace
 						in component.subscribers( (self,), IWorkspace )
-						if _is_valid_workspace(workspace)],
+						if self._is_valid_workspace(workspace)],
 					   key=lambda w: w.name )
