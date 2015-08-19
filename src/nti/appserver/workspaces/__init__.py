@@ -78,7 +78,7 @@ from .interfaces import IWorkspace
 from .interfaces import ICollection
 from .interfaces import IUserService
 from .interfaces import IUserWorkspace
-from .interfaces import IDisabledLocation
+from .interfaces import IWorkspaceValiator
 from .interfaces import IContainerCollection
 from .interfaces import IUserWorkspaceLinkProvider
 
@@ -733,6 +733,14 @@ def _global_workspace( user_service ):
 	assert global_ws.__parent__
 	return global_ws
 
+def _is_valid_workspace(workspace):
+	validator = component.queryUtility(IWorkspaceValiator)
+	if workspace != None and validator != None:
+		result = validator.validate(workspace)
+	else:
+		result = workspace != None
+	return result
+
 @component.adapter(IUser)
 @interface.implementer(IUserService, IContentTypeAware)
 class UserService(Location):
@@ -763,5 +771,5 @@ class UserService(Location):
 		return sorted( [workspace
 						for workspace
 						in component.subscribers( (self,), IWorkspace )
-						if workspace and not IDisabledLocation.providedBy(workspace)],
+						if _is_valid_workspace(workspace)],
 					   key=lambda w: w.name )
