@@ -276,7 +276,8 @@ def _ugd_odata_views(pyramid_config):
 	register_map(_m)
 
 	# Relevant data we allow for both present and missing data
-	_m = {'RelevantUserGeneratedData': '_RelevantUGDView'}
+	_m = {'RelevantUserGeneratedData': '_RelevantUGDView',
+		  'RelevantContainedUserGeneratedData': '_RelevantContainedUGDView'}
 	register_map(_m, 'nti.appserver.relevant_ugd_views')
 	register_map(_m, 'nti.appserver.relevant_ugd_views',
 				 context='nti.appserver.interfaces.INewPageContainerResource')
