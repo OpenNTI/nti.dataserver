@@ -82,7 +82,7 @@ class IService(ILocation):
 	workspaces = TypedIterable(	title="The workspaces of this service",
 								value_type=Object( IWorkspace, title="Workspaces in the service" ))
 
-class IWorkspaceValiator(interface.Interface):
+class IWorkspaceValidator(interface.Interface):
 	"""
 	Marker interface for utility that validates a workspace before 
 	it is made avaiable in a user's service

@@ -78,7 +78,7 @@ from .interfaces import IWorkspace
 from .interfaces import ICollection
 from .interfaces import IUserService
 from .interfaces import IUserWorkspace
-from .interfaces import IWorkspaceValiator
+from .interfaces import IWorkspaceValidator
 from .interfaces import IContainerCollection
 from .interfaces import IUserWorkspaceLinkProvider
 
@@ -734,7 +734,7 @@ def _global_workspace( user_service ):
 	return global_ws
 
 def _is_valid_workspace(workspace):
-	validator = component.queryUtility(IWorkspaceValiator)
+	validator = component.queryUtility(IWorkspaceValidator)
 	if workspace != None and validator != None:
 		result = validator.validate(workspace)
 	else:
