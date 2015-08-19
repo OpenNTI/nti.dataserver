@@ -11,25 +11,24 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from itertools import chain
-
 from zope import component
 from zope import interface
-
-from pyramid import httpexceptions as _hexc
 
 from nti.app.renderers.interfaces import IUGDExternalCollection
 
 from nti.appserver import httpexceptions as hexc
 from nti.appserver.ugd_query_views import Operator
+from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_query_views import _RecursiveUGDView
 from nti.appserver.ugd_query_views import _combine_predicate
 
 from nti.assessment.interfaces import IQAssessmentItemContainer
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.indexed_data import get_catalog as lib_catalog
 from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
 from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
+
+from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -44,7 +43,7 @@ LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 union_operator = Operator.union
 intersection_operator = Operator.intersection
 
-class _RelevantUGDView(_RecursiveUGDView):
+class _AbstractRelevantUGDView(object):
 
 	def _make_accept_predicate(self):
 		accept_types = ('application/vnd.nextthought.redaction',)
@@ -72,23 +71,6 @@ class _RelevantUGDView(_RecursiveUGDView):
 		predicate = _combine_predicate(filter_shared_with, predicate, operator=operator)
 		return predicate
 
-	def getObjectsForId(self, user, ntiid):
-		try:
-			results = super(_RelevantUGDView, self).getObjectsForId(user, ntiid)
-		except hexc.HTTPNotFound:
-			results = ({}, {})
-		return results
-
-	def _get_items(self, ntiid):
-		# query objects
-		view = _RecursiveUGDView(self.request)
-		view._DEFAULT_BATCH_SIZE = view._DEFAULT_BATCH_START = None
-		try:
-			results = view.getObjectsForId(self.user, ntiid)
-		except _hexc.HTTPNotFound:
-			results = ()
-		return results
-
 	def _get_library_path(self, ntiid):
 		library = component.getUtility(IContentPackageLibrary)
 		paths = library.pathToNTIID(ntiid) if library else None
@@ -96,8 +78,8 @@ class _RelevantUGDView(_RecursiveUGDView):
 
 	def _scan_quizzes(self, ntiid):
 		library = component.getUtility(IContentPackageLibrary)
-		# quizzes are often subcontainers, so we look at the parent and its children
-		ntiids = set()
+		# Quizzes are often subcontainers, so we look at the parent and its children
+		# TODO Is this what we want for all implementations?
 		results = []
 		units = []
 		children = library.childrenOfNTIID(ntiid)
@@ -108,12 +90,7 @@ class _RelevantUGDView(_RecursiveUGDView):
 
 		for unit in units + [self._get_library_path(ntiid)]:
 			for asm_item in IQAssessmentItemContainer(unit, ()):
-				q_ntiid = getattr(asm_item, 'ntiid', None)
-				if q_ntiid and q_ntiid not in ntiids:
-					ntiids.add(q_ntiid)
-					items = self._get_items(q_ntiid)
-					if items:
-						results.extend(items)
+				results.append( asm_item )
 		return results
 
 	def _scan_media(self, ntiid):
@@ -121,26 +98,75 @@ class _RelevantUGDView(_RecursiveUGDView):
 		unit = self._get_library_path(ntiid)
 		if unit is None:
 			return results
-		
+
 		for iface in (IVideoIndexedDataContainer, IAudioIndexedDataContainer):
 			for media_data in iface(unit).values():
-				media_id = media_data.ntiid
-				items = self._get_items(media_id)
-				if items:
-					results.extend(items)
+				results.append( media_data )
+		return results
+
+	def _get_legacy_contained(self, container_ntiid):
+		results = []
+		results.extend( self._scan_media( container_ntiid ))
+		results.extend( self._scan_quizzes( container_ntiid ))
+		return results
+
+	def get_contained(self, container_ntiid):
+		catalog = lib_catalog()
+		objects = catalog.search_objects(container_ntiids=(container_ntiid,))
+		if not objects:
+			# Needed for non-persistent courses
+			objects = self._get_legacy_contained( container_ntiid )
+		return objects
+
+	def get_objects(self, container_ntiid):
+		# Get our nearest content unit
+		unit = self._get_library_path( container_ntiid )
+		container_ntiid = unit.ntiid
+		contained_objects = self.get_contained( container_ntiid )
+		contained_ntiids = set( (x.ntiid for x in contained_objects) )
+		contained_ntiids.add( container_ntiid )
+
+		results = []
+		for ntiid in contained_ntiids:
+			contained_ugd = self.getObjectsForId(self.user, ntiid)
+			results.extend( contained_ugd )
 		return results
 
 	def __call__(self):
 		# Gather data
-		items = self.getObjectsForId(self.user, self.ntiid)
-		quiz_items = self._scan_quizzes(self.ntiid)
-		media_items = self._scan_media(self.ntiid)
+		items = self.get_objects(self.ntiid)
 
 		predicate = self._make_complete_predicate()
-		all_items = chain(items, quiz_items, media_items)
 		# De-dupe; we could batch here if needed.
-		result = lists_and_dicts_to_ext_collection(all_items, predicate)
+		result = lists_and_dicts_to_ext_collection(items, predicate)
 		result['Total'] = len(result.get('Items', ()))
 		result.mimeType = nti_mimetype_with_class(None)
 		interface.alsoProvides(result, IUGDExternalCollection)
 		return result
+
+class _RelevantUGDView(_AbstractRelevantUGDView, _RecursiveUGDView):
+	"""
+	A relevant view that returns UGD on our item, any contained
+	objects (video, quizzes, etc), and any sub-containers.
+	"""
+
+	def getObjectsForId(self, user, ntiid):
+		try:
+			results = super(_RelevantUGDView, self).getObjectsForId(user, ntiid)
+		except hexc.HTTPNotFound:
+			results = ({}, {})
+		return results
+
+class _RelevantContainedUGDView(_AbstractRelevantUGDView, UGDView):
+	"""
+	A relevant view that returns UGD on our item and any contained
+	objects (video, quizzes, etc), but not recursively through other
+	pages/units.
+	"""
+
+	def getObjectsForId(self, user, ntiid):
+		try:
+			results = super(_RelevantContainedUGDView, self).getObjectsForId(user, ntiid)
+		except hexc.HTTPNotFound:
+			results = ({}, {})
+		return results

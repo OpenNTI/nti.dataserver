@@ -60,7 +60,9 @@ class TestRelevantUGDView(ApplicationLayerTest):
 	@WithSharedApplicationMockDSWithChanges
 	def test_relevant_view(self):
 		requestor = 'ichigo@nt.com'
-		containerId = make_ntiid(nttype='bleach', specific='manga')
+		#containerId = make_ntiid(nttype='bleach', specific='manga')
+		containerId = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.brief_history_of_cosmetology'
+		sub_container_id = "tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.1920s"
 		with mock_dataserver.mock_db_trans(self.ds):
 
 			gin = self._create_user(username='gin@nt.com')
@@ -86,12 +88,24 @@ class TestRelevantUGDView(ApplicationLayerTest):
 			self._create_note(rukia, "Sode no Shirayuki", 'Bankai', containerId, sharedWith=(c,))
 			kyoka = self._create_note(aizen, "kyoka suigetsu", 'Bankai', containerId, sharedWith=(bankai,))
 			self._create_note(gin, "Kanzen Saimin", 'Bankai', containerId, sharedWith=(ichigo,), inReplyTo=kyoka)
+			# Sub container
+			self._create_note(gin, "Kamishini no Yari", 'Bankai', sub_container_id, sharedWith=(ichigo,))
+			self._create_note(rukia, "Sode no Shirayuki", 'Bankai', sub_container_id, sharedWith=(c,))
+			kyoka = self._create_note(aizen, "kyoka suigetsu", 'Bankai', sub_container_id, sharedWith=(bankai,))
 
 			self._create_redaction(ichigo, 'Fear', 'Zangetsu Gone', 'The Asauchi breaks away to reveal Hollow Ichigo', containerId)
 			self._create_redaction(rukia, 'Fear', 'Zangetsu Gone', 'The Asauchi breaks away to reveal Hollow Ichigo', containerId)
 
+		# Our recursive call finds everything
 		testapp = TestApp(self.app)
 		path = '/dataserver2/users/%s/Pages(%s)/RelevantUserGeneratedData' % (requestor, containerId)
+		res = testapp.get(str(path), extra_environ=self._make_extra_environ(user=requestor))
+		assert_that(res.status_int, is_(200))
+		assert_that(res.json_body, has_entry('Total', 8))
+		assert_that(res.json_body, has_entry('Items', has_length(8)))
+
+		# Our contained call returns everything but subcontainer ugd.
+		path = '/dataserver2/users/%s/Pages(%s)/RelevantContainedUserGeneratedData' % (requestor, containerId)
 		res = testapp.get(str(path), extra_environ=self._make_extra_environ(user=requestor))
 		assert_that(res.status_int, is_(200))
 		assert_that(res.json_body, has_entry('Total', 5))
