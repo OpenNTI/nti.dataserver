@@ -25,7 +25,6 @@ from persistent import Persistent
 from nti.common.property import alias
 from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
-from nti.common.iterables import is_nonstr_iter
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -39,7 +38,7 @@ from .interfaces import IContainedObjectCatalog
 from . import CATALOG_INDEX_NAME
 
 def to_iterable(value):
-	if is_nonstr_iter(value):
+	if isinstance(value, (list, tuple, set)):
 		result = value
 	else:
 		result = (value,)

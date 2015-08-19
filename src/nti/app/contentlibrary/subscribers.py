@@ -171,6 +171,7 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	registry and the index.
 	"""
 	result = []
+	from IPython.core.debugger import Tracer; Tracer()()
 	registry = get_registry(registry)
 	catalog = get_catalog() if catalog is None else catalog
 	if catalog is None: # may be None in test mode
@@ -190,6 +191,7 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 										registry=registry)
 			except AttributeError:
 				pass
+	from IPython.core.debugger import Tracer; Tracer()()
 	return result
 
 def _get_container_tree(container_id):
