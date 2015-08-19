@@ -26,8 +26,9 @@ from zope.proxy.decorator import ProxyBase
 
 from zope.traversing.interfaces import IEtcNamespace
 
-from pyramid import security as psec
 from pyramid.threadlocal import get_current_request
+
+from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import is_readable
 
@@ -43,11 +44,12 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 
 from nti.dataserver.interfaces import IMemcacheClient
-from nti.dataserver.interfaces import IAuthenticationPolicy
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.externalization import to_external_object
+
+DAY_IN_SECS = 86400
 
 class _PermissionedContentPackageLibrary(ProxyBase):
 	"""
@@ -76,26 +78,26 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		result = getattr(hostsites, 'lastSynchronized', 0)
 		return result
 
-	@classmethod
-	def _effective_principals(cls, request):
-		result = (psec.Everyone,)
-		authn_policy = component.queryUtility(IAuthenticationPolicy)
-		if authn_policy is not None and request is not None:
-			result = authn_policy.effective_principals(request)
-		result = {getattr(x, 'id', str(x)) for x in result}
-		return sorted(result)
-
-	def _base_key(self, package):
-		md5 = hashlib.md5()
-		cur_site = hooks.getSite()
-		lastSync = self.lastSynchronized
-		for value in ('PCP', cur_site.__name__, package.ntiid, lastSync):
-			md5.update(str(value).lower())
-		return md5
-
 	@Lazy
 	def _client(self):
 		return component.queryUtility(IMemcacheClient)
+
+	def _user_ticket(self, user):
+		try:
+			key = '%s/pcpl/ticket' % user.username
+			if self._client != None:
+				result = self._client.get(key)
+		except:
+			result = None
+		return result or 0
+
+	def _base_key(self, package):
+		result = hashlib.md5()
+		cur_site = hooks.getSite()
+		lastSync = self.lastSynchronized
+		for value in (cur_site.__name__, package.ntiid, lastSync):
+			result.update(str(value).lower())
+		return result.hexdigest()
 
 	def _test_and_cache(self, content_package):
 		# test readability
@@ -109,12 +111,12 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 		try:
 			# cache if possible
 			client = self._client
-			if client != None:
-				for name in self._effective_principals(request):
-					base = self._base_key(content_package)
-					base.update(name)
-					name = base.hexdigest()
-					client.set(name, bool(result))
+			user = get_remote_user()
+			if client != None and user != None:
+				ticket = self._user_ticket(user)
+				base = self._base_key(content_package)
+				key = "/%s/%s/%s" % (user.username, base, ticket)
+				client.set(key, bool(result), time=DAY_IN_SECS)
 		except Exception as e:
 			logger.error("Cannot set value(s) in memcached %s", e)
 		return result
@@ -122,17 +124,16 @@ class _PermissionedContentPackageLibrary(ProxyBase):
 	def _test_is_readable(self, content_package):
 		try:
 			client = self._client
-			if client != None:
-				request = self.request
-				for name in self._effective_principals(request):
-					base = self._base_key(content_package)
-					base.update(name)
-					name = base.hexdigest()
-					result = client.get(name)
-					if result is not None:
-						return result
+			user = get_remote_user()
+			if client != None and user != None:
+				ticket = self._user_ticket(user)
+				base = self._base_key(content_package)
+				key = "/%s/%s/%s" % (user.username, base, ticket)
+				result = client.get(key)
+				if result is not None:
+					return result
 		except Exception as e:
-			logger.error("Cannot get value(s) in memcached %s", e)
+			logger.error("Cannot get value(s) from memcached %s", e)
 
 		result = self._test_and_cache(content_package)
 		return result
