@@ -78,6 +78,7 @@ from .interfaces import IWorkspace
 from .interfaces import ICollection
 from .interfaces import IUserService
 from .interfaces import IUserWorkspace
+from .interfaces import IDisabledLocation
 from .interfaces import IContainerCollection
 from .interfaces import IUserWorkspaceLinkProvider
 
@@ -762,5 +763,5 @@ class UserService(Location):
 		return sorted( [workspace
 						for workspace
 						in component.subscribers( (self,), IWorkspace )
-						if workspace],
+						if workspace and not IDisabledLocation.providedBy(workspace)],
 					   key=lambda w: w.name )
