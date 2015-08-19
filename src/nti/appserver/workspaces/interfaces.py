@@ -25,7 +25,12 @@ from nti.schema.field import IndexedIterable as TypedIterable
 # data for portions of the URL space
 ###
 
-class  ICollection(ILocation):
+class IDisabledLocation(interface.Interface):
+	"""
+	marker interface to mark a location disabled
+	"""
+
+class ICollection(ILocation):
 	"""
 	A collection (in the Atom sense) contains individual objects (entries).
 	It may be writable.
