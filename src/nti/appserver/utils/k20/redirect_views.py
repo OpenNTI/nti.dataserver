@@ -9,9 +9,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import urllib
-import zope.intid
 
-from zope import component
 from urlparse import urlparse
 
 from pyramid.view import view_config
@@ -24,13 +22,14 @@ from nti.common.maps import CaseInsensitiveDict
 from nti.dataserver.users.users import User
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.oids import to_external_ntiid_oid
+
 K20_VIEW_NAME = 'k20_link'
 K20_LINK_PARAM_NAME = 'href'
 K20_IDENTIFIER_NAME = 'token'
 
 def _get_user_token( user ):
-	intids = component.getUtility( zope.intid.IIntIds )
-	return intids.getId( user )
+	return to_external_ntiid_oid( user, mask_creator=True )
 
 @view_config(route_name='objects.generic.traversal',
 			 name=K20_VIEW_NAME,
