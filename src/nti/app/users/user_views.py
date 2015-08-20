@@ -22,9 +22,12 @@ from nti.appserver.ugd_edit_views import UGDPutView
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 
+from nti.appserver.dataserver_pyramid_views import GenericGetView
+
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IEntity
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users import Entity
@@ -146,3 +149,10 @@ class UserUpdateView(UGDPutView):
 		value = super(UserUpdateView, self).readInput(value=value)
 		value.pop( 'DynamicMemberships', None )
 		return value
+	
+@view_config(context=IUsersFolder,
+			 request_method='GET')
+class UsersGetView(GenericGetView):
+
+	def __call__( self ):
+		raise hexc.HTTPForbidden()
