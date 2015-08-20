@@ -59,6 +59,7 @@ from nti.dataserver import shards as ds_shards
 from nti.dataserver import containers as container
 
 from nti.dataserver.interfaces import IOIDResolver
+from nti.dataserver.interfaces import IUsersFolder
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IGlobalFlagStorage
 from nti.dataserver.interfaces import ISessionServiceStorage
@@ -157,7 +158,10 @@ def install_main( context ):
 		install_metadata_catalog( dataserver_folder, intids )
 		install_container_catalog( dataserver_folder, intids )
 
-		everyone = dataserver_folder['users']['Everyone'] = users.Everyone()
+		users_folder = dataserver_folder['users']
+		interface.alsoProvides(users_folder, IUsersFolder)
+		
+		everyone = users_folder['Everyone'] = users.Everyone()
 		assert intids.getId(everyone) is not None
 		assert everyone.username is not None
 
