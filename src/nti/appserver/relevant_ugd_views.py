@@ -119,9 +119,14 @@ class _AbstractRelevantUGDView(object):
 		return objects
 
 	def get_objects(self, container_ntiid):
-		# Get our nearest content unit
-		unit = self._get_library_path( container_ntiid )
-		container_ntiid = unit.ntiid
+		# Get our nearest content unit, if available
+		# Seems wrong to do this in all cases, was doing it just for
+		# assessment items before.
+		try:
+			unit = self._get_library_path( container_ntiid )
+			container_ntiid = unit.ntiid
+		except AttributeError:
+			pass
 		contained_objects = self.get_contained( container_ntiid )
 		contained_ntiids = set( (x.ntiid for x in contained_objects) )
 		contained_ntiids.add( container_ntiid )
