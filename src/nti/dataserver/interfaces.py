@@ -32,7 +32,8 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from zope.proxy import ProxyBase
 
-import zope.site.interfaces
+from zope.site.interfaces import IFolder
+from zope.site.interfaces import IRootFolder
 
 from zope.schema import Bool
 from zope.schema import Iterable
@@ -205,14 +206,14 @@ class IShardLayout(interface.Interface):
 	dataserver_folder = Object(IDataserverFolder,
 							   title="The root folder for the dataserver in this shard")
 
-	users_folder = Object(zope.site.interfaces.IFolder,
+	users_folder = Object(IFolder,
 						  title="The folder containing users that live in this shard.")
 
 	shards = Object( IContainerContained,
 					 title="The root shard will contain a shards folder.",
 					 required=False)
 
-	root_folder = Object( zope.site.interfaces.IRootFolder,
+	root_folder = Object( IRootFolder,
 						  title="The root shard will contain the root folder",
 						  required=False)
 
@@ -230,6 +231,11 @@ class INewUserPlacer(interface.Interface):
 			all known shards. They may or may not all be available and active at this time.
 		:return: Undefined.
 		"""
+
+class IUsersFolder(IFolder):
+	"""
+	Marker interface for the users forlder
+	"""
 
 # BWC exports
 from nti.site.interfaces import ISiteTransactionRunner
