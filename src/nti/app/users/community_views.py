@@ -33,6 +33,7 @@ from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IShardLayout
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IUsernameSubstitutionPolicy
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 from nti.dataserver.contenttypes.forums.interfaces import ICommunityBoard
 
 from nti.dataserver.users import Community
@@ -257,6 +258,14 @@ class UnhideCommunityMembershipView(AbstractAuthenticatedView):
 			hidden.unhide(user)
 		return community
 
+class TraxResultSet(ResultSet):
+
+	def getObject(self, uid):
+		obj = super(TraxResultSet, self).getObject(uid)
+		if IHeadlinePost.providedBy(obj):
+			obj = obj.__parent__ # return entry
+		return obj
+
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',
 			 request_method='GET',
@@ -292,6 +301,6 @@ class CommunityActivityView(_UGDView):
 				if uid is not None:
 					topics_intids.add(uid)
 		
-		all_intids = intids.family.IF.union(topics_intids,  top_level_shared_intids)
-		items = ResultSet(all_intids, intids, ignore_invalid=True)
+		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
+		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
