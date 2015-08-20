@@ -31,6 +31,10 @@
 
 	<adapter factory=".library_views._ContentPackageLibraryCacheController" />
 
+	<!-- permissions cache -->
+	<subscriber handler="._permissioned._on_enroll_record" />
+	<subscriber handler="._permissioned._on_unenroll_record" />
+				
 	<!--
 		 The user has a named path adapter to get his personal library.
 		 Currently this is implicitly the Main library but in the future
@@ -217,5 +221,5 @@
 	<subscriber	factory=".filters._LibraryContentObjectFilter"
 				provides="nti.appserver.interfaces.ICreatableObjectFilter"
 				for="nti.dataserver.interfaces.IUser" />
-	
+				
 </configure>
