@@ -34,9 +34,11 @@ from nti.appserver.ugd_edit_views import UGDDeleteView
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver import authorization as nauth
+from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+
 from nti.dataserver.contenttypes.forums.forum import DFLForum
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
-from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_SHAREDWITH
@@ -91,6 +93,14 @@ class DFLDeleteView(UGDDeleteView):
 			raise hexc.HTTPForbidden(_("Group is not empty"))
 		return super(DFLDeleteView, self)._do_delete_object(theObject)
 
+class TraxResultSet(ResultSet):
+
+	def getObject(self, uid):
+		obj = super(TraxResultSet, self).getObject(uid)
+		if IHeadlinePost.providedBy(obj):
+			obj = obj.__parent__ # return entry
+		return obj
+
 @view_config(route_name='objects.generic.traversal',
 			 name='Activity',
 			 request_method='GET',
@@ -129,7 +139,7 @@ class DFLActivityView(UGDView):
 					topics_intids.add(uid)
 
 		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
-		items = ResultSet(all_intids, intids, ignore_invalid=True)
+		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
 
 @view_config(route_name='objects.generic.traversal',
