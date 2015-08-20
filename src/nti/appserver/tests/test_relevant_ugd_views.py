@@ -60,7 +60,6 @@ class TestRelevantUGDView(ApplicationLayerTest):
 	@WithSharedApplicationMockDSWithChanges
 	def test_relevant_view(self):
 		requestor = 'ichigo@nt.com'
-		#containerId = make_ntiid(nttype='bleach', specific='manga')
 		containerId = 'tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.brief_history_of_cosmetology'
 		sub_container_id = "tag:nextthought.com,2011-10:MN-HTML-MiladyCosmetology.1920s"
 		with mock_dataserver.mock_db_trans(self.ds):
