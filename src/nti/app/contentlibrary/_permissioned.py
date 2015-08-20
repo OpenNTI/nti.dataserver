@@ -9,24 +9,31 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import random
 import hashlib
 
 from zope import component
 
 from zope.component import hooks
 
+from zope.lifecycleevent.interfaces import IObjectAddedEvent
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
+from zope.security.interfaces import IPrincipal
+
 from zope.traversing.interfaces import IEtcNamespace
 
-from pyramid import security as psec
+from nti.app.authentication import get_remote_user
 
 from nti.appserver.pyramid_authorization import is_readable
 
 from nti.common.property import Lazy
 
-from nti.dataserver.interfaces import IMemcacheClient
-from nti.dataserver.interfaces import IAuthenticationPolicy
+from nti.contenttypes.courses.interfaces import ICourseInstanceEnrollmentRecord
 
-EXP_TIME = 1800
+from nti.dataserver.interfaces import IMemcacheClient
+
+EXP_TIME = 86400
 
 def _memcache_client():
 	return component.queryUtility(IMemcacheClient)
@@ -34,24 +41,57 @@ def _memcache_client():
 def _last_synchronized():
 	hostsites = component.queryUtility(IEtcNamespace, name='hostsites')
 	result = getattr(hostsites, 'lastSynchronized', 0)
-	return result
+	return result or 0
 
-def _base_key(content_package, lastSync=None):
+def _get_user_ticket_key(user):
+	result = '%s/ticket' % getattr(user, 'username', user)
+	return result.lower()
+	
+def _get_user_ticket(user, client):
+	try:
+		if client != None:
+			key = _get_user_ticket_key(user)
+			result = client.get(key)
+	except:
+		result = None
+	return result or 0
+
+def _set_user_ticket(user, client):
+	try:
+		if client != None:
+			key = _get_user_ticket_key(user)
+			client.set(key, random.randint(0, 10000), time=EXP_TIME)
+	except:
+		pass
+
+def _get_base_key(content_package):
 	result = hashlib.md5()
 	cur_site = hooks.getSite()
-	lastSync = _last_synchronized() if not lastSync else lastSync
+	lastSync = _last_synchronized()
 	for value in ('pcpl', cur_site.__name__, content_package.ntiid, lastSync):
 		result.update(str(value).lower())
-	return result
+	return result.hexdigest()
+	
+def _get_user_content_package_key(user, content_package, client):
+	base = _get_base_key(content_package)
+	ticket = _get_user_ticket(user, client)
+	result = "/%s/%s/%s" % (user.username, base, ticket)
+	return result.lower()
 
-def _effective_principals(request):
-	result = (psec.Everyone,)
-	authn_policy = component.queryUtility(IAuthenticationPolicy)
-	if authn_policy is not None and request is not None:
-		result = authn_policy.effective_principals(request)
-	result = {getattr(x, 'id', str(x)).lower() for x in result}
-	return sorted(result)
+def _on_operation_on_scope_membership(record, event):
+	principal = record.Principal
+	if principal != None:
+		pid = IPrincipal(principal).id
+		_set_user_ticket(pid, _memcache_client())
 
+@component.adapter(ICourseInstanceEnrollmentRecord, IObjectAddedEvent)
+def _on_enroll_record(record, event):
+	_on_operation_on_scope_membership(record , event)
+
+@component.adapter(ICourseInstanceEnrollmentRecord, IObjectRemovedEvent)
+def _on_unenroll_record(record, event):
+	_on_operation_on_scope_membership(record , event)
+	
 class _PermissionedContentPackageMixin(object):
 
 	@Lazy
@@ -70,13 +110,10 @@ class _PermissionedContentPackageMixin(object):
 		try:
 			# cache if possible
 			client = self._client
-			if client != None:
-				lastSync = _last_synchronized()
-				for name in _effective_principals(request):
-					base = _base_key(content_package, lastSync)
-					base.update(name)
-					name = base.hexdigest()
-					client.set(name, bool(result), time=EXP_TIME)
+			user = get_remote_user()
+			if client != None and user != None:
+				key = _get_user_content_package_key(user, content_package, client)
+				client.set(key, bool(result), time=EXP_TIME)
 		except Exception as e:
 			logger.error("Cannot set value(s) in memcached %s", e)
 		return result
@@ -84,18 +121,14 @@ class _PermissionedContentPackageMixin(object):
 	def _test_is_readable(self, content_package):
 		try:
 			client = self._client
-			if client != None:
-				request = self.request
-				lastSync = _last_synchronized()
-				for name in _effective_principals(request):
-					base = _base_key(content_package, lastSync)
-					base.update(name)
-					name = base.hexdigest()
-					result = client.get(name)
-					if result is not None:
-						return result
+			user = get_remote_user()
+			if client != None and user != None:
+				key = _get_user_content_package_key(user, content_package, client)
+				result = client.get(key)
+				if result is not None:
+					return result
 		except Exception as e:
-			logger.error("Cannot get value(s) in memcached %s", e)
+			logger.error("Cannot get value(s) from memcached %s", e)
 
 		result = self._test_and_cache(content_package)
 		return result
