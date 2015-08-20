@@ -10,7 +10,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 65
+generation = 66
 
 # Allow going forward/backward for testing
 import os
