@@ -11,8 +11,9 @@ logger = __import__('logging').getLogger(__name__)
 
 from six import string_types
 
-import zope.intid
 from zope import component
+
+from zope.intid import IIntIds
 
 from nti.common.string import safestr
 
@@ -61,22 +62,22 @@ def get_oid(obj):
 	return result
 
 def get_uid(obj, intids=None):
-	intids = component.getUtility(zope.intid.IIntIds) if intids is None else intids
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	result = intids.getId(obj)
 	return result
 
 def query_uid(obj, intids=None):
-	intids = component.queryUtility(zope.intid.IIntIds) if intids is None else intids
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 	result = intids.queryId(obj) if intids is not None else None
 	return result
 
 def get_object(uid, intids=None):
-	intids = component.getUtility(zope.intid.IIntIds) if intids is None else intids
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	result = intids.getObject(int(uid))
 	return result
 
 def query_object(uid, default=None, intids=None):
-	intids = component.queryUtility(zope.intid.IIntIds) if intids is None else intids
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 	result = intids.queryObject(int(uid), default) if intids is not None else None
 	return result
 
