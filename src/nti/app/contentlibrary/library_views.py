@@ -698,6 +698,9 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 
 	def __call__(self):
 		obj, object_ntiid = self._get_params()
+		# FIXME We need to validate user access to our endpoint
+		# object here, instead of assuming content package access
+		# is enough (versus asset visbility).
 		if 		ITopic.providedBy(obj) \
 			or 	IPost.providedBy(obj) \
 			or 	IForum.providedBy(obj):
