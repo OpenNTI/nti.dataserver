@@ -257,12 +257,12 @@ class _ObjectsContainerResource(_ContainerResource):
 		"""
 		if queryInteraction() is not None and not is_readable(context):
 			results = _get_joinable_contexts(context)
+			response = hexc.HTTPForbidden()
 			if results:
-				response = hexc.HTTPForbidden()
 				result = LocatedExternalDict()
 				result[ITEMS] = results
 				response.json_body = self.to_json_body(result)
-				raise response
+			raise response
 
 	def _getitem_with_ds(self, ds, key):
 		# The dataserver wants to provide user-based security
