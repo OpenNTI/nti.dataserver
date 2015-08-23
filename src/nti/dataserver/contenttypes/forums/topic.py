@@ -30,6 +30,8 @@ from zope.location.interfaces import ILocationInfo
 
 from zope.schema.fieldproperty import FieldProperty
 
+from zope.security.interfaces import IPrincipal
+
 from nti.common.property import Lazy
 from nti.common.property import readproperty
 from nti.common.property import CachedProperty
@@ -42,7 +44,9 @@ from nti.dataserver.users import Entity
 
 from nti.dataserver.interfaces import ACE_ACT_ALLOW
 
+from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import ICommunity
+from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IWritableShared
 from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import ObjectSharingModifiedEvent
@@ -270,16 +274,29 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# This ACL must be static.
 		# TODO: Remove hack
 		_forum = self.__parent__
+		
+		possible_entities = set()
+		
 		# TODO: REMOVE IACL
 		if IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
-			result = set()
 			for ace in _forum.ACL:
 				for action, entity, perm in ace:
 					if action == ACE_ACT_ALLOW and can_read(perm):
-						entity = Entity.get_entity(entity)
-						result.add(entity)
-			result.discard(None)
+						possible_entities.add(entity)
+		elif IACLProvider.providedBy(_forum):
+			for ace in IACLProvider(_forum).__acl__:
+				if IACE.providedBy(ace):
+					action = ace.action
+					if action == ACE_ACT_ALLOW:
+						possible_entities.add(IPrincipal(ace.actor).id)
+		
+		if possible_entities:
+			result = []
+			for entity in possible_entities:
+				entity = Entity.get_entity(entity)
+				if entity is not None:
+					result.append(entity)
 			return result
 
 		# Instead of returning the default set from super, which would return
