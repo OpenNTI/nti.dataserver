@@ -101,7 +101,7 @@ class _AbstractUnsharedTopic(AcquireObjectsOnReadMixin,
 	id, containerId = _containerIds_from_parent()
 
 	sharingTargets = ()
-	
+
 	@property
 	def NewestDescendantCreatedTime(self):
 		post = self.NewestDescendant
@@ -233,7 +233,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 	# in that order. But AbstractDefaultPublishableSharedWithMixin is already a base
 	# class of GeneralHeadlineTopic, so there should be no need to move it to the front
 	# again. By doing so, we create a situation where PyPy complained:
-	# "TypeError: cycle among base classes: AbstractDefaultPublishableSharedWithMixin 
+	# "TypeError: cycle among base classes: AbstractDefaultPublishableSharedWithMixin
 	# < GeneralHeadlineTopic < AbstractDefaultPublishableSharedWithMixin"
 	# No tests break if we remove the extra mention, and there should be no persistence issues as it's just
 	# a mixin.
@@ -274,9 +274,9 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		# This ACL must be static.
 		# TODO: Remove hack
 		_forum = self.__parent__
-		
+
 		possible_entities = set()
-		
+
 		# TODO: REMOVE IACL
 		if IACLEnabled.providedBy(_forum):
 			# don't include the creator of the forum if we have a ACL
@@ -290,7 +290,7 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 					action = ace.action
 					if action == ACE_ACT_ALLOW:
 						possible_entities.add(IPrincipal(ace.actor).id)
-		
+
 		if possible_entities:
 			result = []
 			for entity in possible_entities:
@@ -305,8 +305,8 @@ class CommunityHeadlineTopic(GeneralHeadlineTopic):
 		return [self._community] if self._community else ()
 
 @interface.implementer(IDFLHeadlineTopic)
-class DFLHeadlineTopic(GeneralHeadlineTopic): # order matters
-	
+class DFLHeadlineTopic(GeneralHeadlineTopic):  # order matters
+
 	mimeType = None
 
 	_ntiid_type = NTIID_TYPE_DFL_TOPIC
@@ -337,7 +337,7 @@ def _forward_not_published(name):
 			return  # ignored
 		getattr(self._sharing_storage, name)(*args, **kwargs)
 	return f
-	
+
 @interface.implementer(IPersonalBlogEntry)
 class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 						HeadlineTopic,
@@ -355,7 +355,8 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 	def __setstate__(self, state):
 		# TODO: A migration
 		super(PersonalBlogEntry, self).__setstate__(state)
-		if not IDefaultPublished.providedBy(self) and not IWritableShared.providedBy(self):
+		if 	not IDefaultPublished.providedBy(self) and \
+			not IWritableShared.providedBy(self):
 			interface.alsoProvides(self, IWritableShared)
 
 	# We use this object to implement sharing storage when we are not published
@@ -396,7 +397,8 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 	def _may_have_sharing_targets(self):
 		if not IDefaultPublished.providedBy(self):
 			self._p_activate()
-			return '_sharing_storage' in self.__dict__ and self._sharing_storage._may_have_sharing_targets()
+			return 	'_sharing_storage' in self.__dict__ and \
+					self._sharing_storage._may_have_sharing_targets()
 		return super(PersonalBlogEntry, self)._may_have_sharing_targets()
 
 	@property
