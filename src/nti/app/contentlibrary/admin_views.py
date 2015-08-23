@@ -19,6 +19,8 @@ from zope import component
 from zope.security.management import endInteraction
 from zope.security.management import restoreInteraction
 
+from pyramid import httpexceptions as hexc
+
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 
@@ -38,6 +40,23 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 from nti.externalization.interfaces import LocatedExternalDict
 
 from .synchronize import synchronize
+
+SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
+
+@view_config(permission=ACT_SYNC_LIBRARY)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=IDataserverFolder,
+			   name='RemoveSyncLock')
+class _RemoveSyncLock(AbstractAuthenticatedView):
+
+	@Lazy
+	def redis(self):
+		return component.getUtility(IRedisClient)
+
+	def __call__(self):
+		self.redis.delete( SYNC_LOCK_NAME )
+		return hexc.HTTPNoContent()
 
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
@@ -72,8 +91,6 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	# sync
 	lock_timeout = 60 * 30  # 30 minutes
 
-	lock_name = '/var/libraries/Lock/sync'
-
 	def readInput(self, value=None):
 		result = CaseInsensitiveDict()
 		if self.request:
@@ -90,7 +107,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 
 	@Lazy
 	def lock(self):
-		return self.redis.lock(self.lock_name, self.lock_timeout)
+		return self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
 
 	def _do_call(self):
 		values = self.readInput()
