@@ -24,8 +24,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.event import notify
 
@@ -46,24 +46,24 @@ from .interfaces import FlagLinkRemovedEvent
 from .interfaces import IDeletableLinkProvider
 
 # We store links in an OOTreeSet annotation on the User object
-_LINK_ANNOTATION_KEY = 'nti.appserver.user_link_provider' + '.LinkAnnotation' # hardcoded name for BWC
+_LINK_ANNOTATION_KEY = 'nti.appserver.user_link_provider' + '.LinkAnnotation'  # hardcoded name for BWC
 
-def add_link( user, link_name ):
+def add_link(user, link_name):
 	"""
 	Add the given link name to the user.
 
 	:param user: An annotatable user.
 	:param unicode link_name: The link name.
 	"""
-	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY )
+	the_set = IAnnotations(user).get(_LINK_ANNOTATION_KEY)
 	if the_set is None:
 		the_set = OOTreeSet()
-		IAnnotations( user )[_LINK_ANNOTATION_KEY] = the_set
+		IAnnotations(user)[_LINK_ANNOTATION_KEY] = the_set
 	if link_name not in the_set:
-		notify(FlagLinkAddedEvent( user, link_name ))
-	the_set.add( link_name )
+		notify(FlagLinkAddedEvent(user, link_name))
+	the_set.add(link_name)
 
-def has_link( user, link_name ):
+def has_link(user, link_name):
 	"""
 	Primarily for testing, answer whether the user is known to
 	have the given link.
@@ -72,10 +72,10 @@ def has_link( user, link_name ):
 	:param unicode link_name: The link name.
 	"""
 
-	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY, () )
+	the_set = IAnnotations(user).get(_LINK_ANNOTATION_KEY, ())
 	return link_name in the_set
 
-def delete_link( user, link_name ):
+def delete_link(user, link_name):
 	"""
 	Ensure the given user does not have a link with the
 	given name.
@@ -86,13 +86,13 @@ def delete_link( user, link_name ):
 		existed and was discarded or false of the link didn't exist.
 	"""
 
-	the_set = IAnnotations( user ).get( _LINK_ANNOTATION_KEY )
+	the_set = IAnnotations(user).get(_LINK_ANNOTATION_KEY)
 	if the_set is None:
 		return
 
-	result = sets.discard_p( the_set, link_name )
+	result = sets.discard_p(the_set, link_name)
 	if result:
-		notify( FlagLinkRemovedEvent( user, link_name ) )
+		notify(FlagLinkRemovedEvent(user, link_name))
 	return result
 
 _delete_link = delete_link
@@ -101,9 +101,9 @@ _delete_link = delete_link
 @component.adapter(IUser, IRequest)
 class FlagLinkProvider(LinkProvider):
 
-	def get_links( self ):
-		the_set = IAnnotations( self.user ).get( _LINK_ANNOTATION_KEY, () )
-		return [self._make_link_with_rel( link_name ) for link_name in the_set]
+	def get_links(self):
+		the_set = IAnnotations(self.user).get(_LINK_ANNOTATION_KEY, ())
+		return [self._make_link_with_rel(link_name) for link_name in the_set]
 
-	def delete_link( self, link_name ):
-		return _delete_link( self.user, link_name )
+	def delete_link(self, link_name):
+		return _delete_link(self.user, link_name)
