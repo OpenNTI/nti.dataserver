@@ -46,6 +46,7 @@ SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
 @view_config(permission=ACT_SYNC_LIBRARY)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
+			   request_method='POST',
 			   context=IDataserverFolder,
 			   name='RemoveSyncLock')
 class _RemoveSyncLock(AbstractAuthenticatedView):
