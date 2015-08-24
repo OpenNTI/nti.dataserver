@@ -11,8 +11,8 @@
 	<include package="zope.security" />
 
 	<include package="zope.formlib" />
-	<include package="zope.contentprovider" />
 	<include package="zope.browserresource" />
+	<include package="zope.contentprovider" />
 	<include package="zope.componentvocabulary" />
 	<include package="zope.browserpage" file="meta.zcml" /> <!-- tales:expressiontype -->
 	<include package="zope.browserresource" file="meta.zcml" /> <!-- browser:resource[Directory] -->
@@ -456,7 +456,6 @@
 	<include package="." file="configure_invitations.zcml" />
 	<include package=".policies" file="configure.zcml" />
 
-	<include package=".dashboard" />
 	<include package="nti.app.forums" />
 	<include package="nti.app.contentlibrary" />
 
