@@ -20,22 +20,22 @@ class _PyramidRendererContentProvider(ContentProviderBase):
 	Renders using a named Pyramid renderer.
 	"""
 
-	def __init__( self, context, request, view, name ):
-		super(_PyramidRendererContentProvider,self).__init__( context, request, view )
+	def __init__(self, context, request, view, name):
+		super(_PyramidRendererContentProvider, self).__init__(context, request, view)
 		self.__name__ = name
 
-	def render( self, *args, **kwargs ):
-		return render( self.__name__,
-					   None, # value
-					   request=self.request )
+	def render(self, *args, **kwargs):
+		return render(self.__name__,
+					  None,  # value
+					  request=self.request)
 
 class PyramidRendererContentProviderFactory(object):
 	"""
 	A factory to register in ZCA to produce a content provider.
 	"""
 
-	def __init__( self, template_spec ):
+	def __init__(self, template_spec):
 		self.template_spec = template_spec
 
-	def __call__( self, context, request, view ):
-		return _PyramidRendererContentProvider( context, request, view, self.template_spec )
+	def __call__(self, context, request, view):
+		return _PyramidRendererContentProvider(context, request, view, self.template_spec)
