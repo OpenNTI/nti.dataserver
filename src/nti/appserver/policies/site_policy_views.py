@@ -13,12 +13,14 @@ logger = __import__('logging').getLogger(__name__)
 
 from pyramid.view import view_config
 
-from zope import interface
 from zope import component
+from zope import interface
+
 from pyramid.interfaces import IView
 
-from nti.appserver import httpexceptions as hexc
-from nti.appserver.interfaces import IApplicationSettings
+from .. import httpexceptions as hexc
+
+from ..interfaces import IApplicationSettings
 
 from . import site_policies
 
@@ -49,17 +51,17 @@ class LegacyResourceView(object):
 	For moving off of the SiteXXXMarkers but not actually correctly
 	using static views.
 	"""
-	def __init__( self, site, name ):
+	def __init__(self, site, name):
 		self.site = site
 		self.name = name
 
-	def __call__( self, context, request ):
-		new_path = request.path.split( '/' )[1:-1] # the path to the directory
-		new_path.append( self.site )
-		new_path.append( self.name )
-		return hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path ) )
+	def __call__(self, context, request):
+		new_path = request.path.split('/')[1:-1]  # the path to the directory
+		new_path.append(self.site)
+		new_path.append(self.name)
+		return hexc.HTTPSeeOther(location=request.resource_path(request.context, *new_path))
 
-def _response_for_site_resource_with_marker( marker_interface, request, resource, mime_type ):
+def _response_for_site_resource_with_marker(marker_interface, request, resource, mime_type):
 	"""
 	Searches for an :class:`.IView` utility having the given resource name
 	and if found, hands control over to it.
@@ -111,22 +113,25 @@ def _response_for_site_resource_with_marker( marker_interface, request, resource
 	lots of 404 responses which is ugly.
 	"""
 
-	view = component.queryUtility( IView, name=resource )
+	view = component.queryUtility(IView, name=resource)
 
 	if view:
 		# If the web root is not our usual default, and the path is under
 		# the web root, fix it up.
 		settings = component.getUtility(IApplicationSettings)
 		web_root = settings.get('web_app_root', '/NextThoughtWebApp/')
-		if web_root != '/NextThoughtWebApp/' and request.environ['PATH_INFO'].startswith(web_root):
+		if 	web_root != '/NextThoughtWebApp/' and \
+			request.environ['PATH_INFO'].startswith(web_root):
 			request.environ['PATH_INFO'] = request.environ['PATH_INFO'].replace(web_root, '/NextThoughtWebApp/')
-		return view( request.context, request )
+		return view(request.context, request)
 
 	# Extra legacy support...these markers are DEPRECATED
-	marker, site_name = site_policies.queryUtilityInSite( marker_interface, request=request, return_site_name=True )
+	marker, site_name = site_policies.queryUtilityInSite(marker_interface,
+														 request=request,
+														 return_site_name=True)
 	if marker:
-		logger.warn( "Site %s is still using legacy marker %s", site_name, marker )
-		return LegacyResourceView( site_name, resource )(request.context, request)
+		logger.warn("Site %s is still using legacy marker %s", site_name, marker)
+		return LegacyResourceView(site_name, resource)(request.context, request)
 
 	# Nothing found
 	request.response.content_type = mime_type
@@ -144,7 +149,7 @@ def site_css_view(request):
 	we will return responses within the directory enclosing that css file.
 	"""
 
-	return _response_for_site_resource_with_marker( ISiteCSSMarker, request, 'site.css', b'text/css' )
+	return _response_for_site_resource_with_marker(ISiteCSSMarker, request, 'site.css', b'text/css')
 
 @view_config(route_name="logon.strings_js",
 			 request_method='GET')
@@ -159,10 +164,10 @@ def webapp_strings_view(request):
 	# This makes doing simple static redirections much harder than necessary and places
 	# a lot of burden on specific implementations for sites.
 	# Our hacky fix here is to adjust the PATH_INFO to reflect the desired name
-	assert request.environ['PATH_INFO'].endswith( 'site.js' )
+	assert request.environ['PATH_INFO'].endswith('site.js')
 	request.environ['PATH_INFO'] = request.environ['PATH_INFO'][:-7] + b'strings.js'
 
-	return _response_for_site_resource_with_marker( ISiteStringsMarker,
+	return _response_for_site_resource_with_marker(ISiteStringsMarker,
 												   request,
 												   'strings.js',
 												   b'application/javascript')
@@ -184,25 +189,29 @@ def landing_html_view(request):
 		symlinks where necessary.
 	"""
 
-	marker, site_name = site_policies.queryUtilityInSite( ISiteLandingMarker, request=request, return_site_name=True )
+	marker, site_name = site_policies.queryUtilityInSite(ISiteLandingMarker, 
+														 request=request, 
+														 return_site_name=True)
 
-	#Send them a redirect to folder for this request (basically pop off the last bit)
-	new_path = request.path.split( '/' )[1:-1]
+	# Send them a redirect to folder for this request (basically pop off the last bit)
+	new_path = request.path.split('/')[1:-1]
 
-	response = hexc.HTTPSeeOther( location=request.resource_path( request.context, *new_path, query=request.params ) )
+	response = hexc.HTTPSeeOther(location=request.resource_path(request.context, *new_path, query=request.params))
 
 	if marker:
-		response.set_cookie(_SITE_LANDING_COOKIE_NAME, site_name.encode( 'utf-8' ), 600) #Live for 5 minutes.  We really just want this long enough to get through the redirect
+		# Live for 5 minutes.  We really just want this long enough to get through the redirect
+		response.set_cookie(_SITE_LANDING_COOKIE_NAME, site_name.encode('utf-8'), 600)
 	else:
 		response.delete_cookie(_SITE_LANDING_COOKIE_NAME)
 
 	return response
 
+import os
+
+import scss
+
 from pyramid.static import static_view
 from pyramid.path import caller_package
-
-import os
-import scss
 
 @interface.implementer(IView)
 class _StaticView(static_view):
@@ -213,15 +222,15 @@ class _StaticView(static_view):
 		# XXX: Assuming this is broken out on the filesystem. Could use
 		# pyramid's package stuff to handle that better
 
-		_my_dir = os.path.dirname( package.__file__ )
+		_my_dir = os.path.dirname(package.__file__)
 		_my_dir = os.path.abspath(_my_dir)
 		assets_dir = os.path.join(_my_dir, 'assets')
-		inst = super(_StaticView,cls).__new__(cls,assets_dir,**kwargs)
+		inst = super(_StaticView, cls).__new__(cls, assets_dir, **kwargs)
 		inst.assets_dir = assets_dir
 		return inst
 
 	def __init__(self, package, **kwargs):
-		super(_StaticView,self).__init__(self.assets_dir, **kwargs)
+		super(_StaticView, self).__init__(self.assets_dir, **kwargs)
 
 @interface.named('strings.js')
 class _StringsJsView(_StaticView):
@@ -231,22 +240,22 @@ class _StringsJsView(_StaticView):
 class _CompilingSCSSView(_StaticView):
 
 	def __new__(cls, *args, **kwargs):
-		inst = super(_CompilingSCSSView,cls).__new__(cls, *args, **kwargs)
+		inst = super(_CompilingSCSSView, cls).__new__(cls, *args, **kwargs)
 
 		_my_dir = inst.assets_dir
 
-		_scss_dir = os.path.join( _my_dir, 'NextThoughtWebApp', 'resources', 'scss' )
-		_css_dir = os.path.join( _my_dir, 'NextThoughtWebApp', 'resources', 'css' )
-		_scss_file = os.path.join( _scss_dir, 'site.scss' )
-		_css_file = os.path.join( _css_dir, 'site.css' )
+		_scss_dir = os.path.join(_my_dir, 'NextThoughtWebApp', 'resources', 'scss')
+		_css_dir = os.path.join(_my_dir, 'NextThoughtWebApp', 'resources', 'css')
+		_scss_file = os.path.join(_scss_dir, 'site.scss')
+		_css_file = os.path.join(_css_dir, 'site.css')
 		# Sadly, logging is ineffective at this time, we expect to be at the
 		# module level
 		if os.path.isfile(_scss_file) and os.stat(_scss_file).st_size:
 			# TODO: Remove CSS if this file goes away/to zero bytes?
-			if not os.path.isdir( _css_dir ):
-				os.mkdir( _css_dir )
+			if not os.path.isdir(_css_dir):
+				os.mkdir(_css_dir)
 
-			if 	not os.path.isfile( _css_file ) or \
+			if 	not os.path.isfile(_css_file) or \
 				os.stat(_scss_file).st_mtime > os.stat(_css_file).st_mtime:
 				compiler = scss.Scss(scss_opts={'compress': False, 'debug_info': False})
 				with open(_scss_file, "rb") as source:

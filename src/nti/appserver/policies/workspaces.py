@@ -9,8 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from nti.appserver.workspaces.interfaces import IUserWorkspace
 from nti.appserver.workspaces.interfaces import IContainerCollection
@@ -26,8 +26,8 @@ from nti.links.links import Link
 
 from nti.zodb import isBroken
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 class _UserBoardCollection(object):
 	"""
 	Turns a User into a ICollection of data for their boards.
@@ -40,24 +40,24 @@ class _UserBoardCollection(object):
 	accepts = ()
 	container = ()
 
-	def __init__( self, user_workspace ):
+	def __init__(self, user_workspace):
 		self.__parent__ = user_workspace
 
 	@property
 	def links(self):
-		site = component.queryUtility(ICommunitySitePolicyUserEventListener )
+		site = component.queryUtility(ICommunitySitePolicyUserEventListener)
 		community_name = getattr(site, 'COM_USERNAME', None)
 		community = Entity.get_entity(community_name)
 		if community is not None and not isBroken(community):
 			# We just want the user's community board.
-			board = ICommunityBoard( community )
-			board_ntiid = externalization.to_external_ntiid_oid( board )
-			link = Link( board_ntiid, rel='global.site.board' )
+			board = ICommunityBoard(community)
+			board_ntiid = externalization.to_external_ntiid_oid(board)
+			link = Link(board_ntiid, rel='global.site.board')
 			link._name_ = 'global.site.board'
 			return (link,)
 		return ()
 
-@interface.implementer(IContainerCollection)
 @component.adapter(IUserWorkspace)
+@interface.implementer(IContainerCollection)
 def _UserBoardCollectionFactory(workspace):
-	return _UserBoardCollection( workspace )
+	return _UserBoardCollection(workspace)

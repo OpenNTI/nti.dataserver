@@ -1,10 +1,13 @@
 <!-- -*- mode: nxml -*- -->
 <configure	xmlns="http://namespaces.zope.org/zope"
-			xmlns:link="http://nextthought.com/ntp/link_providers"
-			xmlns:zcml="http://namespaces.zope.org/zcml">
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:link="http://nextthought.com/ntp/link_providers">
+
+	<include package="zope.component" />
 
 	<include package="z3c.baseregistry" file="meta.zcml" />
-	<include package="zope.component" />
+
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
 	<!-- Dispatch functions to direct events to active site policies. -->
@@ -58,7 +61,6 @@
 	<utility factory=".site_policies.DevmodeSitePolicyEventListener"
 			 zcml:condition="have devmode" />
 
-
 	<link:userLink
 		named='nti.appserver.logon.REL_INITIAL_TOS_PAGE'
 		minGeneration='20130501'
@@ -69,4 +71,5 @@
 		named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
 		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
 		mimeType='text/html'/>
+
 </configure>

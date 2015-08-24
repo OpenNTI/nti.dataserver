@@ -1,9 +1,11 @@
 <!-- -*- mode: nxml -*- -->
-<configure xmlns="http://namespaces.zope.org/zope"
-		   xmlns:zcml="http://namespaces.zope.org/zcml"
-		   xmlns:link="http://nextthought.com/ntp/link_providers">
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:link="http://nextthought.com/ntp/link_providers">
 
 	<include package="zope.component" />
+
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
 	<!-- Information used during sending/retrieving contact emails. -->
@@ -16,9 +18,9 @@
 	<subscriber handler=".user_policies.veto_sharing_for_unsigned_coppa_edit" />
 
 	<!-- Emails -->
+	<subscriber handler=".user_policies.send_consent_ack_email" />
 	<subscriber handler=".user_policies.send_consent_request_on_new_coppa_account" />
 	<subscriber handler=".user_policies.send_consent_request_when_contact_email_changes" />
-	<subscriber handler=".user_policies.send_consent_ack_email" />
 
 	<!--
 	Default to "sending" new object emails in dev mode.
