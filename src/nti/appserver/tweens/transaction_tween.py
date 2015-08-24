@@ -43,13 +43,13 @@ def _commit_veto(request, response):
 	Otherwise the transaction will be allowed to commit.
 	"""
 	xtm = response.headers.get('x-tm')
-	if xtm is not None: # pragma: no cover
+	if xtm is not None:  # pragma: no cover
 		return xtm != 'commit'
 	if response.status.startswith(('4', '5')):
 		return True
 	return request.environ.get('nti.commit_veto')
 
-def _is_side_effect_free( request ):
+def _is_side_effect_free(request):
 	"""
 	Is the request side-effect free? If the answer is yes, we should be able to quietly abort
 	the transaction and avoid taking out any locks in the DBs.
@@ -60,14 +60,13 @@ def _is_side_effect_free( request ):
 			# (Unfortunately, socket.io polling does)
 			# However, the static resources don't
 			return True if 'static' in request.url else False
-
 		return True
 	# Every non-get probably has side effects
 	return False
 
 class _transaction_tween(TransactionLoop):
 
-	def prep_for_retry( self, number, request ):
+	def prep_for_retry(self, number, request):
 		# make_body_seekable will copy wsgi.input if necessary,
 		# otherwise it will rewind the copy to position zero
 		try:
@@ -77,8 +76,8 @@ class _transaction_tween(TransactionLoop):
 			# (though it could also be a tempfile issue if we spool to
 			# disk?) at any rate,
 			# this is non-recoverable
-			logger.log( TRACE, "Failed to make request body seekable",
-						exc_info=True )
+			logger.log(TRACE, "Failed to make request body seekable",
+					   exc_info=True)
 			# TODO: Should we do anything with the request.response? Set an error
 			# code? It won't make it anywhere...
 
@@ -86,8 +85,8 @@ class _transaction_tween(TransactionLoop):
 			# object, even if it is an exception response, so that
 			# Pyramid doesn't blow up
 
-			raise self.AbortException( HTTPBadRequest(str(e)),
-									   "IOError on reading body" )
+			raise self.AbortException(HTTPBadRequest(str(e)),
+									  "IOError on reading body")
 
 		# XXX: HACK
 
@@ -115,20 +114,20 @@ class _transaction_tween(TransactionLoop):
 				# escaped. so this must be meant to be JSON
 				request.content_type = b'application/json'
 
-	def should_abort_due_to_no_side_effects( self, request ):
-		return	_is_side_effect_free( request ) and \
+	def should_abort_due_to_no_side_effects(self, request):
+		return	_is_side_effect_free(request) and \
 				not request.environ.get('nti.request_had_transaction_side_effects')
 
-	def should_veto_commit( self, response, request ):
-		return  _commit_veto( request, response ) or \
-				request.environ.get( 'nti.early_teardown_happened' ) # see zope_site_tween
+	def should_veto_commit(self, response, request):
+		return  _commit_veto(request, response) or \
+				request.environ.get('nti.early_teardown_happened')  # see zope_site_tween
 
-	def describe_transaction( self, request ):
+	def describe_transaction(self, request):
 		return request.url
 
 	def run_handler(self, request):
 		try:
-			return TransactionLoop.run_handler(self, request) # Not super() for speed
+			return TransactionLoop.run_handler(self, request)  # Not super() for speed
 		except HTTPException as e:
 			# Pyramid catches these and treats them as a response. We
 			# MUST catch them as well and let the normal transaction
@@ -152,11 +151,11 @@ class _transaction_tween(TransactionLoop):
 			return e
 
 	def __call__(self, request):
-		result = TransactionLoop.__call__(self,request) # not super() for speed
-		if  isinstance(result,HTTPException) and \
+		result = TransactionLoop.__call__(self, request)  # not super() for speed
+		if  isinstance(result, HTTPException) and \
 			getattr(request, '_nti_raised_exception', False):
 			raise result
 		return result
 
 def transaction_tween_factory(handler, registry):
-	return _transaction_tween( handler )
+	return _transaction_tween(handler)

@@ -34,15 +34,15 @@ class zodb_connection_tween(object):
 
 	"""
 
-	DEBUG_COUNT = 100
 	DEBUG_OFF = True
+	DEBUG_COUNT = 100
 
 	def __init__(self, handler, registry):
 		self.handler = handler
 		self._count = 0
 
 	def __call__(self, request):
-		#logger.debug("Connection details %s", '\n'.join([str(x) for x in request.registry.nti_zodb_root_db.connectionDebugInfo()]))
+		# logger.debug("Connection details %s", '\n'.join([str(x) for x in request.registry.nti_zodb_root_db.connectionDebugInfo()]))
 		# The value of nti_zodb_root_db may change at runtime,
 		# so we don't cache it (only during tests)
 		request.nti_zodb_root_connection = request.registry.nti_zodb_root_db.open()
@@ -92,6 +92,7 @@ class zodb_connection_tween(object):
 		logger.debug("Connection details in pid %s:\n%s", pid, stream.getvalue())
 		if need_gc:
 			logger.warn("Too many connection objects in pid %s: %s", pid, need_gc)
+			
 			def _print_refs(c):
 				if c in c.db().pool.available:
 					return
@@ -107,7 +108,7 @@ class zodb_connection_tween(object):
 					if type(o) is list and o is not objs and o is not details:
 						details.append(o)
 						oo = gc.get_referrers(o)
-						details.append( {type(x) for x in oo if x is not objs and x is not details} )
+						details.append({type(x) for x in oo if x is not objs and x is not details})
 						for x in oo:
 							if isinstance(x, dict):
 								details.append(x.keys())

@@ -45,13 +45,13 @@ class _interaction_tween(object):
 
 	__slots__ = ('handler',)
 
-	def __init__( self, handler ):
+	def __init__(self, handler):
 		self.handler = handler
 
-	def __call__( self, request ):
+	def __call__(self, request):
 		uid = request.authenticated_userid
 		if uid:
-			dataserver = component.getUtility( IDataserver )
+			dataserver = component.getUtility(IDataserver)
 			# We must have a user at this point...
 			user = users.User.get_user(uid, dataserver=dataserver)
 			# ...and all users must be IParticipation-capable
@@ -70,4 +70,4 @@ class _interaction_tween(object):
 			endInteraction()
 
 def security_interaction_tween_factory(handler, registry):
-	return _interaction_tween( handler )
+	return _interaction_tween(handler)
