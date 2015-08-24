@@ -74,7 +74,11 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 		if session:
 			session.get_messages_to_client() # prevent buildup in the database
 		if message is None:
-			safe_kill_session( session, ' on transfer of None across sending channel' )
+			# JZ - 08.2015 - We used to kill our session here, but that would cause a large
+			# amount of conflict errors on our session storage, since we kill
+			# the same session from the reader.  We eliminate the session
+			# killing here, and hope the watchdog will clean up any potential
+			# orphans.
 			return False
 		return True
 
@@ -85,7 +89,7 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 			if not self.run_loop:
 				break
 			try:
-				self.run_loop &= run_job_in_site( self._do_send, retries=10, 
+				self.run_loop &= run_job_in_site( self._do_send, retries=10,
 												  site_names=self.session_originating_site_names )
 			except transaction.interfaces.TransientError:
 				# A problem clearing the queue or getting the session.
@@ -98,7 +102,7 @@ class _WebSocketSender(_AbstractWebSocketOperator):
 				# and we're going to break this loop
 				break
 
-			try:					
+			try:
 				# logger.debug( "Sending session '%s' value '%r'", self.session_id, self.message )
 				self.websocket.send(self.message)
 			except geventwebsocket.exceptions.FrameTooLargeException:
@@ -216,7 +220,7 @@ class _WebSocketGreenlet(Greenlet):
 class WebsocketTransport(BaseTransport):
 
 	websocket = None
-	
+
 	def __init__( self, request ):
 		super(WebsocketTransport,self).__init__(request)
 
@@ -247,20 +251,20 @@ class WebsocketTransport(BaseTransport):
 		# that they all die together, and that they all do cleanup when they die
 		session_service.set_proxy_session( session_id, session_proxy )
 
-		send_into_ws = _WebSocketSender( session_id, session_proxy, 
-										 session_service, 
+		send_into_ws = _WebSocketSender( session_id, session_proxy,
+										 session_service,
 										 session_originating_site_names,
 										 websocket )
-		
-		read_from_ws = _WebSocketReader( session_id, session_proxy, 
-										session_service, 
+
+		read_from_ws = _WebSocketReader( session_id, session_proxy,
+										session_service,
 										session_originating_site_names,
 										websocket )
-		
+
 		ping = _WebSocketPinger( session_id, session_proxy,
-								 session_service, 
-								 session_originating_site_names, 
-								 websocket, 
+								 session_service,
+								 session_originating_site_names,
+								 websocket,
 								 ping_sleep=ping_sleep )
 
 		session_owner = getattr( session, 'owner', '' )
