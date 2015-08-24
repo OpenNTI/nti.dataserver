@@ -107,7 +107,12 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 
 	@Lazy
 	def lock(self):
-		return self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
+		# Fail fast if we cannot acquire the lock.
+		lock = self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
+		acquired = lock.acquire( blocking=False )
+		if acquired:
+			return lock
+		raise hexc.HTTPUnprocessableEntity( 'Sync already in progress' )
 
 	def _do_call(self):
 		values = self.readInput()
