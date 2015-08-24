@@ -149,6 +149,9 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		logger.info( 'Acquiring sync lock' )
-		with self.lock:
+		lock = self.lock
+		try:
 			logger.info( 'Starting sync' )
 			return self._do_call()
+		finally:
+			lock.release()
