@@ -39,7 +39,7 @@ class IUserLinkDirective(interface.Interface):
 		title="The name of the link.",
 		description="This literal value will be used as the relationship type of the link. You must provide either this or ``named``",
 		required=False,
-		min_length=1 )
+		min_length=1)
 
 	named = zope.configuration.fields.GlobalObject(
 		title="Path to string constant giving the name.",
@@ -50,17 +50,17 @@ class IUserLinkDirective(interface.Interface):
 	minGeneration = zope.configuration.fields.TextLine(
 		title="If given, the minimum required value users must have.",
 		description="""A text string that should be monotonically increasing because it is lexographically compared. For dates, use YYYYMMDD. Mutually exclusive with ``field``.""",
-		required=False )
+		required=False)
 
 	url = ValidTextLine(# Because we want to allow putting in just the path portion of the URL allowing for site-relative urls. But those aren't valid by themselves.
 		title="A URI to redirect to on GET",
 		description="NOTE: This is not enforced to be a complete, valid URL/URI. You are responsible for that. Mutually exclusive with ``field``",
-		required=False )
+		required=False)
 
 	field = zope.configuration.fields.PythonIdentifier(
 		title="A field on the user that this will link to, using the ++fields namespace",
 		description="Mutually exclusive with ``url`` and ``minGeneration``",
-		required=False )
+		required=False)
 
 	view_named = zope.configuration.fields.GlobalObject(
 		title="Path to string constant giving the name of a view.",
@@ -71,12 +71,12 @@ class IUserLinkDirective(interface.Interface):
 	mimeType = ValidTextLine(
 		title="The mime type expected to be returned by the link",
 		constraint=mimeTypeConstraint,
-		required=False )
+		required=False)
 
 	for_ = zope.configuration.fields.GlobalInterface(
 		title="The subtype of user to apply this to",
 		required=False,
-		default=IUser )
+		default=IUser)
 
 def registerUserLink(_context,
 					 name=None,
@@ -89,28 +89,28 @@ def registerUserLink(_context,
 					 for_=IUser):
 
 	if name and named:
-		raise ConfigurationError( "Pick either name or named, not both" )
+		raise ConfigurationError("Pick either name or named, not both")
 	if named:
 		name = named
 	if not name:
-		raise ConfigurationError( "Specify either name or named" )
+		raise ConfigurationError("Specify either name or named")
 
-	if not for_ or not for_.isOrExtends( IUser ):
-		raise ConfigurationError( "For must be a user type" )
+	if not for_ or not for_.isOrExtends(IUser):
+		raise ConfigurationError("For must be a user type")
 
 	if field and url:
-		raise ConfigurationError( "Pick either field or url, not both" )
+		raise ConfigurationError("Pick either field or url, not both")
 
 	if field and minGeneration:
-		raise ConfigurationError( "Pick either field or minGeneration, not both" ) # because going to a field is handled by its own views
+		raise ConfigurationError("Pick either field or minGeneration, not both")  # because going to a field is handled by its own views
 
 	if view_named and (field or minGeneration or url):
-		raise ConfigurationError( "Pick one of view_named, field, minGeneration, or url" )
+		raise ConfigurationError("Pick one of view_named, field, minGeneration, or url")
 
-	kwargs = dict(name=name, url=url, view_named=view_named, field=field,  mime_type=mimeType)
+	kwargs = dict(name=name, url=url, view_named=view_named, field=field, mime_type=mimeType)
 
 	if minGeneration:
-		factory = functools.partial( GenerationalLinkProvider, minGeneration=minGeneration, **kwargs )
+		factory = functools.partial(GenerationalLinkProvider, minGeneration=minGeneration, **kwargs)
 	else:
-		factory = functools.partial( LinkProvider, **kwargs )
-	subscriber( _context, for_=(for_, IRequest), factory=factory, provides=IAuthenticatedUserLinkProvider )
+		factory = functools.partial(LinkProvider, **kwargs)
+	subscriber(_context, for_=(for_, IRequest), factory=factory, provides=IAuthenticatedUserLinkProvider)

@@ -11,8 +11,8 @@ __docformat__ = "restructuredtext en"
 
 from zope import interface
 
-from zope.interface.interfaces import IObjectEvent
 from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
 
 from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
 
@@ -23,7 +23,7 @@ class IDeletableLinkProvider(IAuthenticatedUserLinkProvider):
 	the state such that the link should no longer be provided.
 	"""
 
-	def delete_link( link_name ):
+	def delete_link(link_name):
 		"""Stop providing the particular named link.
 
 		:param unicode link_name: The link name.
@@ -36,7 +36,7 @@ class IFlagLinkEvent(IObjectEvent):
 	A flag link has changed. The object will be the user.
 	"""
 
-	link_name = interface.Attribute( "The name of the link that was changed." )
+	link_name = interface.Attribute("The name of the link that was changed.")
 
 class IFlagLinkAddedEvent(IFlagLinkEvent):
 	"""
@@ -51,8 +51,8 @@ class IFlagLinkRemovedEvent(IFlagLinkEvent):
 @interface.implementer(IFlagLinkEvent)
 class FlagLinkEvent(ObjectEvent):
 
-	def __init__( self, obj, link_name ):
-		super(FlagLinkEvent,self).__init__( obj )
+	def __init__(self, obj, link_name):
+		super(FlagLinkEvent, self).__init__(obj)
 		self.link_name = link_name
 
 @interface.implementer(IFlagLinkAddedEvent)

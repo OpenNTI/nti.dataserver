@@ -14,7 +14,7 @@ MessageFactory = zope.i18nmessageid.MessageFactory('nti.dataserver')
 
 from zope import component
 
-from nti.appserver.interfaces import IAuthenticatedUserLinkProvider
+from ..interfaces import IAuthenticatedUserLinkProvider
 
 def safe_links(provider):
 	try:
@@ -28,10 +28,10 @@ def find_providers_and_links(user, request, keeporder=True):
 										IAuthenticatedUserLinkProvider)
 	for order, provider in enumerate(subscribers):
 		rels = set()
-		rels.update(getattr(provider ,'rels', ()))
+		rels.update(getattr(provider , 'rels', ()))
 		# legacy
-		rels.add(getattr(provider ,'rel', None))
-		rels.add(getattr(provider ,'__name__', None))
+		rels.add(getattr(provider , 'rel', None))
+		rels.add(getattr(provider , '__name__', None))
 		rels.discard(None)
 		# register w/ priority
 		providers.append((rels, getattr(provider, 'priority', 0), provider, order))
@@ -53,7 +53,7 @@ def find_providers_and_links(user, request, keeporder=True):
 
 	if keeporder:
 		result = sorted(result, key=lambda t:t[2])
-	return [(p, lnks) for p, lnks,_ in result]
+	return [(p, lnks) for p, lnks, _ in result]
 
 def unique_link_providers(user, request, with_links=False):
 	"""
@@ -67,7 +67,7 @@ def unique_link_providers(user, request, with_links=False):
 	"""
 	seen_names = set()
 	providers = find_providers_and_links(user, request, True)
-	
+
 	# Subscribers are returned in REVERSE order, that is, from
 	# all the bases FIRST...so to let the lower levels win, we reverse again
 	# not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
@@ -101,5 +101,5 @@ def provide_links(user, request):
 				# In the case of our objects, of course, rel is the same
 				# as the name configured in ZCML, and we only provide one link
 				continue
-			seen_rels.add( link.rel )
+			seen_rels.add(link.rel)
 			yield link

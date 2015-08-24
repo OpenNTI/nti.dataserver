@@ -92,69 +92,69 @@ class TestZcml(nti.testing.base.ConfiguringTestBase):
 
 	def test_site_registrations(self):
 
-		self.configure_string( ZCML_STRING )
-		assert_that( MATHCOUNTS.__bases__, is_( (component.globalSiteManager,) ) )
-		with site( _TrivialSite( MATHCOUNTS ) ):
-			user = users.User( 'foo@bar' )
-			request = Request.blank( '/' )
+		self.configure_string(ZCML_STRING)
+		assert_that(MATHCOUNTS.__bases__, is_((component.globalSiteManager,)))
+		with site(_TrivialSite(MATHCOUNTS)):
+			user = users.User('foo@bar')
+			request = Request.blank('/')
 			# Nothing until we provide ICoppaUser
-			assert_that( list( component.subscribers( (user, request), IAuthenticatedUserLinkProvider) ), is_empty() )
+			assert_that(list(component.subscribers((user, request), IAuthenticatedUserLinkProvider)), is_empty())
 
-			interface.alsoProvides( user, nti_interfaces.ICoppaUser )
+			interface.alsoProvides(user, nti_interfaces.ICoppaUser)
 
-			providers = list( component.subscribers( (user, request), IAuthenticatedUserLinkProvider ) )
-			assert_that( providers, has_length( 1 ) )
+			providers = list(component.subscribers((user, request), IAuthenticatedUserLinkProvider))
+			assert_that(providers, has_length(1))
 
 			# Make sure all our properties got where we wanted them
 			provider = providers[0]
-			assert_that( provider.url, is_( '/relative/path' ) )
-			assert_that( provider.minGeneration, is_( '1234' ) )
+			assert_that(provider.url, is_('/relative/path'))
+			assert_that(provider.minGeneration, is_('1234'))
 
-			assert_that( provider.get_links( ), has_length( 1 ) )
-			assert_that( provider.get_links()[0].elements[-1], is_( 'foo.bar' ) )
+			assert_that(provider.get_links(), has_length(1))
+			assert_that(provider.get_links()[0].elements[-1], is_('foo.bar'))
 
-			provider.delete_link( provider.__name__ )
+			provider.delete_link(provider.__name__)
 
-			assert_that( provider.get_links( ), is_empty() )
+			assert_that(provider.get_links(), is_empty())
 
 	def test_raises(self):
 		from nti.appserver.link_providers.zcml import registerUserLink
 
 		context = object()
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name="name", named="named" )
+			registerUserLink(context, name="name", named="named")
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name='' )
+			registerUserLink(context, name='')
 
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name='link', for_=None )
+			registerUserLink(context, name='link', for_=None)
 
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name='link', field='abc', url='def' )
+			registerUserLink(context, name='link', field='abc', url='def')
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name='link', field='abc', minGeneration='def' )
+			registerUserLink(context, name='link', field='abc', minGeneration='def')
 		with assert_raises(ConfigurationError):
-			registerUserLink( context, name='link', field='abc', view_named='def' )
+			registerUserLink(context, name='link', field='abc', view_named='def')
 
 	def test_site_registrations_do_not_accumulate(self):
 
-		self.configure_string( ZCML_STRING )
-		with site( _TrivialSite( _MYSITE ) ):
-			user = users.User( 'foo@bar' )
-			request = Request.blank( '/' )
+		self.configure_string(ZCML_STRING)
+		with site(_TrivialSite(_MYSITE)):
+			user = users.User('foo@bar')
+			request = Request.blank('/')
 			# Nothing until we provide IMarker
-			assert_that( list( component.subscribers( (user, request), IAuthenticatedUserLinkProvider) ), is_empty() )
+			assert_that(list(component.subscribers((user, request), IAuthenticatedUserLinkProvider)), is_empty())
 
-			interface.alsoProvides( user, IMarker )
+			interface.alsoProvides(user, IMarker)
 
-			links = list( provide_links( user, request ) )
-			assert_that( links, has_length( 1 ) )
+			links = list(provide_links(user, request))
+			assert_that(links, has_length(1))
 
 			# Make sure all our properties got where we wanted them
 			link = links[0]
 			__traceback_info__ = link.__dict__
-			assert_that( link, has_property( '_v_provided_by', has_property( 'url', 'https://this/link/overrides/the/parent')))
+			assert_that(link, has_property('_v_provided_by', has_property('url', 'https://this/link/overrides/the/parent')))
 
 			providers = list(unique_link_providers(user, request))
-			assert_that( providers, has_length(1))
-			assert_that( providers[0], has_property( 'url', 'https://this/link/overrides/the/parent'))
+			assert_that(providers, has_length(1))
+			assert_that(providers[0], has_property('url', 'https://this/link/overrides/the/parent'))
