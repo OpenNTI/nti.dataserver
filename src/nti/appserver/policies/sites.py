@@ -42,42 +42,42 @@ zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.mathcounts",
 	"nti.app.sites.mathcounts",
 	"MATHCOUNTS",
-	"TESTMATHCOUNTS" )
+	"TESTMATHCOUNTS")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.alpha",
 	"nti.app.sites.alpha",
-	"ALPHA" )
+	"ALPHA")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.columbia",
 	"nti.app.sites.columbia",
-	"COLUMBIA" )
+	"COLUMBIA")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.demo",
 	"nti.app.sites.demo",
-	"DEMO" )
+	"DEMO")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.law",
 	"nti.app.sites.law",
-	"LAW" )
+	"LAW")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.litworld",
 	"nti.app.sites.litworld",
-	"LITWORLD" )
+	"LITWORLD")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.prmia",
 	"nti.app.sites.prmia",
-	"PRMIA" )
+	"PRMIA")
 
 zope.deferredimport.deprecatedFrom(
 	"Import from nti.app.sites.rwanda",
 	"nti.app.sites.rwanda",
-	"RWANDA" )
+	"RWANDA")
 
 def _find_sites():
 	"""
@@ -87,24 +87,24 @@ def _find_sites():
 	The list is returned in roughly top-down order.
 	"""
 
-	def _collect_subs(components,accum):
-		accum.append( components )
+	def _collect_subs(components, accum):
+		accum.append(components)
 		for subreg in components.adapters._v_subregistries.keys():
 			parent_component = subreg.__parent__
-			_collect_subs( parent_component, accum )
+			_collect_subs(parent_component, accum)
 
 	# Find all the extent sub-components of the root
 	# components. This is roughly in topological order
 	# from the root down
 	top_down_components = [BASEADULT, BASECOPPA]
 	for top in list(top_down_components):
-		_collect_subs( top, top_down_components )
+		_collect_subs(top, top_down_components)
 
 	# Remove dups, preserve order
 	result = []
 	for x in top_down_components:
 		if x not in result:
-			result.append( x )
+			result.append(x)
 	return result
 
 def _reinit():
@@ -129,7 +129,7 @@ def _reinit():
 	# does a reasonable approximation.
 
 	for site in _find_sites():
-		site.__init__( site.__parent__, name=site.__name__, bases=site.__bases__ )
+		site.__init__(site.__parent__, name=site.__name__, bases=site.__bases__)
 
 from zope.testing.cleanup import addCleanUp
-addCleanUp( _reinit )
+addCleanUp(_reinit)

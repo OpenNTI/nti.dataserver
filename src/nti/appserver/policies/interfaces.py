@@ -21,7 +21,7 @@ class ISitePolicyUserEventListener(interface.Interface):
 
 	DISPLAY_NAME = interface.Attribute('DISPLAY_NAME',
 									   'Optional human-readable name for the site.'
-									   ' Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`')
+									   'Do not access directly, use :func:`nti.appserver.policies.site_polices.guess_site_display_name`')
 
 	def map_validation_exception(incoming_data, exception):
 		"""
@@ -91,4 +91,4 @@ zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the columbia site package."
 	" The only valid use is existing ZODB objects",
 	"nti.app.sites.columbia.interfaces",
-	"IColumbiaBusinessUserProfile" )
+	"IColumbiaBusinessUserProfile")

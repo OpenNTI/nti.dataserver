@@ -5,6 +5,7 @@ Policies for the censoring of modeled content objects.
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -19,17 +20,20 @@ from pyramid.traversal import find_interface
 
 from nti.app.authentication import get_remote_user
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IMessageInfo
 
 from nti.contentfragments import censor
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments.interfaces import ICensoredContentPolicy
+from nti.contentfragments.interfaces import IUnicodeContentFragment
 
-from nti.contentlibrary import interfaces as lib_interfaces
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
 
-from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
+from nti.dataserver.users import Entity
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICoppaUser
 
-from nti.socketio import interfaces as sio_interfaces
+from nti.socketio.interfaces import ISocketSessionCreatedObjectEvent
 
 from . import site_policies
 
@@ -46,8 +50,8 @@ class ObjectNotTiedToContent(object):
 	"Direct provider of IObjectNotTiedToContent"
 
 # No default adapter list, too many things.
-@interface.implementer( frg_interfaces.ICensoredContentPolicy )
-def creator_and_location_censor_policy( fragment, target, site_names=None ):
+@interface.implementer(ICensoredContentPolicy)
+def creator_and_location_censor_policy(fragment, target, site_names=None):
 	"""
 	Attempts to locate a censoring policy, appropriate for the creator
 	of the target object and the location in which it is being created.
@@ -90,42 +94,42 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 
 	"""
 
-	creator = getattr( target, 'creator', None )
+	creator = getattr(target, 'creator', None)
 	location = None
 
 	if not creator:
 		# Ok, try to find something in the lineage
-		creator = find_interface( target, nti_interfaces.IUser )
+		creator = find_interface(target, IUser)
 
 	if not creator:
 		creator = get_remote_user()
 
 	if not creator:
-		creator = getattr( target, 'username', None ) # sometimes this is an alias
+		creator = getattr(target, 'username', None)  # sometimes this is an alias
 
-	if not creator: # Nothing to go off of, must assume the worst
+	if not creator:  # Nothing to go off of, must assume the worst
 		return censor.DefaultCensoredContentPolicy()
 
 	__traceback_info__ = creator, target
 	# Hmm Kay. If we find a string for a creator, try to resolve
 	# it to an entity.
-	if isinstance( creator, six.string_types ):
-		creator = users.Entity.get_entity( username=creator, default=creator )
+	if isinstance(creator, six.string_types):
+		creator = Entity.get_entity(username=creator, default=creator)
 
 	# TODO: It's possible this isn't doing what we want for Messages. They have
 	# a containerId that is their meeting? But we actually want to use
 	# the meeting's containerId? As it is, this winds up finding a `location`
 	# of ``None``, which gets matched by the * in the adapter registration
 
-	if getattr( target, 'containerId', None ):
+	if getattr(target, 'containerId', None):
 		# Try to find a location to put it in.
 		# See comments above about how this is starting to not be appropriate.
-		library = component.queryUtility( lib_interfaces.IContentPackageLibrary )
-		content_units = library.pathToNTIID( target.containerId ) if library is not None else None
+		library = component.queryUtility(IContentPackageLibrary)
+		content_units = library.pathToNTIID(target.containerId) if library is not None else None
 		location = content_units[-1] if content_units else None
 
 	if location is None:
-		location = getattr( target, '__parent__', None )
+		location = getattr(target, '__parent__', None)
 
 	if location is None:
 		location = ObjectNotTiedToContent
@@ -133,14 +137,13 @@ def creator_and_location_censor_policy( fragment, target, site_names=None ):
 	# In general the site_policies.queryMulitAdapterInSite is deprecated,
 	# but its currently here for chat messages. (See below). This can
 	# probably go away once tests are updated
-	return site_policies.queryMultiAdapterInSite( (creator, location),
-												  frg_interfaces.ICensoredContentPolicy,
-												  site_names=site_names	)
+	return site_policies.queryMultiAdapterInSite((creator, location),
+												  ICensoredContentPolicy,
+												  site_names=site_names)
 
-
-@interface.implementer(frg_interfaces.ICensoredContentPolicy)
-@component.adapter( nti_interfaces.ICoppaUser, interface.Interface )
-def coppa_user_censor_policy( user, content_unit ):
+@interface.implementer(ICensoredContentPolicy)
+@component.adapter(ICoppaUser, interface.Interface)
+def coppa_user_censor_policy(user, content_unit):
 	"""
 	The default profanity filter always applies to underage users,
 	no matter where they attempt to do something (IContentUnit
@@ -148,9 +151,9 @@ def coppa_user_censor_policy( user, content_unit ):
 	"""
 	return censor.DefaultCensoredContentPolicy()
 
-@interface.implementer(frg_interfaces.ICensoredContentPolicy)
-@component.adapter(nti_interfaces.IUser,lib_interfaces.IDelimitedHierarchyContentUnit)
-def user_filesystem_censor_policy( user, file_content_unit ):
+@interface.implementer(ICensoredContentPolicy)
+@component.adapter(IUser, IDelimitedHierarchyContentUnit)
+def user_filesystem_censor_policy(user, file_content_unit):
 	"""
 	Profanity filtering may be turned off in specific content units
 	by the use of a '.nti_disable_censoring' flag file.
@@ -158,21 +161,21 @@ def user_filesystem_censor_policy( user, file_content_unit ):
 	# TODO: maybe this could be handled with an ACL entry? The permission
 	# to post uncensored things?
 
-	if file_content_unit.does_sibling_entry_exist( '.nti_disable_censoring' ):
+	if file_content_unit.does_sibling_entry_exist('.nti_disable_censoring'):
 		return None
 	return censor.DefaultCensoredContentPolicy()
 
-###
+# ##
 # TODO: The copying of site names below is probably no longer
 # necessary. While this still happen outside of a request,
 # the transaction runner is establishing the proper context
 # for a site in the ZCA hierarchy automatically. However,
 # it also doesn't hurt anything so it can stay until a test
 # is written to prove it.
-###
+# ##
 
-@component.adapter( chat_interfaces.IMessageInfo, sio_interfaces.ISocketSessionCreatedObjectEvent )
-def ensure_message_info_has_creator( message, event ):
+@component.adapter(IMessageInfo, ISocketSessionCreatedObjectEvent)
+def ensure_message_info_has_creator(message, event):
 	"""
 	Ensures that messages created by sockets have their creator set immediately. This is necessary
 	to be sure that the correct security and censoring policies are applied.
@@ -183,16 +186,18 @@ def ensure_message_info_has_creator( message, event ):
 	# Recall that sessions have string as their owner,
 	# and messages keep it that way
 	message.creator = event.session.owner
-	setattr( message, '_v_originating_site_names',
-			 getattr(event.session, 'originating_site_names', () ) )
+	setattr(message, '_v_originating_site_names',
+			getattr(event.session, 'originating_site_names', ()))
 
-@interface.implementer( frg_interfaces.ICensoredContentPolicy )
-@component.adapter(frg_interfaces.IUnicodeContentFragment, chat_interfaces.IMessageInfo )
-def message_info_uses_captured_session_info( fragment, target ):
+@interface.implementer(ICensoredContentPolicy)
+@component.adapter(IUnicodeContentFragment, IMessageInfo)
+def message_info_uses_captured_session_info(fragment, target):
 	"""
 	Chat messages usually arrive outside an active request. So we use the sites
 	that originated the session, which we captured on the session itself
 	and then copied to the message.
 	"""
-
-	return creator_and_location_censor_policy( fragment, target, site_names=getattr( target, '_v_originating_site_names', () ) )
+	site_names = getattr(target, '_v_originating_site_names', ())
+	return creator_and_location_censor_policy(fragment,
+											  target, 
+											  site_names=site_names)
