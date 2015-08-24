@@ -38,7 +38,7 @@ class IMissingSitePolicy(interface.Interface):
 		:class:`pyramid.httpexceptions.HTTPBadRequest`.
 
 		:param request: The request being processed. Will already have
-			the `possible_site_names` attribute set.
+						the `possible_site_names` attribute set.
 		:param parent_site: The root persistent site containing the dataserver.
 		:return: The site to use
 		"""

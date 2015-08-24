@@ -40,8 +40,8 @@ import gevent
 
 import transaction
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.component.hooks import setSite, getSite, setHooks, clearSite
 
@@ -74,17 +74,18 @@ def _get_possible_site_names(request):
 		origin = request.headers[b'origin'].decode('ascii')
 		__traceback_info__ = origin
 		if origin and '//' in origin and ':' in origin:
-			host = origin.split( '//' )[1].split( ":" )[0]
-			result.append( host.lower() )
+			host = origin.split('//')[1].split(":")[0]
+			result.append(host.lower())
+
 	if request.host:
 		# Host is a plain name/IP address, and potentially port
 		host = request.host.split(':')[0].lower()
-		if host not in result: # no dups
-			result.append( host )
+		if host not in result:  # no dups
+			result.append(host)
 
 	for blacklisted in ('localhost', '0.0.0.0'):
 		if blacklisted in result:
-			result.remove( blacklisted )
+			result.remove(blacklisted)
 
 	return result
 
@@ -99,16 +100,19 @@ def _gevent_spawn(run, *args, **kwargs):
 	return gevent.spawn(run, *args, **kwargs)
 
 # Make zope site managers a bit more compatible with pyramid.
-from zope.site.site import LocalSiteManager as _ZLocalSiteManager
 from zope.cachedescriptors.property import readproperty
-def _notify( self, *events ):
-	for _ in self.subscribers( events, None ):
+from zope.site.site import LocalSiteManager as _ZLocalSiteManager
+
+def _notify(self, *events):
+	for _ in self.subscribers(events, None):
 		pass
+
 _ZLocalSiteManager.notify = _notify
 _ZLocalSiteManager.has_listeners = True
+
 # make the settings a readable property but still overridable
 # on an instance, just in case
-_ZLocalSiteManager.settings = readproperty( lambda s: get_current_request().nti_settings )
+_ZLocalSiteManager.settings = readproperty(lambda s: get_current_request().nti_settings)
 
 class site_tween(object):
 	"""
@@ -137,36 +141,36 @@ class site_tween(object):
 
 	__slots__ = ('handler',)
 
-	def __init__( self, handler ):
+	def __init__(self, handler):
 		self.handler = handler
 
-	def __call__( self, request ):
-		#conn.sync() # syncing the conn aborts the transaction.
+	def __call__(self, request):
+		# conn.sync() # syncing the conn aborts the transaction.
 		site = request.nti_zodb_root_connection.root()['nti.dataserver']
-		self._debug_site( site )
-		self._add_properties_to_request( request )
+		self._debug_site(site)
+		self._add_properties_to_request(request)
 
-		site = _get_site_for_request( request, site )
+		site = _get_site_for_request(request, site)
 
-		setSite( site )
+		setSite(site)
 		__traceback_info__ = self.handler
 		# See comments in the class doc about why we cannot set the Pyramid request/current site
 		try:
-			self._configure_transaction( request )
+			self._configure_transaction(request)
 			created(request)
 			return self.handler(request)
 		finally:
 			clearSite()
 
 	def _add_properties_to_request(self, request):
-		request.environ['nti.pid'] = os.getpid() # helpful in debug tracebacks
+		request.environ['nti.pid'] = os.getpid()  # helpful in debug tracebacks
 		request.environ['nti.node'] = platform.node()
-		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names( request ) )
+		request.environ['nti.possible_site_names'] = tuple(_get_possible_site_names(request))
 		request.environ['nti.gevent_spawn'] = _gevent_spawn
 		# The "proper" way to add properties is with request.set_property, but
 		# this is easier and faster.
 		request.possible_site_names = request.environ['nti.possible_site_names']
-		request.nti_settings = request.registry.settings # shortcut
+		request.nti_settings = request.registry.settings  # shortcut
 		request.nti_gevent_spawn = _gevent_spawn
 		# In [15]: %%timeit
 		#   ....: r = pyramid.request.Request.blank( '/' )
@@ -181,20 +185,17 @@ class site_tween(object):
 		#   ....:
 		# 10000 loops, best of 3: 57.4 us per loop
 
-
-	def _configure_transaction( self, request ):
+	def _configure_transaction(self, request):
 		# NOTE: We have dropped support for pyramid_tm due to breaking changes in 0.7
 		# and instead require our own .tweens.transaction_tween
 		# Now (and only now, that the site is setup since that's when we can access the DB
 		# and get the user) record info in the transaction
 		uid = request.authenticated_userid
 		if uid:
-			transaction.get().setUser( uid )
+			transaction.get().setUser(uid)
 
-
-
-	def _debug_site( self, new_site ):
-		if __debug__: # pragma: no cover
+	def _debug_site(self, new_site):
+		if __debug__:  # pragma: no cover
 			old_site = getSite()
 			# Not sure what circumstances lead to already having a site
 			# here. Have seen it at startup (also with some of the new test machinery). Force it back to none (?)
@@ -203,13 +204,13 @@ class site_tween(object):
 			try:
 				assert old_site is None or old_site is new_site, "Should not have a site already in place"
 			except AssertionError:
-				logger.debug( "Should not have a site already in place: %s", old_site, exc_info=True )
+				logger.debug("Should not have a site already in place: %s", old_site, exc_info=True)
 
 from nti.site.site import get_site_for_site_names
 
 from .interfaces import IMissingSitePolicy
 
-def _get_site_for_request( request, parent_site ):
+def _get_site_for_request(request, parent_site):
 	"""
 	In the context of a request, looks up the named site for the request.
 
@@ -219,12 +220,13 @@ def _get_site_for_request( request, parent_site ):
 
 	"""
 	site_names = request.possible_site_names
-	found_site = get_site_for_site_names( site_names, site=parent_site )
+	found_site = get_site_for_site_names(site_names, site=parent_site)
 	if found_site is parent_site:
 		# This design adds overhead when a site is not
 		# found. This should be uncommon during production,
 		# although common at development time.
-		found_site = component.getGlobalSiteManager().getUtility(IMissingSitePolicy)( request, parent_site )
+		gsm = component.getGlobalSiteManager()
+		found_site = gsm.getUtility(IMissingSitePolicy)(request, parent_site)
 		# We could reduce the overhead a bit by looking up
 		# the utility in the tween factory. The next step would be
 		# to abstract  this entire function to be part of the policy
@@ -235,11 +237,11 @@ def _get_site_for_request( request, parent_site ):
 
 def _DevmodeMissingSitePolicy(request, parent_site):
 	return parent_site
-interface.directlyProvides(_DevmodeMissingSitePolicy,IMissingSitePolicy)
+interface.directlyProvides(_DevmodeMissingSitePolicy, IMissingSitePolicy)
 
 def _ProductionMissingSitePolicy(request, parent_site):
 	raise HTTPBadRequest("Invalid site")
-interface.directlyProvides(_ProductionMissingSitePolicy,IMissingSitePolicy)
+interface.directlyProvides(_ProductionMissingSitePolicy, IMissingSitePolicy)
 
 def site_tween_factory(handler, registry):
 	"""
@@ -251,5 +253,4 @@ def site_tween_factory(handler, registry):
 	# If we wanted to, we could be setting sites up as we traverse as well;
 	# traverse hooks are installed to do this
 	setHooks()
-
-	return site_tween( handler )
+	return site_tween(handler)

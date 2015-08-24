@@ -36,7 +36,6 @@ from pyramid.httpexceptions import HTTPOk
 from pyramid.httpexceptions import HTTPException
 
 class IGreenletsToRun(interface.Interface):
-
 	greenlets = interface.Attribute("A sequence of greenlets to join")
 	response = interface.Attribute("The pyramid response to return")
 
