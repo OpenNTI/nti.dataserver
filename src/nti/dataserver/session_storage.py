@@ -198,7 +198,6 @@ class OwnerBasedAnnotationSessionServiceStorage(persistent.Persistent):
 	def unregister_session(self, session):
 		if session is None:
 			return
-
 		session_id = self._intids_rc.queryId(session)
 		if session_id is not None:
 			# Not registered, or gone

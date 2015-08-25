@@ -68,6 +68,10 @@ class _AbstractWebSocketOperator(object):
 class _WebSocketSender(_AbstractWebSocketOperator):
 	message = None
 
+	def get_session(self):
+		# See note below, we don't want to be responsible for sessions.
+		return self.session_service.get_session( self.session_id, cleanup=False )
+
 	def _do_send(self):
 		message = self.message
 		session = self.get_session()
