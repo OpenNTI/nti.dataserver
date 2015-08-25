@@ -79,9 +79,23 @@ if not hasattr(InMemoryMockRedis, 'connection_pool' ):
 
 # Pretend to have a lock
 if not hasattr( InMemoryMockRedis, 'lock' ):
-	def _lock(self, *args, **kwargs):
-		return threading.Lock()
-	InMemoryMockRedis.lock = _lock
+	class _Lock( object ):
+		def __init__(self):
+			self._lock = threading.Lock()
+
+		def acquire(self, **kwargs):
+			return self._lock.acquire()
+
+		def release(self):
+			self._lock.release()
+		def __enter__(self):
+			self._lock.acquire()
+		def __exit__(self, type, value, traceback):
+			self._lock.release()
+
+	def _get_lock(self, *args, **kwargs):
+		return _Lock()
+	InMemoryMockRedis.lock = _get_lock
 
 # Enforce the type of time arguments for some methods
 # that are commonly mixed up (these arguments are
