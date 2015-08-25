@@ -65,11 +65,6 @@ from ..interfaces import IUserCreatedWithRequestEvent
 
 from . import site_policies
 
-try:
-	from .interfaces import IMathcountsCoppaUserWithoutAgreement
-except ImportError:
-	raise
-
 @component.adapter(IModeledContent, IObjectCreatedEvent)
 def dispatch_content_created_to_user_policies(content, event):
 	component.handle(content, content.creator, event)
@@ -145,6 +140,10 @@ class MathCountsCapabilityFilter(site_policies.NoAvatarUploadCapabilityFilter):
 
 	def filterCapabilities(self, capabilities):
 		result = super(MathCountsCapabilityFilter, self).filterCapabilities(capabilities)
+		try:
+			from .interfaces import IMathcountsCoppaUserWithoutAgreement # pylint
+		except ImportError:
+			raise
 		if not self.context or IMathcountsCoppaUserWithoutAgreement.providedBy(self.context):
 			result.discard(u'nti.platform.p2p.dynamicfriendslists')
 		return result
