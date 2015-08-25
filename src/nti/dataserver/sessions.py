@@ -127,7 +127,7 @@ class SessionService(object):
 				__traceback_info__ = msg_dict
 				msgs = msg_dict['data']
 				msgs = pickle.loads(msgs)  # TODO: Compression?
-				
+
 				# In our background greenlet, we begin and commit
 				# transactions around sending messages to
 				# the proxy queue. If the proxy is transaction aware,
@@ -294,15 +294,17 @@ class SessionService(object):
 		# Let any listeners across the cluster also know it
 		self._publish_msg(b'session_dead', s.session_id, b"42")
 
-	def _validated_session(self, s, send_event=True):
+	def _validated_session(self, s, send_event=True, cleanup=True):
 		""" Returns a live session or None """
 		if s and self._is_session_dead(s):
-			self._session_cleanup(s, send_event=send_event)
+			if cleanup:
+				self._session_cleanup(s, send_event=send_event)
 			return None
 		return s
 
-	def get_session(self, session_id):
-		s = self._validated_session(self._get_session(session_id))
+	def get_session(self, session_id, cleanup=True):
+		s = self._get_session(session_id)
+		s = self._validated_session( s, cleanup=cleanup )
 		if s:
 			s.incr_hits()
 		return s
@@ -480,8 +482,8 @@ class SessionService(object):
 		if not self._dispatch_message_to_proxy(session_id, name, msg_str):
 			transactions.do(target=self,
 							 call=self._publish_msg_to_redis,
-							 args=(self.channel_name, 
-								   pickle.dumps([session_id, 
+							 args=(self.channel_name,
+								   pickle.dumps([session_id,
 								   name, msg_str], pickle.HIGHEST_PROTOCOL),))
 
 	def queue_message_from_client(self, session_id, msg):
