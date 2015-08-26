@@ -74,10 +74,13 @@ class TestWebSocket(ConfiguringTestBase):
 		transport = transports.WebsocketTransport(handler)
 		transport.handler = handler
 
+		def _get_session(x, **kwargs):
+			return sess
+
 		sess = Mock()
 		sess.session_id = 1
 		sess.incr_hits = lambda: 1
-		handler.server.session_manager.get_session = lambda x: sess
+		handler.server.session_manager.get_session = _get_session
 		sess.socket = Mock()
 		sess.socket.protocol = protocol.SocketIOProtocolFormatter1()
 
@@ -97,7 +100,7 @@ class TestWebSocket(ConfiguringTestBase):
 	@mock_dataserver.WithMockDS
 	def test_sender(self):
 		class Service(object):
-			def get_session( self, sid ): return None
+			def get_session( self, sid, **kwargs ): return None
 
 		proxy = _WebsocketSessionEventProxy()
 		sender = _WebSocketSender( 1, proxy, Service(), (), None )
@@ -124,7 +127,7 @@ class TestWebSocket(ConfiguringTestBase):
 				self.killed = True
 		class Service(object):
 			session = None
-			def get_session( self, sid ): return self.session
+			def get_session( self, sid, **kwargs ): return self.session
 
 		class WebSocket(object):
 			def __init__(self): self.pkts = []
