@@ -132,6 +132,11 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		# Our simple-minded approach is to simply void the interaction during this process
 		# (which works so long as zope.securitypolicy doesn't get involved...)
 		# This is somewhat difficult to test the side-effects of, sadly.
+
+		# JZ - 8.2015 - Disabling interaction also prevents stream changes
+		# from being broadcast (specifically topic creations). We've seen such
+		# changes end up causing conflict issues when managing sessions. These
+		# retries cause syncs to take much longer to perform.
 		now = time.time()
 		result = LocatedExternalDict()
 		result['Started'] = now
@@ -150,6 +155,7 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 
 	def __call__(self):
 		logger.info( 'Acquiring sync lock' )
+		# With 'with', we deadlock while attempting to re-acquire the lock.
 		lock = self.lock
 		try:
 			logger.info( 'Starting sync' )
