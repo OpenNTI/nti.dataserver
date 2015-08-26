@@ -250,5 +250,6 @@ def install_container_catalog(site_manager_container, intids=None):
 		catalog.__name__ = CATALOG_INDEX_NAME
 		catalog.__parent__ = site_manager_container
 		intids.register(catalog)
-		lsm.registerUtility(catalog, provided=IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
+		lsm.registerUtility(catalog, provided=IContainedObjectCatalog,
+							name=CATALOG_INDEX_NAME)
 	return catalog

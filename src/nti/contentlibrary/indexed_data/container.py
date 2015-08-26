@@ -128,7 +128,6 @@ class TimelineIndexedDataContainer(IndexedDataContainer):
 class SlideDeckIndexedDataContainer(IndexedDataContainer):
 	type = NTI_SLIDE_DECK_TYPE
 
-
 from zope.deprecation import deprecated
 
 from zope.container.contained import Contained
