@@ -16,6 +16,8 @@ from zope.event import notify
 
 from zope.lifecycleevent import IObjectModifiedEvent
 
+from zope.security.management import queryInteraction
+
 from nti.intid.interfaces import IIntIdAddedEvent
 from nti.intid.interfaces import IIntIdRemovedEvent
 
@@ -78,7 +80,8 @@ def _enqueue_change_to_target( target, change, accum=None ):
 # we fire) can make use of them.
 
 def _stream_preflight( contained ):
-	if not IEntity.providedBy( getattr( contained, 'creator', None ) ):
+	if not IEntity.providedBy( getattr( contained, 'creator', None ) ) \
+		or queryInteraction() is None:
 		return None
 	try:
 		return getattr( contained, 'sharingTargets' )
