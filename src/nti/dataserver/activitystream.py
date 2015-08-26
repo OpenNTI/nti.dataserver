@@ -80,6 +80,8 @@ def _enqueue_change_to_target( target, change, accum=None ):
 # we fire) can make use of them.
 
 def _stream_preflight( contained ):
+	# Make sure we don't broadcast changes for system created
+	# objects or when interaction is disabled.
 	if not IEntity.providedBy( getattr( contained, 'creator', None ) ) \
 		or queryInteraction() is None:
 		return None
