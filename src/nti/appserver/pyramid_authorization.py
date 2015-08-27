@@ -142,8 +142,8 @@ from ZODB.POSException import POSKeyError
 from nti.common.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
-
-	cache = _get_cache(get_current_request() or _Fake(), '_acl_adding_lineage_cache')
+	request = get_current_request() or _Fake()
+	cache = _get_cache(request, '_acl_adding_lineage_cache')
 	for location in _pyramid_lineage(obj):
 		try:
 			# Native ACL. Run with it.
