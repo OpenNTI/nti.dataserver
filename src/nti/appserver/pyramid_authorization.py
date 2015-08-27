@@ -16,17 +16,24 @@ from zope import component
 from zope.security.interfaces import NoInteraction
 from zope.security.management import checkPermission
 
-import pyramid.authorization
-import pyramid.security as psec
+from pyramid import security as psec
+from pyramid import authorization as pauth
 from pyramid.threadlocal import get_current_request
 from pyramid.traversal import lineage as _pyramid_lineage
 from pyramid.authorization import ACLAuthorizationPolicy as _PyramidACLAuthorizationPolicy
 
+from nti.dataserver.authorization import ACT_READ
+from nti.dataserver.authorization import ACT_CREATE
+from nti.dataserver.authorization import ACT_DELETE
+from nti.dataserver.authorization import ACT_UPDATE
+
 from nti.dataserver.authorization_acl import ACL
 from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
-from nti.dataserver.authorization import ACT_UPDATE, ACT_READ, ACT_CREATE, ACT_DELETE
-from nti.dataserver.interfaces import ACLProxy, IAuthenticationPolicy, IAuthorizationPolicy
+
+from nti.dataserver.interfaces import ACLProxy
+from nti.dataserver.interfaces import IAuthorizationPolicy
+from nti.dataserver.interfaces import IAuthenticationPolicy
 
 from nti.externalization.interfaces import StandardExternalFields
 
@@ -51,11 +58,10 @@ def ACLAuthorizationPolicy(_factory=_PyramidACLAuthorizationPolicy):
 	# to get what we want is to patch the 'lineage' function it uses to return proxy
 	# objects if there is no native ACL, but we can generate one
 
-	if pyramid.authorization.lineage is _pyramid_lineage:
+	if pauth.lineage is _pyramid_lineage:
 		# patch it
-		logger.debug( "patching pyramid.authorization to use ACL providers" )
-		pyramid.authorization.lineage = _lineage_that_ensures_acls
-
+		logger.debug("patching pyramid.authorization to use ACL providers")
+		pauth.lineage = _lineage_that_ensures_acls
 	return _factory()
 
 def ZopeACLAuthorizationPolicy():
@@ -78,7 +84,7 @@ def ZopeACLAuthorizationPolicy():
 			# policy. We assume
 			# that if we have the correct interaction in place, which allows us to
 			# derive the relevant principals (only a concern during impersonation)
-			if not permits: # Or maybe if permits.ace == '<default deny>'?
+			if not permits:  # Or maybe if permits.ace == '<default deny>'?
 				zope_permits = False
 				# Turn IPermission objects into the strings that
 				# zope expects (unless we already have a string)
@@ -112,11 +118,11 @@ class _Fake(object):
 class _Cache(dict):
 	pass
 
-def _get_cache( obj, name ):
-	cache = getattr( obj, name, None )
+def _get_cache(obj, name):
+	cache = getattr(obj, name, None)
 	if cache is None:
 		cache = _Cache()
-		setattr( obj, name, cache )
+		setattr(obj, name, cache)
 	return cache
 
 def _clear_caches():
@@ -126,18 +132,18 @@ def _clear_caches():
 
 	for k, v in vars(req).items():
 		if isinstance(v, _Cache):
-			delattr( req, k )
+			delattr(req, k)
 
 import zope.testing.cleanup
-zope.testing.cleanup.addCleanUp( _clear_caches )
+zope.testing.cleanup.addCleanUp(_clear_caches)
 
 from ZODB.POSException import POSKeyError
 
 from nti.common.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
-	
-	cache = _get_cache( get_current_request() or _Fake(), '_acl_adding_lineage_cache' )
+
+	cache = _get_cache(get_current_request() or _Fake(), '_acl_adding_lineage_cache')
 	for location in _pyramid_lineage(obj):
 		try:
 			# Native ACL. Run with it.
@@ -145,15 +151,15 @@ def _lineage_that_ensures_acls(obj):
 			# would permit objects to easily manage their own ACLs using
 			# our ACLProvider machinery and supporting caching on the object
 			# through zope.cachedescriptors
-			getattr( location, '__acl__' )
+			getattr(location, '__acl__')
 			yield location
 		except AttributeError:
 			# OK, can we create one?
 			cache_key = id(removeAllProxies(location))
-			acl = cache.get( cache_key )
+			acl = cache.get(cache_key)
 			if acl is None:
 				try:
-					acl = ACL( location, default=_marker )
+					acl = ACL(location, default=_marker)
 				except AttributeError:
 					# Sometimes the ACL providers might fail with this;
 					# especially common in test objects
@@ -166,15 +172,15 @@ def _lineage_that_ensures_acls(obj):
 				yield location
 			else:
 				# Yes we can. So do so
-				yield ACLProxy( location, acl )
-		except POSKeyError: # pragma: no cover
+				yield ACLProxy(location, acl)
+		except POSKeyError:  # pragma: no cover
 			# Yikes
 			logger.warn('Cannot access ACL due to broken reference: %s', type(obj), exc_info=True)
 			# It's highly likely we won't be able to get __parent__ either.
 			# Check that...
 			try:
-				getattr( location, '__parent__')
-			except (POSKeyError,AttributeError):
+				getattr(location, '__parent__')
+			except (POSKeyError, AttributeError):
 				break
 
 			# Ok, we can still get __parent__, but some sub-object in our __acl__
@@ -184,7 +190,7 @@ def _lineage_that_ensures_acls(obj):
 			# actually being traversed to find acls, or just to find parents...
 			# for security, we return an object that denies all permissions
 			fake = _Fake()
-			fake.__acl__ = acl_from_aces( ace_denying_all() )
+			fake.__acl__ = acl_from_aces(ace_denying_all())
 			fake.__parent__ = location.__parent__
 			yield fake
 
@@ -193,29 +199,44 @@ def can_create(obj, request=None, skip_cache=False):
 	Can the current user create over the specified object? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_creatable_cache', ACT_CREATE, obj, request, skip_cache=skip_cache)
+	return _caching_permission_check('_acl_is_creatable_cache', 
+									 ACT_CREATE, 
+									 obj,
+									 request, 
+									 skip_cache=skip_cache)
 
 def is_writable(obj, request=None, skip_cache=False):
 	"""
 	Is the given object writable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_writable_cache', ACT_UPDATE, obj, request, skip_cache=skip_cache)
+	return _caching_permission_check('_acl_is_writable_cache', 
+									 ACT_UPDATE, 
+									 obj,
+									 request, 
+									 skip_cache=skip_cache)
 
 def is_deletable(obj, request=None, skip_cache=False):
 	"""
 	Is the given object deletable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_deletable_cache', ACT_DELETE, obj, request, skip_cache=skip_cache)
-
+	return _caching_permission_check('_acl_is_deletable_cache', 
+									 ACT_DELETE, 
+									 obj, 
+									 request,
+									 skip_cache=skip_cache)
 
 def is_readable(obj, request=None, skip_cache=False):
 	"""
 	Is the given object readable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_readable_cache', ACT_READ, obj, request, skip_cache=skip_cache)
+	return _caching_permission_check('_acl_is_readable_cache', 
+									 ACT_READ,
+									 obj,
+									 request,
+									 skip_cache=skip_cache)
 
 def _caching_permission_check(cache_name, permission, obj, request, skip_cache=False):
 	"""
@@ -242,7 +263,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 	# like the zope.site.threadSiteSubscriber that does the same thing for
 	# pyramid.threadlocal, but see zope_site_tween for why that doesn't work Here we cheap out
 	# and re-implement has_permission to use the desired registry.
-	check_value = _has_permission( permission, obj, reg, authn_policy, principals )
+	check_value = _has_permission(permission, obj, reg, authn_policy, principals)
 	if not check_value and authn_policy is not None:
 		# Try externalized objects
 
@@ -250,10 +271,10 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 		# then IExternalizedObject.providedBy and an /in/
 		try:
 			ext_creator_name = obj[StandardExternalFields.CREATOR]
-			auth_userid = authn_policy.authenticated_userid( request )
+			auth_userid = authn_policy.authenticated_userid(request)
 
 			check_value = ext_creator_name == auth_userid
-		except (KeyError,AttributeError,TypeError):
+		except (KeyError, AttributeError, TypeError):
 			pass
 
 	if not skip_cache:
@@ -261,19 +282,21 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 
 	return check_value
 
-def _get_effective_principals( request ):
+def _get_effective_principals(request):
 	""" Return the principals as a tuple, plus the auth policy and registry (optimization) """
-	reg = component.getSiteManager() # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
+	reg = component.getSiteManager()  # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
 
 	authn_policy = reg.queryUtility(IAuthenticationPolicy)
 	if authn_policy is None:
 		return (psec.Everyone,), None, reg
 
-
-	principals = authn_policy.effective_principals(request) if request is not None else (psec.Everyone,)
+	if request is not None:
+		principals = authn_policy.effective_principals(request) 
+	else:
+		principals = (psec.Everyone,)
 	return tuple(principals), authn_policy, reg
 
-def _has_permission( permission, context, reg, authn_policy, principals  ):
+def _has_permission(permission, context, reg, authn_policy, principals):
 	"""
 	Check the given permission on the given context object in the given request.
 
@@ -283,13 +306,12 @@ def _has_permission( permission, context, reg, authn_policy, principals  ):
 		return psec.Allowed('No authentication policy in use.')
 
 	authz_policy = reg.queryUtility(IAuthorizationPolicy)
-	if authz_policy is None: # pragma: no cover
+	if authz_policy is None:  # pragma: no cover
 		raise ValueError('Authentication policy registered without '
-						 'authorization policy') # should never happen
-
+						 'authorization policy')  # should never happen
 	return authz_policy.permits(context, principals, permission)
 
-def has_permission( permission, context, request=None ):
+def has_permission(permission, context, request=None):
 	request = request or get_current_request()
-	principals, authn_policy, reg = _get_effective_principals( request )
-	return _has_permission( permission, context, reg, authn_policy, principals )
+	principals, authn_policy, reg = _get_effective_principals(request)
+	return _has_permission(permission, context, reg, authn_policy, principals)
