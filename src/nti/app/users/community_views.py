@@ -19,8 +19,6 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
-from perfmetrics import metricmethod
-
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
@@ -284,7 +282,6 @@ class CommunityActivityView(UGDView):
 			return True
 		return False, security_check
 
-	@metricmethod
 	def getObjectsForId(self, *args, **kwargs ):
 		context = self.request.context
 		if not context.public and self.remoteUser not in context:
@@ -301,13 +298,12 @@ class CommunityActivityView(UGDView):
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_comm)
 		
-		topics_intids = intids.family.IF.LFSet()
+		seen = set()
 		board = ICommunityBoard(context, None) or {}
 		for forum in board.values():
-			for topic in forum.values():
-				uid = intids.queryId(topic)
-				if uid is not None:
-					topics_intids.add(uid)
+			seen.update(intids.queryId(t) for t in forum.values())
+		seen.discard(None)
+		topics_intids = intids.family.IF.LFSet(seen)
 		
 		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
 		items = TraxResultSet(all_intids, intids, ignore_invalid=True)

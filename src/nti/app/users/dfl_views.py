@@ -17,26 +17,19 @@ from zope import component
 
 from zope.catalog.interfaces import ICatalog
 
-from zope.container.interfaces import INameChooser
-
 from zope.intid.interfaces import IIntIds
 
 from pyramid.view import view_config
 from pyramid import httpexceptions as hexc
 
 from nti.app.authentication import get_remote_user
-from nti.app.base.abstract_views import AbstractAuthenticatedView
-from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.appserver.ugd_query_views import UGDView
 from nti.appserver.ugd_edit_views import UGDDeleteView
 
-from nti.common.maps import CaseInsensitiveDict
-
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.contenttypes.forums.forum import DFLForum
 from nti.dataserver.contenttypes.forums.interfaces import IDFLBoard
 from nti.dataserver.contenttypes.forums.interfaces import IHeadlinePost
 
@@ -130,41 +123,13 @@ class DFLActivityView(UGDView):
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		top_level_shared_intids = toplevel_intids_extent.intersection(intids_shared_with_dfl)
 
-		topics_intids = intids.family.IF.LFSet()
+		seen = set()
 		board = IDFLBoard(context, None) or {}
 		for forum in board.values():
-			for topic in forum.values():
-				uid = intids.queryId(topic)
-				if uid is not None:
-					topics_intids.add(uid)
+			seen.update(intids.queryId(t) for t in forum.values())
+		seen.discard(None)
+		topics_intids = intids.family.IF.LFSet(seen)
 
 		all_intids = intids.family.IF.union(topics_intids, top_level_shared_intids)
 		items = TraxResultSet(all_intids, intids, ignore_invalid=True)
 		return (items,)
-
-@view_config(route_name='objects.generic.traversal',
-			 name='CreateForum',
-			 request_method='POST',
-			 context=IDynamicSharingTargetFriendsList,
-			 permission=nauth.ACT_UPDATE)
-class DFLCreateForumView(AbstractAuthenticatedView,
-						 ModeledContentUploadRequestUtilsMixin):
-
-	def readInput(self, value=None):
-		result = super(DFLCreateForumView, self).readInput(value=value)
-		result = CaseInsensitiveDict(result)
-		return result
-
-	def _do_call(self):
-		value = self.readInput()
-		title = value.get('title')
-		description = value.get('description')
-		if not title:
-			raise hexc.HTTPUnprocessableEntity(_("Must provide a forum title."))
-		if not description:
-			raise hexc.HTTPUnprocessableEntity(_("Must provide a forum description."))
-		board = IDFLBoard(self.request.context)
-		forum = DFLForum(title=title, description=description)
-		name = INameChooser(board).chooseName(forum.title, forum)
-		board[name] = forum
-		# TODO: Set ACL
