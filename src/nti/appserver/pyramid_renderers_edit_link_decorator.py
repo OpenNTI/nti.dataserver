@@ -5,6 +5,7 @@ A decorator for the 'edit' link
 
 .. $Id$
 """
+
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
@@ -18,13 +19,14 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import is_deletable
 
+from nti.dataserver.users import User
+
 from nti.dataserver.interfaces import IUser
-from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
+from nti.dataserver.interfaces import ICreated
+from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 # make sure we use nti.dataserver.traversal to find the root site
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
-
-from nti.dataserver.users import User
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
@@ -67,13 +69,13 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			link.__parent__ = context.__parent__
 			link.__name__ = context.__name__
 		else:
-			link = Link( to_external_ntiid_oid( context ),
+			link = Link(to_external_ntiid_oid(context),
 						 rel='edit',
 						 method=self.link_method)
 			link.__parent__ = context
 			# XXX: Is this necessary anymore?
 			link.__name__ = ''
-			interface.alsoProvides( link, ILocation )
+			interface.alsoProvides(link, ILocation)
 
 		try:
 			# We make the link ICreated so that we go to the /Objects/
@@ -86,23 +88,28 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			creator = context.creator
 			if IUser.providedBy(creator):
 				link.creator = context.creator
-				interface.alsoProvides( link, ICreated )
+				interface.alsoProvides(link, ICreated)
 		except AttributeError:
 			pass
 		return link
 
 	def _preflight_context(self, context):
-		""" We must either have a persistent object, or one with a traversable path """
-		return 	getattr( context, '_p_jar', None ) or \
+		""" 
+		We must either have a persistent object, or one with a traversable path 
+		"""
+		return 	getattr(context, '_p_jar', None) or \
 				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
+		# CS/JZ 2015-08-27 for performace reasons we are not checking the
+		# ACL using is_writable(context, request=self.request), we simply
+		# check the creator of the object
 		remote_user = self.request.remote_user
-		creator = getattr( context, 'creator', None )
+		creator = getattr(context, 'creator', None)
 		if remote_user is None or creator is None:
 			return False
 
-		remote_user = User.get_user( remote_user )
+		remote_user = User.get_user(remote_user)
 		is_owner = 	creator is not None \
 				and remote_user is not None \
 				and creator == remote_user
@@ -112,11 +119,11 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
 				and self._preflight_context(context))
 
-	def _do_decorate_external( self, context, mapping ):
+	def _do_decorate_external(self, context, mapping):
 		# make sure there is no edit link already
 		# permission check is relatively expensive
 
-		links = mapping.setdefault( LINKS, [] )
+		links = mapping.setdefault(LINKS, [])
 		needs_edit = True
 		for l in links:
 			if getattr(l, 'rel', None) == 'edit':
@@ -137,33 +144,33 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			# chatserver.IMeeting (which is IModeledContent and IPersistent)
 			# Our options are to either catch that here, or introduce an
 			# opt-in interface that everything that wants 'edit' implements
-			nearest_site = ds_find_nearest_site( context )
+			nearest_site = ds_find_nearest_site(context)
 		except TypeError:
 			nearest_site = None
 
 		if nearest_site is None:
-			logger.debug( "Not providing edit/href links for %s, could not find site",
-						  getattr(context, '__class__', type(context)) )
+			logger.debug("Not providing edit/href links for %s, could not find site",
+						  getattr(context, '__class__', type(context)))
 			return
 
 		try:
 			edit_link = self._make_link_to_context(context)
-		except TypeError: # commonly a failure to adapt something
-			logger.debug( "Not providing edit/href links for %s, failed to get link",
+		except TypeError:  # commonly a failure to adapt something
+			logger.debug("Not providing edit/href links for %s, failed to get link",
 						  getattr(context, '__class__', type(context)),
 						  exc_info=True)
 			return
 
 		if needs_edit:
-			links.append( edit_link )
+			links.append(edit_link)
 		if needs_href or needs_edit:
 			# For cases that we can, make edit and the toplevel href be the same.
 			# this improves caching
-			mapping['href'] = render_link( edit_link, nearest_site=nearest_site )['href']
+			mapping['href'] = render_link(edit_link, nearest_site=nearest_site)['href']
 
 			# We used to catch this when rendering a link:
-			#except (KeyError,ValueError,AssertionError,TypeError):
-			#	logger.log( loglevels.TRACE, "Failed to get href link for %s", context, exc_info=True )
+			# except (KeyError,ValueError,AssertionError,TypeError):
+			# 	logger.log( loglevels.TRACE, "Failed to get href link for %s", context, exc_info=True )
 			# But that could still fail later when the edit link is rendered?
 			# So why catch here? Does rendering the edit link also catch?
 
@@ -174,8 +181,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 class OIDEditLinkDecorator(EditLinkDecorator):
 	"""
-	A decorator for persistent objects, producing stable
-	OIDs.
+	A decorator for persistent objects, producing stable OIDs.
 	"""
 
 	allow_traversable_paths = False
@@ -186,7 +192,7 @@ class OIDEditOrDeleteLinkDecorator(OIDEditLinkDecorator):
 	"""
 
 	def _has_permission(self, context):
-		writable = super(OIDEditOrDeleteLinkDecorator,self)._has_permission(context)
+		writable = super(OIDEditOrDeleteLinkDecorator, self)._has_permission(context)
 		if writable:
 			return writable
 		deleteable = is_deletable(context, request=self.request)
