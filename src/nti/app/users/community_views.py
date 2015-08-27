@@ -24,7 +24,7 @@ from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
-from nti.appserver.ugd_query_views import _UGDView
+from nti.appserver.ugd_query_views import UGDView
 
 from nti.common.maps import CaseInsensitiveDict
 
@@ -271,12 +271,17 @@ class TraxResultSet(ResultSet):
 			 request_method='GET',
 			 context=ICommunity,
 			 permission=nauth.ACT_READ)
-class CommunityActivityView(_UGDView):
+class CommunityActivityView(UGDView):
 
 	def _set_user_and_ntiid(self, *args, **kwargs):
 		self.ntiid = u''
 		self.user = self.remoteUser
 	
+	def _get_security_check(self):
+		def security_check(x):
+			return True
+		return False, security_check
+
 	def getObjectsForId(self, *args, **kwargs ):
 		context = self.request.context
 		if not context.public and self.remoteUser not in context:
