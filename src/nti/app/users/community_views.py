@@ -19,6 +19,8 @@ from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
+from perfmetrics import metricmethod
+
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import BatchingUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
@@ -282,6 +284,7 @@ class CommunityActivityView(UGDView):
 			return True
 		return False, security_check
 
+	@metricmethod
 	def getObjectsForId(self, *args, **kwargs ):
 		context = self.request.context
 		if not context.public and self.remoteUser not in context:
