@@ -16,7 +16,6 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
 
 from nti.dataserver.interfaces import IUser
@@ -24,6 +23,8 @@ from nti.dataserver.interfaces import ICreated, IShouldHaveTraversablePath
 
 # make sure we use nti.dataserver.traversal to find the root site
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
+
+from nti.dataserver.users import User
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
@@ -96,7 +97,17 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		return is_writable(context, request=self.request)
+		remote_user = self.request.remote_user
+		creator = getattr( context, 'creator', None )
+		if remote_user is None or creator is None:
+			return False
+
+		creator = User.get_user( creator )
+		remote_user = User.get_user( remote_user )
+		is_owner = 	creator is not None \
+				and remote_user is not None \
+				and creator == remote_user
+		return is_owner
 
 	def _predicate(self, context, result):
 		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
@@ -105,6 +116,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external( self, context, mapping ):
 		# make sure there is no edit link already
 		# permission check is relatively expensive
+
 		links = mapping.setdefault( LINKS, [] )
 		needs_edit = True
 		for l in links:
