@@ -17,9 +17,8 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
+from nti.appserver.pyramid_authorization import is_writable
 from nti.appserver.pyramid_authorization import is_deletable
-
-from nti.dataserver.users import User
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICreated
@@ -101,19 +100,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		# CS/JZ 2015-08-27 for performace reasons we are not checking the
-		# ACL using is_writable(context, request=self.request), we simply
-		# check the creator of the object
-		remote_user = self.request.remote_user
-		creator = getattr(context, 'creator', None)
-		if remote_user is None or creator is None:
-			return False
-
-		remote_user = User.get_user(remote_user)
-		is_owner = 	creator is not None \
-				and remote_user is not None \
-				and creator == remote_user
-		return is_owner
+		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
 		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
