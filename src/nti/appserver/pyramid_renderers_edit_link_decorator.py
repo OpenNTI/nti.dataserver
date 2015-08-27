@@ -102,7 +102,6 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		if remote_user is None or creator is None:
 			return False
 
-		creator = User.get_user( creator )
 		remote_user = User.get_user( remote_user )
 		is_owner = 	creator is not None \
 				and remote_user is not None \
