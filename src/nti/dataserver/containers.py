@@ -20,12 +20,11 @@ import numbers
 import collections
 from random import randint
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
+
 from zope.annotation import interfaces as annotation
-from zope.location import interfaces as loc_interfaces
-from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
 from zope.container.contained import contained
 from zope.container.btree import BTreeContainer
@@ -35,6 +34,10 @@ from zope.container.interfaces import IContained
 from zope.container.interfaces import INameChooser
 from zope.container.interfaces import IBTreeContainer
 from zope.container.interfaces import IContainerModifiedEvent
+
+from zope.lifecycleevent.interfaces import IObjectModifiedEvent
+
+from zope.location import interfaces as loc_interfaces
 
 from zope.site.interfaces import IFolder
 from zope.site.site import SiteManagerContainer
