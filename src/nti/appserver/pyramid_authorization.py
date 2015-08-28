@@ -16,10 +16,6 @@ from zope import component
 from zope.security.interfaces import NoInteraction
 from zope.security.management import checkPermission
 
-from zope.traversing.interfaces import IEtcNamespace
-
-from ZODB.POSException import POSError
-
 from pyramid import security as psec
 from pyramid import authorization as pauth
 from pyramid.threadlocal import get_current_request
@@ -36,11 +32,9 @@ from nti.dataserver.authorization_acl import acl_from_aces
 from nti.dataserver.authorization_acl import ace_denying_all
 
 from nti.dataserver.interfaces import ACLProxy
-from nti.dataserver.interfaces import IMemcacheClient
 from nti.dataserver.interfaces import IAuthorizationPolicy
 from nti.dataserver.interfaces import IAuthenticationPolicy
 
-from nti.externalization.oids import to_external_oid
 from nti.externalization.interfaces import StandardExternalFields
 
 # Hope nobody is monkey patching this after we're imported
@@ -140,112 +134,67 @@ def _clear_caches():
 		if isinstance(v, _Cache):
 			delattr(req, k)
 
-def _last_synchronized():
-	hostsites = component.queryUtility(IEtcNamespace, name='hostsites')
-	result = getattr(hostsites, 'lastSynchronized', 0)
-	return str(result or 0)
-
-def _memcache_client():
-	return component.queryUtility(IMemcacheClient)
-
-def generic_cache_key(context, path=None):
-	try:
-		oid = to_external_oid(context)
-		path = _last_synchronized() if not path else path
-		return (oid + '/@@__acl__' + '/' + path).encode('utf-8')
-	except (TypeError, POSError):  # to_external_oid throws if context not saved
-		return None
-
-def get_from_memcache(key, client=None):
-	client = _memcache_client() if client is None else client
-	if client is not None:
-		try:
-			return client.get(key)
-		except Exception, e:
-			logger.error("Cannot save value for key in memcache. %s", key, e)
-	return None
-
-def save_in_memcache(key, value, client=None):
-	client = _memcache_client() if client is None else client
-	if client is not None:
-		try:
-			client.set(key, value)
-			return True
-		except Exception, e:
-			logger.error("Cannot save value for key in memcache. %s", key, e)
-	return False
-
 import zope.testing.cleanup
 zope.testing.cleanup.addCleanUp(_clear_caches)
+
+from ZODB.POSException import POSKeyError
 
 from nti.common.proxy import removeAllProxies
 
 def _lineage_that_ensures_acls(obj):
-	client = _memcache_client()
-	lastSync = _last_synchronized()
 	request = get_current_request() or _Fake()
 	cache = _get_cache(request, '_acl_adding_lineage_cache')
 	for location in _pyramid_lineage(obj):
 		result = None
-		unproxied = removeAllProxies(location)
-		key = generic_cache_key(unproxied, lastSync)
-		if key is not None:
-			acl = get_from_memcache(key, client)
-			if acl is not None:
-				result = ACLProxy(location, acl)
-		if result is None:
-			try:
-				# Native ACL. Run with it.
-				# Note that as of 1.5a2 this can now be a callable object, which
-				# would permit objects to easily manage their own ACLs using
-				# our ACLProvider machinery and supporting caching on the object
-				# through zope.cachedescriptors
-				getattr(location, '__acl__')
-				result = location
-			except AttributeError:
-				# OK, can we create one?
-				cache_key = id(unproxied)
-				acl = cache.get(cache_key)
-				if acl is None:
-					try:
-						acl = ACL(location, default=_marker)
-					except AttributeError:
-						# Sometimes the ACL providers might fail with this;
-						# especially common in test objects
-						acl = _marker
-					cache[cache_key] = acl
-	
-				if acl is _marker:
-					# Nope. So still return the original object,
-					# which pyramid will inspect and then ignore
-					result = location
-				else:
-					# Yes we can. So do so
-					result = ACLProxy(location, acl)
-			except POSError:  # pragma: no cover
-				# Yikes
-				logger.warn('Cannot access ACL due to broken reference: %s',
-							type(obj), exc_info=True)
-				# It's highly likely we won't be able to get __parent__ either.
-				# Check that...
+		try:
+			# Native ACL. Run with it.
+			# Note that as of 1.5a2 this can now be a callable object, which
+			# would permit objects to easily manage their own ACLs using
+			# our ACLProvider machinery and supporting caching on the object
+			# through zope.cachedescriptors
+			getattr(location, '__acl__')
+			result = location
+		except AttributeError:
+			# OK, can we create one?
+			cache_key = id(removeAllProxies(location))
+			acl = cache.get(cache_key)
+			if acl is None:
 				try:
-					getattr(location, '__parent__')
-				except (POSError, AttributeError):
-					break
-	
-				# Ok, we can still get __parent__, but some sub-object in our __acl__
-				# raised. Now, it could be that our __acl__ was trying to
-				# deny specific rights that we would otherwise inherit
-				# from our parents...we can't know. We also can't know if we're
-				# actually being traversed to find acls, or just to find parents...
-				# for security, we return an object that denies all permissions
-				fake = _Fake()
-				fake.__acl__ = acl_from_aces(ace_denying_all())
-				fake.__parent__ = location.__parent__
-				result = fake
-			# save acl
-			if key is not None and hasattr(result, '__acl__'):
-				save_in_memcache(key, result.__acl__, client)
+					acl = ACL(location, default=_marker)
+				except AttributeError:
+					# Sometimes the ACL providers might fail with this;
+					# especially common in test objects
+					acl = _marker
+				cache[cache_key] = acl
+
+			if acl is _marker:
+				# Nope. So still return the original object,
+				# which pyramid will inspect and then ignore
+				result = location
+			else:
+				# Yes we can. So do so
+				result = ACLProxy(location, acl)
+		except POSKeyError:  # pragma: no cover
+			# Yikes
+			logger.warn('Cannot access ACL due to broken reference: %s',
+						type(obj), exc_info=True)
+			# It's highly likely we won't be able to get __parent__ either.
+			# Check that...
+			try:
+				getattr(location, '__parent__')
+			except (POSKeyError, AttributeError):
+				break
+
+			# Ok, we can still get __parent__, but some sub-object in our __acl__
+			# raised. Now, it could be that our __acl__ was trying to
+			# deny specific rights that we would otherwise inherit
+			# from our parents...we can't know. We also can't know if we're
+			# actually being traversed to find acls, or just to find parents...
+			# for security, we return an object that denies all permissions
+			fake = _Fake()
+			fake.__acl__ = acl_from_aces(ace_denying_all())
+			fake.__parent__ = location.__parent__
+			result = fake
 		yield result
 
 def can_create(obj, request=None, skip_cache=False):
@@ -326,7 +275,6 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 		try:
 			ext_creator_name = obj[StandardExternalFields.CREATOR]
 			auth_userid = authn_policy.authenticated_userid(request)
-
 			check_value = ext_creator_name == auth_userid
 		except (KeyError, AttributeError, TypeError):
 			pass
