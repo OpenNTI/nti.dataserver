@@ -1512,6 +1512,13 @@ class IUserBlacklistedStorage(interface.Interface):
 		Remove the given username from the blacklist.
 		"""
 
+class IInteractionQuerier(interface.Interface):
+	
+	def queryInteraction():
+		"""
+		return the current security interaction
+		"""
+		
 # Weak Refs and related BWC exports
 
 import zope.deferredimport

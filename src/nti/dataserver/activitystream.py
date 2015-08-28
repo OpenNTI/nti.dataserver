@@ -12,6 +12,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.event import notify
 
 from zope.lifecycleevent import IObjectModifiedEvent
@@ -31,7 +32,7 @@ from nti.intid.interfaces import IntIdMissingError
 
 from .activitystream_change import Change
 
-def _enqueue_change_to_target( target, change, accum=None ):
+def _enqueue_change_to_target(target, change, accum=None):
 	"""
 	Enqueue the ``change`` to the ``target``. If the ``target`` can be iterated
 	across to expand into additional targets, this method will recurse
@@ -54,7 +55,7 @@ def _enqueue_change_to_target( target, change, accum=None ):
 	target_key = (target, change.type)
 	if target_key in accum:
 		return
-	accum.add( target_key )
+	accum.add(target_key)
 
 	# Fire the change off to the user
 	notify(TargetedStreamChangeEvent(change, target))
@@ -71,7 +72,7 @@ def _enqueue_change_to_target( target, change, accum=None ):
 		# count, and sends a real-time notice to connected sockets.
 		# TODO: Can we make it be just the later?
 		# Or remove _get_dynamic_sharing_targets_for_read?
-		_enqueue_change_to_target( nested_entity, change, accum=accum )
+		_enqueue_change_to_target(nested_entity, change, accum=accum)
 
 # TODO: These listeners should probably be registered on something
 # higher, like IModeledContent?
@@ -79,14 +80,34 @@ def _enqueue_change_to_target( target, change, accum=None ):
 # around Zope catalogs having been updated so that we (and listeners to what
 # we fire) can make use of them.
 
-def _stream_preflight( contained ):
+from zope import interface
+
+from .interfaces import IInteractionQuerier
+
+@interface.implementer(IInteractionQuerier)
+class TestInteractionQuerier(object):
+
+	def queryInteraction(self):
+		return self
+
+@interface.implementer(IInteractionQuerier)
+class InteractionQuerier(object):
+
+	def queryInteraction(self):
+		return queryInteraction()
+
+def hasQueryInteraction():
+	querier = component.queryUtility(IInteractionQuerier)
+	return querier.queryInteraction() is not None if querier is not None else False
+
+def _stream_preflight(contained):
 	# Make sure we don't broadcast changes for system created
 	# objects or when interaction is disabled.
-	if not IEntity.providedBy( getattr( contained, 'creator', None ) ) \
-		or queryInteraction() is None:
+	if 	not IEntity.providedBy(getattr(contained, 'creator', None)) \
+		or not hasQueryInteraction():
 		return None
 	try:
-		return getattr( contained, 'sharingTargets' )
+		return getattr(contained, 'sharingTargets')
 	except AttributeError:
 		return None
 
@@ -125,7 +146,7 @@ from nti.dataserver.interfaces import INotModifiedInStreamWhenContainerModified
 from zope.container.interfaces import IContainerModifiedEvent
 
 @component.adapter(IContained, IObjectModifiedEvent)
-def stream_didModifyObject( contained, event ):
+def stream_didModifyObject(contained, event):
 	if (IContainerModifiedEvent.providedBy(event)
 		and INotModifiedInStreamWhenContainerModified.providedBy(contained)):
 		# Bypass. See INotModifiedInStreamWhenContainerModified for rationale
@@ -157,7 +178,7 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 		origSharing = set(current_sharing_targets)
 
 	try:
-		change = Change( changeType, obj )
+		change = Change(changeType, obj)
 	except IntIdMissingError:
 		# No? In this case, we were trying to get a weak ref to the object,
 		# but it has since been deleted and so further modifications are
@@ -177,12 +198,12 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 		# if it is, just a MODIFIED notice). People that it is now shared with will
 		# get a SHARED notice--these people should not later get
 		# a MODIFIED notice for this action.
-		deleteChange = Change( Change.DELETED, obj )
+		deleteChange = Change(Change.DELETED, obj)
 		deleteChange.creator = self
-		sharedChange = Change( Change.SHARED, obj )
+		sharedChange = Change(Change.SHARED, obj)
 		sharedChange.creator = self
 		for shunnedPerson in origSharing - newSharing:
-			if obj.isSharedWith( shunnedPerson ):
+			if obj.isSharedWith(shunnedPerson):
 				# Shared with him indirectly, not directly. We need to be sure
 				# this stuff gets cleared from his caches, thus the delete notice.
 				# but we don't want this to leave us because to the outside world it
@@ -192,10 +213,10 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 			else:
 				# TODO: mutating this isn't really right, it is a shared persisted object
 				deleteChange.send_change_notice = True
-			_enqueue_change_to_target( shunnedPerson, deleteChange, seenTargets )
+			_enqueue_change_to_target(shunnedPerson, deleteChange, seenTargets)
 		for lovedPerson in newSharing - origSharing:
-			_enqueue_change_to_target( lovedPerson, sharedChange, seenTargets )
-			newSharing.remove( lovedPerson ) # Don't send MODIFIED, send SHARED
+			_enqueue_change_to_target(lovedPerson, sharedChange, seenTargets)
+			newSharing.remove(lovedPerson)  # Don't send MODIFIED, send SHARED
 
 	# Deleted events won't change the sharing, so there's
 	# no need to look for a union of old and new to send
@@ -203,4 +224,4 @@ def _stream_enqeue_modification(self, changeType, obj, current_sharing_targets,
 
 	# Now broadcast the change to anyone that's left.
 	for lovedPerson in newSharing:
-		_enqueue_change_to_target( lovedPerson, change, seenTargets )
+		_enqueue_change_to_target(lovedPerson, change, seenTargets)
