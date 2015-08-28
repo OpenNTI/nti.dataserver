@@ -14,7 +14,6 @@ from hamcrest import is_not
 from hamcrest import all_of
 from hamcrest import has_item
 from hamcrest import has_entry
-from hamcrest import has_value
 
 from hamcrest import has_length
 from hamcrest import assert_that
@@ -207,8 +206,7 @@ class TestUserEnumerationWorkspace(ApplicationLayerTest):
 					'Stream', 'RecursiveStream',
 					'UserGeneratedDataAndRecursiveStream',
 					'RelevantUserGeneratedData',
-					'Glossary',
-					'TopUserSummaryData', 'UniqueMinMaxSummary'):
+					'Glossary'):
 			self.require_link_href_with_rel( ext_obj, rel )
 
 		transaction.doom()
