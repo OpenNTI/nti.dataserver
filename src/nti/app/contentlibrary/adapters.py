@@ -22,8 +22,8 @@ from zope.security.interfaces import IPrincipal
 
 from persistent.mapping import PersistentMapping
 
-from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IJoinableContextProvider
+from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
