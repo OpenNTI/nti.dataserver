@@ -24,12 +24,14 @@ from zope import component
 from zope import interface
 from zope import lifecycleevent
 
-from zope.annotation import interfaces as annotation
+from zope.annotation.interfaces import IAttributeAnnotatable
+
+from zope.container.btree import BTreeContainer
 
 from zope.container.contained import contained
-from zope.container.btree import BTreeContainer
 from zope.container.contained import uncontained
 from zope.container.contained import NameChooser
+
 from zope.container.interfaces import IContained
 from zope.container.interfaces import INameChooser
 from zope.container.interfaces import IBTreeContainer
@@ -37,7 +39,7 @@ from zope.container.interfaces import IContainerModifiedEvent
 
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
-from zope.location import interfaces as loc_interfaces
+from zope.location.interfaces import ISublocations
 
 from zope.site.interfaces import IFolder
 from zope.site.site import SiteManagerContainer
@@ -51,7 +53,9 @@ from nti.zodb.minmax import NumericMaximum
 from nti.zodb.minmax import NumericPropertyDefaultingToZero
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
-from . import interfaces
+from .interfaces import ILastModified
+from .interfaces import IModeledContent
+from .interfaces import DCTimesLastModifiedMixin
 
 _MAX_UNIQUEID_ATTEMPTS = 1000
 
@@ -63,7 +67,7 @@ class _IdGenerationMixin(object):
 	Mix this in to a BTreeContainer to provide id generation.
 	"""
 
-	#: The integer counter for generated ids.
+	# : The integer counter for generated ids.
 	_v_nextid = 0
 
 	def generateId(self, prefix='item', suffix='', rand_ceiling=999999999, _nextid=None):
@@ -82,7 +86,7 @@ class _IdGenerationMixin(object):
 		n = _nextid or self._v_nextid
 		attempt = 0
 		while True:
-			if n % 4000 != 0 and n <= rand_ceiling: # TODO: 4000 is a magic number. The size of the bucket?
+			if n % 4000 != 0 and n <= rand_ceiling:  # TODO: 4000 is a magic number. The size of the bucket?
 				the_id = '%s%d%s' % (prefix, n, suffix)
 				if not tree.has_key(the_id):
 					break
@@ -113,15 +117,15 @@ class IdGeneratorNameChooser(NameChooser):
 
 		# convert to unicode and remove characters that checkName does not allow
 		if not name:
-			name = unicode( obj.__class__.__name__ ) # use __class__, not type(), to work with proxies
-		name = unicode(name) # throw if conversion doesn't work
-		name = name.strip() # no whitespace
+			name = unicode(obj.__class__.__name__)  # use __class__, not type(), to work with proxies
+		name = unicode(name)  # throw if conversion doesn't work
+		name = name.strip()  # no whitespace
 		# remove bad characters
 		name = name.replace('/', '.').lstrip('+@')
 
 		# If it's clean, go with it
 		if name not in container:
-			self.checkName( name, obj )
+			self.checkName(name, obj)
 			return name
 
 		# otherwise, generate
@@ -150,9 +154,9 @@ class IdGeneratorNameChooser(NameChooser):
 		else:
 			suffix = ''
 
-		name = container.generateId( name, suffix, _nextid=nextid )
+		name = container.generateId(name, suffix, _nextid=nextid)
 		# Make sure the name is valid.	We may have started with something bad.
-		self.checkName(name, obj )
+		self.checkName(name, obj)
 		return name
 
 from slugify import slugify_url
@@ -168,22 +172,23 @@ class AbstractNTIIDSafeNameChooser(object):
 	chooser.
 	"""
 
-	#: class attribute, subclasses must set.
+	# : class attribute, subclasses must set.
 	leaf_iface = None
 
-	#: Set if the name should be passed through URL-safe
-	#: sluggification if it is not safely a NTIID specific
-	#: part already.
+	# : Set if the name should be passed through URL-safe
+	# : sluggification if it is not safely a NTIID specific
+	# : part already.
 	slugify = True
 
-	def __init__( self, context ):
+	def __init__(self, context):
 		self.context = context
 
 	def __make_specific_safe(self, name):
 		try:
-			return ntiids.make_specific_safe( name )
+			return ntiids.make_specific_safe(name)
 		except ntiids.InvalidNTIIDError as e:
-			e.field = self.leaf_iface['title'] if 'title' in self.leaf_iface else self.leaf_iface['__name__']
+			e.field = self.leaf_iface['title'] \
+					  if 'title' in self.leaf_iface else self.leaf_iface['__name__']
 			raise
 
 	def _to_ntiid_safe(self, name):
@@ -191,21 +196,20 @@ class AbstractNTIIDSafeNameChooser(object):
 			return self.__make_specific_safe(name)
 		except ntiids.InvalidNTIIDError:
 			if self.slugify:
-				return self.__make_specific_safe( slugify_url(name) )
+				return self.__make_specific_safe(slugify_url(name))
 			raise
 
-	def chooseName( self, name, obj ):
+	def chooseName(self, name, obj):
 		# NTIID flatten
 		name = self._to_ntiid_safe(name)
 
 		# Now on to the next adapter (Note: this ignores class-based adapters)
 		# First, get the "required" interface list (from the adapter's standpoint),
 		# removing the think we just adapted out
-		remaining = interface.providedBy( self.context ) - self.leaf_iface
+		remaining = interface.providedBy(self.context) - self.leaf_iface
 		# now perform a lookup. The first arg has to be a tuple for whatever reason
-		factory = component.getSiteManager().adapters.lookup( (remaining,), INameChooser )
-		return factory( self.context ).chooseName( name, obj )
-
+		factory = component.getSiteManager().adapters.lookup((remaining,), INameChooser)
+		return factory(self.context).chooseName(name, obj)
 
 from zope.container.constraints import checkObject
 
@@ -213,9 +217,9 @@ class _CheckObjectOnSetMixin(object):
 	"""
 	Works only with the standard BTree container.
 	"""
-	def _setitemf( self, key, value ):
-		checkObject( self, key, value )
-		super(_CheckObjectOnSetMixin,self)._setitemf( key, value )
+	def _setitemf(self, key, value):
+		checkObject(self, key, value)
+		super(_CheckObjectOnSetMixin, self)._setitemf(key, value)
 
 try:
 	from Acquisition.interfaces import IAcquirer
@@ -226,36 +230,36 @@ try:
 		acquisition.
 		"""
 
-		def __setitem__( self, key, value ):
+		def __setitem__(self, key, value):
 			"""
 			Ensure that we do not put an acquisition wrapper
 			as the __parent__ key (self).
 			"""
 			self = aq_base(self)
-			super(AcquireObjectsOnReadMixin,self).__setitem__( key, value )
+			super(AcquireObjectsOnReadMixin, self).__setitem__(key, value)
 
-		def __acquire( self, result ):
-			if IAcquirer.providedBy( result ):
+		def __acquire(self, result):
+			if IAcquirer.providedBy(result):
 				# Make it __of__ this object. But if this object is itself
 				# already acquired, and from its own parent, then
 				# there's no good reason to acquire from the wrapper
 				# that is this object.
 				base_self = aq_base(self)
 				if base_self is self \
-				  or getattr(base_self, '__parent__', None) is getattr(self,'__parent__',None):
-					result = result.__of__( base_self )
+				  or getattr(base_self, '__parent__', None) is getattr(self, '__parent__', None):
+					result = result.__of__(base_self)
 
 			return result
 
-		def __getitem__( self, key ):
-			result = super(AcquireObjectsOnReadMixin,self).__getitem__( key )
+		def __getitem__(self, key):
+			result = super(AcquireObjectsOnReadMixin, self).__getitem__(key)
 			return self.__acquire(result)
 
-		def get( self, key, default=None ):
-			result = super(AcquireObjectsOnReadMixin,self).get( key, default=default )
+		def get(self, key, default=None):
+			result = super(AcquireObjectsOnReadMixin, self).get(key, default=default)
 			# BTreeFolder doesn't wrap the default
 			if result is not default:
-				result = self.__acquire( result )
+				result = self.__acquire(result)
 			return result
 
 		# TODO: Items? values?
@@ -264,8 +268,8 @@ except ImportError:
 	class AcquireObjectsOnReadMixin(object):
 		"No-op because Acquisition is not installed."
 
-@interface.implementer(interfaces.ILastModified,annotation.IAttributeAnnotatable)
-class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
+@interface.implementer(ILastModified, IAttributeAnnotatable)
+class LastModifiedBTreeContainer(DCTimesLastModifiedMixin,
 								 BTreeContainer,
 								 PersistentPropertyHolder):
 
@@ -281,17 +285,17 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 	"""
 
 	createdTime = 0
-	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'), NumericMaximum, as_number=True )
+	lastModified = NumericPropertyDefaultingToZero(str('_lastModified'), NumericMaximum, as_number=True)
 
-	def __init__( self ):
+	def __init__(self):
 		self.createdTime = time.time()
-		super(LastModifiedBTreeContainer,self).__init__()
+		super(LastModifiedBTreeContainer, self).__init__()
 
-	def updateLastMod(self, t=None ):
-		self.lastModified = ( t if t is not None and t > self.lastModified else time.time() )
+	def updateLastMod(self, t=None):
+		self.lastModified = (t if t is not None and t > self.lastModified else time.time())
 		return self.lastModified
 
-	def updateLastModIfGreater( self, t ):
+	def updateLastModIfGreater(self, t):
 		"Only if the given time is (not None and) greater than this object's is this object's time changed."
 		if t is not None and t > self.lastModified:
 			self.lastModified = t
@@ -321,7 +325,7 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 			item.__name__ = None
 			item.__parent__ = None
 		return item
-		
+
 	# We know that these methods are implemented as iterators.
 	# This is not part of the IBTreeContainer interface, but it is
 	# dict-like.
@@ -329,25 +333,25 @@ class LastModifiedBTreeContainer(interfaces.DCTimesLastModifiedMixin,
 	# keys(), items() and values(), but the underlying BTree
 	# supports a full range. We use that here.
 
-	def itervalues(self, min=None, max=None, excludemin=False, excludemax=False ):
+	def itervalues(self, min=None, max=None, excludemin=False, excludemax=False):
 		if max is None or min is None:
 			return self.values(min)
-		return self._SampleContainer__data.values(min,max,excludemin,excludemax)
+		return self._SampleContainer__data.values(min, max, excludemin, excludemax)
 
-	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False ):
+	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False):
 		if max is None or min is None:
 			return self.keys(min)
-		return self._SampleContainer__data.keys(min,max,excludemin,excludemax)
+		return self._SampleContainer__data.keys(min, max, excludemin, excludemax)
 
-	def iteritems(self, min=None, max=None, excludemin=False, excludemax=False ):
+	def iteritems(self, min=None, max=None, excludemin=False, excludemax=False):
 		if max is None or min is None:
 			return self.items(min)
-		return self._SampleContainer__data.items(min,max,excludemin,excludemax)
+		return self._SampleContainer__data.items(min, max, excludemin, excludemax)
 
 mapping_register = getattr(collections.Mapping, 'register')
-mapping_register( LastModifiedBTreeContainer )
+mapping_register(LastModifiedBTreeContainer)
 
-ModDateTrackingBTreeContainer = LastModifiedBTreeContainer # BWC
+ModDateTrackingBTreeContainer = LastModifiedBTreeContainer  # BWC
 
 class CheckingLastModifiedBTreeContainer(_CheckObjectOnSetMixin,
 										 LastModifiedBTreeContainer):
@@ -363,16 +367,16 @@ class CheckingLastModifiedBTreeFolder(CheckingLastModifiedBTreeContainer,
 	"""
 
 
-@component.adapter( interfaces.ILastModified, IContainerModifiedEvent )
-def update_container_modified_time( container, event ):
+@component.adapter(ILastModified, IContainerModifiedEvent)
+def update_container_modified_time(container, event):
 	"""
 	Register this handler to update modification times when a container is
 	modified through addition or removal of children.
 	"""
 	container.updateLastMod()
 
-@component.adapter( interfaces.ILastModified, IObjectModifiedEvent )
-def update_parent_modified_time( modified_object, event ):
+@component.adapter(ILastModified, IObjectModifiedEvent)
+def update_parent_modified_time(modified_object, event):
 	"""
 	If an object is modified and it is contained inside a container
 	that wants to track modifications, we want to update its parent too...
@@ -381,17 +385,16 @@ def update_parent_modified_time( modified_object, event ):
 	up surprisingly far).
 	"""
 	# IContainerModifiedEvent extends IObjectModifiedEvent
-	if IContainerModifiedEvent.providedBy( event ):
+	if IContainerModifiedEvent.providedBy(event):
 		return
 
 	try:
-		modified_object.__parent__.updateLastModIfGreater( modified_object.lastModified )
+		modified_object.__parent__.updateLastModIfGreater(modified_object.lastModified)
 	except AttributeError:
 		pass
 
-
-@component.adapter( interfaces.ILastModified, IObjectModifiedEvent )
-def update_object_modified_time( modified_object, event ):
+@component.adapter(ILastModified, IObjectModifiedEvent)
+def update_object_modified_time(modified_object, event):
 	"""
 	Register this handler to update modification times when an object
 	itself is modified.
@@ -403,8 +406,9 @@ def update_object_modified_time( modified_object, event ):
 		pass
 
 from nti.schema.interfaces import IBeforeSequenceAssignedEvent
-@component.adapter( None, interfaces.IModeledContent, IBeforeSequenceAssignedEvent )
-def contain_nested_objects( sequence, parent, event ):
+
+@component.adapter(None, IModeledContent, IBeforeSequenceAssignedEvent)
+def contain_nested_objects(sequence, parent, event):
 	"""
 	New, incoming objects like a Canvas need to be added to the parent container
 	when a sequence containing them is set. (e.g., the body of a Note)
@@ -412,13 +416,13 @@ def contain_nested_objects( sequence, parent, event ):
 	if sequence is None:
 		return
 
-	for i, child in enumerate( sequence ):
-		if IContained.providedBy( child ):
-			name = getattr( child, '__name__', None ) or unicode(i)
-			contained( child, parent, name )
-			jar = IConnection( child, None ) # Use either its pre-existing jar, or the parents
-			if jar and not getattr( child, '_p_oid', None ):
-				jar.add( child )
+	for i, child in enumerate(sequence):
+		if IContained.providedBy(child):
+			name = getattr(child, '__name__', None) or unicode(i)
+			contained(child, parent, name)
+			jar = IConnection(child, None)  # Use either its pre-existing jar, or the parents
+			if jar and not getattr(child, '_p_oid', None):
+				jar.add(child)
 
 class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""
@@ -427,35 +431,35 @@ class EventlessLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	have their ``__name__`` and ``__parent__`` set by a real container.
 	"""
 
-	def __setitem__( self, key, value ):
+	def __setitem__(self, key, value):
 		__traceback_info__ = key, value
 		# Containers don't allow None; keys must be unicode
 		if isinstance(key, str):
 			try:
 				key = unicode(key)
 			except UnicodeError:
-				raise TypeError( 'Key could not be converted to unicode' )
-		elif not isinstance( key, unicode ):
-			raise TypeError( "Key must be unicode" )
+				raise TypeError('Key could not be converted to unicode')
+		elif not isinstance(key, unicode):
+			raise TypeError("Key must be unicode")
 		if value is None:
-			raise TypeError( 'Value must not be None' )
+			raise TypeError('Value must not be None')
 
 		# Super's _setitemf changes the length, so only do this if
 		# it's not here already. To comply with the containers interface,
 		# we cannot add duplicates
-		old = self.get( key )
+		old = self.get(key)
 		if old is not None:
 			if old is value:
 				# no op
 				return
-			raise KeyError( key )
-		self._setitemf( key, value )
+			raise KeyError(key)
+		self._setitemf(key, value)
 		# TODO: Should I enforce anything with the __parent__ and __name__ of
 		# the value? For example, parent is not None and __name__ == key?
 		# We're probably more generally useful without those constraints,
 		# but more specifically useful in certain scenarios with those constraints.
 
-	def __delitem__( self, key ):
+	def __delitem__(self, key):
 		# Just like the super implementation, but without
 		# firing the 'uncontained' event
 		l = self._BTreeContainer__len
@@ -475,16 +479,16 @@ class _CaseInsensitiveKey(object):
 	only with other objects of its same type. It must not be subclassed.
 	"""
 
-	def __init__( self, key ):
-		if not isinstance( key, basestring ):
-			raise TypeError( "Expected basestring instead of %s (%r)" % (type(key), key))
+	def __init__(self, key):
+		if not isinstance(key, basestring):
+			raise TypeError("Expected basestring instead of %s (%r)" % (type(key), key))
 		self.key = unicode(key)
 		self._lower_key = self.key.lower()
 
-	def __str__( self ): # pragma: no cover
+	def __str__(self):  # pragma: no cover
 		return self.key
 
-	def __repr__( self ): # pragma: no cover
+	def __repr__(self):  # pragma: no cover
 		return "%s('%s')" % (self.__class__, self.key)
 
 	# These should only ever be compared to themselves
@@ -492,7 +496,7 @@ class _CaseInsensitiveKey(object):
 	def __eq__(self, other):
 		try:
 			return other is self or other._lower_key == self._lower_key
-		except AttributeError: # pragma: no cover
+		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
 	def __hash__(self):
@@ -501,13 +505,13 @@ class _CaseInsensitiveKey(object):
 	def __lt__(self, other):
 		try:
 			return self._lower_key < other._lower_key
-		except AttributeError: # pragma: no cover
+		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
 	def __gt__(self, other):
 		try:
 			return self._lower_key > other._lower_key
-		except AttributeError: # pragma: no cover
+		except AttributeError:  # pragma: no cover
 			return NotImplemented
 
 from repoze.lru import lru_cache
@@ -518,12 +522,12 @@ from repoze.lru import lru_cache
 
 @lru_cache(10000)
 def _tx_key_insen(key):
-	return _CaseInsensitiveKey( key ) if key is not None else None
+	return _CaseInsensitiveKey(key) if key is not None else None
 
 # As of BTrees 4.0.1, None is no longer allowed to be a key
 # or even used in __contains__
 
-@interface.implementer(loc_interfaces.ISublocations)
+@interface.implementer(ISublocations)
 class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	"""
 	A BTreeContainer that only works with string (unicode) keys, and treats them in a case-insensitive
@@ -535,10 +539,10 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 
 	# Note that the IContainer contract specifies keys that are strings. None is not allowed.
 
-	def __contains__( self, key ):
-		return key is not None and _tx_key_insen( key ) in self._SampleContainer__data
+	def __contains__(self, key):
+		return key is not None and _tx_key_insen(key) in self._SampleContainer__data
 
-	def __iter__( self ):
+	def __iter__(self):
 		# For purposes of evolving, when our parent container
 		# class has changed from one that used to manually wrap keys to
 		# one that depends on us, we trap attribute errors. This should only
@@ -547,19 +551,19 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 			__traceback_info__ = self, k
 			try:
 				yield k.key
-			except AttributeError: # pragma: no cover
+			except AttributeError:  # pragma: no cover
 				if k == 'Last Modified': continue
 				yield k
 
-	def __getitem__( self, key ):
+	def __getitem__(self, key):
 		return self._SampleContainer__data[_tx_key_insen(key)]
 
-	def get( self, key, default=None ):
+	def get(self, key, default=None):
 		if key is None: return default
-		return self._SampleContainer__data.get( _tx_key_insen( key ), default )
+		return self._SampleContainer__data.get(_tx_key_insen(key), default)
 
-	def _setitemf( self, key, value ):
-		LastModifiedBTreeContainer._setitemf( self, _tx_key_insen( key ), value )
+	def _setitemf(self, key, value):
+		LastModifiedBTreeContainer._setitemf(self, _tx_key_insen(key), value)
 
 	def __delitem__(self, key):
 		# deleting is somewhat complicated by the need to broadcast
@@ -573,34 +577,34 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 	def _delitemf(self, key, event=True):
 		item = LastModifiedBTreeContainer._delitemf(self, _tx_key_insen(key), event)
 		return item
-	
-	def items( self, key=None ):
+
+	def items(self, key=None):
 		if key is not None:
-			key = _tx_key_insen( key )
+			key = _tx_key_insen(key)
 
 		for k, v in self._SampleContainer__data.items(key):
 			try:
 				yield k.key, v
-			except AttributeError: # pragma: no cover
+			except AttributeError:  # pragma: no cover
 				if k == 'Last Modified': continue
 				yield k, v
 
-	def keys(self, key=None ):
+	def keys(self, key=None):
 		if key is not None:
-			key = _tx_key_insen( key )
+			key = _tx_key_insen(key)
 		return (k.key for k in self._SampleContainer__data.keys(key))
 
-	def values( self, key=None ):
+	def values(self, key=None):
 		if key is not None:
-			key = _tx_key_insen( key )
+			key = _tx_key_insen(key)
 		return (v for v in self._SampleContainer__data.values(key))
 
-	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False ):
+	def iterkeys(self, min=None, max=None, excludemin=False, excludemax=False):
 		if max is None or min is None:
 			return self.keys(min)
-		min = _tx_key_insen( min )
-		max = _tx_key_insen( max )
-		return (k.key for k in self._SampleContainer__data.keys(min,max,excludemin,excludemax))
+		min = _tx_key_insen(min)
+		max = _tx_key_insen(max)
+		return (k.key for k in self._SampleContainer__data.keys(min, max, excludemin, excludemax))
 
 	def sublocations(self):
 		# We directly implement ISublocations instead of using the adapter for two reasons.
@@ -610,11 +614,11 @@ class CaseInsensitiveLastModifiedBTreeContainer(LastModifiedBTreeContainer):
 		# that has keys of different types
 		for v in self._SampleContainer__data.values():
 			# For evolving, reject numbers (Last Modified key)
-			if isinstance( v, numbers.Number ): # pragma: no cover
+			if isinstance(v, numbers.Number):  # pragma: no cover
 				continue
 			yield v
 
-KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer = CaseInsensitiveLastModifiedBTreeContainer # BWC
+KeyPreservingCaseInsensitiveModDateTrackingBTreeContainer = CaseInsensitiveLastModifiedBTreeContainer  # BWC
 
 @interface.implementer(IFolder)
 class CaseInsensitiveLastModifiedBTreeFolder(CaseInsensitiveLastModifiedBTreeContainer,
