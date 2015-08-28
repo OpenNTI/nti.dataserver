@@ -202,10 +202,10 @@ def can_create(obj, request=None, skip_cache=False):
 	Can the current user create over the specified object? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_creatable_cache', 
-									 ACT_CREATE, 
+	return _caching_permission_check('_acl_is_creatable_cache',
+									 ACT_CREATE,
 									 obj,
-									 request, 
+									 request,
 									 skip_cache=skip_cache)
 
 def is_writable(obj, request=None, skip_cache=False):
@@ -213,10 +213,10 @@ def is_writable(obj, request=None, skip_cache=False):
 	Is the given object writable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_writable_cache', 
-									 ACT_UPDATE, 
+	return _caching_permission_check('_acl_is_writable_cache',
+									 ACT_UPDATE,
 									 obj,
-									 request, 
+									 request,
 									 skip_cache=skip_cache)
 
 def is_deletable(obj, request=None, skip_cache=False):
@@ -224,9 +224,9 @@ def is_deletable(obj, request=None, skip_cache=False):
 	Is the given object deletable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_deletable_cache', 
-									 ACT_DELETE, 
-									 obj, 
+	return _caching_permission_check('_acl_is_deletable_cache',
+									 ACT_DELETE,
+									 obj,
 									 request,
 									 skip_cache=skip_cache)
 
@@ -235,7 +235,7 @@ def is_readable(obj, request=None, skip_cache=False):
 	Is the given object readable by the current user? Yes if the creator matches,
 	or Yes if it is the returned object and we have permission.
 	"""
-	return _caching_permission_check('_acl_is_readable_cache', 
+	return _caching_permission_check('_acl_is_readable_cache',
 									 ACT_READ,
 									 obj,
 									 request,
@@ -254,7 +254,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 	# during the course of a single request due to authentication (used when broadcasting events)
 	# so our cache must be aware of this
 	principals, authn_policy, reg = _get_effective_principals(request)
-	cache_key = (id(obj), principals)
+	cache_key = (id(obj), tuple(principals))
 
 	cached_val = the_cache.get(cache_key, _marker) if not skip_cache else _marker
 	if cached_val is not _marker:
@@ -286,7 +286,9 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 	return check_value
 
 def _get_effective_principals(request):
-	""" Return the principals as a tuple, plus the auth policy and registry (optimization) """
+	""" Return the principals as a set, plus the auth policy and registry (optimization) """
+	# Make sure we return a set here, the membership checks are much, much faster
+	# than iteration.
 	reg = component.getSiteManager()  # not pyramid.threadlocal.get_current_registry or request.registry, it ignores the site
 
 	authn_policy = reg.queryUtility(IAuthenticationPolicy)
@@ -294,10 +296,10 @@ def _get_effective_principals(request):
 		return (psec.Everyone,), None, reg
 
 	if request is not None:
-		principals = authn_policy.effective_principals(request) 
+		principals = authn_policy.effective_principals(request)
 	else:
 		principals = (psec.Everyone,)
-	return tuple(principals), authn_policy, reg
+	return set(principals), authn_policy, reg
 
 def _has_permission(permission, context, reg, authn_policy, principals):
 	"""
