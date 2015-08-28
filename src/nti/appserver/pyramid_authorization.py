@@ -254,7 +254,7 @@ def _caching_permission_check(cache_name, permission, obj, request, skip_cache=F
 	# during the course of a single request due to authentication (used when broadcasting events)
 	# so our cache must be aware of this
 	principals, authn_policy, reg = _get_effective_principals(request)
-	cache_key = (id(obj), tuple(principals))
+	cache_key = (id(obj), principals)
 
 	cached_val = the_cache.get(cache_key, _marker) if not skip_cache else _marker
 	if cached_val is not _marker:
@@ -298,7 +298,7 @@ def _get_effective_principals(request):
 		principals = authn_policy.effective_principals(request)
 	else:
 		principals = (psec.Everyone,)
-	return set(principals), authn_policy, reg
+	return frozenset(principals), authn_policy, reg
 
 def _has_permission(permission, context, reg, authn_policy, principals):
 	"""
