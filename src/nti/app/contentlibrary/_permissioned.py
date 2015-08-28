@@ -38,13 +38,19 @@ EXP_TIME = 86400
 def _memcache_client():
 	return component.queryUtility(IMemcacheClient)
 
+def _encode_keys(*keys):
+	result = hashlib.md5()
+	for value in keys:
+		result.update(str(value).lower())
+	return result.hexdigest()
+
 def _last_synchronized():
 	hostsites = component.queryUtility(IEtcNamespace, name='hostsites')
 	result = getattr(hostsites, 'lastSynchronized', 0)
 	return result or 0
 
 def _get_user_ticket_key(user):
-	result = '%s/ticket' % getattr(user, 'username', user)
+	result = '/contentlibrary/%s/ticket' % getattr(user, 'username', user)
 	return result.lower()
 	
 def _get_user_ticket(user, client):
@@ -64,18 +70,16 @@ def _set_user_ticket(user, client):
 	except:
 		pass
 
-def _get_base_key(content_package):
-	result = hashlib.md5()
+def _get_base_key(username, ntiid):
 	cur_site = hooks.getSite()
 	lastSync = _last_synchronized()
-	for value in ('pcpl', cur_site.__name__, content_package.ntiid, lastSync):
-		result.update(str(value).lower())
-	return result.hexdigest()
+	result = _encode_keys(cur_site.__name__, username, ntiid, lastSync)
+	return result
 	
 def _get_user_content_package_key(user, content_package, client):
-	base = _get_base_key(content_package)
 	ticket = _get_user_ticket(user, client)
-	result = "/%s/%s/%s" % (user.username, base, ticket)
+	base = _get_base_key(user.username, content_package.ntiid)
+	result = "/contentlibrary/%s/%s" % (base, ticket)
 	return result.lower()
 
 def _on_operation_on_scope_membership(record, event):

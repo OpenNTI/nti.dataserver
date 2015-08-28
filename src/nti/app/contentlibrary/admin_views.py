@@ -56,7 +56,7 @@ class _RemoveSyncLock(AbstractAuthenticatedView):
 		return component.getUtility(IRedisClient)
 
 	def __call__(self):
-		self.redis.delete( SYNC_LOCK_NAME )
+		self.redis.delete(SYNC_LOCK_NAME)
 		return hexc.HTTPNoContent()
 
 @view_config(permission=ACT_SYNC_LIBRARY)
@@ -110,10 +110,10 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 	def lock(self):
 		# Fail fast if we cannot acquire the lock.
 		lock = self.redis.lock(SYNC_LOCK_NAME, self.lock_timeout)
-		acquired = lock.acquire( blocking=False )
+		acquired = lock.acquire(blocking=False)
 		if acquired:
 			return lock
-		raise hexc.HTTPUnprocessableEntity( 'Sync already in progress' )
+		raise hexc.HTTPUnprocessableEntity('Sync already in progress')
 
 	def _do_call(self):
 		values = self.readInput()
@@ -154,11 +154,11 @@ class _SyncAllLibrariesView(AbstractAuthenticatedView,
 		return result
 
 	def __call__(self):
-		logger.info( 'Acquiring sync lock' )
+		logger.info('Acquiring sync lock')
 		# With 'with', we deadlock while attempting to re-acquire the lock.
 		lock = self.lock
 		try:
-			logger.info( 'Starting sync' )
+			logger.info('Starting sync')
 			return self._do_call()
 		finally:
 			lock.release()
