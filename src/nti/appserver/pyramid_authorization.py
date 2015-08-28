@@ -145,6 +145,7 @@ def _lineage_that_ensures_acls(obj):
 	request = get_current_request() or _Fake()
 	cache = _get_cache(request, '_acl_adding_lineage_cache')
 	for location in _pyramid_lineage(obj):
+		result = None
 		try:
 			# Native ACL. Run with it.
 			# Note that as of 1.5a2 this can now be a callable object, which
@@ -152,7 +153,7 @@ def _lineage_that_ensures_acls(obj):
 			# our ACLProvider machinery and supporting caching on the object
 			# through zope.cachedescriptors
 			getattr(location, '__acl__')
-			yield location
+			result = location
 		except AttributeError:
 			# OK, can we create one?
 			cache_key = id(removeAllProxies(location))
@@ -169,13 +170,14 @@ def _lineage_that_ensures_acls(obj):
 			if acl is _marker:
 				# Nope. So still return the original object,
 				# which pyramid will inspect and then ignore
-				yield location
+				result = location
 			else:
 				# Yes we can. So do so
-				yield ACLProxy(location, acl)
+				result = ACLProxy(location, acl)
 		except POSKeyError:  # pragma: no cover
 			# Yikes
-			logger.warn('Cannot access ACL due to broken reference: %s', type(obj), exc_info=True)
+			logger.warn('Cannot access ACL due to broken reference: %s',
+						type(obj), exc_info=True)
 			# It's highly likely we won't be able to get __parent__ either.
 			# Check that...
 			try:
@@ -192,7 +194,8 @@ def _lineage_that_ensures_acls(obj):
 			fake = _Fake()
 			fake.__acl__ = acl_from_aces(ace_denying_all())
 			fake.__parent__ = location.__parent__
-			yield fake
+			result = fake
+		yield result
 
 def can_create(obj, request=None, skip_cache=False):
 	"""
