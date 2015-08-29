@@ -26,7 +26,7 @@ import pkg_resources
 # the brute-force method to check
 dist = pkg_resources.get_distribution('webob')
 if not dist.version or dist.version < '1.3':
-	raise ImportError("WebOb less that 1.3 is no longer supported: %s" % dist )
+	raise ImportError("WebOb less that 1.3 is no longer supported: %s" % dist)
 
 def patch():
 	pass

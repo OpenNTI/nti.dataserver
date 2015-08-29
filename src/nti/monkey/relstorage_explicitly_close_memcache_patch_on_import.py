@@ -34,7 +34,6 @@ def _release(self):
 				logger.debug("Explicitly disconnecting memcache %s", client)
 				disconnect()
 
-
 def _patch():
 	RelStorage.release = _release
 

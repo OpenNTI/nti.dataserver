@@ -63,7 +63,7 @@ def _patch_relstorage_registerDB():
 		# so we simply replace it. This needs to be checked
 		# when the version changes.
 		try:
-			super(RelStorage,self).registerDB(db)
+			super(RelStorage, self).registerDB(db)
 			raise TypeError("Internals changed, check patch")
 		except AttributeError:
 			# We expect the MRO to be
@@ -88,7 +88,6 @@ def _patch_relstorage_registerDB():
 		new_instance._crs_untransform_record_data = self._crs_untransform_record_data
 		return new_instance
 	RelStorage.new_instance = new_instance
-
 
 _patch_relstorage_registerDB()
 del _patch_relstorage_registerDB
