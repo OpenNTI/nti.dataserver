@@ -54,7 +54,7 @@ def _storage_deleteObject(self, oid, oldserial, transaction):
 
 from ZODB.utils import u64
 
-def _make_stmt(base,oid):
+def _make_stmt(base, oid):
 	return base % str(u64(oid))
 
 def _historyFree_deleteObject(self, cursor, oid, oldserial):
@@ -69,16 +69,13 @@ def _historyFree_deleteObject(self, cursor, oid, oldserial):
 	WHERE zoid = %s
 	"""
 
-	self.runner.run_script_stmt(cursor, _make_stmt(state,oid))
-	self.runner.run_script_stmt(cursor, _make_stmt(chunk,oid))
-
+	self.runner.run_script_stmt(cursor, _make_stmt(state, oid))
+	self.runner.run_script_stmt(cursor, _make_stmt(chunk, oid))
 
 def _patch():
 
-
 	if IExternalGC.implementedBy(RelStorage) or hasattr(RelStorage, 'deleteObject'):
 		raise ImportError("Internals of RelStorage changed; check this patch")
-
 
 	HistoryFreePackUndo.deleteObject = _historyFree_deleteObject
 	RelStorage.deleteObject = _storage_deleteObject

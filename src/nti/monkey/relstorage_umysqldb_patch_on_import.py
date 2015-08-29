@@ -17,7 +17,7 @@ def _patch():
 	try:
 		import umysqldb
 		import umysql
-		assert umysql # not used here, but must be importable for this to work
+		assert umysql  # not used here, but must be importable for this to work
 		umysqldb.install_as_MySQLdb()
 	except ImportError:
 		import platform
@@ -28,7 +28,6 @@ def _patch():
 			umysqldb = pymysql
 		else:
 			raise
-
 
 	_patch_connection()
 	_patch_relstorage_error(umysqldb)
@@ -99,10 +98,10 @@ def _patch_connection():
 			try:
 				result = self._result
 				if result is None:
-					logger.warn("No result from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+					logger.warn("No result from GET_LOCK query: %s", result.__dict__, exc_info=ex)
 					return
 				if not result.affected_rows:
-					logger.warn("Zero rowcount from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+					logger.warn("Zero rowcount from GET_LOCK query: %s", result.__dict__, exc_info=ex)
 				if not result.rows:
 					# We see this a fair amount. The C code in umysql got a packet that
 					# its treating as an "OK" response, for which it just returns a tuple
@@ -110,13 +109,13 @@ def _patch_connection():
 					# But no actual rows. In all cases, it has been returning affected_rows of 2?
 					# We *could* patch the rows variable here to be [0], indicating the lock was not
 					# taken, but given that OK response I'm not sure that's right just yet
-					logger.warn("Empty rows from GET_LOCK query: %s", result.__dict__, exc_info=ex )
+					logger.warn("Empty rows from GET_LOCK query: %s", result.__dict__, exc_info=ex)
 			except Exception:
 				logger.exception("Failed to debug lock problem")
 
-		def query( self, sql, args=() ):
+		def query(self, sql, args=()):
 			__traceback_info__ = args
-			if isinstance( args, dict ):
+			if isinstance(args, dict):
 				# First, encode them as strings
 				args = {k: encoders.get(type(v), notouch)(v) for k, v in args.items()}
 				# now format the string
@@ -124,7 +123,7 @@ def _patch_connection():
 				# and delete the now useless args
 				args = ()
 			try:
-				super(Connection,self).query( sql, args=args )
+				super(Connection, self).query(sql, args=args)
 				self.__debug_lock(sql)
 			except IOError:
 				self.__debug_lock(sql, True)
@@ -149,7 +148,7 @@ def _patch_connection():
 					del self._umysql_conn
 					import umysql
 					self._umysql_conn = umysql.Connection()
-					self._connect() # Potentially this could raise again?
+					self._connect()  # Potentially this could raise again?
 					try:
 						return self.query(sql, args)
 					except InternalError:
@@ -168,7 +167,7 @@ def _patch_connection():
 	# Patching the module itself seems to be not needed because
 	# RelStorage uses 'mysql.Connect' directly. And if we patch the module,
 	# we get into recursive super calls
-	#umysqldb.connections.Connection = Connection
+	# umysqldb.connections.Connection = Connection
 	# Also patch the re-export of it
 	umysqldb.connect = Connection
 	umysqldb.Connection = Connection
@@ -189,10 +188,10 @@ def _patch_relstorage_error(umysqldb):
 	# XXX: The PyPy branch of relstorage takes care of most of this
 
 	for attr in (relstorage.adapters.mysql,
-				 relstorage.adapters.mysql.MySQLdbConnectionManager ):
+				 relstorage.adapters.mysql.MySQLdbConnectionManager):
 		# close_exceptions: "to ignore when closing the connection"
-		attr.close_exceptions += (pymysql.err.Error, # The one usually mapped to
-								  IOError, # This one can escape mapping
+		attr.close_exceptions += (pymysql.err.Error,  # The one usually mapped to
+								  IOError,  # This one can escape mapping
 								  DatabaseError)
 
 	for attr in (relstorage.adapters.mysql,
@@ -201,7 +200,7 @@ def _patch_relstorage_error(umysqldb):
 
 		# Note we don't make the generic `pymysql.err.Error` indicate
 		# disconnection
-		attr.disconnected_exceptions += (IOError, # This one can escape mapping;
+		attr.disconnected_exceptions += (IOError,  # This one can escape mapping;
 										 # This one has only been seen as its subclass,
 										 # InternalError, as (0, 'Socket receive buffer full'),
 										 # which should probably be taken as disconnect
@@ -228,7 +227,7 @@ def _patch_transaction_retry():
 	# level. This uses sdm.SessionDataManager.should_retry
 	import nti.transactions.transactions
 	import functools
-	sql_should_retry = functools.partial( sdm.SessionDataManager.should_retry.im_func, None)
+	sql_should_retry = functools.partial(sdm.SessionDataManager.should_retry.im_func, None)
 	from sqlalchemy.exc import SQLAlchemyError
 	nti.transactions.transactions.TransactionLoop._retryable_errors += ((SQLAlchemyError, sql_should_retry),)
 

@@ -276,7 +276,7 @@ if version_info[0] >= 1 and 'ZEO' not in sys.modules:
 		import greenlet
 		def greenlet_trace(event, origin):
 			print("Greenlet switching from", event, "to", origin, file=sys.stderr)
-		greenlet.settrace(greenlet_trace)
+		getattr(greenlet, 'settrace')(greenlet_trace)
 
 	# We monkey patched threads out of the way, so there's no need for
 	# the GIL checking for thread switches. However, it is still

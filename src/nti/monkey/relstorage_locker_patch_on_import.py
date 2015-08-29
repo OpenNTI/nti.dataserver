@@ -29,7 +29,7 @@ def _StorageError(msg):
 
 import time
 
-LONG_LOCK_TIME = 5 # seconds
+LONG_LOCK_TIME = 5  # seconds
 
 def _patch_hold_logging(cls):
 
@@ -79,7 +79,7 @@ def _patch():
 	_patch_hold_logging(locker.MySQLLocker)
 	_patch_hold_logging(locker.OracleLocker)
 	_patch_hold_logging(locker.PostgreSQLLocker)
-	
+
 _patch()
 del _patch
 

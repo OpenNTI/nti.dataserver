@@ -21,7 +21,7 @@ def patch():
 	relstorage_explicitly_close_memcache_patch_on_import.patch()
 	relstorage_locker_patch_on_import.patch()
 	nti_internal_patch_on_import.patch()
-	
+
 	try:
 		__import__('MySQLdb')
 	except ImportError:
