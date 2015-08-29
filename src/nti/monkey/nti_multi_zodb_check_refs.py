@@ -1,26 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+.. note:: You must have the MySQL-python driver installed, as we
+	cannot monkey patch to use umysqldb due to errors. See
+	that patch for details.
+
 .. $Id$
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from . import relstorage_patch_all_except_gevent_on_import
 relstorage_patch_all_except_gevent_on_import.patch()
 
-logger = __import__('logging').getLogger(__name__)
-
 import sys
-
 from pkg_resources import load_entry_point
 
 def main():
-    # Not a threaded process, no need to check for switches
-    sys.setcheckinterval(100000)
-    ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-gc')()
-    sys.exit(ec)
+	ec = load_entry_point('zc.zodbdgc', 'console_scripts', 'multi-zodb-check-refs')()
+	sys.exit(ec)
 
 if __name__ == '__main__':
-    main()
+	main()
