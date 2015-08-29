@@ -33,6 +33,7 @@ entry_points = {
 		'nti_testing_mark_emails_bounced = nti.appserver.bounced_email_workflow:mark_emails_bounced',
 		"nti_pserve = nti.appserver.nti_pserve:main",
 		"nti_runzeo = nti.monkey.nti_runzeo:main",
+		"nti_multi_zodb_gc = nti.monkey.nti_multi_zodb_gc:main",
 		"nti_zodbconvert = nti.monkey.nti_zodbconvert:main",
 		"nti_qp = nti.mailer.queue:run_console",
 		# XXX: NOTE: The following technique is NOT reliable and fails
