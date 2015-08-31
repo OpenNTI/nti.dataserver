@@ -177,10 +177,12 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	if catalog is None: # may be None in test mode
 		return result
 	else:
+		sites = get_component_hierarchy_names()
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		for utility in catalog.search_objects(intids=intids, provided=provided,
 											  container_ntiids=containers, 
-											  namespace=namespace):
+											  namespace=namespace,
+											  sites=sites):
 			try:
 				ntiid = utility.ntiid
 				if ntiid:
