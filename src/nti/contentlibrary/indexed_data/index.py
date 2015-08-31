@@ -81,12 +81,12 @@ class KeepSetIndex(RawSetIndex):
 class SiteIndex(KeepSetIndex):
 
 	def to_iterable(self, value=None):
-		if value is None:
-			result = get_component_hierarchy_names()
-		elif IHostPolicyFolder.providedBy(value):
+		if IHostPolicyFolder.providedBy(value):
 			result = get_component_hierarchy_names(value)
-		else:
+		elif value is not None:
 			result = to_iterable(value)
+		else:
+			result = ()
 		return result
 
 class CheckRawValueIndex(RawValueIndex):
@@ -205,7 +205,6 @@ class ContainedObjectCatalog(Persistent):
 	def get_references(self, container_ntiids=None, provided=None,
 					   namespace=None, ntiid=None, sites=None):
 		result = None
-		sites = sites or get_component_hierarchy_names()
 
 		# Provided is interface that maps to our type adapter
 		for index, value, query in ((self._site_index, sites, 'any_of'),
