@@ -46,6 +46,7 @@ from nti.ntiids.ntiids import is_valid_ntiid_string
 from nti.site.utils import registerUtility
 from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
+from nti.site.site import get_component_hierarchy_names
 
 from .interfaces import IContentBoard
 
@@ -204,22 +205,23 @@ def _get_file_last_mod_namespace(unit, filename):
 
 def _index_item(item, content_package, container_id, catalog):
 	result = 1
+	sites = get_component_hierarchy_names()
 	lineage_ntiids = _get_container_tree(container_id)
 	lineage_ntiids = None if not lineage_ntiids else lineage_ntiids
 	# index item
 	catalog.index(item, container_ntiids=lineage_ntiids,
-				  namespace=content_package.ntiid)
+				  namespace=content_package.ntiid, sites=sites)
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
 		for slide in item.Slides or ():
 			result += 1
 			catalog.index(slide, container_ntiids=lineage_ntiids,
-				  		  namespace=content_package.ntiid)
+				  		  namespace=content_package.ntiid, sites=sites)
 
 		for video in item.Videos or ():
 			result += 1
 			catalog.index(video, container_ntiids=lineage_ntiids,
-				  		  namespace=content_package.ntiid)
+				  		  namespace=content_package.ntiid, sites=sites)
 	return result
 
 def _store_asset(content_package, container_id, ntiid, item):
