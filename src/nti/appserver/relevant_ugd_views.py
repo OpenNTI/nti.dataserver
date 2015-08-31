@@ -36,6 +36,8 @@ from nti.mimetype.mimetype import nti_mimetype_with_class
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from nti.site.site import get_component_hierarchy_names
+
 from .ugd_query_views import lists_and_dicts_to_ext_collection
 
 LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
@@ -112,7 +114,9 @@ class _AbstractRelevantUGDView(object):
 
 	def get_contained(self, container_ntiid):
 		catalog = lib_catalog()
-		objects = catalog.search_objects(container_ntiids=(container_ntiid,))
+		sites = get_component_hierarchy_names()
+		objects = catalog.search_objects(container_ntiids=(container_ntiid,),
+										 sites=sites)
 		if not objects:
 			# Needed for non-persistent courses
 			objects = self._get_legacy_contained( container_ntiid )

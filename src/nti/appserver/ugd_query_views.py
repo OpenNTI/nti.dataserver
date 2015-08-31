@@ -82,6 +82,8 @@ from nti.mimetype.mimetype import nti_mimetype_from_object
 from nti.ntiids import ntiids
 from nti.ntiids.ntiids import find_object_with_ntiid
 
+from nti.site.site import get_component_hierarchy_names
+
 from nti.zope_catalog.catalog import ResultSet
 
 liking_like_count = liking.like_count  # minor optimization
@@ -1153,7 +1155,9 @@ class _RecursiveUGDView(_UGDView):
 			catalog = lib_catalog()
 			if catalog is not None: # test mode
 				# Should this be all types, or is that too expensive?
+				sites = get_component_hierarchy_names()
 				objects = catalog.search_objects(container_ntiids=containers,
+												 sites=sites,
 									   			 provided=(INTIVideo, INTIAudio,
 															IQPoll, IQSurvey))
 				for obj in objects:
