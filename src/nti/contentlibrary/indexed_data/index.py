@@ -26,6 +26,9 @@ from nti.common.property import alias
 from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
 
+from nti.site.interfaces import IHostPolicyFolder
+from nti.site.site import get_component_hierarchy_names
+
 from nti.zope_catalog.catalog import ResultSet
 
 from nti.zope_catalog.index import SetIndex as RawSetIndex
@@ -47,13 +50,17 @@ def to_iterable(value):
 
 class KeepSetIndex(RawSetIndex):
 	"""
-	Maps object -> containedContainers. A set index that keeps the old values.
+	A set index that keeps the old values.
 	"""
 
 	empty_set = set()
 
+	def to_iterable(self, value=None):
+		result = to_iterable(value)
+		return result
+
 	def index_doc(self, doc_id, value):
-		value = {v for v in to_iterable(value) if v is not None}
+		value = {v for v in self.to_iterable(value) if v is not None}
 		old = self.documents_to_values.get(doc_id) or self.empty_set
 		if value.difference(old):
 			value.update(old or ())
@@ -70,6 +77,17 @@ class KeepSetIndex(RawSetIndex):
 			super(KeepSetIndex, self).index_doc(doc_id, old)
 		else:
 			super(KeepSetIndex, self).unindex_doc(doc_id)
+
+class SiteIndex(KeepSetIndex):
+
+	def to_iterable(self, value=None):
+		if value is None:
+			result = get_component_hierarchy_names()
+		elif IHostPolicyFolder.providedBy(value):
+			result = get_component_hierarchy_names(value)
+		else:
+			result = to_iterable(value)
+		return result
 
 class CheckRawValueIndex(RawValueIndex):
 
@@ -110,6 +128,7 @@ class ContainedObjectCatalog(Persistent):
 
 	family = BTrees.family64
 
+	site_index = alias('_site_index')
 	type_index = alias('_type_index')
 	ntiid_index = alias('_ntiid_index')
 	container_index = alias('_container_index')
@@ -125,6 +144,8 @@ class ContainedObjectCatalog(Persistent):
 		self._type_index = TypeIndex(family=self.family)
 		# Track the ntiid of the object
 		self._ntiid_index = NTIIDIndex(family=self.family)
+		# Track the object site
+		self._site_index = KeepSetIndex(family=self.family)
 		# Track the containers the object belongs to
 		self._container_index = KeepSetIndex(family=self.family)
 		# Track the source/file name an object was read from
@@ -182,8 +203,10 @@ class ContainedObjectCatalog(Persistent):
 		return False
 
 	def get_references(self, container_ntiids=None, provided=None,
-					   namespace=None, ntiid=None):
+					   namespace=None, ntiid=None, sites=None):
 		result = None
+		sites = sites or get_component_hierarchy_names()
+
 		# Provided is interface that maps to our type adapter
 		for index, value, query in ((self._ntiid_index, ntiid, 'any_of'),
 									(self._type_index, provided, 'any_of'),
@@ -199,16 +222,20 @@ class ContainedObjectCatalog(Persistent):
 		return result if result else self.family.IF.LFSet()
 
 	def search_objects(self, container_ntiids=None, provided=None, namespace=None,
-					   ntiid=None, intids=None):
+					   ntiid=None, sites=None, intids=None):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
-			refs = self.get_references(container_ntiids, provided, namespace, ntiid)
+			refs = self.get_references(container_ntiids=container_ntiids,
+									   provided=provided,
+									   namespace=namespace,
+									   ntiid=ntiid,
+									   sites=sites)
 			result = ResultSet(refs, intids)
 		else:
 			result = ()
 		return result
 
-	def index(self, item, container_ntiids=None, namespace=None, intids=None):
+	def index(self, item, container_ntiids=None, namespace=None, sites=None, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
@@ -216,7 +243,10 @@ class ContainedObjectCatalog(Persistent):
 		if namespace is not None:
 			namespace = getattr(namespace, '__name__', namespace)
 
+		sites = sites or get_component_hierarchy_names()
+
 		for index, value in ((self._type_index, item),
+							 (self._site_index, sites),
 							 (self._ntiid_index, item),
 							 (self._namespace_index, namespace),
 							 (self._container_index, container_ntiids)):
@@ -224,7 +254,7 @@ class ContainedObjectCatalog(Persistent):
 				index.index_doc(doc_id, value)
 		return True
 
-	def unindex(self, item, intids=None):
+	def unindex(self, item, sites=None, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
