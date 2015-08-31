@@ -208,7 +208,8 @@ class ContainedObjectCatalog(Persistent):
 		sites = sites or get_component_hierarchy_names()
 
 		# Provided is interface that maps to our type adapter
-		for index, value, query in ((self._ntiid_index, ntiid, 'any_of'),
+		for index, value, query in ((self._site_index, sites, 'any_of'),
+									(self._ntiid_index, ntiid, 'any_of'),
 									(self._type_index, provided, 'any_of'),
 									(self._namespace_index, namespace, 'any_of'),
 							  		(self._container_index, container_ntiids, 'all_of')):
@@ -254,19 +255,21 @@ class ContainedObjectCatalog(Persistent):
 				index.index_doc(doc_id, value)
 		return True
 
-	def unindex(self, item, sites=None, intids=None):
+	def unindex(self, item, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
 		for index in (self._container_index, self._type_index,
-					  self._namespace_index, self._ntiid_index):
+					  self._namespace_index, self._ntiid_index,
+					  self._site_index):
 			index.unindex_doc(doc_id)
 		return True
 
 	def clear(self):
 		self._last_modified.clear()
 		for index in (self._container_index, self._type_index,
-					  self._namespace_index, self._ntiid_index):
+					  self._namespace_index, self._ntiid_index,
+					  self._site_index):
 			index.clear()
 
 def install_container_catalog(site_manager_container, intids=None):
