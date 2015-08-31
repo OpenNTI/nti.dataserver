@@ -17,8 +17,8 @@ from zope.intid import IIntIds
 
 from ZODB.interfaces import IConnection
 
-from nti.contentlibrary.indexed_data import get_catalog
 from nti.contentlibrary.indexed_data import get_registry
+from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
@@ -157,7 +157,7 @@ def _removed_registered(provided, name, intids=None, registry=None, catalog=None
 	registered = registry.queryUtility(provided, name=name)
 	intids = component.queryUtility(IIntIds) if intids is None else intids
 	if registered is not None:
-		catalog = get_catalog() if catalog is None else catalog
+		catalog = get_library_catalog() if catalog is None else catalog
 		if catalog is not None: # may be None in test mode
 			catalog.unindex(registered, intids=intids)
 		unregisterUtility(registry, provided=provided, name=name)
@@ -172,13 +172,14 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	"""
 	result = []
 	registry = get_registry(registry)
-	catalog = get_catalog() if catalog is None else catalog
+	catalog = get_library_catalog() if catalog is None else catalog
 	if catalog is None: # may be None in test mode
 		return result
 	else:
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		for utility in catalog.search_objects(intids=intids, provided=provided,
-											  container_ntiids=containers, namespace=namespace):
+											  container_ntiids=containers, 
+											  namespace=namespace):
 			try:
 				ntiid = utility.ntiid
 				if ntiid:
@@ -253,7 +254,7 @@ def _index_items(content_package, index, item_iface, removed, catalog, registry)
 
 def _update_index_when_content_changes(content_package, index_filename,
 									   item_iface, object_creator, catalog=None):
-	catalog = get_catalog() if catalog is None else catalog
+	catalog = get_library_catalog() if catalog is None else catalog
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
 		# Nothing to do
@@ -363,7 +364,7 @@ def _clear_when_removed(content_package):
 	# across multiple content packages.
 	registry = get_registry()
 	if registry != component.getGlobalSiteManager():
-		catalog = get_catalog()
+		catalog = get_library_catalog()
 		for _, item_iface, _ in INDICES:
 			removed = _remove_from_registry(namespace=content_package.ntiid,
 								  			provided=item_iface,
