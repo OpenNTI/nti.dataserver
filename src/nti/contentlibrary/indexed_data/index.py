@@ -44,7 +44,7 @@ def to_iterable(value):
 	if isinstance(value, (list, tuple, set)):
 		result = value
 	else:
-		result = (value,)
+		result = (value,) if value is not None else ()
 	result = tuple(getattr(x, '__name__', x) for x in result)
 	return result
 
