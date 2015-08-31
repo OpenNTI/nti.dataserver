@@ -20,6 +20,8 @@ from nti.common.property import Lazy
 
 from nti.dublincore.time_mixins import PersistentCreatedAndModifiedTimeObject
 
+from nti.site.site import get_component_hierarchy_names
+
 from nti.zope_catalog.catalog import ResultSet
 
 from .interfaces import IIndexedDataContainer
@@ -46,7 +48,8 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	__name__ = None
 	__parent__ = None
 	
-	def __init__(self, unit):
+	def __init__(self, unit, sites=None):
+		self.sites = sites or get_component_hierarchy_names()
 		self.ntiid = getattr(unit, 'ntiid', None) or getattr(unit, 'NTIID', None) or u''
 
 	@Lazy
@@ -61,6 +64,7 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 		items = list(self.catalog.search_objects(container_ntiids=(self.ntiid,),
 												 provided=self.type,
 												 ntiid=key,
+												 sites=self.sites,
 												 intids=self.intids))
 		if len(items) == 1:
 			return items[0]
@@ -76,6 +80,7 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	def __contains__(self, key):
 		items = self.catalog.get_references(container_ntiids=(self.ntiid,),
 											provided=self.type,
+											sites=self.sites,
 											ntiid=key)
 		return len(items) == 1
 	contains_data_item_with_ntiid = __contains__
@@ -83,6 +88,7 @@ class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	@property
 	def doc_ids(self):
 		result = self.catalog.get_references(container_ntiids=(self.ntiid,),
+											 sites=self.sites,
 											 provided=self.type)
 		return result
 
