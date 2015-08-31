@@ -27,9 +27,10 @@ from .interfaces import IContainedObjectCatalog
 # catalog
 CATALOG_INDEX_NAME = '++etc++contentlibrary.container_index'
 
-def get_catalog():
+def get_library_catalog():
 	result = component.queryUtility(IContainedObjectCatalog, name=CATALOG_INDEX_NAME)
 	return result
+get_catalog = get_library_catalog
 
 # types
 NTI_AUDIO_TYPE = 'INTIAudio'
