@@ -244,8 +244,6 @@ class ContainedObjectCatalog(Persistent):
 		if namespace is not None:
 			namespace = getattr(namespace, '__name__', namespace)
 
-		sites = sites or get_component_hierarchy_names()
-
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
 							 (self._ntiid_index, item),
