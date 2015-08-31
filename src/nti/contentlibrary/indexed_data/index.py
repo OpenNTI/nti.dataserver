@@ -16,8 +16,6 @@ from zope import component
 
 from zope.intid import IIntIds
 
-from zope.proxy import removeAllProxies
-
 import BTrees
 
 from persistent import Persistent
@@ -25,6 +23,7 @@ from persistent import Persistent
 from nti.common.property import alias
 from nti.common.time import bit64_int_to_time
 from nti.common.time import time_to_64bit_int
+from nti.common.proxy import removeAllProxies
 
 from nti.site.interfaces import IHostPolicyFolder
 from nti.site.site import get_component_hierarchy_names
