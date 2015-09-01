@@ -79,11 +79,13 @@ class TestSubscribers(ApplicationLayerTest):
 
 	@WithMockDSTrans
 	@fudge.patch('nti.app.contentlibrary.subscribers.get_registry')
-	def test_indexing(self, mock_registry):
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
+	def test_indexing(self, mock_registry, mock_sites):
 		registry = PersistentComponents()
 		mock_dataserver.current_transaction.add(registry)
 		mock_registry.is_callable().returns(registry)
-
+		mock_sites.is_callable().returns(None)
+		
 		unit_ntiid = 'tag:nextthought.com,2011-10:NTI-HTML-CourseTestContent.lesson1'
 		self.library.syncContentPackages()
 		content_package = self.library.contentPackages[0]
@@ -173,7 +175,6 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(list(registry.registeredUtilities()), has_length(count))
 
 		catalog = _index_items('xxx', *result)
-
 		result = _remove_from_registry(namespace='xxx', 
 									   provided=iface.__name__,
 									   registry=registry,
@@ -181,22 +182,30 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(result, has_length(count))
 
 	@WithMockDSTrans
-	def test_video_index(self):
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
+	def test_video_index(self, mock_sites):
+		mock_sites.is_callable().returns(None)
 		self._test_feed('video_index.json', INTIVideo, 94,
 						create_ntivideo_from_external)
 
 	@WithMockDSTrans
-	def test_timeline_index(self):
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
+	def test_timeline_index(self, mock_sites):
+		mock_sites.is_callable().returns(None)
 		self._test_feed('timeline_index.json', INTITimeline, 11,
 						create_timelime_from_external)
 
 	@WithMockDSTrans
-	def test_related_content_index(self):
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
+	def test_related_content_index(self, mock_sites):
+		mock_sites.is_callable().returns(None)
 		self._test_feed('related_content_index.json', INTIRelatedWorkRef, 372,
 						create_relatedwork_from_external)
 
 	@WithMockDSTrans
-	def test_slidedeck_index(self):
+	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
+	def test_slidedeck_index(self, mock_sites):
+		mock_sites.is_callable().returns(None)
 		path = os.path.join(os.path.dirname(__file__), 'slidedeck_index.json')
 		with open(path, "r") as fp:
 			source = fp.read()
