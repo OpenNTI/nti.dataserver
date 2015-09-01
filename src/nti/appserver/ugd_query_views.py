@@ -37,6 +37,7 @@ from nti.appserver.pyramid_authorization import is_readable
 from nti.appserver.interfaces import INamedLinkView
 from nti.appserver.interfaces import IPrincipalUGDFilter
 from nti.appserver.interfaces import get_principal_ugd_filter
+from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
 from nti.assessment.interfaces import IQPoll
@@ -497,7 +498,7 @@ class _UGDView(AbstractAuthenticatedView,
 
 	def _get_top_level_contexts(self, obj):
 		top_level_contexts = []
-		if self.user is not None:
+		if self.user is None:
 			for new_contexts in component.subscribers( (obj,),
 													ITopLevelContainerContextProvider ):
 				top_level_contexts.extend( new_contexts )
@@ -508,8 +509,12 @@ class _UGDView(AbstractAuthenticatedView,
 		return top_level_contexts
 
 	def _toplevel_context_filter(self, obj):
-		top_level_contexts = self._get_top_level_contexts( obj )
-		return top_level_contexts \
+		try:
+			top_level_contexts = self._get_top_level_contexts( obj )
+		except ForbiddenContextException:
+			return False
+
+		return 	top_level_contexts \
 			and self.top_level_context_filters.intersection( set( top_level_contexts ))
 
 	def _transcript_user_filter(self, obj):
