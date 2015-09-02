@@ -35,8 +35,10 @@ from pyramid.traversal import find_interface
 from pyramid.threadlocal import get_current_request
 
 from nti.appserver import httpexceptions as hexc
+
+from nti.appserver.context_providers import get_joinable_contexts
+
 from nti.appserver.pyramid_authorization import is_readable
-from nti.appserver.interfaces import IJoinableContextProvider
 
 from nti.appserver.workspaces.interfaces import IContainerCollection
 
@@ -199,12 +201,6 @@ class _PageContainerResource(_AbstractPageContainerResource):
 class _RootPageContainerResource(_AbstractPageContainerResource):
 	pass
 
-def _get_joinable_contexts(obj):
-	results = []
-	for joinable_contexts in component.subscribers((obj,), IJoinableContextProvider):
-		results.extend(joinable_contexts)
-	return results
-
 @interface.implementer(interfaces.IObjectsContainerResource)
 class _ObjectsContainerResource(_ContainerResource):
 
@@ -217,7 +213,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		if result is None:  # pragma: no cover
 			raise LocationError(key)
 
-		self._check_permission(result)
+ 		self._check_permission(result)
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
 		if 	getattr(result, '__parent__', None) is not None and \
@@ -255,8 +251,11 @@ class _ObjectsContainerResource(_ContainerResource):
 		to provide information on where the user *might* obtain
 		permission to view the object in the case of 403s.
 		"""
+		# FIXME We should probably make the endpoint define
+		# permissions. We should catch 403s elsewhere and
+		# add context there.
 		if queryInteraction() is not None and not is_readable(context):
-			results = _get_joinable_contexts(context)
+			results = get_joinable_contexts(context)
 			response = hexc.HTTPForbidden()
 			if results:
 				result = LocatedExternalDict()
