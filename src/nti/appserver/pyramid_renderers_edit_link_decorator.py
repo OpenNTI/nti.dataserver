@@ -15,6 +15,8 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
+from nti.app.authentication import get_remote_user
+
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import is_deletable
@@ -26,8 +28,6 @@ from nti.dataserver.interfaces import IShouldHaveTraversablePath
 
 # make sure we use nti.dataserver.traversal to find the root site
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
-
-from nti.dataserver.users import User
 
 from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization import interfaces as ext_interfaces
@@ -102,18 +102,14 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		remote_user = self.request.remote_user
+		remote_user = get_remote_user( self.request )
 		creator = getattr( context, 'creator', None )
 		if remote_user is None or creator is None:
 			return False
 
 		# If a user is not an owner, shortcut the ACL check and do not
 		# return an edit link.
-		remote_user = User.get_user( remote_user )
-		is_owner = 	creator is not None \
-				and remote_user is not None \
-				and creator == remote_user
-		if not is_owner:
+		if not creator == remote_user:
 			return False
 
 		# Ok, see if the owner can edit the underlying object.
