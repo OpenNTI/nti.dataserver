@@ -5,6 +5,7 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+from nti.appserver.context_providers import get_top_level_contexts
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -21,6 +22,8 @@ from zope.location.interfaces import IContained
 from zope.security.interfaces import IPrincipal
 
 from persistent.mapping import PersistentMapping
+
+from nti.appserver.context_providers import get_top_level_contexts
 
 from nti.appserver.interfaces import IJoinableContextProvider
 from nti.appserver.interfaces import ForbiddenContextException
@@ -259,12 +262,10 @@ def _bundles_from_forum(obj):
 def _get_top_level_contexts(obj):
 	results = set()
 	try:
-		for top_level_contexts in component.subscribers((obj,),
-														ITopLevelContainerContextProvider):
-			top_level_contexts = []
-			for top_level_context in top_level_contexts:
-				if IContentPackageBundle.providedBy(top_level_context):
-					results.add(top_level_context)
+		top_level_contexts = get_top_level_contexts( obj )
+		for top_level_context in top_level_contexts:
+			if IContentPackageBundle.providedBy(top_level_context):
+				results.add(top_level_context)
 	except ForbiddenContextException:
 		pass
 	return results
