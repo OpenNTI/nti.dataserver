@@ -261,7 +261,7 @@ class ISynchronizationParams(interface.Interface):
 							   unique=True,
 							   default=(),
 							   required=False)
-	
+
 	allowRemoval = Bool(title="Allow content drops/removal",
 					  	default=False,
 					  	required=False)
@@ -272,25 +272,25 @@ class IGenericSynchronizationResults(interface.Interface):
 class ILibrarySynchronizationResults(IGenericSynchronizationResults):
 
 	Name = TextLine(title="Libray name", required=False)
-	
-	Added = List(title="An iterable NTIID of content package added", 
+
+	Added = List(title="An iterable NTIID of content package added",
 				 value_type=TextLine(title="The NTIID"),
 				 required=False)
-			
-	Modified = List(title="An iterable NTIID of modified content package", 
+
+	Modified = List(title="An iterable NTIID of modified content package",
 					value_type=TextLine(title="The NTIID"),
 					required=False)
 
-	Removed = List(title="An iterable NTIID of content package dropped", 
+	Removed = List(title="An iterable NTIID of content package dropped",
 				   value_type=TextLine(title="The NTIID"),
 				   required=False)
-	
+
 class ISynchronizationResults(interface.Interface):
 
-	Items = IndexedIterable(title="An iterable of sync results", 
+	Items = IndexedIterable(title="An iterable of sync results",
 							value_type=Object(IGenericSynchronizationResults),
 							required=False)
-			
+
 	def add(item):
 		"""
 		Add a sync result
@@ -354,7 +354,7 @@ class IContentPackageLibraryDidSyncEvent(IObjectEvent):
 	params = Object(ISynchronizationParams,
 					title="Synchronization parameters",
 					required=False)
-	
+
 	results = Object(ISynchronizationResults,
 					 title="Synchronization results",
 					 required=False)
@@ -376,7 +376,7 @@ class IContentPackageLibraryModifiedOnSyncEvent(IObjectModifiedEvent):
 	params = Object(ISynchronizationParams,
 					title="Synchronization parameters",
 					required=False)
-	
+
 	results = Object(ISynchronizationResults,
 					 title="Synchronization results",
 					 required=False)
@@ -410,7 +410,7 @@ class AllContentPackageLibrariesWillSyncEvent(object):
 	"""
 	Before all Content package libraries are synced event.
 	"""
-	
+
 	def __init__(self, params=None):
 		self.params = params
 
@@ -422,7 +422,7 @@ class IAllContentPackageLibrariesDidSyncEvent(interface.Interface):
 	params = Object(ISynchronizationParams,
 					title="Synchronization parameters",
 					required=False)
-	
+
 	results = Object(ISynchronizationResults,
 					 title="Synchronization results",
 					 required=False)
@@ -432,7 +432,7 @@ class AllContentPackageLibrariesDidSyncEvent(object):
 	"""
 	All Content package libraries synced event.
 	"""
-	
+
 	def __init__(self, params=None, results=None):
 		self.params = params
 		self.results = results
@@ -688,11 +688,11 @@ class IContentPackageUnmodifiedEvent(IObjectEvent):
 	A special type of event to signal a content package
 	was not modififed
 	"""
-	
+
 	params = Object(ISynchronizationParams,
 					title="Synchronization parameters",
 					required=False)
-	
+
 	results = Object(ISynchronizationResults,
 					 title="Synchronization results",
 					 required=False)
@@ -705,7 +705,7 @@ class ContentPackageUnmodifiedEvent(ObjectEvent):
 		ObjectEvent.__init__(self, obj)
 		self.params = params
 		self.results = results
-		
+
 class IContentPackageReplacedEvent(IObjectModifiedEvent):
 	"""
 	A special type of modification event sent when a content package
@@ -727,18 +727,18 @@ class IContentPackageReplacedEvent(IObjectModifiedEvent):
 
 	original = Object(IContentPackage,
 					  title="The object being replaced")
-	
+
 	params = Object(ISynchronizationParams,
 					title="Synchronization parameters",
 					required=False)
-	
+
 	results = Object(ISynchronizationResults,
 					 title="Synchronization results",
 					 required=False)
 
 @interface.implementer(IContentPackageReplacedEvent)
 class ContentPackageReplacedEvent(ObjectModifiedEvent):
-	
+
 	original = None
 	replacement = alias('object')
 
