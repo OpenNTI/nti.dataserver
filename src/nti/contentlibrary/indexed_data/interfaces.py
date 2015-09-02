@@ -19,7 +19,7 @@ TAG_NAMESPACE_FILE = 'nti.contentlibrary.indexed_data.NamespaceFile'
 
 class IIndexedDataContainer(IReadMapping):
 	"""
-	The indexed data for a content unit. 
+	The indexed data for a content unit.
 
 	These are expected to be accessed by adapting the content
 	unit to this interface; there may be several different

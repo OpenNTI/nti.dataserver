@@ -67,6 +67,8 @@ class ContentPackageBundle(CreatedAndModifiedTimeMixin,
 	__external_class_name__ = 'ContentPackageBundle'
 	__external_can_create__ = False
 
+	mime_type = mimeType = 'application/vnd.nextthought.contentpackagebundle'
+
 	_SET_CREATED_MODTIME_ON_INIT = False
 
 	# Equality and hashcode not defined on purpose,

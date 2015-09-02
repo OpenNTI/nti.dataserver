@@ -21,7 +21,7 @@
 	-->
 	<include package="nti.wref" />
 	<adapter factory=".wref.ContentUnitWeakRef" />
-	
+
 	<!-- also override for persistent units, which we want to
 		 be referenced by NTIID and looked up in the library. -->
 	<adapter factory=".wref.ContentUnitWeakRef"
@@ -36,7 +36,7 @@
 	<!-- annotations -->
 	<!-- single argument -->
 	<adapter factory=".annotation.annotations" />
-	
+
 	<!-- context argument -->
 	<adapter factory=".annotation.annotations"
 			 for=".interfaces.IContentUnit *" />

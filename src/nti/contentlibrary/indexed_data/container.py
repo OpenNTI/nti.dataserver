@@ -40,17 +40,18 @@ from . import NTI_SLIDE_DECK_TYPE
 from . import NTI_RELATED_WORK_REF_TYPE
 
 @interface.implementer(IIndexedDataContainer)
-class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject): 
+class IndexedDataContainer(PersistentCreatedAndModifiedTimeObject):
 	# Make it persistent for BWC
 
 	type = None
-	
+
 	__name__ = None
 	__parent__ = None
-	
+
 	def __init__(self, unit, sites=None):
 		self.sites = sites or get_component_hierarchy_names()
-		self.ntiid = getattr(unit, 'ntiid', None) or getattr(unit, 'NTIID', None) or u''
+		self.ntiid = getattr(unit, 'ntiid', None) \
+		or getattr(unit, 'NTIID', None) or u''
 
 	@Lazy
 	def catalog(self):
