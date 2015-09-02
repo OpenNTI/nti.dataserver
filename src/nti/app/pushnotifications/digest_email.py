@@ -14,7 +14,12 @@ logger = __import__('logging').getLogger(__name__)
 from . import MessageFactory as _
 
 import time
+import hashlib
+import datetime
+import nameparser
 import collections
+
+from nameparser import HumanName
 
 from zope import component
 from zope import interface
@@ -23,20 +28,35 @@ from zope.interface.interfaces import ComponentLookupError
 
 from zope.intid.interfaces import IIntIds
 
+from zope.security.interfaces import IParticipation
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
+from zope.security.management import restoreInteraction
+
+from zope.preference.interfaces import IPreferenceGroup
+
+from zope.i18n import translate
+
+from zope.publisher.interfaces.browser import IBrowserRequest
+
 from zc.displayname.interfaces import IDisplayNameGenerator
 
 from pyramid.traversal import find_interface
 
 from nti.appserver.interfaces import IApplicationSettings
 
+from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
 from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 
 from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
-from nti.common.property import Lazy
+from nti.appserver.context_providers import get_joinable_contexts
 
-from nti.common.gravatar import MYSTERY_MAN_URL as DEFAULT_AVATAR_URL
+from nti.appserver.policies.site_policies import find_site_policy
+from nti.appserver.policies.site_policies import guess_site_display_name
+
+from nti.common.property import Lazy
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
@@ -47,7 +67,12 @@ from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContaine
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IAuthenticationPolicy
+from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
 
+from nti.dataserver.users import User
+from nti.dataserver.users import Entity
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -58,6 +83,8 @@ from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntryPost
 
 from nti.externalization.oids import to_external_ntiid_oid
 
+from nti.externalization.singleton import SingletonDecorator
+
 from nti.intid.interfaces import IntIdMissingError
 
 from nti.mailer.interfaces import IEmailAddressable
@@ -67,10 +94,16 @@ from nti.ntiids.ntiids import get_parts as parse_ntiid
 
 from nti.utils.property import annotation_alias
 
+from .interfaces import INotableDataEmailClassifier
+
 _ONE_WEEK = 7 * 24 * 60 * 60
 _TWO_WEEKS = _ONE_WEEK * 2
 _ONE_MONTH = _TWO_WEEKS * 2
 _TWO_MONTH = _ONE_MONTH * 2
+
+AVATAR_BG_COLORS = [ "5E35B1","3949AB","1E88E5","039BE5",
+					"00ACC1","00897B","43A047","7CB342",
+					"C0CA33","FDD835","FFB300", "FB8C00","F4511E"]
 
 class _TemplateArgs(object):
 
@@ -234,7 +267,36 @@ class _TemplateArgs(object):
 		avatar_container = IAvatarURL( self._primary.creator )
 		if avatar_container.avatarURL:
 			return self.request.resource_url(self._primary.creator, '@@avatar')
-		return DEFAULT_AVATAR_URL
+		return None
+
+	@property
+	def creator_avatar_initials(self):
+		result = None
+		if not self.creator_avatar_url:
+			named = IFriendlyNamed( self._primary.creator )
+			human_name = None
+			if named and named.realname:
+				human_name = nameparser.HumanName( named.realname )
+			# User's initials if we have both first and last
+			if human_name and human_name.first and human_name.last:
+				result = human_name.first[0] + human_name.last[0]
+			# Or the first initial of alias/real/username
+			else:
+				named = named.alias or named.realname or self._primary.creator.username
+				result = named[0]
+		return result
+
+	@property
+	def creator_avatar_bg_color(self):
+		# Hash the username into our BG color array.
+		result = None
+		if not self.creator_avatar_url:
+			username = self._primary.creator.username
+			username_hash = hashlib.md5( username.lower() ).hexdigest()
+			username_hash = int( username_hash, 16 )
+			index = username_hash % len( AVATAR_BG_COLORS )
+			result = AVATAR_BG_COLORS[ index ]
+		return result
 
 class DigestEmailTemplateArgs(dict):
 
@@ -247,13 +309,6 @@ class DigestEmailTemplateArgs(dict):
 		# that the copied dict will actually return
 		# our fake key
 		self['context'] = self
-
-from zope.security.interfaces import IParticipation
-from zope.security.management import endInteraction
-from zope.security.management import newInteraction
-from zope.security.management import restoreInteraction
-
-from zope.preference.interfaces import IPreferenceGroup
 
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
@@ -427,10 +482,6 @@ class DigestEmailCollector(object):
 			result['total_remaining_href'] = _TemplateArgs((None,), request, self.remoteUser).total_remaining_href
 		return result
 
-from nti.externalization.singleton import SingletonDecorator
-
-from .interfaces import INotableDataEmailClassifier
-
 @interface.implementer(INotableDataEmailClassifier)
 class _AbstractClassifier(object):
 
@@ -482,25 +533,6 @@ class _StreamChangeEventDispatcher(_AbstractClassifier):
 
 class _FeedbackClassifier(_AbstractClassifier):
 	classification = 'feedback'
-
-import datetime
-from nameparser import HumanName
-
-from zope.i18n import translate
-
-from zope.publisher.interfaces.browser import IBrowserRequest
-
-from nti.app.bulkemail.interfaces import IBulkEmailProcessDelegate
-
-from nti.appserver.policies.site_policies import find_site_policy
-from nti.appserver.policies.site_policies import guess_site_display_name
-
-from nti.dataserver.interfaces import IDataserver
-from nti.dataserver.interfaces import IAuthenticationPolicy
-from nti.dataserver.interfaces import IImpersonatedAuthenticationPolicy
-
-from nti.dataserver.users import User
-from nti.dataserver.users import Entity
 
 @interface.implementer(IBulkEmailProcessDelegate)
 class DigestEmailProcessDelegate(AbstractBulkEmailProcessDelegate):

@@ -25,6 +25,23 @@
 			font-size: 14pt;
 			color: #757474;
 			}
+			.avatar_initials {
+			    position: absolute;
+			    top: 0;
+			    bottom: 0;
+			    left: 0;
+			    right: 0;
+			    background-size: cover;
+			    background-position: center center;
+			    background-repeat: no-repeat;
+			    top: 50%;
+			    width: 100%;
+			    line-height: 4em;
+			    margin-top: -2em;
+			    font-weight: 600;
+			    font-size: 36px;
+			    font-weight: bold;
+			}
 			a {
 			text-decoration: none;
 			color: #3fb3f6;
