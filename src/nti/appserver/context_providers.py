@@ -13,6 +13,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
 
@@ -94,3 +95,14 @@ def get_hierarchy_context(obj, user):
 		if hiearchy_contexts:
 			results.extend(hiearchy_contexts)
 	return _dedupe_bundles_from_hierarchy(results)
+
+def get_joinable_contexts(obj):
+	"""
+	Return all joinable contexts for a given object.
+	"""
+	results = set()
+	try:
+		get_top_level_contexts(obj)
+	except ForbiddenContextException as e:
+		results = set( e.joinable_contexts )
+	return results
