@@ -32,11 +32,14 @@ from nti.app.renderers.interfaces import IPreRenderResponseCacheController
 from nti.app.renderers.interfaces import IResponseCacheController
 from nti.app.renderers.caching import AbstractReliableLastModifiedCacheController
 
+from nti.appserver.context_providers import get_hierarchy_context
+from nti.appserver.context_providers import get_top_level_contexts
+from nti.appserver.context_providers import get_top_level_contexts_for_user
+
 from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
 
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
-from nti.appserver.interfaces import ITopLevelContainerContextProvider
 from nti.appserver.interfaces import ILibraryPathLastModifiedProvider
 
 from nti.appserver.pyramid_authorization import is_readable
@@ -302,76 +305,6 @@ class _ContentPackageLibraryCacheController(AbstractReliableLastModifiedCacheCon
 	def _context_specific(self):
 		return sorted([x.ntiid for x in self.context.contentPackages])
 
-def _get_wrapped_contexts(top_level_contexts):
-	results = []
-	for top_level_context in top_level_contexts:
-		try:
-			results.append(top_level_context.ContentPackageBundle)
-			results.extend(top_level_context.ContentPackageBundle.ContentPackages)
-		except AttributeError:
-			try:
-				results.append(top_level_context.legacy_content_package)
-			except AttributeError:
-				try:
-					results.extend(top_level_context.ContentPackages)
-				except AttributeError:
-					pass
-	return results
-
-def _dedupe_bundles(top_level_contexts):
-	"""
-	Filter out bundles/packages that may be contained by other contexts.
-	"""
-	results = []
-	wrapped_bundles = _get_wrapped_contexts(top_level_contexts)
-	for top_level_context in top_level_contexts:
-		if top_level_context not in wrapped_bundles:
-			results.append(top_level_context)
-	return results
-
-def _get_top_level_contexts(obj):
-	results = []
-	for top_level_contexts in component.subscribers((obj,),
-													ITopLevelContainerContextProvider):
-		if top_level_contexts:
-			results.extend(top_level_contexts)
-	return _dedupe_bundles(results)
-
-def _get_top_level_contexts_for_user(obj, user):
-	results = []
-	for top_level_contexts in component.subscribers((obj, user),
-													ITopLevelContainerContextProvider):
-		if top_level_contexts:
-			results.extend(top_level_contexts)
-	return _dedupe_bundles(results)
-
-def _get_wrapped_bundles_from_hierarchy(hierarchy_contexts):
-	"""
-	For our hierarchy paths, get all contained bundles.
-	"""
-	top_level_contexts = (x[0] for x in hierarchy_contexts if x)
-	return _get_wrapped_contexts(top_level_contexts)
-
-def _dedupe_bundles_from_hierarchy(hierarchy_contexts):
-	"""
-	Filter out bundles that may be contained by other contexts.
-	"""
-	results = []
-	wrapped_bundles = _get_wrapped_bundles_from_hierarchy(hierarchy_contexts)
-	for hierarchy_context in hierarchy_contexts:
-		top_level_context = hierarchy_context[0]
-		if top_level_context not in wrapped_bundles:
-			results.append(hierarchy_context)
-	return results
-
-def _get_hierarchy_context(obj, user):
-	results = []
-	for hiearchy_contexts in component.subscribers((obj, user),
-												IHierarchicalContextProvider):
-		if hiearchy_contexts:
-			results.extend(hiearchy_contexts)
-	return _dedupe_bundles_from_hierarchy(results)
-
 def _get_hierarchy_context_for_context(obj, top_level_context):
 	results = component.queryMultiAdapter(
 									(top_level_context, obj),
@@ -385,7 +318,7 @@ def _get_board_obj_path(obj):
 	# Permissioning concerns? If we have permission
 	# on underlying object, we should have permission up the tree.
 	result = LocatedExternalList()
-	top_level_context = _get_top_level_contexts(obj)
+	top_level_context = get_top_level_contexts(obj)
 	top_level_context = top_level_context[0] if top_level_context else None
 
 	item = obj.__parent__
@@ -601,7 +534,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 		legacy_path = self._get_legacy_path_to_id(target_ntiid)
 		if legacy_path:
 			package = legacy_path[0]
-			top_level_contexts = _get_top_level_contexts_for_user(package, self.remoteUser)
+			top_level_contexts = get_top_level_contexts_for_user(package, self.remoteUser)
 			for top_level_context in top_level_contexts:
 
 				# Bail if our top-level context is not readable.
@@ -633,7 +566,7 @@ class _LibraryPathView(_AbstractCachingLibraryPathView):
 
 	def _get_path(self, obj, target_ntiid):
 		result = LocatedExternalList()
-		hierarchy_contexts = _get_hierarchy_context(obj, self.remoteUser)
+		hierarchy_contexts = get_hierarchy_context(obj, self.remoteUser)
 		# We have some readings that do not exist in our catalog.
 		# We need content units to be indexed.
 		for hierarchy_context in hierarchy_contexts:
