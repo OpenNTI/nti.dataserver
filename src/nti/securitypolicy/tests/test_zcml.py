@@ -32,22 +32,27 @@ class TestZcml(base.ConfiguringTestBase):
 		<include package="zope.principalregistry" />
 
 		<permission
-			id="nti.actions.coursewarereports.view_reports"
+			id="nti.actions.courseware_reports.view_reports"
 			title="View reports" />
+
 		<sp:role
 			id="nti.roles.courseware.report_viewer"
 			title="Globally accessible report viewing"
 			description="Other people perhaps not associated with the course at
 				all might also be able to view reports." />
+
 		<sp:grant
-			permission="nti.actions.coursewarereports.view_reports"
+			permission="nti.actions.courseware_reports.view_reports"
 			role="nti.roles.courseware.report_viewer" />
+
 		<sp:principal
 			id="grey.allman@nextthought.com"
 			login="grey.allman@nextthought.com"
 			title="Grey Allman" />
+
 		<sp:grant principal="grey.allman@nextthought.com"
 			   role="nti.roles.courseware.report_viewer" />
+
 		</configure>
 		"""
 
