@@ -151,6 +151,7 @@ class TestApplicationDigest(ApplicationLayerTest):
 		msgs = send_notable_email_connected(self.testapp, self._create_notable_data, fake_connect)
 
 		msg = msgs[0]
+		assert_that( msg, contains_string('General Activity'))
 		assert_that( msg, contains_string('From: "NextThought" <no-reply@alerts.nextthought.com>') )
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
