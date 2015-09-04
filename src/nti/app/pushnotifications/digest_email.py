@@ -60,10 +60,6 @@ from nti.common.property import Lazy
 
 from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.contentlibrary.interfaces import IContentPackageLibrary
-from nti.contentlibrary.indexed_data.interfaces import IAudioIndexedDataContainer
-from nti.contentlibrary.indexed_data.interfaces import IVideoIndexedDataContainer
-
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IStreamChangeEvent
@@ -90,8 +86,6 @@ from nti.intid.interfaces import IntIdMissingError
 from nti.mailer.interfaces import IEmailAddressable
 from nti.mailer.interfaces import EmailAddresablePrincipal
 
-from nti.ntiids.ntiids import get_parts as parse_ntiid
-
 from nti.utils.property import annotation_alias
 
 from .interfaces import INotableDataEmailClassifier
@@ -106,11 +100,14 @@ AVATAR_BG_COLORS = [ "5E35B1","3949AB","1E88E5","039BE5",
 					"C0CA33","FDD835","FFB300", "FB8C00","F4511E"]
 
 class _TemplateArgs(object):
+	"""
+	Handles values for presentation per item.
+	"""
 
-	def __init__(self, values, request, remoteUser=None):
-		self._primary = values[0]
+	def __init__(self, objs, request, remoteUser=None):
 		self.request = request
-		self.remaining = len(values) - 1
+		self._primary = objs[0]
+		self.remaining = len( objs ) - 1
 		self.remoteUser = remoteUser
 
 	def __getattr__(self, name):
@@ -118,18 +115,8 @@ class _TemplateArgs(object):
 
 	@Lazy
 	def __parent__(self):
-		return _TemplateArgs([self._primary.__parent__],
+		return _TemplateArgs( self._primary.__parent__,
 							 self.request)
-
-	@Lazy
-	def course(self):
-		from nti.contenttypes.courses.interfaces import ICourseInstance
-		course = ICourseInstance(self._primary, None)
-		if course is None:
-			course = find_interface(self._primary, ICourseInstance)
-		if course is not None:
-			return _TemplateArgs([course],
-								 self.request)
 
 	@Lazy
 	def assignment_name(self):
@@ -206,62 +193,6 @@ class _TemplateArgs(object):
 		# with the application...
 		return self.request.resource_url(self._primary)
 
-	def _path_to_note_container(self):
-		name = self.__name__
-		__traceback_info__ = name
-		assert name.startswith('tag:')
-
-		# Try to find a content unit
-		# FIXME: Eww, ugly. This implementation knows entirely
-		# too much. We would like to pull it out to a DisplayNameGenerator,
-		# but we have nothing to really register that adapter
-		# on.
-		# It's also incredibly inefficient.
-		lib = component.getUtility(IContentPackageLibrary)
-		path = lib.pathToNTIID(name)
-		if path:
-			return path
-
-		ifaces = (IAudioIndexedDataContainer, IVideoIndexedDataContainer)
-		def _search(unit):
-			for iface in ifaces:
-				if name in iface(unit):
-					return lib.pathToNTIID(unit.ntiid)
-			for child in unit.children:
-				r = _search(child)
-				if r:
-					return r
-
-		for package in lib.contentPackages:
-			r = _search(package)
-			if r:
-				return r
-
-	@property
-	def note_container_display_name(self):
-		path = self._path_to_note_container()
-		if path:
-			for i in reversed(path):
-				title = getattr(i, 'title', '')
-				if title and title.strip():
-					return title
-
-	@property
-	def note_container_href(self):
-		"For note containers, we want to go to the content unit, not the note container"
-		path = self._path_to_note_container()
-		if path:
-			ntiid = path[-1].ntiid
-			parsed_ntiid = parse_ntiid(ntiid)
-			# The app has another, nice, format for content
-			# #!HTML/<provider>/<specific>
-			provider = parsed_ntiid.provider
-			specific = parsed_ntiid.specific
-			return self.request.route_url('objects.generic.traversal',
-										  traverse=(),
-										  _anchor="!HTML/" + provider + '/' + specific).replace('/dataserver2',
-																								self.web_root)
-
 	@property
 	def creator_avatar_url(self):
 		avatar_container = IAvatarURL( self._primary.creator )
@@ -271,44 +202,35 @@ class _TemplateArgs(object):
 
 	@property
 	def creator_avatar_initials(self):
-		result = None
-		if not self.creator_avatar_url:
-			named = IFriendlyNamed( self._primary.creator )
-			human_name = None
-			if named and named.realname:
-				human_name = nameparser.HumanName( named.realname )
-			# User's initials if we have both first and last
-			if human_name and human_name.first and human_name.last:
-				result = human_name.first[0] + human_name.last[0]
-			# Or the first initial of alias/real/username
-			else:
-				named = named.alias or named.realname or self._primary.creator.username
-				result = named[0]
+		named = IFriendlyNamed( self._primary.creator )
+		human_name = None
+		if named and named.realname:
+			human_name = nameparser.HumanName( named.realname )
+		# User's initials if we have both first and last
+		if human_name and human_name.first and human_name.last:
+			result = human_name.first[0] + human_name.last[0]
+		# Or the first initial of alias/real/username
+		else:
+			named = named.alias or named.realname or self._primary.creator.username
+			result = named[0]
 		return result
 
 	@property
 	def creator_avatar_bg_color(self):
 		# Hash the username into our BG color array.
-		result = None
-		if not self.creator_avatar_url:
-			username = self._primary.creator.username
-			username_hash = hashlib.md5( username.lower() ).hexdigest()
-			username_hash = int( username_hash, 16 )
-			index = username_hash % len( AVATAR_BG_COLORS )
-			result = AVATAR_BG_COLORS[ index ]
+		username = self._primary.creator.username
+		username_hash = hashlib.md5( username.lower() ).hexdigest()
+		username_hash = int( username_hash, 16 )
+		index = username_hash % len( AVATAR_BG_COLORS )
+		result = AVATAR_BG_COLORS[ index ]
 		return result
 
-class DigestEmailTemplateArgs(dict):
+class NotableGroupContext(dict):
 
-	def __init__(self):
-		dict.__init__(self)
-		# Yes, this creates a cycle. But
-		# if someone does dict.update(self),
-		# even if we override __getitem__/get,
-		# __contains__, and items(), we have no guarantee
-		# that the copied dict will actually return
-		# our fake key
-		self['context'] = self
+	def __init__(self, notable_context, notable_dict, remaining=0):
+		self.notable_context = notable_context
+		self.context = notable_dict
+		self.remaining = remaining
 
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
@@ -443,14 +365,24 @@ class DigestEmailCollector(object):
 		# (Note that grade objects are going to have a `change` content type, which is
 		# unique)
 		sorted_by_type_time = recipient['template_args']
-
-		values = collections.defaultdict(list)
+		values = {}
 
 		notable_data = component.getMultiAdapter((self.remoteUser, self.request),
 												  IUserNotableData)
 
 		total_found = 0
+		# FIXME gather and sort first, then gather by joinable in sorted order
+		# stop when we get our category count (e.g. courses) and count by category.
+		# Group by joinable context, then by classification.
+		# Do we need to group everything first before cutting off, or can we short circuit (know)
+		# when we have everything we need?
+		# Easy way to get our global remaining count based on that.
 		for o in notable_data.iter_notable_intids(sorted_by_type_time, ignore_missing=True):
+			joinable_contexts = get_joinable_contexts( o )
+			joinable_context = joinable_contexts[0] if joinable_contexts else 'GeneralActivity'
+
+			class_dict = values.setdefault( joinable_context, collections.defaultdict( list ) )
+
 			total_found += 1
 			classifier = component.queryAdapter(o, INotableDataEmailClassifier)
 			try:
@@ -459,27 +391,39 @@ class DigestEmailCollector(object):
 				classification = None
 
 			if classification:
-				values[classification].append(o)
+				class_dict[classification].append(o)
 			else:
 				total_found -= 1
-				values['other'].append(o)
+				class_dict['other'].append(o)
 
+		result = {}
+		# TODO How to sort this? Do we need to?
+		# FIXME We should sort first, then organize by joinable context
 		# These were initially sorted by time within their own mime types,
 		# but some things may have multiple mime types under the same classification,
-		# so we need to resort
-		result = DigestEmailTemplateArgs()
-		for name, objs in values.items():
-			if objs:
+		# so we need to re-sort.
+		result['notable_groups'] = notable_groups = []
+		total_remaining = 0
+		for joinable, class_dict in values.items():
+			new_class_dict = {}
+			obj_count = 0
+			for class_name, objs in class_dict.items() or {}:
+				obj_count += len( objs )
 				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
-				result[name] = _TemplateArgs(objs, request, self.remoteUser)
+				# This isn't quite what we want, we're limiting ourselves to
+				# displaying one object per type (without more work).
+				new_class_dict[ class_name ] = _TemplateArgs( objs, request, self.remoteUser )
+			# We display one per type; whatever left is our remaining per group.
+			remaining = obj_count - len( new_class_dict )
+			total_remaining += remaining
+			notable_groups.append( NotableGroupContext( joinable, new_class_dict, remaining ))
 
 		result['unsubscribe_link'] = generate_unsubscribe_url(self.remoteUser, request)
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
 		result['total_found'] = total_found
-		# We may want to exclude 'circled' and others from this count?
-		result['total_remaining'] = sum([ x.remaining for x in result.values() if isinstance(x, _TemplateArgs) ])
+		result['total_remaining'] = total_remaining
 		if result['total_remaining']:
-			result['total_remaining_href'] = _TemplateArgs((None,), request, self.remoteUser).total_remaining_href
+			result['total_remaining_href'] = _TemplateArgs( (None,), request, self.remoteUser ).total_remaining_href
 		return result
 
 @interface.implementer(INotableDataEmailClassifier)
@@ -636,9 +580,9 @@ class DigestEmailProcessTestingDelegate(DigestEmailProcessDelegate):
 
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			if email:
-				if email.endswith('@nextthought.com'):
-					return True
-				if email == 'jamadden@ou.edu':
+				if 		email == 'jamadden@ou.edu' \
+					or	email == 'jzuech3@gmail.com' \
+					or 	email.endswith('@nextthought.com'):
 					return True
 
 	class _Collector(DigestEmailCollector):

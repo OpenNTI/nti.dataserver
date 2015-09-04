@@ -10,9 +10,5 @@
 		   tal:attributes="href notable/href"
 		   tal:content="notable/display_name|notable/snippet|string:View Note">Test save</a>
 
-		<span tal:condition="notable/__parent__/note_container_display_name">
-			in <a style="color: #3fb3f6;" href=""
-			tal:attributes="href notable/__parent__/note_container_href|default"
-			tal:content="notable/__parent__/note_container_display_name|default">a book</a></span>.
 	</span>
 </div>

@@ -37,7 +37,6 @@ from nti.dataserver import contenttypes
 from nti.dataserver.users.users import User
 
 from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.appserver.tests import ExLibraryApplicationTestLayer
 
@@ -70,14 +69,6 @@ class FakeNotable(PersistentCreatedAndModifiedTimeObject, Contained):
 class TestApplicationDigest(ApplicationLayerTest):
 
 	layer = ExLibraryApplicationTestLayer
-
-	@WithMockDSTrans
-	def test_path_to_note_container(self):
-		from ..digest_email import _TemplateArgs
-		args = _TemplateArgs([self], None)
-		args.__name__ = self.CONTAINER_ID + '.this.is.not_toplevel'
-		path = args._path_to_note_container()
-		assert_that( path, is_(none() ) )
 
 	@WithSharedApplicationMockDS(users=True,testapp=True)
 	@fudge.patch('boto.ses.connect_to_region')
@@ -160,16 +151,13 @@ class TestApplicationDigest(ApplicationLayerTest):
 		msgs = send_notable_email_connected(self.testapp, self._create_notable_data, fake_connect)
 
 		msg = msgs[0]
-		assert_that( msg, contains_string( self.CONTAINER_NAME ) )
-		assert_that( msg, contains_string( 'http://localhost/NextThoughtWebApp/#!HTML/MN/MiladyCosmetology.the_twentieth_century'))
-
 		assert_that( msg, contains_string('From: "NextThought" <no-reply@alerts.nextthought.com>') )
 		assert_that( msg, contains_string('NOTABLE NOTE'))
 		assert_that( msg, contains_string('shared a note'))
 		assert_that( msg, contains_string("Here's what you may have missed on Localhost since 12/31/69 6:00 PM."))
 
 		assert_that( msg, contains_string('NOTABLE BLOG TITLE'))
-		assert_that( msg, contains_string('Steve Johnson added'))
+		assert_that( msg, contains_string('added you as a contact'))
 		assert_that( msg, contains_string('<span>jason.madden@nextthought.com (jason)</span>'))
 
 		assert_that( msg, contains_string('See All Activity'))

@@ -146,7 +146,7 @@
 	<adapter factory=".digest_email._BlogEntryClassifier" />
 	<adapter factory=".digest_email._BlogEntryPostClassifier" />
 	<adapter factory=".digest_email._StreamChangeEventDispatcher" />
-	
+
 	<!-- Note the coupling. This should be moved -->
 	<adapter factory=".digest_email._FeedbackClassifier"
 			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemFeedback"
