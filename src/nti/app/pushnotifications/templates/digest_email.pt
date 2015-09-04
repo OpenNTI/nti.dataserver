@@ -80,18 +80,63 @@
 										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;">Here's what you may have missed on ${options/site_name} since ${options/since_when}.</div>
 									</td>
 								</tr>
+								<tal:block tal:repeat="notable_group options/notable_groups">
 								<tr width="100%">
-									<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; background:#fff; padding: 18px;">
+									<td width="100%">
+										<!-- White background -->
+										<table style="border: none; background:#fff; margin-left: 0px; width: 500px;">
+										<tbody>
+											<tr width="100%">
+											<td width="100%" style="border-collapse:collapse; margin-left: 0px; padding:15px">
 
-										<div>
-											<metal:block tal:content="structure provider:notable_items">
-												Render each notable item.
-											</metal:block>
-										</div>
+												<!-- Table with data -->
+												<table style="border-collapse:collapse; margin-left: 0px; align: center; width: 490px">
+													<tr width="100%">
+														<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+																							padding-top:10px; padding-bottom: 10px; border-bottom: 1px solid #EFEFEF;
+																							padding: 0px; margin-left: 0px; font-size: 22px;">
+															<div>
+																<span tal:content="notable_group/notable_context/title | default">
+																	General Activity
+																</span>
+															</div>
+														</td>
+													</tr>
+
+													<!-- 'context' is the dict used by the viewlets -->
+													<tr width="100%" tal:define="context notable_group/context">
+														<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+																							padding-top:18px; padding-bottom: 18px; padding: 0px; margin-left: 0px;">
+															<div>
+																<metal:block tal:content="structure provider:notable_items">
+																	Render each notable item.
+																</metal:block>
+															</div>
+														</td>
+													</tr>
+													<tr width="100%">
+														<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+																							padding-top:0px; padding-bottom: 0px; padding: 0px; margin-left: 0px;">
+															<div>
+																<div tal:condition="notable_group/remaining"
+																	 tal:define="remaining notable_group/remaining"
+																	 style="color: #a3a3a4; font-style: italic; height:30px; text-align:left;
+																	 		padding-top:0px;margin-top:0px;">
+																	 And ${remaining} more...
+																</div>
+															</div>
+														</td>
+													</tr>
+												</table>
+											</td>
+											</tr>
+										</tbody>
+										</table>
 									</td>
 								</tr>
+								</tal:block>
 								<tr width="100%">
-									<td valign="top" align="left">
+									<td valign="top" align="left" style="padding: 0px;">
 										<div>
 											<div tal:condition="options/total_remaining"
 												 tal:define="total_remaining options/total_remaining"
@@ -103,7 +148,7 @@
 												</a>
 											</div>
 										</div>
-								</td>
+									</td>
 								</tr>
 								<tr width="100%">
 									<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
