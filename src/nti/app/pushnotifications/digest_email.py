@@ -361,20 +361,16 @@ class DigestEmailCollector(object):
 		# Now iterate to get the actual content objects
 		# (Note that grade objects are going to have a `change` content type, which is
 		# unique)
-		sorted_by_type_time = recipient['template_args']
-		values = {}
+		sorted_by_time = recipient['template_args']
+		values = collections.OrderedDict()
 
 		notable_data = component.getMultiAdapter((self.remoteUser, self.request),
 												  IUserNotableData)
 
 		total_found = 0
-		# FIXME gather and sort first, then gather by joinable in sorted order
-		# stop when we get our category count (e.g. courses) and count by category.
-		# Group by joinable context, then by classification.
-		# Do we need to group everything first before cutting off, or can we short circuit (know)
-		# when we have everything we need?
-		# Easy way to get our global remaining count based on that.
-		for o in notable_data.iter_notable_intids(sorted_by_type_time, ignore_missing=True):
+		# Since we are sorted by time, our notable groups will be sorted by time as well
+		# (groups with most recent events will come first).
+		for o in notable_data.iter_notable_intids(sorted_by_time, ignore_missing=True):
 			joinable_contexts = get_joinable_contexts( o )
 			joinable_context = joinable_contexts[0] if joinable_contexts else 'General Activity'
 
@@ -393,12 +389,8 @@ class DigestEmailCollector(object):
 				total_found -= 1
 				class_dict['other'].append(o)
 
+		# Now gather our objects for display.
 		result = {}
-		# TODO How to sort this? Do we need to?
-		# FIXME We should sort first, then organize by joinable context
-		# These were initially sorted by time within their own mime types,
-		# but some things may have multiple mime types under the same classification,
-		# so we need to re-sort.
 		result['notable_groups'] = notable_groups = []
 		total_remaining = 0
 		for joinable, class_dict in values.items():
@@ -409,7 +401,7 @@ class DigestEmailCollector(object):
 				# We used to sort our objects here by created time. Should no longer
 				# be necessary.
 
-				# This isn't quite what we want, we're limiting ourselves to
+				# This isn't quite what we want (?), we're limiting ourselves to
 				# displaying one object per type (without more work).
 				new_class_dict[ class_name ] = _TemplateArgs( objs, request, self.remoteUser )
 			# We display one per type; whatever left is our remaining per group.
