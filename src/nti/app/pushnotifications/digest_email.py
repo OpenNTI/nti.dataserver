@@ -51,7 +51,7 @@ from nti.app.bulkemail.delegate import AbstractBulkEmailProcessDelegate
 from nti.app.notabledata.interfaces import IUserNotableData
 from nti.app.pushnotifications.utils import generate_unsubscribe_url
 
-from nti.appserver.context_providers import get_joinable_contexts
+from nti.appserver.context_providers import get_trusted_top_level_contexts
 
 from nti.appserver.policies.site_policies import find_site_policy
 from nti.appserver.policies.site_policies import guess_site_display_name
@@ -371,10 +371,10 @@ class DigestEmailCollector(object):
 		# Since we are sorted by time, our notable groups will be sorted by time as well
 		# (groups with most recent events will come first).
 		for o in notable_data.iter_notable_intids(sorted_by_time, ignore_missing=True):
-			joinable_contexts = get_joinable_contexts( o )
-			joinable_context = joinable_contexts[0] if joinable_contexts else 'General Activity'
+			top_level_contexts = get_trusted_top_level_contexts( o )
+			top_level_context = top_level_contexts[0] if top_level_contexts else 'General Activity'
 
-			class_dict = values.setdefault( joinable_context, collections.defaultdict( list ) )
+			class_dict = values.setdefault( top_level_context, collections.defaultdict( list ) )
 
 			total_found += 1
 			classifier = component.queryAdapter(o, INotableDataEmailClassifier)

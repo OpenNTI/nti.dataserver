@@ -16,6 +16,7 @@ from zope import component
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider
 from nti.appserver.interfaces import ITopLevelContainerContextProvider
+from nti.appserver.interfaces import ITrustedTopLevelContainerContextProvider
 
 def _get_wrapped_contexts(top_level_contexts):
 	results = []
@@ -54,6 +55,19 @@ def get_top_level_contexts(obj):
 		if top_level_contexts:
 			results.extend(top_level_contexts)
 	return _dedupe_bundles(results)
+
+def get_trusted_top_level_contexts(obj):
+	"""
+	Return all top-level contexts for a given object, no matter
+	the current state of such contexts.  Useful only for display
+	purposes.
+	"""
+	results = set()
+	for top_level_contexts in component.subscribers((obj,),
+													ITrustedTopLevelContainerContextProvider):
+		if top_level_contexts:
+			results.update(top_level_contexts)
+	return results
 
 def get_top_level_contexts_for_user(obj, user):
 	"""
