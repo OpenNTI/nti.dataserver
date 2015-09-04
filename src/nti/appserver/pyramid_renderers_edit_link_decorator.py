@@ -109,7 +109,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 
 		# If a user is not an owner, shortcut the ACL check and do not
 		# return an edit link.
-		if not creator == remote_user:
+		if creator != remote_user:
 			return False
 
 		# Ok, see if the owner can edit the underlying object.

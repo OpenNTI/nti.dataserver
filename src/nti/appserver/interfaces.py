@@ -564,7 +564,8 @@ zope.deferredimport.deprecatedFrom(
 class IJoinableContextProvider(IIterable):
 	"""
 	An adapter interface that returns objects that a user
-	may join in order to access the adapted object.
+	may join in order to access the adapted object.  This
+	will only return the top-level items current available.
 	"""
 
 	def __len__():
@@ -586,6 +587,19 @@ class ITopLevelContainerContextProvider(IIterable):
 	"""
 	An adapter interface that returns the top-level
 	container object(s) of the adapted object.
+	"""
+
+	def __len__():
+		"""
+		Return the number of items.
+		"""
+
+class ITrustedTopLevelContainerContextProvider(IIterable):
+	"""
+	An adapter interface that returns the top-level
+	container object(s) of the adapted object, irregardless
+	of the current state of such context.  Useful only
+	for display purposes.
 	"""
 
 	def __len__():
