@@ -232,6 +232,11 @@ class NotableGroupContext(dict):
 		self.context = notable_dict
 		self.remaining = remaining
 
+	@property
+	def title(self):
+		result = getattr( self.notable_context, 'title', self.notable_context )
+		return result
+
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
 
@@ -379,7 +384,7 @@ class DigestEmailCollector(object):
 		# Easy way to get our global remaining count based on that.
 		for o in notable_data.iter_notable_intids(sorted_by_type_time, ignore_missing=True):
 			joinable_contexts = get_joinable_contexts( o )
-			joinable_context = joinable_contexts[0] if joinable_contexts else 'GeneralActivity'
+			joinable_context = joinable_contexts[0] if joinable_contexts else 'General Activity'
 
 			class_dict = values.setdefault( joinable_context, collections.defaultdict( list ) )
 
