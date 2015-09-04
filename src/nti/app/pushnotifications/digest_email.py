@@ -341,27 +341,19 @@ class DigestEmailCollector(object):
 		# about the first (most recent) item in each group.
 		# TODO: There should be heuristics around that, it should be the
 		# first, most notable, thing
+		# JZ 9.2016 - We used to also sort by mimetype to group objects (not sure why).
+		# As a side-effect of this, items not in the mimetype index were dropped.
+		# Now, we group by context.
 
 		# So first we sort them by created time, descending.
 		sorted_by_time = notable_data.sort_notable_intids(notable_intids_since_last_viewed,
 														  reverse=True,
 														  reify=True)
 
-		# Then we can sort them by type, trusting the stable sort to
-		# preserve relative creation times among items of the same
-		# type. (TODO: Is this actually guaranteed stable? If not we
-		# need our own stable implementation)
-
-		# WARNING: If an item is not found in the mimeType index
-		# because it is not IContentTypeAware, it will be dropped!
-		sorted_by_type_time = notable_data.sort_notable_intids(sorted_by_time,
-															   field_name='mimeType',
-															   reify=True)
-
 		logger.debug("User %s/%s had %d notable items since %s",
-					  self.remoteUser, addr.email, len(sorted_by_type_time), min_created_time)
+					  self.remoteUser, addr.email, len(sorted_by_time), min_created_time)
 		return {'email': EmailAddresablePrincipal(self.remoteUser),
-				'template_args': sorted_by_type_time,
+				'template_args': sorted_by_time,
 				'since': min_created_time}
 
 
@@ -414,7 +406,9 @@ class DigestEmailCollector(object):
 			obj_count = 0
 			for class_name, objs in class_dict.items() or {}:
 				obj_count += len( objs )
-				objs.sort(reverse=True, key=lambda x: getattr(x, 'createdTime', 0))
+				# We used to sort our objects here by created time. Should no longer
+				# be necessary.
+
 				# This isn't quite what we want, we're limiting ourselves to
 				# displaying one object per type (without more work).
 				new_class_dict[ class_name ] = _TemplateArgs( objs, request, self.remoteUser )
