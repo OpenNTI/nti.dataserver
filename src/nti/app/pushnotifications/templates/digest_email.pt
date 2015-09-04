@@ -96,7 +96,7 @@
 																							padding-top:10px; padding-bottom: 10px; border-bottom: 1px solid #EFEFEF;
 																							padding: 0px; margin-left: 0px; font-size: 22px;">
 															<div>
-																<span tal:content="notable_group/notable_context/title | default">
+																<span tal:content="notable_group/title | default">
 																	General Activity
 																</span>
 															</div>
@@ -136,7 +136,7 @@
 								</tr>
 								</tal:block>
 								<tr width="100%">
-									<td valign="top" align="left" style="padding: 0px;">
+									<td valign="top" align="left" style="padding: 0px; padding-left:15px; padding-right:15px;">
 										<div>
 											<div tal:condition="options/total_remaining"
 												 tal:define="total_remaining options/total_remaining"
