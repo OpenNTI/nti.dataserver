@@ -232,11 +232,6 @@ class NotableGroupContext(dict):
 		self.context = notable_dict
 		self.remaining = remaining
 
-	@property
-	def title(self):
-		result = getattr( self.notable_context, 'title', self.notable_context )
-		return result
-
 @component.adapter(IUser, interface.Interface)
 class DigestEmailCollector(object):
 
@@ -356,6 +351,21 @@ class DigestEmailCollector(object):
 				'template_args': sorted_by_time,
 				'since': min_created_time}
 
+	def _get_top_level_context(self, obj):
+		"""
+		Get the top level context for our object.
+		"""
+		# Just grab the title since this is what we display. This also
+		# collapses possible different catalog entries into a single
+		# entry, which we want.
+		top_level_contexts = get_trusted_top_level_contexts( obj )
+		result = None
+		if top_level_contexts:
+			top_level_contexts = tuple( top_level_contexts )
+			result = top_level_contexts[0]
+
+		result = getattr( result, 'title', 'General Activity' )
+		return result
 
 	def recipient_to_template_args(self, recipient, request):
 		# Now iterate to get the actual content objects
@@ -371,9 +381,7 @@ class DigestEmailCollector(object):
 		# Since we are sorted by time, our notable groups will be sorted by time as well
 		# (groups with most recent events will come first).
 		for o in notable_data.iter_notable_intids(sorted_by_time, ignore_missing=True):
-			top_level_contexts = get_trusted_top_level_contexts( o )
-			top_level_context = top_level_contexts[0] if top_level_contexts else 'General Activity'
-
+			top_level_context = self._get_top_level_context( o )
 			class_dict = values.setdefault( top_level_context, collections.defaultdict( list ) )
 
 			total_found += 1
@@ -393,7 +401,7 @@ class DigestEmailCollector(object):
 		result = {}
 		result['notable_groups'] = notable_groups = []
 		total_remaining = 0
-		for joinable, class_dict in values.items():
+		for top_level_context, class_dict in values.items():
 			new_class_dict = {}
 			obj_count = 0
 			for class_name, objs in class_dict.items() or {}:
@@ -407,7 +415,7 @@ class DigestEmailCollector(object):
 			# We display one per type; whatever left is our remaining per group.
 			remaining = obj_count - len( new_class_dict )
 			total_remaining += remaining
-			notable_groups.append( NotableGroupContext( joinable, new_class_dict, remaining ))
+			notable_groups.append( NotableGroupContext( top_level_context, new_class_dict, remaining ))
 
 		result['unsubscribe_link'] = generate_unsubscribe_url(self.remoteUser, request)
 		result['email_to'] = '%s (%s)' % (recipient['email'].email, recipient['email'].id)
