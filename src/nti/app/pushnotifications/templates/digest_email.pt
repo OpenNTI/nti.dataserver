@@ -96,7 +96,7 @@
 																							padding-top:10px; padding-bottom: 10px; border-bottom: 1px solid #EFEFEF;
 																							padding: 0px; margin-left: 0px; font-size: 22px;">
 															<div>
-																<span tal:content="notable_group/title | default">
+																<span tal:content="notable_group/notable_context | default">
 																	General Activity
 																</span>
 															</div>
