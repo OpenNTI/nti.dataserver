@@ -51,6 +51,7 @@ from nti.mailer.interfaces import ITemplatedMailer
 from . import VERIFY_USER_EMAIL_VIEW
 
 _EMAIL_VERIFICATION_TIME_KEY = 'nti.app.users._EMAIL_VERIFICATION_TIME_KEY'
+_EMAIL_VERIFICATION_COUNT_KEY = 'nti.app.users._EMAIL_VERIFICATION_COUNT_KEY'
 
 def get_user(user):
 	result = user if IUser.providedBy(user) else User.get_user(str(user or ''))
@@ -140,11 +141,25 @@ def get_email_verification_time(user):
 	result = annotes.get(_EMAIL_VERIFICATION_TIME_KEY)
 	return result
 
+def get_email_verification_count(user):
+	annotes = IAnnotations(user)
+	result = annotes.get(_EMAIL_VERIFICATION_COUNT_KEY)
+	return result or 0
+
 def set_email_verification_time(user, now=None):
 	now = time.time() if now is None else math.fabs(now)
 	annotes = IAnnotations(user)
 	annotes[_EMAIL_VERIFICATION_TIME_KEY] = now
 
+def set_email_verification_count(user, count=None):
+	count = 0 if count is None else int(math.fabs(count))
+	annotes = IAnnotations(user)
+	annotes[_EMAIL_VERIFICATION_COUNT_KEY] = count
+	
+def incr_email_verification_count(user):
+	count = get_email_verification_count(user)
+	set_email_verification_count(user, count+1)
+	
 def _get_package(policy, template='email_verification_email'):
 	base_package = 'nti.app.users'
 	package = getattr(policy, 'PACKAGE', None)
@@ -203,6 +218,7 @@ def send_email_verification(user, profile, email, request=None, check=True):
 
 	# record time
 	set_email_verification_time(user)
+	incr_email_verification_count(user)
 
 def safe_send_email_verification(user, profile, email, request=None, check=True):
 	iids = component.getUtility(zope.intid.IIntIds)
