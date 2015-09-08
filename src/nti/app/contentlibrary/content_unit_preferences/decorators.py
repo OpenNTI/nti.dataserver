@@ -20,10 +20,15 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.interfaces import IContentUnitInfo
 
+from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
 from .prefs import prefs_present
 from .prefs import find_prefs_for_content_and_user
+
+CLASS = StandardExternalFields.CLASS
+MIMETYPE = StandardExternalFields.MIMETYPE
+LAST_MODIFIED = StandardExternalFields.LAST_MODIFIED
 
 @interface.implementer(IExternalMappingDecorator)
 @component.adapter(IContentUnitInfo, IRequest)
@@ -39,18 +44,18 @@ class _ContentUnitPreferencesDecorator(AbstractAuthenticatedRequestAwareDecorato
 		prefs, provenance, contentUnit = \
 					find_prefs_for_content_and_user(context.contentUnit, self.remoteUser)
 
-		if prefs_present( prefs ):
+		if prefs_present(prefs):
 			ext_obj = {}
 			ext_obj['State'] = 'set' if contentUnit is context.contentUnit else 'inherited'
 			ext_obj['Provenance'] = provenance
 			ext_obj['sharedWith'] = prefs.sharedWith
-			ext_obj['Class'] = 'SharingPagePreference'
-
+			ext_obj[CLASS] = 'SharingPagePreference'
+			ext_obj[MIMETYPE] = 'application/vnd.nextthought.sharingpagepreference'
 			result['sharingPreference'] = ext_obj
 
 		if prefs:
 			# We found one, but it specified no sharing settings.
 			# we still want to copy its last modified
 			if prefs.lastModified > context.lastModified:
-				result['Last Modified'] = prefs.lastModified
+				result[LAST_MODIFIED] = prefs.lastModified
 				context.lastModified = prefs.lastModified
