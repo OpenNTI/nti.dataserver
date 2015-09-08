@@ -54,7 +54,9 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.utils import reindex_email_verification
 
 from .utils import get_email_verification_time
+from .utils import get_email_verification_count
 from .utils import safe_send_email_verification
+from .utils import set_email_verification_count
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
 
@@ -63,7 +65,8 @@ from . import REQUEST_EMAIL_VERFICATION_VIEW
 from . import SEND_USER_EMAIL_VERFICATION_VIEW
 from . import VERIFY_USER_EMAIL_WITH_TOKEN_VIEW
 
-MAX_WAIT_TIME_EMAILS = 300
+MAX_REQUEST_COUNT = 5
+MAX_WAIT_TIME_EMAILS = 300 # 5 mins
 
 def _login_app_root():
 	settings = component.getUtility(IApplicationSettings)
@@ -203,9 +206,12 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 
 		if not profile.email_verified:
 			now  = time.time()
-			last_time = get_email_verification_time(user) or 0
-			diff_time = now - last_time
+			count = get_email_verification_count(user)
+			diff_time = now - (get_email_verification_time(user) or 0)
 			if diff_time > MAX_WAIT_TIME_EMAILS:
+				set_email_verification_count(user, 0) # reset
+				safe_send_email_verification(user, profile, email, self.request)
+			elif count < MAX_REQUEST_COUNT:
 				safe_send_email_verification(user, profile, email, self.request)
 			else:
 				raise_error(self.request,
