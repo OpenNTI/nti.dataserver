@@ -77,7 +77,7 @@ class TestApplicationDFLViews(ApplicationLayerTest):
 		# after which it 404s
 		testapp.delete( path + '/@@' + str( REL_MY_MEMBERSHIP ),
 						extra_environ=self._make_extra_environ(username=member_user_username),
-						status=404)
+						status=403) # custom predicate
 
 		# The member is no longer a member and no longer follows
 		with mock_dataserver.mock_db_trans( self.ds ):
