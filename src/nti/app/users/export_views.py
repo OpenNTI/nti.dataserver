@@ -18,6 +18,7 @@ from zope.catalog.interfaces import ICatalog
 from zope.intid import IIntIds
 
 from pyramid.view import view_config
+from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -260,12 +261,13 @@ class DeleteUserObjects(AbstractAuthenticatedView, ModeledContentUploadRequestUt
 
 		return counter_map
 
-@view_config(route_name='objects.generic.traversal',
-			 renderer='rest',
-			 name='object_resolver',
-			 request_method='GET',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='ObjectResolver')
+@view_config(name='object_resolver')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class ObjectResolverView(AbstractAuthenticatedView):
 
 	def __call__(self):
@@ -280,12 +282,13 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		result = removeAllProxies(result)
 		return result
 
-@view_config(route_name='objects.generic.traversal',
-			 name='export_users',
-			 renderer='rest',
-			 request_method='GET',
-			 context=IDataserverFolder,
-			 permission=nauth.ACT_NTI_ADMIN)
+@view_config(name='ExportUsers')
+@view_config(name='export_users')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   request_method='GET',
+			   context=IDataserverFolder,
+			   permission=nauth.ACT_NTI_ADMIN)
 class ExportUsersView(AbstractAuthenticatedView):
 
 	def __call__(self):
