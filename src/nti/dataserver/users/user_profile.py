@@ -101,7 +101,7 @@ def get_searchable_realname_parts(realname):
 	if realname:
 		# CFA: another suffix we see from certain financial quorters
 		suffixes = nameparser_config.SUFFIXES | set(('cfa',))
-		constants = nameparser_config.Constants(suffixes=suffixes)
+		constants = nameparser_config.Constants(suffix_acronyms=suffixes)
 		name = nameparser.HumanName(realname, constants=constants)
 		# We try to be a bit more sophisticated around certain
 		# naming scenarios.
@@ -154,7 +154,7 @@ class FriendlyNamed(Persistent):
 class ImageProfileMixin(object):
 	"""
 	An adapter for storing profile information. We provide a specific implementation
-	of the ``avatarURL`` and 'backgroundURL' properties rather than relying on field 
+	of the ``avatarURL`` and 'backgroundURL' properties rather than relying on field
 	storage.
 
 	For convenience, we have a read-only shadow of the username value.
@@ -183,7 +183,7 @@ class UserProfile(FriendlyNamed, ImageProfileMixin):
 class CommunityProfile(FriendlyNamed, ImageProfileMixin):
 	about = FP(ICommunityProfile['about'])
 	username = property(lambda self: self.context.username)
-	
+
 @component.adapter(IUserProfile)
 @interface.implementer(IPrincipal)
 def _profile_to_principal(profile):
