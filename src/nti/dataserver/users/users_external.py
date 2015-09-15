@@ -64,6 +64,7 @@ def _image_url(entity, avatar_iface, attr_name, view_name):
 	instead of data: urls. Tightly coupled to user_profile.
 	"""
 	with_url = avatar_iface(entity, None)
+	with_url = removeAllProxies(with_url)
 	url_property = getattr(type(with_url), attr_name, None)
 	if isinstance(url_property, urlproperty.UrlProperty):
 		the_file = url_property.get_file(with_url)
