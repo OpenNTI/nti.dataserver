@@ -1212,7 +1212,7 @@ class TestApplication(ApplicationLayerTest):
 		data = '5'
 		self._edit_user_ext_field( 'NotificationCount', data )
 
-	def _test_edit_user_image_url(self, name):
+	def _test_edit_user_image_url(self, name, default_status=404, default_url=None):
 		data = u'"data:image/gif;base64,R0lGODlhEAAQANUAAP///////vz9/fr7/Pf5+vX4+fP2+PL19/D09uvx8+Xt797o69zm6tnk6Nfi5tLf49Dd483c4cva38nZ38jY3cbX3MTW3MPU2sLT2cHT2cDS2b3R2L3Q17zP17vP1rvO1bnN1LbM1LbL07XL0rTK0bLI0LHH0LDHz6/Gzq7Ezq3EzavDzKnCy6jByqbAyaS+yKK9x6C7xZ66xJu/zJi2wY2uukZncwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAAQAAAGekCAcEgsEmvIJNJmBNSEAQHh8GQWn4BBAZHAWm1MsM0AVtTEYYd67bAtGrO4lb1mOB4RyixNb0MkFRh7ADZ9bRMWGh+DhX02FxsgJIMAhhkdISUpjIY2IycrLoxhYBxgKCwvMZRCNRkeIiYqLTAyNKxOcbq7uGi+YgBBADs="'
 
 		testapp = TestApp( self.app )
@@ -1224,11 +1224,12 @@ class TestApplication(ApplicationLayerTest):
 
 		view_name = '/@@%s' % name
 		attr_name = '%sURL' % name
-		testapp.get('/dataserver2/users/' + username + view_name, extra_environ=self._make_extra_environ(),
-					status=404)
-		# assert_that(res.location,
-		#			  is_('https://secure.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon') )
+		# We find our default generated
+		res = testapp.get('/dataserver2/users/' + username + view_name, extra_environ=self._make_extra_environ(),
+					status=default_status)
+		assert_that( res.location, is_( default_url ) )
 
+		# Set our new avatar
 		res = self._edit_user_ext_field( attr_name, data, username, user_ext_id )
 		assert_that( res.json_body, has_entry( attr_name, starts_with( '/dataserver2/' ) ) )
 
@@ -1242,8 +1243,11 @@ class TestApplication(ApplicationLayerTest):
 
 	@WithSharedApplicationMockDS
 	def test_edit_user_avatar_url(self):
-		#"We can POST to a specific sub-URL to change the avatarURL"
-		self._test_edit_user_image_url('avatar')
+		"We can POST to a specific sub-URL to change the avatarURL"
+		# By default, we have a gravatar url
+		default_url = 'https://secure.gravatar.com/avatar/31f94302764fc0b184fd0c2e96e4084f?s=128&d=identicon'
+		default_status = 302
+		self._test_edit_user_image_url('avatar', default_status, default_url)
 
 	@WithSharedApplicationMockDS
 	def test_edit_user_background_url(self):
