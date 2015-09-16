@@ -14,6 +14,5 @@
 	<a style="color: #3fb3f6;"
 	   href=""
 	   tal:attributes="href notable/href"
-	   tal:content="notable/assignment_name|notable/course/display_name|default">An assignment</a>
-	<span tal:condition="notable/course/display_name">in ${notable/course/display_name}</span>.
+	   tal:content="notable/assignment_name|default">An assignment</a>.
 </div>
