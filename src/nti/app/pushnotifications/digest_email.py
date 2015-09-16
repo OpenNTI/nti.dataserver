@@ -115,8 +115,7 @@ class _TemplateArgs(object):
 
 	@Lazy
 	def __parent__(self):
-		return _TemplateArgs( self._primary.__parent__,
-							 self.request)
+		return _TemplateArgs( (self._primary.__parent__,), self.request)
 
 	@Lazy
 	def assignment_name(self):
