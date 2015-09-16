@@ -147,6 +147,4 @@ class TestMailViews(ApplicationLayerTest):
 		extra_environ = self._make_extra_environ(user=username)
 		href = '/dataserver2/users/ichigo/@@request_email_verification'
 		self.testapp.post(href, extra_environ=extra_environ, status=204)
-		for _ in range(4):
-			self.testapp.post(href, extra_environ=extra_environ, status=204)
 		self.testapp.post(href, extra_environ=extra_environ, status=422)

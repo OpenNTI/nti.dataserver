@@ -54,9 +54,7 @@ from nti.dataserver.users.interfaces import EmailAddressInvalid
 from nti.dataserver.users.utils import reindex_email_verification
 
 from .utils import get_email_verification_time
-from .utils import get_email_verification_count
 from .utils import safe_send_email_verification
-from .utils import set_email_verification_count
 from .utils import generate_mail_verification_pair
 from .utils import get_verification_signature_data
 
@@ -205,13 +203,9 @@ class RequestEmailVerificationView(	AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("Email address not provided."))
 
 		if not profile.email_verified:
-			now  = time.time()
-			count = get_email_verification_count(user)
-			diff_time = now - (get_email_verification_time(user) or 0)
+			last_time = get_email_verification_time(user) or 0
+			diff_time = time.time() - last_time
 			if diff_time > MAX_WAIT_TIME_EMAILS:
-				set_email_verification_count(user, 0) # reset
-				safe_send_email_verification(user, profile, email, self.request)
-			elif count < MAX_REQUEST_COUNT:
 				safe_send_email_verification(user, profile, email, self.request)
 			else:
 				raise_error(self.request,
