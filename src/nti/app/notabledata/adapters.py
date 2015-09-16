@@ -47,6 +47,7 @@ from ..base.abstract_views import AbstractAuthenticatedView
 
 _BLOG_ENTRY_NTIID = "tag:nextthought.com,2011-10:%s-Topic:PersonalBlogEntry"
 _BLOG_ENTRY_MIMETYPE = "application/vnd.nextthought.forums.personalblogentry"
+_BLOG_ENTRY_POST_MIMETYPE = "application/vnd.nextthought.forums.personalblogentrypost"
 _BLOG_COMMENT_MIMETYPE = "application/vnd.nextthought.forums.personalblogcomment"
 
 _TOPIC_MIMETYPE = "application/vnd.nextthought.forums.communityheadlinetopic"
@@ -180,7 +181,6 @@ class UserNotableData(AbstractAuthenticatedView):
 
 	@CachedProperty('_time_range')
 	def _safely_viewable_notable_intids(self):
-
 		catalog = self._catalog
 		# Any top-level items shared directly to me or my groups
 		shared_with_ids = self._group_ntiids
@@ -189,6 +189,12 @@ class UserNotableData(AbstractAuthenticatedView):
 
 		toplevel_intids_extent = catalog[IX_TOPICS][TP_TOP_LEVEL_CONTENT].getExtent()
 		toplevel_intids_shared_to_me = toplevel_intids_extent.intersection(intids_shared_to_me)
+
+		# Blog posts are now top-level, exclude them. It's confusing when both
+		# blogs and blog-posts are returned.
+		blog_post_intids = catalog['mimeType'].apply({'any_of': (_BLOG_ENTRY_POST_MIMETYPE,)})
+		toplevel_intids_shared_to_me = catalog.family.IF.difference( toplevel_intids_shared_to_me,
+																	blog_post_intids )
 
 		# Any topics shared to me or my groups
 		topic_intids = catalog['mimeType'].apply({'any_of': (_TOPIC_MIMETYPE,
@@ -204,7 +210,6 @@ class UserNotableData(AbstractAuthenticatedView):
 		blogentry_intids_shared_to_me = catalog.family.IF.intersection(intids_shared_to_me, blogentry_intids)
 
 		toplevel_intids_forum_comments = self.__find_generalForum_comment_intids()
-
 		safely_viewable_intids = [toplevel_intids_shared_to_me,
 								  intids_replied_to_me,
 								  topic_intids,
