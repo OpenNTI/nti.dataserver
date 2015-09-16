@@ -45,7 +45,7 @@ class TestFile(DataserverLayerTest):
 		ext_obj = {
 			'MimeType': 'application/vnd.nextthought.contentfile',
 			'value': GIF_DATAURL,
-			'filename': r'/Users/ichigo/file.gif',
+			'filename': r'file.gif',
 			'name':'ichigo'
 		}
 
@@ -82,8 +82,8 @@ class TestFile(DataserverLayerTest):
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that(ext, has_entries("Class", "Note",
-									   "body", only_contains(has_entries('Class', 'ContentFile',
-																		  'name', 'foo.gif'))))
+									 "body", only_contains(has_entries('Class', 'ContentFile',
+																	   'name', 'foo.gif'))))
 		n = Note()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
@@ -94,7 +94,7 @@ class TestFile(DataserverLayerTest):
 		ext_file = {
 			'MimeType': 'application/vnd.nextthought.contentfile',
 			'value': GIF_DATAURL,
-			'filename': r'/Users/ichigo/file.gif',
+			'filename': r'file.gif',
 			'name':'ichigo'
 		}
 		ext_obj = {	"Class": "Note",
