@@ -7,10 +7,6 @@ delivery of email notifications.
 To verify your email address, please click on the following link:
 ${href}.
 
-Alternatively, you can enter this verification code on your profile page.
-
-Verification Code: ${token}
-
 Thank you for helping us maintain the security of your account.
 
 If you feel this email was sent in error, or this account was created
