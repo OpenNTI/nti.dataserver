@@ -423,7 +423,7 @@ class _CommunityACLProvider(_EntityACLProvider):
 
 	def _viewers(self):
 		return (AUTHENTICATED_GROUP_NAME,) if self._entity.public else ()
-	
+
 	@Lazy
 	def __acl__(self):
 		"""
@@ -608,9 +608,8 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	are shared.
 
 	Those things that are shared can be viewed (:data:`authorization.ACT_READ`) by those they are
-	shared with. (When shared with something that can be adapted to :class:`nti.dataserver.interfaces.IUsernameIterable`,
-	then the complete list of users is expanded into the ACL; the alternative is to have
-	principals appear to be members of all these things, as a group.)
+	shared with. The ACL is composed of the sharingTargets. Members of these groups
+	must have these groups/communities in their effective principals.
 
 	This is modified: If this object is the child of another :class:`.IReadableShared`
 	e.g., a Canvas inside a Note, then the ACL is skipped and just inherited
@@ -630,10 +629,7 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	_DENY_ALL = True
 
 	def _get_sharing_target_names(self):
-		# By expanding in this way, in certain cases we can get
-		# multiple entries for the creator. That's OK, because the creator
-		# ACE comes first, and because they are both 'allow' entries
-		return self.context.flattenedSharingTargetNames
+		return self.context.sharingTargetNames
 
 	@Lazy
 	def __acl__(self):

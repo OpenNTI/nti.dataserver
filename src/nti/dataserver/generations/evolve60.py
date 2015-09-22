@@ -94,15 +94,15 @@ def do_evolve(context):
 
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
-		
+
 		catalog = install_container_catalog(ds_folder, intids)
 
 		if not hasattr(catalog, '_ntiid_index'):
 			catalog._ntiid_index = NTIIDIndex(family=intids.family)
-		
+
 		if not hasattr(catalog, '_last_modified'):
 			catalog._last_modified = intids.family.OI.BTree()
-		
+
 		# load library
 		library = component.queryUtility(IContentPackageLibrary)
 		if library is not None:

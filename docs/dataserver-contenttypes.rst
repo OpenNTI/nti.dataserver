@@ -127,7 +127,7 @@ These objects describe users and things related to users.
 	   URL CompositeGravatars[];
 	   // An immutable property that determines whether or not
 	   // objects shared with this list are distributed dynamically as
-	   // the list membership chages, or statically at the time of
+	   // the list membership changes, or statically at the time of
 	   // sharing.
 	   // NOTE: static distribution is MUCH less expensive
 	   // than dynamic. Prefer static distribution. The default value

@@ -364,8 +364,8 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	max_age = 300
 
 	def to_json_body(self, obj):
-		result = toExternalObject(toExternalObject(obj))
-		result = removed_unserializable(result)
+ 		result = toExternalObject(toExternalObject(obj))
+ 		result = removed_unserializable(result)
 		return result
 
 	def _get_library_path_last_mod(self):

@@ -409,13 +409,8 @@ class TestDFL(DataserverLayerTest):
 			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(member_user2, child_note, 1)
 
 			# This Note provides ACL access to its creator and the members of the DFL
-			# (TODO: This is implemented by expanding the membership list of the DFL
-			# when the ACL is constructed. The other option is to have the DFL
-			# appear in the principal list of the user, as is done for communities; that
-			# would change this test.)
 			assert_that(child_note, permits(member_user, nauth.ACT_READ))
-			assert_that(child_note, permits(owner_user, nauth.ACT_READ))
-			assert_that(child_note, permits(member_user2, nauth.ACT_READ))
+			assert_that(child_note, permits(parent_dfl, nauth.ACT_READ))
 
 			# Even though the other members do not have data in this NTIID, they
 			# still register that they are interested in it

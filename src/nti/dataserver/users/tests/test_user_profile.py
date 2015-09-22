@@ -122,6 +122,7 @@ class TestUserProfile(DataserverLayerTest):
 
 			setattr(prof, field, '  \t bc')
 
+
 	def test_updating_realname_from_external(self):
 		user = User(username="foo@bar")
 

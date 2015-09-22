@@ -29,7 +29,7 @@ try:
 except:
 	from pyramid.authorization import ACLAuthorizationPolicy
 
-from . import mock_dataserver
+from nti.dataserver.tests import mock_dataserver
 
 class TestACLProviders(unittest.TestCase):
 

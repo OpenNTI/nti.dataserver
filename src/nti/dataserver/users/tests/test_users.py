@@ -90,7 +90,7 @@ class TestMisc(unittest.TestCase):
 	def test_create_friends_list_through_registry(self):
 		def _test( name, dynamic_sharing=False ):
 			user = User( 'foo12' )
-			created = user.maybeCreateContainedObjectWithType( 
+			created = user.maybeCreateContainedObjectWithType(
 									name, {'Username': 'Friend', 'IsDynamicSharing': dynamic_sharing } )
 			assert_that( created, is_(FriendsList) )
 			assert_that( created.username, is_( 'Friend' ) )
@@ -137,7 +137,7 @@ class TestUser(DataserverLayerTest):
 
 	@WithMockDSTrans
 	def test_type_error(self):
-	
+
 		with assert_raises(TypeError):
 			users.Entity.get_entity( username={} )
 
@@ -368,7 +368,10 @@ class TestUser(DataserverLayerTest):
 
 	@WithMockDS
 	def test_share_note_directly_and_indirectly_with_community_unshare_with_community(self):
-		#"""An item shared both directly and indirectly with me is still shared with me if the indirect sharing is removed"""
+		"""
+		An item shared both directly and indirectly with me is
+		still shared with me if the indirect sharing is removed.
+		"""
 		with mock_dataserver.mock_db_trans(self.ds):
 			user1 = User.create_user( self.ds, username='foo@bar', password='temp001' )
 			user2 = User.create_user( self.ds, username='fab@bar', password='temp001' )
@@ -955,7 +958,7 @@ from zope.event import notify
 from nti.apns.interfaces import APNSDeviceFeedback
 
 class TestFeedbackEvent(DataserverLayerTest):
-	
+
 	layer = mock_dataserver.SharedConfiguringTestLayer
 
 	@WithMockDSTrans
@@ -975,7 +978,7 @@ class TestFeedbackEvent(DataserverLayerTest):
 import zope.schema.interfaces
 
 class TestUserNotDevMode(mock_dataserver.NotDevmodeDataserverLayerTest):
-	
+
 	features = ()
 
 	@WithMockDS

@@ -131,7 +131,7 @@ class ThreadableMixin(object):
 @component.adapter( IThreadable, IIntIdAddedEvent )
 def threadable_added( threadable, event ):
 	"""
-	Update the replies and referents. NOTE: This assumes that IThreadable is actually 
+	Update the replies and referents. NOTE: This assumes that IThreadable is actually
 	a ThreadableMixin.
 	"""
 	# Note that we don't trust the 'references' value of the client.
@@ -167,7 +167,7 @@ def _threadable_added( threadable, intids, intid ):
 @component.adapter( IThreadable, IIntIdRemovedEvent )
 def threadable_removed(threadable, event):
 	"""
-	Update the replies and referents. NOTE: This assumes that IThreadable is actually a 
+	Update the replies and referents. NOTE: This assumes that IThreadable is actually a
 	ThreadableMixin.
 	"""
 	# Note that we don't trust the 'references' value of the client.

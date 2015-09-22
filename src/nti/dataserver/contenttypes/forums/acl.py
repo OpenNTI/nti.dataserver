@@ -129,14 +129,7 @@ class _TopicACLProvider(AbstractCreatedAndSharedACLProvider):
 	_do_get_perms_for_creator = _do_get_perms_for_creator_by_kind
 
 	def _get_sharing_target_names(self):
-		# The context is usually an IPublishable. In the simple case,
-		# we could directly return `self.context.sharingTargets`, saving a lookup step, because
-		# IPublishable will either have nothing there, or only ICommunity objects
-		# there. However, if the object actually has sharing,
-		# we MUST let it expand sharing targets to names that we then resolve
-		# (otherwise, some things like IDynamicSharingTarget are not valid
-		# IPrincipals to put in the ACL---only their members are)
-		return self.context.flattenedSharingTargetNames
+		return self.context.sharingTargetNames
 
 	def _extend_acl_after_creator_and_sharing(self, acl):
 		return self._extend_with_admin_privs(acl)
@@ -162,7 +155,7 @@ class _PostACLProvider(AbstractCreatedAndSharedACLProvider):
 
 	def _get_sharing_target_names(self):
 		try:
-			return self.context.__parent__.flattenedSharingTargetNames
+			return self.context.__parent__.sharingTargetNames
 		except AttributeError:
 			return ()  # Must not have a parent
 

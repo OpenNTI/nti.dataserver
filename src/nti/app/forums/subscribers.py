@@ -68,7 +68,7 @@ def _notify_online_author_of_comment( comment, topic_author ):
 	if not comment.isSharedDirectlyWith(topic_author):
 		topic_author._noticeChange(change, force=True)
 
-	# (Except for being in the stream, the effect of the notification can be done 
+	# (Except for being in the stream, the effect of the notification can be done
 	# with component.handle( blog_author, change ) )
 
 	# Also do the same for of the dynamic types it is shared with,

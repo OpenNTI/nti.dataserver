@@ -46,7 +46,7 @@ class IUserNotableData(IIterable):
 
 	Excluded objects include:
 
-	* Those objects (or descendents of those objects, in some cases)
+	* Those objects (or descendants of those objects, in some cases)
 	  specifically marked non-notable;
 
 	* In the future, muted conversations may also be excluded;
