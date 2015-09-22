@@ -15,8 +15,6 @@ from zope import interface
 
 from zope.location.interfaces import ILocation
 
-from nti.app.authentication import get_remote_user
-
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver.pyramid_authorization import is_deletable
@@ -102,17 +100,6 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 				(self.allow_traversable_paths and IShouldHaveTraversablePath_providedBy(context))
 
 	def _has_permission(self, context):
-		remote_user = get_remote_user( self.request )
-		creator = getattr( context, 'creator', None )
-		if remote_user is None or creator is None:
-			return False
-
-		# If a user is not an owner, shortcut the ACL check and do not
-		# return an edit link.
-		if creator != remote_user:
-			return False
-
-		# Ok, see if the owner can edit the underlying object.
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):

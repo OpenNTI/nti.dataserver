@@ -53,7 +53,6 @@ from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IOpenIdUser
 from nti.dataserver.interfaces import ITranscript
 from nti.dataserver.interfaces import IZContained
-from nti.dataserver.interfaces import IFriendsList
 from nti.dataserver.interfaces import IFacebookUser
 from nti.dataserver.interfaces import IIntIdIterable
 from nti.dataserver.interfaces import INamedContainer

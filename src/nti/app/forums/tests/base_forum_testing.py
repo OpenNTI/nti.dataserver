@@ -459,7 +459,7 @@ class AbstractTestApplicationForumsBase(AppTestBaseMixin, AbstractPostCreationMi
 		data = self._create_comment_data_for_POST()
 		comment_res2 = testapp.post_json(entry_url, data, status=201)
 		comment_res2.json_body['CreatedTime']
-		
+
 		# And again
 		data = self._create_comment_data_for_POST()
 		comment_res2 = testapp.post_json(entry_url, data, status=201)

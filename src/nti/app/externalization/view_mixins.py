@@ -252,7 +252,7 @@ class BatchingUtilsMixin(object):
 			kwargs['selector'] = _tuple_selector
 		return self._batch_items_iterable(*args, **kwargs)
 
-	def _batch_on_item(self, iterator, test, batch_containing=False, 
+	def _batch_on_item(self, iterator, test, batch_containing=False,
 					   batch_after=False, batch_before=False):
 		"""
 		Given an iterator of items, and a test function that returns true when the desired

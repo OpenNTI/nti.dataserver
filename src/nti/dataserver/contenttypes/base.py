@@ -43,13 +43,13 @@ from nti.ntiids import ntiids
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 def _get_entity( username, dataserver=None ):
-	return Entity.get_entity( username, dataserver=dataserver, 
+	return Entity.get_entity( username, dataserver=dataserver,
 							  _namespace=User._ds_namespace )
 
 @interface.implementer(IModeledContent)
-class UserContentRoot(ShareableMixin, 
-					  ZContainedMixin, 
-					  CreatedModDateTrackingObject, 
+class UserContentRoot(ShareableMixin,
+					  ZContainedMixin,
+					  CreatedModDateTrackingObject,
 					  PersistentPropertyHolder):
 	"""
 	Base implementation of behaviours expected for contenttypes. Should be the primary
@@ -193,7 +193,7 @@ class UserContentRootInternalObjectIO(UserContentRootInternalObjectIOMixin,Inter
 
 	_ext_iface_upper_bound = IModeledContent
 
-	# _excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets', 
+	# _excluded_out_ivars_ = { 'flattenedSharingTargetNames', 'flattenedSharingTargets',
 	#						   'sharingTargets', 'inReplyTo', 'references' } | InterfaceObjectIO._excluded_out_ivars_
 
 	def __init__( self, context ):

@@ -182,8 +182,8 @@ class TaggedTo(object):
 				if entity is not None:
 					# We actually have to be a bit careful here; we only want
 					# to catch certain types of entity tags, those that are either
-					# to an individual or those that participate in security 
-					# relationships; (e.g., it doesn't help to use a regular FriendsList 
+					# to an individual or those that participate in security
+					# relationships; (e.g., it doesn't help to use a regular FriendsList
 					# since that is effectively flattened).
 					# Currently, this abstraction doesn't exactly exist so we
 					# are very specific about it. See also :mod:`sharing`
@@ -304,7 +304,7 @@ def LastModifiedIndex(family=None):
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
 class RevSharedWith(object):
-	
+
 	__slots__ = (b'context',)
 
 	def __init__( self, context, default=None):
@@ -315,9 +315,9 @@ class RevSharedWith(object):
 		result = getattr(self.context, 'sharedWith', None)
 		result = None if not result else result
 		return result
-	
+
 def RevSharedWithIndex(family=None):
-	return AttributeKeywordIndex(field_name='usernames', 
+	return AttributeKeywordIndex(field_name='usernames',
 								 interface=RevSharedWith,
 								 family=family)
 

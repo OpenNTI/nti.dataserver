@@ -829,7 +829,7 @@ class IGoogleUser(IUser):
 	"""
 	A google user.
 	"""
-	
+
 class ICoppaUser(IUser):
 	"""
 	A marker interface to denote users to whom the United States COPPA

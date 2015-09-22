@@ -38,8 +38,14 @@ def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
 			(ICommunity.providedBy(community) and \
 			 not IUnscopedGlobalCommunity.providedBy(community)):
 			yield IPrincipal(community) if as_principals else community
-	# XXX: This is out of sync with the sharing target's xxx_intids_of_memberships_and_self
+	# This mimics the sharing target's xxx_intids_of_memberships_and_self
 	# which is used as an ACL optimization
+
+	# Now add DFLs we own (must be DFL? see _xxx_extra_intids_of_memberships).
+	friends_lists = getattr( user, 'friendsLists', {} )
+	for friends_list in friends_lists.values():
+		if IDynamicSharingTargetFriendsList.providedBy( friends_list ):
+			yield IPrincipal(friends_list) if as_principals else friends_list
 
 def _user_factory( username ):
 	# To avoid circular imports (sharing imports us, users imports us, we import users). sigh.
@@ -96,6 +102,7 @@ def effective_principals( username,
 
 	# Add the authenticated and everyone groups
 	result.add( 'Everyone' )
+	result.add( IPrincipal( 'Everyone' ) )
 	result.add( IPrincipal( EVERYONE_GROUP_NAME ) )
 
 	if authenticated:
@@ -205,7 +212,7 @@ class DelegatingImpersonatedAuthenticationPolicy(object):
 		self._locals = _ThreadLocalManager( default=base_policy )
 
 	def impersonating_userid( self, userid ):
-		
+
 		@contextlib.contextmanager
 		def impersonating():
 			self._locals.push( _FixedUserAuthenticationPolicy( userid ) )

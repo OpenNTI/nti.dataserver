@@ -23,8 +23,8 @@ import nti.dataserver.sessions as sessions
 from nti.dataserver import session_storage
 from nti.dataserver import users
 
-from . import mock_dataserver
-from .mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests import mock_dataserver
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 
 from nti.dataserver.tests import mock_redis
 
@@ -224,7 +224,7 @@ class TestSessionService(mock_dataserver.DataserverLayerTest):
 		# Delete some foobar session
 		self.session_service.delete_session( 42 )
 
-
-
 	def test_session_service_storage(self):
 		assert_that( session_storage.OwnerBasedAnnotationSessionServiceStorage(), verifiably_provides( nti_interfaces.ISessionServiceStorage ) )
+
+

@@ -231,7 +231,7 @@ def _links_for_unauthenticated_users(request):
 				yes = False
 
 			if yes:
-				links.append(Link(route, rel=rel, 
+				links.append(Link(route, rel=rel,
 								  target_mime_type=mimetype.nti_mimetype_from_object(users.User)))
 
 
@@ -281,9 +281,9 @@ def _forgetting(request, redirect_param_name, no_param_class, redirect_value=Non
 		# TODO: Sending multiple warnings
 		response.headers[b'Warning'] = error.encode('utf-8')
 
-	logger.debug("Forgetting user %s with %s (%s)", 
-				 request.authenticated_userid, 
-				 response, 
+	logger.debug("Forgetting user %s with %s (%s)",
+				 request.authenticated_userid,
+				 response,
 				 response.headers)
 	return response
 
@@ -1051,7 +1051,7 @@ def _openidcallback(context, request, success_dict):
 
 
 	if _checksum(username) != oidcsum:
-		logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s", 
+		logger.warn("Checksum mismatch. Logged in multiple times? %s %s username=%s prov=%s",
 					oidcsum, success_dict, username, username_provider)
 		return _create_failure_response(request, error='Username/Email checksum mismatch')
 
@@ -1080,7 +1080,7 @@ def _user_did_logon(user, event):
 	user.update_last_login_time()
 
 # TODO: The two facebook methods below could be radically simplified using
-# requests-facebook. As of 0.1.1, it adds no dependencies. 
+# requests-facebook. As of 0.1.1, it adds no dependencies.
 # (However, it also has no tests in its repo)
 # http://pypi.python.org/pypi/requests-facebook/0.1.1
 
@@ -1104,8 +1104,8 @@ def facebook_oauth1(request):
 def facebook_oauth2(request):
 
 	if 'error' in request.params:
-		return _create_failure_response(request, 
-										request.session.get('facebook.failure'), 
+		return _create_failure_response(request,
+										request.session.get('facebook.failure'),
 										error=request.params.get('error'))
 
 	code = request.params['code']
@@ -1116,7 +1116,7 @@ def facebook_oauth2(request):
 	auth = requests.get('https://graph.facebook.com/oauth/access_token',
 						 params={'client_id': app_id,
 								 'redirect_uri': our_uri,
-								 'client_secret': app_secret, 
+								 'client_secret': app_secret,
 								 'code': code},
 						 timeout=_REQUEST_TIMEOUT)
 
@@ -1144,14 +1144,14 @@ def facebook_oauth2(request):
 						 timeout=_REQUEST_TIMEOUT)
 	data = json.loads(data.text)
 	if data['email'] != request.session.get('facebook.username'):
-		logger.warn("Facebook username returned different emails %s != %s", 
+		logger.warn("Facebook username returned different emails %s != %s",
 					data['email'], request.session.get('facebook.username'))
-		return _create_failure_response(request, 
+		return _create_failure_response(request,
 										request.session.get('facebook.failure'),
 										error='Facebook resolved to different username')
 
 	# TODO: Assuming email address == username
-	user = _deal_with_external_account(request, username=data['email'], 
+	user = _deal_with_external_account(request, username=data['email'],
 									   fname=data['first_name'], lname=data['last_name'],
 									   email=data['email'], idurl=data['link'],
 									   iface=nti_interfaces.IFacebookUser,
@@ -1175,8 +1175,8 @@ def facebook_oauth2(request):
 		if pic_location and pic_location != user.avatarURL:
 			user.avatarURL = pic_location
 
-	result = _create_success_response(request, 
-									  userid=data['email'], 
+	result = _create_success_response(request,
+									  userid=data['email'],
 									  success=request.session.get('facebook.success'))
 	return result
 
@@ -1184,7 +1184,7 @@ def facebook_oauth2(request):
 
 import os
 import hashlib
-from urlparse import urljoin 
+from urlparse import urljoin
 
 from nti.common.string import TRUE_VALUES
 
@@ -1245,7 +1245,7 @@ def google_oauth1(request):
 
 	# redirect
 	target = auth_url[:-1] if auth_url.endswith('/') else auth_url
-	target = '%s?%s' % (target, urllib.urlencode(params)) 
+	target = '%s?%s' % (target, urllib.urlencode(params))
 	response = hexc.HTTPSeeOther(location=target)
 	return response
 
@@ -1257,7 +1257,7 @@ def google_oauth2(request):
 	# check for errors
 	if 'error' in params or 'errorCode' in params:
 		error = params.get('error') or params.get('errorCode')
-		return _create_failure_response(request, 
+		return _create_failure_response(request,
 										request.session.get('google.failure'),
 										error=error)
 
@@ -1279,13 +1279,13 @@ def google_oauth2(request):
 		return _create_failure_response(request,
 										request.session.get('google.failure'),
 										error=_('Incorrect state values.'))
-	
+
 	# Exchange code for access token and ID token
 	config = get_openid_configuration()
 	token_url = config.get('token_endpoint', DEFAULT_TOKEN_URL)
-	
+
 	try:
-		data = {'code':code, 
+		data = {'code':code,
 				'client_id':auth_keys.APIKey,
 				'grant_type':'authorization_code',
 				'client_secret':auth_keys.SecretKey,
@@ -1306,7 +1306,7 @@ def google_oauth2(request):
 			return _create_failure_response(request,
 											request.session.get('google.failure'),
 											error=_('Could not find id token.'))
-			
+
 		# id_token = data['id_token'] #TODO:Validate id token
 		access_token  = data['access_token']
 		logger.debug("Getting user profile")
@@ -1323,7 +1323,7 @@ def google_oauth2(request):
 			firstName = profile.get('given_name', 'unspecified')
 			lastName = profile.get('family_name', 'unspecified')
 			email_verified = profile.get('email_verified', 'false')
-			
+
 			user = _deal_with_external_account(	request,
 												username=username,
 												fname=firstName,
@@ -1343,7 +1343,7 @@ def google_oauth2(request):
 											success=request.session.get('google.success'))
 	except Exception as e:
 		logger.exception('Failed to login with google')
-		response = _create_failure_response(request, 
+		response = _create_failure_response(request,
 											request.session.get('google.failure'),
 											error=str(e))
 	return response
