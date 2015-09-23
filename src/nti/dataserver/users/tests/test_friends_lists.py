@@ -22,6 +22,8 @@ is_not = does_not
 
 from nti.contentrange.contentrange import ContentRangeDescription
 
+from nti.dataserver import authorization as nauth
+
 from nti.dataserver.users import User
 from nti.dataserver.users import users
 from nti.dataserver.users import FriendsList
@@ -39,6 +41,8 @@ from nti.dataserver.tests.mock_dataserver import WithMockDS, WithMockDSTrans
 
 from nti.dataserver.tests import mock_dataserver
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+from nti.dataserver.tests.test_authorization_acl import permits
+from nti.dataserver.tests.test_authorization_acl import denies
 
 from nti.testing.matchers import is_true, is_false
 
@@ -258,10 +262,6 @@ def _dfl_sharing_fixture(ds, owner_username='OwnerUser@bar', passwords=None):
 
 	return owner_user, member_user, member_user2, parent_dfl
 
-from nti.dataserver import authorization as nauth
-
-from nti.dataserver.tests.test_authorization_acl import permits
-
 def _assert_that_item_is_in_contained_stream_and_data_with_notification_count(user, item, count=1):
 	__traceback_info__ = user, item
 	child_stream = user.getContainedStream(item.containerId)
@@ -386,11 +386,18 @@ class TestDFL(DataserverLayerTest):
 		it is visible to the creator of the DFL in the shared data, in the stream, and
 		in the notification count. It is also in the 'iterntiids' value for all
 		people.
+
+		Validates the DFL sharing architecture.
 		"""
 
 		ds = mock_dataserver.current_mock_ds
 		with mock_dataserver.mock_db_trans(ds):
 			owner_user, member_user, member_user2, parent_dfl = _dfl_sharing_fixture(ds)
+
+			# A second DFL with the same username
+			parent_dfl2 = DynamicFriendsList(username=parent_dfl.username)
+			owner_user2 = users.User.create_user(username="owneruser2@bar")
+			parent_dfl2.creator = owner_user2
 
 			with member_user.updates():
 				child_note = _note_from(member_user, 'From the child')
@@ -408,9 +415,12 @@ class TestDFL(DataserverLayerTest):
 			# and is in the other member's stream and shared data as well
 			_assert_that_item_is_in_contained_stream_and_data_with_notification_count(member_user2, child_note, 1)
 
-			# This Note provides ACL access to its creator and the members of the DFL
+			# This Note provides ACL access to its creator and the members/owner ,
+			# of the DFL, but not a DFL with the same name.
+			# DFL resolves to NTIID of owner + dfl-username.
 			assert_that(child_note, permits(member_user, nauth.ACT_READ))
 			assert_that(child_note, permits(parent_dfl, nauth.ACT_READ))
+			assert_that(child_note, denies(parent_dfl2, nauth.ACT_READ))
 
 			# Even though the other members do not have data in this NTIID, they
 			# still register that they are interested in it
