@@ -94,6 +94,8 @@ from BTrees.OOBTree import OOSet
 
 from nti.common.property import alias
 
+from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
+
 from nti.externalization.interfaces import IExternalObject
 
 from . import interfaces as nti_interfaces
@@ -223,11 +225,11 @@ class _AbstractPrincipal(object):
 			# The solution, obviously, is to eliminate the trip
 			# through strings so that the particular Principal
 			# implementations that *already know* about NTIIDs can be
-			# used. (In some cases, this only works for dynamicly
+			# used. (In some cases, this only works for dynamically
 			# created ACLs, but that's already the case, and is even
 			# the expected case in the Zope world, where principal IDs
 			# are separate from logon name and are typically numbers.)
-			return self is other or self.id == other.id or self.id == other.NTIID
+			return self is other or self.id == other.id
 		except AttributeError:
 			return NotImplemented
 
@@ -402,8 +404,10 @@ class _UserPrincipal(_AbstractPrincipal):
 
 	def __init__(self, user):
 		self.context = user
-		self.id = user.username
-		self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
+		if IUseNTIIDAsExternalUsername.providedBy( user ):
+			self.id = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
+		else:
+			self.id = user.username
 
 	username = alias('id')
 	title = alias('id')

@@ -354,15 +354,14 @@ class TestLibraryEntryAclProvider(unittest.TestCase):
 
 
 from zope.security.permission import Permission
-from pyramid.compat import is_nonstr_iter
 class Permits(BaseMatcher):
 
 	def __init__( self, prin, perm, policy=ACLAuthorizationPolicy() ):
 		super(Permits,self).__init__( )
-		if is_nonstr_iter(prin):
-			self.prin = [nti_interfaces.IPrincipal(x) for x in prin]
-		else:
+		try:
 			self.prin = (nti_interfaces.IPrincipal( prin ),)
+		except TypeError:
+			self.prin = prin
 		self.perm = perm if nti_interfaces.IPermission.providedBy( perm ) else Permission( perm )
 		self.policy = policy
 
