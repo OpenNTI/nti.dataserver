@@ -398,6 +398,7 @@ class TestDFL(DataserverLayerTest):
 			parent_dfl2 = DynamicFriendsList(username=parent_dfl.username)
 			owner_user2 = users.User.create_user(username="owneruser2@bar")
 			parent_dfl2.creator = owner_user2
+			owner_user2.addContainedObject(parent_dfl2)
 
 			with member_user.updates():
 				child_note = _note_from(member_user, 'From the child')
