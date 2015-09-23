@@ -331,8 +331,13 @@ class AbstractFilesystemLibrary(library.AbstractContentPackageLibrary):
 		return _FilesystemLibraryEnumeration(root)
 
 	def __repr__(self):
-		return "<%s(%s)>" % (self.__class__.__name__,
-						   getattr(self._enumeration, 'absolute_path', self._enumeration.root))
+		try:
+			return "<%s(%s)>" % (self.__class__.__name__,
+						   		 getattr(self._enumeration, 
+										 'absolute_path',
+										  self._enumeration.root))
+		except ConnectionStateError:
+			return object.__repr__(self)
 
 @interface.implementer(IFilesystemContentUnit)
 class FilesystemContentUnit(_FilesystemTimesMixin,
