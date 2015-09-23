@@ -29,6 +29,7 @@ from zope.event import notify
 
 from ZODB.POSException import POSError
 from ZODB.interfaces import IConnection, IBroken
+from ZODB.POSException import ConnectionStateError
 
 from persistent import Persistent
 
@@ -682,6 +683,12 @@ class PersistentContentPackageLibrary(Persistent,
 	every startup, only when content on disk has changed.
 	"""
 
+	def __repr__(self):
+		try:
+			return super(PersistentContentPackageLibrary, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
+		
 from zope.interface.interfaces import ComponentLookupError
 
 from nti.intid.interfaces import IntIdMissingError
