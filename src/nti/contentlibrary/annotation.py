@@ -71,19 +71,22 @@ def _to_id(func):
 	@functools.wraps(func)
 	def _with_id(self, content_unit):
 		return func(self, _WithId(content_unit))
-
 	return _with_id
+
+def _im_func(obj):
+	return getattr(obj, 'im_func', None)
 
 @interface.implementer(IContentUnitAnnotationUtility,
 					   IAttributeAnnotatable)
 class ContentUnitAnnotationUtility(PrincipalAnnotationUtility):
 
 	# These two methods are the only ones that depend on the id attribute
-	getAnnotations = _to_id(PrincipalAnnotationUtility.getAnnotations.im_func)
-	hasAnnotations = _to_id(PrincipalAnnotationUtility.hasAnnotations.im_func)
+	getAnnotations = _to_id(_im_func(PrincipalAnnotationUtility.getAnnotations))
+	hasAnnotations = _to_id(_im_func(PrincipalAnnotationUtility.hasAnnotations))
 
 	def getAnnotationsById(self, principalId):
-		"""Return object implementing `IAnnotations` for the given principal.
+		"""
+		Return object implementing `IAnnotations` for the given principal.
 
 		If there is no `IAnnotations` it will be created and then returned.
 		"""
