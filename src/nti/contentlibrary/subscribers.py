@@ -88,7 +88,7 @@ def install_site_content_library(local_site_manager, _=None):
 		library.syncContentPackages()
 		return library
 
-### Bundle-related subscribers
+# Bundle-related subscribers
 
 from zope.interface.interfaces import IRegistered
 from zope.interface.interfaces import IUnregistered
@@ -125,8 +125,8 @@ def sync_bundles_when_library_synched(library, event):
 	"""
 	When a persistent content library is synchronized
 	with the disk contents, whether or not anything actually changed,
-	we also synchronize the corresponding bundle library. (Because they could
-	change independently and in unknown ways)
+	we also synchronize the corresponding bundle library. 
+	(Because they could change independently and in unknown ways)
 	"""
 
 	# Find the local site manager

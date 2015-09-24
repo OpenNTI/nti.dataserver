@@ -38,8 +38,9 @@ class DisplayablePlatformPresentationResources(DCTimesLastModifiedMixin,
 
 	__external_can_create__ = False
 
-	root = None
 	createDirectFieldProperties(IDisplayablePlatformPresentationResources)
+
+	root = None
 
 	@property
 	def createdTime(self):
