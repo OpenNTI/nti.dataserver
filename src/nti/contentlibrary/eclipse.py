@@ -143,6 +143,8 @@ def _tocItem( node, toc_entry, factory=None, child_factory=None ):
 # Cache for content packages
 # should be done at a higher level.
 
+etree_Error = getattr(etree, 'Error')
+
 def EclipseContentPackage( toc_entry,
 						   package_factory=None,
 						   unit_factory=None ):
@@ -169,7 +171,7 @@ def EclipseContentPackage( toc_entry,
 
 	try:
 		root = toc_entry.key.readContentsAsETree()
-	except (IOError, etree.Error):
+	except (IOError, etree_Error):
 		logger.debug( "Failed to parse TOC at %s", toc_entry, exc_info=True )
 		return None
 
@@ -214,7 +216,6 @@ def EclipseContentPackage( toc_entry,
 			content_package.courseInfoSrc = _node_get(info[0], 'src')
 		elif content_package.does_sibling_entry_exist( 'course_info.json' ):
 			content_package.courseInfoSrc = 'course_info.json'
-
 
 	if content_package.does_sibling_entry_exist( ARCHIVE_FILENAME ):
 		content_package.archive = ARCHIVE_FILENAME
