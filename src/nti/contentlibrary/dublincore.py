@@ -49,7 +49,7 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 	# errors,, it turns out that this triggers a codepath in
 	# xml.sax that tries to resolve DTDs externally across HTTP, which we
 	# don't really want. There's no trivial way to customize this.
-	metadata = xmlmetadata.parseString( dublin_key.readContents() )
+	metadata = xmlmetadata.parseString(dublin_key.readContents())
 
 	# Most implementations use an underlying dictionary that's supposed
 	# to track with what the metadata produces. If we don't know a property
@@ -61,7 +61,7 @@ def read_dublincore_from_named_key(dublin_object, bucket, filename=DCMETA_FILENA
 			val = metadata[k]
 			if k in _scalars:
 				val = val[0]
-			setattr(dublin_properties, str(_xml_to_attr[k]),val)
+			setattr(dublin_properties, str(_xml_to_attr[k]), val)
 		elif core_mapping is not None:
 			core_mapping[k] = metadata[k]
 		else:
@@ -93,7 +93,7 @@ DisplayableContentZopeDublinCoreAdapter = partialAnnotatableAdapterFactory(
 		 # Sadly, the sequence properties aren't supported directly
 		 # for some reason, so we do that ourself.
 		 # TODO: Submit pull request
-		 #'creators', 'subjects', 'contributors'
+		 # 'creators', 'subjects', 'contributors'
 	 ]))
 
 class _SequenceDirectProperty(object):
@@ -120,7 +120,7 @@ class _SequenceDirectProperty(object):
 
 for x in map(str, ['creators', 'subjects', 'contributors']):
 	prop = _SequenceDirectProperty(x, x)
-	setattr( DisplayableContentZopeDublinCoreAdapter, x, prop )
+	setattr(DisplayableContentZopeDublinCoreAdapter, x, prop)
 
 #: A standard adapter for things that are just descriptive properties
 #: but also annotatable

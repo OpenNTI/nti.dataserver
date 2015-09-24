@@ -26,8 +26,8 @@ logger = __import__('logging').getLogger(__name__)
 
 import functools
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.annotation.interfaces import IAnnotations
 from zope.annotation.interfaces import IAttributeAnnotatable
@@ -64,7 +64,7 @@ class _WithId(object):
 
 		try:
 			self.id += _WithId(unit.__parent__).id
-		except (AttributeError,ValueError):
+		except (AttributeError, ValueError):
 			pass
 
 def _to_id(func):
@@ -122,6 +122,7 @@ class ContentUnitAnnotations(Annotations):
 	def keys(self):
 		for k, _ in self.items():
 			yield k
+
 	def values(self):
 		for _, v in self.items():
 			yield v
@@ -156,5 +157,5 @@ class GlobalContentUnitAnnotationUtility(ContentUnitAnnotationUtility):
 @component.adapter(IContentUnit)
 @interface.implementer(IAnnotations)
 def annotations(content_unit, context=None):
-	utility = component.getUtility(IContentUnitAnnotationUtility,context=context)
+	utility = component.getUtility(IContentUnitAnnotationUtility, context=context)
 	return utility.getAnnotations(content_unit)
