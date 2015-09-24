@@ -137,7 +137,21 @@ class PersistentContentPackageBundle(ContentPackageBundle,
 				result.append(x)
 		return result
 	ContentPackages = property(_get_ContentPackages, _set_ContentPackages)
+	
+	def __repr__(self):
+		try:
+			return super(PersistentContentPackageBundle, self).__repr__()
+		except ConnectionStateError:
+			return object.__repr__(self)
 
+	def __str__(self):
+		try:
+			return super(PersistentContentPackageBundle, self).__str__()
+		except ConnectionStateError:
+			return object.__str__(self)
+
+	__unicode__ = __str__
+	
 _marker = object()
 
 @interface.implementer(IContentPackageBundleLibrary)
@@ -157,7 +171,6 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 		except ConnectionStateError:
 			return object.__repr__(self)
 
-	
 	def __str__(self):
 		try:
 			return self.__name__

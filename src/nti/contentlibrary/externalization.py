@@ -45,6 +45,7 @@ from .interfaces import IDisplayablePlatformPresentationResources
 @interface.implementer(IExternalObject)
 @component.adapter(IContentPackageLibrary)
 class _ContentPackageLibraryExternal(object):
+
 	def __init__(self, library):
 		self.library = library
 

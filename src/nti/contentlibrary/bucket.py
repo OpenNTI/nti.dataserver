@@ -32,7 +32,6 @@ class _AbstractDelimitedHierarchyObject(object):
 	of the :class:`.CachedProperty` decorator.
 	"""
 
-
 	__name__ = None
 	__parent__ = None
 
@@ -41,7 +40,6 @@ class _AbstractDelimitedHierarchyObject(object):
 
 	# BWC we allow key
 	key = alias('name')
-
 
 	def __init__(self, bucket=None, name=None):
 		# by convention, parent is the first argument.
@@ -64,7 +62,7 @@ class _AbstractDelimitedHierarchyObject(object):
 								   self.bucket,
 								   self.name.encode('unicode_escape') if self.name else '')
 
-	### persistence methods
+	# persistence methods
 
 	def __getstate__(self):
 		# object defines neither getstate or setstate
@@ -79,8 +77,7 @@ class _AbstractDelimitedHierarchyObject(object):
 			if not k.startswith('_v'):
 				self_dict[str(k)] = v
 
-
-	### Methods from IEnumerableDelimitedHierarchyBucket
+	# Methods from IEnumerableDelimitedHierarchyBucket
 
 	def enumerateChildren(self):
 		"""
@@ -139,16 +136,16 @@ class AbstractKey(_AbstractDelimitedHierarchyObject):
 		# A simple copy is faster, but not equivalent
 		# In [49]: %timeit copy.copy(data)
 		# 1000000 loops, best of 3: 984 ns per loop
-		json_value = component.getUtility(IExternalRepresentationReader,name='json').load(json_text)
+		json_value = component.getUtility(IExternalRepresentationReader, name='json').load(json_text)
 		return json_value
 
 	def readContentsAsETree(self):
-		root = etree.fromstring( self.readContents() )
+		root = getattr(etree, 'fromstring')(self.readContents())
 		return root
 
 	def _do_readContentsAsYaml(self, stream):
 		try:
-			return component.getUtility(IExternalRepresentationReader,name='yaml').load(stream)
+			return component.getUtility(IExternalRepresentationReader, name='yaml').load(stream)
 		except ScannerError:
 			# most of our use cases for this are transitioning
 			# off of JSON and yaml 1.1 isn't a strictly compatible
