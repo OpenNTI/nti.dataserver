@@ -115,9 +115,9 @@ class ContentPackage(ContentUnit,
 	# ALL DEPRECATED
 	createDirectFieldProperties(ILegacyCourseConflatedContentPackage)
 
-	# : A tuple of things thrown by the implementation's
-	# : IO methods that represent transient states that may
-	# : clear up by themself
+	# A tuple of things thrown by the implementation's
+	# IO methods that represent transient states that may
+	# clear up by themself
 	TRANSIENT_EXCEPTIONS = ()
 
 	@CachedProperty('index_last_modified')
