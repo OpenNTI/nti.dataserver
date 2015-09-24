@@ -18,10 +18,13 @@ import time
 import warnings
 
 from zope import schema
-from zope import interface
 from zope import component
-from zope.event import notify
+from zope import interface
+
 from zope.cachedescriptors.property import Lazy
+
+from zope.event import notify
+
 from zope.interface.common import mapping as imapping
 
 from persistent import Persistent
@@ -30,23 +33,27 @@ from persistent.mapping import PersistentMapping
 from nti.common.sets import discard as _discard
 
 # FIXME: Break this dependency
-
 from nti.dataserver import users
-from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
+
 from nti.dataserver import authorization_acl as auth_acl
 
 from nti.externalization.interfaces import StandardExternalFields as XFields
 
-from nti.socketio import interfaces as sio_interfaces
+from nti.socketio.interfaces import ISocketSession
+from nti.socketio.interfaces import ISocketEventHandler
+from nti.socketio.interfaces import SocketEventHandlerClientError
 
-from nti.zodb import interfaces as zodb_interfaces
+from nti.zodb.interfaces import ITokenBucket
 from nti.zodb.tokenbucket import PersistentTokenBucket
 
-from . import interfaces
 from ._metaclass import _ChatObjectMeta
 
 from .interfaces import IContacts
 from .interfaces import IChatserver
+from .interfaces import ACT_MODERATE
 from .interfaces import IPresenceInfo
 from .interfaces import IChatEventHandler
 from .interfaces import UserExitRoomEvent
@@ -57,7 +64,7 @@ EVT_POST_MESSOGE = 'chat_postMessage'
 EVT_RECV_MESSAGE = 'chat_recvMessage'
 EVT_ENTERED_ROOM = 'chat_enteredRoom'
 
-class MessageRateExceeded(sio_interfaces.SocketEventHandlerClientError):
+class MessageRateExceeded(SocketEventHandlerClientError):
 	"""
 	Raised when a user is attempting to post too many chat messages too quickly.
 	"""
@@ -65,13 +72,13 @@ class MessageRateExceeded(sio_interfaces.SocketEventHandlerClientError):
 	i18n_message = _("You are trying to send too many chat messages too quickly. Please wait and try again.")
 
 class IChatHandlerSessionState(interface.Interface):
-	rooms_i_moderate = schema.Object( imapping.IFullMapping,
-									  title="Mapping of rooms I moderate" )
-	message_post_rate_limit = schema.Object( zodb_interfaces.ITokenBucket,
-											 title="Take one token for every message you attempt to post." )
+	rooms_i_moderate = schema.Object(imapping.IFullMapping,
+									 title="Mapping of rooms I moderate")
+	message_post_rate_limit = schema.Object(ITokenBucket,
+											title="Take one token for every message you attempt to post.")
 
 @interface.implementer(IChatHandlerSessionState)
-@component.adapter(sio_interfaces.ISocketSession)
+@component.adapter(ISocketSession)
 class _ChatHandlerSessionState(Persistent):
 	"""
 	An annotation for sessions to store the state a chat handler likes to have,
@@ -102,7 +109,7 @@ from zope.annotation import factory as an_factory
 _ChatHandlerSessionStateFactory = an_factory(_ChatHandlerSessionState)
 
 @interface.implementer(IChatEventHandler)
-@component.adapter(nti_interfaces.IUser,sio_interfaces.ISocketSession, IChatserver)
+@component.adapter(IUser, ISocketSession, IChatserver)
 class _ChatHandler(object):
 	"""
 	Class to handle each of the messages sent to or from a client in the ``chat`` prefix.
@@ -118,7 +125,7 @@ class _ChatHandler(object):
 				 'data_noticeIncomingChange', 'failedToEnterRoom',
 				 'setPresenceOfUsersTo')
 
-	event_prefix = 'chat' #: the namespace of events we handle
+	event_prefix = 'chat'  # : the namespace of events we handle
 
 	chatserver = None
 	session_user = None
@@ -126,10 +133,10 @@ class _ChatHandler(object):
 
 	# recall that public methods correspond to incomming events
 
-	def __init__( self, *args):
+	def __init__(self, *args):
 		# For backwards compat, we accept either two args or three, as specified
 		# in our adapter contract
-		if len( args ) == 3:
+		if len(args) == 3:
 			self.session_user = args[0]
 			self.session = args[1]
 			self.chatserver = args[2]
@@ -137,24 +144,23 @@ class _ChatHandler(object):
 			assert len(args) == 2
 			self.chatserver = args[0]
 			self.session = args[1]
-			self.session_user = users.User.get_user( self.session.owner )
+			self.session_user = users.User.get_user(self.session.owner)
 
 	def __reduce__(self):
 		raise TypeError()
 
-	def __str__( self ):
+	def __str__(self):
 		return "%s(%s %s)" % (self.__class__.__name__,
 							  self.session.owner,
 							  self.session.session_id)
 
-
 	def _get_chatserver(self):
-		return self.chatserver or component.queryUtility( interfaces.IChatserver )
-	def _set_chatserver( self, cs ):
+		return self.chatserver or component.queryUtility(IChatserver)
+	def _set_chatserver(self, cs):
 		self.chatserver = cs
-	_chatserver = property(_get_chatserver, _set_chatserver )
+	_chatserver = property(_get_chatserver, _set_chatserver)
 
-	def postMessage( self, msg_info ):
+	def postMessage(self, msg_info):
 		# Ensure that the sender correctly matches.
 		msg_info.Sender = self.session.owner
 		msg_info.sender_sid = self.session.session_id
@@ -162,7 +168,7 @@ class _ChatHandler(object):
 		# Rate limit *all* incoming chat messages
 		state = IChatHandlerSessionState(self.session)
 		if not state.message_post_rate_limit.consume():
-			if 'DATASERVER_SYNC_CHANGES' in os.environ: # hack for testing
+			if 'DATASERVER_SYNC_CHANGES' in os.environ:  # hack for testing
 				logger.warn("Allowing message rate for %s to exceed throttle %s during integration testings.",
 							self, state.message_post_rate_limit)
 			else:
@@ -170,122 +176,123 @@ class _ChatHandler(object):
 
 
 		for room in set(msg_info.rooms):
-			result &= self._chatserver.post_message_to_room( room, msg_info )
+			result &= self._chatserver.post_message_to_room(room, msg_info)
 		return result
 
-	def enterRoom( self, room_info ):
+	def enterRoom(self, room_info):
 		room = None
 
-		if room_info.get( 'RoomId' ) is not None:
+		if room_info.get('RoomId') is not None:
 			# Trying to join an established room
 			# Can only do this if the meeting currently exists and we were once a part of it
-			room = self._chatserver.enter_existing_meeting( room_info, self.session.owner )
-		elif len( room_info.get( 'Occupants', () ) ) == 0 and XFields.CONTAINER_ID in room_info:
+			room = self._chatserver.enter_existing_meeting(room_info, self.session.owner)
+		elif len(room_info.get('Occupants', ())) == 0 and XFields.CONTAINER_ID in room_info:
 			# No occupants, but a container ID. This must be for something
 			# that can persistently host meetings. We want
 			# to either create or join it.
 			room_info['Creator'] = self.session.owner
-			room_info['Occupants'] = [ (self.session.owner, self.session.session_id ) ]
-			room = self._chatserver.enter_meeting_in_container( room_info )
+			room_info['Occupants'] = [ (self.session.owner, self.session.session_id) ]
+			room = self._chatserver.enter_meeting_in_container(room_info)
 		else:
 			# Creating a room to chat with. Make sure I'm in it.
 			# More than that, make sure it's my session, and any
 			# of my friends lists are expanded. Make sure it has an active
 			# occupant besides me
 			room_info['Creator'] = self.session.owner
-			_discard( room_info.get('Occupants'), self.session.owner )
-			room_info['Occupants'] = list( room_info['Occupants'] )
+			_discard(room_info.get('Occupants'), self.session.owner)
+			room_info['Occupants'] = list(room_info['Occupants'])
 			user = self.session_user
 			if user:
 				for i in list(room_info['Occupants']):
 					if i in user.friendsLists:
 						room_info['Occupants'] += [x.username for x in user.friendsLists[i]]
-			room_info['Occupants'].append( (self.session.owner, self.session.session_id) )
+			room_info['Occupants'].append((self.session.owner, self.session.session_id))
 			def sessions_validator(sessions):
 				"""
 				We can only create the ad-hoc room if there is another online occupant.
 				"""
 				return len(sessions) > 1
-			room = self._chatserver.create_room_from_dict( room_info, sessions_validator=sessions_validator )
+			room = self._chatserver.create_room_from_dict(room_info,
+														  sessions_validator=sessions_validator)
 
 		if not room:
-			self.emit_failedToEnterRoom( self.session.owner, room_info )
+			self.emit_failedToEnterRoom(self.session.owner, room_info)
 		else:
 			notify(UserEnterRoomEvent(self.session.owner, room.id))
 		return room
 
-	def exitRoom( self, room_id ):
-		result = self._chatserver.exit_meeting( room_id, self.session.owner )
+	def exitRoom(self, room_id):
+		result = self._chatserver.exit_meeting(room_id, self.session.owner)
 		if result:
 			notify(UserExitRoomEvent(self.session.owner, room_id))
 		return result
 
-	def addOccupantToRoom( self, room_id, occupant_name ):
-		return self._chatserver.add_occupant_to_existing_meeting(room_id, 
+	def addOccupantToRoom(self, room_id, occupant_name):
+		return self._chatserver.add_occupant_to_existing_meeting(room_id,
 																 self.session.owner,
-																 occupant_name )
+																 occupant_name)
 
-	def makeModerated( self, room_id, flag ):
+	def makeModerated(self, room_id, flag):
 
-		room = self._chatserver.get_meeting( room_id )
-		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, 
+		room = self._chatserver.get_meeting(room_id)
+		can_moderate = auth_acl.has_permission(	ACT_MODERATE,
 												room,
-												self.session.owner )
+												self.session.owner)
 		if not can_moderate:
-			logger.debug( "%s not allowed to moderate room %s: %s", 
-						 self, room, can_moderate )
+			logger.debug("%s not allowed to moderate room %s: %s",
+						 self, room, can_moderate)
 			return room
 
 		if flag:
 			if flag != room.Moderated:
 				room.Moderated = flag
-			logger.debug( "%s becoming a moderator of room %s", self, room )
-			room.add_moderator( self.session.owner )
+			logger.debug("%s becoming a moderator of room %s", self, room)
+			room.add_moderator(self.session.owner)
 			IChatHandlerSessionState(self.session).rooms_i_moderate[room.RoomId] = room
 		else:
 			# deactivating moderation for the room
 			# TODO: We need to 'pop' rooms_i_moderate in all the other handlers.
 			# Thats only a minor problem, though
 			if flag != room.Moderated:
-				logger.debug( "%s deactivating moderation of %s", self, room )
+				logger.debug("%s deactivating moderation of %s", self, room)
 				room.Moderated = flag
-			IChatHandlerSessionState(self.session).rooms_i_moderate.pop( room.RoomId, None )
+			IChatHandlerSessionState(self.session).rooms_i_moderate.pop(room.RoomId, None)
 		return room
 
-	def approveMessages( self, m_ids ):
+	def approveMessages(self, m_ids):
 		for m in m_ids:
 			for room in IChatHandlerSessionState(self.session).rooms_i_moderate.itervalues():
-				room.approve_message( m )
+				room.approve_message(m)
 
-	def flagMessagesToUsers( self, m_ids, usernames ):
+	def flagMessagesToUsers(self, m_ids, usernames):
 		# TODO: Roles again. Who can flag to whom?
-		warnings.warn( "Allowing anyone to flag messages to users." )
-		warnings.warn( "Assuming that clients have seen messages flagged to them." )
+		warnings.warn("Allowing anyone to flag messages to users.")
+		warnings.warn("Assuming that clients have seen messages flagged to them.")
 		for m in m_ids:
 			# TODO: Where does this state belong? Who
 			# keeps the message? Passing just the ID assumes
 			# that the client can find the message by id.
-			self.emit_recvMessageForAttention( usernames, m )
+			self.emit_recvMessageForAttention(usernames, m)
 		return True
 
-	def shadowUsers( self, room_id, usernames ):
-		room = self._chatserver.get_meeting( room_id )
-		can_moderate = auth_acl.has_permission( interfaces.ACT_MODERATE, 
+	def shadowUsers(self, room_id, usernames):
+		room = self._chatserver.get_meeting(room_id)
+		can_moderate = auth_acl.has_permission(	ACT_MODERATE,
 												room,
-												self.session.owner )
+												self.session.owner)
 		if not can_moderate:
-			logger.debug( "%s not allowed to shadow in room %s: %s", self, room, can_moderate )
+			logger.debug("%s not allowed to shadow in room %s: %s", self, room, can_moderate)
 			return False
 
 		result = False
 		if room and room.Moderated:
 			result = True
 			for user in usernames:
-				result &= room.shadow_user( user )
+				result &= room.shadow_user(user)
 		return result
 
-	def setPresence( self, presenceinfo ):
-		if not IPresenceInfo.providedBy( presenceinfo ):
+	def setPresence(self, presenceinfo):
+		if not IPresenceInfo.providedBy(presenceinfo):
 			return False
 
 		# canonicalize the presence username
@@ -296,7 +303,7 @@ class _ChatHandler(object):
 		chatserver = self._chatserver
 
 		# 1. Store the presence
-		chatserver.setPresence( presenceinfo )
+		chatserver.setPresence(presenceinfo)
 
 		# 2. Broadcast the presence to contacts
 		contacts = IContacts(self.session_user)
@@ -305,7 +312,7 @@ class _ChatHandler(object):
 		self.emit_setPresenceOfUsersTo(updates_to, args)
 
 		# 3. Also broadcast to all my sessions
-		self.emit_setPresenceOfUsersTo( self.session_user.username, args )
+		self.emit_setPresenceOfUsersTo(self.session_user.username, args)
 
 		# 4. Collect and broadcast my subscriptions to me.
 		# NOTE: Ideally, we would do this only on "initial presence." But in the
@@ -320,14 +327,14 @@ class _ChatHandler(object):
 		# and explicit-unavailable. Is that a problem? Should we thus synthesize a fake
 		# entry? (What does XMPP do?)
 		if presenceinfo.isAvailable():
-			presences = chatserver.getPresenceOfUsers( contacts.contactNamesISubscribeToPresenceUpdates )
+			presences = chatserver.getPresenceOfUsers(contacts.contactNamesISubscribeToPresenceUpdates)
 			args = {info.username: info for info in presences}
-			self.emit_setPresenceOfUsersTo( self.session, args )
+			self.emit_setPresenceOfUsersTo(self.session, args)
 		return True
 
 @interface.implementer(IChatEventHandler)
-@component.adapter(	nti_interfaces.ICoppaUserWithoutAgreement,
-					sio_interfaces.ISocketSession, 
+@component.adapter(	ICoppaUserWithoutAgreement,
+					ISocketSession,
 					IChatserver)
 def ChatHandlerNotAvailable(*args):
 	"""
@@ -335,15 +342,15 @@ def ChatHandlerNotAvailable(*args):
 	"""
 	return None
 
-@interface.implementer(sio_interfaces.ISocketEventHandler)
-def ChatHandlerFactory( socketio_protocol, chatserver=None ):
-	session = socketio_protocol.session if hasattr( socketio_protocol, 'session' ) else socketio_protocol
+@interface.implementer(ISocketEventHandler)
+def ChatHandlerFactory(socketio_protocol, chatserver=None):
+	session = socketio_protocol.session if hasattr(socketio_protocol, 'session') else socketio_protocol
 	if session:
-		chatserver = component.queryUtility( interfaces.IChatserver ) if not chatserver else chatserver
-		user = users.User.get_user( session.owner )
+		chatserver = component.queryUtility(IChatserver) if not chatserver else chatserver
+		user = users.User.get_user(session.owner)
 	if session and chatserver and user:
-		handler = component.queryMultiAdapter( (user, session, chatserver), 
-											   IChatEventHandler )
+		handler = component.queryMultiAdapter((user, session, chatserver),
+											   IChatEventHandler)
 		return handler
-	logger.warning( "No session (%s) or chatserver (%s) or user (%r=%s); could not create event handler.",
-					session, chatserver, getattr( session, 'owner', None ), user )
+	logger.warning("No session (%s) or chatserver (%s) or user (%r=%s); could not create event handler.",
+					session, chatserver, getattr(session, 'owner', None), user)

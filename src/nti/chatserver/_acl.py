@@ -31,7 +31,6 @@ class _MeetingACLProvider(AbstractCreatedAndSharedACLProvider):
 	def _get_sharing_target_names(self):
 		return self.context.occupant_names
 
-	def _extend_acl_before_deny( self, acl ):
+	def _extend_acl_before_deny(self, acl):
 		for occupant_name in self.context.historical_occupant_names:
-			acl.append(ace_allowing(occupant_name, ACT_ENTER,
-									_MeetingACLProvider))
+			acl.append(ace_allowing(occupant_name, ACT_ENTER, _MeetingACLProvider))
