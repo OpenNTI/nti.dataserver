@@ -210,10 +210,10 @@ class _AbstractPrincipal(object):
 		return self.id < other.id
 
 	def __hash__(self):
-		try:
-			return hash( self.NTIID )
-		except AttributeError:
-			pass
+# 		try:
+# 			return hash( self.NTIID )
+# 		except AttributeError:
+# 			pass
 		return hash( self.id )
 
 	def __str__(self):
