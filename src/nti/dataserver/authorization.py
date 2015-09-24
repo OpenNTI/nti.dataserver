@@ -206,10 +206,15 @@ class _AbstractPrincipal(object):
 			return NotImplemented
 
 	def __lt__(self, other):
+		# TODO Ordering issues with NTIIDs?
 		return self.id < other.id
 
 	def __hash__(self):
-		return hash(self.id)
+		try:
+			return hash( self.NTIID )
+		except AttributeError:
+			pass
+		return hash( self.id )
 
 	def __str__(self):
 		return self.id
