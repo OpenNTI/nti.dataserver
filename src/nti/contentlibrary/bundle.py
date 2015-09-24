@@ -11,8 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 # Because we only expect to store persistent versions
@@ -156,6 +156,15 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 									   	   id(self))
 		except ConnectionStateError:
 			return object.__repr__(self)
+
+	
+	def __str__(self):
+		try:
+			return self.__name__
+		except ConnectionStateError:
+			return object.__str__(self)
+
+	__unicode__ = __str__
 
 	@property
 	def _parent_lib(self):
