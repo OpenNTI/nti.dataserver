@@ -200,7 +200,8 @@ class _AbstractPrincipal(object):
 	id = ''
 	def __eq__(self, other):
 		try:
-			return self is other or self.id == other.id
+			# FIXME Comparing ntiids to ids?
+			return self is other or self.id == other.id or self.id == other.NTIID
 		except AttributeError:
 			return NotImplemented
 
@@ -375,11 +376,8 @@ class _UserPrincipal(_AbstractPrincipal):
 
 	def __init__(self, user):
 		self.context = user
-		# Some entities use NTIIDs as principal IDs, since their usernames may collide.
-		if IUseNTIIDAsExternalUsername.providedBy( user ):
-			self.id = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
-		else:
-			self.id = user.username
+		self.id = user.username
+		self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
 
 	username = alias('id')
 	title = alias('id')
