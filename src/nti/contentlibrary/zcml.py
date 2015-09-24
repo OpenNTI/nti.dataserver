@@ -17,11 +17,15 @@ import functools
 import boto
 
 from zope import interface
+
 from zope.component.zcml import utility
 from zope.component import getSiteManager
+
 from zope.configuration.exceptions import ConfigurationError
 
 import zope.configuration.fields
+
+from nti.schema.field import ValidTextLine
 
 from .boto_s3 import NameEqualityBucket
 from .boto_s3 import BotoS3BucketContentLibrary
@@ -30,8 +34,6 @@ from .interfaces import IContentPackageLibrary
 from .filesystem import GlobalFilesystemContentPackageLibrary
 
 from .externalization import map_all_buckets_to
-
-from nti.schema.field import ValidTextLine
 
 class IFilesystemLibrary(interface.Interface):
 	"""
@@ -57,7 +59,6 @@ class IFilesystemLibrary(interface.Interface):
 			""",
 		required=False,
 		default="")
-
 
 def registerFilesystemLibrary( _context, directory=None, prefix="" ):
 	if not directory or not os.path.isdir( directory ):
