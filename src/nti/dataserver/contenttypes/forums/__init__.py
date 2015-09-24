@@ -22,7 +22,7 @@ try:
 		def __get__(self, instance, klass):
 			if instance is None:
 				return self
-			# NOTE: This only works if __parent__ is already set. 
+			# NOTE: This only works if __parent__ is already set.
 			# It fails otherwise
 			return getattr(aq_parent(instance), 'sharingTargets', ())
 
@@ -137,7 +137,7 @@ class _CreatedIntIdNTIIDMixin(_CreatedNamedNTIIDMixin):
 	def _ntiid_creator_username(self):
 		intids = component.queryUtility(IIntIds)
 		if intids is not None and self.creator:
-			return intids.queryId(self.creator) 
+			return intids.queryId(self.creator)
 
 def _containerIds_from_parent():
 	"""
