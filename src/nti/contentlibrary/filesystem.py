@@ -14,8 +14,8 @@ logger = __import__('logging').getLogger(__name__)
 import os
 from os.path import join as path_join
 
-from zope import interface
 from zope import component
+from zope import interface
 
 from zope.cachedescriptors.method import cachedIn
 
@@ -68,7 +68,6 @@ def _package_factory(bucket, _package_factory=None, _unit_factory=None):
 	_unit_factory = _unit_factory or FilesystemContentUnit
 
 	key = FilesystemKey(bucket=bucket, name=eclipse.TOC_FILENAME)
-
 
 	temp_entry = FilesystemContentUnit(key=key)
 	assert key.absolute_path == _TOCPath(directory) == temp_entry.filename
@@ -354,7 +353,6 @@ class FilesystemContentUnit(_FilesystemTimesMixin,
 			raise TypeError("Should provide a real key")
 		self.__dict__[str('key')] = nk
 	key = property(_get_key, _set_key)
-
 
 	filename = property(lambda self: self.key.absolute_path if self.key else None)
 	absolute_path = filename
