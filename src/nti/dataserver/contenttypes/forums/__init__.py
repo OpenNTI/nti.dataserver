@@ -90,6 +90,8 @@ class _CreatedNamedNTIIDMixin(object):
 
 	@property
 	def _ntiid_creator_username(self):
+		# TODO We could use username here if we have it, falling back to
+		# using the principal id.
 		return IPrincipal(self.creator).id if self.creator else None
 
 	@property

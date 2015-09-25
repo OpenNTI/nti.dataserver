@@ -210,10 +210,9 @@ class _AbstractPrincipal(object):
 		return self.id < other.id
 
 	def __hash__(self):
-# 		try:
-# 			return hash( self.NTIID )
-# 		except AttributeError:
-# 			pass
+		ntiid = getattr( self, 'NTIID', None )
+		if ntiid:
+			return hash( self.NTIID )
 		return hash( self.id )
 
 	def __str__(self):
@@ -382,7 +381,11 @@ class _UserPrincipal(_AbstractPrincipal):
 	def __init__(self, user):
 		self.context = user
 		self.id = user.username
-		self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
+		self.NTIID = None
+		# Only set NTIID if our context is marked as not
+		# being unique by only the username.
+		if IUseNTIIDAsExternalUsername.providedBy( user ):
+			self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
 
 	username = alias('id')
 	title = alias('id')
