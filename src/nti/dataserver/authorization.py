@@ -200,7 +200,39 @@ class _AbstractPrincipal(object):
 	id = ''
 	def __eq__(self, other):
 		try:
-			# FIXME Comparing ntiids to ids?
+			# JAM: XXX: Comparing NTIIDs to our ID is a HACK. Here's the particular
+			# case:
+			# * Forum objects (actually, anything using the
+			#   AbstractCreatedAndSharedACLProvider) take a round-trip
+			#   through the 'flattenedSharingTargetNames' before
+			#   coming up with principals, which wind up being
+			#   _StringPrincipal objects below. It's not exactly clear
+			#   why they do that.
+			# * Meantime, authentication winds up returning actual
+			# * objects like _CommunityGroup.
+			# * Typical _UserPrincipal objects, like _CommunityGroup,
+			#   capture 'username' as their ID.
+			# * However, certain types of dynamic memberships
+			#   (increasingly, all of them!) do not have a globally
+			#   useful username. Thus, everything is moving to
+			#   IUseNTIIDAsExternalUsername; this NTIID winds up in
+			#   flattenedSharingTargetNames, but the 'username' may or
+			#   may not be globally unqualified.
+			# * In that case, whether an ACL entry matches or not is a
+			#   crapshoot. Checking the NTIID additionally gives
+			#   better odds.
+			#
+			# The solution, obviously, is to eliminate the trip
+			# through strings so that the particular Principal
+			# implementations that *already know* about NTIIDs can be
+			# used. (In some cases, this only works for dynamically
+			# created ACLs, but that's already the case, and is even
+			# the expected case in the Zope world, where principal IDs
+			# are separate from logon name and are typically numbers.)
+			#
+			# It seems like we could also force those types that use NTIIDs
+			# to set that as their id. If so, there are places that expect
+			# id to be a string username that must be handled.
 			return self is other or self.id == other.id or self.id == other.NTIID
 		except AttributeError:
 			return NotImplemented
