@@ -62,8 +62,8 @@ frm_ext = frm_ext
 
 POST_MIME_TYPE = 'application/vnd.nextthought.forums.post'
 
-from .base_forum_testing import AbstractTestApplicationForumsBaseMixin
-from .base_forum_testing import UserCommunityFixture
+from nti.app.forums.tests.base_forum_testing import AbstractTestApplicationForumsBaseMixin
+from nti.app.forums.tests.base_forum_testing import UserCommunityFixture
 
 class TestApplicationBlogging(AbstractTestApplicationForumsBaseMixin,ApplicationLayerTest):
 	__test__ = True
