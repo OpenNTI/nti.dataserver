@@ -38,6 +38,13 @@ def _dynamic_memberships_that_participate_in_security(user, as_principals=True):
 			(ICommunity.providedBy(community) and \
 			 not IUnscopedGlobalCommunity.providedBy(community)):
 			yield IPrincipal(community) if as_principals else community
+			# This is a bit of a hack. Now that we store our principals in a
+			# set. We need hashes to collide when either an id or an NTIID
+			# match. So we return our community principal and the principal
+			# for our community username. This might only apply to test
+			# .nti-acl files, which I don't think are being used anywhere.
+			if as_principals:
+				yield IPrincipal(community.username)
 	# This mimics the sharing target's xxx_intids_of_memberships_and_self
 	# which is used as an ACL optimization
 
