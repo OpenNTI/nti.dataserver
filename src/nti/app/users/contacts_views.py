@@ -42,6 +42,9 @@ from . import SUGGESTED_CONTACTS
 
 ITEMS = StandardExternalFields.ITEMS
 CLASS = StandardExternalFields.CLASS
+MIME_TYPE = StandardExternalFields.MIMETYPE
+
+SUGGESTED_CONTACTS_MIMETYPE = 'application/vnd.nextthought.suggestedcontacts'
 
 def to_suggested_contacts(users):
 	result = []
@@ -175,6 +178,7 @@ class UserSuggestedContactsView(_AbstractSuggestedContactsView):
 		fill_in_contacts = self._get_fill_in_contacts(limited_contacts)
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = SUGGESTED_CONTACTS
+		results[ MIME_TYPE ] = SUGGESTED_CONTACTS_MIMETYPE
 
 		# Only return anything if we meet our minimum requirements.
 		if 		len(fill_in_contacts) >= self.MIN_FILL_COUNT \
@@ -239,6 +243,8 @@ class _MembershipSuggestedContactsView(_AbstractSuggestedContactsView):
 		contacts = self._get_contacts()
 		results[ 'ItemCount' ] = 0
 		results[ CLASS ] = SUGGESTED_CONTACTS
+		results[ MIME_TYPE ] = SUGGESTED_CONTACTS_MIMETYPE
+
 		if len(contacts) >= self.MIN_RESULT_COUNT:
 			result_list = []
 			result_list.extend(contacts)
