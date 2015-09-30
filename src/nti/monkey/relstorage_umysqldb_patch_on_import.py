@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Monkey-patch for RelStorage to use pure-python drivers that are
-non-blocking.
+Monkey-patch for RelStorage to use pure-python drivers that are non-blocking.
 
 Also, while we're monkeying with database drivers, adjusts the set of
 retriable exceptions that zope.sqlalchemy knows about.
@@ -162,7 +161,8 @@ def _patch_connection():
 				self.__debug_lock(sql, True)
 				raise
 
-
+		def connect(self, *args, **kwargs):
+			return self._connect()
 
 	# Patching the module itself seems to be not needed because
 	# RelStorage uses 'mysql.Connect' directly. And if we patch the module,
@@ -170,14 +170,12 @@ def _patch_connection():
 	# umysqldb.connections.Connection = Connection
 	# Also patch the re-export of it
 	umysqldb.connect = Connection
-	umysqldb.Connection = Connection
 	umysqldb.Connect = Connection
-
+	umysqldb.Connection = Connection
 
 def _patch_relstorage_error(umysqldb):
 	import pymysql.err
 	from pymysql.err import DatabaseError
-
 
 	# Now got to patch relstorage to recognize some exceptions. If these
 	# don't get caught, relstorage may not properly close the connection, or fail
