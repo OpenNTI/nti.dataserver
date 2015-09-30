@@ -222,8 +222,9 @@ def install_root_folders( parent_folder,
 		parent_folder[key] = folder_type()
 		parent_folder[key].__name__ = key
 
-from nti.site.folder import HostSitesFolder
 from zope.traversing.interfaces import IEtcNamespace
+
+from nti.site.folder import HostSitesFolder
 
 def install_sites_folder(dataserver_folder):
 	"""
@@ -231,7 +232,6 @@ def install_sites_folder(dataserver_folder):
 	we will store persistent sites. This is also registered as an
 	IEtcNamespace utility called \"hostsites\".
 	"""
-
 	sites = HostSitesFolder()
 	dataserver_folder['++etc++hostsites'] = sites
 	lsm = dataserver_folder.getSiteManager()

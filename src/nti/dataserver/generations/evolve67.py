@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 generation = 67
 
-import functools
+from functools import partial
 
 from zope import component
 
@@ -73,7 +73,7 @@ def do_evolve(context, generation=generation):
 		_index_assets(catalog, intids)
 
 		# index in all sites
-		run_job_in_all_host_sites(functools.partial(_index_assets, catalog, intids))
+		run_job_in_all_host_sites(partial(_index_assets, catalog, intids))
 
 		logger.info('Dataserver evolution %s done.', generation)
 
