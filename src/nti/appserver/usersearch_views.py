@@ -14,6 +14,7 @@ logger = __import__('logging').getLogger(__name__)
 import six
 import operator
 import simplejson
+from urllib import unquote
 from collections import Mapping
 
 from zope import component
@@ -89,8 +90,9 @@ def _UserSearchView(request):
 	partialMatch = request.subpath[0] if request.subpath else ''
 	if isinstance(partialMatch, bytes):
 		partialMatch = partialMatch.decode('utf-8')
+	partialMatch = unquote(partialMatch)
 	partialMatch = partialMatch.lower()
-
+	
 	# We tend to use this API as a user-resolution service, so
 	# optimize for that case--avoid waking all other users up
 	result = ()
@@ -172,7 +174,8 @@ def _ResolveUserView(request):
 
 	if isinstance(exact_match, bytes):
 		exact_match = exact_match.decode('utf-8')
-
+	exact_match = unquote(exact_match)
+	
 	result = _resolve_user(exact_match, remote_user)
 	if result:
 		# If we matched one user entity, see if we can get away without rendering it
@@ -314,6 +317,7 @@ def _scoped_search_prefix_match(compare, search_term):
 	for k in compare.split():
 		if k.startswith(search_term):
 			return True
+	return compare.startswith(search_term)
 
 def _search_scope_to_remote_user(remote_user, search_term, op=_scoped_search_prefix_match,
 								 fl_only=False, ignore_fl=False):
