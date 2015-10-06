@@ -63,6 +63,12 @@ Assets found beneath presentation-assets/iPad/v1/
 |``contentpackage-thumb-60x80.png``  | 60 x 80 px | thumbnail for this content package.  This is the thumbnail     |
 |                                    |            | that shows up on the books view of the library.                |
 +------------------------------------+------------+----------------------------------------------------------------+
+|``background.png``                  |            | background image shown when in the context of this course or   |
+|                                    |            | catalog entry.                                                 |
++------------------------------------+------------+----------------------------------------------------------------+
+|``instructor-photos/{}.png``        |            | The avatar to use for the ith instructor listed in the catalog |
+|e.g. ``instructor-photos/01.png``   |            | entry                                                          |
++------------------------------------+------------+----------------------------------------------------------------+
 
 WebApp
 ------
@@ -77,6 +83,22 @@ Assets found beneath presentation-assets/webapp/v1/
 +------------------------------------+------------+----------------------------------------------------------------+
 |``contentpackage-thumb-60x60.png``  | 60 x 60 px | thumbnail for this content package. Shown in the various small |
 |                                    |            | squares peppered throught the app (note context, nav bar)      |
++------------------------------------+------------+----------------------------------------------------------------+
+|``background.png``                  |            | background image shown when in the context of this course or   |
+|                                    |            | catalog entry.                                                 |
++------------------------------------+------------+----------------------------------------------------------------+
+|``vendoroverrideicon.png``          |  n x 70 px | If provided allows for a custom vendor icon to be shown in the |
+|                                    |            | top left corner of the application when in this course context |
++------------------------------------+------------+----------------------------------------------------------------+
+
+Mobile
+------
+
+Assets found beneath presentation-assets/mobile/v1/
+
++------------------------------------+------------+----------------------------------------------------------------+
+|Name                                |Size        |Description                                                     |
++====================================+============+================================================================+
 +------------------------------------+------------+----------------------------------------------------------------+
 
 Legacy Presentation Assets Still In Use
