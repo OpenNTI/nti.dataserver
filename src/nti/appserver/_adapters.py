@@ -390,13 +390,13 @@ class _AliasUserSearchPolicy(object):
 	Something that searches on the alias.
 	"""
 
-	# : Define here the names of the indexes in the user catalog
-	# : to search over. These indexes should be case-normalizing indexes
-	# : that store their keys in lower case (as the search term is
-	# : provided that way). You must define a matching `_iterindexitems_NAME`
-	# : method to determine the keys to get; each key will be treated
-	# : as a prefix match, and we assume the prefix match has already
-	# : been done.
+	#: Define here the names of the indexes in the user catalog
+	#: to search over. These indexes should be case-normalizing indexes
+	#: that store their keys in lower case (as the search term is
+	#: provided that way). You must define a matching `_iterindexitems_NAME`
+	#: method to determine the keys to get; each key will be treated
+	#: as a prefix match, and we assume the prefix match has already
+	#: been done.
 	_index_names = ('alias',)
 
 	def __init__(self, context):
