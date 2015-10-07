@@ -14,7 +14,9 @@ logger = __import__('logging').getLogger(__name__)
 from pyramid.security import remember
 
 from zope import interface
+
 from zope.event import notify
+
 from zope.location.interfaces import ILocation
 
 from nti.appserver.interfaces import UserLogonEvent
@@ -32,9 +34,9 @@ zope.deferredimport.deprecatedFrom(
 	# here even after all clients are updated
 	"_UncacheableInResponseProxy",
 	"uncached_in_response"
-	)
+)
 
-def logon_userid_with_request( userid, request, response=None ):
+def logon_userid_with_request(userid, request, response=None):
 	"""
 	Mark that the user has logged in. This is done by notifying a :class:`nti.appserver.interfaces.IUserLogonEvent`.
 
@@ -47,13 +49,13 @@ def logon_userid_with_request( userid, request, response=None ):
 
 	# Send the logon event
 	dataserver = request.registry.getUtility(nti_interfaces.IDataserver)
-	user = users.User.get_user( username=userid, dataserver=dataserver )
+	user = users.User.get_user(username=userid, dataserver=dataserver)
 	if not user:
-		raise ValueError( "No user found for %s" % userid )
+		raise ValueError("No user found for %s" % userid)
 
-	logon_user_with_request( user, request, response=response )
+	logon_user_with_request(user, request, response=response)
 
-def logon_user_with_request( user, request, response=None ):
+def logon_user_with_request(user, request, response=None):
 	"""
 	Mark that the user has logged in. This is done by notifying a :class:`nti.appserver.interfaces.IUserLogonEvent`.
 
@@ -65,15 +67,15 @@ def logon_user_with_request( user, request, response=None ):
 	"""
 
 	# Send the logon event
-	if not nti_interfaces.IUser.providedBy( user ):
-		raise ValueError( "No valid user given" )
+	if not nti_interfaces.IUser.providedBy(user):
+		raise ValueError("No valid user given")
 
 	notify(UserLogonEvent(user, request))
 
-	response = response or getattr( request, 'response' )
+	response = response or getattr(request, 'response')
 	if response:
-		response.headers.extend( remember( request, user.username.encode('utf-8') ) )
-		response.set_cookie( b'username', user.username.encode( 'utf-8' ) ) # the web app likes this
+		response.headers.extend(remember(request, user.username.encode('utf-8')))
+		response.set_cookie(b'username', user.username.encode('utf-8'))  # the web app likes this
 
 def dump_stacks():
 	"""
@@ -86,7 +88,7 @@ def dump_stacks():
 	dump = []
 
 	# threads
-	import threading # Late import this stuff because it may get monkey-patched
+	import threading  # Late import this stuff because it may get monkey-patched
 	import sys
 	import gc
 	import traceback
@@ -108,7 +110,7 @@ def dump_stacks():
 		if not isinstance(ob, greenlet):
 			continue
 		if not ob:
-			continue   # not running anymore or not started
+			continue  # not running anymore or not started
 		dump.append('Greenlet %s\n' % ob)
 		dump.append(''.join(traceback.format_stack(ob.gr_frame)))
 		dump.append('\n')
@@ -117,7 +119,7 @@ def dump_stacks():
 
 def dump_stacks_view(request):
 	body = '\n'.join(dump_stacks())
-	print( body )
+	print(body)
 	request.response.text = body
 	request.response.content_type = b'text/plain'
 	return request.response
@@ -144,16 +146,16 @@ def dump_database_cache(gc=False):
 	databases = db.databases or {'': db}
 	lines = []
 	for name, value in databases.items():
-		lines.append( "Database\tCacheSize" )
-		lines.append( "%s\t%s" % (name, value.cacheSize()) )
+		lines.append("Database\tCacheSize")
+		lines.append("%s\t%s" % (name, value.cacheSize()))
 
 		lines.append("\tConnections")
 		for row in value.cacheDetailSize():
-			lines.append( "\t\t%s" % row )
+			lines.append("\t\t%s" % row)
 
 		lines.append("\tTypes")
-		for kind, count in sorted(value.cacheDetail(),key=lambda x: x[1]):
-			lines.append( '\t\t%s\t%s' % (kind, count))
+		for kind, count in sorted(value.cacheDetail(), key=lambda x: x[1]):
+			lines.append('\t\t%s\t%s' % (kind, count))
 
 		if gc:
 			value.cacheMinimize()
@@ -174,13 +176,13 @@ zope.deferredimport.deprecatedFrom(
 	"nti.app.externalization.error",
 	"raise_json_error")
 
-def link_belongs_to_user( link, user ):
+def link_belongs_to_user(link, user):
 	link.__parent__ = user
 	link.__name__ = ''
-	interface.alsoProvides( link, ILocation )
+	interface.alsoProvides(link, ILocation)
 	try:
 		link.creator = user
-		interface.alsoProvides( link, ICreated )
+		interface.alsoProvides(link, ICreated)
 	except AttributeError:
 		pass
 	return link
