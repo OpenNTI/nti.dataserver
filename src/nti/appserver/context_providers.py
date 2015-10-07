@@ -104,8 +104,8 @@ def get_hierarchy_context(obj, user):
 	Return all hierarchical contexts for a given object and user.
 	"""
 	results = []
-	for hiearchy_contexts in component.subscribers((obj, user),
-												IHierarchicalContextProvider):
+	for hiearchy_contexts in component.subscribers(	(obj, user),
+													IHierarchicalContextProvider):
 		if hiearchy_contexts:
 			results.extend(hiearchy_contexts)
 	return _dedupe_bundles_from_hierarchy(results)
@@ -118,5 +118,5 @@ def get_joinable_contexts(obj):
 	try:
 		get_top_level_contexts(obj)
 	except ForbiddenContextException as e:
-		results = set( e.joinable_contexts )
+		results = set(e.joinable_contexts)
 	return results

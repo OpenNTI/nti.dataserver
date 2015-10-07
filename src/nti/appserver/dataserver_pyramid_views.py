@@ -8,9 +8,10 @@ Defines traversal views and resources for the dataserver.
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__( 'logging' ).getLogger( __name__ )
+logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+
 from zope.location.location import LocationProxy
 
 from pyramid.view import view_defaults
@@ -27,12 +28,12 @@ from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
 class _ServiceGetView(AbstractAuthenticatedView):
 
-	def __call__( self ):
+	def __call__(self):
 		# JAM: We should make this a multi-adapter on the request
 		# so that the request can be threaded down through workspaces,
 		# collections, etc.
 		service = IService(self.remoteUser)
-		#service.__parent__ = self.request.context
+		# service.__parent__ = self.request.context
 		return service
 
 @view_defaults(route_name='objects.generic.traversal',
@@ -41,7 +42,7 @@ class _ServiceGetView(AbstractAuthenticatedView):
 			   request_method='GET')
 class _GenericGetView(AbstractView):
 
-	def __call__( self ):
+	def __call__(self):
 		# TODO: We sometimes want to change the interface that we return
 		# We're doing this to turn a dataserver IContainer (which externalizes poorly)
 		# to an ICollection (which externalizes nicely.) How to make this
@@ -54,21 +55,21 @@ class _GenericGetView(AbstractView):
 		# links and handle paging. Is that right?
 		# NOTE: We'll take either one of the wrapper classes defined
 		# in this module, or the object itself
-		resource = getattr( self.request.context, 'resource', self.request.context )
+		resource = getattr(self.request.context, 'resource', self.request.context)
 
 		if IDeletedObjectPlaceholder.providedBy(resource):
 			# For deleted objects, we want to return a 404 with our
 			# deleted object placeholder in the payload.
 			self.request.response.status = 404
 
-		result = component.queryAdapter( resource,
-										 ICollection,
-										 name=self.request.traversed[-1] )
+		result = component.queryAdapter(resource,
+										ICollection,
+										name=self.request.traversed[-1])
 		if not result:
-			result = component.queryAdapter( resource,
-											 ICollection,
-											 default=resource )
-		if hasattr( result, '__parent__' ):
+			result = component.queryAdapter(resource,
+											ICollection,
+											default=resource)
+		if hasattr(result, '__parent__'):
 			# FIXME: Choosing which parent to set is also borked up.
 			# Some context objects (resources) are at the same conceptual level
 			# as the actual request.context, some are /beneath/ that level??
@@ -76,11 +77,11 @@ class _GenericGetView(AbstractView):
 			# TODO: This can probably mostly go away now?
 			if result is resource:
 				# Must be careful not to modify the persistent object
-				result = LocationProxy( result,
-										getattr( result, '__parent__', None),
-										getattr( result, '__name__', None ) )
+				result = LocationProxy(	result,
+										getattr(result, '__parent__', None),
+										getattr(result, '__name__', None))
 
-			if getattr( resource, '__parent__', None ) is not None:
+			if getattr(resource, '__parent__', None) is not None:
 				result.__parent__ = resource.__parent__
 				# FIXME: Another hack at getting the right parent relationship in.
 				# The actual parent relationship is to the Provider object,
@@ -93,7 +94,7 @@ class _GenericGetView(AbstractView):
 					 self.request.traversed[0] == 'users':
 					result.__parent__ = self.request.context.__parent__
 			elif resource is not self.request.context and \
-				 hasattr( self.request.context, '__parent__' ):
+				 hasattr(self.request.context, '__parent__'):
 				result.__parent__ = self.request.context.__parent__
 		return result
 
@@ -101,8 +102,8 @@ GenericGetView = _GenericGetView
 
 class _EmptyContainerGetView(AbstractView):
 
-	def __call__( self ):
-		raise hexc.HTTPNotFound( self.request.context.ntiid )
+	def __call__(self):
+		raise hexc.HTTPNotFound(self.request.context.ntiid)
 
 def _method_not_allowed(request):
 	raise hexc.HTTPMethodNotAllowed()

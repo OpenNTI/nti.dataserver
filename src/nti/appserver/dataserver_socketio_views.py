@@ -22,15 +22,16 @@ import transaction
 from zope import component
 from zope import interface
 
-import pyramid.interfaces
 from pyramid.view import view_config
-import pyramid.httpexceptions as hexc
+from pyramid.interfaces import IResponse
+from pyramid import httpexceptions as hexc
 
-from geventwebsocket import interfaces as ws_interfaces
+from geventwebsocket.interfaces import IWSWillUpgradeVeto
 
 from nti.appserver.policies import site_policies
 
-import nti.dataserver.interfaces as nti_interfaces
+from nti.dataserver.interfaces import IDataserver
+from nti.dataserver.interfaces import IDataserverTransactionRunner
 
 import nti.socketio.interfaces
 from nti.socketio.dataserver_session import Session
@@ -49,7 +50,6 @@ URL_HANDSHAKE = '/socket.io/1/'
 # We could use different hard-coded urls for the connect
 URL_CONNECT = '/socket.io/1/{transport}/{session_id}'
 
-
 def _create_new_session(request):
 	"""
 	Creates a session for the authenticated user of the request.
@@ -57,23 +57,23 @@ def _create_new_session(request):
 
 	username = request.authenticated_userid
 	if not username:
-		logger.debug( "Unauthenticated session request" )
+		logger.debug("Unauthenticated session request")
 		raise hexc.HTTPUnauthorized()
-	#gevent.sleep( 0.1 ) # Trivial throttling
-	logger.debug( "Creating session handler for '%s'", username )
+	# gevent.sleep( 0.1 ) # Trivial throttling
+	logger.debug("Creating session handler for '%s'", username)
 
-	session_manager = component.getUtility( nti_interfaces.IDataserver ).session_manager
-	session = session_manager.create_session( session_class=Session, owner=username )
-	session.originating_site_names = site_policies.get_possible_site_names( request, include_default=True )
-	logger.debug( "Created new session %s with site policies %s", session, session.originating_site_names )
+	session_manager = component.getUtility(IDataserver).session_manager
+	session = session_manager.create_session(session_class=Session, owner=username)
+	session.originating_site_names = site_policies.get_possible_site_names(request, include_default=True)
+	logger.debug("Created new session %s with site policies %s", session, session.originating_site_names)
 	return session
 
 POSSIBLE_TRANSPORTS = {'websocket', 'flashsocket', 'xhr-polling', 'jsonp-polling', 'htmlfile'}
 SUPPORTED_TRANSPORTS = {'websocket': 1,
 						'xhr-polling': 2}
 
-@view_config(route_name=RT_HANDSHAKE) # POST or GET
-def _handshake_view( request ):
+@view_config(route_name=RT_HANDSHAKE)  # POST or GET
+def _handshake_view(request):
 	"""
 	The first step in socket.io. A handshake begins the process by
 	requesting a new session, we send back the session id and some miscellaneous
@@ -82,12 +82,12 @@ def _handshake_view( request ):
 	session = _create_new_session(request)
 
 	# session_id:heartbeat_seconds:close_timeout:supported_type, supported_type,...
-	handler_types = [x[0] for x in component.getAdapters( (request,),
+	handler_types = [x[0] for x in component.getAdapters((request,),
 														  nti.socketio.interfaces.ISocketIOTransport)
 					 if x[0] in SUPPORTED_TRANSPORTS]
 	handler_types = sorted(handler_types, key=lambda x: SUPPORTED_TRANSPORTS.get(x, -1))
 	data = "%s:15:10:%s" % (session.session_id, ",".join(handler_types))
-	data = data.encode( 'ascii' )
+	data = data.encode('ascii')
 	# NOTE: We are not handling JSONP here. It should not be a registered transport
 
 	response = request.response
@@ -95,61 +95,61 @@ def _handshake_view( request ):
 	response.content_type = b'text/plain'
 	return response
 
-@interface.implementer( ws_interfaces.IWSWillUpgradeVeto )
+@interface.implementer(IWSWillUpgradeVeto)
 class _WSWillUpgradeVeto(object):
 	"""
 	A veto handler to avoid upgrading to websockets if the session doesn't
 	exist. This lets our 404 propagate.
 	"""
 
-	def __init__( self, evt=None ):
+	def __init__(self, evt=None):
 		return
 
-	def can_upgrade( self, wswill_upgrade_event ):
+	def can_upgrade(self, wswill_upgrade_event):
 		"""
 		If the session exists and is valid, we can upgrade.
 		"""
 		# Pull the session id out of the path. See
 		# URL_CONNECT
 		environ = wswill_upgrade_event.environ
-		sid = environ['PATH_INFO'].split( '/' )[-1]
+		sid = environ['PATH_INFO'].split('/')[-1]
 		def test():
 			try:
-				_get_session( sid ) # TODO: This causes a write to the session. Why?
+				_get_session(sid)  # TODO: This causes a write to the session. Why?
 			except hexc.HTTPNotFound:
-				logger.debug( "Not upgrading, no session", exc_info=True )
+				logger.debug("Not upgrading, no session", exc_info=True)
 				return False
 			else:
 				return True
 		# NOTE: Not running this in any site policies
-		return component.getUtility( nti_interfaces.IDataserverTransactionRunner )( test, retries=3, sleep=0.1 )
+		return component.getUtility(IDataserverTransactionRunner)(test, retries=3, sleep=0.1)
 
 def _get_session(session_id):
 	"""
 	Returns a valid session to use, or raises HTTPNotFound.
 	"""
 	try:
-		session = component.getUtility( nti_interfaces.IDataserver ).session_manager.get_session( session_id )
-	except (KeyError,ValueError):
-		logger.warn( "Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True )
-		raise hexc.HTTPNotFound( _("No session found or illegal session id" ))
+		session = component.getUtility(IDataserver).session_manager.get_session(session_id)
+	except (KeyError, ValueError):
+		logger.warn("Client sent bad value for session (%s); DDoS attempt?", session_id, exc_info=True)
+		raise hexc.HTTPNotFound(_("No session found or illegal session id"))
 
 	if session is None:
-		raise hexc.HTTPNotFound( "No session found for %s" % session_id)
+		raise hexc.HTTPNotFound("No session found for %s" % session_id)
 	if not session.owner:
-		logger.warn( "Found session with no owner. Cannot connect: %s", session )
-		raise hexc.HTTPNotFound( "Session has no owner %s" % session_id )
+		logger.warn("Found session with no owner. Cannot connect: %s", session)
+		raise hexc.HTTPNotFound("Session has no owner %s" % session_id)
 	return session
 
 from .tweens.greenlet_runner_tween import HTTPOkGreenletsToRun
 
-@view_config(route_name=RT_CONNECT) # Any request method
-def _connect_view( request ):
+@view_config(route_name=RT_CONNECT)  # Any request method
+def _connect_view(request):
 
 	environ = request.environ
-	transport = request.matchdict.get( 'transport' )
+	transport = request.matchdict.get('transport')
 	ws_transports = ('websocket',)
-	session_id = request.matchdict.get( 'session_id' )
+	session_id = request.matchdict.get('session_id')
 
 	# All our errors need to come back as 404 (not 403) otherwise the browser
 	# keeps trying to reconnect this same session
@@ -166,25 +166,26 @@ def _connect_view( request ):
 	if not request.authenticated_userid:
 		raise hexc.HTTPUnauthorized()
 
-
 	# Make the session object available for WSGI apps
 	environ['socketio'] = session.socket
-	environ['socketio'].session = session # TODO: Needed anymore?
+	environ['socketio'].session = session  # TODO: Needed anymore?
 
 	# Create a transport and handle the request likewise
 	try:
-		transport = component.getAdapter( request, nti.socketio.interfaces.ISocketIOTransport, name=transport )
+		transport = component.getAdapter(request, 
+										 nti.socketio.interfaces.ISocketIOTransport,
+										 name=transport)
 	except LookupError:
-		raise hexc.HTTPNotFound( "Unknown transport type %s" % transport )
+		raise hexc.HTTPNotFound("Unknown transport type %s" % transport)
 
 	request_method = environ.get("REQUEST_METHOD")
 	try:
 		jobs_or_response = transport.connect(session, request_method)
 	except IOError:
-		logger.debug( "Client disconnected during connection", exc_info=True )
+		logger.debug("Client disconnected during connection", exc_info=True)
 		raise hexc.HTTPClientError()
 
-	if pyramid.interfaces.IResponse.providedBy( jobs_or_response ):
+	if IResponse.providedBy(jobs_or_response):
 		return jobs_or_response
 
 	# If we have connection jobs (websockets)
