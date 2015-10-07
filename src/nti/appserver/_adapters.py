@@ -11,12 +11,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from . import MessageFactory as _
-
 from zope import component
 from zope import interface
-
-from zope.i18n import translate
 
 from zope.location.interfaces import LocationError
 
@@ -36,7 +32,6 @@ from nti.dataserver.interfaces import IModeledContent
 from nti.dataserver.interfaces import IEnclosedContent
 from nti.dataserver.interfaces import ITitledDescribedContent
 from nti.dataserver.interfaces import IShareableModeledContent
-from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.users.interfaces import TAG_HIDDEN_IN_UI
@@ -48,14 +43,12 @@ from nti.externalization.externalization import to_external_object
 
 from nti.externalization.interfaces import IExternalObject
 from nti.externalization.interfaces import IExternalObjectDecorator
-from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.schema.interfaces import find_most_derived_interface
 
 from .interfaces import IUserSearchPolicy
 from .interfaces import IIntIdUserSearchPolicy
 from .interfaces import IExternalFieldResource
-from .interfaces import IModeratorDealtWithFlag
 from .interfaces import IExternalFieldTraversable
 
 @interface.implementer(IExternalObject)
@@ -233,11 +226,6 @@ class DFLExternalFieldTraverser(_AbstractExternalFieldTraverser):
 	_unwrapped_fields = ()
 	_allowed_fields = ('About', 'about', 'Locked', 'locked')
 
-import nameparser
-nameparser_config = getattr(nameparser, "config")
-
-from zope.i18n.interfaces import IUserPreferredLanguages
-
 from pyramid.threadlocal import get_current_request
 
 _REALNAME_FIELDS = ('realname', 'NonI18NFirstName', 'NonI18NLastName')
@@ -263,42 +251,6 @@ class _UserRealnameStripper(object):
 		for k in _REALNAME_FIELDS:
 			if k in external:
 				external[k] = None
-
-@component.adapter(IUser)
-@interface.implementer(IExternalMappingDecorator)
-class _EnglishFirstAndLastNameDecorator(object):
-	"""
-	If a user's first preferred language is English,
-	then assume that they provided a first and last name and return that
-	in the profile data.
-
-	.. note::
-		This is an incredibly Western and even US centric way of
-		looking at things. The restriction to those that prefer
-		English as their language is an attempt to limit the damage.
-	"""
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping(self, original, external):
-		realname = external.get('realname')
-		if not realname or '@' in realname or realname == external.get('ID'):
-			return
-
-		preflangs = IUserPreferredLanguages(original, None)
-		if preflangs and 'en' == (preflangs.getPreferredLanguages() or (None,))[0]:
-			# FIXME: Duplicated from users.user_profile
-			# CFA: another suffix we see from certain financial quorters
-			suffixes = nameparser_config.SUFFIXES | set(('cfa',))
-			constants = nameparser_config.Constants(suffixes=suffixes)
-
-			human_name = nameparser.HumanName(realname, constants=constants)
-			first = human_name.first or human_name.last
-			last = human_name.last or human_name.first
-
-			if first:
-				external['NonI18NFirstName'] = first
-				external['NonI18NLastName'] = last
 
 from zope.intid.interfaces import IIntIds
 
@@ -527,82 +479,3 @@ class _NoOpUserSearchPolicyAndRealnameStripper(_NoOpUserSearchPolicy, _UserRealn
 		if external.get('Username'):
 			external['alias'] = external['Username']
 		super(_NoOpUserSearchPolicyAndRealnameStripper, self).decorateExternalObject(original, external)
-
-from nti.externalization.interfaces import StandardExternalFields
-
-from .link_providers import provide_links
-
-@component.adapter(IUser)
-@interface.implementer(IExternalMappingDecorator)
-class _AuthenticatedUserLinkAdder(object):
-	"""
-	When we decorate an user, if the user is ourself, we want to provide
-	the same links that we would at logon time, mostly as a convenience
-	to the client.
-	"""
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalMapping(self, original, external):
-		request = get_current_request()
-		if not request:
-			return
-
-		userid = request.authenticated_userid
-		if not userid or original.username != userid:
-			return
-
-		links = list(external.get(StandardExternalFields.LINKS, ()))
-		links.extend(provide_links(original, request))
-
-		external[StandardExternalFields.LINKS] = links
-
-@interface.implementer(IExternalObjectDecorator)
-@component.adapter(IDeletedObjectPlaceholder)
-class _DeletedObjectPlaceholderDecorator(object):
-	"""
-	Replaces the title, description, and body of deleted objects with I18N strings.
-	Cleans up some other data too that we don't want out.
-	"""
-
-	_message = _("This item has been deleted.")
-
-	_moderator_message = _("This item has been deleted by the moderator.")
-
-	__metaclass__ = SingletonDecorator
-
-	def decorateExternalObject(self, original, external):
-		request = get_current_request()
-		deleted_by_moderator = IModeratorDealtWithFlag.providedBy(original)
-		message = translate(self._moderator_message if deleted_by_moderator else self._message, context=request)
-
-		if 'title' in external:
-			external['title'] = message
-		if 'description' in external:
-			external['description'] = message
-		if 'body' in external:
-			external['body'] = [message]
-
-		if 'tags' in external:
-			external['tags'] = ()
-
-		if StandardExternalFields.LINKS in external:
-			# These may or may not be rendered at this point
-			links = []
-			for l in external[StandardExternalFields.LINKS]:
-				try:
-					rel = l['rel']
-				except KeyError:
-					rel = l.rel
-				if rel in ('replies',):
-					# We want to allow access to non-deleted children
-					# XXX FIXME This should probably be a per-interface whitelist?
-					links.append(l)
-			external[StandardExternalFields.LINKS] = links
-
-		# Note that we are still externalizing with the original class and mimetype values;
-		# to do otherwise would almost certainly break client assumptions about the type of data the APIs return.
-		# But we do expose secondary information about this state:
-		external['Deleted'] = True
-		if deleted_by_moderator:
-			external['DeletedByModerator'] = True
