@@ -21,24 +21,25 @@ import cgi
 from abc import ABCMeta #, abstractmethod
 from collections import Counter
 
-import lxml.etree
+from lxml import etree
 
 import html5lib
 from html5lib import treebuilders
 
-from zope import interface
 from zope import component
+from zope import interface
 
-from zope.contentprovider import interfaces as cp_interfaces
+from zope.contentprovider.interfaces import IContentProvider
 from zope.contentprovider.provider import ContentProviderBase
 
-from zope.dublincore import interfaces as dc_interfaces
+from zope.dublincore.interfaces import IDCTimes
+from zope.dublincore.interfaces import IZopeDublinCore
+
+from zope.intid import IIntIds
 
 from zope.proxy.decorator import SpecificationDecoratorBase
 
 from zope.traversing.browser.interfaces import IAbsoluteURL
-
-from zc import intid as zc_intid
 
 import z3c.table.interfaces
 from z3c.table import column
@@ -46,18 +47,22 @@ from z3c.table import column
 import pyramid.interfaces
 from pyramid import traversal
 
-from nti.chatserver import interfaces as chat_interfaces
+from nti.chatserver.interfaces import IMessageInfo
 
-from nti.contentfragments import interfaces as frg_interfaces
+from nti.contentfragments.interfaces import IHTMLContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes.forums import interfaces as frm_interfaces
+from nti.dataserver.interfaces import ILink
+from nti.dataserver.interfaces import INote
+from nti.dataserver.interfaces import ICanvas
+from nti.dataserver.contenttypes.forums.interfaces import IPost
+from nti.dataserver.contenttypes.forums.interfaces import IHeadlineTopic
 
 from nti.links.externalization import render_link
 
 from nti.ntiids import ntiids
 
-@interface.implementer(dc_interfaces.IZopeDublinCore)
+@interface.implementer(IZopeDublinCore)
 class _FakeDublinCoreProxy(SpecificationDecoratorBase):
 	pass
 
@@ -87,7 +92,7 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 
 	def renderCell( self, item ):
 		content_provider = component.queryMultiAdapter( (item, self.request, self),
-														cp_interfaces.IContentProvider )
+														IContentProvider )
 		if content_provider:
 			content_provider.update()
 			return content_provider.render()
@@ -96,7 +101,8 @@ class NoteLikeBodyColumn(column.GetAttrColumn):
 class AbstractNoteContentProvider(ContentProviderBase):
 	"""
 	Base content provider for something that is note-like
-	(being modeled content and typically having a body that is a :func:`nti.dataserver.interfaces.CompoundModeledContentBody`).
+	(being modeled content and typically having a body that is a
+	:func:`nti.dataserver.interfaces.CompoundModeledContentBody`).
 	"""
 	__metaclass__ = ABCMeta
 
@@ -104,7 +110,7 @@ class AbstractNoteContentProvider(ContentProviderBase):
 		return self.context.body
 
 	def render_body_part( self, part ):
-		if nti_interfaces.ICanvas.providedBy( part ):
+		if ICanvas.providedBy( part ):
 			# TODO: We can do better than this. For one, we could use adapters
 			body = ["<div class='canvas'>&lt;CANVAS OBJECT of length %s&gt;" % len(part)]
 			part_types = Counter()
@@ -121,7 +127,7 @@ class AbstractNoteContentProvider(ContentProviderBase):
 					link = part_ext['url']
 					# TODO: Apparently there are some unmigrated objects that don't have _file
 					# hidden away somewhere?
-					link_external = render_link(link) if nti_interfaces.ILink.providedBy( link ) else link
+					link_external = render_link(link) if ILink.providedBy( link ) else link
 					body.append( "<img src='%s' />" % link_external )
 				elif hasattr( canvas_part, 'text' ):
 					body.append( cgi.escape( canvas_part.text ) )
@@ -130,17 +136,18 @@ class AbstractNoteContentProvider(ContentProviderBase):
 			body.append( '</div>' )
 			return '<br />'.join( body )
 
-		if frg_interfaces.IHTMLContentFragment.providedBy( part ):
-			parser = html5lib.HTMLParser( tree=treebuilders.getTreeBuilder("lxml"), namespaceHTMLElements=False )
+		if IHTMLContentFragment.providedBy( part ):
+			parser = html5lib.HTMLParser(tree=treebuilders.getTreeBuilder("lxml"),
+										 namespaceHTMLElements=False )
 			doc = parser.parse( part )
 			body = doc.find('body')
 			if body is not None:
-				part = lxml.etree.tostring( body, method='html', encoding=unicode )
+				part = getattr(etree ,'tostring')( body, method='html', encoding=unicode )
 				result = part[6:-7] # strip the enclosing body tag
 			else:
 				result = ''
 		else:
-			result = frg_interfaces.IPlainTextContentFragment( part, None ) or unicode(part)
+			result = IPlainTextContentFragment( part, None ) or unicode(part)
 		return result
 
 	def update(self):
@@ -165,8 +172,8 @@ class AbstractNoteContentProvider(ContentProviderBase):
 		parts.append( '</div>' )
 		return ''.join( parts )
 
-@interface.implementer(cp_interfaces.IContentProvider)
-@component.adapter(nti_interfaces.INote, interface.Interface, NoteLikeBodyColumn)
+@interface.implementer(IContentProvider)
+@component.adapter(INote, interface.Interface, NoteLikeBodyColumn)
 class NoteContentProvider(AbstractNoteContentProvider):
 
 	def render_prefix(self):
@@ -174,8 +181,8 @@ class NoteContentProvider(AbstractNoteContentProvider):
 			return '<span style="font-weight: bold">' + self.context.title + '</span>'
 		return ''
 
-@interface.implementer(cp_interfaces.IContentProvider)
-@component.adapter(chat_interfaces.IMessageInfo, interface.Interface, NoteLikeBodyColumn)
+@interface.implementer(IContentProvider)
+@component.adapter(IMessageInfo, interface.Interface, NoteLikeBodyColumn)
 class MessageInfoContentProvider(AbstractNoteContentProvider):
 
 	def get_body_parts(self):
@@ -187,8 +194,8 @@ class MessageInfoContentProvider(AbstractNoteContentProvider):
 			return "<br /><span class='chat-recipients'>(Recipients: " + ' '.join( recip ) + ')</span>'
 		return ''
 
-@interface.implementer(cp_interfaces.IContentProvider)
-@component.adapter(frm_interfaces.IHeadlineTopic, interface.Interface, NoteLikeBodyColumn)
+@interface.implementer(IContentProvider)
+@component.adapter(IHeadlineTopic, interface.Interface, NoteLikeBodyColumn)
 class HeadlineTopicContentProvider(AbstractNoteContentProvider):
 
 	def get_body_parts(self):
@@ -197,11 +204,10 @@ class HeadlineTopicContentProvider(AbstractNoteContentProvider):
 	def render_prefix(self):
 		return self.context.headline.title
 
-@interface.implementer(cp_interfaces.IContentProvider)
-@component.adapter(frm_interfaces.IPost, interface.Interface, NoteLikeBodyColumn)
+@interface.implementer(IContentProvider)
+@component.adapter(IPost, interface.Interface, NoteLikeBodyColumn)
 class TopicCommentContentProvider(AbstractNoteContentProvider):
 	pass
-
 
 class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	"""
@@ -213,13 +219,13 @@ class IntIdCheckBoxColumn(column.CheckBoxColumn):
 	cssClasses = { 'td': 'select-object-checkbox' }
 
 	def getItemValue(self, item):
-		return str(component.getUtility( zc_intid.IIntIds ).queryId( item ) or -1)
+		return str(component.getUtility( IIntIds ).queryId( item ) or -1)
 
 def fake_dc_core_for_times( item ):
-	times = dc_interfaces.IDCTimes( item, None )
+	times = IDCTimes( item, None )
 	if times is None:
 		return item # No values to proxy from, no point in doing so
-	if dc_interfaces.IZopeDublinCore.providedBy( times ):
+	if IZopeDublinCore.providedBy( times ):
 		return times
 	return _FakeDublinCoreProxy( times )
 
