@@ -66,7 +66,7 @@ class _AbstractDelimitedHierarchyObject(object):
 									   self.bucket,
 									   self.name.encode('unicode_escape') if self.name else '')
 		except ConnectionStateError:
-			return object.__str__(self)
+			return"(%s,%s)" % (type(self).__name__, id(self))
 
 	# persistence methods
 
