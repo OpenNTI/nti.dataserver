@@ -106,7 +106,7 @@
 
 	<include package="nti.app.renderers" />
 
-	<subscriber factory="._adapters._EnglishFirstAndLastNameDecorator"
+	<subscriber factory=".decorators._EnglishFirstAndLastNameDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<!--
@@ -155,7 +155,7 @@
 	<subscriber factory=".pyramid_renderers_profile_link_decorator.ProfileLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
-	<subscriber factory="._adapters._AuthenticatedUserLinkAdder"
+	<subscriber factory=".decorators._AuthenticatedUserLinkAdder"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<!-- This one is really slow in big databases. -->
@@ -163,10 +163,10 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"
 				zcml:condition='have shared-dynamic-memberships-external' />
 
-	<adapter factory="._adapters.EnclosureExternalObject" />
 	<adapter factory="._adapters.BrokenExternalObject" />
+	<adapter factory="._adapters.EnclosureExternalObject" />
 
-	<subscriber factory="._adapters._DeletedObjectPlaceholderDecorator"
+	<subscriber factory=".decorators._DeletedObjectPlaceholderDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
 
 	<!-- Assessment -->

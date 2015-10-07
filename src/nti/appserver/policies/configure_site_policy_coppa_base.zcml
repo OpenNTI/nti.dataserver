@@ -31,7 +31,6 @@
 				 for="nti.dataserver.interfaces.IUser"
 				 provides="nti.appserver.interfaces.IUserSearchPolicy" />
 
-
 		<!-- Likewise, we never reveal real names -->
 		<adapter factory="nti.appserver._adapters._NoOpUserSearchPolicyAndRealnameStripper"
 				 provides="nti.externalization.interfaces.IExternalObjectDecorator"
