@@ -42,7 +42,7 @@
 				   view_named=".feedback_views.REL_SEND_FEEDBACK" />
 
 	<link:userLink named="nti.app.invitations.views.REL_ACCEPT_INVITATIONS"
-				   view_named=".nti.app.invitations.views.REL_ACCEPT_INVITATIONS" />
+				   view_named="nti.app.invitations.views.REL_ACCEPT_INVITATIONS" />
 
 	<subscriber factory=".logon.ImpersonationLinkProvider"
 				provides=".interfaces.IAuthenticatedUserLinkProvider" />
