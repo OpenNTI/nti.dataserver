@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Implementation of the :class:`nti.appserver.interfaces.IInvitations` utility.
-
 .. $Id$
 """
 
