@@ -176,8 +176,8 @@
 	<subscriber handler=".application._sync_global_library" />
 
 	<subscriber handler=".account_creation_views.link_removed_on_user" />
-	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 	<subscriber handler=".account_creation_views.accept_invitations_on_user_creation" />
+	<subscriber handler=".account_creation_views.request_profile_update_on_user_upgrade" />
 
 	<!-- Logon -->
 	<include package="." file="configure_logon.zcml" />
@@ -453,7 +453,6 @@
 
 	<includeOverrides file="overrides.zcml" />
 
-	<include package="." file="configure_invitations.zcml" />
 	<include package=".policies" file="configure.zcml" />
 
 	<include package="nti.app.forums" />
@@ -489,6 +488,7 @@
 	<include package="nti.app.types" />
 	<include package="nti.app.users" />
 	<include package="nti.app.bulkemail" />
+	<include package="nti.app.invitations" />
 	<include package="nti.app.notabledata" />
 	<include package="nti.app.contentfile" />
 	<include package="nti.app.contentsearch" />

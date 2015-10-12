@@ -56,17 +56,16 @@
 	<pyramid:scan package='.flagging_views' />
 	<pyramid:scan package='.feedback_views' />
 	<pyramid:scan package='.zope_file_views' />
-	<pyramid:scan package='.invitation_views' />
 	<pyramid:scan package='.account_creation_views' />
 	<pyramid:scan package='nti.appserver.usersearch_views' />
 
 	<pyramid:scan package=".link_providers.views" />
-	
-	<include package="nti.app.bulkemail" file="pyramid.zcml" />
 
 	<include package="nti.app.types" file="pyramid.zcml" />
 	<include package="nti.app.forums" file="pyramid.zcml" />
+	<include package="nti.app.bulkemail" file="pyramid.zcml" />
 	<include package="nti.app.publishing" file="pyramid.zcml" />
+	<include package="nti.app.invitations" file="pyramid.zcml" />
 	<include package="nti.app.contentlibrary" file="pyramid.zcml" />
 
 	<!-- Util views -->
