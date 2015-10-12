@@ -7,4 +7,6 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 	
+	<subscriber handler=".subscribers._record_modification" />
+
 </configure>
