@@ -13,6 +13,8 @@ from hamcrest import is_not
 from hamcrest import assert_that
 from hamcrest import has_property
 
+from nti.testing.matchers import verifiably_provides
+
 import unittest
 
 from zope import component
@@ -27,7 +29,6 @@ from nti.invitations import interfaces
 from nti.invitations import invitation
 
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.testing.matchers import verifiably_provides
 
 from nti.invitations.tests import SharedConfiguringTestLayer
 
