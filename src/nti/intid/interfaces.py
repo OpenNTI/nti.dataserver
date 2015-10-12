@@ -9,7 +9,7 @@ Intid intefaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-import zc.intid
+logger = __import__('logging').getLogger(__name__)
 
 from zope.interface import Interface
 from zope.interface import Attribute
@@ -17,7 +17,10 @@ from zope.interface import implementer
 
 from zope.container.interfaces import IContained
 
-class IIntIds(zc.intid.IIntIds, zc.intid.IIntIdsSubclass, IContained):
+from zc.intid import IIntIds
+from zc.intid import IIntIdsSubclass
+
+class IIntIds(IIntIds, IIntIdsSubclass, IContained):
 	
 	def register(ob, event=True):
 		"""
@@ -35,9 +38,9 @@ class IIntIds(zc.intid.IIntIds, zc.intid.IIntIdsSubclass, IContained):
 		unregistrations.
 		"""
 
-## The reason for the __str__ override bypassing KeyError
-## is to get usable exceptions printed from unit tests
-## See https://github.com/nose-devs/nose/issues/511
+# The reason for the __str__ override bypassing KeyError
+# is to get usable exceptions printed from unit tests
+# See https://github.com/nose-devs/nose/issues/511
 class IntIdMissingError(KeyError):
 	"""
 	Raised by the utility when ``getId`` fails.
@@ -59,11 +62,9 @@ class ObjectMissingError(KeyError):
 	def __str__(self):
 		return Exception.__str__( self )
 
-###
 # The intid events, imported wholesale from
 # zope.intid, but fired at a different time (after
 # the zope versions, for a guaranteed order).
-###
 
 class IIntIdEvent(Interface):
 	"""
@@ -112,5 +113,5 @@ class IntIdAddedEvent(object):
 
 	def __init__(self, o, event, idmap=None):
 		self.object = o
-		self.original_event = event
 		self.idmap = idmap
+		self.original_event = event
