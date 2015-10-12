@@ -74,7 +74,7 @@ def echo_image_url(request):
 		image_response.raise_for_status()
 	except requests.exceptions.HTTPError as e:
 		request.response.status_code = e.response.status_code
-		request.response.body = e.args[0]
+		request.response.text = e.args[0]
 		return request.response
 	except requests.exceptions.RequestException as e:
 		return hexc.HTTPBadRequest(*e.args)
