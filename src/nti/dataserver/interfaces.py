@@ -1052,35 +1052,7 @@ from nti.dataserver_core.interfaces import IShareableModeledContent
 
 IShareable = IWritableShared # bwc alias
 
-class IFriendsList(IModeledContent, IEntity,
-				   INotModifiedInStreamWhenContainerModified):
-	"""
-	Define a list of users.
-
-	.. note:: The inheritance from :class:`IEntity` is probably a mistake to be changed;
-		these are not globally named.
-	"""
-
-	def __iter__():
-		"""
-		Iterating over a FriendsList iterates over its friends
-		(as Entity objects), resolving weak refs.
-		"""
-
-	def __contains__(friend):
-		"""
-		Is the given entity a member of this friends list?
-		"""
-
-	def addFriend(friend):
-		"""
-		Adding friends causes our creator to follow them.
-
-		:param friend: May be another friends list, an entity, a
-						string naming a user, or even a dictionary containing
-						a 'Username' property.
-
-		"""
+from nti.dataserver_core.interfaces import IFriendsList
 
 class IUseNTIIDAsExternalUsername(interface.Interface):
 	"""
