@@ -9,8 +9,6 @@ Dataserver interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-from . import MessageFactory as _
-
 import six
 import sys
 
@@ -20,8 +18,6 @@ from zope import interface
 from zope.annotation.interfaces import IAnnotatable
 
 from zope.catalog.interfaces import ICatalog
-
-from zope.i18n import translate
 
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
@@ -35,7 +31,6 @@ from zope.proxy import ProxyBase
 from zope.site.interfaces import IFolder
 from zope.site.interfaces import IRootFolder
 
-from zope.schema import Bool
 from zope.schema import Iterable
 
 from contentratings.interfaces import IUserRatable
@@ -56,8 +51,6 @@ from nti.schema.field import UniqueIterable
 from nti.schema.field import ValidSet as Set
 from nti.schema.field import ValidChoice as Choice
 from nti.schema.field import DecodingValidTextLine
-
-from nti.schema.interfaces import InvalidValue
 
 class ACLLocationProxy(LocationProxy):
 	"""
@@ -88,40 +81,13 @@ class ACLProxy(ProxyBase):
 		ProxyBase.__init__(self, backing)
 		self.__acl__ = acl
 
-# pylint: disable=E0213,E0211
+# BWC exports
+from nti.dataserver_core.interfaces import InvalidData
+from nti.dataserver_core.interfaces import checkCannotBeBlank
+from nti.dataserver_core.interfaces import FieldCannotBeOnlyWhitespace
 
-class InvalidData(InvalidValue):
-	"""
-	Invalid Value
-	"""
-
-	i18n_message = None
-
-	def __str__(self):
-		if self.i18n_message:
-			return translate(self.i18n_message)
-		return super(InvalidData, self).__str__()
-
-	def doc(self):
-		if self.i18n_message:
-			return self.i18n_message
-		return self.__class__.__doc__
 _InvalidData = InvalidData
-
-class FieldCannotBeOnlyWhitespace(InvalidData):
-
-	i18n_message = _("The field cannot be blank.")
-
-	def __init__( self, field_name, value, field_external=None ):
-		super(FieldCannotBeOnlyWhitespace,self).__init__( self.i18n_message,
-														  field_external or (field_name and field_name.capitalize()),
-														  value,
-														  value=value )
-
-def checkCannotBeBlank(value):
-	if not value or not value.strip():
-		raise FieldCannotBeOnlyWhitespace( None, value )
-	return True
+FieldCannotBeOnlyWhitespace = FieldCannotBeOnlyWhitespace
 
 # BWC exports
 from nti.coremetadata.interfaces import ICreatedTime
@@ -1052,30 +1018,14 @@ from nti.dataserver_core.interfaces import IShareableModeledContent
 
 IShareable = IWritableShared # bwc alias
 
+# BWC exports
+
 from nti.dataserver_core.interfaces import IFriendsList
+from nti.dataserver_core.interfaces import IUseNTIIDAsExternalUsername
+from nti.dataserver_core.interfaces import IDynamicSharingTargetFriendsList
 
-class IUseNTIIDAsExternalUsername(interface.Interface):
-	"""
-	A marker interface for IEntity objects that are not globally resolvable
-	by their 'username'; instead, everywhere we would write out
-	a username we must instead write the NTIID.
-	"""
-
-class IDynamicSharingTargetFriendsList(IDynamicSharingTarget,
-									   IFriendsList,
-									   IUseNTIIDAsExternalUsername):
-	"""
-	A type of :class:`IDynamicSharingTarget` that is a list of members.
-	"""
-
-	About = ValidTextLine(
-				title='About',
-				description="A short description of a grouo",
-				max_length=500,
-				required=False,
-				constraint=checkCannotBeBlank)
-
-	Locked = Bool(title='Locked flag. No group code, no removal', required=False, default=False)
+IUseNTIIDAsExternalUsername = IUseNTIIDAsExternalUsername
+IDynamicSharingTargetFriendsList = IDynamicSharingTargetFriendsList
 
 from zope.container.constraints import contains
 
@@ -1095,16 +1045,18 @@ class IDeviceContainer(INamedContainer):
 
 class ITranscriptSummary(IModeledContent):
 
-	Contributors = Set(title="All the usernames of people who participated in the conversation",
+	Contributors = Set(	title="All the usernames of people who participated in the conversation",
 						value_type=DecodingValidTextLine(title="The username"),
 						readonly=True)
 	RoomInfo = interface.Attribute("The meeting where the conversation took place")
 
 class ITranscript(ITranscriptSummary):
-	Messages = ListOrTuple(title="All the messages contained in the conversation",
+	Messages = ListOrTuple(	title="All the messages contained in the conversation",
 							readonly=True)
 	def get_message(msg_id):
-		"Return a message with that id"
+		"""
+		Return a message with that id
+		"""
 
 class ITranscriptContainer(INamedContainer):
 	contains(ITranscript)
