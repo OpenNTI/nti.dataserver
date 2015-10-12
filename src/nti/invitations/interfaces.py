@@ -143,3 +143,13 @@ class InvitationCodeError(InvitationValidationError):
 class InvitationExpiredError(InvitationValidationError):
 	__doc__ = _('The invitation code has expired.')
 	i18n_message = __doc__
+
+class IInvitationEntityFinder(interface.Interface):
+	"""
+	An interface for a utility to find an entity
+	"""
+	def find(username):
+		"""
+		returns the entity with the specified username
+		"""
+	

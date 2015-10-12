@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from zope.annotation.interfaces import IAttributeAnnotatable
@@ -17,11 +18,16 @@ from zope.event import notify
 
 from zope.container.contained import Contained
 
+from nti.dataserver_core.interfaces import ICommunity
+from nti.dataserver_core.interfaces import IFriendsList
+from nti.dataserver_core.interfaces import SYSTEM_USER_NAME
+
 from nti.dublincore.datastructures import CreatedModDateTrackingObject
 
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 
 from .interfaces import IInvitation
+from .interfaces import IInvitationEntityFinder
 from .interfaces import InvitationAcceptedEvent
 
 @interface.implementer(IInvitation, IAttributeAnnotatable)
@@ -49,11 +55,41 @@ class ZcmlInvitation(BaseInvitation):
 	and isn't automatically adaptable to IKeyReference.
 	"""
 
-import zope.deferredimport
-zope.deferredimport.initialize()
+class JoinEntitiesInvitation(ZcmlInvitation):
+	"""
+	Simple first pass at a pre-configured invitation to join existing
+	entities. Intended to be configured with ZCML and not stored persistently.
+	"""
 
-zope.deferredimport.deprecatedFrom(
-    "Moved to nti.app.invitations.invitation",
-    "nti.app.invitations.invitation",
-    "JoinEntitiesInvitation",
-    "JoinCommunityInvitation")
+	creator = SYSTEM_USER_NAME
+
+	def __init__(self, code, entities):
+		super(JoinEntitiesInvitation, self).__init__()
+		self.code = code
+		self.entities = entities
+
+	def _iter_entities(self):
+		finder = component.getUtility(IInvitationEntityFinder)
+		for entity_name in self.entities:
+			entity = finder.find(entity_name)
+			if entity is None:
+				logger.warn("Unable to accept invitation to join non-existent entity %s",
+							 entity_name)
+				continue
+			yield entity
+
+	def accept(self, user):
+		for entity in self._iter_entities():
+			if ICommunity.providedBy(entity):
+				logger.info("Accepting invitation to join community %s", entity)
+				user.record_dynamic_membership(entity)
+				user.follow(entity)
+			elif IFriendsList.providedBy(entity):
+				logger.info("Accepting invitation to join DFL %s", entity)
+				entity.addFriend(user)
+			else:
+				logger.warn("Don't know how to accept invitation to join entity %s",
+							entity)
+		super(JoinEntitiesInvitation, self).accept(user)
+
+JoinCommunityInvitation = JoinEntitiesInvitation
