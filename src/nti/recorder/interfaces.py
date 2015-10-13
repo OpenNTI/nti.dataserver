@@ -26,12 +26,12 @@ class ITransactionRecord(IContained, ICreated):
 					 min_length=1)
 
 class ITransactionRecordHistory(IContained, IIterable):
-	
+
 	def add(record):
 		pass
-	
+
 	def remove(record):
 		pass
-	
+
 	def clear(self):
 		pass
