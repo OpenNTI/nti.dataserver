@@ -17,7 +17,7 @@ from zope.security.management import queryInteraction
 
 from ZODB.utils import u64
 
-from nti.dataserver_core.interfaces import IRecordableAnnotatable
+from nti.coremetadata.interfaces import IRecordable
 
 from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
@@ -31,11 +31,15 @@ def principal():
 	except (NoInteraction, IndexError, AttributeError):
 		return None
 
-@component.adapter(IRecordableAnnotatable, IObjectModifiedFromExternalEvent)
+@component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
 	if queryInteraction() is None:
 		return
 		
+	history = ITransactionRecordHistory(obj, None)
+	if history is None:
+		return
+	
 	username = principal().id
 	
 	tid = getattr(obj, '_p_serial', None)
@@ -46,5 +50,4 @@ def _record_modification(obj, event):
 		attributes.update(a.attributes or ())
 	record = TransactionRecord(principal=username, tid=tid,
 							   attributes=tuple(attributes))
-	history = ITransactionRecordHistory(obj)
 	history.add(record)
