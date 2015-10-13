@@ -392,6 +392,7 @@
 	</configure>
 	<subscriber handler=".application._configure_zodb_tween" />
 
+	<include package="nti.recorder" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
 	<include package="nti.contentrange" />
