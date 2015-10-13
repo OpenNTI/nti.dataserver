@@ -11,6 +11,7 @@ from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
 from hamcrest import has_entry
+from hamcrest import has_length
 from hamcrest import assert_that
 from hamcrest import has_property
 
@@ -60,9 +61,14 @@ class TestRecord(unittest.TestCase):
 		assert_that(obj, has_property('tid', is_('a')))
 		assert_that(obj, has_property('attributes', is_(['foo'])))
 		assert_that(obj, has_property('principal', is_('ichigo')))
-		assert_that(obj, has_property('createdTime', is_(record.createdTime)))
 
 	def test_adapter(self):
 		f = Foo()
 		history = ITransactionRecordHistory(f, None)
 		assert_that(history, is_not(none()))
+		assert_that(history, has_length(0))
+		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
+		history.add(record, False)
+		assert_that(history, has_length(1))
+		assert_that(list(history), is_([record]))
+		
