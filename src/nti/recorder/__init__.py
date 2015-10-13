@@ -9,4 +9,4 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-RECORD_HISTORY_KEY = 'nti.recorder.record.RecordHistory'
+TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'

@@ -37,32 +37,32 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
-from .interfaces import IRecord
-from .interfaces import IRecordHistory
+from .interfaces import ITransactionRecord
+from .interfaces import ITransactionRecordHistory
 
-from . import RECORD_HISTORY_KEY
+from . import TRX_RECORD_HISTORY_KEY
 
 @WithRepr
 @EqHash('creator', 'createdTime')
-@interface.implementer(IRecord, IContentTypeAware)
-class Record(PersistentCreatedModDateTrackingObject,
-			 SchemaConfigured,
-			 Contained):
+@interface.implementer(ITransactionRecord, IContentTypeAware)
+class TransactionRecord(PersistentCreatedModDateTrackingObject,
+			 			SchemaConfigured,
+			 			Contained):
 
-	createDirectFieldProperties(IRecord)
+	createDirectFieldProperties(ITransactionRecord)
 
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)
 
-	def add(self, name, value):
+	def add(self, name):
 		if self.attributes is None:
-			self.attributes = dict()
-		self.attributes[name] = value
+			self.attributes = set()
+		self.attributes.add(name)
 
 @component.adapter(IRecordable)
-@interface.implementer(IRecordHistory, ISublocations)
-class RecordHistory(Contained, Persistent):
+@interface.implementer(ITransactionRecordHistory, ISublocations)
+class TransactionRecordHistory(Contained, Persistent):
 
 	def __init__(self):
 		self.reset()
@@ -109,4 +109,4 @@ class RecordHistory(Contained, Persistent):
 		for record in self._records:
 			yield record
 
-_RecordHistoryFactory = an_factory(RecordHistory, RECORD_HISTORY_KEY)
+_TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory, TRX_RECORD_HISTORY_KEY)
