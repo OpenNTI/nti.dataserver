@@ -21,9 +21,11 @@ import unittest
 
 from zope import interface
 
+from zope.annotation.interfaces import IAttributeAnnotatable
+
 from persistent.persistence import Persistent
 
-from nti.dataserver_core.interfaces import IRecordableAnnotatable
+from nti.coremetadata.interfaces import IRecordable
 
 from nti.externalization.internalization import find_factory_for
 from nti.externalization.externalization import to_external_object
@@ -35,7 +37,7 @@ from nti.recorder.interfaces import ITransactionRecordHistory
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
-@interface.implementer(IRecordableAnnotatable)
+@interface.implementer(IRecordable, IAttributeAnnotatable)
 class Foo(Persistent):
 	pass
 
@@ -71,4 +73,6 @@ class TestRecord(unittest.TestCase):
 		history.add(record, False)
 		assert_that(history, has_length(1))
 		assert_that(list(history), is_([record]))
-		
+		r = history.clear()
+		assert_that(r, is_(1))
+		assert_that(history, has_length(0))
