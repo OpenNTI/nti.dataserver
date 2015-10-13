@@ -44,6 +44,7 @@ def _record_modification(obj, event):
 	attributes = set()
 	for a in event.descriptions or ():
 		attributes.update(a.attributes or ())
-	record = TransactionRecord(creator=username, tid=tid, attributes=attributes)
+	record = TransactionRecord(principal=username, tid=tid,
+							   attributes=tuple(attributes))
 	history = ITransactionRecordHistory(obj)
 	history.add(record)
