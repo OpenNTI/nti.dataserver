@@ -45,7 +45,7 @@ from .interfaces import ITransactionRecordHistory
 from . import TRX_RECORD_HISTORY_KEY
 
 @WithRepr
-@EqHash('creator', 'createdTime')
+@EqHash('principal', 'createdTime')
 @interface.implementer(ITransactionRecord, IContentTypeAware)
 class TransactionRecord(PersistentCreatedModDateTrackingObject,
 			 			SchemaConfigured,
@@ -53,16 +53,11 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
 	createDirectFieldProperties(ITransactionRecord)
 
-	username = alias('creator')
+	username = alias('principal')
 
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)
-
-	def add(self, name):
-		if self.attributes is None:
-			self.attributes = set()
-		self.attributes.add(name)
 
 @component.adapter(IRecordable)
 @interface.implementer(ITransactionRecordHistory, ISublocations)

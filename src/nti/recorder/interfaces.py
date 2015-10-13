@@ -15,15 +15,16 @@ from dolmen.builtins.interfaces import IIterable
 
 from nti.dataserver_core.interfaces import ICreated
 
-from nti.schema.field import Set
 from nti.schema.field import ValidTextLine
+from nti.schema.field import IndexedIterable
 
 class ITransactionRecord(IContained, ICreated):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
-	creator = ValidTextLine(title="The attribute name", required=True)
-	attributes = Set(title="The modifed attributes",
-				 	 value_type=ValidTextLine(title="The attribute name"),
-					 min_length=1)
+	principal = ValidTextLine(title="The principal id", required=True)
+	attributes = IndexedIterable(title="The modifed attributes",
+				 	 			 value_type=ValidTextLine(title="The attribute name"),
+								 min_length=1,
+								 unique=True)
 
 class ITransactionRecordHistory(IContained, IIterable):
 
