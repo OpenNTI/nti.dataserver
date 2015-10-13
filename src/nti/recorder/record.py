@@ -27,6 +27,8 @@ from ZODB.interfaces import IConnection
 from persistent import Persistent
 from persistent.list import PersistentList
 
+from nti.common.property import alias
+
 from nti.coremetadata.interfaces import IRecordable
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
@@ -50,6 +52,8 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 			 			Contained):
 
 	createDirectFieldProperties(ITransactionRecord)
+
+	username = alias('creator')
 
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
@@ -94,7 +98,7 @@ class TransactionRecordHistory(Contained, Persistent):
 	def clear(self):
 		result = 0
 		for _ in xrange(len(self._records)):
-			record=self._records.pop()
+			record = self._records.pop()
 			lifecycleevent.removed(record)  # remove iid
 			result += 1
 		return result
