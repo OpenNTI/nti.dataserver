@@ -30,6 +30,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.recorder.record import TransactionRecord
 from nti.recorder.interfaces import ITransactionRecord
+from nti.recorder.interfaces import ITransactionRecordHistory
 
 from nti.recorder.tests import SharedConfiguringTestLayer
 
@@ -60,3 +61,8 @@ class TestRecord(unittest.TestCase):
 		assert_that(obj, has_property('attributes', is_(['foo'])))
 		assert_that(obj, has_property('principal', is_('ichigo')))
 		assert_that(obj, has_property('createdTime', is_(record.createdTime)))
+
+	def test_adapter(self):
+		f = Foo()
+		history = ITransactionRecordHistory(f, None)
+		assert_that(history, is_not(none()))
