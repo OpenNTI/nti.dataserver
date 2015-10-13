@@ -31,6 +31,22 @@ def principal():
 	except (NoInteraction, IndexError, AttributeError):
 		return None
 
+def record_trax(obj, descriptions=(), history=None):
+	history = ITransactionRecordHistory(obj) if history is None else history
+	
+	username = principal().id
+	
+	tid = getattr(obj, '_p_serial', None)
+	tid = u64(tid) if tid else None
+	
+	attributes = set()
+	for a in descriptions or ():
+		attributes.update(a.attributes or ())
+	record = TransactionRecord(principal=username, tid=tid,
+							   attributes=tuple(attributes))
+	history.add(record)
+	return record
+
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
 	if queryInteraction() is None:
@@ -39,15 +55,4 @@ def _record_modification(obj, event):
 	history = ITransactionRecordHistory(obj, None)
 	if history is None:
 		return
-	
-	username = principal().id
-	
-	tid = getattr(obj, '_p_serial', None)
-	tid = u64(tid) if tid else None
-	
-	attributes = set()
-	for a in event.descriptions or ():
-		attributes.update(a.attributes or ())
-	record = TransactionRecord(principal=username, tid=tid,
-							   attributes=tuple(attributes))
-	history.add(record)
+	record_trax(obj, event.descriptions, history)
