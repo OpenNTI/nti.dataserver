@@ -74,13 +74,15 @@ class TransactionRecordHistory(Contained, Persistent):
 	def object(self):
 		return self.__parent__
 
-	def add(self, record):
+	def add(self, record, connection=True):
+		assert ITransactionRecord.providedBy(record)
 		# locate before firing events
 		locate(record, self)
-		# add to connection and fire event
-		IConnection(self).add(record)
-		lifecycleevent.created(record)
-		lifecycleevent.added(record)  # get an iid
+		if connection:
+			# add to connection and fire event
+			IConnection(self).add(record)
+			lifecycleevent.created(record)
+			lifecycleevent.added(record)  # get an iid
 		self._records.append(record)
 		return record
 	append = add
