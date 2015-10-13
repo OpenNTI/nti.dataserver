@@ -33,6 +33,7 @@ from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
 from nti.externalization.representation import WithRepr
 
+from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
@@ -42,6 +43,7 @@ from .interfaces import IRecordHistory
 from . import RECORD_HISTORY_KEY
 
 @WithRepr
+@EqHash('creator', 'createdTime')
 @interface.implementer(IRecord, IContentTypeAware)
 class Record(PersistentCreatedModDateTrackingObject,
 			 SchemaConfigured,
@@ -67,6 +69,7 @@ class RecordHistory(Contained, Persistent):
 
 	def reset(self):
 		self._records = PersistentList()
+		self._records.__parent__ = self
 
 	@property
 	def object(self):
@@ -79,23 +82,22 @@ class RecordHistory(Contained, Persistent):
 		IConnection(self).add(record)
 		lifecycleevent.created(record)
 		lifecycleevent.added(record)  # get an iid
-
+		self._records.append(record)
 		return record
 	append = add
 
-	def remove(self, purchase):
-		lifecycleevent.removed(purchase)  # remove iid
+	def remove(self, record):
+		self._records.remove(record)
+		lifecycleevent.removed(record)  # remove iid
 		return True
 
 	def clear(self):
 		result = 0
-		for p in list(self._records):
-			self.remove(p)
+		for _ in xrange(len(self._records)):
+			record=self._records.pop()
+			lifecycleevent.removed(record)  # remove iid
 			result += 1
 		return result
-
-	def records(self):
-		return self._records
 
 	def __iter__(self):
 		return iter(self._records)
