@@ -19,7 +19,7 @@ from nti.dataserver_core.interfaces import IRecordableAnnotatable
 
 from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
-from .record import Record
+from .record import TransactionRecord
 
 def principal():
     try:
@@ -31,4 +31,4 @@ def principal():
 def _record_modification(obj, event):
     if queryInteraction() is None:
         return
-    Record()
+    TransactionRecord()
