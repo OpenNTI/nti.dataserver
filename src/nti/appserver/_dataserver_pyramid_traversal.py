@@ -213,7 +213,7 @@ class _ObjectsContainerResource(_ContainerResource):
 		if result is None:  # pragma: no cover
 			raise LocationError(key)
 
- 		self._check_permission(result)
+		self._check_permission(result)
 		# Make these things be acquisition wrapped, just as if we'd traversed
 		# all the way to them (only if not already wrapped)
 		if 	getattr(result, '__parent__', None) is not None and \
@@ -233,8 +233,8 @@ class _ObjectsContainerResource(_ContainerResource):
 				if 'href' in m and not isinstance(m['href'], six.string_types):
 					m.pop('href', None)
 				values = m.values()
-			elif isinstance( m, set ):
-				values = list( m )
+			elif isinstance(m, set):
+				values = list(m)
 			elif is_nonstr_iter(m):
 				values = m
 			else:
