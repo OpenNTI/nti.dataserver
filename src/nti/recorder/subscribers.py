@@ -15,7 +15,7 @@ from zope.security.interfaces import NoInteraction
 from zope.security.management import getInteraction
 from zope.security.management import queryInteraction
 
-from ZODB.utils import p64
+from ZODB.utils import serial_repr
 
 from nti.coremetadata.interfaces import IRecordable
 
@@ -32,12 +32,13 @@ def principal():
 		return None
 
 def record_trax(obj, descriptions=(), history=None):
+	from IPython.core.debugger import Tracer; Tracer()()
 	history = ITransactionRecordHistory(obj) if history is None else history
 	
 	username = principal().id
 	
 	tid = getattr(obj, '_p_serial', None)
-	tid = p64(tid) if tid else None
+	tid = unicode(serial_repr(tid)) if tid else None
 	
 	attributes = set()
 	for a in descriptions or ():
