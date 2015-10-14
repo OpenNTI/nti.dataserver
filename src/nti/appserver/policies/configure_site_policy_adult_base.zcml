@@ -6,9 +6,9 @@
 			i18n_domain='nti.dataserver'>
 
 	<include package="zope.component" />
-	
+
 	<include package="z3c.baseregistry" file="meta.zcml" />
-	
+
 	<include package="nti.appserver.link_providers" file="meta.zcml" />
 
 	<utility
@@ -20,12 +20,12 @@
 		<link:userLink
 			named='nti.appserver.logon.REL_INITIAL_WELCOME_PAGE'
 			minGeneration='20130313'
-			url='/NextThoughtWebApp/content/welcome/welcome.html'
+			url='/app/content/welcome/welcome.html'
 			mimeType='text/html'/>
-			
+
 		<link:userLink
 			named='nti.appserver.logon.REL_PERMANENT_WELCOME_PAGE'
-			url='/NextThoughtWebApp/content/welcome/welcome.html'
+			url='/app/content/welcome/welcome.html'
 			mimeType='text/html'/>
 
 	</registerIn>
