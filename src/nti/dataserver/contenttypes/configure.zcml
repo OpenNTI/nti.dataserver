@@ -12,7 +12,7 @@
 
 	<!-- Adapters -->
 	<adapter factory=".adapters._ContainerContext" />
-	
+
 	<!-- Events for keeping replies and referents updated. -->
 	<subscriber handler=".threadable.threadable_added" />
 	<subscriber handler=".threadable.threadable_removed" />
@@ -56,5 +56,5 @@
 
 	<adapter factory=".file._ContentFileObjectIO"
 			 for="..interfaces.IContentFile"  />
-			 
+
 </configure>

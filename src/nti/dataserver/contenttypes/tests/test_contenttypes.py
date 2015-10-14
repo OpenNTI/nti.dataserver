@@ -543,7 +543,8 @@ class TestNote(DataserverLayerTest):
 	def test_external_body_with_media(self):
 		n = Note()
 		m = EmbeddedVideo()
-		m.embedURL = u"http://foo.org/video.mp4"
+		m.embedURL = u"https://www.youtube.com/watch?v=qcI5-nOEsYM"
+		m.VideoId = 'qcI5-nOEsYM'
 
 		n.body = [m]
 		n.updateLastMod()
@@ -552,7 +553,8 @@ class TestNote(DataserverLayerTest):
 		del ext['CreatedTime']
 		assert_that(ext, has_entries("Class", "Note",
 									 "body", only_contains(has_entries('Class', u'EmbeddedVideo',
-																	   'embedURL', u'http://foo.org/video.mp4',
+																	   'embedURL', m.embedURL,
+																	   'VideoId', m.VideoId,
 																	   'CreatedTime', m.createdTime))))
 
 
@@ -562,7 +564,8 @@ class TestNote(DataserverLayerTest):
 			update_from_external_object(n, ext, context=ds)
 
 		assert_that(n.body[0], is_(EmbeddedVideo))
-		assert_that(n.body[0].embedURL, is_(u"http://foo.org/video.mp4"))
+		assert_that(n.body[0].embedURL, is_( m.embedURL ))
+		assert_that(n.body[0].VideoId, is_( m.VideoId ))
 
 
 	@WithMockDS
