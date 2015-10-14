@@ -300,13 +300,13 @@ def role_for_providers_content(provider, local_part):
 	"""
 	return nti_interfaces.IRole(CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
 
-# : Name of the super-user group that is expected to have full rights
-# : in certain areas
+#: Name of the super-user group that is expected to have full rights
+#: in certain areas
 ROLE_ADMIN_NAME = ROLE_PREFIX + 'nti.admin'
 ROLE_ADMIN = _StringRole(ROLE_ADMIN_NAME)
 
-# : Name of the high-permission group that is expected to have certain
-# : moderation-like rights in certain areas
+#: Name of the high-permission group that is expected to have certain
+#: moderation-like rights in certain areas
 ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
 ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 

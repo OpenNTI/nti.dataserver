@@ -447,7 +447,7 @@ ACE_ACT_ALLOW = _psec.Allow
 EVERYONE_USER_NAME = _psec.Everyone
 AUTHENTICATED_GROUP_NAME = _psec.Authenticated
 
-# : Constant for use in an ACL indicating that all permissions
+#: Constant for use in an ACL indicating that all permissions
 ALL_PERMISSIONS = _psec.ALL_PERMISSIONS
 interface.directlyProvides(ALL_PERMISSIONS, IPermission)
 
