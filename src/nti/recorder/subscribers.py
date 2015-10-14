@@ -32,7 +32,6 @@ def principal():
 		return None
 
 def record_trax(obj, descriptions=(), history=None):
-	from IPython.core.debugger import Tracer; Tracer()()
 	history = ITransactionRecordHistory(obj) if history is None else history
 	
 	username = principal().id
