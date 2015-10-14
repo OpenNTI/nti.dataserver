@@ -15,7 +15,7 @@ from zope.security.interfaces import NoInteraction
 from zope.security.management import getInteraction
 from zope.security.management import queryInteraction
 
-from ZODB.utils import u64
+from ZODB.utils import p64
 
 from nti.coremetadata.interfaces import IRecordable
 
@@ -37,7 +37,7 @@ def record_trax(obj, descriptions=(), history=None):
 	username = principal().id
 	
 	tid = getattr(obj, '_p_serial', None)
-	tid = u64(tid) if tid else None
+	tid = p64(tid) if tid else None
 	
 	attributes = set()
 	for a in descriptions or ():
