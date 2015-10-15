@@ -24,6 +24,7 @@ from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
+from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
@@ -37,6 +38,7 @@ from .interfaces import ITransactionRecord
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
+IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_TARGET_INTID = 'targetIntId'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
@@ -82,6 +84,10 @@ def CreatedTimeIndex(family=None):
 								index=CreatedTimeRawIndex(family=family),
 								normalizer=TimestampToNormalized64BitIntNormalizer())
 
+class AttributeSetIndex(AttributeSetIndex):
+	default_field_name = 'attributes'
+	default_interface = ITransactionRecord
+
 @interface.implementer(IMetadataCatalog)
 class MetadataRecorderCatalog(Catalog):
 
@@ -110,6 +116,7 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	for name, clazz in ((IX_TID, TIDIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
+						(IX_ATTRIBUTES, AttributeSetIndex),
 						(IX_TARGET_INTID, TargetIntIDIndex)):
 		index = clazz(family=intids.family)
 		assert ICatalogIndex.providedBy(index)
