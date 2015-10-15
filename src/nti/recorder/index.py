@@ -18,6 +18,10 @@ from zope.location import locate
 
 from nti.common.property import Lazy
 
+from nti.coremetadata.interfaces import IRecordable
+
+from nti.traversal.traversal import find_interface
+
 from nti.zope_catalog.catalog import Catalog
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
@@ -56,7 +60,8 @@ class ValidatingTargetIntID(object):
 
 	def __init__(self, obj, default=None):
 		if ITransactionRecord.providedBy(obj):
-			self.intid = self.intid.queryId(obj.__parent__)
+			source = find_interface(obj, IRecordable, strict=False)
+			self.intid = self.intid.queryId(source) if source is not None else None
 
 	@Lazy
 	def intid(self):
