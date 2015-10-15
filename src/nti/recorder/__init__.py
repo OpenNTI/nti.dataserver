@@ -9,4 +9,13 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
+from zope import component
+
+from nti.zope_catalog.interfaces import IMetadataCatalog
+
+from .index import CATALOG_NAME
+
+from .record import TRX_RECORD_HISTORY_KEY
+
+def get_recorder_catalog():
+	return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)
