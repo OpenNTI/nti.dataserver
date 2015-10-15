@@ -20,10 +20,8 @@ from zope.component.hooks import site, setHooks
 from nti.common.string import safestr
 
 from nti.dataserver.interfaces import ICommunity
-
 from nti.dataserver.users.interfaces import ICommunityProfile
 from nti.dataserver.users.user_profile import FRIENDLY_NAME_KEY
-
 
 def do_evolve(context):
 	setHooks()

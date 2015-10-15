@@ -30,12 +30,12 @@ from nti.contentlibrary.indexed_data.index import install_container_catalog
 from nti.contentlibrary.indexed_data.interfaces import CONTAINER_IFACES
 from nti.contentlibrary.indexed_data.interfaces import TAG_NAMESPACE_FILE
 
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+
 from nti.dataserver.interfaces import IDataserver
 from nti.dataserver.interfaces import IOIDResolver
 
 from nti.site.hostpolicy import run_job_in_all_host_sites
-
-from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 @interface.implementer(IDataserver)
 class MockDataserver(object):
