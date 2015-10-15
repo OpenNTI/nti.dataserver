@@ -16,8 +16,6 @@ from zope.intid import IIntIds
 
 from zope.location import locate
 
-from zope.catalog.interfaces import ICatalogIndex
-
 from nti.common.property import Lazy
 
 from nti.zope_catalog.catalog import Catalog
@@ -119,7 +117,6 @@ def install_recorder_catalog(site_manager_container, intids=None):
 						(IX_ATTRIBUTES, AttributeSetIndex),
 						(IX_TARGET_INTID, TargetIntIDIndex)):
 		index = clazz(family=intids.family)
-		assert ICatalogIndex.providedBy(index)
 		intids.register(index)
 		locate(index, catalog, name)
 		catalog[name] = index
