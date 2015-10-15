@@ -42,8 +42,6 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 from .interfaces import ITransactionRecord
 from .interfaces import ITransactionRecordHistory
 
-from . import TRX_RECORD_HISTORY_KEY
-
 @WithRepr
 @EqHash('principal', 'createdTime')
 @interface.implementer(ITransactionRecord, IContentTypeAware)
@@ -110,4 +108,6 @@ class TransactionRecordHistory(Contained, Persistent):
 		for record in self._records:
 			yield record
 
-_TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory, TRX_RECORD_HISTORY_KEY)
+TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
+_TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory,
+											  TRX_RECORD_HISTORY_KEY)
