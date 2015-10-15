@@ -34,5 +34,5 @@ class ITransactionRecordHistory(IContained, IIterable):
 	def remove(record):
 		pass
 
-	def clear(self):
+	def clear():
 		pass
