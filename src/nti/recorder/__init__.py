@@ -15,7 +15,8 @@ from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from .index import CATALOG_NAME
 
-from .record import TRX_RECORD_HISTORY_KEY
+from .record import get_transactions
+from .record import remove_transaction_history
 
 def get_recorder_catalog():
 	return component.queryUtility(IMetadataCatalog, name=CATALOG_NAME)

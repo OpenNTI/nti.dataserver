@@ -111,3 +111,25 @@ class TransactionRecordHistory(Contained, Persistent):
 TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory,
 											  TRX_RECORD_HISTORY_KEY)
+
+def get_transactions(obj):
+	result = []
+	try:
+		annotations = obj.__annotations__
+		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
+		if history is not None:
+			result.extend(history)
+	except AttributeError:
+		pass
+	return result
+
+def remove_history(obj):
+	try:
+		annotations = obj.__annotations__
+		history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
+		if history is not None:
+			return history.clear()
+	except AttributeError:
+		pass
+	return 0
+remove_transaction_history = remove_history
