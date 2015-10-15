@@ -392,7 +392,6 @@
 	</configure>
 	<subscriber handler=".application._configure_zodb_tween" />
 
-	<include package="nti.recorder" />
 	<include package="nti.socketio" />
 	<include package="nti.assessment" />
 	<include package="nti.contentrange" />
@@ -488,6 +487,7 @@
 	<!-- The ones directly mentioned are part of this distribution until they get moved out -->
 	<include package="nti.app.types" />
 	<include package="nti.app.users" />
+	<include package="nti.app.recorder" />
 	<include package="nti.app.bulkemail" />
 	<include package="nti.app.invitations" />
 	<include package="nti.app.notabledata" />
