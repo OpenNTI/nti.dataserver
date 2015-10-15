@@ -112,6 +112,16 @@ TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 _TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory,
 											  TRX_RECORD_HISTORY_KEY)
 
+def has_transactions(obj):
+	result = False
+	try:
+		annotations = obj.__annotations__
+		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
+		result = bool(history)
+	except AttributeError:
+		pass
+	return result
+
 def get_transactions(obj):
 	result = []
 	try:
@@ -119,6 +129,7 @@ def get_transactions(obj):
 		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
 		if history is not None:
 			result.extend(history)
+			result.sort(key=lambda t: t.createdTime)
 	except AttributeError:
 		pass
 	return result

@@ -16,6 +16,7 @@ from nti.zope_catalog.interfaces import IMetadataCatalog
 from .index import CATALOG_NAME
 
 from .record import get_transactions
+from .record import has_transactions
 from .record import remove_transaction_history
 
 def get_recorder_catalog():

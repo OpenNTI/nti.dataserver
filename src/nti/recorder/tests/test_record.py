@@ -35,6 +35,7 @@ from nti.externalization.internalization import update_from_external_object
 
 from nti.recorder.record import remove_history
 from nti.recorder.record import get_transactions
+from nti.recorder.record import has_transactions
 from nti.recorder.record import TransactionRecord
 from nti.recorder.record import TRX_RECORD_HISTORY_KEY
 from nti.recorder.interfaces import ITransactionRecord
@@ -86,9 +87,11 @@ class TestRecord(unittest.TestCase):
 		
 	def test_funcs(self):
 		f = Foo()
+		assert_that(has_transactions(f), is_(False))
 		history = ITransactionRecordHistory(f)
 		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
 		history.add(record, False)
+		assert_that(has_transactions(f), is_(True))
 		trxs = get_transactions(f)
 		assert_that(trxs, has_length(1))
 		assert_that(remove_history(f), is_(1))
