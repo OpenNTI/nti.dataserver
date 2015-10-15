@@ -13,7 +13,8 @@ generation = 59
 
 from zope import component
 
-from zope.component.hooks import site, setHooks
+from zope.component.hooks import site
+from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
