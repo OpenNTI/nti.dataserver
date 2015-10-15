@@ -17,8 +17,6 @@ from zope import interface
 
 from zope.annotation.interfaces import IAnnotatable
 
-from zope.catalog.interfaces import ICatalog
-
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.lifecycleevent.interfaces import IObjectModifiedEvent
 
@@ -87,6 +85,7 @@ from nti.dataserver_core.interfaces import checkCannotBeBlank
 from nti.dataserver_core.interfaces import FieldCannotBeOnlyWhitespace
 
 _InvalidData = InvalidData
+checkCannotBeBlank = checkCannotBeBlank
 FieldCannotBeOnlyWhitespace = FieldCannotBeOnlyWhitespace
 
 # BWC exports
@@ -1051,8 +1050,10 @@ class ITranscriptSummary(IModeledContent):
 	RoomInfo = interface.Attribute("The meeting where the conversation took place")
 
 class ITranscript(ITranscriptSummary):
+
 	Messages = ListOrTuple(	title="All the messages contained in the conversation",
 							readonly=True)
+
 	def get_message(msg_id):
 		"""
 		Return a message with that id
@@ -1213,15 +1214,21 @@ class IGlobalFlagStorage(interface.Interface):
 		"""
 
 class IObjectFlaggingEvent(interface.interfaces.IObjectEvent):
-	"The kind of event when objects are flagged."
+	"""
+	The kind of event when objects are flagged.
+	"""
 	# Note that this is not an ObjectModifiedEvent. This is perhaps debatable, but is
 	# consistent with contentratings.interfaces.IObjectRatedEvent
 
 class IObjectFlaggedEvent(IObjectFlaggingEvent):
-	"Sent when an object is initially flagged."
+	"""
+	Sent when an object is initially flagged.
+	"""
 
 class IObjectUnflaggedEvent(IObjectFlaggingEvent):
-	"Sent when an object is unflagged."
+	"""
+	Sent when an object is unflagged.
+	"""
 
 @interface.implementer(IObjectFlaggedEvent)
 class ObjectFlaggedEvent(interface.interfaces.ObjectEvent):
@@ -1246,9 +1253,9 @@ class IDeletedObjectPlaceholder(interface.Interface):
 	"""
 
 # Dynamic event handling
-import nti.socketio.interfaces
+from nti.socketio.interfaces import ISocketIOChannel
 
-class ISocketProxySession(nti.socketio.interfaces.ISocketIOChannel):
+class ISocketProxySession(ISocketIOChannel):
 	pass
 
 class ISessionService(interface.Interface):
@@ -1369,19 +1376,9 @@ class DataChangedUserNotificationEvent(UserNotificationEvent):
 		"""
 		super(DataChangedUserNotificationEvent,self).__init__( "data_noticeIncomingChange", targets, change )
 
-class IMetadataCatalog(ICatalog):
-	"""
-	The nti metadata catalog.
-	"""
-	def index_doc(self, iid, ob):
-		"""
-		This may or may not update our underlying index.
-		"""
-
-	def force_index_doc(self, iid, ob):
-		"""
-		Force the underlying index to update.
-		"""
+# BWC exports
+from nti.zope_catalog.interfaces import IMetadataCatalog
+IMetadataCatalog = IMetadataCatalog
 
 class IPrincipalMetadataObjects(IIntIdIterable):
 	"""
