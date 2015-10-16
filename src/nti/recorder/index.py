@@ -27,9 +27,10 @@ from nti.zope_catalog.catalog import Catalog
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.index import AttributeSetIndex
+from nti.zope_catalog.index import AttributeValueIndex
 from nti.zope_catalog.index import NormalizationWrapper
+from nti.zope_catalog.index import IntegerAttributeIndex 
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
-from nti.zope_catalog.index import AttributeValueIndex as ValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
 from nti.zope_catalog.string import StringTokenNormalizer
@@ -70,11 +71,11 @@ class ValidatingTargetIntID(object):
 	def __reduce__(self):
 		raise TypeError()
 
-class TargetIntIDIndex(RawIntegerValueIndex):
-	default_field_name = 'intid'
-	default_interface = ValidatingTargetIntID
+class TargetIntIDIndex(IntegerAttributeIndex):
+	field_name = default_field_name = 'intid'
+	interface = default_interface = ValidatingTargetIntID
 
-class TIDIndex(ValueIndex):
+class TIDIndex(AttributeValueIndex):
 	default_field_name = 'tid'
 	default_interface = ITransactionRecord
 
