@@ -163,7 +163,7 @@ class _ACE(object):
 			return NotImplemented
 
 	def __hash__(self):
-		return hash((self.action, self.actor.id, self.permission))
+		return hash((self.action, self.actor.id, tuple(self.permission)))
 
 	def __iter__(self):
 		return iter((self.action, self.actor, self.permission))
