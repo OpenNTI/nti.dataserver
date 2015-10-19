@@ -31,6 +31,7 @@ from nti.common.proxy import removeAllProxies
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.dataserver.interfaces import IUser
+from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IDataserverFolder
 from nti.dataserver.interfaces import IDeletedObjectPlaceholder
 
@@ -283,8 +284,16 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		obj = removeAllProxies(obj)
 		
 		result = LocatedExternalDict()
+		result['ACL'] = aces = []
 		result['Object'] = toExternalObject(obj)
 		result['IntId'] = intids.queryId(obj)
+		try:
+			acl = getattr(obj, '__acl__', None) or \
+				  IACLProvider(obj, None).__acl__
+			for ace in acl or ():
+				aces.append(ace.to_external_string())
+		except (TypeError, AttributeError):
+			pass
 		return result
 
 @view_config(name='ExportUsers')
