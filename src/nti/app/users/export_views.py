@@ -276,10 +276,15 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		if not ntiid:
 			raise hexc.HTTPUnprocessableEntity("Must specify a ntiid")
 
-		result = find_object_with_ntiid(ntiid)
-		if result is None:
+		intids = component.getUtility(IIntIds)
+		obj = find_object_with_ntiid(ntiid)
+		if obj is None:
 			raise hexc.HTTPNotFound()
-		result = removeAllProxies(result)
+		obj = removeAllProxies(obj)
+		
+		result = LocatedExternalDict()
+		result['Object'] = toExternalObject(obj)
+		result['IntId'] = intids.queryId(obj)
 		return result
 
 @view_config(name='ExportUsers')
