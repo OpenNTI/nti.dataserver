@@ -161,7 +161,7 @@ def _removed_registered(provided, name, intids=None, registry=None, catalog=None
 		catalog = get_library_catalog() if catalog is None else catalog
 		if catalog is not None: # may be None in test mode
 			catalog.unindex(registered, intids=intids)
-		unregisterUtility(registry, provided=provided, name=name)
+		unregisterUtility(registry, component==registered, provided=provided, name=name)
 		intids.unregister(registered, event=False)
 	return registered
 
