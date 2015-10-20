@@ -154,3 +154,11 @@ bundle. This file is a standard bundle file as defined by
 If present, this file is a standard Dublin Core XML file containing
 additional metadata about the content bundle.
 
+``presentation-assets/`` (optional)
+-----------------------------------
+
+If present, this directory is a standard presentation assets directory
+containing convention-based images for different platforms. This will
+be returned as the ``PlatformPresentationResources`` value on the
+bundle.
+
