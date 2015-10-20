@@ -81,11 +81,14 @@ def intid_register(item, registry, intids=None, connection=None):
 	return False
 
 def _register_utility(item, provided, ntiid, registry=None, intids=None, connection=None):
+	intids = component.queryUtility(IIntIds) if intids is None else intids
 	if provided.providedBy(item):
 		registry = get_registry(registry)
 		registered = registry.queryUtility(provided, name=ntiid)
-		if registered is None:
+		if registered is None or intids.queryId(registered) is None:
 			assert is_valid_ntiid_string(ntiid), "Invalid NTIID %s" % ntiid
+			if intids.queryId(registered) is None: # remove if invalid
+				unregisterUtility(registry, provided=provided, name=ntiid)
 			registerUtility(registry, item, provided=provided, name=ntiid)
 			intid_register(item, registry, intids, connection)
 			return (True, item)
@@ -107,7 +110,7 @@ def _load_and_register_items(item_iterface, items, registry=None, connection=Non
 	for ntiid, data in items.items():
 		internal = external_object_creator(data, notify=False)
 		if _was_utility_registered(internal, item_iterface, ntiid,
-								  registry=registry, connection=connection):
+								   registry=registry, connection=connection):
 			result.append(internal)
 	return result
 
