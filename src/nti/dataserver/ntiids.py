@@ -180,7 +180,7 @@ class _ContentResolver(object):
 		if path:
 			result = path[-1]
 			# TODO: ACL Proxy can probably go away
-			result = ACLLocationProxy( result, result.__parent__, 
+			result = ACLLocationProxy( result, result.__parent__,
 									   result.__name__, nacl.ACL(result) )
 		return result
 
@@ -220,7 +220,7 @@ class _UGDResolver(_AbstractUserBasedResolver):
 		result = None
 		for container_name in user.containers.containers:
 			container = user.containers.containers[container_name]
-			if isinstance(container, numbers.Number): 
+			if isinstance(container, numbers.Number):
 				continue
 			result = container.get( key )
 			if result:
