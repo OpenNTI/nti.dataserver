@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from nameparser import HumanName
+
 from zope import component
 
 from pyramid.view import view_defaults
@@ -17,6 +19,8 @@ from pyramid import httpexceptions as hexc
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
+
+from nti.dataserver.users.interfaces import IFriendlyNamed
 
 from nti.mailer.interfaces import ITemplatedMailer
 from nti.mailer.interfaces import IEmailAddressable
@@ -56,10 +60,18 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		addr = IEmailAddressable( user, None )
 		return addr and addr.email
 
+	def _get_user_first_name(self, user):
+		named = IFriendlyNamed( user )
+		human_name = None
+		if named and named.realname:
+			human_name = HumanName( named.realname )
+		return human_name and human_name.first_name
+
 	def get_template_args(self, user, body, to_addr):
 		result = {}
 		result['body'] = body
-		result['to_addr'] = to_addr
+		result['email_to'] = to_addr
+		result['first_name'] = self._get_user_first_name( user ) or to_addr
 		return result
 
 	def send_email(self, to_user, subject, body):
@@ -75,7 +87,8 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 								sender=reply_addr,
 								recipients=[to_addr],
 								template_args=user_args,
-								request=self.request )
+								request=self.request,
+								text_template_extension=".mak" )
 		except Exception:
 			logger.exception('Error while sending email to %s', to_user)
 
