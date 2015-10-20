@@ -5,6 +5,7 @@ entry_points = {
 	'console_scripts': [
 		# library
 		"nti_sync_all_libraries = nti.app.contentlibrary.utils.synchronizer:main",
+		"nti_sync_library_assets = nti.app.contentlibrary.utils.sync_library_assets:main",
 		# dataserver
 		"nti_shards = nti.dataserver.utils.nti_shards:main",
 		"nti_init_env = nti.dataserver.utils.nti_init_env:main",
