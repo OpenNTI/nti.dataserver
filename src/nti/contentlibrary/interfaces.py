@@ -8,8 +8,6 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 __docformat__ = "restructuredtext en"
 
 from zope import interface
-from zope.interface.interfaces import ObjectEvent
-from zope.interface.interfaces import IObjectEvent
 
 from zope.annotation.interfaces import IAnnotatable
 
@@ -17,6 +15,9 @@ from zope.container.constraints import contains  # If passing strings, they requ
 from zope.container.interfaces import IContentContainer
 
 from zope.dublincore import interfaces as dub_interfaces
+
+from zope.interface.interfaces import ObjectEvent
+from zope.interface.interfaces import IObjectEvent
 
 from zope.lifecycleevent import ObjectAddedEvent
 from zope.lifecycleevent import ObjectRemovedEvent
@@ -904,6 +905,11 @@ class IFilesystemContentPackageLibrary(IContentPackageLibrary):
 class IPersistentFilesystemContentPackageLibrary(IPersistentContentPackageLibrary,
 												 IFilesystemContentPackageLibrary):
 	pass
+
+class IGlobalContentPackage(interface.Interface):
+	"""
+	A marker interface for a package in the global library
+	"""
 
 class IGlobalFilesystemContentPackageLibrary(IGlobalContentPackageLibrary,
 											 IFilesystemContentPackageLibrary):

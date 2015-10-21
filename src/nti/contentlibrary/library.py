@@ -386,8 +386,7 @@ class AbstractContentPackageLibrary(object):
 	# confines of this class.
 	_content_packages_by_ntiid = ()
 
-	@property
-	def contentPackages(self):
+	def _get_contentPackages(self):
 		if self._contentPackages is None:
 			warnings.warn("Please sync the library first.", stacklevel=2)
 			warnings.warn("Please sync the library first.", stacklevel=3)
@@ -408,6 +407,10 @@ class AbstractContentPackageLibrary(object):
 			if i.ntiid not in self._content_packages_by_ntiid:
 				contentPackages.append(i)
 		return contentPackages
+
+	@property
+	def contentPackages(self):
+		return self._get_contentPackages()
 
 	def __delattr__(self, name):
 		"""
@@ -655,6 +658,8 @@ def __pathToPropertyValue(unit, prop, value):
 			return childPath
 	return None
 
+from .interfaces import IGlobalContentPackage
+
 @interface.implementer(IAttributeAnnotatable)
 @NoPickle
 class GlobalContentPackageLibrary(AbstractContentPackageLibrary):
@@ -664,6 +669,13 @@ class GlobalContentPackageLibrary(AbstractContentPackageLibrary):
 	on every startup.
 	"""
 
+	def _get_contentPackages(self):
+		result = super(GlobalContentPackageLibrary, self)._get_contentPackages()
+		for package in result or ():
+			if not IGlobalContentPackage.providedBy(package):
+				interface.alsoProvides(package, IGlobalContentPackage)
+		return result
+	
 class _EmptyEnumeration(AbstractContentPackageEnumeration):
 
 	def enumerateContentPackages(self):
