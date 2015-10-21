@@ -20,6 +20,7 @@ from ZODB.interfaces import IConnection
 from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
+from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
@@ -353,14 +354,14 @@ def _clear_assets(content_package):
 		if container is not None:
 			container.clear()
 	recur(content_package)
-clear_assets = _clear_assets
+clear_package_assets = _clear_assets
 
 def _clear_last_modified(content_package, catalog=None):
 	catalog = get_library_catalog() if catalog is None else catalog
 	for name, _, _ in INDICES:
 		namespace = _get_file_last_mod_namespace(content_package, name)
 		catalog.remove_last_modified(namespace)
-clear_last_modified = _clear_last_modified
+clear_namespace_last_modified = _clear_last_modified
 
 def update_indices_when_content_changes(content_package, force=False):
 	_clear_assets(content_package)
@@ -370,37 +371,41 @@ def update_indices_when_content_changes(content_package, force=False):
 def _update_indices_when_content_changes(content_package, event):
 	update_indices_when_content_changes(content_package)
 
-def _clear_when_removed(content_package):
+def _clear_when_removed(content_package, global_pkgs=False):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
 	"""
 	catalog = get_library_catalog()
 	_clear_assets(content_package)
-	_clear_last_modified(content_package, catalog)
 
-	removed_count = 0
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
-	registry = get_registry()
-	if registry != component.getGlobalSiteManager():
-		for _, item_iface, _ in INDICES:
-			removed = _remove_from_registry(namespace=content_package.ntiid,
-								  			provided=item_iface,
-								  			catalog=catalog)
-			removed_count += len(removed)
-		removed = _remove_from_registry(namespace=content_package.ntiid,
-							  			provided=INTISlide,
-							  			catalog=catalog)
-		removed_count += len(removed)
+	if not global_pkgs and IGlobalContentPackage.providedBy(content_package):
+		return ()
+	_clear_last_modified(content_package, catalog)
 
+	result = []
+	for _, item_iface, _ in INDICES:
 		removed = _remove_from_registry(namespace=content_package.ntiid,
-							  			provided=INTISlideVideo,
-							 			catalog=catalog)
-		removed_count += len(removed)
+							  			provided=item_iface,
+							  			catalog=catalog)
+		result.extend(removed)
+	removed = _remove_from_registry(namespace=content_package.ntiid,
+						  			provided=INTISlide,
+						  			catalog=catalog)
+	result.extend(removed)
+
+	removed = _remove_from_registry(namespace=content_package.ntiid,
+						  			provided=INTISlideVideo,
+						 			catalog=catalog)
+	result.extend(removed)
+
 	logger.info('Removed indexes for content package %s (removed=%s)',
-				content_package, removed_count)
+				content_package, len(result))
+	return result
+clear_content_package_assets = _clear_when_removed
 
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
