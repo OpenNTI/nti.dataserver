@@ -9,10 +9,7 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
-	<!-- Content card resolution; temporary? -->
-	<utility factory=".card_views._ContentCardResolver" name="NTICard" />
-	<utility factory=".card_views._ContentCardResolver" name="nticard" />
-
+	<include package=".views" />
 	<include package=".content_unit_preferences" />
 
 	<!-- Workspaces/collections -->
@@ -28,8 +25,6 @@
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer" />
 	<adapter factory=".workspaces.LibraryCollectionDetailExternalizer"
 			 name="detail" />
-
-	<adapter factory=".library_views._ContentPackageLibraryCacheController" />
 
 	<!-- permissions cache -->
 	<subscriber handler="._permissioned._on_enroll_record" />

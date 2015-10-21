@@ -20,7 +20,7 @@ from nti.app.testing.application_webtest import ApplicationLayerTest
 
 from nti.app.contentlibrary.tests import ContentLibraryApplicationTestLayer
 
-from nti.app.contentlibrary.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
+from nti.app.contentlibrary.views.library_views import PAGE_INFO_MT_JSON as page_info_mt_json
 
 class TestApplicationContentCard(ApplicationLayerTest):
 
@@ -48,8 +48,8 @@ class TestApplicationContentCard(ApplicationLayerTest):
 											'rel', 'content',
 											'href', '/TestFilesystem/tag_nextthought_com_2011-10_USSC-HTML-Cohen_18.html') ) ) )
 		# We externalize title and cp-ntiid
-		assert_that( res, has_entries( 'ContentPackageNTIID', 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.cohen_v._california.',
-										'Title', 'COHEN v. CALIFORNIA.' ) )
+		assert_that( res, has_entries('ContentPackageNTIID', 'tag:nextthought.com,2011-10:USSC-HTML-Cohen.cohen_v._california.',
+									  'Title', 'COHEN v. CALIFORNIA.' ) )
 
 	@WithSharedApplicationMockDS(testapp=True,users=True)
 	def test_fetch_content_card_by_ntiid_accept_link(self):

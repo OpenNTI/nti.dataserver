@@ -30,8 +30,8 @@ from nti.dataserver import authorization as nauth
 
 from nti.ntiids import ntiids
 
-from ..library_views import _LibraryTOCRedirectView
-from ..library_views import _RootLibraryTOCRedirectView
+from ..views.library_views import _LibraryTOCRedirectView
+from ..views.library_views import _RootLibraryTOCRedirectView
 
 from .interfaces import IContentUnitPreferences
 
