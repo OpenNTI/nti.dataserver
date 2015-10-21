@@ -353,6 +353,14 @@ def _clear_assets(content_package):
 		if container is not None:
 			container.clear()
 	recur(content_package)
+clear_assets = _clear_assets
+
+def _clear_last_modified(content_package, catalog=None):
+	catalog = get_library_catalog() if catalog is None else catalog
+	for name, _, _ in INDICES:
+		namespace = _get_file_last_mod_namespace(content_package, name)
+		catalog.remove_last_modified(namespace)
+clear_last_modified = _clear_last_modified
 
 def update_indices_when_content_changes(content_package, force=False):
 	_clear_assets(content_package)
@@ -367,7 +375,9 @@ def _clear_when_removed(content_package):
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
 	"""
+	catalog = get_library_catalog()
 	_clear_assets(content_package)
+	_clear_last_modified(content_package, catalog)
 
 	removed_count = 0
 	# Remove indexes for our contained items; ignoring the global library.
@@ -375,7 +385,6 @@ def _clear_when_removed(content_package):
 	# across multiple content packages.
 	registry = get_registry()
 	if registry != component.getGlobalSiteManager():
-		catalog = get_library_catalog()
 		for _, item_iface, _ in INDICES:
 			removed = _remove_from_registry(namespace=content_package.ntiid,
 								  			provided=item_iface,
