@@ -72,7 +72,7 @@ def get_connection(registry=None):
 	return result
 
 def intid_register(item, registry, intids=None, connection=None):
-	intids = component.queryUtility(IIntIds) if intids is None else intids
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	connection = get_connection(registry) if connection is None else connection
 	if connection is not None:
 		connection.add(item)
@@ -81,7 +81,7 @@ def intid_register(item, registry, intids=None, connection=None):
 	return False
 
 def _register_utility(item, provided, ntiid, registry=None, intids=None, connection=None):
-	intids = component.queryUtility(IIntIds) if intids is None else intids
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	if provided.providedBy(item):
 		registry = get_registry(registry)
 		registered = registry.queryUtility(provided, name=ntiid)
@@ -159,7 +159,7 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 def _removed_registered(provided, name, intids=None, registry=None, catalog=None):
 	registry = get_registry(registry)
 	registered = registry.queryUtility(provided, name=name)
-	intids = component.queryUtility(IIntIds) if intids is None else intids
+	intids = component.getUtility(IIntIds) if intids is None else intids
 	if registered is not None:
 		catalog = get_library_catalog() if catalog is None else catalog
 		if catalog is not None: # may be None in test mode
@@ -181,7 +181,7 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 		return result
 	else:
 		sites = get_component_hierarchy_names()
-		intids = component.queryUtility(IIntIds) if intids is None else intids
+		intids = component.getUtility(IIntIds) if intids is None else intids
 		for utility in catalog.search_objects(intids=intids, provided=provided,
 											  container_ntiids=containers, 
 											  namespace=namespace,
@@ -287,7 +287,7 @@ def _update_index_when_content_changes(content_package, index_filename,
 	index = simplejson.loads(index_text)
 	registry = get_registry()
 	connection = get_connection(registry)
-	intids = component.queryUtility(IIntIds)
+	intids = component.getUtility(IIntIds)
 
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 									provided=item_iface,
