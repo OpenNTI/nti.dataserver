@@ -39,7 +39,7 @@ from nti.dataserver.authorization import ACT_SYNC_LIBRARY
 
 from nti.externalization.interfaces import LocatedExternalDict
 
-from .synchronize import synchronize
+from ..synchronize import synchronize
 
 SYNC_LOCK_NAME = '/var/libraries/Lock/sync'
 

@@ -5,8 +5,10 @@
 			xmlns:pyramid="http://pylonshq.com/pyramid">
 
 	<include package="pyramid_zcml" />
-	
-	<include package=".views" file="pyramid.zcml" />
-	<include package=".content_unit_preferences" file="pyramid.zcml" />
+
+	<pyramid:scan package='.card_views' />
+	<pyramid:scan package=".sync_views" />
+	<pyramid:scan package='.bundle_views' />
+	<pyramid:scan package='.library_views' />
 
 </configure>

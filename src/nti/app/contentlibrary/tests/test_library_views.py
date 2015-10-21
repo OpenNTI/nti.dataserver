@@ -6,6 +6,7 @@ __docformat__ = "restructuredtext en"
 
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
+
 from hamcrest import is_
 from hamcrest import raises
 from hamcrest import calling
@@ -24,8 +25,9 @@ from pyramid.request import Request
 
 from nti.appserver.httpexceptions import HTTPNotFound
 
+from nti.app.contentlibrary.views.library_views import find_page_info_view_helper
+
 from nti.contentlibrary import interfaces as lib_interfaces
-from nti.app.contentlibrary.library_views import find_page_info_view_helper
 
 @interface.implementer(lib_interfaces.IContentUnit)
 class ContentUnit(object):
@@ -53,7 +55,6 @@ class NIDMapper(object):
 			href = '/' + href
 
 		self.href = href
-
 
 from urllib import quote
 

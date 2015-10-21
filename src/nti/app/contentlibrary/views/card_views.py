@@ -29,7 +29,7 @@ from nti.ntiids.interfaces import INTIIDResolver
 
 from .library_views import find_page_info_view_helper
 
-from . import PAGE_INFO_MT_JSON
+from .. import PAGE_INFO_MT_JSON
 PAGE_INFO_MT_JSON = PAGE_INFO_MT_JSON
 
 # See also assessment_views, especially for notes on Accept header handling.
@@ -66,10 +66,10 @@ class _ContentCardResolver(object):
 			return card
 
 _view_defaults = dict(route_name='objects.generic.traversal',
-					   renderer='rest',
-					   context=_ContentCard,
-					   permission=nauth.ACT_READ,
-					   request_method='GET')
+					  renderer='rest',
+					  context=_ContentCard,
+					  permission=nauth.ACT_READ,
+					  request_method='GET')
 @view_config(accept=PAGE_INFO_MT_JSON.encode('ascii'), **_view_defaults)
 def pageinfo_from_content_card_view(request):
 	assert request.accept
@@ -80,7 +80,8 @@ def get_card_view_link(request):
 	# Not supported.
 	return hexc.HTTPBadRequest()
 
-# explicit empty accept, else we get a ConfigurationConflict and/or no-Accept header goes to the wrong place
+# explicit empty accept, else we get a ConfigurationConflict and/or
+# no-Accept header goes to the wrong place
 @view_config(accept=b'', **_view_defaults)
 @view_config(**_view_defaults)
 def get_card_view(request):
@@ -97,14 +98,15 @@ def get_card_view(request):
 		return hexc.HTTPNotFound()
 
 	pq = pyquery.PyQuery(contents, parser='html')
-	
+
 	# Because of syntax issues, and unicode issues, we have to iterate
 	# for the object ourself
 
 	nodes = pq(b'object[data-ntiid]')
 	object_elm = None
 	for node in nodes:
-		if node.tag == 'object' and node.attrib.get('data-ntiid') == request.context.__name__:
+		if 	node.tag == 'object' and \
+			node.attrib.get('data-ntiid') == request.context.__name__:
 			object_elm = node
 			break
 

@@ -84,11 +84,11 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 from nti.traversal.traversal import find_interface
 
-from .utils import PAGE_INFO_MT
-from .utils import PAGE_INFO_MT_JSON
-from .utils import find_page_info_view_helper
+from ..utils import PAGE_INFO_MT
+from ..utils import PAGE_INFO_MT_JSON
+from ..utils import find_page_info_view_helper
 
-from . import LIBRARY_PATH_GET_VIEW
+from .. import LIBRARY_PATH_GET_VIEW
 
 ITEMS = StandardExternalFields.ITEMS
 
@@ -364,8 +364,8 @@ class _AbstractCachingLibraryPathView(AbstractAuthenticatedView):
 	max_age = 300
 
 	def to_json_body(self, obj):
- 		result = toExternalObject(toExternalObject(obj))
- 		result = removed_unserializable(result)
+		result = toExternalObject(toExternalObject(obj))
+		result = removed_unserializable(result)
 		return result
 
 	def _get_library_path_last_mod(self):
