@@ -78,16 +78,20 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
         catalog = get_library_catalog()
         intids = component.getUtility(IIntIds)
 
+        total = 0
         result = LocatedExternalDict()
-        result[ITEMS] = items = []
+        result[ITEMS] = items = {}
         sites = get_component_hierarchy_names()
         for package in packages:
             objects = catalog.search_objects(intids=intids,
                                              provided=PACKAGE_CONTAINER_INTERFACES,
                                              namespace=package.ntiid,
                                              sites=sites)
-            items.extend(sorted(objects or (), key=lambda x: x.__class__.__name__))
-        result['ItemCount'] = result['Total'] = len(items)
+            items[package.ntiid] = sorted(objects or (),
+                                          key=lambda x: x.__class__.__name__)
+            total += len(items[package.ntiid])
+            
+        result['ItemCount'] = result['Total'] = total
         return result
 
 @view_config(context=IDataserverFolder)

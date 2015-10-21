@@ -69,8 +69,11 @@ def prepare_json_text(s):
 
 def get_connection(registry=None):
 	registry = get_registry(registry)
-	result = IConnection(registry, None)
-	return result
+	if registry == component.getGlobalSiteManager():
+		return None
+	else:
+		result = IConnection(registry, None)
+		return result
 
 def intid_register(item, registry, intids=None, connection=None):
 	intids = component.getUtility(IIntIds) if intids is None else intids
@@ -371,7 +374,7 @@ def update_indices_when_content_changes(content_package, force=False):
 def _update_indices_when_content_changes(content_package, event):
 	update_indices_when_content_changes(content_package)
 
-def _clear_when_removed(content_package, global_pkgs=False):
+def _clear_when_removed(content_package):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
@@ -382,7 +385,7 @@ def _clear_when_removed(content_package, global_pkgs=False):
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
-	if not global_pkgs and IGlobalContentPackage.providedBy(content_package):
+	if IGlobalContentPackage.providedBy(content_package):
 		return ()
 	_clear_last_modified(content_package, catalog)
 
