@@ -15,36 +15,21 @@ import argparse
 
 from zope import component
 
-from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
 from nti.dataserver.utils import run_with_dataserver
 from nti.dataserver.utils.base_script import set_site
 from nti.dataserver.utils.base_script import create_context
 
-from nti.ntiids.ntiids import find_object_with_ntiid
-
 from ..subscribers import update_indices_when_content_changes
 
-def yield_content_packages(args, all_packages=False):
-	library = component.getUtility(IContentPackageLibrary)
-	if all_packages or args.all:
-		for package in library.contentPackages:
-			yield package
-	else:
-		for ntiid in args.ntiids or ():
-			obj = find_object_with_ntiid(ntiid)
-			package = IContentPackage(obj, None)
-			if package is None:
-				logger.error("Could not find package with NTIID %s", ntiid)
-			else:
-				yield package
+from . import yield_sync_content_packages as yield_packages
 
 def _sync_content_package(pacakge, force=False):
 	update_indices_when_content_changes(pacakge, force=force)
 
 def _sync_content_packages(args):
-	for package in yield_content_packages(args):
+	for package in yield_packages(all_packages=args.all, ntiids=args.ntiids):
 		_sync_content_package(package, args.force)
 
 def _process_args(args):
@@ -57,7 +42,7 @@ def _process_args(args):
 		_sync_content_packages(args)
 	else:
 		print()
-		for package in yield_content_packages(args, True):
+		for package in yield_packages(all_packages=True):
 			print("===>", package.ntiid)
 		print()
 
