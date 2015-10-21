@@ -97,7 +97,6 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 @view_config(context=IDataserverFolder)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
-               request_method='POST',
                permission=nauth.ACT_NTI_ADMIN,
                name='ResetPackagePresentationAssets')
 class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
@@ -128,7 +127,6 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 @view_config(context=IDataserverFolder)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
-               request_method='POST',
                permission=nauth.ACT_NTI_ADMIN,
                name='RemovePackageInaccessibleAssets')
 class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
@@ -184,7 +182,6 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 @view_config(context=IDataserverFolder)
 @view_defaults(route_name='objects.generic.traversal',
                renderer='rest',
-               request_method='POST',
                permission=nauth.ACT_NTI_ADMIN,
                name='RemoveAllPackagesPresentationAssets')
 class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsView):
