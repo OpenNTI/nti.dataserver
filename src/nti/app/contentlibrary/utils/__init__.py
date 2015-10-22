@@ -95,14 +95,14 @@ from nti.contentlibrary.interfaces import IContentPackage
 from nti.contentlibrary.interfaces import IGlobalContentPackage
 from nti.contentlibrary.interfaces import IContentPackageLibrary
 
-def yield_sync_content_packages(all_packages=True, ntiids=(), include_global=False):
+def yield_sync_content_packages(ntiids=(), include_global=False):
 	library = component.getUtility(IContentPackageLibrary)
-	if all_packages:
+	if not ntiids:
 		for package in library.contentPackages:
 			if not IGlobalContentPackage.providedBy(package) or include_global:
 				yield package
 	else:
-		for ntiid in ntiids or ():
+		for ntiid in ntiids:
 			obj = find_object_with_ntiid(ntiid)
 			package = IContentPackage(obj, None)
 			if package is None:
