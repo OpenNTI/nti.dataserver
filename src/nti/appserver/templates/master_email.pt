@@ -20,8 +20,9 @@
 			}
 			.footer{
 			margin-top: 0px;
-			font-size:12px;
+			font-size: 12px;
 			text-align: center;
+			line-height: 12pt;
 			}
 			body {
 			margin-left: 30px;

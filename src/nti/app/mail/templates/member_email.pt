@@ -66,33 +66,93 @@
 		</div>
 
 		<table cellspacing="0" cellpadding="0" border="0"
-			style="color: #333; background: #fff; padding: 0; margin:
+			style="color: #333; background: #EEF0F1; padding: 0; margin:
 			0; width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,
 			Helvetica;">
 			<tbody>
 				<tr width="100%">
-					<td valign="top" align="left" style="background: #EEF0F1; font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;" >
-						<table style="border: none; padding: 0 18px; margin: 50px auto; width: 500px;">
+					<td valign="top" align="left">
+						<!-- White background -->
+						<table style="border: none; background:#fff; padding: 0 18px; margin: 50px auto; width: 500px;">
 							<tbody>
-								<tr width="100%">
-									<td valign="top" align="left" style="padding-left:18px; padding-bottom: 10px;">
-										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; font-weight:bold; margin: 0;color:#7f7f7f;">Hi ${options/first_name},</div>
-										<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;"
-											tal:content="options/body">
-											Email content.
-										</div>
-									</td>
-								</tr>
-								<tr width="100%">
-									<td valign="top" align="left" style="padding: 16px; font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica; line-height: 1.25em;">
-										<p style="color: #999; margin-bottom: 8px;font: 12px/1.25em 'Helvetica Neue', Arial, Helvetica;">
-											This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.
-										</p>
-									</td>
-
-								</tr>
-								</tbody>
-							</table>
+							<tr width="100%">
+								<td width="100%" style="border-collapse:collapse; margin-left: 0px; padding:15px">
+									<!-- Table with data -->
+									<table style="border-collapse:collapse; margin-left: 0px; align: center; width: 490px">
+										<tr width="100%">
+											<td valign="top" align="left" style="border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+																				border-bottom: 1px solid #EFEFEF;
+																				margin-left: 0px; font-size: 22px; padding-left: 0px;">
+												<span>
+													<!--
+														Use the user's avatar if we have one. Otherwise, generate an
+														avatar showing user's initials.
+													-->
+													<tal:block tal:condition="options/sender_avatar_url" >
+														<img src="https://secure.gravatar.com/avatar/bcb6a8c096111ae02010cb094d71fc49?s=128&d=identicon"
+															 alt="David Sabatini"
+															 title="David Sabatini"
+															 width="45" height="45"
+															 style="display: inline;vertical-align:top;float:left;margin-right:2px;"
+															 tal:attributes="alt options/sender_name; title options/sender_name; src options/sender_avatar_url"
+															 />
+													</tal:block>
+													<tal:block 	tal:condition="not:options/sender_avatar_url">
+														<!-- We do not have a style for this. We need to work out macro
+															style inheritance.
+														-->
+														<div class="avatar_initials"
+															tal:define="sender_avatar_bg_color options/sender_avatar_bg_color"
+															style="font-size: 16px; width: 45px; height: 45px;
+														    		font-weight: bold; color: white; text-align: center;
+														    		display: inline; vertical-align: top; float:left;
+														    		margin-right: 4px; background-size: cover;
+														    		background-position: center center; line-height: 45px;">
+															<div tal:attributes="style python: 'background-color:%s' % sender_avatar_bg_color"
+																tal:content="options/sender_avatar_initials">
+																SJ
+															</div>
+														</div>
+													</tal:block>
+												</span>
+												<span style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; padding-left: 8px;"
+													tal:content="options/sender_name">
+													Sender Name
+												</span>
+												<br />
+												<span style="font: 14px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4; padding-left: 8px;"
+													tal:content="options/context_display_name">
+													Group
+												</span>
+											</td>
+										</tr>
+										<tr width="100%">
+											<td valign="top" align="left" style="padding-left: 0px;">
+												<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;"
+													tal:content="options/body">
+													Email content.
+												</div>
+											</td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+							<tr width="100%" style="color: #333; background: #EEF0F1; padding: 0; margin: 0;
+													width: 100%; font: 15px/1.25em 'Helvetica Neue', Arial,Helvetica;">
+								<td valign="top" align="left">
+									<p class="footer" style="font-size: smaller">
+										<span>This message was sent to <span tal:content="options/email_to">jamadden@gmail.com</span>.</span>
+										<br />
+										If you feel this email was sent in error, or this account was created
+										without your consent, you may email
+										<a href="mailto:janux@ou.edu"
+											tal:attributes="href options/support_email"
+											tal:content="options/support_email">janux@ou.edu</a>.
+									</p>
+								</td>
+							</tr>
+							</tbody>
+						</table>
 					</td>
 				</tr>
 			</tbody>
