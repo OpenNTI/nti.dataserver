@@ -42,7 +42,7 @@ def _process_args(args):
 		_sync_content_packages(args)
 	else:
 		print()
-		for package in yield_packages(all_packages=True):
+		for package in yield_packages():
 			print("===>", package.ntiid)
 		print()
 

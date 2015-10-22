@@ -71,10 +71,7 @@ class GetPackagePresentationAssetsView(AbstractAuthenticatedView,
 	def __call__(self):
 		params = CaseInsensitiveDict(self.request.params)
 		ntiids = _get_package_ntiids(params)
-		if not ntiids:
-			packages = list(yield_content_packages(all_packages=True))
-		else:
-			packages = list(yield_content_packages(ntiids=ntiids))
+		packages = list(yield_content_packages(ntiids=ntiids))
 
 		catalog = get_library_catalog()
 		intids = component.getUtility(IIntIds)
@@ -104,17 +101,14 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 										 ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		values = super(ResetPackagePresentationAssetsView, self).readInput(self, value=value)
+		values = super(ResetPackagePresentationAssetsView, self).readInput(value=value)
 		return CaseInsensitiveDict(values)
 
 	def __call__(self):
 		now = time.time()
 		values = self.readInput()
 		ntiids = _get_package_ntiids(values)
-		if not ntiids:
-			packages = list(yield_content_packages(all_packages=True))
-		else:
-			packages = list(yield_content_packages(ntiids=ntiids))
+		packages = list(yield_content_packages(ntiids))
 
 		total = 0
 		result = LocatedExternalDict()
@@ -209,7 +203,7 @@ class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsVie
 				intids.unregister(asset)
 			registered += 1
 
-		for package in yield_content_packages(all_packages=True):
+		for package in yield_content_packages():
 			clear_package_assets(package)
 			clear_namespace_last_modified(package, catalog)
 
@@ -227,20 +221,19 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 										ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		values = super(ResetPackagePresentationAssetsView, self).readInput(self, value=value)
+		values = super(ResetPackagePresentationAssetsView, self).readInput(value=value)
 		return CaseInsensitiveDict(values)
 
 	def __call__(self):
 		values = self.readInput()
 		ntiids = _get_package_ntiids(values)
-		if not ntiids:
-			packages = list(yield_content_packages(all_packages=True))
-		else:
-			packages = list(yield_content_packages(ntiids=ntiids))
+		packages = list(yield_content_packages(ntiids))
 
 		now = time.time()
 		result = LocatedExternalDict()
+		items = result[ITEMS] = []
 		for package in packages:
+			items.append(package.ntiid)
 			update_indices_when_content_changes(package)
 
 		result['TimeElapsed'] = time.time() - now
