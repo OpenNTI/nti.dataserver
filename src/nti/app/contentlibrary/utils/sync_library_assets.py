@@ -29,7 +29,7 @@ def _sync_content_package(pacakge, force=False):
 	update_indices_when_content_changes(pacakge, force=force)
 
 def _sync_content_packages(args):
-	for package in yield_packages(all_packages=args.all, ntiids=args.ntiids):
+	for package in yield_packages(args.ntiids):
 		_sync_content_package(package, args.force)
 
 def _process_args(args):
