@@ -221,7 +221,7 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 										ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		values = super(ResetPackagePresentationAssetsView, self).readInput(value=value)
+		values = super(SyncPackagePresentationAssetsView, self).readInput(value=value)
 		return CaseInsensitiveDict(values)
 
 	def __call__(self):
