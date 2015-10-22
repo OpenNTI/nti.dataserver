@@ -31,12 +31,12 @@ def principal():
 	except (NoInteraction, IndexError, AttributeError):
 		return None
 
-def record_trax(obj, descriptions=(), history=None):
-	history = ITransactionRecordHistory(obj) if history is None else history
+def record_trax(recordable, descriptions=(), history=None):
+	history = ITransactionRecordHistory(recordable) if history is None else history
 	
 	username = principal().id
 	
-	tid = getattr(obj, '_p_serial', None)
+	tid = getattr(recordable, '_p_serial', None)
 	tid = unicode(serial_repr(tid)) if tid else None
 	
 	attributes = set()
@@ -45,6 +45,8 @@ def record_trax(obj, descriptions=(), history=None):
 	record = TransactionRecord(principal=username, tid=tid,
 							   attributes=tuple(attributes))
 	history.add(record)
+	
+	recordable.locked = True
 	return record
 
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
