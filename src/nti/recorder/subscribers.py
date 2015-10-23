@@ -27,16 +27,6 @@ from .record import TransactionRecord
 
 from .interfaces import ITransactionRecordHistory
 
-def get_connection(registry=None):
-	registry = component.getSiteManager()
-	result = IConnection(registry, None)
-	return result
-
-def add_2_connection(obj, connection=None):
-	connection = get_connection() if connection is None else connection
-	if connection is not None and IConnection(obj, None) is None:
-		connection.add(object)
-
 def principal():
 	try:
 		return getInteraction().participations[0].principal
@@ -44,12 +34,8 @@ def principal():
 		return None
 
 def record_trax(recordable, descriptions=(), history=None):
-	connection = get_connection()
-	add_2_connection(recordable, connection)
-
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
-		add_2_connection(history, connection)
 
 	tid = getattr(recordable, '_p_serial', None)
 	tid = unicode(serial_repr(tid)) if tid else None
@@ -68,9 +54,8 @@ def record_trax(recordable, descriptions=(), history=None):
 
 @component.adapter(IRecordable, IObjectModifiedFromExternalEvent)
 def _record_modification(obj, event):
-	if queryInteraction() is None:
+	# XXX: don't process if batch update or new object
+	if queryInteraction() is None or IConnection(obj, None) is None:
 		return
-	history = ITransactionRecordHistory(obj, None)
-	if history is None:
-		return
+	history = ITransactionRecordHistory(obj)
 	record_trax(obj, event.descriptions, history)
