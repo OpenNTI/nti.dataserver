@@ -113,6 +113,9 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		return _is_true( val )
 
 	def __accept_user(self, user):
+		# Only email externally if configured to do so.
+		# Otherwise, only email NT users.
+		# This would be useful as a utility.
 		if not self.email_externally:
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			return 	email	\
@@ -146,19 +149,11 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		addr = IEmailAddressable( user, None )
 		return addr and addr.email
 
-	def _get_user_first_name(self, user):
-		named = IFriendlyNamed( user )
-		human_name = None
-		if named and named.realname:
-			human_name = HumanName( named.realname )
-		return human_name and human_name.first_name
-
-	def get_template_args(self, user, body, to_addr):
+	def get_template_args(self, body, to_addr):
 		result = {}
 		result['body'] = body
 		result['email_to'] = to_addr
 		result['support_email'] = self.support_email
-		result['first_name'] = self._get_user_first_name( user ) or to_addr
 		result['sender_name'] = self.sender_display_name
 		result['sender_avatar_url'] = self.sender_avatar_url
 		result['sender_avatar_initials'] = self.sender_avatar_initials
@@ -168,18 +163,17 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 
 	def _get_body(self, email):
 		# Make sure we sanitize our user input.
-		body = sanitize_user_html( email.body )
+		body = sanitize_user_html( email.Body )
 		return body
 
 	def send_email(self, to_user, subject, body):
 		reply_addr = self.reply_addr_for_recipient( to_user )
 		to_addr = self._email_address_for_user( to_user )
-		user_args = self.get_template_args( to_user, body, to_addr )
+		user_args = self.get_template_args( body, to_addr )
 		try:
-			# TODO package?
 			mailer = component.getUtility(ITemplatedMailer)
 			mailer.queue_simple_html_text_email(
-								'member_email.pt',
+								'member_email',
 								subject=subject,
 								sender=reply_addr,
 								recipients=[to_addr],
@@ -203,6 +197,6 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 				send_count += 1
 				self.send_email( member, subject, body )
 
-		logger.info( '%s sent %s emails to %s',
-					self.remoteUser, send_count, self.context_display_name)
-		return hexc.HTTPNoContent
+		logger.info( '%s sent %s emails to "%s"',
+					self.remoteUser, send_count, self._context_display_name)
+		return hexc.HTTPNoContent()
