@@ -8,6 +8,8 @@ Site policies interfaces
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
+logger = __import__('logging').getLogger(__name__)
+
 from zope import interface
 
 class ISitePolicyUserEventListener(interface.Interface):
@@ -85,7 +87,6 @@ zope.deferredimport.deprecatedFrom(
 	"IMathcountsCoppaUserWithAgreementUpgraded",
 	"IMathcountsCoppaUserWithoutAgreementUserProfile",
 	"IMathcountsCoppaUserWithAgreementUserProfile")
-
 
 zope.deferredimport.deprecatedFrom(
 	"Code should not access this directly; move your tests to the columbia site package."

@@ -8,6 +8,9 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<!-- Site names -->
+	<utility factory=".site_policies._TransactionSiteNames" />
+
 	<!-- Account Creation -->
 	<utility factory=".site_policies.RequestAwareUserPlacer" />
 
