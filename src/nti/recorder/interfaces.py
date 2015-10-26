@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import interface
+
 from zope.container.interfaces import IContained
 
 from dolmen.builtins.interfaces import IIterable
@@ -25,6 +27,8 @@ class ITransactionRecord(IContained, ICreated):
 				 	 			 value_type=ValidTextLine(title="The attribute name"),
 								 min_length=1,
 								 unique=True)
+	external_value = interface.Attribute("External value")
+	external_value.setTaggedValue('_ext_excluded_out', True)
 
 class ITransactionRecordHistory(IContained, IIterable):
 
