@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 68
+generation = 69
 
 from zope import component
 
@@ -18,6 +18,10 @@ from zope.component.hooks import setHooks
 
 from zope.intid.interfaces import IIntIds
 
+from zope.location import locate
+
+from nti.recorder.index import IX_SITE
+from nti.recorder.index import SiteIndex
 from nti.recorder.index import install_recorder_catalog
 
 def do_evolve(context):
@@ -33,12 +37,16 @@ def do_evolve(context):
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 
-		install_recorder_catalog(ds_folder, intids)
-
+		catalog = install_recorder_catalog(ds_folder, intids)
+		if IX_SITE  not in catalog:
+			index = SiteIndex(family=intids.family)
+			intids.register(index)
+			locate(index, catalog, IX_SITE)
+			catalog[IX_SITE] = index
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to generation 68 by registering the recorder catalog.
+	Evolve to gen 69 by modifying the recorder catalog.
 	"""
 	do_evolve(context)
