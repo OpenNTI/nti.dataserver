@@ -87,6 +87,8 @@ from nti.externalization.interfaces import IExternalObjectDecorator
 from nti.schema.interfaces import InvalidValue
 from nti.schema.interfaces import find_most_derived_interface
 
+from nti.site.interfaces import ITransactionSiteNames
+
 from .interfaces import ISitePolicyUserEventListener
 from .interfaces import ICommunitySitePolicyUserEventListener
 
@@ -133,6 +135,12 @@ def get_possible_site_names(request=None, include_default=False):
 		site_names += ('',)
 	return site_names
 
+@interface.implementer(ITransactionSiteNames)
+class _TransactionSiteNames(object):
+	
+	def __call__(self, *args, **kwargs):
+		return get_possible_site_names(*args, **kwargs)
+		
 def _find_site_components(request, include_default=False, site_names=None):
 	site_names = site_names or get_possible_site_names(request=request,
 													   include_default=include_default)
