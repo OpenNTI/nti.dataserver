@@ -20,6 +20,8 @@ from nti.common.property import Lazy
 
 from nti.coremetadata.interfaces import IRecordable
 
+from nti.site.site import get_component_hierarchy_names
+
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
@@ -30,6 +32,7 @@ from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import AttributeValueIndex
 from nti.zope_catalog.index import NormalizationWrapper
 from nti.zope_catalog.index import IntegerAttributeIndex 
+from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
 
@@ -41,10 +44,46 @@ from .interfaces import ITransactionRecord
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
+IX_SITE = 'site'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_TARGET_INTID = 'targetIntId'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
+
+class KeepSetIndex(RawSetIndex):
+
+	empty_set = set()
+
+	def to_iterable(self, value):
+		return value
+
+	def index_doc(self, doc_id, value):
+		value = {v for v in self.to_iterable(value) if v is not None}
+		old = self.documents_to_values.get(doc_id) or self.empty_set
+		if value.difference(old):
+			value.update(old or ())
+			result = super(KeepSetIndex, self).index_doc(doc_id, value)
+			return result
+
+	def remove(self, doc_id, value):
+		old = set(self.documents_to_values.get(doc_id) or ())
+		if not old:
+			return
+		for v in self.to_iterable(value):
+			old.discard(v)
+		if old:
+			super(KeepSetIndex, self).index_doc(doc_id, old)
+		else:
+			super(KeepSetIndex, self).unindex_doc(doc_id)
+
+class SiteIndex(KeepSetIndex):
+
+	def to_iterable(self, value):
+		if ITransactionRecord.providedBy(value):
+			result = get_component_hierarchy_names()	
+		else:
+			result = ()
+		return result
 
 class PrincipalRawIndex(RawValueIndex):
 	pass
@@ -118,6 +157,7 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
 	for name, clazz in ((IX_TID, TIDIndex),
+						(IX_SITE, SiteIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
 						(IX_ATTRIBUTES, AttributeSetIndex),
