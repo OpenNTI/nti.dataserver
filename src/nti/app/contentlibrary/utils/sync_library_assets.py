@@ -25,12 +25,12 @@ from ..subscribers import update_indices_when_content_changes
 
 from . import yield_sync_content_packages as yield_packages
 
-def _sync_content_package(pacakge, force=False):
-	update_indices_when_content_changes(pacakge, force=force)
+def _sync_content_package(pacakge):
+	update_indices_when_content_changes(pacakge)
 
 def _sync_content_packages(args):
 	for package in yield_packages(args.ntiids):
-		_sync_content_package(package, args.force)
+		_sync_content_package(package)
 
 def _process_args(args):
 	library = component.getUtility(IContentPackageLibrary)
@@ -51,9 +51,6 @@ def main():
 	arg_parser.add_argument('-v', '--verbose', help="Be Verbose", action='store_true',
 							dest='verbose')
 
-	arg_parser.add_argument('-f', '--force', help="Force update",
-							action='store_true', dest='force')
-	
 	arg_parser.add_argument('-s', '--site',
 							dest='site',
 							help="Application SITE.")

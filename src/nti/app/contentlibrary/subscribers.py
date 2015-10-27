@@ -264,8 +264,7 @@ def _index_items(content_package, index, item_iface, removed, catalog, registry)
 	return result
 
 def _update_index_when_content_changes(content_package, index_filename,
-									   item_iface, object_creator, catalog=None,
-									   force=False):
+									   item_iface, object_creator, catalog=None):
 	catalog = get_library_catalog() if catalog is None else catalog
 	sibling_key = content_package.does_sibling_entry_exist(index_filename)
 	if not sibling_key:
@@ -276,7 +275,7 @@ def _update_index_when_content_changes(content_package, index_filename,
 		sk_lastModified = sibling_key.lastModified
 		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
 		last_modified = catalog.get_last_modified(last_mod_namespace)
-		if not force and last_modified and last_modified >= sk_lastModified:
+		if last_modified and last_modified >= sk_lastModified:
 			logger.info("No change to %s since %s, ignoring",
 						sibling_key,
 						sk_lastModified)
@@ -366,10 +365,10 @@ def _clear_last_modified(content_package, catalog=None):
 		catalog.remove_last_modified(namespace)
 clear_namespace_last_modified = _clear_last_modified
 
-def update_indices_when_content_changes(content_package, force=False):
+def update_indices_when_content_changes(content_package):
 	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
-		_update_index_when_content_changes(content_package, name, item_iface, func, force=force)
+		_update_index_when_content_changes(content_package, name, item_iface, func)
 
 def _update_indices_when_content_changes(content_package, event):
 	update_indices_when_content_changes(content_package)
