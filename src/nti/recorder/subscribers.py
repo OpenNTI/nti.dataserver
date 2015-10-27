@@ -9,9 +9,6 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-import zlib
-from io import BytesIO
-
 from zope import component
 
 from zope.security.interfaces import NoInteraction
@@ -30,18 +27,13 @@ from .record import TransactionRecord
 
 from .interfaces import ITransactionRecordHistory
 
+from .utils import compress
+
 def principal():
 	try:
 		return getInteraction().participations[0].principal
 	except (NoInteraction, IndexError, AttributeError):
 		return None
-
-def pickle(obj):
-	bio = BytesIO()
-	pickle.dump(obj, bio)
-	bio.seek(0)
-	result = zlib.compress(bio.read())
-	return result
 	
 def record_trax(recordable, descriptions=(), ext_value=None, history=None):
 	if history is None:
@@ -55,7 +47,7 @@ def record_trax(recordable, descriptions=(), ext_value=None, history=None):
 		attributes.update(a.attributes or ())
 
 	username = principal().id
-	ext_value = pickle(ext_value) if ext_value is not None else None
+	ext_value = compress(ext_value) if ext_value is not None else None
 	record = TransactionRecord(principal=username, tid=tid,
 							   attributes=tuple(attributes),
 							   external_value=ext_value)

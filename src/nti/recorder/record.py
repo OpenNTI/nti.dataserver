@@ -85,16 +85,20 @@ class TransactionRecordHistory(Contained, Persistent):
 		return record
 	append = add
 
+	def extend(self, records=()):
+		self._records.extend(records)
+
 	def remove(self, record):
 		self._records.remove(record)
 		lifecycleevent.removed(record)  # remove iid
 		return True
 
-	def clear(self):
+	def clear(self, event=True):
 		result = 0
 		for _ in xrange(len(self._records)):
 			record = self._records.pop()
-			lifecycleevent.removed(record)  # remove iid
+			if event:
+				lifecycleevent.removed(record)  # remove iid
 			result += 1
 		return result
 
@@ -144,3 +148,18 @@ def remove_history(obj):
 		pass
 	return 0
 remove_transaction_history = remove_history
+
+def copy_history(source, target):
+	try:
+		annotations = source.__annotations__
+		source_history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
+		if source_history is not None:
+			return 0
+		records = list(source_history)
+		target_history = ITransactionRecordHistory(target)
+		target_history.extends(records)
+		return len(records)
+	except AttributeError:
+		pass
+	return 0
+copy_transaction_history = copy_history
