@@ -34,6 +34,7 @@ from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
 from nti.contenttypes.presentation import PACKAGE_CONTAINER_INTERFACES
+from nti.contenttypes.presentation.interfaces import IPresentationAssetContainer
 
 from nti.dataserver import authorization as nauth
 from nti.dataserver.interfaces import IDataserverFolder
@@ -146,8 +147,10 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 
 	def _unregister(self, sites_names, provided, name):
 		result = False
+		sites_names = list(sites_names)
+		sites_names.reverse()
 		hostsites = component.getUtility(IEtcNamespace, name='hostsites')
-		for site_name in list(sites_names).reverse():
+		for site_name in sites_names:
 			try:
 				folder = hostsites[site_name]
 				registry = folder.getSiteManager()
@@ -158,10 +161,24 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				pass
 		return result
 
-	def _assets(self, registry):
+	def _registered_assets(self, registry):
 		for iface in PACKAGE_CONTAINER_INTERFACES:
 			for ntiid, asset in list(registry.getUtilitiesFor(iface)):
 				yield ntiid, asset
+
+	def _contained_assets(self):
+		result = []
+		def recur(unit):
+			for child in unit.children or ():
+				recur(child)
+			container = IPresentationAssetContainer(unit, None) or {}
+			for key, value in container.items():
+				provided = iface_of_thing(value)
+				if provided in PACKAGE_CONTAINER_INTERFACES:
+					result.append((container, key, value))
+		for pacakge in yield_content_packages():
+			recur(pacakge)
+		return result
 
 	def _do_call(self, result):
 		registry = get_registry()
@@ -174,7 +191,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 		references = catalog.get_references(sites=sites,
 											provided=PACKAGE_CONTAINER_INTERFACES)
 
-		for ntiid, asset in self._assets(registry):
+		for ntiid, asset in self._registered_assets(registry):
 			uid = intids.queryId(asset)
 			provided = iface_of_thing(asset)
 			if uid is None:
@@ -185,9 +202,23 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				self._unregister(sites, provided=provided, name=ntiid)
 				intids.unregister(asset)
 			registered += 1
+			
+		contained = set()
+		for container, ntiid, asset in self._contained_assets():
+			uid = intids.queryId(asset)
+			provided = iface_of_thing(asset)
+			if 	uid is None or uid not in references or \
+				component.queryUtility(provided, name=ntiid) is None:
+				container.pop(ntiid, None)
+				self._unregister(sites, provided=provided, name=ntiid)
+				if uid is not None:
+					catalog.unindex(uid)
+					intids.unregister(asset)
+			contained.add(ntiid)
 
 		result['TotalRemoved'] = len(items)
 		result['TotalRegisteredAssets'] = registered
+		result['TotalContainedAssets'] = len(contained)
 		result['TotalCatalogedAssets'] = len(references)
 		return result
 
