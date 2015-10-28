@@ -58,6 +58,11 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		return 'no-reply@nextthought.com'
 
 	@property
+	def _sender_reply_addr(self):
+		result = self._email_address_for_user( self.sender )
+		return result or self._no_reply_addr
+
+	@property
 	def sender(self):
 		return self.remoteUser
 
@@ -86,7 +91,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 			result = human_name.first[0] + human_name.last[0]
 		# Or the first initial of alias/real/username
 		else:
-			named = named.alias or named.realname or self._primary.creator.username
+			named = named.alias or named.realname or self.sender.username
 			result = named[0]
 		return result
 
@@ -113,9 +118,10 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		return _is_true( val )
 
 	def __accept_user(self, user):
-		# Only email externally if configured to do so.
-		# Otherwise, only email NT users.
-		# This would be useful as a utility.
+		# Only email externally if configured to do so. Otherwise, only
+		# email NT users.
+		# TODO This would be useful as a utility.
+		# TODO Only verified emails?
 		if not self.email_externally:
 			email = getattr(IEmailAddressable(user, None), 'email', None)
 			return 	email	\
@@ -166,8 +172,15 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		body = sanitize_user_html( email.Body )
 		return body
 
-	def send_email(self, to_user, subject, body):
-		reply_addr = self.reply_addr_for_recipient( to_user )
+	def _get_reply_addr(self, to_user, email):
+		if email.NoReply:
+			result = self._no_reply_addr
+		else:
+			result = self.reply_addr_for_recipient( to_user )
+		return result
+
+	def send_email(self, to_user, subject, body, email):
+		reply_addr = self._get_reply_addr( to_user, email )
 		to_addr = self._email_address_for_user( to_user )
 		user_args = self.get_template_args( body, to_addr )
 		try:
@@ -195,7 +208,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		for member in self.iter_members():
 			if self.__accept_user( member ):
 				send_count += 1
-				self.send_email( member, subject, body )
+				self.send_email( member, subject, body, email )
 
 		logger.info( '%s sent %s emails to "%s"',
 					self.remoteUser, send_count, self._context_display_name)
