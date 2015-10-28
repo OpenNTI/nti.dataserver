@@ -88,18 +88,20 @@ class TransactionRecordHistory(Contained, Persistent):
 	def extend(self, records=()):
 		self._records.extend(records)
 
-	def remove(self, record):
+	def remove(self, record, event=True):
 		self._records.remove(record)
-		lifecycleevent.removed(record)  # remove iid
+		if event:
+			lifecycleevent.removed(record)  # remove iid
 		return True
 
 	def clear(self, event=True):
-		result = 0
-		for _ in xrange(len(self._records)):
-			record = self._records.pop()
-			if event:
+		result = len(self._records)
+		if not event:
+			del self._records[:]
+		else:
+			for _ in xrange(len(self._records)):
+				record = self._records.pop()
 				lifecycleevent.removed(record)  # remove iid
-			result += 1
 		return result
 
 	def __iter__(self):
