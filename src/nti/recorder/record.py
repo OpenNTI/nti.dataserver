@@ -150,7 +150,7 @@ def remove_history(obj):
 	return 0
 remove_transaction_history = remove_history
 
-def copy_history(source, target):
+def copy_history(source, target, clear=True):
 	try:
 		annotations = source.__annotations__
 		source_history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
@@ -159,6 +159,8 @@ def copy_history(source, target):
 		records = list(source_history)
 		target_history = ITransactionRecordHistory(target)
 		target_history.extends(records)
+		if clear:
+			source_history.clear(event=False)
 		return len(records)
 	except AttributeError:
 		pass
