@@ -17,6 +17,7 @@ from zope.catalog.interfaces import ICatalog
 
 from zope.intid import IIntIds
 
+from pyramid.location import lineage
 from pyramid.view import view_config
 from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
@@ -281,19 +282,21 @@ class ObjectResolverView(AbstractAuthenticatedView):
 		obj = find_object_with_ntiid(ntiid)
 		if obj is None:
 			raise hexc.HTTPNotFound()
-		obj = removeAllProxies(obj)
-		
+		resource = obj = removeAllProxies(obj)
+
 		result = LocatedExternalDict()
 		result['ACL'] = aces = []
 		result['Object'] = toExternalObject(obj)
 		result['IntId'] = intids.queryId(obj)
-		try:
-			acl = getattr(obj, '__acl__', None) or \
-				  IACLProvider(obj, None).__acl__
+		for resource in lineage(obj):
+			acl = getattr(resource, '__acl__', None)
+			if not acl:
+				provider = IACLProvider(resource, None)
+				acl = provider.__acl__ if provider is not None else None
 			for ace in acl or ():
 				aces.append(ace.to_external_string())
-		except (TypeError, AttributeError):
-			pass
+			if aces:  # found something
+				break
 		return result
 
 @view_config(name='ExportUsers')
