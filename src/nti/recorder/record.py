@@ -126,13 +126,14 @@ def has_transactions(obj):
 		pass
 	return result
 
-def get_transactions(obj):
+def get_transactions(obj, sort=False):
 	result = []
 	try:
 		annotations = obj.__annotations__
 		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
-		if history is not None:
+		if history:
 			result.extend(history)
+		if sort:
 			result.sort(key=lambda t: t.createdTime)
 	except AttributeError:
 		pass
@@ -142,7 +143,7 @@ def remove_history(obj):
 	try:
 		annotations = obj.__annotations__
 		history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
-		if history is not None:
+		if history:
 			return history.clear()
 	except AttributeError:
 		pass
@@ -153,7 +154,7 @@ def copy_history(source, target):
 	try:
 		annotations = source.__annotations__
 		source_history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
-		if source_history is not None:
+		if not source_history:
 			return 0
 		records = list(source_history)
 		target_history = ITransactionRecordHistory(target)
