@@ -17,6 +17,8 @@ from zope.intid import IIntIds
 
 from ZODB.interfaces import IConnection
 
+from nti.coremetadata.interfaces import IRecordable
+
 from nti.contentlibrary.indexed_data import get_registry
 from nti.contentlibrary.indexed_data import get_library_catalog
 
@@ -53,15 +55,11 @@ from .interfaces import IContentBoard
 
 ITEMS = StandardExternalFields.ITEMS
 
-@component.adapter(IContentPackageLibrary, IContentPackageLibraryDidSyncEvent)
-def _on_content_pacakge_library_synced(library, event):
-	site = library.__parent__
-	if IHostPolicySiteManager.providedBy(site):
-		bundle_library = site.getUtility(IContentPackageBundleLibrary)
-		for bundle in bundle_library.values():
-			board = IContentBoard(bundle, None)
-			if board is not None:
-				board.createDefaultForum()
+INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+			('video_index.json', INTIVideo, create_ntivideo_from_external),
+			('timeline_index.json', INTITimeline, create_timelime_from_external),
+			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
+			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
 
 def prepare_json_text(s):
 	result = unicode(s, 'utf-8') if isinstance(s, bytes) else s
@@ -160,20 +158,34 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 				result.append(internal)
 	return result
 
-def _removed_registered(provided, name, intids=None, registry=None, catalog=None):
+def _can_be_removed(registered, force=False):
+	result = registered is not None and \
+			 (	force or
+			 	(not IRecordable.providedBy(registered) or not registered.locked) )
+	return result
+can_be_removed = _can_be_removed
+
+def _removed_registered(provided, name, intids=None, registry=None, 
+						catalog=None, force=False):
 	registry = get_registry(registry)
 	registered = registry.queryUtility(provided, name=name)
 	intids = component.getUtility(IIntIds) if intids is None else intids
-	if registered is not None:
+	if _can_be_removed(registered, force=force):
 		catalog = get_library_catalog() if catalog is None else catalog
-		if catalog is not None: # may be None in test mode
-			catalog.unindex(registered, intids=intids)
-		unregisterUtility(registry, component==registered, provided=provided, name=name)
+		catalog.unindex(registered, intids=intids)
+		if not unregisterUtility(registry, component=registered,
+								 provided=provided, name=name):
+			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
+						provided.__name__, name)
 		intids.unregister(registered, event=False)
+	elif registered is not None:
+		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
+					provided.__name__, name)
+		registered = None # set to None since it was not removed
 	return registered
 
 def _remove_from_registry(containers=None, namespace=None, provided=None,
-						  registry=None, intids=None, catalog=None):
+						  registry=None, intids=None, catalog=None, force=False):
 	"""
 	For our type, get our indexed objects so we can remove from both the
 	registry and the index.
@@ -186,21 +198,19 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	else:
 		sites = get_component_hierarchy_names()
 		intids = component.getUtility(IIntIds) if intids is None else intids
-		for utility in catalog.search_objects(intids=intids, provided=provided,
-											  container_ntiids=containers, 
-											  namespace=namespace,
-											  sites=sites):
-			try:
-				ntiid = utility.ntiid
-				if ntiid:
-					result.append(utility)
-					_removed_registered(provided,
-										name=ntiid,
-										intids=intids,
-										catalog=catalog,
-										registry=registry)
-			except AttributeError:
-				pass
+		for item in catalog.search_objects(intids=intids, provided=provided,
+										   container_ntiids=containers, 
+										   namespace=namespace,
+										   sites=sites):
+			ntiid = item.ntiid
+			removed = _removed_registered(provided,
+										  name=ntiid,
+										  force=force,
+										  intids=intids,
+										  catalog=catalog,
+										  registry=registry)
+			if removed is not None:
+				result.append(removed)
 	return result
 
 def _get_container_tree(container_id):
@@ -342,12 +352,6 @@ def _update_index_when_content_changes(content_package, index_filename,
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
 				sibling_key, registered_count, index_item_count, removed_count)
 
-INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
-			('video_index.json', INTIVideo, create_ntivideo_from_external),
-			('timeline_index.json', INTITimeline, create_timelime_from_external),
-			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
-			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
-
 def _clear_assets(content_package):
 	def recur(unit):
 		for child in unit.children or ():
@@ -365,6 +369,8 @@ def _clear_last_modified(content_package, catalog=None):
 		catalog.remove_last_modified(namespace)
 clear_namespace_last_modified = _clear_last_modified
 
+# update events
+
 def update_indices_when_content_changes(content_package):
 	_clear_assets(content_package)
 	for name, item_iface, func in INDICES:
@@ -373,11 +379,14 @@ def update_indices_when_content_changes(content_package):
 def _update_indices_when_content_changes(content_package, event):
 	update_indices_when_content_changes(content_package)
 
+# clear events
+
 def _clear_when_removed(content_package):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
 	"""
+	result = []
 	catalog = get_library_catalog()
 	_clear_assets(content_package)
 
@@ -385,23 +394,25 @@ def _clear_when_removed(content_package):
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
 	if IGlobalContentPackage.providedBy(content_package):
-		return ()
+		return result
 	_clear_last_modified(content_package, catalog)
 
-	result = []
 	for _, item_iface, _ in INDICES:
 		removed = _remove_from_registry(namespace=content_package.ntiid,
 							  			provided=item_iface,
-							  			catalog=catalog)
+							  			catalog=catalog,
+							  			force=True)
 		result.extend(removed)
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 						  			provided=INTISlide,
-						  			catalog=catalog)
+						  			catalog=catalog,
+						  			force=True)
 	result.extend(removed)
 
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 						  			provided=INTISlideVideo,
-						 			catalog=catalog)
+						 			catalog=catalog,
+						 			force=True)
 	result.extend(removed)
 
 	logger.info('Removed indexes for content package %s (removed=%s)',
@@ -411,3 +422,15 @@ clear_content_package_assets = _clear_when_removed
 
 def _clear_index_when_content_removed(content_package, event):
 	return _clear_when_removed(content_package)
+
+# forum events
+
+@component.adapter(IContentPackageLibrary, IContentPackageLibraryDidSyncEvent)
+def _on_content_pacakge_library_synced(library, event):
+	site = library.__parent__
+	if IHostPolicySiteManager.providedBy(site):
+		bundle_library = site.getUtility(IContentPackageBundleLibrary)
+		for bundle in bundle_library.values():
+			board = IContentBoard(bundle, None)
+			if board is not None:
+				board.createDefaultForum()
