@@ -17,6 +17,7 @@ from dolmen.builtins.interfaces import IIterable
 
 from nti.dataserver_core.interfaces import ICreated
 
+from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
 
@@ -27,7 +28,9 @@ class ITransactionRecord(IContained, ICreated):
 				 	 			 value_type=ValidTextLine(title="The attribute name"),
 								 min_length=1,
 								 unique=True)
-	external_value = interface.Attribute("External value")
+	external_value = Object(interface.Interface, 
+							title="External value", 
+							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
 
 class ITransactionRecordHistory(IContained, IIterable):
