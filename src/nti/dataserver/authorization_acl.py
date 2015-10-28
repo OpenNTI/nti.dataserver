@@ -20,11 +20,16 @@ from zope.cachedescriptors.property import Lazy
 
 from zope.interface.interfaces import ComponentLookupError
 
-import pyramid.security
+from pyramid.security import Denied as psecDenied
 
 from nti.common.property import alias
 
-from nti.contentlibrary import interfaces as content_interfaces
+from nti.contentlibrary.interfaces import IContentUnit
+from nti.contentlibrary.interfaces import IContentPackage
+from nti.contentlibrary.interfaces import IContentPackageLibrary
+from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackage
 
 from nti.dataserver import authorization
 from nti.dataserver import authentication
@@ -288,13 +293,13 @@ def has_permission(permission, context, username, **kwargs):
 			# object returns the parent of its context.
 			to_check = IACLProvider(context)
 		except TypeError:
-			return pyramid.security.Denied("No ACL found")
+			return psecDenied("No ACL found")
 	else:
 		to_check = context
 
 	policy = component.queryUtility(IAuthorizationPolicy)
 	if not policy:
-		return pyramid.security.Denied("No IAuthorizationPolicy installed")
+		return psecDenied("No IAuthorizationPolicy installed")
 	return policy.permits(to_check,
 						   authentication.effective_principals(username, **kwargs),
 						   permission)
@@ -375,7 +380,7 @@ from nti.common.property import LazyOnClass as _LazyOnClass
 def _add_admin_moderation(acl, provenance):
 	acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance))
 	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance))
-	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_COPPA_ADMIN, provenance))
+	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_NTI_ADMIN, provenance))
 
 @interface.implementer(IACLProvider)
 @component.adapter(IEntity)
@@ -662,7 +667,7 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
 		return result
 
 @interface.implementer(nti_interfaces.IACLProvider)
-@component.adapter(content_interfaces.IContentUnit)
+@component.adapter(IContentUnit)
 class _TestingLibraryTOCEntryACLProvider(object):
 	"""
 	Allows all authenticated users access to library entries.
@@ -751,7 +756,7 @@ def _supplement_acl_with_content_role(self, context, acl):
 	to be very specific.)
 	"""
 
-	package = traversal.find_interface(context, content_interfaces.IContentPackage, strict=False)
+	package = traversal.find_interface(context, IContentPackage, strict=False)
 	if package is not None and package.ntiid:
 		parts = ntiids.get_parts(package.ntiid)
 		if parts and parts.provider and parts.specific:
@@ -761,7 +766,7 @@ def _supplement_acl_with_content_role(self, context, acl):
 	return acl
 
 @interface.implementer(IACLProvider)
-@component.adapter(content_interfaces.IDelimitedHierarchyContentPackage)
+@component.adapter(IDelimitedHierarchyContentPackage)
 class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
 	For content packages that are part of a hierarchy,
@@ -781,7 +786,7 @@ class _DelimitedHierarchyContentPackageACLProvider(_AbstractDelimitedHierarchyEn
 		return _supplement_acl_with_content_role(self, context, acl)
 
 @interface.implementer(IACLProvider)
-@component.adapter(content_interfaces.IDelimitedHierarchyContentUnit)
+@component.adapter(IDelimitedHierarchyContentUnit)
 class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntryACLProvider):
 	"""
 	For content units, we look for an acl file matching their ordinal
@@ -811,8 +816,9 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		ordinals = []
 		ordinals.append(context.ordinal)
 		parent = context.__parent__
-		while parent is not None and content_interfaces.IContentUnit.providedBy(parent) and \
-			  not content_interfaces.IContentPackage.providedBy(parent):
+		while (parent is not None and
+				IContentUnit.providedBy(parent) and
+			  	not IContentPackage.providedBy(parent)):
 			ordinals.append(parent.ordinal)
 			parent = parent.__parent__
 
@@ -878,11 +884,11 @@ class _DataserverFolderACLProvider(object):
 		_add_admin_moderation(acl, _DataserverFolderACLProvider)
 		return acl
 
-# ## Content/bundle library.
+# Content/bundle library.
 # TODO: These should move up to nti.app.contentlibrary.
 
 @interface.implementer(IACLProvider)
-@component.adapter(content_interfaces.IContentPackageLibrary)
+@component.adapter(IContentPackageLibrary)
 class _ContentPackageLibraryACLProvider(object):
 
 	def __init__(self, context):
@@ -895,9 +901,8 @@ class _ContentPackageLibraryACLProvider(object):
 								  authorization.ACT_READ,
 								  _ContentPackageLibraryACLProvider),))
 
-
 @interface.implementer(IACLProvider)
-@component.adapter(content_interfaces.IContentPackageBundleLibrary)
+@component.adapter(IContentPackageBundleLibrary)
 class _ContentPackageBundleLibraryACLProvider(object):
 
 	def __init__(self, context):
