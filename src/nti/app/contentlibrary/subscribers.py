@@ -27,6 +27,8 @@ from nti.contentlibrary.interfaces import IContentPackageLibrary
 from nti.contentlibrary.interfaces import IContentPackageBundleLibrary
 from nti.contentlibrary.interfaces import IContentPackageLibraryDidSyncEvent
 
+from nti.contenttypes.presentation import iface_of_asset
+
 from nti.contenttypes.presentation.interfaces import INTIAudio
 from nti.contenttypes.presentation.interfaces import INTIVideo
 from nti.contenttypes.presentation.interfaces import INTISlide
@@ -46,6 +48,9 @@ from nti.externalization.interfaces import StandardExternalFields
 
 from nti.ntiids.ntiids import is_valid_ntiid_string
 
+from nti.recorder.record import copy_transaction_history
+from nti.recorder.record import remove_transaction_history
+
 from nti.site.utils import registerUtility
 from nti.site.utils import unregisterUtility
 from nti.site.interfaces import IHostPolicySiteManager
@@ -55,11 +60,11 @@ from .interfaces import IContentBoard
 
 ITEMS = StandardExternalFields.ITEMS
 
-INDICES = ( ('audio_index.json', INTIAudio, create_ntiaudio_from_external),
+INDICES = (	('audio_index.json', INTIAudio, create_ntiaudio_from_external),
 			('video_index.json', INTIVideo, create_ntivideo_from_external),
 			('timeline_index.json', INTITimeline, create_timelime_from_external),
 			('slidedeck_index.json', INTISlideDeck, create_object_from_external),
-			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external) )
+			('related_content_index.json', INTIRelatedWorkRef, create_relatedwork_from_external))
 
 def prepare_json_text(s):
 	result = unicode(s, 'utf-8') if isinstance(s, bytes) else s
@@ -89,7 +94,7 @@ def _register_utility(item, provided, ntiid, registry=None, intids=None, connect
 		registered = registry.queryUtility(provided, name=ntiid)
 		if registered is None or intids.queryId(registered) is None:
 			assert is_valid_ntiid_string(ntiid), "Invalid NTIID %s" % ntiid
-			if intids.queryId(registered) is None: # remove if invalid
+			if intids.queryId(registered) is None:  # remove if invalid
 				unregisterUtility(registry, provided=provided, name=ntiid)
 			registerUtility(registry, item, provided=provided, name=ntiid)
 			intid_register(item, registry, intids, connection)
@@ -164,7 +169,7 @@ def _can_be_removed(registered, force=False):
 	return result
 can_be_removed = _can_be_removed
 
-def _removed_registered(provided, name, intids=None, registry=None, 
+def _removed_registered(provided, name, intids=None, registry=None,
 						catalog=None, force=False):
 	registry = get_registry(registry)
 	registered = registry.queryUtility(provided, name=name)
@@ -180,7 +185,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 	elif registered is not None:
 		logger.warn("Object (%s,%s) is locked cannot be removed during sync",
 					provided.__name__, name)
-		registered = None # set to None since it was not removed
+		registered = None  # set to None since it was not removed
 	return registered
 
 def _remove_from_registry(containers=None, namespace=None, provided=None,
@@ -192,13 +197,13 @@ def _remove_from_registry(containers=None, namespace=None, provided=None,
 	result = []
 	registry = get_registry(registry)
 	catalog = get_library_catalog() if catalog is None else catalog
-	if catalog is None: # may be None in test mode
+	if catalog is None:  # may be None in test mode
 		return result
 	else:
 		sites = get_component_hierarchy_names()
 		intids = component.getUtility(IIntIds) if intids is None else intids
 		for item in catalog.search_objects(intids=intids, provided=provided,
-										   container_ntiids=containers, 
+										   container_ntiids=containers,
 										   namespace=namespace,
 										   sites=sites):
 			ntiid = item.ntiid
@@ -242,12 +247,22 @@ def _index_item(item, content_package, container_id, catalog):
 				  		  namespace=content_package.ntiid, sites=sites)
 	return result
 
+def _copy_remove_transactions(items, registry=None):
+	registry = get_registry(registry)
+	for item in items or ():
+		provided = iface_of_asset(item)
+		obj = registry.queryUtility(provided, name=item.ntiid)
+		if obj is None:
+			remove_transaction_history(item)
+		else:
+			copy_transaction_history(item, obj)
+
 def _store_asset(content_package, container_id, ntiid, item):
 	try:
 		unit = content_package[container_id]
 	except KeyError:
 		unit = content_package
-	
+
 	container = IPresentationAssetContainer(unit, None)
 	if container is not None:
 		container[ntiid] = item
@@ -280,7 +295,7 @@ def _update_index_when_content_changes(content_package, index_filename,
 		# Nothing to do
 		return
 
-	if catalog is not None: # may be None in test mode
+	if catalog is not None:  # may be None in test mode
 		sk_lastModified = sibling_key.lastModified
 		last_mod_namespace = _get_file_last_mod_namespace(content_package, index_filename)
 		last_modified = catalog.get_last_modified(last_mod_namespace)
@@ -342,10 +357,13 @@ def _update_index_when_content_changes(content_package, index_filename,
 	registered_count = len(added)
 	removed_count = len(removed)
 
+	# keep transaction history
+	_copy_remove_transactions(removed, registry=registry)
+
 	# Index our contained items; ignoring the global library.
 	index_item_count = 0
 	if registry != component.getGlobalSiteManager():
-		index_item_count = _index_items(content_package, index, item_iface, 
+		index_item_count = _index_items(content_package, index, item_iface,
 										removed, catalog, registry)
 
 	logger.info('Finished indexing %s (registered=%s) (indexed=%s) (removed=%s)',
@@ -413,6 +431,9 @@ def _clear_when_removed(content_package):
 						 			catalog=catalog,
 						 			force=True)
 	result.extend(removed)
+
+	for item in result:
+		remove_transaction_history(item)
 
 	logger.info('Removed indexes for content package %s (removed=%s)',
 				content_package, len(result))
