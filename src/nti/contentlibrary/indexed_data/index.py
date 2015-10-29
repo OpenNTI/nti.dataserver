@@ -202,15 +202,17 @@ class ContainedObjectCatalog(Persistent):
 		return False
 
 	def get_references(self, container_ntiids=None, provided=None,
-					   namespace=None, ntiid=None, sites=None):
+					   namespace=None, ntiid=None, sites=None,
+					   container_all_of=True):
 		result = None
+		container_query = 'all_of' if container_all_of else 'any_of'
 
 		# Provided is interface that maps to our type adapter
 		for index, value, query in ((self._site_index, sites, 'any_of'),
 									(self._ntiid_index, ntiid, 'any_of'),
 									(self._type_index, provided, 'any_of'),
 									(self._namespace_index, namespace, 'any_of'),
-							  		(self._container_index, container_ntiids, 'all_of')):
+							  		(self._container_index, container_ntiids, container_query)):
 			if value is not None:
 				value = to_iterable(value)
 				ids = index.apply({query: value}) or self.family.IF.LFSet()
@@ -221,7 +223,7 @@ class ContainedObjectCatalog(Persistent):
 		return result if result else self.family.IF.LFSet()
 
 	def search_objects(self, container_ntiids=None, provided=None, namespace=None,
-					   ntiid=None, sites=None, intids=None):
+					   ntiid=None, sites=None, intids=None, container_all_of=True):
 		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if intids is not None:
 			refs = self.get_references(container_ntiids=container_ntiids,
