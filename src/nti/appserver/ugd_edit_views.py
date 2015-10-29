@@ -17,8 +17,8 @@ import time
 
 import transaction
 
-from zope import interface
 from zope import component
+from zope import interface
 from zope import lifecycleevent
 
 from zope.container.interfaces import InvalidContainerType
@@ -33,9 +33,11 @@ from nti.dataserver.interfaces import IContained
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IContainerContext
 
-from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardInternalFields
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.externalization import toExternalObject
+
 from nti.externalization.oids import to_external_ntiid_oid as toExternalOID
 
 from .interfaces import INewObjectTransformer
@@ -139,7 +141,7 @@ class UGDPostView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMix
 		# Respond with the generic location of the object, within
 		# the owner's Objects tree.
 		# TODO: Shouldn't this be the external OID NTIID ?
-		self.request.response.location = self.request.resource_url(	owner,
+		self.request.response.location = self.request.resource_url(owner,
 																	'Objects',
 																	toExternalOID(containedObject))
 
@@ -267,7 +269,7 @@ class UGDPutView(AbstractAuthenticatedView,
 						objectId,
 						getattr(theObject, '__class__', type(theObject)).__name__)
 
-		if theObject and theObject == theObject.creator:
+		if theObject and theObject == creator:
 			# Updating a user. Naturally, this is done by
 			# the user himself. We never want to send
 			# back the entire user, but we do want to
