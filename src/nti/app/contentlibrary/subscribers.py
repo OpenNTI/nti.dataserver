@@ -160,8 +160,7 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 
 def _can_be_removed(registered, force=False):
 	result = registered is not None and \
-			 (	force or
-			 	(not IRecordable.providedBy(registered) or not registered.locked) )
+			 (force or not IRecordable.providedBy(registered) or not registered.locked)
 	return result
 can_be_removed = _can_be_removed
 
