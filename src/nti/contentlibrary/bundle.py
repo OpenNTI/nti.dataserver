@@ -223,8 +223,8 @@ class ContentPackageBundleLibrary(CheckingLastModifiedBTreeContainer):
 			seen_ids.add(bundle.__name__)
 			yield bundle
 
-# : The name of the file that identifies a directory
-# : as a content bundle
+#: The name of the file that identifies a directory
+#: as a content bundle
 _BUNDLE_META_NAME = "bundle_meta_info.json"
 BUNDLE_META_NAME = _BUNDLE_META_NAME  # export
 
