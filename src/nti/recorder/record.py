@@ -128,7 +128,7 @@ def has_transactions(obj):
 		pass
 	return result
 
-def get_transactions(obj, sort=False):
+def get_transactions(obj, sort=False, descending=True):
 	result = []
 	try:
 		annotations = obj.__annotations__
@@ -136,7 +136,7 @@ def get_transactions(obj, sort=False):
 		if history:
 			result.extend(history)
 		if sort:
-			result.sort(key=lambda t: t.createdTime)
+			result.sort(key=lambda t: t.createdTime, reverse=descending)
 	except AttributeError:
 		pass
 	return result
