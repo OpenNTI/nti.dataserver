@@ -85,8 +85,9 @@ class TransactionRecordHistory(Contained, Persistent):
 		return record
 	append = add
 
-	def extend(self, records=()):
-		self._records.extend(records)
+	def extend(self, records=(), connection=False):
+		for record in records or ():
+			self.add(record, connection=connection)
 
 	def remove(self, record, event=True):
 		self._records.remove(record)
