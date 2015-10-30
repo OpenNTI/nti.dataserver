@@ -286,8 +286,6 @@ setup(
 		 # Consider also https://github.com/phensley/gstatsd
 		'pystatsd',
 		'pytz',
-		 # RDF and embedded RDFa parsing.
-		'rdflib',
 		 # Redis python client. Note that Amazon deployed servers are still in the 2.6 (2.4?) series
 		'redis',
 		'reportlab',
