@@ -160,7 +160,7 @@ def copy_history(source, target, clear=True):
 			return 0
 		records = list(source_history)
 		target_history = ITransactionRecordHistory(target)
-		target_history.extends(records)
+		target_history.extend(records)
 		if clear:
 			source_history.clear(event=False)
 		return len(records)
