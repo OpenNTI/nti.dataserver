@@ -35,10 +35,10 @@ class ITransactionRecord(IContained, ICreated):
 
 class ITransactionRecordHistory(IContained, IIterable):
 
-	def add(record):
+	def add(record, connection=True):
 		pass
 
-	def extend(records):
+	def extend(records, connection=False):
 		pass
 
 	def remove(record):
