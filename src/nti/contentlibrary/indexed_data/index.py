@@ -230,7 +230,8 @@ class ContainedObjectCatalog(Persistent):
 									   provided=provided,
 									   namespace=namespace,
 									   ntiid=ntiid,
-									   sites=sites)
+									   sites=sites,
+									   container_all_of=container_all_of)
 			result = ResultSet(refs, intids)
 		else:
 			result = ()
