@@ -444,7 +444,6 @@ setup(
 			'epydoc >= 3.0.1',	# auto-api docs
 			'httpie',
 			'jsonschema',
-			'pycurl' if not IS_PYPY else '',
 			# A development tool to measure, monitor and analyze the memory behavior of Python objects.
 			'pympler' if not IS_PYPY else '',
 			'mistune',
