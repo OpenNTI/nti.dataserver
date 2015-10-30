@@ -45,6 +45,7 @@ CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
 IX_SITE = 'site'
+IX_LOCKED = 'locked'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_TARGET_INTID = 'targetIntId'
@@ -131,6 +132,27 @@ class AttributeSetIndex(AttributeSetIndex):
 	default_field_name = 'attributes'
 	default_interface = ITransactionRecord
 
+class ValidatingLocked(object):
+
+	__slots__ = (b'locked',)
+
+	def __init__(self, obj, default=None):
+		if ITransactionRecord.providedBy(obj):
+			source = find_interface(obj, IRecordable, strict=False)
+		elif IRecordable.providedBy(obj):
+			source = obj
+		else:
+			source = None
+		if source is not None:
+			self.locked = source.locked
+
+	def __reduce__(self):
+		raise TypeError()
+
+class LockedIndex(AttributeValueIndex):
+	field_name = default_field_name = 'locked'
+	interface = default_interface = ValidatingLocked
+
 @interface.implementer(IMetadataCatalog)
 class MetadataRecorderCatalog(Catalog):
 
@@ -158,6 +180,7 @@ def install_recorder_catalog(site_manager_container, intids=None):
 
 	for name, clazz in ((IX_TID, TIDIndex),
 						(IX_SITE, SiteIndex),
+						(IX_LOCKED, LockedIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
 						(IX_ATTRIBUTES, AttributeSetIndex),
