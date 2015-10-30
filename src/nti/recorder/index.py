@@ -16,8 +16,6 @@ from zope.intid import IIntIds
 
 from zope.location import locate
 
-from nti.common.property import Lazy
-
 from nti.coremetadata.interfaces import IRecordable
 
 from nti.site.site import get_component_hierarchy_names
@@ -48,8 +46,8 @@ IX_SITE = 'site'
 IX_LOCKED = 'locked'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
-IX_TARGET_INTID = 'targetIntId'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
+IX_RECORDABLE = IX_TARGET_INTID = 'targetIntId'
 
 class KeepSetIndex(RawSetIndex):
 
@@ -102,11 +100,12 @@ class ValidatingTargetIntID(object):
 	def __init__(self, obj, default=None):
 		if ITransactionRecord.providedBy(obj):
 			source = find_interface(obj, IRecordable, strict=False)
-			self.intid = self.intid.queryId(source) if source is not None else None
-
-	@Lazy
-	def intid(self):
-		return component.getUtility(IIntIds)
+		elif IRecordable.providedBy(obj):
+			source = obj
+		else:
+			source = None
+		if source is not None:
+			self.intid = component.getUtility(IIntIds).queryId(source)
 
 	def __reduce__(self):
 		raise TypeError()
