@@ -228,6 +228,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				if uid is not None:
 					catalog.unindex(uid)
 					intids.unregister(asset)
+				remove_transaction_history(asset)
 			contained.add(ntiid)
 
 		result['TotalRemoved'] = len(items)
@@ -274,7 +275,7 @@ class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsVie
 		for ntiid, asset in self._registered_assets(registry):
 			if not can_be_removed(asset, force=force):
 				continue
-			# trax
+			# remove trax
 			remove_transaction_history(asset)
 			# unregister utility
 			provided = iface_of_thing(asset)
