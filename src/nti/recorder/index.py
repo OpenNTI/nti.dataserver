@@ -106,7 +106,8 @@ class ValidatingTargetIntID(object):
 		else:
 			source = None
 		if source is not None:
-			self.intid = component.getUtility(IIntIds).queryId(source)
+			intids = component.queryUtility(IIntIds) # test mode
+			self.intid = intids.queryId(source) if intids is not None else None
 
 	def __reduce__(self):
 		raise TypeError()
@@ -164,6 +165,20 @@ class MetadataRecorderCatalog(Catalog):
 	def force_index_doc(self, docid, ob):
 		self.super_index_doc(docid, ob)
 
+def create_recorder_catalog(family):
+	catalog = MetadataRecorderCatalog(family=family)
+	for name, clazz in ((IX_TID, TIDIndex),
+						(IX_SITE, SiteIndex),
+						(IX_LOCKED, LockedIndex),
+						(IX_PRINCIPAL, PrincipalIndex),
+						(IX_CREATEDTIME, CreatedTimeIndex),
+						(IX_ATTRIBUTES, AttributeSetIndex),
+						(IX_TARGET_INTID, TargetIntIDIndex)):
+		index = clazz(family=family)
+		locate(index, catalog, name)
+		catalog[name] = index
+	return catalog
+
 def install_recorder_catalog(site_manager_container, intids=None):
 	lsm = site_manager_container.getSiteManager()
 	if intids is None:
@@ -173,22 +188,13 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	if catalog is not None:
 		return catalog
 
-	catalog = MetadataRecorderCatalog(family=intids.family)
+	catalog = create_recorder_catalog(family=intids.family)
 	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
 
-	for name, clazz in ((IX_TID, TIDIndex),
-						(IX_SITE, SiteIndex),
-						(IX_LOCKED, LockedIndex),
-						(IX_PRINCIPAL, PrincipalIndex),
-						(IX_CREATEDTIME, CreatedTimeIndex),
-						(IX_ATTRIBUTES, AttributeSetIndex),
-						(IX_TARGET_INTID, TargetIntIDIndex)):
-		index = clazz(family=intids.family)
+	for index in catalog.values():
 		intids.register(index)
-		locate(index, catalog, name)
-		catalog[name] = index
 	return catalog
 
 def get_recordables(objects=True, catalog=None, intids=None):
