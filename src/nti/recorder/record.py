@@ -153,12 +153,13 @@ def remove_history(obj):
 	return 0
 remove_transaction_history = remove_history
 
-def append_transactions(target, records=(), connection=True):
+def append_records(target, records=(), connection=True):
 	if ITransactionRecord.providedBy(records):
 		records = (records,)
 	history = ITransactionRecordHistory(target)
 	history.extend(records, connection)
 	return len(records)
+append_transactions = append_records
 
 def copy_history(source, target, clear=True):
 	try:
