@@ -74,12 +74,11 @@ class TransactionRecordHistory(Contained, Persistent):
 
 	def add(self, record, connection=True):
 		assert ITransactionRecord.providedBy(record)
-		# locate before firing events
-		locate(record, self)
+		locate(record, self) # take ownership
 		if connection:
-			# add to connection and fire event
-			IConnection(self).add(record)
-			lifecycleevent.created(record)
+			if getattr(record, '_p_jar', None) is None:
+				IConnection(self).add(record)
+				lifecycleevent.created(record)
 			lifecycleevent.added(record)  # get an iid
 		self._records.append(record)
 		return record
