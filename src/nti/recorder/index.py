@@ -215,7 +215,7 @@ def get_recordables(objects=True, catalog=None, intids=None):
 	uids = catalog.family.IF.union(locked_ids, recordable_ids)
 	if objects:
 		intids = component.getUtility(IIntIds) if intids is None else intids
-		result = ResultSet(list(uids), intids)
+		result = ResultSet(uids, intids)
 	else:
 		result = uids
 	return result

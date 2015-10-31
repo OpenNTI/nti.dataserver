@@ -50,7 +50,7 @@ def do_evolve(context):
 					continue
 				locate(old, None, None)
 				copy_records(recordable, old._records)
-			except KeyError:
+			except AttributeError:
 				pass
 		logger.info('Dataserver evolution %s done.', generation)
 
