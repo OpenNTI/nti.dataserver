@@ -51,11 +51,15 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
 	createDirectFieldProperties(ITransactionRecord)
 
+	serial = alias('tid')
 	username = alias('principal')
 
 	def __init__(self, *args, **kwargs):
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)
+
+	def key(self):
+		return "(%s,%s,%s)" % (self.principal, self.createdTime, self.tid)
 
 @component.adapter(IRecordable)
 @interface.implementer(ITransactionRecordHistory, ISublocations)
