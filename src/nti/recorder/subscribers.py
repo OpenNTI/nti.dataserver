@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import component
 
+from zope.lifecycleevent.interfaces import IObjectRemovedEvent
+
 from zope.security.interfaces import NoInteraction
 from zope.security.management import getInteraction
 from zope.security.management import queryInteraction
@@ -24,6 +26,7 @@ from nti.coremetadata.interfaces import IRecordable
 from nti.externalization.interfaces import IObjectModifiedFromExternalEvent
 
 from .record import TransactionRecord
+from .record import remove_transaction_history
 
 from .interfaces import ITransactionRecordHistory
 
@@ -63,3 +66,7 @@ def _record_modification(obj, event):
 		return
 	history = ITransactionRecordHistory(obj)
 	record_trax(obj, event.descriptions, event.external_value, history)
+	
+@component.adapter(IRecordable, IObjectRemovedEvent)
+def _recorable_removed(obj, event):
+	remove_transaction_history(obj)
