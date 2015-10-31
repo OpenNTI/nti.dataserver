@@ -28,6 +28,7 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.internalization import read_body_as_external_object
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
+from nti.common.string import TRUE_VALUES
 from nti.common.maps import CaseInsensitiveDict
 
 from nti.contentlibrary.indexed_data import get_registry
@@ -42,11 +43,14 @@ from nti.dataserver.interfaces import IDataserverFolder
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.recorder.record import remove_transaction_history
+
 from nti.site.utils import unregisterUtility
 from nti.site.site import get_component_hierarchy_names
 
 from ..utils import yield_content_packages
 
+from ..subscribers import can_be_removed
 from ..subscribers import clear_package_assets
 from ..subscribers import clear_content_package_assets
 from ..subscribers import clear_namespace_last_modified
@@ -61,6 +65,19 @@ def _get_package_ntiids(values):
 	if ntiids and isinstance(ntiids, six.string_types):
 		ntiids = ntiids.split()
 	return ntiids
+
+def _is_true(v):
+	return v and str(v).lower() in TRUE_VALUES
+
+def _read_input(request):
+	result = CaseInsensitiveDict()
+	if request:
+		if request.body:
+			values = read_body_as_external_object(request)
+		else:
+			values = request.params
+		result.update(values)
+	return result
 
 @view_config(context=IDataserverFolder)
 @view_defaults(route_name='objects.generic.traversal',
@@ -105,24 +122,18 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 										 ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		result = CaseInsensitiveDict()
-		if self.request:
-			if self.request.body:
-				values = read_body_as_external_object(self.request)
-			else:
-				values = self.request.params
-			result.update(values)
-		return result
+		return _read_input(self.request)
 
 	def _do_call(self, result):
+		total = 0
 		values = self.readInput()
 		ntiids = _get_package_ntiids(values)
+		force = _is_true(values.get('force'))
 		packages = list(yield_content_packages(ntiids))
 
-		total = 0
 		result = LocatedExternalDict()
 		for package in packages:
-			total += len(clear_content_package_assets(package, True))
+			total += len(clear_content_package_assets(package, force=force))
 		result['Total'] = total
 		return result
 
@@ -145,6 +156,9 @@ class ResetPackagePresentationAssetsView(AbstractAuthenticatedView,
 class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 										  ModeledContentUploadRequestUtilsMixin):
 
+	def readInput(self, value=None):
+		return _read_input(self.request)
+
 	def _unregister(self, sites_names, provided, name):
 		result = False
 		sites_names = list(sites_names)
@@ -154,8 +168,8 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 			try:
 				folder = hostsites[site_name]
 				registry = folder.getSiteManager()
-				result = unregisterUtility(registry, 
-										   provided=provided, 
+				result = unregisterUtility(registry,
+										   provided=provided,
 										   name=name) or result
 			except KeyError:
 				pass
@@ -202,7 +216,7 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 				self._unregister(sites, provided=provided, name=ntiid)
 				intids.unregister(asset)
 			registered += 1
-			
+
 		contained = set()
 		for container, ntiid, asset in self._contained_assets():
 			uid = intids.queryId(asset)
@@ -241,23 +255,37 @@ class RemovePackageInaccessibleAssetsView(AbstractAuthenticatedView,
 class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsView):
 
 	def _do_call(self, result):
+		values = self.readInput()
 		registry = get_registry()
 		catalog = get_library_catalog()
+		force = _is_true(values.get('force'))
 		sites = get_component_hierarchy_names()
 		intids = component.getUtility(IIntIds)
 
 		registered = 0
-		references = catalog.get_references(sites=sites,
+		references = set()
+		result_set = catalog.search_objects(sites=sites,
 											provided=PACKAGE_CONTAINER_INTERFACES)
-		for uid in references:
-			catalog.unindex(uid)
+		for uid, asset in result_set.iter_pairs():
+			if can_be_removed(asset, force=force):
+				catalog.unindex(uid)
+				references.add(uid)
 
 		for ntiid, asset in self._registered_assets(registry):
-			uid = intids.queryId(asset)
+			if not can_be_removed(asset, force=force):
+				continue
+			# trax
+			remove_transaction_history(asset)
+			# unregister utility
 			provided = iface_of_thing(asset)
 			self._unregister(sites, provided=provided, name=ntiid)
+			# unregister fron intid
+			uid = intids.queryId(asset)
 			if uid is not None:
 				intids.unregister(asset)
+			# ground if possible
+			if hasattr('asset', '__parent__'):
+				asset.__parent__ = None
 			registered += 1
 
 		for package in yield_content_packages():
@@ -288,14 +316,7 @@ class SyncPackagePresentationAssetsView(AbstractAuthenticatedView,
 										ModeledContentUploadRequestUtilsMixin):
 
 	def readInput(self, value=None):
-		result = CaseInsensitiveDict()
-		if self.request:
-			if self.request.body:
-				values = read_body_as_external_object(self.request)
-			else:
-				values = self.request.params
-			result.update(values)
-		return result
+		return _read_input(self.request)
 
 	def _do_call(self, result):
 		values = self.readInput()
