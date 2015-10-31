@@ -398,7 +398,7 @@ def _update_indices_when_content_changes(content_package, event):
 
 # clear events
 
-def _clear_when_removed(content_package):
+def _clear_when_removed(content_package, force=True):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
@@ -418,18 +418,18 @@ def _clear_when_removed(content_package):
 		removed = _remove_from_registry(namespace=content_package.ntiid,
 							  			provided=item_iface,
 							  			catalog=catalog,
-							  			force=True)
+							  			force=force)
 		result.extend(removed)
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 						  			provided=INTISlide,
 						  			catalog=catalog,
-						  			force=True)
+						  			force=force)
 	result.extend(removed)
 
 	removed = _remove_from_registry(namespace=content_package.ntiid,
 						  			provided=INTISlideVideo,
 						 			catalog=catalog,
-						 			force=True)
+						 			force=force)
 	result.extend(removed)
 
 	for item in result:
