@@ -13,13 +13,13 @@ from zope import interface
 
 from zope.container.interfaces import IContained
 
-from dolmen.builtins.interfaces import IIterable
-
 from nti.dataserver_core.interfaces import ICreated
 
 from nti.schema.field import Object
 from nti.schema.field import ValidTextLine
 from nti.schema.field import IndexedIterable
+
+TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 
 class ITransactionRecord(IContained, ICreated):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
@@ -33,12 +33,12 @@ class ITransactionRecord(IContained, ICreated):
 							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
 
-class ITransactionRecordHistory(IContained, IIterable):
+class ITransactionRecordHistory(IContained):
 
-	def add(record, connection=True):
+	def add(record):
 		pass
 
-	def extend(records, connection=False):
+	def extend(records):
 		pass
 
 	def remove(record):
@@ -46,3 +46,7 @@ class ITransactionRecordHistory(IContained, IIterable):
 
 	def clear(event=True):
 		pass
+	
+	def records():
+		pass
+

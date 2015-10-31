@@ -11,7 +11,7 @@
 	<include package="zope.security" />
 
 	<!-- Adapters -->
-	<adapter factory=".record._TransactionRecordHistoryFactory"
+	<adapter factory=".adapters._TransactionRecordHistoryFactory"
 			 provides=".interfaces.ITransactionRecordHistory"
 			 for="nti.coremetadata.interfaces.IRecordable" />
 			 

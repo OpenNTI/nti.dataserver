@@ -23,13 +23,14 @@ from nti.site.site import get_component_hierarchy_names
 from nti.traversal.traversal import find_interface
 
 from nti.zope_catalog.catalog import Catalog
+from nti.zope_catalog.catalog import ResultSet
 
 from nti.zope_catalog.interfaces import IMetadataCatalog
 
 from nti.zope_catalog.index import AttributeSetIndex
 from nti.zope_catalog.index import AttributeValueIndex
 from nti.zope_catalog.index import NormalizationWrapper
-from nti.zope_catalog.index import IntegerAttributeIndex 
+from nti.zope_catalog.index import IntegerAttributeIndex
 from nti.zope_catalog.index import SetIndex as RawSetIndex
 from nti.zope_catalog.index import ValueIndex as RawValueIndex
 from nti.zope_catalog.index import IntegerValueIndex as RawIntegerValueIndex
@@ -79,7 +80,7 @@ class SiteIndex(KeepSetIndex):
 
 	def to_iterable(self, value):
 		if ITransactionRecord.providedBy(value):
-			result = get_component_hierarchy_names()	
+			result = get_component_hierarchy_names()
 		else:
 			result = ()
 		return result
@@ -189,3 +190,26 @@ def install_recorder_catalog(site_manager_container, intids=None):
 		locate(index, catalog, name)
 		catalog[name] = index
 	return catalog
+
+def get_recordables(objects=True, catalog=None, intids=None):
+	"""
+	return the the recordables in the catalog
+	"""
+	if catalog is None:
+		catalog = component.getUtility(IMetadataCatalog, name=CATALOG_NAME)
+
+	# ids in transactions
+	target_index = catalog[IX_TARGET_INTID]
+	recordable_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
+	
+	# locked status
+	locked_index = catalog[IX_LOCKED]
+	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
+	
+	uids = catalog.family.IF.union(locked_ids, recordable_ids)
+	if objects:
+		intids = component.getUtility(IIntIds) if intids is None else intids
+		result = ResultSet(list(uids), intids)
+	else:
+		result = uids
+	return result
