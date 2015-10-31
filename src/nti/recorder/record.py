@@ -9,27 +9,17 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-from zope import component
 from zope import interface
-from zope import lifecycleevent
-
-from zope.annotation import factory as an_factory
 
 from zope.container.contained import Contained
 
-from zope.location import locate
-from zope.location.interfaces import ISublocations
+from zope.deprecation import deprecated
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from ZODB.interfaces import IConnection
-
 from persistent import Persistent
-from persistent.list import PersistentList
 
 from nti.common.property import alias
-
-from nti.coremetadata.interfaces import IRecordable
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 
@@ -39,11 +29,13 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+from .interfaces import TRX_RECORD_HISTORY_KEY
+
 from .interfaces import ITransactionRecord
 from .interfaces import ITransactionRecordHistory
 
 @WithRepr
-@EqHash('principal', 'createdTime')
+@EqHash('principal', 'createdTime', 'tid')
 @interface.implementer(ITransactionRecord, IContentTypeAware)
 class TransactionRecord(PersistentCreatedModDateTrackingObject,
 			 			SchemaConfigured,
@@ -58,69 +50,13 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 		SchemaConfigured.__init__(self, *args, **kwargs)
 		PersistentCreatedModDateTrackingObject.__init__(self)
 
-	def key(self):
-		return "(%s,%s,%s)" % (self.principal, self.createdTime, self.tid)
-
-@component.adapter(IRecordable)
-@interface.implementer(ITransactionRecordHistory, ISublocations)
-class TransactionRecordHistory(Contained, Persistent):
-
-	def __init__(self):
-		self.reset()
-
-	def reset(self):
-		self._records = PersistentList()
-		self._records.__parent__ = self
-
 	@property
-	def object(self):
-		return self.__parent__
+	def key(self):
+		return "(%s,%s,%s)" % (self.createdTime, self.principal, self.tid)
 
-	def add(self, record, connection=True):
-		assert ITransactionRecord.providedBy(record)
-		locate(record, self) # take ownership
-		if connection:
-			if getattr(record, '_p_jar', None) is None:
-				IConnection(self).add(record)
-				lifecycleevent.created(record)
-			lifecycleevent.added(record)  # get an iid
-		self._records.append(record)
-		return record
-	append = add
-
-	def extend(self, records=(), connection=False):
-		for record in records or ():
-			self.add(record, connection=connection)
-
-	def remove(self, record, event=True):
-		self._records.remove(record)
-		if event:
-			lifecycleevent.removed(record)  # remove iid
-		return True
-
-	def clear(self, event=True):
-		result = len(self._records)
-		if not event:
-			del self._records[:]
-		else:
-			for _ in xrange(len(self._records)):
-				record = self._records.pop()
-				lifecycleevent.removed(record)  # remove iid
-		return result
-
-	def __iter__(self):
-		return iter(self._records)
-
-	def __len__(self):
-		return len(self._records)
-
-	def sublocations(self):
-		for record in self._records:
-			yield record
-
-TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
-_TransactionRecordHistoryFactory = an_factory(TransactionRecordHistory,
-											  TRX_RECORD_HISTORY_KEY)
+deprecated('TransactionRecordHistory', 'No longer used')
+class TransactionRecordHistory(Contained, Persistent):
+	_records = ()
 
 def has_transactions(obj):
 	result = False
@@ -155,11 +91,11 @@ def remove_history(obj):
 	return 0
 remove_transaction_history = remove_history
 
-def append_records(target, records=(), connection=True):
+def append_records(target, records=()):
 	if ITransactionRecord.providedBy(records):
 		records = (records,)
 	history = ITransactionRecordHistory(target)
-	history.extend(records, connection)
+	history.extend(records)
 	return len(records)
 append_transactions = append_records
 
@@ -180,7 +116,7 @@ def copy_history(source, target, clear=True):
 	return 0
 copy_transaction_history = copy_history
 
-def copy_records(target, records=(), connection=False):
+def copy_records(target, records=()):
 	history = ITransactionRecordHistory(target)
-	history.extend(records, connection)
+	history.extend(records)
 	return len(records)

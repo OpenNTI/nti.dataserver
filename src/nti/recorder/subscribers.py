@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 from zope import component
+from zope import lifecycleevent
 
 from zope.lifecycleevent.interfaces import IObjectRemovedEvent
 
@@ -54,6 +55,7 @@ def record_trax(recordable, descriptions=(), ext_value=None, history=None):
 	record = TransactionRecord(principal=username, tid=tid,
 							   attributes=tuple(attributes),
 							   external_value=ext_value)
+	lifecycleevent.created(record)
 	history.add(record)
 
 	recordable.locked = True
