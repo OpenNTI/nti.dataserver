@@ -252,7 +252,7 @@ class RemoveAllPackagesPresentationAssetsView(RemovePackageInaccessibleAssetsVie
 		for uid in references:
 			catalog.unindex(uid)
 
-		for ntiid, asset in self._assets(registry):
+		for ntiid, asset in self._registered_assets(registry):
 			uid = intids.queryId(asset)
 			provided = iface_of_thing(asset)
 			self._unregister(sites, provided=provided, name=ntiid)
