@@ -137,8 +137,7 @@ def get_transactions(obj, sort=False, descending=True):
 	try:
 		annotations = obj.__annotations__
 		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
-		if history:
-			result.extend(history)
+		result.extend(history or ())
 		if sort:
 			result.sort(key=lambda t: t.createdTime, reverse=descending)
 	except AttributeError:
@@ -180,3 +179,8 @@ def copy_history(source, target, clear=True):
 		pass
 	return 0
 copy_transaction_history = copy_history
+
+def copy_records(target, records=(), connection=False):
+	history = ITransactionRecordHistory(target)
+	history.extend(records, connection)
+	return len(records)
