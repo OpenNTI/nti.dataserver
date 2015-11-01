@@ -29,6 +29,7 @@ from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
 from nti.dataserver.metadata_index import IX_TOPICS
 from nti.dataserver.metadata_index import IX_TAGGEDTO
+from nti.dataserver.metadata_index import IX_CREATEDTIME
 from nti.dataserver.metadata_index import TP_TOP_LEVEL_CONTENT
 from nti.dataserver.metadata_index import TP_DELETED_PLACEHOLDER
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
@@ -170,13 +171,23 @@ class UserNotableData(AbstractAuthenticatedView):
 		if min_created_time is None and max_created_time is None:
 			return None
 
-		intids_in_time_range = self._catalog['createdTime'].apply({'between': (min_created_time, max_created_time,)})
+		if min_created_time is None:
+			# We should probably remove time range filtering here, and leave it
+			# to callers. Batching from 0 to a timestamp is extremely slow as our
+			# index increases in size. The entire index has to be awaken to do
+			# the filtering.
+			logger.warn( 'Slow running query from time 0 to %s on large index.',
+						max_created_time )
+
+		intids_in_time_range = self._catalog[IX_CREATEDTIME].apply(
+											{'between': (min_created_time, max_created_time,)})
 		return intids_in_time_range
 
 	@CachedProperty
 	def _group_ntiids(self):
 		# Return all friends list we own or are members of.
-		results = set( self.remoteUser.friendsLists.values() ) | set( self.remoteUser.dynamic_memberships )
+		results = set( self.remoteUser.friendsLists.values() ) \
+				| set( self.remoteUser.dynamic_memberships )
 		return {x.NTIID for x in results if IFriendsList.providedBy( x )}
 
 	@CachedProperty('_time_range')
