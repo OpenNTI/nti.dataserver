@@ -58,7 +58,7 @@ class _NotableRecursiveUGDView(_UGDView):
 	batchBefore
 		If given, this is the timestamp (floating point number in fractional
 		unix seconds, as returned in ``Last Modified``) of the *youngest*
-		object to consider returning. Thus, the most efficient way to page through
+		object to consider returning (exclusive). Thus, the most efficient way to page through
 		this object is to *not* use ``batchStart``, but instead to set ``batchBefore``
 		to the timestamp of the *oldest* change in the previous batch (always leaving
 		``batchStart`` at zero). Effectively, this defaults to the current time.
@@ -114,17 +114,17 @@ class _NotableRecursiveUGDView(_UGDView):
 		if most_recently_modified_object:
 			result['Last Modified'] = result.lastModified = most_recently_modified_object[0].lastModified
 
-		# Also if we didn't have to provide TotalItemCount, our
-		# handling of before could be much more efficient
-		# (we could do this join early on)
-		if batch_before is not None:
-			safely_viewable_intids = user_notable_data.get_notable_intids(max_created_time=batch_before)
-
 		descending_sort = request.params.get('sortOrder') != 'ascending'
 		sorted_intids = user_notable_data.sort_notable_intids( 	safely_viewable_intids,
 															   	limit=limit,
 															   	reverse=descending_sort )
 		items = user_notable_data.iter_notable_intids(sorted_intids)
+
+		# It is usually faster and simpler to handle batch_before ourselves,
+		# especially since the users are only browsing the first few pages.
+		if batch_before is not None:
+			# Exclusive to make sure clients do not have dupes.
+			items = (x for x in items if x.createdTime < batch_before)
 		self._batch_items_iterable(result, items,
 								   number_items_needed=limit,
 								   batch_size=batch_size,
