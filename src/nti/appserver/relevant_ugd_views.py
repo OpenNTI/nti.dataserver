@@ -91,7 +91,10 @@ class _AbstractRelevantUGDView(object):
 				units.append( unit )
 
 		for unit in units + [self._get_library_path(ntiid)]:
-			for asm_item in IQAssessmentItemContainer(unit).assessments():
+			container = IQAssessmentItemContainer(unit, None)
+			if not container:
+				continue
+			for asm_item in container.assessments():
 				results.append( asm_item )
 		return results
 
