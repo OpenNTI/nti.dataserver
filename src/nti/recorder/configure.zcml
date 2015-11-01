@@ -24,6 +24,7 @@
 		modules=".record" />
 
 	<!-- Subscribers -->	
+	<subscriber handler=".subscribers._recordable_removed" />
 	<subscriber handler=".subscribers._record_modification" />
 
 </configure>
