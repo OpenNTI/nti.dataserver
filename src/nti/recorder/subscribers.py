@@ -70,5 +70,5 @@ def _record_modification(obj, event):
 	record_trax(obj, event.descriptions, event.external_value, history)
 	
 @component.adapter(IRecordable, IObjectRemovedEvent)
-def _recorable_removed(obj, event):
+def _recordable_removed(obj, event):
 	remove_transaction_history(obj)
