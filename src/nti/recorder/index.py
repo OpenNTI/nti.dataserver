@@ -165,8 +165,8 @@ class MetadataRecorderCatalog(Catalog):
 	def force_index_doc(self, docid, ob):
 		self.super_index_doc(docid, ob)
 
-def create_recorder_catalog(family):
-	catalog = MetadataRecorderCatalog(family=family)
+def create_recorder_catalog(catalog=None, family=None):
+	catalog = MetadataRecorderCatalog(family=family) if catalog is None else catalog
 	for name, clazz in ((IX_TID, TIDIndex),
 						(IX_SITE, SiteIndex),
 						(IX_LOCKED, LockedIndex),
@@ -188,11 +188,12 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	if catalog is not None:
 		return catalog
 
-	catalog = create_recorder_catalog(family=intids.family)
+	catalog = MetadataRecorderCatalog(family=intids.family)
 	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
-
+	
+	catalog = create_recorder_catalog(catalog=catalog)
 	for index in catalog.values():
 		intids.register(index)
 	return catalog
