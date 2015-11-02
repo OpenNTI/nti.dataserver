@@ -129,6 +129,9 @@ ACT_NTI_ADMIN = ACT_COPPA_ADMIN  # alias
 # sync lib
 ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 
+# content edit
+ACT_CONTENT_EDIT = Permission('nti.actions.contentedit')
+
 @interface.implementer(nti_interfaces.IMutableGroupMember)
 @component.adapter(IAttributeAnnotatable)
 class _PersistentGroupMember(persistent.Persistent,
@@ -242,10 +245,10 @@ class _AbstractPrincipal(object):
 		return self.id < other.id
 
 	def __hash__(self):
-		ntiid = getattr( self, 'NTIID', None )
+		ntiid = getattr(self, 'NTIID', None)
 		if ntiid:
-			return hash( self.NTIID )
-		return hash( self.id )
+			return hash(self.NTIID)
+		return hash(self.id)
 
 	def __str__(self):
 		return self.id
@@ -310,10 +313,17 @@ ROLE_ADMIN = _StringRole(ROLE_ADMIN_NAME)
 ROLE_MODERATOR_NAME = ROLE_PREFIX + 'nti.moderator'
 ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 
+#: Name of the high-permission group that is expected to have certain
+#: content-edit-like rights in certain areas
+ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + 'nti.content.editor'
+ROLe_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
+
 # TODO: Everyone and Authenticated can go away
 # through the use of the principal registry
 class _EveryoneGroup(_StringGroup):
-	"Everyone, authenticated or not."
+	"""
+	Everyone, authenticated or not.
+	"""
 
 	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
 	def __init__(self, string):
@@ -383,7 +393,6 @@ def _string_group_factory(name):
 		return result
 	return _StringGroup(name)
 
-
 def _string_role_factory(name):
 	if not name:
 		return None
@@ -416,7 +425,7 @@ class _UserPrincipal(_AbstractPrincipal):
 		self.NTIID = None
 		# Only set NTIID if our context is marked as not
 		# being unique by only the username.
-		if IUseNTIIDAsExternalUsername.providedBy( user ):
+		if IUseNTIIDAsExternalUsername.providedBy(user):
 			self.NTIID = getattr(user, 'NTIID', None) or getattr(user, 'ntiid', None)
 
 	username = alias('id')
