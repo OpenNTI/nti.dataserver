@@ -106,10 +106,9 @@ def copy_history(source, target, clear=True):
 		if not source_history:
 			return 0
 		records = list(source_history)
-		target_history = ITransactionRecordHistory(target)
-		target_history.extend(records)
+		append_records(target, records)
 		if clear:
-			source_history.clear(event=False)
+			source_history.clear(event=False) # don't remove intids
 		return len(records)
 	except AttributeError:
 		pass
