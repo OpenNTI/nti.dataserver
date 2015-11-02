@@ -378,9 +378,19 @@ def acl_from_aces(*args):
 from nti.common.property import LazyOnClass as _LazyOnClass
 
 def _add_admin_moderation(acl, provenance):
-	acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, provenance))
-	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_MODERATE, provenance))
-	acl.append(ace_allowing(authorization.ROLE_ADMIN, authorization.ACT_NTI_ADMIN, provenance))
+	# admin
+	for perm in (authorization.ACT_MODERATE,
+				 authorization.ACT_NTI_ADMIN,
+				 authorization.ACT_CONTENT_EDIT):
+		acl.append(ace_allowing(authorization.ROLE_ADMIN, perm, provenance))
+	# moderators
+	acl.append(ace_allowing(authorization.ROLE_MODERATOR,
+							authorization.ACT_MODERATE,
+							provenance))
+	# editors
+	acl.append(ace_allowing(authorization.ROLe_CONTENT_EDITOR,
+							authorization.ACT_CONTENT_EDIT,
+							provenance))
 
 @interface.implementer(IACLProvider)
 @component.adapter(IEntity)
@@ -702,8 +712,8 @@ class _AbstractDelimitedHierarchyEntryACLProvider(object):
 		self.context = context
 
 	_acl_sibling_entry_name = '.nti_acl'
-	# : If defined by a subclass, this will be checked
-	# : when `_acl_sibling_entry_name` does not exist.
+	#: If defined by a subclass, this will be checked
+	#: when `_acl_sibling_entry_name` does not exist.
 	_acl_sibling_fallback_name = None
 	_default_allow = True
 	_add_default_deny_to_acl_from_file = False
