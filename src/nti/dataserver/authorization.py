@@ -84,11 +84,11 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.cachedescriptors.property import Lazy
 
-from zope.container import contained
+from zope.container.contained import Contained
 
 from zope.security.permission import Permission
 
-import persistent
+from persistent import Persistent
 
 from BTrees.OOBTree import OOSet
 
@@ -98,7 +98,19 @@ from nti.dataserver.interfaces import IUseNTIIDAsExternalUsername
 
 from nti.externalization.interfaces import IExternalObject
 
-from . import interfaces as nti_interfaces
+from .interfaces import system_user
+from .interfaces import SYSTEM_USER_ID
+from .interfaces import SYSTEM_USER_NAME
+from .interfaces import EVERYONE_GROUP_NAME
+from .interfaces import AUTHENTICATED_GROUP_NAME
+
+from .interfaces import IRole
+from .interfaces import IUser
+from .interfaces import IGroup
+from .interfaces import IPrincipal
+from .interfaces import IMutableGroupMember
+from .interfaces import IGroupAwarePrincipal
+from .interfaces import IDynamicSharingTargetFriendsList
 
 # TODO: How does zope normally present these? Side effects of import are Bad
 if not '__str__' in Permission.__dict__:
@@ -132,24 +144,26 @@ ACT_SYNC_LIBRARY = Permission('nti.actions.contentlibrary.sync_library')
 # content edit
 ACT_CONTENT_EDIT = Permission('nti.actions.contentedit')
 
-@interface.implementer(nti_interfaces.IMutableGroupMember)
+@interface.implementer(IMutableGroupMember)
 @component.adapter(IAttributeAnnotatable)
-class _PersistentGroupMember(persistent.Persistent,
-							 contained.Contained):  # (recall annotations should be IContained)
+class _PersistentGroupMember(Persistent,
+							 Contained):  # (recall annotations should be IContained)
 	"""
 	Implementation of the group membership by
 	storing a collection.
 	"""
 
-	GROUP_FACTORY = nti_interfaces.IGroup
+	GROUP_FACTORY = IGroup
 
 	def __init__(self):
 		pass
 
 	@Lazy
 	def _groups(self):
-		"""We store strings in this set, and adapt them to
-		IGroups during iteration."""
+		"""
+		We store strings in this set, and adapt them to
+		IGroups during iteration.
+		"""
 
 		groups = OOSet()
 		self._p_changed = True
@@ -161,7 +175,6 @@ class _PersistentGroupMember(persistent.Persistent,
 	def groups(self):
 		if not self.hasGroups():
 			return ()
-
 		return (self.GROUP_FACTORY(g) for g in self._groups)
 
 	def setGroups(self, value):
@@ -177,7 +190,7 @@ class _PersistentGroupMember(persistent.Persistent,
 _persistent_group_member_factory = afactory(_PersistentGroupMember)
 
 class _PersistentRoleMember(_PersistentGroupMember):
-	GROUP_FACTORY = nti_interfaces.IRole
+	GROUP_FACTORY = IRole
 
 def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 	"""
@@ -198,7 +211,7 @@ def _make_group_member_factory(group_type, factory=_PersistentGroupMember):
 @functools.total_ordering
 class _AbstractPrincipal(object):
 	"""
-	Root for all actual :class:`nti_interfaces.IPrincipal` implementations.
+	Root for all actual :class:`IPrincipal` implementations.
 	"""
 	id = ''
 	def __eq__(self, other):
@@ -257,8 +270,8 @@ class _AbstractPrincipal(object):
 		return "%s('%s')" % (self.__class__.__name__,
 							 unicode(self.id).encode('unicode_escape'))
 
-@interface.implementer(nti_interfaces.IPrincipal)
 @component.adapter(basestring)
+@interface.implementer(IPrincipal)
 class _StringPrincipal(_AbstractPrincipal):
 	"""
 	Allows any string to be an IPrincipal.
@@ -271,22 +284,22 @@ class _StringPrincipal(_AbstractPrincipal):
 		self.title = name
 
 def _system_user_factory(string):
-	assert string in (nti_interfaces.SYSTEM_USER_NAME, nti_interfaces.SYSTEM_USER_ID)
-	return nti_interfaces.system_user
+	assert string in (SYSTEM_USER_NAME, SYSTEM_USER_ID)
+	return system_user
 
 # Let the system user externalize
-nti_interfaces.system_user.toExternalObject = \
+system_user.toExternalObject = \
 		staticmethod(lambda *args, **kwargs: {'Class': 'SystemUser',
-											  'Username': nti_interfaces.SYSTEM_USER_NAME})
+											  'Username': SYSTEM_USER_NAME})
 
-@interface.implementer(nti_interfaces.IGroup)
+@interface.implementer(IGroup)
 @component.adapter(basestring)
 class _StringGroup(_StringPrincipal):
 	"""
 	Allows any string to be an IGroup.
 	"""
 
-@interface.implementer(nti_interfaces.IRole)
+@interface.implementer(IRole)
 class _StringRole(_StringGroup):
 	pass
 
@@ -301,7 +314,7 @@ def role_for_providers_content(provider, local_part):
 	Create an IRole for access to content provided by the given ``provider``
 	and having the local (specific) part of an NTIID matching ``local_part``
 	"""
-	return nti_interfaces.IRole(CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
+	return IRole(CONTENT_ROLE_PREFIX + provider.lower() + ':' + local_part.lower())
 
 #: Name of the super-user group that is expected to have full rights
 #: in certain areas
@@ -325,7 +338,7 @@ class _EveryoneGroup(_StringGroup):
 	Everyone, authenticated or not.
 	"""
 
-	REQUIRED_NAME = nti_interfaces.EVERYONE_GROUP_NAME
+	REQUIRED_NAME = EVERYONE_GROUP_NAME
 	def __init__(self, string):
 		assert string == self.REQUIRED_NAME
 		super(_EveryoneGroup, self).__init__(unicode(string))
@@ -357,7 +370,7 @@ _EveryoneGroup.description = _EveryoneGroup.__doc__
 class _AuthenticatedGroup(_EveryoneGroup):
 	"The subset of everyone that is authenticated"
 
-	REQUIRED_NAME = nti_interfaces.AUTHENTICATED_GROUP_NAME
+	REQUIRED_NAME = AUTHENTICATED_GROUP_NAME
 
 _AuthenticatedGroup.description = _AuthenticatedGroup.__doc__
 
@@ -368,7 +381,7 @@ def _string_principal_factory(name):
 	# Check for a named adapter first, since we are the no-name factory.
 	# Note that this might return an IGroup
 	result = component.queryAdapter(name,
-									nti_interfaces.IPrincipal,
+									IPrincipal,
 									name=name)
 	if result is None:
 		result = _StringPrincipal(name)
@@ -381,15 +394,15 @@ def _string_group_factory(name):
 
 	# Try the named factory
 	result = component.queryAdapter(name,
-									nti_interfaces.IGroup,
+									IGroup,
 									name=name)
 	if result is None:
 		# Try the principal factory, see if something is registered
 		result = component.queryAdapter(name,
-										nti_interfaces.IPrincipal,
+										IPrincipal,
 										name=name)
 
-	if nti_interfaces.IGroup.providedBy(result):
+	if IGroup.providedBy(result):
 		return result
 	return _StringGroup(name)
 
@@ -399,24 +412,24 @@ def _string_role_factory(name):
 
 	# Try the named factory
 	result = component.queryAdapter(name,
-									nti_interfaces.IRole,
+									IRole,
 									name=name)
 	if result is None:
 		# Try the principal factory, see if something is registered
 		# that turns out to be a role
 		result = component.queryAdapter(name,
-										nti_interfaces.IPrincipal,
+										IPrincipal,
 										name=name)
 
-	if nti_interfaces.IRole.providedBy(result):
+	if IRole.providedBy(result):
 		return result
 	return _StringRole(name)
 
-@interface.implementer(nti_interfaces.IPrincipal)
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(IUser)
+@interface.implementer(IPrincipal)
 class _UserPrincipal(_AbstractPrincipal):
 	"""
-	Adapter from an :class:`nti_interfaces.IUser` to an :class:`nti_interfaces.IPrincipal`.
+	Adapter from an :class:`IUser` to an :class:`IPrincipal`.
 	"""
 
 	def __init__(self, user):
@@ -436,13 +449,13 @@ class _UserPrincipal(_AbstractPrincipal):
 		if iface.providedBy(self.context):
 			return self.context
 
-@interface.implementer(nti_interfaces.IGroupAwarePrincipal)
-@component.adapter(nti_interfaces.IUser)
+@component.adapter(IUser)
+@interface.implementer(IGroupAwarePrincipal)
 class _UserGroupAwarePrincipal(_UserPrincipal):
 
 	@property
 	def groups(self):
-		return nti_interfaces.IMutableGroupMember(self.context).groups
+		return IMutableGroupMember(self.context).groups
 
 # Reverses that back to annotations
 def _UserGroupAwarePrincipalAnnotations(_ugaware_principal, *args):  # optional multi-adapt
@@ -453,12 +466,13 @@ def _UserGroupAwarePrincipalAnnotations(_ugaware_principal, *args):  # optional 
 def _UserGroupAwarePrincipalExternalObject(_ugaware_principal):
 	return IExternalObject(_ugaware_principal.context)
 
-@interface.implementer(nti_interfaces.IPrincipal)
+@interface.implementer(IPrincipal)
 class _CommunityGroup(_UserPrincipal):  # IGroup extends IPrincipal
 	pass
+CommunityGroup = _CommunityGroup
 
-@interface.implementer(nti_interfaces.IPrincipal)
-@component.adapter(nti_interfaces.IDynamicSharingTargetFriendsList)
+@interface.implementer(IPrincipal)
+@component.adapter(IDynamicSharingTargetFriendsList)
 class _DFLPrincipal(_UserPrincipal):
 	pass
 _DFLGroup = _DFLPrincipal
@@ -474,8 +488,8 @@ class _Participation(object):
 		self.interaction = None
 		self.principal = principal
 
+@component.adapter(IUser)
 @interface.implementer(IParticipation)
-@component.adapter(nti_interfaces.IUser)
 def _participation_for_user(remote_user):
 	return _Participation(_UserGroupAwarePrincipal(remote_user))
 
