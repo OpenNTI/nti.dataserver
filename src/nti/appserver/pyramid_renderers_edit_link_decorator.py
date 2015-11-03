@@ -17,8 +17,10 @@ from zope.location.interfaces import ILocation
 
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
-from nti.appserver.pyramid_authorization import is_deletable
 from nti.appserver.pyramid_authorization import is_writable
+from nti.appserver.pyramid_authorization import is_deletable
+
+from nti.common.property import Lazy
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICreated
@@ -28,8 +30,8 @@ from nti.dataserver.interfaces import IShouldHaveTraversablePath
 from nti.dataserver.traversal import find_nearest_site as ds_find_nearest_site
 
 from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization import interfaces as ext_interfaces
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.links.links import Link
 from nti.links.externalization import render_link
@@ -37,7 +39,7 @@ from nti.links.externalization import render_link
 LINKS = StandardExternalFields.LINKS
 IShouldHaveTraversablePath_providedBy = IShouldHaveTraversablePath.providedBy
 
-@interface.implementer(ext_interfaces.IExternalMappingDecorator)
+@interface.implementer(IExternalMappingDecorator)
 class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	"""
 	Adds the ``edit`` link relationship to objects that are persistent
@@ -69,8 +71,8 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			link.__name__ = context.__name__
 		else:
 			link = Link(to_external_ntiid_oid(context),
-						 rel='edit',
-						 method=self.link_method)
+						rel='edit',
+						method=self.link_method)
 			link.__parent__ = context
 			# XXX: Is this necessary anymore?
 			link.__name__ = ''
@@ -92,6 +94,12 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			pass
 		return link
 
+	@Lazy
+	def _no_edit_link_in_request(self):
+		request = self.request
+		result = getattr(request, 'no_edit_link', False)
+		return result
+
 	def _preflight_context(self, context):
 		"""
 		We must either have a persistent object, or one with a traversable path
@@ -103,13 +111,14 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
-		return (AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
+		return (not self._no_edit_link_in_request()
+				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
 				and self._preflight_context(context))
 
 	def _do_decorate_external(self, context, mapping):
 		# make sure there is no edit link already
 		# permission check is relatively expensive
-
+		
 		links = mapping.setdefault(LINKS, [])
 		needs_edit = True
 		for l in links:
