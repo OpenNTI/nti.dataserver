@@ -388,7 +388,7 @@ def _add_admin_moderation(acl, provenance):
 							authorization.ACT_MODERATE,
 							provenance))
 	# editors
-	acl.append(ace_allowing(authorization.ROLe_CONTENT_EDITOR,
+	acl.append(ace_allowing(authorization.ROLE_CONTENT_EDITOR,
 							authorization.ACT_CONTENT_EDIT,
 							provenance))
 
