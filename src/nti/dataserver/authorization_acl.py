@@ -889,8 +889,12 @@ class _DataserverFolderACLProvider(object):
 			# Global admins also get library sync rights globally
 			ace_allowing(authorization.ROLE_ADMIN,
 						 authorization.ACT_SYNC_LIBRARY,
+						 _DataserverFolderACLProvider),
+			# Global admins also get content edit rights globally
+			ace_allowing(authorization.ROLE_ADMIN,
+						 authorization.ACT_CONTENT_EDIT,
 						 _DataserverFolderACLProvider)
-			)
+		)
 		_add_admin_moderation(acl, _DataserverFolderACLProvider)
 		return acl
 
