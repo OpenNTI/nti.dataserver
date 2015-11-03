@@ -1,0 +1,11 @@
+Dear ${profile.realname},
+
+A new note was created by ${note.creator} and shared with you:
+
+${note_text}
+
+Sincerely,
+NextThought
+
+If you feel this email was sent in error, you may email us at
+support@nextthought.com.

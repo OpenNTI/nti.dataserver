@@ -1,0 +1,19 @@
+<!-- -*- mode: nxml -*- -->
+<configure  xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			i18n_domain="nti.dataserver">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<subscriber handler=".subscribers.intIdEventNotify" />
+
+	<subscriber handler=".subscribers.addIntIdSubscriber" />
+	<subscriber handler=".subscribers.removeIntIdSubscriber" />
+		
+	<subscriber handler=".subscribers.nti_intIdEventNotify" />
+		
+</configure>

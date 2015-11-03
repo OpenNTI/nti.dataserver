@@ -1,0 +1,120 @@
+Dataserver v2
+
+* Structured storage
+
+  The first iteration of the dataserver stored arbitrary data blobs.
+  That is, the values given to a key did not matter.
+
+  The second iteration of the dataserver stores structured data. The
+  values given to the keys matter. They are parsed by the dataserver
+  before storage, and if they are not in the correct format a 500 error
+  results.
+
+  Moreover, the first dataserver had only a rudimentary sense of
+  containers (URLs), but dataserver2 has a structured way of making
+  sense of URLs.
+
+** Structured format
+
+   All structured data is in the form of a dictionary. The dictionary
+   can either be represented in JSON format or PList format. JSON is
+   the default, and the format can be specified to be either json or
+   plist by using the 'format' URL query parameter. The format
+   parameter will always control what response format the body content
+   is in. When used to upload data, then the body must be in that
+   format otherwise an error results.
+
+** Structured URLs
+
+   All URLs are of the form:
+
+   /dataserver/users/$USERNAME/$TYPE/$GROUP/$ID?format=$FORMAT
+
+   Where:
+
+   - $USERNAME is the name of the user, for example, sjohnson. It
+     names a /collection/ and is globally unique.
+   - $TYPE is the name of a datatype, for example, Notes. It names a
+     collection and is unique within its user.
+   - $GROUP is the name of a unit within a specific type, for example
+     aops-prealgebra-1. It names a collection and is unique within its type.
+   - $ID is a dataserver-assigned identifier. It names an /item/. It is
+	 unique within its containing group collection.
+
+
+   An /item/ is a dictionary. It has the key 'ID' containing its
+   identifier, and the key 'Last Modified' containing a number of
+   seconds since 1970 that it was last modified. The other keys and
+   values are up to the client.
+
+   A /collection/ is a dictionary of metadata and items. It maps keys to values,
+   and the values are expected to have similar structure. It has the
+   key 'Last Modified', as for an item, and the key 'Items',
+   a dictionary mapping each contained identifier to its item. A
+   collection's 'Last Modified' is the greatest time that any of its
+   contained items was modified, or the time at which an item was
+   deleted (if that's greater).
+
+** Accessing data
+
+   Any collection may be retreived with GET. It will (recursively)
+   return the items in its collection. A trailing slash may or may not
+   be present. For example, accessing
+   /dataserver/users/sjohnson/Notes/AGroup/ will return all of
+   sjohnson's notes in AGroup, while accessing
+   /dataserver/users/sjohnson/Notes will return all of sjohnson's
+   notes in all of the groups. If the collection does not exist, a 404
+   error results.
+
+   Any item may be retreived using its full URL, and its contents will
+   be returned. If it does not exist, a 404 will be returned.
+
+   All accesses require authentication. Any unauthenticated access
+   will result in a 401.
+
+   On a successful response, the 'Last Modified' HTTP header will
+   contain the same value as the 'Last Modified' dictionary key.
+
+** Adding data
+
+   New items may be created by POSTing their dictionary content in one
+   of the two supported formats to the appropriate group.
+   (Intermediate collections are created as appropriate.) The server
+   will parse the content and insert a new dictionary in the group. It
+   will choose an unused key for the items ID. A successful response
+   will return the 201 code along with the Location HTTP header
+   containing the full URL to the item (including its new ID). The
+   'Last Modified' data will be as for GET (both header and
+   dictionary). The return body will be the inserted dictionary,
+   including the 'Last Modified' and 'ID' keys.
+
+   An existing item may be updated by PUTing its dictionary content to
+   the full location, including ID. The dictionary content replaces
+   what was on the server. A successful PUT returns a 200 response,
+   the 'Last Modified' HTTP header, and the body contains the modified
+   dictionary as for POST.
+
+   A new item may be created by PUTing its dictionary content to the
+   full location of an item that does not exist. This will behave as
+   for POST, except that the server will use the ID given by the
+   client in the URL.
+
+** Removing data
+
+   A specific item may be DELETEd using its full location and no body.
+   A successful DELETE will return 204 and no body (but the 'Last
+   Modified' HTTP header will be present). Deleting data that doesn't exist
+   will return a 404. Deleting an item from a group will update the
+   group's last modified time.
+
+** Security
+
+   All accessess must be authenticated, otherwise there is a 401
+   error.
+
+   Any user can access all data (i.e., logged in as sjohnson, you can
+   access data beneath /users/sjohnson and /users/mobile, if there is
+   any).
+
+   A user can only modify (create, update, delete) data beneath his
+   own /users/ path. Attempting to modify others will result in a 403 error.

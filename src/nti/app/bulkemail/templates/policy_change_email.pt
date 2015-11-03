@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:metal="http://xml.zope.org/namespaces/metal"
+	  xmlns:tal="http://xml.zope.org/namespaces/tal">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Welcome To NextThought</title>
+		<style metal:use-macro="macro:style">
+			#green-bar {
+			background-color: #89be3c;
+			width: 100%;
+			height: 5px;
+			margin-left: -30px;
+			padding-right: 40px;
+			}
+			#logo-bar {
+			margin-top: 20px;
+			margin-bottom: 30px;
+			}
+			body {
+			margin-left: 30px;
+			margin-right: 0px;
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 14pt;
+			color: #757474;
+			}
+			a {
+			text-decoration: none;
+			color: #3fb3f6;
+			}
+			.tterm, strong {
+			font-weight: bold;
+			color: #494949;
+			}
+			h1, h2, h3, h4, h5, h6 {
+			font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div metal:use-macro="macro:header">
+		<div id="green-bar"></div>
+		<div id="logo-bar">
+			<img src="https://d2ixlfeu83tci.cloudfront.net/images/email_logo.png" width="177" height="25"
+			alt="NextThought Logo" />
+		</div>
+		</div>
+
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">Dear Participant,</p>
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+			Thank you for being part of the NextThought community. We
+			are writing today to let you know about updates to our
+			<a href="https://docs.google.com/document/pub?id=1W9R8s1jIHWTp38gvacXOStsfmUz5TjyDYYy3CVJ2SmM">privacy
+			policy</a>
+			and <a href="https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM">terms
+			of service.</a> As we develop and release new features, we
+			must also update our policies to reflect the changes we
+			are making, and we want to take this opportunity to
+			further clarify how we use the information that you
+			entrust to us.
+		</p>
+
+		<h1 style="font-weight: bold; margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 16pt; line-height: 20pt;">Summary of Updates</h1>
+
+		<dl style="margin-left: 30px">
+			<dt style="font-weight: bold;  color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt">Information Provided with a Purchase</dt>
+			<dd>
+				<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+  					Some of our users will have opportunities to make
+					purchases through the NextThought application.
+					When making purchases, users are subject to an end
+					user license agreement, which is now included in
+					the terms of service agreement and applies only to
+					those who make a purchase. Also, we have added a
+					provision to the privacy policy that explains how
+					we handle personal data that is provided with a
+					purchase, such as credit card information.
+				</p>
+			</dd>
+			<dt style="font-weight: bold; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt">Information Shared with Institutions</dt>
+			<dd>
+				<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+					We have added some information to our privacy
+					policy for our users who access NextThought
+					through academic or sponsoring institutions. In
+					these cases we may share applicable personal
+					information with the appropriate instructor and/or
+					institution.
+				</p>
+			</dd>
+			<dt style="font-weight: bold; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt">Information Provided through Technology</dt>
+			<dd>
+				<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+					We have added information to our privacy policy to
+					better describe how we use the information
+					collected via technology. We now differentiate
+					between information used for internal operations
+					and data that we apply to the learning experience.
+				</p>
+			</dd>
+			<dt style="font-weight: bold; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt">Third Party Providers</dt>
+			<dd>
+				<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+					Delivering the products and experiences that you
+					expect from us requires that we share some of your
+					personal information with third-party vendors who
+					perform services on our behalf. To clarify this
+					interaction, we have added a section to the
+					privacy policy to further explain this. Please
+					note that these third parties are bound by
+					confidentiality agreements and are required not to
+					use the information outside of providing services
+					requested by us.
+				</p>
+			</dd>
+			<dt style="font-weight: bold; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt">Communications from NextThought</dt>
+			<dd>
+				<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+					To provide better transparency about our
+					communication practices, we have updated the
+					privacy policy to describe the notices that you
+					may receive from us, including informational
+					emails (such as this one) and promotional emails
+					that you may opt out of.
+				</p>
+			</dd>
+		</dl>
+
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+		At NextThought we care about your privacy and want to keep you
+		informed of changes to our service. These changes are effective as of
+		May 1, 2013, and we encourage you to read the updated policies
+		carefully. If you have any questions, please contact us at
+		<a href="mailto:compliance@nextthought.com">compliance@nextthought.com.</a>
+		</p>
+
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+			Thank you for your support.
+		</p>
+
+		<p style="margin-left: 30px; margin-right: 30px; color: #757474; font-family: Helvetica, Arial, sans-serif; font-size: 14pt; line-height: 20pt;">
+			The NextThought Team <br />
+			<a href="http://www.nextthought.com">www.nextthought.com</a>
+		</p>
+		<div>
+			<center>
+			<img src="https://d2ixlfeu83tci.cloudfront.net/images/purchase_email_logo1.png" width="104" height="24"
+				 alt="NextThought Logo" />
+			</center>
+		</div>
+
+	</body>
+</html>

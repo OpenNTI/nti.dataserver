@@ -1,0 +1,18 @@
+<!--! -*- mode: nxml -*- -->
+<div style="margin-bottom: 18px;font: 15px/1.25em 'Helvetica Neue', Arial, Helvetica;"
+	 tal:define="notable view/notable">
+
+	<span style="margin: 0 2px 0 0;">
+		<img src="http://d2ixlfeu83tci.cloudfront.net/images/assignment_ontime_45x45.png"
+			 alt="Grade"
+			 title="Grade"
+			 width="45" height="45"
+			 style="display: inline;vertical-align:top;float:left;margin-right:2px;" />
+	</span>
+
+	You received a grade. <br />
+	<a style="color: #3fb3f6;"
+	   href=""
+	   tal:attributes="href notable/href"
+	   tal:content="notable/assignment_name|default">An assignment</a>
+</div>

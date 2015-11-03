@@ -1,0 +1,75 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:link="http://nextthought.com/ntp/link_providers">
+
+	<include package="zope.component" />
+
+	<include package="z3c.baseregistry" file="meta.zcml" />
+
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
+
+	<!-- Dispatch functions to direct events to active site policies. -->
+	<subscriber handler=".site_policies.dispatch_user_created_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_will_update_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_will_create_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_created_with_request_to_site_policy" />
+	<subscriber handler=".site_policies.dispatch_user_logon_to_site_policy" />
+
+	<!--
+	Dispatch functions for objects we know we may want to externalize slightly differently
+	from one site to another. This is relatively expensive so use sparingly.
+	-->
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for="nti.appserver.logon._Pong"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for="nti.appserver.logon._Handshake"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<subscriber factory=".site_policies.SiteBasedExternalObjectDecorator"
+				for="nti.dataserver.interfaces.IUser"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator" />
+
+	<!-- Misc policies -->
+
+	<!--
+	On sites that do not otherwise specify a search behaviour, use the
+	"old" behaviour that searches on alias and realname. (Alias is and always has been displayed;
+	on all the adult sites realname is being displayed now, as well, so this covers them. The
+	only exception is the mathcounts-based sites, where no-one can have a realname displayed (and,
+	depending on where you created your account, alias may or may not be the same as the username).
+
+	This policy is evolving as realname evolves.
+	-->
+	<adapter factory="nti.appserver._adapters._ComprehensiveUserSearchPolicy"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.interfaces.IUserSearchPolicy" />
+	<!-- We also make that same adapter available by name so it can be used in other sites -->
+	<adapter factory="nti.appserver._adapters._ComprehensiveUserSearchPolicy"
+			 for="nti.dataserver.interfaces.IUser"
+			 provides="nti.appserver.interfaces.IIntIdUserSearchPolicy"
+			 name="comprehensive"/>
+
+	<!--
+	General site policies
+	-->
+	<utility factory=".site_policies.GenericSitePolicyEventListener"
+			 zcml:condition="not-have devmode" />
+	<utility factory=".site_policies.DevmodeSitePolicyEventListener"
+			 zcml:condition="have devmode" />
+
+	<link:userLink
+		named='nti.appserver.logon.REL_INITIAL_TOS_PAGE'
+		minGeneration='20130501'
+		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+		mimeType='text/html'/>
+
+	<link:userLink
+		named='nti.appserver.logon.REL_PERMANENT_TOS_PAGE'
+		url='https://docs.google.com/document/pub?id=1rM40we-bbPNvq8xivEKhkoLE7wmIETmO4kerCYmtISM&amp;embedded=true'
+		mimeType='text/html'/>
+
+</configure>

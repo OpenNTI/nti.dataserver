@@ -1,0 +1,40 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:invite="http://nextthought.com/ntp/invite"
+			xmlns:link="http://nextthought.com/ntp/link_providers">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+
+	<include package="nti.invitations" file="meta.zcml" />
+	<include package="nti.invitations" />
+
+	<!-- Utilities -->
+	<utility factory=".views._TrivialDefaultInvitations"
+			 provides="nti.invitations.interfaces.IInvitations" />
+
+	<utility factory=".invitation.InvitationEntityFinder" />
+	
+	<!--
+		Basic testing invitation. Note that entities is a space
+		separated list of usernames and/or NTIIDs (for DFLs).
+	-->
+	<invite:joinCommunities
+		code="MATHCOUNTS"
+		entities="MATHCOUNTS" />
+
+	<subscriber
+		factory=".views.DFLGetInvitationLinkProvider"
+		provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
+
+	<include package="nti.appserver.link_providers" file="meta.zcml" />
+	
+	<!-- Additional links for logged-in users -->
+	<link:userLink named=".views.REL_ACCEPT_INVITATIONS"
+				   view_named=".views.REL_ACCEPT_INVITATIONS" />
+
+</configure>

@@ -1,0 +1,57 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:pyramid="http://pylonshq.com/pyramid">
+
+	<include package="pyramid_zcml" />
+
+	<pyramid:route name='search.user'
+				   pattern='/dataserver2/users/{user}/Search/RecursiveUserGeneratedData/{term:.*}'
+				   traverse='/dataserver2/users/{user}'>
+	</pyramid:route>
+
+	<pyramid:view route_name='search.user'
+				  view='.views.UserSearch'
+				  renderer='rest'
+				  permission='nti.actions.search'
+				  request_method='GET'>
+	</pyramid:view>
+
+	<pyramid:route name='search2.unified'
+				   pattern='/dataserver2/users/{user}/Search/UnifiedSearch/{ntiid}/{term:.*}'
+				   traverse='/dataserver2/users/{user}'>
+	</pyramid:route>
+
+	<pyramid:view route_name='search2.unified'
+				  view='.views.Search'
+				  renderer='rest'
+				  permission='nti.actions.search'
+				  request_method='GET'>
+	</pyramid:view>
+
+	<pyramid:route name='suggest.unified'
+				   pattern='/dataserver2/users/{user}/Search/UnifiedSuggest/{ntiid}/{term:.*}'
+				   traverse='/dataserver2/users/{user}'>
+	</pyramid:route>
+
+	<pyramid:view route_name='suggest.unified'
+				  view='.views.Suggest'
+				  renderer='rest'
+				  permission='nti.actions.search'
+				  request_method='GET'>
+	</pyramid:view>
+
+	<pyramid:route name='highlight.searchhits'
+				   pattern='/dataserver2/users/{user}/Search/HighlightSearchHits'
+				   traverse='/dataserver2/users/{user}'>
+	</pyramid:route>
+
+	<pyramid:view route_name='highlight.searchhits'
+				  view='.views.HighlightSearchHitsView'
+				  renderer='rest'
+				  permission='nti.actions.search'
+				  request_method='POST'>
+	</pyramid:view>
+
+</configure>

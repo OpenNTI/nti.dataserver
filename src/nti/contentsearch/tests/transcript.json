@@ -1,0 +1,1321 @@
+{
+ "RoomInfo": {
+  "Active": true, 
+  "Moderated": false, 
+  "MessageCount": 72, 
+  "CreatedTime": 1318543995.000051, 
+  "references": [], 
+  "Class": "RoomInfo", 
+  "OID": "0x86:53657373696f6e73", 
+  "Occupants": [
+   "test.user.1@nextthought.com"
+  ], 
+  "ID": "7cb3b8fa7b144a7aad8a702eee2d10f6"
+ }, 
+ "Contributors": [
+  "test.user.1@nextthought.com", 
+  "test.user.2@nextthought.com"
+ ], 
+ "Last Modified": 1318543995.529524, 
+ "NTIID": null, 
+ "Class": "Transcript", 
+ "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6",
+ "Messages": [
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.148481, 
+   "ID": "03a0453907c84853ad0b18f8b4d294cb", 
+   "Body": "Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.148481, 
+   "OID": "0xa2:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.109588, 
+   "ID": "059522a3f2c0467ba7fc1f81ee3e9194", 
+   "Body": "Quick went Yellow uptown Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.109588, 
+   "OID": "0x9c:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": ["test.user.1@nextthought.com","test.user.2@nextthought.com"], 
+   "references": [], 
+   "CreatedTime": 1318543995.504597, 
+   "ID": "06c35b96bae5458793c0c505f255f94b", 
+   "Body": "Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.504597, 
+   "OID": "0xd8:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.040843, 
+   "ID": "080d14294b274ddbbd095da4bf6f6e16", 
+   "Body": "Interest rendering outer photo! Quick went Preserving extreme Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.040843, 
+   "OID": "0x91:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.022838, 
+   "ID": "09a755bbbae6437bbc13b5f28bcc4358", 
+   "Body": "Chicken hacker Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.022838, 
+   "OID": "0x8e:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.18295, 
+   "ID": "09c7a1b11b744526bd60d252862e0a83", 
+   "Body": "Blue red green render purple? Preserving extreme Yellow uptown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.18295, 
+   "OID": "0xa7:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.348734, 
+   "ID": "0b7be78aa9704aaab04fd938a6d4b5f5", 
+   "Body": "Yellow brown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.348734, 
+   "OID": "0xc2:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.071276, 
+   "ID": "0f0f491bb6e44c0fbe4712ab049d55fc", 
+   "Body": "Quick went One two", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.071276, 
+   "OID": "0x96:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.320677, 
+   "ID": "111525b3a2ed4eafa3f93a1658e41149", 
+   "Body": "Chicken hacker Gamma delta epsilon omega. Yellow uptown Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.320677, 
+   "OID": "0xbe:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.128277, 
+   "ID": "12221a7260d740e7bddf48ede1b2b8f6", 
+   "Body": "Chicken hacker Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.128277, 
+   "OID": "0x9f:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.394915, 
+   "ID": "13f145337dad4202ae551840f066e398", 
+   "Body": "Gamma delta epsilon omega. Blue red green render purple? Yellow brown Interest rendering outer photo!", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.394915, 
+   "OID": "0xca:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.096508, 
+   "ID": "1431434eb057411588bcc421a42101fd", 
+   "Body": "Yellow uptown Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.096508, 
+   "OID": "0x9a:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.116031, 
+   "ID": "163c9b913d33405e90c36e7953b2a3b9", 
+   "Body": "Gamma delta epsilon omega. Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.116031, 
+   "OID": "0x9d:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.512413, 
+   "ID": "18fe8b63d5794028af700f25342ffa2d", 
+   "Body": "Gamma delta epsilon omega.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.512413, 
+   "OID": "0xd9:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.44826, 
+   "ID": "29c9e5abd7d4465cb4a3eca1c7abecc3", 
+   "Body": "Quick went Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.44826, 
+   "OID": "0xd1:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.440433, 
+   "ID": "2b15327c49024e81ac66723c4529d691", 
+   "Body": "Quick went Blue red green render purple?", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.440433, 
+   "OID": "0xd0:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.327952, 
+   "ID": "2b6dfa261240468ea1dcb8092397b907", 
+   "Body": "Every red town. Interest rendering outer photo!", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.327952, 
+   "OID": "0xbf:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.211416, 
+   "ID": "2d7aa2b629604b659641996172617aba", 
+   "Body": "Yellow brown Three rendered four five. Quick went Interest rendering outer photo!", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.211416, 
+   "OID": "0xab:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.052415, 
+   "ID": "306c5fef97224ef9816385a87a426fd3", 
+   "Body": "Alpha beta Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.052415, 
+   "OID": "0x93:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.175999, 
+   "ID": "31798468ada74094912d3c0f2fe36510", 
+   "Body": "One two Yellow brown Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.175999, 
+   "OID": "0xa6:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.1626, 
+   "ID": "32e374d5787d421c999ddc67b9d762cb", 
+   "Body": "Yellow uptown Alpha beta Three rendered four five. Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.1626, 
+   "OID": "0xa4:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.355746, 
+   "ID": "35695af1ef494eb1adff3ee6a7481c0a", 
+   "Body": "Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.355746, 
+   "OID": "0xc3:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.334704, 
+   "ID": "35c512a8fac64c59873b4a7ff7c2a24a", 
+   "Body": "Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.334704, 
+   "OID": "0xc0:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.189742, 
+   "ID": "3c209e6a592c47e1a7ca4ff0ed235fd4", 
+   "Body": "One two Three rendered four five. Chicken hacker Blue red green render purple?", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.189742, 
+   "OID": "0xa8:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.245855, 
+   "ID": "3ce3572283bb4934ae1452ba8a54b47a", 
+   "Body": "Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.245855, 
+   "OID": "0xb4:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.433006, 
+   "ID": "3edd58f58a26407ca81ba0fa59278f61", 
+   "Body": "Yellow uptown Three rendered four five. Gamma delta epsilon omega. Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.433006, 
+   "OID": "0xcf:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.225722, 
+   "ID": "3f7018a84d344843aa85d513575202c3", 
+   "Body": "Alpha beta Quick went Chicken hacker Blue red green render purple?", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.225722, 
+   "OID": "0xb1:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.252526, 
+   "ID": "4003cb2993584ea299710f27afb52d00", 
+   "Body": "Chicken hacker Three rendered four five. Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.252526, 
+   "OID": "0xb5:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.015965, 
+   "ID": "45ce97adb1564902a791ced6a80a19a3", 
+   "Body": "Every red town. Yellow brown One two Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.015965, 
+   "OID": "0x89:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.42514, 
+   "ID": "4bab9e955a9b4f7689248dc42bc053b5", 
+   "Body": "Alpha beta Every red town. Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.42514, 
+   "OID": "0xce:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.169321, 
+   "ID": "4ce4dd8211ae4a27a747cf458d2286ed", 
+   "Body": "Quick went Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.169321, 
+   "OID": "0xa5:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.47193, 
+   "ID": "4eb269d8a7034fb08548c61d8a043bd8", 
+   "Body": "Interest rendering outer photo! Gamma delta epsilon omega. Yellow brown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.47193, 
+   "OID": "0xd4:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.259587, 
+   "ID": "518469cab7124785b36555033031b97b", 
+   "Body": "Interest rendering outer photo! Three rendered four five. Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.259587, 
+   "OID": "0xb6:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.370813, 
+   "ID": "5448e539c0c74d398e5d8ba3756e0af7", 
+   "Body": "Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.370813, 
+   "OID": "0xc5:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.305455, 
+   "ID": "5c36f9a08cc542828cb00607e7a69283", 
+   "Body": "One two", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.305455, 
+   "OID": "0xbc:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.362944, 
+   "ID": "5c9a97fc10d048b7bf10c4bf0fc1d393", 
+   "Body": "Blue red green render purple? Yellow brown Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.362944, 
+   "OID": "0xc4:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.488499, 
+   "ID": "61f0792203cf44a8998da39bfc28d26c", 
+   "Body": "Yellow uptown Yellow brown Interest rendering outer photo! Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.488499, 
+   "OID": "0xd6:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.122117, 
+   "ID": "6e02508e14024132b39c2359c8ca84e2", 
+   "Body": "Interest rendering outer photo! Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.122117, 
+   "OID": "0x9e:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.291042, 
+   "ID": "742ede0dbefd478ab2b115df321b3c41", 
+   "Body": "Blue red green render purple? Gamma delta epsilon omega. Quick went Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.291042, 
+   "OID": "0xba:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.48041, 
+   "ID": "744315972ec04c9bb46e81dba6272a99", 
+   "Body": "Gamma delta epsilon omega. Three rendered four five. Preserving extreme Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.48041, 
+   "OID": "0xd5:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.13474, 
+   "ID": "75eb324d7c07410aa37b0013940947d8", 
+   "Body": "Interest rendering outer photo! Quick went Three rendered four five. Every red town.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.13474, 
+   "OID": "0xa0:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.455716, 
+   "ID": "774e07ef7415407aa81fd900afbf28ed", 
+   "Body": "Yellow brown Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.455716, 
+   "OID": "0xd2:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.218958, 
+   "ID": "7dbf4f00095e4feeaf80701040c105b9", 
+   "Body": "Yellow brown Blue red green render purple?", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.218958, 
+   "OID": "0xb0:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.341712, 
+   "ID": "89589d2211ea4728bd3aaec96b62b363", 
+   "Body": "Chicken hacker Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.341712, 
+   "OID": "0xc1:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.034748, 
+   "ID": "9159e2f1ead643ddbf990def1a0022d7", 
+   "Body": "Interest rendering outer photo!", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.034748, 
+   "OID": "0x90:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.496698, 
+   "ID": "91c9105cf9184e31a7ee546dcc2e1621", 
+   "Body": "Every red town. Yellow uptown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.496698, 
+   "OID": "0xd7:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.27456, 
+   "ID": "9bd17b270fc948d1b6b488f5a467a171", 
+   "Body": "One two Every red town. Gamma delta epsilon omega. Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.27456, 
+   "OID": "0xb8:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.089973, 
+   "ID": "9c12da89aa7b45da96d65c5c96ef8153", 
+   "Body": "Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.089973, 
+   "OID": "0x99:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.417583, 
+   "ID": "9fe85e44b07945dea06a75b60214a1d3", 
+   "Body": "Interest rendering outer photo! Preserving extreme Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.417583, 
+   "OID": "0xcd:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.203007, 
+   "ID": "a0947a0ea04f4e4cabb9dd804d3a3b64", 
+   "Body": "Every red town. Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.203007, 
+   "OID": "0xaa:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.059275, 
+   "ID": "a8e3d7b74c90470592a1ab36317ae487", 
+   "Body": "Preserving extreme Blue red green render purple?", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.059275, 
+   "OID": "0x94:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.463594, 
+   "ID": "a9677b3ead8e4a1e9f3e2575a2ecf7f3", 
+   "Body": "Yellow uptown Chicken hacker Interest rendering outer photo!", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.463594, 
+   "OID": "0xd3:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.267281, 
+   "ID": "ac362c6ca6044251af6ac27800c94442", 
+   "Body": "Interest rendering outer photo! One two Yellow uptown Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.267281, 
+   "OID": "0xb7:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.402124, 
+   "ID": "accafb306280456cb86237269b47d794", 
+   "Body": "Alpha beta Quick went One two", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.402124, 
+   "OID": "0xcb:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.29852, 
+   "ID": "ae755604314a40c9a96d84aecf60f3f3", 
+   "Body": "Blue red green render purple? Alpha beta Gamma delta epsilon omega. Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.29852, 
+   "OID": "0xbb:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.02887, 
+   "ID": "aede5c01d07b4a4393776288c9dd18a2", 
+   "Body": "Yellow brown Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.02887, 
+   "OID": "0x8f:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.141615, 
+   "ID": "b21aa25c65d049b28c09a92f87aafe35", 
+   "Body": "Alpha beta Preserving extreme Yellow uptown One two", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.141615, 
+   "OID": "0xa1:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.312444, 
+   "ID": "b9b63a270973437d9c670d6466641777", 
+   "Body": "Yellow brown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.312444, 
+   "OID": "0xbd:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.102634, 
+   "ID": "baddfd61e7a84d3d90b51ebfe55b1f9b", 
+   "Body": "Yellow brown Chicken hacker Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.102634, 
+   "OID": "0x9b:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.283127, 
+   "ID": "baed4d1b5c4e44cc8e70029826a95cb2", 
+   "Body": "Interest rendering outer photo! Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.283127, 
+   "OID": "0xb9:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.083906, 
+   "ID": "c05f63a6daf14efa934b0ad3459f78cc", 
+   "Body": "Yellow brown Every red town. Alpha beta Quick went", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.083906, 
+   "OID": "0x98:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.409407, 
+   "ID": "d331988ab1444eadb24bfd569a5f99b1", 
+   "Body": "Alpha beta Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.409407, 
+   "OID": "0xcc:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.155014, 
+   "ID": "de0c92dcd8f84755af21311b044998ed", 
+   "Body": "Three rendered four five. Every red town. Yellow brown Yellow uptown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.155014, 
+   "OID": "0xa3:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.046475, 
+   "ID": "e0235caeccd448279276a8d43f569f1a", 
+   "Body": "Three rendered four five.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.046475, 
+   "OID": "0x92:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.196327, 
+   "ID": "ec145a63b9754dd6a75a6f14f0d82bb8", 
+   "Body": "Alpha beta Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.196327, 
+   "OID": "0xa9:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.529524, 
+   "ID": "f089865fbc8d4f6da7aac8be7ac67bce", 
+   "Body": "Blue red green render purple? Every red town. Yellow uptown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.529524, 
+   "OID": "0xda:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.065366, 
+   "ID": "f0b7515ad1274b6bb3753cc65eee8a87", 
+   "Body": "Alpha beta Chicken hacker", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.065366, 
+   "OID": "0x95:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.232378, 
+   "ID": "f432a2df06fe4ebca5f3694a1c730f23", 
+   "Body": "One two Chicken hacker Every red town.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.232378, 
+   "OID": "0xb2:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.378051, 
+   "ID": "f60ccc6a640c4a18ac99d8734226feef", 
+   "Body": "Preserving extreme Every red town.", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.378051, 
+   "OID": "0xc6:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.239067, 
+   "ID": "faa637410e834f0fb4ca617f5192ce86", 
+   "Body": "Alpha beta", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.239067, 
+   "OID": "0xb3:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.38623, 
+   "ID": "fbe0ef046ebc470bbea9a4cdbee1bb75", 
+   "Body": "Yellow uptown Yellow brown", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.1@nextthought.com", 
+   "Last Modified": 1318543995.38623, 
+   "OID": "0xc9:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }, 
+  {
+   "Status": "st_POSTED", 
+   "recipients": [], 
+   "references": [], 
+   "CreatedTime": 1318543995.07762, 
+   "ID": "ffdd55c6fb314e0ca0f814b147d1e8d6", 
+   "Body": "Alpha beta Three rendered four five. Preserving extreme", 
+   "ContainerId": "7cb3b8fa7b144a7aad8a702eee2d10f6", 
+   "Creator": "test.user.2@nextthought.com", 
+   "Last Modified": 1318543995.07762, 
+   "OID": "0x97:53657373696f6e73", 
+   "sharedWith": [
+    "test.user.1@nextthought.com", 
+    "test.user.2@nextthought.com"
+   ], 
+   "Class": "MessageInfo", 
+   "channel": "DEFAULT"
+  }
+ ]
+}

@@ -1,0 +1,155 @@
+<!-- -*- mode: nxml -*- -->
+<configure	xmlns="http://namespaces.zope.org/zope"
+			xmlns:browser="http://namespaces.zope.org/browser"
+			xmlns:i18n="http://namespaces.zope.org/i18n"
+			xmlns:ext="http://nextthought.com/ntp/ext"
+			xmlns:sp="http://nextthought.com/ntp/securitypolicy"
+			xmlns:zcml="http://namespaces.zope.org/zcml"
+			xmlns:z3c="http://namespaces.zope.org/z3c" >
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.security" />
+
+	<include package="zc.displayname" />
+
+	<!-- z3c:template/layout -->
+	<include package="z3c.template" file="meta.zcml" />
+	<!-- It has no standard configure.zcml -->
+
+	<include package="z3c.pagelet" /> <!-- pagelet contentprovider -->
+
+	<include package="zope.viewlet" file="meta.zcml" /> <!-- zope:viewlet/Manager -->
+	<include package="zope.viewlet" />
+
+	<!-- The digest emailing process -->
+	<adapter factory="nti.app.bulkemail.process.SiteTransactedBulkEmailProcessLoop"
+			 for='pyramid.interfaces.IRequest'
+			 name="digest_email" />
+	<adapter factory="nti.app.bulkemail.process.SiteTransactedBulkEmailProcessLoop"
+			 for="pyramid.interfaces.IRequest"
+			 name="test_digest_email" />
+
+
+	<adapter factory=".digest_email.DigestEmailProcessDelegate"
+			 for='* *'
+			 name="digest_email" />
+	<adapter factory=".digest_email.DigestEmailProcessTestingDelegate"
+			 for="* *"
+			 name="test_digest_email" />
+
+	<!-- The digest email templates -->
+	<browser:viewletManager
+		name="notable_items"
+		permission="zope.Public"
+		provides=".interfaces.INotableDataEmailViewletManager"
+		class="zope.viewlet.manager.ConditionalViewletManager"
+		view=".digest_email.DigestEmailProcessDelegate" />
+
+	<z3c:macro
+		template="templates/digest_email_macros.pt"
+		name="creator_icon"
+		macro="creator_icon"
+		for="zope.interface.Interface"
+		view=".digest_email.DigestEmailNotableViewletBase"
+		layer="pyramid.interfaces.IRequest" />
+
+	<z3c:macro
+		template="templates/digest_email_macros.pt"
+		name="row"
+		macro="row"
+		for="zope.interface.Interface"
+		view=".digest_email.DigestEmailNotableViewletBase"
+		layer="pyramid.interfaces.IRequest" />
+
+	<browser:viewlet
+		name="blog"
+		template="templates/digest_email_item_blog.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<browser:viewlet
+		name="comment"
+		template="templates/digest_email_item_comment.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<browser:viewlet
+		name="discussion"
+		template="templates/digest_email_item_discussion.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<browser:viewlet
+		name="feedback"
+		template="templates/digest_email_item_feedback.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<browser:viewlet
+		name="note"
+		template="templates/digest_email_item_note.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<browser:viewlet
+		name="top_level_comment"
+		template="templates/digest_email_item_top_level_comment.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"/>
+
+	<!-- Note that these two are optimized to go last -->
+
+	<browser:viewlet
+		name="circled"
+		template="templates/digest_email_item_circled.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"
+		weight="999" />
+
+	<browser:viewlet
+		name="grade"
+		template="templates/digest_email_item_grade.pt"
+		view=".digest_email.DigestEmailProcessDelegate"
+		layer="pyramid.interfaces.IRequest"
+		permission="zope.Public"
+		manager=".interfaces.INotableDataEmailViewletManager"
+		class=".digest_email.DigestEmailNotableViewletBase"
+		weight="1000" />
+
+	<!-- The classifiers for grouping objects for the templates -->
+	<adapter factory=".digest_email._NoteClassifier" />
+	<adapter factory=".digest_email._TopicClassifier" />
+	<adapter factory=".digest_email._CommentClassifier" />
+	<adapter factory=".digest_email._BlogEntryClassifier" />
+	<adapter factory=".digest_email._BlogEntryPostClassifier" />
+	<adapter factory=".digest_email._StreamChangeEventDispatcher" />
+
+	<!-- Note the coupling. This should be moved -->
+	<adapter factory=".digest_email._FeedbackClassifier"
+			 for="nti.app.assessment.interfaces.IUsersCourseAssignmentHistoryItemFeedback"
+			 zcml:condition="installed nti.app.assessment" />
+
+</configure>

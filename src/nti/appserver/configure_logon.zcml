@@ -1,0 +1,87 @@
+<!-- -*- mode: nxml -*- -->
+<configure xmlns="http://namespaces.zope.org/zope"
+		   xmlns:i18n="http://namespaces.zope.org/i18n"
+		   xmlns:zcml="http://namespaces.zope.org/zcml"
+		   xmlns:oauth="http://nextthought.com/ntp/oauth"
+		   xmlns:link="http://nextthought.com/ntp/link_providers">
+
+	<include package="zope.component" file="meta.zcml" />
+	<include package="zope.security" file="meta.zcml" />
+	<include package="zope.component" />
+	<include package="zope.security" />
+	
+	<include package=".link_providers" file="meta.zcml" />
+
+	<!-- Logon -->
+	<subscriber handler=".logon._user_did_logon" />
+
+	<!-- Local users with passwords get a direct logon link -->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"/>
+				
+	<!--
+		Users we've never seen before get a logon link too: Security through
+		obscurity and avoiding leaking information. Also, since
+		we are not currently offering any other login types in
+		production, this is necessary to make the login page work out.
+	-->
+	<subscriber factory=".logon._SimpleExistingUserLinkProvider"
+				provides=".interfaces.ILogonLinkProvider"
+				for=".interfaces.IMissingUser pyramid.interfaces.IRequest" />
+
+	<!-- Additional links for logged-in users -->
+	
+	<!-- Terms of service and privacy policy direct links -->
+	<subscriber factory=".logon._OnlinePolicyLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+	
+	<subscriber factory=".link_providers.flag_link_provider.FlagLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+
+	<link:userLink named=".feedback_views.REL_SEND_FEEDBACK"
+				   view_named=".feedback_views.REL_SEND_FEEDBACK" />
+
+	<subscriber factory=".logon.ImpersonationLinkProvider"
+				provides=".interfaces.IAuthenticatedUserLinkProvider" />
+
+	<!-- All the other logon types are disabled in production -->
+	<configure zcml:condition="have devmode">
+	
+		<subscriber factory=".logon._SimpleMissingUserFacebookLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+
+		<subscriber factory=".logon._SimpleExistingUserFacebookLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+
+		<subscriber factory=".logon._ExistingOpenIdUserLoginLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+
+		<subscriber factory=".logon._MissingUserAopsLoginLinkProvider"
+					provides=".interfaces.ILogonLinkProvider" />
+					
+		<adapter factory=".logon._MissingUserAopsLoginLinkProvider"
+				 for="* pyramid.interfaces.IRequest"
+				 provides=".interfaces.ILogonUsernameFromIdentityURLProvider"
+				 name="openid.aops.com" />
+				 
+		<!-- Google -->
+		<include package="nti.utils" file="meta.zcml" />
+		<oauth:registerOAuthKeys
+				apiKey="656445967400-op21oh9rpglhrha98ukq5r7cvbdp8333.apps.googleusercontent.com"
+				secretKey="f2Q0JmM8WA9fGiRCcgwLWw8wE15nLAM/"
+				id="google" />
+				
+	</configure>
+	
+	<configure zcml:condition="not-have devmode">
+
+		<!-- Google -->
+		<include package="nti.utils" file="meta.zcml" />
+		<oauth:registerOAuthKeys
+				apiKey="621475736574-dfgpfgdojhmli7otmhdu4qss4jo9n0b8.apps.googleusercontent.com"
+				secretKey="IgsnDiIOYx0GMDVpVCp+Vhw+JS5zFwEH"
+				id="google" />
+
+	</configure>
+
+</configure>

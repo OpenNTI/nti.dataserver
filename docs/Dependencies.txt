@@ -1,0 +1,80 @@
+Dependencies (macports):
+- gcc48				# 2012-03-07 (Optional)
+- llvm-gcc-4.2		# 2012-03-07 (Optional)
+- python27			# 2011-08-31
+- py27-setuptools	# 2011-08-31
+- pypy				# 2012-09-10 (Optional), if it takes a long time to install, try to build with build.jobs=1
+
+- mercurial 		# 2012-02-24 (Optional)
+- mysql56			# "", When you install, link mysql_config5 to mysql_config, try it with configure.compiler=llvm-gcc-4.2 if fail w/o (Optional)
+
+- gsed				# 2013-06-12 (optional)
+- spidermonkey		# 2013-06-122 install as spidermonkey +fileobject (optional)
+- jslint			# 2013-06-12 (optional)
+- libxml			# 2014-01-23
+- libxml2			# 2013-06-12
+- nasm				# 2014-01-23
+- pcre				# 2014-01-23
+- lua				# 2014-03-06 (optional)
+- cyrus-sasl2 		# 2014-01-23
+- graphviz-devel	# 2014-01-23
+- pkgconfig			# 2013-06-12 (optional)
+- mongodb			# 2012-06-13 (Optional)
+- mcrypt			# 2013-08-01 (Optional)
+- wget				# 2013-08-01 (Optional)
+
+Dependencies for content generation:
+- Full TeX distribution (including extras) - macports
+	- asymptote (optional)
+	- libpng
+	- freetype
+	- pngcrush
+	- texlive @2013_0+doc+medium 
+	- texlive-basic
+	- texlive-bibtex-extra
+ 	- texlive-bin
+ 	- texlive-bin-extra
+ 	- texlive-common
+ 	- texlive-context
+	- texlive-fonts-extra
+	- texlive-fonts-recommended
+	- texlive-fontutils
+	- texlive-generic-extra
+	- texlive-generic-recommended
+	- texlive-lang-czechslovak
+	- texlive-lang-english
+	- texlive-lang-european
+	- texlive-lang-french
+	- texlive-lang-german
+	- texlive-lang-greek
+ 	- texlive-lang-italian
+	- texlive-lang-polish
+	- texlive-lang-portuguese
+	- texlive-lang-spanish
+	- texlive-latex
+	- texlive-latex-extra
+	- texlive-latex-recommended
+	- texlive-luatex
+	- texlive-math-extra
+	- texlive-metapost
+	- texlive-pictures
+	- texlive-plain-extra
+	- texlive-pstricks
+	- texlive-science
+	- texlive-xetex
+	- gtk2 (optional)
+	- pdf2svg
+	- poppler
+	- ImageMagick
+	- openexr
+	- liblqr
+	- xpdf (optional)
+	- enchant (optional)
+
+- phantomjs >= 1.9
+  http://phantomjs.org, download and place the phantomjs command somewhere on your path, e.g., 
+  ~/bin/
+
+Dependencies (other):
+- Phusion Passenger # 3.0.9, 2011-10-08
+

@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Definition of the redaction object.
+
+.. $Id$
+"""
+
+from __future__ import print_function, unicode_literals, absolute_import, division
+__docformat__ = "restructuredtext en"
+
+logger = __import__('logging').getLogger(__name__)
+
+from zope import component
+from zope import interface
+
+from nti.schema.fieldproperty import createDirectFieldProperties
+
+from ..interfaces import IRedaction
+
+from .selectedrange import SelectedRange
+from .selectedrange import SelectedRangeInternalObjectIO
+
+@interface.implementer(IRedaction)
+class Redaction(SelectedRange):
+	createDirectFieldProperties(IRedaction)  # replacementContent, redactionExplanation
+
+@component.adapter(IRedaction)
+class RedactionInternalObjectIO(SelectedRangeInternalObjectIO):
+	_ext_iface_upper_bound = IRedaction
+	validate_after_update = True
