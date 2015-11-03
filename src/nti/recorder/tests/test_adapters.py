@@ -76,6 +76,7 @@ class TestAdapters(unittest.TestCase):
 		
 		trxs = get_transactions(f)
 		assert_that(trxs, has_length(1))
+		assert_that(trxs[0], is_(record))
 		
 		f2 = Foo()
 		copy_records(f2, records)
