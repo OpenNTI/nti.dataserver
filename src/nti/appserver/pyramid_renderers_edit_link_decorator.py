@@ -111,7 +111,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
-		return (not self._no_acl_decoration_in_request()
+		return (not self._no_acl_decoration_in_request
 				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
 				and self._preflight_context(context))
 
