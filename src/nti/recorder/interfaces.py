@@ -26,7 +26,7 @@ class ITransactionRecord(IContained, ICreated):
 	principal = ValidTextLine(title="The principal id", required=True)
 	attributes = IndexedIterable(title="The modifed attributes",
 				 	 			 value_type=ValidTextLine(title="The attribute name"),
-								 min_length=1,
+								 min_length=0,
 								 unique=True)
 	external_value = Object(interface.Interface, 
 							title="External value", 
