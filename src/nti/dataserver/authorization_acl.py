@@ -33,7 +33,6 @@ from nti.contentlibrary.interfaces import IDelimitedHierarchyContentPackage
 
 from nti.dataserver import authorization
 from nti.dataserver import authentication
-from nti.dataserver import interfaces as nti_interfaces
 
 from nti.externalization.singleton import SingletonDecorator
 from nti.externalization.interfaces import IExternalMappingDecorator
@@ -46,12 +45,19 @@ from .interfaces import IACE
 from .interfaces import IACL
 from .interfaces import IUser
 from .interfaces import IEntity
+from .interfaces import ICreated
 from .interfaces import ICommunity
 from .interfaces import IPrincipal
 from .interfaces import IPermission
 from .interfaces import IACLProvider
+from .interfaces import IFriendsList
+from .interfaces import IReadableShared
+from .interfaces import IEnclosedContent
+from .interfaces import IDataserverFolder
 from .interfaces import IAuthorizationPolicy
 from .interfaces import IACLProviderCacheable
+from .interfaces import IShareableModeledContent
+from .interfaces import ICoppaUserWithoutAgreement
 from .interfaces import IUseNTIIDAsExternalUsername
 
 from .interfaces import ACE_ACT_DENY
@@ -448,8 +454,8 @@ class _CommunityACLProvider(_EntityACLProvider):
 			username = self._entity.NTIID
 		else:
 			username = self._entity.username
-		acl = _ACL([ace_allowing(username, nti_interfaces.ALL_PERMISSIONS, self)])
-		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, self))
+		acl = _ACL([ace_allowing(username, ALL_PERMISSIONS, self)])
+		acl.append(ace_allowing(authorization.ROLE_ADMIN, ALL_PERMISSIONS, self))
 		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_MODERATE, self))
 		for viewer in self._viewers():
 			acl.append(ace_allowing(viewer, authorization.ACT_READ, self))
@@ -468,7 +474,7 @@ class _UserACLProvider(_EntityACLProvider):
 		# this is a private function while in flux
 		return authentication._dynamic_memberships_that_participate_in_security(self._entity)
 
-@component.adapter(nti_interfaces.ICoppaUserWithoutAgreement)
+@component.adapter(ICoppaUserWithoutAgreement)
 class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
 	"""
 	ACL Provider for Koppa Kids that limits all access to them.
@@ -478,10 +484,10 @@ class _CoppaUserWithoutAgreementACLProvider(_UserACLProvider):
 		return ()  # nobody!
 
 @interface.implementer(IACLProvider)
-@component.adapter(nti_interfaces.ICreated)
+@component.adapter(ICreated)
 class _CreatedACLProvider(object):
 	"""
-	ACL provider for class:`nti_interfaces.ICreated` objects.
+	ACL provider for class:`ICreated` objects.
 	The creator of an object is allowed all permissions.
 
 	.. py:attribute:: _DENY_ALL
@@ -594,7 +600,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		provenance = provenance or self
 		_add_admin_moderation(acl, provenance)
 		acl.append(ace_allowing(authorization.ROLE_MODERATOR, authorization.ACT_READ, provenance))
-		acl.append(ace_allowing(authorization.ROLE_ADMIN, nti_interfaces.ALL_PERMISSIONS, provenance))
+		acl.append(ace_allowing(authorization.ROLE_ADMIN, ALL_PERMISSIONS, provenance))
 
 	def _do_get_perms_for_sharing_targets(self):
 		return self._PERMS_FOR_SHARING_TARGETS
@@ -616,7 +622,7 @@ class AbstractCreatedAndSharedACLProvider(_CreatedACLProvider):
 		self._extend_acl_after_creator_and_sharing(result)
 		return self._handle_deny_all(result)
 
-@component.adapter(nti_interfaces.IShareableModeledContent)
+@component.adapter(IShareableModeledContent)
 class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 	"""
 	Extends the ACL for :class:`nti.dataserver.interfaces.ICreated` objects to things that
@@ -651,13 +657,13 @@ class _ShareableModeledContentACLProvider(AbstractCreatedAndSharedACLProvider):
 		# Inherit if we are nested. See class comment. NOTE: We are just checking the direct parent,
 		# not the entire traversal chain; checking to see if anything we are within is IReadableShared
 		# might pull in the wrong permissions, depending on how the nesting goes (?)
-		if nti_interfaces.IReadableShared.providedBy(getattr(self.context, '__parent__', None)):
+		if IReadableShared.providedBy(getattr(self.context, '__parent__', None)):
 			result = _ACL()
 			self._extend_with_admin_privs(result, 'Nested _ShareableModeledContentACLProvider')
 			return result
 		return super(_ShareableModeledContentACLProvider, self).__acl__
 
-@component.adapter(nti_interfaces.IEnclosedContent)
+@component.adapter(IEnclosedContent)
 class _EnclosedContentACLProvider(_CreatedACLProvider):
 	"""
 	The ACL for enclosed content depends on a few things, most notably
@@ -676,7 +682,7 @@ class _EnclosedContentACLProvider(_CreatedACLProvider):
 		result.extend(ACL(self._created.data))
 		return result
 
-@interface.implementer(nti_interfaces.IACLProvider)
+@interface.implementer(IACLProvider)
 @component.adapter(IContentUnit)
 class _TestingLibraryTOCEntryACLProvider(object):
 	"""
@@ -845,7 +851,7 @@ class _DelimitedHierarchyContentUnitACLProvider(_AbstractDelimitedHierarchyEntry
 		return 	_supplement_acl_with_content_role(self, context, acl) \
 				if self._acl_sibling_fallback_name else acl
 
-@component.adapter(nti_interfaces.IFriendsList)
+@component.adapter(IFriendsList)
 class _FriendsListACLProvider(_CreatedACLProvider):
 	"""
 	Makes friends lists readable by those it contains.
@@ -864,7 +870,7 @@ class _FriendsListACLProvider(_CreatedACLProvider):
 		return result
 
 @interface.implementer(IACLProvider)
-@component.adapter(nti_interfaces.IDataserverFolder)
+@component.adapter(IDataserverFolder)
 class _DataserverFolderACLProvider(object):
 
 	def __init__(self, context):
@@ -875,10 +881,10 @@ class _DataserverFolderACLProvider(object):
 		# Got to be here after the components are registered
 		acl = acl_from_aces(
 			# Everyone logged in has read and search access at the root
-			ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
+			ace_allowing(AUTHENTICATED_GROUP_NAME,
 						 authorization.ACT_READ,
 						 _DataserverFolderACLProvider),
-			ace_allowing(nti_interfaces.AUTHENTICATED_GROUP_NAME,
+			ace_allowing(AUTHENTICATED_GROUP_NAME,
 						 authorization.ACT_SEARCH,
 						 _DataserverFolderACLProvider),
 			# Global admins also get impersonation rights globally
