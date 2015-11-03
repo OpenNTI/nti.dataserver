@@ -73,7 +73,8 @@ def get_transactions(obj, sort=False, descending=True):
 	try:
 		annotations = obj.__annotations__
 		history = annotations.get(TRX_RECORD_HISTORY_KEY, None)
-		result.extend(history or ())
+		if history:
+			result.extend(history.records())
 		if sort:
 			result.sort(key=lambda t: t.createdTime, reverse=descending)
 	except AttributeError:
@@ -105,7 +106,7 @@ def copy_history(source, target, clear=True):
 		source_history = annotations.pop(TRX_RECORD_HISTORY_KEY, None)
 		if not source_history:
 			return 0
-		records = list(source_history)
+		records = list(source_history.records())
 		append_records(target, records)
 		if clear:
 			source_history.clear(event=False) # don't remove intids

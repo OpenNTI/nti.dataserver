@@ -30,6 +30,7 @@ from nti.recorder import TRX_RECORD_HISTORY_KEY
 
 from nti.recorder.interfaces import ITransactionRecordHistory
 
+from nti.recorder.record import copy_records
 from nti.recorder.record import remove_history
 from nti.recorder.record import get_transactions
 from nti.recorder.record import has_transactions
@@ -68,8 +69,17 @@ class TestAdapters(unittest.TestCase):
 		history = ITransactionRecordHistory(f)
 		record = TransactionRecord(tid='a', principal='ichigo', attributes=('foo',))
 		history.add(record)
+		
+		records = list(history.records())
+		assert_that(records, has_length(1))
 		assert_that(has_transactions(f), is_(True))
+		
 		trxs = get_transactions(f)
 		assert_that(trxs, has_length(1))
+		
+		f2 = Foo()
+		copy_records(f2, records)
+		assert_that(has_transactions(f2), is_(True))
+		
 		assert_that(remove_history(f), is_(1))
 		assert_that(f.__annotations__, does_not(has_key(TRX_RECORD_HISTORY_KEY)))
