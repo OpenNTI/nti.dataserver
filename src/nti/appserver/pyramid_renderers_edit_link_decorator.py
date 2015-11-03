@@ -95,9 +95,9 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return link
 
 	@Lazy
-	def _no_edit_link_in_request(self):
+	def _no_acl_decoration_in_request(self):
 		request = self.request
-		result = getattr(request, 'no_edit_link', False)
+		result = getattr(request, 'no_acl_decoration', False)
 		return result
 
 	def _preflight_context(self, context):
@@ -111,7 +111,7 @@ class EditLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return is_writable(context, request=self.request)
 
 	def _predicate(self, context, result):
-		return (not self._no_edit_link_in_request()
+		return (not self._no_acl_decoration_in_request()
 				and AbstractAuthenticatedRequestAwareDecorator._predicate(self, context, result)
 				and self._preflight_context(context))
 
