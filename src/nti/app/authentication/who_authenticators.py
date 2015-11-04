@@ -21,6 +21,8 @@ from repoze.who.interfaces import IAuthenticator
 
 from .interfaces import IIdentifiedUserTokenAuthenticator
 
+ANONYMOUS_USERNAME = ''
+
 @interface.implementer(IAuthenticator)
 class DataserverGlobalUsersAuthenticatorPlugin(object):
 
@@ -97,6 +99,26 @@ class KnownUrlTokenBasedAuthenticator(object):
 		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
 @interface.implementer(IAuthenticator,IIdentifier)
+class AnonymousAccessAuthenticator(object):
+	"""
+	A :mod:`repoze.who` plugin that acts in the role of identifier
+	and authenticator for anonymous (unauthenticated) requests
+	"""
+	def authenticate(self, environ, identity ):
+		if 'anonymous' not in identity:
+			return
+		return ANONYMOUS_USERNAME if identity['anonymous'] else None
+
+	def identify(self, environ):
+		return {'anonymous': True}
+
+	def forget(self, environ, identity): # pragma: no cover
+		return []
+	def remember(self, environ, identity): # pragma: no cover
+		return []
+
+
+@interface.implementer(IAuthenticator, IIdentifier)
 class FixedUserAuthenticatorPlugin(object): # pragma: no cover # For use with redbot testing
 
 	username = 'pacifique.mahoro@nextthought.com'

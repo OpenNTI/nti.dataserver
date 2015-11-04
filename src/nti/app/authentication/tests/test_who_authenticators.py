@@ -16,10 +16,12 @@ logger = __import__('logging').getLogger(__name__)
 
 import unittest
 from hamcrest import assert_that
+from hamcrest import has_entry
 from hamcrest import is_
 from hamcrest import none
 
-
+from ..who_authenticators import AnonymousAccessAuthenticator
+from ..who_authenticators import ANONYMOUS_USERNAME
 from ..who_authenticators import KnownUrlTokenBasedAuthenticator
 from ..user_token import DefaultIdentifiedUserTokenAuthenticator
 
@@ -66,3 +68,18 @@ class TestKnownUrlTokenBasedAuthenticator(unittest.TestCase):
 		identity = self.plugin.identify( environ )
 		assert_that( self.plugin.authenticate( environ, identity ),
 					 is_( 'user' ) )
+
+class TestAnonymousAccessAuthenticator(unittest.TestCase):
+
+	def setUp(self):
+		self.plugin = AnonymousAccessAuthenticator()
+
+	def testIdentity(self):
+		assert_that( self.plugin.identify( {} ), has_entry( 'anonymous', True ) )
+
+	def testAuthenticateToUserId(self):
+		environ = {}
+		identity = self.plugin.identify( environ )
+
+		assert_that( self.plugin.authenticate( environ, identity ), is_(ANONYMOUS_USERNAME) )
+
