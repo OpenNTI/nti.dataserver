@@ -20,6 +20,7 @@ from repoze.who.interfaces import IIdentifier
 from repoze.who.interfaces import IAuthenticator
 
 from .interfaces import IIdentifiedUserTokenAuthenticator
+from .who_classifiers import CLASS_TV_APP
 
 ANONYMOUS_USERNAME = ''
 
@@ -104,6 +105,10 @@ class AnonymousAccessAuthenticator(object):
 	A :mod:`repoze.who` plugin that acts in the role of identifier
 	and authenticator for anonymous (unauthenticated) requests
 	"""
+
+	classifications = {IAuthenticator: [CLASS_TV_APP],
+						  IIdentifier: [CLASS_TV_APP]}
+
 	def authenticate(self, environ, identity ):
 		if 'anonymous' not in identity:
 			return
