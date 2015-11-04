@@ -20,6 +20,8 @@ from pyramid.httpexceptions import HTTPForbidden
 
 from repoze.who.interfaces import IRequestClassifier
 
+from nti.app.authentication.who_classifiers import CLASS_BROWSER
+
 from .interfaces import IResponseRenderer
 from .interfaces import IResponseCacheController
 from .interfaces import IPreRenderResponseCacheController
@@ -51,7 +53,7 @@ class AbstractCachingRenderer(object):
 			pass
 
 		classification = IRequestClassifier(request)(request.environ)
-		if classification == 'browser':
+		if classification == CLASS_BROWSER:
 			body = self._render_to_browser(data, system)
 		else:
 			body = self._render_to_non_browser(data, system)
