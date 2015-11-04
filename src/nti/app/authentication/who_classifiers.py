@@ -29,6 +29,14 @@ CLASS_BROWSER_APP = 'application-browser'
 #: a browser being used interactively.
 CLASS_BROWSER = 'browser'
 
+#: A request classfication meant to distinguish
+#: we are being interacted from a tvos environment (apple tv)
+CLASS_TV_APP = 'application-tvos'
+
+#: A group of classifications that are meant to indicate a browser
+#: or browser-like environment being interacted with programatically
+APP_CLASSES = (CLASS_BROWSER_APP, CLASS_TV_APP, )
+
 @interface.provider(IRequestClassifier)
 def application_request_classifier( environ ):
 	"""
@@ -54,7 +62,9 @@ def application_request_classifier( environ ):
 
 		# OK, but is it an programmatic browser request where we'd like to
 		# change up the auth rules?
-		if environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
+		if b'ntitvos' in ua: #Trumps other rules so we check it first
+			result = CLASS_TV_APP
+		elif environ.get( 'HTTP_X_REQUESTED_WITH', '' ).lower() == b'xmlhttprequest':
 			# An easy Yes!
 			result = CLASS_BROWSER_APP
 		elif environ.get('paste.testing') is True:
