@@ -74,10 +74,10 @@ class TestAnonymousAccessAuthenticator(unittest.TestCase):
 	def setUp(self):
 		self.plugin = AnonymousAccessAuthenticator()
 
-	def testIdentity(self):
+	def test_identity(self):
 		assert_that( self.plugin.identify( {} ), has_entry( 'anonymous', True ) )
 
-	def testAuthenticateToUserId(self):
+	def test_authenticate_to_username(self):
 		environ = {}
 		identity = self.plugin.identify( environ )
 
