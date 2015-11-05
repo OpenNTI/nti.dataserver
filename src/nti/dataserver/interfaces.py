@@ -895,24 +895,15 @@ class IACLProviderCacheable(interface.Interface):
 	generally only safe to do when the ACL information comes from external sources
 	such as files or strings.
 	"""
+	
+# BWC exports
+from nti.coremetadata.interfaces import IPublishable
+from nti.coremetadata.interfaces import IDefaultPublished
 
-class IDefaultPublished(interface.Interface):
-	"""
-	A marker interface mixed in to an instance to specify
-	that it has been "published" by its creator, thus sharing
-	it with the default sharing applicable to its creator
-	(whatever that means).
-	"""
+IPublishable = IPublishable
+IDefaultPublished = IDefaultPublished
 
-class IPublishable(interface.Interface):
-
-	def publish():
-		"Cause this object to provide :class:`IDefaultPublished`"
-
-	def unpublish():
-		"Cause this object to no longer provide :class:`IDefaultPublished`"
-
-# Content
+# Content interfaces
 
 # BWC exports
 from nti.dataserver_fragments.interfaces import ITitledContent
