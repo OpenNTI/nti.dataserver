@@ -10,6 +10,7 @@ __docformat__ = "restructuredtext en"
 from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_not
+from hamcrest import has_key
 from hamcrest import has_entry
 from hamcrest import assert_that
 from hamcrest import has_property
@@ -41,6 +42,7 @@ class TestRecord(unittest.TestCase):
 		assert_that(ext, has_entry('CreatedTime', is_not(none())))
 		assert_that(ext, has_entry('attributes', is_(['foo'])))
 		assert_that(ext, has_entry('tid', is_('a')))
+		assert_that(ext, does_not(has_key('key')))
 		assert_that(ext, has_entry('MimeType', is_('application/vnd.nextthought.recorder.transactionrecord')))
 
 		factory = find_factory_for(ext)
