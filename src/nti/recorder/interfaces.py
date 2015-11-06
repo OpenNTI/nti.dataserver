@@ -32,6 +32,9 @@ class ITransactionRecord(IContained, ICreated):
 							title="External value", 
 							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
+	
+	key = interface.Attribute('record key')
+	key.setTaggedValue('_ext_excluded_out', True)
 
 class ITransactionRecordHistory(IContained):
 
