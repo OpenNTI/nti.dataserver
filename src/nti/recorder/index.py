@@ -113,6 +113,7 @@ class ValidatingTargetIntID(object):
 		raise TypeError()
 
 class TargetIntIDIndex(IntegerAttributeIndex):
+	field_callable = None
 	field_name = default_field_name = 'intid'
 	interface = default_interface = ValidatingTargetIntID
 
