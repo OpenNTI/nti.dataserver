@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from functools import total_ordering
+
 from zope import interface
 
 from zope.container.contained import Contained
@@ -35,6 +37,7 @@ from .interfaces import ITransactionRecord
 from .interfaces import ITransactionRecordHistory
 
 @WithRepr
+@total_ordering
 @EqHash('principal', 'createdTime', 'tid')
 @interface.implementer(ITransactionRecord, IContentTypeAware)
 class TransactionRecord(PersistentCreatedModDateTrackingObject,
@@ -53,6 +56,19 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 	@property
 	def key(self):
 		return "(%s,%s,%s)" % (self.createdTime, self.principal, self.tid)
+
+
+	def __lt__(self, other):
+		try:
+			return (self.principal, self.createdTime) < (self.principal, self.createdTime)
+		except AttributeError:  # pragma: no cover
+			return NotImplemented
+
+	def __gt__(self, other):
+		try:
+			return (self.principal, self.createdTime) > (self.principal, self.createdTime)
+		except AttributeError:  # pragma: no cover
+			return NotImplemented
 
 deprecated('TransactionRecordHistory', 'No longer used')
 class TransactionRecordHistory(Contained, Persistent):
