@@ -5,6 +5,7 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
+
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -12,13 +13,13 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.deprecation import deprecated
+
 from zope.intid import IIntIds
 
 from zope.location import locate
 
 from nti.coremetadata.interfaces import IRecordable
-
-from nti.site.site import get_component_hierarchy_names
 
 from nti.traversal.traversal import find_interface
 
@@ -43,47 +44,15 @@ from .interfaces import ITransactionRecord
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
-IX_SITE = 'site'
 IX_LOCKED = 'locked'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
 IX_USERNAME = IX_PRINCIPAL = 'principal'
 IX_RECORDABLE = IX_TARGET_INTID = 'targetIntId'
 
-class KeepSetIndex(RawSetIndex):
-
-	empty_set = set()
-
-	def to_iterable(self, value):
-		return value
-
-	def index_doc(self, doc_id, value):
-		value = {v for v in self.to_iterable(value) if v is not None}
-		old = self.documents_to_values.get(doc_id) or self.empty_set
-		if value.difference(old):
-			value.update(old or ())
-			result = super(KeepSetIndex, self).index_doc(doc_id, value)
-			return result
-
-	def remove(self, doc_id, value):
-		old = set(self.documents_to_values.get(doc_id) or ())
-		if not old:
-			return
-		for v in self.to_iterable(value):
-			old.discard(v)
-		if old:
-			super(KeepSetIndex, self).index_doc(doc_id, old)
-		else:
-			super(KeepSetIndex, self).unindex_doc(doc_id)
-
-class SiteIndex(KeepSetIndex):
-
-	def to_iterable(self, value):
-		if ITransactionRecord.providedBy(value):
-			result = get_component_hierarchy_names()
-		else:
-			result = ()
-		return result
+deprecated('SiteIndex', 'No longer used')
+class SiteIndex(RawSetIndex):
+	pass
 
 class PrincipalRawIndex(RawValueIndex):
 	pass
@@ -106,14 +75,14 @@ class ValidatingTargetIntID(object):
 		else:
 			source = None
 		if source is not None:
-			intids = component.queryUtility(IIntIds) # test mode
+			intids = component.queryUtility(IIntIds)  # test mode
 			self.intid = intids.queryId(source) if intids is not None else None
 
 	def __reduce__(self):
 		raise TypeError()
 
 class TargetIntIDIndex(IntegerAttributeIndex):
-	field_callable = None
+	field_callable = None  # XXX: Avoid migration
 	field_name = default_field_name = 'intid'
 	interface = default_interface = ValidatingTargetIntID
 
@@ -169,7 +138,6 @@ class MetadataRecorderCatalog(Catalog):
 def create_recorder_catalog(catalog=None, family=None):
 	catalog = MetadataRecorderCatalog(family=family) if catalog is None else catalog
 	for name, clazz in ((IX_TID, TIDIndex),
-						(IX_SITE, SiteIndex),
 						(IX_LOCKED, LockedIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
@@ -193,7 +161,7 @@ def install_recorder_catalog(site_manager_container, intids=None):
 	locate(catalog, site_manager_container, CATALOG_NAME)
 	intids.register(catalog)
 	lsm.registerUtility(catalog, provided=IMetadataCatalog, name=CATALOG_NAME)
-	
+
 	catalog = create_recorder_catalog(catalog=catalog)
 	for index in catalog.values():
 		intids.register(index)
@@ -209,11 +177,11 @@ def get_recordables(objects=True, catalog=None, intids=None):
 	# ids in transactions
 	target_index = catalog[IX_TARGET_INTID]
 	recordable_ids = catalog.family.IF.LFSet(target_index.values_to_documents.keys())
-	
+
 	# locked status
 	locked_index = catalog[IX_LOCKED]
 	locked_ids = catalog.family.IF.LFSet(locked_index.documents_to_values.keys())
-	
+
 	uids = catalog.family.IF.union(locked_ids, recordable_ids)
 	if objects:
 		intids = component.getUtility(IIntIds) if intids is None else intids

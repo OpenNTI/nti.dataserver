@@ -9,7 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
-generation = 71
+generation = 72
 
 from zope import component
 
@@ -20,12 +20,9 @@ from zope.intid.interfaces import IIntIds
 
 from zope.location import locate
 
-from nti.recorder.record import copy_records
-
-from nti.recorder.index import get_recordables
 from nti.recorder.index import install_recorder_catalog
 
-from nti.recorder.interfaces import TRX_RECORD_HISTORY_KEY
+IX_SITE = 'site'
 
 def do_evolve(context):
 	setHooks()
@@ -39,23 +36,20 @@ def do_evolve(context):
 
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
-
 		catalog = install_recorder_catalog(ds_folder, intids)
-		recordables = get_recordables(catalog=catalog, intids=intids)
-		for recordable in recordables:
-			try:
-				anno = recordable.__annotations__
-				old = anno.pop(TRX_RECORD_HISTORY_KEY, None)
-				if not old:
-					continue
-				locate(old, None, None)
-				copy_records(recordable, old._records)
-			except AttributeError:
-				pass
+
+		old_idx = catalog[IX_SITE]
+		intids.unregister(old_idx)
+		del catalog[IX_SITE]
+		locate(old_idx, None, None)
+		
+		# should be empty since the catalog is a metadata catalog
+		# as such access to the site data is not possible
+		old_idx.clear()
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
 	"""
-	Evolve to gen 71 by migrating transaction history storage
+	Evolve to gen 72 by removing the site index from the recorder catalog
 	"""
 	do_evolve(context)
