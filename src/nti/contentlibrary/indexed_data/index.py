@@ -14,6 +14,10 @@ import time
 
 from zope import component
 
+from zope.component.hooks import getSite
+
+from zope.deprecation import deprecated
+
 from zope.intid import IIntIds
 
 import BTrees
@@ -26,7 +30,6 @@ from nti.common.time import time_to_64bit_int
 from nti.common.proxy import removeAllProxies
 
 from nti.site.interfaces import IHostPolicyFolder
-from nti.site.site import get_component_hierarchy_names
 
 from nti.zope_catalog.catalog import ResultSet
 
@@ -77,16 +80,26 @@ class KeepSetIndex(RawSetIndex):
 		else:
 			super(KeepSetIndex, self).unindex_doc(doc_id)
 
-class SiteIndex(KeepSetIndex):
+deprecated('SiteIndex', 'Replaced with SingleSiteIndex')
+class SiteIndex(RawSetIndex):
+	pass
 
-	def to_iterable(self, value=None):
-		if IHostPolicyFolder.providedBy(value):
-			result = get_component_hierarchy_names(value)
-		elif value is not None:
-			result = to_iterable(value)
+class ValidatingSiteName(object):
+
+	__slots__ = (b'site',)
+
+	def __init__(self, obj, default=None):	
+		if IHostPolicyFolder.providedBy(obj):
+			self.site = obj.__name__
 		else:
-			result = ()
-		return result
+			self.site = getSite().__name__
+
+	def __reduce__(self):
+		raise TypeError()
+
+class SingleSiteIndex(ValueIndex):
+	default_field_name = 'site'
+	default_interface = ValidatingSiteName
 
 class CheckRawValueIndex(RawValueIndex):
 
@@ -144,7 +157,7 @@ class ContainedObjectCatalog(Persistent):
 		# Track the ntiid of the object
 		self._ntiid_index = NTIIDIndex(family=self.family)
 		# Track the object site
-		self._site_index = KeepSetIndex(family=self.family)
+		self._site_index = SingleSiteIndex(family=self.family)
 		# Track the containers the object belongs to
 		self._container_index = KeepSetIndex(family=self.family)
 		# Track the source/file name an object was read from
@@ -242,8 +255,8 @@ class ContainedObjectCatalog(Persistent):
 		if doc_id is None:
 			return False
 
-		if namespace is not None:
-			namespace = getattr(namespace, '__name__', namespace)
+		if namespace is not None: # TODO: do we need this check?
+			namespace =	getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
@@ -253,6 +266,7 @@ class ContainedObjectCatalog(Persistent):
 			if value is not None:
 				index.index_doc(doc_id, value)
 		return True
+	index_doc = index
 
 	def unindex(self, item, intids=None):
 		doc_id = self._doc_id(item, intids)
@@ -263,6 +277,7 @@ class ContainedObjectCatalog(Persistent):
 					  self._site_index):
 			index.unindex_doc(doc_id)
 		return True
+	unindex_doc = unindex
 
 	def clear(self):
 		self._last_modified.clear()
