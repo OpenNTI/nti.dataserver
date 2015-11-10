@@ -28,12 +28,11 @@ from BTrees.OOBTree import OOBTree
 
 from persistent import Persistent
 
-from nti.folder.ofsfolder import Folder
+from .ofs.folder import Folder
+from .ofs.interfaces import ObjectWillBeAddedEvent
+from .ofs.interfaces import ObjectWillBeRemovedEvent
 
 from .lazy import LazyMap
-
-from .interfaces import ObjectWillBeAddedEvent
-from .interfaces import ObjectWillBeRemovedEvent
 
 _marker = object()
 

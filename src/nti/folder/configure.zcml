@@ -10,4 +10,10 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<include package="zope.annotation" />
+	
+	<adapter factory=".default.DefaultOrdering" />
+	<adapter factory=".partial.PartialOrdering" name="partial" />
+	<adapter factory=".unordered.UnorderedOrdering" name="unordered" />
+
 </configure>
