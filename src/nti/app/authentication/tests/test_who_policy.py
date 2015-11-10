@@ -19,14 +19,22 @@ from hamcrest import assert_that
 from hamcrest import is_
 from hamcrest import is_not as does_not
 from hamcrest import has_property
+from hamcrest import has_items
+from hamcrest import none
+from hamcrest import not_none
 
 from nti.testing.time import time_monotonically_increases
 import fudge
 
 from pyramid.request import Request
+from pyramid.security import Authenticated
+from pyramid.security import Everyone
 
 from ..who_policy import AuthenticationPolicy
 from ..who_apifactory import create_who_apifactory
+from ..who_authenticators import ANONYMOUS_USERNAME
+
+from zope.authentication import interfaces
 
 class TestWhoPolicy(unittest.TestCase):
 
@@ -63,3 +71,26 @@ class TestWhoPolicy(unittest.TestCase):
 						 is_('jason'))
 			# Side-effect: need a reissue
 			assert_that( request, has_property('_authtkt_reissued'))
+
+	def test_allows_anonymous_for_tvos( self ):
+		policy = self.policy
+
+		request = Request.blank('/')
+		assert_that(policy.unauthenticated_userid(request), none())
+
+		request = Request.blank('/', headers={'User-Agent': b"NextThought/1.0.2 ntitvos CFNetwork/672.0.8 Darwin/13.0.0"})
+		assert_that(policy.unauthenticated_userid(request), is_(ANONYMOUS_USERNAME))
+
+	def test_anonymous_effective_principles( self ):
+		unknown_principal = 'test_unauthed_principal_id'
+
+		mock_get = fudge.Fake()
+		mock_get.is_callable().returns( {} ).next_call().with_args( interfaces.IUnauthenticatedPrincipal ).returns( unknown_principal )
+		with fudge.patched_context('zope.component', 'getUtility', mock_get):
+
+			policy = self.policy
+			request = Request.blank('/', headers={'User-Agent': b"NextThought/1.0.2 ntitvos CFNetwork/672.0.8 Darwin/13.0.0"})
+			effective_principals = policy.effective_principals(request)
+			
+			assert_that(effective_principals, has_items(ANONYMOUS_USERNAME, unknown_principal, Everyone))
+			assert_that(effective_principals, does_not(has_items(Authenticated)))

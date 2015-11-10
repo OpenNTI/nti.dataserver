@@ -18,12 +18,15 @@ logger = __import__('logging').getLogger(__name__)
 
 import time
 
+from zope import component
 from zope import interface
+from zope.authentication import interfaces
 
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid_who.whov2 import WhoV2AuthenticationPolicy
 
 from nti.dataserver.authentication import effective_principals
+from .who_authenticators import ANONYMOUS_USERNAME
 
 ONE_DAY = 24 * 60 * 60
 ONE_WEEK = 7 * ONE_DAY
@@ -51,8 +54,15 @@ class _GroupsCallback(object):
 		if 'repoze.who.userid' in identity: # already identified by AuthTktCookie or _NTIUsersAuthenticatorPlugin
 			username = identity['repoze.who.userid']
 
+		# Check if we have been identifies as the anonymous user
+		# XXX: Question. We could also check that identity['identifier'] is an instance of
+		# our AnonymousAccessAuthenticator class.  Is that necessary
+		if username == ANONYMOUS_USERNAME or username == None:
+			return ( component.getUtility( interfaces.IUnauthenticatedPrincipal ), )
+
+
 		result = effective_principals( username,
-									   registry=request.registry,
+									   registry=request.registry,	
 									   authenticated=True,
 									   request=request )
 
