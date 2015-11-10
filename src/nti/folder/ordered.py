@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+Based on plone.folder.ordered
+
 .. $Id$
 """
 
