@@ -98,7 +98,7 @@ class OrderedBTreeFolderBase(BTreeFolder2Base):
 		return LazyMap(self._getOb, self.objectIds())
 
 	def objectItems(self):
-		return LazyMap(lambda uid, _getOb=self._getOb: (uid, _getOb(id)),
+		return LazyMap(lambda uid, _getOb=self._getOb: (uid, _getOb(uid)),
 					   self.objectIds())
 
 	def getObjectPosition(self, uid):

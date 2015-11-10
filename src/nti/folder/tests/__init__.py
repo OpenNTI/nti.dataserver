@@ -43,8 +43,9 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 
 class DummyObject(object):
 
-	def __init__(self, uid):
+	def __init__(self, uid, meta_type=None):
 		self.id = uid
+		self.meta_type = meta_type
 
 	def __of__(self, obj):
 		return self
