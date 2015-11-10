@@ -40,3 +40,29 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
 	@classmethod
 	def testTearDown(cls):
 		pass
+
+class DummyObject(object):
+
+	def __init__(self, uid):
+		self.id = uid
+
+	def __of__(self, obj):
+		return self
+
+	def dummy_method(self):
+		return self.id
+
+from zope.interface import implementer
+
+from nti.folder.interfaces import IOrderable
+
+@implementer(IOrderable)
+class Orderable(DummyObject):
+	"""
+	orderable mock object 
+	"""
+
+class Chaoticle(DummyObject):
+	""" 
+	non-orderable mock object;  this does not implement `IOrderable` 
+	"""

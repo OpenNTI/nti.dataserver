@@ -17,7 +17,7 @@ from .interfaces import IFolder
 
 from .item import Item
 
-from nti.folder.objectmanager import ObjectManager
+from .objectmanager import ObjectManager
 
 @interface.implementer(IFolder)
 class Folder(ObjectManager, Item):

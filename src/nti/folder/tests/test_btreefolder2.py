@@ -22,7 +22,8 @@ import unittest
 
 from Acquisition import aq_base
 
-from nti.folder.ofsfolder import Folder
+from nti.folder.ofs.folder import Folder
+
 from nti.folder.btreefolder2 import BTreeFolder2
 from nti.folder.btreefolder2 import ExhaustedUniqueIdsError
 
