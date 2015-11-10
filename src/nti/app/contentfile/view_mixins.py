@@ -69,7 +69,7 @@ def read_multipart_sources(request, sources=()):
 				data.contentType = source.contentType
 			if not data.filename and source.filename:
 				data.filename = nameFinder(source)
-			result[name] = data
+			result.append(data)
 	return result
 
 def get_content_files(context, attr="body"):
@@ -87,7 +87,7 @@ def transfer_internal_content_data(context, attr="body"):
 		# not internal ref
 		if not IInternalFileRef.providedBy(target):
 			continue
-		elif target.data: # has data
+		elif target.data:  # has data
 			interface.noLongerProvides(target, IInternalFileRef)
 			continue
 
