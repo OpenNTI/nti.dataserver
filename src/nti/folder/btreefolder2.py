@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Based on BTreeFolder2
+Based on Products.BTreeFolder2
 
 .. $Id$
 """
