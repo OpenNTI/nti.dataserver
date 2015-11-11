@@ -71,7 +71,7 @@ class _IdGenerationMixin(object):
 	Mix this in to a BTreeContainer to provide id generation.
 	"""
 
-	# : The integer counter for generated ids.
+	#: The integer counter for generated ids.
 	_v_nextid = 0
 
 	def generateId(self, prefix='item', suffix='', rand_ceiling=999999999, _nextid=None):
@@ -506,8 +506,9 @@ class _CaseInsensitiveKey(object):
 # and so that messes with caches
 
 @lru_cache(10000)
-def _tx_key_insen(key):
+def tx_key_insen(key):
 	return _CaseInsensitiveKey(key) if key is not None else None
+_tx_key_insen = tx_key_insen # BWC
 
 # As of BTrees 4.0.1, None is no longer allowed to be a key
 # or even used in __contains__
