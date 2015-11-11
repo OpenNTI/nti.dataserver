@@ -197,6 +197,7 @@ class TestObjectManager(unittest.TestCase):
 		got = om['1']
 		assert_that(got.aq_self, is_(same_instance(si1)))
 		assert_that(got.aq_parent, is_(same_instance(om)))
+		assert_that(got, has_property('__parent__', is_(same_instance(om))))
 		
 	def test_get_hit(self):
 		om = self._makeOne()

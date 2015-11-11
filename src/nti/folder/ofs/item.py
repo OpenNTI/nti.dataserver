@@ -19,7 +19,11 @@ from Acquisition import Implicit
 
 from ExtensionClass import Base
 
+from zope.cachedescriptors.property import readproperty
+
 from zope.interface import implementer
+
+from zope.location.interfaces import IContained
 
 from persistent import Persistent
 
@@ -31,7 +35,7 @@ from .interfaces import IItemWithName
 
 from .traversable import Traversable
 
-@implementer(IItem)
+@implementer(IItem, IContained)
 class Item(Base, Traversable):
 	"""
 	A common base class for simple, non-container objects.
@@ -56,6 +60,10 @@ class Item(Base, Traversable):
 		raise AttributeError, 'This object has no id'
 
 	__name__ = alias('id')
+
+	@readproperty
+	def __parent__(self):
+		return self.aq_parent
 
 	# Name, relative to BASEPATH1 of icon used to display item
 	# in folder listings.
