@@ -15,10 +15,15 @@ from zope.container.contained import Contained
 
 from zope.traversing.interfaces import IPathAdapter
 
+from ZODB.interfaces import IConnection
+
 from nti.contentfolder.model import RootFolder
 
 @interface.implementer(IPathAdapter)
 class OFSPathAdapter(Contained):
+	"""
+	Test adapter
+	"""
 
 	__name__ = "ofs"
 
@@ -33,5 +38,6 @@ class OFSPathAdapter(Contained):
 				result = self.context._ofs_root
 			except AttributeError:
 				result = self.context._ofs_root = RootFolder()
+				IConnection(self.context).add(result)
 			return result
 		raise KeyError(key)
