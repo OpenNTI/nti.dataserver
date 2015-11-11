@@ -13,7 +13,7 @@
 	<configure zcml:condition="have devmode">
 		<adapter name="ofs"
 				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"
-				 factory="adapters.OFSPathAdapter"
+				 factory=".adapters.OFSPathAdapter"
 				 provides="zope.traversing.interfaces.IPathAdapter" />
 	</configure>
 

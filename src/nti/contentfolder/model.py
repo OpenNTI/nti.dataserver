@@ -67,6 +67,8 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
 
+	parameters = {}
+
 	def __init__(self, *args, **kwargs):
 		kwargs['name'] = kwargs.get('name') or 'root'
 		super(RootFolder, self).__init__(*args, **kwargs)
