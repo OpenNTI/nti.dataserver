@@ -7,7 +7,8 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import is_
+# from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
 from hamcrest import assert_that
@@ -83,6 +84,6 @@ class TestTraverse(unittest.TestCase):
 	def testTraversePath(self):
 		assert_that('file', is_in(self.folder1.objectIds()))
 		assert_that(
-			self.folder1.unrestrictedTraverse(('', 'folder1', 'file')), is_(True))
+			self.folder1.unrestrictedTraverse(('', 'folder1', 'file')), is_not(none()))
 		assert_that(
-			self.folder1.unrestrictedTraverse(('', 'folder1')), is_(True))
+			self.folder1.unrestrictedTraverse(('', 'folder1')), is_not(none()))
