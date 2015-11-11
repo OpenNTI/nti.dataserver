@@ -19,13 +19,10 @@ from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from nti.coremetadata.interfaces import ILastModified
 
-from nti.namedfile.interfaces import IFile
+from nti.namedfile.interfaces import IFile as INamedFile
 
 from nti.schema.field import Bool
 from nti.schema.field import ValidTextLine
-
-class INamedFile(IFile):
-    name = name = ValidTextLine(title="File name", required=True)
 
 class INamedContainer(IContained,
                       IDCDescriptiveProperties,
@@ -38,7 +35,7 @@ class IContentFolder(INamedContainer):
   
     containers(str('.INamedFolder'))
     contains(str('.INamedFolder'),
-             str('.INamedFile'))
+             INamedFile)
 
 class IRootFolder(IContentFolder):
     pass
