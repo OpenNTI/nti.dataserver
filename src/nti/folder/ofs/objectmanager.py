@@ -9,8 +9,6 @@ Based on Zope2.OFS.Folder and Zope2.OFS.ObjectManager
 from __future__ import print_function, unicode_literals, absolute_import, division
 __docformat__ = "restructuredtext en"
 
-logger = __import__('logging').getLogger(__name__)
-
 import re
 import six
 from cgi import escape
@@ -32,6 +30,8 @@ from .interfaces import ObjectWillBeAddedEvent
 from .interfaces import ObjectWillBeRemovedEvent
 
 from .traversable import Traversable
+
+logger = __import__('logging').getLogger(__name__)
 
 # Constants: __replaceable__ flags:
 UNIQUE = 2
@@ -189,10 +189,28 @@ class ObjectManager(Traversable, Implicit):
 		return [ self._getOb(uid) for uid in self.objectIds() ]
 
 	def objectItems(self):
-		return [ (id, self._getOb(uid)) for uid in self.objectIds() ]
+		return [ (uid, self._getOb(uid)) for uid in self.objectIds() ]
 
 	def objectMap(self):
 		return tuple(d.copy() for d in self._objects)
+
+	def manage_delObjects(self, ids=()):
+		"""
+		Delete a subordinate object
+
+		The objects specified in 'ids' get deleted.
+		"""
+		if isinstance(ids, six.string_types):
+			ids=[ids]
+		if not ids:
+			raise ValueError('No items specified')
+		while ids:
+			uid = ids[-1]
+			v = self._getOb(uid, self)
+			if v is self:
+				raise ValueError('%s does not exist' % escape(ids[-1]))
+			self._delObject(uid)
+			del ids[-1]
 
 	def __delitem__(self, name):
 		return self.manage_delObjects(ids=[name])
