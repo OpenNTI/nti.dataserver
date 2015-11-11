@@ -49,6 +49,8 @@ import z3c.password.interfaces
 
 import BTrees
 
+from nti.containers import containers as container
+
 from nti.dataserver import users
 from nti.dataserver import flagging
 from nti.dataserver import _Dataserver
@@ -56,7 +58,6 @@ from nti.dataserver import metadata_index
 from nti.dataserver import session_storage
 from nti.dataserver import password_utility
 from nti.dataserver import shards as ds_shards
-from nti.dataserver import containers as container
 
 from nti.dataserver.interfaces import IOIDResolver
 from nti.dataserver.interfaces import IUsersFolder
