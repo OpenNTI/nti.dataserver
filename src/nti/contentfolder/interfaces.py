@@ -37,6 +37,9 @@ class IContentFolder(INamedContainer):
     contains(str('.INamedFolder'),
              INamedFile)
 
+    __parent__.required = False
+    __setitem__.__doc__ = None
+    
     def append(obj):
         """
         add an object to this container

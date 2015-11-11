@@ -31,11 +31,13 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
 	name = alias('__name__')
 
-	def __init__(self, name, use_blobs=False):
+	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
-		self.name = name
-		self.use_blobs = use_blobs
-
+		self.name = kwargs.get('name')
+		self.use_blobs = kwargs.get('use_blobs', True)
+		self.title = kwargs.get('title') or self.name
+		self.description = kwargs.get('description') or self.title
+		
 	def append(self, obj):
 		name = obj.name
 		if name in self:
@@ -46,5 +48,6 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
 
-	def __init__(self, name, use_blobs=False):
-		super(RootFolder, self).__init__('root', use_blobs)
+	def __init__(self, *args, **kwargs):
+		kwargs['name'] = kwargs.get('name') or 'root'
+		super(RootFolder, self).__init__(*args, **kwargs)
