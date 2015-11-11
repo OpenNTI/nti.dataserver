@@ -20,8 +20,9 @@ import transaction
 
 try:
 	from Acquisition import aq_base
-except ImportError:  # PyPy?
-	def aq_base(o): return o
+except ImportError:
+	def aq_base(o):
+		return o
 
 from zope import interface
 
@@ -430,11 +431,11 @@ class ModeledContentUploadRequestUtilsMixin(object):
 	inputClass = dict
 	content_predicate = id
 
-	# : Subclasses can define this as a tuple of types to
-	# : catch that we can't be sure are client or server errors.
-	# : We catch TypeError and LookupError (which includes KeyError)
-	# : by default, often they're a failed
-	# : interface adaptation, but that could be because of bad input
+	#: Subclasses can define this as a tuple of types to
+	#: catch that we can't be sure are client or server errors.
+	#: We catch TypeError and LookupError (which includes KeyError)
+	#: by default, often they're a failed
+	#: interface adaptation, but that could be because of bad input
 	_EXTRA_INPUT_ERRORS = (TypeError, LookupError)
 
 	def __call__(self):
@@ -467,8 +468,8 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			client request.
 		"""
 		result = read_body_as_external_object(self.request,
-												input_data=value,
-												expected_type=self.inputClass)
+											  input_data=value,
+											  expected_type=self.inputClass)
 		try:
 			return self._transformInput(result)
 		except hexc.HTTPException:
