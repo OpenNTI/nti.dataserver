@@ -34,7 +34,7 @@ from .interfaces import ITraversable
 
 _marker = object()
 
-class NotFound(ValueError):
+class NotFound(Exception):
 	pass
 
 @implementer(ITraversable)
@@ -153,7 +153,6 @@ class Traversable(object):
 		else:
 			obj = self
 
-		resource = _marker
 		try:
 			while path:
 				name = path_pop()
@@ -202,11 +201,8 @@ class Traversable(object):
 						except AttributeError:
 							raise e
 						if next_ is _marker:
-							# If we have a NullResource from earlier use it.
-							next_ = resource
-							if next_ is _marker:
-								# Nothing found re-raise error
-								raise e
+							# Nothing found re-raise error
+							raise e
 				obj = next_
 
 			return obj
