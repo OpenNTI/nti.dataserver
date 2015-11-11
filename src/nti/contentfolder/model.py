@@ -10,6 +10,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
+
 from zope import interface
 
 from zope.container.contained import Contained
@@ -22,6 +24,17 @@ from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import IRootFolder
 from .interfaces import IContentFolder
+
+def checkValidId(uid):
+	
+	if not uid or not isinstance(uid, six.string_types):
+		raise ValueError('Empty or invalid id specified', uid)
+
+	if uid in ('.', '..'):
+		raise ValueError('The id "%s" is invalid because it is not traversable.' % uid)
+
+	if '/' in uid:
+		raise ValueError('The id "%s" contains characters illegal.' % uid)
 
 @interface.implementer(IContentFolder)
 class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
@@ -38,11 +51,16 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 		self.title = kwargs.get('title') or self.name
 		self.description = kwargs.get('description') or self.title
 		
+	def __setitem__(self, key, value):
+		checkValidId(key)
+		CaseInsensitiveCheckingLastModifiedBTreeContainer.__setitem__(self, key, value)
+
 	def append(self, obj):
 		name = obj.name
 		if name in self:
 			del self[name]
 		self[name] = obj
+		return obj
 
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):

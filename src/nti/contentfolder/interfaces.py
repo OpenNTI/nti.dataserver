@@ -33,8 +33,8 @@ class INamedContainer(IContained,
 
 class IContentFolder(INamedContainer):
   
-    containers(str('.INamedFolder'))
-    contains(str('.INamedFolder'),
+    containers(str('.INamedContainer'))
+    contains(str('.INamedContainer'),
              INamedFile)
 
     __parent__.required = False
