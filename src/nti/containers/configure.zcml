@@ -12,19 +12,16 @@
 	<include package="zope.dublincore" />
 	<include package="zope.annotation" />
 
-	<!-- Container events -->
-	<subscriber handler=".containers.update_container_modified_time" />
-	
-	<!-- Container events -->
-	<subscriber handler=".containers.update_container_modified_time" />
+	<!-- Subscribers -->
+	<subscriber handler=".subscribers.update_container_modified_time" />
 
 	<!-- 
 	TODO: We are relying on registration order. Make sure that's kosher. 
 	-->
-	<subscriber handler=".containers.update_object_modified_time" />
-	<subscriber handler=".containers.update_parent_modified_time" />
+	<subscriber handler=".subscribers.update_object_modified_time" />
+	<subscriber handler=".subscribers.update_parent_modified_time" />
 
-	<!-- Container adapters -->
+	<!-- Adapters -->
 	<adapter factory=".containers.IdGeneratorNameChooser" />
 
 </configure>
