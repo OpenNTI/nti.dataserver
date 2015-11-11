@@ -384,12 +384,15 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 		if '_sharing_storage' in self.__dict__:
 			self._sharing_storage.clearSharingTargets()
 
-
 	def unpublish(self):
 		# See notes in publish() for why we do this first
 		interface.alsoProvides(self, IWritableShared)
 		super(PersonalBlogEntry, self).unpublish()
 
+	def is_published(self):
+		return not IWritableShared.providedBy(self)
+	isPublished = is_published
+	
 	updateSharingTargets = _forward_not_published('updateSharingTargets')
 	clearSharingTargets = _forward_not_published('clearSharingTargets')
 	addSharingTarget = _forward_not_published('addSharingTarget')
