@@ -22,11 +22,16 @@ from zope.container.contained import notifyContainerModified
 
 from zope.event import notify
 
+from zope.interface import implementer
+
 from zope.lifecycleevent import ObjectAddedEvent
 from zope.lifecycleevent import ObjectRemovedEvent
 
+from .interfaces import IObjectManager
 from .interfaces import ObjectWillBeAddedEvent
 from .interfaces import ObjectWillBeRemovedEvent
+
+from .traversable import Traversable
 
 # Constants: __replaceable__ flags:
 UNIQUE = 2
@@ -88,7 +93,8 @@ def checkValidId(self, uid, allow_dup=0):
 
 _marker = object()
 
-class ObjectManager(Implicit):
+@implementer(IObjectManager)
+class ObjectManager(Traversable, Implicit):
 
 	_objects = ()
 
