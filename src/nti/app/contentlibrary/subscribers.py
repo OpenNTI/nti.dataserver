@@ -181,8 +181,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 	if _can_be_removed(registered, force=force):
 		catalog = get_library_catalog() if catalog is None else catalog
 		catalog.unindex(registered, intids=intids)
-		if not unregisterUtility(registry, component=registered,
-								 provided=provided, name=name):
+		if not unregisterUtility(registry, provided=provided, name=name):
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
 		intids.unregister(registered, event=False)
@@ -402,7 +401,7 @@ def _update_indices_when_content_changes(content_package, event):
 
 # clear events
 
-def _clear_when_removed(content_package, force=True):
+def _clear_when_removed(content_package, force=True, process_global=False):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
@@ -414,7 +413,7 @@ def _clear_when_removed(content_package, force=True):
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
-	if IGlobalContentPackage.providedBy(content_package):
+	if not process_global and IGlobalContentPackage.providedBy(content_package):
 		return result
 	_clear_last_modified(content_package, catalog)
 
