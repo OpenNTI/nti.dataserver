@@ -21,8 +21,7 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import get_source
 
-from nti.namedfile.interfaces import INamedFile
-from nti.namedfile.interfaces import INamedImage
+from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
 
 from nti.dataserver.interfaces import IInternalFileRef
@@ -30,7 +29,7 @@ from nti.dataserver.interfaces import IInternalFileRef
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 def is_named_source(context):
-	return INamedFile.providedBy(context) or INamedImage.providedBy(context)
+	return IFile.providedBy(context)
 
 def validate_sources(context=None, sources=()):
 	for source in sources:

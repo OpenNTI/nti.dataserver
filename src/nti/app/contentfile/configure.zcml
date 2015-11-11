@@ -9,7 +9,7 @@
 	<include package="zope.security" />
 
 	<subscriber factory=".decorators._ContentFileDecorator"
-				for="nti.dataserver_core.interfaces.IContentFile"
+				for="nti.namedfile.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
 </configure>

@@ -9,6 +9,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from zope import component
 from zope import interface
 
 from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
@@ -20,11 +21,14 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_external_ntiid_oid
 
+from nti.namedfile.interfaces import IFile
+
 from nti.links.links import Link
 
 OID = StandardExternalFields.OID
 NTIID = StandardExternalFields.NTIID
 
+@component.adapter(IFile)
 @interface.implementer(IExternalMappingDecorator)
 class _ContentFileDecorator(object):
 

@@ -12,22 +12,21 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from zope.location.interfaces import IContained
+
 from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.datastructures import NamedFileObjectIO
 
-from ..interfaces import IZContained
 from ..interfaces import IContentFile
 
 from .base import UserContentRoot
 
 from .threadable import ThreadableMixin
 
-@interface.implementer(IContentFile, IZContained)
+@interface.implementer(IContentFile, IContained)
 class ContentFile(ThreadableMixin,
 				  UserContentRoot,
 				  NamedBlobFile):
-
-	__parent__ = __name__ = None
 
 	def __init__(self, *args, **kwargs):
 		ThreadableMixin.__init__(self)
