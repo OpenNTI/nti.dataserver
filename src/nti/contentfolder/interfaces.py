@@ -17,6 +17,8 @@ from zope.container.interfaces import IContentContainer
 
 from zope.dublincore.interfaces import IDCDescriptiveProperties
 
+from zope.mimetype.interfaces import IContentTypeAware
+
 from nti.coremetadata.interfaces import ILastModified
 
 from nti.namedfile.interfaces import IFile as INamedFile
@@ -27,10 +29,12 @@ from nti.schema.field import ValidTextLine
 class INamedContainer(IContained,
                       IDCDescriptiveProperties,
                       IContentContainer, 
+                      IContentTypeAware,
                       ILastModified):
     name = ValidTextLine(title="Folder name", required=True)
     use_blobs = Bool(title="Use blobs flag", required=True, default=True)
-
+    use_blobs.setTaggedValue('_ext_excluded_out', True)
+    
 class IContentFolder(INamedContainer):
   
     containers(str('.INamedContainer'))

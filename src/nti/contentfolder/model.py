@@ -42,6 +42,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 	__external_can_create__ = False
 	createDirectFieldProperties(IContentFolder)
 
+	parameters = {}
 	name = alias('__name__')
 
 	def __init__(self, *args, **kwargs):

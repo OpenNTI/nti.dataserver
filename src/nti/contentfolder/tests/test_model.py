@@ -8,6 +8,7 @@ __docformat__ = "restructuredtext en"
 # pylint: disable=W0212,R0904
 
 from hamcrest import is_in
+from hamcrest import has_entries
 from hamcrest import assert_that
 
 from nti.testing.matchers import validly_provides
@@ -21,6 +22,8 @@ from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IContentFolder
 
 from nti.contentfolder.tests import SharedConfiguringTestLayer
+
+from nti.externalization.externalization import to_external_object
 
 from nti.namedfile.file import NamedFile
 
@@ -38,3 +41,9 @@ class TestModel(unittest.TestCase):
 		f1.append(NamedFile(name="foo"))
 		assert_that('foo', is_in(f1))
 		self.assertRaises(Exception, f1.__setitem__, 'foo', object())
+		
+		ext_obj = to_external_object(root)
+		assert_that(ext_obj, 
+					has_entries(
+						u'MimeType', 'application/vnd.nextthought.contentfolder.rootfolder',
+						u'name', 'root'))
