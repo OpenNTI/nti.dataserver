@@ -36,9 +36,9 @@ from nti.common.property import Lazy
 from nti.common.property import readproperty
 from nti.common.property import CachedProperty
 
-from nti.dataserver.containers import AcquireObjectsOnReadMixin
-from nti.dataserver.containers import AbstractNTIIDSafeNameChooser
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.containers.containers import AcquireObjectsOnReadMixin
+from nti.containers.containers import AbstractNTIIDSafeNameChooser
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.users import Entity
 

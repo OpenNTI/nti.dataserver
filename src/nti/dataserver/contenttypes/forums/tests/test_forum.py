@@ -29,9 +29,10 @@ from zope.container.interfaces import InvalidItemType, InvalidContainerType
 
 from zope.intid import IIntIds
 
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
 from nti.dataserver.users import Community
 from nti.dataserver.users import DynamicFriendsList
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization.tests import externalizes
 

@@ -31,8 +31,8 @@ from nti.dataserver.interfaces import ICommunity
 from nti.dataserver.interfaces import IRedisClient
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
 
-from nti.dataserver.containers import AcquireObjectsOnReadMixin
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.containers.containers import AcquireObjectsOnReadMixin
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.sharing import AbstractReadableSharedWithMixin
 
