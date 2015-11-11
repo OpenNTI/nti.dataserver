@@ -37,5 +37,10 @@ class IContentFolder(INamedContainer):
     contains(str('.INamedFolder'),
              INamedFile)
 
+    def append(obj):
+        """
+        add an object to this container
+        """
+
 class IRootFolder(IContentFolder):
     pass
