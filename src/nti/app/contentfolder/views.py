@@ -11,6 +11,8 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+from collections import Mapping
+
 # from zope import component
 # from zope import interface
 
@@ -40,12 +42,15 @@ from nti.dataserver import authorization as nauth
 class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	def _do_call(self):
-		input_ = self.readInput()
-		name = input_.get('name')
-		if not name:
-			raise hexc.HTTPUnprocessableEntity("Invalid folder name.")
-		title = input_.get('title')
-		description = input_.get('description')
+		data = self.readInput()
+		if isinstance(data, Mapping):
+			name = data.get('name')
+			if not name:
+				raise hexc.HTTPUnprocessableEntity("Invalid folder name.")
+			title = data.get('title')
+			description = data.get('description')
+		else:
+			name = str(data)
 		if name in self.context:
 			raise hexc.HTTPUnprocessableEntity(_("Folder exists."))
 		new_folder = ContentFolder(name=name,
