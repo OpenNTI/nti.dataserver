@@ -11,6 +11,7 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+import six
 from urllib import quote
 
 from Acquisition import aq_base
@@ -133,7 +134,7 @@ class Traversable(object):
 		if not path:
 			return self
 
-		if isinstance(path, str):
+		if isinstance(path, six.string_types):
 			# Unicode paths are not allowed
 			path = path.split('/')
 		else:
@@ -153,6 +154,7 @@ class Traversable(object):
 		else:
 			obj = self
 
+		next_ = None
 		try:
 			while path:
 				name = path_pop()
@@ -192,10 +194,9 @@ class Traversable(object):
 								raise NotFound(name)
 				except (AttributeError, NotFound, KeyError), e:
 					if next_ is not None:
-						if IAcquirer.providedBy(next_):
-							next_ = next_.__of__(obj)
+						raise e
 					else:
-						# No view, try acquired attributes
+						# try acquired attributes
 						try:
 							next_ = getattr(obj, name, _marker)
 						except AttributeError:

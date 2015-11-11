@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-# from hamcrest import is_
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import is_in
 from hamcrest import is_not
@@ -15,7 +15,9 @@ from hamcrest import assert_that
 does_not = is_not
 
 import unittest
+from operator import getitem
 
+from Acquisition import aq_base
 from Acquisition import Implicit
 
 from zope.event import notify
@@ -28,8 +30,12 @@ from persistent import Persistent
 
 from nti.folder.ofs.folder import Root
 from nti.folder.ofs.folder import Folder
+from nti.folder.ofs.item import SimpleItem
 from nti.folder.ofs.item import ItemWithName
+
 from nti.folder.ofs.interfaces import ITraversable
+
+from nti.folder.ofs.traversable import NotFound
 from nti.folder.ofs.traversable import Traversable
 
 from nti.folder.tests import SharedConfiguringTestLayer
@@ -62,7 +68,7 @@ def manage_addFile(self, uid, title='', content_type=''):
 	notify(ObjectCreatedEvent(newFile))
 	return newFile
 
-class TestTraverse(unittest.TestCase):
+class TestTraversable(unittest.TestCase):
 
 	layer = SharedConfiguringTestLayer
 
@@ -81,9 +87,50 @@ class TestTraverse(unittest.TestCase):
 	def test_interfaces(self):
 		verifyClass(ITraversable, Traversable)
 
-	def testTraversePath(self):
+	def test_traversePath(self):
 		assert_that('file', is_in(self.folder1.objectIds()))
 		assert_that(
 			self.folder1.unrestrictedTraverse(('', 'folder1', 'file')), is_not(none()))
 		assert_that(
 			self.folder1.unrestrictedTraverse(('', 'folder1')), is_not(none()))
+
+	def test_traverseURLNoSlash(self):
+		assert_that('file', is_in(self.folder1.objectIds()))
+		assert_that(self.folder1.unrestrictedTraverse('/folder1/file'), is_not(none()))
+		assert_that(self.folder1.unrestrictedTraverse('/folder1'), is_not(none()))
+
+	def test_traverseURLSlash(self):
+		assert_that('file', is_in(self.folder1.objectIds()))
+		assert_that(self.folder1.unrestrictedTraverse('/folder1/file/'), is_not(none()))
+		assert_that(self.folder1.unrestrictedTraverse('/folder1/') , is_not(none()))
+
+	def test_traverseToNone(self):
+		self.assertRaises(
+			KeyError,
+			self.folder1.unrestrictedTraverse, ('', 'folder1', 'file2'))
+		self.assertRaises(
+			KeyError, self.folder1.unrestrictedTraverse, '/folder1/file2')
+		self.assertRaises(
+			KeyError, self.folder1.unrestrictedTraverse, '/folder1/file2/')
+
+	def test_traverseUp(self):
+		# Test that we can traverse upwards
+		assert_that(
+			aq_base(self.app.folder1.file.restrictedTraverse('../..')),
+			is_(aq_base(self.app)))
+	
+	def test_notFoundIsRaised(self):
+		self.folder1._setObject('foo', SimpleItem('foo'))
+		self.assertRaises(AttributeError, getitem, self.folder1.foo,
+						  'doesntexist')
+		self.assertRaises(NotFound, self.folder1.unrestrictedTraverse,
+						  'foo/doesntexist')
+		self.assertRaises(AttributeError, getitem,
+						  self.folder1.foo, 'isPrincipiaFolderish')
+		self.assertRaises(NotFound, self.folder1.unrestrictedTraverse,
+						  'foo/isPrincipiaFolderish/doesntexist')
+
+	def test_traverseToNameStartingWithPlus(self):
+		# Verify it's possible to traverse to a name such as +something
+		assert_that(
+			self.folder1.unrestrictedTraverse('+something'), is_('plus'))
