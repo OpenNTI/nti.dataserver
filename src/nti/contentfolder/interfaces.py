@@ -32,6 +32,11 @@ class INamedContainer(IContained,
                       IContentTypeAware,
                       ILastModified):
     name = ValidTextLine(title="Folder name", required=True)
+    
+    # dublin core
+    title = ValidTextLine(title="Folder title", required=False, default=None)
+    description = ValidTextLine(title="Folder description", required=False, default=None)
+     
     use_blobs = Bool(title="Use blobs flag", required=True, default=True)
     use_blobs.setTaggedValue('_ext_excluded_out', True)
     

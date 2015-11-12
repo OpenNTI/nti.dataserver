@@ -11,10 +11,10 @@ logger = __import__('logging').getLogger(__name__)
 
 from . import MessageFactory as _
 
+import six
 from collections import Mapping
 
-# from zope import component
-# from zope import interface
+from zope import lifecycleevent
 
 from pyramid.view import view_config
 from pyramid.view import view_defaults
@@ -27,13 +27,15 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.contentfolder.model import ContentFolder
-from nti.contentfolder.interfaces import IRootFolder
-from nti.contentfolder.interfaces import IContentFolder
+from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver import authorization as nauth
 
-@view_config(context=IRootFolder)
-@view_config(context=IContentFolder)
+from nti.externalization.interfaces import StandardExternalFields
+
+MIMETYPE = StandardExternalFields.MIMETYPE
+
+@view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
 			   name="mkdir",
@@ -41,21 +43,27 @@ from nti.dataserver import authorization as nauth
 			   request_method='POST')
 class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
+	content_predicate = INamedContainer.providedBy
+	
+	def readInput(self, value=None):
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		if isinstance(data, six.string_types):
+			data = {
+				'name': data,
+				'title': data,
+				'description': data,
+				MIMETYPE: ContentFolder.mimeType
+			}
+		elif isinstance(data, Mapping) and MIMETYPE not in data:
+			data[MIMETYPE] = ContentFolder.mimeType
+		return data
+
 	def _do_call(self):
-		data = self.readInput()
-		if isinstance(data, Mapping):
-			name = data.get('name')
-			if not name:
-				raise hexc.HTTPUnprocessableEntity(_("Invalid folder name."))
-			title = data.get('title')
-			description = data.get('description')
-		else:
-			name = str(data)
-		if name in self.context:
+		creator = self.remoteUser
+		new_folder = self.readCreateUpdateContentObject(creator)
+		if new_folder.name in self.context:
 			raise hexc.HTTPUnprocessableEntity(_("Folder exists."))
-		new_folder = ContentFolder(name=name,
-								   title=title,
-								   description=description)
-		self.context.append(new_folder)
+		lifecycleevent.created(new_folder)
+		self.context.add(new_folder)
 		self.request.response.status_int = 201
 		return new_folder

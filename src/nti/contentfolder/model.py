@@ -13,8 +13,6 @@ import six
 
 from zope import interface
 
-from zope.container.contained import Contained
-
 from nti.common.property import alias
 
 from nti.coremetadata.interfaces import SYSTEM_USER_ID
@@ -48,11 +46,11 @@ def get_context_name(context):
 	return result
 
 @interface.implementer(IContentFolder)
-class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
-					Contained):
+class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 
 	createDirectFieldProperties(IContentFolder)
 
+	__parent__ = None
 	name = alias('__name__')
 
 	creator = None

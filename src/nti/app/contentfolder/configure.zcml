@@ -8,6 +8,8 @@
 	<include package="zope.component" />
 	<include package="zope.security" />
 
+	<include package="nti.contentfolder" />
+
 	<adapter factory=".acl.ContentFolderACLProvider" />
 		
 	<configure zcml:condition="have testmode">
