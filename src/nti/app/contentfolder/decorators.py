@@ -52,3 +52,4 @@ class _FolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 			_links.append(self._create_link(context, "contents", "@@contents"))
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(self._create_link(context, "mkdir", "@@mkdir"))
+			_links.append(self._create_link(context, "upload", "@@upload"))
