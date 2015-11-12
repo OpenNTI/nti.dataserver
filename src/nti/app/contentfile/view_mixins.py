@@ -20,11 +20,10 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 from pyramid import httpexceptions as hexc
 
 from plone.namedfile.interfaces import IFile as IPloneFile
-from plone.namedfile.interfaces import INamed as IPloneNamed
 
 from nti.app.base.abstract_views import get_source
 
-from nti.namedfile.file import NamedFileMixin
+from nti.namedfile.file import get_file_name as get_context_name
 
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
@@ -35,14 +34,6 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 def is_named_source(context):
 	return IFile.providedBy(context)
-
-def get_context_name(context):
-	result = None
-	if IFile.providedBy(context):
-		result = context.name
-	if not result and IPloneNamed.providedBy(context):
-		result = NamedFileMixin.nameFinder(context.filename) or context.filename
-	return result
 
 def validate_sources(context=None, sources=()):
 	for source in sources:
