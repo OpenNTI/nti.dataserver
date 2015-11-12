@@ -39,7 +39,6 @@ from zope.authentication import interfaces
 
 from zope.security.management import newInteraction, endInteraction
 
-from nti.app.authentication.who_authenticators import ANONYMOUS_USERNAME
 from nti.dataserver import users
 from nti.dataserver.interfaces import IDataserver
 
@@ -54,15 +53,15 @@ class _interaction_tween(object):
 		uid = request.authenticated_userid
 		user = None
 
-		if uid == ANONYMOUS_USERNAME:
+		if not uid:
 			user = component.getUtility( interfaces.IUnauthenticatedPrincipal )
-		elif uid:
+		else:
 			dataserver = component.getUtility(IDataserver)
 			# We must have a user at this point...
 			user = users.User.get_user(uid, dataserver=dataserver)
 			# ...and all users must be IParticipation-capable
 
-		if user:
+		if user is not None:
 			participation = IParticipation(user)
 			# newInteraction takes a list of participations.
 			# it's important that the first one be the main IPrincipal,
