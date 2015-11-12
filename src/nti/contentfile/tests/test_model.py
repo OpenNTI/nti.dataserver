@@ -7,6 +7,7 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
 from hamcrest import none
 from hamcrest import all_of
 from hamcrest import is_not
@@ -61,9 +62,13 @@ class TestModel(unittest.TestCase):
 		assert_that(internal, has_property('filename', 'ichigo.gif'))
 		assert_that(internal, has_property('name', 'ichigo.gif'))
 
-		assert_that(internal, 
-                    externalizes(all_of(has_key('CreatedTime'),
-                                        has_key('Last Modified'),
+		assert_that(internal,
+					externalizes(all_of(has_key('CreatedTime'),
+										has_key('Last Modified'),
 										has_entry('name', 'ichigo.gif'),
-                                        has_entry('FileMimeType', 'image/gif'),
-                                        has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
+										has_entry('FileMimeType', 'image/gif'),
+										has_entry('MimeType', 'application/vnd.nextthought.contentimage'))))
+
+		assert_that(internal, has_property('__name__', is_('ichigo.gif')))
+		internal.name = 'foo'
+		assert_that(internal, has_property('__name__', is_('foo')))

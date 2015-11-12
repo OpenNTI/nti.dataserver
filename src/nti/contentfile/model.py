@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 
 from zope import interface
 
-from nti.mimetype.mimetype import MIME_BASE
+from nti.common.property import alias
 
 from nti.namedfile.file import NamedFile
 from nti.namedfile.file import NamedImage
@@ -27,23 +27,24 @@ from .interfaces import IContentBlobImage
    
 class BaseMixin(object):
     parameters = {}
-     
+    __name__ = alias('name')
+
 @interface.implementer(IContentFile)
-class ContentFile(NamedFile, BaseMixin):
+class ContentFile(BaseMixin, NamedFile):
     createDirectFieldProperties(IContentFile)
     mimeType = mime_tye = b'application/vnd.nextthought.contentfile'
     
 @interface.implementer(IContentBlobFile)
-class ContentBlobFile(NamedBlobFile, BaseMixin):
+class ContentBlobFile(BaseMixin, NamedBlobFile):
     createDirectFieldProperties(IContentBlobFile)
     mimeType = mime_tye = b'application/vnd.nextthought.contentblobfile'
 
 @interface.implementer(IContentImage)
-class ContentImage(NamedImage, BaseMixin):
+class ContentImage(BaseMixin, NamedImage):
     createDirectFieldProperties(IContentImage)
     mimeType = mime_tye = b'application/vnd.nextthought.contentimage'
     
 @interface.implementer(IContentBlobImage)
-class ContentBlobImage(NamedBlobImage, BaseMixin):
+class ContentBlobImage(BaseMixin, NamedBlobImage):
     createDirectFieldProperties(IContentBlobImage)
     mimeType = mime_tye = b'application/vnd.nextthought.contentblobimage'
