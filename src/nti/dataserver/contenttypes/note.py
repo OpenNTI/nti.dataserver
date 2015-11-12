@@ -20,13 +20,14 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.schema.fieldproperty import FieldProperty
 
+from plone.namedfile.interfaces import INamed
+
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IMedia
 from nti.dataserver.interfaces import ICanvas
 from nti.dataserver.interfaces import IRatable
 from nti.dataserver.interfaces import ILikeable
 from nti.dataserver.interfaces import IFlaggable
-from nti.dataserver.interfaces import IContentFile
 from nti.dataserver.interfaces import IFavoritable
 
 from nti.dataserver_core.schema import BodyFieldProperty
@@ -101,7 +102,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
 
 		for i, item in enumerate(body):
 			if not (ICanvas.providedBy(item) or IMedia.providedBy(item) or \
-					IContentFile.providedBy(item)):
+					INamed.providedBy(item)):
 				continue
 
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
