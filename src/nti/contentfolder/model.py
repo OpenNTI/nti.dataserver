@@ -42,9 +42,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 	__external_can_create__ = False
 	createDirectFieldProperties(IContentFolder)
 
-	parameters = {}
 	name = alias('__name__')
 
+	parameters = {}
+	mimeType = mime_type = b'application/vnd.nextthought.contentfolder'
+	
 	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
 		self.name = kwargs.get('name')
@@ -68,6 +70,7 @@ class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
 
 	parameters = {}
+	mimeType = mime_type = b'application/vnd.nextthought.contentrootfolder'
 
 	def __init__(self, *args, **kwargs):
 		kwargs['name'] = kwargs.get('name') or 'root'

@@ -21,11 +21,11 @@ from nti.contentfolder.model import ContentFolder
 from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IContentFolder
 
-from nti.contentfolder.tests import SharedConfiguringTestLayer
-
 from nti.externalization.externalization import to_external_object
 
 from nti.namedfile.file import NamedFile
+
+from nti.contentfolder.tests import SharedConfiguringTestLayer
 
 class TestModel(unittest.TestCase):
 
@@ -45,5 +45,5 @@ class TestModel(unittest.TestCase):
 		ext_obj = to_external_object(root)
 		assert_that(ext_obj, 
 					has_entries(
-						u'MimeType', 'application/vnd.nextthought.contentfolder.rootfolder',
+						u'MimeType', 'application/vnd.nextthought.contentrootfolder',
 						u'name', 'root'))

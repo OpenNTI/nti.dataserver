@@ -18,7 +18,7 @@ class SharedConfiguringTestLayer(ZopeComponentLayer,
                                  GCLayerMixin,
                                  ConfiguringLayerMixin):
 
-    set_up_packages = ('nti.contentfolder',)
+    set_up_packages = ('nti.namedfile', 'nti.contentfolder',)
 
     @classmethod
     def setUp(cls):
