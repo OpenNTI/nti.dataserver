@@ -22,8 +22,6 @@ from pyramid import httpexceptions as hexc
 
 from nti.app.base.abstract_views import AbstractAuthenticatedView
 
-# from nti.app.contentfile import get_content_files
-
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.contentfolder.model import ContentFolder
@@ -31,9 +29,27 @@ from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver import authorization as nauth
 
+from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
+
+@view_config(name="ls")
+@view_config(name="contents")
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_READ,
+			   request_method='GET')
+class DirContentsView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		result = LocatedExternalDict()
+		items = result[ITEMS] = []
+		items.extend(x for x in self.context.values())
+		result['Total'] = result['ItemCount'] = len(items)
+		return result
 
 @view_config(context=INamedContainer)
 @view_defaults(route_name='objects.generic.traversal',
@@ -44,7 +60,7 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
 	content_predicate = INamedContainer.providedBy
-	
+
 	def readInput(self, value=None):
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
 		if isinstance(data, six.string_types):

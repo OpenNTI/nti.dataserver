@@ -10,8 +10,15 @@
 
 	<include package="nti.contentfolder" />
 
+	<!-- ACL -->
 	<adapter factory=".acl.ContentFolderACLProvider" />
 		
+	<!-- Decorators -->
+	<subscriber factory=".decorators._FolderLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.contentfolder.interfaces.INamedContainer
+					 pyramid.interfaces.IRequest" />
+
 	<configure zcml:condition="have testmode">
 		<adapter name="ofs"
 				 for="nti.dataserver.interfaces.IDataserverFolder pyramid.interfaces.IRequest"

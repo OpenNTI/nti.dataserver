@@ -38,6 +38,7 @@ class OFSPathAdapter(Contained):
 				result = self.context._ofs_root
 			except AttributeError:
 				result = self.context._ofs_root = RootFolder()
+				result.__parent__ = self.context
 				IConnection(self.context).add(result)
 			return result
 		raise KeyError(key)
