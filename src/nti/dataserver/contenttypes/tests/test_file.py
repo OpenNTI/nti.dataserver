@@ -19,7 +19,7 @@ from hamcrest import has_property
 from hamcrest import only_contains
 
 from nti.dataserver.contenttypes.note import Note
-from nti.dataserver.contenttypes.file import ContentFile
+from nti.dataserver.contenttypes.file import ModeledContentFile
 
 from nti.dataserver_core.interfaces import IContentFile
 
@@ -43,7 +43,7 @@ class TestFile(DataserverLayerTest):
 
 	def test_content_file(self):
 		ext_obj = {
-			'MimeType': 'application/vnd.nextthought.contentfile',
+			'MimeType': 'application/vnd.nextthought.modeledcontentfile',
 			'value': GIF_DATAURL,
 			'filename': r'file.gif',
 			'name':'ichigo'
@@ -66,14 +66,14 @@ class TestFile(DataserverLayerTest):
 
 
 	def test_validation_file(self):
-		c = ContentFile()
+		c = ModeledContentFile()
 		assert_that(c, validly_provides(IContentFile))
 		assert_that(c, verifiably_provides(IContentFile))
 
 	@WithMockDS
 	def test_external_body_with_file(self):
 		n = Note()
-		c = ContentFile()
+		c = ModeledContentFile()
 		c.name = 'foo.gif'
 
 		n.body = [c]
@@ -82,17 +82,17 @@ class TestFile(DataserverLayerTest):
 		del ext['Last Modified']
 		del ext['CreatedTime']
 		assert_that(ext, has_entries("Class", "Note",
-									 "body", only_contains(has_entries('Class', 'ContentFile',
+									 "body", only_contains(has_entries('Class', 'ModeledContentFile',
 																	   'name', 'foo.gif'))))
 		n = Note()
 		ds = self.ds
 		with mock_dataserver.mock_db_trans(ds):
 			update_from_external_object(n, ext, context=ds)
-		assert_that(n.body[0], is_(ContentFile))
+		assert_that(n.body[0], is_(ModeledContentFile))
 
 	def test_content_file_note(self):
 		ext_file = {
-			'MimeType': 'application/vnd.nextthought.contentfile',
+			'MimeType': 'application/vnd.nextthought.modeledcontentfile',
 			'value': GIF_DATAURL,
 			'filename': r'file.gif',
 			'name':'ichigo'
@@ -110,5 +110,5 @@ class TestFile(DataserverLayerTest):
 		update_from_external_object(internal, ext_obj)
 
 		assert_that(internal.body[0], is_('ichigo'))
-		assert_that(internal.body[1], is_(ContentFile))
+		assert_that(internal.body[1], is_(ModeledContentFile))
 		assert_that(internal.body[1], has_property('data', is_not(none())))
