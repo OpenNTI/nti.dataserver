@@ -9,7 +9,7 @@
 	<include package="zope.security" />
 
 	<subscriber factory=".decorators._ContentFileDecorator"
-				for="nti.namedfile.interfaces.IFile"
+				for="plone.namedfile.interfaces.IFile"
 				provides="nti.externalization.interfaces.IExternalMappingDecorator"/>
 
 </configure>

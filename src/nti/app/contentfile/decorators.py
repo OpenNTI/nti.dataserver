@@ -12,6 +12,8 @@ logger = __import__('logging').getLogger(__name__)
 from zope import component
 from zope import interface
 
+from plone.namedfile.interfaces import IFile
+
 from nti.dataserver_core.interfaces import ILinkExternalHrefOnly
 
 from nti.externalization.singleton import SingletonDecorator
@@ -20,8 +22,6 @@ from nti.externalization.interfaces import IExternalMappingDecorator
 
 from nti.externalization.externalization import to_external_object
 from nti.externalization.externalization import to_external_ntiid_oid
-
-from nti.namedfile.interfaces import IFile
 
 from nti.links.links import Link
 
