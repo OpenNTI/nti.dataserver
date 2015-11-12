@@ -19,9 +19,9 @@ from zope.dublincore.interfaces import IDCDescriptiveProperties
 
 from zope.mimetype.interfaces import IContentTypeAware
 
-from nti.coremetadata.interfaces import ILastModified
+from plone.namedfile.interfaces import INamed as IPloneNamed
 
-from nti.namedfile.interfaces import IFile as INamedFile
+from nti.coremetadata.interfaces import ILastModified
 
 from nti.schema.field import Bool
 from nti.schema.field import ValidTextLine
@@ -39,12 +39,12 @@ class IContentFolder(INamedContainer):
   
     containers(str('.INamedContainer'))
     contains(str('.INamedContainer'),
-             INamedFile)
+             IPloneNamed)
 
     __parent__.required = False
     __setitem__.__doc__ = None
     
-    def append(obj):
+    def add(obj):
         """
         add an object to this container
         """

@@ -18,15 +18,18 @@ from zope.container.contained import Contained
 
 from nti.common.property import alias
 
+from nti.namedfile.file import get_file_name
+
 from nti.containers.containers import CaseInsensitiveCheckingLastModifiedBTreeContainer
 
 from nti.schema.fieldproperty import createDirectFieldProperties
 
 from .interfaces import IRootFolder
 from .interfaces import IContentFolder
+from .interfaces import INamedContainer
 
 def checkValidId(uid):
-	
+
 	if not uid or not isinstance(uid, six.string_types):
 		raise ValueError('Empty or invalid id specified', uid)
 
@@ -35,6 +38,13 @@ def checkValidId(uid):
 
 	if '/' in uid:
 		raise ValueError('The id "%s" contains characters illegal.' % uid)
+
+def get_context_name(context):
+	if INamedContainer.providedBy(context):
+		result = context.name
+	else:
+		result = get_file_name(context)
+	return result
 
 @interface.implementer(IContentFolder)
 class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
@@ -46,24 +56,27 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 
 	parameters = {}
 	mimeType = mime_type = b'application/vnd.nextthought.contentfolder'
-	
+
 	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
 		self.name = kwargs.get('name')
 		self.use_blobs = kwargs.get('use_blobs', True)
 		self.title = kwargs.get('title') or self.name
 		self.description = kwargs.get('description') or self.title
-		
+
 	def __setitem__(self, key, value):
 		checkValidId(key)
 		CaseInsensitiveCheckingLastModifiedBTreeContainer.__setitem__(self, key, value)
 
-	def append(self, obj):
-		name = obj.name
+	def add(self, obj):
+		name = get_context_name(obj)
+		if not name:
+			raise ValueError("Cannot find file name")
 		if name in self:
 			del self[name]
 		self[name] = obj
 		return obj
+	append = add
 
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):

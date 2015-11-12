@@ -37,8 +37,8 @@ class TestModel(unittest.TestCase):
 
 	def test_container(self):
 		root = RootFolder()
-		f1 = root.append(ContentFolder(name='f1'))
-		f1.append(NamedFile(name="foo"))
+		f1 = root.add(ContentFolder(name='f1'))
+		f1.add(NamedFile(name="foo"))
 		assert_that('foo', is_in(f1))
 		self.assertRaises(Exception, f1.__setitem__, 'foo', object())
 		
