@@ -57,6 +57,14 @@ def validate_sources(context=None, sources=()):
 		if filename and not validator.is_filename_allowed(filename):
 			raise ConstraintNotSatisfied(filename, 'filename')
 
+def transfer(source, target):
+	target.data = source.read()
+	if not target.contentType and source.contentType:
+		target.contentType = source.contentType
+	if not target.filename and source.filename:
+		target.filename = nameFinder(source)
+	return target
+
 def read_multipart_sources(request, sources=()):
 	result = []
 	for data in sources or ():
@@ -67,11 +75,7 @@ def read_multipart_sources(request, sources=()):
 				msg = 'Could not find data for file %s' % data.name
 				raise hexc.HTTPUnprocessableEntity(msg)
 
-			data.data = source.read()
-			if not data.contentType and source.contentType:
-				data.contentType = source.contentType
-			if not data.filename and source.filename:
-				data.filename = nameFinder(source)
+			data = transfer(source, data)
 			result.append(data)
 	return result
 

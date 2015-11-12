@@ -35,4 +35,3 @@ class TestContentFolderViews(ApplicationLayerTest):
         assert_that(res.json_body, 
                     has_entries('ItemCount', is_(1),
                                 'Items', has_length(1)))
-
