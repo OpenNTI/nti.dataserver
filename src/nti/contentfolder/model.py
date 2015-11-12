@@ -5,7 +5,6 @@
 """
 
 from __future__ import print_function, unicode_literals, absolute_import, division
-
 __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
@@ -17,6 +16,8 @@ from zope import interface
 from zope.container.contained import Contained
 
 from nti.common.property import alias
+
+from nti.coremetadata.interfaces import SYSTEM_USER_ID
 
 from nti.namedfile.file import get_file_name
 
@@ -49,13 +50,14 @@ def get_context_name(context):
 @interface.implementer(IContentFolder)
 class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 					Contained):
-	__external_can_create__ = False
+
 	createDirectFieldProperties(IContentFolder)
 
 	name = alias('__name__')
 
+	creator = None
 	parameters = {}
-	mimeType = mime_type = b'application/vnd.nextthought.contentfolder'
+	mimeType = mime_type = str('application/vnd.nextthought.contentfolder')
 
 	def __init__(self, *args, **kwargs):
 		super(ContentFolder, self).__init__()
@@ -71,7 +73,7 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 	def add(self, obj):
 		name = get_context_name(obj)
 		if not name:
-			raise ValueError("Cannot find file name")
+			raise ValueError("Cannot get file name")
 		if name in self:
 			del self[name]
 		self[name] = obj
@@ -82,8 +84,11 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer,
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)
 
+	__external_can_create__ = False
+
 	parameters = {}
-	mimeType = mime_type = b'application/vnd.nextthought.contentrootfolder'
+	creator = SYSTEM_USER_ID
+	mimeType = mime_type = str('application/vnd.nextthought.contentrootfolder')
 
 	def __init__(self, *args, **kwargs):
 		kwargs['name'] = kwargs.get('name') or 'root'

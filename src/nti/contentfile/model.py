@@ -15,7 +15,7 @@ from nti.common.property import alias
 
 from nti.namedfile.file import NamedFile
 from nti.namedfile.file import NamedImage
-from nti.namedfile.file import NamedBlobFile 
+from nti.namedfile.file import NamedBlobFile
 from nti.namedfile.file import NamedBlobImage
 
 from nti.schema.fieldproperty import createDirectFieldProperties
@@ -24,27 +24,28 @@ from .interfaces import IContentFile
 from .interfaces import IContentImage
 from .interfaces import IContentBlobFile
 from .interfaces import IContentBlobImage
-   
+
 class BaseMixin(object):
-    parameters = {}
-    __name__ = alias('name')
+	creator = None
+	parameters = {}
+	__name__ = alias('name')
 
 @interface.implementer(IContentFile)
 class ContentFile(BaseMixin, NamedFile):
-    createDirectFieldProperties(IContentFile)
-    mimeType = mime_tye = b'application/vnd.nextthought.contentfile'
-    
+	createDirectFieldProperties(IContentFile)
+	mimeType = mime_tye = b'application/vnd.nextthought.contentfile'
+
 @interface.implementer(IContentBlobFile)
 class ContentBlobFile(BaseMixin, NamedBlobFile):
-    createDirectFieldProperties(IContentBlobFile)
-    mimeType = mime_tye = b'application/vnd.nextthought.contentblobfile'
+	createDirectFieldProperties(IContentBlobFile)
+	mimeType = mime_tye = b'application/vnd.nextthought.contentblobfile'
 
 @interface.implementer(IContentImage)
 class ContentImage(BaseMixin, NamedImage):
-    createDirectFieldProperties(IContentImage)
-    mimeType = mime_tye = b'application/vnd.nextthought.contentimage'
-    
+	createDirectFieldProperties(IContentImage)
+	mimeType = mime_tye = b'application/vnd.nextthought.contentimage'
+
 @interface.implementer(IContentBlobImage)
 class ContentBlobImage(BaseMixin, NamedBlobImage):
-    createDirectFieldProperties(IContentBlobImage)
-    mimeType = mime_tye = b'application/vnd.nextthought.contentblobimage'
+	createDirectFieldProperties(IContentBlobImage)
+	mimeType = mime_tye = b'application/vnd.nextthought.contentblobimage'

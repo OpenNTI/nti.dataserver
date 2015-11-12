@@ -7,9 +7,13 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
+from hamcrest import is_
+from hamcrest import none
 from hamcrest import is_in
+from hamcrest import is_not
 from hamcrest import has_entries
 from hamcrest import assert_that
+from hamcrest import has_property
 
 from nti.testing.matchers import validly_provides
 
@@ -22,6 +26,9 @@ from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import IContentFolder
 
 from nti.externalization.externalization import to_external_object
+
+from nti.externalization.internalization import find_factory_for
+from nti.externalization.internalization import update_from_external_object
 
 from nti.namedfile.file import NamedFile
 
@@ -45,5 +52,19 @@ class TestModel(unittest.TestCase):
 		ext_obj = to_external_object(root)
 		assert_that(ext_obj, 
 					has_entries(
-						u'MimeType', 'application/vnd.nextthought.contentrootfolder',
-						u'name', 'root'))
+						u'MimeType', u'application/vnd.nextthought.contentrootfolder',
+						u'name', u'root'))
+		factory = find_factory_for(ext_obj)
+		assert_that(factory, is_(none()))
+		
+		ext_obj = to_external_object(f1)
+		assert_that(ext_obj, 
+					has_entries(
+						u'MimeType', u'application/vnd.nextthought.contentfolder',
+						u'name', u'f1'))
+		
+		factory = find_factory_for(ext_obj)
+		assert_that(factory, is_not(none()))
+		internal = factory()
+		update_from_external_object(internal, ext_obj)
+		assert_that(internal, has_property('name', is_('f1')))
