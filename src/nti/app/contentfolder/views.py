@@ -46,7 +46,7 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 		if isinstance(data, Mapping):
 			name = data.get('name')
 			if not name:
-				raise hexc.HTTPUnprocessableEntity("Invalid folder name.")
+				raise hexc.HTTPUnprocessableEntity(_("Invalid folder name."))
 			title = data.get('title')
 			description = data.get('description')
 		else:
