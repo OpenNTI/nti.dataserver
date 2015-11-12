@@ -99,6 +99,9 @@ class KnownUrlTokenBasedAuthenticator(object):
 		environ[b'AUTH_TYPE'] = b'token'
 		return component.getAdapter(self.secret,IIdentifiedUserTokenAuthenticator).identityIsValid(identity)
 
+def _is_anonymous_identity( identity ):
+	return 'anonymous' in identity and identity['anonymous']
+
 @interface.implementer(IAuthenticator,IIdentifier)
 class AnonymousAccessAuthenticator(object):
 	"""
@@ -110,9 +113,7 @@ class AnonymousAccessAuthenticator(object):
 						  IIdentifier: [CLASS_TV_APP]}
 
 	def authenticate(self, environ, identity ):
-		if 'anonymous' not in identity:
-			return
-		return ANONYMOUS_USERNAME if identity['anonymous'] else None
+		return ANONYMOUS_USERNAME if _is_anonymous_identity(identity) else None
 
 	def identify(self, environ):
 		return {'anonymous': True}

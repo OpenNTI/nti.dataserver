@@ -22,6 +22,7 @@ from hamcrest import none
 
 from ..who_authenticators import AnonymousAccessAuthenticator
 from ..who_authenticators import ANONYMOUS_USERNAME
+from ..who_authenticators import _is_anonymous_identity
 from ..who_authenticators import KnownUrlTokenBasedAuthenticator
 from ..user_token import DefaultIdentifiedUserTokenAuthenticator
 
@@ -82,4 +83,9 @@ class TestAnonymousAccessAuthenticator(unittest.TestCase):
 		identity = self.plugin.identify( environ )
 
 		assert_that( self.plugin.authenticate( environ, identity ), is_(ANONYMOUS_USERNAME) )
+
+	def test_is_anonymous_identity(self):
+		identity = self.plugin.identify( {} )
+		assert_that( _is_anonymous_identity( identity ), is_(True) )
+		assert_that( _is_anonymous_identity( {} ), is_(False) )
 
