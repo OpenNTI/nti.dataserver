@@ -16,6 +16,7 @@ logger = __import__('logging').getLogger(__name__)
 
 import unittest
 from hamcrest import assert_that
+from hamcrest import contains_inanyorder
 from hamcrest import is_
 from hamcrest import is_not as does_not
 from hamcrest import has_property
@@ -32,9 +33,16 @@ from pyramid.security import Everyone
 
 from ..who_policy import AuthenticationPolicy
 from ..who_apifactory import create_who_apifactory
+from ..who_authenticators import AnonymousAccessAuthenticator
 from ..who_authenticators import ANONYMOUS_USERNAME
 
+
 from zope.authentication import interfaces
+
+class FakeGroupsCallback(object):
+
+	def __call__( self, identity, request ):
+		return ( self.principal, )
 
 class TestWhoPolicy(unittest.TestCase):
 
@@ -71,6 +79,25 @@ class TestWhoPolicy(unittest.TestCase):
 						 is_('jason'))
 			# Side-effect: need a reissue
 			assert_that( request, has_property('_authtkt_reissued'))
+
+	def test_get_groups( self ):
+		callback = FakeGroupsCallback();
+		callback.principal = 'fake-principal'
+
+		policy = self.policy
+		policy._callback = callback
+
+		request = None
+		identity = {}
+
+		#A real identity gets the callback usernames, Everyone, and Authenticated
+		groups = policy._get_groups( identity, request )
+		assert_that(groups,  contains_inanyorder('fake-principal', Everyone, Authenticated))
+
+		#The anonymous identity gets the callback usernames, and Everyone, but not Authenticated
+		identity = AnonymousAccessAuthenticator().identify( {} )
+		groups = policy._get_groups( identity, request )
+		assert_that(groups,  contains_inanyorder('fake-principal', Everyone))
 
 	def test_allows_anonymous_for_tvos( self ):
 		policy = self.policy
