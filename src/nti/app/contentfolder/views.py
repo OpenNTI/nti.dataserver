@@ -104,8 +104,6 @@ class MkdirView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin
 			   request_method='POST')
 class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixin):
 
-	content_predicate = INamedContainer.providedBy
-
 	@Lazy
 	def use_blobs(self):
 		return self.context.use_blobs
@@ -131,20 +129,24 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		return data
 
 	def _do_call(self):
-		items = []
+		result = LocatedExternalDict()
+		result[ITEMS] = items= [] 
+
+		# parse incoming data
 		data = self.readInput()
 		creator = self.remoteUser
 		sources = get_all_sources(self.request)
 		for ext_obj in data or ():
-			item = self.readCreateUpdateContentObject(creator, externalValue=ext_obj)
-			if not INamedFile.providedBy(item):
+			target = self.readCreateUpdateContentObject(creator, externalValue=ext_obj)
+			if not INamedFile.providedBy(target):
 				raise hexc.HTTPUnprocessableEntity(_("Invalid content in upload."))
-			name = item.name
+			name = target.name
 			if name in sources:
 				source = sources.pop(name, None)
-				transfer(source, item)
-			items.append(item)
+				transfer(source, target)
+			items.append(target)
 		
+		# parse multipart data
 		use_blobs = self.use_blobs
 		for name, source in sources.items():
 			content_type, width, height = getImageInfo(source)
@@ -159,10 +161,14 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			target = factory()
 			target.name = name
 			target.filename = name
+			target.creator = creator
 			transfer(source, target)
+			items.append(target)
 			
 		for item in items:
 			lifecycleevent.created(item)
 			self.context.add(item)
+
 		self.request.response.status_int = 201
-		return hexc.HTTPNoContent()
+		result['ItemCount'] = result['Total'] = len(items)
+		return result

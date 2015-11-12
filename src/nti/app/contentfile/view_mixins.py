@@ -59,10 +59,13 @@ def validate_sources(context=None, sources=()):
 
 def transfer(source, target):
 	target.data = source.read()
-	if not target.contentType and source.contentType:
-		target.contentType = source.contentType
-	if not target.filename and source.filename:
-		target.filename = nameFinder(source)
+	try:
+		if not target.contentType and source.contentType:
+			target.contentType = source.contentType
+		if not target.filename and source.filename:
+			target.filename = nameFinder(source)
+	except AttributeError:
+		pass
 	return target
 
 def read_multipart_sources(request, sources=()):
