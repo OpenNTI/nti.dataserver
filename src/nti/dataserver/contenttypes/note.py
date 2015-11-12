@@ -20,7 +20,7 @@ from zope.annotation.interfaces import IAttributeAnnotatable
 
 from zope.schema.fieldproperty import FieldProperty
 
-from plone.namedfile.interfaces import INamed
+from plone.namedfile.interfaces import IFile
 
 from nti.dataserver.interfaces import INote
 from nti.dataserver.interfaces import IMedia
@@ -102,7 +102,7 @@ class NoteInternalObjectIO(ThreadableExternalizableMixin, HighlightInternalObjec
 
 		for i, item in enumerate(body):
 			if not (ICanvas.providedBy(item) or IMedia.providedBy(item) or \
-					INamed.providedBy(item)):
+					IFile.providedBy(item)):
 				continue
 
 			ext_val = getattr(item, '_v_updated_from_external_source', {})
