@@ -40,8 +40,8 @@ def get_context_name(context):
 	result = None
 	if IFile.providedBy(context):
 		result = context.name
-	elif IPloneNamed.providedBy(context):
-		result = NamedFileMixin.nameFinder(context.filename)
+	if not result and IPloneNamed.providedBy(context):
+		result = NamedFileMixin.nameFinder(context.filename) or context.filename
 	return result
 
 def validate_sources(context=None, sources=()):
