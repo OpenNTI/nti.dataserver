@@ -19,7 +19,12 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 
 from pyramid import httpexceptions as hexc
 
+from plone.namedfile.interfaces import IFile as IPloneFile
+from plone.namedfile.interfaces import INamed as IPloneNamed
+
 from nti.app.base.abstract_views import get_source
+
+from nti.namedfile.file import NamedFileMixin
 
 from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
@@ -30,6 +35,14 @@ from nti.ntiids.ntiids import find_object_with_ntiid
 
 def is_named_source(context):
 	return IFile.providedBy(context)
+
+def get_context_name(context):
+	result = None
+	if IFile.providedBy(context):
+		result = context.name
+	elif IPloneNamed.providedBy(context):
+		result = NamedFileMixin.nameFinder(context.filename)
+	return result
 
 def validate_sources(context=None, sources=()):
 	for source in sources:
@@ -56,8 +69,8 @@ def validate_sources(context=None, sources=()):
 def read_multipart_sources(request, sources=()):
 	result = []
 	for data in sources or ():
-		if is_named_source(data):
-			name = data.name or u''
+		name = get_context_name(data)
+		if name:
 			source = get_source(request, name)
 			if source is None:
 				msg = 'Could not find data for file %s' % data.name
@@ -75,8 +88,9 @@ def get_content_files(context, attr="body"):
 	result = OrderedDict()
 	sources = getattr(context, attr, None) if attr else context
 	for data in sources or ():
-		if is_named_source(data):
-			result[data.name] = data
+		name = get_context_name(data)
+		if name:
+			result[name] = data
 	return result
 
 def transfer_internal_content_data(context, attr="body"):
@@ -93,7 +107,7 @@ def transfer_internal_content_data(context, attr="body"):
 		# find the original source reference
 		ref = getattr(target, 'reference', None)
 		source = find_object_with_ntiid(ref) if ref else None
-		if is_named_source(source) and target != source:
+		if IPloneFile.providedBy(source) and target != source:
 			target.data = source.data
 			target.filename = source.filename or source.filename
 			target.contentType = source.contentType or source.contentType
