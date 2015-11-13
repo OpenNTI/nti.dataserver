@@ -38,8 +38,9 @@ class _ContentFileDecorator(object):
         target = to_external_ntiid_oid(item, add_to_connection=True)
         if target:
             for element, key in ('view', 'url'), ('download', 'download_url'):
+                contentType = getattr(item, 'contentType', None)
                 link = Link(target=target,
-                            target_mime_type=item.contentType,
+                            target_mime_type=contentType,
                             elements=(element,),
                             rel="data")
                 interface.alsoProvides(link, ILinkExternalHrefOnly)
