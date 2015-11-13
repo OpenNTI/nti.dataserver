@@ -298,7 +298,7 @@ def _get_effective_principals(request):
 		principals = authn_policy.effective_principals(request)
 	else:
 		principals = (psec.Everyone,)
-	return frozenset(principals), authn_policy, reg
+	return principals, authn_policy, reg
 
 def _has_permission(permission, context, reg, authn_policy, principals):
 	"""
