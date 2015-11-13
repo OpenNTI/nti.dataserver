@@ -43,6 +43,7 @@ from .interfaces import ITransactionRecord
 CATALOG_NAME = 'nti.dataserver.++etc++recorder-catalog'
 
 IX_TID = 'tid'
+IX_TYPE = 'type'
 IX_LOCKED = 'locked'
 IX_ATTRIBUTES = 'attributes'
 IX_CREATEDTIME = 'createdTime'
@@ -89,6 +90,10 @@ class TIDIndex(AttributeValueIndex):
 	default_field_name = 'tid'
 	default_interface = ITransactionRecord
 
+class TypeIndex(AttributeValueIndex):
+	default_field_name = 'type'
+	default_interface = ITransactionRecord
+	
 class CreatedTimeRawIndex(RawIntegerValueIndex):
 	pass
 
@@ -137,6 +142,7 @@ class MetadataRecorderCatalog(Catalog):
 def create_recorder_catalog(catalog=None, family=None):
 	catalog = MetadataRecorderCatalog(family=family) if catalog is None else catalog
 	for name, clazz in ((IX_TID, TIDIndex),
+						(IX_TYPE, TypeIndex),
 						(IX_LOCKED, LockedIndex),
 						(IX_PRINCIPAL, PrincipalIndex),
 						(IX_CREATEDTIME, CreatedTimeIndex),
