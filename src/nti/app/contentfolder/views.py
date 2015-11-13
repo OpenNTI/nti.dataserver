@@ -27,14 +27,19 @@ from nti.app.base.abstract_views import AbstractAuthenticatedView
 
 from nti.app.contentfile.view_mixins import transfer
 
+from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMixin
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.common.property import Lazy
 
-from nti.contentfile.model import ContentFile, ContentBlobImage, ContentImage
-from nti.contentfolder.model import ContentFolder
+from nti.contentfile.model import ContentFile 
+from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
+from nti.contentfile.model import ContentBlobImage
 
+from nti.contentfolder.model import ContentFolder
+
+from nti.contentfolder.interfaces import IRootFolder
 from nti.contentfolder.interfaces import INamedContainer
 
 from nti.dataserver import authorization as nauth
@@ -172,3 +177,34 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		self.request.response.status_int = 201
 		result['ItemCount'] = result['Total'] = len(items)
 		return result
+
+@view_config(context=INamedFile)
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_DELETE,
+			   request_method='DELETE')
+class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin):
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+		
+		if IRootFolder.providedBy(self.context):
+			raise hexc.HTTPForbidden()
+
+		del theObject.__parent__[theObject.__name__]
+		return theObject
+	
+@view_config(name='clear')
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   context=INamedContainer,
+			   permission=nauth.ACT_UPDATE,
+			   request_method='POST')
+class ClearContainerView(AbstractAuthenticatedView):
+
+	def __call__(self):
+		self.context.clear()
+		raise hexc.HTTPNoContent()

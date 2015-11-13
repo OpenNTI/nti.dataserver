@@ -14,9 +14,14 @@
 	<adapter factory=".acl.ContentFolderACLProvider" />
 		
 	<!-- Decorators -->
-	<subscriber factory=".decorators._FolderLinkDecorator"
+	<subscriber factory=".decorators._NamedFolderLinkDecorator"
 				provides="nti.externalization.interfaces.IExternalObjectDecorator"
 				for="nti.contentfolder.interfaces.INamedContainer
+					 pyramid.interfaces.IRequest" />
+
+	<subscriber factory=".decorators._NamedFileLinkDecorator"
+				provides="nti.externalization.interfaces.IExternalObjectDecorator"
+				for="nti.namedfile.interfaces.INamedFile
 					 pyramid.interfaces.IRequest" />
 
 	<configure zcml:condition="have testmode">

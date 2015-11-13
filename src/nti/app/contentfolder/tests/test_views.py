@@ -80,3 +80,44 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(1),
 								'Items', has_length(1)))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
+	def test_delete(self, mock_gas):
+		multipart = {'ichigo': SourceProxy(StringIO('ichigo'))}
+		mock_gas.is_callable().with_args().returns(multipart)
+		
+		data = {
+			'MimeType': 'application/vnd.nextthought.contentfile',
+			'filename': r'/Users/ichigo/ichigo.gif',
+			'name':'ichigo'
+		}
+		self.testapp.post_json('/dataserver2/ofs/root/@@upload',
+								data,
+								status=201)
+		self.testapp.delete('/dataserver2/ofs/root/ichigo', status=200)
+		
+		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(0),
+								'Items', has_length(0)))
+		
+		self.testapp.delete('/dataserver2/ofs/root', status=403)
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
+	def test_clear(self, mock_gas):
+		data = {'ichigo': SourceProxy(StringIO('ichigo')),
+				'aizen': SourceProxy(StringIO('aizen')) }
+		mock_gas.is_callable().with_args().returns(data)
+		res = self.testapp.post_json('/dataserver2/ofs/root/@@upload',
+									 status=201)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(2)))
+
+		self.testapp.post('/dataserver2/ofs/root/@@clear', status=204)
+		
+		res = self.testapp.get('/dataserver2/ofs/root/@@contents', status=200)
+		assert_that(res.json_body,
+					has_entries('ItemCount', is_(0),
+								'Items', has_length(0)))
