@@ -285,7 +285,6 @@ def has_permission(permission, context, username, **kwargs):
 	:return: An object that behaves like a boolean value but provides a description
 		about what was allowed or denied when printed.
 	"""
-
 	try:
 		context.__acl__
 	except AttributeError:

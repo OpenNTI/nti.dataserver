@@ -104,7 +104,7 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		res = super(AuthenticationPolicy,self).effective_principals(request)
 		if res and len(res) > 1:
 			self.__do_reissue(request)
-		return res
+		return frozenset( res )
 
 	def __do_reissue(self, request):
 		if hasattr(request, '_authtkt_reissued'):
