@@ -31,6 +31,7 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+from .interfaces import TRX_TYPE_UPDATE
 from .interfaces import TRX_RECORD_HISTORY_KEY
 
 from .interfaces import ITransactionRecord
@@ -46,6 +47,7 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
 	createDirectFieldProperties(ITransactionRecord)
 
+	type = TRX_TYPE_UPDATE
 	serial = alias('tid')
 	username = alias('principal')
 
@@ -56,7 +58,6 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 	@property
 	def key(self):
 		return "(%s,%s,%s)" % (self.createdTime, self.principal, self.tid)
-
 
 	def __lt__(self, other):
 		try:
