@@ -47,6 +47,8 @@ from nti.dataserver import authorization as nauth
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
 
+from nti.namedfile.file import name_finder
+from nti.namedfile.file import safe_filename
 from nti.namedfile.interfaces import INamedFile
 
 ITEMS = StandardExternalFields.ITEMS
@@ -120,6 +122,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			data = None
 
 		if isinstance(data, six.string_types):
+			data = safe_filename(name_finder(data))
 			data = {
 				'name': data,
 				'filename': data,
@@ -146,14 +149,17 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			if not INamedFile.providedBy(target):
 				raise hexc.HTTPUnprocessableEntity(_("Invalid content in upload."))
 			name = target.name
-			if name in sources:
-				source = sources.pop(name, None)
+			filename = target.filename or u''
+			if name in sources or filename in sources:
+				source = sources.pop(name, None) or sources.pop(filename, None)
+				target.name = safe_filename(name_finder(name)) # always get a good name
 				transfer(source, target)
-			items.append(target)
+				items.append(target)
 		
 		# parse multipart data
 		use_blobs = self.use_blobs
 		for name, source in sources.items():
+			name = safe_filename(name_finder(name))
 			content_type, width, height = getImageInfo(source)
 			source.seek(0) # reset
 			if content_type: # it's an image
