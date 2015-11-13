@@ -37,15 +37,15 @@ def do_evolve(context):
 		lsm = ds_folder.getSiteManager()
 		intids = lsm.getUtility(IIntIds)
 		catalog = install_recorder_catalog(ds_folder, intids)
-
-		old_idx = catalog[IX_SITE]
-		intids.unregister(old_idx)
-		del catalog[IX_SITE]
-		locate(old_idx, None, None)
 		
-		# should be empty since the catalog is a metadata catalog
-		# as such access to the site data is not possible
-		old_idx.clear()
+		if IX_SITE in catalog:
+			old_idx = catalog[IX_SITE]
+			intids.unregister(old_idx)
+			del catalog[IX_SITE]
+			locate(old_idx, None, None)
+			# should be empty since the catalog is a metadata catalog
+			# as such access to the site data is not possible
+			old_idx.clear()
 		logger.info('Dataserver evolution %s done.', generation)
 
 def evolve(context):
