@@ -13,7 +13,7 @@
 				provides="nti.externalization.interfaces.IExternalMappingDecorator" />
 
 	<adapter factory=".adapters._ContainerContentUnitPreferencesFactory"
-			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
+			 for="nti.containers.containers.LastModifiedBTreeContainer"
 			 provides=".interfaces.IContentUnitPreferences" />
 
 	<adapter factory=".adapters._DelimitedHierarchyContentUnitPreferencesFactory"
@@ -26,12 +26,12 @@
 	     containers
 	-->
 	<adapter factory=".traversal._ContainerFieldsTraversable"
-			 for="nti.dataserver.containers.LastModifiedBTreeContainer"
+			 for="nti.containers.containers.LastModifiedBTreeContainer"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />
 
 	<adapter factory=".traversal._ContainerFieldsTraversable"
-			 for="nti.dataserver.containers.LastModifiedBTreeContainer
+			 for="nti.containers.containers.LastModifiedBTreeContainer
 				  pyramid.interfaces.IRequest"
 			 provides="zope.traversing.interfaces.ITraversable"
 			 name="fields" />

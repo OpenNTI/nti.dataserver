@@ -19,8 +19,9 @@ from hamcrest import contains_inanyorder
 from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
 from nti.testing.matchers import validly_provides
 
+from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
+
 from nti.dataserver.contenttypes import Note as _Note
-from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 from nti.contentrange.contentrange import ContentRangeDescription
 from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object

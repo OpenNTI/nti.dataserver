@@ -55,7 +55,7 @@ class _ContainerFieldsTraversable(object):
 	Register as a namespace traverser for the ``fields`` namespace.
 
 	FIXME: This is registered for
-	:class:`nti.dataserver.containers.LastModifiedBTreeContainer`. It
+	:class:`nti.containers.containers.LastModifiedBTreeContainer`. It
 	needs to be handled at an interface level, not this class level.
 	The intent is to adapt to the UGD containers found in a User, but
 	this also catches forum containers and who knows what all else.
