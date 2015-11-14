@@ -18,10 +18,10 @@ import zc.dict
 
 from zope import interface
 
+from nti.containers.containers import _tx_key_insen
+
 from nti.zodb.persistentproperty import PersistentPropertyHolder
 from nti.zodb.minmax import NumericMaximum, NumericPropertyDefaultingToZero
-
-from .containers import _tx_key_insen
 
 from .interfaces import ILastModified
 
@@ -77,7 +77,8 @@ class LastModifiedDict(PersistentPropertyHolder, zc.dict.Dict):
 		super(LastModifiedDict, self).__delitem__(key)
 		self.updateLastMod()
 
-collections.Mapping.register(zc.dict.Dict)
+register = getattr(collections.Mapping, "register")
+register(zc.dict.Dict)
 
 class CaseInsensitiveLastModifiedDict(LastModifiedDict):
 	"""

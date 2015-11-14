@@ -895,24 +895,15 @@ class IACLProviderCacheable(interface.Interface):
 	generally only safe to do when the ACL information comes from external sources
 	such as files or strings.
 	"""
+	
+# BWC exports
+from nti.coremetadata.interfaces import IPublishable
+from nti.coremetadata.interfaces import IDefaultPublished
 
-class IDefaultPublished(interface.Interface):
-	"""
-	A marker interface mixed in to an instance to specify
-	that it has been "published" by its creator, thus sharing
-	it with the default sharing applicable to its creator
-	(whatever that means).
-	"""
+IPublishable = IPublishable
+IDefaultPublished = IDefaultPublished
 
-class IPublishable(interface.Interface):
-
-	def publish():
-		"Cause this object to provide :class:`IDefaultPublished`"
-
-	def unpublish():
-		"Cause this object to no longer provide :class:`IDefaultPublished`"
-
-# Content
+# Content interfaces
 
 # BWC exports
 from nti.dataserver_fragments.interfaces import ITitledContent
@@ -1065,17 +1056,17 @@ class ITranscriptContainer(INamedContainer):
 # BWC exports
 from nti.dataserver_core.interfaces import IMedia
 from nti.dataserver_core.interfaces import ICanvas
-from nti.dataserver_core.interfaces import IContentFile
 from nti.dataserver_core.interfaces import IEmbeddedAudio
 from nti.dataserver_core.interfaces import IEmbeddedMedia
 from nti.dataserver_core.interfaces import IEmbeddedVideo
+from nti.dataserver_core.interfaces import IModeledContentFile
 
 IMedia = IMedia
 ICanvas = ICanvas
-IContentFile = IContentFile
 IEmbeddedAudio = IEmbeddedAudio
 IEmbeddedMedia = IEmbeddedMedia
 IEmbeddedVideo = IEmbeddedVideo
+IModeledContentFile = IModeledContentFile
 
 # BWC exports
 from nti.namedfile.interfaces import IInternalFileRef

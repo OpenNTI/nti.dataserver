@@ -21,17 +21,29 @@ from nti.schema.field import IndexedIterable
 
 TRX_RECORD_HISTORY_KEY = 'nti.recorder.record.TransactionRecordHistory'
 
+TRX_TYPE_UPDATE = 'update'
+
 class ITransactionRecord(IContained, ICreated):
 	tid = ValidTextLine(title="The transaction/serial id", required=False)
+
+	type = ValidTextLine(title="The transaction type", 
+						 required=False, 
+						 default=TRX_TYPE_UPDATE)
+
 	principal = ValidTextLine(title="The principal id", required=True)
+
 	attributes = IndexedIterable(title="The modifed attributes",
 				 	 			 value_type=ValidTextLine(title="The attribute name"),
 								 min_length=0,
 								 unique=True)
+
 	external_value = Object(interface.Interface, 
 							title="External value", 
 							required=False)
 	external_value.setTaggedValue('_ext_excluded_out', True)
+	
+	key = interface.Attribute('record key')
+	key.setTaggedValue('_ext_excluded_out', True)
 
 class ITransactionRecordHistory(IContained):
 
@@ -49,4 +61,3 @@ class ITransactionRecordHistory(IContained):
 	
 	def records():
 		pass
-

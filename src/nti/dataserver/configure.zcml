@@ -51,7 +51,6 @@
 	<!-- Simple dependency management -->
 	<include package="zope.app.dependable" />
 
-
 	<include package="nti.site" />
 
 	<!-- Entries in the Zope root principal registry -->
@@ -128,8 +127,11 @@
 	<include package="nti.links" />
 	<include package="nti.mimetype" />
 	<include package="nti.chatserver" />
+	<include package="nti.containers" />
+	<include package="nti.contentfile" />
 	<include package="nti.invitations" />
 	<include package="nti.contentrange" />
+	<include package="nti.contentfolder" />
 	<include package="nti.contentlibrary" />
 	<include package="nti.contentfragments" />
 
@@ -148,8 +150,7 @@
 
 	<!-- Database shards -->
 	<adapter factory=".shards.ShardLayout" />
-	<utility factory=".shards.HashedShardPlacer"
-			 name="default" />
+	<utility factory=".shards.HashedShardPlacer" name="default" />
 
 	<!-- Events -->
 	<subscriber handler=".sessions._send_notification" />
@@ -161,17 +162,7 @@
 	<subscriber handler=".session_storage._remove_sessions_for_removed_user" />
 	<subscriber handler=".sharing.SharingSourceMixin_dynamicsharingtargetdeleted" />
 
-	<!-- Container events -->
-	<subscriber handler=".containers.update_container_modified_time" />
-
-	<!-- TODO: We are relying on registration order. Make sure that's kosher. -->
-	<subscriber handler=".containers.update_object_modified_time" />
-	<subscriber handler=".containers.update_parent_modified_time" />
-
 	<subscriber handler=".containers.contain_nested_objects" />
-
-	<!-- Container adapters -->
-	<adapter factory=".containers.IdGeneratorNameChooser" />
 
 	<!-- Chat -->
 	<adapter factory=".meeting_container_storage._FriendsListAdapter" />
@@ -233,9 +224,11 @@
 	<adapter factory=".authorization._UserGroupAwarePrincipal"
 			 provides=".interfaces.IPrincipal"
 			 for=".interfaces.IUser" />
+
 	<adapter factory=".authorization._UserGroupAwarePrincipal"
 			 provides=".interfaces.IGroupAwarePrincipal"
 			 for=".interfaces.IUser" />
+
 	<!-- We can also have a participation for the user -->
 	<adapter factory=".authorization._participation_for_user" />
 
@@ -243,13 +236,10 @@
 		such as the system UnauthenticatedUser -->
 	<adapter factory=".authorization._participation_for_zope_principal" />
 
-	<!--
-		 And we can get back from that to something that is
-		 annotatable -->
-	<adapter
-		factory=".authorization._UserGroupAwarePrincipalAnnotations"
-		provides="zope.annotation.interfaces.IAnnotations"
-		for=".authorization._UserGroupAwarePrincipal" />
+	<!-- And we can get back from that to something that is annotatable -->
+	<adapter factory=".authorization._UserGroupAwarePrincipalAnnotations"
+			 provides="zope.annotation.interfaces.IAnnotations"
+			 for=".authorization._UserGroupAwarePrincipal" />
 
 	<!--
 	...and when we need annotations in any more explicit
@@ -260,15 +250,14 @@
 	because it wants to live as its own persistent component in the
 	site manager in the database.
 	-->
-	<adapter
-		factory=".authorization._UserGroupAwarePrincipalAnnotations"
-		provides="zope.annotation.interfaces.IAnnotations"
-		for=".authorization._UserGroupAwarePrincipal *" />
+	<adapter factory=".authorization._UserGroupAwarePrincipalAnnotations"
+			 provides="zope.annotation.interfaces.IAnnotations"
+			 for=".authorization._UserGroupAwarePrincipal *" />
+
 	<!-- It externalizes as the underlying user -->
-	<adapter
-		factory=".authorization._UserGroupAwarePrincipalExternalObject"
-		provides="nti.externalization.interfaces.IExternalObject"
-		for=".authorization._UserGroupAwarePrincipal" />
+	<adapter factory=".authorization._UserGroupAwarePrincipalExternalObject"
+			 provides="nti.externalization.interfaces.IExternalObject"
+			 for=".authorization._UserGroupAwarePrincipal" />
 
 	<!-- Communities can be groups -->
 	<adapter factory=".authorization._CommunityGroup"

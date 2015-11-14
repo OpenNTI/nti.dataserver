@@ -38,7 +38,7 @@ def principal():
 		return getInteraction().participations[0].principal
 	except (NoInteraction, IndexError, AttributeError):
 		return None
-	
+
 def record_trax(recordable, descriptions=(), ext_value=None, history=None):
 	if history is None:
 		history = ITransactionRecordHistory(recordable)
@@ -68,7 +68,7 @@ def _record_modification(obj, event):
 		return
 	history = ITransactionRecordHistory(obj)
 	record_trax(obj, event.descriptions, event.external_value, history)
-	
+
 @component.adapter(IRecordable, IObjectRemovedEvent)
 def _recordable_removed(obj, event):
 	remove_transaction_history(obj)

@@ -9,6 +9,8 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from functools import total_ordering
+
 from zope import interface
 
 from zope.container.contained import Contained
@@ -29,12 +31,14 @@ from nti.schema.schema import EqHash
 from nti.schema.field import SchemaConfigured
 from nti.schema.fieldproperty import createDirectFieldProperties
 
+from .interfaces import TRX_TYPE_UPDATE
 from .interfaces import TRX_RECORD_HISTORY_KEY
 
 from .interfaces import ITransactionRecord
 from .interfaces import ITransactionRecordHistory
 
 @WithRepr
+@total_ordering
 @EqHash('principal', 'createdTime', 'tid')
 @interface.implementer(ITransactionRecord, IContentTypeAware)
 class TransactionRecord(PersistentCreatedModDateTrackingObject,
@@ -43,6 +47,7 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 
 	createDirectFieldProperties(ITransactionRecord)
 
+	type = TRX_TYPE_UPDATE
 	serial = alias('tid')
 	username = alias('principal')
 
@@ -53,6 +58,18 @@ class TransactionRecord(PersistentCreatedModDateTrackingObject,
 	@property
 	def key(self):
 		return "(%s,%s,%s)" % (self.createdTime, self.principal, self.tid)
+
+	def __lt__(self, other):
+		try:
+			return (self.principal, self.createdTime) < (self.principal, self.createdTime)
+		except AttributeError:  # pragma: no cover
+			return NotImplemented
+
+	def __gt__(self, other):
+		try:
+			return (self.principal, self.createdTime) > (self.principal, self.createdTime)
+		except AttributeError:  # pragma: no cover
+			return NotImplemented
 
 deprecated('TransactionRecordHistory', 'No longer used')
 class TransactionRecordHistory(Contained, Persistent):

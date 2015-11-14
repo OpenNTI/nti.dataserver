@@ -24,7 +24,7 @@ from zope.location.interfaces import ISublocations
 
 import persistent
 
-from nti.dataserver import containers
+from nti.containers import containers
 
 from nti.externalization import integer_strings
 

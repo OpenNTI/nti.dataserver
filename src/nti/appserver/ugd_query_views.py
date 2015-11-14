@@ -443,6 +443,7 @@ PersonalBlogComment.xxx_isReadableByAnyIdOfUser = _personalblogcomment_xxx_isRea
 
 def _communityforum_xxx_isReadableByAnyIdOfUser( self, user, ids, family ):
 	return self.creator in user.dynamic_memberships
+
 from nti.dataserver.contenttypes.forums.forum import CommunityForum
 CommunityForum.xxx_isReadableByAnyIdOfUser = _communityforum_xxx_isReadableByAnyIdOfUser
 
@@ -989,13 +990,11 @@ class _UGDView(AbstractAuthenticatedView,
 
 		result['FilteredTotalItemCount'] = sum( (len(x) for x in sorted_sublists) ) # this may be an approximation
 
-
 		# Apply cross-user security if needed
 		# Do this after all the filtering because it's the most expensive
 		# filter of all
 		if needs_security:
 			sorted_sublists = [itertools.ifilter( tuple_security_check, x ) for x in sorted_sublists]
-
 
 		# Now merge the lists altogether if we didn't already
 		# `merged` will be an iterable of the sorted tuples: (key, value)
@@ -1038,7 +1037,7 @@ class _UGDView(AbstractAuthenticatedView,
 UGDView = _UGDView # make public
 
 @interface.implementer(INamedLinkView)
-class _RecursiveUGDView(_UGDView):
+class RecursiveUGDView(_UGDView):
 	"""
 	Just like a normal :class:`._UGDView`, but recurses through all the NTIID
 	containers beneath the given NTIID. The unnamed container is always included.
@@ -1064,7 +1063,7 @@ class _RecursiveUGDView(_UGDView):
 
 			return self._special_case_root()
 
-		return super(_RecursiveUGDView,self).__call__()
+		return super(RecursiveUGDView,self).__call__()
 
 	def _special_case_root(self):
 		"""
@@ -1140,7 +1139,7 @@ class _RecursiveUGDView(_UGDView):
 		   ever found for the current user, so we can be sure to add 'MeOnly' to the filters
 		   in that case.
 		"""
-		filters = super(_RecursiveUGDView,self)._get_filter_names()
+		filters = super(RecursiveUGDView,self)._get_filter_names()
 		if self._get_accept_types() == ['application/vnd.nextthought.transcriptsummary']: # equals, not contains
 			filters = set(filters)
 			filters.add( 'MeOnly' )
@@ -1209,7 +1208,7 @@ class _RecursiveUGDView(_UGDView):
 		return True
 
 	def _make_complete_predicate(self, operator=Operator.intersection):
-		predicate = super(_RecursiveUGDView, self)._make_complete_predicate(operator=operator)
+		predicate = super(RecursiveUGDView, self)._make_complete_predicate(operator=operator)
 		predicate = _combine_predicate(self._filter_inaccessible_object,
 									   predicate,
 									   operator=Operator.intersection)
@@ -1221,7 +1220,7 @@ class _RecursiveUGDView(_UGDView):
 		items = []
 		for container in containers:
 			try:
-				items.extend( super(_RecursiveUGDView,self).getObjectsForId( user, container ) )
+				items.extend( super(RecursiveUGDView,self).getObjectsForId( user, container ) )
 			except hexc.HTTPNotFound:
 				exc_info = sys.exc_info()
 
@@ -1251,7 +1250,7 @@ class _RecursiveUGDView(_UGDView):
 			# Throw the previous not found exception.
 			raise exc_info[0], exc_info[1], exc_info[2]
 
-RecursiveUGDView = _RecursiveUGDView
+_RecursiveUGDView = RecursiveUGDView # BWC 
 
 class _ChangeMimeFilter(_MimeFilter):
 
@@ -1271,7 +1270,7 @@ class _UGDStreamView(_UGDView):
 UGDStreamView = _UGDStreamView
 
 @interface.implementer(INamedLinkView)
-class _RecursiveUGDStreamView(_RecursiveUGDView):
+class _RecursiveUGDStreamView(RecursiveUGDView):
 	"""
 	Accepts all the regular sorting and paging parameters (though note, you
 	probably do not want to sort by anything other than the default, lastModified descending).

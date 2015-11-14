@@ -22,9 +22,9 @@ from zope.annotation.factory import factory as an_factory
 
 from persistent import Persistent
 
-from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
+from nti.containers.containers import LastModifiedBTreeContainer
 
-from nti.dataserver.containers import LastModifiedBTreeContainer
+from nti.contentlibrary.interfaces import IDelimitedHierarchyContentUnit
 
 from .interfaces import IContentUnitPreferences
 

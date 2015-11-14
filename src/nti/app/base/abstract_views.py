@@ -12,7 +12,10 @@ __docformat__ = "restructuredtext en"
 logger = __import__('logging').getLogger(__name__)
 
 import six
-from cStringIO import StringIO
+try:
+	from cStringIO import StringIO
+except ImportError:
+	from StringIO import StringIO
 
 from zope import component
 
@@ -154,13 +157,7 @@ class SourceProxy(ProxyBase):
 		self.filename = filename
 		self.contentType = content_type
 
-def get_source(request, *keys):
-	values = CaseInsensitiveDict(request.POST)
-	source = None
-	for key in keys:
-		source = values.get(key)
-		if source is not None:
-			break
+def process_source(source):
 	if isinstance(source, six.string_types):
 		source = StringIO(source)
 		source.seek(0)
@@ -172,3 +169,24 @@ def get_source(request, *keys):
 		source.seek(0)
 		source = SourceProxy(source, filename, content_type)
 	return source
+
+def get_source(request, *keys):
+	source = None
+	values = CaseInsensitiveDict(request.POST)
+	for key in keys:
+		source = values.get(key)
+		if source is not None:
+			break
+	source = process_source(source)
+	return source
+
+def get_all_sources(request):
+	result = CaseInsensitiveDict()
+	values = CaseInsensitiveDict(request.POST)
+	for name, source in values.items():
+		try:
+			source = process_source(source)
+		except AttributeError:
+			continue
+		result[name] = source
+	return result

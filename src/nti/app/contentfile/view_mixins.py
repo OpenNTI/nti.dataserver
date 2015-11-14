@@ -19,10 +19,13 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 
 from pyramid import httpexceptions as hexc
 
+from plone.namedfile.interfaces import IFile as IPloneFile
+
 from nti.app.base.abstract_views import get_source
 
-from nti.namedfile.interfaces import INamedFile
-from nti.namedfile.interfaces import INamedImage
+from nti.namedfile.file import get_file_name as get_context_name
+
+from nti.namedfile.interfaces import IFile
 from nti.namedfile.interfaces import IFileConstraints
 
 from nti.dataserver.interfaces import IInternalFileRef
@@ -30,7 +33,7 @@ from nti.dataserver.interfaces import IInternalFileRef
 from nti.ntiids.ntiids import find_object_with_ntiid
 
 def is_named_source(context):
-	return INamedFile.providedBy(context) or INamedImage.providedBy(context)
+	return IFile.providedBy(context)
 
 def validate_sources(context=None, sources=()):
 	for source in sources:
@@ -54,30 +57,38 @@ def validate_sources(context=None, sources=()):
 		if filename and not validator.is_filename_allowed(filename):
 			raise ConstraintNotSatisfied(filename, 'filename')
 
+def transfer(source, target):
+	target.data = source.read()
+	try:
+		if not target.contentType and source.contentType:
+			target.contentType = source.contentType
+		if not target.filename and source.filename:
+			target.filename = nameFinder(source)
+	except AttributeError:
+		pass
+	return target
+
 def read_multipart_sources(request, sources=()):
 	result = []
 	for data in sources or ():
-		if is_named_source(data):
-			name = data.name or u''
+		name = get_context_name(data)
+		if name:
 			source = get_source(request, name)
 			if source is None:
 				msg = 'Could not find data for file %s' % data.name
 				raise hexc.HTTPUnprocessableEntity(msg)
 
-			data.data = source.read()
-			if not data.contentType and source.contentType:
-				data.contentType = source.contentType
-			if not data.filename and source.filename:
-				data.filename = nameFinder(source)
-			result[name] = data
+			data = transfer(source, data)
+			result.append(data)
 	return result
 
 def get_content_files(context, attr="body"):
 	result = OrderedDict()
 	sources = getattr(context, attr, None) if attr else context
 	for data in sources or ():
-		if is_named_source(data):
-			result[data.name] = data
+		name = get_context_name(data)
+		if name:
+			result[name] = data
 	return result
 
 def transfer_internal_content_data(context, attr="body"):
@@ -87,14 +98,14 @@ def transfer_internal_content_data(context, attr="body"):
 		# not internal ref
 		if not IInternalFileRef.providedBy(target):
 			continue
-		elif target.data: # has data
+		elif target.data:  # has data
 			interface.noLongerProvides(target, IInternalFileRef)
 			continue
 
 		# find the original source reference
 		ref = getattr(target, 'reference', None)
 		source = find_object_with_ntiid(ref) if ref else None
-		if is_named_source(source) and target != source:
+		if IPloneFile.providedBy(source) and target != source:
 			target.data = source.data
 			target.filename = source.filename or source.filename
 			target.contentType = source.contentType or source.contentType

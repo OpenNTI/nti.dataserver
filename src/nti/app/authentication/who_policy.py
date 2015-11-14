@@ -108,10 +108,16 @@ class AuthenticationPolicy(WhoV2AuthenticationPolicy):
 		return res
 
 	def effective_principals(self, request):
+		# The who policy defines effective principals as lists. Instead, we
+		# are returning sets to improve performance (since we may have
+		# large collections of effective principals). This is reasonable (for
+		# now) because we know the auth policy loops over ACLs checking for
+		# membership in effective principals. If that changes, we'll have to
+		# revert and return lists again.
 		res = super(AuthenticationPolicy,self).effective_principals(request)
 		if res and len(res) > 1:
 			self.__do_reissue(request)
-		return res
+		return frozenset( res )
 
 	def __do_reissue(self, request):
 		if hasattr(request, '_authtkt_reissued'):

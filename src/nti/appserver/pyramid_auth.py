@@ -91,6 +91,7 @@ class NextthoughtDotComAdmin(object):
 
 	def __init__(self, context):
 		if context.username.endswith('@nextthought.com'):
-			self.groups = (nti_authorization.ROLE_ADMIN,)
+			self.groups = (nti_authorization.ROLE_ADMIN,
+						   nti_authorization.ROLE_CONTENT_EDITOR)
 		else:
 			self.groups = ()

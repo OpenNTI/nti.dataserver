@@ -26,9 +26,10 @@ from nti.chatserver.interfaces import IMessageInfo
 from nti.chatserver.interfaces import IMeetingStorage
 from nti.chatserver.interfaces import IMessageInfoStorage
 
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
 from nti.dataserver import users
 from nti.dataserver.interfaces import IEntity
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 from nti.dataserver.datastructures import check_contained_object_for_storage
 
 from nti.externalization import oids

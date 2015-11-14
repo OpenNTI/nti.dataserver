@@ -28,7 +28,7 @@ from ZODB.POSException import ConnectionStateError
 
 from nti.common.property import alias
 
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dublincore.time_mixins import CreatedAndModifiedTimeMixin
 

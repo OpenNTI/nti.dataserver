@@ -29,7 +29,7 @@ from zope.container.interfaces import InvalidContainerType
 
 from ExtensionClass import Base
 
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
 
 from nti.externalization import internalization
 from nti.externalization.tests import externalizes

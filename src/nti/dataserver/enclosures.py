@@ -19,9 +19,10 @@ from zope.mimetype.interfaces import IContentTypeAware
 
 from nti.common.property import alias
 
+from nti.containers.containers import CaseInsensitiveLastModifiedBTreeContainer
+
 from nti.dataserver.interfaces import IZContained
 from nti.dataserver.interfaces import IEnclosedContent
-from nti.dataserver.containers import CaseInsensitiveLastModifiedBTreeContainer
 
 from nti.dublincore.datastructures import PersistentCreatedModDateTrackingObject
 

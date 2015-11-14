@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals, absolute_import, division
@@ -22,10 +23,9 @@ from zope.intid import IIntIds
 
 from persistent import Persistent
 
-from nti.app.contentlibrary.subscribers import _get_file_last_mod_namespace
 from nti.app.contentlibrary.subscribers import _clear_when_removed
-from nti.app.contentlibrary.subscribers import _remove_from_registry
 from nti.app.contentlibrary.subscribers import _load_and_register_json
+from nti.app.contentlibrary.subscribers import _get_file_last_mod_namespace
 from nti.app.contentlibrary.subscribers import _load_and_register_slidedeck_json
 
 from nti.contentlibrary.indexed_data import get_catalog
@@ -76,7 +76,11 @@ class TestSubscribers(ApplicationLayerTest):
 
 	def tearDown(self):
 		component.getGlobalSiteManager().unregisterUtility(self.library, IContentPackageLibrary)
-
+	
+	@property
+	def sites(self):
+		return ('dataserver2',)
+	
 	@WithMockDSTrans
 	@fudge.patch('nti.app.contentlibrary.subscribers.get_registry')
 	@fudge.patch('nti.app.contentlibrary.subscribers.get_component_hierarchy_names')
@@ -141,7 +145,7 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(containers, has_length(0))
 
 		# Clear everything
-		_clear_when_removed(content_package)
+		_clear_when_removed(content_package, force=True, process_global=True)
 
 		for provided in ('video', 'relatedwork', 'slidedeck', 'timeline', 'audio'):
 			results = catalog.search_objects(provided=provided)
@@ -175,10 +179,8 @@ class TestSubscribers(ApplicationLayerTest):
 		assert_that(list(registry.registeredUtilities()), has_length(count))
 
 		catalog = _index_items('xxx', *result)
-		result = _remove_from_registry(namespace='xxx', 
-									   provided=iface.__name__,
-									   registry=registry,
-									   catalog=catalog)
+		result = catalog.get_references(namespace='xxx', 
+									    provided=iface.__name__)
 		assert_that(result, has_length(count))
 
 	@WithMockDSTrans
@@ -218,20 +220,14 @@ class TestSubscribers(ApplicationLayerTest):
 		
 		catalog = _index_items('xxx', *result)
 		
-		result = _remove_from_registry(namespace='xxx', 
-									   provided=INTISlideDeck, 
-									   registry=registry,
-									   catalog=catalog)
+		result = catalog.get_references(namespace='xxx', 
+									    provided=INTISlideDeck)
 		assert_that(result, has_length(57))
 
-		result = _remove_from_registry(namespace='xxx',
-									   provided=INTISlideVideo.__name__, 
-									   registry=registry,
-									   catalog=catalog)
+		result = catalog.get_references(namespace='xxx',
+									    provided=INTISlideVideo.__name__, )
 		assert_that(result, has_length(57))
 
-		result = _remove_from_registry(namespace='xxx', 
-									   provided=INTISlide,
-									   registry=registry,
-									   catalog=catalog)
+		result = catalog.get_references(namespace='xxx', 
+									    provided=INTISlide)
 		assert_that(result, has_length(628))

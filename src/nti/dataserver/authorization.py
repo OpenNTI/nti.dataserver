@@ -329,7 +329,7 @@ ROLE_MODERATOR = _StringRole(ROLE_MODERATOR_NAME)
 #: Name of the high-permission group that is expected to have certain
 #: content-edit-like rights in certain areas
 ROLE_CONTENT_EDITOR_NAME = ROLE_PREFIX + 'nti.content.editor'
-ROLe_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
+ROLE_CONTENT_EDITOR = _StringRole(ROLE_CONTENT_EDITOR_NAME)
 
 # TODO: Everyone and Authenticated can go away
 # through the use of the principal registry

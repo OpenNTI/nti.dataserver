@@ -45,8 +45,10 @@ from nti.dataserver.metadata_index import IX_SHAREDWITH
 from nti.dataserver.metadata_index import CATALOG_NAME as METADATA_CATALOG_NAME
 
 from nti.externalization.interfaces import LocatedExternalDict
-from nti.externalization.externalization import toExternalObject
 from nti.externalization.interfaces import StandardExternalFields
+
+from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import NonExternalizableObjectError
 
 from nti.ntiids.ntiids import find_object_with_ntiid
 
@@ -286,7 +288,12 @@ class ObjectResolverView(AbstractAuthenticatedView):
 
 		result = LocatedExternalDict()
 		result['ACL'] = aces = []
-		result['Object'] = toExternalObject(obj)
+		try:
+			result['Object'] = toExternalObject(obj)
+		except NonExternalizableObjectError:
+			result['Object'] = {'Class': "NonExternalizableObject",
+								'InternalType': "%s.%s" % (obj.__class__.__module__, obj.__class__.__name__)}
+
 		result['IntId'] = intids.queryId(obj)
 		for resource in lineage(obj):
 			acl = getattr(resource, '__acl__', None)

@@ -53,16 +53,16 @@ from nti.utils._compat import IAcquirer
 
 # ## NTIID values
 
-# : The type of NTIID used for a :class:`IBoard` object
+#: The type of NTIID used for a :class:`IBoard` object
 NTIID_TYPE_BOARD = 'Board'
 
-# : The subtype of NTIID used to represent a :class:`.IGeneralBoard`
+#: The subtype of NTIID used to represent a :class:`.IGeneralBoard`
 NTIID_TYPE_GENERAL_BOARD = NTIID_TYPE_BOARD + ':General'
 
-# : The subtype of NTIID used to represent a :class:`.ICommunityBoard`
+#: The subtype of NTIID used to represent a :class:`.ICommunityBoard`
 NTIID_TYPE_COMMUNITY_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Community'
 
-# : The subtype of NTIID used to represent a :class:`.IDFLBoard`
+#: The subtype of NTIID used to represent a :class:`.IDFLBoard`
 NTIID_TYPE_DFL_BOARD = NTIID_TYPE_GENERAL_BOARD + 'DFL'
 
 # The subtype of NTIID used to represent a :class:`.IClassBoard`
@@ -71,28 +71,28 @@ NTIID_TYPE_CLASS_BOARD = NTIID_TYPE_GENERAL_BOARD + 'Class'
 # The subtype of NTIID used to represent a :class:`.ISectionBoard`
 NTIID_TYPE_CLASS_SECTION_BOARD = NTIID_TYPE_GENERAL_BOARD + 'ClassSection'
 
-# : The type of NTIID used for a :class:`IForum` object
+#: The type of NTIID used for a :class:`IForum` object
 NTIID_TYPE_FORUM = 'Forum'
 
-# : The subtype of NTIID used to represent a :class:`IPersonalBlog`
+#: The subtype of NTIID used to represent a :class:`IPersonalBlog`
 NTIID_TYPE_PERSONAL_BLOG = NTIID_TYPE_FORUM + ':PersonalBlog'
 
-# : The subtype of NTIID used to represent a :class:`.IGeneralForum`
+#: The subtype of NTIID used to represent a :class:`.IGeneralForum`
 NTIID_TYPE_GENERAL_FORUM = NTIID_TYPE_FORUM + ':General'
 
-# : The subtype of NTIID used to represent a :class:`.ICommunityForum`
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_COMMUNITY_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Community'
 
-# : The subtype of NTIID used to represent a :class:`.IDFLForum`
+#: The subtype of NTIID used to represent a :class:`.IDFLForum`
 NTIID_TYPE_DFL_FORUM = NTIID_TYPE_GENERAL_FORUM + 'DFL'
 
-# : The subtype of NTIID used to represent a :class:`.ICommunityForum`
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_CLASS_FORUM = NTIID_TYPE_GENERAL_FORUM + 'Class'
 
-# : The subtype of NTIID used to represent a :class:`.ICommunityForum`
+#: The subtype of NTIID used to represent a :class:`.ICommunityForum`
 NTIID_TYPE_CLASS_SECTION_FORUM = NTIID_TYPE_GENERAL_FORUM + 'ClassSection'
 
-# : The type of NTIID used for a :class:`ITopic`
+#: The type of NTIID used for a :class:`ITopic`
 NTIID_TYPE_TOPIC = 'Topic'
 
 # The subtype of NTIID used to represent a :class:`IPersonalBlogEntry`
@@ -107,10 +107,10 @@ NTIID_TYPE_COMMUNITY_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "Community"
 # The subtype of NTIID used for DFL general topics
 NTIID_TYPE_DFL_TOPIC = NTIID_TYPE_GENERAL_TOPIC + "DFL"
 
-# : The type of NTIID used to represent an individual :class:`IPost`
+#: The type of NTIID used to represent an individual :class:`IPost`
 NTIID_TYPE_POST = 'Post'
 
-# : The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
+#: The type of NTIID used to represent a comment within a blog post, an :class:`IPersonalBlogComment`
 NTIID_TYPE_BLOG_COMMENT = NTIID_TYPE_POST + ':PersonalBlogComment'
 
 class IUseOIDForNTIID(interface.Interface):

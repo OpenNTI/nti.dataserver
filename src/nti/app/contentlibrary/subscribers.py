@@ -119,6 +119,7 @@ def _load_and_register_items(item_iterface, items, registry=None, connection=Non
 		if _was_utility_registered(internal, item_iterface, ntiid,
 								   registry=registry, connection=connection):
 			result.append(internal)
+			internal.publish() # by default
 	return result
 
 def _load_and_register_json(item_iterface, jtext, registry=None, connection=None,
@@ -153,14 +154,17 @@ def _load_and_register_slidedeck_json(jtext, registry=None, connection=None,
 		if 	INTISlide.providedBy(internal) and \
 			_was_utility_registered(internal, INTISlide, ntiid, registry, connection):
 			result.append(internal)
+			internal.publish() # by default
 		elif INTISlideVideo.providedBy(internal) and \
 			 _was_utility_registered(internal, INTISlideVideo, ntiid, registry, connection):
 			result.append(internal)
+			internal.publish() # by default
 		elif INTISlideDeck.providedBy(internal):
 			result.extend(_canonicalize(internal.Slides, INTISlide, registry))
 			result.extend(_canonicalize(internal.Videos, INTISlideVideo, registry))
 			if _was_utility_registered(internal, INTISlideDeck, ntiid, registry, connection):
 				result.append(internal)
+				internal.publish() # by default
 	return result
 
 def _can_be_removed(registered, force=False):
@@ -177,8 +181,7 @@ def _removed_registered(provided, name, intids=None, registry=None,
 	if _can_be_removed(registered, force=force):
 		catalog = get_library_catalog() if catalog is None else catalog
 		catalog.unindex(registered, intids=intids)
-		if not unregisterUtility(registry, component=registered,
-								 provided=provided, name=name):
+		if not unregisterUtility(registry, provided=provided, name=name):
 			logger.warn("Could not unregister (%s,%s) during sync, continuing...",
 						provided.__name__, name)
 		intids.unregister(registered, event=False)
@@ -398,7 +401,7 @@ def _update_indices_when_content_changes(content_package, event):
 
 # clear events
 
-def _clear_when_removed(content_package, force=True):
+def _clear_when_removed(content_package, force=True, process_global=False):
 	"""
 	Because we don't know where the data is stored, when an
 	content package is removed we need to clear its data.
@@ -410,7 +413,7 @@ def _clear_when_removed(content_package, force=True):
 	# Remove indexes for our contained items; ignoring the global library.
 	# Not sure if this will work when we have shared items
 	# across multiple content packages.
-	if IGlobalContentPackage.providedBy(content_package):
+	if not process_global and IGlobalContentPackage.providedBy(content_package):
 		return result
 	_clear_last_modified(content_package, catalog)
 

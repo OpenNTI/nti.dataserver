@@ -103,8 +103,16 @@ def effective_principals( username,
 	result.update( _dynamic_memberships_that_participate_in_security( user ) )
 
 	# These last three will be duplicates of string-only versions
-	# Ensure that the user is in there as a IPrincipal
-	result.update( (IPrincipal(username),) )
+	# Ensure that the user (and their NTIID) is in there as a IPrincipal.
+	result.add( IPrincipal(username) )
+	if hasattr( user, 'NTIID' ):
+		# JZ - 11.2015 - Some persisted principal objects have
+		# unique principal names with NTIID fields, which will not
+		# hash equally with non-ntiid principals. Unique usernames
+		# should not have principals with NTIIDs (fixed in r73647).
+		# To simplify, and since this is cheap, make sure we have an
+		# NTIID principal in our effective principals.
+		result.add( IPrincipal(user.NTIID) )
 
 	# Add the authenticated and everyone groups
 	result.add( 'Everyone' )

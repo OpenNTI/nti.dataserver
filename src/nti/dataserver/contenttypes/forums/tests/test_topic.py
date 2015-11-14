@@ -41,10 +41,11 @@ from zope.schema.interfaces import ConstraintNotSatisfied
 
 from ExtensionClass import Base
 
+from nti.containers.containers import CheckingLastModifiedBTreeContainer
+
 from nti.externalization.internalization import update_from_external_object
 
 from nti.dataserver.interfaces import IUser, IWritableShared, IPrincipal
-from nti.dataserver.containers import CheckingLastModifiedBTreeContainer
 
 from nti.dataserver.contenttypes.forums.interfaces import ITopic, IHeadlineTopic
 from nti.dataserver.contenttypes.forums.interfaces import IPersonalBlogEntry, IGeneralHeadlineTopic
