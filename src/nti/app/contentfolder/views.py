@@ -21,6 +21,7 @@ from pyramid.view import view_defaults
 from pyramid import httpexceptions as hexc
 
 from plone.namedfile.file import getImageInfo
+from plone.namedfile.interfaces import INamed
 
 from nti.app.base.abstract_views import get_all_sources
 from nti.app.base.abstract_views import AbstractAuthenticatedView
@@ -32,7 +33,7 @@ from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtils
 
 from nti.common.property import Lazy
 
-from nti.contentfile.model import ContentFile 
+from nti.contentfile.model import ContentFile
 from nti.contentfile.model import ContentImage
 from nti.contentfile.model import ContentBlobFile
 from nti.contentfile.model import ContentBlobImage
@@ -46,6 +47,10 @@ from nti.dataserver import authorization as nauth
 
 from nti.externalization.interfaces import LocatedExternalDict
 from nti.externalization.interfaces import StandardExternalFields
+from nti.externalization.externalization import to_external_object
+
+from nti.links import Link
+from nti.links.externalization import render_link
 
 from nti.namedfile.file import name_finder
 from nti.namedfile.file import safe_filename
@@ -63,10 +68,21 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 			   request_method='GET')
 class DirContentsView(AbstractAuthenticatedView):
 
+	def ext_obj(self, item):
+		decorate = not INamed.providedBy(item)
+		result = to_external_object(item, decorate=decorate)
+		if not decorate:
+			try:
+				link = Link(item)
+				href = render_link(link)['href']
+				result['href'] = result['url'] = href + '/@@view'
+			except (KeyError, ValueError, AssertionError):
+				pass  # Nope
+		return result
+
 	def __call__(self):
 		result = LocatedExternalDict()
-		items = result[ITEMS] = []
-		items.extend(x for x in self.context.values())
+		items = result[ITEMS] = map(self.ext_obj, self.context.values())
 		result['Total'] = result['ItemCount'] = len(items)
 		return result
 
@@ -131,14 +147,14 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 		elif isinstance(data, Mapping) and MIMETYPE not in data:
 			mtype = ContentBlobFile.mimeType if self.use_blobs else ContentFile.mimeType
 			data[MIMETYPE] = mtype
-			
-		if data and not isinstance(data, (list,tuple)):
-			data = [data,]
+
+		if data and not isinstance(data, (list, tuple)):
+			data = [data, ]
 		return data
 
 	def _do_call(self):
 		result = LocatedExternalDict()
-		result[ITEMS] = items= [] 
+		result[ITEMS] = items = []
 
 		# parse incoming data
 		data = self.readInput()
@@ -152,19 +168,19 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			filename = target.filename or u''
 			if name in sources or filename in sources:
 				source = sources.pop(name, None) or sources.pop(filename, None)
-				target.name = safe_filename(name_finder(name)) # always get a good name
+				target.name = safe_filename(name_finder(name))  # always get a good name
 				transfer(source, target)
 				items.append(target)
-		
+
 		# parse multipart data
 		use_blobs = self.use_blobs
 		for name, source in sources.items():
 			name = safe_filename(name_finder(name))
 			content_type, width, height = getImageInfo(source)
-			source.seek(0) # reset
-			if content_type: # it's an image
+			source.seek(0)  # reset
+			if content_type:  # it's an image
 				factory = ContentBlobImage if use_blobs else ContentImage
-				logger.info("Parsed image (%s,%s,%s,%s)", 
+				logger.info("Parsed image (%s,%s,%s,%s)",
 							content_type, name, width, height)
 			else:
 				factory = ContentBlobFile if use_blobs else ContentFile
@@ -175,7 +191,7 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 			target.creator = creator
 			transfer(source, target)
 			items.append(target)
-			
+
 		for item in items:
 			lifecycleevent.created(item)
 			self.context.add(item)
@@ -196,13 +212,13 @@ class DeleteView(AbstractAuthenticatedView, ModeledContentEditRequestUtilsMixin)
 		theObject = self.context
 		self._check_object_exists(theObject)
 		self._check_object_unmodified_since(theObject)
-		
+
 		if IRootFolder.providedBy(self.context):
 			raise hexc.HTTPForbidden()
 
 		del theObject.__parent__[theObject.__name__]
 		return theObject
-	
+
 @view_config(name='clear')
 @view_defaults(route_name='objects.generic.traversal',
 			   renderer='rest',
