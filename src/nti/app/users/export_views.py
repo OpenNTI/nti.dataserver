@@ -31,6 +31,7 @@ from nti.chatserver.interfaces import IUserTranscriptStorage
 from nti.common.proxy import removeAllProxies
 from nti.common.maps import CaseInsensitiveDict
 
+from nti.dataserver.interfaces import IACE
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import IACLProvider
 from nti.dataserver.interfaces import IDataserverFolder
@@ -300,8 +301,12 @@ class ObjectResolverView(AbstractAuthenticatedView):
 			if not acl:
 				provider = IACLProvider(resource, None)
 				acl = provider.__acl__ if provider is not None else None
+
 			for ace in acl or ():
-				aces.append(ace.to_external_string())
+				if IACE.providedBy(ace):
+					aces.append(ace.to_external_string())
+				else:
+					aces.append(str(ace))
 			if aces:  # found something
 				break
 		return result
