@@ -40,7 +40,7 @@ class _ServiceGetView(AbstractAuthenticatedView):
 			   permission=nauth.ACT_READ,
 			   renderer='rest',
 			   request_method='GET')
-class _GenericGetView(AbstractView):
+class GenericGetView(AbstractView):
 
 	def __call__(self):
 		# TODO: We sometimes want to change the interface that we return
@@ -77,9 +77,9 @@ class _GenericGetView(AbstractView):
 			# TODO: This can probably mostly go away now?
 			if result is resource:
 				# Must be careful not to modify the persistent object
-				result = LocationProxy(	result,
-										getattr(result, '__parent__', None),
-										getattr(result, '__name__', None))
+				result = LocationProxy(result,
+									   getattr(result, '__parent__', None),
+									   getattr(result, '__name__', None))
 
 			if getattr(resource, '__parent__', None) is not None:
 				result.__parent__ = resource.__parent__
@@ -97,8 +97,7 @@ class _GenericGetView(AbstractView):
 				 hasattr(self.request.context, '__parent__'):
 				result.__parent__ = self.request.context.__parent__
 		return result
-
-GenericGetView = _GenericGetView
+_GenericGetView = GenericGetView #BWC
 
 class _EmptyContainerGetView(AbstractView):
 
