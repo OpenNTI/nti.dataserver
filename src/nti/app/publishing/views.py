@@ -30,7 +30,7 @@ class _AbstractPublishingView(object):
 
 	_iface = IDefaultPublished
 
-	def __init__( self, request ):
+	def __init__(self, request):
 		self.request = request
 
 	@abstractmethod
@@ -39,11 +39,11 @@ class _AbstractPublishingView(object):
 		This method is responsible for firing any ObjectSharingModifiedEvents needed.
 		"""
 		# Which is done by the topic object's publish/unpublish method
-		raise NotImplementedError() # pragma: no cover
+		raise NotImplementedError()  # pragma: no cover
 
 	@abstractmethod
 	def _test_provides(self, topic):
-		raise NotImplementedError() # pragma: no cover
+		raise NotImplementedError()  # pragma: no cover
 
 	def __call__(self):
 		request = self.request
@@ -53,36 +53,36 @@ class _AbstractPublishingView(object):
 			raise TypeError("Object not publishable; this is a development error.",
 							topic)
 
-		if self._test_provides( topic ):
-			self._do_provide( topic )
+		if self._test_provides(topic):
+			self._do_provide(topic)
 
-		request.response.location = request.resource_path( topic )
-		return uncached_in_response( topic )
+		request.response.location = request.resource_path(topic)
+		return uncached_in_response(topic)
 
-@view_config( context=IPublishable )
-@view_defaults( route_name='objects.generic.traversal',
+@view_config(context=IPublishable)
+@view_defaults(route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
 				request_method='POST',
-				name=VIEW_PUBLISH )
+				name=VIEW_PUBLISH)
 class PublishView(_AbstractPublishingView):
-	
-	def _do_provide( self, topic ):
-		topic.publish()
-		
-	def _test_provides( self, topic ):
-		return not IDefaultPublished.providedBy( topic )
 
-@view_config( context=IPublishable )
-@view_defaults( route_name='objects.generic.traversal',
+	def _do_provide(self, topic):
+		topic.publish()
+
+	def _test_provides(self, topic):
+		return not IDefaultPublished.providedBy(topic)
+
+@view_config(context=IPublishable)
+@view_defaults(route_name='objects.generic.traversal',
 				renderer='rest',
 				permission=nauth.ACT_UPDATE,
 				request_method='POST',
-				name=VIEW_UNPUBLISH )
+				name=VIEW_UNPUBLISH)
 class UnpublishView(_AbstractPublishingView):
-	
-	def _do_provide( self, topic ):
+
+	def _do_provide(self, topic):
 		topic.unpublish()
-		
-	def _test_provides( self, topic ):
-		return IDefaultPublished.providedBy( topic )
+
+	def _test_provides(self, topic):
+		return IDefaultPublished.providedBy(topic)
