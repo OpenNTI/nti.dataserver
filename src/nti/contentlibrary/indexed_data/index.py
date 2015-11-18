@@ -88,7 +88,7 @@ class ValidatingSiteName(object):
 
 	__slots__ = (b'site',)
 
-	def __init__(self, obj, default=None):	
+	def __init__(self, obj, default=None):
 		if IHostPolicyFolder.providedBy(obj):
 			self.site = obj.__name__
 		else:
@@ -250,19 +250,22 @@ class ContainedObjectCatalog(Persistent):
 			result = ()
 		return result
 
-	def index(self, item, container_ntiids=None, namespace=None, sites=None, intids=None):
+	def index(self, item, container_ntiids=None, namespace=None,
+			  sites=None, intids=None):
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			return False
 
-		if namespace is not None: # TODO: do we need this check?
-			namespace =	getattr(namespace, '__name__', namespace)
+		if namespace is not None:  # TODO: do we need this check?
+			namespace = 	getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
 							 (self._ntiid_index, item),
 							 (self._namespace_index, namespace),
 							 (self._container_index, container_ntiids)):
+			# XXX: we want to make sure we don't index None in order to
+			# to keep the index data value(s)
 			if value is not None:
 				index.index_doc(doc_id, value)
 		return True

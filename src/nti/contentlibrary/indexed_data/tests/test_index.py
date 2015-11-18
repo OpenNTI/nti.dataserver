@@ -46,3 +46,7 @@ class TestIndex(ContentlibraryLayerTest):
 		assert_that(list(catalog.get_references(container_ntiids='x', namespace='x')), is_([]))
 		assert_that(list(catalog.get_references(container_ntiids='r', namespace='p')), is_([]))
 		assert_that(list(catalog.get_references(namespace='p')), is_([100]))
+		
+		# indexing with a None does not alter the index
+		catalog.index(100, namespace=None)
+		assert_that(list(catalog.get_references(namespace='p')), is_([100]))
