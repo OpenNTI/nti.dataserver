@@ -36,7 +36,7 @@ from nti.appserver.context_providers import get_hierarchy_context
 from nti.appserver.context_providers import get_top_level_contexts
 from nti.appserver.context_providers import get_top_level_contexts_for_user
 
-from nti.appserver.dataserver_pyramid_views import _GenericGetView as GenericGetView
+from nti.appserver.dataserver_pyramid_views import GenericGetView
 
 from nti.appserver.interfaces import ForbiddenContextException
 from nti.appserver.interfaces import IHierarchicalContextProvider

@@ -326,7 +326,7 @@ def _modifying_ugd_views(pyramid_config):
 							renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							permission=nauth.ACT_CREATE, request_method='POST')
 
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='nti.appserver.interfaces.IContainerResource',
 							permission=nauth.ACT_READ, request_method='GET')
 
@@ -348,7 +348,7 @@ def _modifying_ugd_views(pyramid_config):
 	# 'resource' from the PagesResource and turning it into a ICollection, which is what
 	# we want to return (from the users workspace) for this URL. This relies on the default ICollection
 	# adapter for the user.
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='nti.appserver.interfaces.IPagesResource',
 							permission=nauth.ACT_READ, request_method='GET')
 
@@ -397,17 +397,17 @@ def _enclosure_views(pyramid_config):
 							renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							permission=nauth.ACT_UPDATE, request_method='DELETE')
 
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='nti.dataserver.interfaces.IEnclosedContent',
 							permission=nauth.ACT_READ, request_method='GET')
 
 	# Restore GET for the things we can POST enclosures to
 	# XXX: This is a pretty broad registration, we should almost certainly tone that down
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='zope.container.interfaces.IContained',
 							permission=nauth.ACT_READ, request_method='GET')
 
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='nti.dataserver.interfaces.ISimpleEnclosureContainer',
 							permission=nauth.ACT_READ, request_method='GET')
 
@@ -427,7 +427,7 @@ def _patching_restore_views(pyramid_config):
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_CREATE, request_method='POST')
 
-	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views._GenericGetView',
+	pyramid_config.add_view(route_name='objects.generic.traversal', view='nti.appserver.dataserver_pyramid_views.GenericGetView',
 							renderer='rest', context='nti.dataserver.interfaces.IFriendsList',
 							permission=nauth.ACT_READ, request_method='GET')
 
