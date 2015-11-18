@@ -14,18 +14,18 @@
 	<include package="zope.browserresource" />
 	<include package="zope.contentprovider" />
 	<include package="zope.componentvocabulary" />
-	
+
 	<!-- tales:expressiontype -->
 	<include package="zope.browserpage" file="meta.zcml" />
-	
+
 	<!-- browser:resource[Directory] -->
-	<include package="zope.browserresource" file="meta.zcml" /> 
+	<include package="zope.browserresource" file="meta.zcml" />
 
 	<!-- z3c:macro -->
 	<include package="z3c.macro" file="meta.zcml" />
 
 	<!-- regular pagetemplate usage uses chamelean engine -->
-	<include package="z3c.ptcompat" zcml:condition="not-have in-apidoc" /> 
+	<include package="z3c.ptcompat" zcml:condition="not-have in-apidoc" />
 	<include package="z3c.macro" />
 
 	<include package="nti.externalization" />
@@ -496,6 +496,7 @@
 	<include package="nti.app.users" />
 	<include package="nti.app.recorder" />
 	<include package="nti.app.bulkemail" />
+	<include package="nti.app.publishing" />
 	<include package="nti.app.invitations" />
 	<include package="nti.app.notabledata" />
 	<include package="nti.app.contentfile" />

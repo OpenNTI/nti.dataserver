@@ -19,11 +19,6 @@ from zope.container.interfaces import ILocation
 from pyramid.threadlocal import get_current_request
 
 from nti.app.authentication import get_remote_user
-
-from nti.app.publishing import VIEW_PUBLISH
-from nti.app.publishing import VIEW_UNPUBLISH
-
-from nti.app.renderers.decorators import AbstractTwoStateViewLinkDecorator
 from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecorator
 
 from nti.appserver._util import link_belongs_to_user
@@ -33,7 +28,6 @@ from nti.appserver.pyramid_authorization import is_readable
 
 from nti.dataserver.interfaces import IUser
 from nti.dataserver.interfaces import ICommunity
-from nti.dataserver.interfaces import IDefaultPublished
 from nti.dataserver.interfaces import IUnscopedGlobalCommunity
 from nti.dataserver.interfaces import ICoppaUserWithoutAgreement
 from nti.dataserver.interfaces import IDynamicSharingTargetFriendsList
@@ -112,37 +106,6 @@ class DFLBoardLinkDecorator(object):
 						elements=(DEFAULT_BOARD_NAME,))
 			link_belongs_to_user(link, context)
 			the_links.append(link)
-
-@interface.implementer(IExternalMappingDecorator)
-class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
-	"""
-	Adds the appropriate publish or unpublish link for the owner
-	of the object.
-
-	Also, because that information is useful to have for others to
-	which the post is visible (for cases where additional permissions
-	beyond default published are in use; in that case, visibility
-	doesn't necessarily imply publication), we also provide a
-	``PublicationState`` containing one of the values
-	``DefaultPublished`` or null.
-	"""
-	false_view = VIEW_PUBLISH
-	true_view = VIEW_UNPUBLISH
-
-	def link_predicate(self, context, current_username):
-		return IDefaultPublished.providedBy(context)
-
-	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
-		# The owner is the only one that gets the links
-		current_user = self.remoteUser
-		if current_user and current_user == context.creator:
-			super(PublishLinkDecorator, self)._do_decorate_external_link(context, mapping)
-
-	def _do_decorate_external(self, context, mapping):
-		super(PublishLinkDecorator, self)._do_decorate_external(context, mapping)
-		# Everyone gets the status
-		mapping['PublicationState'] = 'DefaultPublished' \
-									  if IDefaultPublished.providedBy(context) else None
 
 # Notice we do not declare what we adapt--we adapt too many things
 # that share no common ancestor. (We could be declared on IContainer,
