@@ -31,7 +31,7 @@ from nti.mimetype.mimetype import nti_mimetype_class
 
 from .error import handle_possible_validation_error
 
-def create_modeled_content_object( dataserver, owner, datatype, externalValue, creator ):
+def create_modeled_content_object(dataserver, owner, datatype, externalValue, creator):
 	"""
 	:param owner: The entity which will contain the object.
 	:param creator: The user attempting to create the object. Possibly separate from the
@@ -43,26 +43,26 @@ def create_modeled_content_object( dataserver, owner, datatype, externalValue, c
 
 	result = None
 	if datatype is not None and owner is not None:
-		result = owner.maybeCreateContainedObjectWithType( datatype, externalValue )
+		result = owner.maybeCreateContainedObjectWithType(datatype, externalValue)
 
 	if result is None:
-		result = find_factory_for( externalValue )
+		result = find_factory_for(externalValue)
 		if result:
 			result = result()
 
 	return result
 
-def class_name_from_content_type( request ):
+def class_name_from_content_type(request):
 	"""
 	:return: The class name portion of one of our content-types, or None
 		if the content-type doesn't conform. Note that this will be lowercase.
 	"""
-	content_type = request.content_type if hasattr( request, 'content_type' ) else request
+	content_type = request.content_type if hasattr(request, 'content_type') else request
 	content_type = content_type or ''
-	return nti_mimetype_class( content_type )
+	return nti_mimetype_class(content_type)
 
-def read_body_as_external_object( request, input_data=None, 
-								  expected_type=collections.Mapping ):
+def read_body_as_external_object(request, input_data=None,
+								 expected_type=collections.Mapping):
 	"""
 	Returns the object specified by the external data. The request input stream is
 	input stream is parsed, and the return value is verified to be of `expected_type`
@@ -72,17 +72,17 @@ def read_body_as_external_object( request, input_data=None,
 	:raises hexc.HTTPBadRequest: If there is an error parsing/transforming the
 			client request.
 	"""
-	value = input_data if input_data is not None else request.body
 	ext_format = 'json'
+	value = input_data if input_data is not None else request.body
 	content_type = getattr(request, 'content_type', '')
-	if (content_type.endswith( 'plist' )
+	if (content_type.endswith('plist')
 		or content_type == 'application/xml'
-		or request.GET.get('format') == 'plist'): # pragma: no cover
+		or request.GET.get('format') == 'plist'):  # pragma: no cover
 		ext_format = 'plist'
 
 	__traceback_info__ = ext_format, value
 	reader = component.queryUtility(IExternalRepresentationReader, name=ext_format)
-	if reader is None: # pragma: no cover
+	if reader is None:  # pragma: no cover
 		# We're officially dropping support for plist values.
 		# primarily due to the lack of support for null values, and
 		# unsure about encoding issues
@@ -98,10 +98,10 @@ def read_body_as_external_object( request, input_data=None,
 		# the hooks gets to be complicated if it correctly catches everything (inside arrays,
 		# for example; the function below misses them) so decoding to unicode up front
 		# is simpler
-		#def _read_body_strings_unicode(pairs):
-		#	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
-		#				   for k, v
-		#				   in pairs) )
+		# def _read_body_strings_unicode(pairs):
+		# 	return dict( ( (k, (unicode(v, request.charset) if isinstance(v, str) else v))
+		# 				   for k, v
+		# 				   in pairs) )
 		try:
 			value = unicode(value, request.charset)
 		except UnicodeError:
@@ -110,13 +110,13 @@ def read_body_as_external_object( request, input_data=None,
 
 		value = reader.load(value)
 
-		if not isinstance( value, expected_type ):
-			raise TypeError( type(value) )
+		if not isinstance(value, expected_type):
+			raise TypeError(type(value))
 
 		return value
-	except hexc.HTTPException: # pragma: no cover
+	except hexc.HTTPException:  # pragma: no cover
 		raise
-	except Exception: # pragma: no cover
+	except Exception:  # pragma: no cover
 		# Sadly, there's not a good exception list to catch.
 		# plistlib raises undocumented exceptions from xml.parsers.expat
 		# json may raise ValueError or other things, depending on implementation.
@@ -125,17 +125,18 @@ def read_body_as_external_object( request, input_data=None,
 		# could also come from other places. We call it all client error.
 		# Note that value could be a byte string at this point if decoding failed,
 		# so be careful not to try to log it as a string
-		logger.exception( "Failed to parse/transform value %r", value )
+		logger.exception("Failed to parse/transform value %r", value)
 		tb = sys.exc_info()[2]
-		ex = hexc.HTTPBadRequest( _("Failed to parse/transform input") )
+		ex = hexc.HTTPBadRequest(_("Failed to parse/transform input"))
 		raise ex, None, tb
 
-def update_object_from_external_object( contentObject, externalValue, 
-										notify=True, request=None ):
-	dataserver = component.queryUtility( IDataserver )
+def update_object_from_external_object(contentObject, externalValue,
+									   notify=True, request=None, pre_hook=None):
+	dataserver = component.queryUtility(IDataserver)
 	try:
 		__traceback_info__ = contentObject, externalValue
-		return update_from_external_object( contentObject, externalValue, 
-											context=dataserver, notify=notify )
+		return update_from_external_object(contentObject, externalValue,
+										   context=dataserver, notify=notify,
+										   pre_hook=pre_hook)
 	except Exception as e:
-		handle_possible_validation_error( request, e )
+		handle_possible_validation_error(request, e)

@@ -57,6 +57,7 @@ from .internalization import read_body_as_external_object
 from .internalization import create_modeled_content_object
 from .internalization import update_object_from_external_object
 
+ID = StandardExternalFields.ID
 CLASS = StandardExternalFields.CLASS
 ITEMS = StandardExternalFields.ITEMS
 MIMETYPE = StandardExternalFields.MIMETYPE
@@ -537,18 +538,20 @@ class ModeledContentUploadRequestUtilsMixin(object):
 			raise hexc.HTTPUnprocessableEntity(_('Unsupported/missing Class'))
 		return containedObject
 
-	def updateContentObject(self, contentObject, externalValue, set_id=False, notify=True):
+	def updateContentObject(self, contentObject, externalValue, set_id=False, 
+							notify=True, pre_hook=None):
 		# We want to be sure to only change values on the actual content object,
 		# not things in its traversal lineage
 		containedObject = update_object_from_external_object(aq_base(contentObject),
 															 externalValue,
 															 notify=notify,
-															 request=self.request)
+															 request=self.request,
+															 pre_hook=pre_hook)
 
 		# If they provided an ID, use it if we can and we need to
-		if set_id and StandardExternalFields.ID in externalValue \
-			and hasattr(containedObject, StandardInternalFields.ID) \
-			and getattr(containedObject, StandardInternalFields.ID, None) != externalValue[StandardExternalFields.ID]:
+		if set_id and ID in externalValue \
+			and hasattr(containedObject, ID) \
+			and getattr(containedObject, ID, None) != externalValue[ID]:
 			try:
 				containedObject.id = externalValue['ID']
 			except AttributeError:
@@ -623,6 +626,9 @@ class ModeledContentEditRequestUtilsMixin(object):
 		if o is None or IDeletedObjectPlaceholder.providedBy(o):
 			raise hexc.HTTPNotFound("No object %s/%s/%s" % (cr, cid, oid))
 
+	def _to_utc(self, last_mod):
+		return datetime.datetime.fromtimestamp(last_mod, webob.datetime_utils.UTC)
+
 	def _check_object_unmodified_since(self, obj):
 		"""
 		If the request for this object has a 'If-Unmodified-Since' header,
@@ -634,6 +640,6 @@ class ModeledContentEditRequestUtilsMixin(object):
 
 		if self.request.if_unmodified_since is not None:
 			obj_last_mod = to_standard_external_last_modified_time(obj)
-			if 	obj_last_mod is not None \
-				and datetime.datetime.fromtimestamp(obj_last_mod, webob.datetime_utils.UTC) > self.request.if_unmodified_since:
+			if 		obj_last_mod is not None \
+				and self._to_utc(obj_last_mod) > self.request.if_unmodified_since:
 				raise hexc.HTTPPreconditionFailed()
