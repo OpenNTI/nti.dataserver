@@ -235,14 +235,15 @@ def _index_item(item, content_package, container_id, catalog):
 				  namespace=content_package.ntiid, sites=sites)
 	# check for slide decks
 	if INTISlideDeck.providedBy(item):
+		extended = tuple(lineage_ntiids or ()) + (item.ntiid,)
 		for slide in item.Slides or ():
 			result += 1
-			catalog.index(slide, container_ntiids=lineage_ntiids,
+			catalog.index(slide, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 
 		for video in item.Videos or ():
 			result += 1
-			catalog.index(video, container_ntiids=lineage_ntiids,
+			catalog.index(video, container_ntiids=extended,
 				  		  namespace=content_package.ntiid, sites=sites)
 	return result
 
