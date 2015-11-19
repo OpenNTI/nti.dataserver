@@ -358,9 +358,10 @@ class TestLibraryCollectionDetailExternalizer(NewRequestLayerTest):
 			def authenticated_userid( self, request ):
 				return 'jason.madden@nextthought.com'
 			def effective_principals( self, request ):
-				return [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request),
-																nti_interfaces.AUTHENTICATED_GROUP_NAME,
-																nti_interfaces.EVERYONE_GROUP_NAME]]
+				result = [nti_interfaces.IPrincipal(x) for x in [	self.authenticated_userid(request),
+																	nti_interfaces.AUTHENTICATED_GROUP_NAME,
+																	nti_interfaces.EVERYONE_GROUP_NAME]]
+				return frozenset( result )
 
 		self.policy = Policy()
 		component.provideUtility( self.policy )
