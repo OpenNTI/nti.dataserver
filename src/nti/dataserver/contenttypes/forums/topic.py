@@ -209,6 +209,11 @@ class HeadlineTopic(Topic):
 		interface.noLongerProvides(self, IDefaultPublished)
 		self._did_modify_publication_status(oldSharingTargets)
 
+	def is_published(self):
+		return IDefaultPublished.providedBy(self)
+
+	isPublished = is_published
+
 @interface.implementer(IGeneralTopic)
 class GeneralTopic(Topic):
 	pass
@@ -392,7 +397,7 @@ class PersonalBlogEntry(AbstractDefaultPublishableSharedWithMixin,
 	def is_published(self):
 		return not IWritableShared.providedBy(self)
 	isPublished = is_published
-	
+
 	updateSharingTargets = _forward_not_published('updateSharingTargets')
 	clearSharingTargets = _forward_not_published('clearSharingTargets')
 	addSharingTarget = _forward_not_published('addSharingTarget')
