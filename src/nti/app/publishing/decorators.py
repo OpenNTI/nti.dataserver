@@ -22,8 +22,6 @@ from nti.appserver.pyramid_authorization import has_permission
 
 from nti.dataserver.authorization import ACT_CONTENT_EDIT
 
-from nti.dataserver.interfaces import IDefaultPublished
-
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
@@ -46,14 +44,18 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	true_view = VIEW_UNPUBLISH
 
 	def link_predicate(self, context, current_username):
-		return IDefaultPublished.providedBy(context)
+		return context.is_published()
+
+	def _expose_links(self, context):
+		return 	getattr(context, '_p_jar', None) \
+ 			and has_permission(ACT_CONTENT_EDIT, context, self.request)
 
 	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
-		if has_permission( ACT_CONTENT_EDIT, context, self.request ):
+		if self._expose_links( context ):
 			super(PublishLinkDecorator, self)._do_decorate_external_link(context, mapping)
 
 	def _do_decorate_external(self, context, mapping):
 		super(PublishLinkDecorator, self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
 		mapping['PublicationState'] = 'DefaultPublished' \
-									  if IDefaultPublished.providedBy(context) else None
+									  if context.is_published() else None
