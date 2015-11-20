@@ -264,7 +264,7 @@ class ContainedObjectCatalog(Persistent):
 			return False
 
 		if namespace is not None:  # TODO: do we need this check?
-			namespace = 	getattr(namespace, '__name__', namespace)
+			namespace =	getattr(namespace, '__name__', namespace)
 
 		for index, value in ((self._type_index, item),
 							 (self._site_index, sites),
