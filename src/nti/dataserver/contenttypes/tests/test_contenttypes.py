@@ -7,52 +7,77 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import (assert_that, is_, has_entry,
-					  has_key,  is_not, has_item, has_property,
-					  same_instance, none, has_entries, only_contains)
-from hamcrest import has_length
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import all_of
+from hamcrest import is_not
+from hamcrest import has_key
+from hamcrest import contains
+from hamcrest import has_item
 from hamcrest import not_none
+from hamcrest import has_entry
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_entries
 from hamcrest import instance_of
 from hamcrest import greater_than
-from hamcrest import all_of
-from hamcrest import contains
+from hamcrest import has_property
+from hamcrest import only_contains
+from hamcrest import same_instance
 
-from zope.annotation import interfaces as an_interfaces
+from nti.testing.matchers import is_true
+from nti.testing.matchers import verifiably_provides
+
 from zope import component
 
-from nti.testing.matchers import verifiably_provides
-from nti.testing.matchers import is_true
-from nti.intid import wref as intid_wref
-from nti.dataserver import interfaces as nti_interfaces
-from nti.dataserver.contenttypes import Redaction as _Redaction, Highlight as _Highlight, Note as _Note, Bookmark as _Bookmark
-from nti.dataserver.contenttypes import Canvas, CanvasPathShape, CanvasTextShape
-from nti.dataserver.contenttypes import EmbeddedVideo
-from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
-from nti.externalization.oids import to_external_ntiid_oid
-from nti.externalization.externalization import to_external_object
-import nti.dataserver.users as users
+from zope.annotation import interfaces as an_interfaces
 
 import zope.schema.interfaces
-from nti.dataserver.tests import mock_dataserver
-from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
-from nti.dataserver.tests.mock_dataserver import WithMockDS
-from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
-from nti.contentfragments import interfaces as frg_interfaces
-import nti.contentfragments.censor
-from nti.containers import containers
-
-from nti.contentrange import timeline
-from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
-
-from zope.component import eventtesting
 
 from zope.lifecycleevent import IObjectModifiedEvent
 
+from zc import intid as zc_intid
+
+from nti.containers import containers
+
+import nti.contentfragments.censor
+from nti.contentfragments import interfaces as frg_interfaces
+
+from nti.contentrange import timeline
+from nti.contentrange.contentrange import ContentRangeDescription
+from nti.contentrange.contentrange import ElementDomContentPointer
+from nti.contentrange.contentrange import DomContentRangeDescription
+
+from nti.dataserver import interfaces as nti_interfaces
+
+from nti.dataserver.contenttypes import Canvas
+from nti.dataserver.contenttypes import Note as _Note
+from nti.dataserver.contenttypes import EmbeddedVideo
+from nti.dataserver.contenttypes import CanvasPathShape
+from nti.dataserver.contenttypes import CanvasTextShape
+from nti.dataserver.contenttypes import Bookmark as _Bookmark
+from nti.dataserver.contenttypes import Redaction as _Redaction
+from nti.dataserver.contenttypes import Highlight as _Highlight
+from nti.dataserver.contenttypes import NonpersistentCanvasPathShape
+
+import nti.dataserver.users as users
+
+from nti.externalization.oids import to_external_ntiid_oid
 from nti.externalization.externalization import toExternalObject
+from nti.externalization.externalization import to_external_object
 from nti.externalization.internalization import update_from_external_object
+
+from nti.intid import wref as intid_wref
+
+from nti.dataserver.tests import mock_dataserver
+
+from nti.dataserver.tests.mock_dataserver import WithMockDS
+from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
+from nti.dataserver.tests.mock_dataserver import DataserverLayerTest
+
 from nti.externalization.tests import externalizes
 
-from zc import intid as zc_intid
+from zope.component import eventtesting
 
 class TestSanitize(DataserverLayerTest):
 
@@ -570,7 +595,6 @@ class TestNote(DataserverLayerTest):
 		ext = to_external_object(n)
 		assert_that(ext, has_entries("body", has_length(2)))
 
-
 	@WithMockDS
 	def test_external_body_mimetypes(self):
 		n = Note()
@@ -607,7 +631,6 @@ class TestNote(DataserverLayerTest):
 		update_from_external_object( n, { 'body': ["So visit www.nextthought.com and see for yourself."] } )
 		ext = to_external_object( n )
 		assert_that( ext['body'], is_( [u'<html><body>So visit <a href="http://www.nextthought.com">www.nextthought.com</a> and see for yourself.</body></html>'] ) )
-
 
 	@WithMockDSTrans
 	def test_update_sharing_only( self ):
