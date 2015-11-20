@@ -174,7 +174,11 @@ class _ACE(object):
 			return NotImplemented
 
 	def __hash__(self):
-		return hash((self.action, self.actor.id, tuple(self.permission)))
+		if self.permission == ALL_PERMISSIONS:
+			result = (self.action, self.actor.id, ())
+		else:
+			result = (self.action, self.actor.id, tuple(self.permission))
+		return hash(result)
 
 	def __iter__(self):
 		return iter((self.action, self.actor, self.permission))
@@ -316,16 +320,16 @@ def is_writable(context, username, **kwargs):
 
 	A shortcut to :func:``has_permission``; see its docs for details.
 	"""
-
 	return has_permission(authorization.ACT_UPDATE, context, username, **kwargs)
 
 import functools
 
 from ZODB.POSException import POSError
 
-@interface.implementer(IExternalMappingDecorator)
 @component.adapter(object)
+@interface.implementer(IExternalMappingDecorator)
 class ACLDecorator(object):
+
 	__metaclass__ = SingletonDecorator
 
 	def decorateExternalMapping(self, orig, result):

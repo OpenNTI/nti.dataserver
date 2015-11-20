@@ -39,7 +39,7 @@ from nti.dataserver.tests.mock_dataserver import WithMockDS
 from nti.dataserver.tests.mock_dataserver import WithMockDSTrans
 from nti.contentfragments import interfaces as frg_interfaces
 import nti.contentfragments.censor
-from nti.dataserver import containers
+from nti.containers import containers
 
 from nti.contentrange import timeline
 from nti.contentrange.contentrange import ContentRangeDescription, DomContentRangeDescription, ElementDomContentPointer
@@ -62,7 +62,6 @@ class TestSanitize(DataserverLayerTest):
 		update_from_external_object( shape, {'text': text} )
 		assert_that( shape, has_property( 'text', "Hi, all.  I've found the following video series to be very helpful as you learn algebra.  Let me know if questions or if you find others.\n" ) )
 
-
 def Note():
 	n = _Note()
 	n.applicableRange = ContentRangeDescription()
@@ -73,12 +72,10 @@ def Bookmark():
 	h.applicableRange = ContentRangeDescription()
 	return h
 
-
 def Highlight():
 	h = _Highlight()
 	h.applicableRange = ContentRangeDescription()
 	return h
-
 
 def Redaction():
 	h = _Redaction()
@@ -167,8 +164,6 @@ class _BaseSelectedRangeTest(DataserverLayerTest):
 		update_from_external_object( highlight, ext, context=self.ds )
 		assert_that( highlight.tags, contains( ('hi') ) )
 
-
-
 class TestHighlight(_BaseSelectedRangeTest):
 
 	def test_external_style(self):
@@ -199,8 +194,6 @@ class TestHighlight(_BaseSelectedRangeTest):
 		assert_that( highlight, externalizes( has_entries( 'presentationProperties', {'key': 'val',
 																					  'key2': 'val2'} ) ) )
 
-
-
 class TestBookmark(_BaseSelectedRangeTest):
 
 	CONSTRUCTOR = staticmethod(Bookmark)
@@ -210,7 +203,6 @@ import contentratings.interfaces
 
 class TestNote(DataserverLayerTest):
 
-
 	def test_note_is_favoritable(self):
 		#"Notes should be favoritable, and can become IUserRating"
 		n = Note()
@@ -219,7 +211,6 @@ class TestNote(DataserverLayerTest):
 		ratings = liking._lookup_like_rating_for_write( n, liking.FAVR_CAT_NAME )
 		assert_that( ratings, verifiably_provides( contentratings.interfaces.IUserRating ) )
 		assert_that( ratings, has_property( 'numberOfRatings', 0 ) )
-
 
 	def test_note_is_likeable(self):
 		#"Notes should be likeable, and can become IUserRating"
