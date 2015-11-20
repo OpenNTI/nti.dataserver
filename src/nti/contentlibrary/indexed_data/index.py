@@ -181,16 +181,15 @@ class ContainedObjectCatalog(Persistent):
 			pass
 
 	def _doc_id(self, item, intids=None):
-		intids = component.queryUtility(IIntIds) if intids is None else intids
 		if not isinstance(item, int):
 			item = removeAllProxies(item)
+			intids = component.queryUtility(IIntIds) if intids is None else intids
 			doc_id = intids.queryId(item) if intids is not None else None
 		else:
 			doc_id = item
 		return doc_id
 
 	def get_containers(self, item, intids=None):
-		intids = component.queryUtility(IIntIds) if intids is None else intids
 		doc_id = self._doc_id(item, intids)
 		if doc_id is None:
 			result = set()
@@ -198,6 +197,14 @@ class ContainedObjectCatalog(Persistent):
 			result = self._container_index.documents_to_values.get(doc_id)
 			result = set(result or ())
 		return result
+
+	def update_containers(self, item, containers=(), intids=None):
+		doc_id = self._doc_id(item, intids)
+		if doc_id is not None and containers:
+			containers = to_iterable(containers)
+			result = self._container_index.index_doc(doc_id, containers)
+		return result
+	update_container = update_containers
 
 	def remove_containers(self, item, containers, intids=None):
 		doc_id = self._doc_id(item, intids)
