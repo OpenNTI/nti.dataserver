@@ -11,7 +11,11 @@ __docformat__ = "restructuredtext en"
 
 logger = __import__('logging').getLogger(__name__)
 
+from pyramid.threadlocal import get_current_request
+
 from zope import interface
+
+from zope.location.interfaces import ILocation
 
 from nti.app.publishing import VIEW_PUBLISH
 from nti.app.publishing import VIEW_UNPUBLISH
@@ -25,7 +29,18 @@ from nti.dataserver.authorization import ACT_CONTENT_EDIT
 from nti.externalization.interfaces import StandardExternalFields
 from nti.externalization.interfaces import IExternalMappingDecorator
 
+from nti.externalization.singleton import SingletonDecorator
+
+from nti.links.links import Link
+
 LINKS = StandardExternalFields.LINKS
+
+def _expose_links( context, request ):
+	return 	getattr(context, '_p_jar', None) \
+ 		and has_permission(ACT_CONTENT_EDIT, context, request)
+
+def _get_publish_state( obj ):
+	return 'DefaultPublished' if obj.is_published() else None
 
 @interface.implementer(IExternalMappingDecorator)
 class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
@@ -46,16 +61,36 @@ class PublishLinkDecorator(AbstractTwoStateViewLinkDecorator):
 	def link_predicate(self, context, current_username):
 		return context.is_published()
 
-	def _expose_links(self, context):
-		return 	getattr(context, '_p_jar', None) \
- 			and has_permission(ACT_CONTENT_EDIT, context, self.request)
-
 	def _do_decorate_external_link(self, context, mapping, extra_elements=()):
-		if self._expose_links( context ):
+		if _expose_links( context, self.request ):
 			super(PublishLinkDecorator, self)._do_decorate_external_link(context, mapping)
 
 	def _do_decorate_external(self, context, mapping):
 		super(PublishLinkDecorator, self)._do_decorate_external(context, mapping)
 		# Everyone gets the status
-		mapping['PublicationState'] = 'DefaultPublished' \
-									  if context.is_published() else None
+		mapping['PublicationState'] = _get_publish_state( context )
+
+
+@interface.implementer(IExternalMappingDecorator)
+class CalendarPublishStateDecorator(object):
+	"""
+	Adds both the `publish` and `unpublish` links to our outbound object.
+
+	Since `ICalendarPublishable` objects have three possible states, the
+	client may call any of these links from any state.
+	"""
+	__metaclass__ = SingletonDecorator
+
+	def decorateExternalMapping(self, context, result):
+		request = get_current_request()
+		if _expose_links( context, request ):
+			_links = result.setdefault(LINKS, [])
+			for rel in (VIEW_PUBLISH, VIEW_UNPUBLISH):
+				link = Link(context, rel=rel, elements=(rel,))
+				interface.alsoProvides(link, ILocation)
+				link.__name__ = ''
+				link.__parent__ = context
+				_links.append(link)
+		result['PublicationState'] = _get_publish_state( context )
+		result['publishBeginning'] = context.publishBeginning
+		result['publishEnding'] = context.publishEnding

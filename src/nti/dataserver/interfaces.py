@@ -895,13 +895,15 @@ class IACLProviderCacheable(interface.Interface):
 	generally only safe to do when the ACL information comes from external sources
 	such as files or strings.
 	"""
-	
+
 # BWC exports
 from nti.coremetadata.interfaces import IPublishable
 from nti.coremetadata.interfaces import IDefaultPublished
+from nti.coremetadata.interfaces import ICalendarPublishable
 
 IPublishable = IPublishable
 IDefaultPublished = IDefaultPublished
+ICalendarPublishable = ICalendarPublishable
 
 # Content interfaces
 
@@ -1425,12 +1427,12 @@ class IUserBlacklistedStorage(interface.Interface):
 		"""
 
 class IInteractionQuerier(interface.Interface):
-	
+
 	def queryInteraction():
 		"""
 		return the current security interaction
 		"""
-		
+
 # Weak Refs and related BWC exports
 
 import zope.deferredimport
