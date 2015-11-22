@@ -168,8 +168,9 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		return result
 
 	def _get_body(self, email):
-		# Make sure we sanitize our user input.
-		body = sanitize_user_html( email.Body )
+		# Make sure we sanitize our user input; we currently
+		# only support text.
+		body = sanitize_user_html( email.Body, method='text' )
 		return body
 
 	def _get_reply_addr(self, to_user, email):
