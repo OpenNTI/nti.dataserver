@@ -29,6 +29,7 @@ from nti.common.string import TRUE_VALUES
 from nti.contentfragments.html import sanitize_user_html
 
 from nti.contentfragments.interfaces import IHTMLContentFragment
+from nti.contentfragments.interfaces import IPlainTextContentFragment
 
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
@@ -160,6 +161,7 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	def get_template_args(self, body, to_addr):
 		result = {}
 		result['body'] = body
+		result['text_body'] = IPlainTextContentFragment( body )
 		result['email_to'] = to_addr
 		result['support_email'] = self.support_email
 		result['sender_name'] = self.sender_display_name
