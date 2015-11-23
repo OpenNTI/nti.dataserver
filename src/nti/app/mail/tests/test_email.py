@@ -7,7 +7,6 @@ __docformat__ = "restructuredtext en"
 # disable: accessing protected members, too many methods
 # pylint: disable=W0212,R0904
 
-from hamcrest import is_
 from hamcrest import not_none
 from hamcrest import assert_that
 
@@ -29,7 +28,6 @@ class TestEmailVerificationTemplate(ApplicationLayerTest):
 				I need everyone to come to class this week! <br />Thank you.
 				"""
 		body = sanitize_user_html( body )
-		body = body[len('<html><body>'): 0 - len('</body></html>')]
 		args = {'body': body,
 				'email_to': 'jzuech3@gmail.com',
 				'first_name': 'Bob',
@@ -49,4 +47,3 @@ class TestEmailVerificationTemplate(ApplicationLayerTest):
 						 package=package)
 		_write_to_file('member_email.html', result)
 		assert_that( result, not_none() )
-		assert_that( result.count( '<html' ), is_( 1 ))

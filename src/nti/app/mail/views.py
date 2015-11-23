@@ -174,9 +174,6 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 	def _get_body(self, email):
 		# Make sure we sanitize our user input
 		body = sanitize_user_html( email.Body )
-		if IHTMLContentFragment.providedBy( body ):
-			# Strip html tags so we can embed sanitized user html.
-			body = body[len('<html><body>'): 0 - len('</body></html>')]
 		return body
 
 	def _get_reply_addr(self, to_user, email):
