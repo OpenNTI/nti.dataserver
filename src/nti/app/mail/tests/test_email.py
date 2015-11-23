@@ -25,10 +25,11 @@ def _write_to_file(name, output):
 class TestEmailVerificationTemplate(ApplicationLayerTest):
 
 	def test_render(self):
-		body = """This is the body of the email.<br /> <br />
+		body = """This is the body of the email. <br /> <br />
 				I need everyone to come to class this week! <br />Thank you.
 				"""
-		body = sanitize_user_html( body, method='text' )
+		body = sanitize_user_html( body )
+		body = body[len('<html><body>'): 0 - len('</body></html>')]
 		args = {'body': body,
 				'email_to': 'jzuech3@gmail.com',
 				'first_name': 'Bob',

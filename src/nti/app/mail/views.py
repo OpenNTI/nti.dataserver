@@ -28,6 +28,8 @@ from nti.common.string import TRUE_VALUES
 
 from nti.contentfragments.html import sanitize_user_html
 
+from nti.contentfragments.interfaces import IHTMLContentFragment
+
 from nti.dataserver.users.interfaces import IAvatarURL
 from nti.dataserver.users.interfaces import IFriendlyNamed
 
@@ -168,9 +170,11 @@ class AbstractMemberEmailView(AbstractAuthenticatedView,
 		return result
 
 	def _get_body(self, email):
-		# Make sure we sanitize our user input; we currently
-		# only support text.
-		body = sanitize_user_html( email.Body, method='text' )
+		# Make sure we sanitize our user input
+		body = sanitize_user_html( email.Body )
+		if IHTMLContentFragment.providedBy( body ):
+			# Strip html tags so we can embed sanitized user html.
+			body = body[len('<html><body>'): 0 - len('</body></html>')]
 		return body
 
 	def _get_reply_addr(self, to_user, email):

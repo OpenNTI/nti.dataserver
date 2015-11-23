@@ -129,7 +129,7 @@
 										<tr width="100%">
 											<td valign="top" align="left" style="padding-left: 0px;">
 												<div style="font: 16px/1.25em 'Helvetica Neue', Arial, Helvetica; color:#a3a3a4;"
-													tal:content="options/body">
+													tal:content="structure options/body">
 													Email content.
 												</div>
 											</td>
