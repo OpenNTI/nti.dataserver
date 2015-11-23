@@ -184,12 +184,14 @@ class UploadView(AbstractAuthenticatedView, ModeledContentUploadRequestUtilsMixi
 				logger.info("Parsed image (%s,%s,%s,%s)",
 							content_type, name, width, height)
 			else:
+				content_type = source.contentType
 				factory = ContentBlobFile if use_blobs else ContentFile
 
 			target = factory()
 			target.name = name
 			target.filename = name
 			target.creator = creator
+			target.contentType = content_type
 			transfer(source, target)
 			items.append(target)
 

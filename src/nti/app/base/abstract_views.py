@@ -157,11 +157,11 @@ class SourceProxy(ProxyBase):
 		self.filename = filename
 		self.contentType = content_type
 
-def process_source(source):
+def process_source(source, content_type='application/json'):
 	if isinstance(source, six.string_types):
 		source = StringIO(source)
 		source.seek(0)
-		source = SourceProxy(source, content_type='application/json')
+		source = SourceProxy(source, content_type=content_type)
 	elif source is not None:
 		filename = getattr(source, 'filename', None)
 		content_type = getattr(source, 'type', None)
@@ -180,12 +180,12 @@ def get_source(request, *keys):
 	source = process_source(source)
 	return source
 
-def get_all_sources(request):
+def get_all_sources(request, default_content_type=None):
 	result = CaseInsensitiveDict()
 	values = CaseInsensitiveDict(request.POST)
 	for name, source in values.items():
 		try:
-			source = process_source(source)
+			source = process_source(source, default_content_type)
 		except AttributeError:
 			continue
 		result[name] = source
