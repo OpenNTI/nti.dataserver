@@ -32,6 +32,7 @@ from nti.app.externalization.view_mixins import ModeledContentEditRequestUtilsMi
 from nti.app.externalization.view_mixins import ModeledContentUploadRequestUtilsMixin
 
 from nti.common.property import Lazy
+from nti.common.maps import CaseInsensitiveDict
 
 from nti.contentfile.model import ContentFile
 from nti.contentfile.model import ContentImage
@@ -69,9 +70,9 @@ MIMETYPE = StandardExternalFields.MIMETYPE
 class DirContentsView(AbstractAuthenticatedView):
 
 	def ext_obj(self, item):
-		decorate = not INamed.providedBy(item)
+		decorate = INamed.providedBy(item)
 		result = to_external_object(item, decorate=decorate)
-		if not decorate:
+		if decorate:
 			try:
 				link = Link(item)
 				href = render_link(link)['href']
@@ -230,3 +231,57 @@ class ClearContainerView(AbstractAuthenticatedView):
 	def __call__(self):
 		self.context.clear()
 		raise hexc.HTTPNoContent()
+
+@view_config(context=INamedFile)
+@view_config(context=INamedContainer)
+@view_defaults(route_name='objects.generic.traversal',
+			   renderer='rest',
+			   permission=nauth.ACT_DELETE,
+			   request_method='POST',
+			   name='rename')
+class RenameView(AbstractAuthenticatedView,
+				 ModeledContentEditRequestUtilsMixin,
+				 ModeledContentUploadRequestUtilsMixin):
+
+	def readInput(self, value=None):
+		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
+		if isinstance(data, six.string_types):
+			data = safe_filename(name_finder(data))
+			data = {
+				'name': data, 'filename': data,
+			}
+		assert isinstance(data, Mapping)
+		return CaseInsensitiveDict(data)
+
+	def __call__(self):
+		theObject = self.context
+		self._check_object_exists(theObject)
+		self._check_object_unmodified_since(theObject)
+		if IRootFolder.providedBy(self.context):
+			raise hexc.HTTPForbidden(_("Cannot rename root folder"))
+
+		data = self.readInput()
+		name = data.get('name')
+		if not name:
+			raise hexc.HTTPUnprocessableEntity(_("Must specify a valid name."))
+
+		# get name/filename
+		name = safe_filename(name_finder(name))
+		parent = theObject.__parent__
+		if name in parent:
+			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
+
+		# get content type
+		content_type = data.get('content_type') or data.get('contentType')
+		
+		# replace name
+		old = theObject.name 
+		theObject.name = name
+		if INamed.providedBy(theObject):
+			theObject.filename = name
+			if content_type: # replace if provided
+				theObject.contentType = content_type
+			
+		# replace in folder
+		parent.rename(old, name)
+		return theObject

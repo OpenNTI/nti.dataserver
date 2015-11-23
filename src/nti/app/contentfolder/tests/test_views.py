@@ -121,3 +121,25 @@ class TestContentFolderViews(ApplicationLayerTest):
 		assert_that(res.json_body,
 					has_entries('ItemCount', is_(0),
 								'Items', has_length(0)))
+		
+	@WithSharedApplicationMockDS(users=True, testapp=True)
+	@fudge.patch('nti.app.contentfolder.views.get_all_sources')
+	def test_rename(self, mock_gas):
+		multipart = {'ichigo': SourceProxy(StringIO('ichigo'))}
+		mock_gas.is_callable().with_args().returns(multipart)
+		
+		data = {
+			'MimeType': 'application/vnd.nextthought.contentfile',
+			'filename': r'/Users/ichigo/ichigo.gif',
+			'name':'ichigo'
+		}
+		self.testapp.post_json('/dataserver2/ofs/root/@@upload',
+								data,
+								status=201)
+		self.testapp.post_json('/dataserver2/ofs/root/ichigo/@@rename', {'name':'aizen'},
+								status=200)
+		
+		self.testapp.get('/dataserver2/ofs/root/ichigo', status=404)
+		self.testapp.get('/dataserver2/ofs/root/aizen', status=200)
+		
+		self.testapp.post_json('/dataserver2/ofs/root/@@rename', {'name':'xxx'}, status=403)

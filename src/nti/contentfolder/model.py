@@ -78,6 +78,10 @@ class ContentFolder(CaseInsensitiveCheckingLastModifiedBTreeContainer):
 		return obj
 	append = add
 
+	def rename(self, old, new):
+		item = self._delitemf(old, event=False)
+		self._setitemf(new, item)
+
 @interface.implementer(IRootFolder)
 class RootFolder(ContentFolder):
 	createDirectFieldProperties(IRootFolder)

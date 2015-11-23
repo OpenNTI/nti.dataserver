@@ -18,10 +18,9 @@ from nti.app.renderers.decorators import AbstractAuthenticatedRequestAwareDecora
 
 from nti.appserver.pyramid_authorization import has_permission
 
-from nti.contentfolder.interfaces import INamedContainer
+from nti.contentfolder.interfaces import INamedContainer, IRootFolder
 
 from nti.dataserver.authorization import ACT_READ 
-from nti.dataserver.authorization import ACT_DELETE
 from nti.dataserver.authorization import ACT_UPDATE
 
 from nti.externalization.interfaces import StandardExternalFields
@@ -51,12 +50,18 @@ class _NamedFolderLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, result):
 		request = self.request
 		_links = result.setdefault(LINKS, [])
+
+		# read based ops
 		if has_permission(ACT_READ, context, request):
 			_links.append(self._create_link(context, "contents", "@@contents"))
+
+		# update based ops
 		if has_permission(ACT_UPDATE, context, request):
 			_links.append(self._create_link(context, "mkdir", "@@mkdir"))
 			_links.append(self._create_link(context, "clear", "@@clear"))
 			_links.append(self._create_link(context, "upload", "@@upload"))
+			if not IRootFolder.providedBy(context):
+				_links.append(self._create_link(context, "rename", "@@rename"))
 
 @component.adapter(INamedFile)
 @interface.implementer(IExternalObjectDecorator)
@@ -67,7 +72,7 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 		return 		parent is not None \
 				and self._is_authenticated \
 				and INamedContainer.providedBy(parent) \
-				and has_permission(ACT_DELETE, context, self.request)
+				and has_permission(ACT_UPDATE, context, self.request)
 
 	def _create_link(self, context, rel, name=None, method=None):
 		elements = () if not name else (name,)
@@ -80,3 +85,5 @@ class _NamedFileLinkDecorator(AbstractAuthenticatedRequestAwareDecorator):
 	def _do_decorate_external(self, context, result):
 		_links = result.setdefault(LINKS, [])
 		_links.append(self._create_link(context, rel="delete", method='DELETE'))
+		_links.append(self._create_link(context, rel="rename", 
+										name="@@rename", method='POST'))
