@@ -247,9 +247,7 @@ class RenameView(AbstractAuthenticatedView,
 		data = ModeledContentUploadRequestUtilsMixin.readInput(self, value=value)
 		if isinstance(data, six.string_types):
 			data = safe_filename(name_finder(data))
-			data = {
-				'name': data, 'filename': data,
-			}
+			data = {'name': data}
 		assert isinstance(data, Mapping)
 		return CaseInsensitiveDict(data)
 
@@ -272,7 +270,7 @@ class RenameView(AbstractAuthenticatedView,
 			raise hexc.HTTPUnprocessableEntity(_("File already exists."))
 
 		# get content type
-		content_type = data.get('content_type') or data.get('contentType')
+		content_type = data.get('contentType') or data.get('content_type')
 		
 		# replace name
 		old = theObject.name 
